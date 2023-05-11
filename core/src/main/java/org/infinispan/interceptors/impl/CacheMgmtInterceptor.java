@@ -814,8 +814,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          return cacheTopology.getMembers().size();
       }
       int numMembers = cacheTopology.getMembers().size();
-      // If scattered just assume 2 owners - numOwners in config says 1 though
-      int numOwners = mode.isScattered() ? 2 : clusteringConfiguration.hash().numOwners();
+      int numOwners = clusteringConfiguration.hash().numOwners();
       int minNodes = numMembers - numOwners + 1;
       long maxSize = config.memory().size();
 

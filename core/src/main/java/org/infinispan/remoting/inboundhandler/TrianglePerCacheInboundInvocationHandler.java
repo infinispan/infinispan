@@ -11,8 +11,6 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
-import org.infinispan.commands.statetransfer.ScatteredStateConfirmRevokedCommand;
-import org.infinispan.commands.statetransfer.ScatteredStateGetKeysCommand;
 import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetListenersCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
@@ -89,8 +87,6 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
                handleBackupAckCommand((BackupAckCommand) command);
                return;
             case ConflictResolutionStartCommand.COMMAND_ID:
-            case ScatteredStateConfirmRevokedCommand.COMMAND_ID:
-            case ScatteredStateGetKeysCommand.COMMAND_ID:
             case StateTransferCancelCommand.COMMAND_ID:
             case StateTransferGetListenersCommand.COMMAND_ID:
             case StateTransferGetTransactionsCommand.COMMAND_ID:

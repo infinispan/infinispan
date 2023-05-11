@@ -17,11 +17,11 @@ import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.irac.IracCleanupKeysCommand;
 import org.infinispan.commands.irac.IracClearKeysCommand;
-import org.infinispan.commands.irac.IracPutManyCommand;
-import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
+import org.infinispan.commands.irac.IracPutManyCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
+import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneRemoteSiteCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
@@ -35,16 +35,12 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.CheckTransactionRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.RenewBiasCommand;
-import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
-import org.infinispan.commands.statetransfer.ScatteredStateConfirmRevokedCommand;
-import org.infinispan.commands.statetransfer.ScatteredStateGetKeysCommand;
 import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetListenersCommand;
@@ -78,7 +74,6 @@ import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
-import org.infinispan.commands.write.InvalidateVersionsCommand;
 import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -328,12 +323,6 @@ public class RemoteCommandsFactory {
             case ConflictResolutionStartCommand.COMMAND_ID:
                command = new ConflictResolutionStartCommand(cacheName);
                break;
-            case ScatteredStateConfirmRevokedCommand.COMMAND_ID:
-               command = new ScatteredStateConfirmRevokedCommand(cacheName);
-               break;
-            case ScatteredStateGetKeysCommand.COMMAND_ID:
-               command = new ScatteredStateGetKeysCommand(cacheName);
-               break;
             case StateTransferCancelCommand.COMMAND_ID:
                command = new StateTransferCancelCommand(cacheName);
                break;
@@ -426,15 +415,6 @@ public class RemoteCommandsFactory {
                break;
             case BackupNoopCommand.COMMAND_ID:
                command = new BackupNoopCommand(cacheName);
-               break;
-            case InvalidateVersionsCommand.COMMAND_ID:
-               command = new InvalidateVersionsCommand(cacheName);
-               break;
-            case RevokeBiasCommand.COMMAND_ID:
-               command = new RevokeBiasCommand(cacheName);
-               break;
-            case RenewBiasCommand.COMMAND_ID:
-               command = new RenewBiasCommand(cacheName);
                break;
             case ReductionPublisherRequestCommand.COMMAND_ID:
                command = new ReductionPublisherRequestCommand<>(cacheName);

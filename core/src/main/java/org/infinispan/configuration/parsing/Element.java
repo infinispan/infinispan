@@ -103,10 +103,6 @@ public enum Element {
     ROLE,
     ROLES,
     ROOT,
-    @Deprecated
-    SCATTERED_CACHE,
-    @Deprecated
-    SCATTERED_CACHE_CONFIGURATION,
     SERIALIZATION_CONTEXT_INITIALIZER("context-initializer"),
     SERIALIZATION_CONTEXT_INITIALIZERS("context-initializers"),
     SHARED_PERSISTENT_LOCATION,
@@ -186,9 +182,7 @@ public enum Element {
                 || element == REPLICATED_CACHE
                 || element == REPLICATED_CACHE_CONFIGURATION
                 || element == DISTRIBUTED_CACHE
-                || element == DISTRIBUTED_CACHE_CONFIGURATION
-                || element == SCATTERED_CACHE
-                || element == SCATTERED_CACHE_CONFIGURATION;
+                || element == DISTRIBUTED_CACHE_CONFIGURATION;
     }
 
    @Override

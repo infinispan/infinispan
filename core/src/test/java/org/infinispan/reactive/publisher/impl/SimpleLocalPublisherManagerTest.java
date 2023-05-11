@@ -40,7 +40,7 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.BiFunction;
 
 @Test(groups = "functional", testName = "reactive.publisher.impl.SimpleLocalPublisherManagerTest")
-@InCacheMode({CacheMode.REPL_SYNC, CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC})
+@InCacheMode({CacheMode.REPL_SYNC, CacheMode.DIST_SYNC})
 public class SimpleLocalPublisherManagerTest extends MultipleCacheManagersTest {
    private static final int SEGMENT_COUNT = 128;
 

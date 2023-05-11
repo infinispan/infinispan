@@ -135,8 +135,6 @@ public class CacheTopology {
             assert pendingCH == null;
             assert unionCH == null;
             return currentCH;
-         case TRANSITORY:
-            return pendingCH;
          case READ_OLD_WRITE_ALL:
             assert pendingCH != null;
             assert unionCH != null;
@@ -162,8 +160,6 @@ public class CacheTopology {
             assert pendingCH == null;
             assert unionCH == null;
             return currentCH;
-         case TRANSITORY:
-            return pendingCH;
          case READ_OLD_WRITE_ALL:
          case READ_ALL_WRITE_ALL:
          case READ_NEW_WRITE_ALL:
@@ -282,10 +278,6 @@ public class CacheTopology {
        * Only currentCH should be set, this works as both readCH and writeCH
        */
       NO_REBALANCE(false),
-      /**
-       * Used by caches that don't use 4-phase topology change. PendingCH is used for both read and write.
-       */
-      TRANSITORY(true),
       /**
        * Interim state between NO_REBALANCE &rarr; READ_OLD_WRITE_ALL
        * readCh is set locally using previous Topology (of said node) readCH, whilst writeCH contains all members after merge

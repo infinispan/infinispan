@@ -26,12 +26,12 @@ import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.irac.IracCleanupKeysCommand;
-import org.infinispan.commands.irac.IracPutManyCommand;
-import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracClearKeysCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
+import org.infinispan.commands.irac.IracPutManyCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
+import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneRemoteSiteCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
@@ -46,16 +46,12 @@ import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.CheckTransactionRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.RenewBiasCommand;
-import org.infinispan.commands.remote.RevokeBiasCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTransactionsCommand;
 import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
-import org.infinispan.commands.statetransfer.ScatteredStateConfirmRevokedCommand;
-import org.infinispan.commands.statetransfer.ScatteredStateGetKeysCommand;
 import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetListenersCommand;
@@ -80,7 +76,6 @@ import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.commands.write.InvalidateVersionsCommand;
 import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -483,14 +478,10 @@ public interface CommandsFactory {
 
    StateTransferStartCommand buildStateTransferStartCommand(int topologyId, IntSet segments);
 
-   ScatteredStateGetKeysCommand buildScatteredStateGetKeysCommand(int topologyId, IntSet segments);
-
-   ScatteredStateConfirmRevokedCommand buildScatteredStateConfirmRevokeCommand(int topologyId, IntSet segments);
-
    /**
     * Builds a StateResponseCommand used for pushing cache entries to another node.
     */
-   StateResponseCommand buildStateResponseCommand(int viewId, Collection<StateChunk> stateChunks, boolean applyState, boolean pushTransfer);
+   StateResponseCommand buildStateResponseCommand(int viewId, Collection<StateChunk> stateChunks, boolean applyState);
 
    /**
     * Retrieves the cache name this CommandFactory is set up to construct commands for.
@@ -610,12 +601,6 @@ public interface CommandsFactory {
    BackupMultiKeyAckCommand buildBackupMultiKeyAckCommand(long id, int segment, int topologyId);
 
    ExceptionAckCommand buildExceptionAckCommand(long id, Throwable throwable, int topologyId);
-
-   InvalidateVersionsCommand buildInvalidateVersionsCommand(int topologyId, Object[] keys, int[] topologyIds, long[] versions, boolean removed);
-
-   RevokeBiasCommand buildRevokeBiasCommand(Address ackTarget, long id, int topologyId, Collection<Object> keys);
-
-   RenewBiasCommand buildRenewBiasCommand(Object[] keys);
 
    SingleKeyBackupWriteCommand buildSingleKeyBackupWriteCommand();
 

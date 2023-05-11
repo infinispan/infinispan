@@ -473,15 +473,6 @@
       </distributed-cache-configuration>
       <distributed-cache name="dist-instance" configuration="dist-template" />
 
-      <scattered-cache-configuration name="scattered-template" remote-timeout="17500" invalidation-batch-size="1"
-                                     bias-acquisition="NEVER" bias-lifespan="256">
-         <encoding>
-            <key media-type="application/x-java-object"/>
-            <value media-type="application/x-java-object"/>
-         </encoding>
-      </scattered-cache-configuration>
-      <scattered-cache name="scattered-cache" configuration="scattered-template"/>
-
       <local-cache name="secure">
          <security>
             <authorization roles="peasant vavasour vassal king"/>

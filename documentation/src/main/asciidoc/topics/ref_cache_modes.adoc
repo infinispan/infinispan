@@ -16,8 +16,3 @@ Distributed:: {brandname} replicates cache entries on a subset of nodes in a clu
 {brandname} requests read operations from owner nodes to ensure it returns the correct value.
 
 Invalidation:: {brandname} evicts stale data from all nodes whenever operations modify entries in the cache. {brandname} performs local read operations only.
-
-Scattered:: {brandname} stores cache entries across a subset of nodes. +
-By default {brandname} assigns a primary owner and a backup owner to each cache entry in scattered caches. +
-{brandname} assigns primary owners in the same way as with distributed caches, while backup owners are always the nodes that initiate the write operations. +
-{brandname} requests read operations from at least one owner node to ensure it returns the correct value.

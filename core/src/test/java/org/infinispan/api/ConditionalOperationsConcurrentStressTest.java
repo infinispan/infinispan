@@ -1,6 +1,5 @@
 package org.infinispan.api;
 
-import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.testng.annotations.Test;
 
@@ -19,8 +18,6 @@ public class ConditionalOperationsConcurrentStressTest extends ConditionalOperat
    public Object[] factory() {
       return new Object[] {
             new ConditionalOperationsConcurrentStressTest().cacheMode(CacheMode.DIST_SYNC),
-            new ConditionalOperationsConcurrentStressTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.NEVER),
-            new ConditionalOperationsConcurrentStressTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.ON_WRITE)
       };
    }
 

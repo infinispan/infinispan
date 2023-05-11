@@ -18,7 +18,6 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
-import org.infinispan.distribution.ch.impl.ScatteredConsistentHash;
 import org.infinispan.filter.Converter;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
@@ -63,8 +62,7 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
       sci = new StreamSerializationContextImpl();
       HashConfigurationBuilder hashConfiguration = builderUsed.clustering().cacheMode(cacheMode).hash().numSegments(3);
       if (!cacheMode.isReplicated()) {
-         BaseControlledConsistentHashFactory<? extends ConsistentHash> chf =
-               cacheMode.isScattered() ? new TestScatteredConsistentHashFactory() : new TestDefaultConsistentHashFactory();
+         BaseControlledConsistentHashFactory<? extends ConsistentHash> chf = new TestDefaultConsistentHashFactory();
          hashConfiguration.consistentHashFactory(chf);
       }
       if (transactional) {
@@ -140,27 +138,6 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
       }
    }
 
-   public static class TestScatteredConsistentHashFactory
-         extends BaseControlledConsistentHashFactory<ScatteredConsistentHash> {
-      TestScatteredConsistentHashFactory() {
-         super(new ScatteredTrait(), 3);
-      }
-
-      @Override
-      protected int[][] assignOwners(int numSegments, List<Address> members) {
-         // The test needs a segment owned by each node when there are 3 nodes in the cluster.
-         // There are no restrictions for before/after, so we make the coordinator the primary owner of all segments.
-         switch (members.size()) {
-            case 1:
-               return new int[][]{{0}, {0}, {0}};
-            case 2:
-               return new int[][]{{0}, {0}, {0}};
-            default:
-               return new int[][]{{0}, {1}, {2}};
-         }
-      }
-   }
-
    protected Map<Integer, Set<Map.Entry<Object, String>>> generateEntriesPerSegment(KeyPartitioner keyPartitioner,
                                                                                   Iterable<Map.Entry<Object, String>> entries) {
       Map<Integer, Set<Map.Entry<Object, String>>> returnMap = new HashMap<>();
@@ -179,7 +156,6 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
          includeClasses = {
                BaseSetupStreamIteratorTest.StringTruncator.class,
                BaseSetupStreamIteratorTest.TestDefaultConsistentHashFactory.class,
-               BaseSetupStreamIteratorTest.TestScatteredConsistentHashFactory.class,
                MagicKey.class
          },
          schemaFileName = "core.stream.proto",

@@ -9,8 +9,6 @@ import static org.infinispan.configuration.parsing.Element.LOCAL_CACHE;
 import static org.infinispan.configuration.parsing.Element.LOCAL_CACHE_CONFIGURATION;
 import static org.infinispan.configuration.parsing.Element.REPLICATED_CACHE;
 import static org.infinispan.configuration.parsing.Element.REPLICATED_CACHE_CONFIGURATION;
-import static org.infinispan.configuration.parsing.Element.SCATTERED_CACHE;
-import static org.infinispan.configuration.parsing.Element.SCATTERED_CACHE_CONFIGURATION;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.parsing.Element;
@@ -60,16 +58,7 @@ public enum CacheMode {
     * Async DIST
     */
    @ProtoEnumValue(number = 6)
-   DIST_ASYNC,
-
-   /**
-    * Synchronous scattered cache
-    *
-    * @deprecated Since 14.0, will be removed in 16.0. Please use {@link #DIST_SYNC} instead.
-    */
-   @Deprecated
-   @ProtoEnumValue(number = 7)
-   SCATTERED_SYNC;
+   DIST_ASYNC;
 
    private static final CacheMode[] cachedValues = values();
 
@@ -85,7 +74,7 @@ public enum CacheMode {
    }
 
    public boolean isSynchronous() {
-      return this == REPL_SYNC || this == DIST_SYNC || this == INVALIDATION_SYNC || this == SCATTERED_SYNC || this == LOCAL;
+      return this == REPL_SYNC || this == DIST_SYNC || this == INVALIDATION_SYNC || this == LOCAL;
    }
 
    public boolean isClustered() {
@@ -100,14 +89,8 @@ public enum CacheMode {
       return this == REPL_SYNC || this == REPL_ASYNC;
    }
 
-   /**
-    * @deprecated Since 14.0, will be removed in 16.0.
-    */
-   @Deprecated
-   public boolean isScattered() { return this == SCATTERED_SYNC; }
-
    public boolean needsStateTransfer() {
-      return isReplicated() || isDistributed() || isScattered();
+      return isReplicated() || isDistributed();
    }
 
    public CacheMode toSync() {
@@ -135,8 +118,6 @@ public enum CacheMode {
             return INVALIDATION_ASYNC;
          case DIST_SYNC:
             return DIST_ASYNC;
-         case SCATTERED_SYNC:
-            throw new IllegalArgumentException("Scattered mode does not have asynchronous mode.");
          default:
             return this;
       }
@@ -153,8 +134,6 @@ public enum CacheMode {
          case DIST_SYNC:
          case DIST_ASYNC:
             return "DISTRIBUTED";
-         case SCATTERED_SYNC:
-            return "SCATTERED";
          case LOCAL:
             return "LOCAL";
       }
@@ -172,8 +151,6 @@ public enum CacheMode {
          case INVALIDATION_SYNC:
          case INVALIDATION_ASYNC:
             return INVALIDATION_CACHE.getLocalName();
-         case SCATTERED_SYNC:
-            return SCATTERED_CACHE.getLocalName();
          default:
             return LOCAL_CACHE.getLocalName();
       }
@@ -190,8 +167,6 @@ public enum CacheMode {
          case INVALIDATION_SYNC:
          case INVALIDATION_ASYNC:
             return template ? INVALIDATION_CACHE_CONFIGURATION : INVALIDATION_CACHE;
-         case SCATTERED_SYNC:
-            return template ? SCATTERED_CACHE_CONFIGURATION : SCATTERED_CACHE;
          default:
             return template ? LOCAL_CACHE_CONFIGURATION : LOCAL_CACHE;
       }
@@ -208,8 +183,6 @@ public enum CacheMode {
             return sync.equals("sync") ? REPL_SYNC : REPL_ASYNC;
          case "local":
             return LOCAL;
-         case "scattered":
-            return SCATTERED_SYNC;
          case "invalidation":
             return sync.equals("sync") ? INVALIDATION_SYNC : INVALIDATION_ASYNC;
          default:

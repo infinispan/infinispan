@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
  * Verifies stream tests work when rehash is disabled on a parallel stream with parallel distribution
  */
 @Test(groups = "functional", testName = "streams.DistributedParallelNonRehashStreamTest")
-@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
+@InCacheMode({ CacheMode.DIST_SYNC })
 public class DistributedParallelNonRehashStreamTest extends DistributedStreamTest {
 
    @Override

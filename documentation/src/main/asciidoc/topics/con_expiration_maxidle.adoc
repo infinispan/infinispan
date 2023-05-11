@@ -16,7 +16,6 @@ The touch commands that {brandname} send have the following considerations:
 
 * `Cache.get()` requests do not return until all touch commands complete. This synchronous behavior increases latency of client requests.
 * The touch command also updates the "recently accessed" metadata for cache entries on all owners, which {brandname} uses for eviction.
-* With scattered cache mode, {brandname} sends touch commands to all nodes, not just primary and backup owners.
 
 .Additional information
 

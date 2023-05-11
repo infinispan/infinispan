@@ -19,14 +19,4 @@
    <xs:element name="invalidation-cache" type="invalidation-cache"/>
    <xs:element name="distributed-cache-configuration" type="distributed-cache"/>
    <xs:element name="distributed-cache" type="distributed-cache"/>
-   <xs:element name="scattered-cache-configuration" type="scattered-cache">
-      <xs:annotation>
-        <xs:documentation>Defines a SCATTERED_* mode cache. Deprecated since 14.0, will be removed in 16.0.</xs:documentation>
-      </xs:annotation>
-   </xs:element>
-   <xs:element name="scattered-cache" type="scattered-cache">
-      <xs:annotation>
-        <xs:documentation>Defines a SCATTERED_* mode cache configuration. Deprecated since 14.0, will be removed in 16.0.</xs:documentation>
-      </xs:annotation>
-   </xs:element>
 </xs:schema>

@@ -35,7 +35,6 @@
       </distributed-cache-configuration>
       <invalidation-cache-configuration name="org.infinispan.INVALIDATION_SYNC" remote-timeout="17500" configuration="org.infinispan.LOCAL"/>
       <invalidation-cache-configuration name="org.infinispan.INVALIDATION_ASYNC" mode="ASYNC" configuration="org.infinispan.LOCAL"/>
-      <scattered-cache-configuration name="org.infinispan.SCATTERED_SYNC" remote-timeout="17500" configuration="org.infinispan.LOCAL"/>
    </cache-container>
 
 </infinispan>

@@ -56,12 +56,11 @@ public class OutboundTransferTaskTest {
             commandsFactory,
             10_000,
             "mock-cache",
-            true,
-            false
+            true
       );
 
       ArgumentCaptor<Collection<StateChunk>> cmdCaptor = ArgumentCaptor.forClass(Collection.class);
-      when(commandsFactory.buildStateResponseCommand(anyInt(), cmdCaptor.capture(), anyBoolean(), anyBoolean()))
+      when(commandsFactory.buildStateResponseCommand(anyInt(), cmdCaptor.capture(), anyBoolean()))
             .thenReturn(mock(StateResponseCommand.class));
       when(rpcManager.invokeCommand(any(Address.class), any(), any(), any()))
             .thenAnswer(i -> CompletableFutures.completedNull());

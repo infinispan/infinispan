@@ -27,7 +27,6 @@ public class ClusterExpirationMaxIdleLoaderTest extends ClusterExpirationMaxIdle
             new ClusterExpirationMaxIdleLoaderTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
             new ClusterExpirationMaxIdleLoaderTest().cacheMode(CacheMode.REPL_SYNC).transactional(true),
             new ClusterExpirationMaxIdleLoaderTest().cacheMode(CacheMode.REPL_SYNC).transactional(false),
-            new ClusterExpirationMaxIdleLoaderTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false),
             new ClusterExpirationMaxIdleLoaderTest().touch(TouchMode.ASYNC).cacheMode(CacheMode.DIST_SYNC).transactional(false),
             new ClusterExpirationMaxIdleLoaderTest().touch(TouchMode.ASYNC).cacheMode(CacheMode.REPL_SYNC).transactional(false),
       };

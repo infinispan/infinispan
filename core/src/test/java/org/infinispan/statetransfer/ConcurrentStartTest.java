@@ -45,7 +45,6 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
 
    public static final String REPL_CACHE_NAME = "repl";
    public static final String DIST_CACHE_NAME = "dist";
-   public static final String SCATTERED_CACHE_NAME = "scattered";
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -71,8 +70,6 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
       Future<Object> repl2Future = fork(new CacheStartCallable(cm2, REPL_CACHE_NAME));
       Future<Object> dist1Future = fork(new CacheStartCallable(cm1, DIST_CACHE_NAME));
       Future<Object> dist2Future = fork(new CacheStartCallable(cm2, DIST_CACHE_NAME));
-      Future<Object> scat1Future = fork(new CacheStartCallable(cm1, SCATTERED_CACHE_NAME));
-      Future<Object> scat2Future = fork(new CacheStartCallable(cm2, SCATTERED_CACHE_NAME));
 
       // The joiner always sends a POLICY_GET_STATUS command to the coordinator.
       // The coordinator may or may not send a GET_STATUS command to the other node,
@@ -87,29 +84,21 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
       repl2Future.get(10, SECONDS);
       dist1Future.get(10, SECONDS);
       dist2Future.get(10, SECONDS);
-      scat1Future.get(10, SECONDS);
-      scat2Future.get(10, SECONDS);
 
       Cache<String, String> c1r = cm1.getCache(REPL_CACHE_NAME);
       Cache<String, String> c1d = cm1.getCache(DIST_CACHE_NAME);
       Cache<String, String> c2r = cm2.getCache(REPL_CACHE_NAME);
       Cache<String, String> c2d = cm2.getCache(DIST_CACHE_NAME);
-      Cache<String, String> c1s = cm2.getCache(SCATTERED_CACHE_NAME);
-      Cache<String, String> c2s = cm2.getCache(SCATTERED_CACHE_NAME);
 
       blockUntilViewsReceived(10000, cm1, cm2);
       waitForNoRebalance(c1r, c2r);
       waitForNoRebalance(c1d, c2d);
-      waitForNoRebalance(c1s, c2s);
 
       c1r.put("key", "value");
       assertEquals("value", c2r.get("key"));
 
       c1d.put("key", "value");
       assertEquals("value", c2d.get("key"));
-
-      c1s.put("key", "value");
-      assertEquals("value", c2s.get("key"));
    }
 
    private EmbeddedCacheManager createCacheManager() {
@@ -124,8 +113,6 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
       cm.defineConfiguration(REPL_CACHE_NAME, replCfg);
       Configuration distCfg = new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_SYNC).build();
       cm.defineConfiguration(DIST_CACHE_NAME, distCfg);
-      Configuration scatteredCfg = new ConfigurationBuilder().clustering().cacheMode(CacheMode.SCATTERED_SYNC).build();
-      cm.defineConfiguration(SCATTERED_CACHE_NAME, scatteredCfg);
       return cm;
    }
 

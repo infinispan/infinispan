@@ -6,7 +6,6 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.Arrays;
 
 import org.infinispan.Cache;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.BaseDistStoreTest;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
@@ -30,8 +29,6 @@ public class RehashWithSharedStoreTest extends BaseDistStoreTest<Object, String,
       return new Object[] {
          new RehashWithSharedStoreTest().segmented(false),
          new RehashWithSharedStoreTest().segmented(true),
-         new RehashWithSharedStoreTest().segmented(false).numOwners(1).l1(false).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false),
-         new RehashWithSharedStoreTest().segmented(true).numOwners(1).l1(false).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false),
       };
    }
 

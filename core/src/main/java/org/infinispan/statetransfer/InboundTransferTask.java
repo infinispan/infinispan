@@ -123,10 +123,6 @@ public class InboundTransferTask {
             segments -> commandsFactory.buildConflictResolutionStartCommand(topologyId, segments));
    }
 
-   public CompletionStage<Void> requestKeys() {
-      return startTransfer(segments -> commandsFactory.buildScatteredStateGetKeysCommand(topologyId, segments));
-   }
-
    /**
     * Request the segments from the source
     *

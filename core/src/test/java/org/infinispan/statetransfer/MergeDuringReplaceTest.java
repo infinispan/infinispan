@@ -8,8 +8,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.statetransfer.ScatteredStateConfirmRevokedCommand;
-import org.infinispan.commands.statetransfer.ScatteredStateGetKeysCommand;
 import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.commands.write.ReplaceCommand;
@@ -28,7 +26,7 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "statetransfer.MergeDuringReplaceTest")
 @CleanupAfterMethod
-@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
+@InCacheMode({ CacheMode.DIST_SYNC })
 public class MergeDuringReplaceTest extends MultipleCacheManagersTest {
 
    private DISCARD[] discard;
@@ -52,24 +50,18 @@ public class MergeDuringReplaceTest extends MultipleCacheManagersTest {
 
       int nonOwner;
       final Cache<Object, Object> c;
-      if (cacheMode.isScattered()) {
-         nonOwner = findNonOwner(key);
-         c = cache(nonOwner);
-      } else {
-         LocalizedCacheTopology cacheTopology = advancedCache(0).getDistributionManager().getCacheTopology();
-         List<Address> members = new ArrayList<>(cacheTopology.getMembers());
-         List<Address> owners = cacheTopology.getDistribution(key).readOwners();
-         members.removeAll(owners);
-         nonOwner = cacheTopology.getMembers().indexOf(members.get(0));
-         c = cache(nonOwner);
-      }
+      LocalizedCacheTopology cacheTopology = advancedCache(0).getDistributionManager().getCacheTopology();
+      List<Address> members = new ArrayList<>(cacheTopology.getMembers());
+      List<Address> owners = cacheTopology.getDistribution(key).readOwners();
+      members.removeAll(owners);
+      nonOwner = cacheTopology.getMembers().indexOf(members.get(0));
+      c = cache(nonOwner);
 
       List<Cache<Object, Object>> partition1 = caches();
       partition1.remove(c);
 
       ControlledRpcManager controlledRpcManager = ControlledRpcManager.replaceRpcManager(c);
-      controlledRpcManager.excludeCommands(StateTransferStartCommand.class, ScatteredStateGetKeysCommand.class,
-            ScatteredStateConfirmRevokedCommand.class, StateResponseCommand.class);
+      controlledRpcManager.excludeCommands(StateTransferStartCommand.class, StateResponseCommand.class);
 
       Future<Boolean> future = fork(() -> c.replace(key, value, "myNewValue"));
 

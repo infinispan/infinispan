@@ -157,8 +157,7 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
       Map<Address, CacheStatusResponse> statusResponses =
          Arrays.stream(caches).collect(Collectors.toMap(this::address, this::getCacheStatus));
 
-      LostDataCheck lostDataCheck = cacheMode.isScattered() ? ClusterTopologyManagerImpl::scatteredLostDataCheck :
-                                    ClusterTopologyManagerImpl::distLostDataCheck;
+      LostDataCheck lostDataCheck = ClusterTopologyManagerImpl::distLostDataCheck;
       CacheTopology preferredTopology = new PreferAvailabilityStrategy(null, null, lostDataCheck)
                                            .computePreferredTopology(statusResponses);
 

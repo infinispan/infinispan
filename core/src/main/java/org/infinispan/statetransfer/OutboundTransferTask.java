@@ -61,17 +61,13 @@ public class OutboundTransferTask {
 
    private final boolean applyState;
 
-   private final boolean pushTransfer;
-
-
    private final RpcOptions rpcOptions;
 
    private volatile boolean cancelled;
 
    public OutboundTransferTask(Address destination, IntSet segments, int segmentCount, int chunkSize, int topologyId,
                                Consumer<Collection<StateChunk>> onChunkReplicated, RpcManager rpcManager,
-                               CommandsFactory commandsFactory, long timeout, String cacheName, boolean applyState,
-                               boolean pushTransfer) {
+                               CommandsFactory commandsFactory, long timeout, String cacheName, boolean applyState) {
       if (segments == null || segments.isEmpty()) {
          throw new IllegalArgumentException("Segments must not be null or empty");
       }
@@ -91,7 +87,6 @@ public class OutboundTransferTask {
       this.timeout = timeout;
       this.cacheName = cacheName;
       this.applyState = applyState;
-      this.pushTransfer = pushTransfer;
 
       this.rpcOptions = new RpcOptions(DeliverOrder.NONE, timeout, TimeUnit.MILLISECONDS);
    }
@@ -156,8 +151,7 @@ public class OutboundTransferTask {
          log.tracef("Sending to node %s %d cache entries from segments %s", destination, entriesSize, chunks.keySet());
       }
 
-      StateResponseCommand cmd = commandsFactory.buildStateResponseCommand(topologyId,
-                                                                           chunks.values(), applyState, pushTransfer);
+      StateResponseCommand cmd = commandsFactory.buildStateResponseCommand(topologyId, chunks.values(), applyState);
       try {
          return rpcManager.invokeCommand(destination, cmd, SingleResponseCollector.validOnly(), rpcOptions)
                           .handle((response, throwable) -> {

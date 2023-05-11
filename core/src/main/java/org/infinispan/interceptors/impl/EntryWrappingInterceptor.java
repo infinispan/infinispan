@@ -170,8 +170,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       isSync = cacheConfiguration.clustering().cacheMode().isSynchronous();
       // isolation level makes no sense without transactions
       useRepeatableRead = cacheConfiguration.transaction().transactionMode().isTransactional()
-            && cacheConfiguration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ
-            || cacheConfiguration.clustering().cacheMode().isScattered();
+            && cacheConfiguration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
       isVersioned = Configurations.isTxVersioned(cacheConfiguration);
       isPessimistic = cacheConfiguration.transaction().transactionMode().isTransactional()
             && cacheConfiguration.transaction().lockingMode() == LockingMode.PESSIMISTIC;

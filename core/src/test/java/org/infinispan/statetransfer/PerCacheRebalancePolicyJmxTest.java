@@ -37,7 +37,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "statetransfer.PerCacheRebalancePolicyJmxTest")
 @CleanupAfterMethod
-@InCacheMode({CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC})
+@InCacheMode({CacheMode.DIST_SYNC})
 public class PerCacheRebalancePolicyJmxTest extends MultipleCacheManagersTest {
 
    private static final String REBALANCING_ENABLED = "rebalancingEnabled";

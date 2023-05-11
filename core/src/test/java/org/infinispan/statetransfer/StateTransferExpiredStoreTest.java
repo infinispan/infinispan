@@ -48,7 +48,6 @@ public class StateTransferExpiredStoreTest extends MultipleCacheManagersTest {
       return new Object[][] {
             {CacheMode.DIST_SYNC},
             {CacheMode.REPL_SYNC},
-            {CacheMode.SCATTERED_SYNC},
       };
    }
 

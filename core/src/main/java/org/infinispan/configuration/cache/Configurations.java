@@ -68,7 +68,6 @@ public class Configurations {
       boolean usingSegmentedStore = configuration.persistence().usingSegmentedStore();
       return (cacheMode.isReplicated() ||
             cacheMode.isDistributed() ||
-            cacheMode.isScattered() ||
             (cacheMode.isInvalidation() && transactional) ||
             usingSegmentedStore);
    }

@@ -10,7 +10,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.Cache;
-import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -36,8 +35,6 @@ public class NonTxPutIfAbsentDuringLeaveStressTest extends MultipleCacheManagers
    public Object[] factory() {
       return new Object[] {
             new NonTxPutIfAbsentDuringLeaveStressTest().cacheMode(CacheMode.DIST_SYNC),
-            new NonTxPutIfAbsentDuringLeaveStressTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.NEVER),
-            new NonTxPutIfAbsentDuringLeaveStressTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.ON_WRITE),
       };
    }
 

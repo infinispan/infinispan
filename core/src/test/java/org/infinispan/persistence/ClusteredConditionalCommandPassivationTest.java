@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
  * @since 7.0
  */
 @Test(groups = "functional", testName = "persistence.ClusteredConditionalCommandPassivationTest")
-@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
+@InCacheMode({ CacheMode.DIST_SYNC })
 public class ClusteredConditionalCommandPassivationTest extends ClusteredConditionalCommandTest {
 
    public ClusteredConditionalCommandPassivationTest() {

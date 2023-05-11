@@ -19,7 +19,6 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
-import org.infinispan.distribution.ch.impl.ScatteredConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
@@ -137,30 +136,6 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
     * Ignores backup-owner part of the calls
     */
    @SerializeWith(Externalizer.class)
-   public static class Scattered extends ControlledConsistentHashFactory<ScatteredConsistentHash> {
-      public Scattered(int primaryOwnerIndex) {
-         super(new ScatteredTrait(), primaryOwnerIndex);
-      }
-
-      public Scattered(int[] segmentOwners) {
-         super(new ScatteredTrait(), Arrays.stream(segmentOwners).mapToObj(o -> new int[]{o}).toArray(int[][]::new));
-      }
-
-      @Override
-      public void setOwnerIndexes(int primaryOwnerIndex, int... backupOwnerIndexes) {
-         super.setOwnerIndexes(primaryOwnerIndex);
-      }
-
-      @Override
-      public void setOwnerIndexes(int[][] segmentOwners) {
-         super.setOwnerIndexes(segmentOwners);
-      }
-   }
-
-   /**
-    * Ignores backup-owner part of the calls
-    */
-   @SerializeWith(Externalizer.class)
    public static class Replicated extends ControlledConsistentHashFactory<ReplicatedConsistentHash> {
       public Replicated(int primaryOwnerIndex) {
          super(new ReplicatedTrait(), primaryOwnerIndex);
@@ -185,12 +160,12 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
 
       @Override
       public Set<Class<? extends ControlledConsistentHashFactory<?>>> getTypeClasses() {
-         return Util.asSet(Default.class, Scattered.class, Replicated.class);
+         return Util.asSet(Default.class, Replicated.class);
       }
 
       @Override
       public void writeObject(ObjectOutput output, ControlledConsistentHashFactory<?> object) throws IOException {
-         output.writeByte(object instanceof Default ? 0 : object instanceof Scattered ? 1 : 2);
+         output.writeByte(object instanceof Default ? 0 : 1);
          int numOwners = object.ownerIndexes.length;
          MarshallUtil.marshallSize(output, numOwners);
          for (int i = 0; i < numOwners; i++) {
@@ -222,9 +197,6 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
                chf = new Default(indexes);
                break;
             case 1:
-               chf = new Scattered(indexes[0]);
-               break;
-            case 2:
                chf = new Replicated(indexes[0]);
                break;
             default:

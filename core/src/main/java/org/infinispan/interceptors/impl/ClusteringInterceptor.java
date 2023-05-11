@@ -55,13 +55,11 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
    @Inject ClusterPublisherManager<?, ?> clusterPublisherManager;
 
    private TouchMode touchMode;
-   private boolean isScattered;
 
    @Override
    public void init() {
       super.init();
 
-      isScattered = cacheConfiguration.clustering().cacheMode().isScattered();
       if (cacheConfiguration.clustering().cacheMode().isSynchronous()) {
          touchMode = cacheConfiguration.expiration().touch();
       } else {
@@ -93,27 +91,6 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
       }
 
       abstract Boolean addBooleanResponse(Address sender, Boolean response);
-   }
-
-   private static class ScatteredTouchResponseCollector extends AbstractTouchResponseCollector {
-
-      private static final ScatteredTouchResponseCollector INSTANCE = new ScatteredTouchResponseCollector();
-
-      @Override
-      public Boolean finish() {
-         // No other node was touched
-         return Boolean.FALSE;
-      }
-
-      @Override
-      protected Boolean addBooleanResponse(Address sender, Boolean response) {
-         if (response == Boolean.TRUE) {
-            // Return early if any node touched the value - as SCATTERED only exists on a single backup!
-            // TODO: what if the read was when one of the backups or primary died?
-            return Boolean.TRUE;
-         }
-         return null;
-      }
    }
 
    private static class TouchResponseCollector extends AbstractTouchResponseCollector {
@@ -158,7 +135,7 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
       LocalizedCacheTopology cacheTopology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
       DistributionInfo info = cacheTopology.getSegmentDistribution(command.getSegment());
       // Scattered any node could be a backup, so we have to touch all members
-      List<Address> owners = isScattered ? cacheTopology.getActualMembers() : info.readOwners();
+      List<Address> owners = info.readOwners();
 
       if (touchMode == TouchMode.ASYNC) {
          if (ctx.isOriginLocal()) {
@@ -169,8 +146,7 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
       }
 
       if (info.isPrimary()) {
-         AbstractTouchResponseCollector collector = isScattered ? ScatteredTouchResponseCollector.INSTANCE :
-               TouchResponseCollector.INSTANCE;
+         AbstractTouchResponseCollector collector = TouchResponseCollector.INSTANCE;
          CompletionStage<Boolean> remoteInvocation = rpcManager.invokeCommand(owners, command, collector,
                rpcManager.getSyncRpcOptions());
          return invokeNextThenApply(ctx, command, (rCtx, rCommand, rValue) -> {

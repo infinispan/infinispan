@@ -21,8 +21,6 @@ public class ClusteringDependentLogicFactory extends AbstractNamedCacheComponent
          cdl = new ClusteringDependentLogic.ReplicationLogic();
       } else if (cacheMode.isDistributed()){
          cdl = new ClusteringDependentLogic.DistributionLogic();
-      } else if (cacheMode.isScattered()) {
-         cdl = new ClusteringDependentLogic.ScatteredLogic();
       } else {
          throw CONTAINER.factoryCannotConstructComponent(componentName);
       }

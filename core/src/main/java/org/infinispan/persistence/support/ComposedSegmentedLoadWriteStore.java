@@ -232,8 +232,7 @@ public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedSt
       keyPartitioner = componentRegistry.getComponent(KeyPartitioner.class);
       stores = new AtomicReferenceArray<>(hashConfiguration.numSegments());
 
-      // Local (invalidation), replicated and scattered cache we just instantiate all the maps immediately
-      // Scattered needs this for backups as they can be for any segment
+      // Local (invalidation) and replicated we just instantiate all the maps immediately
       // Distributed needs them all only at beginning for preload of data - rehash event will remove others
       for (int i = 0; i < stores.length(); ++i) {
          startNewStoreForSegment(i);

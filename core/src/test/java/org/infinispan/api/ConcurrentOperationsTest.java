@@ -48,9 +48,6 @@ public class ConcurrentOperationsTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(cacheMode, false);
-      if (biasAcquisition != null) {
-         dcc.clustering().biasAcquisition(biasAcquisition);
-      }
       dcc.clustering().l1().disable();
       createClusteredCaches(nodes, dcc);
    }

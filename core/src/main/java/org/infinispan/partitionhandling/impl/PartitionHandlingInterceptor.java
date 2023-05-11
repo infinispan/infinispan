@@ -36,7 +36,6 @@ import org.infinispan.interceptors.InvocationFinallyAction;
 import org.infinispan.interceptors.InvocationSuccessAction;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.RpcException;
-import org.infinispan.statetransfer.AllOwnersLostException;
 
 public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
 
@@ -151,10 +150,6 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
             // There is no way to verify the cause here, but there isn't any other way to get an invalid
             // get response.
             throw CONTAINER.degradedModeKeyUnavailable(dataCommand.getKey());
-         } else if (t instanceof AllOwnersLostException) {
-            // Scattered cache throws AllOwnersLostException even if there's no need to fail with AvailabilityException\
-            // Dist caches should never throw AllOwnersLostException
-            assert cacheConfiguration.clustering().cacheMode().isScattered();
          }
       }
 

@@ -15,7 +15,6 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
-import org.infinispan.distribution.ch.impl.ScatteredConsistentHash;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.remoting.transport.Address;
 
@@ -136,34 +135,6 @@ public abstract class BaseControlledConsistentHashFactory<CH extends ConsistentH
       @Override
       public int getNumOwners(DefaultConsistentHash defaultConsistentHash) {
          return defaultConsistentHash.getNumOwners();
-      }
-   }
-
-   public static class ScatteredTrait implements Trait<ScatteredConsistentHash> {
-      @Override
-      public ScatteredConsistentHash create(int numOwners, int numSegments, List<Address> members,
-                                            Map<Address, Float> capacityFactors, List<Address>[] segmentOwners,
-                                            boolean rebalanced) {
-         Address[] segmentOwners1 = Stream.of(segmentOwners)
-                                          .map(list -> list.isEmpty() ? null : list.get(0))
-                                          .toArray(Address[]::new);
-         return new ScatteredConsistentHash(numSegments, members, capacityFactors,
-                                            segmentOwners1, rebalanced);
-      }
-
-      @Override
-      public ScatteredConsistentHash union(ScatteredConsistentHash ch1, ScatteredConsistentHash ch2) {
-         return ch1.union(ch2);
-      }
-
-      @Override
-      public boolean requiresPrimaryOwner() {
-         return false;
-      }
-
-      @Override
-      public int getNumOwners(ScatteredConsistentHash scatteredConsistentHash) {
-         return 1;
       }
    }
 

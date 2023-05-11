@@ -9,8 +9,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.test.skip.SkipTestNG;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -43,8 +41,6 @@ public class GetGroupKeysTest extends BaseUtilGroupTest {
             new GetGroupKeysTest(false, TestCacheFactory.PRIMARY_OWNER),
             new GetGroupKeysTest(false, TestCacheFactory.BACKUP_OWNER),
             new GetGroupKeysTest(false, TestCacheFactory.NON_OWNER),
-            new GetGroupKeysTest(false, TestCacheFactory.PRIMARY_OWNER).cacheMode(CacheMode.SCATTERED_SYNC),
-            new GetGroupKeysTest(false, TestCacheFactory.NON_OWNER).cacheMode(CacheMode.SCATTERED_SYNC),
       };
    }
 
@@ -130,7 +126,6 @@ public class GetGroupKeysTest extends BaseUtilGroupTest {
    }
 
    public void testRemoveGroupKeysWithPersistenceAndSkipCacheWriter() {
-      SkipTestNG.skipIf(cacheMode == CacheMode.SCATTERED_SYNC, "Streams does not work with scattered cache because of tombstones");
       TestCache testCache = createTestCacheAndReset(GROUP, caches(PERSISTENCE_CACHE));
       initCache(testCache.primaryOwner);
       Map<GroupKey, String> groupKeySet = testCache.testCache.getGroup(GROUP);

@@ -343,12 +343,10 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
 
       // Force it so only cache0 has it's primary owned keys
       MagicKey key2 = magicKey(cache1, cache2);
-      // write from backup so that the test works on scattered cache, too
       cache2.put(key2, key2.toString());
 
       // Force it so only cache0 has it's primary owned keys
       MagicKey key3 = magicKey(cache2, cache1);
-      // write from backup so that the test works on scattered cache, too
       cache1.put(key3, key3.toString());
 
       int count = 0;

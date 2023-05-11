@@ -28,9 +28,6 @@ import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 /**
  * A command writing multiple key/value pairs with the same metadata.
  *
- * <p>Note: In scattered caches, push state transfer uses {@code PutMapCommand} but wraps the values in
- * {@code InternalCacheValue} instances in order to preserve the original metadata and timestamps.</p>
- *
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */

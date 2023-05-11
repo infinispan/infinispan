@@ -40,8 +40,8 @@ public class DelegatingStateConsumer implements StateConsumer {
    }
 
    @Override
-   public CompletionStage<?> applyState(Address sender, int topologyId, boolean pushTransfer, Collection<StateChunk> stateChunks) {
-      return delegate.applyState(sender, topologyId, pushTransfer, stateChunks);
+   public CompletionStage<?> applyState(Address sender, int topologyId, Collection<StateChunk> stateChunks) {
+      return delegate.applyState(sender, topologyId, stateChunks);
    }
 
    @Override

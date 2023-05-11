@@ -1,15 +1,20 @@
 package org.infinispan.statetransfer;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.infinispan.test.TestingUtil.sequence;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.spy;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
-import jakarta.transaction.SystemException;
-import jakarta.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.test.Exceptions;
@@ -21,16 +26,23 @@ import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.DelayedMarshallingPojo;
+import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.topology.CacheTopology;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.SystemException;
+import jakarta.transaction.TransactionManager;
 
 @Test(groups = "functional", testName = "statetransfer.StateTransferFunctionalTest")
 public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
@@ -270,7 +282,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       logTestEnd(m);
    }
 
-   public void testStateTransferException(Method m) {
+   public void testStateTransferException(Method m) throws InterruptedException, java.util.concurrent.TimeoutException, ExecutionException {
       testCount++;
       logTestStart(m);
 
@@ -287,6 +299,9 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       amendCacheManagerBeforeStart(embeddedCacheManager);
       embeddedCacheManager.start();
 
+      CheckPoint checkPoint = new CheckPoint();
+      blockRebalanceStart(embeddedCacheManager, checkPoint, 2);
+
       ConfigurationBuilder configToUse = new ConfigurationBuilder();
       configToUse.read(configurationBuilder.build())
             .clustering().remoteTimeout(1, TimeUnit.NANOSECONDS).stateTransfer().timeout(1, TimeUnit.NANOSECONDS);
@@ -294,9 +309,34 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       assertEquals(1, cache1.getAdvancedCache().getDistributionManager().getCacheTopology().getMembers().size());
 
       embeddedCacheManager.defineConfiguration(cacheName, configToUse.build());
-      Exceptions.expectException(TimeoutException.class, () -> embeddedCacheManager.getCache(cacheName));
 
-      assertEquals(1, cache1.getAdvancedCache().getDistributionManager().getCacheTopology().getMembers().size());
+      Future<Cache<Object, Object>> future = fork(() -> embeddedCacheManager.getCache(cacheName));
+      // This guarantees the timeout will hit
+      checkPoint.awaitStrict("rebalance_begin", 10, SECONDS);
+      Exceptions.expectException(ExecutionException.class, TimeoutException.class, () -> future.get(10, SECONDS));
+      // Let the operation finally complete
+      checkPoint.triggerForever("merge");
+
+      eventuallyEquals(1, () -> cache1.getAdvancedCache().getDistributionManager().getCacheTopology().getMembers().size());
+   }
+
+   protected void blockRebalanceStart(final EmbeddedCacheManager manager, final CheckPoint checkpoint, final int numMembers) {
+      final LocalTopologyManager localTopologyManager = TestingUtil.extractGlobalComponent(manager,
+            LocalTopologyManager.class);
+      LocalTopologyManager spyLocalTopologyManager = spy(localTopologyManager);
+      doAnswer(invocation -> {
+         CacheTopology topology = (CacheTopology) invocation.getArguments()[1];
+         List<Address> members = topology.getMembers();
+         checkpoint.trigger("rebalance_begin");
+         if (members.size() == numMembers) {
+            log.debugf("Blocking the REBALANCE_START command with members %s on %s", members, manager.getAddress());
+            return sequence(checkpoint.future("merge", 30, SECONDS, testExecutor()),
+                  () -> Mocks.callRealMethod(invocation));
+         }
+         return invocation.callRealMethod();
+      }).when(spyLocalTopologyManager).handleRebalance(eq(cacheName), any(CacheTopology.class), anyInt(),
+            any(Address.class));
+      TestingUtil.replaceComponent(manager, LocalTopologyManager.class, spyLocalTopologyManager, true);
    }
 
    private void logTestStart(Method m) {

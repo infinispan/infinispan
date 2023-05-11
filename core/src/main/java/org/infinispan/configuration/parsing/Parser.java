@@ -788,22 +788,6 @@ public class Parser extends CacheParser {
                parseDistributedCache(reader, holder, ParseUtils.requireAttributes(reader, Attribute.NAME)[0], true);
                break;
             }
-            case SCATTERED_CACHE: {
-               if (reader.getSchema().since(9, 1)) {
-                  parseScatteredCache(reader, holder, ParseUtils.requireAttributes(reader, Attribute.NAME)[0], false);
-               } else {
-                  throw ParseUtils.unexpectedElement(reader);
-               }
-               break;
-            }
-            case SCATTERED_CACHE_CONFIGURATION: {
-               if (reader.getSchema().since(9, 1)) {
-                  parseScatteredCache(reader, holder, ParseUtils.requireAttributes(reader, Attribute.NAME)[0], true);
-               } else {
-                  throw ParseUtils.unexpectedElement(reader);
-               }
-               break;
-            }
             case SERIALIZATION: {
                parseSerialization(reader, holder);
                break;
@@ -873,12 +857,6 @@ public class Parser extends CacheParser {
                break;
             case DISTRIBUTED_CACHE_CONFIGURATION:
                parseDistributedCache(reader, holder, name, true);
-               break;
-            case SCATTERED_CACHE:
-               parseScatteredCache(reader, holder, name, false);
-               break;
-            case SCATTERED_CACHE_CONFIGURATION:
-               parseScatteredCache(reader, holder, name, true);
                break;
             default:
                throw ParseUtils.unexpectedElement(reader, type);

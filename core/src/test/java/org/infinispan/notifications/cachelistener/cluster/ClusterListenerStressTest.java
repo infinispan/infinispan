@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -24,7 +25,6 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.InCacheMode;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.testng.annotations.Test;
 
 /**
@@ -35,7 +35,7 @@ import org.testng.annotations.Test;
  * @since 7.0
  */
 @Test(groups = "stress", testName = "notifications.cachelistener.cluster.ClusterListenerStressTest", timeOut = 15*60*1000)
-@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
+@InCacheMode({ CacheMode.DIST_SYNC })
 public class ClusterListenerStressTest extends MultipleCacheManagersTest {
    protected final static String CACHE_NAME = "cluster-listener";
    protected final static String KEY = "ClusterListenerStressTestKey";

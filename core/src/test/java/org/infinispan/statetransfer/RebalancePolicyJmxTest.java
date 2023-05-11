@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "statetransfer.RebalancePolicyJmxTest")
 @CleanupAfterMethod
-@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
+@InCacheMode({ CacheMode.DIST_SYNC })
 public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
 
    private static final String REBALANCING_ENABLED = "rebalancingEnabled";

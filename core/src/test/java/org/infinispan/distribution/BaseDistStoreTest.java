@@ -8,7 +8,6 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.interceptors.impl.CacheWriterInterceptor;
 import org.infinispan.interceptors.impl.DistCacheWriterInterceptor;
-import org.infinispan.interceptors.impl.ScatteredCacheWriterInterceptor;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
@@ -90,10 +89,6 @@ public abstract class BaseDistStoreTest<K, V, C extends BaseDistStoreTest> exten
    }
 
    protected CacheWriterInterceptor getCacheWriterInterceptor(Cache<?, ?> cache) {
-      CacheWriterInterceptor cacheWriterInterceptor = TestingUtil.extractComponent(cache, DistCacheWriterInterceptor.class);
-      if (cacheWriterInterceptor == null) {
-         cacheWriterInterceptor = TestingUtil.extractComponent(cache, ScatteredCacheWriterInterceptor.class);
-      }
-      return cacheWriterInterceptor;
+      return TestingUtil.extractComponent(cache, DistCacheWriterInterceptor.class);
    }
 }

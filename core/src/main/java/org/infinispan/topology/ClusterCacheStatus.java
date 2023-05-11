@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -22,6 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.util.Immutables;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.conflict.impl.InternalConflictManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
@@ -37,7 +39,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.RebalanceType;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.ConditionFuture;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
@@ -420,12 +421,6 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
             newTopology = new CacheTopology(currentTopologyId + 1, currentTopology.getRebalanceId(),
                   currentTopology.getCurrentCH(), currentTopology.getPendingCH(),
                   CacheTopology.Phase.READ_ALL_WRITE_ALL, members,
-                  persistentUUIDManager.mapAddresses(members));
-            break;
-         case TWO_PHASE:
-            newTopology = new CacheTopology(currentTopologyId + 1, currentTopology.getRebalanceId(),
-                  currentTopology.getPendingCH(), null,
-                  CacheTopology.Phase.NO_REBALANCE, members,
                   persistentUUIDManager.mapAddresses(members));
             break;
          default:
@@ -928,15 +923,10 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, getAvailabilityMode());
       } else if (rebalance) {
          CacheTopology.Phase newPhase;
-         switch (rebalanceType) {
-            case FOUR_PHASE:
-               newPhase = CacheTopology.Phase.READ_OLD_WRITE_ALL;
-               break;
-            case TWO_PHASE:
-               newPhase = CacheTopology.Phase.TRANSITORY;
-               break;
-            default:
-               throw new IllegalStateException();
+         if (Objects.requireNonNull(rebalanceType) == RebalanceType.FOUR_PHASE) {
+            newPhase = CacheTopology.Phase.READ_OLD_WRITE_ALL;
+         } else {
+            throw new IllegalStateException();
          }
          CacheTopology newTopology = new CacheTopology(newTopologyId, newRebalanceId, currentCH, balancedCH,
                newPhase, balancedCH.getMembers(), persistentUUIDManager.mapAddresses(balancedCH.getMembers()));

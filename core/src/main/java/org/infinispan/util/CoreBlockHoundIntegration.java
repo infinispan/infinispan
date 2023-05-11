@@ -15,7 +15,6 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistryImpl;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.persistence.sifs.TemporaryTable;
-import org.infinispan.scattered.impl.ScatteredStateConsumerImpl;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.statetransfer.StateTransferLockImpl;
 import org.infinispan.topology.ClusterTopologyManagerImpl;
@@ -112,10 +111,6 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
       // The internal map only supports local mode - we need to replace with Caffeine
       // https://issues.redhat.com/browse/ISPN-11272
       builder.allowBlockingCallsInside(RecoveryManagerImpl.class.getName(), "registerInDoubtTransaction");
-
-      // Scattered state consumer is currently blocking - needs to be rewritten to be non blocking
-      // https://issues.redhat.com/browse/ISPN-10864
-      builder.allowBlockingCallsInside(ScatteredStateConsumerImpl.class.getName(), "blockingSubscribe");
 
       // SoftIndexFileStore locks and awaits on write if there is a concurrent compaction
       // https://issues.redhat.com/browse/ISPN-13799

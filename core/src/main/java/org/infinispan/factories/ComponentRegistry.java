@@ -34,7 +34,6 @@ import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
-import org.infinispan.persistence.manager.OrderedUpdatesManager;
 import org.infinispan.persistence.manager.PreloadManager;
 import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
 import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
@@ -43,7 +42,6 @@ import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.scattered.BiasManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.stats.ClusterCacheStats;
@@ -93,7 +91,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private ComponentRef<BlockingManager> blockingManager;
    private ComponentRef<ClusterPublisherManager> clusterPublisherManager;
    private ComponentRef<ClusterPublisherManager> localClusterPublisherManager;
-   private ComponentRef<BiasManager> biasManager;
    private ComponentRef<CacheNotifier> cacheNotifier;
    private ComponentRef<ClusterCacheNotifier> clusterCacheNotifier;
    private ComponentRef<CommandAckCollector> commandAckCollector;
@@ -108,7 +105,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private ComponentRef<IracTombstoneManager> iracTombstoneCleaner;
    private ComponentRef<LocalPublisherManager> localPublisherManager;
    private ComponentRef<LockManager> lockManager;
-   private ComponentRef<OrderedUpdatesManager> orderedUpdatesManager;
    private ComponentRef<PerCacheInboundInvocationHandler> inboundInvocationHandler;
    private ComponentRef<PersistenceMarshaller> persistenceMarshaller;
    private ComponentRef<PublisherHandler> publisherHandler;
@@ -397,7 +393,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
     */
    public void cacheComponents() {
       asyncInterceptorChain = basicComponentRegistry.getComponent(AsyncInterceptorChain.class);
-      biasManager = basicComponentRegistry.getComponent(BiasManager.class);
       backupReceiver = basicComponentRegistry.lazyGetComponent(BackupReceiver.class); //can we avoid instantiate BackupReceiver is not needed?
       backupSender = basicComponentRegistry.getComponent(BackupSender.class);
       blockingManager = basicComponentRegistry.getComponent(BlockingManager.class);
@@ -421,7 +416,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       iracTombstoneCleaner = basicComponentRegistry.getComponent(IracTombstoneManager.class);
       localPublisherManager = basicComponentRegistry.getComponent(LocalPublisherManager.class);
       lockManager = basicComponentRegistry.getComponent(LockManager.class);
-      orderedUpdatesManager = basicComponentRegistry.getComponent(OrderedUpdatesManager.class);
       persistenceMarshaller = basicComponentRegistry.getComponent(KnownComponentNames.PERSISTENCE_MARSHALLER, PersistenceMarshaller.class);
       publisherHandler = basicComponentRegistry.getComponent(PublisherHandler.class);
       recoveryManager = basicComponentRegistry.getComponent(RecoveryManager.class);
@@ -496,10 +490,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       return iracTombstoneCleaner;
    }
 
-   public ComponentRef<BiasManager> getBiasManager() {
-      return biasManager;
-   }
-
    public ByteString getCacheByteString() {
       return cacheByteString;
    }
@@ -546,10 +536,6 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    public ComponentRef<LockManager> getLockManager() {
       return lockManager;
-   }
-
-   public ComponentRef<OrderedUpdatesManager> getOrderedUpdatesManager() {
-      return orderedUpdatesManager;
    }
 
    public ComponentRef<RecoveryManager> getRecoveryManager() {

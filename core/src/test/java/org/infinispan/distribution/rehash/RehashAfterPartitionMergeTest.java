@@ -12,7 +12,7 @@ import org.jgroups.protocols.DISCARD;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName =  "distribution.rehash.RehashAfterPartitionMergeTest")
-@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
+@InCacheMode({ CacheMode.DIST_SYNC })
 public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
 
    Cache<Object, Object> c1, c2;

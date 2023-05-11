@@ -241,11 +241,11 @@ public class StateProviderTest {
       DefaultConsistentHash ch2 = chf.updateMembers(ch1, members2, null);
 
       // set up dependencies
-      when(commandsFactory.buildStateResponseCommand(anyInt(), any(), anyBoolean(), anyBoolean()))
+      when(commandsFactory.buildStateResponseCommand(anyInt(), any(), anyBoolean()))
             .thenAnswer(invocation -> new StateResponseCommand(ByteString.fromString("testCache"),
                                                                (Integer) invocation.getArguments()[0],
                                                                (Collection<StateChunk>) invocation.getArguments()[1],
-                                                               true, false));
+                                                               true));
 
       when(rpcManager.getAddress()).thenReturn(A);
       when(rpcManager.invokeCommand(any(Address.class), any(), any(), any())).thenReturn(new CompletableFuture<>());

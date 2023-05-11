@@ -50,7 +50,6 @@ public class RehashClusterListenerTest extends MultipleCacheManagersTest {
    public Object[] factory() {
       return new Object[]{
          new RehashClusterListenerTest(new ControlledConsistentHashFactory.Default(1, 2)).cacheMode(CacheMode.DIST_SYNC),
-         new RehashClusterListenerTest(new ControlledConsistentHashFactory.Scattered(1)).cacheMode(CacheMode.SCATTERED_SYNC),
       };
    }
 
@@ -94,7 +93,6 @@ public class RehashClusterListenerTest extends MultipleCacheManagersTest {
       assertEquals(listener.events.size(), 0);
    }
 
-   // In scattered mode, the node cannot become backup owner
    @InCacheMode(CacheMode.DIST_SYNC)
    public void testClusterListenerNodeBecomingBackupFromNotAnOwner() throws Exception {
       final Cache<Object, String> cache0 = cache(0, CACHE_NAME);

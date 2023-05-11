@@ -15,7 +15,6 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
 
    static final String DIST = "dist";
    static final String REPL = "repl";
-   static final String SCATTERED = "scattered";
 
    // Create local caches as default in a cluster of 2
    int numNodes = 2;
@@ -50,22 +49,8 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
       configureCache(replBuilder);
       cacheManagers.stream().forEach(cm -> cm.defineConfiguration(REPL, replBuilder.build()));
 
-      if (transactional != Boolean.TRUE) {
-         // Create scattered caches
-         ConfigurationBuilder scatteredBuilder = new ConfigurationBuilder();
-         scatteredBuilder.clustering().cacheMode(CacheMode.SCATTERED_SYNC);
-         if (biasAcquisition != null) {
-            scatteredBuilder.clustering().biasAcquisition(biasAcquisition);
-         }
-         configureCache(scatteredBuilder);
-         cacheManagers.stream().forEach(cm -> cm.defineConfiguration(SCATTERED, scatteredBuilder.build()));
-      }
-
       // Wait for cluster to form
       waitForClusterToForm(DIST, REPL);
-      if (transactional != Boolean.TRUE) {
-         waitForClusterToForm(SCATTERED);
-      }
    }
 
    protected void configureCache(ConfigurationBuilder builder) {

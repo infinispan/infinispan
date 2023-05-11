@@ -10,7 +10,6 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.CommandsFactoryImpl;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
-import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.offheap.OffHeapEntryFactory;
 import org.infinispan.container.offheap.OffHeapEntryFactoryImpl;
@@ -44,19 +43,12 @@ import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.CacheNotifierImpl;
 import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
-import org.infinispan.persistence.manager.OrderedUpdatesManager;
-import org.infinispan.persistence.manager.OrderedUpdatesManagerImpl;
 import org.infinispan.persistence.manager.PassivationPersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.persistence.manager.PreloadManager;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.reactive.publisher.impl.PublisherHandler;
-import org.infinispan.scattered.BiasManager;
-import org.infinispan.scattered.ScatteredVersionManager;
-import org.infinispan.scattered.impl.BiasManagerImpl;
-import org.infinispan.scattered.impl.ScatteredPreloadManager;
-import org.infinispan.scattered.impl.ScatteredVersionManagerImpl;
 import org.infinispan.statetransfer.CommitManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferLockImpl;
@@ -105,11 +97,10 @@ import org.infinispan.xsite.status.TakeOfflineManager;
                               RemoteValueRetrievedListener.class, InvocationContextFactory.class, CommitManager.class,
                               XSiteStateTransferManager.class, XSiteStateConsumer.class, XSiteStateProvider.class,
                               FunctionalNotifier.class, CommandAckCollector.class, TriangleOrderManager.class,
-                              OrderedUpdatesManager.class, ScatteredVersionManager.class, TransactionOriginatorChecker.class,
-                              BiasManager.class, OffHeapEntryFactory.class, OffHeapMemoryAllocator.class, PublisherHandler.class,
-                              InvocationHelper.class, TakeOfflineManager.class, IracManager.class, IracVersionGenerator.class,
-                              BackupReceiver.class, StorageConfigurationManager.class, XSiteMetricsCollector.class,
-                              IracTombstoneManager.class
+                              TransactionOriginatorChecker.class, OffHeapEntryFactory.class, OffHeapMemoryAllocator.class,
+                              PublisherHandler.class, InvocationHelper.class, TakeOfflineManager.class, IracManager.class,
+                              IracVersionGenerator.class, BackupReceiver.class, StorageConfigurationManager.class,
+                              XSiteMetricsCollector.class, IracTombstoneManager.class
 })
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
@@ -136,11 +127,7 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
       } else if (componentName.equals(ActivationManager.class.getName())) {
          return new ActivationManagerImpl();
       } else if (componentName.equals(PreloadManager.class.getName())) {
-         if (configuration.clustering().cacheMode().isScattered()) {
-            return new ScatteredPreloadManager();
-         } else {
-            return new PreloadManager();
-         }
+         return new PreloadManager();
       } else if (componentName.equals(BatchContainer.class.getName())) {
          return new BatchContainer();
       } else if (componentName.equals(TransactionCoordinator.class.getName())) {
@@ -187,29 +174,10 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          } else {
             return null;
          }
-      } else if (componentName.equals(OrderedUpdatesManager.class.getName())) {
-         if (configuration.clustering().cacheMode().isScattered()) {
-            return new OrderedUpdatesManagerImpl();
-         } else {
-            return null;
-         }
-      } else if (componentName.equals(ScatteredVersionManager.class.getName())) {
-         if (configuration.clustering().cacheMode().isScattered()) {
-            return new ScatteredVersionManagerImpl<>();
-         } else {
-            return null;
-         }
       } else if (componentName.equals(TransactionOriginatorChecker.class.getName())) {
          return configuration.clustering().cacheMode() == CacheMode.LOCAL ?
                TransactionOriginatorChecker.LOCAL :
                new ClusteredTransactionOriginatorChecker();
-      } else if (componentName.equals(BiasManager.class.getName())) {
-         if (configuration.clustering().cacheMode().isScattered() &&
-               configuration.clustering().biasAcquisition() != BiasAcquisition.NEVER) {
-            return new BiasManagerImpl();
-         } else {
-            return null;
-         }
       } else if (componentName.equals(OffHeapEntryFactory.class.getName())) {
          return new OffHeapEntryFactoryImpl();
       } else if (componentName.equals(OffHeapMemoryAllocator.class.getName())) {

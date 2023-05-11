@@ -39,6 +39,7 @@ import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ProcessorInfo;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -72,7 +73,6 @@ import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.statetransfer.RebalanceType;
 import org.infinispan.util.concurrent.ActionSequencer;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.ConditionFuture;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -501,12 +501,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       return cacheStatusMap.computeIfAbsent(cacheName, (name) -> {
          // We assume that any cache with partition handling configured is already defined on all the nodes
          // (including the coordinator) before it starts on any node.
-         LostDataCheck lostDataCheck;
-         if (cacheMode.isScattered()) {
-            lostDataCheck = ClusterTopologyManagerImpl::scatteredLostDataCheck;
-         } else {
-            lostDataCheck = ClusterTopologyManagerImpl::distLostDataCheck;
-         }
+         LostDataCheck lostDataCheck = ClusterTopologyManagerImpl::distLostDataCheck;
          // TODO Partition handling config should be part of the join info
          AvailabilityStrategy availabilityStrategy;
          Configuration config = configurationManager.getConfiguration(cacheName, true);
@@ -529,7 +524,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    }
 
    private boolean resolveConflictsOnMerge(Configuration config, CacheMode cacheMode) {
-      if (config == null || cacheMode.isScattered() || cacheMode.isInvalidation())
+      if (config == null || cacheMode.isInvalidation())
          return false;
 
       return config.clustering().partitionHandling().resolveConflictsOnMerge();
@@ -736,14 +731,6 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    public CompletionStage<Void> handleShutdownRequest(String cacheName) throws Exception {
       ClusterCacheStatus cacheStatus = cacheStatusMap.get(cacheName);
       return cacheStatus.shutdownCache();
-   }
-
-   public static boolean scatteredLostDataCheck(ConsistentHash stableCH, List<Address> newMembers) {
-      Set<Address> lostMembers = new HashSet<>(stableCH.getMembers());
-      lostMembers.removeAll(newMembers);
-      log.tracef("Stable CH members: %s, actual members: %s, lost members: %s",
-                 stableCH.getMembers(), newMembers, lostMembers);
-      return lostMembers.size() > 1;
    }
 
    public static boolean distLostDataCheck(ConsistentHash stableCH, List<Address> newMembers) {
