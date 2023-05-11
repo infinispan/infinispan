@@ -9,12 +9,13 @@ import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.serializing.SerializedWith;
 import org.infinispan.persistence.jdbc.common.configuration.AbstractJdbcStoreConfiguration;
 import org.infinispan.persistence.jdbc.common.configuration.ConnectionFactoryConfiguration;
+import org.infinispan.persistence.jdbc.common.configuration.Element;
 import org.infinispan.persistence.sql.TableJdbcStore;
 
 @BuiltBy(TableJdbcStoreConfigurationBuilder.class)
 @ConfigurationFor(TableJdbcStore.class)
 @SerializedWith(TableJdbcStoreConfigurationSerializer.class)
-public class TableJdbcStoreConfiguration extends AbstractSchemaJdbcConfiguration {
+public class TableJdbcStoreConfiguration extends AbstractSchemaJdbcConfiguration<TableJdbcStoreConfiguration> {
    static final AttributeDefinition<String> TABLE_NAME = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.TABLE_NAME, null, String.class).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
@@ -25,17 +26,11 @@ public class TableJdbcStoreConfiguration extends AbstractSchemaJdbcConfiguration
 
    public TableJdbcStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async,
          ConnectionFactoryConfiguration connectionFactory, SchemaJdbcConfiguration schemaJdbcConfiguration) {
-      super(attributes, async, connectionFactory, schemaJdbcConfiguration);
+      super(Element.TABLE_JDBC_STORE, attributes, async, connectionFactory, schemaJdbcConfiguration);
       tableName = attributes.attribute(TABLE_NAME);
    }
 
    public String tableName() {
       return tableName.get();
-   }
-
-   @Override
-   public String toString() {
-      return "TableJdbcStoreConfiguration [attributes=" + attributes +
-            ", connectionFactory=" + connectionFactory() + ", async=" + async() + "]";
    }
 }

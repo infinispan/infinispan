@@ -2,7 +2,6 @@ package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.cache.PersistenceConfiguration.AVAILABILITY_INTERVAL;
 import static org.infinispan.configuration.cache.PersistenceConfiguration.CONNECTION_ATTEMPTS;
-import static org.infinispan.configuration.cache.PersistenceConfiguration.CONNECTION_INTERVAL;
 import static org.infinispan.configuration.cache.PersistenceConfiguration.PASSIVATION;
 import static org.infinispan.util.logging.Log.CONFIG;
 
@@ -66,8 +65,9 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
     * @param interval The time, in milliseconds, to wait between subsequent connection attempts on startup. A negative
     *                 or zero value means no wait between connection attempts.
     */
+   @Deprecated
    public PersistenceConfigurationBuilder connectionInterval(int interval) {
-      attributes.attribute(CONNECTION_INTERVAL).set(interval);
+      // Ignore
       return this;
    }
 

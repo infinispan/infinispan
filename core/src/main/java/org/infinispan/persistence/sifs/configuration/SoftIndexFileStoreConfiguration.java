@@ -7,6 +7,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.parsing.Attribute;
+import org.infinispan.configuration.parsing.Element;
 import org.infinispan.persistence.sifs.NonBlockingSoftIndexFileStore;
 
 /**
@@ -14,7 +15,7 @@ import org.infinispan.persistence.sifs.NonBlockingSoftIndexFileStore;
  */
 @BuiltBy(SoftIndexFileStoreConfigurationBuilder.class)
 @ConfigurationFor(NonBlockingSoftIndexFileStore.class)
-public class SoftIndexFileStoreConfiguration extends AbstractStoreConfiguration {
+public class SoftIndexFileStoreConfiguration extends AbstractStoreConfiguration<SoftIndexFileStoreConfiguration> {
 
    public static final AttributeDefinition<Integer> OPEN_FILES_LIMIT = AttributeDefinition.builder(Attribute.OPEN_FILES_LIMIT, 1000).immutable().build();
    public static final AttributeDefinition<Double> COMPACTION_THRESHOLD = AttributeDefinition.builder(Attribute.COMPACTION_THRESHOLD, 0.5d).immutable().build();
@@ -29,7 +30,7 @@ public class SoftIndexFileStoreConfiguration extends AbstractStoreConfiguration 
                                           AsyncStoreConfiguration async,
                                           IndexConfiguration indexConfiguration,
                                           DataConfiguration dataConfiguration) {
-      super(attributes, async);
+      super(Element.FILE_STORE, attributes, async, indexConfiguration, dataConfiguration);
       index = indexConfiguration;
       data = dataConfiguration;
    }
@@ -80,10 +81,5 @@ public class SoftIndexFileStoreConfiguration extends AbstractStoreConfiguration 
 
    public DataConfiguration data() {
       return data;
-   }
-
-   @Override
-   public String toString() {
-      return "SoftIndexFileStore [attributes=" + attributes + "]";
    }
 }

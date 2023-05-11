@@ -274,7 +274,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             Configuration local = getConfiguration(holder, "local");
             PersistenceConfiguration persistenceConfiguration = local.persistence();
             assertEquals(5, persistenceConfiguration.connectionAttempts());
-            assertEquals(100, persistenceConfiguration.connectionInterval());
             assertEquals(2000, persistenceConfiguration.availabilityInterval());
             assertFalse(persistenceConfiguration.stores().isEmpty());
             AsyncStoreConfiguration asyncConfig = persistenceConfiguration.stores().iterator().next().async();

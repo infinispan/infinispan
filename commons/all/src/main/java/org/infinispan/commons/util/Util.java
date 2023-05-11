@@ -1177,6 +1177,13 @@ public final class Util {
       return ret;
    }
 
+   public static <T> T[] concat(T[] a, T b) {
+      int aLen = a.length;
+      T[] ret = Arrays.copyOf(a, aLen + 1);
+      ret[aLen] = b;
+      return ret;
+   }
+
    public static RuntimeException unchecked(Throwable t) {
       if (t instanceof RuntimeException) {
          return (RuntimeException) t;

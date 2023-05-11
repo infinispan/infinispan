@@ -2,7 +2,6 @@ package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
-import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.parsing.Element;
@@ -16,7 +15,7 @@ import org.infinispan.persistence.file.SingleFileStore;
  */
 @BuiltBy(SingleFileStoreConfigurationBuilder.class)
 @ConfigurationFor(SingleFileStore.class)
-public class SingleFileStoreConfiguration extends AbstractStoreConfiguration {
+public class SingleFileStoreConfiguration extends AbstractStoreConfiguration<SingleFileStoreConfiguration> {
    public static final AttributeDefinition<String> LOCATION = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.PATH, null, String.class).immutable().global(false).build();
    /**
     * @deprecated Since 13.0, will be removed in 16.0
@@ -29,19 +28,12 @@ public class SingleFileStoreConfiguration extends AbstractStoreConfiguration {
       return new AttributeSet(SingleFileStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), LOCATION, MAX_ENTRIES, FRAGMENTATION_FACTOR);
    }
 
-   private final Attribute<String> location;
-   private final Attribute<Integer> maxEntries;
-   private final Attribute<Float> fragmentationFactor;
-
    public SingleFileStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
-      super(attributes, async);
-      location = attributes.attribute(LOCATION);
-      maxEntries = attributes.attribute(MAX_ENTRIES);
-      fragmentationFactor = attributes.attribute(FRAGMENTATION_FACTOR);
+      super(Element.SINGLE_FILE_STORE, attributes, async);
    }
 
    public String location() {
-      return location.get();
+      return attributes.attribute(LOCATION).get();
    }
 
    /**
@@ -49,15 +41,10 @@ public class SingleFileStoreConfiguration extends AbstractStoreConfiguration {
     */
    @Deprecated
    public int maxEntries() {
-      return maxEntries.get();
+      return attributes.attribute(MAX_ENTRIES).get();
    }
 
    public float fragmentationFactor() {
-      return fragmentationFactor.get();
-   }
-
-   @Override
-   public String toString() {
-      return Element.SINGLE_FILE_STORE + attributes.toString(null);
+      return attributes.attribute(FRAGMENTATION_FACTOR).get();
    }
 }

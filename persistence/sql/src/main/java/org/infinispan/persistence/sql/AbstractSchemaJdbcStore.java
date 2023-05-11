@@ -482,8 +482,7 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
       private final Parameter[] upsertParameters;
 
       public SchemaTableOperations(ProtoSchemaOptions<K, V, C> schemaOptions, Parameter[] upsertParameters) {
-         super(schemaOptions.config.maxBatchSize(), schemaOptions.config.writeQueryTimeout(),
-               schemaOptions.config.readQueryTimeout());
+         super(schemaOptions.config);
          this.schemaOptions = schemaOptions;
          this.upsertParameters = upsertParameters;
       }

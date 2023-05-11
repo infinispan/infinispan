@@ -6,15 +6,14 @@ import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.persistence.jdbc.common.configuration.AbstractJdbcStoreConfiguration;
 import org.infinispan.persistence.jdbc.common.configuration.ConnectionFactoryConfiguration;
 
-public class AbstractSchemaJdbcConfiguration extends AbstractJdbcStoreConfiguration {
+public class AbstractSchemaJdbcConfiguration<T extends AbstractSchemaJdbcConfiguration<T>> extends AbstractJdbcStoreConfiguration<T> {
    static final String NAMESPACE = Parser.NAMESPACE + "store:sql:";
 
    private final SchemaJdbcConfiguration schemaJdbcConfiguration;
 
-   protected AbstractSchemaJdbcConfiguration(AttributeSet attributes, AsyncStoreConfiguration async,
+   protected AbstractSchemaJdbcConfiguration(Enum<?> element, AttributeSet attributes, AsyncStoreConfiguration async,
          ConnectionFactoryConfiguration connectionFactory, SchemaJdbcConfiguration schemaJdbcConfiguration) {
-      super(attributes, async, connectionFactory);
-
+      super(element, attributes, async, connectionFactory);
       this.schemaJdbcConfiguration = schemaJdbcConfiguration;
    }
 

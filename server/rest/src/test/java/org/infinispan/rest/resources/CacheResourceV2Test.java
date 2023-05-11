@@ -53,6 +53,7 @@ import java.util.stream.IntStream;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.assertj.core.api.Assertions;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.client.rest.RestCacheClient;
@@ -97,10 +98,6 @@ import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.LocalTopologyManager;
-
-import io.reactivex.rxjava3.core.Flowable;
-import okhttp3.internal.http2.StreamResetException;
-import org.assertj.core.api.Assertions;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -108,6 +105,9 @@ import org.testng.reporters.Files;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+
+import io.reactivex.rxjava3.core.Flowable;
+import okhttp3.internal.http2.StreamResetException;
 
 @Test(groups = "functional", testName = "rest.CacheResourceV2Test")
 public class CacheResourceV2Test extends AbstractRestResourceTest {
@@ -393,7 +393,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       CompletionStage<RestResponse> response = cacheClient.configurationAttributes(true);
       assertThat(response).isOk();
       Json attributes = Json.read(join(response).getBody());
-      assertEquals(11, attributes.asJsonMap().size());
+      assertEquals(13, attributes.asJsonMap().size());
       assertEquals("long", attributes.at("clustering.remote-timeout").at("type").asString());
       assertEquals(15000, attributes.at("clustering.remote-timeout").at("value").asLong());
       assertThat(attributes.at("indexing.indexed-entities").at("type").asString()).isEqualTo("set");

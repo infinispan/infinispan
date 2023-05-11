@@ -88,9 +88,9 @@ public abstract class AbstractTableManager<K, V> extends BaseTableOperations<K, 
 
    AbstractTableManager(InitializationContext ctx, ConnectionFactory connectionFactory, JdbcStringBasedStoreConfiguration jdbcConfig,
          DbMetaData dbMetadata, String cacheName, String identifierQuoteString, Log log) {
-      super(jdbcConfig.maxBatchSize(), jdbcConfig.writeQueryTimeout(), jdbcConfig.readQueryTimeout());
+      super(jdbcConfig);
       // cacheName is required
-      if (cacheName == null || cacheName.trim().length() == 0)
+      if (cacheName == null || cacheName.trim().isEmpty())
          throw new PersistenceException("cacheName needed in order to create table");
 
       this.ctx = ctx;
@@ -672,7 +672,7 @@ public abstract class AbstractTableManager<K, V> extends BaseTableOperations<K, 
       PreparedStatement ps = null;
       try {
          ps = connection.prepareStatement(sql);
-         ps.setQueryTimeout(readQueryTimeout);
+         ps.setQueryTimeout(configuration.readQueryTimeout());
          ps.setString(1, keyStr);
          ResultSet rs = ps.executeQuery();
          boolean update = rs.next();
@@ -687,7 +687,7 @@ public abstract class AbstractTableManager<K, V> extends BaseTableOperations<K, 
             log.tracef("Running sql '%s'. Key string is '%s'", sql, keyStr);
          }
          ps = connection.prepareStatement(sql);
-         ps.setQueryTimeout(writeQueryTimeout);
+         ps.setQueryTimeout(configuration.writeQueryTimeout());
          prepareValueStatement(ps, segment, entry);
          ps.executeUpdate();
       } finally {

@@ -18,7 +18,7 @@ import org.infinispan.persistence.remote.RemoteStore;
 @BuiltBy(RemoteStoreConfigurationBuilder.class)
 @ConfigurationFor(RemoteStore.class)
 @SerializedWith(RemoteStoreConfigurationSerializer.class)
-public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
+public class RemoteStoreConfiguration extends AbstractStoreConfiguration<RemoteStoreConfiguration> {
    static final AttributeDefinition<String> BALANCING_STRATEGY = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.BALANCING_STRATEGY, RoundRobinBalancingStrategy.class.getName()).immutable().build();
    static final AttributeDefinition<Long> CONNECTION_TIMEOUT = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.CONNECT_TIMEOUT, (long) ConfigurationProperties.DEFAULT_CONNECT_TIMEOUT).build();
    static final AttributeDefinition<Boolean> FORCE_RETURN_VALUES = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.FORCE_RETURN_VALUES, false).immutable().build();
@@ -71,7 +71,7 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration {
    public RemoteStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async,
                                    ExecutorFactoryConfiguration asyncExecutorFactory, ConnectionPoolConfiguration connectionPool,
                                    SecurityConfiguration security, List<RemoteServerConfiguration> servers) {
-      super(attributes, async);
+      super(Element.REMOTE_STORE, attributes, async);
       balancingStrategy = attributes.attribute(BALANCING_STRATEGY);
       connectionTimeout = attributes.attribute(CONNECTION_TIMEOUT);
       forceReturnValues = attributes.attribute(FORCE_RETURN_VALUES);

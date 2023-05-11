@@ -20,6 +20,7 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
 import org.infinispan.persistence.jdbc.common.JdbcUtil;
 import org.infinispan.persistence.jdbc.common.TableOperations;
+import org.infinispan.persistence.jdbc.common.configuration.AbstractJdbcStoreConfiguration;
 import org.infinispan.persistence.jdbc.common.logging.Log;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
@@ -33,14 +34,10 @@ import io.reactivex.rxjava3.core.Flowable;
 public abstract class BaseTableOperations<K, V> implements TableOperations<K, V> {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
 
-   protected final int fetchSize;
-   protected final int writeQueryTimeout;
-   protected final int readQueryTimeout;
+   protected final AbstractJdbcStoreConfiguration<?> configuration;
 
-   public BaseTableOperations(int fetchSize, int writeQueryTimeout, int readQueryTimeout) {
-      this.fetchSize = fetchSize;
-      this.writeQueryTimeout = writeQueryTimeout;
-      this.readQueryTimeout = readQueryTimeout;
+   public BaseTableOperations(AbstractJdbcStoreConfiguration<?> configuration) {
+      this.configuration = configuration;
    }
 
    public abstract String getSelectRowSql();
@@ -80,7 +77,7 @@ public abstract class BaseTableOperations<K, V> implements TableOperations<K, V>
             log.tracef("Running select row sql '%s'", selectSql);
          }
          ps = connection.prepareStatement(selectSql);
-         ps.setQueryTimeout(readQueryTimeout);
+         ps.setQueryTimeout(configuration.readQueryTimeout());
          prepareKeyStatement(ps, key);
          rs = ps.executeQuery();
          if (rs.next()) {
@@ -102,7 +99,7 @@ public abstract class BaseTableOperations<K, V> implements TableOperations<K, V>
             log.tracef("Running delete row sql '%s'", deleteSql);
          }
          ps = connection.prepareStatement(deleteSql);
-         ps.setQueryTimeout(writeQueryTimeout);
+         ps.setQueryTimeout(configuration.writeQueryTimeout());
          prepareKeyStatement(ps, key);
          return ps.executeUpdate() == 1;
       } finally {
@@ -137,7 +134,7 @@ public abstract class BaseTableOperations<K, V> implements TableOperations<K, V>
             log.tracef("Running upsert row sql '%s'", upsertSql);
          }
          ps = connection.prepareStatement(upsertSql);
-         ps.setQueryTimeout(writeQueryTimeout);
+         ps.setQueryTimeout(configuration.writeQueryTimeout());
          prepareValueStatement(ps, segment, entry);
          ps.executeUpdate();
       } finally {
@@ -228,7 +225,7 @@ public abstract class BaseTableOperations<K, V> implements TableOperations<K, V>
       }, fc -> {
          PreparedStatement ps = fc.statement;
          preparePublishStatement(ps, segments);
-         ps.setFetchSize(fetchSize);
+         ps.setFetchSize(configuration.maxBatchSize());
          ResultSet rs = ps.executeQuery();
          return Flowable.fromIterable(() -> new ResultSetEntryIterator(rs, filter, fetchValue))
                .doFinally(() -> JdbcUtil.safeClose(rs));

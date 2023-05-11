@@ -1433,15 +1433,6 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="connection-interval" type="xs:int" default="${Persistence.connection-interval}">
-      <xs:annotation>
-        <xs:documentation>
-          Specifies the time, in milliseconds, to wait between connection
-          attempts on startup. A negative or zero value means no wait between
-          connection attempts.
-        </xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
     <xs:attribute name="availability-interval" type="xs:int" default="${Persistence.availability-interval}">
       <xs:annotation>
         <xs:documentation>
