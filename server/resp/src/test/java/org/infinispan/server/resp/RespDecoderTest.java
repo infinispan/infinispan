@@ -53,7 +53,7 @@ public class RespDecoderTest {
             return myStage;
          }
       };
-      channel = new EmbeddedChannel(new FixedLengthFrameDecoder(1), new RespDecoder(myRespRequestHandler));
+      channel = new EmbeddedChannel(new FixedLengthFrameDecoder(1), new RespDecoder(), new RespHandler(myRespRequestHandler));
    }
 
    @AfterClass
