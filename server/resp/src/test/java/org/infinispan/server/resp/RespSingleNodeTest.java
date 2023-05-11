@@ -534,4 +534,23 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       String key = "getdel-notpresent";
       assertThat(redis.getdel(key)).isNull();
    }
+
+   @Test
+   public void testStrlen() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "strlen";
+      String val = "Hello";
+      String app = " World";
+      redis.set(key, val);
+      assertThat(redis.strlen(key)).isEqualTo(5);
+      long retVal = redis.append(key, app);
+      assertThat(redis.strlen(key)).isEqualTo(retVal);
+   }
+
+   @Test
+   public void testStrlenNotPresent() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "strlen-notpresent";
+      assertThat(redis.strlen(key)).isEqualTo(0);
+   }
 }
