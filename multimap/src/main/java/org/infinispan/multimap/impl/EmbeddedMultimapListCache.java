@@ -9,9 +9,11 @@ import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.multimap.impl.function.IndexFunction;
 import org.infinispan.multimap.impl.function.OfferFunction;
+import org.infinispan.multimap.impl.function.PollFunction;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import static java.util.Objects.requireNonNull;
@@ -129,8 +131,40 @@ public class EmbeddedMultimapListCache<K, V> {
       throw new UnsupportedOperationException();
    }
 
-   public CompletionStage<Collection<V>> pollFirst(int count) {
-      throw new UnsupportedOperationException();
+   /**
+    * Removes the given count of elements from the head of the list.
+    *
+    * @param key, the name of the list
+    * @param count, the number of elements. Must be positive.
+    * @return {@link CompletionStage} containing a {@link Collection<V>} of values removed,
+    * or null if the key does not exit
+    */
+   public CompletionStage<Collection<V>> pollFirst(K key, long count) {
+      return poll(key, count, true);
+   }
+
+   /**
+    * Removes the given count of elements from the tail of the list.
+    *
+    * @param key, the name of the list
+    * @param count, the number of elements. Must be positive.
+    * @return {@link CompletionStage} containing a {@link Collection<V>} of values removed,
+    * or null if the key does not exit
+    */
+   public CompletionStage<Collection<V>> pollLast(K key, long count) {
+      return poll(key, count, false);
+   }
+
+   private CompletableFuture<Collection<V>> poll(K key, long count, boolean first) {
+      requireNonNull(key, "key can't be null");
+      requirePositive(count, "count can't be negative");
+      return readWriteMap.eval(key, new PollFunction<>(first, count));
+   }
+
+   private static void requirePositive(long count, String message) {
+      if (count < 0) {
+         throw new IllegalArgumentException(message);
+      }
    }
 
    public CompletionStage<Void> set(K key, V value, int index) {

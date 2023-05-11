@@ -88,6 +88,37 @@ public class DistributedMultimapListCacheTest extends BaseDistFunctionalTest<Str
       assertValuesAndOwnership(NAMES_KEY, ELAIA);
    }
 
+   public void testPollFirstAndLast() {
+      initAndTest();
+      EmbeddedMultimapListCache<String, Person> list = getMultimapCacheMember();
+      await(
+            list.offerLast(NAMES_KEY, OIHANA)
+                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, ELAIA))
+                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, OIHANA))
+                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, ELAIA))
+                  .thenCompose(r1 -> list.size(NAMES_KEY))
+                  .thenAccept(size -> assertThat(size).isEqualTo(4))
+
+      );
+
+      await(
+            list.pollLast(NAMES_KEY, 2)
+                  .thenAccept(r1 -> assertThat(r1).containsExactly(ELAIA, OIHANA))
+
+      );
+      await(
+            list.pollFirst(NAMES_KEY, 1)
+                  .thenAccept(r1 -> assertThat(r1).containsExactly(OIHANA))
+
+      );
+
+      await(
+            list.size(NAMES_KEY)
+                  .thenAccept(r1 -> assertThat(r1).isEqualTo(1))
+
+      );
+   }
+
    public void testSize() {
       initAndTest();
       EmbeddedMultimapListCache<String, Person> list = getMultimapCacheMember();

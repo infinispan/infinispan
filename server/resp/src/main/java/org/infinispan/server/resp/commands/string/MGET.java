@@ -1,13 +1,11 @@
 package org.infinispan.server.resp.commands.string;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.util.CharsetUtil;
 import org.infinispan.server.resp.ByteBufferUtils;
-import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
+import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletionStages;
 
@@ -62,27 +60,8 @@ public class MGET extends RespCommand implements Resp3Command {
                   resultBytesSize.addAndGet(2);
                }));
       }
-      return handler.stageToReturn(getStage.freeze(), ctx, (ignore, alloc) -> {
-         int elements = results.size();
-         // * + digit length (log10 + 1) + \r\n + accumulated bytes
-         int byteAmount = 1 + (int) Math.log10(elements) + 1 + 2 + resultBytesSize.get();
-         ByteBuf byteBuf = alloc.apply(byteAmount);
-         byteBuf.writeCharSequence("*" + results.size(), CharsetUtil.US_ASCII);
-         byteBuf.writeByte('\r');
-         byteBuf.writeByte('\n');
-         for (byte[] value : results) {
-            if (value == null) {
-               byteBuf.writeCharSequence("$-1", CharsetUtil.US_ASCII);
-            } else {
-               byteBuf.writeCharSequence("$" + value.length, CharsetUtil.US_ASCII);
-               byteBuf.writeByte('\r');
-               byteBuf.writeByte('\n');
-               byteBuf.writeBytes(value);
-            }
-            byteBuf.writeByte('\r');
-            byteBuf.writeByte('\n');
-         }
-         assert byteBuf.writerIndex() == byteAmount;
-      });
+      return handler.stageToReturn(getStage.freeze(), ctx, (ignore, alloc) ->
+         ByteBufferUtils.bytesToResult(resultBytesSize.get(), results, alloc)
+      );
    }
 }

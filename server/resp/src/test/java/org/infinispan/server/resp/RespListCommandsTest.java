@@ -99,6 +99,70 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
             .hasMessageContaining("ERRWRONGTYPE");
    }
 
+   public void testRPOP() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThat(redis.rpop("not_exist")).isNull();
+
+      // test single value
+      assertThat(redis.rpush("leads", "tristan")).isEqualTo(1);
+      assertThat(redis.rpop("leads")).isEqualTo("tristan");
+      assertThat(redis.rpop("leads")).isNull();
+
+      // test multiple values
+      assertThat(redis.rpush("leads", "tristan", "jose", "william", "pedro")).isEqualTo(4);
+      assertThat(redis.rpop("leads", 0)).isEmpty();
+      assertThat(redis.rpop("leads", 3)).containsExactly( "pedro", "william", "jose");
+      assertThat(redis.rpop("leads", 1)).containsExactly("tristan");
+      assertThat(redis.rpop("leads")).isNull();
+
+      //Set a String Command
+      redis.set("leads", "tristan");
+
+      //RPOP on an existing key that contains a String, not a Collection!
+      assertThatThrownBy(() -> {
+         redis.rpop("leads");
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERRWRONGTYPE");
+
+      // RPOP the count argument is negative
+      assertThatThrownBy(() -> {
+         redis.rpop("leads", -42);
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR value is out of range, must be positive");
+   }
+
+   public void testLPOP() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThat(redis.lpop("not_exist")).isNull();
+
+      // test single value
+      assertThat(redis.rpush("leads", "tristan")).isEqualTo(1);
+      assertThat(redis.lpop("leads")).isEqualTo("tristan");
+      assertThat(redis.lpop("leads")).isNull();
+
+      // test multiple values
+      assertThat(redis.rpush("leads", "tristan", "jose", "william", "pedro")).isEqualTo(4);
+      assertThat(redis.lpop("leads", 0)).isEmpty();
+      assertThat(redis.lpop("leads", 3)).containsExactly(  "tristan", "jose", "william");
+      assertThat(redis.lpop("leads", 1)).containsExactly("pedro");
+      assertThat(redis.lpop("leads")).isNull();
+
+      //Set a String Command
+      redis.set("leads", "tristan");
+
+      //RPOP on an existing key that contains a String, not a Collection!
+      assertThatThrownBy(() -> {
+         redis.lpop("leads");
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERRWRONGTYPE");
+
+      // RPOP the count argument is negative
+      assertThatThrownBy(() -> {
+         redis.lpop("leads", -42);
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR value is out of range, must be positive");
+   }
+
    public void testLINDEX() {
       RedisCommands<String, String> redis = redisConnection.sync();
       assertThat(redis.lindex("noexisting", 10)).isNull();

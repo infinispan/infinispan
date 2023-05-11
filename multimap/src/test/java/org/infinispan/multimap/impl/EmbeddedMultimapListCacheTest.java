@@ -189,4 +189,116 @@ public class EmbeddedMultimapListCacheTest extends SingleCacheManagerTest {
             .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
 
    }
+
+   public void testPollFirst() {
+      await(
+            listCache.pollFirst(NAMES_KEY, 0)
+                  .thenAccept(r1 -> assertThat(r1).isNull())
+      );
+
+      await(listCache.offerFirst(NAMES_KEY, OIHANA));
+
+      await(
+            listCache.pollFirst(NAMES_KEY, 0)
+                  .thenAccept(r1 -> assertThat(r1).isEmpty())
+      );
+
+      await(
+            listCache.pollFirst(NAMES_KEY, 1)
+                  .thenAccept(r1 -> assertThat(r1).containsExactly(OIHANA))
+      );
+      await(
+            listCache.pollFirst(NAMES_KEY, 1)
+                  .thenAccept(r1 -> assertThat(r1).isNull())
+      );
+
+      // [OIHANA, ELAIA, KOLDO]
+      await(listCache.offerLast(NAMES_KEY, OIHANA));
+      await(listCache.offerLast(NAMES_KEY, ELAIA));
+      await(listCache.offerLast(NAMES_KEY, KOLDO));
+
+      await(
+            listCache.pollFirst(NAMES_KEY, 2)
+                  .thenAccept(r1 -> assertThat(r1).containsExactly(OIHANA, ELAIA))
+      );
+
+      await(
+            listCache.pollLast(NAMES_KEY, 1)
+                  .thenAccept(r1 -> assertThat(r1).containsExactly(KOLDO))
+      );
+
+      await(
+            listCache.pollFirst(NAMES_KEY, 1)
+                  .thenAccept(r1 -> assertThat(r1).isNull())
+      );
+
+      // [OIHANA, ELAIA, KOLDO]
+      await(listCache.offerLast(NAMES_KEY, OIHANA));
+      await(listCache.offerLast(NAMES_KEY, ELAIA));
+      await(listCache.offerLast(NAMES_KEY, KOLDO));
+      await(
+            listCache.pollFirst(NAMES_KEY, 4)
+                  .thenAccept(r1 -> assertThat(r1).containsExactly(OIHANA, ELAIA, KOLDO))
+      );
+      await(
+            listCache.pollLast(NAMES_KEY, 1)
+                  .thenAccept(r1 -> assertThat(r1).isNull())
+      );
+   }
+
+   public void testPollLast() {
+      await(
+            listCache.pollLast(NAMES_KEY, 0)
+                  .thenAccept(r1 -> assertThat(r1).isNull())
+      );
+
+      await(listCache.offerFirst(NAMES_KEY, OIHANA));
+
+      await(
+            listCache.pollLast(NAMES_KEY, 0)
+                  .thenAccept(r1 -> assertThat(r1).isEmpty())
+      );
+
+      await(
+            listCache.pollLast(NAMES_KEY, 1)
+                  .thenAccept(r1 -> assertThat(r1).containsExactly(OIHANA))
+      );
+      await(
+            listCache.pollLast(NAMES_KEY, 1)
+                  .thenAccept(r1 -> assertThat(r1).isNull())
+      );
+
+      // [OIHANA, ELAIA, KOLDO]
+      await(listCache.offerLast(NAMES_KEY, OIHANA));
+      await(listCache.offerLast(NAMES_KEY, ELAIA));
+      await(listCache.offerLast(NAMES_KEY, KOLDO));
+
+      await(
+            listCache.pollLast(NAMES_KEY, 2)
+                  .thenAccept(r1 -> assertThat(r1).containsExactly(KOLDO, ELAIA))
+      );
+
+      await(
+            listCache.pollLast(NAMES_KEY, 1)
+                  .thenAccept(r1 -> assertThat(r1).containsExactly(OIHANA))
+      );
+
+      await(
+            listCache.pollLast(NAMES_KEY, 1)
+                  .thenAccept(r1 -> assertThat(r1).isNull())
+      );
+
+      // [OIHANA, ELAIA, KOLDO]
+      await(listCache.offerLast(NAMES_KEY, OIHANA));
+      await(listCache.offerLast(NAMES_KEY, ELAIA));
+      await(listCache.offerLast(NAMES_KEY, KOLDO));
+      await(
+            listCache.pollLast(NAMES_KEY, 4)
+                  .thenAccept(r1 -> assertThat(r1).containsExactly(KOLDO, ELAIA, OIHANA))
+      );
+      await(
+            listCache.pollLast(NAMES_KEY, 1)
+                  .thenAccept(r1 -> assertThat(r1).isNull())
+      );
+   }
 }

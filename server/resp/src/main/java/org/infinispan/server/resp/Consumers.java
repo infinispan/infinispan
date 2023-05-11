@@ -1,11 +1,12 @@
 package org.infinispan.server.resp;
 
-import static org.infinispan.server.resp.RespConstants.CRLF;
+import org.infinispan.server.resp.response.SetResponse;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 import java.util.function.BiConsumer;
 
-import org.infinispan.server.resp.response.SetResponse;
+import static org.infinispan.server.resp.RespConstants.CRLF;
 
 /**
  * Utility class with Consumers
@@ -28,6 +29,14 @@ public final class Consumers {
    public static final BiConsumer<Double, ByteBufPool> DOUBLE_BICONSUMER = Resp3Handler::handleDoubleResult;
 
    public static final BiConsumer<byte[], ByteBufPool> GET_BICONSUMER = (innerValueBytes, alloc) -> {
+      if (innerValueBytes != null) {
+         ByteBufferUtils.bytesToResult(innerValueBytes, alloc);
+      } else {
+         ByteBufferUtils.stringToByteBuf("$-1\r\n", alloc);
+      }
+   };
+
+   public static final BiConsumer<Collection<byte[]>, ByteBufPool> GET_ARRAY_BICONSUMER = (innerValueBytes, alloc) -> {
       if (innerValueBytes != null) {
          ByteBufferUtils.bytesToResult(innerValueBytes, alloc);
       } else {

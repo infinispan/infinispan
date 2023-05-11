@@ -2,6 +2,9 @@ package org.infinispan.server.resp;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
+import io.netty.util.CharsetUtil;
+
+import java.util.Collection;
 
 /**
  * Utility class with ByteBuffer Utils
@@ -54,6 +57,48 @@ public final class ByteBufferUtils {
       buffer.writeByte('\r').writeByte('\n');
 
       return buffer;
+   }
+
+   public static ByteBuf bytesToResult(Collection<byte[]> results, ByteBufPool alloc) {
+      int resultBytesSize = 0;
+      for (byte[] result: results) {
+         int length = result.length;
+         if (length > 0) {
+            // $ + digit length (log10 + 1) + /r/n + byte length
+            resultBytesSize += (1 + (int) Math.log10(length) + 1 + 2 + result.length);
+         } else {
+            // $0 + /r/n
+            resultBytesSize += (2 + 2);
+         }
+      }
+      // /r/n
+      resultBytesSize += (2);
+
+      return bytesToResult(resultBytesSize, results, alloc);
+   }
+
+   public static ByteBuf bytesToResult(int resultBytesSize, Collection<byte[]> results, ByteBufPool alloc) {
+      int elements = results.size();
+      // * + digit length (log10 + 1) + \r\n + accumulated bytes
+      int byteAmount = 1 + (int) Math.log10(elements) + 1 + 2 + resultBytesSize;
+      ByteBuf byteBuf = alloc.apply(byteAmount);
+      byteBuf.writeCharSequence("*" + results.size(), CharsetUtil.US_ASCII);
+      byteBuf.writeByte('\r');
+      byteBuf.writeByte('\n');
+      for (byte[] value : results) {
+         if (value == null) {
+            byteBuf.writeCharSequence("$-1", CharsetUtil.US_ASCII);
+         } else {
+            byteBuf.writeCharSequence("$" + value.length, CharsetUtil.US_ASCII);
+            byteBuf.writeByte('\r');
+            byteBuf.writeByte('\n');
+            byteBuf.writeBytes(value);
+         }
+         byteBuf.writeByte('\r');
+         byteBuf.writeByte('\n');
+      }
+      assert byteBuf.writerIndex() == byteAmount;
+      return byteBuf;
    }
 
    // This code is a modified version of Integer.toString to write the underlying bytes directly to the ByteBuffer
