@@ -1,9 +1,6 @@
 package org.infinispan.persistence.rocksdb.configuration;
 
 import static org.infinispan.persistence.rocksdb.configuration.RocksDBExpirationConfiguration.EXPIRED_LOCATION;
-import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.BLOCK_SIZE;
-import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.CACHE_SIZE;
-import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.CLEAR_THRESHOLD;
 import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.COMPRESSION_TYPE;
 import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.LOCATION;
 
@@ -29,10 +26,6 @@ public class RocksDBStoreConfigurationBuilder extends AbstractStoreConfiguration
       super(builder, attributeSet);
    }
 
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
    public RocksDBStoreConfigurationBuilder location(String location) {
       attributes.attribute(LOCATION).set(location);
       return self();
@@ -43,13 +36,13 @@ public class RocksDBStoreConfigurationBuilder extends AbstractStoreConfiguration
       return self();
    }
 
+   @Deprecated
    public RocksDBStoreConfigurationBuilder blockSize(int blockSize) {
-      attributes.attribute(BLOCK_SIZE).set(blockSize);
       return self();
    }
 
+   @Deprecated
    public RocksDBStoreConfigurationBuilder cacheSize(long cacheSize) {
-      attributes.attribute(CACHE_SIZE).set(cacheSize);
       return self();
    }
 
@@ -67,7 +60,6 @@ public class RocksDBStoreConfigurationBuilder extends AbstractStoreConfiguration
     */
    @Deprecated
    public RocksDBStoreConfigurationBuilder clearThreshold(int clearThreshold) {
-      attributes.attribute(CLEAR_THRESHOLD).set(clearThreshold);
       return self();
    }
 

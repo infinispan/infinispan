@@ -30,6 +30,7 @@ import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.impl.InternalEntryFactory;
@@ -50,7 +51,6 @@ import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.persistence.spi.MarshalledValue;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
@@ -381,11 +381,11 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
             .flatMap(Flowable::fromPublisher, publisherCount)
             .map(RemoteStore::unwrap)
             .flatMapCompletable(key -> Completable.fromCompletionStage(remoteCache.removeAsync(key)), false, 10);
-
+      int maxBatchSize = configuration.maxBatchSize();
       Completable putCompletable = Flowable.fromPublisher(writePublisher)
             .flatMap(Flowable::fromPublisher, publisherCount)
             .groupBy(MarshallableEntry::getMetadata)
-            .flatMapCompletable(meFlowable -> meFlowable.buffer(configuration.maxBatchSize())
+            .flatMapCompletable(meFlowable -> meFlowable.buffer(maxBatchSize)
                   .flatMapCompletable(meList -> {
                      Map<Object, Object> map = meList.stream().collect(Collectors.toMap(this::getKey, this::getValue));
 

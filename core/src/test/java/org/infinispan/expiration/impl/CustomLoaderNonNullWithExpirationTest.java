@@ -27,6 +27,7 @@ import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.persistence.dummy.Element;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
@@ -62,10 +63,10 @@ public class CustomLoaderNonNullWithExpirationTest extends SingleCacheManagerTes
 
    @BuiltBy(SimpleLoaderConfigurationBuilder.class)
    @ConfigurationFor(SimpleLoader.class)
-   public static class SimpleLoaderConfiguration extends AbstractStoreConfiguration {
+   public static class SimpleLoaderConfiguration extends AbstractStoreConfiguration<SimpleLoaderConfiguration> {
 
       public SimpleLoaderConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
-         super(attributes, async);
+         super(Element.DUMMY_STORE, attributes, async);
       }
    }
 

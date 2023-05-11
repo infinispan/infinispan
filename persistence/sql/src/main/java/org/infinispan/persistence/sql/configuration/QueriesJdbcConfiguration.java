@@ -2,9 +2,11 @@ package org.infinispan.persistence.sql.configuration;
 
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.persistence.jdbc.common.configuration.Attribute;
+import org.infinispan.persistence.jdbc.common.configuration.Element;
 
-public class QueriesJdbcConfiguration {
+public class QueriesJdbcConfiguration extends ConfigurationElement<QueriesJdbcConfiguration> {
    public static final AttributeDefinition<String> SELECT = AttributeDefinition.builder(Attribute.SELECT_SINGLE, null, String.class).immutable().build();
    public static final AttributeDefinition<String> SELECT_ALL = AttributeDefinition.builder(Attribute.SELECT_ALL, null, String.class).immutable().build();
    public static final AttributeDefinition<String> DELETE = AttributeDefinition.builder(Attribute.DELETE_SINGLE, null, String.class).immutable().build();
@@ -12,18 +14,12 @@ public class QueriesJdbcConfiguration {
    public static final AttributeDefinition<String> UPSERT = AttributeDefinition.builder(Attribute.UPSERT, null, String.class).immutable().build();
    public static final AttributeDefinition<String> SIZE = AttributeDefinition.builder(Attribute.SIZE, null, String.class).immutable().build();
 
-   private final AttributeSet attributes;
-
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(QueriesJdbcConfiguration.class, SELECT, SELECT_ALL, DELETE, DELETE_ALL, UPSERT, SIZE);
    }
 
    QueriesJdbcConfiguration(AttributeSet attributes) {
-      this.attributes = attributes;
-   }
-
-   AttributeSet attributes() {
-      return attributes;
+      super(Element.QUERIES, attributes);
    }
 
    public String select() {
@@ -48,27 +44,5 @@ public class QueriesJdbcConfiguration {
 
    public String size() {
       return attributes.attribute(SIZE).get();
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      QueriesJdbcConfiguration that = (QueriesJdbcConfiguration) o;
-
-      return attributes.equals(that.attributes);
-   }
-
-   @Override
-   public int hashCode() {
-      return attributes.hashCode();
-   }
-
-   @Override
-   public String toString() {
-      return "QueriesConfiguration{" +
-            "attributes=" + attributes +
-            '}';
    }
 }

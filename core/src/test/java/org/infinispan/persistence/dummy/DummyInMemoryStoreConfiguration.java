@@ -9,7 +9,7 @@ import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 
 @BuiltBy(DummyInMemoryStoreConfigurationBuilder.class)
 @ConfigurationFor(DummyInMemoryStore.class)
-public class DummyInMemoryStoreConfiguration extends AbstractStoreConfiguration {
+public class DummyInMemoryStoreConfiguration extends AbstractStoreConfiguration<DummyInMemoryStoreConfiguration> {
    static final AttributeDefinition<Boolean> SLOW = AttributeDefinition.builder("slow", false).immutable().build();
    static final AttributeDefinition<String> STORE_NAME = AttributeDefinition.builder("store-name", null, String.class).immutable().build();
    static final AttributeDefinition<Integer> START_FAILURES = AttributeDefinition.builder("start-failures", 0).immutable().build();
@@ -18,7 +18,7 @@ public class DummyInMemoryStoreConfiguration extends AbstractStoreConfiguration 
    }
 
    public DummyInMemoryStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
-      super(attributes, async);
+      super(Element.DUMMY_STORE, attributes, async);
    }
 
    public boolean slow() {

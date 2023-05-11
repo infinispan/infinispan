@@ -7,7 +7,7 @@ import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.persistence.jdbc.common.DatabaseType;
 
-public abstract class AbstractJdbcStoreConfiguration extends AbstractStoreConfiguration {
+public abstract class AbstractJdbcStoreConfiguration<T extends AbstractJdbcStoreConfiguration<T>> extends AbstractStoreConfiguration<T> {
    static final AttributeDefinition<DatabaseType> DIALECT = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.DIALECT, null, DatabaseType.class).immutable().build();
    static final AttributeDefinition<Integer> READ_QUERY_TIMEOUT = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.READ_QUERY_TIMEOUT, 0, Integer.class).build();
    static final AttributeDefinition<Integer> WRITE_QUERY_TIMEOUT = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.WRITE_QUERY_TIMEOUT, 0, Integer.class).build();
@@ -22,8 +22,8 @@ public abstract class AbstractJdbcStoreConfiguration extends AbstractStoreConfig
    private final Attribute<Integer> writeQueryTimeout;
    private final ConnectionFactoryConfiguration connectionFactory;
 
-   protected AbstractJdbcStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, ConnectionFactoryConfiguration connectionFactory) {
-      super(attributes, async);
+   protected AbstractJdbcStoreConfiguration(Enum<?> element, AttributeSet attributes, AsyncStoreConfiguration async, ConnectionFactoryConfiguration connectionFactory) {
+      super(element, attributes, async);
       this.connectionFactory = connectionFactory;
       dialect = attributes.attribute(DIALECT);
       readQueryTimeout = attributes.attribute(READ_QUERY_TIMEOUT);
@@ -68,35 +68,4 @@ public abstract class AbstractJdbcStoreConfiguration extends AbstractStoreConfig
    public Integer writeQueryTimeout() {
       return writeQueryTimeout.get();
    }
-
-   @Override
-   public String toString() {
-      return "AbstractJdbcStoreConfiguration [connectionFactory=" + connectionFactory + ", attributes=" + attributes + "]";
-   }
-
-   @Override
-   public int hashCode() {
-      final int prime = 31;
-      int result = super.hashCode();
-      result = prime * result + ((connectionFactory == null) ? 0 : connectionFactory.hashCode());
-      return result;
-   }
-
-   @Override
-   public boolean equals(Object obj) {
-      if (this == obj)
-         return true;
-      if (!super.equals(obj))
-         return false;
-      if (getClass() != obj.getClass())
-         return false;
-      AbstractJdbcStoreConfiguration other = (AbstractJdbcStoreConfiguration) obj;
-      if (connectionFactory == null) {
-         if (other.connectionFactory != null)
-            return false;
-      } else if (!connectionFactory.equals(other.connectionFactory))
-         return false;
-      return true;
-   }
-
 }

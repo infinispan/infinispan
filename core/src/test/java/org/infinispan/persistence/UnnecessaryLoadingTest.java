@@ -23,6 +23,7 @@ import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.dummy.Element;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.persistence.spi.InitializationContext;
@@ -287,10 +288,10 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
 
    @BuiltBy(CountingStoreConfigurationBuilder.class)
    @ConfigurationFor(CountingStore.class)
-   public static class CountingStoreConfiguration extends AbstractStoreConfiguration {
+   public static class CountingStoreConfiguration extends AbstractStoreConfiguration<CountingStoreConfiguration> {
 
       public CountingStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
-         super(attributes, async);
+         super(Element.DUMMY_STORE, attributes, async);
       }
    }
 

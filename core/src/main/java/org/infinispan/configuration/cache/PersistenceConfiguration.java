@@ -2,64 +2,61 @@ package org.infinispan.configuration.cache;
 
 import java.util.List;
 
-import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.configuration.parsing.Attribute;
+import org.infinispan.configuration.parsing.Element;
 
 /**
  * Configuration for stores.
- *
  */
-public class PersistenceConfiguration implements Matchable<PersistenceConfiguration> {
+public class PersistenceConfiguration extends ConfigurationElement<PersistenceConfiguration> {
    public static final AttributeDefinition<Boolean> PASSIVATION = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.PASSIVATION, false).immutable().build();
    public static final AttributeDefinition<Integer> AVAILABILITY_INTERVAL = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.AVAILABILITY_INTERVAL, 1000).immutable().build();
-   public static final AttributeDefinition<Integer> CONNECTION_ATTEMPTS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CONNECTION_ATTEMPTS, 10).immutable().build();
-   public static final AttributeDefinition<Integer> CONNECTION_INTERVAL = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CONNECTION_INTERVAL, 50).immutable().build();
+   public static final AttributeDefinition<Integer> CONNECTION_ATTEMPTS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CONNECTION_ATTEMPTS, 10).build();
+   @Deprecated
+   public static final AttributeDefinition<Integer> CONNECTION_INTERVAL = AttributeDefinition.builder(Attribute.CONNECTION_INTERVAL, 50).immutable().deprecatedSince(15, 0).build();
+
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(PersistenceConfiguration.class, PASSIVATION, AVAILABILITY_INTERVAL, CONNECTION_ATTEMPTS, CONNECTION_INTERVAL);
    }
 
-   private final Attribute<Boolean> passivation;
-   private final Attribute<Integer> availabilityInterval;
-   private final Attribute<Integer> connectionAttempts;
-   private final Attribute<Integer> connectionInterval;
-   private final AttributeSet attributes;
    private final List<StoreConfiguration> stores;
 
 
    PersistenceConfiguration(AttributeSet attributes, List<StoreConfiguration> stores) {
-      this.attributes = attributes.checkProtection();
-      this.passivation = attributes.attribute(PASSIVATION);
-      this.availabilityInterval = attributes.attribute(AVAILABILITY_INTERVAL);
-      this.connectionAttempts = attributes.attribute(CONNECTION_ATTEMPTS);
-      this.connectionInterval = attributes.attribute(CONNECTION_INTERVAL);
+      super(Element.PERSISTENCE, attributes, asChildren(stores));
       this.stores = stores;
    }
 
+   private static ConfigurationElement<?>[] asChildren(List<StoreConfiguration> stores) {
+      return stores.stream().filter(store -> store instanceof ConfigurationElement).toArray(ConfigurationElement[]::new);
+   }
+
    /**
-    * If true, data is only written to the cache store when it is evicted from memory, a phenomenon
-    * known as 'passivation'. Next time the data is requested, it will be 'activated' which means
-    * that data will be brought back to memory and removed from the persistent store. This gives you
-    * the ability to 'overflow' to disk, similar to swapping in an operating system. <br />
-    * <br />
-    * If false, the cache store contains a copy of the contents in memory, so writes to cache result
-    * in cache store writes. This essentially gives you a 'write-through' configuration.
+    * If true, data is only written to the cache store when it is evicted from memory, a phenomenon known as
+    * 'passivation'. Next time the data is requested, it will be 'activated' which means that data will be brought back
+    * to memory and removed from the persistent store. This gives you the ability to 'overflow' to disk, similar to
+    * swapping in an operating system. <br /> <br /> If false, the cache store contains a copy of the contents in
+    * memory, so writes to cache result in cache store writes. This essentially gives you a 'write-through'
+    * configuration.
     */
    public boolean passivation() {
-      return passivation.get();
+      return attributes.attribute(PASSIVATION).get();
    }
 
    public int availabilityInterval() {
-      return availabilityInterval.get();
+      return attributes.attribute(AVAILABILITY_INTERVAL).get();
    }
 
    public int connectionAttempts() {
-      return connectionAttempts.get();
+      return attributes.attribute(CONNECTION_ATTEMPTS).get();
    }
 
+   @Deprecated
    public int connectionInterval() {
-      return connectionInterval.get();
+      return -1;
    }
 
    public List<StoreConfiguration> stores() {
@@ -67,8 +64,7 @@ public class PersistenceConfiguration implements Matchable<PersistenceConfigurat
    }
 
    /**
-    * Loops through all individual cache loader configs and checks if fetchPersistentState is set on
-    * any of them
+    * Loops through all individual cache loader configs and checks if fetchPersistentState is set on any of them
     *
     * @deprecated since 14.0. This will always return false
     */
@@ -78,8 +74,7 @@ public class PersistenceConfiguration implements Matchable<PersistenceConfigurat
    }
 
    /**
-    * Loops through all individual cache loader configs and checks if preload is set on
-    * any of them
+    * Loops through all individual cache loader configs and checks if preload is set on any of them
     */
    public Boolean preload() {
       for (StoreConfiguration c : stores) {
@@ -103,6 +98,7 @@ public class PersistenceConfiguration implements Matchable<PersistenceConfigurat
 
    /**
     * Returns if any store is {@link StoreConfiguration#segmented()}
+    *
     * @return true if any configured store is segmented, otherwise false
     */
    public boolean usingSegmentedStore() {
@@ -112,45 +108,4 @@ public class PersistenceConfiguration implements Matchable<PersistenceConfigurat
       }
       return false;
    }
-
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public String toString() {
-      return attributes.toString(null) + ", stores=" + stores;
-   }
-
-   @Override
-   public boolean equals(Object obj) {
-      if (this == obj)
-         return true;
-      if (obj == null)
-         return false;
-      if (getClass() != obj.getClass())
-         return false;
-      PersistenceConfiguration other = (PersistenceConfiguration) obj;
-      if (attributes == null) {
-         if (other.attributes != null)
-            return false;
-      } else if (!attributes.equals(other.attributes))
-         return false;
-      if (stores == null) {
-         return other.stores == null;
-      } else if (!stores.equals(other.stores)) {
-         return false;
-      }
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
-      result = prime * result + ((stores == null) ? 0 : stores.hashCode());
-      return result;
-   }
-
 }

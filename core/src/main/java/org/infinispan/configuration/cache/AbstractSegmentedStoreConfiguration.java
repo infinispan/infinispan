@@ -11,8 +11,8 @@ import org.infinispan.persistence.spi.InitializationContext;
  * @since 9.4
  */
 public abstract class AbstractSegmentedStoreConfiguration<T extends AbstractStoreConfiguration> extends AbstractStoreConfiguration {
-   public AbstractSegmentedStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
-      super(attributes, async);
+   public AbstractSegmentedStoreConfiguration(Enum<?> element, AttributeSet attributes, AsyncStoreConfiguration async) {
+      super(element, attributes, async);
    }
 
    /**

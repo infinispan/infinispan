@@ -3,6 +3,8 @@ package org.infinispan.configuration.cache;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.configuration.parsing.Element;
 
 /**
  * Configuration for the async cache store. If enabled, this provides you with asynchronous writes
@@ -11,7 +13,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @author pmuir
  *
  */
-public class AsyncStoreConfiguration {
+public class AsyncStoreConfiguration extends ConfigurationElement<AsyncStoreConfiguration> {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ENABLED, false).immutable().build();
    public static final AttributeDefinition<Integer> MODIFICATION_QUEUE_SIZE  = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MODIFICATION_QUEUE_SIZE, 1024).immutable().build();
    @Deprecated
@@ -22,18 +24,10 @@ public class AsyncStoreConfiguration {
       return new AttributeSet(AsyncStoreConfiguration.class, ENABLED, MODIFICATION_QUEUE_SIZE, THREAD_POOL_SIZE, FAIL_SILENTLY);
    }
 
-   private final Attribute<Boolean> enabled;
-   private final Attribute<Integer> modificationQueueSize;
-   private final Attribute<Integer> threadPoolSize;
    private final Attribute<Boolean> failSilently;
 
-   private final AttributeSet attributes;
-
    public AsyncStoreConfiguration(AttributeSet attributes) {
-      this.attributes = attributes.checkProtection();
-      this.enabled = attributes.attribute(ENABLED);
-      this.modificationQueueSize = attributes.attribute(MODIFICATION_QUEUE_SIZE);
-      this.threadPoolSize = attributes.attribute(THREAD_POOL_SIZE);
+      super(Element.WRITE_BEHIND, attributes);
       this.failSilently = attributes.attribute(FAIL_SILENTLY);
    }
 
@@ -41,7 +35,7 @@ public class AsyncStoreConfiguration {
     * If true, all modifications to this cache store happen asynchronously, on a separate thread.
     */
    public boolean enabled() {
-      return enabled.get();
+      return attributes.attribute(ENABLED).get();
    }
 
    /**
@@ -51,7 +45,7 @@ public class AsyncStoreConfiguration {
     * elements.
     */
    public int modificationQueueSize() {
-      return modificationQueueSize.get();
+      return attributes.attribute(MODIFICATION_QUEUE_SIZE).get();
    }
 
    /**
@@ -60,45 +54,10 @@ public class AsyncStoreConfiguration {
     */
    @Deprecated
    public int threadPoolSize() {
-      return threadPoolSize.get();
+      return attributes.attribute(THREAD_POOL_SIZE).get();
    }
 
    public boolean failSilently() {
       return failSilently.get();
    }
-
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public String toString() {
-      return "AsyncStoreConfiguration [attributes=" + attributes + "]";
-   }
-
-   @Override
-   public boolean equals(Object obj) {
-      if (this == obj)
-         return true;
-      if (obj == null)
-         return false;
-      if (getClass() != obj.getClass())
-         return false;
-      AsyncStoreConfiguration other = (AsyncStoreConfiguration) obj;
-      if (attributes == null) {
-         if (other.attributes != null)
-            return false;
-      } else if (!attributes.equals(other.attributes))
-         return false;
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
-      return result;
-   }
-
 }

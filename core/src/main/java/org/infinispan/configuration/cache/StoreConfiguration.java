@@ -2,6 +2,8 @@ package org.infinispan.configuration.cache;
 
 import java.util.Properties;
 
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+
 /**
  * StoreConfiguration contains generic configuration elements available to all the stores.
  *
@@ -61,4 +63,6 @@ public interface StoreConfiguration {
    }
 
    Properties properties();
+
+   AttributeSet attributes();
 }

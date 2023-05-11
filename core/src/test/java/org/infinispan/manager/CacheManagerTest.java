@@ -66,6 +66,7 @@ import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.persistence.dummy.Element;
 import org.infinispan.persistence.spi.ExternalStore;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
@@ -572,10 +573,10 @@ public class CacheManagerTest extends AbstractInfinispanTest {
 
    @ConfigurationFor(UnreliableCacheStore.class)
    @BuiltBy(UnreliableCacheStoreConfigurationBuilder.class)
-   public static class UnreliableCacheStoreConfiguration extends AbstractStoreConfiguration {
+   public static class UnreliableCacheStoreConfiguration extends AbstractStoreConfiguration<UnreliableCacheStoreConfiguration> {
 
       public UnreliableCacheStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async) {
-         super(attributes, async);
+         super(Element.DUMMY_STORE, attributes, async);
       }
    }
 

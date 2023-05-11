@@ -191,12 +191,13 @@ public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedSt
 
    @Override
    public void deleteBatch(Iterable<Object> keys) {
+      int maxBatchSize = configuration.maxBatchSize();
       CompletionStage<Void> stage = Flowable.fromIterable(keys)
             // Separate out batches by segment
             .groupBy(keyPartitioner::getSegment)
             .flatMap(groupedFlowable ->
                   groupedFlowable
-                        .buffer(configuration.maxBatchSize())
+                        .buffer(maxBatchSize)
                         .doOnNext(batch -> stores.get(groupedFlowable.getKey()).deleteBatch(batch))
                   , stores.length())
             .ignoreElements()
@@ -206,11 +207,12 @@ public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedSt
 
    @Override
    public CompletionStage<Void> bulkUpdate(Publisher<MarshallableEntry<? extends K, ? extends V>> publisher) {
+      int maxBatchSize = configuration.maxBatchSize();
       return Flowable.fromPublisher(publisher)
             .groupBy(me -> keyPartitioner.getSegment(me.getKey()))
             .flatMapCompletable(groupedFlowable ->
                   groupedFlowable
-                        .buffer(configuration.maxBatchSize())
+                        .buffer(maxBatchSize)
                         .flatMapCompletable(batch -> {
                            CompletionStage<Void> stage = stores.get(groupedFlowable.getKey()).bulkUpdate(Flowable.fromIterable(batch));
                            return Completable.fromCompletionStage(stage);
