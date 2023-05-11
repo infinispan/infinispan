@@ -14,6 +14,8 @@ import org.infinispan.server.configuration.ServerConfiguration;
 import org.infinispan.server.core.security.sasl.SaslAuthenticator;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfiguration;
+import org.infinispan.server.resp.authentication.RespAuthenticator;
+import org.infinispan.server.resp.configuration.RespServerConfiguration;
 import org.wildfly.security.auth.server.MechanismConfiguration;
 import org.wildfly.security.auth.server.MechanismConfigurationSelector;
 import org.wildfly.security.auth.server.MechanismRealmConfiguration;
@@ -60,6 +62,13 @@ public class ElytronSASLAuthenticator implements SaslAuthenticator {
       ElytronSASLAuthenticator authenticator = (ElytronSASLAuthenticator) configuration.authentication().sasl().authenticator();
       if (authenticator != null) {
          authenticator.init(serverConfiguration, timeoutExecutor);
+      }
+   }
+
+   public static void init(RespServerConfiguration configuration, ServerConfiguration serverConfiguration, ScheduledExecutorService timeoutExecutor) {
+      RespAuthenticator authenticator = configuration.authentication().authenticator();
+      if (authenticator != null) {
+         ((ElytronRESPAuthenticator) authenticator).init(serverConfiguration, timeoutExecutor);
       }
    }
 

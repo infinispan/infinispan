@@ -4,6 +4,8 @@ import static org.infinispan.security.Security.doPrivileged;
 
 import java.util.concurrent.CompletionStage;
 
+import javax.security.auth.Subject;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
@@ -78,6 +80,11 @@ public class SecurityActions {
    public static void checkPermission(EmbeddedCacheManager cacheManager, AuthorizationPermission permission) {
       Authorizer authorizer = getGlobalComponentRegistry(cacheManager).getComponent(Authorizer.class);
       authorizer.checkPermission(permission);
+   }
+
+   public static void checkPermission(EmbeddedCacheManager cacheManager, Subject subject, AuthorizationPermission permission) {
+      Authorizer authorizer = getGlobalComponentRegistry(cacheManager).getComponent(Authorizer.class);
+      authorizer.checkPermission(subject, permission);
    }
 
    public static ComponentRegistry getCacheComponentRegistry(AdvancedCache<?, ?> advancedCache) {

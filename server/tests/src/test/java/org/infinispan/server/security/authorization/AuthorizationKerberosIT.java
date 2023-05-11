@@ -86,6 +86,7 @@ public class AuthorizationKerberosIT extends AbstractAuthorization {
       }
       hotRodBuilders.put(user, hotRodBuilder);
       restBuilders.put(user, restBuilder);
+      respBuilders.clear(); // No supported by RESP.
    }
 
    protected String expectedServerPrincipalName(TestUser user) {

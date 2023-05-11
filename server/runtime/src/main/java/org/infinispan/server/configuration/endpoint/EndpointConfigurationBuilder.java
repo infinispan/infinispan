@@ -29,6 +29,8 @@ import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
 import org.infinispan.server.security.ElytronHTTPAuthenticator;
 import org.infinispan.server.security.ElytronSASLAuthenticator;
 import org.infinispan.server.security.ElytronUsernamePasswordAuthenticator;
+import org.infinispan.server.security.ElytronRESPAuthenticator;
+import org.infinispan.server.security.RespClientCertAuthenticator;
 import org.infinispan.server.security.ServerSecurityRealm;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
@@ -272,17 +274,31 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
       if (!authentication.hasSecurityRealm()) {
          authentication.securityRealm(securityRealmName);
       }
+
+      boolean authSupported = false;
       ServerSecurityRealm securityRealm = security.realms().getRealm(authentication.securityRealm()).serverSecurityRealm();
+      ElytronRESPAuthenticator respAuthenticator = new ElytronRESPAuthenticator();
+
       if (securityRealm.hasFeature(ServerSecurityRealm.Feature.PASSWORD_PLAIN)) {
-         authentication.authenticator(new ElytronUsernamePasswordAuthenticator(authentication.securityRealm()));
-      } else {
+         respAuthenticator.withUsernamePasswordAuth(new ElytronUsernamePasswordAuthenticator(authentication.securityRealm()));
+         authSupported = true;
+      }
+
+      if (securityRealm.hasFeature(ServerSecurityRealm.Feature.TRUST)) {
+         respAuthenticator.withClientCertAuth(new RespClientCertAuthenticator(authentication.securityRealm()));
+         authSupported = true;
+      }
+
+      if (!authSupported) {
          if (builder.implicitConnector()) {
             // The connector was added implicitly, but the security realm cannot support it. Remove it.
             return null;
          } else {
-            throw Server.log.respEndpointRequiresRealmWithPassword();
+            throw Server.log.respEndpointRequiresRealmWithPasswordOrTrustore();
          }
       }
+
+      authentication.authenticator(respAuthenticator);
       return builder;
    }
 

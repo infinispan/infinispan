@@ -4,7 +4,7 @@ import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.server.core.configuration.AuthenticationConfiguration;
-import org.infinispan.server.core.security.UsernamePasswordAuthenticator;
+import org.infinispan.server.resp.authentication.RespAuthenticator;
 
 /**
  * RespAuthenticationConfiguration.
@@ -16,13 +16,13 @@ public class RespAuthenticationConfiguration extends ConfigurationElement<RespAu
    public static final AttributeDefinition<String> SECURITY_REALM = AttributeDefinition.builder("security-realm", null, String.class).immutable().build();
 
    private final boolean enabled;
-   private final UsernamePasswordAuthenticator authenticator;
+   private final RespAuthenticator authenticator;
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(RespAuthenticationConfiguration.class, SECURITY_REALM);
    }
 
-   RespAuthenticationConfiguration(AttributeSet attributes, UsernamePasswordAuthenticator authenticator, boolean enabled) {
+   RespAuthenticationConfiguration(AttributeSet attributes, RespAuthenticator authenticator, boolean enabled) {
       super("authentication", attributes);
       this.enabled = enabled;
       this.authenticator = authenticator;
@@ -32,7 +32,7 @@ public class RespAuthenticationConfiguration extends ConfigurationElement<RespAu
       return enabled;
    }
 
-   public UsernamePasswordAuthenticator authenticator() {
+   public RespAuthenticator authenticator() {
       return authenticator;
    }
 

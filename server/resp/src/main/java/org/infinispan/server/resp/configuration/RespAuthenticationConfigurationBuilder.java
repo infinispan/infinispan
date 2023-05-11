@@ -7,7 +7,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.core.configuration.AbstractProtocolServerConfigurationChildBuilder;
 import org.infinispan.server.core.configuration.AuthenticationConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
-import org.infinispan.server.core.security.UsernamePasswordAuthenticator;
+import org.infinispan.server.resp.authentication.RespAuthenticator;
 import org.infinispan.server.resp.logging.Log;
 
 
@@ -19,7 +19,7 @@ import org.infinispan.server.resp.logging.Log;
  */
 public class RespAuthenticationConfigurationBuilder extends AbstractProtocolServerConfigurationChildBuilder<RespServerConfiguration, RespAuthenticationConfigurationBuilder, RespAuthenticationConfiguration> implements AuthenticationConfigurationBuilder<RespAuthenticationConfiguration> {
    private final AttributeSet attributes;
-   private UsernamePasswordAuthenticator authenticator;
+   private RespAuthenticator authenticator;
    private boolean enabled;
 
    RespAuthenticationConfigurationBuilder(ProtocolServerConfigurationBuilder builder) {
@@ -58,7 +58,7 @@ public class RespAuthenticationConfigurationBuilder extends AbstractProtocolServ
       return !attributes.attribute(SECURITY_REALM).isNull();
    }
 
-   public RespAuthenticationConfigurationBuilder authenticator(UsernamePasswordAuthenticator authenticator) {
+   public RespAuthenticationConfigurationBuilder authenticator(RespAuthenticator authenticator) {
       this.authenticator = authenticator;
       return this.enable();
    }

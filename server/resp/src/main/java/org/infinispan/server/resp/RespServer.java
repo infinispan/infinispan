@@ -30,6 +30,7 @@ import io.netty.channel.group.ChannelMatcher;
 public class RespServer extends AbstractProtocolServer<RespServerConfiguration> {
    public static final String RESP_SERVER_FEATURE = "resp-server";
    private final static Log log = LogFactory.getLog(RespServer.class, Log.class);
+   private MediaType configuredValueType = MediaType.APPLICATION_OCTET_STREAM;
 
    public RespServer() {
       super("Resp");
@@ -45,13 +46,14 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
          Configuration defaultCacheConfiguration = cacheManager.getDefaultCacheConfiguration();
          if (defaultCacheConfiguration != null) { // We have a default configuration, use that
             builder.read(defaultCacheConfiguration);
+            configuredValueType = builder.encoding().value().mediaType();
          } else {
             if (cacheManager.getCacheManagerConfiguration().isClustered()) { // We are running in clustered mode
                builder.clustering().cacheMode(CacheMode.REPL_SYNC);
                builder.clustering().hash().hashFunction(CRC16.getInstance());
             }
             builder.encoding().key().mediaType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
-            builder.encoding().value().mediaType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
+            builder.encoding().value().mediaType(configuredValueType);
          }
          cacheManager.defineConfiguration(configuration.defaultCacheName(), builder.build());
       }
@@ -92,7 +94,7 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
    }
 
    public Resp3Handler newHandler() {
-      return new Resp3Handler(this);
+      return new Resp3Handler(this, configuredValueType);
    }
 
    @Override
