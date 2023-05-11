@@ -18,6 +18,8 @@ import org.infinispan.server.resp.commands.connection.READONLY;
 import org.infinispan.server.resp.commands.connection.READWRITE;
 import org.infinispan.server.resp.commands.connection.RESET;
 import org.infinispan.server.resp.commands.connection.SELECT;
+import org.infinispan.server.resp.commands.list.LPOP;
+import org.infinispan.server.resp.commands.list.RPOP;
 import org.infinispan.server.resp.commands.list.LINDEX;
 import org.infinispan.server.resp.commands.list.LPUSH;
 import org.infinispan.server.resp.commands.list.LPUSHX;
@@ -101,11 +103,11 @@ public abstract class RespCommand {
       indexedRespCommand[6] = new RespCommand[]{new GET(), new GETDEL()};
       indexedRespCommand[7] = new RespCommand[]{new HELLO()};
       indexedRespCommand[8] = new RespCommand[]{new INCR(), new INCRBY(), new INCRBYFLOAT(), new INFO()};
-      indexedRespCommand[11] = new RespCommand[]{new LINDEX(), new LPUSH(), new LPUSHX()};
+      indexedRespCommand[11] = new RespCommand[]{new LINDEX(), new LPUSH(), new LPUSHX(), new LPOP()};
       indexedRespCommand[12] = new RespCommand[]{new MGET(), new MSET(), new MODULE()};
       indexedRespCommand[15] = new RespCommand[]{new PUBLISH(), new PING(), new PSUBSCRIBE(), new PUNSUBSCRIBE()};
       indexedRespCommand[16] = new RespCommand[]{new QUIT()};
-      indexedRespCommand[17] = new RespCommand[]{new RPUSH(), new RPUSHX(), new RESET(), new READWRITE(), new READONLY()};
+      indexedRespCommand[17] = new RespCommand[]{new RPUSH(), new RPUSHX(), new RPOP(), new RESET(), new READWRITE(), new READONLY()};
       // SET should always be first here
       indexedRespCommand[18] = new RespCommand[]{new SET(), new STRLEN(), new SUBSCRIBE(), new SELECT()};
       indexedRespCommand[20] = new RespCommand[]{new UNSUBSCRIBE()};

@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -79,7 +80,6 @@ public class ListBucket<V> {
       return new ArrayDeque<>(values);
    }
 
-
    @Override
    public String toString() {
       return "ListBucket{values=" + Util.toStr(values) + '}';
@@ -94,6 +94,47 @@ public class ListBucket<V> {
       }
 
       return new ListBucket<>(newBucket);
+   }
+
+   public class ListBucketResult {
+      private final Collection<V> result;
+      private final ListBucket<V> bucketValue;
+      public ListBucketResult(Collection<V> result, ListBucket<V> bucketValue) {
+         this.result = result;
+         this.bucketValue = bucketValue;
+      }
+
+      public ListBucket<V> bucketValue() {
+         return bucketValue;
+      }
+
+      public Collection<V> opResult() {
+         return result;
+      }
+   }
+   public ListBucketResult poll(boolean first, long count) {
+      List<V> polledValues = new ArrayList<>();
+      if (count >= values.size()) {
+         if (first) {
+            polledValues.addAll(values);
+         } else {
+            Iterator<V> ite = values.descendingIterator();
+            while(ite.hasNext()) {
+               polledValues.add(ite.next());
+            }
+         }
+         return new ListBucketResult(polledValues, new ListBucket<>());
+      }
+
+      Deque<V> valuesCopy = new ArrayDeque<>(values);
+      for (int i = 0 ; i < count; i++) {
+         if (first) {
+            polledValues.add(valuesCopy.pollFirst());
+         } else {
+            polledValues.add(valuesCopy.pollLast());
+         }
+      }
+      return new ListBucketResult(polledValues, new ListBucket<>(valuesCopy));
    }
 
    public V index(long index) {

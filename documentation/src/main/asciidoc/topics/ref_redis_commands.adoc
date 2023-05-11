@@ -58,6 +58,15 @@ The {brandname} RESP endpoint implements the following Redis commands:
 | link:https://redis.io/commands/mset[MSET]
 |
 
+| link:https://redis.io/commands/lpop[LPOP]
+|
+
+| link:https://redis.io/commands/lpush[LPUSH]
+|
+
+| link:https://redis.io/commands/lpushx[LPUSHX]
+|
+
 | link:https://redis.io/commands/ping[PING]
 |
 
@@ -71,6 +80,9 @@ The {brandname} RESP endpoint implements the following Redis commands:
 |
 
 | link:https://redis.io/commands/quit[QUIT]
+|
+
+| link:https://redis.io/commands/rpop[RPOP]
 |
 
 | link:https://redis.io/commands/rpush[RPUSH]

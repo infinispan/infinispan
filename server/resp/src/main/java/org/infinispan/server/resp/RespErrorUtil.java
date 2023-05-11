@@ -15,4 +15,9 @@ public final class RespErrorUtil {
       ByteBufferUtils.stringToByteBuf(
             "-ERR wrong number of arguments for '" + command.getName().toLowerCase() + "' command\r\n", allocatorToUse);
    }
+
+   public static void mustBePositive(ByteBufPool allocatorToUse) {
+      ByteBufferUtils.stringToByteBuf(
+            "-ERR value is out of range, must be positive\r\n", allocatorToUse);
+   }
 }
