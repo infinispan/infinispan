@@ -20,6 +20,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.IntStream;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.Exceptions;
@@ -49,6 +50,7 @@ import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 @Test(groups = "functional", testName = "server.resp.RespSingleNodeTest")
 public class RespSingleNodeTest extends SingleNodeRespBaseTest {
 
+   @Test
    public void testSetMultipleOptions() throws Exception {
       RedisCommands<String, String> redis = redisConnection.sync();
 
@@ -256,8 +258,9 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
 
    @DataProvider(name = "booleans")
    Object[][] booleans() {
-      // Reset disabled for now as the client isn't sending a reset command to the server
-      return new Object[][]{{true}, {false}};
+      // Reset disabled for now as the client isn't sending a reset command to the
+      // server
+      return new Object[][] { { true }, { false } };
    }
 
    @Test(dataProvider = "booleans")
@@ -274,12 +277,12 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       value = handOffQueue.poll(10, TimeUnit.SECONDS);
       assertThat(value).isEqualTo("subscribed-test-0");
 
-
       // 2 listeners, one for each sub above
       assertThat(cache.getAdvancedCache().getListeners()).hasSize(listenersBefore + 2);
       // Unsubscribe to all channels
       if (quit) {
-         // Originally wanted to use reset or quit, but they don't do what we expect from lettuce
+         // Originally wanted to use reset or quit, but they don't do what we expect from
+         // lettuce
          connection.getStatefulConnection().close();
 
          // Have to use eventually as they are removed asynchronously
@@ -328,7 +331,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       connection.unsubscribe("doesn't-exist");
       connection.unsubscribe("channel", "test");
 
-      for (String channel : new String[]{"channel2", "doesn't-exist", "channel", "test"}) {
+      for (String channel : new String[] { "channel2", "doesn't-exist", "channel", "test" }) {
          value = handOffQueue.poll(10, TimeUnit.SECONDS);
          assertThat(value).isEqualTo("unsubscribed-" + channel + "-0");
       }
@@ -485,12 +488,14 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
 
    public void testAuth() {
       RedisCommands<String, String> redis = redisConnection.sync();
-      Exceptions.expectException(RedisCommandExecutionException.class, ".*but no password is set", () -> redis.auth("user", "pass"));
+      Exceptions.expectException(RedisCommandExecutionException.class, ".*but no password is set",
+            () -> redis.auth("user", "pass"));
    }
 
    public void testNotImplementedCommand() {
       RedisCommands<String, String> redis = redisConnection.sync();
-      Exceptions.expectException(RedisCommandExecutionException.class, "ERR unknown command", () -> redis.sadd("not-supported", "should error"));
+      Exceptions.expectException(RedisCommandExecutionException.class, "ERR unknown command",
+            () -> redis.sadd("not-supported", "should error"));
    }
 
    protected RedisPubSubCommands<String, String> createPubSubConnection() {
@@ -632,5 +637,29 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       public String name() {
          return name;
       }
+   }
+
+   @Test
+   public void testExists() {
+      // Test on 10 entries
+      RedisCommands<String, String> redis = redisConnection.sync();
+      IntStream.range(0, 10).map(i -> 2 * i).forEach(i -> redis.set("key" + i, "value " + i));
+      // Check 20 keys, 10 exist
+      String[] keys = IntStream.range(0, 20).boxed().map(v -> "key" + v).toArray(String[]::new);
+      assertThat(redis.exists(keys)).isEqualTo(10);
+   }
+
+   @Test
+   public void testExistsMisc() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set("key1", "value1");
+      redis.set("key2", "value2");
+      redis.set("key3", "value3");
+      assertThat(redis.exists("key1")).isEqualTo(1);
+      assertThat(redis.exists("key1","key2","key3")).isEqualTo(3);
+      assertThat(redis.exists("nonexistent-key")).isEqualTo(0);
+      assertThat(redis.exists("key1","nonexistent-key","key2")).isEqualTo(2);
+      assertThat(redis.exists("key1","nonexistent-key","key1")).isEqualTo(2);
+      assertThat(redis.exists("nonexistent-key","nonexistent-key","key1")).isEqualTo(1);
    }
 }

@@ -24,6 +24,7 @@ import org.infinispan.server.resp.commands.list.RPOP;
 import org.infinispan.server.resp.commands.list.LINDEX;
 import org.infinispan.server.resp.commands.list.LPUSH;
 import org.infinispan.server.resp.commands.list.LPUSHX;
+import org.infinispan.server.resp.commands.generic.EXISTS;
 import org.infinispan.server.resp.commands.list.RPUSH;
 import org.infinispan.server.resp.commands.list.RPUSHX;
 import org.infinispan.server.resp.commands.pubsub.PSUBSCRIBE;
@@ -99,7 +100,7 @@ public abstract class RespCommand {
       indexedRespCommand[2] = new RespCommand[]{new CONFIG(), new COMMAND()};
       // DEL should always be first here
       indexedRespCommand[3] = new RespCommand[]{new DEL(), new DECR(), new DECRBY(), new DBSIZE()};
-      indexedRespCommand[4] = new RespCommand[]{new ECHO()};
+      indexedRespCommand[4] = new RespCommand[]{new ECHO(), new EXISTS()};
       // GET should always be first here
       indexedRespCommand[6] = new RespCommand[]{new GET(), new GETDEL()};
       indexedRespCommand[7] = new RespCommand[]{new HELLO()};

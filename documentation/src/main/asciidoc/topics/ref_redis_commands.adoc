@@ -31,6 +31,9 @@ The {brandname} RESP endpoint implements the following Redis commands:
 | link:https://redis.io/commands/echo[ECHO]
 |
 
+| link:https://redis.io/commands/exists[EXISTS]
+|
+
 | link:https://redis.io/commands/get[GET]
 |
 
