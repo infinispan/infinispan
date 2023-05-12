@@ -548,6 +548,19 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
    }
 
    @Test
+   public void testStrlenUTF8() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "strlen-nonascii";
+      String val = "Euro is €";
+      String app = " yen is ¥";
+      redis.set(key, val);
+      assertThat(redis.strlen(key)).isEqualTo(11);
+      // See if append and strlen are consistent
+      long retVal = redis.append(key, app);
+      assertThat(redis.strlen(key)).isEqualTo(retVal);
+   }
+
+   @Test
    public void testStrlenNotPresent() {
       RedisCommands<String, String> redis = redisConnection.sync();
       String key = "strlen-notpresent";

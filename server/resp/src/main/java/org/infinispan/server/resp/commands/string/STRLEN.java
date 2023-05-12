@@ -29,7 +29,7 @@ public class STRLEN extends RespCommand implements Resp3Command {
       byte[] keyBytes = arguments.get(0);
 
       CompletableFuture<Long> strLenAsync = handler.cache().getAsync(keyBytes)
-      .thenCompose(buff -> CompletableFuture.completedFuture(Long.valueOf(buff!=null ? buff.length : 0)));
+      .thenApply(buff -> buff!=null ? buff.length : 0L);
       return handler.stageToReturn(strLenAsync, ctx, Consumers.LONG_BICONSUMER);
    }
 }
