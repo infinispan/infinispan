@@ -322,8 +322,10 @@ class Compactor implements Consumer<Object> {
             // We have to copy the file ids into its own collection because it can pickup the compactor files sometimes
             // causing extra unneeded churn in some cases
             Set<Integer> currentFiles = new HashSet<>();
-            for (CloseableIterator<Integer> iter = fileProvider.getFileIterator(); iter.hasNext(); ) {
-               currentFiles.add(iter.next());
+            try (CloseableIterator<Integer> iter = fileProvider.getFileIterator()) {
+               while (iter.hasNext()) {
+                  currentFiles.add(iter.next());
+               }
             }
             for (int fileId : currentFiles) {
                Stats stats = fileStats.get(fileId);
