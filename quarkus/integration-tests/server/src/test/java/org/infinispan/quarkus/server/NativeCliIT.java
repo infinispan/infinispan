@@ -65,12 +65,12 @@ public class NativeCliIT {
       }).start();
 
       p.waitFor(5, TimeUnit.SECONDS);
-      assertEquals(0, p.exitValue());
       String stderr = sb.toString();
       if (!stderr.isEmpty()) {
          System.err.println(stderr);
          fail("Unexpected CLI output in stderr");
       }
+      assertEquals(0, p.exitValue());
       restResponse = sync(client.cache("mybatch").exists());
       assertEquals(204, restResponse.getStatus());
    }

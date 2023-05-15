@@ -28,7 +28,7 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-commons</artifactId>
+         <artifactId>infinispan-commons-graalvm</artifactId>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
@@ -152,11 +152,11 @@
                </properties>
             </configuration>
          </plugin>
-         <!-- For debug purposes -->
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>exec-maven-plugin</artifactId>
             <executions>
+               <!-- For debug purposes -->
                <execution>
                   <id>default-cli</id>
                   <goals>
@@ -165,6 +165,24 @@
                   <configuration>
                      <mainClass>${cli.main.class}</mainClass>
                      <cleanupDaemonThreads>false</cleanupDaemonThreads>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>graalvm-meta</id>
+                  <phase>process-classes</phase>
+                  <goals>
+                     <goal>exec</goal>
+                  </goals>
+                  <configuration>
+                     <executable>java</executable>
+                     <workingDirectory>target</workingDirectory>
+                     <arguments>
+                        <argument>-cp</argument>
+                        <classpath/>
+                        <argument>org.infinispan.commons.graalvm.NativeMetadataWriter</argument>
+                        <argument>org.infinispan.cli.util.aesh.graal.NativeMetadataProvider</argument>
+                        <argument>classes/META-INF/native-image/org.infinispan/infinispan-cli-client</argument>
+                     </arguments>
                   </configuration>
                </execution>
             </executions>
