@@ -42,7 +42,7 @@ public class ReflectiveClass implements JsonSerialization {
       return methods.toArray(new Method[0]);
    }
 
-   private ReflectiveClass(Class<?> clazz, Constructor<?>[] constructors, Field[] fields, Method[] methods) {
+   public ReflectiveClass(Class<?> clazz, Constructor<?>[] constructors, Field[] fields, Method[] methods) {
       this.clazz = clazz;
       this.constructors = constructors;
       this.fields = fields;

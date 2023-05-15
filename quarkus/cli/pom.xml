@@ -85,63 +85,6 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>aesh-cli-native-reflection</id>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>java</executable>
-                            <workingDirectory>target</workingDirectory>
-                            <arguments>
-                                <argument>-cp</argument>
-                                <classpath/>
-                                <argument>org.infinispan.cli.util.aesh.graal.GraalReflectionFileGenerator</argument>
-                                <argument>org.infinispan.cli.commands.CLI</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>aesh-kube-native-reflection</id>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>java</executable>
-                            <workingDirectory>target</workingDirectory>
-                            <arguments>
-                                <argument>-cp</argument>
-                                <classpath/>
-                                <argument>org.infinispan.cli.util.aesh.graal.GraalReflectionFileGenerator</argument>
-                                <argument>org.infinispan.cli.commands.kubernetes.Kube</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>aesh-batch-native-reflection</id>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>java</executable>
-                            <workingDirectory>target</workingDirectory>
-                            <arguments>
-                                <argument>-cp</argument>
-                                <classpath/>
-                                <argument>org.infinispan.cli.util.aesh.graal.GraalReflectionFileGenerator</argument>
-                                <argument>org.infinispan.cli.commands.Batch</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <systemPropertyVariables>
@@ -156,7 +99,7 @@
             <id>native</id>
             <properties>
                 <quarkus.package.type>native</quarkus.package.type>
-                <quarkus.native.additional-build-args>${native-build-args}-H:ResourceConfigurationFiles=../../src/main/native/cli_resources.json,-H:ReflectionConfigurationFiles=../cli_reflection.json\,../kube_reflection.json\,../batch_reflection.json\,../../src/main/native/cli.json,--initialize-at-run-time=org.infinispan.cli.benchmark.RespBenchmark</quarkus.native.additional-build-args>
+                <quarkus.native.additional-build-args>${native-build-args}</quarkus.native.additional-build-args>
             </properties>
             <build>
                 <plugins>
