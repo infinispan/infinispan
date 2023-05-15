@@ -8,6 +8,8 @@ import static org.infinispan.server.functional.XSiteIT.LON;
 import static org.infinispan.server.functional.XSiteIT.LON_CACHE_CUSTOM_NAME_XML_CONFIG;
 import static org.infinispan.server.functional.XSiteIT.LON_CACHE_OFF_HEAP;
 import static org.infinispan.server.functional.XSiteIT.LON_CACHE_XML_CONFIG;
+import static org.infinispan.server.functional.XSiteIT.MAX_COUNT_KEYS;
+import static org.infinispan.server.functional.XSiteIT.NR_KEYS;
 import static org.infinispan.server.functional.XSiteIT.NUM_SERVERS;
 import static org.infinispan.server.functional.XSiteIT.NYC;
 import static org.infinispan.server.functional.XSiteIT.NYC_CACHE_CUSTOM_NAME_XML_CONFIG;
@@ -117,13 +119,11 @@ public class XSiteRestCacheOperations {
       //Just to make sure that the file store is empty
       assertEquals(0, getTotalMemoryEntries(lonCache));
 
-      IntStream.range(0, 300)
-            .forEach(i -> {
-               String s = Integer.toString(i);
-               assertStatus(NO_CONTENT, lonCache.put(s, s));
-            });
-      eventuallyEquals("300", () -> assertStatus(OK, nycCache.size()));
-      assertEquals(100, getTotalMemoryEntries(lonCache));
+      IntStream.range(0, NR_KEYS)
+            .mapToObj(Integer::toString)
+            .forEach(s -> assertStatus(NO_CONTENT, lonCache.put(s, s)));
+      eventuallyEquals(Integer.toString(NR_KEYS), () -> assertStatus(OK, nycCache.size()));
+      assertEquals(MAX_COUNT_KEYS, getTotalMemoryEntries(lonCache));
    }
 
    private int getTotalMemoryEntries(RestCacheClient restCache) {
