@@ -7,6 +7,7 @@ import org.infinispan.server.cli.XSiteCliOperations;
 import org.infinispan.server.functional.hotrod.XSiteHotRodCacheOperations;
 import org.infinispan.server.functional.rest.XSiteRestCacheOperations;
 import org.infinispan.server.functional.rest.XSiteRestMetricsOperations;
+import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
 import org.infinispan.server.test.junit4.InfinispanXSiteServerRule;
 import org.infinispan.server.test.junit4.InfinispanXSiteServerRuleBuilder;
@@ -69,6 +70,8 @@ public class XSiteIT {
                "  </replicated-cache>" +
                "</cache-container></infinispan>";
 
+   public static final int NR_KEYS = 30;
+   public static final int MAX_COUNT_KEYS = 10;
    public static final String LON_CACHE_OFF_HEAP =
          "<infinispan><cache-container statistics=\"true\">" +
                "<distributed-cache name=\"%s\" owners=\"2\" mode=\"ASYNC\" remote-timeout=\"25000\" statistics=\"true\">" +
@@ -77,7 +80,7 @@ public class XSiteIT {
                "                <take-offline after-failures=\"-1\" min-wait=\"60000\"/>" +
                "            </backup>" +
                "        </backups>" +
-               "        <memory storage=\"OFF_HEAP\" max-count=\"100\" when-full=\"REMOVE\"/>" +
+               "        <memory storage=\"OFF_HEAP\" max-count=\"" + MAX_COUNT_KEYS + "\" when-full=\"REMOVE\"/>" +
                "        <persistence passivation=\"true\">" +
                "     <file-store shared=\"false\" preload=\"true\" purge=\"false\" />" +
                "  </persistence>" +
@@ -86,10 +89,12 @@ public class XSiteIT {
 
    static InfinispanServerRuleBuilder lonServerRule = InfinispanServerRuleBuilder
          .config("configuration/XSiteServerTest.xml")
+         .runMode(ServerRunMode.CONTAINER)
          .numServers(NUM_SERVERS);
 
    static InfinispanServerRuleBuilder nycServerRule = InfinispanServerRuleBuilder
          .config("configuration/XSiteServerTest.xml")
+         .runMode(ServerRunMode.CONTAINER)
          .numServers(NUM_SERVERS);
 
    @ClassRule

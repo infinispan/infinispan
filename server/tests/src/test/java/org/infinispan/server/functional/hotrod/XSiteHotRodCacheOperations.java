@@ -4,6 +4,8 @@ import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.commons.test.Eventually.eventuallyEquals;
 import static org.infinispan.server.functional.XSiteIT.LON_CACHE_CUSTOM_NAME_XML_CONFIG;
 import static org.infinispan.server.functional.XSiteIT.LON_CACHE_OFF_HEAP;
+import static org.infinispan.server.functional.XSiteIT.MAX_COUNT_KEYS;
+import static org.infinispan.server.functional.XSiteIT.NR_KEYS;
 import static org.infinispan.server.functional.XSiteIT.NYC_CACHE_CUSTOM_NAME_XML_CONFIG;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.LON;
@@ -84,10 +86,10 @@ public class XSiteHotRodCacheOperations {
       //Just to make sure that the file store is empty
       assertEquals(0, getTotalMemoryEntries(lonXML));
 
-      IntStream.range(0, 300).forEach(i -> lonCache.put(i, i));
+      IntStream.range(0, NR_KEYS).forEach(i -> lonCache.put(i, i));
 
-      eventuallyEquals(300, nycCache::size);
-      assertEquals(100, getTotalMemoryEntries(lonXML));
+      eventuallyEquals(NR_KEYS, nycCache::size);
+      assertEquals(MAX_COUNT_KEYS, getTotalMemoryEntries(lonXML));
    }
 
    @Test
