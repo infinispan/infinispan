@@ -3,6 +3,7 @@ package org.infinispan.cli.connection.rest;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -23,9 +24,9 @@ public class RestConnector implements Connector {
    final Pattern HOST_PORT = Pattern.compile("(\\[[0-9A-Fa-f:]+\\]|[^:/?#]*)(?::(\\d*))");
 
    @Override
-   public Connection getConnection(String connectionString, SSLContextSettings sslContextSettings) {
+   public Connection getConnection(Properties properties, String connectionString, SSLContextSettings sslContextSettings) {
       try {
-         RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
+         RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder().withProperties(properties);
          if (connectionString == null || connectionString.isEmpty() || "-".equals(connectionString)) {
             builder.addServer().host("localhost").port(11222);
          } else {
