@@ -1,5 +1,6 @@
 package org.infinispan.server.test.api;
 
+import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
@@ -79,10 +80,8 @@ public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDri
       if (serverConfiguration != null) {
          RestEntity configEntity = RestEntity.create(MediaType.APPLICATION_XML, serverConfiguration.toStringConfiguration(name));
          future = restClient.cache(name).createWithConfiguration(configEntity, flags.toArray(new CacheContainerAdmin.AdminFlag[0]));
-      } else if (mode != null) {
-         future = restClient.cache(name).createWithTemplate("org.infinispan." + mode, flags.toArray(new CacheContainerAdmin.AdminFlag[0]));
       } else {
-         future = restClient.cache(name).createWithTemplate("org.infinispan.DIST_SYNC", flags.toArray(new CacheContainerAdmin.AdminFlag[0]));
+         future = restClient.cache(name).createWithTemplate("org.infinispan." + Objects.requireNonNullElse(mode, CacheMode.DIST_SYNC).name(), flags.toArray(new CacheContainerAdmin.AdminFlag[0]));
       }
       RestResponse response = Exceptions.unchecked(() -> future.toCompletableFuture().get(TIMEOUT, TimeUnit.SECONDS));
       response.close();

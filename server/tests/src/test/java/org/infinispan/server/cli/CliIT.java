@@ -23,8 +23,8 @@ import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -328,16 +328,26 @@ public class CliIT {
       }
    }
 
+   @Test
+   public void testCliAlternateContext() {
+      try (AeshTestConnection terminal = new AeshTestConnection()) {
+         CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
+         terminal.send("connect --context-path=/relax " + connectionUrl(TestUser.ADMIN, 11225));
+         terminal.assertContains("//containers/default]>");
+         terminal.clear();
+      }
+   }
+
    private String hostAddress() {
       return SERVERS.getServerDriver().getServerAddress(0).getHostAddress();
    }
 
    private String connectionUrl() {
-      return connectionUrl(TestUser.ADMIN);
+      return connectionUrl(TestUser.ADMIN, 11222);
    }
 
-   private String connectionUrl(TestUser user) {
-      return String.format("http://%s:%s@%s:11222", user.getUser(), user.getPassword(), hostAddress());
+   private String connectionUrl(TestUser user, int port) {
+      return String.format("http://%s:%s@%s:%d", user.getUser(), user.getPassword(), hostAddress(), port);
    }
 
    private File getCliResource(String resource) {

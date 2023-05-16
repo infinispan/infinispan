@@ -1,8 +1,8 @@
 package org.infinispan.client.rest.configuration;
 
-import java.util.Properties;
-
 import org.infinispan.commons.util.TypedProperties;
+
+import java.util.Properties;
 
 /**
  * Encapsulate all config properties here
@@ -57,6 +57,7 @@ public class RestClientConfigurationProperties {
    public static final long DEFAULT_CONNECT_TIMEOUT = 60_000;
    public static final int DEFAULT_MAX_RETRIES = 10;
    public static final int DEFAULT_BATCH_SIZE = 10_000;
+   public static final String DEFAULT_CONTEXT_PATH = "/rest";
 
    private final TypedProperties props;
 
