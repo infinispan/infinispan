@@ -108,7 +108,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
                  purgeCandidates.hasNext();) {
                InternalCacheEntry<K, V> e = purgeCandidates.next();
                if (e.isExpired(currentTimeMillis)) {
-                  entryExpiredInMemory(e, currentTimeMillis, false);
+                  CompletionStages.join(entryExpiredInMemory(e, currentTimeMillis, false));
                }
             }
             if (log.isTraceEnabled()) {
