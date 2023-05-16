@@ -155,7 +155,6 @@ public class ContextImpl implements Context, AeshContext, Closeable {
                      username = sysConsole.readLine(Messages.MSG.username());
                   }
                   password = username.isEmpty() ? "" : new String(sysConsole.readPassword(Messages.MSG.password()));
-               } else {
                }
             }
             connection.connect(username, password);

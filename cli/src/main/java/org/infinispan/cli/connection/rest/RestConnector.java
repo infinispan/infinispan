@@ -20,8 +20,7 @@ import org.kohsuke.MetaInfServices;
  **/
 @MetaInfServices
 public class RestConnector implements Connector {
-   private
-   final Pattern HOST_PORT = Pattern.compile("(\\[[0-9A-Fa-f:]+\\]|[^:/?#]*)(?::(\\d*))");
+   private final Pattern HOST_PORT = Pattern.compile("(\\[[0-9A-Fa-f:]+\\]|[^:/?#]*)(?::(\\d*))");
 
    @Override
    public Connection getConnection(Properties properties, String connectionString, SSLContextSettings sslContextSettings) {
