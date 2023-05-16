@@ -3,5 +3,5 @@
            xmlns="urn:infinispan:server:15.0"
            socket-binding="alternate-3" security-realm="default">
    <hotrod-connector security-realm="alternate"/>
-   <rest-connector/>
+   <rest-connector context-path="relax"/>
 </endpoint>

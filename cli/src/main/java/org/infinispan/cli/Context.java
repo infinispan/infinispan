@@ -49,7 +49,7 @@ public interface Context extends AeshContext {
     * @param connectionString
     * @return
     */
-   Connection connect(Shell shell, String connectionString);
+   void connect(Shell shell, String connectionString);
 
    /**
     * Connect to a server using the supplied username and password
@@ -60,7 +60,7 @@ public interface Context extends AeshContext {
     * @param password
     * @return
     */
-   Connection connect(Shell shell, String connectionString, String username, String password);
+   void connect(Shell shell, String connectionString, String username, String password);
 
    void setRegistry(CommandRegistry<? extends CommandInvocation> registry);
 

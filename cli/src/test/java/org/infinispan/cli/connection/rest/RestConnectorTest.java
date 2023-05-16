@@ -1,19 +1,19 @@
 package org.infinispan.cli.connection.rest;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import java.security.NoSuchAlgorithmException;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-
 import org.infinispan.cli.util.ZeroSecurityTrustManager;
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.junit.Test;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import java.security.NoSuchAlgorithmException;
+import java.util.Properties;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -24,7 +24,7 @@ public class RestConnectorTest {
    @Test
    public void testUrlWithCredentials() {
       RestConnector connector = new RestConnector();
-      RestConnection connection = (RestConnection) connector.getConnection("http://user:password@localhost:11222", null);
+      RestConnection connection = (RestConnection) connector.getConnection(new Properties(), "http://user:password@localhost:11222", null);
       RestClientConfigurationBuilder builder = connection.getBuilder();
       RestClientConfiguration configuration = builder.build();
       assertEquals(11222, configuration.servers().get(0).port());
@@ -37,7 +37,7 @@ public class RestConnectorTest {
    @Test
    public void testUrlWithoutCredentials() {
       RestConnector connector = new RestConnector();
-      RestConnection connection = (RestConnection) connector.getConnection("http://localhost:11222", null);
+      RestConnection connection = (RestConnection) connector.getConnection(new Properties(),"http://localhost:11222", null);
       RestClientConfigurationBuilder builder = connection.getBuilder();
       RestClientConfiguration configuration = builder.build();
       assertEquals(11222, configuration.servers().get(0).port());
@@ -48,7 +48,7 @@ public class RestConnectorTest {
    @Test
    public void testUrlWithoutPort() {
       RestConnector connector = new RestConnector();
-      RestConnection connection = (RestConnection) connector.getConnection("http://localhost", null);
+      RestConnection connection = (RestConnection) connector.getConnection(new Properties(),"http://localhost", null);
       RestClientConfigurationBuilder builder = connection.getBuilder();
       RestClientConfiguration configuration = builder.build();
       assertEquals(80, configuration.servers().get(0).port());
@@ -59,7 +59,7 @@ public class RestConnectorTest {
    @Test
    public void testUrlWithSSL() throws NoSuchAlgorithmException {
       RestConnector connector = new RestConnector();
-      RestConnection connection = (RestConnection) connector.getConnection("https://localhost", null);
+      RestConnection connection = (RestConnection) connector.getConnection(new Properties(),"https://localhost", null);
       RestClientConfigurationBuilder builder = connection.getBuilder();
       builder.security().ssl().sslContext(SSLContext.getDefault()).trustManagers(new TrustManager[]{new ZeroSecurityTrustManager()});
       RestClientConfiguration configuration = builder.build();
@@ -73,7 +73,7 @@ public class RestConnectorTest {
    @Test
    public void testEmptyUrl() {
       RestConnector connector = new RestConnector();
-      RestConnection connection = (RestConnection) connector.getConnection("", null);
+      RestConnection connection = (RestConnection) connector.getConnection(new Properties(),"", null);
       RestClientConfigurationBuilder builder = connection.getBuilder();
       RestClientConfiguration configuration = builder.build();
       assertEquals(11222, configuration.servers().get(0).port());
@@ -83,7 +83,7 @@ public class RestConnectorTest {
    @Test
    public void testPlainHostPort() {
       RestConnector connector = new RestConnector();
-      RestConnection connection = (RestConnection) connector.getConnection("my.host.com:12345", null);
+      RestConnection connection = (RestConnection) connector.getConnection(new Properties(),"my.host.com:12345", null);
       RestClientConfigurationBuilder builder = connection.getBuilder();
       RestClientConfiguration configuration = builder.build();
       assertEquals(12345, configuration.servers().get(0).port());

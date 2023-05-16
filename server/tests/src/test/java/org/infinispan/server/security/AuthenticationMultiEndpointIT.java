@@ -16,6 +16,7 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.client.rest.configuration.RestClientConfigurationProperties;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.category.Security;
@@ -46,7 +47,7 @@ public class AuthenticationMultiEndpointIT {
    @RegisterExtension
    public static InfinispanServerExtension SERVERS =
          InfinispanServerExtensionBuilder.config("configuration/AuthenticationServerMultipleEndpoints.xml")
-               .addListener(new SecurityRealmServerListener("alternate"))
+               .addListener(new SecurityRealmServerListener("alternate")).numServers(1)
                .build();
 
    static class ArgsProvider implements ArgumentsProvider {
@@ -59,13 +60,12 @@ public class AuthenticationMultiEndpointIT {
             String userPrefix = "alternate".equals(realm) ? "alternate_" : "";
             // We test against different ports with different configurations
             for (int p = 11222; p < 11227; p++) {
-               Integer port = Integer.valueOf(p);
-
                final boolean isAnonymous;
                final boolean isAdmin;
                final boolean isPlain;
                final boolean isAlternateRealmHotRod;
                final boolean isAlternateRealmHTTP;
+               final String contextPath;
                switch (p) {
                   case 11222:
                      isAnonymous = false;
@@ -73,6 +73,7 @@ public class AuthenticationMultiEndpointIT {
                      isPlain = true;
                      isAlternateRealmHotRod = false;
                      isAlternateRealmHTTP = false;
+                     contextPath = RestClientConfigurationProperties.DEFAULT_CONTEXT_PATH;
                      break;
                   case 11223:
                      isAnonymous = true;
@@ -80,6 +81,7 @@ public class AuthenticationMultiEndpointIT {
                      isPlain = false;
                      isAlternateRealmHotRod = false;
                      isAlternateRealmHTTP = false;
+                     contextPath = RestClientConfigurationProperties.DEFAULT_CONTEXT_PATH;
                      break;
                   case 11224:
                      isAnonymous = false;
@@ -87,6 +89,7 @@ public class AuthenticationMultiEndpointIT {
                      isPlain = true;
                      isAlternateRealmHotRod = true;
                      isAlternateRealmHTTP = true;
+                     contextPath = RestClientConfigurationProperties.DEFAULT_CONTEXT_PATH;
                      break;
                   case 11225:
                      isAnonymous = false;
@@ -94,6 +97,7 @@ public class AuthenticationMultiEndpointIT {
                      isPlain = false;
                      isAlternateRealmHotRod = true;
                      isAlternateRealmHTTP = false;
+                     contextPath = "/relax";
                      break;
                   case 11226:
                      isAnonymous = false;
@@ -101,18 +105,20 @@ public class AuthenticationMultiEndpointIT {
                      isPlain = false;
                      isAlternateRealmHotRod = false;
                      isAlternateRealmHTTP = false;
+                     contextPath = RestClientConfigurationProperties.DEFAULT_CONTEXT_PATH;
                      break;
                   default:
                      throw new IllegalArgumentException();
                }
 
                // We test with different Hot Rod mechs
+               int port = p;
                Common.SASL_MECHS.forEach(m ->
-                     args.add(Arguments.of("Hot Rod", m, realm, userPrefix, port, isAnonymous, isAdmin, isPlain, isAlternateRealmHotRod))
+                     args.add(Arguments.of("Hot Rod", m, realm, userPrefix, port, isAnonymous, isAdmin, isPlain, isAlternateRealmHotRod, null))
                );
 
                Common.HTTP_MECHS.forEach(m ->
-                     args.add(Arguments.of(Protocol.HTTP_11.name(), m, realm, userPrefix, port, isAnonymous, isAdmin, isPlain, isAlternateRealmHTTP))
+                     args.add(Arguments.of(Protocol.HTTP_11.name(), m, realm, userPrefix, port, isAnonymous, isAdmin, isPlain, isAlternateRealmHTTP, contextPath))
                );
             }
          }
@@ -120,7 +126,7 @@ public class AuthenticationMultiEndpointIT {
       }
    }
 
-   @ParameterizedTest(name = "protocol={0}, mech={1}, realm={2}, userPrefix={3}, port={4}, anon={5}, admin={6}, plain={7}")
+   @ParameterizedTest(name = "protocol={0}, mech={1}, realm={2}, userPrefix={3}, port={4}, anon={5}, admin={6}, plain={7}, contextPath={9}")
    @ArgumentsSource(AuthenticationMultiEndpointIT.ArgsProvider.class)
    public void testProtocol(@AggregateWith(EndpointAggregator.class) Endpoint endpoint) {
       endpoint.test();
@@ -138,7 +144,8 @@ public class AuthenticationMultiEndpointIT {
                accessor.getBoolean(5),
                accessor.getBoolean(6),
                accessor.getBoolean(7),
-               accessor.getBoolean(8)
+               accessor.getBoolean(8),
+               accessor.getString(9)
          );
       }
    }
@@ -154,9 +161,10 @@ public class AuthenticationMultiEndpointIT {
       private final boolean isAlternateRealm;
       private final boolean useAuth;
       private final boolean isMechanismClearText;
+      private final String contextPath;
 
 
-      public Endpoint(String protocol, String mechanism, String realm, String userPrefix, int port, boolean isAnonymous, boolean isAdmin, boolean isPlain, boolean isAlternateRealm) {
+      public Endpoint(String protocol, String mechanism, String realm, String userPrefix, int port, boolean isAnonymous, boolean isAdmin, boolean isPlain, boolean isAlternateRealm, String contextPath) {
          this.protocol = protocol;
          this.mechanism = mechanism;
          this.realm = realm;
@@ -168,6 +176,7 @@ public class AuthenticationMultiEndpointIT {
          this.isAlternateRealm = isAlternateRealm;
          this.useAuth = !mechanism.isEmpty();
          this.isMechanismClearText = SaslMechanismInformation.Names.PLAIN.equals(mechanism) || HttpConstants.BASIC_NAME.equals(mechanism);
+         this.contextPath = contextPath;
       }
 
       public void test() {
@@ -200,7 +209,9 @@ public class AuthenticationMultiEndpointIT {
 
       private void testRest() {
          Protocol proto = Protocol.valueOf(protocol);
-         RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder().followRedirects(false);
+         RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder()
+               .followRedirects(false)
+               .contextPath(contextPath);
          if (useAuth) {
             builder
                   .protocol(proto)

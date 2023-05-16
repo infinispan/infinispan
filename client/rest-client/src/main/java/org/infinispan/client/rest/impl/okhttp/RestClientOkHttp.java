@@ -150,7 +150,7 @@ public class RestClientOkHttp implements RestClient {
 
       httpClient = builder.build();
       ServerConfiguration server = configuration.servers().get(0);
-      baseURL = String.format("%s://%s:%d", ssl.enabled() ? "https" : "http", server.host(), server.port()).replaceAll("//", "/");
+      baseURL = String.format("%s://%s:%d", ssl.enabled() ? "https" : "http", server.host(), server.port());
    }
 
    @Override
