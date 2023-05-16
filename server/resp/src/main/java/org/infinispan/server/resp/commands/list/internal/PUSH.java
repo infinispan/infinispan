@@ -1,7 +1,6 @@
 package org.infinispan.server.resp.commands.list.internal;
 
 import io.netty.channel.ChannelHandlerContext;
-import org.infinispan.commons.CacheException;
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
@@ -56,14 +55,7 @@ public abstract class PUSH extends RespCommand implements Resp3Command {
 
       return CompletionStages.handleAndCompose(aggregateCompletionStage.freeze(), (r, t) -> {
          if (t != null) {
-            if (t instanceof CacheException) {
-               CacheException cacheException = (CacheException) t;
-               if (cacheException.getCause() instanceof ClassCastException) {
-                  RespErrorUtil.wrongType(handler.allocatorToUse());
-                  return handler.myStage();
-               }
-            }
-            throw new RuntimeException(t);
+            return handleException(handler, t);
          }
 
          return handler.stageToReturn(listMultimap.size(key), ctx, Consumers.LONG_BICONSUMER);

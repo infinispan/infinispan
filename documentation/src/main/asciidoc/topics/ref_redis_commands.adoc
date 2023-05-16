@@ -49,6 +49,9 @@ The {brandname} RESP endpoint implements the following Redis commands:
 | link:https://redis.io/commands/info[INFO]
 |
 
+| link:https://redis.io/commands/info[LINDEX]
+|
+
 | link:https://redis.io/commands/mget[MGET]
 |
 

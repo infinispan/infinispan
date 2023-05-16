@@ -99,4 +99,33 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
             .hasMessageContaining("ERRWRONGTYPE");
    }
 
+   public void testLINDEX() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThat(redis.lindex("noexisting", 10)).isNull();
+
+      redis.rpush("leads", "tristan");
+      assertThat(redis.lindex("leads", 0)).isEqualTo("tristan");
+      assertThat(redis.lindex("leads", -1)).isEqualTo("tristan");
+      assertThat(redis.lindex("leads", 1)).isNull();
+      assertThat(redis.lindex("leads", -2)).isNull();
+
+      redis.rpush("leads", "william", "jose", "ryan", "pedro", "vittorio");
+      // size 6: ["tristan", "william", "jose", "ryan", "pedro", "vittorio"]
+      assertThat(redis.lindex("leads", 1)).isEqualTo("william");
+      assertThat(redis.lindex("leads", -1)).isEqualTo("vittorio");
+      assertThat(redis.lindex("leads", -6)).isEqualTo("tristan");
+      assertThat(redis.lindex("leads", 3)).isEqualTo("ryan");
+      assertThat(redis.lindex("leads", -3)).isEqualTo("ryan");
+      assertThat(redis.lindex("leads", 6)).isNull();
+      assertThat(redis.lindex("leads", -7)).isNull();
+
+      // Set a String Command
+      redis.set("another", "tristan");
+
+      // LINDEX on an existing key that contains a String, not a Collection!
+      assertThatThrownBy(() -> {
+         redis.lindex("another", 1);
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERRWRONGTYPE");
+   }
 }
