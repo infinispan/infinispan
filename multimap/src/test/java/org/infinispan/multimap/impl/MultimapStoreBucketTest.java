@@ -33,7 +33,7 @@ public class MultimapStoreBucketTest extends AbstractInfinispanTest {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(globalBuilder, config);
 
       MultimapCacheManager<String, Person> multimapCacheManager = EmbeddedMultimapCacheManagerFactory.from(cm);
-      MultimapCache<String, Person> multimapCache = multimapCacheManager.get("test", false);
+      MultimapCache<String, Person> multimapCache = multimapCacheManager.get("test");
       multimapCache.put("k1", new SuperPerson());
       PersistenceMarshallerImpl pm = TestingUtil.extractPersistenceMarshaller(cm);
       DelegatingUserMarshaller userMarshaller = (DelegatingUserMarshaller) pm.getUserMarshaller();

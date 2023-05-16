@@ -1,6 +1,5 @@
 package org.infinispan.multimap.impl;
 
-import org.infinispan.multimap.configuration.EmbeddedMultimapConfiguration;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 
@@ -9,7 +8,6 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
       includeClasses = {
             Bucket.class,
             ListBucket.class,
-            EmbeddedMultimapConfiguration.class,
       },
       schemaFileName = "persistence.multimap.proto",
       schemaFilePath = "proto/generated",

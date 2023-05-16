@@ -13,10 +13,6 @@
     <description>Infinispan Multimap module</description>
 
     <dependencies>
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-api</artifactId>
-        </dependency>
        <dependency>
           <groupId>org.infinispan</groupId>
           <artifactId>infinispan-component-processor</artifactId>
