@@ -38,10 +38,10 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
    private boolean tcpNoDelay = true;
    private boolean tcpKeepAlive = false;
    private Protocol protocol = Protocol.HTTP_11;
-   private String contextPath = "/rest";
+   private String contextPath = RestClientConfigurationProperties.DEFAULT_CONTEXT_PATH;
    private boolean priorKnowledge;
    private boolean followRedirects = true;
-   private Map<String, String> headers = new HashMap<>();
+   private final Map<String, String> headers = new HashMap<>();
 
    public RestClientConfigurationBuilder() {
       this.security = new SecurityConfigurationBuilder(this);
@@ -189,7 +189,7 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
    @Override
    public RestClientConfiguration create() {
       List<ServerConfiguration> servers = new ArrayList<>();
-      if (this.servers.size() > 0)
+      if (!this.servers.isEmpty())
          for (ServerConfigurationBuilder server : this.servers) {
             servers.add(server.create());
          }
@@ -229,7 +229,7 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
       this.tcpKeepAlive = template.tcpKeepAlive();
       this.security.read(template.security(), combine);
       this.headers.putAll(template.headers());
-
+      this.contextPath = template.contextPath();
       return this;
    }
 }

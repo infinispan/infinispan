@@ -14,6 +14,7 @@ import org.aesh.command.option.Option;
 import org.aesh.io.Resource;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.logging.Messages;
+import org.infinispan.client.rest.configuration.RestClientConfigurationProperties;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -53,6 +54,9 @@ public class Connect extends CliCommand {
    @Option(name = "hostname-verifier", description = "A regular expression used to match hostnames when connecting to SSL/TLS-enabled servers")
    String hostnameVerifier;
 
+   @Option(name = "context-path", description = "The context path for the server REST connector. If unspecified, defaults to /rest")
+   String contextPath;
+
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
    protected boolean help;
 
@@ -68,6 +72,9 @@ public class Connect extends CliCommand {
       } catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException | IOException e) {
          invocation.getShell().writeln(Messages.MSG.keyStoreError(e));
          throw new RuntimeException(e);
+      }
+      if (contextPath != null) {
+         invocation.getContext().setProperty(RestClientConfigurationProperties.CONTEXT_PATH, contextPath);
       }
       if (username != null) {
          invocation.getContext().connect(invocation.getShell(), connectionString, username, password);

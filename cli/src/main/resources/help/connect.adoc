@@ -39,11 +39,14 @@ Specifies a keystore that contains a client certificate.
 *-w, --keystore-password*='PASSWORD'::
 Specifies a password for the keystore.
 
-*--hostname-verifier*='REGEX'
+*--hostname-verifier*='REGEX'::
 A regular expression that matches hostnames during a connection to an SSL/TLS-enabled server.
 
 *--trustall*::
 Trusts all certificates.
+
+*--context-path*='PATH'::
+The context path for the server REST connector. If unspecified, defaults to `/rest`.
 
 EXAMPLE
 -------
