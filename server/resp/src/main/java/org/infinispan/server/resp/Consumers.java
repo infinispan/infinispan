@@ -29,6 +29,8 @@ public final class Consumers {
 
    public static final BiConsumer<Double, ByteBufPool> DOUBLE_BICONSUMER = Resp3Handler::handleDoubleResult;
 
+   public static final BiConsumer<byte[], ByteBufPool> BULK_BICONSUMER = Resp3Handler::handleBulkResult;
+
    public static final BiConsumer<byte[], ByteBufPool> GET_BICONSUMER = (innerValueBytes, alloc) -> {
       if (innerValueBytes != null) {
          ByteBufferUtils.bytesToResult(innerValueBytes, alloc);
