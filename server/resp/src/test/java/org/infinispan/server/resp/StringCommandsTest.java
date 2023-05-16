@@ -4,7 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.withPrecision;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import org.infinispan.commons.time.ControlledTimeService;
@@ -12,6 +16,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import io.lettuce.core.GetExArgs;
+import io.lettuce.core.KeyValue;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.SetArgs;
 import io.lettuce.core.StrAlgoArgs;
@@ -467,5 +472,38 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.get(key)).isEqualTo(value);
       ((ControlledTimeService) this.timeService).advance(2000);
       assertThat(redis.get(key)).isNull();
+   }
+
+   @Test
+   public void testMsetnx() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      Map<String, String> values = new HashMap<String,String>();
+      values.put("k1", "v1");
+      values.put("k3", "v3");
+      values.put("k4", "v4");
+      assertThat(redis.msetnx(values)).isEqualTo(true);
+
+      List<KeyValue<String, String>> expected = new ArrayList<>(4);
+      expected.add(KeyValue.just("k1", "v1"));
+      expected.add(KeyValue.empty("k2"));
+      expected.add(KeyValue.just("k3", "v3"));
+      expected.add(KeyValue.just("k4", "v4"));
+
+      List<KeyValue<String, String>> results = redis.mget("k1", "k2", "k3", "k4");
+      assertThat(results).containsExactlyElementsOf(expected);
+
+      values.clear();
+      values.put("k4", "v4");
+      values.put("k5", "v5");
+      values.put("k6", "v6");
+      assertThat(redis.msetnx(values)).isEqualTo(false);
+
+      expected.clear();
+      expected.add(KeyValue.just("k4", "v4"));
+      expected.add(KeyValue.empty("k5"));
+      expected.add(KeyValue.empty("k6"));
+
+      results = redis.mget("k4", "k5", "k6");
+      assertThat(results).containsExactlyElementsOf(expected);
    }
 }
