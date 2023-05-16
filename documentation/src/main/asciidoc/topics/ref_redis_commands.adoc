@@ -213,6 +213,9 @@ provides a read-uncommitted isolation.
 | link:https://redis.io/commands/pexpiretime[PEXPIRETIME]
 |
 
+| link:https://redis.io/commands/msetnx[MSETNX]
+|
+
 | link:https://redis.io/commands/ping[PING]
 |
 
