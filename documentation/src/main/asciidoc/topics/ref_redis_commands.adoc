@@ -49,6 +49,9 @@ The {brandname} RESP endpoint implements the following Redis commands:
 | link:https://redis.io/commands/getdel[GETDEL]
 |
 
+| link:https://redis.io/commands/getrange[GETRANGE]
+|
+
 | link:https://redis.io/commands/hello[HELLO]
 |
 

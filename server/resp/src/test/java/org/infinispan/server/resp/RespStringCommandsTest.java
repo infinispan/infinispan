@@ -346,4 +346,25 @@ public class RespStringCommandsTest extends SingleNodeRespBaseTest {
         assertThat(res.getLen()).isEqualTo(resp.length());
         assertThat(res.getMatchString()).isNull();
     }
+
+    @Test
+    void testGetRange() {
+        RedisCommands<String, String> redis = redisConnection.sync();
+        String key = "getrange";
+        redis.set(key, "A long string for testing");
+        assertThat(redis.getrange(key, 1, 7)).isEqualTo(" long s");
+        // Check negative range
+        assertThat(redis.getrange(key, 10, -2)).isEqualTo("ing for testin");
+    }
+
+    @Test
+    void testGetRangeMultibyte() {
+        RedisCommands<String, String> redis = redisConnection.sync();
+        String key = "getrange";
+        redis.set(key, "Testing with € char");
+        var g = redis.getrange(key, 13, 20);
+        assertThat(g).isEqualTo("€ char");
+        // Check negative range
+        assertThat(redis.getrange(key, 10, -2)).isEqualTo("th € cha");
+    }
 }
