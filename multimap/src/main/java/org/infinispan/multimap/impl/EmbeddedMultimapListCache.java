@@ -7,6 +7,7 @@ import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
+import org.infinispan.multimap.impl.function.IndexFunction;
 import org.infinispan.multimap.impl.function.OfferFunction;
 
 import java.util.Collection;
@@ -111,15 +112,24 @@ public class EmbeddedMultimapListCache<K, V> {
       return cache.getAsync(key).thenApply(b -> b == null ? 0 : (long) b.size());
    }
 
+   /**
+    * Returns the element at the given index. Index is zero-based.
+    * 0 means fist element. Negative index counts index from the tail. For example -1 is the last element.
+    *
+    * @param key, the name of the list
+    * @param index, the position of the element.
+    * @return The existing value. Returns null if the key does not exist or the index is out of bounds.
+    */
+   public CompletionStage<V> index(K key, long index) {
+      requireNonNull(key, "key can't be null");
+      return readWriteMap.eval(key, new IndexFunction<>(index));
+   }
+
    public CompletionStage<Collection<V>> subList(int from, int to) {
       throw new UnsupportedOperationException();
    }
 
    public CompletionStage<Collection<V>> pollFirst(int count) {
-      throw new UnsupportedOperationException();
-   }
-
-   public CompletionStage<Collection<V>> pollLast(int count) {
       throw new UnsupportedOperationException();
    }
 

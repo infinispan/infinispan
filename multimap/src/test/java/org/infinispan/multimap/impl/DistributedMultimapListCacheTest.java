@@ -1,18 +1,5 @@
 package org.infinispan.multimap.impl;
 
-import static java.lang.String.format;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.infinispan.functional.FunctionalTestUtils.await;
-import static org.infinispan.multimap.impl.MultimapTestUtils.ELAIA;
-import static org.infinispan.multimap.impl.MultimapTestUtils.NAMES_KEY;
-import static org.infinispan.multimap.impl.MultimapTestUtils.OIHANA;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -21,6 +8,19 @@ import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.data.Person;
 import org.testng.annotations.Test;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
+import static java.lang.String.format;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.infinispan.functional.FunctionalTestUtils.await;
+import static org.infinispan.multimap.impl.MultimapTestUtils.ELAIA;
+import static org.infinispan.multimap.impl.MultimapTestUtils.NAMES_KEY;
+import static org.infinispan.multimap.impl.MultimapTestUtils.OIHANA;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 @Test(groups = "functional", testName = "distribution.DistributedMultimapListCacheTest")
 public class DistributedMultimapListCacheTest extends BaseDistFunctionalTest<String, Collection<Person>> {
@@ -98,6 +98,20 @@ public class DistributedMultimapListCacheTest extends BaseDistFunctionalTest<Str
                   .thenCompose(r1 -> list.offerFirst(NAMES_KEY, OIHANA))
                   .thenCompose(r1 -> list.size(NAMES_KEY))
                   .thenAccept(size -> assertThat(size).isEqualTo(4))
+
+      );
+   }
+
+   public void testIndex() {
+      initAndTest();
+      EmbeddedMultimapListCache<String, Person> list = getMultimapCacheMember();
+      await(
+            list.offerLast(NAMES_KEY, OIHANA)
+                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, OIHANA))
+                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, ELAIA))
+                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, OIHANA))
+                  .thenCompose(r1 -> list.index(NAMES_KEY, 2))
+                  .thenAccept(v -> assertThat(v).isEqualTo(ELAIA))
 
       );
    }

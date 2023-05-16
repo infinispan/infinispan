@@ -11,6 +11,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -94,4 +95,38 @@ public class ListBucket<V> {
 
       return new ListBucket<>(newBucket);
    }
+
+   public V index(long index) {
+      if (index == 0) {
+         return values.element();
+      }
+      if (index == values.size() - 1) {
+         return values.getLast();
+      }
+      V result = null;
+      if (index > 0) {
+         if (index >= values.size()) {
+            return null;
+         }
+
+         Iterator<V> iterator = values.iterator();
+         int currentIndex = 0;
+         while (currentIndex++ <= index) {
+            result = iterator.next();
+         }
+      } else {
+         long currentIndex = Math.abs(index);
+         if (currentIndex > values.size()) {
+            return null;
+         }
+
+         Iterator<V> iterator = values.descendingIterator();
+         while (currentIndex-- > 0) {
+            result = iterator.next();
+         }
+      }
+
+      return result;
+   }
+
 }

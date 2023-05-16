@@ -10,6 +10,7 @@ import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.multimap.impl.function.ContainsFunction;
 import org.infinispan.multimap.impl.function.GetFunction;
+import org.infinispan.multimap.impl.function.IndexFunction;
 import org.infinispan.multimap.impl.function.OfferFunction;
 import org.infinispan.multimap.impl.function.PutFunction;
 import org.infinispan.multimap.impl.function.RemoveFunction;
@@ -42,5 +43,6 @@ public class MultimapModuleLifecycle implements ModuleLifecycle {
       addAdvancedExternalizer(externalizerMap, ContainsFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, GetFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, OfferFunction.EXTERNALIZER);
+      addAdvancedExternalizer(externalizerMap, IndexFunction.EXTERNALIZER);
    }
 }
