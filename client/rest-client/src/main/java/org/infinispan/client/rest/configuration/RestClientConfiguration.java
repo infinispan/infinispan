@@ -87,7 +87,7 @@ public class RestClientConfiguration {
       properties.setProperty(RestClientConfigurationProperties.SO_TIMEOUT, socketTimeout());
       properties.setProperty(RestClientConfigurationProperties.TCP_NO_DELAY, tcpNoDelay());
       properties.setProperty(RestClientConfigurationProperties.TCP_KEEP_ALIVE, tcpKeepAlive());
-      properties.setProperty(RestClientConfigurationProperties.CONTEXT_PATH, tcpKeepAlive());
+      properties.setProperty(RestClientConfigurationProperties.CONTEXT_PATH, contextPath());
 
       StringBuilder servers = new StringBuilder();
       for (ServerConfiguration server : servers()) {
