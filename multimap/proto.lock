@@ -25,21 +25,6 @@
                 "is_repeated": true
               }
             ]
-          },
-          {
-            "name": "EmbeddedMultimapConfiguration",
-            "fields": [
-              {
-                "id": 1,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "supportsDuplicates",
-                "type": "bool"
-              }
-            ]
           }
         ],
         "imports": [

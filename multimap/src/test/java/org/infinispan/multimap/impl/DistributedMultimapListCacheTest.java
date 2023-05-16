@@ -1,24 +1,5 @@
 package org.infinispan.multimap.impl;
 
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.distribution.BaseDistFunctionalTest;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.multimap.api.embedded.EmbeddedMultimapCacheManagerFactory;
-import org.infinispan.multimap.configuration.EmbeddedMultimapConfiguration;
-import org.infinispan.multimap.configuration.MultimapCacheManagerConfiguration;
-import org.infinispan.multimap.configuration.MultimapCacheManagerConfigurationBuilder;
-import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.test.data.Person;
-import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.util.concurrent.CompletionStages;
-import org.testng.annotations.Test;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.functional.FunctionalTestUtils.await;
@@ -27,6 +8,19 @@ import static org.infinispan.multimap.impl.MultimapTestUtils.NAMES_KEY;
 import static org.infinispan.multimap.impl.MultimapTestUtils.OIHANA;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.distribution.BaseDistFunctionalTest;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.multimap.api.embedded.EmbeddedMultimapCacheManagerFactory;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.data.Person;
+import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "distribution.DistributedMultimapListCacheTest")
 public class DistributedMultimapListCacheTest extends BaseDistFunctionalTest<String, Collection<Person>> {
@@ -45,14 +39,6 @@ public class DistributedMultimapListCacheTest extends BaseDistFunctionalTest<Str
 
       for (EmbeddedCacheManager cacheManager : cacheManagers) {
          EmbeddedMultimapCacheManager multimapCacheManager = (EmbeddedMultimapCacheManager) EmbeddedMultimapCacheManagerFactory.from(cacheManager);
-         MultimapCacheManagerConfigurationBuilder builder = new MultimapCacheManagerConfigurationBuilder((GlobalConfigurationBuilder) null);
-         builder.addMultimap().name(cacheName);
-         MultimapCacheManagerConfiguration conf = builder.create();
-         AggregateCompletionStage<Void> definitions = CompletionStages.aggregateCompletionStage();
-         for (EmbeddedMultimapConfiguration c : conf.multimaps().values()) {
-            definitions.dependsOn(multimapCacheManager.defineConfiguration(c));
-         }
-         CompletionStages.join(definitions.freeze());
          listCluster.put(cacheManager.getAddress(), multimapCacheManager.getMultimapList(cacheName));
       }
    }

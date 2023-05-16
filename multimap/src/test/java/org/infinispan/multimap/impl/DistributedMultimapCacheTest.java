@@ -27,7 +27,6 @@ import java.util.function.Predicate;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -36,14 +35,9 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.multimap.api.embedded.EmbeddedMultimapCacheManagerFactory;
 import org.infinispan.multimap.api.embedded.MultimapCache;
 import org.infinispan.multimap.api.embedded.MultimapCacheManager;
-import org.infinispan.multimap.configuration.MultimapCacheManagerConfiguration;
-import org.infinispan.multimap.configuration.MultimapCacheManagerConfigurationBuilder;
-import org.infinispan.multimap.configuration.EmbeddedMultimapConfiguration;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.data.Person;
-import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "distribution.DistributedMultimapCacheTest")
@@ -82,22 +76,8 @@ public class DistributedMultimapCacheTest extends BaseDistFunctionalTest<String,
 
       for (EmbeddedCacheManager cacheManager : cacheManagers) {
          MultimapCacheManager multimapCacheManager = EmbeddedMultimapCacheManagerFactory.from(cacheManager);
-         MultimapCacheManagerConfigurationBuilder builder = new MultimapCacheManagerConfigurationBuilder((GlobalConfigurationBuilder) null);
-         builder.addMultimap()
-               .name(cacheName);
-         amendMultimapCacheManagerConfiguration(builder);
-         MultimapCacheManagerConfiguration conf = builder.create();
-         AggregateCompletionStage<Void> definitions = CompletionStages.aggregateCompletionStage();
-         for (EmbeddedMultimapConfiguration c : conf.multimaps().values()) {
-            definitions.dependsOn(multimapCacheManager.defineConfiguration(c));
-         }
-         CompletionStages.join(definitions.freeze());
          multimapCacheCluster.put(cacheManager.getAddress(), multimapCacheManager.get(cacheName));
       }
-   }
-
-   protected void amendMultimapCacheManagerConfiguration(MultimapCacheManagerConfigurationBuilder builder) {
-      // no-op
    }
 
    @Override
