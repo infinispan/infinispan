@@ -84,7 +84,7 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
 
    @AfterMethod(alwaysRun=true)
    protected void clearContent() {
-      if (cleanupAfterTest()) clearCacheManager();
+      if (cleanupAfterMethod()) clearCacheManager();
    }
 
    protected ConfigurationBuilder getDefaultStandaloneCacheConfig(boolean transactional) {
