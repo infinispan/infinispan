@@ -11,6 +11,15 @@ import org.infinispan.api.sync.events.container.SyncContainerListener;
  **/
 public interface SyncContainer extends Infinispan {
 
+   // quick access ?
+   SyncCache cache(String name);
+
+   // quick access ?
+   SyncList list(String name);
+
+
+   SyncStructures select(String name);
+
    SyncCaches caches();
 
    SyncMultimaps multimaps();
