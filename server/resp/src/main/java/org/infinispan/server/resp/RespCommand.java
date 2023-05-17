@@ -134,7 +134,7 @@ public abstract class RespCommand {
             for (int i = 1; i < possibleBytes.length; ++i) {
                byte upperByte = possibleBytes[i];
                byte targetByte = buf.getByte(readOffset + i);
-               if (upperByte == targetByte || upperByte + 22 == targetByte) {
+               if (upperByte == targetByte || upperByte + 32 == targetByte) {
                   continue;
                }
                matches = false;

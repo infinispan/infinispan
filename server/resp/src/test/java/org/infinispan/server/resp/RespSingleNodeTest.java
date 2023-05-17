@@ -1,17 +1,12 @@
 package org.infinispan.server.resp;
 
-import io.lettuce.core.KeyValue;
-import io.lettuce.core.RedisCommandExecutionException;
-import io.lettuce.core.SetArgs;
-import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.pubsub.RedisPubSubAdapter;
-import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
-import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.test.Exceptions;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.server.resp.test.CommonRespTests;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.withPrecision;
+import static org.infinispan.server.resp.test.RespTestingUtil.OK;
+import static org.infinispan.server.resp.test.RespTestingUtil.PONG;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -26,12 +21,23 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.fail;
-import static org.assertj.core.api.Assertions.withPrecision;
-import static org.infinispan.server.resp.test.RespTestingUtil.OK;
-import static org.infinispan.server.resp.test.RespTestingUtil.PONG;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.test.Exceptions;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.server.resp.test.CommonRespTests;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
+import io.lettuce.core.KeyValue;
+import io.lettuce.core.RedisCommandExecutionException;
+import io.lettuce.core.SetArgs;
+import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.output.StatusOutput;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.ProtocolKeyword;
+import io.lettuce.core.pubsub.RedisPubSubAdapter;
+import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 
 /**
  * Base class for single node tests.
@@ -565,5 +571,35 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       RedisCommands<String, String> redis = redisConnection.sync();
       String key = "strlen-notpresent";
       assertThat(redis.strlen(key)).isEqualTo(0);
+   }
+
+   @Test
+   public void testUpperLowercase() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).addValue("Hello");
+      String response = redis.dispatch(new ProtocolKeyword() {
+         @Override
+         public byte[] getBytes() {
+            return "ECHO".getBytes();
+         }
+
+         @Override
+         public String name() {
+            return "ECHO";
+         }
+      }, new StatusOutput<>(StringCodec.UTF8), args);
+      assertEquals("Hello", response);
+      response = redis.dispatch(new ProtocolKeyword() {
+         @Override
+         public byte[] getBytes() {
+            return "echo".getBytes();
+         }
+
+         @Override
+         public String name() {
+            return "echo";
+         }
+      }, new StatusOutput<>(StringCodec.UTF8), args);
+      assertEquals("Hello", response);
    }
 }
