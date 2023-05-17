@@ -606,6 +606,15 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       assertEquals(0, response.size());
    }
 
+   @Test
+   public void testDbSize() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      Long size = redis.dbsize();
+      assertThat(size).isEqualTo(cache.size());
+      redis.set("dbsize-key", "dbsize-value");
+      assertThat(redis.dbsize()).isEqualTo(size + 1);
+   }
+
    public static class SimpleCommand implements ProtocolKeyword {
       private final String name;
 
