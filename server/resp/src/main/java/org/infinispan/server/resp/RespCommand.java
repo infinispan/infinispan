@@ -9,6 +9,7 @@ import org.infinispan.server.resp.commands.CONFIG;
 import org.infinispan.server.resp.commands.INFO;
 import org.infinispan.server.resp.commands.connection.AUTH;
 import org.infinispan.server.resp.commands.connection.COMMAND;
+import org.infinispan.server.resp.commands.connection.DBSIZE;
 import org.infinispan.server.resp.commands.connection.ECHO;
 import org.infinispan.server.resp.commands.connection.HELLO;
 import org.infinispan.server.resp.commands.connection.MODULE;
@@ -95,7 +96,7 @@ public abstract class RespCommand {
       indexedRespCommand[0] = new RespCommand[]{new APPEND(), new AUTH()};
       indexedRespCommand[2] = new RespCommand[]{new CONFIG(), new COMMAND()};
       // DEL should always be first here
-      indexedRespCommand[3] = new RespCommand[]{new DEL(), new DECR(), new DECRBY()};
+      indexedRespCommand[3] = new RespCommand[]{new DEL(), new DECR(), new DECRBY(), new DBSIZE()};
       indexedRespCommand[4] = new RespCommand[]{new ECHO()};
       // GET should always be first here
       indexedRespCommand[6] = new RespCommand[]{new GET(), new GETDEL()};
