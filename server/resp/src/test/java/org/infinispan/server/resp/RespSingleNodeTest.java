@@ -208,7 +208,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       StringBuilder sb = new StringBuilder();
       String charsToChoose = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
 
-      for(int i = 0; i < 10_000; ++i) {
+      for (int i = 0; i < 10_000; ++i) {
          sb.append(charsToChoose.charAt(ThreadLocalRandom.current().nextInt(charsToChoose.length())));
       }
       String actualString = sb.toString();
@@ -327,7 +327,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       connection.unsubscribe("doesn't-exist");
       connection.unsubscribe("channel", "test");
 
-      for (String channel : new String[] {"channel2", "doesn't-exist", "channel", "test"}) {
+      for (String channel : new String[]{"channel2", "doesn't-exist", "channel", "test"}) {
          value = handOffQueue.poll(10, TimeUnit.SECONDS);
          assertThat(value).isEqualTo("unsubscribed-" + channel + "-0");
       }
@@ -391,10 +391,10 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
    public void testIncrbyNotPresent() {
       RedisCommands<String, String> redis = redisConnection.sync();
       String nonPresentKey = "incrby-notpresent";
-      Long newValue = redis.incrby(nonPresentKey,42);
+      Long newValue = redis.incrby(nonPresentKey, 42);
       assertThat(newValue.longValue()).isEqualTo(42L);
 
-      Long nextValue = redis.incrby(nonPresentKey,2);
+      Long nextValue = redis.incrby(nonPresentKey, 2);
       assertThat(nextValue.longValue()).isEqualTo(44L);
    }
 
@@ -403,10 +403,10 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       String key = "incrby";
       redis.set(key, "12");
 
-      Long newValue = redis.incrby(key,23);
+      Long newValue = redis.incrby(key, 23);
       assertThat(newValue.longValue()).isEqualTo(35L);
 
-      Long nextValue = redis.incrby(key,23);
+      Long nextValue = redis.incrby(key, 23);
       assertThat(nextValue.longValue()).isEqualTo(58L);
    }
 
@@ -414,18 +414,18 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       RedisCommands<String, String> redis = redisConnection.sync();
       String key = "incrby-string";
       redis.set(key, "foo");
-      assertThatThrownBy(()-> redis.incrby(key,1), "")
-         .isInstanceOf(RedisCommandExecutionException.class)
-         .hasMessageContaining("value is not an integer or out of range");
+      assertThatThrownBy(() -> redis.incrby(key, 1), "")
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("value is not an integer or out of range");
    }
 
    public void testDecrbyNotPresent() {
       RedisCommands<String, String> redis = redisConnection.sync();
       String nonPresentKey = "decrby-notpresent";
-      Long newValue = redis.decrby(nonPresentKey,42);
+      Long newValue = redis.decrby(nonPresentKey, 42);
       assertThat(newValue.longValue()).isEqualTo(-42L);
 
-      Long nextValue = redis.decrby(nonPresentKey,2);
+      Long nextValue = redis.decrby(nonPresentKey, 2);
       assertThat(nextValue.longValue()).isEqualTo(-44L);
    }
 
@@ -434,10 +434,10 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       String key = "decrby";
       redis.set(key, "12");
 
-      Long newValue = redis.decrby(key,10);
+      Long newValue = redis.decrby(key, 10);
       assertThat(newValue.longValue()).isEqualTo(2L);
 
-      Long nextValue = redis.decrby(key,10);
+      Long nextValue = redis.decrby(key, 10);
       assertThat(nextValue.longValue()).isEqualTo(-8L);
    }
 
@@ -506,7 +506,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       String key = "append";
       String val = "Hello";
       String app = " World";
-      String expect = val+app;
+      String expect = val + app;
       redis.set(key, val);
       long retVal = redis.append(key, app);
       assertThat(retVal).isEqualTo(expect.length());
@@ -601,5 +601,19 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
          }
       }, new StatusOutput<>(StringCodec.UTF8), args);
       assertEquals("Hello", response);
+   }
+
+   @Test
+   public void testInfo() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String info = redis.info();
+      assertThat(info).contains("# Server");
+      assertThat(info).contains("# Client");
+      assertThat(info).contains("# Modules");
+      assertThat(info).contains("# Persistence");
+      assertThat(info).contains("# Keyspace");
+      info = redis.info("server");
+      assertThat(info).contains("# Server");
+      assertThat(info).doesNotContain("# Client");
    }
 }

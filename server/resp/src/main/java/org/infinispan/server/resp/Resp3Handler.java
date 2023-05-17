@@ -1,15 +1,18 @@
 package org.infinispan.server.resp;
 
-import io.netty.buffer.ByteBufUtil;
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.context.Flag;
 import org.infinispan.multimap.impl.EmbeddedMultimapCacheManager;
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
+import org.infinispan.security.AuthorizationManager;
+import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.resp.commands.Resp3Command;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.buffer.ByteBufUtil;
+import io.netty.channel.ChannelHandlerContext;
 
 public class Resp3Handler extends Resp3AuthHandler {
    protected AdvancedCache<byte[], byte[]> ignorePreviousValueCache;
@@ -49,8 +52,12 @@ public class Resp3Handler extends Resp3AuthHandler {
       handleBulkResult(result.toString(), alloc);
    }
 
-   protected static void handleBulkResult(String result, ByteBufPool alloc) {
-      ByteBufferUtils.stringToByteBuf("$" + ByteBufUtil.utf8Bytes(result) + "\r\n" + result + "\r\n", alloc);
+   public static void handleBulkResult(CharSequence result, ByteBufPool alloc) {
+      if (result == null) {
+         ByteBufferUtils.stringToByteBuf("$-1\r\n", alloc);
+      }  else {
+         ByteBufferUtils.stringToByteBuf("$" + ByteBufUtil.utf8Bytes(result) + "\r\n" + result + "\r\n", alloc);
+      }
    }
 
    protected static void handleThrowable(ByteBufPool alloc, Throwable t) {
@@ -65,5 +72,12 @@ public class Resp3Handler extends Resp3AuthHandler {
                                                        RespCommand command,
                                                        List<byte[]> arguments) {
       return super.actualHandleRequest(ctx, command, arguments);
+   }
+
+   public void checkPermission(AuthorizationPermission authorizationPermission) {
+      AuthorizationManager authorizationManager = cache.getAuthorizationManager();
+      if (authorizationManager != null) {
+         authorizationManager.checkPermission(authorizationPermission);
+      }
    }
 }
