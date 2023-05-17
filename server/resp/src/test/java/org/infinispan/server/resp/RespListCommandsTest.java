@@ -192,4 +192,21 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
       }).isInstanceOf(RedisCommandExecutionException.class)
             .hasMessageContaining("ERRWRONGTYPE");
    }
+
+   public void testLLEN() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThat(redis.llen("noexisting")).isEqualTo(0);
+
+      redis.rpush("leads", "william", "jose", "ryan", "pedro", "vittorio");
+      assertThat(redis.llen("leads")).isEqualTo(5);
+
+      // Set a String Command
+      redis.set("another", "tristan");
+
+      // LLEN on an existing key that contains a String, not a Collection!
+      assertThatThrownBy(() -> {
+         redis.llen("another");
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERRWRONGTYPE");
+   }
 }

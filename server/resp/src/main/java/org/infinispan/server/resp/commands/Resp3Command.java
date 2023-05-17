@@ -7,6 +7,7 @@ import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 
 import java.util.List;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 
 public interface Resp3Command {
@@ -14,13 +15,18 @@ public interface Resp3Command {
    CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx, List<byte[]> arguments);
 
    default CompletionStage<RespRequestHandler> handleException(Resp3Handler handler, Throwable t) {
-      if (t instanceof CacheException) {
-         CacheException cacheException = (CacheException) t;
-         if (cacheException.getCause() instanceof ClassCastException) {
-            RespErrorUtil.wrongType(handler.allocatorToUse());
-            return handler.myStage();
-         }
+      Throwable ex = t;
+      if (t instanceof CompletionException) {
+         ex = t.getCause();
       }
+      if (ex instanceof CacheException) {
+         ex = ex.getCause();
+      }
+      if (ex instanceof ClassCastException) {
+         RespErrorUtil.wrongType(handler.allocatorToUse());
+         return handler.myStage();
+      }
+
       throw new RuntimeException(t);
    }
 }
