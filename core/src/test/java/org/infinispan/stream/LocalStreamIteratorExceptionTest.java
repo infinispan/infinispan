@@ -1,6 +1,6 @@
 package org.infinispan.stream;
 
-import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertSame;
@@ -8,6 +8,7 @@ import static org.testng.AssertJUnit.fail;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.test.TestingUtil;
@@ -31,7 +32,7 @@ public class LocalStreamIteratorExceptionTest extends BaseSetupStreamIteratorTes
       InternalDataContainer dataContainer = TestingUtil.extractComponent(cache, InternalDataContainer.class);
       try {
          Throwable t = new CacheException();
-         InternalDataContainer mockContainer = when(mock(InternalDataContainer.class).publisher(anyInt())).thenThrow(t).getMock();
+         InternalDataContainer mockContainer = when(mock(InternalDataContainer.class).publisher(any(IntSet.class))).thenThrow(t).getMock();
          TestingUtil.replaceComponent(cache, InternalDataContainer.class, mockContainer, true);
 
          try {

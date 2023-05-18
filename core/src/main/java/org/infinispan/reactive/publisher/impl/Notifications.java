@@ -68,7 +68,7 @@ public class Notifications {
       public SegmentAwarePublisherSupplier.NotificationWithLost<R> segmentLost(int segment) {
          this.value = null;
          this.segment = -segment - 1;
-         return null;
+         return this;
       }
 
       @Override
