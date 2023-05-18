@@ -26,6 +26,7 @@ import io.netty.channel.ChannelHandlerContext;
  * @since 15.0
  */
 public class INFO extends RespCommand implements Resp3Command {
+
    public INFO() {
       super(-1, 0, 0, 0);
    }
@@ -52,14 +53,14 @@ public class INFO extends RespCommand implements Resp3Command {
          sb.append("# Server\r\n");
          sb.append("redis_version:");
          sb.append(Version.getMajorMinor());
-         sb.append("\r\n");
+         sb.append(CRLF);
          sb.append("redis_git_sha1:");
          sb.append(Version.getProperty("infinispan.build.commitid"));
-         sb.append("\r\n");
+         sb.append(CRLF);
          sb.append("redis_git_dirty:0\r\n");
          sb.append("redis_build_id:");
          sb.append(Version.getVersion());
-         sb.append("\r\n");
+         sb.append(CRLF);
          sb.append("redis_mode:");
          switch (handler.cache().getCacheConfiguration().clustering().cacheMode()) {
             case LOCAL:
@@ -80,24 +81,24 @@ public class INFO extends RespCommand implements Resp3Command {
          sb.append(System.getProperty("os.version"));
          sb.append(' ');
          sb.append(System.getProperty("os.arch"));
-         sb.append("\r\n");
+         sb.append(CRLF);
          sb.append("arch_bits:");
          sb.append(System.getProperty("os.arch").endsWith("64") ? "64" : "32");
-         sb.append("\r\n");
+         sb.append(CRLF);
          sb.append("monotonic_clock:POSIX clock_gettime\r\n");
          sb.append("multiplexing_api:epoll\r\n"); // TODO: use server socket channel in use
          sb.append("atomicvar_api:c11 - builtin\r\n");
          sb.append("process_id:");
          sb.append(ProcessInfo.getInstance().getPid());
-         sb.append("\r\n");
+         sb.append(CRLF);
          sb.append("process_supervised:no\r\n");
          sb.append("run_id:0000000000000\r\n"); // get UUID
          sb.append("tcp_port:");
          sb.append(((InetSocketAddress) ctx.channel().localAddress()).getPort());
-         sb.append("\r\n");
+         sb.append(CRLF);
          sb.append("server_time_usec:");
          sb.append(System.currentTimeMillis() * 1000);
-         sb.append("\r\n");
+         sb.append(CRLF);
          sb.append("uptime_in_seconds:0\r\n");
          sb.append("uptime_in_days:0\r\n");
          sb.append("hz:10\r\n");
@@ -106,7 +107,7 @@ public class INFO extends RespCommand implements Resp3Command {
          sb.append("executable:server\r\n");
          sb.append("config_file:infinispan.xml\r\n");
          sb.append("io_threads_active:0\r\n");
-         sb.append("\r\n");
+         sb.append(CRLF);
       }
       if (sections.contains(Section.CLIENTS)) {
          sb.append("# Clients\r\n");
@@ -118,7 +119,7 @@ public class INFO extends RespCommand implements Resp3Command {
          sb.append("blocked_clients:0\r\n");
          sb.append("tracking_clients:0\r\n");
          sb.append("clients_in_timeout_table:0\r\n");
-         sb.append("\r\n");
+         sb.append(CRLF);
       }
       if (sections.contains(Section.MEMORY)) {
          sb.append("# Memory\r\n");
@@ -173,7 +174,7 @@ public class INFO extends RespCommand implements Resp3Command {
          sb.append("active_defrag_running:0\r\n");
          sb.append("lazyfree_pending_objects:0\r\n");
          sb.append("lazyfreed_objects:0\r\n");
-         sb.append("\r\n");
+         sb.append(CRLF);
       }
 
       if (sections.contains(Section.PERSISTENCE)) {
@@ -208,7 +209,7 @@ public class INFO extends RespCommand implements Resp3Command {
          sb.append("aof_last_cow_size:0\r\n");
          sb.append("module_fork_in_progress:0\r\n");
          sb.append("module_fork_last_cow_size:0\r\n");
-         sb.append("\r\n");
+         sb.append(CRLF);
       }
 
       if (sections.contains(Section.STATS)) {
@@ -263,6 +264,10 @@ public class INFO extends RespCommand implements Resp3Command {
          sb.append("io_threaded_writes_processed:0\r\n");
          sb.append("reply_buffer_shrinks:0\r\n");
          sb.append("reply_buffer_expands:0\r\n");
+         sb.append(CRLF);
+      }
+
+      if (sections.contains(Section.REPLICATION)) {
          sb.append("# Replication\r\n");
          sb.append("role:master\r\n");
          sb.append("connected_slaves:0\r\n");
@@ -275,7 +280,7 @@ public class INFO extends RespCommand implements Resp3Command {
          sb.append("repl_backlog_size:0\r\n");
          sb.append("repl_backlog_first_byte_offset:0\r\n");
          sb.append("repl_backlog_histlen:0\r\n");
-         sb.append("\r\n");
+         sb.append(CRLF);
       }
 
       if (sections.contains(Section.CPU)) {
@@ -286,12 +291,12 @@ public class INFO extends RespCommand implements Resp3Command {
          sb.append("used_cpu_user_children:0.000000\r\n");
          sb.append("used_cpu_sys_main_thread:0.000000\r\n");
          sb.append("used_cpu_user_main_thread:0.000000\r\n");
-         sb.append("\r\n");
+         sb.append(CRLF);
       }
 
       if (sections.contains(Section.MODULES)) {
          sb.append("# Modules\r\n");
-         sb.append("\r\n");
+         sb.append(CRLF);
       }
 
       if (sections.contains(Section.ERRORSTATS)) {
@@ -299,12 +304,12 @@ public class INFO extends RespCommand implements Resp3Command {
          sb.append("errorstat_ERR:count=0\r\n");
          sb.append("errorstat_NOPERM:count=0\r\n");
          sb.append("errorstat_WRONGTYPE:count=0\r\n");
-         sb.append("\r\n");
+         sb.append(CRLF);
       }
       if (sections.contains(Section.CLUSTER)) {
          sb.append("# Cluster\r\n");
          sb.append("cluster_enabled:0\r\n");
-         sb.append("\r\n");
+         sb.append(CRLF);
       }
       if (sections.contains(Section.KEYSPACE)) {
          sb.append("# Keyspace\r\n");
