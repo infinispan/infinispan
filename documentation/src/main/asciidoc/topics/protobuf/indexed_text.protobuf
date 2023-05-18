@@ -1,4 +1,4 @@
 /**
-   * @Text(analyze = Analyze.YES, store = Store.YES)
+   * @Text(projectable = true)
    */
 required string street = 1;
