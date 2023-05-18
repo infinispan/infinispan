@@ -1,17 +1,20 @@
 package org.infinispan.server.resp.commands.connection;
 
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.util.CharsetUtil;
+import static org.infinispan.server.resp.RespConstants.CRLF;
+
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.commons.util.Version;
-import org.infinispan.server.resp.commands.AuthResp3Command;
 import org.infinispan.server.resp.ByteBufPool;
 import org.infinispan.server.resp.ByteBufferUtils;
 import org.infinispan.server.resp.Resp3AuthHandler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
+import org.infinispan.server.resp.commands.AuthResp3Command;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.CharsetUtil;
 
 /**
  * @link https://redis.io/commands/hello/
@@ -51,7 +54,7 @@ public class HELLO extends RespCommand implements AuthResp3Command {
       String versionString = Version.getBrandVersion();
       ByteBufferUtils.stringToByteBuf("%7\r\n" +
             "$6\r\nserver\r\n$15\r\nInfinispan RESP\r\n" +
-            "$7\r\nversion\r\n$" + versionString.length() + "\r\n" + versionString + "\r\n" +
+            "$7\r\nversion\r\n$" + versionString.length() + CRLF + versionString + CRLF +
             "$5\r\nproto\r\n:3\r\n" +
             "$2\r\nid\r\n:184\r\n" +
             "$4\r\nmode\r\n$7\r\ncluster\r\n" +

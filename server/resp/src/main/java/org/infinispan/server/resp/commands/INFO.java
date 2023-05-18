@@ -1,6 +1,7 @@
 package org.infinispan.server.resp.commands;
 
 import static org.infinispan.server.resp.Resp3Handler.handleBulkResult;
+import static org.infinispan.server.resp.RespConstants.CRLF;
 
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;

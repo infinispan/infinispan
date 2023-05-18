@@ -1,9 +1,11 @@
 package org.infinispan.server.resp;
 
-import org.infinispan.server.resp.response.SetResponse;
+import static org.infinispan.server.resp.RespConstants.CRLF;
 
 import java.nio.charset.StandardCharsets;
 import java.util.function.BiConsumer;
+
+import org.infinispan.server.resp.response.SetResponse;
 
 /**
  * Utility class with Consumers
@@ -34,7 +36,7 @@ public final class Consumers {
    };
 
    public static final BiConsumer<byte[], ByteBufPool> DELETE_BICONSUMER = (prev, alloc) ->
-         ByteBufferUtils.stringToByteBuf(":" + (prev == null ? "0" : "1") + "\r\n", alloc);
+         ByteBufferUtils.stringToByteBuf(":" + (prev == null ? "0" : "1") + CRLF, alloc);
 
    public static final BiConsumer<SetResponse, ByteBufPool> SET_BICONSUMER = (res, alloc) -> {
       // The set operation has three return options, with a precedence:

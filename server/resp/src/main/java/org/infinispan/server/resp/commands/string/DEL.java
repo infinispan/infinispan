@@ -1,18 +1,21 @@
 package org.infinispan.server.resp.commands.string;
 
-import io.netty.channel.ChannelHandlerContext;
-import org.infinispan.server.resp.ByteBufferUtils;
-import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.Consumers;
-import org.infinispan.server.resp.Resp3Handler;
-import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespRequestHandler;
-import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.util.concurrent.CompletionStages;
+import static org.infinispan.server.resp.RespConstants.CRLF;
 
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.infinispan.server.resp.ByteBufferUtils;
+import org.infinispan.server.resp.Consumers;
+import org.infinispan.server.resp.Resp3Handler;
+import org.infinispan.server.resp.RespCommand;
+import org.infinispan.server.resp.RespRequestHandler;
+import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.CompletionStages;
+
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @link https://redis.io/commands/del/
@@ -49,7 +52,7 @@ public class DEL extends RespCommand implements Resp3Command {
                }));
       }
       return handler.stageToReturn(deleteStages.freeze(), ctx, (removals, alloc) -> {
-         ByteBufferUtils.stringToByteBuf(":" + removals.get() + "\r\n", alloc);
+         ByteBufferUtils.stringToByteBuf(":" + removals.get() + CRLF, alloc);
       });
    }
 }

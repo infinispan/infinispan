@@ -6,4 +6,5 @@ public interface RespConstants {
    byte ARRAY = '*';
    byte NUMERIC = ':';
    byte HELLO = '@';
+   String CRLF = "\r\n";
 }

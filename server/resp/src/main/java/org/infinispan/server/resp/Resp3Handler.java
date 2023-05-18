@@ -1,5 +1,7 @@
 package org.infinispan.server.resp;
 
+import static org.infinispan.server.resp.RespConstants.CRLF;
+
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
@@ -44,7 +46,7 @@ public class Resp3Handler extends Resp3AuthHandler {
 
    protected static void handleLongResult(Long result, ByteBufPool alloc) {
       // TODO: this can be optimized to avoid the String allocation
-      ByteBufferUtils.stringToByteBuf(":" + result + "\r\n", alloc);
+      ByteBufferUtils.stringToByteBuf(":" + result + CRLF, alloc);
    }
 
    protected static void handleDoubleResult(Double result, ByteBufPool alloc) {
@@ -56,12 +58,12 @@ public class Resp3Handler extends Resp3AuthHandler {
       if (result == null) {
          ByteBufferUtils.stringToByteBuf("$-1\r\n", alloc);
       }  else {
-         ByteBufferUtils.stringToByteBuf("$" + ByteBufUtil.utf8Bytes(result) + "\r\n" + result + "\r\n", alloc);
+         ByteBufferUtils.stringToByteBuf("$" + ByteBufUtil.utf8Bytes(result) + CRLF + result + CRLF, alloc);
       }
    }
 
    protected static void handleThrowable(ByteBufPool alloc, Throwable t) {
-      ByteBufferUtils.stringToByteBuf("-ERR " + t.getMessage() + "\r\n", alloc);
+      ByteBufferUtils.stringToByteBuf("-ERR " + t.getMessage() + CRLF, alloc);
    }
 
    public AdvancedCache<byte[], byte[]> ignorePreviousValuesCache() {
