@@ -1,7 +1,7 @@
-@Text(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = "keyword"))
-@ProtoField(1)
-final String id;
+@Text(projectable = true, analyzer = "whitespace")
+@ProtoField(value = 1)
+private String id;
 
-@Text(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = "simple"))
-@ProtoField(2)
-final String description;
+@Text(projectable = true, analyzer = "simple")
+@ProtoField(value = 2)
+private String description;
