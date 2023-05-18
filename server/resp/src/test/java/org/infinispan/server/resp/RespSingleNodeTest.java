@@ -33,6 +33,7 @@ import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.SetArgs;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.output.ArrayOutput;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.ProtocolKeyword;
@@ -577,29 +578,9 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
    public void testUpperLowercase() {
       RedisCommands<String, String> redis = redisConnection.sync();
       CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).addValue("Hello");
-      String response = redis.dispatch(new ProtocolKeyword() {
-         @Override
-         public byte[] getBytes() {
-            return "ECHO".getBytes();
-         }
-
-         @Override
-         public String name() {
-            return "ECHO";
-         }
-      }, new StatusOutput<>(StringCodec.UTF8), args);
+      String response = redis.dispatch(new SimpleCommand("ECHO"), new StatusOutput<>(StringCodec.UTF8), args);
       assertEquals("Hello", response);
-      response = redis.dispatch(new ProtocolKeyword() {
-         @Override
-         public byte[] getBytes() {
-            return "echo".getBytes();
-         }
-
-         @Override
-         public String name() {
-            return "echo";
-         }
-      }, new StatusOutput<>(StringCodec.UTF8), args);
+      response = redis.dispatch(new SimpleCommand("echo"), new StatusOutput<>(StringCodec.UTF8), args);
       assertEquals("Hello", response);
    }
 
@@ -615,5 +596,32 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       info = redis.info("server");
       assertThat(info).contains("# Server");
       assertThat(info).doesNotContain("# Client");
+   }
+
+   @Test
+   public void testModule() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).addValue("LIST");
+      List<Object> response = redis.dispatch(new SimpleCommand("MODULE"), new ArrayOutput<>(StringCodec.UTF8), args);
+      assertEquals(0, response.size());
+   }
+
+   public static class SimpleCommand implements ProtocolKeyword {
+      private final String name;
+
+
+      public SimpleCommand(String name) {
+         this.name = name;
+      }
+
+      @Override
+      public byte[] getBytes() {
+         return name.getBytes(StandardCharsets.UTF_8);
+      }
+
+      @Override
+      public String name() {
+         return name;
+      }
    }
 }
