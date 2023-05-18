@@ -26,6 +26,7 @@ import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.ProcessorInfo;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
@@ -51,7 +52,6 @@ import org.infinispan.persistence.manager.PersistenceManager.StoreChangeListener
 import org.infinispan.reactive.publisher.impl.commands.reduction.PublisherResult;
 import org.infinispan.reactive.publisher.impl.commands.reduction.SegmentPublisherResult;
 import org.infinispan.stream.StreamMarshalling;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -317,14 +317,12 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
 
       @Override
       public Publisher<R> publisherWithoutSegments() {
-         return Flowable.fromIterable(segments).concatMap(segment -> {
-            Publisher<I> publisher = cacheSet.localPublisher(segment);
-            if (predicate != null) {
-               publisher = Flowable.fromPublisher(publisher)
-                     .filter(predicate);
-            }
-            return transformer.apply(publisher);
-         });
+         Publisher<I> publisher = cacheSet.localPublisher(segments);
+         if (predicate != null) {
+            publisher = Flowable.fromPublisher(publisher)
+                  .filter(predicate);
+         }
+         return transformer.apply(publisher);
       }
 
       Flowable<NotificationWithLost<R>> flowableWithNotifications(boolean reuseNotifications) {

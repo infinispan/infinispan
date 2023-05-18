@@ -126,15 +126,22 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
    }
 
    private int maxSegment;
+   private boolean replicatedCache;
    private volatile boolean writeBehindShared;
-   private final StoreChangeListener storeChangeListener = pm -> writeBehindShared = pm.usingSharedAsyncStore();
+   // If they have a shared store we can just read everything locally
+   private volatile boolean sharedStore;
+   private final StoreChangeListener storeChangeListener = pm -> {
+      writeBehindShared = pm.usingSharedAsyncStore();
+      sharedStore = pm.usingSharedStore();
+   };
 
    protected RpcOptions rpcOptions;
 
    @Start
    public void start() {
       maxSegment = cacheConfiguration.clustering().hash().numSegments();
-      writeBehindShared = hasWriteBehindSharedStore(cacheConfiguration.persistence());
+      replicatedCache = cacheConfiguration.clustering().cacheMode().isReplicated();
+      updateStoreInfo(cacheConfiguration.persistence());
       persistenceManager.addStoreListener(storeChangeListener);
 
       // Note we use a little extra wiggle room for the timeout of the remote invocation by increasing it by 3 times
@@ -291,8 +298,9 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       }
 
       if (localKeys != null) {
+         DeliveryGuarantee guarantee = deliveryToUse(null, deliveryGuarantee);
          CompletionStage<PublisherResult<R>> localStage = composedType.localInvocation(parallelPublisher, null,
-               localKeys, null, explicitFlags, deliveryGuarantee, transformer, finalizer);
+               localKeys, null, explicitFlags, guarantee, transformer, finalizer);
 
          if (log.isTraceEnabled()) {
             // Make sure the trace occurs before response is processed
@@ -367,8 +375,9 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       }
 
       if (localSegments != null) {
+         DeliveryGuarantee guarantee = deliveryToUse(null, deliveryGuarantee);
          CompletionStage<PublisherResult<R>> localStage = composedType.localInvocation(parallelPublisher, localSegments,
-               null, keysToExcludeByAddress.get(localAddress), explicitFlags, deliveryGuarantee, transformer, finalizer);
+               null, keysToExcludeByAddress.get(localAddress), explicitFlags, guarantee, transformer, finalizer);
 
          if (log.isTraceEnabled()) {
             // Make sure the trace occurs before response is processed
@@ -659,6 +668,12 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
    }
 
    private Map<Address, IntSet> determineSegmentTargets(LocalizedCacheTopology topology, IntSet segments, Address localAddress) {
+      if ((sharedStore || replicatedCache) && !writeBehindShared) {
+         // A shared store without write behind will have all values available on all nodes, so just do local lookup
+         var map = new HashMap<Address, IntSet>();
+         map.put(localAddress, segments == null ? IntSets.immutableRangeSet(maxSegment) : segments);
+         return map;
+      }
       Map<Address, IntSet> targets = new HashMap<>();
       if (segments == null) {
          for (int segment = 0; segment < maxSegment; ++segment) {
@@ -887,13 +902,15 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       }
    }
 
-   private boolean hasWriteBehindSharedStore(PersistenceConfiguration persistenceConfiguration) {
+   private void updateStoreInfo(PersistenceConfiguration persistenceConfiguration) {
       for (StoreConfiguration storeConfiguration : persistenceConfiguration.stores()) {
-         if (storeConfiguration.shared() && storeConfiguration.async().enabled()) {
-            return true;
+         if (storeConfiguration.shared()) {
+            sharedStore = true;
+            if (storeConfiguration.async().enabled()) {
+               writeBehindShared = true;
+            }
          }
       }
-      return false;
    }
 
    @Override
@@ -1315,7 +1332,9 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             functionToUse = transformer;
          }
 
-         return commandsFactory.buildInitialPublisherCommand(requestId, deliveryGuarantee,
+         DeliveryGuarantee guarantee = deliveryToUse(target, deliveryGuarantee);
+
+         return commandsFactory.buildInitialPublisherCommand(requestId, guarantee,
                batchSize, segments, keysToUse, excludedKeys, explicitFlags, composedType.isEntry(), shouldTrackKeys,
                functionToUse);
       }
@@ -1348,8 +1367,16 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             functionToUse = transformer;
          }
 
-         return commandsFactory.buildInitialPublisherCommand(requestId, deliveryGuarantee,
+         DeliveryGuarantee guarantee = deliveryToUse(target, deliveryGuarantee);
+
+         return commandsFactory.buildInitialPublisherCommand(requestId, guarantee,
                batchSize, segments, null, excludedKeys, explicitFlags, composedType.isEntry(), shouldTrackKeys, functionToUse);
       }
+   }
+
+   private DeliveryGuarantee deliveryToUse(Address target, DeliveryGuarantee desiredGuarantee) {
+      // When the target is the local node and we have a shared store that doesn't have write behind we don't
+      // need any special delivery guarantee as our store will hold all entries
+      return target == null && ((sharedStore || replicatedCache) && !writeBehindShared) ? DeliveryGuarantee.AT_MOST_ONCE : desiredGuarantee;
    }
 }
