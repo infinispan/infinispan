@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 public interface Resp3Command {
+   String CRLF = "\r\n";
+
    CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx, List<byte[]> arguments);
 
    default CompletionStage<RespRequestHandler> handleException(Resp3Handler handler, Throwable t) {
