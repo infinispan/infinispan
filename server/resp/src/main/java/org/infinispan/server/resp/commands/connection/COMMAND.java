@@ -1,15 +1,18 @@
 package org.infinispan.server.resp.commands.connection;
 
-import io.netty.buffer.ByteBufUtil;
-import io.netty.channel.ChannelHandlerContext;
-import org.infinispan.server.resp.ByteBufferUtils;
-import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.Resp3Handler;
-import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespRequestHandler;
+import static org.infinispan.server.resp.RespConstants.CRLF;
 
 import java.util.List;
 import java.util.concurrent.CompletionStage;
+
+import org.infinispan.server.resp.ByteBufferUtils;
+import org.infinispan.server.resp.Resp3Handler;
+import org.infinispan.server.resp.RespCommand;
+import org.infinispan.server.resp.RespRequestHandler;
+import org.infinispan.server.resp.commands.Resp3Command;
+
+import io.netty.buffer.ByteBufUtil;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @link https://redis.io/commands/command/
@@ -33,7 +36,7 @@ public class COMMAND extends RespCommand implements Resp3Command {
          List<RespCommand> commands = RespCommand.all();
          commandBuilder.append("*");
          commandBuilder.append(commands.size());
-         commandBuilder.append("\r\n");
+         commandBuilder.append(CRLF);
          for (RespCommand command : commands){
             addCommand(commandBuilder, command);
          }
@@ -45,16 +48,16 @@ public class COMMAND extends RespCommand implements Resp3Command {
    private void addCommand(StringBuilder builder, RespCommand command) {
       builder.append("*6\r\n");
       // Name
-      builder.append("$").append(ByteBufUtil.utf8Bytes(command.getName())).append("\r\n").append(command.getName()).append("\r\n");
+      builder.append("$").append(ByteBufUtil.utf8Bytes(command.getName())).append(CRLF).append(command.getName()).append(CRLF);
       // Arity
-      builder.append(":").append(command.getArity()).append("\r\n");
+      builder.append(":").append(command.getArity()).append(CRLF);
       // Flags
       builder.append("*0\r\n");
       // First key
-      builder.append(":").append(command.getFirstKeyPos()).append("\r\n");
+      builder.append(":").append(command.getFirstKeyPos()).append(CRLF);
       // Second key
-      builder.append(":").append(command.getLastKeyPos()).append("\r\n");
+      builder.append(":").append(command.getLastKeyPos()).append(CRLF);
       // Step
-      builder.append(":").append(command.getSteps()).append("\r\n");
+      builder.append(":").append(command.getSteps()).append(CRLF);
    }
 }

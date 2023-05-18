@@ -1,15 +1,18 @@
 package org.infinispan.server.resp.commands.connection;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
-import org.infinispan.server.resp.ByteBufferUtils;
-import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.Resp3Handler;
-import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespRequestHandler;
+import static org.infinispan.server.resp.RespConstants.CRLF;
 
 import java.util.List;
 import java.util.concurrent.CompletionStage;
+
+import org.infinispan.server.resp.ByteBufferUtils;
+import org.infinispan.server.resp.Resp3Handler;
+import org.infinispan.server.resp.RespCommand;
+import org.infinispan.server.resp.RespRequestHandler;
+import org.infinispan.server.resp.commands.Resp3Command;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @link https://redis.io/commands/echo/
@@ -25,7 +28,7 @@ public class ECHO extends RespCommand implements Resp3Command {
                                                                 List<byte[]> arguments) {
       byte[] argument = arguments.get(0);
       ByteBuf bufferToWrite = ByteBufferUtils.
-            stringToByteBufWithExtra("$" + argument.length + "\r\n", handler.allocatorToUse(), argument.length + 2);
+            stringToByteBufWithExtra("$" + argument.length + CRLF, handler.allocatorToUse(), argument.length + 2);
       bufferToWrite.writeBytes(argument);
       bufferToWrite.writeByte('\r').writeByte('\n');
       return handler.myStage();
