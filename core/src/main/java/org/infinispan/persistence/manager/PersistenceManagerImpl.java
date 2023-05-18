@@ -506,12 +506,16 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    private PersistenceStatus createStatus() {
+      boolean usingSharedStore = false;
       boolean usingSharedAsync = false;
       boolean usingSegments = false;
       boolean usingAsync = false;
       boolean usingReadOnly = false;
       boolean usingTransactionalStore = false;
       for (StoreStatus storeStatus : stores) {
+         if (storeStatus.config.shared()) {
+            usingSharedStore = true;
+         }
          if (storeStatus.config.async().enabled()) {
             usingSharedAsync |= storeStatus.config.shared();
             usingAsync = true;
@@ -526,7 +530,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             usingTransactionalStore = true;
          }
       }
-      return new PersistenceStatus(enabled, usingSegments, usingAsync, usingSharedAsync,
+      return new PersistenceStatus(enabled, usingSegments, usingAsync, usingSharedStore, usingSharedAsync,
             usingReadOnly, usingTransactionalStore);
    }
 

@@ -10,6 +10,7 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.lang.reflect.Method;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.CompletionStage;
@@ -20,9 +21,13 @@ import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
+import org.infinispan.CacheStream;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.ByRef;
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
@@ -31,6 +36,7 @@ import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -305,6 +311,59 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       for (int i = 0; i < numberOfEntries; ++i) {
          assertNotNull("Entry for key: " + i + " was null", store.loadEntry(toStorage(cache, Integer.toString(i))));
       }
+   }
+
+   public void testIterator() {
+      int numberOfEntries = 100;
+      String cacheName = "testIterator";
+      ConfigurationBuilder cb = getDefaultCacheConfiguration();
+      createCacheStoreConfig(cb.persistence(), cacheName, false);
+      TestingUtil.defineConfiguration(cacheManager, cacheName, cb.build());
+
+      Cache<String, Object> cache = cacheManager.getCache(cacheName);
+      Map<String, Object> entriesMap = IntStream.range(0, numberOfEntries).boxed()
+            .collect(Collectors.toMap(Object::toString, i -> wrap(i.toString(), "Val" + i)));
+      cache.putAll(entriesMap);
+
+      Map<String, Object> results = new HashMap<>(numberOfEntries);
+      try (CloseableIterator<Map.Entry<String, Object>> iter = cache.getAdvancedCache().entrySet().iterator()) {
+         iter.forEachRemaining(e -> results.put(e.getKey(), e.getValue()));
+      }
+
+      assertEquals(entriesMap, results);
+   }
+
+   public void testIteratorWithSegment() {
+      int numberOfEntries = 100;
+      String cacheName = "testIteratorWithSegment";
+      ConfigurationBuilder cb = getDefaultCacheConfiguration();
+      createCacheStoreConfig(cb.persistence(), cacheName, false);
+      TestingUtil.defineConfiguration(cacheManager, cacheName, cb.build());
+
+      Cache<String, Object> cache = cacheManager.getCache(cacheName);
+      IntSet segments = IntSets.mutableEmptySet();
+      for (int i = 0; i < cache.getCacheConfiguration().clustering().hash().numSegments(); ++i) {
+         if (i % 2 == 0) {
+            segments.set(i);
+         }
+      }
+
+      Map<String, Object> entriesMap = IntStream.range(0, numberOfEntries).boxed()
+            .collect(Collectors.toMap(Object::toString, i -> wrap(i.toString(), "Val" + i)));
+      cache.putAll(entriesMap);
+
+      KeyPartitioner kp = TestingUtil.extractComponent(cache, KeyPartitioner.class);
+
+      Map<String, Object> targetMap = entriesMap.entrySet().stream().filter(e ->
+         segments.contains(kp.getSegment(e.getKey()))
+      ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+      Map<String, Object> results = new HashMap<>(numberOfEntries);
+      try (CacheStream<Map.Entry<String, Object>> stream = cache.getAdvancedCache().entrySet().stream()) {
+         stream.filterKeySegments(segments).iterator().forEachRemaining(e -> results.put(e.getKey(), e.getValue()));
+      }
+
+      assertEquals(targetMap, results);
    }
 
    Object fromStorage(Cache<?, ?> cache, Object value) {

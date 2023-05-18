@@ -202,12 +202,12 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
    public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command)
          throws Throwable {
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         if (hasSkipLoadFlag(command)) {
+         if (hasSkipLoadFlag(rCommand)) {
             // Continue with the existing throwable/return value
             return rv;
          }
          CacheSet<CacheEntry<K, V>> entrySet = (CacheSet<CacheEntry<K, V>>) rv;
-         return new WrappedEntrySet(entrySet, command);
+         return new WrappedEntrySet(entrySet, rCommand);
       });
    }
 
@@ -215,13 +215,13 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
    public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command)
          throws Throwable {
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         if (hasSkipLoadFlag(command)) {
+         if (hasSkipLoadFlag(rCommand)) {
             // Continue with the existing throwable/return value
             return rv;
          }
 
          CacheSet<K> keySet = (CacheSet<K>) rv;
-         return new WrappedKeySet(keySet, command);
+         return new WrappedKeySet(keySet, rCommand);
       });
    }
 

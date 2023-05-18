@@ -7,15 +7,17 @@ public class PersistenceStatus {
    private final boolean isEnabled;
    private final boolean usingSegmentedStore;
    private final boolean usingAsyncStore;
+   private final boolean usingSharedStore;
    private final boolean usingSharedAsyncStore;
    private final boolean usingReadOnly;
    private final boolean usingTransactionalStore;
 
    public PersistenceStatus(boolean isEnabled, boolean usingSegmentedStore, boolean usingAsyncStore,
-         boolean usingSharedAsyncStore, boolean usingReadOnly, boolean usingTransactionalStore) {
+                            boolean usingSharedStore, boolean usingSharedAsyncStore, boolean usingReadOnly, boolean usingTransactionalStore) {
       this.isEnabled = isEnabled;
       this.usingSegmentedStore = usingSegmentedStore;
       this.usingAsyncStore = usingAsyncStore;
+      this.usingSharedStore = usingSharedStore;
       this.usingSharedAsyncStore = usingSharedAsyncStore;
       this.usingReadOnly = usingReadOnly;
       this.usingTransactionalStore = usingTransactionalStore;
@@ -31,6 +33,10 @@ public class PersistenceStatus {
 
    public boolean usingAsyncStore() {
       return usingAsyncStore;
+   }
+
+   public boolean usingSharedStore() {
+      return usingSharedStore;
    }
 
    public boolean usingSharedAsyncStore() {
