@@ -109,6 +109,11 @@ public class AbstractDelegatingEmbeddedCacheManager implements EmbeddedCacheMana
    }
 
    @Override
+   public Set<String> getAccessibleCacheNames() {
+      return cm.getAccessibleCacheNames();
+   }
+
+   @Override
    public Set<String> getCacheConfigurationNames() {
       return cm.getCacheConfigurationNames();
    }

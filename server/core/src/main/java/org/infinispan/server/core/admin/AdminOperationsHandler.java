@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
+import javax.security.auth.Subject;
+
 import org.infinispan.commons.CacheException;
 import org.infinispan.security.Security;
 import org.infinispan.tasks.Task;
@@ -43,13 +45,10 @@ public abstract class AdminOperationsHandler implements TaskEngine {
    @Override
    public <T> CompletionStage<T> runTask(String taskName, TaskContext context, BlockingManager blockingManager) {
       AdminServerTask<T> task = tasks.get(taskName);
+      Subject subject = context.getSubject().orElse(Security.getSubject());
       return blockingManager.supplyBlocking(() -> {
          try {
-            if (context.getSubject().isPresent()) {
-               return Security.doAs(context.getSubject().get(), (PrivilegedAction<T>) () -> task.execute(context));
-            } else {
-               return task.execute(context);
-            }
+            return Security.doAs(subject, (PrivilegedAction<T>) () -> task.execute(context));
          } catch (CacheException e) {
             throw e;
          } catch (Exception e) {

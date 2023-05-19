@@ -2,6 +2,7 @@ package org.infinispan.security.impl;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -581,6 +582,11 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
          @Override
          public void checkPermission(Subject subject, AuthorizationPermission permission, String role) {
             authzManager.checkPermission(subject, permission, role);
+         }
+
+         @Override
+         public EnumSet<AuthorizationPermission> getPermissions(Subject subject) {
+            return authzManager.getPermissions(subject);
          }
 
          @Override

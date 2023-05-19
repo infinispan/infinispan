@@ -878,7 +878,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    }
 
    private CompletionStage<RestResponse> getCacheNames(RestRequest request) throws RestResponseException {
-      Collection<String> cacheNames = invocationHelper.getRestCacheManager().getCacheNames();
+      Collection<String> cacheNames = invocationHelper.getRestCacheManager().getAccessibleCacheNames();
       return asJsonResponseFuture(Json.make(cacheNames), isPretty(request));
    }
 

@@ -11,7 +11,7 @@ import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-@Test(groups="functional", testName="security.RolePermissionNoACLCacheTest")
+@Test(groups = "functional", testName = "security.RolePermissionNoACLCacheTest")
 public class RolePermissionNoACLCacheTest extends RolePermissionTest {
 
    @Override
@@ -23,9 +23,13 @@ public class RolePermissionNoACLCacheTest extends RolePermissionTest {
       AuthorizationConfigurationBuilder authConfig = config.security().authorization().enable();
 
       globalRoles
-         .role("role1").permission(AuthorizationPermission.EXEC)
-         .role("role2").permission(AuthorizationPermission.EXEC)
-         .role("admin").permission(AuthorizationPermission.ALL);
+            .role("role1").permission(AuthorizationPermission.EXEC)
+            .role("role2").permission(AuthorizationPermission.EXEC)
+            .role("role3").permission(AuthorizationPermission.EXEC)
+            .role("role4").permission(AuthorizationPermission.EXEC)
+            .role("role5").permission(AuthorizationPermission.EXEC)
+            .role("role6").permission(AuthorizationPermission.EXEC)
+            .role("admin").permission(AuthorizationPermission.ALL);
       authConfig.role("role1").role("role2").role("admin");
       return TestCacheManagerFactory.createCacheManager(global, config);
    }
