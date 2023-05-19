@@ -97,7 +97,8 @@ View and modify security information.
 include::{topics}/ref_rest_server_security.adoc[leveloffset=+2]
 
 [id='rest_v2_tracing_propagation']
-== Tracing Propagation
+== Enabling Tracing Propagation
+Tracing with {brandname} Server and REST API lets you monitor and analyze the flow of requests and track the execution path across different components.
 
 include::{topics}/ref_rest_server_tracing_propagation.adoc[leveloffset=+2]
 
