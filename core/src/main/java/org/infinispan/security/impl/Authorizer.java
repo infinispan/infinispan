@@ -5,6 +5,7 @@ import static org.infinispan.util.logging.Log.SECURITY;
 import java.security.AccessControlException;
 import java.security.Principal;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -99,12 +100,8 @@ public class Authorizer {
          } else {
             subject = subject != null ? subject : Security.getSubject();
             try {
-               if (subject != null) {
-                  if (checkSubjectPermissionAndRole(subject, configuration, perm, role)) {
-                     audit.audit(subject, explicitContext, explicitName, perm, AuditResponse.ALLOW);
-                  } else {
-                     checkSecurityManagerPermission(perm);
-                  }
+               if (checkSubjectPermissionAndRole(subject, configuration, perm, role)) {
+                  audit.audit(subject, explicitContext, explicitName, perm, AuditResponse.ALLOW);
                } else {
                   checkSecurityManagerPermission(perm);
                }
@@ -124,6 +121,15 @@ public class Authorizer {
       }
    }
 
+   public EnumSet<AuthorizationPermission> getPermissions(AuthorizationConfiguration configuration, Subject subject) {
+      if (globalConfiguration.authorization().enabled()) {
+         return computeSubjectACL(subject, configuration).getPermissions();
+      } else {
+         return EnumSet.allOf(AuthorizationPermission.class);
+      }
+   }
+
+
    private boolean checkSubjectPermissionAndRole(Subject subject, AuthorizationConfiguration configuration,
                                                  AuthorizationPermission requiredPermission, String requestedRole) {
       if (subject != null) {
@@ -135,7 +141,7 @@ public class Authorizer {
             subjectACL = computeSubjectACL(subject, configuration);
 
          int permissionMask = requiredPermission.getMask();
-         boolean authorized = subjectACL.matches(permissionMask) && (requestedRole != null ? subjectACL.containsRole(requestedRole) : true);
+         boolean authorized = subjectACL.matches(permissionMask) && (requestedRole == null || subjectACL.containsRole(requestedRole));
          if (log.isTraceEnabled()) {
             log.tracef("Check subject '%s' with ACL '%s' has permission '%s' and role '%s' = %b", subject, subjectACL, requiredPermission, requestedRole, authorized);
          }
@@ -160,7 +166,7 @@ public class Authorizer {
       // Create a bitmask of the permissions this Subject has for the resource identified by the configuration
       int subjectMask = 0;
       // If this resource has not declared any roles, all the inheritable global roles will be checked
-      boolean implicit = configuration != null ? configuration.roles().isEmpty() : false;
+      boolean implicit = configuration != null && configuration.roles().isEmpty();
       for (String role : allRoles) {
          if (configuration == null || implicit || configuration.roles().contains(role)) {
             Role globalRole = authorization.getRole(role);

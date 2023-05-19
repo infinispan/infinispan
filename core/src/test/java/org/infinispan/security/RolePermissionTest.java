@@ -1,7 +1,11 @@
 package org.infinispan.security;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
 import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
+import java.util.Set;
 
 import javax.security.auth.Subject;
 
@@ -16,7 +20,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-@Test(groups="functional", testName="security.RolePermissionTest")
+@Test(groups = "functional", testName = "security.RolePermissionTest")
 public class RolePermissionTest extends SingleCacheManagerTest {
    static final Subject ADMIN = TestingUtil.makeSubject("admin");
    static final Subject SUBJECT_A = TestingUtil.makeSubject("A", "role1");
@@ -29,26 +33,26 @@ public class RolePermissionTest extends SingleCacheManagerTest {
       GlobalAuthorizationConfigurationBuilder globalRoles = global.security().authorization().enable()
             .principalRoleMapper(new IdentityRoleMapper());
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-      AuthorizationConfigurationBuilder authConfig = config.security().authorization().enable();
 
       globalRoles
-         .role("role1").permission(AuthorizationPermission.EXEC)
-         .role("role2").permission(AuthorizationPermission.EXEC)
-         .role("admin").permission(AuthorizationPermission.ALL);
+            .role("role1").permission(AuthorizationPermission.EXEC)
+            .role("role2").permission(AuthorizationPermission.EXEC)
+            .role("role3").permission(AuthorizationPermission.READ, AuthorizationPermission.WRITE)
+            .role("role4").permission(AuthorizationPermission.READ, AuthorizationPermission.WRITE)
+            .role("role5").permission(AuthorizationPermission.READ, AuthorizationPermission.WRITE)
+            .role("admin").permission(AuthorizationPermission.ALL);
+
+      AuthorizationConfigurationBuilder authConfig = config.security().authorization().enable();
       authConfig.role("role1").role("role2").role("admin");
       return TestCacheManagerFactory.createCacheManager(global, config);
    }
 
    @Override
    protected void setup() throws Exception {
-      authzManager = Security.doAs(ADMIN, new PrivilegedExceptionAction<AuthorizationManager>() {
-
-         @Override
-         public AuthorizationManager run() throws Exception {
-            cacheManager = createCacheManager();
-            if (cache == null) cache = cacheManager.getCache();
-            return cache.getAdvancedCache().getAuthorizationManager();
-         }
+      authzManager = Security.doAs(ADMIN, (PrivilegedExceptionAction<AuthorizationManager>) () -> {
+         cacheManager = createCacheManager();
+         if (cache == null) cache = cacheManager.getCache();
+         return cache.getAdvancedCache().getAuthorizationManager();
       });
    }
 
@@ -66,7 +70,7 @@ public class RolePermissionTest extends SingleCacheManagerTest {
       });
    }
 
-   @Test(expectedExceptions=SecurityException.class)
+   @Test(expectedExceptions = SecurityException.class)
    public void testWrongPermissionAndNoRole() {
       Security.doAs(SUBJECT_A, (PrivilegedAction<Void>) () -> {
          authzManager.checkPermission(AuthorizationPermission.LISTEN);
@@ -74,7 +78,7 @@ public class RolePermissionTest extends SingleCacheManagerTest {
       });
    }
 
-   @Test(expectedExceptions=SecurityException.class)
+   @Test(expectedExceptions = SecurityException.class)
    public void testWrongPermissionAndRole() {
       Security.doAs(SUBJECT_A, (PrivilegedAction<Void>) () -> {
          authzManager.checkPermission(AuthorizationPermission.LISTEN, "role1");
@@ -82,7 +86,7 @@ public class RolePermissionTest extends SingleCacheManagerTest {
       });
    }
 
-   @Test(expectedExceptions=SecurityException.class)
+   @Test(expectedExceptions = SecurityException.class)
    public void testPermissionAndWrongRole() {
       Security.doAs(SUBJECT_A, (PrivilegedAction<Void>) () -> {
          authzManager.checkPermission(AuthorizationPermission.EXEC, "role2");
@@ -90,7 +94,7 @@ public class RolePermissionTest extends SingleCacheManagerTest {
       });
    }
 
-   @Test(expectedExceptions=SecurityException.class)
+   @Test(expectedExceptions = SecurityException.class)
    public void testWrongPermissionAndWrongRole() {
       Security.doAs(SUBJECT_A, (PrivilegedAction<Void>) () -> {
          authzManager.checkPermission(AuthorizationPermission.LISTEN, "role2");
@@ -103,6 +107,30 @@ public class RolePermissionTest extends SingleCacheManagerTest {
          authzManager.checkPermission(AuthorizationPermission.NONE);
          return null;
       });
+   }
+
+   public void testAccessibleCaches() {
+      Security.doAs(ADMIN, () -> {
+         for (int i = 3; i < 6; i++) {
+            ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+            config.security().authorization().enable().role("role" + i).role("admin");
+            cacheManager.createCache("cache" + i, config.build());
+         }
+      });
+      Set<String> names = Security.doAs(TestingUtil.makeSubject("Subject34", "role3", "role4"), (PrivilegedAction<Set<String>>) () -> cacheManager.getAccessibleCacheNames());
+      assertEquals(2, names.size());
+      assertTrue(names.toString(), names.contains("cache3"));
+      assertTrue(names.toString(), names.contains("cache4"));
+      names = Security.doAs(TestingUtil.makeSubject("Subject35", "role3", "role5"), (PrivilegedAction<Set<String>>) () -> cacheManager.getAccessibleCacheNames());
+      assertEquals(2, names.size());
+      assertTrue(names.toString(), names.contains("cache3"));
+      assertTrue(names.toString(), names.contains("cache5"));
+      names = Security.doAs(TestingUtil.makeSubject("Subject45", "role4", "role5"), (PrivilegedAction<Set<String>>) () -> cacheManager.getAccessibleCacheNames());
+      assertEquals(2, names.size());
+      assertTrue(names.toString(), names.contains("cache4"));
+      assertTrue(names.toString(), names.contains("cache5"));
+      names = Security.doAs(TestingUtil.makeSubject("Subject0"), (PrivilegedAction<Set<String>>) () -> cacheManager.getAccessibleCacheNames());
+      assertEquals(0, names.size());
    }
 
    @Override

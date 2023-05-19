@@ -130,6 +130,10 @@ public class RestCacheManager<V> {
       return instance.getCacheNames();
    }
 
+   public Collection<String> getAccessibleCacheNames() {
+      return instance.getAccessibleCacheNames();
+   }
+
    public CompletionStage<CacheEntry<Object, V>> getInternalEntry(String cacheName, Object key, MediaType keyContentType, MediaType mediaType, RestRequest request) {
       return getInternalEntry(cacheName, key, false, keyContentType, mediaType, request);
    }

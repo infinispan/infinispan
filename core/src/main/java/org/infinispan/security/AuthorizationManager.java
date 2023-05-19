@@ -1,6 +1,7 @@
 package org.infinispan.security;
 
 import java.security.AccessControlContext;
+import java.util.EnumSet;
 
 import javax.security.auth.Subject;
 
@@ -38,6 +39,11 @@ public interface AuthorizationManager {
     * A {@link SecurityException} is thrown otherwise.
     */
    void checkPermission(Subject subject, AuthorizationPermission permission, String role);
+
+   /**
+    * Returns the permissions that the specified {@link Subject} has for the cache
+    */
+   EnumSet<AuthorizationPermission> getPermissions(Subject subject);
 
    /**
     * Returns the permission required to write to the resource associated with this AuthorizationManager.
