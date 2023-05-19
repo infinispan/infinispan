@@ -54,12 +54,11 @@ public abstract class AdminServerTask<T> implements Task {
                }
             }));
       List<String> sFlags = parameters.remove("flags");
-      T result = execute(
+      return execute(
             taskContext.getCacheManager(),
             parameters,
             sFlags != null ? AdminFlag.fromString(sFlags.get(0)) : EnumSet.noneOf(AdminFlag.class)
       );
-      return result;
    }
 
    protected String requireParameter(Map<String, List<String>> parameters, String parameter) {

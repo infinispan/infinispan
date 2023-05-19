@@ -84,7 +84,10 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.GlobalSecurityManager;
+import org.infinispan.security.Security;
 import org.infinispan.security.actions.SecurityActions;
+import org.infinispan.security.impl.AuthorizationManagerImpl;
 import org.infinispan.security.impl.AuthorizationMapperContextImpl;
 import org.infinispan.security.impl.Authorizer;
 import org.infinispan.security.impl.SecureCacheImpl;
@@ -105,8 +108,8 @@ import org.infinispan.util.logging.LogFactory;
  * JVM (unless specific configuration requirements require more than one; but either way, this would be a minimal and
  * finite number of instances).
  * <p/>
- * Constructing a <tt>CacheManager</tt> is done via one of its constructors, which optionally take in a {@link
- * org.infinispan.configuration.cache.Configuration} or a path or URL to a configuration XML file.
+ * Constructing a <tt>CacheManager</tt> is done via one of its constructors, which optionally take in a
+ * {@link org.infinispan.configuration.cache.Configuration} or a path or URL to a configuration XML file.
  * <p/>
  * Lifecycle - <tt>CacheManager</tt>s have a lifecycle (it implements {@link Lifecycle}) and the default constructors
  * also call {@link #start()}. Overloaded versions of the constructors are available, that do not start the
@@ -172,8 +175,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    /**
     * Constructs and starts a default instance of the CacheManager, using configuration defaults. See
-    * {@link org.infinispan.configuration.cache.Configuration} and {@link org.infinispan.configuration.global.GlobalConfiguration}
-    * for details of these defaults.
+    * {@link org.infinispan.configuration.cache.Configuration} and
+    * {@link org.infinispan.configuration.global.GlobalConfiguration} for details of these defaults.
     */
    public DefaultCacheManager() {
       this(null, null, true);
@@ -181,8 +184,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    /**
     * Constructs a default instance of the CacheManager, using configuration defaults.  See
-    * {@link org.infinispan.configuration.cache.Configuration} and {@link org.infinispan.configuration.global.GlobalConfiguration}
-    * for details of these defaults.
+    * {@link org.infinispan.configuration.cache.Configuration} and
+    * {@link org.infinispan.configuration.global.GlobalConfiguration} for details of these defaults.
     *
     * @param start if true, the cache manager is started
     */
@@ -192,8 +195,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    /**
     * Constructs and starts a new instance of the CacheManager, using the default configuration passed in.  See
-    * {@link org.infinispan.configuration.cache.Configuration} and {@link org.infinispan.configuration.global.GlobalConfiguration}
-    * for details of these defaults.
+    * {@link org.infinispan.configuration.cache.Configuration} and
+    * {@link org.infinispan.configuration.global.GlobalConfiguration} for details of these defaults.
     *
     * @param defaultConfiguration configuration to use as a template for all caches created
     * @deprecated Since 11.0, please use {@link #DefaultCacheManager(ConfigurationBuilderHolder, boolean)} instead.
@@ -229,8 +232,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    /**
     * Constructs a new instance of the CacheManager, using the global configuration passed in, and system defaults for
-    * the default named cache configuration.  See {@link org.infinispan.configuration.cache.Configuration}
-    * for details of these defaults.
+    * the default named cache configuration.  See {@link org.infinispan.configuration.cache.Configuration} for details
+    * of these defaults.
     *
     * @param globalConfiguration GlobalConfiguration to use for all caches created
     * @param start               if true, the cache manager is started.
@@ -283,7 +286,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       ModuleRepository moduleRepository = ModuleRepository.newModuleRepository(globalConfiguration.classLoader(), globalConfiguration);
       this.classAllowList = globalConfiguration.serialization().allowList().create();
       this.globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet(),
-                                                                 moduleRepository, configurationManager);
+            moduleRepository, configurationManager);
 
       InternalCacheRegistry internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
       this.globalComponentRegistry.registerComponent(cacheDependencyGraph, CACHE_DEPENDENCY_GRAPH, false);
@@ -300,7 +303,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       globalComponentRegistry.registerComponent(new HealthJMXExposerImpl(health), HealthJMXExposer.class);
 
       this.cacheManagerAdmin = new DefaultCacheManagerAdmin(this, authorizer, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class), null,
-                                                            globalComponentRegistry.getComponent(GlobalConfigurationManager.class));
+            globalComponentRegistry.getComponent(GlobalConfigurationManager.class));
       if (start)
          start();
    }
@@ -358,9 +361,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
     * Constructs a new instance of the CacheManager, using the input stream passed in to read configuration file
     * contents.
     *
-    * @param configurationURL    stream containing configuration file contents, to use as a template for all caches
-    *                            created
-    * @param start               if true, the cache manager is started
+    * @param configurationURL stream containing configuration file contents, to use as a template for all caches
+    *                         created
+    * @param start            if true, the cache manager is started
     * @throws java.io.IOException if there is a problem reading the configuration stream
     */
    public DefaultCacheManager(URL configurationURL, boolean start) throws IOException {
@@ -382,7 +385,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
          ModuleRepository moduleRepository = ModuleRepository.newModuleRepository(globalConfiguration.classLoader(), globalConfiguration);
          globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet(),
-                                                               moduleRepository, configurationManager);
+               moduleRepository, configurationManager);
 
          InternalCacheRegistry internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
          globalComponentRegistry.registerComponent(cacheDependencyGraph, CACHE_DEPENDENCY_GRAPH, false);
@@ -398,7 +401,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          globalComponentRegistry.registerComponent(authorizer, Authorizer.class);
 
          cacheManagerAdmin = new DefaultCacheManagerAdmin(this, authorizer, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class),
-                                                          null, globalComponentRegistry.getComponent(GlobalConfigurationManager.class));
+               null, globalComponentRegistry.getComponent(GlobalConfigurationManager.class));
       } catch (CacheConfigurationException ce) {
          throw ce;
       } catch (RuntimeException re) {
@@ -490,8 +493,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    /**
     * Retrieves the default cache associated with this cache manager. Note that the default cache does not need to be
-    * explicitly created with {@link #createCache(String)} (String)} since it is automatically created lazily
-    * when first used.
+    * explicitly created with {@link #createCache(String)} (String)} since it is automatically created lazily when first
+    * used.
     * <p/>
     * As such, this method is always guaranteed to return the default cache.
     *
@@ -510,8 +513,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
     * cache instance is returned. Otherwise, this method attempts to create the cache first.
     * <p/>
     * When creating a new cache, this method will use the configuration passed in to the CacheManager on construction,
-    * as a template, and then optionally apply any overrides previously defined for the named cache using the {@link
-    * #defineConfiguration(String, Configuration)} or {@link #defineConfiguration(String, String, Configuration)}
+    * as a template, and then optionally apply any overrides previously defined for the named cache using the
+    * {@link #defineConfiguration(String, Configuration)} or {@link #defineConfiguration(String, String, Configuration)}
     * methods, or declared in the configuration file.
     *
     * @param cacheName name of cache to retrieve
@@ -719,7 +722,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          ComponentRegistry cr = SecurityActions.getUnwrappedCache(cache).getAdvancedCache().getComponentRegistry();
 
          boolean notStartedYet =
-            cr.getStatus() != ComponentStatus.RUNNING && cr.getStatus() != ComponentStatus.INITIALIZING;
+               cr.getStatus() != ComponentStatus.RUNNING && cr.getStatus() != ComponentStatus.INITIALIZING;
          // start the cache-level components
          cache.start();
          cacheFuture.complete(cache);
@@ -983,6 +986,27 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    }
 
    @Override
+   public Set<String> getAccessibleCacheNames() {
+      if (configurationManager.getGlobalConfiguration().security().authorization().enabled()) {
+         Set<String> names = new HashSet<>();
+         GlobalSecurityManager gsm = globalComponentRegistry.getComponent(GlobalSecurityManager.class);
+         for (String name : configurationManager.getDefinedCaches()) {
+            Configuration cfg = configurationManager.getConfiguration(name);
+            AuthorizationManagerImpl am = new AuthorizationManagerImpl();
+            am.init(name, configurationManager.getGlobalConfiguration(), cfg, gsm);
+            if (!am.getPermissions(Security.getSubject()).isEmpty()) {
+               names.add(name);
+            }
+         }
+         InternalCacheRegistry internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
+         internalCacheRegistry.filterPrivateCaches(names);
+         return names;
+      } else {
+         return getCacheNames();
+      }
+   }
+
+   @Override
    public Set<String> getCacheConfigurationNames() {
       return cacheManagerInfo.getCacheConfigurationNames();
    }
@@ -1072,7 +1096,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @ManagedOperation(description = "Starts a named cache from this cache manager", name = "startCache", displayName = "Starts a cache with the given name")
    public void startCache(@Parameter(name = "cacheName", description = "Name of cache to start") String cacheName) {
-      if (cacheName == null )
+      if (cacheName == null)
          throw new NullPointerException("Null arguments not allowed");
 
       assertIsNotTerminated();
@@ -1084,7 +1108,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       CompletableFuture<Cache<?, ?>> cacheFuture = caches.get(cacheName);
       if (cacheFuture != null) {
          try {
-            Cache<?,?> cache = cacheFuture.join();
+            Cache<?, ?> cache = cacheFuture.join();
             if (!cache.getStatus().isTerminated()) {
                return;
             }
@@ -1157,8 +1181,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    private void assertIsNotTerminated() {
       if (status == ComponentStatus.STOPPING ||
-          status == ComponentStatus.TERMINATED ||
-          status == ComponentStatus.FAILED)
+            status == ComponentStatus.TERMINATED ||
+            status == ComponentStatus.FAILED)
          throw new IllegalLifecycleStateException(
                "Cache container has been stopped and cannot be reused. Recreate the cache container.");
    }
@@ -1199,7 +1223,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    private String identifierString() {
       if (getAddress() != null) {
          return getAddress().toString();
-      } else if (configurationManager.getGlobalConfiguration().transport().nodeName() != null){
+      } else if (configurationManager.getGlobalConfiguration().transport().nodeName() != null) {
          return configurationManager.getGlobalConfiguration().transport().nodeName();
       } else {
          return configurationManager.getGlobalConfiguration().cacheManagerName();
