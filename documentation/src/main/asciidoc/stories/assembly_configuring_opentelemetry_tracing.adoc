@@ -1,0 +1,11 @@
+[id='opentelemetry-tracing']
+:context: opentelemetry-tracing
+= Enabling and configuring {brandname} OpenTelemetry tracing
+
+{brandname} generates tracing spans compatible with the OpenTelemetry standard, allowing you to export, visualize, and analyze tracing data related to the most important cache operations.
+
+include::{topics}/proc_configuring_tracing.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

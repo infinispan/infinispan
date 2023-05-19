@@ -1,0 +1,25 @@
+[id='propagation-hotrod-client-tracing']
+= Hot Rod client tracing propagation
+
+When you configure OpenTelemetry tracing on both the client VM and the {brandname} Server, the Hot Rod client enables automatic correlation of tracing spans between the client application and the {brandname} Server.
+
+[discrete]
+== Disabling tracing propagation from the client to the {brandname} Server
+
+.Prerequisites
+* Have OpenTelemetry tracing enabled on The {brandname} Server and the client side.
+
+.Procedure
+
+* Use the `disableTracingPropagation()` method to disable OpenTelemetry tracing propagation.
++
+[source,java]
+----
+include::code_examples/HotRodDisableTracingPropagation.java[]
+----
++
+The Hot Rod client stops sending tracing to the {brandname} Server.
+
+[role="_additional-resources"]
+.Additional resources
+* link:{server_docs}#opentelemetry-tracing[Enabling {brandname} tracing]
