@@ -60,6 +60,7 @@ import org.infinispan.server.resp.commands.string.INCRBYFLOAT;
 import org.infinispan.server.resp.commands.string.MGET;
 import org.infinispan.server.resp.commands.string.MSET;
 import org.infinispan.server.resp.commands.string.SET;
+import org.infinispan.server.resp.commands.string.SETRANGE;
 import org.infinispan.server.resp.commands.string.STRALGO;
 import org.infinispan.server.resp.commands.string.STRLEN;
 
@@ -90,7 +91,7 @@ public final class Commands {
       ALL_COMMANDS[16] = new RespCommand[]{new QUIT()};
       ALL_COMMANDS[17] = new RespCommand[]{new RPUSH(), new RPUSHX(), new RPOP(), new RESET(), new READWRITE(), new READONLY()};
       // SET should always be first here
-      ALL_COMMANDS[18] = new RespCommand[]{new SET(), new STRLEN(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN()};
+      ALL_COMMANDS[18] = new RespCommand[]{new SET(), new STRLEN(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN(), new SETRANGE()};
       ALL_COMMANDS[19] = new RespCommand[]{new TTL(), new TYPE()};
       ALL_COMMANDS[20] = new RespCommand[]{new UNSUBSCRIBE()};
    }
