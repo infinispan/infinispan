@@ -1,5 +1,6 @@
 package org.infinispan.security.impl;
 
+import java.util.EnumSet;
 import java.util.Map;
 
 import javax.security.auth.Subject;
@@ -61,6 +62,11 @@ public class AuthorizationManagerImpl implements AuthorizationManager {
    @Override
    public void checkPermission(Subject subject, AuthorizationPermission perm, String role) {
       authorizer.checkPermission(configuration, subject, perm, role);
+   }
+
+   @Override
+   public EnumSet<AuthorizationPermission> getPermissions(Subject subject) {
+      return authorizer.getPermissions(configuration, subject);
    }
 
    @Override

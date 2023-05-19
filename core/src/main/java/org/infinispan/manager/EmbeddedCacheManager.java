@@ -172,6 +172,11 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
    }
 
    /**
+    * Similar to {@link #getCacheNames()} but filters out caches that are not accessible by the current user
+    */
+   Set<String> getAccessibleCacheNames();
+
+   /**
     * Tests whether a cache is running.
     * @param cacheName name of cache to test.
     * @return true if the cache exists and is running; false otherwise.

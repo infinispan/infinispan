@@ -2,6 +2,7 @@ package org.infinispan.security.impl;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -11,7 +12,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import javax.security.auth.Subject;
-import jakarta.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.AdvancedCache;
@@ -44,6 +44,8 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.SecureCache;
 import org.infinispan.stats.Stats;
 import org.infinispan.util.concurrent.locks.LockManager;
+
+import jakarta.transaction.TransactionManager;
 
 /**
  * SecureCacheImpl.
@@ -581,6 +583,11 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
          @Override
          public void checkPermission(Subject subject, AuthorizationPermission permission, String role) {
             authzManager.checkPermission(subject, permission, role);
+         }
+
+         @Override
+         public EnumSet<AuthorizationPermission> getPermissions(Subject subject) {
+            return authzManager.getPermissions(subject);
          }
 
          @Override
