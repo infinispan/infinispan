@@ -367,4 +367,39 @@ public class RespStringCommandsTest extends SingleNodeRespBaseTest {
         // Check negative range
         assertThat(redis.getrange(key, 10, -2)).isEqualTo("th € cha");
     }
+
+    @Test
+    void testSetrange() {
+       RedisCommands<String, String> redis = redisConnection.sync();
+       String key = "setrange";
+       redis.set(key, "A long string for testing");
+       assertThat(redis.setrange(key, 2, "tiny")).isEqualTo(25);
+       assertThat(redis.get(key)).isEqualTo("A tiny string for testing");
+    }
+
+    @Test
+    void testSetrangePatchOverflowsLength() {
+       RedisCommands<String, String> redis = redisConnection.sync();
+       String key = "setrange";
+       redis.set(key, "A long string for testing");
+       assertThat(redis.setrange(key, 18, "setrange testing")).isEqualTo(34);
+       assertThat(redis.get(key)).isEqualTo("A long string for setrange testing");
+    }
+
+    @Test
+    void testSetrangeOffsetGreaterThanLength() {
+       RedisCommands<String, String> redis = redisConnection.sync();
+       String key = "setrange";
+       redis.set(key, "A long string for testing");
+       assertThat(redis.setrange(key, 30, "my setrange")).isEqualTo(41);
+       assertThat(redis.get(key)).isEqualTo("A long string for testing\u0000\u0000\u0000\u0000\u0000my setrange");
+    }
+
+    @Test
+    void testSetrangeNotPresent() {
+       RedisCommands<String, String> redis = redisConnection.sync();
+       String key = "setrange-notpresent";
+       assertThat(redis.setrange(key, 5, "my setrange")).isEqualTo(16);
+       assertThat(redis.get(key)).isEqualTo("\u0000\u0000\u0000\u0000\u0000my setrange");
+    }
 }

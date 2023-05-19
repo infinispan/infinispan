@@ -154,6 +154,9 @@ The {brandname} RESP endpoint implements the following Redis commands:
 | link:https://redis.io/commands/set[SET]
 |
 
+| link:https://redis.io/commands/set[SETRANGE]
+|
+
 | link:https://redis.io/commands/subscribe[SUBSCRIBE]
 |
 
