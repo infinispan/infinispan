@@ -132,6 +132,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
             QueryConfiguration query = getConfiguration(holder, "local").query();
             assertThat(query.defaultMaxResults()).isEqualTo(100);
+            assertThat(query.hitCountAccuracy()).isEqualTo(10_000);
 
             IndexingConfiguration indexed = getConfiguration(holder, "indexed-reindex-at-startup").indexing();
             assertThat(indexed.enabled()).isTrue();
@@ -141,6 +142,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
             query = getConfiguration(holder, "custom-default-max-results").query();
             assertThat(query.defaultMaxResults()).isEqualTo(10);
+            assertThat(query.hitCountAccuracy()).isEqualTo(1000);
          }
       },
       INFINISPAN_130(13, 0) {

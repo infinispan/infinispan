@@ -983,6 +983,16 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
+          <xs:attribute name="hit-count-accuracy" type="xs:integer" default="${Query.hit-count-accuracy}">
+            <xs:annotation>
+              <xs:documentation>
+                Limit the required accuracy of the hit count for the indexed queries to an upper-bound.
+                Setting the hit-count-accuracy could improve the performance of queries targeting large data sets.
+                For optimal performances set this value not much above the expected hit count.
+                If you do not require accurate hit counts, set it to a low value.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
         </xs:complexType>
       </xs:element>
       <xs:element name="indexing" minOccurs="0">
