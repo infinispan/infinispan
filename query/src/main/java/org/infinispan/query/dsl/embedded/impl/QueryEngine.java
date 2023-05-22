@@ -84,6 +84,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
 
    private final boolean broadcastQuery;
    private final int defaultMaxResults;
+   private final int defaultHitCountAccuracy;
 
    public QueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed) {
       this(cache, isIndexed, ObjectReflectionMatcher.class);
@@ -96,6 +97,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       this.broadcastQuery = cacheMode.isClustered() && !cacheMode.isReplicated();
       this.isIndexed = isIndexed;
       this.defaultMaxResults = configuration.query().defaultMaxResults();
+      this.defaultHitCountAccuracy = configuration.query().hitCountAccuracy();
    }
 
    protected SearchMapping getSearchMapping() {
@@ -692,7 +694,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
    }
 
    private SearchQueryParsingResult transformToSearchQueryParsingResult(IckleParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters) {
-      SearchQueryMaker<TypeMetadata> queryMaker = new SearchQueryMaker<>(getSearchMapping(), propertyHelper);
+      SearchQueryMaker<TypeMetadata> queryMaker = new SearchQueryMaker<>(getSearchMapping(), propertyHelper, defaultHitCountAccuracy);
       return queryMaker.transform(parsingResult, namedParameters, getTargetedClass(parsingResult), getTargetedNamedType(parsingResult));
    }
 

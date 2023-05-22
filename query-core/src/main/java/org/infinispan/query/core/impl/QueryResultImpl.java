@@ -18,12 +18,15 @@ public final class QueryResultImpl<E> implements QueryResult<E> {
    private final List<E> list;
 
    public QueryResultImpl(long hitCount, List<E> list) {
-      this.hitCount = OptionalLong.of(hitCount);
-      this.list = list;
+      this(OptionalLong.of(hitCount), list);
    }
 
-   public QueryResultImpl(List<E> list) { //todo [anistor] why not used?
-      this.hitCount = OptionalLong.empty();
+   public QueryResultImpl(List<E> list) {
+      this(OptionalLong.empty(), list);
+   }
+
+   public QueryResultImpl(OptionalLong hitCount, List<E> list) {
+      this.hitCount = hitCount;
       this.list = list;
    }
 
