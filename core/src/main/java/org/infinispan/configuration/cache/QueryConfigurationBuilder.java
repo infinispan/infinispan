@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.cache.QueryConfiguration.DEFAULT_MAX_RESULTS;
+import static org.infinispan.configuration.cache.QueryConfiguration.HIT_COUNT_ACCURACY;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -33,6 +34,24 @@ public class QueryConfigurationBuilder extends AbstractConfigurationChildBuilder
 
    public int defaultMaxResults() {
       return attributes.attribute(DEFAULT_MAX_RESULTS).get();
+   }
+
+   /**
+    * Limit the required accuracy of the hit count for the indexed queries to an upper-bound.
+    * Setting the hit-count-accuracy could improve the performance of queries targeting large data sets.
+    * For optimal performances set this value not much above the expected hit count.
+    * If you do not require accurate hit counts, set it to a low value.
+    *
+    * @param hitCountAccuracy The value to apply
+    * @return <code>this</code>, for method chaining
+    */
+   public QueryConfigurationBuilder hitCountAccuracy(int hitCountAccuracy) {
+      attributes.attribute(HIT_COUNT_ACCURACY).set(hitCountAccuracy);
+      return this;
+   }
+
+   public int hitCountAccuracy() {
+      return attributes.attribute(HIT_COUNT_ACCURACY).get();
    }
 
    @Override

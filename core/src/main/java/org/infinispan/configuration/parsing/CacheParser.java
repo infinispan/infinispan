@@ -1646,6 +1646,9 @@ public class CacheParser implements ConfigurationParser {
             case DEFAULT_MAX_RESULTS:
                builder.query().defaultMaxResults(ParseUtils.parseInt(reader, i, value));
                break;
+            case HIT_COUNT_ACCURACY:
+               builder.query().hitCountAccuracy(ParseUtils.parseInt(reader, i, value));
+               break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }

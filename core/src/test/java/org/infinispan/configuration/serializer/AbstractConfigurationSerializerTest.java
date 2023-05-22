@@ -29,6 +29,7 @@ import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexingConfiguration;
+import org.infinispan.configuration.cache.QueryConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -121,6 +122,7 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
       assertEquals(name, configurationBefore.memory(), configurationAfter.memory());
       compareAttributeSets(name, configurationBefore.expiration().attributes(), configurationAfter.expiration().attributes());
       compareIndexing(name, configurationBefore.indexing(), configurationAfter.indexing());
+      compareQuery(name, configurationBefore.query(), configurationAfter.query());
       compareAttributeSets(name, configurationBefore.locking().attributes(), configurationAfter.locking().attributes());
       compareAttributeSets(name, configurationBefore.statistics().attributes(), configurationAfter.statistics().attributes());
       compareAttributeSets(name, configurationBefore.sites().attributes(), configurationAfter.sites().attributes());
@@ -134,6 +136,10 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
       compareAttributeSets(name, configurationBefore.transaction().attributes(), configurationAfter.transaction().attributes(), "transaction-manager-lookup");
 
       compareExtraConfiguration(name, configurationBefore, configurationAfter);
+   }
+
+   private void compareQuery(String name, QueryConfiguration before, QueryConfiguration after) {
+      assertEquals(String.format("Query attributes for %s mismatch", name), before.attributes(), after.attributes());
    }
 
    private void compareIndexing(String name, IndexingConfiguration before, IndexingConfiguration after) {
