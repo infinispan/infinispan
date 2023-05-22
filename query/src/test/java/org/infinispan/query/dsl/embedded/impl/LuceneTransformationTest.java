@@ -810,7 +810,7 @@ public class LuceneTransformationTest extends SingleCacheManagerTest {
    }
 
    private SearchQuery<?> transform(IckleParsingResult<Class<?>> ickleParsingResult, Map<String, Object> parameters) {
-      SearchQueryMaker<Class<?>> searchQueryMaker = new SearchQueryMaker<>(searchMapping, propertyHelper);
+      SearchQueryMaker<Class<?>> searchQueryMaker = new SearchQueryMaker<>(searchMapping, propertyHelper, 10_000);
       return searchQueryMaker
             .transform(ickleParsingResult, parameters, Employee.class, null)
             .builder(searchMapping.getMappingSession()).build();

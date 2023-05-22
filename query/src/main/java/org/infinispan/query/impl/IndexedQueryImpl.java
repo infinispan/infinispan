@@ -10,6 +10,7 @@ import static org.infinispan.query.logging.Log.CONTAINER;
 import org.hibernate.search.backend.lucene.search.query.LuceneSearchQuery;
 import org.hibernate.search.engine.search.query.SearchQuery;
 import org.hibernate.search.engine.search.query.SearchResult;
+import org.hibernate.search.engine.search.query.SearchResultTotal;
 import org.hibernate.search.util.common.SearchException;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterator;
@@ -161,7 +162,13 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
 
          if (queryStatistics.isEnabled()) recordQuery(System.nanoTime() - start);
 
-         return new QueryResultImpl<E>(searchResult.total().hitCount(), searchResult.hits());
+         // TODO ISPN-14198 Make the accuracy of the query count more expressive
+         SearchResultTotal total = searchResult.total();
+         if (total.isHitCountExact()) {
+            return new QueryResultImpl<>(searchResult.total().hitCount(), searchResult.hits());
+         }
+
+         return new QueryResultImpl<>(searchResult.hits());
       } catch (org.hibernate.search.util.common.SearchTimeoutException timeoutException) {
          throw new SearchTimeoutException();
       }

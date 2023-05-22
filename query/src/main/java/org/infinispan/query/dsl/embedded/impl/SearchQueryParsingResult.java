@@ -22,19 +22,21 @@ public final class SearchQueryParsingResult {
    private final SearchProjectionInfo projectionInfo;
    private final SearchPredicate predicate;
    private final SearchSort sort;
+   private final int hitCountAccuracy;
 
    public SearchQueryParsingResult(Class<?> targetedType, String targetedTypeName, SearchProjectionInfo projectionInfo,
-                                   SearchPredicate predicate, SearchSort sort) {
+                                   SearchPredicate predicate, SearchSort sort, int hitCountAccuracy) {
       this.targetedType = targetedType;
       this.targetedTypeName = targetedTypeName;
       this.projectionInfo = projectionInfo;
       this.predicate = predicate;
       this.sort = sort;
+      this.hitCountAccuracy = hitCountAccuracy;
    }
 
    public SearchQueryBuilder builder(SearchSession querySession) {
       SearchScope<?> scope = getScope(querySession);
-      return new SearchQueryBuilder(querySession, scope, projectionInfo, predicate, sort);
+      return new SearchQueryBuilder(querySession, scope, projectionInfo, predicate, sort, hitCountAccuracy);
    }
 
    private SearchScope<?> getScope(SearchSession querySession) {
