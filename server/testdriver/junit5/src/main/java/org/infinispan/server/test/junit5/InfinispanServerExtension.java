@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
 import org.infinispan.server.test.api.MemcachedTestClientDriver;
+import org.infinispan.server.test.api.RespTestClientDriver;
 import org.infinispan.server.test.api.RestTestClientDriver;
 import org.infinispan.server.test.api.TestClientDriver;
 import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
@@ -105,6 +106,11 @@ public class InfinispanServerExtension implements
    @Override
    public RestTestClientDriver rest() {
       return testClient.rest();
+   }
+
+   @Override
+   public RespTestClientDriver resp() {
+      return testClient.resp();
    }
 
    @Override

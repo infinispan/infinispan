@@ -43,6 +43,7 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.impl.StorageConfigurationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.globalstate.ScopedState;
 import org.infinispan.globalstate.impl.CacheState;
@@ -258,7 +259,8 @@ public class CacheResource extends AbstractContainerResource {
          PersistenceMarshaller persistenceMarshaller = cr.getPersistenceMarshaller();
          Marshaller userMarshaller = persistenceMarshaller.getUserMarshaller();
 
-         log.debugf("Backing up Cache %s", configuration.toStringConfiguration(cacheName));
+         if (log.isDebugEnabled())
+            log.debugf("Backing up Cache %s", configuration.toStringConfiguration(cacheName));
 
          int bufferSize = configuration.clustering().stateTransfer().chunkSize();
          Publisher<CacheBackupEntry> p =
@@ -268,8 +270,15 @@ public class CacheResource extends AbstractContainerResource {
                )
                .map(e -> {
                   CacheBackupEntry be = new CacheBackupEntry();
+                  // A cache might have heterogeneous data, e.g., `respCache`.
+                  // TODO Handle this with proper metadata inspection.
+                  boolean multimapMetadata = e.getMetadata() instanceof MetaParamsInternalMetadata;
                   be.key = keyMarshalling ? marshall(e.getKey(), userMarshaller) : (byte[]) scm.getKeyWrapper().unwrap(e.getKey());
-                  be.value = valueMarshalling ? marshall(e.getValue(), userMarshaller) : (byte[]) scm.getValueWrapper().unwrap(e.getValue());
+                  be.value = valueMarshalling
+                        ? marshall(e.getValue(), userMarshaller)
+                        : multimapMetadata
+                           ? marshall(e.getValue(), persistenceMarshaller)
+                           : (byte[]) scm.getValueWrapper().unwrap(e.getValue());
                   be.metadata = marshall(e.getMetadata(), persistenceMarshaller);
                   be.internalMetadata = e.getInternalMetadata();
                   be.created = e.getCreated();

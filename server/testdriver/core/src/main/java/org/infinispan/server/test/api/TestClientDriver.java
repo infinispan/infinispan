@@ -24,6 +24,12 @@ public interface TestClientDriver {
    RestTestClientDriver rest();
 
    /**
+    * Get the RESP instance.
+    * @return {@link RespTestClientDriver} instance.
+    */
+   RespTestClientDriver resp();
+
+   /**
     * Get the Memcached instance
     * @return {@link MemcachedTestClientDriver} instance}
     */

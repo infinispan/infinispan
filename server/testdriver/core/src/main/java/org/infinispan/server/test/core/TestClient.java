@@ -22,6 +22,7 @@ import org.infinispan.counter.api.CounterManager;
 import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
 import org.infinispan.server.test.api.MemcachedTestClientDriver;
+import org.infinispan.server.test.api.RespTestClientDriver;
 import org.infinispan.server.test.api.RestTestClientDriver;
 
 import net.spy.memcached.ConnectionFactoryBuilder;
@@ -61,6 +62,10 @@ public class TestClient {
 
    public RestTestClientDriver rest() {
       return new RestTestClientDriver(testServer, this);
+   }
+
+   public RespTestClientDriver resp() {
+      return new RespTestClientDriver(testServer, this);
    }
 
    public MemcachedTestClientDriver memcached() {

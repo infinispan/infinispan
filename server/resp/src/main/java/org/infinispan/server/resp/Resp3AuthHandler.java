@@ -12,10 +12,8 @@ import org.infinispan.server.resp.authentication.RespAuthenticator;
 import org.infinispan.server.resp.commands.AuthResp3Command;
 
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.util.AttributeKey;
 
 public class Resp3AuthHandler extends CacheRespRequestHandler {
-   static final AttributeKey<Subject> SUBJECT_ATTRIBUTE_KEY = AttributeKey.newInstance("subject");
 
    public Resp3AuthHandler(RespServer server) {
       super(server);
@@ -80,7 +78,6 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
          return false;
       }
 
-      ctx.channel().attr(SUBJECT_ATTRIBUTE_KEY).set(subject);
       setCache(cache.withSubject(subject));
       Consumers.OK_BICONSUMER.accept(null, allocatorToUse);
       return true;
@@ -98,9 +95,5 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
    public boolean canUseCertAuth() {
       RespAuthenticator authenticator = respServer.getConfiguration().authentication().authenticator();
       return authenticator != null && authenticator.isClientCertAuthEnabled();
-   }
-
-   public Subject extractSubject(ChannelHandlerContext ctx) {
-      return ctx.channel().attr(SUBJECT_ATTRIBUTE_KEY).get();
    }
 }

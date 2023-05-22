@@ -9,12 +9,16 @@ import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 11.0
  **/
 
+@RunWith(AuthorizationSuiteRunner.class)
+@Suite.SuiteClasses({HotRodAuthorizationTest.class, RESPAuthorizationTest.class, RESTAuthorizationTest.class})
 @Category(Security.class)
 public class AuthorizationPropertiesIT extends AbstractAuthorization {
    @ClassRule
