@@ -32,6 +32,7 @@ public final class SearchQueryBuilder {
    private final SearchProjectionInfo projectionInfo;
    private final SearchPredicate predicate;
    private final SearchSort sort;
+   private final int hitCountAccuracy;
 
    // target segment collection may mutate
    private Collection<String> routingKeys = Collections.emptySet();
@@ -40,12 +41,13 @@ public final class SearchQueryBuilder {
    private TimeUnit timeUnit;
 
    public SearchQueryBuilder(SearchSession querySession, SearchScope<?> scope, SearchProjectionInfo projectionInfo,
-                             SearchPredicate predicate, SearchSort sort) {
+                             SearchPredicate predicate, SearchSort sort, int hitCountAccuracy) {
       this.querySession = querySession;
       this.scope = scope;
       this.projectionInfo = projectionInfo;
       this.predicate = predicate;
       this.sort = sort;
+      this.hitCountAccuracy = hitCountAccuracy;
    }
 
    public LuceneSearchQuery<?> build() {
@@ -101,6 +103,7 @@ public final class SearchQueryBuilder {
       if (timeout != null && timeUnit != null) {
          queryOptionsStep = queryOptionsStep.failAfter(timeout, timeUnit);
       }
+      queryOptionsStep = queryOptionsStep.totalHitCountThreshold(hitCountAccuracy);
 
       return queryOptionsStep.toQuery();
    }

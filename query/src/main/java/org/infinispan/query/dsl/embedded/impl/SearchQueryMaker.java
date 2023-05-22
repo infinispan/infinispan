@@ -86,14 +86,16 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
 
    private final SearchMapping searchMapping;
    private final ObjectPropertyHelper<TypeMetadata> propertyHelper;
+   private final int hitCountAccuracy;
 
    private Map<String, Object> namedParameters;
    private LuceneSearchPredicateFactory predicateFactory;
    private SearchIndexedEntity indexedEntity;
 
-   SearchQueryMaker(SearchMapping searchMapping, ObjectPropertyHelper<TypeMetadata> propertyHelper) {
+   SearchQueryMaker(SearchMapping searchMapping, ObjectPropertyHelper<TypeMetadata> propertyHelper, int hitCountAccuracy) {
       this.searchMapping = searchMapping;
       this.propertyHelper = propertyHelper;
+      this.hitCountAccuracy = hitCountAccuracy;
    }
 
    public SearchQueryParsingResult transform(IckleParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters,
@@ -118,7 +120,7 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
             parsingResult.getProjectedTypes());
       SearchSort sort = makeSort(scope.sort(), parsingResult.getSortFields());
 
-      return new SearchQueryParsingResult(targetedType, targetedTypeName, projection, predicate, sort);
+      return new SearchQueryParsingResult(targetedType, targetedTypeName, projection, predicate, sort, hitCountAccuracy);
    }
 
    private SearchProjectionInfo makeProjection(TypeMetadata typeMetadata, SearchProjectionFactory<EntityReference, ?> projectionFactory,

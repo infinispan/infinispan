@@ -81,7 +81,7 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
       IndexedQuery<?> indexedQuery = createIndexedQuery();
       QueryResult<?> result = indexedQuery.execute();
       List<Object> collect = result.list().stream().map(this::convertResult).collect(Collectors.toList());
-      return new QueryResultImpl<>(result.hitCount().orElse(-1), (List<T>) collect);
+      return new QueryResultImpl<>(result.hitCount(), (List<T>) collect);
    }
 
    @Override
