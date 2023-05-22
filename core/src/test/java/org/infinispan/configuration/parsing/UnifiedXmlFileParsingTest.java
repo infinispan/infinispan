@@ -132,11 +132,17 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertThat(indexed.sharding()).isNotNull();
             assertThat(indexed.sharding().getShards()).isEqualTo(7);
 
+            QueryConfiguration query = getConfiguration(holder, "local").query();
+            assertThat(query.hitCountAccuracy()).isEqualTo(10_000);
+
             Configuration configuration = getConfiguration(holder, "repl");
             assertThat(configuration.clustering().hash().hashFunction()).isSameAs(CRC16.getInstance());
 
             configuration = getConfiguration(holder, "dist");
             assertThat(configuration.clustering().hash().hashFunction()).isSameAs(MurmurHash3.getInstance());
+
+            query = getConfiguration(holder, "custom-default-max-results").query();
+            assertThat(query.hitCountAccuracy()).isEqualTo(1000);
          }
       },
       INFINISPAN_140(14, 0) {

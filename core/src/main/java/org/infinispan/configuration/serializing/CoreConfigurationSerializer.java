@@ -700,6 +700,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       if (attributes.isModified()) {
          writer.writeStartElement(Element.QUERY);
          attributes.write(writer, QueryConfiguration.DEFAULT_MAX_RESULTS, Attribute.DEFAULT_MAX_RESULTS);
+         attributes.write(writer, QueryConfiguration.HIT_COUNT_ACCURACY, Attribute.HIT_COUNT_ACCURACY);
          writer.writeEndElement();
       }
    }
