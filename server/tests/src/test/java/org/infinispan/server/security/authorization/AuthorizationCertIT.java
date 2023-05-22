@@ -7,6 +7,7 @@ import java.net.InetSocketAddress;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.server.functional.ClusteredIT;
+import org.infinispan.server.test.api.RespTestClientDriver;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.category.Security;
@@ -16,6 +17,8 @@ import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisURI;
@@ -27,6 +30,8 @@ import io.lettuce.core.resource.DefaultClientResources;
  * @author Ryan Emerson
  * @since 13.0
  */
+@RunWith(AuthorizationSuiteRunner.class)
+@Suite.SuiteClasses({HotRodAuthorizationTest.class, RESTAuthorizationTest.class, RESPAuthorizationTest.class})
 @Category(Security.class)
 public class AuthorizationCertIT extends AbstractAuthorization {
 
@@ -46,7 +51,6 @@ public class AuthorizationCertIT extends AbstractAuthorization {
       return SERVERS;
    }
 
-   @Override
    protected InfinispanServerTestMethodRule getServerTest() {
       return SERVER_TEST;
    }
@@ -111,9 +115,10 @@ public class AuthorizationCertIT extends AbstractAuthorization {
             .autoReconnect(false) // Otherwise, Lettuce keeps retrying.
             .build();
 
-      respBuilders.put(user, new LettuceConfiguration(builder.build(), options, uri));
+      respBuilders.put(user, new RespTestClientDriver.LettuceConfiguration(builder, options, uri));
    }
 
+   @Override
    protected String expectedServerPrincipalName(TestUser user) {
       return String.format("CN=%s,OU=Infinispan,O=JBoss,L=Red Hat", user.getUser());
    }

@@ -21,12 +21,15 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.1
  **/
-
+@RunWith(AuthorizationSuiteRunner.class)
+@Suite.SuiteClasses({HotRodAuthorizationTest.class, RESTAuthorizationTest.class})
 @Category(Security.class)
 public class AuthorizationKerberosIT extends AbstractAuthorization {
    @ClassRule
@@ -86,7 +89,7 @@ public class AuthorizationKerberosIT extends AbstractAuthorization {
       }
       hotRodBuilders.put(user, hotRodBuilder);
       restBuilders.put(user, restBuilder);
-      respBuilders.clear(); // No supported by RESP.
+      respBuilders.clear();
    }
 
    protected String expectedServerPrincipalName(TestUser user) {
