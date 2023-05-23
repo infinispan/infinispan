@@ -10,6 +10,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
@@ -94,6 +95,46 @@ public class ListBucket<V> {
       }
 
       return new ListBucket<>(newBucket);
+   }
+
+   public Collection<V> sublist(long from, long to) {
+      // from and to are + but from is bigger
+      // example: from 2 > to 1 -> empty result
+      // from and to are - and to is smaller
+      // example: from -1 > to -2 -> empty result
+      if ((from > 0 && to > 0 && from > to) || (from < 0 && to < 0 && from > to)) {
+         return Collections.emptyList();
+      }
+
+      // index request
+      if (from == to) {
+         V element = index(from);
+         if (element != null) {
+            return Collections.singletonList(element);
+         }
+         return Collections.emptyList();
+      }
+
+      List<V> result = new ArrayList<>();
+      long fromIte = from < 0 ? values.size() + from : from;
+      long toIte = to < 0 ? values.size() + to : to;
+
+      Iterator<V> ite = values.iterator();
+      int offset = 0;
+      while (ite.hasNext()) {
+         V element = ite.next();
+         if (offset < fromIte){
+            offset++;
+            continue;
+         }
+         if (offset > toIte){
+            break;
+         }
+
+         result.add(element);
+         offset++;
+      }
+      return result;
    }
 
    public class ListBucketResult {

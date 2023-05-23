@@ -10,6 +10,7 @@ import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.multimap.impl.function.IndexFunction;
 import org.infinispan.multimap.impl.function.OfferFunction;
 import org.infinispan.multimap.impl.function.PollFunction;
+import org.infinispan.multimap.impl.function.SubListFunction;
 
 import java.util.Collection;
 import java.util.List;
@@ -127,8 +128,19 @@ public class EmbeddedMultimapListCache<K, V> {
       return readWriteMap.eval(key, new IndexFunction<>(index));
    }
 
-   public CompletionStage<Collection<V>> subList(int from, int to) {
-      throw new UnsupportedOperationException();
+   /**
+    * Retrieves a sub list of elements, starting from 0.
+    * Negative indexes point positions counting from the tail of the list.
+    * For example 0 is the first element, 1 is the second element, -1 the last element.
+    *
+    * @param key, the name of the list
+    * @param from, the starting offset
+    * @param to, the final offset
+    * @return The subList. Returns null if the key does not exist.
+    */
+   public CompletionStage<Collection<V>> subList(K key, long from, long to) {
+      requireNonNull(key, "key can't be null");
+      return readWriteMap.eval(key, new SubListFunction<>(from, to));
    }
 
    /**

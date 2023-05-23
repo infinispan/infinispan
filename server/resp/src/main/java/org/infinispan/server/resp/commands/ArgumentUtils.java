@@ -15,4 +15,8 @@ public final class ArgumentUtils {
    public static long toLong(byte[] argument) {
       return Long.parseLong(new String(argument, StandardCharsets.US_ASCII));
    }
+
+   public static int toInt(byte[] argument) {
+      return Integer.parseInt(new String(argument, StandardCharsets.US_ASCII));
+   }
 }

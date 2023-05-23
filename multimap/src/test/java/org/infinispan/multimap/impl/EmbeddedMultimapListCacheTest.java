@@ -301,4 +301,48 @@ public class EmbeddedMultimapListCacheTest extends SingleCacheManagerTest {
                   .thenAccept(r1 -> assertThat(r1).isNull())
       );
    }
+
+   public void testSubList() {
+      await(listCache.offerLast(NAMES_KEY, OIHANA));
+      await(listCache.offerLast(NAMES_KEY, ELAIA));
+      await(listCache.offerLast(NAMES_KEY, KOLDO));
+      await(listCache.offerLast(NAMES_KEY, RAMON));
+      await(listCache.offerLast(NAMES_KEY, JULIEN));
+
+      assertThat(await(listCache.subList(NAMES_KEY, 0, 0))).containsExactly(OIHANA);
+      assertThat(await(listCache.subList(NAMES_KEY, 4, 4))).containsExactly(JULIEN);
+      assertThat(await(listCache.subList(NAMES_KEY, 5, 5))).isEmpty();
+      assertThat(await(listCache.subList(NAMES_KEY, -1, -1))).containsExactly(JULIEN);
+      assertThat(await(listCache.subList(NAMES_KEY, -5, -5))).containsExactly(OIHANA);
+      assertThat(await(listCache.subList(NAMES_KEY, -6, -6))).isEmpty();
+
+      assertThat(await(listCache.subList(NAMES_KEY, 0, 4))).containsExactly(OIHANA, ELAIA, KOLDO, RAMON, JULIEN);
+      assertThat(await(listCache.subList(NAMES_KEY, 0, 5))).containsExactly(OIHANA, ELAIA, KOLDO, RAMON, JULIEN);
+      assertThat(await(listCache.subList(NAMES_KEY, 0, 3))).containsExactly(OIHANA, ELAIA, KOLDO, RAMON);
+      assertThat(await(listCache.subList(NAMES_KEY, 1, 2))).containsExactly(ELAIA, KOLDO);
+
+      assertThat(await(listCache.subList(NAMES_KEY, 1, 0))).isEmpty();
+      assertThat(await(listCache.subList(NAMES_KEY, -1, 0))).isEmpty();
+      assertThat(await(listCache.subList(NAMES_KEY, -1, -2))).isEmpty();
+
+      assertThat(await(listCache.subList(NAMES_KEY, -5, -1))).containsExactly(OIHANA, ELAIA, KOLDO, RAMON, JULIEN);
+      assertThat(await(listCache.subList(NAMES_KEY, -5, -2))).containsExactly(OIHANA, ELAIA, KOLDO, RAMON);
+      assertThat(await(listCache.subList(NAMES_KEY, -4, -2))).containsExactly(ELAIA, KOLDO, RAMON);
+
+      assertThat(await(listCache.subList(NAMES_KEY, 1, -1))).containsExactly(ELAIA, KOLDO, RAMON, JULIEN);
+      assertThat(await(listCache.subList(NAMES_KEY, 1, -1))).containsExactly(ELAIA, KOLDO, RAMON, JULIEN);
+      assertThat(await(listCache.subList(NAMES_KEY, -5, 1))).containsExactly(OIHANA, ELAIA);
+      assertThat(await(listCache.subList(NAMES_KEY, -2, 4))).containsExactly(RAMON, JULIEN);
+      assertThat(await(listCache.subList(NAMES_KEY, 0, -1))).containsExactly(OIHANA, ELAIA, KOLDO, RAMON, JULIEN);
+      assertThat(await(listCache.subList(NAMES_KEY, 2, -2))).containsExactly(KOLDO, RAMON);
+      assertThat(await(listCache.subList(NAMES_KEY, -1, 7))).containsExactly(JULIEN);
+      assertThat(await(listCache.subList(NAMES_KEY, 2, -6))).isEmpty();
+
+      assertThatThrownBy(() -> {
+         await(listCache.subList(null, 1, 10));
+      }).isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
+
+      assertThat(await(listCache.subList("not_existing", 1, 10))).isNull();
+   }
 }
