@@ -64,8 +64,8 @@ public class Resp3Handler extends Resp3AuthHandler {
    }
 
    protected static void handleBulkResult(byte[] result, ByteBufPool alloc) {
-      var buffer = handleLengthPrefix('$', result.length, alloc, result.length+2);
-      buffer.writeBytes(result, 0, result.length);
+      var buffer = handleLengthPrefix('$', result.length, alloc, result.length + 2);
+      buffer.writeBytes(result);
       buffer.writeByte('\r');
       buffer.writeByte('\n');
    }
@@ -96,8 +96,8 @@ public class Resp3Handler extends Resp3AuthHandler {
    }
 
    private static ByteBuf handleLengthPrefix(char type, int size, ByteBufPool alloc, int dataSize) {
-      int strLength = (size==0) ? 1 : (int)Math.log10(size) + 1;
-      ByteBuf buffer = alloc.acquire(strLength+dataSize+3);
+      int strLength = size==0 ? 1 : (int)Math.log10(size) + 1;
+      ByteBuf buffer = alloc.acquire(strLength + dataSize + 3);
       buffer.writeByte(type);
       ByteBufferUtils.setIntChars(size, strLength, buffer);
       buffer.writeByte('\r');
