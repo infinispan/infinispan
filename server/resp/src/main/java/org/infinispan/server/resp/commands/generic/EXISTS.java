@@ -32,11 +32,12 @@ public class EXISTS extends RespCommand implements Resp3Command {
       AggregateCompletionStage<Void> acs = CompletionStages.aggregateCompletionStage();
       AtomicLong presentCount = new AtomicLong(arguments.size());
       for (byte[] bs : arguments) {
-         acs.dependsOn(handler.cache()
-               .computeIfAbsentAsync(bs, (v) -> {
-                  presentCount.decrementAndGet();
-                  return null;
-               }));
+         acs.dependsOn(handler.cache().touch(bs, false).thenApply((v) -> {
+            if (!v) {
+               presentCount.decrementAndGet();
+            }
+            return null;
+         }));
       }
       return handler.stageToReturn(acs.freeze().thenApply(v -> presentCount.get()), ctx,
             Consumers.LONG_BICONSUMER);
