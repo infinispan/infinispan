@@ -909,6 +909,11 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
       return super.touch(keyToStorage(key), touchEvenIfExpired);
    }
 
+   @Override
+   public CompletionStage<Boolean> touch(Object key, int segment, boolean touchEvenIfExpired) {
+      return super.touch(keyToStorage(key), segment, touchEvenIfExpired);
+   }
+
    Map.Entry<K, V> toEntry(Object o) {
       if (o instanceof Map.Entry) {
          Map.Entry<K, V> entry = (Map.Entry<K, V>) o;
