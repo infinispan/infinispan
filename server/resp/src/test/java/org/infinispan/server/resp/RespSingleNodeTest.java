@@ -645,7 +645,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       RedisCommands<String, String> redis = redisConnection.sync();
       IntStream.range(0, 10).map(i -> 2 * i).forEach(i -> redis.set("key" + i, "value " + i));
       // Check 20 keys, 10 exist
-      String[] keys = IntStream.range(0, 20).boxed().map(v -> "key" + v).toArray(String[]::new);
+      String[] keys = IntStream.range(0, 21).boxed().map(v -> "key" + v).toArray(String[]::new);
       assertThat(redis.exists(keys)).isEqualTo(10);
    }
 
