@@ -25,6 +25,7 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
 
       result = redis.rpush("people", "william", "jose", "pedro");
       assertThat(result).isEqualTo(5);
+      assertThat(redis.lrange("people", 0, 4)).containsExactly("tristan", "william", "william", "jose", "pedro");
 
       // Set a String Command
       redis.set("leads", "tristan");
@@ -46,7 +47,7 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
 
       result = redis.rpushx("existing", "william", "jose");
       assertThat(result).isEqualTo(3);
-
+      assertThat(redis.lrange("existing", 0, 2)).containsExactly("tristan", "william", "jose");
       // Set a String Command
       redis.set("leads", "tristan");
 
@@ -67,6 +68,7 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
 
       result = redis.lpush("people", "william", "jose", "pedro");
       assertThat(result).isEqualTo(5);
+      assertThat(redis.lrange("people", 0, 4)).containsExactly("pedro", "jose", "william", "william", "tristan");
 
       // Set a String Command
       redis.set("leads", "tristan");
@@ -83,11 +85,12 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
       long result = redis.lpushx("noexisting", "doraemon", "son goku");
       assertThat(result).isEqualTo(0);
 
-      result = redis.rpush("existing", "tristan");
+      result = redis.lpush("existing", "tristan");
       assertThat(result).isEqualTo(1);
 
       result = redis.lpushx("existing", "william", "jose");
       assertThat(result).isEqualTo(3);
+      assertThat(redis.lrange("existing", 0, 2)).containsExactly("jose", "william", "tristan");
 
       // Set a String Command
       redis.set("leads", "tristan");
@@ -199,6 +202,25 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
 
       redis.rpush("leads", "william", "jose", "ryan", "pedro", "vittorio");
       assertThat(redis.llen("leads")).isEqualTo(5);
+
+      // Set a String Command
+      redis.set("another", "tristan");
+
+      // LLEN on an existing key that contains a String, not a Collection!
+      assertThatThrownBy(() -> {
+         redis.llen("another");
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERRWRONGTYPE");
+   }
+
+   public void testLRANGE() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThat(redis.lrange("noexisting", -1, 3)).isEmpty();
+
+      redis.rpush("leads", "william", "jose", "ryan", "pedro", "vittorio");
+      assertThat(redis.lrange("leads", 0, 5)).containsExactly("william", "jose", "ryan", "pedro", "vittorio");
+      assertThat(redis.lrange("leads", 1, -1)).containsExactly("jose", "ryan", "pedro", "vittorio");
+      assertThat(redis.lrange("leads", 3, 3)).containsExactly("pedro");
 
       // Set a String Command
       redis.set("another", "tristan");
