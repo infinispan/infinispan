@@ -21,11 +21,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-<<<<<<< HEAD
 import java.util.stream.IntStream;
-=======
 import java.util.stream.Stream;
->>>>>>> 36a3240594 (ISPN-14653 LCS command)
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.Exceptions;

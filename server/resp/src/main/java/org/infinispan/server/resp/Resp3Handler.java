@@ -95,9 +95,9 @@ public class Resp3Handler extends Resp3AuthHandler {
       handleLengthPrefix('*', size, alloc, 0);
    }
 
-   private static ByteBuf handleLengthPrefix(char type, int size, ByteBufPool alloc, int dataSize) {
+   private static ByteBuf handleLengthPrefix(char type, int size, ByteBufPool alloc, int additionalBytes) {
       int strLength = size==0 ? 1 : (int)Math.log10(size) + 1;
-      ByteBuf buffer = alloc.acquire(strLength + dataSize + 3);
+      ByteBuf buffer = alloc.acquire(strLength + additionalBytes + 3);
       buffer.writeByte(type);
       ByteBufferUtils.setIntChars(size, strLength, buffer);
       buffer.writeByte('\r');
