@@ -16,5 +16,6 @@ public interface ExternalizerIds {
    Integer OFFER_FUNCTION = 2054;
    Integer INDEX_FUNCTION = 2055;
    Integer POLL_FUNCTION = 2056;
-   Integer SUBLIST_FUNCTION = 2057;
+   Integer SET_FUNCTION = 2057;
+   Integer SUBLIST_FUNCTION = 2058;
 }

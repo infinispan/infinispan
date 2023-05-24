@@ -20,7 +20,8 @@ public class MultimapTestUtils {
    public static final Person OIHANA = new Person("Oihana");
    public static final Person RAMON = new Person("Ramon");
    public static final Person KOLDO = new Person("Koldo");
-   public static final Person ELAIA = new Person("ELaia");
+   public static final Person ELAIA = new Person("Elaia");
+   public static final Person FELIX = new Person("Felix");
    public static final SuperPerson PEPE = new SuperPerson("Pepe");
    public static final SuperPerson NULL_USER = null;
 

@@ -76,6 +76,12 @@ The {brandname} RESP endpoint implements the following Redis commands:
 | link:https://redis.io/commands/lpushx[LPUSHX]
 |
 
+| link:https://redis.io/commands/lrange[LRANGE]
+|
+
+| link:https://redis.io/commands/lset[LSET]
+|
+
 | link:https://redis.io/commands/ping[PING]
 |
 

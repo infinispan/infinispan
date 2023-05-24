@@ -6,6 +6,17 @@ public final class RespErrorUtil {
 
    }
 
+   public static void noSuchKey(ByteBufPool allocatorToUse) {
+      ByteBufferUtils.stringToByteBuf(
+            "-ERR no such key\r\n", allocatorToUse);
+   }
+
+   public static void indexOutOfRange(ByteBufPool allocatorToUse) {
+      ByteBufferUtils.stringToByteBuf(
+            "-ERR index out of range\r\n", allocatorToUse);
+
+   }
+
    public static void wrongType(ByteBufPool allocatorToUse) {
       ByteBufferUtils.stringToByteBuf(
             "-ERRWRONGTYPE Operation against a key holding the wrong kind of value\r\n", allocatorToUse);

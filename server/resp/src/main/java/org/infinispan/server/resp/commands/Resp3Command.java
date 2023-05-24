@@ -27,6 +27,11 @@ public interface Resp3Command {
          return handler.myStage();
       }
 
+      if (ex instanceof IndexOutOfBoundsException) {
+         RespErrorUtil.indexOutOfRange(handler.allocatorToUse());
+         return handler.myStage();
+      }
+
       throw new RuntimeException(t);
    }
 }
