@@ -9,6 +9,7 @@ import static org.infinispan.server.memcached.MemcachedStats.INCR_HITS;
 import static org.infinispan.server.memcached.MemcachedStats.INCR_MISSES;
 import static org.infinispan.server.memcached.binary.BinaryConstants.MAX_EXPIRATION;
 
+import java.nio.charset.StandardCharsets;
 import java.time.temporal.Temporal;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -85,46 +86,46 @@ public abstract class MemcachedBaseDecoder extends ByteToMessageDecoder {
 
    protected abstract void send(Header header, CompletionStage<?> response, GenericFutureListener<? extends Future<? super Void>> listener);
 
-   protected Map<String, String> statsMap() {
+   protected Map<byte[], byte[]> statsMap() {
       Stats stats = cache.getAdvancedCache().getStats();
-      Map<String, String> map = new LinkedHashMap<>(35);
-      map.put("pid", Long.toString(ProcessHandle.current().pid()));
-      map.put("uptime", Long.toString(stats.getTimeSinceStart()));
-      map.put("time", Long.toString(TimeUnit.MILLISECONDS.toSeconds(timeService.wallClockTime())));
-      map.put("version", cache.getVersion());
-      map.put("pointer_size", "0"); // Unsupported
-      map.put("rusage_user", "0"); // Unsupported
-      map.put("rusage_system", "0"); // Unsupported
-      map.put("curr_items", Long.toString(stats.getApproximateEntries()));
-      map.put("total_items", Long.toString(stats.getStores()));
-      map.put("bytes", "0"); // Unsupported
-      map.put("cmd_get", Long.toString(stats.getRetrievals()));
-      map.put("cmd_set", Long.toString(stats.getStores()));
-      map.put("get_hits", Long.toString(stats.getHits()));
-      map.put("get_misses", Long.toString(stats.getMisses()));
-      map.put("delete_misses", Long.toString(stats.getRemoveMisses()));
-      map.put("delete_hits", Long.toString(stats.getRemoveHits()));
-      map.put("incr_misses", Long.toString(INCR_MISSES.get(statistics)));
-      map.put("incr_hits", Long.toString(INCR_HITS.get(statistics)));
-      map.put("decr_misses", Long.toString(DECR_MISSES.get(statistics)));
-      map.put("decr_hits", Long.toString(DECR_HITS.get(statistics)));
-      map.put("cas_misses", Long.toString(CAS_MISSES.get(statistics)));
-      map.put("cas_hits", Long.toString(CAS_HITS.get(statistics)));
-      map.put("cas_badval", Long.toString(CAS_BADVAL.get(statistics)));
-      map.put("auth_cmds", "0"); // Unsupported
-      map.put("auth_errors", "0"); // Unsupported
+      Map<byte[], byte[]> map = new LinkedHashMap<>(35);
+      map.put(MemcachedStats.MemcachedStatsKeys.PID, ParseUtil.writeAsciiLong(ProcessHandle.current().pid()));
+      map.put(MemcachedStats.MemcachedStatsKeys.UPTIME, ParseUtil.writeAsciiLong(stats.getTimeSinceStart()));
+      map.put(MemcachedStats.MemcachedStatsKeys.TIME, ParseUtil.writeAsciiLong(TimeUnit.MILLISECONDS.toSeconds(timeService.wallClockTime())));
+      map.put(MemcachedStats.MemcachedStatsKeys.VERSION, cache.getVersion().getBytes(StandardCharsets.US_ASCII));
+      map.put(MemcachedStats.MemcachedStatsKeys.POINTER_SIZE, ParseUtil.ZERO); // Unsupported
+      map.put(MemcachedStats.MemcachedStatsKeys.RUSAGE_USER, ParseUtil.ZERO); // Unsupported
+      map.put(MemcachedStats.MemcachedStatsKeys.RUSAGE_SYSTEM, ParseUtil.ZERO); // Unsupported
+      map.put(MemcachedStats.MemcachedStatsKeys.CURR_ITEMS, ParseUtil.writeAsciiLong(stats.getApproximateEntries()));
+      map.put(MemcachedStats.MemcachedStatsKeys.TOTAL_ITEMS, ParseUtil.writeAsciiLong(stats.getStores()));
+      map.put(MemcachedStats.MemcachedStatsKeys.BYTES, ParseUtil.ZERO); // Unsupported
+      map.put(MemcachedStats.MemcachedStatsKeys.CMD_GET, ParseUtil.writeAsciiLong(stats.getRetrievals()));
+      map.put(MemcachedStats.MemcachedStatsKeys.CMD_SET, ParseUtil.writeAsciiLong(stats.getStores()));
+      map.put(MemcachedStats.MemcachedStatsKeys.GET_HITS, ParseUtil.writeAsciiLong(stats.getHits()));
+      map.put(MemcachedStats.MemcachedStatsKeys.GET_MISSES, ParseUtil.writeAsciiLong(stats.getMisses()));
+      map.put(MemcachedStats.MemcachedStatsKeys.DELETE_MISSES, ParseUtil.writeAsciiLong(stats.getRemoveMisses()));
+      map.put(MemcachedStats.MemcachedStatsKeys.DELETE_HITS, ParseUtil.writeAsciiLong(stats.getRemoveHits()));
+      map.put(MemcachedStats.MemcachedStatsKeys.INCR_MISSES, ParseUtil.writeAsciiLong(INCR_MISSES.get(statistics)));
+      map.put(MemcachedStats.MemcachedStatsKeys.INCR_HITS, ParseUtil.writeAsciiLong(INCR_HITS.get(statistics)));
+      map.put(MemcachedStats.MemcachedStatsKeys.DECR_MISSES, ParseUtil.writeAsciiLong(DECR_MISSES.get(statistics)));
+      map.put(MemcachedStats.MemcachedStatsKeys.DECR_HITS, ParseUtil.writeAsciiLong(DECR_HITS.get(statistics)));
+      map.put(MemcachedStats.MemcachedStatsKeys.CAS_MISSES, ParseUtil.writeAsciiLong(CAS_MISSES.get(statistics)));
+      map.put(MemcachedStats.MemcachedStatsKeys.CAS_HITS, ParseUtil.writeAsciiLong(CAS_HITS.get(statistics)));
+      map.put(MemcachedStats.MemcachedStatsKeys.CAS_BADVAL, ParseUtil.writeAsciiLong(CAS_BADVAL.get(statistics)));
+      map.put(MemcachedStats.MemcachedStatsKeys.AUTH_CMDS, ParseUtil.ZERO); // Unsupported
+      map.put(MemcachedStats.MemcachedStatsKeys.AUTH_ERRORS, ParseUtil.ZERO); // Unsupported
       //TODO: Evictions are measured by evict calls, but not by nodes are that are expired after the entry's lifespan has expired.
-      map.put("evictions", Long.toString(stats.getEvictions()));
+      map.put(MemcachedStats.MemcachedStatsKeys.EVICTIONS, ParseUtil.writeAsciiLong(stats.getEvictions()));
       NettyTransport transport = server.getTransport();
-      map.put("bytes_read", Long.toString(transport.getTotalBytesRead()));
-      map.put("bytes_written", Long.toString(transport.getTotalBytesWritten()));
-      map.put("curr_connections", Long.toString(transport.getNumberOfLocalConnections()));
-      map.put("total_connections", Long.toString(transport.getNumberOfGlobalConnections()));
-      map.put("threads", "0"); // TODO: Through netty?
-      map.put("connection_structures", "0"); // Unsupported
-      map.put("limit_maxbytes", "0"); // Unsupported
-      map.put("conn_yields", "0"); // Unsupported
-      map.put("reclaimed", "0"); // Unsupported
+      map.put(MemcachedStats.MemcachedStatsKeys.BYTES_READ, ParseUtil.writeAsciiLong(transport.getTotalBytesRead()));
+      map.put(MemcachedStats.MemcachedStatsKeys.BYTES_WRITTEN, ParseUtil.writeAsciiLong(transport.getTotalBytesWritten()));
+      map.put(MemcachedStats.MemcachedStatsKeys.CURR_CONNECTIONS, ParseUtil.writeAsciiLong(transport.getNumberOfLocalConnections()));
+      map.put(MemcachedStats.MemcachedStatsKeys.TOTAL_CONNECTIONS, ParseUtil.writeAsciiLong(transport.getNumberOfGlobalConnections()));
+      map.put(MemcachedStats.MemcachedStatsKeys.THREADS, ParseUtil.ZERO); // TODO: Through netty?
+      map.put(MemcachedStats.MemcachedStatsKeys.CONNECTION_STRUCTURES, ParseUtil.ZERO); // Unsupported
+      map.put(MemcachedStats.MemcachedStatsKeys.LIMIT_MAXBYTES, ParseUtil.ZERO); // Unsupported
+      map.put(MemcachedStats.MemcachedStatsKeys.CONN_YIELDS, ParseUtil.ZERO); // Unsupported
+      map.put(MemcachedStats.MemcachedStatsKeys.RECLAIMED, ParseUtil.ZERO); // Unsupported
       return map;
    }
 

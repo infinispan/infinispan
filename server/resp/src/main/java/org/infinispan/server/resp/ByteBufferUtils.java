@@ -59,6 +59,17 @@ public final class ByteBufferUtils {
       return buffer;
    }
 
+   public static ByteBuf writeLong(long result, ByteBufPool alloc) {
+      // : + number of digits + \r\n
+      int size = 1 + stringSize(result) + 2;
+      ByteBuf buffer = alloc.acquire(size);
+      buffer.writeByte(':');
+      setIntChars(result, size - 3, buffer);
+      buffer.writeByte('\r')
+            .writeByte('\n');
+      return buffer;
+   }
+
    public static ByteBuf bytesToResult(Collection<byte[]> results, ByteBufPool alloc) {
       int resultBytesSize = 0;
       for (byte[] result: results) {
@@ -104,9 +115,10 @@ public final class ByteBufferUtils {
    // This code is a modified version of Integer.toString to write the underlying bytes directly to the ByteBuffer
    // instead of creating a String around a byte[]
 
-   protected static int setIntChars(int i, int index, ByteBuf buf) {
+   protected static int setIntChars(long i, int index, ByteBuf buf) {
       int writeIndex = buf.writerIndex();
-      int q, r;
+      long q;
+      int r;
       int charPos = index;
 
       boolean negative = i < 0;
@@ -117,7 +129,7 @@ public final class ByteBufferUtils {
       // Generate two digits per iteration
       while (i <= -100) {
          q = i / 100;
-         r = (q * 100) - i;
+         r = (int)((q * 100) - i);
          i = q;
          buf.setByte(writeIndex + --charPos, DigitOnes[r]);
          buf.setByte(writeIndex + --charPos, DigitTens[r]);
@@ -125,7 +137,7 @@ public final class ByteBufferUtils {
 
       // We know there are at most two digits left at this point.
       q = i / 10;
-      r = (q * 10) - i;
+      r = (int)((q * 10) - i);
       buf.setByte(writeIndex + --charPos, (byte) ('0' + r));
 
       // Whatever left is the remaining digit.
@@ -140,7 +152,7 @@ public final class ByteBufferUtils {
       return charPos;
    }
 
-   private static int stringSize(int x) {
+   private static int stringSize(long x) {
       int d = 1;
       if (x >= 0) {
          d = 0;

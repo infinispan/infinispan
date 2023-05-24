@@ -45,14 +45,13 @@ public class Resp3Handler extends Resp3AuthHandler {
       return super.actualHandleRequest(ctx, type, arguments);
    }
 
-   protected static void handleLongResult(Long result, ByteBufPool alloc) {
-      // TODO: this can be optimized to avoid the String allocation
-      ByteBufferUtils.stringToByteBuf(":" + result + CRLF, alloc);
+   protected static void handleLongResult(long result, ByteBufPool alloc) {
+      ByteBufferUtils.writeLong(result, alloc);
    }
 
-   protected static void handleDoubleResult(Double result, ByteBufPool alloc) {
+   protected static void handleDoubleResult(double result, ByteBufPool alloc) {
       // TODO: this can be optimized to avoid the String allocation
-      handleBulkResult(result.toString(), alloc);
+      handleBulkResult(Double.toString(result), alloc);
    }
 
    public static void handleBulkResult(CharSequence result, ByteBufPool alloc) {
