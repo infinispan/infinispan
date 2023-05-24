@@ -231,4 +231,44 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
       }).isInstanceOf(RedisCommandExecutionException.class)
             .hasMessageContaining("ERRWRONGTYPE");
    }
+
+   public void testLSET() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.rpush("leads", "william", "jose", "ryan", "pedro", "vittorio");
+
+      assertThat(redis.lset("leads", 0,  "fabio")).isEqualTo("OK");
+      assertThat(redis.lindex("leads", 0)).isEqualTo("fabio");
+      assertThat(redis.lset("leads", -1,  "tristan")).isEqualTo("OK");
+      assertThat(redis.lindex("leads", -1)).isEqualTo("tristan");
+
+      assertThat(redis.lset("leads", 2,  "wolf")).isEqualTo("OK");
+      assertThat(redis.lindex("leads", 2)).isEqualTo("wolf");
+
+      assertThat(redis.lset("leads", -3,  "anna")).isEqualTo("OK");
+      assertThat(redis.lindex("leads", -3)).isEqualTo("anna");
+
+      assertThatThrownBy(() -> {
+         redis.lset("leads", 5, "dan");
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR index out of range");
+
+      assertThatThrownBy(() -> {
+         redis.lset("leads", -6, "dan");
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR index out of range");
+
+      assertThatThrownBy(() -> {
+         redis.lset("not_existing", 0, "tristan");
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR no such key");
+
+      // Set a String Command
+      redis.set("another", "tristan");
+
+      // LSET on an existing key that contains a String, not a Collection!
+      assertThatThrownBy(() -> {
+         redis.lset("another", 0, "tristan");
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERRWRONGTYPE");
+   }
 }

@@ -13,6 +13,7 @@ import org.infinispan.multimap.impl.function.OfferFunction;
 import org.infinispan.multimap.impl.function.PollFunction;
 import org.infinispan.multimap.impl.function.PutFunction;
 import org.infinispan.multimap.impl.function.RemoveFunction;
+import org.infinispan.multimap.impl.function.SetFunction;
 import org.infinispan.multimap.impl.function.SubListFunction;
 
 import java.util.Map;
@@ -48,5 +49,6 @@ public class MultimapModuleLifecycle implements ModuleLifecycle {
       addAdvancedExternalizer(externalizerMap, IndexFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, PollFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, SubListFunction.EXTERNALIZER);
+      addAdvancedExternalizer(externalizerMap, SetFunction.EXTERNALIZER);
    }
 }

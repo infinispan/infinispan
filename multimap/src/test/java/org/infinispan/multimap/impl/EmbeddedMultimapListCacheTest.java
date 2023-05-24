@@ -1,5 +1,6 @@
 package org.infinispan.multimap.impl;
 
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -13,6 +14,7 @@ import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.multimap.impl.EmbeddedMultimapListCache.ERR_KEY_CAN_T_BE_NULL;
 import static org.infinispan.multimap.impl.EmbeddedMultimapListCache.ERR_VALUE_CAN_T_BE_NULL;
 import static org.infinispan.multimap.impl.MultimapTestUtils.ELAIA;
+import static org.infinispan.multimap.impl.MultimapTestUtils.FELIX;
 import static org.infinispan.multimap.impl.MultimapTestUtils.JULIEN;
 import static org.infinispan.multimap.impl.MultimapTestUtils.KOLDO;
 import static org.infinispan.multimap.impl.MultimapTestUtils.NAMES_KEY;
@@ -80,19 +82,19 @@ public class EmbeddedMultimapListCacheTest extends SingleCacheManagerTest {
    }
 
    public void testOfferWithNullArguments() {
-      assertThatThrownBy(() -> {
-         await(listCache.offerFirst(null, OIHANA));
-      }).isInstanceOf(NullPointerException.class)
+      assertThatThrownBy(() ->
+         await(listCache.offerFirst(null, OIHANA))
+      ).isInstanceOf(NullPointerException.class)
             .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
 
-      assertThatThrownBy(() -> {
-         await(listCache.offerLast(null, OIHANA));
-      }).isInstanceOf(NullPointerException.class)
+      assertThatThrownBy(() ->
+         await(listCache.offerLast(null, OIHANA))
+      ).isInstanceOf(NullPointerException.class)
             .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
 
-      assertThatThrownBy(() -> {
-         await(listCache.offerFirst(NAMES_KEY, null));
-      }).isInstanceOf(NullPointerException.class)
+      assertThatThrownBy(() ->
+         await(listCache.offerFirst(NAMES_KEY, null))
+      ).isInstanceOf(NullPointerException.class)
             .hasMessageContaining(ERR_VALUE_CAN_T_BE_NULL);
 
       assertThatThrownBy(() -> {
@@ -300,6 +302,59 @@ public class EmbeddedMultimapListCacheTest extends SingleCacheManagerTest {
             listCache.pollLast(NAMES_KEY, 1)
                   .thenAccept(r1 -> assertThat(r1).isNull())
       );
+   }
+
+   public void testSet() {
+      await(listCache.offerLast(NAMES_KEY, OIHANA));
+      await(listCache.offerLast(NAMES_KEY, ELAIA));
+      await(listCache.offerLast(NAMES_KEY, KOLDO));
+      await(listCache.offerLast(NAMES_KEY, FELIX));
+
+      // head
+      assertThat(await(listCache.index(NAMES_KEY, 0))).isEqualTo(OIHANA);
+      assertThat(await(listCache.set(NAMES_KEY,0, RAMON))).isTrue();
+      assertThat(await(listCache.index(NAMES_KEY, 0))).isEqualTo(RAMON);
+
+      // tail
+      assertThat(await(listCache.index(NAMES_KEY, -1))).isEqualTo(FELIX);
+      assertThat(await(listCache.set(NAMES_KEY, -1, JULIEN))).isTrue();
+      assertThat(await(listCache.index(NAMES_KEY, -1))).isEqualTo(JULIEN);
+
+      // middle
+      assertThat(await(listCache.index(NAMES_KEY, 1))).isEqualTo(ELAIA);
+      assertThat(await(listCache.set(NAMES_KEY, 1, OIHANA))).isTrue();
+      assertThat(await(listCache.index(NAMES_KEY, 1))).isEqualTo(OIHANA);
+
+      assertThat(await(listCache.index(NAMES_KEY, -2))).isEqualTo(KOLDO);
+      assertThat(await(listCache.set(NAMES_KEY, -2, ELAIA))).isTrue();
+      assertThat(await(listCache.index(NAMES_KEY, -2))).isEqualTo(ELAIA);
+
+      assertThat(await(listCache.index(NAMES_KEY, -3))).isEqualTo(OIHANA);
+      assertThat(await(listCache.set(NAMES_KEY, 1, ELAIA))).isTrue();
+      assertThat(await(listCache.index(NAMES_KEY, 1))).isEqualTo(ELAIA);
+
+      // not existing
+      assertThat(await(listCache.set("not_existing", 0, JULIEN))).isFalse();
+
+      assertThatThrownBy(() -> {
+         await(listCache.set(NAMES_KEY, 4, JULIEN));
+      }).cause().cause()
+            .isInstanceOf(CacheException.class)
+            .cause().isInstanceOf(IndexOutOfBoundsException.class)
+            .hasMessageContaining("Index is out of range");
+
+      assertThatThrownBy(() -> {
+         await(listCache.set(NAMES_KEY, -5, JULIEN));
+      }).cause().cause()
+            .isInstanceOf(CacheException.class)
+            .cause().isInstanceOf(IndexOutOfBoundsException.class)
+            .hasMessageContaining("Index is out of range");
+
+      assertThatThrownBy(() -> {
+         await(listCache.index(null, 10));
+      }).isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
+
    }
 
    public void testSubList() {

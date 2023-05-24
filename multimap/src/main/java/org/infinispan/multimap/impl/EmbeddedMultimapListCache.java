@@ -10,6 +10,7 @@ import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.multimap.impl.function.IndexFunction;
 import org.infinispan.multimap.impl.function.OfferFunction;
 import org.infinispan.multimap.impl.function.PollFunction;
+import org.infinispan.multimap.impl.function.SetFunction;
 import org.infinispan.multimap.impl.function.SubListFunction;
 
 import java.util.Collection;
@@ -167,6 +168,20 @@ public class EmbeddedMultimapListCache<K, V> {
       return poll(key, count, false);
    }
 
+   /**
+    * Sets a value in the given index.
+    * 0 means fist element. Negative index counts index from the tail. For example -1 is the last element.
+    * @param key, the name of the list
+    * @param index, the position of the element to be inserted. Can be negative
+    * @param value, the element to be inserted in the index position
+    * @return {@link CompletionStage} with true if the value was set, false if the key does not exist
+    * @throws org.infinispan.commons.CacheException when the index is out of range
+    */
+   public CompletionStage<Boolean> set(K key, long index, V value) {
+      requireNonNull(key, "key can't be null");
+      return readWriteMap.eval(key, new SetFunction<>(index, value));
+   }
+
    private CompletableFuture<Collection<V>> poll(K key, long count, boolean first) {
       requireNonNull(key, "key can't be null");
       requirePositive(count, "count can't be negative");
@@ -177,9 +192,5 @@ public class EmbeddedMultimapListCache<K, V> {
       if (count < 0) {
          throw new IllegalArgumentException(message);
       }
-   }
-
-   public CompletionStage<Void> set(K key, V value, int index) {
-      throw new UnsupportedOperationException();
    }
 }

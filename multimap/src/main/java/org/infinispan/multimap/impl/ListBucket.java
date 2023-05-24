@@ -87,13 +87,62 @@ public class ListBucket<V> {
    }
 
    public ListBucket<V> offer(V value, boolean first) {
-      Deque<V> newBucket = new ArrayDeque<>(values);
       if (first) {
-         newBucket.offerFirst(value);
+         values.offerFirst(value);
       } else {
-         newBucket.offerLast(value);
+         values.offerLast(value);
       }
 
+      return new ListBucket<>(values);
+   }
+
+   public ListBucket<V> set(long index, V value) {
+      if ((index >= 0 && (values.size()-1 < index)) || (index < 0 && (values.size() + index < 0))) {
+        return null;
+      }
+
+      // set head
+      if (index == 0) {
+         values.pollFirst();
+         values.offerFirst(value);
+         return new ListBucket<>(values);
+      }
+
+      // set tail
+      if (index == -1 || index == values.size() -1) {
+         values.pollLast();
+         values.offerLast(value);
+         return new ListBucket<>(values);
+      }
+
+      ArrayDeque<V> newBucket = new ArrayDeque<>(values.size());
+      if (index > 0) {
+         Iterator<V> ite = values.iterator();
+         int currentIndex = 0;
+         while(ite.hasNext()) {
+            V element = ite.next();
+            if (index == currentIndex) {
+               newBucket.offerLast(value);
+            } else {
+               newBucket.offerLast(element);
+            }
+            currentIndex++;
+         }
+      }
+
+      if (index < -1) {
+         Iterator<V> ite = values.descendingIterator();
+         int currentIndex = -1;
+         while(ite.hasNext()) {
+            V element = ite.next();
+            if (index == currentIndex) {
+               newBucket.offerFirst(value);
+            } else {
+               newBucket.offerFirst(element);
+            }
+            currentIndex--;
+         }
+      }
       return new ListBucket<>(newBucket);
    }
 
@@ -153,6 +202,7 @@ public class ListBucket<V> {
          return result;
       }
    }
+
    public ListBucketResult poll(boolean first, long count) {
       List<V> polledValues = new ArrayList<>();
       if (count >= values.size()) {
@@ -167,15 +217,14 @@ public class ListBucket<V> {
          return new ListBucketResult(polledValues, new ListBucket<>());
       }
 
-      Deque<V> valuesCopy = new ArrayDeque<>(values);
       for (int i = 0 ; i < count; i++) {
          if (first) {
-            polledValues.add(valuesCopy.pollFirst());
+            polledValues.add(values.pollFirst());
          } else {
-            polledValues.add(valuesCopy.pollLast());
+            polledValues.add(values.pollLast());
          }
       }
-      return new ListBucketResult(polledValues, new ListBucket<>(valuesCopy));
+      return new ListBucketResult(polledValues, new ListBucket<>(values));
    }
 
    public V index(long index) {
