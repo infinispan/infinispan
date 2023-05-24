@@ -51,6 +51,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.server.memcached.MemcachedMetadata;
 import org.infinispan.server.memcached.MemcachedServer;
+import org.infinispan.server.memcached.ParseUtil;
 
 import io.netty.buffer.ByteBuf;
 
@@ -237,7 +238,7 @@ public abstract class TextOpDecoder extends TextDecoder {
          if ("noreply".equals(s)) {
             noreply = true;
          } else {
-            delay = Integer.parseUnsignedInt(s);
+            delay = ParseUtil.readInt(arg);
          }
       }
       boolean quiet = noreply;
@@ -301,22 +302,21 @@ public abstract class TextOpDecoder extends TextDecoder {
 
    protected void stats(TextHeader header, List<byte[]> names) {
       send(header, server.getBlockingManager().supplyBlocking(() -> {
-         Map<String, String> stats = statsMap();
+         Map<byte[], byte[]> stats = statsMap();
          ByteBuf buf = channel.alloc().buffer();
          if (names.isEmpty()) {
-            for (Map.Entry<String, String> stat : stats.entrySet()) {
+            for (Map.Entry<byte[], byte[]> stat : stats.entrySet()) {
                stat(buf, stat.getKey(), stat.getValue());
             }
          } else {
             for (byte[] name : names) {
-               String stat = new String(name, StandardCharsets.US_ASCII);
-               String value = stats.get(stat);
+               byte[] value = stats.get(name);
                if (value == null) {
                   buf.clear();
                   buf.writeCharSequence("CLIENT_ERROR\r\n", StandardCharsets.US_ASCII);
                   return buf;
                } else {
-                  stat(buf, stat, value);
+                  stat(buf, name, value);
                }
             }
          }
@@ -325,12 +325,12 @@ public abstract class TextOpDecoder extends TextDecoder {
       }, "memcached-stats"));
    }
 
-   private static void stat(ByteBuf buf, String name, String value) {
+   private static void stat(ByteBuf buf, byte[] name, byte[] value) {
       if (value != null) {
          buf.writeCharSequence("STAT ", StandardCharsets.US_ASCII);
-         buf.writeCharSequence(name, StandardCharsets.US_ASCII);
+         buf.writeBytes(name);
          buf.writeByte(' ');
-         buf.writeCharSequence(value, StandardCharsets.US_ASCII);
+         buf.writeBytes(value);
          buf.writeBytes(CRLFBytes);
       }
    }

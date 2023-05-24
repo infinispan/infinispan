@@ -91,7 +91,7 @@ abstract class BinaryDecoder extends MemcachedBaseDecoder {
       return buf;
    }
 
-   protected ByteBuf response(BinaryHeader header, MemcachedStatus status, String number) {
+   protected ByteBuf response(BinaryHeader header, MemcachedStatus status, long number) {
       ByteBuf buf = channel.alloc().buffer(32);
       buf.writeByte(MAGIC_RES);
       buf.writeByte(header.op.opCode());
@@ -102,7 +102,7 @@ abstract class BinaryDecoder extends MemcachedBaseDecoder {
       buf.writeInt(8);
       buf.writeInt(header.opaque);
       buf.writeLong(header.cas);
-      buf.writeLong(Long.parseLong(number));
+      buf.writeLong(number);
       return buf;
    }
 

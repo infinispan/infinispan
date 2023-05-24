@@ -95,7 +95,7 @@ public class TextIntrinsics {
       if (s == null) {
          return 0;
       } else if (s.isReadable()) {
-         return Integer.parseUnsignedInt(s.toString(US_ASCII));
+         return parseUnsignedInt(s);
       } else {
          consumeLine(buf);
          throw new IllegalArgumentException("Expected number");
@@ -191,5 +191,27 @@ public class TextIntrinsics {
       }
       buf.resetReaderIndex();
       return false;
+   }
+
+   public static long parseLong(ByteBuf s) {
+      byte first = s.readByte();
+      long result = first == '+' ? 0 : first - 48;
+      while (s.isReadable()) {
+         byte b = s.readByte();
+         if (b < '0' || b > '9')
+            throw new NumberFormatException("Invalid character: " + b);
+
+         result = (result << 3) + (result << 1) + (b - 48);
+      }
+      return result;
+   }
+
+   public static int parseUnsignedInt(ByteBuf s) {
+      long v = parseLong(s);
+      // From Integer.parseUnsignedInt.
+      if ((v & 0xffff_ffff_0000_0000L) != 0L) {
+         throw new NumberFormatException("Value exceeds range of unsigned int: " + v);
+      }
+      return (int)v;
    }
 }

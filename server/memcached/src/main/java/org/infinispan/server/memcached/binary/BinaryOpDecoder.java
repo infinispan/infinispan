@@ -30,6 +30,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.server.memcached.MemcachedMetadata;
 import org.infinispan.server.memcached.MemcachedServer;
+import org.infinispan.server.memcached.ParseUtil;
 import org.jgroups.util.CompletableFutures;
 
 import io.netty.buffer.ByteBuf;
@@ -179,7 +180,7 @@ abstract class BinaryOpDecoder extends BinaryDecoder {
       if (expiration == -1) {
          f = cache.computeIfPresentAsync(key, (k, v) -> increment(delta, v), metadata);
       } else {
-         f = cache.mergeAsync(key, Long.toString(initial).getBytes(StandardCharsets.US_ASCII), (v1, v2) -> increment(delta, v1), metadata);
+         f = cache.mergeAsync(key, ParseUtil.writeAsciiLong(initial), (v1, v2) -> increment(delta, v1), metadata);
       }
       CompletableFuture<ByteBuf> response = f.thenApply(v -> {
          if (v == null) {
@@ -202,16 +203,16 @@ abstract class BinaryOpDecoder extends BinaryDecoder {
          if (quiet)
             return null;
          header.cas = ((NumericVersion) metadata.version()).getVersion();
-         return response(header, NO_ERROR, new String(v));
+         return response(header, NO_ERROR, ParseUtil.readLong(v));
       });
       send(header, response);
    }
 
    private static byte[] increment(long delta, byte[] v1) {
-      long l = Long.parseLong(new String(v1));
+      long l = ParseUtil.readLong(v1);
       l += delta;
       if (l < 0) l = 0;
-      return Long.toString(l).getBytes(StandardCharsets.US_ASCII);
+      return ParseUtil.writeAsciiLong(l);
    }
 
    protected void append(BinaryHeader header, byte[] key, byte[] value, boolean quiet) {
@@ -292,17 +293,16 @@ abstract class BinaryOpDecoder extends BinaryDecoder {
 
    protected void stat(BinaryHeader header, byte[] key) {
       CompletionStage<ByteBuf> s = server.getBlockingManager().supplyBlocking(() -> {
-         Map<String, String> map = statsMap();
+         Map<byte[], byte[]> map = statsMap();
          if (key != null) {
-            String skey = new String(key, StandardCharsets.US_ASCII);
-            if (!map.containsKey(skey)) {
+            if (!map.containsKey(key)) {
                return response(header, KEY_NOT_FOUND);
             } else {
-               return singleStat(header, new SimpleImmutableEntry<>(skey, map.get(skey)));
+               return singleStat(header, new SimpleImmutableEntry<>(key, map.get(key)));
             }
          } else {
             ByteBuf buf = channel.alloc().buffer();
-            for (Map.Entry<String, String> e : map.entrySet()) {
+            for (Map.Entry<byte[], byte[]> e : map.entrySet()) {
                buf.writeBytes(singleStat(header, e));
             }
             buf.writeBytes(response(header, NO_ERROR));
@@ -312,8 +312,8 @@ abstract class BinaryOpDecoder extends BinaryDecoder {
       send(header, s);
    }
 
-   private ByteBuf singleStat(BinaryHeader header, Map.Entry<String, String> e) {
-      return response(header, NO_ERROR, e.getKey().getBytes(StandardCharsets.US_ASCII), e.getValue().getBytes(StandardCharsets.US_ASCII));
+   private ByteBuf singleStat(BinaryHeader header, Map.Entry<byte[], byte[]> e) {
+      return response(header, NO_ERROR, e.getKey(), e.getValue());
    }
 
    protected void flush(BinaryHeader header, int expiration, boolean quiet) {
