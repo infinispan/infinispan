@@ -37,7 +37,9 @@ import org.infinispan.util.logging.LogFactory;
  */
 
 public class VolatileLocalConfigurationStorage implements LocalConfigurationStorage {
-   protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+
    protected EmbeddedCacheManager cacheManager;
    protected ParserRegistry parserRegistry;
    protected ConfigurationManager configurationManager;

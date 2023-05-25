@@ -9,6 +9,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -30,6 +31,8 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalStateConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.globalstate.LocalConfigurationStorage;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * An implementation of {@link LocalConfigurationStorage} which stores non-{@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#VOLATILE}
@@ -42,6 +45,9 @@ import org.infinispan.globalstate.LocalConfigurationStorage;
  */
 
 public class OverlayLocalConfigurationStorage extends VolatileLocalConfigurationStorage {
+
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+
    private Set<String> persistentCaches = ConcurrentHashMap.newKeySet();
    private Set<String> persistentTemplates = ConcurrentHashMap.newKeySet();
 
