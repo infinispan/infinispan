@@ -12,7 +12,7 @@ import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.hotrod.Events.Event;
 import org.infinispan.server.hotrod.counter.listener.ClientCounterEvent;
-import org.infinispan.server.hotrod.iteration.IterableIterationResult;
+import org.infinispan.server.iteration.IterableIterationResult;
 import org.infinispan.stats.ClusterCacheStats;
 import org.infinispan.stats.Stats;
 

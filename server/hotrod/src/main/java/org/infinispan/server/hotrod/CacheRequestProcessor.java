@@ -22,12 +22,13 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.hotrod.HotRodServer.ExtendedCacheInfo;
-import org.infinispan.server.hotrod.iteration.IterableIterationResult;
-import org.infinispan.server.hotrod.iteration.IterationState;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.tracing.HotRodTelemetryService;
+import org.infinispan.server.iteration.IterableIterationResult;
+import org.infinispan.server.iteration.IterationState;
 import org.infinispan.stats.ClusterCacheStats;
 import org.infinispan.stats.Stats;
 
@@ -608,7 +609,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       executor.execute(() -> {
          try {
             IterationState iterationState = server.getIterationManager().start(cache, segmentMask != null ? BitSet.valueOf(segmentMask) : null,
-                  filterConverterFactory, filterConverterParams, header.getValueMediaType(), batch, includeMetadata);
+                  filterConverterFactory, filterConverterParams, header.getValueMediaType(), batch, includeMetadata, DeliveryGuarantee.EXACTLY_ONCE);
             iterationState.getReaper().registerChannel(channel);
             writeResponse(header, header.encoder().iterationStartResponse(header, server, channel, iterationState.getId()));
          } catch (Throwable t) {
@@ -620,7 +621,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    void iterationNext(HotRodHeader header, Subject subject, String iterationId) {
       executor.execute(() -> {
          try {
-            IterableIterationResult iterationResult = server.getIterationManager().next(iterationId);
+            IterableIterationResult iterationResult = server.getIterationManager().next(iterationId, -1);
             writeResponse(header, header.encoder().iterationNextResponse(header, server, channel, iterationResult));
          } catch (Throwable t) {
             writeException(header, t);

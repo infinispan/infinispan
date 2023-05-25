@@ -48,9 +48,9 @@ import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.server.core.transport.NettyTransport;
 import org.infinispan.server.core.transport.VInt;
 import org.infinispan.server.hotrod.counter.listener.ClientCounterEvent;
-import org.infinispan.server.hotrod.iteration.IterableIterationResult;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.transport.ExtendedByteBuf;
+import org.infinispan.server.iteration.IterableIterationResult;
 import org.infinispan.stats.ClusterCacheStats;
 import org.infinispan.stats.Stats;
 import org.infinispan.topology.CacheTopology;
@@ -319,7 +319,19 @@ class Encoder2x implements VersionedEncoder {
 
    @Override
    public ByteBuf iterationNextResponse(HotRodHeader header, HotRodServer server, Channel channel, IterableIterationResult iterationResult) {
-      ByteBuf buf = writeHeader(header, server, channel, iterationResult.getStatusCode());
+      OperationStatus status;
+      switch (iterationResult.getStatusCode()) {
+         case Success:
+         case Finished:
+            status = OperationStatus.Success;
+            break;
+         case InvalidIteration:
+            status = OperationStatus.InvalidIteration;
+            break;
+         default:
+            throw new IllegalStateException("Unknown iteration result status " + iterationResult.getStatusCode());
+      }
+      ByteBuf buf = writeHeader(header, server, channel, status);
       ExtendedByteBuf.writeRangedBytes(iterationResult.segmentsToBytes(), buf);
       List<CacheEntry> entries = iterationResult.getEntries();
       ExtendedByteBuf.writeUnsignedInt(entries.size(), buf);

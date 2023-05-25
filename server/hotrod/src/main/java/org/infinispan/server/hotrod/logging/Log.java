@@ -67,8 +67,12 @@ public interface Log extends BasicLogger {
    @Message(value = "Trying to add a filter and converter factory with name '%s' but it does not extend CacheEventFilterConverterFactory", id = 6014)
    IllegalStateException illegalFilterConverterEventFactory(String name);
 
+   /*
+     Moved to server-core
+
    @Message(value = "Factory '%s' not found in server", id = 6016)
    IllegalStateException missingKeyValueFilterConverterFactory(String name);
+   */
 
    @Message(value = "Operation '%s' requires authentication", id = 6017)
    SecurityException unauthorizedOperation(String op);
@@ -93,9 +97,11 @@ public interface Log extends BasicLogger {
    @Message(value = "Error serializing script response '%s'", id = 28025)
    EncodingException errorSerializingResponse(Object o);
 
+   /* Moved to server-core
    @LogMessage(level = WARN)
    @Message(value = "Removed unclosed iterator '%s'", id = 28026)
    void removedUnclosedIterator(String iteratorId);
+   */
 
    @Message(value = "Invalid credentials", id = 28027)
    SecurityException authenticationException(@Cause Throwable cause);

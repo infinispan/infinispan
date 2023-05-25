@@ -1,4 +1,4 @@
-package org.infinispan.server.hotrod.iteration;
+package org.infinispan.server.iteration;
 
 import java.util.BitSet;
 import java.util.List;
@@ -6,6 +6,7 @@ import java.util.List;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
+import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 
 /**
  * @author wburns
@@ -13,9 +14,10 @@ import org.infinispan.filter.KeyValueFilterConverterFactory;
  */
 public interface IterationManager {
    IterationState start(AdvancedCache cache, BitSet segments,
-                String filterConverterFactory, List<byte[]> filterConverterParams, MediaType valueMediaType, int batch, boolean metadata);
+                        String filterConverterFactory, List<byte[]> filterConverterParams, MediaType valueMediaType,
+                        int batch, boolean metadata, DeliveryGuarantee guarantee);
 
-   IterableIterationResult next(String iterationId);
+   IterableIterationResult next(String iterationId, int batch);
 
    IterationState close(String iterationId);
 
