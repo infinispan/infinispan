@@ -1,11 +1,5 @@
 package org.infinispan.server.resp;
 
-import static org.infinispan.server.resp.test.RespTestingUtil.createClient;
-import static org.infinispan.server.resp.test.RespTestingUtil.startServer;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -13,6 +7,12 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.resp.configuration.RespServerConfiguration;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.infinispan.server.resp.test.RespTestingUtil.createClient;
+import static org.infinispan.server.resp.test.RespTestingUtil.startServer;
 
 @Test(groups = "functional", testName = "server.resp.RespMediaTypesTest")
 public class RespMediaTypesTest extends RespSingleNodeTest {
@@ -66,6 +66,6 @@ public class RespMediaTypesTest extends RespSingleNodeTest {
 
    @Override
    protected String parameters() {
-      return String.format("[key=%s, type=%s]", keyType, valueType);
+      return String.format("[key=%s, value=%s]", keyType, valueType);
    }
 }

@@ -2,7 +2,6 @@ package org.infinispan.server.resp;
 
 import static org.infinispan.server.resp.commands.Commands.ALL_COMMANDS;
 
-import java.lang.invoke.MethodHandles;
 import java.nio.charset.StandardCharsets;
 
 import org.infinispan.server.resp.logging.Log;
@@ -31,7 +30,12 @@ public abstract class RespCommand {
     * @param steps       the step, or increment, between the first key and the position of the next key.
     */
    protected RespCommand(int arity, int firstKeyPos, int lastKeyPos, int steps) {
-      this(MethodHandles.lookup().getClass().getSimpleName(), arity, firstKeyPos, lastKeyPos, steps);
+      this.name = this.getClass().getSimpleName();
+      this.arity = arity;
+      this.firstKeyPos = firstKeyPos;
+      this.lastKeyPos = lastKeyPos;
+      this.steps = steps;
+      this.bytes = name.getBytes(StandardCharsets.US_ASCII);
    }
 
    /**
@@ -112,5 +116,10 @@ public abstract class RespCommand {
 
    public int getSteps() {
       return steps;
+   }
+
+   @Override
+   public String toString() {
+      return name;
    }
 }

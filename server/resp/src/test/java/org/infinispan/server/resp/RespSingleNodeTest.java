@@ -4,13 +4,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.infinispan.server.resp.test.RespTestingUtil.OK;
 import static org.infinispan.server.resp.test.RespTestingUtil.PONG;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
@@ -28,8 +33,11 @@ import org.infinispan.server.resp.test.CommonRespTests;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import io.lettuce.core.FlushMode;
+import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.RedisCommandExecutionException;
+import io.lettuce.core.ScanArgs;
 import io.lettuce.core.SetArgs;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
@@ -259,7 +267,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
    Object[][] booleans() {
       // Reset disabled for now as the client isn't sending a reset command to the
       // server
-      return new Object[][] { { true }, { false } };
+      return new Object[][]{{true}, {false}};
    }
 
    @Test(dataProvider = "booleans")
@@ -330,7 +338,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       connection.unsubscribe("doesn't-exist");
       connection.unsubscribe("channel", "test");
 
-      for (String channel : new String[] { "channel2", "doesn't-exist", "channel", "test" }) {
+      for (String channel : new String[]{"channel2", "doesn't-exist", "channel", "test"}) {
          value = handOffQueue.poll(10, TimeUnit.SECONDS);
          assertThat(value).isEqualTo("unsubscribed-" + channel + "-0");
       }
@@ -445,4 +453,96 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       assertThat(redis.exists("key1", "nonexistent-key", "key1")).isEqualTo(2);
       assertThat(redis.exists("nonexistent-key", "nonexistent-key", "key1")).isEqualTo(1);
    }
+
+   @Test
+   public void testFlushDb() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(0), v(0));
+      assertThat(redis.dbsize()).isGreaterThan(0);
+      redis.flushdb(FlushMode.SYNC);
+      assertThat(redis.dbsize()).isEqualTo(0);
+      redis.set(k(0), v(0));
+      assertThat(redis.dbsize()).isGreaterThan(0);
+      redis.flushdb(FlushMode.ASYNC);
+      eventually(() -> redis.dbsize() == 0);
+   }
+
+   @Test
+   public void testFlushAll() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(0), v(0));
+      assertThat(redis.dbsize()).isGreaterThan(0);
+      redis.flushall(FlushMode.SYNC);
+      assertThat(redis.dbsize()).isEqualTo(0);
+      redis.set(k(0), v(0));
+      assertThat(redis.dbsize()).isGreaterThan(0);
+      redis.flushall(FlushMode.ASYNC);
+      eventually(() -> redis.dbsize() == 0);
+   }
+
+   @Test
+   public void testScan() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.flushdb();
+      Set<String> all = new HashSet<>();
+      for (int i = 0; i < 15; i++) {
+         String k = k(i);
+         redis.set(k, v(i));
+         all.add(k);
+      }
+      Set<String> keys = new HashSet<>();
+      for (KeyScanCursor<String> cursor = redis.scan(); ; cursor = redis.scan(cursor)) {
+         keys.addAll(cursor.getKeys());
+         if (cursor.isFinished())
+            break;
+      }
+      assertTrue(keys.containsAll(all));
+   }
+
+   @Test
+   public void testScanCount() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.flushdb();
+      Set<String> all = new HashSet<>();
+      for (int i = 0; i < 15; i++) {
+         String k = k(i);
+         redis.set(k, v(i));
+         all.add(k);
+      }
+      Set<String> keys = new HashSet<>();
+      ScanArgs args = ScanArgs.Builder.limit(5);
+      for (KeyScanCursor<String> cursor = redis.scan(args); ; cursor = redis.scan(cursor, args)) {
+         if (!cursor.isFinished()) {
+            assertEquals(5, cursor.getKeys().size());
+         }
+         keys.addAll(cursor.getKeys());
+         if (cursor.isFinished())
+            break;
+      }
+      assertTrue(keys.containsAll(all));
+   }
+
+   @Test
+   public void testScanMatch() {
+      // This only works with certain key types
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.flushdb();
+      Set<String> all = new HashSet<>();
+      for (int i = 0; i < 15; i++) {
+         String k = k(i);
+         redis.set(k, v(i));
+         all.add(k);
+      }
+      Set<String> keys = new HashSet<>();
+      ScanArgs args = ScanArgs.Builder.matches("k1*");
+      for (KeyScanCursor<String> cursor = redis.scan(args); ; cursor = redis.scan(cursor, args)) {
+         for(String key : cursor.getKeys()) {
+            assertThat(key).startsWith("k1");
+            keys.add(key);
+         }
+         if (cursor.isFinished())
+            break;
+      }
+   }
+
 }

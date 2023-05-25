@@ -1,10 +1,5 @@
 package org.infinispan.server.resp;
 
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.util.AttributeKey;
-import org.infinispan.server.resp.commands.connection.QUIT;
-import org.infinispan.util.concurrent.CompletionStages;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -12,6 +7,12 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+
+import org.infinispan.server.resp.commands.connection.QUIT;
+import org.infinispan.util.concurrent.CompletionStages;
+
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.AttributeKey;
 
 public abstract class RespRequestHandler {
    protected final CompletionStage<RespRequestHandler> myStage = CompletableFuture.completedFuture(this);
@@ -40,7 +41,7 @@ public abstract class RespRequestHandler {
    public final CompletionStage<RespRequestHandler> handleRequest(ChannelHandlerContext ctx, RespCommand type, List<byte[]> arguments) {
       initializeIfNecessary(ctx);
       if (type == null) {
-         ByteBufferUtils.stringToByteBuf("-ERR unknown command\r\n", allocatorToUse);
+         RespErrorUtil.unknownCommand(allocatorToUse);
          return myStage;
       }
       return actualHandleRequest(ctx, type, arguments);
@@ -67,7 +68,7 @@ public abstract class RespRequestHandler {
          ctx.close();
          return myStage;
       }
-      ByteBufferUtils.stringToByteBuf("-ERR unknown command\r\n", allocatorToUse);
+      RespErrorUtil.unknownCommand(allocatorToUse);
       return myStage;
    }
 
