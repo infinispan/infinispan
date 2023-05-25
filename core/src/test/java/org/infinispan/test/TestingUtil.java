@@ -57,8 +57,6 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.security.auth.Subject;
-import jakarta.transaction.Status;
-import jakarta.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -66,6 +64,7 @@ import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.Lifecycle;
+import org.infinispan.commons.jdkspecific.CallerId;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
@@ -156,6 +155,8 @@ import org.reactivestreams.Publisher;
 import org.testng.AssertJUnit;
 
 import io.reactivex.rxjava3.core.Flowable;
+import jakarta.transaction.Status;
+import jakarta.transaction.TransactionManager;
 
 public class TestingUtil {
    private static final Log log = LogFactory.getLog(TestingUtil.class);
@@ -1375,6 +1376,30 @@ public class TestingUtil {
       delay.setInDelay(in_delay_millis);
       delay.setOutDelay(out_delay_millis);
       return delay;
+   }
+
+   public static String k() {
+      return k(0);
+   }
+
+   public static String k(int index) {
+      return k(CallerId.getCallerMethodName(2), index);
+   }
+
+   public static String k(int index, String prefix) {
+      return String.format("%s-k%d-%s", prefix, index, CallerId.getCallerMethodName(2));
+   }
+
+   public static String v() {
+      return v(0);
+   }
+
+   public static String v(int index) {
+      return v(CallerId.getCallerMethodName(2), index);
+   }
+
+   public static String v(int index, String prefix) {
+      return String.format("%s-v%d-%s", prefix, index, CallerId.getCallerMethodName(2));
    }
 
    public static String k(Method method, int index) {

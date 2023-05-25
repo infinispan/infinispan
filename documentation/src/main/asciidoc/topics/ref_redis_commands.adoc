@@ -34,6 +34,12 @@ The {brandname} RESP endpoint implements the following Redis commands:
 | link:https://redis.io/commands/exists[EXISTS]
 |
 
+| link:https://redis.io/commands/flushall[FLUSHALL]
+| Behaves like *FLUSHDB* since {{brandname}} does not support multiple Redis databases yet.
+
+| link:https://redis.io/commands/flushdb[FLUSHDB]
+|
+
 | link:https://redis.io/commands/get[GET]
 |
 
@@ -121,6 +127,9 @@ The {brandname} RESP endpoint implements the following Redis commands:
 
 | link:https://redis.io/commands/reset[RESET]
 |
+
+| link:https://redis.io/commands/scan[SCAN]
+| Cursors are reaped in case they have not been used within a timeout (5 minutes)
 
 | link:https://redis.io/commands/select[SELECT]
 | Always returns `-ERR Select not supported in cluster mode`

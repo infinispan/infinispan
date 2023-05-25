@@ -1,8 +1,8 @@
 package org.infinispan.server.resp;
 
 import static org.infinispan.server.resp.RespConstants.CRLF;
+import static org.infinispan.server.resp.RespConstants.OK;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.function.BiConsumer;
 
@@ -19,9 +19,6 @@ public final class Consumers {
    private Consumers() {
 
    }
-
-   static final byte[] OK = "+OK\r\n".getBytes(StandardCharsets.US_ASCII);
-   static final byte[] MATCHES = "matches".getBytes(StandardCharsets.US_ASCII);
 
    public static final BiConsumer<Object, ByteBufPool> OK_BICONSUMER = (ignore, alloc) -> alloc.acquire(OK.length)
          .writeBytes(OK);

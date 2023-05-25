@@ -9,10 +9,14 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.transport.NettyChannelInitializer;
 import org.infinispan.server.core.transport.NettyInitializers;
+import org.infinispan.server.iteration.DefaultIterationManager;
 import org.infinispan.server.resp.configuration.RespServerConfiguration;
+import org.infinispan.server.resp.filter.GlobMatchFilterConverterFactory;
 import org.infinispan.server.resp.logging.Log;
 
 import io.netty.channel.Channel;
@@ -31,6 +35,7 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
    public static final String RESP_SERVER_FEATURE = "resp-server";
    private final static Log log = LogFactory.getLog(RespServer.class, Log.class);
    private MediaType configuredValueType = MediaType.APPLICATION_OCTET_STREAM;
+   private DefaultIterationManager iterationManager;
 
    public RespServer() {
       super("Resp");
@@ -38,6 +43,9 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
 
    @Override
    protected void startInternal() {
+      GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(cacheManager);
+      this.iterationManager = new DefaultIterationManager(gcr.getTimeService());
+      iterationManager.addKeyValueFilterConverterFactory(GlobMatchFilterConverterFactory.class.getName(), new GlobMatchFilterConverterFactory());
       if (!cacheManager.getCacheManagerConfiguration().features().isAvailable(RESP_SERVER_FEATURE)) {
          throw CONFIG.featureDisabled(RESP_SERVER_FEATURE);
       }
@@ -100,5 +108,9 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
    @Override
    public void installDetector(Channel ch) {
       ch.pipeline().addLast(RespDetector.NAME, new RespDetector(this));
+   }
+
+   public DefaultIterationManager getIterationManager() {
+      return iterationManager;
    }
 }

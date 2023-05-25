@@ -18,6 +18,9 @@ import org.infinispan.server.resp.commands.connection.READWRITE;
 import org.infinispan.server.resp.commands.connection.RESET;
 import org.infinispan.server.resp.commands.connection.SELECT;
 import org.infinispan.server.resp.commands.generic.EXISTS;
+import org.infinispan.server.resp.commands.generic.FLUSHALL;
+import org.infinispan.server.resp.commands.generic.FLUSHDB;
+import org.infinispan.server.resp.commands.generic.SCAN;
 import org.infinispan.server.resp.commands.list.LINDEX;
 import org.infinispan.server.resp.commands.list.LINSERT;
 import org.infinispan.server.resp.commands.list.LLEN;
@@ -66,6 +69,7 @@ public final class Commands {
       // DEL should always be first here
       ALL_COMMANDS[3] = new RespCommand[]{new DEL(), new DECR(), new DECRBY(), new DBSIZE()};
       ALL_COMMANDS[4] = new RespCommand[]{new ECHO(), new EXISTS()};
+      ALL_COMMANDS[5] = new RespCommand[]{new FLUSHDB(), new FLUSHALL()};
       // GET should always be first here
       ALL_COMMANDS[6] = new RespCommand[]{new GET(), new GETDEL()};
       ALL_COMMANDS[7] = new RespCommand[]{new HELLO()};
@@ -76,7 +80,7 @@ public final class Commands {
       ALL_COMMANDS[16] = new RespCommand[]{new QUIT()};
       ALL_COMMANDS[17] = new RespCommand[]{new RPUSH(), new RPUSHX(), new RPOP(), new RESET(), new READWRITE(), new READONLY()};
       // SET should always be first here
-      ALL_COMMANDS[18] = new RespCommand[]{new SET(), new STRLEN(), new SUBSCRIBE(), new SELECT(), new STRALGO()};
+      ALL_COMMANDS[18] = new RespCommand[]{new SET(), new STRLEN(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN()};
       ALL_COMMANDS[20] = new RespCommand[]{new UNSUBSCRIBE()};
    }
 

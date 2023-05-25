@@ -3,7 +3,6 @@ package org.infinispan.server.resp;
 public final class RespErrorUtil {
 
    private RespErrorUtil() {
-
    }
 
    public static void noSuchKey(ByteBufPool allocatorToUse) {
@@ -27,9 +26,25 @@ public final class RespErrorUtil {
             "-ERR wrong number of arguments for '" + command.getName().toLowerCase() + "' command\r\n", allocatorToUse);
    }
 
-   public static void mustBePositive(ByteBufPool allocatorToUse) {
+   public static void unknownCommand(ByteBufPool allocator) {
+      ByteBufferUtils.stringToByteBuf("-ERR unknown command\r\n", allocator);
+   }
+
+   public static void mustBePositive(ByteBufPool allocator) {
       ByteBufferUtils.stringToByteBuf(
-            "-ERR value is out of range, must be positive\r\n", allocatorToUse);
+            "-ERR value is out of range, must be positive\r\n", allocator);
+   }
+
+   public static void syntaxError(ByteBufPool allocator) {
+      ByteBufferUtils.stringToByteBuf("-ERR syntax error\r\n", allocator);
+   }
+
+   public static void wrongArgumentCount(RespCommand command, ByteBufPool allocator) {
+      ByteBufferUtils.stringToByteBuf("ERR wrong number of arguments for '" + command.getName().toLowerCase() + "' command\r\n", allocator);
+   }
+
+   public static void valueNotInteger(ByteBufPool allocator) {
+      ByteBufferUtils.stringToByteBuf("-ERR value is not an integer or out of range\r\n", allocator);
    }
 
    public static void customError(String message, ByteBufPool allocatorToUse) {

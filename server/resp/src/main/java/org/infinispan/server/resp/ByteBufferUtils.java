@@ -1,10 +1,10 @@
 package org.infinispan.server.resp;
 
+import java.util.Collection;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.util.CharsetUtil;
-
-import java.util.Collection;
 
 /**
  * Utility class with ByteBuffer Utils
@@ -75,16 +75,15 @@ public final class ByteBufferUtils {
       for (byte[] result: results) {
          int length = result.length;
          if (length > 0) {
-            // $ + digit length (log10 + 1) + /r/n + byte length
-            resultBytesSize += (1 + (int) Math.log10(length) + 1 + 2 + result.length);
+            // $ + digit length (log10 + 1) + \r\n + byte length
+            resultBytesSize += (1 + (int) Math.log10(length) + 1 + 2 + length);
          } else {
-            // $0 + /r/n
+            // $0 + \r\n
             resultBytesSize += (2 + 2);
          }
+         // /r/n
+         resultBytesSize += 2;
       }
-      // /r/n
-      resultBytesSize += (2);
-
       return bytesToResult(resultBytesSize, results, alloc);
    }
 
@@ -108,7 +107,6 @@ public final class ByteBufferUtils {
          byteBuf.writeByte('\r');
          byteBuf.writeByte('\n');
       }
-      assert byteBuf.writerIndex() == byteAmount;
       return byteBuf;
    }
 
