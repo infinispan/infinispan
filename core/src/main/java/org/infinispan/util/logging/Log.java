@@ -2349,4 +2349,10 @@ public interface Log extends BasicLogger {
    void recoverFromStateMissingMembers(String cacheName, List<Address> members, int total);
 
    MissingMembersException recoverFromStateMissingMembers(String cacheName, List<Address> members, String total);
+
+   @LogMessage(level = DEBUG)
+   @Message(value = "We cannot find a configuration for the cache '%s' in the available configurations: '%s'. " +
+         "This cache has been probably removed by another thread. Skip to writing it.", id = 690)
+   void configurationNotFound(String cacheName, Collection<String> definedConfigurations);
+
 }

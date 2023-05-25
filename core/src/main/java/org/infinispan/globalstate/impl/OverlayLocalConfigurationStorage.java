@@ -169,7 +169,12 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
          File temp = File.createTempFile(prefix, null, sharedDirectory);
          Map<String, Configuration> configurationMap = new HashMap<>();
          for (String config : configNames) {
-            configurationMap.put(config, configurationManager.getConfiguration(config, true));
+            Configuration configuration = configurationManager.getConfiguration(config, true);
+            if (configuration == null) {
+               log.configurationNotFound(config, configurationManager.getDefinedConfigurations());
+            } else {
+               configurationMap.put(config, configuration);
+            }
          }
          try (ConfigurationWriter writer = ConfigurationWriter.to(new FileOutputStream(temp)).clearTextSecrets(true).prettyPrint(true).build()) {
             parserRegistry.serialize(writer, null, configurationMap);
