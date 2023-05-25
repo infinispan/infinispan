@@ -46,6 +46,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -79,7 +80,6 @@ import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.util.EntryLoader;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -338,11 +338,16 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
          return otherCF.thenAcceptAsync(entry -> putInContext(ctx, key, cmd, entry), nonBlockingExecutor);
       }
 
-      CompletionStage<InternalCacheEntry<K, V>> result = loadAndStoreInDataContainer(ctx, key, segment, cmd);
-      if (CompletionStages.isCompletedSuccessfully(result)) {
-         finishLoadInContext(ctx, key, cmd, cf, CompletionStages.join(result), null);
-      } else {
-         result.whenComplete((value, throwable) -> finishLoadInContext(ctx, key, cmd, cf, value, throwable));
+      try {
+         CompletionStage<InternalCacheEntry<K, V>> result = loadAndStoreInDataContainer(ctx, key, segment, cmd);
+         if (CompletionStages.isCompletedSuccessfully(result)) {
+            finishLoadInContext(ctx, key, cmd, cf, CompletionStages.join(result), null);
+         } else {
+            result.whenComplete((value, throwable) -> finishLoadInContext(ctx, key, cmd, cf, value, throwable));
+         }
+      } catch (Throwable t) {
+         pendingLoads.remove(key);
+         cf.completeExceptionally(t);
       }
       return cf;
    }
