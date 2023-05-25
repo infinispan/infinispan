@@ -1,4 +1,4 @@
-package org.infinispan.server.hotrod.iteration;
+package org.infinispan.server.iteration;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;

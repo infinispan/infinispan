@@ -1,4 +1,4 @@
-package org.infinispan.server.hotrod.iteration;
+package org.infinispan.server.iteration;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;

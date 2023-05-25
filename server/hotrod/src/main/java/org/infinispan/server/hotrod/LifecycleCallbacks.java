@@ -33,7 +33,6 @@ import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.server.hotrod.event.KeyValueWithPreviousEventConverterExternalizer;
-import org.infinispan.server.hotrod.iteration.IterationFilter;
 import org.infinispan.server.hotrod.tx.ServerTransactionOriginatorChecker;
 import org.infinispan.server.hotrod.tx.table.CacheXid;
 import org.infinispan.server.hotrod.tx.table.ClientAddress;
@@ -47,6 +46,7 @@ import org.infinispan.server.hotrod.tx.table.functions.SetCompletedTransactionFu
 import org.infinispan.server.hotrod.tx.table.functions.SetDecisionFunction;
 import org.infinispan.server.hotrod.tx.table.functions.SetPreparedFunction;
 import org.infinispan.server.hotrod.tx.table.functions.XidPredicate;
+import org.infinispan.server.iteration.IterationFilter;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.TransactionOriginatorChecker;
 

@@ -1,4 +1,4 @@
-package org.infinispan.server.hotrod.iteration;
+package org.infinispan.server.iteration;
 
 import java.util.BitSet;
 import java.util.List;
@@ -6,20 +6,26 @@ import java.util.Set;
 import java.util.function.Function;
 
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.server.hotrod.OperationStatus;
 
 /**
  * @author wburns
  * @since 9.0
  */
 public class IterableIterationResult {
+
+   public enum Status {
+      Success,
+      Finished,
+      InvalidIteration,
+   }
+
    private final Set<Integer> finishedSegments;
-   private final OperationStatus statusCode;
+   private final Status statusCode;
    private final List<CacheEntry> entries;
    private final boolean metadata;
    private final Function<Object, Object> resultFunction;
 
-   IterableIterationResult(Set<Integer> finishedSegments, OperationStatus statusCode, List<CacheEntry> entries, boolean metadata, Function<Object, Object> resultFunction) {
+   IterableIterationResult(Set<Integer> finishedSegments, Status statusCode, List<CacheEntry> entries, boolean metadata, Function<Object, Object> resultFunction) {
       this.finishedSegments = finishedSegments;
       this.statusCode = statusCode;
       this.entries = entries;
@@ -27,7 +33,7 @@ public class IterableIterationResult {
       this.resultFunction = resultFunction;
    }
 
-   public OperationStatus getStatusCode() {
+   public Status getStatusCode() {
       return statusCode;
    }
 

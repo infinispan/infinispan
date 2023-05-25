@@ -1,4 +1,4 @@
-package org.infinispan.server.hotrod.iteration;
+package org.infinispan.server.iteration;
 
 import java.io.IOException;
 import java.io.ObjectInput;

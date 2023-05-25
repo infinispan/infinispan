@@ -1,4 +1,4 @@
-package org.infinispan.server.hotrod.iteration;
+package org.infinispan.server.iteration;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.filter.CacheFilters.filterAndConvert;
@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -35,9 +36,9 @@ import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.filter.ParamKeyValueFilterConverterFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
+import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.security.actions.SecurityActions;
-import org.infinispan.server.hotrod.OperationStatus;
-import org.infinispan.server.hotrod.logging.Log;
+import org.infinispan.server.core.logging.Log;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 
@@ -124,6 +125,7 @@ public class DefaultIterationManager implements IterationManager {
    private static final Log log = LogFactory.getLog(DefaultIterationManager.class, Log.class);
 
    private final com.github.benmanes.caffeine.cache.Cache<String, DefaultIterationState> iterationStateMap;
+   private static final AtomicLong globalIterationId = new AtomicLong(0);
    private final Map<String, KeyValueFilterConverterFactory> filterConverterFactoryMap =
          new ConcurrentHashMap<>();
 
@@ -140,8 +142,8 @@ public class DefaultIterationManager implements IterationManager {
    }
 
    @Override
-   public IterationState start(AdvancedCache cache, BitSet segments, String filterConverterFactory, List<byte[]> filterConverterParams, MediaType requestValueType, int batch, boolean metadata) {
-      String iterationId = Util.threadLocalRandomUUID().toString();
+   public IterationState start(AdvancedCache cache, BitSet segments, String filterConverterFactory, List<byte[]> filterConverterParams, MediaType requestValueType, int batch, boolean metadata, DeliveryGuarantee guarantee) {
+      String iterationId = String.valueOf(globalIterationId.incrementAndGet());
 
       EmbeddedCacheManager cacheManager = SecurityActions.getEmbeddedCacheManager(cache);
       EncoderRegistry encoderRegistry = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(EncoderRegistry.class);
@@ -214,18 +216,18 @@ public class DefaultIterationManager implements IterationManager {
    }
 
    @Override
-   public IterableIterationResult next(String iterationId) {
+   public IterableIterationResult next(String iterationId, int batch) {
       DefaultIterationState iterationState = iterationStateMap.getIfPresent(iterationId);
       if (iterationState != null) {
          int i = 0;
-         List<CacheEntry> entries = new ArrayList<>(iterationState.batch);
+         List<CacheEntry> entries = new ArrayList<>(batch > 0 ? batch : iterationState.batch);
          while (i++ < iterationState.batch && iterationState.iterator.hasNext()) {
             entries.add(iterationState.iterator.next());
          }
-         return new IterableIterationResult(iterationState.listener.getFinished(entries.isEmpty()), OperationStatus.Success,
+         return new IterableIterationResult(iterationState.listener.getFinished(entries.isEmpty()), iterationState.iterator.hasNext() ? IterableIterationResult.Status.Success : IterableIterationResult.Status.Finished,
                entries, iterationState.metadata, iterationState.resultFunction);
       } else {
-         return new IterableIterationResult(Collections.emptySet(), OperationStatus.InvalidIteration,
+         return new IterableIterationResult(Collections.emptySet(), IterableIterationResult.Status.InvalidIteration,
                Collections.emptyList(), false, Function.identity());
       }
    }

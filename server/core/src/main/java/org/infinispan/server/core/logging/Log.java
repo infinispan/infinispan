@@ -191,4 +191,12 @@ public interface Log extends BasicLogger {
 
    @Message(value = "EXTERNAL SASL mechanism not allowed without SSL client certificate", id = 5059)
    SecurityException externalMechNotAllowedWithoutSSLClientCert();
+
+   // Out-of-order log messages. Moved here from the server-hotrod module
+   @Message(value = "Factory '%s' not found in server", id = 6016)
+   IllegalStateException missingKeyValueFilterConverterFactory(String name);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Removed unclosed iterator '%s'", id = 28026)
+   void removedUnclosedIterator(String iteratorId);
 }
