@@ -375,11 +375,16 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
          return otherCF.thenAcceptAsync(entry -> putInContext(ctx, key, cmd, entry), nonBlockingExecutor);
       }
 
-      CompletionStage<InternalCacheEntry<K, V>> result = loadAndStoreInDataContainer(ctx, key, segment, cmd);
-      if (CompletionStages.isCompletedSuccessfully(result)) {
-         finishLoadInContext(ctx, key, cmd, cf, CompletionStages.join(result), null);
-      } else {
-         result.whenComplete((value, throwable) -> finishLoadInContext(ctx, key, cmd, cf, value, throwable));
+      try {
+         CompletionStage<InternalCacheEntry<K, V>> result = loadAndStoreInDataContainer(ctx, key, segment, cmd);
+         if (CompletionStages.isCompletedSuccessfully(result)) {
+            finishLoadInContext(ctx, key, cmd, cf, CompletionStages.join(result), null);
+         } else {
+            result.whenComplete((value, throwable) -> finishLoadInContext(ctx, key, cmd, cf, value, throwable));
+         }
+      } catch (Throwable t) {
+         pendingLoads.remove(key);
+         cf.completeExceptionally(t);
       }
       return cf;
    }
