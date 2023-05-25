@@ -15,12 +15,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v2
+    - name: Setup Maven
+      uses: s4u/setup-maven-action@v1.7.0
       with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: maven
+        java-version: 17
+        maven-version: 3.9.0
 
     - name: Build docs with Maven
       run: mvn install -Pdistribution -pl documentation -am -s maven-settings.xml
