@@ -365,7 +365,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
    public void testNotImplementedCommand() {
       RedisCommands<String, String> redis = redisConnection.sync();
       Exceptions.expectException(RedisCommandExecutionException.class, "ERR unknown command",
-            () -> redis.sadd("not-supported", "should error"));
+            () -> redis.xdel("not-supported", "should error"));
    }
 
    protected RedisPubSubCommands<String, String> createPubSubConnection() {

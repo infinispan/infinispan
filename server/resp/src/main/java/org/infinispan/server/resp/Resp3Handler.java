@@ -10,9 +10,12 @@ import java.util.stream.Collectors;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.context.Flag;
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.multimap.impl.EmbeddedMultimapPairCache;
+import org.infinispan.multimap.impl.EmbeddedSetCache;
+import org.infinispan.multimap.impl.SetBucket;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.resp.commands.Resp3Command;
@@ -20,11 +23,12 @@ import org.infinispan.server.resp.commands.Resp3Command;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
-
 public class Resp3Handler extends Resp3AuthHandler {
    protected AdvancedCache<byte[], byte[]> ignorePreviousValueCache;
    protected EmbeddedMultimapListCache<byte[], byte[]> listMultimap;
    protected EmbeddedMultimapPairCache<byte[], byte[], byte[]> mapMultimap;
+   // Entry type for SetBUcket needs proper hashcode, equals methods. Using WrappedByteArray
+   protected EmbeddedSetCache<byte[],WrappedByteArray> embeddedSetCache;
 
    private final MediaType valueMediaType;
 
@@ -40,6 +44,8 @@ public class Resp3Handler extends Resp3AuthHandler {
       Cache toMultimap = cache.withMediaType(MediaType.APPLICATION_OCTET_STREAM, valueMediaType);
       listMultimap = new EmbeddedMultimapListCache<>(toMultimap);
       mapMultimap = new EmbeddedMultimapPairCache<>(toMultimap);
+      Cache<byte[],SetBucket<WrappedByteArray>> wCache = cache.getCacheManager().getCache(cache.getName());
+      embeddedSetCache = new EmbeddedSetCache<byte[],WrappedByteArray>(wCache);
    }
 
    public EmbeddedMultimapListCache<byte[], byte[]> getListMultimap() {
@@ -48,6 +54,10 @@ public class Resp3Handler extends Resp3AuthHandler {
 
    public EmbeddedMultimapPairCache<byte[], byte[], byte[]> getHashMapMultimap() {
       return mapMultimap;
+   }
+
+   public EmbeddedSetCache<byte[],WrappedByteArray> getEmbeddedSetCache() {
+      return embeddedSetCache;
    }
 
    @Override
