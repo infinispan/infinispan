@@ -12,6 +12,7 @@ import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.resp.RespServer;
 import org.infinispan.server.resp.configuration.RespServerConfiguration;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
+import org.infinispan.test.data.Person;
 
 import io.lettuce.core.RedisClient;
 
@@ -22,6 +23,18 @@ import io.lettuce.core.RedisClient;
  * @since 14.0
  */
 public class RespTestingUtil {
+   public static final String NAMES_KEY = "names";
+   public static final String EMPTY_KEY = "";
+   public static final String NULL_KEY = null;
+   public static final Person JULIEN = new Person("Julien");
+   public static final Person OIHANA = new Person("Oihana");
+   public static final Person RAMON = new Person("Ramon");
+   public static final Person KOLDO = new Person("Koldo");
+   public static final Person ELAIA = new Person("Elaia");
+   public static final Person FELIX = new Person("Felix");
+   public static final SuperPerson PEPE = new SuperPerson("Pepe");
+   public static final SuperPerson NULL_USER = null;
+
    private static final Log log = LogFactory.getLog(RespTestingUtil.class, Log.class);
 
    public static final String OK = "OK";
@@ -58,7 +71,8 @@ public class RespTestingUtil {
       return startServer(cacheManager, port, cacheName, MediaType.APPLICATION_OCTET_STREAM);
    }
 
-   public static RespServer startServer(EmbeddedCacheManager cacheManager, int port, String cacheName, MediaType valueMediaType) {
+   public static RespServer startServer(EmbeddedCacheManager cacheManager, int port, String cacheName,
+         MediaType valueMediaType) {
       RespServer server = new RespServer() {
          @Override
          protected void startCaches() {
@@ -73,14 +87,16 @@ public class RespTestingUtil {
 
    public static void killClient(RedisClient client) {
       try {
-         if (client != null) client.shutdown();
+         if (client != null)
+            client.shutdown();
       } catch (Throwable t) {
          log.error("Error stopping client", t);
       }
    }
 
    public static void killServer(RespServer server) {
-      if (server != null) server.stop();
+      if (server != null)
+         server.stop();
    }
 
    public static int port() {
@@ -91,7 +107,8 @@ public class RespTestingUtil {
 
       static UniquePortThreadLocal INSTANCE = new UniquePortThreadLocal();
 
-      private static final AtomicInteger uniqueAddr = new AtomicInteger(1600 + ThreadLocalRandom.current().nextInt(1024));
+      private static final AtomicInteger uniqueAddr = new AtomicInteger(
+            1600 + ThreadLocalRandom.current().nextInt(1024));
 
       @Override
       protected Integer initialValue() {

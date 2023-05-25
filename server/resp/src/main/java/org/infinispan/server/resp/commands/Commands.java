@@ -47,6 +47,7 @@ import org.infinispan.server.resp.commands.pubsub.PUBLISH;
 import org.infinispan.server.resp.commands.pubsub.PUNSUBSCRIBE;
 import org.infinispan.server.resp.commands.pubsub.SUBSCRIBE;
 import org.infinispan.server.resp.commands.pubsub.UNSUBSCRIBE;
+import org.infinispan.server.resp.commands.set.SADD;
 import org.infinispan.server.resp.commands.string.APPEND;
 import org.infinispan.server.resp.commands.string.DECR;
 import org.infinispan.server.resp.commands.string.DECRBY;
@@ -91,7 +92,7 @@ public final class Commands {
       ALL_COMMANDS[16] = new RespCommand[]{new QUIT()};
       ALL_COMMANDS[17] = new RespCommand[]{new RPUSH(), new RPUSHX(), new RPOP(), new RESET(), new READWRITE(), new READONLY()};
       // SET should always be first here
-      ALL_COMMANDS[18] = new RespCommand[]{new SET(), new STRLEN(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN(), new SETRANGE()};
+      ALL_COMMANDS[18] = new RespCommand[]{new SET(), new SADD(), new STRLEN(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN(), new SETRANGE()};
       ALL_COMMANDS[19] = new RespCommand[]{new TTL(), new TYPE()};
       ALL_COMMANDS[20] = new RespCommand[]{new UNSUBSCRIBE()};
    }

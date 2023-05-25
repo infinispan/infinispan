@@ -8,6 +8,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
+import org.infinispan.multimap.impl.function.AddFunction;
 import org.infinispan.multimap.impl.function.ContainsFunction;
 import org.infinispan.multimap.impl.function.GetFunction;
 import org.infinispan.multimap.impl.function.HashMapPutFunction;
@@ -59,7 +60,7 @@ public class MultimapModuleLifecycle implements ModuleLifecycle {
       addAdvancedExternalizer(externalizerMap, InsertFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, RemoveCountFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, HashMapPutFunction.EXTERNALIZER);
-
       addAdvancedExternalizer(externalizerMap, MultimapDataConverter.EXTERNALIZER);
+      addAdvancedExternalizer(externalizerMap, AddFunction.EXTERNALIZER);
    }
 }
