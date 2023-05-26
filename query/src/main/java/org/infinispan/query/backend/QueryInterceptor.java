@@ -228,13 +228,13 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
          old = unreliablePrevious ? UNKNOWN : mvccEntry.getOldValue();
       }
       if (entry != null && entry.isChanged() && !isStale) {
-         if (log.isDebugEnabled()) {
-            log.debugf("Try indexing command '%s',key='%s', oldValue='%s', stale='false'", cmd, key, old);
+         if (log.isTraceEnabled()) {
+            log.tracef("Try indexing command '%s',key='%s', oldValue='%s', stale='false'", cmd, key, old);
          }
          return processChange(rCtx, cmd, key, old, entry.getValue());
       } else {
-         if (log.isDebugEnabled()) {
-            log.debugf("Skipping indexing for command '%s',key='%s', oldValue='%s', stale='%s'", cmd, key, old, isStale);
+         if (log.isTraceEnabled()) {
+            log.tracef("Skipping indexing for command '%s',key='%s', oldValue='%s', stale='%s'", cmd, key, old, isStale);
          }
       }
       return CompletableFutures.completedNull();
