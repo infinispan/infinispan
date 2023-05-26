@@ -1,6 +1,9 @@
 package org.infinispan.server.resp.commands.list;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
@@ -10,9 +13,7 @@ import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.util.concurrent.CompletionStages;
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @link https://redis.io/commands/llen/
@@ -35,7 +36,7 @@ public class LLEN extends RespCommand implements Resp3Command {
 
       if (arguments.size() < 1) {
          // ERROR
-         RespErrorUtil.wrongArgumentNumber(this, handler.allocatorToUse());
+         RespErrorUtil.wrongArgumentNumber(this, handler.allocator());
          return handler.myStage();
       }
 

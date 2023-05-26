@@ -1,14 +1,15 @@
 package org.infinispan.server.resp.commands.connection;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.server.resp.ByteBufferUtils;
-import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
+import org.infinispan.server.resp.commands.Resp3Command;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @link https://redis.io/commands/select/
@@ -24,7 +25,7 @@ public class SELECT extends RespCommand implements Resp3Command {
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
       ByteBufferUtils
-            .stringToByteBuf("-ERR Select not supported in cluster mode\r\n", handler.allocatorToUse());
+            .stringToByteBuf("-ERR Select not supported in cluster mode\r\n", handler.allocator());
       return handler.myStage();
    }
 }

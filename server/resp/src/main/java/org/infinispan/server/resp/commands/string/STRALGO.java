@@ -1,16 +1,17 @@
 package org.infinispan.server.resp.commands.string;
 
-import io.netty.channel.ChannelHandlerContext;
-import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.server.resp.operation.LCSOperation;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.server.resp.ByteBufferUtils;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
+import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.operation.LCSOperation;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @link https://redis.io/commands/lcs/
@@ -27,7 +28,7 @@ public class STRALGO extends RespCommand implements Resp3Command {
          List<byte[]> arguments) {
       if (arguments.size() < 4) {
          ByteBufferUtils.stringToByteBuf("-ERR wrong number of arguments for 'lcs' command\r\n",
-               handler.allocatorToUse());
+               handler.allocator());
       }
       return handler.stageToReturn(LCSOperation.performOperation(handler.cache(), arguments), ctx, Consumers.LCS_BICONSUMER);
    }

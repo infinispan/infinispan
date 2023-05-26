@@ -1,6 +1,8 @@
 package org.infinispan.server.resp.commands.list;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
@@ -12,8 +14,7 @@ import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.jgroups.util.CompletableFutures;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @link https://redis.io/commands/lset/
@@ -35,7 +36,7 @@ public class LSET extends RespCommand implements Resp3Command {
 
       if (arguments.size() < 3) {
          // ERROR
-         RespErrorUtil.wrongArgumentNumber(this, handler.allocatorToUse());
+         RespErrorUtil.wrongArgumentNumber(this, handler.allocator());
          return handler.myStage();
       }
 
@@ -57,7 +58,7 @@ public class LSET extends RespCommand implements Resp3Command {
          }
 
          if (!result) {
-            RespErrorUtil.noSuchKey(handler.allocatorToUse());
+            RespErrorUtil.noSuchKey(handler.allocator());
             return handler.myStage();
          }
 

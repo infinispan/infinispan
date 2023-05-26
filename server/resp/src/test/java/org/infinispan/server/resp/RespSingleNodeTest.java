@@ -23,6 +23,7 @@ import java.util.stream.IntStream;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.server.resp.commands.Commands;
 import org.infinispan.server.resp.test.CommonRespTests;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -339,7 +340,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       RedisCommands<String, String> redis = redisConnection.sync();
 
       List<Object> commands = redis.command();
-      assertThat(commands.size()).isEqualTo(RespCommand.all().size());
+      assertThat(commands.size()).isEqualTo(Commands.all().size());
    }
 
    public void testAuth() {

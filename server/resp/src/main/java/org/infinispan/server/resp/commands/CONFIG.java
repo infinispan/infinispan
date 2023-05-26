@@ -1,15 +1,16 @@
 package org.infinispan.server.resp.commands;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.server.resp.ByteBufferUtils;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @link https://redis.io/commands/config/
@@ -29,16 +30,16 @@ public class CONFIG extends RespCommand implements Resp3Command {
 
       if ("GET".equalsIgnoreCase(getOrSet)) {
          if ("appendonly".equalsIgnoreCase(name)) {
-            ByteBufferUtils.stringToByteBuf("*2\r\n+" + name + "\r\n+no\r\n", handler.allocatorToUse());
+            ByteBufferUtils.stringToByteBuf("*2\r\n+" + name + "\r\n+no\r\n", handler.allocator());
          } else if (name.indexOf('*') != -1 || name.indexOf('?') != -1) {
-            ByteBufferUtils.stringToByteBuf("-ERR CONFIG blob pattern matching not implemented\r\n", handler.allocatorToUse());
+            ByteBufferUtils.stringToByteBuf("-ERR CONFIG blob pattern matching not implemented\r\n", handler.allocator());
          } else {
-            ByteBufferUtils.stringToByteBuf("*2\r\n+" + name + "\r\n+\r\n", handler.allocatorToUse());
+            ByteBufferUtils.stringToByteBuf("*2\r\n+" + name + "\r\n+\r\n", handler.allocator());
          }
       } else if ("SET".equalsIgnoreCase(getOrSet)) {
-         Consumers.OK_BICONSUMER.accept(null, handler.allocatorToUse());
+         Consumers.OK_BICONSUMER.accept(null, handler.allocator());
       } else {
-         ByteBufferUtils.stringToByteBuf("-ERR CONFIG " + getOrSet + " not implemented\r\n", handler.allocatorToUse());
+         ByteBufferUtils.stringToByteBuf("-ERR CONFIG " + getOrSet + " not implemented\r\n", handler.allocator());
       }
       return handler.myStage();
    }
