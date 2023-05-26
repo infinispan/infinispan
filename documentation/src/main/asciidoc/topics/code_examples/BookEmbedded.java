@@ -7,7 +7,7 @@ import java.util.Set;
 import org.infinispan.api.annotations.indexing.*;
 
 // Annotate values with @Indexed to add them to indexes
-// Annotate each fields according to how you want to index it
+// Annotate each field according to how you want to index it
 @Indexed
 public class Book {
    @Keyword

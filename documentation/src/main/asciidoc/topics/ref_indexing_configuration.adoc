@@ -64,15 +64,17 @@ include::xml/indexing_startup_purge.xml[]
 include::xml/indexing_startup_reindex.xml[]
 ----
 
+
 [discrete]
-== Indexing Mode
+== Indexing mode
 
-Affects how cache operations will be propagated to the indexes.
-By default, all the changes to the cache will be immediately applied to the indexes.
+`indexing-mode` controls how cache operations are propagated to the indexes.
 
-This feature can be disabled, allowing the indexes only to be updated when a reindex is explicitly invoked,
-to support for instance batched index updates.
-It can be done setting the `indexing-mode` to `manual`:
+`auto`:: {brandname} immediately applies any changes to the cache to the indexes. This is the default mode.
+
+`manual`:: {brandname} updates indexes only when the reindex operation is explicitly invoked. Configure `manual` mode, for example, when you want to perform batch updates to the indexes.
+
+Set the `indexing-mode` to `manual`:
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
@@ -173,13 +175,16 @@ To configure how {brandname} merges index segments, you use the `index-merge` su
 .Additional resources
 * link:{configdocroot}[{brandname} configuration schema reference]
 
-[discrete]
-== Index Sharding
 
-Sharding consists in splitting index data into multiple "smaller indexes", called shards,
-in order to improve performance when dealing with **large amounts of data**.
+[discrete]
+== Index sharding
+
+When you have a large amount of data, you can configure {brandname} to split index data into multiple indexes called shards.
+Enabling data distribution among shards improves performance.
 By default, sharding is disabled.
-To enable sharding, set the `shards` attribute to a value that is strictly major of 1.
+
+Use the `shards` attribute to configure the number of indexes.
+The number of shards must be greater then `1`.
 
 [source,xml,options="nowrap",subs=attributes+]
 ----
