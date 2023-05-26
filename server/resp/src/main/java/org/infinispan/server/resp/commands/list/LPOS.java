@@ -45,12 +45,12 @@ public class LPOS extends RespCommand implements Resp3Command {
 
       if (arguments.size() < 2 || arguments.size() > 8) {
          // ERROR
-         RespErrorUtil.wrongArgumentNumber(this, handler.allocatorToUse());
+         RespErrorUtil.wrongArgumentNumber(this, handler.allocator());
          return handler.myStage();
       }
       if (arguments.size() % 2 != 0) {
          //(error) (arguments must come in pairs)
-         RespErrorUtil.syntaxError(handler.allocatorToUse());
+         RespErrorUtil.syntaxError(handler.allocator());
          return handler.myStage();
       }
 
@@ -74,7 +74,7 @@ public class LPOS extends RespCommand implements Resp3Command {
             case COUNT:
                count = argumentValue;
                if (count < 0) {
-                  RespErrorUtil.customError("COUNT can't be negative", handler.allocatorToUse());
+                  RespErrorUtil.customError("COUNT can't be negative", handler.allocator());
                   return handler.myStage();
                }
                break;
@@ -82,19 +82,19 @@ public class LPOS extends RespCommand implements Resp3Command {
                rank = argumentValue;
                if (rank == 0) {
                   RespErrorUtil.customError("RANK can't be zero: use 1 to start from the first match, "
-                        + "2 from the second ... or use negative to start from the end of the list", handler.allocatorToUse());
+                        + "2 from the second ... or use negative to start from the end of the list", handler.allocator());
                   return handler.myStage();
                }
                break;
             case MAXLEN:
                maxLen = argumentValue;
                if (maxLen < 0) {
-                  RespErrorUtil.customError("MAXLEN can't be negative", handler.allocatorToUse());
+                  RespErrorUtil.customError("MAXLEN can't be negative", handler.allocator());
                   return handler.myStage();
                }
                break;
             default:
-               RespErrorUtil.syntaxError(handler.allocatorToUse());
+               RespErrorUtil.syntaxError(handler.allocator());
                return handler.myStage();
          }
       }

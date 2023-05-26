@@ -9,6 +9,7 @@ import org.infinispan.server.resp.ByteBufferUtils;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
+import org.infinispan.server.resp.commands.Commands;
 import org.infinispan.server.resp.commands.Resp3Command;
 
 import io.netty.buffer.ByteBufUtil;
@@ -30,17 +31,17 @@ public class COMMAND extends RespCommand implements Resp3Command {
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
       if (!arguments.isEmpty()) {
-         ByteBufferUtils.stringToByteBuf("-ERR COMMAND does not currently support arguments\r\n", handler.allocatorToUse());
+         ByteBufferUtils.stringToByteBuf("-ERR COMMAND does not currently support arguments\r\n", handler.allocator());
       } else {
          StringBuilder commandBuilder = new StringBuilder();
-         List<RespCommand> commands = RespCommand.all();
+         List<RespCommand> commands = Commands.all();
          commandBuilder.append("*");
          commandBuilder.append(commands.size());
          commandBuilder.append(CRLF);
          for (RespCommand command : commands){
             addCommand(commandBuilder, command);
          }
-         ByteBufferUtils.stringToByteBuf(commandBuilder.toString(), handler.allocatorToUse());
+         ByteBufferUtils.stringToByteBuf(commandBuilder.toString(), handler.allocator());
       }
       return handler.myStage();
    }

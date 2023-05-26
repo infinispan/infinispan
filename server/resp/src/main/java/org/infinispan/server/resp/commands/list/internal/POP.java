@@ -1,6 +1,10 @@
 package org.infinispan.server.resp.commands.list.internal;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
@@ -11,10 +15,7 @@ import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.util.concurrent.CompletionStages;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Abstract class for common code on POP operations
@@ -36,7 +37,7 @@ public abstract class POP extends RespCommand implements Resp3Command {
 
       if (arguments.size() < 1) {
          // ERROR
-         RespErrorUtil.wrongArgumentNumber(this, handler.allocatorToUse());
+         RespErrorUtil.wrongArgumentNumber(this, handler.allocator());
          return handler.myStage();
       }
 
@@ -51,7 +52,7 @@ public abstract class POP extends RespCommand implements Resp3Command {
       if (arguments.size() > 1) {
          count = ArgumentUtils.toLong(arguments.get(1));
          if (count < 0) {
-            RespErrorUtil.mustBePositive(handler.allocatorToUse());
+            RespErrorUtil.mustBePositive(handler.allocator());
             return handler.myStage();
          }
       } else {

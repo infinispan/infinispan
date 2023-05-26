@@ -316,7 +316,7 @@ public class INFO extends RespCommand implements Resp3Command {
          sb.append("# Keyspace\r\n");
          sb.append("db0:keys=0,expires=0,avg_ttl=0\r\n");
       }
-      handleBulkResult(sb, handler.allocatorToUse());
+      handleBulkResult(sb, handler.allocator());
       return handler.myStage();
    }
 

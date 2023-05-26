@@ -33,7 +33,7 @@ public abstract class RespRequestHandler {
       return myStage;
    }
 
-   public ByteBufPool allocatorToUse() {
+   public ByteBufPool allocator() {
       return allocatorToUse;
    }
 

@@ -1,18 +1,19 @@
 package org.infinispan.server.resp.commands.connection;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.server.resp.ByteBufferUtils;
-import org.infinispan.server.resp.commands.PubSubResp3Command;
-import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.Resp3AuthHandler;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.SubscriberHandler;
+import org.infinispan.server.resp.commands.PubSubResp3Command;
+import org.infinispan.server.resp.commands.Resp3Command;
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @link https://redis.io/commands/reset/
@@ -27,7 +28,7 @@ public class RESET extends RespCommand implements Resp3Command, PubSubResp3Comma
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
-      ByteBufferUtils.stringToByteBuf("+RESET\r\n", handler.allocatorToUse());
+      ByteBufferUtils.stringToByteBuf("+RESET\r\n", handler.allocator());
       if (handler.respServer().getConfiguration().authentication().enabled()) {
          return CompletableFuture.completedFuture(new Resp3AuthHandler(handler.respServer()));
       }

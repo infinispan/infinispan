@@ -1,6 +1,11 @@
 package org.infinispan.server.resp.commands.string;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.infinispan.server.resp.ByteBufferUtils;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
@@ -9,11 +14,7 @@ import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletionStages;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.atomic.AtomicInteger;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @link https://redis.io/commands/mget/
@@ -30,7 +31,7 @@ public class MGET extends RespCommand implements Resp3Command {
                                                       List<byte[]> arguments) {
       int keysToRetrieve = arguments.size();
       if (keysToRetrieve == 0) {
-         ByteBufferUtils.stringToByteBuf("*0\r\n", handler.allocatorToUse());
+         ByteBufferUtils.stringToByteBuf("*0\r\n", handler.allocator());
          return handler.myStage();
       }
       List<byte[]> results = Collections.synchronizedList(Arrays.asList(

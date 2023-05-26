@@ -23,12 +23,12 @@ public interface Resp3Command {
          ex = ex.getCause();
       }
       if (ex instanceof ClassCastException) {
-         RespErrorUtil.wrongType(handler.allocatorToUse());
+         RespErrorUtil.wrongType(handler.allocator());
          return handler.myStage();
       }
 
       if (ex instanceof IndexOutOfBoundsException) {
-         RespErrorUtil.indexOutOfRange(handler.allocatorToUse());
+         RespErrorUtil.indexOutOfRange(handler.allocator());
          return handler.myStage();
       }
 

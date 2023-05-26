@@ -28,7 +28,7 @@ public class ECHO extends RespCommand implements Resp3Command {
                                                                 List<byte[]> arguments) {
       byte[] argument = arguments.get(0);
       ByteBuf bufferToWrite = ByteBufferUtils.
-            stringToByteBufWithExtra("$" + argument.length + CRLF, handler.allocatorToUse(), argument.length + 2);
+            stringToByteBufWithExtra("$" + argument.length + CRLF, handler.allocator(), argument.length + 2);
       bufferToWrite.writeBytes(argument);
       bufferToWrite.writeByte('\r').writeByte('\n');
       return handler.myStage();

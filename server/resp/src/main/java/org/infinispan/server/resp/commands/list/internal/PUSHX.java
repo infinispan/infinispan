@@ -1,6 +1,9 @@
 package org.infinispan.server.resp.commands.list.internal;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
@@ -9,9 +12,7 @@ import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.util.concurrent.CompletionStages;
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Abstract class for common code on PUSHX operations.
@@ -30,7 +31,7 @@ public abstract class PUSHX extends PUSH implements Resp3Command {
 
       if (arguments.size() < 2) {
          // ERROR
-         RespErrorUtil.wrongArgumentNumber(this, handler.allocatorToUse());
+         RespErrorUtil.wrongArgumentNumber(this, handler.allocator());
          return handler.myStage();
       }
 
