@@ -24,6 +24,7 @@ Keyword fields are not analyzed or tokenized during indexing.
 
 @Embedded:: Use this annotation to mark a field as an embedded object within the parent entity.
 The `NESTED` structure preserves the original object relationship structure while the `FLATTENED` structure makes the leaf fields multivalued of the parent entity.
+The default structure used by `@Embedded` is `NESTED`.
 
 Each of the annotations supports a set of attributes that you can use to further describe how the entity is indexed.
 
@@ -47,11 +48,11 @@ Each of the annotations supports a set of attributes that you can use to further
 |===
 
 [discrete]
-== Remote caches
+== Using {brandname} annotations
 
-You can provide {brandname} with indexing annotations for remote caches in two ways:
+You can provide {brandname} with indexing annotations in two ways:
 
-* Annotate your Java classes directly using `@Basic`, `@Keyword` or `@Text`. +
+* Annotate your Java classes or fields directly using the {brandname} annotations. +
 You then generate or update your Protobuf schema, `.proto` files, before uploading them to {brandname} Server.
 
 * Annotate Protobuf schema directly with `@Indexed` and `@Basic`, `@Keyword` or `@Text`. +
@@ -63,12 +64,3 @@ For example, the following schema uses the `@Text` annotation:
 ----
 include::protobuf/indexed_text.protobuf[]
 ----
-
-[discrete]
-== Embedded caches
-
-For embedded caches, you add indexing annotations to your Java classes according to how {brandname} stores your entries.
-
-Annotate values with `@Indexed` to add them to indexes.
-Use `@Basic`, `@Keyword` or `@Text` to annotate each field depending how you want {brandname} to index them.
-For embedded indexes use the `@Embedded` annotation and specify the entity structure.
