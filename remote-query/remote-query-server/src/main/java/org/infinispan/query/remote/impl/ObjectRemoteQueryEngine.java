@@ -23,10 +23,12 @@ class ObjectRemoteQueryEngine extends QueryEngine<Descriptor> {
       super(cache.getAdvancedCache(), isIndexed, matcherImplClass);
    }
 
-   Query<Object> makeQuery(String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults, boolean local) {
+   Query<Object> makeQuery(String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults,
+                           int hitCountAccuracy, boolean local) {
       Query<Object> query = queryFactory.create(queryString);
       query.startOffset(startOffset);
       query.maxResults(maxResults);
+      query.hitCountAccuracy(hitCountAccuracy);
       query.local(local);
       if (namedParameters != null) {
          query.setParameters(namedParameters);

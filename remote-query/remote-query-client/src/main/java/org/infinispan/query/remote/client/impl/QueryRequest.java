@@ -25,6 +25,7 @@ public final class QueryRequest implements JsonSerialization {
    public static final String QUERY_STRING_FIELD = "queryString";
    public static final String START_OFFSET_FIELD = "startOffset";
    public static final String MAX_RESULTS_FIELD = "maxResults";
+   public static final String HIT_COUNT_ACCURACY = "hitCountAccuracy";
    public static final String NAMED_PARAMETERS_FIELD = "namedParameters";
    public static final String LOCAL_FIELD = "local";
    private String queryString;
@@ -34,6 +35,8 @@ public final class QueryRequest implements JsonSerialization {
    private Long startOffset;
 
    private Integer maxResults;
+
+   private Integer hitCountAccuracy;
 
    private boolean local;
 
@@ -59,6 +62,14 @@ public final class QueryRequest implements JsonSerialization {
 
    public void setMaxResults(Integer maxResults) {
       this.maxResults = maxResults;
+   }
+
+   public Integer hitCountAccuracy() {
+      return hitCountAccuracy == null ? Integer.valueOf(-1) : hitCountAccuracy;
+   }
+
+   public void hitCountAccuracy(Integer hitCountAccuracy) {
+      this.hitCountAccuracy = hitCountAccuracy;
    }
 
    public List<NamedParameter> getNamedParameters() {
@@ -92,6 +103,7 @@ public final class QueryRequest implements JsonSerialization {
       String queryString = jsonRequest.at(QUERY_STRING_FIELD).asString();
       Json offsetValue = jsonRequest.at(START_OFFSET_FIELD);
       Json maxResults = jsonRequest.at(MAX_RESULTS_FIELD);
+      Json hitCountAccuracy = jsonRequest.at(HIT_COUNT_ACCURACY);
       Json named = jsonRequest.at(NAMED_PARAMETERS_FIELD);
       List<NamedParameter> params = named.isArray() ? named.asJsonList().stream()
             .map(NamedParameter::fromJson).collect(toList()) : Collections.emptyList();
@@ -100,6 +112,7 @@ public final class QueryRequest implements JsonSerialization {
       queryRequest.setQueryString(queryString);
       if (!offsetValue.isNull()) queryRequest.setStartOffset(offsetValue.asLong());
       if (!maxResults.isNull()) queryRequest.setMaxResults(maxResults.asInteger());
+      if (!hitCountAccuracy.isNull()) queryRequest.hitCountAccuracy(hitCountAccuracy.asInteger());
       if (!params.isEmpty()) queryRequest.setNamedParameters(params);
 
       return queryRequest;
@@ -111,6 +124,7 @@ public final class QueryRequest implements JsonSerialization {
             .set(QUERY_STRING_FIELD, queryString)
             .set(START_OFFSET_FIELD, startOffset)
             .set(MAX_RESULTS_FIELD, maxResults)
+            .set(HIT_COUNT_ACCURACY, hitCountAccuracy)
             .set(NAMED_PARAMETERS_FIELD, Json.make(getNamedParameters()))
             .set(LOCAL_FIELD, Json.factory().bool(local));
    }
@@ -123,6 +137,7 @@ public final class QueryRequest implements JsonSerialization {
          queryRequest.setQueryString(reader.readString(QUERY_STRING_FIELD));
          queryRequest.setStartOffset(reader.readLong(START_OFFSET_FIELD));
          queryRequest.setMaxResults(reader.readInt(MAX_RESULTS_FIELD));
+         queryRequest.hitCountAccuracy(reader.readInt(HIT_COUNT_ACCURACY));
          queryRequest.setNamedParameters(reader.readCollection(NAMED_PARAMETERS_FIELD, new ArrayList<>(), NamedParameter.class));
          Boolean localField = reader.readBoolean(LOCAL_FIELD);
          if (localField != null) queryRequest.setLocal(localField);
@@ -134,6 +149,7 @@ public final class QueryRequest implements JsonSerialization {
          writer.writeString(QUERY_STRING_FIELD, queryRequest.getQueryString());
          writer.writeLong(START_OFFSET_FIELD, queryRequest.getStartOffset());
          writer.writeInt(MAX_RESULTS_FIELD, queryRequest.getMaxResults());
+         writer.writeInt(HIT_COUNT_ACCURACY, queryRequest.hitCountAccuracy());
          writer.writeCollection(NAMED_PARAMETERS_FIELD, queryRequest.getNamedParameters(), NamedParameter.class);
          writer.writeBoolean(LOCAL_FIELD, queryRequest.isLocal());
       }

@@ -39,6 +39,8 @@ message QueryRequest {
     */
    optional bool local = 6;
 
+   optional int32 hitCountAccuracy = 7;
+
    message NamedParameter {
 
       /**
