@@ -2,6 +2,7 @@ package org.infinispan.query.dsl;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.util.CloseableIterator;
@@ -87,6 +88,21 @@ public interface Query<T> extends Iterable<T>, PaginationContext<Query<T>>, Para
    int getMaxResults();
 
    Query<T> maxResults(int maxResults);
+
+   /**
+    * @return current hitCountAccuracy if present
+    * @see #hitCountAccuracy(int)
+    */
+   Optional<Integer> hitCountAccuracy();
+
+   /**
+    * Limit the required accuracy of the hit count for the indexed queries to an upper-bound.
+    * Setting the hit-count-accuracy could improve the performance of queries targeting large data sets.
+    *
+    * @param hitCountAccuracy The value to apply
+    * @return <code>this</code>, for method chaining
+    */
+   Query<T> hitCountAccuracy(int hitCountAccuracy);
 
    /**
     * Returns the named parameters Map.
