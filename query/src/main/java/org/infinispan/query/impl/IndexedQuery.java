@@ -36,6 +36,15 @@ public interface IndexedQuery<E> {
     */
    IndexedQuery<E> maxResults(int maxResults);
 
+   /**
+    * Limit the required accuracy of the hit count for the indexed queries to an upper-bound.
+    * Setting the hit-count-accuracy could improve the performance of queries targeting large data sets.
+    *
+    * @param hitCountAccuracy The value to apply
+    * @return <code>this</code>, for method chaining
+    */
+   IndexedQuery<E> hitCountAccuracy(int hitCountAccuracy);
+
    CloseableIterator<E> iterator();
 
    /**

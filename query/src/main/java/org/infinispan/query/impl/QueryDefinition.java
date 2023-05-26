@@ -32,6 +32,7 @@ public final class QueryDefinition {
    private SearchQueryBuilder searchQueryBuilder;
    private int maxResults;
    private int firstResult = 0;
+   private int hitCountAccuracy = -1;
    private long timeout = -1;
 
    private final Map<String, Object> namedParameters = new HashMap<>();
@@ -98,6 +99,9 @@ public final class QueryDefinition {
       if (searchQueryBuilder == null) {
          QueryEngine<?> queryEngine = getQueryEngine(cache);
          searchQueryBuilder = queryEngine.buildSearchQuery(queryString, namedParameters);
+         if (hitCountAccuracy != -1) {
+            searchQueryBuilder.hitCountAccuracy(hitCountAccuracy);
+         }
          if (timeout > 0) {
             searchQueryBuilder.failAfter(timeout, TimeUnit.NANOSECONDS);
          }
@@ -121,6 +125,13 @@ public final class QueryDefinition {
 
    public void setMaxResults(int maxResults) {
       this.maxResults = maxResults;
+   }
+
+   public void setHitCountAccuracy(int hitCountAccuracy) {
+      this.hitCountAccuracy = hitCountAccuracy;
+      if (this.hitCountAccuracy != -1 && searchQueryBuilder != null) {
+         searchQueryBuilder.hitCountAccuracy(hitCountAccuracy);
+      }
    }
 
    public void setNamedParameters(Map<String, Object> params) {
@@ -173,6 +184,7 @@ public final class QueryDefinition {
          output.writeObject(queryDefinition.queryEngineProvider);
          output.writeInt(queryDefinition.firstResult);
          output.writeInt(queryDefinition.maxResults);
+         output.writeInt(queryDefinition.hitCountAccuracy);
          output.writeLong(queryDefinition.timeout);
          Map<String, Object> namedParameters = queryDefinition.namedParameters;
          int paramSize = namedParameters.size();
@@ -194,9 +206,11 @@ public final class QueryDefinition {
 
          int firstResult = input.readInt();
          int maxResults = input.readInt();
+         int hitCountAccuracy = input.readInt();
 
          // maxResults becomes the originalMaxResults of the distributed cloned queries
          QueryDefinition queryDefinition = new QueryDefinition(queryString, statementType, engineProvider, maxResults);
+         queryDefinition.setHitCountAccuracy(hitCountAccuracy);
          queryDefinition.setFirstResult(firstResult);
 
          queryDefinition.timeout = input.readLong();

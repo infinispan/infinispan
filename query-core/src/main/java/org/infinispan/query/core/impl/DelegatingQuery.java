@@ -92,6 +92,9 @@ final class DelegatingQuery<TypeMetadata, T> extends BaseQuery<T> {
          if (timeout > 0) {
             query.timeout(timeout, TimeUnit.NANOSECONDS);
          }
+         if (hitCountAccuracy.isPresent()) {
+            query.hitCountAccuracy(hitCountAccuracy.get());
+         }
       }
       return query;
    }
