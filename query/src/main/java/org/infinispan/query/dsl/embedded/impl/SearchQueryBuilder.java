@@ -32,11 +32,11 @@ public final class SearchQueryBuilder {
    private final SearchProjectionInfo projectionInfo;
    private final SearchPredicate predicate;
    private final SearchSort sort;
-   private final int hitCountAccuracy;
 
    // target segment collection may mutate
    private Collection<String> routingKeys = Collections.emptySet();
 
+   private int hitCountAccuracy;
    private Long timeout;
    private TimeUnit timeUnit;
 
@@ -106,6 +106,10 @@ public final class SearchQueryBuilder {
       queryOptionsStep = queryOptionsStep.totalHitCountThreshold(hitCountAccuracy);
 
       return queryOptionsStep.toQuery();
+   }
+
+   public void hitCountAccuracy(int hitCountAccuracy) {
+      this.hitCountAccuracy = hitCountAccuracy;
    }
 
    public void failAfter(long timeout, TimeUnit timeUnit) {

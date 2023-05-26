@@ -17,7 +17,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "query.maxresult.InfinispanDefaultMaxResultTest")
+@Test(groups = "functional", testName = "query.maxresult.EmbeddedDefaultMaxResultTest")
 @TestForIssue(jiraKey = "ISPN-14194")
 public class EmbeddedDefaultMaxResultTest extends SingleCacheManagerTest {
 
