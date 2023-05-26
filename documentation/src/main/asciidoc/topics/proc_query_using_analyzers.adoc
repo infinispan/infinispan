@@ -5,8 +5,8 @@ You specify analyzer definitions with the `@Text` annotation in your Java classe
 
 .Procedure
 
-. Include the `Analyze.YES` attribute to indicate that the property is analyzed.
-. Specify the analyzer definition with the `@Analyzer` annotation.
+. Annotate the property with the `@Text` annotation to indicate that its value is analyzed.
+. Use the `analyzer` attribute to specify the desired analyzer that you want to use for indexing and searching.
 
 .Protobuf schema
 [source,protobuf,options="nowrap",role="primary"]
