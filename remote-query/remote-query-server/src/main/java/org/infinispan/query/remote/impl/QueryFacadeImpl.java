@@ -39,10 +39,11 @@ public final class QueryFacadeImpl implements QueryFacade {
 
          int startOffset = request.getStartOffset().intValue();
          int maxResults = request.getMaxResults();
+         int hitCountAccuracy = request.hitCountAccuracy();
          boolean local = request.isLocal();
 
          return remoteQueryManager.executeQuery(request.getQueryString(),
-               request.getNamedParametersMap(), startOffset, maxResults, cache, requestMediaType, local);
+               request.getNamedParametersMap(), startOffset, maxResults, hitCountAccuracy, cache, requestMediaType, local);
       } catch (Exception e) {
          if (log.isDebugEnabled()) {
             log.debugf(e, "Error executing remote query : %s", e.getMessage());

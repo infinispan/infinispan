@@ -50,7 +50,7 @@ abstract class BaseRemoteQueryManager implements RemoteQueryManager {
 
    @Override
    public byte[] executeQuery(String queryString, Map<String, Object> namedParametersMap, Integer offset, Integer maxResults,
-                              AdvancedCache<?, ?> cache, MediaType outputFormat, boolean isLocal) {
+                              Integer hitCountAccuracy, AdvancedCache<?, ?> cache, MediaType outputFormat, boolean isLocal) {
       if (unknownMediaType) {
          log.warnNoMediaType(cache.getName());
       } else if (!cacheQueryable) {
@@ -58,7 +58,8 @@ abstract class BaseRemoteQueryManager implements RemoteQueryManager {
       }
 
       QuerySerializer<?> querySerializer = querySerializers.getSerializer(outputFormat);
-      Query<Object> query = getQueryEngine(cache).makeQuery(queryString, namedParametersMap, offset, maxResults, isLocal);
+      Query<Object> query = getQueryEngine(cache).makeQuery(queryString, namedParametersMap, offset, maxResults,
+            hitCountAccuracy, isLocal);
       QueryResult<Object> queryResult = query.execute();
       String[] projection = query.getProjection();
       RemoteQueryResult remoteQueryResult = new RemoteQueryResult(projection, queryResult.hitCount().orElse(-1), queryResult.list());

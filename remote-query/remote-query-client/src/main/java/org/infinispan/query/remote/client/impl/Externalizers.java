@@ -27,6 +27,7 @@ public final class Externalizers {
          output.writeUTF(queryRequest.getQueryString());
          output.writeLong(queryRequest.getStartOffset() != null ? queryRequest.getStartOffset() : -1);
          output.writeInt(queryRequest.getMaxResults() != null ? queryRequest.getMaxResults() : -1);
+         output.writeInt(queryRequest.hitCountAccuracy() != null ? queryRequest.hitCountAccuracy() : -1);
          output.writeObject(queryRequest.getNamedParameters());
          output.writeBoolean(queryRequest.isLocal());
       }
@@ -40,6 +41,8 @@ public final class Externalizers {
          queryRequest.setStartOffset(startOffset != -1 ? startOffset : null);
          int maxResults = input.readInt();
          queryRequest.setMaxResults(maxResults != -1 ? maxResults : null);
+         int hitCountAccuracy = input.readInt();
+         queryRequest.hitCountAccuracy(hitCountAccuracy != -1 ? hitCountAccuracy : null);
          queryRequest.setNamedParameters((List<QueryRequest.NamedParameter>) input.readObject());
          queryRequest.setLocal(input.readBoolean());
          return queryRequest;

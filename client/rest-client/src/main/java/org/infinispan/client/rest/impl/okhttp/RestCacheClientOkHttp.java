@@ -392,6 +392,13 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> query(String query, int maxResults, int offset, int hitCountAccuracy) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(String.format("%s?action=search&query=%s&max_results=%d&offset=%d&hit_count_accuracy=%d", cacheUrl, sanitize(query), maxResults, offset, hitCountAccuracy)).get();
+      return client.execute(builder);
+   }
+
+   @Override
    public CompletionStage<RestResponse> xsiteBackups() {
       Request.Builder builder = new Request.Builder();
       builder.url(String.format("%s/x-site/backups/", cacheUrl));
