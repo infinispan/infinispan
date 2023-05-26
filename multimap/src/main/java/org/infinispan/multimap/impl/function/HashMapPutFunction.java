@@ -13,9 +13,9 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.functional.EntryView;
-import org.infinispan.multimap.internal.MultimapDataConverter;
 import org.infinispan.multimap.impl.ExternalizerIds;
 import org.infinispan.multimap.impl.HashMapBucket;
+import org.infinispan.multimap.internal.MultimapDataConverter;
 
 /**
  * Serializable function use by {@link org.infinispan.multimap.impl.EmbeddedMultimapPairCache#set(Object, Map.Entry[])}.
@@ -26,7 +26,7 @@ import org.infinispan.multimap.impl.HashMapBucket;
  * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
-public class HashMapPutFunction<K, HK, HV> extends HashMapBucketBaseFunction<K, HK, HV, Map<HK, HV>> {
+public class HashMapPutFunction<K, HK, HV> extends HashMapBucketBaseFunction<K, HK, HV, Integer> {
    public static final AdvancedExternalizer<HashMapPutFunction> EXTERNALIZER = new Externalizer();
 
    private final Collection<Map.Entry<HK, HV>> entries;
@@ -37,19 +37,18 @@ public class HashMapPutFunction<K, HK, HV> extends HashMapBucketBaseFunction<K, 
    }
 
    @Override
-   public Map<HK, HV> apply(EntryView.ReadWriteEntryView<K, HashMapBucket<HK, HV>> view) {
+   public Integer apply(EntryView.ReadWriteEntryView<K, HashMapBucket<HK, HV>> view) {
       Map<HK, HV> values = entries.stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
       Optional<HashMapBucket<HK, HV>> existing = view.peek();
 
-      Map<HK, HV> res;
+      int res;
       HashMapBucket<HK, HV> bucket;
       if (existing.isPresent()) {
-         bucket = existing.get()
-               .withConverter(converter);
-         res = bucket.putAll(values);
+         bucket = existing.get();
+         res = bucket.putAll(values, converter);
       } else {
-         bucket = HashMapBucket.create(converter, values);
-         res = Collections.emptyMap();
+         bucket = HashMapBucket.create(values, converter);
+         res = values.size();
       }
       view.set(bucket);
 

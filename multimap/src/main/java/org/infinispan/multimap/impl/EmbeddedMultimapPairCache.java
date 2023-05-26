@@ -13,8 +13,8 @@ import org.infinispan.Cache;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
-import org.infinispan.multimap.internal.MultimapDataConverter;
 import org.infinispan.multimap.impl.function.HashMapPutFunction;
+import org.infinispan.multimap.internal.MultimapDataConverter;
 
 /**
  * Multimap which holds a collection of key-values pairs.
@@ -42,9 +42,7 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
       this.cache = cache.getAdvancedCache();
       FunctionalMapImpl<K, HashMapBucket<HK, HV>> functionalMap = FunctionalMapImpl.create(this.cache);
       this.readWriteMap = ReadWriteMapImpl.create(functionalMap);
-
-      Cache c = cache;
-      this.converter = new MultimapDataConverter<>(c);
+      this.converter = new MultimapDataConverter<>(cache);
    }
 
    /**
@@ -54,11 +52,10 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
     *
     * @param key: Cache key to store the values.
     * @param entries: Key-value pairs to store.
-    * @return {@link CompletionStage} containing a {@link Map} with the previous key-value pairs.
+    * @return {@link CompletionStage} with the number of created entries.
     */
    @SafeVarargs
-   public final CompletionStage<Map<HK, HV>> set(K key,Map.Entry<HK, HV>... entries) {
-      // TODO: flag to ignore return.
+   public final CompletionStage<Integer> set(K key, Map.Entry<HK, HV>... entries) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       List<Map.Entry<HK, HV>> values = new ArrayList<>(Arrays.asList(entries));
       return readWriteMap.eval(key, new HashMapPutFunction<>(converter, values));
@@ -80,7 +77,7 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
                }
 
                HashMapBucket<HK, HV> bucket = entry.getValue();
-               return Map.copyOf(bucket.values());
+               return bucket.values(converter);
             });
    }
 }

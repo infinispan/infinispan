@@ -40,13 +40,17 @@ public class DistributedMultimapPairCacheTest extends BaseDistFunctionalTest<Str
 
    public void testSetGetOperations() {
       EmbeddedMultimapPairCache<String, String, String> multimap = getMultimapMember();
-      await(multimap.set("person1", Map.entry("name", "Oihana")));
-      await(multimap.set("person1", Map.entry("age", "1"), Map.entry("birthday", "2023-05-26")));
+      assertThat(await(multimap.set("person1", Map.entry("name", "Oihana"))))
+            .isEqualTo(1);
+      assertThat(await(multimap.set("person1", Map.entry("age", "1"), Map.entry("birthday", "2023-05-26"))))
+            .isEqualTo(2);
+
+      assertThat(await(multimap.set("person1", Map.entry("age", "0")))).isZero();
 
       Map<String, String> person1 = await(multimap.get("person1"));
       assertThat(person1)
             .containsEntry("name", "Oihana")
-            .containsEntry("age", "1")
+            .containsEntry("age", "0")
             .containsEntry("birthday", "2023-05-26")
             .hasSize(3);
    }
