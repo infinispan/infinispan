@@ -84,6 +84,12 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
       return this;
    }
 
+   @Override
+   public IndexedQuery<E> hitCountAccuracy(int hitCountAccuracy) {
+      queryDefinition.setHitCountAccuracy(hitCountAccuracy);
+      return this;
+   }
+
    private void recordQuery(long nanos) {
       queryStatistics.localIndexedQueryExecuted(queryDefinition.getQueryString(), nanos);
    }

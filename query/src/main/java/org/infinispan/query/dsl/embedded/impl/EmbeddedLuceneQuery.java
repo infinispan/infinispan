@@ -64,6 +64,9 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
       if (indexedQuery == null) {
          validateNamedParameters();
          indexedQuery = queryEngine.buildLuceneQuery(parsingResult, namedParameters, startOffset, maxResults, isLocal());
+         if (hitCountAccuracy.isPresent()) {
+            indexedQuery = indexedQuery.hitCountAccuracy(hitCountAccuracy.get());
+         }
          if (timeout > 0) {
             indexedQuery.timeout(timeout, TimeUnit.NANOSECONDS);
          }
