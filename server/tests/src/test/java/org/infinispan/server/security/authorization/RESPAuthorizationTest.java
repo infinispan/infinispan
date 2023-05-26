@@ -3,9 +3,11 @@ package org.infinispan.server.security.authorization;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.Map;
 import java.util.List;
 import java.util.function.Consumer;
 
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.infinispan.server.test.api.RespTestClientDriver;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.category.Security;
@@ -104,6 +106,21 @@ public class RESPAuthorizationTest extends BaseTest {
                   .size().isEqualTo(2);
          }
       }
+   }
+
+   @Test
+   public void testHMSETCommand() {
+      RedisCommands<String, String> redis = createConnection(TestUser.ADMIN);
+
+      Map<String, String> map = Map.of("key1", "value1", "key2", "value2", "key3", "value3");
+      AssertionsForClassTypes.assertThat(redis.hmset("HMSET", map)).isEqualTo("OK");
+
+      // TODO: check when get method added.
+
+      AssertionsForClassTypes.assertThat(redis.set("plain", "string")).isEqualTo("OK");
+      AssertionsForClassTypes.assertThatThrownBy(() -> redis.hmset("plain", Map.of("k1", "v1")))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERRWRONGTYPE");
    }
 
    private void assertAnonymous(RedisClient client, Consumer<RedisCommands<String, String>> consumer) {

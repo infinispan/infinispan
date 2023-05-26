@@ -8,6 +8,8 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
       includeClasses = {
             Bucket.class,
             ListBucket.class,
+            HashMapBucket.class,
+            HashMapBucket.BucketEntry.class,
       },
       schemaFileName = "persistence.multimap.proto",
       schemaFilePath = "proto/generated",

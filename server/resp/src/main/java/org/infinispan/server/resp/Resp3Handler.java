@@ -8,9 +8,11 @@ import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.context.Flag;
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
+import org.infinispan.multimap.impl.EmbeddedMultimapPairCache;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.resp.commands.Resp3Command;
@@ -22,6 +24,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class Resp3Handler extends Resp3AuthHandler {
    protected AdvancedCache<byte[], byte[]> ignorePreviousValueCache;
    protected EmbeddedMultimapListCache<byte[], byte[]> listMultimap;
+   protected EmbeddedMultimapPairCache<byte[], byte[], byte[]> mapMultimap;
 
    private final MediaType valueMediaType;
 
@@ -34,11 +37,17 @@ public class Resp3Handler extends Resp3AuthHandler {
    public void setCache(AdvancedCache<byte[], byte[]> cache) {
       super.setCache(cache);
       ignorePreviousValueCache = cache.withFlags(Flag.SKIP_CACHE_LOAD, Flag.IGNORE_RETURN_VALUES);
-      listMultimap = new EmbeddedMultimapListCache<>(cache.withMediaType(MediaType.APPLICATION_OCTET_STREAM, valueMediaType));
+      Cache toMultimap = cache.withMediaType(MediaType.APPLICATION_OCTET_STREAM, valueMediaType);
+      listMultimap = new EmbeddedMultimapListCache<>(toMultimap);
+      mapMultimap = new EmbeddedMultimapPairCache<>(toMultimap);
    }
 
    public EmbeddedMultimapListCache<byte[], byte[]> getListMultimap() {
       return listMultimap;
+   }
+
+   public EmbeddedMultimapPairCache<byte[], byte[], byte[]> getHashMapMultimap() {
+      return mapMultimap;
    }
 
    @Override
