@@ -25,6 +25,34 @@
                 "is_repeated": true
               }
             ]
+          },
+          {
+            "name": "HashMapBucket",
+            "fields": [
+              {
+                "id": 1,
+                "name": "wrappedValues",
+                "type": "HashMapBucket.BucketEntry",
+                "is_repeated": true
+              }
+            ],
+            "messages": [
+              {
+                "name": "BucketEntry",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "wrappedKey",
+                    "type": "org.infinispan.persistence.core.MarshallableUserObject"
+                  },
+                  {
+                    "id": 2,
+                    "name": "wrappedValue",
+                    "type": "org.infinispan.persistence.core.MarshallableUserObject"
+                  }
+                ]
+              }
+            ]
           }
         ],
         "imports": [
