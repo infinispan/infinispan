@@ -84,13 +84,11 @@ public class InfinispanCacheMeterBinder extends CacheMeterBinder {
             .tags(getTagsWithCacheName())
             .description("Number of entries currently in the cache, excluding passivated entries")
             .register(registry);
-
-      if (cache.getCacheConfiguration().memory().evictionStrategy().isEnabled()) {
-         Gauge.builder("cache.memory.used", cache, cache -> cache.getAdvancedCache().getStats().getDataMemoryUsed())
-               .tags(getTagsWithCacheName())
-               .description("Provides how much memory the current eviction algorithm estimates is in use for data")
-               .register(registry);
-      }
+      
+      Gauge.builder("cache.memory.used", cache, cache -> cache.getAdvancedCache().getStats().getDataMemoryUsed())
+            .tags(getTagsWithCacheName())
+            .description("Provides how much memory the current eviction algorithm estimates is in use for data")
+            .register(registry);
 
       Gauge.builder("cache.memory.offHeap", cache, cache -> cache.getAdvancedCache().getStats().getOffHeapMemoryUsed())
             .tags(getTagsWithCacheName())
