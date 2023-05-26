@@ -57,7 +57,7 @@ include::protobuf/library.proto[]
 include::xml/indexing_entities_proto.xml[]
 ----
 
-.`ConfigurationBuilder`
+.ConfigurationBuilder
 [source,java,options="nowrap",subs=attributes+,role="secondary"]
 ----
 include::code_examples/IndexBasicConfiguration.java[]

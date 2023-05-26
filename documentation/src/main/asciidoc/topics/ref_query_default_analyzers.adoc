@@ -35,6 +35,9 @@
 
 |===
 
-These analyzer definitions are based on Apache Lucene and are provided "as-is".
-For more information about tokenizers, filters, and CharFilters, see the
-appropriate Lucene documentation.
+These analyzer definitions are based on Apache Lucene.
+For more information about tokenizers, filters, and CharFilters, see the Apache Lucene documentation.
+
+[role="_additional-resources"]
+.Additional resources
+* link:https://lucene.apache.org/core/9_6_0/[Apache Lucene Documentation]
