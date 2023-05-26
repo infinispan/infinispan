@@ -343,6 +343,16 @@ public interface RestCacheClient {
    CompletionStage<RestResponse> query(String query, int maxResults, int offset);
 
    /**
+    * Executes an Ickle-query
+    *
+    * @param query            the ickle query
+    * @param maxResults       the maximum number of results to return
+    * @param offset           the offset within the result from which to return results
+    * @param hitCountAccuracy the limit to the hit count accuracy to return sooner
+    */
+   CompletionStage<RestResponse> query(String query, int maxResults, int offset, int hitCountAccuracy);
+
+   /**
     * @return the status of all backup sites
     */
    CompletionStage<RestResponse> xsiteBackups();

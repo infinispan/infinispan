@@ -43,12 +43,17 @@ public final class QueryOperation extends RetryOnFailureOperation<Object> {
    protected void executeOperation(Channel channel) {
       QueryRequest queryRequest = new QueryRequest();
       queryRequest.setQueryString(remoteQuery.getQueryString());
+
       if (remoteQuery.getStartOffset() > 0) {
          queryRequest.setStartOffset(remoteQuery.getStartOffset());
       }
       if (remoteQuery.getMaxResults() >= 0) {
          queryRequest.setMaxResults(remoteQuery.getMaxResults());
       }
+      if (remoteQuery.hitCountAccuracy().isPresent()) {
+         queryRequest.hitCountAccuracy(remoteQuery.hitCountAccuracy().get());
+      }
+
       queryRequest.setNamedParameters(getNamedParameters());
 
       queryRequest.setLocal(remoteQuery.isLocal());

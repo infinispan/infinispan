@@ -1,5 +1,6 @@
 package org.infinispan.query.remote.json;
 
+import static org.infinispan.query.remote.json.JSONConstants.HIT_COUNT_ACCURACY;
 import static org.infinispan.query.remote.json.JSONConstants.MAX_RESULTS;
 import static org.infinispan.query.remote.json.JSONConstants.OFFSET;
 import static org.infinispan.query.remote.json.JSONConstants.QUERY_STRING;
@@ -21,18 +22,13 @@ public class JsonQueryRequest implements JsonSerialization {
    private final Integer startOffset;
    private final Integer maxResults;
 
-   public JsonQueryRequest(String query, Integer startOffset, Integer maxResults) {
+   private Integer hitCountAccuracy;
+
+   public JsonQueryRequest(String query, Integer startOffset, Integer maxResults, Integer hitCountAccuracy) {
       this.query = query;
       this.startOffset = startOffset == null ? DEFAULT_OFFSET : startOffset;
       this.maxResults = maxResults == null ? DEFAULT_MAX_RESULTS : maxResults;
-   }
-
-   private JsonQueryRequest(String query) {
-      this(query, DEFAULT_OFFSET, DEFAULT_MAX_RESULTS);
-   }
-
-   private JsonQueryRequest() {
-      this("");
+      this.hitCountAccuracy = hitCountAccuracy;
    }
 
    public String getQuery() {
@@ -47,6 +43,16 @@ public class JsonQueryRequest implements JsonSerialization {
       return maxResults;
    }
 
+   public Integer getHitCountAccuracy() {
+      return hitCountAccuracy;
+   }
+
+   public void setDefaultHitCountAccuracy(int defaultHitCountAccuracy) {
+      if (hitCountAccuracy == null) {
+         hitCountAccuracy = defaultHitCountAccuracy;
+      }
+   }
+
    @Override
    public Json toJson() {
       throw new UnsupportedOperationException();
@@ -57,10 +63,12 @@ public class JsonQueryRequest implements JsonSerialization {
       Json queryValue = properties.get(QUERY_STRING);
       Json offsetValue = properties.get(OFFSET);
       Json maxResultsValue = properties.get(MAX_RESULTS);
+      Json hitCountAccuracyValue = properties.get(HIT_COUNT_ACCURACY);
 
       String query = queryValue != null ? queryValue.asString() : null;
       Integer offset = offsetValue != null ? offsetValue.asInteger() : null;
       Integer maxResults = maxResultsValue != null ? maxResultsValue.asInteger() : null;
-      return new JsonQueryRequest(query, offset, maxResults);
+      Integer hitCountAccuracy = hitCountAccuracyValue != null ? hitCountAccuracyValue.asInteger() : null;
+      return new JsonQueryRequest(query, offset, maxResults, hitCountAccuracy);
    }
 }

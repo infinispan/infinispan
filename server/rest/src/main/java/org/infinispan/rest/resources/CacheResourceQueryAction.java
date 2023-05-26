@@ -1,6 +1,7 @@
 package org.infinispan.rest.resources;
 
 import static java.util.Collections.emptyMap;
+import static org.infinispan.query.remote.json.JSONConstants.HIT_COUNT_ACCURACY;
 import static org.infinispan.query.remote.json.JSONConstants.MAX_RESULTS;
 import static org.infinispan.query.remote.json.JSONConstants.OFFSET;
 import static org.infinispan.query.remote.json.JSONConstants.QUERY_STRING;
@@ -15,6 +16,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.configuration.cache.QueryConfiguration;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.query.remote.impl.RemoteQueryManager;
 import org.infinispan.query.remote.json.JsonQueryErrorResult;
@@ -63,6 +65,9 @@ class CacheResourceQueryAction {
       boolean isLocal = Boolean.parseBoolean(request.getParameter("local"));
       MediaType keyContentType = request.keyContentType();
       AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, keyContentType, MediaType.APPLICATION_JSON, request);
+
+      QueryConfiguration queryConfiguration = cache.getCacheConfiguration().query();
+      query.setDefaultHitCountAccuracy(queryConfiguration.hitCountAccuracy());
       String queryString = query.getQuery();
 
       RemoteQueryManager remoteQueryManager = SecurityActions.getCacheComponentRegistry(cache).getComponent(RemoteQueryManager.class);
@@ -70,7 +75,7 @@ class CacheResourceQueryAction {
       return CompletableFuture.supplyAsync(() -> {
          try {
             byte[] queryResultBytes = remoteQueryManager.executeQuery(queryString, emptyMap(), finalQuery.getStartOffset(),
-                  finalQuery.getMaxResults(), cache, MediaType.APPLICATION_JSON, isLocal);
+                  finalQuery.getMaxResults(), finalQuery.getHitCountAccuracy(), cache, MediaType.APPLICATION_JSON, isLocal);
             responseBuilder.entity(queryResultBytes);
             return responseBuilder.build();
          } catch (IllegalArgumentException | ParsingException | IllegalStateException | CacheException e) {
@@ -83,9 +88,12 @@ class CacheResourceQueryAction {
       String queryString = getParameterValue(request, QUERY_STRING);
       String strOffset = getParameterValue(request, OFFSET);
       String strMaxResults = getParameterValue(request, MAX_RESULTS);
+      String strHitCountAccuracy = getParameterValue(request, HIT_COUNT_ACCURACY);
       Integer offset = strOffset != null ? Integer.valueOf(strOffset) : null;
       Integer maxResults = strMaxResults != null ? Integer.valueOf(strMaxResults) : null;
-      return new JsonQueryRequest(queryString, offset, maxResults);
+      Integer hitCountAccuracy = strHitCountAccuracy != null ? Integer.valueOf(strHitCountAccuracy) : null;
+
+      return new JsonQueryRequest(queryString, offset, maxResults, hitCountAccuracy);
    }
 
    private JsonQueryRequest getQueryFromJSON(RestRequest request) throws IOException {
