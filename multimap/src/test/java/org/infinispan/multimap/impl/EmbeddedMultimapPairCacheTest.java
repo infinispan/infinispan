@@ -26,12 +26,17 @@ public class EmbeddedMultimapPairCacheTest extends SingleCacheManagerTest {
    }
 
    public void testSetGetOperations() {
-      await(embeddedPairCache.set("person1", Map.entry("name", "Oihana")));
-      await(embeddedPairCache.set("person1", Map.entry("age", "1"), Map.entry("birthday", "2023-05-26")));
+      assertThat(await(embeddedPairCache.set("person1", Map.entry("name", "Oihana"))))
+            .isEqualTo(1);
+      assertThat(await(embeddedPairCache.set("person1", Map.entry("age", "1"), Map.entry("birthday", "2023-05-26"))))
+            .isEqualTo(2);
+
+      assertThat(await(embeddedPairCache.set("person1", Map.entry("name", "Ramon"))))
+            .isEqualTo(0);
 
       Map<String, String> person1 = await(embeddedPairCache.get("person1"));
       assertThat(person1)
-            .containsEntry("name", "Oihana")
+            .containsEntry("name", "Ramon")
             .containsEntry("age", "1")
             .containsEntry("birthday", "2023-05-26")
             .hasSize(3);

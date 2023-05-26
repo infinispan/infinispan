@@ -41,19 +41,23 @@ public class HMSET extends RespCommand implements Resp3Command {
          return handler.myStage();
       }
 
-      byte[] key = arguments.get(0);
-      EmbeddedMultimapPairCache<byte[], byte[], byte[]> hashMap = handler.getHashMapMultimap();
-      Map.Entry<byte[], byte[]>[] entries = new Map.Entry[(arguments.size() - 1) / 2];
-      for (int i = 1; i < arguments.size(); i++) {
-         entries[i / 2] = Map.entry(arguments.get(i), arguments.get(++i));
-      }
-
-      return CompletionStages.handleAndCompose(hashMap.set(key, entries), (ignore, t) -> {
+      return CompletionStages.handleAndCompose(setEntries(handler, arguments), (ignore, t) -> {
          if (t != null) {
             return handleException(handler, t);
          }
 
          return handler.stageToReturn(CompletableFutures.completedNull(), ctx, Consumers.OK_BICONSUMER);
       });
+   }
+
+   protected CompletionStage<Integer> setEntries(Resp3Handler handler, List<byte[]> arguments) {
+      byte[] key = arguments.get(0);
+      EmbeddedMultimapPairCache<byte[], byte[], byte[]> hashMap = handler.getHashMapMultimap();
+      Map.Entry<byte[], byte[]>[] entries = new Map.Entry[(arguments.size() - 1) >> 1];
+      for (int i = 1; i < arguments.size(); i++) {
+         entries[i / 2] = Map.entry(arguments.get(i), arguments.get(++i));
+      }
+
+      return hashMap.set(key, entries);
    }
 }

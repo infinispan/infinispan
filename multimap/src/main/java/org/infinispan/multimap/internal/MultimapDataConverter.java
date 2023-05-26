@@ -35,9 +35,9 @@ public class MultimapDataConverter<K, V> implements InjectableComponent {
    private final DataConversion keyConversion;
    private final DataConversion valueConversion;
 
-   public MultimapDataConverter(Cache<K, V> cache) {
+   public MultimapDataConverter(Cache<?, ?> cache) {
       if (cache instanceof EncoderCache) {
-         EncoderCache<K, V> encoderCache = (EncoderCache<K, V>) cache;
+         EncoderCache<?, ?> encoderCache = (EncoderCache<?, ?>) cache;
          keyConversion = encoderCache.getKeyDataConversion();
          valueConversion = encoderCache.getValueDataConversion();
       } else {

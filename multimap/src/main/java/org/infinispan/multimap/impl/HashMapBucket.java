@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
@@ -20,32 +19,26 @@ public class HashMapBucket<K, V> {
 
    final Map<Object, Object> values;
 
-   // We don't transfer the converter in the proto message.
-   private MultimapDataConverter<K, V> converter = null;
-
    public HashMapBucket() {
       this.values = Collections.emptyMap();
    }
 
-   public HashMapBucket(MultimapDataConverter<K, V> converter, K key, V value) {
+   public HashMapBucket(K key, V value) {
       this.values = new HashMap<>();
       values.put(key, value);
-      this.converter = converter;
    }
 
-   private HashMapBucket(MultimapDataConverter<K, V> converter, Map<K, V> values) {
-      this.converter = converter;
-      this.values = toStore(values);
+   private HashMapBucket(Map<K, V> values, MultimapDataConverter<K, V> converter) {
+      this.values = toStore(values, converter);
    }
 
    @ProtoFactory
-   HashMapBucket(Collection<BucketEntry<Object, Object>> wrappedValues) {
-      this.values = wrappedValues.stream().collect(Collectors.toMap(Function.identity(), Function.identity()));
-      this.converter = null;
+   HashMapBucket(Collection<BucketEntry<K, V>> wrappedValues) {
+      this.values = wrappedValues.stream().collect(Collectors.toMap(BucketEntry::getKey, BucketEntry::getValue));
    }
 
-   public static <K, V> HashMapBucket<K, V> create(MultimapDataConverter<K, V> converter, Map<K, V> values) {
-      return new HashMapBucket<>(converter, values);
+   public static <K, V> HashMapBucket<K, V> create(Map<K, V> values, MultimapDataConverter<K, V> converter) {
+      return new HashMapBucket<>(values, converter);
    }
 
    @ProtoField(number = 1, collectionImplementation = ArrayList.class)
@@ -53,32 +46,20 @@ public class HashMapBucket<K, V> {
       return values.entrySet().stream().map(BucketEntry::new).collect(Collectors.toList());
    }
 
-   public Map<K, V> putAll(Map<K, V> map) {
-      Map<K, V> res = new HashMap<>();
+   public int putAll(Map<K, V> map, MultimapDataConverter<K, V> converter) {
+      int res = 0;
       for (Map.Entry<K, V> entry : map.entrySet()) {
          Object prev = values.put(converter.convertKeyToStore(entry.getKey()), converter.convertValueToStore(entry.getValue()));
-         // TODO if return ignored, we can avoid converting.
-         if (prev != null) {
-            res.put(entry.getKey(), converter.convertValueFromStore(prev));
-         }
+         if (prev == null) res++;
       }
       return res;
    }
 
-   public Map<K, V> values() {
-      return fromStore();
+   public Map<K, V> values(MultimapDataConverter<K, V> converter) {
+      return fromStore(converter);
    }
 
-   public HashMapBucket<K, V> withConverter(MultimapDataConverter<K, V> converter) {
-      this.converter = converter;
-      return this;
-   }
-
-   private Map<Object, Object> toStore(Map<K, V> raw) {
-      if (converter == null) {
-         return (Map) raw;
-      }
-
+   private Map<Object, Object> toStore(Map<K, V> raw, MultimapDataConverter<K, V> converter) {
       Map<Object, Object> converted = new HashMap<>();
       for (Map.Entry<K, V> entry : raw.entrySet()) {
          converted.put(converter.convertKeyToStore(entry.getKey()), converter.convertValueToStore(entry.getValue()));
@@ -86,11 +67,7 @@ public class HashMapBucket<K, V> {
       return converted;
    }
 
-   private Map<K, V> fromStore() {
-      if (converter == null) {
-         return (Map) values;
-      }
-
+   private Map<K, V> fromStore(MultimapDataConverter<K, V> converter) {
       Map<K, V> converted = new HashMap<>();
       for (Map.Entry<Object, Object> entry : values.entrySet()) {
          converted.put(converter.convertKeyFromStore(entry.getKey()), converter.convertValueFromStore(entry.getValue()));
@@ -122,9 +99,17 @@ public class HashMapBucket<K, V> {
          return new MarshallableUserObject<>(key);
       }
 
+      public K getKey() {
+         return key;
+      }
+
       @ProtoField(number = 2)
       MarshallableUserObject<V> wrappedValue() {
          return new MarshallableUserObject<>(value);
+      }
+
+      public V getValue() {
+         return value;
       }
    }
 }
