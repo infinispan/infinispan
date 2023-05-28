@@ -1,10 +1,8 @@
 package org.infinispan.server.resp;
 
-import static org.infinispan.server.resp.RespConstants.CRLF;
-
-import java.util.List;
-import java.util.concurrent.CompletionStage;
-
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
+import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.context.Flag;
@@ -13,9 +11,12 @@ import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.resp.commands.Resp3Command;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
-import io.netty.channel.ChannelHandlerContext;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
+
+import static org.infinispan.server.resp.RespConstants.CRLF;
 
 public class Resp3Handler extends Resp3AuthHandler {
    protected AdvancedCache<byte[], byte[]> ignorePreviousValueCache;
@@ -57,12 +58,25 @@ public class Resp3Handler extends Resp3AuthHandler {
       handleBulkResult(Double.toString(result), alloc);
    }
 
+   protected static void handleCollectionLongResult(Collection<Long> collection, ByteBufPool alloc) {
+      if (collection == null) {
+         handleNullResult(alloc);
+      } else {
+         String result = "*" + collection.size() + CRLF + collection.stream().map(value -> ":" + value  + CRLF).collect(Collectors.joining());
+         ByteBufferUtils.stringToByteBuf(result, alloc);
+      }
+   }
+
    public static void handleBulkResult(CharSequence result, ByteBufPool alloc) {
       if (result == null) {
-         ByteBufferUtils.stringToByteBuf("$-1\r\n", alloc);
+         handleNullResult(alloc);
       }  else {
          ByteBufferUtils.stringToByteBuf("$" + ByteBufUtil.utf8Bytes(result) + CRLF + result + CRLF, alloc);
       }
+   }
+
+   private static void handleNullResult(ByteBufPool alloc) {
+      ByteBufferUtils.stringToByteBuf("$-1\r\n", alloc);
    }
 
    protected static void handleBulkResult(byte[] result, ByteBufPool alloc) {

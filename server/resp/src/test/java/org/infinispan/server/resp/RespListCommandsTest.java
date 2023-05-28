@@ -1,7 +1,9 @@
 package org.infinispan.server.resp;
 
+import io.lettuce.core.LPosArgs;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.api.sync.RedisCommands;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,8 +17,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @Test(groups = "functional", testName = "server.resp.RespListCommandsTest")
 public class RespListCommandsTest extends SingleNodeRespBaseTest {
 
+   RedisCommands<String, String> redis;
+
+   @BeforeMethod
+   public void initConnection() {
+      redis = redisConnection.sync();
+   }
+
    public void testRPUSH() {
-      RedisCommands<String, String> redis = redisConnection.sync();
       long result = redis.rpush("people", "tristan");
       assertThat(result).isEqualTo(1);
 
@@ -38,7 +46,6 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
    }
 
    public void testRPUSHX() {
-      RedisCommands<String, String> redis = redisConnection.sync();
       long result = redis.rpushx("noexisting", "doraemon", "son goku");
       assertThat(result).isEqualTo(0);
 
@@ -59,7 +66,6 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
    }
 
    public void testLPUSH() {
-      RedisCommands<String, String> redis = redisConnection.sync();
       long result = redis.lpush("people", "tristan");
       assertThat(result).isEqualTo(1);
 
@@ -81,7 +87,6 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
    }
 
    public void testLPUSHX() {
-      RedisCommands<String, String> redis = redisConnection.sync();
       long result = redis.lpushx("noexisting", "doraemon", "son goku");
       assertThat(result).isEqualTo(0);
 
@@ -103,7 +108,6 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
    }
 
    public void testRPOP() {
-      RedisCommands<String, String> redis = redisConnection.sync();
       assertThat(redis.rpop("not_exist")).isNull();
 
       // test single value
@@ -135,7 +139,6 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
    }
 
    public void testLPOP() {
-      RedisCommands<String, String> redis = redisConnection.sync();
       assertThat(redis.lpop("not_exist")).isNull();
 
       // test single value
@@ -167,7 +170,6 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
    }
 
    public void testLINDEX() {
-      RedisCommands<String, String> redis = redisConnection.sync();
       assertThat(redis.lindex("noexisting", 10)).isNull();
 
       redis.rpush("leads", "tristan");
@@ -197,7 +199,6 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
    }
 
    public void testLLEN() {
-      RedisCommands<String, String> redis = redisConnection.sync();
       assertThat(redis.llen("noexisting")).isEqualTo(0);
 
       redis.rpush("leads", "william", "jose", "ryan", "pedro", "vittorio");
@@ -214,7 +215,6 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
    }
 
    public void testLRANGE() {
-      RedisCommands<String, String> redis = redisConnection.sync();
       assertThat(redis.lrange("noexisting", -1, 3)).isEmpty();
 
       redis.rpush("leads", "william", "jose", "ryan", "pedro", "vittorio");
@@ -233,7 +233,6 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
    }
 
    public void testLSET() {
-      RedisCommands<String, String> redis = redisConnection.sync();
       redis.rpush("leads", "william", "jose", "ryan", "pedro", "vittorio");
 
       assertThat(redis.lset("leads", 0,  "fabio")).isEqualTo("OK");
@@ -268,6 +267,45 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
       // LSET on an existing key that contains a String, not a Collection!
       assertThatThrownBy(() -> {
          redis.lset("another", 0, "tristan");
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERRWRONGTYPE");
+   }
+
+   public void testLPOS() {
+      redis.rpush("leads", "william", "jose", "ryan", "pedro", "vittorio", "ryan", "michael", "ryan");
+
+      assertThat(redis.lpos("not_existing", "ryan")).isNull();
+      assertThat(redis.lpos("leads", "ramona")).isNull();
+      assertThat(redis.lpos("leads", "ryan")).isEqualTo(2);
+      assertThat(redis.lpos("leads", "ryan", LPosArgs.Builder.rank(1))).isEqualTo(2);
+      assertThat(redis.lpos("leads", "ryan", LPosArgs.Builder.rank(-1))).isEqualTo(7);
+      assertThat(redis.lpos("leads", "ryan", LPosArgs.Builder.rank(-2))).isEqualTo(5);
+      assertThat(redis.lpos("leads", "ryan", LPosArgs.Builder.rank(2))).isEqualTo(5);
+      assertThat(redis.lpos("leads", "ryan", LPosArgs.Builder.maxlen(3))).isEqualTo(2);
+      assertThat(redis.lpos("leads", "ryan", LPosArgs.Builder.maxlen(2))).isNull();
+
+      assertThat(redis.lpos("leads", "ryan", 0)).containsExactly(2L, 5L, 7L);
+      assertThat(redis.lpos("leads", "ryan", 1)).containsExactly(2L);
+      assertThat(redis.lpos("leads", "ryan", 2)).containsExactly(2L, 5L);
+      assertThat(redis.lpos("leads", "ryan", 3)).containsExactly(2L, 5L, 7L);
+      assertThat(redis.lpos("leads", "ryan", 10)).containsExactly(2L, 5L, 7L);
+      assertThat(redis.lpos("leads", "ryan", 0, LPosArgs.Builder.rank(2))).containsExactly(5L, 7L);
+      assertThat(redis.lpos("leads", "ryan", 2, LPosArgs.Builder.rank(-2))).containsExactly(5L, 2L);
+      assertThat(redis.lpos("leads", "ryan", 2, LPosArgs.Builder.rank(1))).containsExactly(2L, 5L);
+      assertThat(redis.lpos("leads", "ramona", 0)).isEmpty();
+
+      // LPOS on an existing key that contains a String, not a Collection!
+      assertThatThrownBy(() -> {
+         redis.lpos("leads", "ryan", LPosArgs.Builder.rank(0));
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR RANK can't be zero");
+
+      // Set a String Command
+      redis.set("another", "tristan");
+
+      // LPOS on an existing key that contains a String, not a Collection!
+      assertThatThrownBy(() -> {
+         redis.lpos("another","tristan");
       }).isInstanceOf(RedisCommandExecutionException.class)
             .hasMessageContaining("ERRWRONGTYPE");
    }

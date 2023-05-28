@@ -18,4 +18,5 @@ public interface ExternalizerIds {
    Integer POLL_FUNCTION = 2056;
    Integer SET_FUNCTION = 2057;
    Integer SUBLIST_FUNCTION = 2058;
+   Integer INDEXOF_FUNCTION = 2059;
 }

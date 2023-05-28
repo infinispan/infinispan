@@ -8,6 +8,7 @@ import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.multimap.impl.function.IndexFunction;
+import org.infinispan.multimap.impl.function.IndexOfFunction;
 import org.infinispan.multimap.impl.function.OfferFunction;
 import org.infinispan.multimap.impl.function.PollFunction;
 import org.infinispan.multimap.impl.function.SetFunction;
@@ -28,6 +29,7 @@ import static java.util.Objects.requireNonNull;
  */
 public class EmbeddedMultimapListCache<K, V> {
    public static final String ERR_KEY_CAN_T_BE_NULL = "key can't be null";
+   public static final String ERR_ELEMENT_CAN_T_BE_NULL = "element can't be null";
    public static final String ERR_VALUE_CAN_T_BE_NULL = "value can't be null";
    protected final FunctionalMap.ReadWriteMap<K, ListBucket<V>> readWriteMap;
    protected final AdvancedCache<K, ListBucket<V>> cache;
@@ -168,6 +170,12 @@ public class EmbeddedMultimapListCache<K, V> {
       return poll(key, count, false);
    }
 
+   private CompletableFuture<Collection<V>> poll(K key, long count, boolean first) {
+      requireNonNull(key, "key can't be null");
+      requirePositive(count, "count can't be negative");
+      return readWriteMap.eval(key, new PollFunction<>(first, count));
+   }
+
    /**
     * Sets a value in the given index.
     * 0 means fist element. Negative index counts index from the tail. For example -1 is the last element.
@@ -182,14 +190,53 @@ public class EmbeddedMultimapListCache<K, V> {
       return readWriteMap.eval(key, new SetFunction<>(index, value));
    }
 
-   private CompletableFuture<Collection<V>> poll(K key, long count, boolean first) {
+   /**
+    * Retrieves indexes of matching elements inside a list.
+    * Scans the list looking for the elements that match  the provided element.
+    *
+    * @param key, the name of the list, can't be null.
+    * @param element, the element to compare, can't be null.
+    * @param count, number of matches. If null, count is 1 by default. Can't be negative.
+    *               If count is 0, means all the matches.
+    * @param rank, the "rank" of the first element to return, in case there are multiple matches.
+    *              A rank of 1 means the first match, 2 the second match, and so forth. Negative rank iterates
+    *              from the tail. If null, rank is 1 by default. Can't be 0.
+    * @param maxlen, compares the provided element only with a given maximum number of list items.
+    *                If null, defaults to 0 that means all the elements. Can't be negative.
+    * @return {@link Collection<Long>} containing the zero-based positions in the list counting from the head of the list.
+    * Returns null when the list does not exist or empty list when matches are not found.
+    *
+    */
+   public CompletionStage<Collection<Long>> indexOf(K key, V element, Long count, Long rank, Long maxlen) {
       requireNonNull(key, "key can't be null");
-      requirePositive(count, "count can't be negative");
-      return readWriteMap.eval(key, new PollFunction<>(first, count));
+      requireNonNull(element, ERR_ELEMENT_CAN_T_BE_NULL);
+      long requestedCount = 1;
+      long requestedRank = 1;
+      long requestedMaxLen = 0;
+      if (count != null) {
+         requirePositive(count, "count can't be negative");
+         requestedCount = count;
+      }
+      if (rank != null) {
+         requireNotZero(rank, "rank can't be zero");
+         requestedRank = rank;
+      }
+      if (maxlen != null) {
+         requirePositive(maxlen, "maxLen can't be negative");
+         requestedMaxLen = maxlen;
+      }
+
+      return readWriteMap.eval(key, new IndexOfFunction<>(element, requestedCount, requestedRank, requestedMaxLen));
    }
 
-   private static void requirePositive(long count, String message) {
-      if (count < 0) {
+   private static void requirePositive(long number, String message) {
+      if (number < 0) {
+         throw new IllegalArgumentException(message);
+      }
+   }
+
+   private static void requireNotZero(long number, String message) {
+      if (number == 0) {
          throw new IllegalArgumentException(message);
       }
    }
