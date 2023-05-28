@@ -19,6 +19,7 @@ import org.infinispan.server.resp.commands.connection.READONLY;
 import org.infinispan.server.resp.commands.connection.READWRITE;
 import org.infinispan.server.resp.commands.connection.RESET;
 import org.infinispan.server.resp.commands.connection.SELECT;
+import org.infinispan.server.resp.commands.list.LINSERT;
 import org.infinispan.server.resp.commands.list.LPOP;
 import org.infinispan.server.resp.commands.list.LPOS;
 import org.infinispan.server.resp.commands.list.LSET;
@@ -110,7 +111,7 @@ public abstract class RespCommand {
       indexedRespCommand[6] = new RespCommand[]{new GET(), new GETDEL()};
       indexedRespCommand[7] = new RespCommand[]{new HELLO()};
       indexedRespCommand[8] = new RespCommand[]{new INCR(), new INCRBY(), new INCRBYFLOAT(), new INFO()};
-      indexedRespCommand[11] = new RespCommand[]{new LINDEX(), new LPUSH(), new LPUSHX(), new LPOP(), new LRANGE(), new LLEN(), new LPOS(), new LSET() };
+      indexedRespCommand[11] = new RespCommand[]{new LINDEX(), new LINSERT(), new LPUSH(), new LPUSHX(), new LPOP(), new LRANGE(), new LLEN(), new LPOS(), new LSET() };
       indexedRespCommand[12] = new RespCommand[]{new MGET(), new MSET(), new MODULE()};
       indexedRespCommand[15] = new RespCommand[]{new PUBLISH(), new PING(), new PSUBSCRIBE(), new PUNSUBSCRIBE()};
       indexedRespCommand[16] = new RespCommand[]{new QUIT()};

@@ -13,6 +13,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.multimap.impl.EmbeddedMultimapListCache.ERR_ELEMENT_CAN_T_BE_NULL;
 import static org.infinispan.multimap.impl.EmbeddedMultimapListCache.ERR_KEY_CAN_T_BE_NULL;
+import static org.infinispan.multimap.impl.EmbeddedMultimapListCache.ERR_PIVOT_CAN_T_BE_NULL;
 import static org.infinispan.multimap.impl.EmbeddedMultimapListCache.ERR_VALUE_CAN_T_BE_NULL;
 import static org.infinispan.multimap.impl.MultimapTestUtils.ELAIA;
 import static org.infinispan.multimap.impl.MultimapTestUtils.FELIX;
@@ -480,5 +481,32 @@ public class EmbeddedMultimapListCacheTest extends SingleCacheManagerTest {
       }).isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("maxLen can't be negative");
 
+   }
+
+   public void testInsertElement() {
+      await(listCache.offerLast(NAMES_KEY, OIHANA));//0
+      await(listCache.offerLast(NAMES_KEY, ELAIA));//1
+      await(listCache.offerLast(NAMES_KEY, KOLDO));//2
+      await(listCache.offerLast(NAMES_KEY, OIHANA));//3
+      assertThat(await(listCache.insert("not_existing", false, OIHANA, ELAIA))).isEqualTo(0);
+      assertThat(await(listCache.insert(NAMES_KEY, false, RAMON, ELAIA))).isEqualTo(-1);
+      assertThat(await(listCache.insert(NAMES_KEY, false, OIHANA, RAMON))).isEqualTo(5);
+      assertThat(await(listCache.subList(NAMES_KEY, 0, -1))).containsExactly(OIHANA, RAMON, ELAIA, KOLDO, OIHANA);
+      assertThat(await(listCache.insert(NAMES_KEY, true, OIHANA, RAMON))).isEqualTo(6);
+      assertThat(await(listCache.subList(NAMES_KEY, 0, -1))).containsExactly(RAMON, OIHANA, RAMON, ELAIA, KOLDO, OIHANA);
+      assertThat(await(listCache.insert(NAMES_KEY, true, OIHANA, RAMON))).isEqualTo(7);
+      assertThat(await(listCache.subList(NAMES_KEY, 0, -1))).containsExactly(RAMON, RAMON, OIHANA, RAMON, ELAIA, KOLDO, OIHANA);
+
+      assertThatThrownBy(() -> await(listCache.insert(null, false, null, null)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
+
+      assertThatThrownBy(() -> await(listCache.insert(NAMES_KEY, false, null, null)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_PIVOT_CAN_T_BE_NULL);
+
+      assertThatThrownBy(() -> await(listCache.insert(NAMES_KEY, false, OIHANA, null)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_ELEMENT_CAN_T_BE_NULL);
    }
 }

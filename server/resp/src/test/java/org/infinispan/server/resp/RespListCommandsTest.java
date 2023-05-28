@@ -309,4 +309,23 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
       }).isInstanceOf(RedisCommandExecutionException.class)
             .hasMessageContaining("ERRWRONGTYPE");
    }
+
+   public void testLINSERT() {
+      redis.rpush("leads", "william", "jose", "ryan", "pedro", "jose");
+      assertThat(redis.linsert("not_exsiting", true, "william", "fabio")).isEqualTo(0);
+      assertThat(redis.linsert("leads", true, "vittorio", "fabio")).isEqualTo(-1);
+      assertThat(redis.linsert("leads", true, "jose", "fabio")).isEqualTo(6);
+      assertThat(redis.lrange("leads",0, -1)).containsExactly("william", "fabio", "jose", "ryan", "pedro", "jose");
+      assertThat(redis.linsert("leads", false, "jose", "fabio")).isEqualTo(7);
+      assertThat(redis.lrange("leads",0, -1)).containsExactly("william", "fabio", "jose", "fabio", "ryan", "pedro", "jose");
+
+      // Set a String Command
+      redis.set("another", "tristan");
+
+      // LPOS on an existing key that contains a String, not a Collection!
+      assertThatThrownBy(() -> {
+         redis.linsert("another", true,"tristan", "william");
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERRWRONGTYPE");
+   }
 }

@@ -9,6 +9,7 @@ import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.multimap.impl.function.IndexFunction;
 import org.infinispan.multimap.impl.function.IndexOfFunction;
+import org.infinispan.multimap.impl.function.InsertFunction;
 import org.infinispan.multimap.impl.function.OfferFunction;
 import org.infinispan.multimap.impl.function.PollFunction;
 import org.infinispan.multimap.impl.function.SetFunction;
@@ -31,6 +32,7 @@ public class EmbeddedMultimapListCache<K, V> {
    public static final String ERR_KEY_CAN_T_BE_NULL = "key can't be null";
    public static final String ERR_ELEMENT_CAN_T_BE_NULL = "element can't be null";
    public static final String ERR_VALUE_CAN_T_BE_NULL = "value can't be null";
+   public static final String ERR_PIVOT_CAN_T_BE_NULL = "pivot can't be null";
    protected final FunctionalMap.ReadWriteMap<K, ListBucket<V>> readWriteMap;
    protected final AdvancedCache<K, ListBucket<V>> cache;
    protected final InternalEntryFactory entryFactory;
@@ -227,6 +229,27 @@ public class EmbeddedMultimapListCache<K, V> {
       }
 
       return readWriteMap.eval(key, new IndexOfFunction<>(element, requestedCount, requestedRank, requestedMaxLen));
+   }
+
+   /**
+    * Inserts an element before or after the pivot element.
+    * If the key does not exist, returns 0.
+    * If the pivot does not exist, returns -1.
+    * If the element was inserted, returns the size of the list.
+    * The list is traversed from head to tail, the insertion is done before or after the first element found.
+    *
+    * @param key, the name of the list
+    * @param isBefore, insert before true, after false
+    * @param pivot, the element to compare
+    * @param element, the element to insert
+    * @return, the size of the list after insertion, 0 or -1
+    */
+   public CompletionStage<Long> insert(K key, boolean isBefore, V pivot, V element) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      requireNonNull(pivot, ERR_PIVOT_CAN_T_BE_NULL);
+      requireNonNull(element, ERR_ELEMENT_CAN_T_BE_NULL);
+
+      return readWriteMap.eval(key, new InsertFunction<>(isBefore, pivot, element));
    }
 
    private static void requirePositive(long number, String message) {
