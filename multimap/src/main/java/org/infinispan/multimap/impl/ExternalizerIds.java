@@ -19,4 +19,5 @@ public interface ExternalizerIds {
    Integer SET_FUNCTION = 2057;
    Integer SUBLIST_FUNCTION = 2058;
    Integer INDEXOF_FUNCTION = 2059;
+   Integer INSERT_FUNCTION = 2060;
 }

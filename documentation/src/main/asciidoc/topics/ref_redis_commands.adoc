@@ -67,6 +67,9 @@ The {brandname} RESP endpoint implements the following Redis commands:
 | link:https://redis.io/commands/mset[MSET]
 |
 
+| link:https://redis.io/commands/linsert[LINSERT]
+| Current implementation time complexity is O(N), where N is the size of the list.
+
 | link:https://redis.io/commands/lpop[LPOP]
 |
 

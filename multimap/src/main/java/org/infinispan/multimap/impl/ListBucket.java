@@ -220,6 +220,36 @@ public class ListBucket<V> {
       return positions;
    }
 
+   public ListBucket<V> insert(boolean before, V pivot, V element) {
+      Deque<V> newValues = new ArrayDeque<>(values.size() +1);
+
+      Iterator<V> iterator = values.iterator();
+      boolean found = false;
+      while (iterator.hasNext()) {
+         V next = iterator.next();
+         if (found) {
+            newValues.offerLast(next);
+         } else {
+            if (Objects.deepEquals(pivot, next))  {
+               found = true;
+               if (before) {
+                  newValues.offerLast(element);
+                  newValues.offerLast(next);
+               } else {
+                  newValues.offerLast(next);
+                  newValues.offerLast(element);
+               }
+            } else {
+               newValues.offerLast(next);
+            }
+         }
+      }
+      if (!found) {
+         return null;
+      }
+      return new ListBucket<>(newValues);
+   }
+
    public class ListBucketResult {
       private final Collection<V> result;
       private final ListBucket<V> bucketValue;
