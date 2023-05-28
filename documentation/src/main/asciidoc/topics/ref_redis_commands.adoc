@@ -70,6 +70,9 @@ The {brandname} RESP endpoint implements the following Redis commands:
 | link:https://redis.io/commands/lpop[LPOP]
 |
 
+| link:https://redis.io/commands/lpos[LPOS]
+|
+
 | link:https://redis.io/commands/lpush[LPUSH]
 |
 

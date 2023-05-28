@@ -186,6 +186,40 @@ public class ListBucket<V> {
       return result;
    }
 
+   public Collection<Long> indexOf(V element, long count, long rank, long maxLen) {
+      long matches = count == 0 ? values.size() : count;
+      long rankCount = Math.abs(rank);
+      long comparisons = maxLen == 0 ? values.size() : maxLen;
+
+      Iterator<V> ite;
+      if (rank > 0) {
+         ite = values.iterator();
+      } else {
+         ite = values.descendingIterator();
+      }
+
+      long pos = 0;
+      List<Long> positions = new ArrayList<>();
+      while (ite.hasNext() && comparisons > 0 && matches > 0) {
+         V current = ite.next();
+         if (Objects.deepEquals(element, current)) {
+            if (rankCount == 1) {
+               matches--;
+               if (rank < 0) {
+                  positions.add(values.size() - pos - 1);
+               } else {
+                  positions.add(pos);
+               }
+            } else {
+               rankCount--;
+            }
+         }
+         comparisons--;
+         pos++;
+      }
+      return positions;
+   }
+
    public class ListBucketResult {
       private final Collection<V> result;
       private final ListBucket<V> bucketValue;

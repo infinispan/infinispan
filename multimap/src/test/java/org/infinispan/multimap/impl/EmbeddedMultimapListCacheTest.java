@@ -11,6 +11,7 @@ import org.testng.annotations.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.functional.FunctionalTestUtils.await;
+import static org.infinispan.multimap.impl.EmbeddedMultimapListCache.ERR_ELEMENT_CAN_T_BE_NULL;
 import static org.infinispan.multimap.impl.EmbeddedMultimapListCache.ERR_KEY_CAN_T_BE_NULL;
 import static org.infinispan.multimap.impl.EmbeddedMultimapListCache.ERR_VALUE_CAN_T_BE_NULL;
 import static org.infinispan.multimap.impl.MultimapTestUtils.ELAIA;
@@ -19,6 +20,7 @@ import static org.infinispan.multimap.impl.MultimapTestUtils.JULIEN;
 import static org.infinispan.multimap.impl.MultimapTestUtils.KOLDO;
 import static org.infinispan.multimap.impl.MultimapTestUtils.NAMES_KEY;
 import static org.infinispan.multimap.impl.MultimapTestUtils.OIHANA;
+import static org.infinispan.multimap.impl.MultimapTestUtils.PEPE;
 import static org.infinispan.multimap.impl.MultimapTestUtils.RAMON;
 
 /**
@@ -399,5 +401,84 @@ public class EmbeddedMultimapListCacheTest extends SingleCacheManagerTest {
             .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
 
       assertThat(await(listCache.subList("not_existing", 1, 10))).isNull();
+   }
+
+   public void testIndexOf() {
+      await(listCache.offerLast(NAMES_KEY, OIHANA));//0
+      await(listCache.offerLast(NAMES_KEY, ELAIA));//1
+      await(listCache.offerLast(NAMES_KEY, KOLDO));//2
+      await(listCache.offerLast(NAMES_KEY, RAMON));//3
+      await(listCache.offerLast(NAMES_KEY, RAMON));//4
+      await(listCache.offerLast(NAMES_KEY, JULIEN));//5
+      await(listCache.offerLast(NAMES_KEY, ELAIA));//6
+      await(listCache.offerLast(NAMES_KEY, OIHANA));//7
+      await(listCache.offerLast(NAMES_KEY, OIHANA));//8
+      await(listCache.offerLast(NAMES_KEY, OIHANA));//9
+
+      // defaults
+      assertThat(await(listCache.indexOf("non_existing", OIHANA, null, null, null))).isNull();
+      assertThat(await(listCache.indexOf(NAMES_KEY, PEPE, null, null, null))).isEmpty();
+      assertThat(await(listCache.indexOf(NAMES_KEY, OIHANA, null, null, null))).containsExactly(0L);
+      assertThat(await(listCache.indexOf(NAMES_KEY, KOLDO, null, null, null))).containsExactly(2L);
+
+      // count parameter
+      assertThat(await(listCache.indexOf(NAMES_KEY, OIHANA, 1L, null, null))).containsExactly(0L);
+      assertThat(await(listCache.indexOf(NAMES_KEY, OIHANA, 2L, null, null))).containsExactly(0L, 7L);
+      assertThat(await(listCache.indexOf(NAMES_KEY, OIHANA, 0L, null, null))).containsExactly(0L, 7L, 8L, 9L);
+
+      // rank parameter
+      assertThat(await(listCache.indexOf(NAMES_KEY, OIHANA, null, 1L, null))).containsExactly(0L);
+      assertThat(await(listCache.indexOf(NAMES_KEY, OIHANA, null, 2L, null))).containsExactly(7L);
+      assertThat(await(listCache.indexOf(NAMES_KEY, OIHANA, null, -1L, null))).containsExactly(9L);
+      assertThat(await(listCache.indexOf(NAMES_KEY, OIHANA, null, -2L, null))).containsExactly(8L);
+      assertThat(await(listCache.indexOf(NAMES_KEY, KOLDO, null, 1L, null))).containsExactly(2L);
+      assertThat(await(listCache.indexOf(NAMES_KEY, KOLDO, null, 2L, null))).isEmpty();
+
+      // maxLen parameter
+      assertThat(await(listCache.indexOf(NAMES_KEY, KOLDO, null, null, 1L))).isEmpty();
+      assertThat(await(listCache.indexOf(NAMES_KEY, KOLDO, null, null, 3L))).containsExactly(2L);
+
+      // count + rank
+      assertThat(await(listCache.indexOf(NAMES_KEY, OIHANA, 2L, 2L, null))).containsExactly(7L, 8L);
+      assertThat(await(listCache.indexOf(NAMES_KEY, OIHANA, 0L, 2L, null))).containsExactly(7L, 8L, 9L);
+      assertThat(await(listCache.indexOf(NAMES_KEY, OIHANA, 0L, -2L, null))).containsExactly(8L, 7L, 0L);
+
+      // count + maxlen
+      assertThat(await(listCache.indexOf(NAMES_KEY, OIHANA, 0L, null, 3L))).containsExactly(0L);
+      assertThat(await(listCache.indexOf(NAMES_KEY, OIHANA, 0L, null, 8L))).containsExactly(0L, 7L);
+
+      // count + maxlen + rank
+      assertThat(await(listCache.indexOf(NAMES_KEY, OIHANA, 0L, -1L, 3L))).containsExactly(9L, 8L, 7L);
+      assertThat(await(listCache.indexOf(NAMES_KEY, OIHANA, 1L, -1L, 3L))).containsExactly(9L);
+      assertThat(await(listCache.indexOf(NAMES_KEY, OIHANA, 2L, -2L, 3L))).containsExactly(8L, 7L);
+      assertThat(await(listCache.indexOf(NAMES_KEY, OIHANA, 3L, -3L, 3L))).containsExactly(7L);
+      assertThat(await(listCache.indexOf(NAMES_KEY, OIHANA, 1L, -2L, 1L))).isEmpty();
+      assertThat(await(listCache.indexOf(NAMES_KEY, OIHANA, 1L, 2L, 1L))).isEmpty();
+
+      assertThatThrownBy(() -> {
+         await(listCache.indexOf(null, null, null, null, null));
+      }).isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
+
+      assertThatThrownBy(() -> {
+         await(listCache.indexOf("foo", null, null, null, null));
+      }).isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_ELEMENT_CAN_T_BE_NULL);
+
+      assertThatThrownBy(() -> {
+         await(listCache.indexOf(NAMES_KEY, ELAIA, -1L, null, null));
+      }).isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("count can't be negative");
+
+      assertThatThrownBy(() -> {
+         await(listCache.indexOf(NAMES_KEY, ELAIA, null, 0L, null));
+      }).isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("rank can't be zero");
+
+      assertThatThrownBy(() -> {
+         await(listCache.indexOf(NAMES_KEY, ELAIA, null, null, -1L));
+      }).isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("maxLen can't be negative");
+
    }
 }

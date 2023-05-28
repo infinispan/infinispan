@@ -31,4 +31,14 @@ public final class RespErrorUtil {
       ByteBufferUtils.stringToByteBuf(
             "-ERR value is out of range, must be positive\r\n", allocatorToUse);
    }
+
+   public static void syntaxError(ByteBufPool allocatorToUse) {
+      ByteBufferUtils.stringToByteBuf(
+            "-ERR syntax error\r\n", allocatorToUse);
+   }
+
+   public static void customError(String message, ByteBufPool allocatorToUse) {
+      ByteBufferUtils.stringToByteBuf(
+            "-ERR " + message + "\r\n", allocatorToUse);
+   }
 }
