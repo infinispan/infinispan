@@ -19,7 +19,7 @@ There are two annotations that control the entities and fields that {brandname} 
 
 |`store`
 |Allows {brandname} to store fields in indexes so you can use them for projections.
-|`Store.YES` or `Store.NO`
+|`Store.YES` or `Store.NO`. Use `Store.YES` and set `sortable = true` for fields that need to be used for sorting.
 
 |`analyze`
 |Includes fields in full-text searches.
@@ -43,6 +43,8 @@ For example, the following schema uses the `@Field` annotation:
 ----
 include::protobuf/indexed_field.protobuf[]
 ----
++
+By including `store = Store.YES` and `sortable = true` in the `@Field` annotation, you can use the `street` field for sorting queries without encountering warning messages or unexpected results.
 
 [discrete]
 == Embedded caches
