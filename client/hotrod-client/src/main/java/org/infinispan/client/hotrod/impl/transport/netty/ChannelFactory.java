@@ -821,6 +821,21 @@ public class ChannelFactory {
       }
    }
 
+   public void fallbackClientIntelligence(ClientIntelligence from, ClientIntelligence to) {
+      lock.writeLock().lock();
+      try {
+         ClusterInfo current = topologyInfo.getCluster();
+         if (current.getIntelligence() != from || current.getIntelligence() == to) {
+            return;
+         }
+
+         ClusterInfo newCluster = new ClusterInfo(current.getName(), current.getInitialServers(), to);
+         topologyInfo.switchCluster(newCluster);
+      } finally {
+         lock.writeLock().unlock();
+      }
+   }
+
    private class ReleaseChannelOperation implements ChannelOperation {
       private final boolean quiet;
 
