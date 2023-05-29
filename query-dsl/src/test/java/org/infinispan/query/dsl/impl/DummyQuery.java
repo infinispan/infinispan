@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.TimeUnit;
 
@@ -149,8 +148,8 @@ class DummyQuery<T> implements Query<T> {
    }
 
    @Override
-   public Optional<Integer> hitCountAccuracy() {
-      return Optional.empty();
+   public Integer hitCountAccuracy() {
+      return null;
    }
 
    @Override

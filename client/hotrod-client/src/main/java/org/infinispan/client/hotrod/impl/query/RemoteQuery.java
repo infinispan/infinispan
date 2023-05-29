@@ -53,13 +53,18 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
 
    @Override
    public List<T> list() {
-      return execute().list();
+      BaseQueryResponse<T> response = executeRemotely(false);
+      try {
+         return response.extractResults(serializationContext);
+      } catch (IOException e) {
+         throw new HotRodClientException(e);
+      }
    }
 
    @Override
    public QueryResult<T> execute() {
-      BaseQueryResponse<T> response = executeRemotely();
-      return new QueryResult<T>() {
+      BaseQueryResponse<T> response = executeRemotely(true);
+      return new QueryResult<>() {
          @Override
          public OptionalLong hitCount() {
             long totalResults = response.getTotalResults();
@@ -79,7 +84,7 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
 
    @Override
    public int executeStatement() {
-      BaseQueryResponse<?> response = executeRemotely();
+      BaseQueryResponse<?> response = executeRemotely(false);
       return (int) response.getTotalResults();
    }
 
@@ -88,19 +93,20 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
       if (maxResults == -1 && startOffset == 0) {
          log.warnPerfRemoteIterationWithoutPagination(queryString);
       }
-      return Closeables.iterator(execute().list().iterator());
+      return Closeables.iterator(list().iterator());
    }
 
    @Override
    public int getResultSize() {
-      BaseQueryResponse<?> response = executeRemotely();
+      BaseQueryResponse<?> response = executeRemotely(true);
       return (int) response.getTotalResults();
    }
 
-   private BaseQueryResponse<T> executeRemotely() {
+   private BaseQueryResponse<T> executeRemotely(boolean withHitCount) {
       validateNamedParameters();
-      QueryOperation op = cache.getOperationsFactory().newQueryOperation(this, cache.getDataFormat());
-      return (BaseQueryResponse<T>) (timeout != -1 ? await(op.execute(), TimeUnit.NANOSECONDS.toMillis(timeout)) : await(op.execute()));
+      QueryOperation op = cache.getOperationsFactory().newQueryOperation(this, cache.getDataFormat(), withHitCount);
+      return (BaseQueryResponse<T>) (timeout != -1 ? await(op.execute(), TimeUnit.NANOSECONDS.toMillis(timeout)) :
+            await(op.execute()));
    }
 
    /**
