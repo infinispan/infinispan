@@ -41,6 +41,14 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
     */
    private IndexedQuery<T> indexedQuery;
 
+   /**
+    * An Infinispan Cache query to use for {@link #list()} and {@link #iterator()},
+    * that wraps an actual Lucene query object.
+    * This is built lazily when {@link #list()} or {@link #iterator()} is executed first time.
+    * In general more efficient than {@link #indexedQuery}, since we don't need to return the hit count.
+    */
+   private IndexedQuery<T> indexedListQuery;
+
    EmbeddedLuceneQuery(QueryEngine<TypeMetadata> queryEngine, QueryFactory queryFactory,
                        Map<String, Object> namedParameters, IckleParsingResult<TypeMetadata> parsingResult,
                        String[] projection, QueryEngine.RowProcessor rowProcessor,
@@ -57,31 +65,20 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
    @Override
    public void resetQuery() {
       indexedQuery = null;
-   }
-
-   private IndexedQuery<T> createIndexedQuery() {
-      // query is created first time only
-      if (indexedQuery == null) {
-         validateNamedParameters();
-         indexedQuery = queryEngine.buildLuceneQuery(parsingResult, namedParameters, startOffset, maxResults, isLocal());
-         if (hitCountAccuracy.isPresent()) {
-            indexedQuery = indexedQuery.hitCountAccuracy(hitCountAccuracy.get());
-         }
-         if (timeout > 0) {
-            indexedQuery.timeout(timeout, TimeUnit.NANOSECONDS);
-         }
-      }
-      return indexedQuery;
+      indexedListQuery = null;
    }
 
    @Override
    public List<T> list() {
-      return execute().list();
+      IndexedQuery<?> indexedQuery = getOrCreateIndexedQuery(false);
+      QueryResult<?> result = indexedQuery.execute();
+      List<Object> collect = result.list().stream().map(this::convertResult).collect(Collectors.toList());
+      return (List<T>) collect;
    }
 
    @Override
    public QueryResult<T> execute() {
-      IndexedQuery<?> indexedQuery = createIndexedQuery();
+      IndexedQuery<?> indexedQuery = getOrCreateIndexedQuery(true);
       QueryResult<?> result = indexedQuery.execute();
       List<Object> collect = result.list().stream().map(this::convertResult).collect(Collectors.toList());
       return new QueryResultImpl<>(result.hitCount(), (List<T>) collect);
@@ -89,23 +86,23 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
 
    @Override
    public int executeStatement() {
-      IndexedQuery<T> indexedQuery = createIndexedQuery();
+      IndexedQuery<T> indexedQuery = getOrCreateIndexedQuery(false);
       return indexedQuery.executeStatement();
    }
 
    @Override
    public CloseableIterator<T> iterator() {
-      return new MappingIterator(createIndexedQuery().iterator(), this::convertResult);
+      return new MappingIterator(getOrCreateIndexedQuery(true).iterator(), this::convertResult);
    }
 
    @Override
    public <K> CloseableIterator<Map.Entry<K, T>> entryIterator() {
-      return new MappingIterator(createIndexedQuery().entryIterator(), null);
+      return new MappingIterator(getOrCreateIndexedQuery(true).entryIterator(), null);
    }
 
    @Override
    public int getResultSize() {
-      return createIndexedQuery().getResultSize();
+      return getOrCreateIndexedQuery(true).getResultSize();
    }
 
    @Override
@@ -116,6 +113,39 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
             ", maxResults=" + maxResults +
             ", timeout=" + timeout +
             '}';
+   }
+
+   private IndexedQuery<T> getOrCreateIndexedQuery(boolean withHitCount) {
+      if (withHitCount) {
+         if (indexedQuery == null) {
+            indexedQuery = createQuery(true);
+         }
+         return indexedQuery;
+      } else {
+         if (indexedListQuery == null) {
+            indexedListQuery = createQuery(false);
+         }
+         return indexedListQuery;
+      }
+   }
+
+   private IndexedQuery<T> createQuery(boolean withHitCount) {
+      validateNamedParameters();
+      IndexedQuery<T> result = queryEngine.buildLuceneQuery(parsingResult, namedParameters, startOffset, maxResults, isLocal());
+
+      if (withHitCount) {
+         if (hitCountAccuracy != null) {
+            result = result.hitCountAccuracy(hitCountAccuracy);
+         }
+      } else {
+         result.hitCountAccuracy(1); // lower the hit count accuracy
+      }
+
+      if (timeout > 0) {
+         result.timeout(timeout, TimeUnit.NANOSECONDS);
+      }
+
+      return result;
    }
 
    private Object convertResult(Object result) {

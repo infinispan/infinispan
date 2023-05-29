@@ -189,8 +189,8 @@ public class CacheOperationsFactory implements HotRodConstants {
       return new FaultTolerantPingOperation(cacheContext, CacheOptions.DEFAULT);
    }
 
-   public QueryOperation newQueryOperation(RemoteQuery remoteQuery, CacheOptions options, DataFormat dataFormat) {
-      return new QueryOperation(cacheContext, options, remoteQuery, dataFormat);
+   public QueryOperation newQueryOperation(RemoteQuery remoteQuery, CacheOptions options, DataFormat dataFormat, boolean withHitCount) {
+      return new QueryOperation(cacheContext, options, remoteQuery, dataFormat, withHitCount);
    }
 
    public SizeOperation newSizeOperation(CacheOptions options) {

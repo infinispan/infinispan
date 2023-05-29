@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.util.CloseableIterator;
@@ -36,7 +35,7 @@ public abstract class BaseQuery<T> implements Query<T> {
 
    protected int maxResults;
 
-   protected Optional<Integer> hitCountAccuracy = Optional.empty();
+   protected Integer hitCountAccuracy;
 
    protected boolean local;
 
@@ -195,13 +194,13 @@ public abstract class BaseQuery<T> implements Query<T> {
    }
 
    @Override
-   public Optional<Integer> hitCountAccuracy() {
+   public Integer hitCountAccuracy() {
       return hitCountAccuracy;
    }
 
    @Override
    public Query<T> hitCountAccuracy(int hitCountAccuracy) {
-      this.hitCountAccuracy = Optional.of(hitCountAccuracy);
+      this.hitCountAccuracy = hitCountAccuracy;
       return this;
    }
 

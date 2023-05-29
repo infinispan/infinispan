@@ -2,7 +2,6 @@ package org.infinispan.query.dsl;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.util.CloseableIterator;
@@ -30,9 +29,7 @@ public interface Query<T> extends Iterable<T>, PaginationContext<Query<T>>, Para
     * Returns the results of a search as a list.
     *
     * @return list of objects that were found from the search.
-    * @deprecated since 11.0, use {@link QueryResult#list()} instead.
     */
-   @Deprecated
    List<T> list();
 
    /**
@@ -93,7 +90,7 @@ public interface Query<T> extends Iterable<T>, PaginationContext<Query<T>>, Para
     * @return current hitCountAccuracy if present
     * @see #hitCountAccuracy(int)
     */
-   Optional<Integer> hitCountAccuracy();
+   Integer hitCountAccuracy();
 
    /**
     * Limit the required accuracy of the hit count for the indexed queries to an upper-bound.
