@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.impl.operations;
 import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
 import java.io.IOException;
+import java.net.NoRouteToHostException;
 import java.net.SocketAddress;
 import java.util.HashSet;
 import java.util.Set;
@@ -10,6 +11,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.DataFormat;
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.RemoteIllegalLifecycleStateException;
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
@@ -175,6 +177,14 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
             channel.close();
             if (headerDecoder != null) {
                headerDecoder.failoverClientListeners();
+            }
+         }
+
+         if (cause instanceof NoRouteToHostException) {
+            ClientIntelligence currentIntelligence = channelFactory.getClientIntelligence();
+            if (currentIntelligence != ClientIntelligence.BASIC) {
+               log.debugf("Changing client intelligence from %s to BASIC", currentIntelligence);
+               channelFactory.fallbackClientIntelligence(currentIntelligence, ClientIntelligence.BASIC);
             }
          }
          logAndRetryOrFail(cause);
