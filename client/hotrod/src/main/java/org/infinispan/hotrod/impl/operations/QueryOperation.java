@@ -18,12 +18,14 @@ public final class QueryOperation extends RetryOnFailureOperation<Object> {
 
    private final RemoteQuery remoteQuery;
    private final QuerySerializer querySerializer;
+   private final boolean withHitCount;
 
    public QueryOperation(OperationContext operationContext,
-                         CacheOptions options, RemoteQuery remoteQuery, DataFormat dataFormat) {
+                         CacheOptions options, RemoteQuery remoteQuery, DataFormat dataFormat, boolean withHitCount) {
       super(operationContext, QUERY_REQUEST, QUERY_RESPONSE, options, dataFormat);
       this.remoteQuery = remoteQuery;
       this.querySerializer = QuerySerializer.findByMediaType(dataFormat.getValueType());
+      this.withHitCount = withHitCount;
    }
 
    @Override
