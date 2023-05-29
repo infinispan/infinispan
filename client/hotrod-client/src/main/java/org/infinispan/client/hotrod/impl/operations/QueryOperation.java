@@ -31,12 +31,14 @@ public final class QueryOperation extends RetryOnFailureOperation<Object> {
 
    private final RemoteQuery<?> remoteQuery;
    private final QuerySerializer querySerializer;
+   private final boolean withHitCount;
 
    public QueryOperation(Codec codec, ChannelFactory channelFactory, byte[] cacheName, AtomicReference<ClientTopology> clientTopology,
-                         int flags, Configuration cfg, RemoteQuery<?> remoteQuery, DataFormat dataFormat) {
+                         int flags, Configuration cfg, RemoteQuery<?> remoteQuery, DataFormat dataFormat, boolean withHitCount) {
       super(QUERY_REQUEST, QUERY_RESPONSE, codec, channelFactory, cacheName, clientTopology, flags, cfg, dataFormat, null);
       this.remoteQuery = remoteQuery;
       this.querySerializer = QuerySerializer.findByMediaType(dataFormat.getValueType());
+      this.withHitCount = withHitCount;
    }
 
    @Override
@@ -50,8 +52,13 @@ public final class QueryOperation extends RetryOnFailureOperation<Object> {
       if (remoteQuery.getMaxResults() >= 0) {
          queryRequest.setMaxResults(remoteQuery.getMaxResults());
       }
-      if (remoteQuery.hitCountAccuracy().isPresent()) {
-         queryRequest.hitCountAccuracy(remoteQuery.hitCountAccuracy().get());
+
+      if (withHitCount) {
+         if (remoteQuery.hitCountAccuracy() != null) {
+            queryRequest.hitCountAccuracy(remoteQuery.hitCountAccuracy());
+         }
+      } else {
+         queryRequest.hitCountAccuracy(1);
       }
 
       queryRequest.setNamedParameters(getNamedParameters());
