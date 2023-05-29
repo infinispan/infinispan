@@ -34,6 +34,8 @@ In some scenarios it might be sensible not to index your caches, such as for wri
 It all depends on what you want to achieve.
 Faster queries means faster reads but comes at the expense of slower writes that come with indexing.
 
+Indexed query performances can be greatly improved by setting properly the max result and the total hit count accuracy values.
+
 [role="_additional-resources"]
 .Additional resources
 * link:{query_docs}[Querying {brandname} caches]
