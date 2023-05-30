@@ -35,10 +35,18 @@
    </jgroups>
 
    <cache-container name="default" statistics="true">
+      <metrics accurate-size="true"/>
       <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack:tcp}" node-name="${infinispan.node.name:}"/>
       <security>
          <authorization/>
       </security>
+      <local-cache name="default"/>
+      <distributed-cache-configuration name="e2e-test-template">
+         <encoding media-type="application/x-protostream"/>
+      </distributed-cache-configuration>
+      <invalidation-cache name="invalidationCache" mode="SYNC" statistics="true">
+         <encoding media-type="application/x-protostream"/>
+      </invalidation-cache>
    </cache-container>
 
    <server xmlns="urn:infinispan:server:15.0">
