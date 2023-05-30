@@ -33,7 +33,8 @@ public class RespChannelInitializer implements NettyInitializer {
          initialHandler = respServer.newHandler();
       }
 
-      pipeline.addLast(new RespDecoder());
-      pipeline.addLast(new RespHandler(initialHandler));
+      RespDecoder decoder = new RespDecoder();
+      pipeline.addLast(decoder);
+      pipeline.addLast(new RespHandler(decoder, initialHandler));
    }
 }
