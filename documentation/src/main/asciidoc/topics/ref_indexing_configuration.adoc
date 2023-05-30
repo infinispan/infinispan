@@ -2,6 +2,7 @@
 = Index configuration
 {brandname} configuration controls how indexes are stored and constructed.
 
+[discrete]
 == Index storage
 
 You can configure how {brandname} stores indexes:
@@ -22,6 +23,7 @@ include::xml/indexing_file_system.xml[]
 include::xml/indexing_jvm_heap.xml[]
 ----
 
+[discrete]
 === Index path
 
 Specifies a filesystem path for the index when storage is 'filesystem'.
@@ -36,6 +38,7 @@ By default, the cache name is used as a relative path for index path.
 When setting a custom value, ensure that there are no conflicts between caches using the same indexed entities.
 ====
 
+[discrete]
 == Index startup mode
 
 When {brandname} starts caches it can perform operations to ensure the index is consistent with data in the cache.
@@ -61,6 +64,7 @@ include::xml/indexing_startup_purge.xml[]
 include::xml/indexing_startup_reindex.xml[]
 ----
 
+[discrete]
 == Indexing Mode
 
 Affects how cache operations will be propagated to the indexes.
@@ -75,6 +79,7 @@ It can be done setting the `indexing-mode` to `manual`:
 include::xml/indexing_manual.xml[]
 ----
 
+[discrete]
 == Index reader
 
 The index reader is an internal component that provides access to the indexes to perform queries. As the index content changes, {brandname} needs to refresh the reader so that search results are up to date.
@@ -86,6 +91,7 @@ By default {brandname} reads the index before each query if the index changed si
 include::xml/indexing_index_reader.xml[]
 ----
 
+[discrete]
 == Index writer
 
 The index writer is an internal component that constructs an index composed of one or more segments (sub-indexes) that can be merged over time to improve performance.
@@ -167,6 +173,7 @@ To configure how {brandname} merges index segments, you use the `index-merge` su
 .Additional resources
 * link:{configdocroot}[{brandname} configuration schema reference]
 
+[discrete]
 == Index Sharding
 
 Sharding consists in splitting index data into multiple "smaller indexes", called shards,
