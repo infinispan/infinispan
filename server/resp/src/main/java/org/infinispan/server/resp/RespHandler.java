@@ -15,6 +15,8 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 public class RespHandler extends ChannelInboundHandlerAdapter {
    protected final static Log log = LogFactory.getLog(RespHandler.class, Log.class);
    protected final static int MINIMUM_BUFFER_SIZE;
+
+   protected final BaseRespDecoder resumeHandler;
    protected RespRequestHandler requestHandler;
 
    protected ByteBuf outboundBuffer;
@@ -26,7 +28,8 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
       MINIMUM_BUFFER_SIZE = Integer.parseInt(System.getProperty("infinispan.resp.minimum-buffer-size", "4096"));
    }
 
-   public RespHandler(RespRequestHandler requestHandler) {
+   public RespHandler(BaseRespDecoder resumeHandler, RespRequestHandler requestHandler) {
+      this.resumeHandler = resumeHandler;
       this.requestHandler = requestHandler;
    }
 
@@ -85,9 +88,14 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
       if (resumeAutoReadOnWritability && ctx.channel().isWritable()) {
          resumeAutoReadOnWritability = false;
          log.tracef("Re-enabling auto read for channel %s as channel is now writeable", ctx.channel());
-         ctx.channel().config().setAutoRead(true);
+         resumeAutoRead(ctx);
       }
       super.channelWritabilityChanged(ctx);
+   }
+
+   protected void resumeAutoRead(ChannelHandlerContext ctx) {
+      ctx.channel().config().setAutoRead(true);
+      resumeHandler.resumeRead();
    }
 
    @Override
@@ -135,7 +143,7 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
          requestHandler = handler;
          flushBufferIfNeeded(ctx, false);
          log.tracef("Re-enabling auto read for channel %s as previous command is complete", ctx.channel());
-         ctx.channel().config().setAutoRead(true);
+         resumeAutoRead(ctx);
       });
    }
 
