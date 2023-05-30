@@ -198,11 +198,10 @@ public class HotRodCacheQueries {
       String query = "FROM sample_bank_account.User WHERE name='Adrian'";
 
       RestClient restClient = SERVER_TEST.newRestClient(new RestClientConfigurationBuilder());
-
-      RestResponse response = sync(restClient.cache(SERVER_TEST.getMethodName()).query(query));
-
-      Json results = Json.read(response.getBody());
-      assertEquals(1, results.at("total_results").asInteger());
+      try (RestResponse response = sync(restClient.cache(SERVER_TEST.getMethodName()).query(query))) {
+         Json results = Json.read(response.getBody());
+         assertEquals(1, results.at("total_results").asInteger());
+      }
    }
 
    @Test
@@ -283,14 +282,14 @@ public class HotRodCacheQueries {
       assertThat(rossignols).extracting("firstName").containsExactlyInAnyOrder("Oihana", "Elaia");
 
       RestClient restClient = SERVER_TEST.rest().get();
-      RestResponse response = sync(restClient.cache(peopleCache.getName()).entries(1000));
+      try (RestResponse response = sync(restClient.cache(peopleCache.getName()).entries(1000))) {
+         if (response.getStatus() != 200) {
+            fail(response.getBody());
+         }
 
-      if (response.getStatus() != 200) {
-         fail(response.getBody());
+         Collection<?> entities = (Collection<?>) Json.read(response.getBody()).getValue();
+         assertThat(entities).hasSize(4);
       }
-
-      Collection<?> entities = (Collection<?>) Json.read(response.getBody()).getValue();
-      assertThat(entities).hasSize(4);
    }
 
    public static User createUser1() {

@@ -1,12 +1,12 @@
 package org.infinispan.server.security;
 
-import static org.infinispan.server.test.core.Common.sync;
+import static org.infinispan.server.test.core.Common.assertStatus;
+import static org.infinispan.server.test.core.Common.assertStatusAndBodyEquals;
 import static org.junit.Assert.assertEquals;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.rest.RestClient;
-import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
@@ -49,12 +49,8 @@ public abstract class AbstractAuthenticationKeyCloak {
             .mechanism("BEARER_TOKEN")
             .username(token);
       RestClient client = getServerTest().rest().withClientConfiguration(builder).create();
-      RestResponse response = sync(client.cache(getServerTest().getMethodName()).post("k1", "v1"));
-
-      assertEquals(204, response.getStatus());
-      response = sync(client.cache(getServerTest().getMethodName()).get("k1"));
-      assertEquals(200, response.getStatus());
-      assertEquals("v1", response.getBody());
+      assertStatus(204, client.cache(getServerTest().getMethodName()).post("k1", "v1"));
+      assertStatusAndBodyEquals(200, "v1", client.cache(getServerTest().getMethodName()).get("k1"));
    }
 
    protected abstract String getToken();

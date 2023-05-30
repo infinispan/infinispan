@@ -137,13 +137,16 @@ public class AuthenticationKerberosIT {
          Exceptions.expectException(SecurityException.class, () -> SERVER_TEST.rest().withClientConfiguration(builder).create());
       } else {
          RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).create();
-         RestResponse response = sync(client.cache(SERVER_TEST.getMethodName()).post("k1", "v1"));
-         assertEquals(204, response.getStatus());
-         assertEquals(protocol, response.getProtocol());
-         response = sync(client.cache(SERVER_TEST.getMethodName()).get("k1"));
-         assertEquals(200, response.getStatus());
-         assertEquals(protocol, response.getProtocol());
-         assertEquals("v1", response.getBody());
+         try (RestResponse response = sync(client.cache(SERVER_TEST.getMethodName()).post("k1", "v1"))) {
+            assertEquals(204, response.getStatus());
+            assertEquals(protocol, response.getProtocol());
+         }
+
+         try (RestResponse response = sync(client.cache(SERVER_TEST.getMethodName()).get("k1"))) {
+            assertEquals(200, response.getStatus());
+            assertEquals(protocol, response.getProtocol());
+            assertEquals("v1", response.getBody());
+         }
       }
    }
 }

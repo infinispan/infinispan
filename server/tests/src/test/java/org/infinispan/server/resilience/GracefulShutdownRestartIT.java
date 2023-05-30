@@ -50,7 +50,7 @@ public class GracefulShutdownRestartIT {
             .socketTimeout(RestClientConfigurationProperties.DEFAULT_SO_TIMEOUT * 60)
             .connectionTimeout(RestClientConfigurationProperties.DEFAULT_CONNECT_TIMEOUT * 60);
       RestClient rest = SERVER_TEST.rest().withClientConfiguration(restClientBuilder).get();
-      sync(rest.cluster().stop(), 5, TimeUnit.MINUTES);
+      sync(rest.cluster().stop(), 5, TimeUnit.MINUTES).close();
       ContainerInfinispanServerDriver serverDriver = (ContainerInfinispanServerDriver) SERVER.getServerDriver();
       Eventually.eventually(
             "Cluster did not shutdown within timeout",

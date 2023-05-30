@@ -1,15 +1,12 @@
 package org.infinispan.server.resilience;
 
-import static org.infinispan.server.test.core.Common.sync;
-import static org.junit.Assert.assertEquals;
+import static org.infinispan.server.test.core.Common.assertStatus;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 import org.infinispan.client.rest.RestClient;
-import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.impl.okhttp.StringRestEntityOkHttp;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.categories.Unstable;
@@ -76,8 +73,7 @@ public class StatefulSetRollingUpgradeIT {
       // ISPN-13997 Ensure that Memory max-size is represented in original format in caches.xml
       String cacheConfig = "<replicated-cache name=\"cache01\"><memory storage=\"OFF_HEAP\" max-size=\"200MB\"/><transaction transaction-manager-lookup=\"org.infinispan.transaction.lookup.GenericTransactionManagerLookup\"/></replicated-cache>";
       StringRestEntityOkHttp body = new StringRestEntityOkHttp(MediaType.APPLICATION_XML, cacheConfig);
-      RestResponse rsp = sync(methodRule.rest().get().cache("cache01").createWithConfiguration(body));
-      assertEquals(HttpResponseStatus.OK.code(), rsp.getStatus());
+      assertStatus(HttpResponseStatus.OK.code(), methodRule.rest().get().cache("cache01").createWithConfiguration(body));
       for (int i = 0; i < NUM_ROLLING_UPGRADES; i++) {
          for (int j = numServers - 1; j > -1; j--) {
             serverDriver.stop(j);
@@ -89,7 +85,6 @@ public class StatefulSetRollingUpgradeIT {
 
    private void assertLiveness(int server) {
       RestClient rest = methodRule.rest().get(server);
-      RestResponse rsp = sync(rest.cacheManager(CACHE_MANAGER).healthStatus(), 10, TimeUnit.SECONDS);
-      assertEquals(HttpResponseStatus.OK.code(), rsp.getStatus());
+      assertStatus(HttpResponseStatus.OK.code(), rest.cacheManager(CACHE_MANAGER).healthStatus());
    }
 }
