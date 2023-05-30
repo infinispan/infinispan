@@ -35,10 +35,15 @@
    </jgroups>
 
    <cache-container name="default" statistics="true">
+      <metrics accurate-size="true"/>
       <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack:tcp}" node-name="${infinispan.node.name:}"/>
       <security>
          <authorization/>
       </security>
+      <distributed-cache-configuration name="distribute-cache-template">
+         <encoding media-type="application/x-protostream"/>
+      </distributed-cache-configuration>
+      <distributed-cache name="default" configuration="distribute-cache-template"/>
    </cache-container>
 
    <server xmlns="urn:infinispan:server:14.0">
