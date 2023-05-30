@@ -12,6 +12,7 @@ import org.infinispan.multimap.impl.function.IndexOfFunction;
 import org.infinispan.multimap.impl.function.InsertFunction;
 import org.infinispan.multimap.impl.function.OfferFunction;
 import org.infinispan.multimap.impl.function.PollFunction;
+import org.infinispan.multimap.impl.function.RemoveCountFunction;
 import org.infinispan.multimap.impl.function.SetFunction;
 import org.infinispan.multimap.impl.function.SubListFunction;
 
@@ -250,6 +251,26 @@ public class EmbeddedMultimapListCache<K, V> {
       requireNonNull(element, ERR_ELEMENT_CAN_T_BE_NULL);
 
       return readWriteMap.eval(key, new InsertFunction<>(isBefore, pivot, element));
+   }
+
+   /**
+    * Removes from the list the provided element. The number of copies to be removed is
+    * provided by the count parameter. When count is 0, all the elements that match the
+    * provided element will be removed. If count is negative, the iteration will be done
+    * from the tail of the list instead of the head.
+    * count = 0, removes all, iterates over the whole list
+    * count = 1, removes one match, starts iteration from the head
+    * count = -1, removed one match, starts iteration from the tail
+    *
+    * @param key, the name of the list
+    * @param count, number of elements to remove
+    * @param element, the element to remove
+    * @return how many elements have actually been removed, 0 if the list does not exist
+    */
+   public CompletionStage<Long> remove(K key, long count, V element) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      requireNonNull(element, ERR_ELEMENT_CAN_T_BE_NULL);
+      return readWriteMap.eval(key, new RemoveCountFunction<>(count, element));
    }
 
    private static void requirePositive(long number, String message) {

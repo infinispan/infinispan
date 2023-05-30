@@ -91,6 +91,9 @@ The {brandname} RESP endpoint implements the following Redis commands:
 | link:https://redis.io/commands/lrange[LRANGE]
 |
 
+| link:https://redis.io/commands/lrem[LREM]
+|
+
 | link:https://redis.io/commands/lset[LSET]
 |
 

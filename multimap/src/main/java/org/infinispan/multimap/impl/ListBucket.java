@@ -250,6 +250,31 @@ public class ListBucket<V> {
       return new ListBucket<>(newValues);
    }
 
+   public long remove(long count, V element) {
+      Iterator<V> ite;
+
+      if (count < 0) {
+         ite = values.descendingIterator();
+      } else {
+         ite = values.iterator();
+      }
+
+      long maxRemovalsCount = count == 0 ?  values.size(): Math.abs(count);
+      long removedElements = 0;
+      while(ite.hasNext()) {
+         V next = ite.next();
+         if (Objects.deepEquals(next, element)) {
+            ite.remove();
+            removedElements++;
+            if (removedElements == maxRemovalsCount) {
+               break;
+            }
+         }
+      }
+
+      return removedElements;
+   }
+
    public class ListBucketResult {
       private final Collection<V> result;
       private final ListBucket<V> bucketValue;
