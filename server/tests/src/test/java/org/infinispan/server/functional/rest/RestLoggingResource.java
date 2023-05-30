@@ -49,20 +49,22 @@ public class RestLoggingResource {
    public void testManipulateLogger() {
       RestClient client = SERVER_TEST.rest().create();
       // Create the logger
-      RestResponse response = sync(client.server().logging().setLogger("org.infinispan.TESTLOGGER", "WARN", "STDOUT"));
-      assertEquals(204, response.getStatus());
-      response = sync(client.server().logging().listLoggers());
-      assertTrue("Logger not found", findLogger(response, "org.infinispan.TESTLOGGER", "WARN", "STDOUT"));
+      assertStatus(204, client.server().logging().setLogger("org.infinispan.TESTLOGGER", "WARN", "STDOUT"));
+      try (RestResponse response = sync(client.server().logging().listLoggers())) {
+         assertTrue("Logger not found", findLogger(response, "org.infinispan.TESTLOGGER", "WARN", "STDOUT"));
+      }
+
       // Update it
-      response = sync(client.server().logging().setLogger("org.infinispan.TESTLOGGER", "ERROR", "FILE"));
-      assertEquals(204, response.getStatus());
-      response = sync(client.server().logging().listLoggers());
-      assertTrue("Logger not found", findLogger(response, "org.infinispan.TESTLOGGER", "ERROR", "FILE"));
+      assertStatus(204, client.server().logging().setLogger("org.infinispan.TESTLOGGER", "ERROR", "FILE"));
+      try (RestResponse response = sync(client.server().logging().listLoggers())) {
+         assertTrue("Logger not found", findLogger(response, "org.infinispan.TESTLOGGER", "ERROR", "FILE"));
+      }
+
       // Remove it
-      response = sync(client.server().logging().removeLogger("org.infinispan.TESTLOGGER"));
-      assertEquals(204, response.getStatus());
-      response = sync(client.server().logging().listLoggers());
-      assertFalse("Logger should not be found", findLogger(response, "org.infinispan.TESTLOGGER", "ERROR"));
+      assertStatus(204, client.server().logging().removeLogger("org.infinispan.TESTLOGGER"));
+      try (RestResponse response = sync(client.server().logging().listLoggers())) {
+         assertFalse("Logger should not be found", findLogger(response, "org.infinispan.TESTLOGGER", "ERROR"));
+      }
    }
 
    private boolean findLogger(RestResponse response, String name, String level, String... appenders) {

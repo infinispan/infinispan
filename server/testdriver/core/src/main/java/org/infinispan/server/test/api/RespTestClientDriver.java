@@ -1,5 +1,7 @@
 package org.infinispan.server.test.api;
 
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
 
@@ -35,8 +37,8 @@ public class RespTestClientDriver extends BaseTestClientDriver<RespTestClientDri
       RedisClient client = RedisClient.create(resources, configuration.redisURI);
       client.setOptions(configuration.clientOptions);
       testClient.registerResource(() -> {
-         resources.shutdown().getNow();
-         client.close();
+         resources.shutdown(0, 15, TimeUnit.SECONDS).getNow();
+         client.shutdown(0, 15, TimeUnit.SECONDS);
       });
       return client;
    }

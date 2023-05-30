@@ -1,5 +1,6 @@
 package org.infinispan.server.security;
 
+import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.Assert.assertEquals;
 
@@ -191,18 +192,19 @@ public class AuthenticationMultiEndpointIT {
       try {
          RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).withPort(port).create();
          validateSuccess();
-         RestResponse response = sync(client.cache(SERVER_TEST.getMethodName()).post("k1", "v1"));
-         assertEquals(204, response.getStatus());
-         assertEquals(proto, response.getProtocol());
-         response = sync(client.cache(SERVER_TEST.getMethodName()).get("k1"));
-         assertEquals(200, response.getStatus());
-         assertEquals(proto, response.getProtocol());
-         assertEquals("v1", response.getBody());
+         try (RestResponse response = sync(client.cache(SERVER_TEST.getMethodName()).post("k1", "v1"))) {
+            assertEquals(204, response.getStatus());
+            assertEquals(proto, response.getProtocol());
+         }
 
-         response = sync(client.raw().get("/"));
-         assertEquals(isAdmin ? 307 : 404, response.getStatus());
-         response = sync(client.server().info());
-         assertEquals(isAdmin ? 200 : 404, response.getStatus());
+         try (RestResponse response = sync(client.cache(SERVER_TEST.getMethodName()).get("k1"))) {
+            assertEquals(200, response.getStatus());
+            assertEquals(proto, response.getProtocol());
+            assertEquals("v1", response.getBody());
+         }
+
+         assertStatus(isAdmin ? 307 : 404, client.raw().get("/"));
+         assertStatus(isAdmin ? 200 : 404, client.server().info());
       } catch (SecurityException e) {
          validateException(e);
       }
