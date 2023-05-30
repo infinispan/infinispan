@@ -509,4 +509,32 @@ public class EmbeddedMultimapListCacheTest extends SingleCacheManagerTest {
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining(ERR_ELEMENT_CAN_T_BE_NULL);
    }
+
+   public void testRemoveElement() {
+      await(listCache.offerLast(NAMES_KEY, OIHANA));
+      await(listCache.offerLast(NAMES_KEY, ELAIA));
+      await(listCache.offerLast(NAMES_KEY, ELAIA));
+      await(listCache.offerLast(NAMES_KEY, ELAIA));
+      await(listCache.offerLast(NAMES_KEY, KOLDO));
+      await(listCache.offerLast(NAMES_KEY, KOLDO));
+      await(listCache.offerLast(NAMES_KEY, OIHANA));
+      assertThat(await(listCache.remove("not_existing", 0, OIHANA))).isEqualTo(0);
+      assertThat(await(listCache.remove(NAMES_KEY, 0, RAMON))).isEqualTo(0);
+      assertThat(await(listCache.remove(NAMES_KEY, 0, ELAIA))).isEqualTo(3);
+      assertThat(await(listCache.subList(NAMES_KEY, 0, -1))).containsExactly(OIHANA, KOLDO, KOLDO, OIHANA);
+      assertThat(await(listCache.remove(NAMES_KEY, 3, KOLDO))).isEqualTo(2);
+      assertThat(await(listCache.subList(NAMES_KEY, 0, -1))).containsExactly(OIHANA, OIHANA);
+      assertThat(await(listCache.remove(NAMES_KEY, 1, OIHANA))).isEqualTo(1);
+      assertThat(await(listCache.subList(NAMES_KEY, 0, -1))).containsExactly(OIHANA);
+      assertThat(await(listCache.remove(NAMES_KEY, 1, OIHANA))).isEqualTo(1);
+      assertThat(await(listCache.containsKey(NAMES_KEY))).isFalse();
+
+      assertThatThrownBy(() -> await(listCache.remove(null, 0, null)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
+
+      assertThatThrownBy(() -> await(listCache.remove(NAMES_KEY, 0, null)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_ELEMENT_CAN_T_BE_NULL);
+   }
 }

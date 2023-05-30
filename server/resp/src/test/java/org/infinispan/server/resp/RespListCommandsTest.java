@@ -328,4 +328,31 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
       }).isInstanceOf(RedisCommandExecutionException.class)
             .hasMessageContaining("ERRWRONGTYPE");
    }
+
+   public void testLREM() {
+      redis.rpush("leads", "william", "jose", "ryan", "pedro", "jose", "pedro", "pedro", "tristan", "pedro");
+      assertThat(redis.lrem("not_existing", 1, "ramona")).isEqualTo(0);
+      assertThat(redis.lrem("leads", 1, "ramona")).isEqualTo(0);
+      assertThat(redis.lrem("leads", 1, "pedro")).isEqualTo(1);
+      assertThat(redis.lrange("leads", 0, -1)).containsExactly("william", "jose", "ryan", "jose", "pedro", "pedro", "tristan", "pedro");
+      assertThat(redis.lrem("leads", -2, "pedro")).isEqualTo(2);
+      assertThat(redis.lrange("leads", 0, -1)).containsExactly("william", "jose", "ryan", "jose", "pedro", "tristan");
+      assertThat(redis.lrem("leads", 0, "jose")).isEqualTo(2);
+      assertThat(redis.lrange("leads", 0, -1)).containsExactly("william", "ryan", "pedro", "tristan");
+      redis.lrem("leads", 0, "tristan");
+      redis.lrem("leads", 0, "william");
+      redis.lrem("leads", 0, "pedro");
+      assertThat(redis.exists("leads")).isEqualTo(1);
+      redis.lrem("leads", 0, "ryan");
+      assertThat(redis.exists("leads")).isEqualTo(0);
+
+      // Set a String Command
+      redis.set("another", "tristan");
+
+      // LREM on an existing key that contains a String, not a Collection!
+      assertThatThrownBy(() -> {
+         redis.lrem("another", 0,"tristan");
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERRWRONGTYPE");
+   }
 }

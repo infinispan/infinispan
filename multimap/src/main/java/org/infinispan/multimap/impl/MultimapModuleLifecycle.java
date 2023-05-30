@@ -14,6 +14,7 @@ import org.infinispan.multimap.impl.function.InsertFunction;
 import org.infinispan.multimap.impl.function.OfferFunction;
 import org.infinispan.multimap.impl.function.PollFunction;
 import org.infinispan.multimap.impl.function.PutFunction;
+import org.infinispan.multimap.impl.function.RemoveCountFunction;
 import org.infinispan.multimap.impl.function.RemoveFunction;
 import org.infinispan.multimap.impl.function.SetFunction;
 import org.infinispan.multimap.impl.function.SubListFunction;
@@ -54,5 +55,6 @@ public class MultimapModuleLifecycle implements ModuleLifecycle {
       addAdvancedExternalizer(externalizerMap, SetFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, IndexOfFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, InsertFunction.EXTERNALIZER);
+      addAdvancedExternalizer(externalizerMap, RemoveCountFunction.EXTERNALIZER);
    }
 }

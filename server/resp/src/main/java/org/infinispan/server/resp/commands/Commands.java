@@ -31,6 +31,7 @@ import org.infinispan.server.resp.commands.list.LPOS;
 import org.infinispan.server.resp.commands.list.LPUSH;
 import org.infinispan.server.resp.commands.list.LPUSHX;
 import org.infinispan.server.resp.commands.list.LRANGE;
+import org.infinispan.server.resp.commands.list.LREM;
 import org.infinispan.server.resp.commands.list.LSET;
 import org.infinispan.server.resp.commands.list.RPOP;
 import org.infinispan.server.resp.commands.list.RPUSH;
@@ -76,7 +77,7 @@ public final class Commands {
       ALL_COMMANDS[6] = new RespCommand[]{new GET(), new GETDEL()};
       ALL_COMMANDS[7] = new RespCommand[]{new HELLO()};
       ALL_COMMANDS[8] = new RespCommand[]{new INCR(), new INCRBY(), new INCRBYFLOAT(), new INFO()};
-      ALL_COMMANDS[11] = new RespCommand[]{new LINDEX(), new LINSERT(), new LPUSH(), new LPUSHX(), new LPOP(), new LRANGE(), new LLEN(), new LPOS(), new LSET() };
+      ALL_COMMANDS[11] = new RespCommand[]{new LINDEX(), new LINSERT(), new LPUSH(), new LPUSHX(), new LPOP(), new LRANGE(), new LLEN(), new LPOS(), new LREM(), new LSET() };
       ALL_COMMANDS[12] = new RespCommand[]{new MGET(), new MSET(), new MODULE()};
       ALL_COMMANDS[15] = new RespCommand[]{new PUBLISH(), new PING(), new PSUBSCRIBE(), new PUNSUBSCRIBE()};
       ALL_COMMANDS[16] = new RespCommand[]{new QUIT()};
