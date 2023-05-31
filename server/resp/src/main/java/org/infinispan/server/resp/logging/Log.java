@@ -1,9 +1,5 @@
 package org.infinispan.server.resp.logging;
 
-import static org.jboss.logging.Logger.Level.WARN;
-
-import java.nio.CharBuffer;
-
 import org.infinispan.commons.CacheConfigurationException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
@@ -11,6 +7,11 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.jboss.logging.annotations.Once;
+
+import java.nio.CharBuffer;
+
+import static org.jboss.logging.Logger.Level.WARN;
 
 /**
  * Log abstraction for the Resp protocol server module. For this module, message ids
@@ -41,4 +42,9 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "There was an error adding listener for channel %s", id = 12005)
    void exceptionWhileRegisteringListener(@Cause Throwable cause, CharBuffer channelName);
+
+   @LogMessage(level = WARN)
+   @Message(value = "LMOVE command can't guarantee atomicity and consistency when the source list and the destination list are different", id = 12006)
+   @Once
+   void lmoveConsistencyMessage();
 }

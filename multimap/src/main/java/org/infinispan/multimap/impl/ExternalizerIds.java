@@ -25,4 +25,5 @@ public interface ExternalizerIds {
    Integer MULTIMAP_CONVERTER = 2063;
    Integer ADD_FUNCTION = 2064;
    Integer TRIM_FUNCTION = 2065;
+   Integer ROTATE_FUNCTION = 2066;
 }

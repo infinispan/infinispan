@@ -88,6 +88,10 @@ The {brandname} RESP endpoint implements the following Redis commands:
 | link:https://redis.io/commands/linsert[LINSERT]
 | Current implementation time complexity is O(N), where N is the size of the list.
 
+| link:https://redis.io/commands/lmove[LMOVE]
+| Current implementation is atomic for rotation (source and destination are the same list). For different lists there is relaxed consistency
+for concurrent operations or failures unless the resp cache is configured to used transactions.
+
 | link:https://redis.io/commands/lpop[LPOP]
 |
 

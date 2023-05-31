@@ -318,6 +318,20 @@ public class ListBucket<V> {
       return removedElements;
    }
 
+   public V rotate(boolean rotateRight) {
+      V element;
+      if (rotateRight) {
+         // from head to tail
+         element = values.pollFirst();
+         values.offerLast(element);
+      } else {
+         // from tail to head
+         element = values.pollLast();
+         values.offerFirst(element);
+      }
+      return element;
+   }
+
    public class ListBucketResult {
       private final Collection<V> result;
       private final ListBucket<V> bucketValue;
@@ -363,7 +377,7 @@ public class ListBucket<V> {
       if (index == 0) {
          return values.element();
       }
-      if (index == values.size() - 1) {
+      if (index == values.size() - 1 || index == -1) {
          return values.getLast();
       }
       V result = null;

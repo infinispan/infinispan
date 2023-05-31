@@ -582,4 +582,23 @@ public class EmbeddedMultimapListCacheTest extends SingleCacheManagerTest {
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
    }
+
+   public void testRotate() {
+      await(listCache.offerLast(NAMES_KEY, OIHANA));
+      await(listCache.offerLast(NAMES_KEY, ELAIA));
+      await(listCache.offerLast(NAMES_KEY, KOLDO));
+      await(listCache.offerLast(NAMES_KEY, RAMON));
+      await(listCache.offerLast(NAMES_KEY, JULIEN));
+
+      assertThat(await(listCache.rotate("not_existing", true))).isNull();
+      assertThat(await(listCache.subList(NAMES_KEY, 0, -1))).containsExactly(OIHANA, ELAIA, KOLDO, RAMON, JULIEN);
+      assertThat(await(listCache.rotate(NAMES_KEY, true))).isEqualTo(OIHANA);
+      assertThat(await(listCache.subList(NAMES_KEY, 0, -1))).containsExactly(ELAIA, KOLDO, RAMON, JULIEN, OIHANA);
+      assertThat(await(listCache.rotate(NAMES_KEY, false))).isEqualTo(OIHANA);
+      assertThat(await(listCache.subList(NAMES_KEY, 0, -1))).containsExactly(OIHANA, ELAIA, KOLDO, RAMON, JULIEN);
+
+      assertThatThrownBy(() -> await(listCache.rotate(null, true)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
+   }
 }

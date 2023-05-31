@@ -232,6 +232,27 @@ public class DistributedMultimapListCacheTest extends BaseDistFunctionalTest<Str
       );
    }
 
+   public void testRotate() {
+      initAndTest();
+      EmbeddedMultimapListCache<String, Person> list = getMultimapCacheMember();
+      await(
+            list.offerLast(NAMES_KEY, OIHANA)
+                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, ELAIA))
+                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, RAMON))
+      );
+
+      await(
+            list.rotate(NAMES_KEY, false)
+                  .thenAccept(v -> assertThat(v).isEqualTo(RAMON))
+
+      );
+      await(
+            list.subList(NAMES_KEY, 0, -1)
+                  .thenAccept(v -> assertThat(v).containsExactly(RAMON, OIHANA, ELAIA))
+
+      );
+   }
+
    protected void assertValuesAndOwnership(String key, Person value) {
       assertOwnershipAndNonOwnership(key, l1CacheEnabled);
       assertOnAllCaches(key, value);
