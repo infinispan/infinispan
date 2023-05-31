@@ -1,6 +1,7 @@
 package org.infinispan.server.hotrod;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -41,6 +42,14 @@ public class InetAddressWithNetMaskTest {
       check((byte) 172, (byte) 32, (byte) 16, (byte) 3, (short) 21, (short) 21);
       // Between 192.168.0.0 and 240.0.0.0/4
       check((byte) 223, (byte) 32, (byte) 16, (byte) 8, (short) 21, (short) 21);
+   }
+
+   public void testDifferentIPvNess() {
+      assertFalse(
+            MultiHomedServerAddress.inetAddressMatchesInterfaceAddress(
+                  new byte[]{10, 1, 2, 3},
+                  new byte[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}, 10)
+      );
    }
 
    private void check(byte a, byte b, byte c, byte d, short prefix, short expected) throws UnknownHostException {
