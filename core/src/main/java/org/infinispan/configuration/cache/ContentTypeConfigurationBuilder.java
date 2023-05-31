@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import static org.infinispan.configuration.cache.ContentTypeConfiguration.MEDIA_TYPE;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -53,8 +54,8 @@ public class ContentTypeConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    @Override
-   public ContentTypeConfigurationBuilder read(ContentTypeConfiguration template) {
-      attributes.read(template.attributes());
+   public ContentTypeConfigurationBuilder read(ContentTypeConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

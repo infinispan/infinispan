@@ -100,4 +100,8 @@ abstract class AbstractContainerResource implements ContainerResource {
       is.readFully(b);
       return ProtobufUtil.fromByteArray(ctx, b, clazz);
    }
+
+   static boolean isInternalName(String name) {
+      return name.startsWith("org.infinispan") || name.startsWith("example.") || name.equals("memcachedCache") || name.equals("respCache");
+   }
 }

@@ -4,6 +4,8 @@ import static org.infinispan.configuration.cache.ClusterLoaderConfiguration.REMO
 
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.configuration.Combine;
+
 /**
  * @deprecated since 11.0. To be removed in 14.0 ISPN-11864 with no direct replacement.
  */
@@ -35,8 +37,8 @@ public class ClusterLoaderConfigurationBuilder extends AbstractStoreConfiguratio
    }
 
    @Override
-   public ClusterLoaderConfigurationBuilder read(ClusterLoaderConfiguration template) {
-      super.read(template);
+   public ClusterLoaderConfigurationBuilder read(ClusterLoaderConfiguration template, Combine combine) {
+      super.read(template, combine);
       return this;
    }
 }

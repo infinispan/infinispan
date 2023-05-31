@@ -4,6 +4,7 @@ import static org.infinispan.configuration.cache.TakeOfflineConfiguration.AFTER_
 import static org.infinispan.configuration.cache.TakeOfflineConfiguration.MIN_TIME_TO_WAIT;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -72,8 +73,8 @@ public class TakeOfflineConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    @Override
-   public TakeOfflineConfigurationBuilder read(TakeOfflineConfiguration template) {
-      attributes.read(template.attributes());
+   public TakeOfflineConfigurationBuilder read(TakeOfflineConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 }

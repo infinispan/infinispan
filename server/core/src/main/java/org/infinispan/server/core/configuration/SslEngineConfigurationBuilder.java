@@ -4,6 +4,7 @@ import java.util.function.Supplier;
 
 import javax.net.ssl.SSLContext;
 
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.InstanceSupplier;
 import org.infinispan.server.core.logging.Log;
@@ -165,7 +166,7 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
    }
 
    @Override
-   public SslEngineConfigurationBuilder read(SslEngineConfiguration template) {
+   public SslEngineConfigurationBuilder read(SslEngineConfiguration template, Combine combine) {
       this.keyStoreFileName = template.keyStoreFileName();
       this.keyStoreType = template.keyStoreType();
       this.keyStorePassword = template.keyStorePassword();

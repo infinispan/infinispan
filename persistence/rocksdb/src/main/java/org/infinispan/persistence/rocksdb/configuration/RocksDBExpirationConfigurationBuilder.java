@@ -4,6 +4,7 @@ import static org.infinispan.persistence.rocksdb.configuration.RocksDBExpiration
 import static org.infinispan.persistence.rocksdb.configuration.RocksDBExpirationConfiguration.EXPIRY_QUEUE_SIZE;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -41,8 +42,8 @@ public class RocksDBExpirationConfigurationBuilder implements Builder<RocksDBExp
    }
 
    @Override
-   public Builder<?> read(RocksDBExpirationConfiguration template) {
-      attributes.read(template.attributes());
+   public Builder<?> read(RocksDBExpirationConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

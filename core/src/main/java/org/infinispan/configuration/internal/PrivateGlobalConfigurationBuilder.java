@@ -1,6 +1,7 @@
 package org.infinispan.configuration.internal;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 
@@ -40,8 +41,8 @@ public class PrivateGlobalConfigurationBuilder implements Builder<PrivateGlobalC
    }
 
    @Override
-   public Builder<?> read(PrivateGlobalConfiguration template) {
-      this.attributes.read(template.attributes());
+   public Builder<?> read(PrivateGlobalConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 

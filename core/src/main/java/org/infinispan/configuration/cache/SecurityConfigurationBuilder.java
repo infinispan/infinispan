@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
@@ -35,8 +36,8 @@ public class SecurityConfigurationBuilder extends AbstractConfigurationChildBuil
    }
 
    @Override
-   public SecurityConfigurationBuilder read(SecurityConfiguration template) {
-      this.authorizationBuilder.read(template.authorization());
+   public SecurityConfigurationBuilder read(SecurityConfiguration template, Combine combine) {
+      this.authorizationBuilder.read(template.authorization(), combine);
       return this;
    }
 

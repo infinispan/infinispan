@@ -6,6 +6,7 @@ import static org.infinispan.configuration.cache.AsyncStoreConfiguration.MODIFIC
 import static org.infinispan.configuration.cache.AsyncStoreConfiguration.THREAD_POOL_SIZE;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
@@ -105,8 +106,8 @@ public class AsyncStoreConfigurationBuilder<S> extends AbstractStoreConfiguratio
    }
 
    @Override
-   public AsyncStoreConfigurationBuilder<S> read(AsyncStoreConfiguration template) {
-      this.attributes.read(template.attributes());
+   public AsyncStoreConfigurationBuilder<S> read(AsyncStoreConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 

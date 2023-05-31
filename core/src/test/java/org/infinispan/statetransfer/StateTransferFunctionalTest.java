@@ -12,6 +12,7 @@ import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -288,7 +289,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       embeddedCacheManager.start();
 
       ConfigurationBuilder configToUse = new ConfigurationBuilder();
-      configToUse.read(configurationBuilder.build())
+      configToUse.read(configurationBuilder.build(), Combine.DEFAULT)
             .clustering().remoteTimeout(1, TimeUnit.NANOSECONDS).stateTransfer().timeout(1, TimeUnit.NANOSECONDS);
 
       assertEquals(1, cache1.getAdvancedCache().getDistributionManager().getCacheTopology().getMembers().size());

@@ -5,6 +5,7 @@ import static org.infinispan.server.configuration.security.TokenRealmConfigurati
 import static org.infinispan.server.configuration.security.TokenRealmConfiguration.NAME;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -75,10 +76,10 @@ public class TokenRealmConfigurationBuilder implements RealmProviderBuilder<Toke
    }
 
    @Override
-   public TokenRealmConfigurationBuilder read(TokenRealmConfiguration template) {
-      attributes.read(template.attributes());
-      jwtConfiguration.read(template.jwtConfiguration());
-      oauth2Configuration.read(template.oauth2Configuration());
+   public TokenRealmConfigurationBuilder read(TokenRealmConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
+      jwtConfiguration.read(template.jwtConfiguration(), combine);
+      oauth2Configuration.read(template.oauth2Configuration(), combine);
       return this;
    }
 

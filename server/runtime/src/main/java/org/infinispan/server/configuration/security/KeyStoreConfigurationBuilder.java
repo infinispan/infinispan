@@ -12,6 +12,7 @@ import static org.infinispan.server.configuration.security.KeyStoreConfiguration
 import java.util.function.Supplier;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.Server;
 import org.infinispan.server.security.PasswordCredentialSource;
@@ -93,8 +94,8 @@ public class KeyStoreConfigurationBuilder implements Builder<KeyStoreConfigurati
    }
 
    @Override
-   public KeyStoreConfigurationBuilder read(KeyStoreConfiguration template) {
-      attributes.read(template.attributes());
+   public KeyStoreConfigurationBuilder read(KeyStoreConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 }

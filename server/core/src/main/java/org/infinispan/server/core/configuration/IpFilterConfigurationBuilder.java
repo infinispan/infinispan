@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.core.transport.IpSubnetFilterRule;
 
@@ -46,7 +47,7 @@ public class IpFilterConfigurationBuilder<T extends ProtocolServerConfiguration,
    }
 
    @Override
-   public IpFilterConfigurationBuilder<T, S> read(IpFilterConfiguration template) {
+   public IpFilterConfigurationBuilder<T, S> read(IpFilterConfiguration template, Combine combine) {
       rules.clear();
       rules.addAll(template.rules());
       return this;

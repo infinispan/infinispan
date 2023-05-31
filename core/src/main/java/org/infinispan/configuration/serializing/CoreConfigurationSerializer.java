@@ -443,7 +443,9 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       if (groups.attributes().isModified()) {
          writer.writeStartElement(Element.GROUPS);
          groups.attributes().write(writer, GroupsConfiguration.ENABLED);
-         writer.writeArrayElement(Element.GROUPER, Element.GROUPER, Attribute.CLASS, groups.groupers().stream().map(g -> g.getClass().getName()).collect(Collectors.toList()));
+         if (!groups.groupers().isEmpty()) {
+            writer.writeArrayElement(Element.GROUPER, Element.GROUPER, Attribute.CLASS, groups.groupers().stream().map(g -> g.getClass().getName()).collect(Collectors.toList()));
+         }
          writer.writeEndElement();
       }
       writeExtraConfiguration(writer, configuration.modules());
@@ -775,7 +777,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
    private void writePersistence(ConfigurationWriter writer, Configuration configuration) {
       PersistenceConfiguration persistence = configuration.persistence();
       AttributeSet attributes = persistence.attributes();
-      if (attributes.isModified() || persistence.stores().size() > 0) {
+      if (attributes.isModified() || !persistence.stores().isEmpty()) {
          writer.writeStartElement(Element.PERSISTENCE);
          attributes.write(writer, PersistenceConfiguration.PASSIVATION, Attribute.PASSIVATION);
          attributes.write(writer, PersistenceConfiguration.AVAILABILITY_INTERVAL, Attribute.AVAILABILITY_INTERVAL);

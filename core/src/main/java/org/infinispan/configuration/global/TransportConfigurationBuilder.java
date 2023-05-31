@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
@@ -278,9 +279,9 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
 
    @Override
    public
-   TransportConfigurationBuilder read(TransportConfiguration template) {
-      attributes.read(template.attributes());
-      this.jgroupsConfigurationBuilder.read(template.jgroups());
+   TransportConfigurationBuilder read(TransportConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
+      this.jgroupsConfigurationBuilder.read(template.jgroups(), combine);
       this.typedProperties = new TypedProperties(template.properties());
       if (template.transport() != null) {
          Transport transport = Util.getInstance(template.transport().getClass().getName(), template.transport().getClass().getClassLoader());

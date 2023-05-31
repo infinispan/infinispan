@@ -1,6 +1,7 @@
 package org.infinispan.server.configuration.security;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -41,8 +42,8 @@ public class SSLEngineConfigurationBuilder implements Builder<SSLEngineConfigura
    }
 
    @Override
-   public SSLEngineConfigurationBuilder read(SSLEngineConfiguration template) {
-      attributes.read(template.attributes());
+   public SSLEngineConfigurationBuilder read(SSLEngineConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 }

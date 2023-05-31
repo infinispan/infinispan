@@ -21,6 +21,7 @@ import java.util.function.Consumer;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
@@ -187,9 +188,9 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
    }
 
    @Override
-   public Builder<?> read(RemoteCacheConfiguration template) {
-      this.nearCache.read(template.nearCache());
-      this.attributes.read(template.attributes());
+   public Builder<?> read(RemoteCacheConfiguration template, Combine combine) {
+      this.nearCache.read(template.nearCache(), combine);
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 

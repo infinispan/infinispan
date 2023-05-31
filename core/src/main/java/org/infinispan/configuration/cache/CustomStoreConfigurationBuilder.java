@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import static org.infinispan.configuration.cache.CustomStoreConfiguration.CUSTOM_STORE_CLASS;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 
 /**
  * StoreConfigurationBuilder used for stores/loaders that don't have a configuration builder
@@ -28,8 +29,8 @@ public class CustomStoreConfigurationBuilder extends
    }
 
    @Override
-   public Builder<?> read(CustomStoreConfiguration template) {
-      super.read(template);
+   public Builder<?> read(CustomStoreConfiguration template, Combine combine) {
+      super.read(template, combine);
       return this;
    }
 

@@ -1,6 +1,5 @@
 package org.infinispan.server.core.backup.resources;
 
-import static org.infinispan.globalstate.impl.GlobalConfigurationManagerImpl.CACHE_SCOPE;
 import static org.infinispan.server.core.BackupManager.Resources.Type.CACHES;
 
 import java.io.DataInputStream;
@@ -10,12 +9,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.EnumSet;
+import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -25,28 +22,23 @@ import org.infinispan.cache.impl.InvocationHelper;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.api.CacheContainerAdmin;
-import org.infinispan.commons.configuration.io.ConfigurationResourceResolvers;
+import org.infinispan.commons.configuration.io.ConfigurationReader;
+import org.infinispan.commons.configuration.io.NamingStrategy;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.parsing.CacheParser;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.impl.StorageConfigurationManager;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.globalstate.GlobalConfigurationManager;
-import org.infinispan.globalstate.ScopedState;
-import org.infinispan.globalstate.impl.CacheState;
-import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
@@ -76,9 +68,6 @@ import io.reactivex.rxjava3.core.Flowable;
  * @since 12.0
  */
 public class CacheResource extends AbstractContainerResource {
-
-   private static final String MEMCACHED_CACHE = "memcachedCache";
-
    private final EmbeddedCacheManager cm;
    private final ParserRegistry parserRegistry;
 
@@ -99,7 +88,7 @@ public class CacheResource extends AbstractContainerResource {
 
          if (wildcard) {
             // For wildcard resources, we ignore internal caches, however explicitly requested internal caches are allowed
-            if (config == null || config.isTemplate() || icr.isInternalCache(cache) || MEMCACHED_CACHE.equals(cache)) {
+            if (config == null || config.isTemplate() || icr.isInternalCache(cache) || isInternalName(cache)) {
                continue;
             }
             resources.add(cache);
@@ -122,7 +111,9 @@ public class CacheResource extends AbstractContainerResource {
    @Override
    public CompletionStage<Void> restore(ZipFile zip) {
       AggregateCompletionStage<Void> stages = CompletionStages.aggregateCompletionStage();
-
+      ConfigurationManager configurationManager = SecurityActions.getGlobalComponentRegistry(cm).getComponent(ConfigurationManager.class);
+      Properties properties = new Properties();
+      properties.put(CacheParser.IGNORE_DUPLICATES, true);
       for (String cacheName : resources) {
          stages.dependsOn(blockingManager.runBlocking(() -> {
             Path cacheRoot = root.resolve(cacheName);
@@ -131,37 +122,12 @@ public class CacheResource extends AbstractContainerResource {
             String configFile = configFile(cacheName);
             String zipPath = cacheRoot.resolve(configFile).toString();
             try (InputStream is = zip.getInputStream(zip.getEntry(zipPath))) {
-               ConfigurationBuilderHolder builderHolder = parserRegistry.parse(is, ConfigurationResourceResolvers.DEFAULT, MediaType.fromExtension(configFile));
+               ConfigurationReader reader = ConfigurationReader.from(is).withProperties(properties).withNamingStrategy(NamingStrategy.KEBAB_CASE).withType(MediaType.fromExtension(configFile)).build();
+               ConfigurationBuilderHolder builderHolder = parserRegistry.parse(reader, configurationManager.toBuilderHolder());
                Configuration config = builderHolder.getNamedConfigurationBuilders().get(cacheName).build();
                log.debugf("Restoring Cache %s: %s", cacheName, config.toStringConfiguration(cacheName));
-
-               String configXml = config.toStringConfiguration(cacheName);
-               ClusterExecutor executor = SecurityActions.getClusterExecutor(cm);
-               final AtomicReference<Throwable> cause = new AtomicReference<>();
-               CompletableFuture<Void> remoteCall = executor.submitConsumer(
-                     m -> createCacheFunction(cacheName, configXml, m),
-                     (a, v, t) -> {
-                  if (t != null) {
-                     // Log failures for all nodes and return the first received failure
-                     log.errorf("%s unable to create cache %s", a, cacheName);
-                     cause.compareAndSet(null, t);
-                  }
-               });
-               // Wait for the cache to be started everywhere
-               CompletionStages.join(remoteCall);
-               if (cause.get() != null) {
-                  throw new CacheException(cause.get());
-               }
-
-               // Insert the cache configuration in the CONFIG state in parallel
-               // Note: cm.admin().getOrCreateCache() looks better, but it is not guaranteed to insert the entry
-               // in the CONFIG cache if the cache already exists locally.
-               log.debugf("Define cache %s globally. config=%s", cacheName, configXml);
-               CacheState state = new CacheState(null, configXml, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class));
-               GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(cm);
-               gcr.getComponent(GlobalConfigurationManager.class).getStateCache().getAdvancedCache()
-                  .withFlags(Flag.IGNORE_RETURN_VALUES)
-                  .putIfAbsent(new ScopedState(CACHE_SCOPE, cacheName), state);
+               // Create the cache
+               SecurityActions.getOrCreateCache(cm, cacheName, config);
             } catch (IOException e) {
                throw new CacheException(e);
             }
@@ -210,19 +176,6 @@ public class CacheResource extends AbstractContainerResource {
          }, "restore-cache-" + cacheName));
       }
       return stages.freeze();
-   }
-
-   private static Void createCacheFunction(String cacheName, String configXml, EmbeddedCacheManager m) {
-      GlobalConfiguration globalConfig = SecurityActions.getGlobalConfiguration(m);
-
-      log.debugf("Create cache %s locally. config=%s", cacheName, configXml);
-      ConfigurationBuilderHolder cbh = new ParserRegistry().parse(configXml);
-      Configuration configuration = cbh.getNamedConfigurationBuilders().get(cacheName).build(globalConfig);
-      if (!m.getCacheConfigurationNames().contains(cacheName)) {
-         m.defineConfiguration(cacheName, configuration);
-      }
-      m.getCache(cacheName);
-      return null;
    }
 
    private CompletionStage<Void> createCacheBackup(String cacheName) {

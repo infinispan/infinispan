@@ -3,6 +3,7 @@ package org.infinispan.rest.configuration;
 import java.util.Arrays;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
@@ -115,8 +116,8 @@ public class CorsRuleConfigurationBuilder implements Builder<CorsRuleConfigurati
    }
 
    @Override
-   public CorsRuleConfigurationBuilder read(CorsRuleConfiguration template) {
-      attributes.read(template.attributes());
+   public CorsRuleConfigurationBuilder read(CorsRuleConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 }

@@ -4,11 +4,12 @@ import java.sql.Connection;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.persistence.jdbc.common.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.common.configuration.ConnectionFactoryConfigurationBuilder;
 import org.infinispan.persistence.jdbc.common.configuration.PooledConnectionFactoryConfiguration;
-import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.common.impl.connectionfactory.PooledConnectionFactory;
+import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
@@ -55,7 +56,7 @@ public class PooledConnectionFactoryTest {
               .addStore(JdbcStringBasedStoreConfigurationBuilder.class);
 
       if(customFactoryConfiguration != null) {
-         factoryBuilder = storeBuilder.connectionPool().read(customFactoryConfiguration);
+         factoryBuilder = storeBuilder.connectionPool().read(customFactoryConfiguration, Combine.DEFAULT);
       } else {
          // We load agroal.properties to enable metrics and ensure that property file loading works as expected
          factoryBuilder = storeBuilder.connectionPool().propertyFile("src/test/resources/configs/agroal.properties");

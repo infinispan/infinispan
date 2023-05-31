@@ -21,6 +21,7 @@ import java.util.Properties;
 import javax.net.ssl.SSLContext;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
 
@@ -212,8 +213,8 @@ public class SslConfigurationBuilder extends AbstractConfigurationChildBuilder i
    }
 
    @Override
-   public Builder read(SslConfiguration template) {
-      this.attributes.read(template.attributes());
+   public Builder read(SslConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 

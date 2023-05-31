@@ -1,6 +1,7 @@
 package org.infinispan.server.configuration.security;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
 
@@ -44,9 +45,9 @@ public class SecurityConfigurationBuilder implements Builder<SecurityConfigurati
    }
 
    @Override
-   public SecurityConfigurationBuilder read(SecurityConfiguration template) {
-      credentialStoresConfiguration.read(template.credentialStores());
-      realmsConfiguration.read(template.realms());
+   public SecurityConfigurationBuilder read(SecurityConfiguration template, Combine combine) {
+      credentialStoresConfiguration.read(template.credentialStores(), combine);
+      realmsConfiguration.read(template.realms(), combine);
       return this;
    }
 

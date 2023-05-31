@@ -9,6 +9,7 @@ import static org.infinispan.server.configuration.security.CredentialStoreConfig
 import java.util.function.Supplier;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.wildfly.security.credential.source.CredentialSource;
 
@@ -55,8 +56,8 @@ public class CredentialStoreConfigurationBuilder implements Builder<CredentialSt
    }
 
    @Override
-   public Builder<?> read(CredentialStoreConfiguration template) {
-      this.attributes.read(template.attributes());
+   public Builder<?> read(CredentialStoreConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 }

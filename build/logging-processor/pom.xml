@@ -34,13 +34,6 @@
                     <excludes>
                         <exclude>**/package-info.java</exclude>
                     </excludes>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>org.kohsuke.metainf-services</groupId>
-                            <artifactId>metainf-services</artifactId>
-                            <version>${versionx.org.kohsuke.metainf-services.metainf-services}</version>
-                        </path>
-                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
         </plugins>

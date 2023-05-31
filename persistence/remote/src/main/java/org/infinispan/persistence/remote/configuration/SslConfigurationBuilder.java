@@ -9,9 +9,8 @@ import java.util.List;
 
 import javax.net.ssl.SSLContext;
 
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -22,8 +21,6 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @since 9.1
  */
 public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<SslConfiguration> {
-   private static final Log log = LogFactory.getLog(SslConfigurationBuilder.class);
-
    private KeyStoreConfigurationBuilder keyStoreConfigurationBuilder;
    private TrustStoreConfigurationBuilder trustStoreConfigurationBuilder;
 
@@ -164,10 +161,10 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    }
 
    @Override
-   public SslConfigurationBuilder read(SslConfiguration template) {
-      this.attributes.read(template.attributes());
-      this.keyStoreConfigurationBuilder.read(template.keyStoreConfiguration());
-      this.trustStoreConfigurationBuilder.read(template.trustStoreConfiguration());
+   public SslConfigurationBuilder read(SslConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
+      this.keyStoreConfigurationBuilder.read(template.keyStoreConfiguration(), combine);
+      this.trustStoreConfigurationBuilder.read(template.trustStoreConfiguration(), combine);
       return this;
    }
 }

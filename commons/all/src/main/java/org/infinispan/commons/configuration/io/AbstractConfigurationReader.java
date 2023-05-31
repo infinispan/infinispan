@@ -41,8 +41,8 @@ public abstract class AbstractConfigurationReader implements ConfigurationReader
    }
 
    @Override
-   public String getProperty(String name) {
-      return properties.getProperty(name);
+   public <T> T getProperty(String name) {
+      return (T) properties.get(name);
    }
 
    @Override

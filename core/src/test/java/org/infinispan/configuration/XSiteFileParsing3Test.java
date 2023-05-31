@@ -1,7 +1,6 @@
-package org.infinispan.xsite;
+package org.infinispan.configuration;
 
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.configuration.cache.BackupConfiguration;
@@ -46,8 +45,8 @@ public class XSiteFileParsing3Test extends SingleCacheManagerTest {
             .backupFailurePolicy(BackupFailurePolicy.WARN).failurePolicyClass(null).replicationTimeout(12003)
             .useTwoPhaseCommit(false).create();
       assertTrue(dcc.sites().allBackups().contains(nyc));
-      assertNull(dcc.sites().backupFor().remoteSite());
-      assertNull(dcc.sites().backupFor().remoteCache());
+      assertEquals("SFO", dcc.sites().backupFor().remoteSite());
+      assertEquals("someCache", dcc.sites().backupFor().remoteCache());
    }
    public void testTakeOfflineDifferentConfig() {
       Configuration dcc = cacheManager.getCacheConfiguration("takeOfflineDifferentConfig");

@@ -4,6 +4,7 @@ import static org.infinispan.configuration.cache.QueryConfiguration.DEFAULT_MAX_
 import static org.infinispan.configuration.cache.QueryConfiguration.HIT_COUNT_ACCURACY;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 public class QueryConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<QueryConfiguration> {
@@ -60,8 +61,8 @@ public class QueryConfigurationBuilder extends AbstractConfigurationChildBuilder
    }
 
    @Override
-   public QueryConfigurationBuilder read(QueryConfiguration template) {
-      attributes.read(template.attributes());
+   public QueryConfigurationBuilder read(QueryConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 }

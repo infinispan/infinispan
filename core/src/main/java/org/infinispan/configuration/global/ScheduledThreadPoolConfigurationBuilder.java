@@ -5,6 +5,7 @@ import static org.infinispan.configuration.global.ScheduledThreadPoolConfigurati
 import static org.infinispan.configuration.global.ScheduledThreadPoolConfiguration.THREAD_FACTORY;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
 import org.infinispan.factories.threads.DefaultThreadFactory;
@@ -44,8 +45,8 @@ public class ScheduledThreadPoolConfigurationBuilder extends AbstractGlobalConfi
    }
 
    @Override
-   public ScheduledThreadPoolConfigurationBuilder read(ScheduledThreadPoolConfiguration template) {
-      attributes.read(template.attributes());
+   public ScheduledThreadPoolConfigurationBuilder read(ScheduledThreadPoolConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

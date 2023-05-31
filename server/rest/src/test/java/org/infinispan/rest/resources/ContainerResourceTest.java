@@ -341,7 +341,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testConfigListener() throws InterruptedException, IOException {
-      SSEListener sseListener = new SSEListener();
+      SSEListener sseListener = new WeakSSEListener();
       try (Closeable ignored = adminClient.raw().listen("/rest/v2/container/config?action=listen&includeCurrentState=true", Collections.emptyMap(), sseListener)) {
          AssertJUnit.assertTrue(sseListener.openLatch.await(10, TimeUnit.SECONDS));
 

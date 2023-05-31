@@ -1,6 +1,7 @@
 package org.infinispan.persistence.remote.configuration;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -33,9 +34,9 @@ public class SecurityConfigurationBuilder extends AbstractRemoteStoreConfigurati
    }
 
    @Override
-   public Builder<?> read(SecurityConfiguration template) {
-      authentication.read(template.authentication());
-      ssl.read(template.ssl());
+   public Builder<?> read(SecurityConfiguration template, Combine combine) {
+      authentication.read(template.authentication(), combine);
+      ssl.read(template.ssl(), combine);
       return this;
    }
 

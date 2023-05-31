@@ -8,6 +8,7 @@ import static org.infinispan.server.hotrod.configuration.HotRodServerConfigurati
 import java.lang.invoke.MethodHandles;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.LockingConfigurationBuilder;
 import org.infinispan.configuration.cache.StateTransferConfigurationBuilder;
@@ -25,7 +26,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class HotRodServerConfigurationBuilder extends ProtocolServerConfigurationBuilder<HotRodServerConfiguration, HotRodServerConfigurationBuilder> implements
       Builder<HotRodServerConfiguration>, HotRodServerChildConfigurationBuilder {
-   private static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
    private final AuthenticationConfigurationBuilder authentication = new AuthenticationConfigurationBuilder(this);
    private final TopologyCacheConfigurationBuilder topologyCache = new TopologyCacheConfigurationBuilder();
    private final EncryptionConfigurationBuilder encryption = new EncryptionConfigurationBuilder(ssl());
@@ -132,11 +133,11 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
    }
 
    @Override
-   public HotRodServerConfigurationBuilder read(HotRodServerConfiguration template) {
-      super.read(template);
-      this.authentication.read(template.authentication());
-      this.topologyCache.read(template.topologyCache());
-      this.encryption.read(template.encryption());
+   public HotRodServerConfigurationBuilder read(HotRodServerConfiguration template, Combine combine) {
+      super.read(template, combine);
+      this.authentication.read(template.authentication(), combine);
+      this.topologyCache.read(template.topologyCache(), combine);
+      this.encryption.read(template.encryption(), combine);
       return this;
    }
 

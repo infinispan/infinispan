@@ -9,6 +9,7 @@ import static org.infinispan.util.logging.Log.CONFIG;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -120,8 +121,8 @@ public class StateTransferConfigurationBuilder extends
    }
 
    @Override
-   public StateTransferConfigurationBuilder read(StateTransferConfiguration template) {
-      this.attributes.read(template.attributes());
+   public StateTransferConfigurationBuilder read(StateTransferConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 

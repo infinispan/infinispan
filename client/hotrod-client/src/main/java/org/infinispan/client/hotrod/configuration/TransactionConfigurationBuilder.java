@@ -17,6 +17,7 @@ import javax.transaction.xa.XAResource;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.commons.util.TypedProperties;
@@ -110,7 +111,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    @Override
-   public Builder<?> read(TransactionConfiguration template) {
+   public Builder<?> read(TransactionConfiguration template, Combine combine) {
       this.transactionManagerLookup = template.transactionManagerLookup();
       this.transactionMode = template.transactionMode();
       this.timeout = template.timeout();

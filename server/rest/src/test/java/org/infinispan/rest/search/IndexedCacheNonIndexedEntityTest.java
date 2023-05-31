@@ -36,7 +36,6 @@ public class IndexedCacheNonIndexedEntityTest extends SingleCacheManagerTest {
    private static final String SCHEMA = "message NonIndexed { optional string name = 1; }";
 
    protected RestClient client;
-   protected RestCacheClient cacheClient;
    private RestServerHelper restServer;
 
    @Override

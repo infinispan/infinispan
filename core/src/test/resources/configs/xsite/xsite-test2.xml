@@ -13,15 +13,6 @@
       </distributed-cache-configuration>
       <distributed-cache name="default" configuration="base"/>
       <distributed-cache name="inheritor" configuration="base"/>
-      <distributed-cache name="noBackupFor" configuration="base">
-         <backups>
-            <backup site="NYC" strategy="SYNC" failure-policy="WARN" timeout="12003"/>
-         </backups>
-         <backup-for/>
-      </distributed-cache>
-      <distributed-cache name="noBackupFor2" configuration="base">
-         <backups/>
-      </distributed-cache>
    </cache-container>
 
 </infinispan>

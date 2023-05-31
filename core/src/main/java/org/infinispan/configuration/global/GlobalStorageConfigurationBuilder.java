@@ -6,6 +6,7 @@ import static org.infinispan.util.logging.Log.CONFIG;
 import java.util.function.Supplier;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.globalstate.LocalConfigurationStorage;
@@ -47,8 +48,8 @@ public class GlobalStorageConfigurationBuilder extends AbstractGlobalConfigurati
    }
 
    @Override
-   public GlobalStorageConfigurationBuilder read(GlobalStorageConfiguration template) {
-      attributes.read(template.attributes());
+   public GlobalStorageConfigurationBuilder read(GlobalStorageConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       this.storage = template.configurationStorage();
       return this;
    }

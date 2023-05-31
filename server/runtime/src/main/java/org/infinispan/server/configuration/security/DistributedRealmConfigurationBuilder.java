@@ -6,6 +6,7 @@ import static org.infinispan.server.configuration.security.DistributedRealmConfi
 import java.util.Arrays;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -46,8 +47,8 @@ public class DistributedRealmConfigurationBuilder implements RealmProviderBuilde
    }
 
    @Override
-   public Builder<?> read(DistributedRealmConfiguration template) {
-      attributes.read(template.attributes());
+   public Builder<?> read(DistributedRealmConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

@@ -5,6 +5,7 @@ import java.util.function.Supplier;
 import javax.net.ssl.SSLContext;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -51,8 +52,8 @@ public class SniConfigurationBuilder implements Builder<SniConfiguration> {
    }
 
    @Override
-   public SniConfigurationBuilder read(SniConfiguration template) {
-      attributes.read(template.attributes());
+   public SniConfigurationBuilder read(SniConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

@@ -5,6 +5,7 @@ import static org.infinispan.query.logging.Log.CONTAINER;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -19,7 +20,6 @@ import javax.management.ObjectName;
 import org.apache.lucene.search.BooleanQuery;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
@@ -29,6 +29,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.encoding.impl.StorageConfigurationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
@@ -104,6 +105,7 @@ public class LifecycleManager implements ModuleLifecycle {
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
       InternalCacheRegistry icr = cr.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+      StorageConfigurationManager scm = cr.getComponent(StorageConfigurationManager.class);
       LocalQueryStatistics queryStatistics = cr.getComponent(LocalQueryStatistics.class);
       if (!icr.isInternalCache(cacheName) || icr.internalCacheHasFlag(cacheName, Flag.QUERYABLE)) {
          AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
@@ -114,7 +116,12 @@ public class LifecycleManager implements ModuleLifecycle {
 
          SearchMapping searchMapping = null;
          if (isIndexed) {
-            Map<String, Class<?>> indexedClasses = makeIndexedClassesMap(cache);
+            Map<String, Class<?>> indexedClasses;
+            if (!scm.getValueStorageMediaType().match(MediaType.APPLICATION_PROTOSTREAM) || !remoteQueryEnabled) {
+               indexedClasses = makeIndexedClassesMap(cache);
+            } else {
+               indexedClasses = Collections.emptyMap();
+            }
 
             KeyTransformationHandler keyTransformationHandler = new KeyTransformationHandler(aggregatedClassLoader);
             cr.registerComponent(keyTransformationHandler, KeyTransformationHandler.class);
@@ -151,25 +158,14 @@ public class LifecycleManager implements ModuleLifecycle {
 
    private Map<String, Class<?>> makeIndexedClassesMap(AdvancedCache<?, ?> cache) {
       Configuration cacheConfiguration = cache.getCacheConfiguration();
-
       Map<String, Class<?>> entities = new HashMap<>();
-      for (Class<?> c : cacheConfiguration.indexing().indexedEntities()) {
+      // Try to resolve the indexed type names to class names.
+      for (String entityName : cacheConfiguration.indexing().indexedEntityTypes()) {
          // include classes declared in indexing config
-         entities.put(c.getName(), c);
-      }
-
-      if (!cache.getValueDataConversion().getStorageMediaType().match(MediaType.APPLICATION_PROTOSTREAM) ||
-          !remoteQueryEnabled) {
-         // Try to resolve the indexed type names to class names.
-         for (String typeName : cacheConfiguration.indexing().indexedEntityTypes()) {
-            if (!entities.containsKey(typeName)) {
-               try {
-                  Class<?> c = Util.loadClass(typeName, cache.getClassLoader());
-                  entities.put(c.getName(), c);
-               } catch (Exception e) {
-                  throw new CacheConfigurationException("Failed to load declared indexed class", e);
-               }
-            }
+         try {
+            entities.put(entityName, Util.loadClass(entityName, cache.getClassLoader()));
+         } catch (Exception e) {
+            throw CONTAINER.cannotLoadIndexedClass(entityName, e);
          }
       }
       return entities;
@@ -211,6 +207,7 @@ public class LifecycleManager implements ModuleLifecycle {
    @Override
    public void cacheStarted(ComponentRegistry cr, String cacheName) {
       Configuration configuration = cr.getComponent(Configuration.class);
+      StorageConfigurationManager scm = cr.getComponent(StorageConfigurationManager.class);
       IndexingConfiguration indexingConfiguration = configuration.indexing();
       if (!indexingConfiguration.enabled()) {
          if (verifyChainContainsQueryInterceptor(cr)) {
@@ -223,8 +220,8 @@ public class LifecycleManager implements ModuleLifecycle {
       }
 
       SearchMapping searchMapping = cr.getComponent(SearchMapping.class);
-      if (searchMapping != null) {
-         checkIndexableClasses(searchMapping, indexingConfiguration.indexedEntities());
+      if (searchMapping != null && !scm.getValueStorageMediaType().match(MediaType.APPLICATION_PROTOSTREAM)) {
+         checkIndexableClasses(searchMapping, indexingConfiguration.indexedEntityTypes(), cr.getGlobalComponentRegistry().getGlobalConfiguration().classLoader());
       }
 
       AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
@@ -248,14 +245,14 @@ public class LifecycleManager implements ModuleLifecycle {
     * Check that the indexable classes declared by the user are really indexable by looking at the presence of Hibernate
     * Search index bindings.
     */
-   private void checkIndexableClasses(SearchMapping searchMapping, Set<Class<?>> indexedEntities) {
+   private void checkIndexableClasses(SearchMapping searchMapping, Set<String> indexedEntities, ClassLoader classLoader) {
       if (indexedEntities.isEmpty()) {
          return;
       }
-
-      for (Class<?> c : indexedEntities) {
-         if (searchMapping.indexedEntity(c) == null) {
-            throw CONTAINER.classNotIndexable(c.getName());
+      for (String entityName : indexedEntities) {
+         Class<?> indexedClass = Util.loadClass(entityName, classLoader);
+         if (searchMapping.indexedEntity(indexedClass) == null) {
+            throw CONTAINER.classNotIndexable(entityName);
          }
       }
    }

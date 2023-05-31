@@ -41,6 +41,7 @@ import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.configuration.ClassAllowList;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.io.ConfigurationResourceResolvers;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.internal.BlockHoundUtil;
@@ -458,7 +459,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       boolean template = true;
       for (Configuration configuration : configurations) {
          if (configuration != null) {
-            builder.read(configuration);
+            builder.read(configuration, Combine.DEFAULT);
             template = template && configuration.isTemplate();
          } else {
             throw new NullPointerException("Null arguments not allowed");

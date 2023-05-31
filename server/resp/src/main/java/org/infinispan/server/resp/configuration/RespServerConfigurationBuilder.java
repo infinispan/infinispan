@@ -1,6 +1,7 @@
 package org.infinispan.server.resp.configuration;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.core.admin.AdminOperationsHandler;
 import org.infinispan.server.core.configuration.EncryptionConfigurationBuilder;
@@ -77,10 +78,10 @@ public class RespServerConfigurationBuilder extends ProtocolServerConfigurationB
    }
 
    @Override
-   public Builder<?> read(RespServerConfiguration template) {
-      super.read(template);
-      this.authentication.read(template.authentication());
-      this.encryption.read(template.encryption());
+   public Builder<?> read(RespServerConfiguration template, Combine combine) {
+      super.read(template, combine);
+      this.authentication.read(template.authentication(), combine);
+      this.encryption.read(template.encryption(), combine);
       return this;
    }
 }

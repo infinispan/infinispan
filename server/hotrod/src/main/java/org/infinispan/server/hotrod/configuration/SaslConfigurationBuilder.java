@@ -12,6 +12,7 @@ import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslServerFactory;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.logging.LogFactory;
@@ -145,8 +146,8 @@ public class SaslConfigurationBuilder implements Builder<SaslConfiguration> {
    }
 
    @Override
-   public SaslConfigurationBuilder read(SaslConfiguration template) {
-      attributes.read(template.attributes());
+   public SaslConfigurationBuilder read(SaslConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       mechProperties = template.mechProperties();
       return this;
    }

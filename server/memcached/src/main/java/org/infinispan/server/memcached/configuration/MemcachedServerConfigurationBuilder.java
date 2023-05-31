@@ -71,10 +71,4 @@ public class MemcachedServerConfigurationBuilder extends ProtocolServerConfigura
    public MemcachedServerConfiguration build() {
       return build(true);
    }
-
-   @Override
-   public Builder<?> read(MemcachedServerConfiguration template) {
-      super.read(template);
-      return this;
-   }
 }

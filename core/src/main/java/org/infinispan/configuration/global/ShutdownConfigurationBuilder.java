@@ -3,6 +3,7 @@ package org.infinispan.configuration.global;
 import static org.infinispan.configuration.global.ShutdownConfiguration.HOOK_BEHAVIOR;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 public class ShutdownConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<ShutdownConfiguration> {
@@ -36,8 +37,8 @@ public class ShutdownConfigurationBuilder extends AbstractGlobalConfigurationBui
 
    @Override
    public
-   ShutdownConfigurationBuilder read(ShutdownConfiguration template) {
-      attributes.read(template.attributes());
+   ShutdownConfigurationBuilder read(ShutdownConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

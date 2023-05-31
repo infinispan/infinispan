@@ -5,6 +5,7 @@ import java.util.Map;
 import javax.security.auth.Subject;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.server.core.security.ServerAuthenticationProvider;
@@ -126,10 +127,10 @@ public class AuthenticationConfigurationBuilder extends AbstractHotRodServerChil
    }
 
    @Override
-   public Builder<?> read(AuthenticationConfiguration template) {
+   public Builder<?> read(AuthenticationConfiguration template, Combine combine) {
       this.enabled = template.enabled();
       this.serverAuthenticationProvider = template.serverAuthenticationProvider();
-      this.sasl.read(template.sasl());
+      this.sasl.read(template.sasl(), combine);
       return this;
    }
 }

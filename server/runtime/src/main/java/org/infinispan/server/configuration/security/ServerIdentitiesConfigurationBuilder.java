@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -46,12 +47,12 @@ public class ServerIdentitiesConfigurationBuilder implements Builder<ServerIdent
    }
 
    @Override
-   public ServerIdentitiesConfigurationBuilder read(ServerIdentitiesConfiguration template) {
+   public ServerIdentitiesConfigurationBuilder read(ServerIdentitiesConfiguration template, Combine combine) {
       if (template.sslConfiguration() != null) {
-         sslConfiguration().read(template.sslConfiguration());
+         sslConfiguration().read(template.sslConfiguration(), combine);
       }
       kerberosConfigurations.clear();
-      template.kerberosConfigurations().forEach(s -> addKerberosConfiguration().read(s));
+      template.kerberosConfigurations().forEach(s -> addKerberosConfiguration().read(s, combine));
       return this;
    }
 }

@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import static org.infinispan.configuration.cache.IndexReaderConfiguration.REFRESH_INTERVAL;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
@@ -37,8 +38,8 @@ public class IndexReaderConfigurationBuilder extends AbstractIndexingConfigurati
    }
 
    @Override
-   public IndexReaderConfigurationBuilder read(IndexReaderConfiguration template) {
-      this.attributes.read(template.attributes());
+   public IndexReaderConfigurationBuilder read(IndexReaderConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 

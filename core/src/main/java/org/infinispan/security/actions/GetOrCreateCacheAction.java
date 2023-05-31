@@ -13,7 +13,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
  * @since 12.1
  */
 public class GetOrCreateCacheAction implements PrivilegedAction<Cache<?, ?>> {
-
    private final String cacheName;
    private final EmbeddedCacheManager cacheManager;
    private final Configuration configuration;

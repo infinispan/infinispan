@@ -4,6 +4,7 @@ import static org.infinispan.configuration.global.StackFileConfiguration.BUILTIN
 import static org.infinispan.configuration.global.StackFileConfiguration.NAME;
 import static org.infinispan.configuration.global.StackFileConfiguration.PATH;
 
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.remoting.transport.jgroups.BuiltinJGroupsChannelConfigurator;
 import org.infinispan.remoting.transport.jgroups.FileJGroupsChannelConfigurator;
@@ -45,8 +46,8 @@ public class StackFileConfigurationBuilder extends AbstractGlobalConfigurationBu
    }
 
    @Override
-   public StackFileConfigurationBuilder read(StackFileConfiguration template) {
-      attributes.read(template.attributes());
+   public StackFileConfigurationBuilder read(StackFileConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       this.configurator = (FileJGroupsChannelConfigurator) template.configurator();
       return this;
    }

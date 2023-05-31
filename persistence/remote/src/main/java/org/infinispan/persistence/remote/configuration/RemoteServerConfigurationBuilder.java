@@ -4,6 +4,7 @@ import static org.infinispan.persistence.remote.configuration.RemoteServerConfig
 import static org.infinispan.persistence.remote.configuration.RemoteServerConfiguration.PORT;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 public class RemoteServerConfigurationBuilder extends AbstractRemoteStoreConfigurationChildBuilder<RemoteStoreConfigurationBuilder> implements
@@ -33,8 +34,8 @@ public class RemoteServerConfigurationBuilder extends AbstractRemoteStoreConfigu
    }
 
    @Override
-   public RemoteServerConfigurationBuilder read(RemoteServerConfiguration template) {
-      attributes.read(template.attributes());
+   public RemoteServerConfigurationBuilder read(RemoteServerConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 }

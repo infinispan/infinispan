@@ -47,6 +47,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.EncodingConfigurationBuilder;
@@ -59,7 +60,6 @@ import org.infinispan.server.core.BackupManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.function.TriConsumer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -173,7 +173,7 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
       int numEntries = 1;
       createAndRestore(
             (source, backupManager) -> {
-               Cache<String, String> cache = source.createCache(cacheName, config);
+               Cache<String, String> cache = source.administration().getOrCreateCache(cacheName, config);
                for (int i = 0; i < numEntries; i++)
                   cache.put(""+i, String.format("{\"value\":\"%d\"}", i));
                return backupManager.create(name, null);
@@ -191,7 +191,7 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
       String cacheName = "cache";
       createAndRestore(
             (source, backupManager) -> {
-               Cache<byte[], byte[]> cache = source.createCache(cacheName, config(APPLICATION_OCTET_STREAM_TYPE));
+               Cache<byte[], byte[]> cache = source.administration().getOrCreateCache(cacheName, config(APPLICATION_OCTET_STREAM_TYPE));
                cache.put(new byte[1], new byte[256]);
                return backupManager.create(name, null);
             },

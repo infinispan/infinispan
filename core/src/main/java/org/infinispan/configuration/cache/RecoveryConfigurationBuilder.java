@@ -5,6 +5,7 @@ import static org.infinispan.configuration.cache.RecoveryConfiguration.RECOVERY_
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.transaction.TransactionMode;
@@ -89,8 +90,8 @@ public class RecoveryConfigurationBuilder extends AbstractTransportConfiguration
    }
 
    @Override
-   public RecoveryConfigurationBuilder read(RecoveryConfiguration template) {
-      this.attributes.read(template.attributes());
+   public RecoveryConfigurationBuilder read(RecoveryConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
 
       return this;
    }

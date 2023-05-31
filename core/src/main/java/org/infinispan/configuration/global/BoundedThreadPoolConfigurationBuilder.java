@@ -9,6 +9,7 @@ import static org.infinispan.configuration.global.CachedThreadPoolConfiguration.
 import static org.infinispan.configuration.global.CachedThreadPoolConfiguration.THREAD_FACTORY;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.factories.threads.CoreExecutorFactory;
 import org.infinispan.factories.threads.DefaultThreadFactory;
@@ -89,8 +90,8 @@ public class BoundedThreadPoolConfigurationBuilder extends AbstractGlobalConfigu
    }
 
    @Override
-   public BoundedThreadPoolConfigurationBuilder read(BoundedThreadPoolConfiguration template) {
-      attributes.read(template.attributes());
+   public BoundedThreadPoolConfigurationBuilder read(BoundedThreadPoolConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

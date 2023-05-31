@@ -9,6 +9,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -30,6 +32,8 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalStateConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.globalstate.LocalConfigurationStorage;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * An implementation of {@link LocalConfigurationStorage} which stores non-{@link org.infinispan.commons.api.CacheContainerAdmin.AdminFlag#VOLATILE}
@@ -42,8 +46,10 @@ import org.infinispan.globalstate.LocalConfigurationStorage;
  */
 
 public class OverlayLocalConfigurationStorage extends VolatileLocalConfigurationStorage {
-   private Set<String> persistentCaches = ConcurrentHashMap.newKeySet();
-   private Set<String> persistentTemplates = ConcurrentHashMap.newKeySet();
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+
+   private final Set<String> persistentCaches = ConcurrentHashMap.newKeySet();
+   private final Set<String> persistentTemplates = ConcurrentHashMap.newKeySet();
 
    private final Lock persistenceLock = new ReentrantLock();
 
@@ -134,11 +140,15 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
    private Map<String, Configuration> load(File file) {
       try (FileInputStream fis = new FileInputStream(file)) {
          Map<String, Configuration> configurations = new HashMap<>();
-         ConfigurationBuilderHolder holder = parserRegistry.parse(fis, new URLConfigurationResourceResolver(file.toURI().toURL()), MediaType.APPLICATION_XML);
+         ConfigurationBuilderHolder holder = configurationManager.toBuilderHolder();
+         parserRegistry.parse(fis, holder, new URLConfigurationResourceResolver(file.toURI().toURL()), MediaType.APPLICATION_XML);
+         Collection<String> definedConfigurations = configurationManager.getDefinedConfigurations();
          for (Map.Entry<String, ConfigurationBuilder> entry : holder.getNamedConfigurationBuilders().entrySet()) {
             String name = entry.getKey();
-            Configuration configuration = entry.getValue().build();
-            configurations.put(name, configuration);
+            if (!definedConfigurations.contains(name)) {
+               Configuration configuration = entry.getValue().build();
+               configurations.put(name, configuration);
+            }
          }
          return configurations;
       } catch (FileNotFoundException e) {

@@ -2,6 +2,7 @@ package org.infinispan.server.configuration.security;
 
 import static org.infinispan.server.configuration.security.DistributedRealmConfiguration.NAME;
 
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -35,8 +36,8 @@ public class LocalRealmConfigurationBuilder implements RealmProviderBuilder<Loca
    }
 
    @Override
-   public LocalRealmConfigurationBuilder read(LocalRealmConfiguration template) {
-      attributes.read(template.attributes());
+   public LocalRealmConfigurationBuilder read(LocalRealmConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

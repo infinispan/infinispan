@@ -11,6 +11,7 @@ import static org.infinispan.server.configuration.security.LdapAttributeConfigur
 import static org.infinispan.server.configuration.security.LdapAttributeConfiguration.TO;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -80,8 +81,8 @@ public class LdapAttributeConfigurationBuilder implements Builder<LdapAttributeC
    }
 
    @Override
-   public LdapAttributeConfigurationBuilder read(LdapAttributeConfiguration template) {
-      this.attributes.read(template.attributes());
+   public LdapAttributeConfigurationBuilder read(LdapAttributeConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 }

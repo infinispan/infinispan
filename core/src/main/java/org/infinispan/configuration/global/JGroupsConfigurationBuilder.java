@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.remoting.transport.Transport;
 
@@ -84,11 +85,11 @@ public class JGroupsConfigurationBuilder extends AbstractGlobalConfigurationBuil
    }
 
    @Override
-   public JGroupsConfigurationBuilder read(JGroupsConfiguration template) {
-      attributes.read(template.attributes());
+   public JGroupsConfigurationBuilder read(JGroupsConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       buildersByName.clear();
-      template.stackFiles().forEach(s -> addStackFile(s.name()).read(s));
-      template.stacks().forEach(s -> addStack(s.name()).read(s));
+      template.stackFiles().forEach(s -> addStackFile(s.name()).read(s, combine));
+      template.stacks().forEach(s -> addStack(s.name()).read(s, combine));
       for(StackFileConfigurationBuilder b : stackFileConfigurationBuilders) {
          buildersByName.add(b.getConfigurator().getName());
       }

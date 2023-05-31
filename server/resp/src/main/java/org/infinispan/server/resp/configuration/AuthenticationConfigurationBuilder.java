@@ -3,6 +3,7 @@ package org.infinispan.server.resp.configuration;
 import static org.infinispan.server.resp.configuration.AuthenticationConfiguration.SECURITY_REALM;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.core.configuration.AbstractProtocolServerConfigurationChildBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuilder;
@@ -74,8 +75,8 @@ public class AuthenticationConfigurationBuilder extends AbstractProtocolServerCo
    }
 
    @Override
-   public Builder<?> read(AuthenticationConfiguration template) {
-      this.attributes.read(template.attributes());
+   public Builder<?> read(AuthenticationConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 

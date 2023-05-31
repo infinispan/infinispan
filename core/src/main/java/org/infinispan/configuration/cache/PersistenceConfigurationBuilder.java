@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.ConfigurationUtils;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -206,7 +207,7 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
 
    @Override
    public PersistenceConfiguration create() {
-      List<StoreConfiguration> stores = new ArrayList<StoreConfiguration>(this.stores.size());
+      List<StoreConfiguration> stores = new ArrayList<>(this.stores.size());
       for (StoreConfigurationBuilder<?, ?> loader : this.stores)
          stores.add(loader.create());
       return new PersistenceConfiguration(attributes.protect(), stores);
@@ -214,15 +215,16 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
 
    @SuppressWarnings("unchecked")
    @Override
-   public PersistenceConfigurationBuilder read(PersistenceConfiguration template) {
-      this.attributes.read(template.attributes());
-      clearStores();
+   public PersistenceConfigurationBuilder read(PersistenceConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
+      if (combine.repeatedAttributes() == Combine.RepeatedAttributes.OVERRIDE && template.attributes().isTouched()) {
+         clearStores();
+      }
       for (StoreConfiguration c : template.stores()) {
          Class<? extends StoreConfigurationBuilder<?, ?>> builderClass = getBuilderClass(c);
          StoreConfigurationBuilder builder =  this.getBuilderFromClass(builderClass);
-         stores.add((StoreConfigurationBuilder) builder.read(c));
+         stores.add((StoreConfigurationBuilder) builder.read(c, combine));
       }
-
       return this;
    }
 

@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import javax.net.ssl.SSLContext;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -203,12 +204,12 @@ public class SslConfigurationBuilder<T extends ProtocolServerConfiguration, S ex
    }
 
    @Override
-   public SslConfigurationBuilder read(SslConfiguration template) {
-      this.attributes.read(template.attributes());
+   public SslConfigurationBuilder read(SslConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
 
       this.sniDomains = new HashMap<>();
       template.sniDomainsConfiguration().entrySet()
-              .forEach(e -> sniDomains.put(e.getKey(), new SslEngineConfigurationBuilder(this).read(e.getValue())));
+              .forEach(e -> sniDomains.put(e.getKey(), new SslEngineConfigurationBuilder(this).read(e.getValue(), combine)));
 
       this.defaultDomainConfigurationBuilder = sniDomains
               .computeIfAbsent(SslConfiguration.DEFAULT_SNI_DOMAIN, (v) -> new SslEngineConfigurationBuilder(this));

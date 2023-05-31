@@ -33,6 +33,7 @@ import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrate
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
@@ -666,11 +667,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    }
 
    @Override
-   public ConfigurationBuilder read(Configuration template) {
+   public ConfigurationBuilder read(Configuration template, Combine combine) {
       this.classLoader = new WeakReference<>(template.classLoader());
-      this.asyncExecutorFactory.read(template.asyncExecutorFactory());
+      this.asyncExecutorFactory.read(template.asyncExecutorFactory(), combine);
       this.balancingStrategyFactory = template.balancingStrategyFactory();
-      this.connectionPool.read(template.connectionPool());
+      this.connectionPool.read(template.connectionPool(), combine);
       this.connectionTimeout = template.connectionTimeout();
       for (int i = 0; i < consistentHashImpl.length; i++) {
          this.consistentHashImpl[i] = template.consistentHashImpl(i + 1);
@@ -688,18 +689,18 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
          this.addServer().host(server.host()).port(server.port());
       }
       this.clusters.clear();
-      template.clusters().forEach(cluster -> this.addCluster(cluster.getClusterName()).read(cluster));
+      template.clusters().forEach(cluster -> this.addCluster(cluster.getClusterName()).read(cluster, combine));
       this.socketTimeout = template.socketTimeout();
-      this.security.read(template.security());
+      this.security.read(template.security(), combine);
       this.tcpNoDelay = template.tcpNoDelay();
       this.tcpKeepAlive = template.tcpKeepAlive();
       this.transportFactory = template.transportFactory();
       this.valueSizeEstimate = template.valueSizeEstimate();
       this.maxRetries = template.maxRetries();
-      this.nearCache.read(template.nearCache());
+      this.nearCache.read(template.nearCache(), combine);
       this.allowListRegExs.addAll(template.serialWhitelist());
-      this.transaction.read(template.transaction());
-      this.statistics.read(template.statistics());
+      this.transaction.read(template.transaction(), combine);
+      this.statistics.read(template.statistics(), combine);
       this.contextInitializers.clear();
       this.contextInitializers.addAll(template.getContextInitializers());
       this.clientIntelligence = template.clientIntelligence();
