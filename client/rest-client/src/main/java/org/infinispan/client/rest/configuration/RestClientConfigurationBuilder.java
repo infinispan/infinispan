@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 
 import org.infinispan.client.rest.RestURI;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Version;
@@ -215,18 +216,20 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
    }
 
    @Override
-   public RestClientConfigurationBuilder read(RestClientConfiguration template) {
+   public RestClientConfigurationBuilder read(RestClientConfiguration template, Combine combine) {
       this.connectionTimeout = template.connectionTimeout();
-      this.servers.clear();
+      if (combine.repeatedAttributes() == Combine.RepeatedAttributes.OVERRIDE) {
+         this.servers.clear();
+         this.headers.clear();
+      }
       for (ServerConfiguration server : template.servers()) {
          this.addServer().host(server.host()).port(server.port());
       }
       this.socketTimeout = template.socketTimeout();
-      this.security.read(template.security());
+      this.security.read(template.security(), combine);
       this.tcpNoDelay = template.tcpNoDelay();
       this.tcpKeepAlive = template.tcpKeepAlive();
-      this.security.read(template.security());
-      this.headers.clear();
+      this.security.read(template.security(), combine);
       this.headers.putAll(template.headers());
       return this;
    }

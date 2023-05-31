@@ -33,49 +33,41 @@ import org.junit.platform.suite.api.Suite;
 public class XSiteIT extends InfinispanSuite {
 
    public static final int NUM_SERVERS = 3;
-   public static final String LON_CACHE_XML_CONFIG =
-         "<infinispan><cache-container>" +
-               "  <replicated-cache name=\"%s\">" +
-               "     <backups>" +
-               "        <backup site=\"" + NYC + "\" strategy=\"ASYNC\"/>" +
-               "     </backups>" +
-               "  </replicated-cache>" +
-               "</cache-container></infinispan>";
 
-   public static final String NYC_CACHE_XML_CONFIG =
-         "<infinispan><cache-container>" +
-               "  <replicated-cache name=\"%s\">" +
+   public static final String LON_CACHE_CONFIG =
+         "<replicated-cache name=\"%s\">" +
                "     <backups>" +
-               "        <backup site=\"" + LON + "\" strategy=\"ASYNC\"/>" +
+               "        <backup site=\"NYC\" strategy=\"ASYNC\"/>" +
                "     </backups>" +
-               "  </replicated-cache>" +
-               "</cache-container></infinispan>";
+               "</replicated-cache>";
 
-   public static final String LON_CACHE_CUSTOM_NAME_XML_CONFIG =
-         "<infinispan><cache-container>" +
-               "  <replicated-cache name=\"lon-cache\">" +
+   public static final String NYC_CACHE_CONFIG =
+         "<replicated-cache name=\"%s\">" +
                "     <backups>" +
-               "        <backup site=\"" + NYC + "\" strategy=\"ASYNC\"/>" +
+               "        <backup site=\"LON\" strategy=\"ASYNC\"/>" +
                "     </backups>" +
-               "     <backup-for remote-cache=\"nyc-cache\" remote-site=\"NYC\" />" +
-               "  </replicated-cache>" +
-               "</cache-container></infinispan>";
+               "</replicated-cache>";
 
-   public static final String NYC_CACHE_CUSTOM_NAME_XML_CONFIG =
-         "<infinispan><cache-container>" +
-               "  <replicated-cache name=\"nyc-cache\">" +
+   public static final String LON_CACHE_CUSTOM_NAME_CONFIG =
+         "<replicated-cache name=\"lon-cache-%s\">" +
                "     <backups>" +
-               "        <backup site=\"" + LON + "\" strategy=\"ASYNC\"/>" +
+               "        <backup site=\"NYC\" strategy=\"ASYNC\"/>" +
                "     </backups>" +
-               "     <backup-for remote-cache=\"lon-cache\" remote-site=\"LON\" />" +
-               "  </replicated-cache>" +
-               "</cache-container></infinispan>";
+               "     <backup-for remote-cache=\"nyc-cache-%s\" remote-site=\"NYC\" />" +
+               "</replicated-cache>";
+
+   public static final String NYC_CACHE_CUSTOM_NAME_CONFIG =
+         "<replicated-cache name=\"nyc-cache-%s\">" +
+               "     <backups>" +
+               "        <backup site=\"LON\" strategy=\"ASYNC\"/>" +
+               "     </backups>" +
+               "     <backup-for remote-cache=\"lon-cache-%s\" remote-site=\"LON\" />" +
+               "</replicated-cache>";
 
    public static final int NR_KEYS = 30;
    public static final int MAX_COUNT_KEYS = 10;
    public static final String LON_CACHE_OFF_HEAP =
-         "<infinispan><cache-container statistics=\"true\">" +
-               "<distributed-cache name=\"%s\" owners=\"2\" mode=\"ASYNC\" remote-timeout=\"25000\" statistics=\"true\">" +
+         "<distributed-cache name=\"%s\" owners=\"2\" mode=\"ASYNC\" remote-timeout=\"25000\" statistics=\"true\">" +
                "        <backups>" +
                "            <backup site=\"" + NYC + "\" strategy=\"ASYNC\" timeout=\"30000\">" +
                "                <take-offline after-failures=\"-1\" min-wait=\"60000\"/>" +
@@ -85,8 +77,7 @@ public class XSiteIT extends InfinispanSuite {
                "        <persistence passivation=\"true\">" +
                "     <file-store shared=\"false\" preload=\"true\" purge=\"false\" />" +
                "  </persistence>" +
-               "  </distributed-cache>" +
-               "</cache-container></infinispan>";
+               "</distributed-cache>";
 
    static InfinispanServerExtensionBuilder lonServerRule = InfinispanServerExtensionBuilder
          .config("configuration/XSiteServerTest.xml")

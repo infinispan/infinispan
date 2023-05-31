@@ -13,6 +13,7 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -135,9 +136,9 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    }
 
    @Override
-   public Builder<?> read(AuthenticationConfiguration template) {
-      this.attributes.read(template.attributes());
-      this.mechanismConfigurationBuilder.read(template.mechanismConfiguration());
+   public Builder<?> read(AuthenticationConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
+      this.mechanismConfigurationBuilder.read(template.mechanismConfiguration(), combine);
       return this;
    }
 

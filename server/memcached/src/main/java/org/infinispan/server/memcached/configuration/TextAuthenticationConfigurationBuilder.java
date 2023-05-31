@@ -3,6 +3,7 @@ package org.infinispan.server.memcached.configuration;
 import static org.infinispan.server.memcached.configuration.TextAuthenticationConfiguration.AUTHENTICATOR;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.core.security.UsernamePasswordAuthenticator;
 
@@ -23,8 +24,8 @@ public class TextAuthenticationConfigurationBuilder implements Builder<TextAuthe
    }
 
    @Override
-   public Builder<?> read(TextAuthenticationConfiguration template) {
-      attributes.read(template.attributes());
+   public Builder<?> read(TextAuthenticationConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

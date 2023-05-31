@@ -1,6 +1,7 @@
 package org.infinispan.server.memcached.configuration;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.core.configuration.AuthenticationConfigurationBuilder;
 import org.infinispan.server.core.configuration.ProtocolServerConfigurationChildBuilder;
@@ -77,10 +78,10 @@ public class MemcachedAuthenticationConfigurationBuilder implements Authenticati
    }
 
    @Override
-   public Builder<?> read(MemcachedAuthenticationConfiguration template) {
-      this.attributes.read(template.attributes());
-      this.sasl.read(template.sasl());
-      this.text.read(template.text());
+   public Builder<?> read(MemcachedAuthenticationConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
+      this.sasl.read(template.sasl(), combine);
+      this.text.read(template.text(), combine);
       return this;
    }
 }

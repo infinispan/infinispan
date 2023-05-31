@@ -8,6 +8,7 @@ import static org.infinispan.persistence.sql.configuration.SchemaJdbcConfigurati
 import java.util.Objects;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.persistence.jdbc.common.configuration.AbstractJdbcStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.common.configuration.AbstractJdbcStoreConfigurationChildBuilder;
@@ -90,8 +91,8 @@ public class SchemaJdbcConfigurationBuilder<S extends AbstractJdbcStoreConfigura
    }
 
    @Override
-   public Builder<?> read(SchemaJdbcConfiguration template) {
-      attributes.read(template.attributes());
+   public Builder<?> read(SchemaJdbcConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 }

@@ -1,6 +1,7 @@
 package org.infinispan.server.hotrod.configuration;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 public class TopologyCacheConfigurationBuilder implements Builder<TopologyCacheConfiguration> {
@@ -46,8 +47,8 @@ public class TopologyCacheConfigurationBuilder implements Builder<TopologyCacheC
    }
 
    @Override
-   public TopologyCacheConfigurationBuilder read(TopologyCacheConfiguration template) {
-      attributes.read(template.attributes());
+   public TopologyCacheConfigurationBuilder read(TopologyCacheConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 }

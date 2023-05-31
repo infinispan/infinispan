@@ -8,6 +8,7 @@ import static org.infinispan.configuration.global.GlobalMetricsConfiguration.PRE
 
 import org.infinispan.Cache;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -113,8 +114,8 @@ public class GlobalMetricsConfigurationBuilder extends AbstractGlobalConfigurati
    }
 
    @Override
-   public GlobalMetricsConfigurationBuilder read(GlobalMetricsConfiguration template) {
-      attributes.read(template.attributes());
+   public GlobalMetricsConfigurationBuilder read(GlobalMetricsConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

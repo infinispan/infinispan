@@ -4,6 +4,7 @@ import static org.infinispan.server.configuration.security.GroupsPropertiesConfi
 import static org.infinispan.server.configuration.security.GroupsPropertiesConfiguration.RELATIVE_TO;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -37,8 +38,8 @@ public class GroupsPropertiesConfigurationBuilder implements Builder<GroupsPrope
    }
 
    @Override
-   public GroupsPropertiesConfigurationBuilder read(GroupsPropertiesConfiguration template) {
-      attributes.read(template.attributes());
+   public GroupsPropertiesConfigurationBuilder read(GroupsPropertiesConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 }

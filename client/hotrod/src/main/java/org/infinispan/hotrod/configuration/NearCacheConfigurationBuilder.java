@@ -9,6 +9,7 @@ import static org.infinispan.hotrod.impl.logging.Log.HOTROD;
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.hotrod.impl.ConfigurationProperties;
@@ -97,8 +98,8 @@ public class NearCacheConfigurationBuilder extends AbstractConfigurationChildBui
    }
 
    @Override
-   public NearCacheConfigurationBuilder read(NearCacheConfiguration template) {
-      this.attributes.read(template.attributes());
+   public NearCacheConfigurationBuilder read(NearCacheConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 

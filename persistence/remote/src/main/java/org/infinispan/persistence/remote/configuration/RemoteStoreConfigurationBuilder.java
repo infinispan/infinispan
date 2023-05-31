@@ -22,6 +22,7 @@ import java.util.Properties;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
@@ -194,14 +195,14 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
    }
 
    @Override
-   public RemoteStoreConfigurationBuilder read(RemoteStoreConfiguration template) {
-      super.read(template);
-      this.asyncExecutorFactory.read(template.asyncExecutorFactory());
-      this.connectionPool.read(template.connectionPool());
+   public RemoteStoreConfigurationBuilder read(RemoteStoreConfiguration template, Combine combine) {
+      super.read(template, combine);
+      this.asyncExecutorFactory.read(template.asyncExecutorFactory(), combine);
+      this.connectionPool.read(template.connectionPool(), combine);
       for (RemoteServerConfiguration server : template.servers()) {
          this.addServer().host(server.host()).port(server.port());
       }
-      this.security.read(template.security());
+      this.security.read(template.security(), combine);
 
       return this;
    }

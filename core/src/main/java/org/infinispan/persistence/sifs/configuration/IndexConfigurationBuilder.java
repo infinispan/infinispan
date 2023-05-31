@@ -7,6 +7,7 @@ import static org.infinispan.persistence.sifs.configuration.IndexConfiguration.M
 import static org.infinispan.persistence.sifs.configuration.IndexConfiguration.MIN_NODE_SIZE;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.persistence.sifs.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -60,8 +61,8 @@ public class IndexConfigurationBuilder implements Builder<IndexConfiguration> {
    }
 
    @Override
-   public Builder<?> read(IndexConfiguration template) {
-      attributes.read(template.attributes());
+   public Builder<?> read(IndexConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

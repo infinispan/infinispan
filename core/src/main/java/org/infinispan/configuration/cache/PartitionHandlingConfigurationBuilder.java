@@ -5,6 +5,7 @@ import static org.infinispan.configuration.cache.PartitionHandlingConfiguration.
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.conflict.EntryMergePolicy;
@@ -54,8 +55,8 @@ public class PartitionHandlingConfigurationBuilder extends AbstractClusteringCon
    }
 
    @Override
-   public Builder<?> read(PartitionHandlingConfiguration template) {
-      attributes.read(template.attributes());
+   public Builder<?> read(PartitionHandlingConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

@@ -8,6 +8,7 @@ import static org.infinispan.configuration.global.GlobalJmxConfiguration.PROPERT
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.PlatformMBeanServerLookup;
@@ -121,8 +122,8 @@ public class GlobalJmxConfigurationBuilder extends GlobalJmxStatisticsConfigurat
    }
 
    @Override
-   public GlobalJmxConfigurationBuilder read(GlobalJmxConfiguration template) {
-      attributes.read(template.attributes());
+   public GlobalJmxConfigurationBuilder read(GlobalJmxConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

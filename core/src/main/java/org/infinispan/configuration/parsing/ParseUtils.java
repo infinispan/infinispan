@@ -371,6 +371,7 @@ public final class ParseUtils {
 
     public static void parseAttributes(ConfigurationReader reader, Builder<?> builder) {
         AttributeSet attributes = builder.attributes();
+        attributes.touch();
         int major = reader.getSchema().getMajor();
         int minor = reader.getSchema().getMinor();
         for (int i = 0; i < reader.getAttributeCount(); i++) {

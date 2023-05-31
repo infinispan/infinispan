@@ -2,11 +2,11 @@ package org.infinispan.server.functional.hotrod;
 
 import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.commons.test.Eventually.eventuallyEquals;
-import static org.infinispan.server.functional.XSiteIT.LON_CACHE_CUSTOM_NAME_XML_CONFIG;
+import static org.infinispan.server.functional.XSiteIT.LON_CACHE_CUSTOM_NAME_CONFIG;
 import static org.infinispan.server.functional.XSiteIT.LON_CACHE_OFF_HEAP;
 import static org.infinispan.server.functional.XSiteIT.MAX_COUNT_KEYS;
 import static org.infinispan.server.functional.XSiteIT.NR_KEYS;
-import static org.infinispan.server.functional.XSiteIT.NYC_CACHE_CUSTOM_NAME_XML_CONFIG;
+import static org.infinispan.server.functional.XSiteIT.NYC_CACHE_CUSTOM_NAME_CONFIG;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.LON;
 import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.NYC;
@@ -48,7 +48,7 @@ public class XSiteHotRodCacheOperations {
 
    @Test
    public void testHotRodOperations() {
-      String lonXML = String.format(XSiteIT.LON_CACHE_XML_CONFIG, SERVERS.getMethodName());
+      String lonXML = String.format(XSiteIT.LON_CACHE_CONFIG, SERVERS.getMethodName());
       RemoteCache<String, String> lonCache = SERVERS.hotrod(LON)
             .withServerConfiguration(new StringConfiguration(lonXML)).create();
       RemoteCache<String, String> nycCache = SERVERS.hotrod(NYC).create(); //nyc cache don't backup to lon
@@ -61,12 +61,12 @@ public class XSiteHotRodCacheOperations {
       RemoteCache<String, String> lonCache = SERVERS.hotrod(LON)
             .createRemoteCacheManager()
             .administration()
-            .createCache("lon-cache", new StringConfiguration(LON_CACHE_CUSTOM_NAME_XML_CONFIG));
+            .createCache("lon-cache-hotrod", new StringConfiguration(String.format(LON_CACHE_CUSTOM_NAME_CONFIG, "hotrod", "hotrod")));
 
       RemoteCache<String, String> nycCache = SERVERS.hotrod(NYC)
             .createRemoteCacheManager()
             .administration()
-            .createCache("nyc-cache", new StringConfiguration(NYC_CACHE_CUSTOM_NAME_XML_CONFIG));
+            .createCache("nyc-cache-hotrod", new StringConfiguration(String.format(NYC_CACHE_CUSTOM_NAME_CONFIG, "hotrod", "hotrod")));
 
       insertAndVerifyEntries(lonCache, nycCache, true);
    }

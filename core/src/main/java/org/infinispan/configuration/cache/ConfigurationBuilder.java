@@ -13,6 +13,7 @@ import java.util.List;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.ConfigurationUtils;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -180,6 +181,10 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       return this;
    }
 
+   public String configuration() {
+      return attributes.attribute(CONFIGURATION).get();
+   }
+
    public void validate() {
       if (attributes.attribute(SIMPLE_CACHE).get()) {
          validateSimpleCacheConfiguration();
@@ -258,27 +263,31 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    }
 
    public ConfigurationBuilder read(Configuration template) {
-      this.attributes.read(template.attributes());
-      this.clustering.read(template.clustering());
-      this.customInterceptors.read(template.customInterceptors());
-      this.expiration.read(template.expiration());
-      this.query.read(template.query());
-      this.indexing.read(template.indexing());
-      this.invocationBatching.read(template.invocationBatching());
-      this.statistics.read(template.statistics());
-      this.persistence.read(template.persistence());
-      this.locking.read(template.locking());
-      this.security.read(template.security());
-      this.transaction.read(template.transaction());
-      this.unsafe.read(template.unsafe());
-      this.sites.read(template.sites());
-      this.memory.read(template.memory());
-      this.encoding.read(template.encoding());
+      return read(template, Combine.DEFAULT);
+   }
+
+   public ConfigurationBuilder read(Configuration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
+      this.clustering.read(template.clustering(), combine);
+      this.customInterceptors.read(template.customInterceptors(), combine);
+      this.expiration.read(template.expiration(), combine);
+      this.query.read(template.query(), combine);
+      this.indexing.read(template.indexing(), combine);
+      this.invocationBatching.read(template.invocationBatching(), combine);
+      this.statistics.read(template.statistics(), combine);
+      this.persistence.read(template.persistence(), combine);
+      this.locking.read(template.locking(), combine);
+      this.security.read(template.security(), combine);
+      this.transaction.read(template.transaction(), combine);
+      this.unsafe.read(template.unsafe(), combine);
+      this.sites.read(template.sites(), combine);
+      this.memory.read(template.memory(), combine);
+      this.encoding.read(template.encoding(), combine);
       this.template = template.isTemplate();
 
       for (Object c : template.modules().values()) {
          Builder<Object> builder = this.addModule(ConfigurationUtils.builderFor(c));
-         builder.read(c);
+         builder.read(c, combine);
       }
 
       return this;

@@ -10,6 +10,7 @@ import static org.infinispan.hotrod.configuration.ConnectionPoolConfiguration.MI
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
 
@@ -132,8 +133,8 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
    }
 
    @Override
-   public ConnectionPoolConfigurationBuilder read(ConnectionPoolConfiguration template) {
-      this.attributes.read(template.attributes());
+   public ConnectionPoolConfigurationBuilder read(ConnectionPoolConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 }

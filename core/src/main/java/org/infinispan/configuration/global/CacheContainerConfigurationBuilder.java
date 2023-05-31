@@ -18,6 +18,7 @@ import java.util.List;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
@@ -279,17 +280,17 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
    }
 
    @Override
-   public Builder<?> read(CacheContainerConfiguration template) {
-      attributes.read(template.attributes());
-      this.globalState.read(template.globalState());
-      this.metrics.read(template.metrics());
-      this.jmx.read(template.jmx());
-      this.transport.read(template.transport());
-      this.security.read(template.security());
-      this.serialization.read(template.serialization());
-      this.shutdown.read(template.shutdown());
-      this.threads.read(template.threads());
-      this.security.read(template.security());
+   public Builder<?> read(CacheContainerConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
+      this.globalState.read(template.globalState(), combine);
+      this.metrics.read(template.metrics(), combine);
+      this.jmx.read(template.jmx(), combine);
+      this.transport.read(template.transport(), combine);
+      this.security.read(template.security(), combine);
+      this.serialization.read(template.serialization(), combine);
+      this.shutdown.read(template.shutdown(), combine);
+      this.threads.read(template.threads(), combine);
+      this.security.read(template.security(), combine);
       return this;
    }
 }

@@ -1,6 +1,7 @@
 package org.infinispan.security.impl;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractModuleConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -26,7 +27,7 @@ public class CreatePermissionConfigurationBuilder extends AbstractModuleConfigur
    }
 
    @Override
-   public Builder<?> read(CreatePermissionConfiguration template) {
+   public Builder<?> read(CreatePermissionConfiguration template, Combine combine) {
       return this;
    }
 

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeListener;
@@ -328,8 +329,8 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
    }
 
    @Override
-   public MemoryConfigurationBuilder read(MemoryConfiguration template) {
-      attributes.read(template.attributes());
+   public MemoryConfigurationBuilder read(MemoryConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
 
       // Propagate any changes to the MemoryStorageConfiguration attributes,
       // because reading an attribute does not invoke the listener

@@ -17,6 +17,7 @@ import java.util.ArrayDeque;
 import java.util.Queue;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.io.ConfigurationResourceResolvers;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.Exceptions;
@@ -287,7 +288,7 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
       ConfigurationBuilder configBuilder = new ConfigurationBuilder();
       configBuilder.memory().storageType(OFF_HEAP).size(1_000).evictionType(COUNT);
       Configuration configuration = configBuilder.build();
-      Configuration afterRead = new ConfigurationBuilder().read(configuration).build();
+      Configuration afterRead = new ConfigurationBuilder().read(configuration, Combine.DEFAULT).build();
 
       assertEquals(OFF_HEAP, afterRead.memory().storage());
       assertEquals(REMOVE, afterRead.memory().whenFull());
@@ -304,7 +305,7 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
    public void testBuildWithLegacyConfiguration2() {
       ConfigurationBuilder configBuilder = new ConfigurationBuilder();
       configBuilder.memory().storageType(HEAP).size(120);
-      Configuration afterRead = new ConfigurationBuilder().read(configBuilder.build()).build();
+      Configuration afterRead = new ConfigurationBuilder().read(configBuilder.build(), Combine.DEFAULT).build();
 
       assertEquals(afterRead.memory().maxSizeBytes(), -1);
       assertEquals(afterRead.memory().maxCount(), 120);
@@ -312,7 +313,7 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
       assertEquals(afterRead.memory().size(), 120);
       assertEquals(afterRead.memory().evictionType(), COUNT);
 
-      ConfigurationBuilder override = new ConfigurationBuilder().read(afterRead);
+      ConfigurationBuilder override = new ConfigurationBuilder().read(afterRead, Combine.DEFAULT);
       Configuration overridden = override.memory().size(400).build();
       assertEquals(overridden.memory().maxSizeBytes(), -1);
       assertEquals(overridden.memory().maxCount(), 400);

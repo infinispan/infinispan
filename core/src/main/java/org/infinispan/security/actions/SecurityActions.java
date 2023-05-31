@@ -157,6 +157,11 @@ public class SecurityActions {
       }
    }
 
+   public static <A extends Cache<K, V>, K, V> A getOrCreateCache(EmbeddedCacheManager cm, String configName, Configuration cfg) {
+      GetOrCreateCacheAction<A, K, V> action = new GetOrCreateCacheAction<>(cm, configName, cfg);
+      return doPrivileged(action);
+   }
+
    public static Configuration getOrCreateTemplate(EmbeddedCacheManager cm, String configName, Configuration cfg) {
       GetOrCreateTemplateAction action = new GetOrCreateTemplateAction(cm, configName, cfg);
       return doPrivileged(action);

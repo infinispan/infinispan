@@ -656,6 +656,27 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(a.matches(b));
    }
 
+   public void testOrdering() {
+      String config = TestingUtil.wrapXMLWithSchema(
+            "<cache-container>" +
+                  "   <transport cluster=\"demoCluster\"/>\n" +
+                  "   <replicated-cache-configuration name=\"repl-2\" configuration=\"repl-1\">\n" +
+                  "   </replicated-cache-configuration>\n" +
+                  "   <replicated-cache-configuration mode=\"ASYNC\" name=\"repl-1\">\n" +
+                  "   </replicated-cache-configuration>\n" +
+                  "</cache-container>"
+      );
+
+      InputStream is = new ByteArrayInputStream(config.getBytes());
+      ConfigurationBuilderHolder holder = TestCacheManagerFactory.parseStream(is, false);
+      Configuration repl1 = getCacheConfiguration(holder, "repl-1");
+      Configuration repl2 = getCacheConfiguration(holder, "repl-2");
+      assertTrue(repl1.isTemplate());
+      assertTrue(repl2.isTemplate());
+      assertEquals(CacheMode.REPL_ASYNC, repl1.clustering().cacheMode());
+      assertEquals(CacheMode.REPL_ASYNC, repl2.clustering().cacheMode());
+   }
+
    public static class CustomTransport extends JGroupsTransport {
 
    }

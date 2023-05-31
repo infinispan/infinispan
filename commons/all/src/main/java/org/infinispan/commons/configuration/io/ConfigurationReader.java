@@ -162,7 +162,7 @@ public interface ConfigurationReader extends AutoCloseable {
 
    Location getLocation();
 
-   Object getProperty(String name);
+   <T> T getProperty(String name);
 
    Properties getProperties();
 

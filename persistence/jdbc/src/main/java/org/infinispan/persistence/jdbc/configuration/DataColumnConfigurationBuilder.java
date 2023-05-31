@@ -4,6 +4,7 @@ import static org.infinispan.persistence.jdbc.configuration.DataColumnConfigurat
 import static org.infinispan.persistence.jdbc.configuration.DataColumnConfiguration.DATA_COLUMN_TYPE;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 public class DataColumnConfigurationBuilder implements Builder<DataColumnConfiguration> {
@@ -40,8 +41,8 @@ public class DataColumnConfigurationBuilder implements Builder<DataColumnConfigu
    }
 
    @Override
-   public Builder<?> read(DataColumnConfiguration template) {
-      attributes.read(template.attributes());
+   public Builder<?> read(DataColumnConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

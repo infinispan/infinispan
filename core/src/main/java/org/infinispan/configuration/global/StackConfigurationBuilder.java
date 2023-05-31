@@ -3,6 +3,7 @@ package org.infinispan.configuration.global;
 import static org.infinispan.configuration.global.StackConfiguration.EXTENDS;
 import static org.infinispan.configuration.global.StackConfiguration.NAME;
 
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.remoting.transport.jgroups.EmbeddedJGroupsChannelConfigurator;
 import org.infinispan.remoting.transport.jgroups.JGroupsChannelConfigurator;
@@ -49,8 +50,8 @@ public class StackConfigurationBuilder extends AbstractGlobalConfigurationBuilde
    }
 
    @Override
-   public StackConfigurationBuilder read(StackConfiguration template) {
-      attributes.read(template.attributes());
+   public StackConfigurationBuilder read(StackConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       this.configurator = template.configurator();
       return this;
    }

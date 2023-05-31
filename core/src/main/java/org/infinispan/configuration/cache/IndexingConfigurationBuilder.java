@@ -13,17 +13,16 @@ import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.util.logging.Log;
 
 /**
  * Configures indexing of entries in the cache for searching.
@@ -31,9 +30,6 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuilder implements IndexingConfigurationChildBuilder, Builder<IndexingConfiguration> {
 
    private final AttributeSet attributes;
-
-   private final Set<Class<?>> resolvedIndexedClasses = new HashSet<>();
-
    private final IndexReaderConfigurationBuilder readerConfigurationBuilder;
    private final IndexWriterConfigurationBuilder writerConfigurationBuilder;
    private final IndexShardingConfigurationBuilder shardingConfigurationBuilder;
@@ -52,10 +48,6 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    }
 
    public IndexingConfigurationBuilder enabled(boolean enabled) {
-      if (!enabled) {
-         // discard any eventually inherited indexing config if indexing is not going to be enabled
-         reset();
-      }
       attributes.attribute(ENABLED).set(enabled);
       return this;
    }
@@ -70,20 +62,6 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    public IndexShardingConfigurationBuilder sharding() {
       return shardingConfigurationBuilder;
-   }
-
-   /**
-    * Wipe out all indexing configuration settings and disable indexing.
-    */
-   public void reset() {
-      attributes.attribute(ENABLED).reset();
-      attributes.attribute(INDEXED_ENTITIES).reset();
-      attributes.attribute(PROPERTIES).reset();
-      attributes.attribute(KEY_TRANSFORMERS).reset();
-      attributes.attribute(STORAGE).reset();
-      attributes.attribute(STARTUP_MODE).reset();
-      attributes.attribute(INDEXING_MODE).reset();
-      attributes.attribute(PATH).reset();
    }
 
    public IndexingConfigurationBuilder enable() {
@@ -121,7 +99,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    /**
     * Registers a transformer for a key class.
     *
-    * @param keyClass the class of the key
+    * @param keyClass            the class of the key
     * @param keyTransformerClass the class of the org.infinispan.query.Transformer that handles this key type
     * @return <code>this</code>, for method chaining
     */
@@ -142,8 +120,8 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    }
 
    public IndexingConfigurationBuilder addIndexedEntity(String indexedEntity) {
-      if (indexedEntity == null || indexedEntity.length() == 0) {
-         throw new CacheConfigurationException("Type name must not be null or empty");
+      if (indexedEntity == null || indexedEntity.isEmpty()) {
+         throw Log.CONFIG.indexedEntityNameMissing();
       }
       Set<String> indexedEntitySet = indexedEntities();
       indexedEntitySet.add(indexedEntity);
@@ -154,8 +132,8 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    public IndexingConfigurationBuilder addIndexedEntities(String... indexedEntities) {
       Set<String> indexedEntitySet = indexedEntities();
       for (String typeName : indexedEntities) {
-         if (typeName == null || typeName.length() == 0) {
-            throw new CacheConfigurationException("Type name must not be null or empty");
+         if (typeName == null || typeName.isEmpty()) {
+            throw Log.CONFIG.indexedEntityNameMissing();
          }
          indexedEntitySet.add(typeName);
       }
@@ -165,13 +143,11 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    public IndexingConfigurationBuilder addIndexedEntity(Class<?> indexedEntity) {
       addIndexedEntity(indexedEntity.getName());
-      resolvedIndexedClasses.add(indexedEntity);
       return this;
    }
 
    public IndexingConfigurationBuilder addIndexedEntities(Class<?>... indexedEntities) {
       addIndexedEntities(Arrays.stream(indexedEntities).map(Class::getName).toArray(String[]::new));
-      Collections.addAll(resolvedIndexedClasses, indexedEntities);
       return this;
    }
 
@@ -242,18 +218,16 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    @Override
    public IndexingConfiguration create() {
-      return new IndexingConfiguration(attributes.protect(), resolvedIndexedClasses, readerConfigurationBuilder.create(),
+      return new IndexingConfiguration(attributes.protect(), readerConfigurationBuilder.create(),
             writerConfigurationBuilder.create(), shardingConfigurationBuilder.create());
    }
 
    @Override
-   public IndexingConfigurationBuilder read(IndexingConfiguration template) {
-      attributes.read(template.attributes());
-      this.resolvedIndexedClasses.clear();
-      this.resolvedIndexedClasses.addAll(template.indexedEntities());
-      this.readerConfigurationBuilder.read(template.reader());
-      this.writerConfigurationBuilder.read(template.writer());
-      this.shardingConfigurationBuilder.read(template.sharding());
+   public IndexingConfigurationBuilder read(IndexingConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
+      this.readerConfigurationBuilder.read(template.reader(), combine);
+      this.writerConfigurationBuilder.read(template.writer(), combine);
+      this.shardingConfigurationBuilder.read(template.sharding(), combine);
       return this;
    }
 

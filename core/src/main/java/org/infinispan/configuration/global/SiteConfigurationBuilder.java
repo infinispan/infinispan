@@ -1,6 +1,7 @@
 package org.infinispan.configuration.global;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.remoting.transport.Transport;
 
@@ -44,7 +45,7 @@ public class SiteConfigurationBuilder extends AbstractGlobalConfigurationBuilder
    }
 
    @Override
-   public SiteConfigurationBuilder read(SiteConfiguration template) {
+   public SiteConfigurationBuilder read(SiteConfiguration template, Combine combine) {
       this.localSite = template.localSite();
       return this;
    }

@@ -10,6 +10,7 @@ import static org.testng.Assert.assertTrue;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -37,7 +38,7 @@ public class RecoveryConfigTest extends SingleCacheManagerTest {
    public void testRecoveryAndAsyncCaches() {
       //Note: this configuration uses Xa Enlistment (see configs/recovery-enabled-config.xml).
       Configuration defaultConfig = cacheManager.getDefaultCacheConfiguration();
-      ConfigurationBuilder builder = new ConfigurationBuilder().read(defaultConfig);
+      ConfigurationBuilder builder = new ConfigurationBuilder().read(defaultConfig, Combine.DEFAULT);
       builder.clustering().cacheMode(CacheMode.REPL_ASYNC);
       builder.transaction().recovery().enable();
       //it should throw an exception when try to build this configuration.

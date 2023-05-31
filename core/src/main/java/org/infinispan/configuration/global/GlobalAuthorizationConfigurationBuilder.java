@@ -12,6 +12,7 @@ import java.util.Map;
 import javax.security.auth.Subject;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.security.AuditLogger;
 import org.infinispan.security.PrincipalRoleMapper;
@@ -117,13 +118,13 @@ public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfi
    }
 
    @Override
-   public Builder<?> read(GlobalAuthorizationConfiguration template) {
-      attributes.read(template.attributes());
-      this.roleMapper.read(template.roleMapperConfiguration());
-      this.permissionMapper.read(template.permissionMapperConfiguration());
+   public Builder<?> read(GlobalAuthorizationConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
+      this.roleMapper.read(template.roleMapperConfiguration(), combine);
+      this.permissionMapper.read(template.permissionMapperConfiguration(), combine);
       this.roles.clear();
       for(Role role : template.roles().values()) {
-         this.role(role.getName()).read(role);
+         this.role(role.getName()).read(role, combine);
       }
       return this;
    }

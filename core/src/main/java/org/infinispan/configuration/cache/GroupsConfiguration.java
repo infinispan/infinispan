@@ -1,6 +1,6 @@
 package org.infinispan.configuration.cache;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.commons.configuration.attributes.Attribute;
@@ -19,7 +19,7 @@ import org.infinispan.distribution.group.Grouper;
  */
 public class GroupsConfiguration extends ConfigurationElement<GroupsConfiguration> {
    public final static AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ENABLED, false).immutable().build();
-   public final static AttributeDefinition<List<Grouper<?>>> GROUPERS = AttributeDefinition.builder(Element.GROUPER, null, (Class<List<Grouper<?>>>) (Class<?>) List.class).initializer(LinkedList::new)
+   public final static AttributeDefinition<List<Grouper<?>>> GROUPERS = AttributeDefinition.builder(Element.GROUPER, null, (Class<List<Grouper<?>>>) (Class<?>) List.class).initializer(ArrayList::new)
          .immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
@@ -46,7 +46,7 @@ public class GroupsConfiguration extends ConfigurationElement<GroupsConfiguratio
    }
 
    /**
-    * Get's the current groupers in use
+    * Get the current groupers in use
     */
    public List<Grouper<?>> groupers() {
       return groupers.get();

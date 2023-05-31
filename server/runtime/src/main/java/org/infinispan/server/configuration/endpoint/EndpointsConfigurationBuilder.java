@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.server.Server;
@@ -87,8 +88,8 @@ public class EndpointsConfigurationBuilder implements Builder<EndpointsConfigura
    }
 
    @Override
-   public EndpointsConfigurationBuilder read(EndpointsConfiguration template) {
-      this.attributes.read(template.attributes());
+   public EndpointsConfigurationBuilder read(EndpointsConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       endpoints.clear();
       return this;
    }

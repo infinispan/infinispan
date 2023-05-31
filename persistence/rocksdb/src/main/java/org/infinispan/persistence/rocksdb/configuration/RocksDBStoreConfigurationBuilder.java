@@ -5,6 +5,7 @@ import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfi
 import static org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfiguration.LOCATION;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
@@ -90,9 +91,9 @@ public class RocksDBStoreConfigurationBuilder extends AbstractStoreConfiguration
    }
 
    @Override
-   public Builder<?> read(RocksDBStoreConfiguration template) {
-      super.read(template);
-      expiration.read(template.expiration());
+   public Builder<?> read(RocksDBStoreConfiguration template, Combine combine) {
+      super.read(template, combine);
+      expiration.read(template.expiration(), combine);
       return self();
    }
 

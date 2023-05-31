@@ -5,6 +5,7 @@ import static org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreCo
 import static org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration.OPEN_FILES_LIMIT;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
@@ -146,10 +147,10 @@ public class SoftIndexFileStoreConfigurationBuilder extends AbstractStoreConfigu
       }
 
       @Override
-      public Builder<?> read (SoftIndexFileStoreConfiguration template){
-         super.read(template);
-         index.read(template.index());
-         data.read(template.data());
+      public Builder<?> read (SoftIndexFileStoreConfiguration template, Combine combine){
+         super.read(template, combine);
+         index.read(template.index(), combine);
+         data.read(template.data(), combine);
          return this;
       }
 

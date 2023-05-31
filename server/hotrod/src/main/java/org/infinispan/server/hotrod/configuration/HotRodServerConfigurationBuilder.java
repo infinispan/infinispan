@@ -6,6 +6,7 @@ import static org.infinispan.server.hotrod.configuration.HotRodServerConfigurati
 import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.PROXY_PORT;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.LockingConfigurationBuilder;
 import org.infinispan.configuration.cache.StateTransferConfigurationBuilder;
@@ -131,10 +132,10 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
    }
 
    @Override
-   public HotRodServerConfigurationBuilder read(HotRodServerConfiguration template) {
-      super.read(template);
-      this.topologyCache.read(template.topologyCache());
-      this.encryption.read(template.encryption());
+   public HotRodServerConfigurationBuilder read(HotRodServerConfiguration template, Combine combine) {
+      super.read(template, combine);
+      this.topologyCache.read(template.topologyCache(), combine);
+      this.encryption.read(template.encryption(), combine);
       return this;
    }
 

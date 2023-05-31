@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.commands.statetransfer.StateTransferStartCommand;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.CacheMode;
@@ -94,7 +95,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       EmbeddedCacheManager joinerManager =
             addClusterEnabledCacheManager(sci, new ConfigurationBuilder(), new TransportFlags().withFD(true));
       ConfigurationBuilder builderNoAwaitInitialTransfer = new ConfigurationBuilder();
-      builderNoAwaitInitialTransfer.read(builderUsed.build());
+      builderNoAwaitInitialTransfer.read(builderUsed.build(), Combine.DEFAULT);
       builderNoAwaitInitialTransfer.clustering().stateTransfer().awaitInitialTransfer(false);
 
       joinerManager.defineConfiguration(CACHE_NAME, builderNoAwaitInitialTransfer.build());

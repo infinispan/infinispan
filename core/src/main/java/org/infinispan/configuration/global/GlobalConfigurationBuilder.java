@@ -8,11 +8,13 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.util.Features;
 
 public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuilder {
@@ -182,7 +184,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    }
 
    public <T> T module(Class<T> moduleClass) {
-      return (T)modules.get(moduleClass);
+      return (T) modules.get(moduleClass);
    }
 
    /**
@@ -256,7 +258,9 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
             validationExceptions.add(e);
          }
       });
-      CacheConfigurationException.fromMultipleRuntimeExceptions(validationExceptions).ifPresent(e -> { throw e; });
+      CacheConfigurationException.fromMultipleRuntimeExceptions(validationExceptions).ifPresent(e -> {
+         throw e;
+      });
    }
 
    @Override
@@ -283,10 +287,10 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       for (Object c : template.modules().values()) {
          BuiltBy builtBy = c.getClass().getAnnotation(BuiltBy.class);
          Builder<Object> builder = this.addModule(builtBy.value());
-         builder.read(c);
+         builder.read(c, Combine.DEFAULT);
       }
-      cacheContainerConfiguration.read(template.cacheContainer());
-      site.read(template.sites());
+      cacheContainerConfiguration.read(template.cacheContainer(), Combine.DEFAULT);
+      site.read(template.sites(), Combine.DEFAULT);
       return this;
    }
 
@@ -311,25 +315,13 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-
-      GlobalConfigurationBuilder builder = (GlobalConfigurationBuilder) o;
-
-      if (cl != null ? !cl.equals(builder.cl) : builder.cl != null) return false;
-      if (cacheContainerConfiguration != null ? !cacheContainerConfiguration.equals(builder.cacheContainerConfiguration) : builder.cacheContainerConfiguration != null)
-         return false;
-      if (modules != null ? !modules.equals(builder.modules) : builder.modules != null) return false;
-      if (site != null ? !site.equals(builder.site) : builder.site != null) return false;
-      return features != null ? features.equals(builder.features) : builder.features == null;
+      GlobalConfigurationBuilder that = (GlobalConfigurationBuilder) o;
+      return Objects.equals(cl, that.cl) && Objects.equals(cacheContainerConfiguration, that.cacheContainerConfiguration) && Objects.equals(modules, that.modules) && Objects.equals(site, that.site) && Objects.equals(features, that.features);
    }
 
    @Override
    public int hashCode() {
-      int result = cl != null ? cl.hashCode() : 0;
-      result = 31 * result + (cacheContainerConfiguration != null ? cacheContainerConfiguration.hashCode() : 0);
-      result = 31 * result + (modules != null ? modules.hashCode() : 0);
-      result = 31 * result + (site != null ? site.hashCode() : 0);
-      result = 31 * result + (features != null ? features.hashCode() : 0);
-      return result;
+      return Objects.hash(cl, cacheContainerConfiguration, modules, site, features);
    }
 
    public ThreadsConfigurationBuilder threads() {

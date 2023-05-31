@@ -3,6 +3,7 @@ package org.infinispan.persistence.jdbc.common.configuration;
 import static org.infinispan.persistence.jdbc.common.configuration.ManagedConnectionFactoryConfiguration.JNDI_URL;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
@@ -49,8 +50,8 @@ public class ManagedConnectionFactoryConfigurationBuilder<S extends AbstractJdbc
    }
 
    @Override
-   public ManagedConnectionFactoryConfigurationBuilder<S> read(ManagedConnectionFactoryConfiguration template) {
-      this.attributes.read(template.attributes());
+   public ManagedConnectionFactoryConfigurationBuilder<S> read(ManagedConnectionFactoryConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 }

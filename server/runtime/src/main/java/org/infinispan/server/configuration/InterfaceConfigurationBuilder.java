@@ -5,6 +5,7 @@ import static org.infinispan.server.configuration.InterfaceConfiguration.NAME;
 import java.io.IOException;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.network.NetworkAddress;
 
@@ -72,9 +73,9 @@ public class InterfaceConfigurationBuilder implements Builder<InterfaceConfigura
    }
 
    @Override
-   public InterfaceConfigurationBuilder read(InterfaceConfiguration template) {
-      this.attributes.read(template.attributes());
-      this.address.read(template.addressConfiguration());
+   public InterfaceConfigurationBuilder read(InterfaceConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
+      this.address.read(template.addressConfiguration(), combine);
       return this;
    }
 }

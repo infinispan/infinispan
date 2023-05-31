@@ -38,19 +38,15 @@ public class IndexingConfiguration extends ConfigurationElement<IndexingConfigur
       return new AttributeSet(IndexingConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), KEY_TRANSFORMERS, INDEXED_ENTITIES, ENABLED, STORAGE, STARTUP_MODE, PATH, INDEXING_MODE);
    }
 
-   private final Set<Class<?>> resolvedIndexedClasses;
    private final IndexReaderConfiguration readerConfiguration;
    private final IndexWriterConfiguration writerConfiguration;
    private final IndexShardingConfiguration shardingConfiguration;
 
-   IndexingConfiguration(AttributeSet attributes, Set<Class<?>> resolvedIndexedClasses,
-                         IndexReaderConfiguration readerConfiguration, IndexWriterConfiguration writerConfiguration,
-                         IndexShardingConfiguration shardingConfiguration) {
+   IndexingConfiguration(AttributeSet attributes, IndexReaderConfiguration readerConfiguration, IndexWriterConfiguration writerConfiguration, IndexShardingConfiguration shardingConfiguration) {
       super(Element.INDEXING, attributes);
       this.readerConfiguration = readerConfiguration;
       this.writerConfiguration = writerConfiguration;
       this.shardingConfiguration = shardingConfiguration;
-      this.resolvedIndexedClasses = resolvedIndexedClasses;
    }
 
    /**
@@ -91,18 +87,6 @@ public class IndexingConfiguration extends ConfigurationElement<IndexingConfigur
     */
    public Map<Class<?>, Class<?>> keyTransformers() {
       return attributes.attribute(KEY_TRANSFORMERS).get();
-   }
-
-   /**
-    * The subset of indexed entity classes. This does not include the protobuf types. For the entire set of types use
-    * {@link #indexedEntityTypes()}.
-    *
-    * @deprecated since 11. Usages should be converted to {@link #indexedEntityTypes()} as this method will be removed
-    * in next major version.
-    */
-   @Deprecated
-   public Set<Class<?>> indexedEntities() {
-      return resolvedIndexedClasses;
    }
 
    /**

@@ -16,6 +16,7 @@ import static org.infinispan.server.core.configuration.ProtocolServerConfigurati
 import static org.infinispan.server.core.configuration.ProtocolServerConfiguration.TCP_NODELAY;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.core.admin.AdminOperationsHandler;
 import org.infinispan.server.core.logging.Log;
@@ -170,11 +171,11 @@ public abstract class ProtocolServerConfigurationBuilder<T extends ProtocolServe
    }
 
    @Override
-   public Builder<?> read(T template) {
-      this.attributes.read(template.attributes());
-      this.authentication().read(template.authentication());
-      this.ssl.read(template.ssl());
-      this.ipFilter.read(template.ipFilter());
+   public Builder<?> read(T template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
+      this.authentication().read(template.authentication(), combine);
+      this.ssl.read(template.ssl(), combine);
+      this.ipFilter.read(template.ipFilter(), combine);
       return this;
    }
 }

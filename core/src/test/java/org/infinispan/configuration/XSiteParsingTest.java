@@ -1,4 +1,4 @@
-package org.infinispan.xsite;
+package org.infinispan.configuration;
 
 import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;

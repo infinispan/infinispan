@@ -8,6 +8,7 @@ import static org.infinispan.persistence.sql.configuration.QueriesJdbcConfigurat
 import static org.infinispan.persistence.sql.configuration.QueriesJdbcConfiguration.UPSERT;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.persistence.jdbc.common.configuration.AbstractJdbcStoreConfigurationBuilder;
 import org.infinispan.persistence.jdbc.common.configuration.AbstractJdbcStoreConfigurationChildBuilder;
@@ -126,8 +127,8 @@ public class QueriesJdbcConfigurationBuilder<S extends AbstractJdbcStoreConfigur
    }
 
    @Override
-   public Builder<?> read(QueriesJdbcConfiguration template) {
-      attributes.read(template.attributes());
+   public Builder<?> read(QueriesJdbcConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 }

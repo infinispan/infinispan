@@ -5,6 +5,7 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -77,7 +78,7 @@ public class NoRpcOnReadonlyTransactionsTest extends MultipleCacheManagersTest {
    }
 
    public void testReadOnlyTxNoNetworkCallMultipleCaches() throws Exception {
-      defineConfigurationOnAllManagers("a", new ConfigurationBuilder().read(manager(0).getDefaultCacheConfiguration()));
+      defineConfigurationOnAllManagers("a", new ConfigurationBuilder().read(manager(0).getDefaultCacheConfiguration(), Combine.DEFAULT));
       cache(0, "a");
       cache(1, "a");
       cache(2, "a");

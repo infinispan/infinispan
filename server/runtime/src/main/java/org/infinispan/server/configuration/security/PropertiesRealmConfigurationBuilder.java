@@ -3,6 +3,7 @@ package org.infinispan.server.configuration.security;
 import static org.infinispan.server.configuration.security.PropertiesRealmConfiguration.GROUPS_ATTRIBUTE;
 import static org.infinispan.server.configuration.security.PropertiesRealmConfiguration.NAME;
 
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 public class PropertiesRealmConfigurationBuilder implements RealmProviderBuilder<PropertiesRealmConfiguration> {
@@ -55,10 +56,10 @@ public class PropertiesRealmConfigurationBuilder implements RealmProviderBuilder
    }
 
    @Override
-   public PropertiesRealmConfigurationBuilder read(PropertiesRealmConfiguration template) {
-      attributes.read(template.attributes());
-      userProperties.read(template.userProperties());
-      groupProperties.read(template.groupProperties());
+   public PropertiesRealmConfigurationBuilder read(PropertiesRealmConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
+      userProperties.read(template.userProperties(), combine);
+      groupProperties.read(template.groupProperties(), combine);
       return this;
    }
 

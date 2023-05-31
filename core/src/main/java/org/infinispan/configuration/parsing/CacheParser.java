@@ -21,8 +21,8 @@ import org.infinispan.configuration.cache.AsyncStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.CacheType;
 import org.infinispan.configuration.cache.ClusterLoaderConfigurationBuilder;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.ContentTypeConfigurationBuilder;
 import org.infinispan.configuration.cache.CustomStoreConfigurationBuilder;
@@ -32,6 +32,7 @@ import org.infinispan.configuration.cache.IndexMergeConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStartupMode;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.configuration.cache.IndexWriterConfigurationBuilder;
+import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexingMode;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
@@ -77,7 +78,7 @@ import org.kohsuke.MetaInfServices;
 @Namespace(uri = NAMESPACE + "*", root = "replicated-cache-configuration")
 public class CacheParser implements ConfigurationParser {
    public static final String NAMESPACE = "urn:infinispan:config:";
-   public static final String IGNORE_MISSING_TEMPLATES = "org.infinispan.parser.ignoreMissingTemplates";
+   public static final String IGNORE_DUPLICATES = "org.infinispan.parser.ignoreDuplicates";
 
    public CacheParser() {
    }
@@ -209,8 +210,6 @@ public class CacheParser implements ConfigurationParser {
 
    private void parseBackups(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
-      // If backups is present then remove any existing backups as they were added by the default config.
-      builder.sites().backups().clear();
       ParseUtils.parseAttributes(reader, builder.sites());
       while (reader.inTag()) {
          Map.Entry<String, String> item = reader.getMapItem(Attribute.SITE);
@@ -292,7 +291,6 @@ public class CacheParser implements ConfigurationParser {
    }
 
    private void parseBackupFor(ConfigurationReader reader, ConfigurationBuilder builder) {
-      builder.sites().backupFor().reset();
       ParseUtils.parseAttributes(reader, builder.sites().backupFor());
       ParseUtils.requireNoContent(reader);
    }
@@ -863,8 +861,7 @@ public class CacheParser implements ConfigurationParser {
          throw CONFIG.wildcardsNotAllowedInCacheNames(name);
       String configuration = reader.getAttributeValue(Attribute.CONFIGURATION.getLocalName());
       ConfigurationBuilder builder = getConfigurationBuilder(reader, holder, name, template, configuration);
-      CacheMode baseCacheMode = configuration == null ? CacheMode.INVALIDATION_SYNC : CacheMode.INVALIDATION_SYNC.toSync(builder.clustering().cacheMode().isSynchronous());
-      builder.clustering().cacheMode(baseCacheMode);
+      builder.clustering().cacheType(CacheType.INVALIDATION);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
@@ -874,7 +871,7 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             default: {
-               this.parseClusteredCacheAttribute(reader, i, attribute, value, builder, baseCacheMode);
+               this.parseClusteredCacheAttribute(reader, i, attribute, value, builder, CacheType.INVALIDATION);
             }
          }
       }
@@ -891,7 +888,7 @@ public class CacheParser implements ConfigurationParser {
    }
 
    private void parseSegmentedCacheAttribute(ConfigurationReader reader,
-                                             int index, Attribute attribute, String value, ConfigurationBuilder builder, ClassLoader classLoader, CacheMode baseCacheMode)
+                                             int index, Attribute attribute, String value, ConfigurationBuilder builder, ClassLoader classLoader, CacheType type)
       {
       switch (attribute) {
          case SEGMENTS: {
@@ -922,13 +919,13 @@ public class CacheParser implements ConfigurationParser {
             break;
          }
          default: {
-            this.parseClusteredCacheAttribute(reader, index, attribute, value, builder, baseCacheMode);
+            this.parseClusteredCacheAttribute(reader, index, attribute, value, builder, type);
          }
       }
    }
 
    private void parseClusteredCacheAttribute(ConfigurationReader reader,
-         int index, Attribute attribute, String value, ConfigurationBuilder builder, CacheMode baseCacheMode)
+         int index, Attribute attribute, String value, ConfigurationBuilder builder, CacheType type)
          {
       switch (attribute) {
          case ASYNC_MARSHALLING: {
@@ -941,7 +938,7 @@ public class CacheParser implements ConfigurationParser {
          }
          case MODE: {
             Mode mode = ParseUtils.parseEnum(reader, index, Mode.class, value);
-            builder.clustering().cacheMode(mode.apply(baseCacheMode));
+            builder.clustering().cacheSync(mode.isSynchronous());
             break;
          }
          case QUEUE_SIZE:
@@ -969,12 +966,11 @@ public class CacheParser implements ConfigurationParser {
          throw CONFIG.wildcardsNotAllowedInCacheNames(name);
       String configuration = reader.getAttributeValue(Attribute.CONFIGURATION.getLocalName());
       ConfigurationBuilder builder = getConfigurationBuilder(reader, holder, name, template, configuration);
-      CacheMode baseCacheMode = configuration == null ? CacheMode.REPL_SYNC : CacheMode.REPL_SYNC.toSync(builder.clustering().cacheMode().isSynchronous());
-      builder.clustering().cacheMode(baseCacheMode);
+      builder.clustering().cacheType(CacheType.REPLICATION);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         parseSegmentedCacheAttribute(reader, i, attribute, value, builder, holder.getClassLoader(), baseCacheMode);
+         parseSegmentedCacheAttribute(reader, i, attribute, value, builder, holder.getClassLoader(), CacheType.REPLICATION);
       }
 
       while (reader.inTag()) {
@@ -1023,8 +1019,7 @@ public class CacheParser implements ConfigurationParser {
          throw CONFIG.wildcardsNotAllowedInCacheNames(name);
       String configuration = reader.getAttributeValue(Attribute.CONFIGURATION.getLocalName());
       ConfigurationBuilder builder = getConfigurationBuilder(reader, holder, name, template, configuration);
-      CacheMode baseCacheMode = configuration == null ? CacheMode.DIST_SYNC : CacheMode.DIST_SYNC.toSync(builder.clustering().cacheMode().isSynchronous());
-      builder.clustering().cacheMode(baseCacheMode);
+      builder.clustering().cacheType(CacheType.DISTRIBUTION);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
@@ -1055,7 +1050,7 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             default: {
-               this.parseSegmentedCacheAttribute(reader, i, attribute, value, builder, holder.getClassLoader(), baseCacheMode);
+               this.parseSegmentedCacheAttribute(reader, i, attribute, value, builder, holder.getClassLoader(), CacheType.DISTRIBUTION);
             }
          }
       }
@@ -1119,31 +1114,12 @@ public class CacheParser implements ConfigurationParser {
    }
 
    private ConfigurationBuilder getConfigurationBuilder(ConfigurationReader reader, ConfigurationBuilderHolder holder, String name, boolean template, String baseConfigurationName) {
-      if (holder.getNamedConfigurationBuilders().containsKey(name)) {
+      if (!reader.getProperties().containsKey(IGNORE_DUPLICATES) && holder.getNamedConfigurationBuilders().containsKey(name)) {
          throw CONFIG.duplicateCacheName(name);
       }
-      boolean ignoreMissingTemplates = reader.getProperty(IGNORE_MISSING_TEMPLATES) != null;
       ConfigurationBuilder builder = holder.newConfigurationBuilder(name);
-      if (baseConfigurationName != null) {
-         ConfigurationBuilder baseConfigurationBuilder = holder.getNamedConfigurationBuilders().get(baseConfigurationName);
-         if (baseConfigurationBuilder == null) {
-            if (ignoreMissingTemplates) {
-               baseConfigurationBuilder = new ConfigurationBuilder().template(true);
-            } else {
-               throw CONFIG.undeclaredConfiguration(baseConfigurationName, name);
-            }
-         }
-         Configuration baseConfiguration = baseConfigurationBuilder.build();
-         if (!baseConfiguration.isTemplate()) {
-            throw CONFIG.noConfiguration(baseConfigurationName);
-         }
-         builder.read(baseConfiguration);
-         if (ignoreMissingTemplates) {
-            builder.configuration(baseConfigurationName);
-         }
-      }
-
-      return builder.template(template);
+      builder.configuration(baseConfigurationName).template(template);
+      return builder;
    }
 
    private void parsePersistence(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {
@@ -1668,6 +1644,8 @@ public class CacheParser implements ConfigurationParser {
    private void parseIndexing(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
       boolean selfEnable = reader.getSchema().since(11, 0);
+      IndexingConfigurationBuilder indexing = builder.indexing();
+      indexing.attributes().touch(); //  To handle inheritance corrrectly
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -1675,26 +1653,26 @@ public class CacheParser implements ConfigurationParser {
          switch (attribute) {
             case ENABLED:
                if (reader.getSchema().since(11, 0)) {
-                  builder.indexing().enabled(ParseUtils.parseBoolean(reader, i, value));
+                  indexing.enabled(ParseUtils.parseBoolean(reader, i, value));
                   selfEnable = false;
                } else {
                   throw ParseUtils.unexpectedAttribute(reader, i);
                }
                break;
             case STORAGE:
-               builder.indexing().storage(IndexStorage.requireValid(value, CONFIG));
+               indexing.storage(IndexStorage.requireValid(value, CONFIG));
                break;
             case STARTUP_MODE:
-               builder.indexing().startupMode(IndexStartupMode.requireValid(value, CONFIG));
+               indexing.startupMode(IndexStartupMode.requireValid(value, CONFIG));
                break;
             case PATH:
-               builder.indexing().path(value);
+               indexing.path(value);
                break;
             case INDEXING_MODE:
-               builder.indexing().indexingMode(IndexingMode.requireValid(value));
+               indexing.indexingMode(IndexingMode.requireValid(value));
                break;
             case INDEXED_ENTITIES:
-               builder.indexing().addIndexedEntities(reader.getListAttributeValue(i));
+               indexing.addIndexedEntities(reader.getListAttributeValue(i));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
@@ -1703,7 +1681,7 @@ public class CacheParser implements ConfigurationParser {
 
       if (selfEnable) {
          // The presence of the <indexing> element without any explicit enabling or disabling results in auto-enabling indexing since 11.0
-         builder.indexing().enable();
+         indexing.enable();
       }
 
       Properties indexingProperties = new Properties();
@@ -1811,20 +1789,8 @@ public class CacheParser implements ConfigurationParser {
 
    private void parseIndexedEntities(ConfigurationReader reader, ConfigurationBuilderHolder holder, ConfigurationBuilder builder) {
       ParseUtils.requireNoAttributes(reader);
-      boolean isProtobufStorage = builder.memory().encoding().value().isProtobufStorage();
       String[] entities = reader.readArray(Element.INDEXED_ENTITIES, Element.INDEXED_ENTITY);
-      for(String entity : entities) {
-         builder.indexing().addIndexedEntities(entity);
-         // Do not attempt to resolve type names to Java Classes if the cache uses Protobuf storage
-         if (!isProtobufStorage) {
-            try {
-               Class<?> indexedClass = Util.loadClass(entity, holder.getClassLoader());
-               builder.indexing().addIndexedEntity(indexedClass);
-            } catch (Exception e) {
-               // ignore
-            }
-         }
-      }
+      builder.indexing().addIndexedEntities(entities);
    }
 
    private static void parseProperty(ConfigurationReader reader, Properties properties) {
@@ -1944,14 +1910,6 @@ public class CacheParser implements ConfigurationParser {
       private final boolean sync;
       Mode(boolean sync) {
          this.sync = sync;
-      }
-
-      public static Mode forCacheMode(CacheMode mode) {
-         return mode.isSynchronous() ? SYNC : ASYNC;
-      }
-
-      public CacheMode apply(CacheMode mode) {
-         return this.sync ? mode.toSync() : mode.toAsync();
       }
 
       public boolean isSynchronous() {

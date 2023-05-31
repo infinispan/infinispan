@@ -4,6 +4,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.jdbc.UnitTestDatabaseManager;
@@ -66,7 +67,7 @@ public class ConfigurationTest {
       assertTrue(store.async().enabled());
 
       b = new ConfigurationBuilder();
-      b.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class).read(store);
+      b.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class).read(store, Combine.DEFAULT);
       Configuration configuration2 = b.build();
       JdbcStringBasedStoreConfiguration store2 = (JdbcStringBasedStoreConfiguration) configuration2.persistence().stores().get(0);
       assertTrue(store2.connectionFactory() instanceof PooledConnectionFactoryConfiguration);

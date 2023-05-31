@@ -14,6 +14,7 @@ import static org.infinispan.util.logging.Log.CONFIG;
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.persistence.Store;
@@ -225,9 +226,9 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
    }
 
    @Override
-   public Builder<?> read(T template) {
-      attributes.read(template.attributes());
-      async.read(template.async());
+   public Builder<?> read(T template, Combine combine) {
+      attributes.read(template.attributes(), combine);
+      async.read(template.async(), combine);
       return this;
    }
 

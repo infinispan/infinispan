@@ -9,6 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -50,8 +51,8 @@ public class ServerConfigurationBuilder extends AbstractConfigurationChildBuilde
    }
 
    @Override
-   public Builder read(ServerConfiguration template) {
-      this.attributes.read(template.attributes());
+   public Builder read(ServerConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 

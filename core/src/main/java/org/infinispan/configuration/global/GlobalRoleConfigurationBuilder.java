@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Role;
@@ -99,7 +100,7 @@ public class GlobalRoleConfigurationBuilder extends AbstractGlobalConfigurationB
    }
 
    @Override
-   public Builder<?> read(Role template) {
+   public Builder<?> read(Role template, Combine combine) {
       permissions.clear();
       permissions.addAll(template.getPermissions());
       inheritable = template.isInheritable();

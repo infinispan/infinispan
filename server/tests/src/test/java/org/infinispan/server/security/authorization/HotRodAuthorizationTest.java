@@ -26,6 +26,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.skip.SkipJunit;
@@ -365,7 +366,7 @@ abstract class HotRodAuthorizationTest {
    }
 
    private ConfigurationBuilder clientConfigurationWithProtostreamMarshaller(TestUser user) {
-      ConfigurationBuilder client = new ConfigurationBuilder().read(hotRodBuilders.get(user).build());
+      ConfigurationBuilder client = new ConfigurationBuilder().read(hotRodBuilders.get(user).build(), Combine.DEFAULT);
       client.servers().clear();
       ProtoStreamMarshaller marshaller = new ProtoStreamMarshaller();
       client.marshaller(marshaller);

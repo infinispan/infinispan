@@ -2,6 +2,7 @@ package org.infinispan.server.configuration.security;
 
 import static org.infinispan.server.configuration.security.DistributedRealmConfiguration.NAME;
 
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -35,8 +36,8 @@ public class TrustStoreRealmConfigurationBuilder implements RealmProviderBuilder
    }
 
    @Override
-   public TrustStoreRealmConfigurationBuilder read(TrustStoreRealmConfiguration template) {
-      attributes.read(template.attributes());
+   public TrustStoreRealmConfigurationBuilder read(TrustStoreRealmConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

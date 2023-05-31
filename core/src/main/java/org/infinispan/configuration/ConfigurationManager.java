@@ -4,12 +4,12 @@ import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.util.GlobUtils;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -102,14 +102,21 @@ public class ConfigurationManager {
    }
 
    public Collection<String> getDefinedCaches() {
-      List<String> cacheNames = namedConfiguration.entrySet().stream()
+      return namedConfiguration.entrySet().stream()
             .filter(entry -> !entry.getValue().isTemplate())
-            .map(entry -> entry.getKey())
-            .collect(Collectors.toList());
-      return Collections.unmodifiableCollection(cacheNames);
+            .map(Map.Entry::getKey).collect(Collectors.toUnmodifiableList());
    }
 
    public Collection<String> getDefinedConfigurations() {
       return Collections.unmodifiableCollection(namedConfiguration.keySet());
+   }
+
+   public ConfigurationBuilderHolder toBuilderHolder() {
+      ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
+      holder.getGlobalConfigurationBuilder().read(globalConfiguration);
+      for (Map.Entry<String, Configuration> entry : namedConfiguration.entrySet()) {
+         holder.newConfigurationBuilder(entry.getKey()).read(entry.getValue(), Combine.DEFAULT);
+      }
+      return holder;
    }
 }

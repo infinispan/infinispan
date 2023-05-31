@@ -12,15 +12,15 @@ import org.testng.annotations.Test;
  *
  * @since 9.2
  */
-@Test(groups = "functional", testName = "rest.search.IndexedRestOffHeapSearch")
-public class IndexedRestOffHeapSearch extends BaseRestSearchTest {
+@Test(groups = "functional", testName = "rest.search.IndexedRestOffHeapSearchTest")
+public class IndexedRestOffHeapSearchTest extends BaseRestSearchTest {
 
    @Override
    protected ConfigurationBuilder getConfigBuilder() {
       ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       configurationBuilder.indexing().enable().storage(LOCAL_HEAP)
             .addIndexedEntity("org.infinispan.rest.search.entity.Person");
-      configurationBuilder.memory().storageType(StorageType.OFF_HEAP);
+      configurationBuilder.memory().storage(StorageType.OFF_HEAP);
       return configurationBuilder;
    }
 }

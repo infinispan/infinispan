@@ -693,7 +693,7 @@ public class Parser extends CacheParser {
             }
             case LISTENER_EXECUTOR: {
                builder.listenerThreadPoolName(value);
-               builder.listenerThreadPool().read(createThreadPoolConfiguration(value, ASYNC_NOTIFICATION_EXECUTOR, holder));
+               builder.listenerThreadPool().read(createThreadPoolConfiguration(value, ASYNC_NOTIFICATION_EXECUTOR, holder), holder.getCombine());
                break;
             }
             case EVICTION_EXECUTOR:
@@ -705,7 +705,7 @@ public class Parser extends CacheParser {
                // fallthrough
             case EXPIRATION_EXECUTOR: {
                builder.expirationThreadPoolName(value);
-               builder.expirationThreadPool().read(createThreadPoolConfiguration(value, EXPIRATION_SCHEDULED_EXECUTOR, holder));
+               builder.expirationThreadPool().read(createThreadPoolConfiguration(value, EXPIRATION_SCHEDULED_EXECUTOR, holder), holder.getCombine());
                break;
             }
             case REPLICATION_QUEUE_EXECUTOR: {
@@ -718,12 +718,12 @@ public class Parser extends CacheParser {
             }
             case NON_BLOCKING_EXECUTOR: {
                builder.nonBlockingThreadPoolName(value);
-               builder.nonBlockingThreadPool().read(createThreadPoolConfiguration(value, NON_BLOCKING_EXECUTOR, holder));
+               builder.nonBlockingThreadPool().read(createThreadPoolConfiguration(value, NON_BLOCKING_EXECUTOR, holder), holder.getCombine());
                break;
             }
             case BLOCKING_EXECUTOR: {
                builder.blockingThreadPoolName(value);
-               builder.blockingThreadPool().read(createThreadPoolConfiguration(value, BLOCKING_EXECUTOR, holder));
+               builder.blockingThreadPool().read(createThreadPoolConfiguration(value, BLOCKING_EXECUTOR, holder), holder.getCombine());
                break;
             }
             case STATISTICS: {

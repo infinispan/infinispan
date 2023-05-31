@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.commons.configuration.io.ConfigurationReaderContext;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -28,6 +29,7 @@ public class ConfigurationBuilderHolder implements ConfigurationReaderContext {
    private final JGroupsConfigurationBuilder jgroupsBuilder;
    private NamespaceMappingParser namespaceMappingParser;
    private final List<ConfigurationParserListener> listeners = new ArrayList<>();
+   private Combine combine = Combine.DEFAULT;
 
    public ConfigurationBuilderHolder() {
       this(Thread.currentThread().getContextClassLoader());
@@ -97,6 +99,14 @@ public class ConfigurationBuilderHolder implements ConfigurationReaderContext {
       return scope.peek();
    }
 
+   public void setCombine(Combine combine) {
+      this.combine = combine;
+   }
+
+   public Combine getCombine() {
+      return combine;
+   }
+
    public void addParserListener(ConfigurationParserListener listener) {
       listeners.add(listener);
    }
@@ -111,11 +121,12 @@ public class ConfigurationBuilderHolder implements ConfigurationReaderContext {
       return classLoader.get();
    }
 
-   public void validate() {
+   public ConfigurationBuilderHolder validate() {
       globalConfigurationBuilder.defaultCacheName().ifPresent(name -> {
          if (!namedConfigurationBuilders.containsKey(name))
             throw CONFIG.missingDefaultCacheDeclaration(name);
       });
+      return this;
    }
 
    public void addJGroupsStack(FileJGroupsChannelConfigurator stack) {
@@ -142,5 +153,30 @@ public class ConfigurationBuilderHolder implements ConfigurationReaderContext {
    @Override
    public void handleAnyAttribute(ConfigurationReader reader, int i) {
       namespaceMappingParser.parseAttribute(reader, i, this);
+   }
+
+   void resolveConfigurations() {
+      // Resolve all configurations
+      for (Map.Entry<String, ConfigurationBuilder> entry : namedConfigurationBuilders.entrySet()) {
+         ConfigurationBuilder builder = resolveConfiguration(entry.getKey(), combine);
+         entry.setValue(builder);
+      }
+   }
+
+   private ConfigurationBuilder resolveConfiguration(String name, Combine combine) {
+      ConfigurationBuilder builder = namedConfigurationBuilders.get(name);
+      if (builder == null) {
+         throw CONFIG.noConfiguration(name);
+      }
+      String parent = builder.configuration();
+      if (parent == null) {
+         // No parents, return as-is
+         return builder;
+      } else {
+         ConfigurationBuilder rebased = new ConfigurationBuilder();
+         rebased.read(resolveConfiguration(parent, combine).build(), combine);
+         rebased.read(builder.build(), combine);
+         return rebased;
+      }
    }
 }

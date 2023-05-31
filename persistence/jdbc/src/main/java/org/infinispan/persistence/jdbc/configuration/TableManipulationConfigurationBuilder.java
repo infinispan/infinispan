@@ -8,6 +8,7 @@ import static org.infinispan.persistence.jdbc.configuration.TableManipulationCon
 import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.TABLE_NAME_PREFIX;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.Self;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -181,12 +182,12 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
    }
 
    @Override
-   public Builder<?> read(TableManipulationConfiguration template) {
-      attributes.read(template.attributes());
-      idColumn.read(template.idColumnConfiguration());
-      dataColumn.read(template.dataColumnConfiguration());
-      timeStampColumn.read(template.timeStampColumnConfiguration());
-      segmentColumn.read(template.segmentColumnConfiguration());
+   public Builder<?> read(TableManipulationConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
+      idColumn.read(template.idColumnConfiguration(), combine);
+      dataColumn.read(template.dataColumnConfiguration(), combine);
+      timeStampColumn.read(template.timeStampColumnConfiguration(), combine);
+      segmentColumn.read(template.segmentColumnConfiguration(), combine);
       return this;
    }
 

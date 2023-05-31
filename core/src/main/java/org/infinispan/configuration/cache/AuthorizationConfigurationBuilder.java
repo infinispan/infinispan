@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalAuthorizationConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -101,8 +102,8 @@ public class AuthorizationConfigurationBuilder extends AbstractSecurityConfigura
    }
 
    @Override
-   public Builder<?> read(AuthorizationConfiguration template) {
-      this.attributes.read(template.attributes());
+   public Builder<?> read(AuthorizationConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 

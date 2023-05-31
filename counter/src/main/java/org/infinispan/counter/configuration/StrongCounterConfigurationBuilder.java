@@ -3,6 +3,7 @@ package org.infinispan.counter.configuration;
 import static org.infinispan.counter.impl.Utils.validateStrongCounterBounds;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -58,8 +59,8 @@ public class StrongCounterConfigurationBuilder extends
    }
 
    @Override
-   public Builder<?> read(StrongCounterConfiguration template) {
-      this.attributes.read(template.attributes());
+   public Builder<?> read(StrongCounterConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return self();
    }
 

@@ -1,15 +1,7 @@
 package org.infinispan.tx;
 
-import static org.infinispan.test.TestingUtil.waitForNoRebalance;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -23,6 +15,15 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+import static org.infinispan.test.TestingUtil.waitForNoRebalance;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * This test reproduces following scenario in Infinispan:
@@ -64,7 +65,7 @@ public class InfinispanNodeFailureTest extends MultipleCacheManagersTest {
    private CompletableFuture<Void> viewLatch;
 
    public void killedNodeDoesNotBreakReplaceCommand() throws Exception {
-      defineConfigurationOnAllManagers(TEST_CACHE, new ConfigurationBuilder().read(manager(0).getDefaultCacheConfiguration()));
+      defineConfigurationOnAllManagers(TEST_CACHE, new ConfigurationBuilder().read(manager(0).getDefaultCacheConfiguration(), Combine.DEFAULT));
       waitForClusterToForm(TEST_CACHE);
       waitForNoRebalance(caches(TEST_CACHE));
 

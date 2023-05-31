@@ -16,16 +16,16 @@ import org.infinispan.configuration.parsing.Element;
  *
  */
 public class ClusteringConfiguration extends ConfigurationElement<ClusteringConfiguration> {
-
-   public static final AttributeDefinition<CacheMode> CACHE_MODE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MODE, CacheMode.LOCAL).immutable().build();
+   public static final AttributeDefinition<CacheType> CACHE_TYPE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.TYPE, CacheType.LOCAL).immutable().autoPersist(false).build();
+   public static final AttributeDefinition<Boolean> CACHE_SYNC = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MODE, true, Boolean.class).immutable().autoPersist(false).build();
    public static final AttributeDefinition<Long> REMOTE_TIMEOUT =
          AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.REMOTE_TIMEOUT, TimeUnit.SECONDS.toMillis(15)).build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(ClusteringConfiguration.class, CACHE_MODE, REMOTE_TIMEOUT);
+      return new AttributeSet(ClusteringConfiguration.class, CACHE_TYPE, CACHE_SYNC, REMOTE_TIMEOUT);
    }
 
-   private final Attribute<CacheMode> cacheMode;
+   private final CacheMode cacheMode;
    private final Attribute<Long> remoteTimeout;
    private final HashConfiguration hashConfiguration;
    private final L1Configuration l1Configuration;
@@ -36,7 +36,7 @@ public class ClusteringConfiguration extends ConfigurationElement<ClusteringConf
                            L1Configuration l1Configuration, StateTransferConfiguration stateTransferConfiguration,
                            PartitionHandlingConfiguration partitionHandlingStrategy) {
       super(Element.CLUSTERING, attributes, hashConfiguration, l1Configuration, stateTransferConfiguration, partitionHandlingStrategy);
-      this.cacheMode = attributes.attribute(CACHE_MODE);
+      this.cacheMode = CacheMode.of(attributes.attribute(CACHE_TYPE).get(), attributes.attribute(CACHE_SYNC).get());
       this.remoteTimeout = attributes.attribute(REMOTE_TIMEOUT);
       this.hashConfiguration = hashConfiguration;
       this.l1Configuration = l1Configuration;
@@ -48,7 +48,7 @@ public class ClusteringConfiguration extends ConfigurationElement<ClusteringConf
     * Cache mode. See {@link CacheMode} for information on the various cache modes available.
     */
    public CacheMode cacheMode() {
-      return cacheMode.get();
+      return cacheMode;
    }
 
    /**

@@ -11,7 +11,6 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.StringBuilderWriter;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.parsing.CacheParser;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.testng.annotations.Test;
@@ -33,7 +32,6 @@ public class ConfigurationConversionTest {
     private String convert(String source, MediaType src, MediaType dst) {
         ParserRegistry parserRegistry = new ParserRegistry();
         Properties properties = new Properties();
-        properties.put(CacheParser.IGNORE_MISSING_TEMPLATES, "true");
         ConfigurationReader reader = ConfigurationReader.from(source)
                 .withResolver(ConfigurationResourceResolvers.DEFAULT)
                 .withType(src)

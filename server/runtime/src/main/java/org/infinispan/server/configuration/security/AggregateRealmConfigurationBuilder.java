@@ -8,6 +8,7 @@ import static org.infinispan.server.configuration.security.DistributedRealmConfi
 import java.util.Arrays;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.wildfly.security.auth.server.NameRewriter;
 
@@ -58,8 +59,8 @@ public class AggregateRealmConfigurationBuilder implements RealmProviderBuilder<
    }
 
    @Override
-   public Builder<?> read(AggregateRealmConfiguration template) {
-      attributes.read(template.attributes());
+   public Builder<?> read(AggregateRealmConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

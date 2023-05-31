@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.rest.configuration.RestAuthenticationConfigurationBuilder;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
@@ -152,8 +153,8 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
    }
 
    @Override
-   public EndpointConfigurationBuilder read(EndpointConfiguration template) {
-      attributes.read(template.attributes());
+   public EndpointConfigurationBuilder read(EndpointConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

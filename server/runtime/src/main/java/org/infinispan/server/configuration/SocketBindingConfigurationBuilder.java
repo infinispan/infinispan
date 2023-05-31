@@ -1,6 +1,7 @@
 package org.infinispan.server.configuration;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 public class SocketBindingConfigurationBuilder implements Builder<SocketBindingConfiguration> {
@@ -35,8 +36,8 @@ public class SocketBindingConfigurationBuilder implements Builder<SocketBindingC
    }
 
    @Override
-   public SocketBindingConfigurationBuilder read(SocketBindingConfiguration template) {
-      this.attributes.read(template.attributes());
+   public SocketBindingConfigurationBuilder read(SocketBindingConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 
