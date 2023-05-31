@@ -5,6 +5,7 @@ import static org.infinispan.persistence.sifs.configuration.DataConfiguration.MA
 import static org.infinispan.persistence.sifs.configuration.DataConfiguration.SYNC_WRITES;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 public class DataConfigurationBuilder implements Builder<DataConfiguration> {
@@ -40,8 +41,8 @@ public class DataConfigurationBuilder implements Builder<DataConfiguration> {
    }
 
    @Override
-   public Builder<?> read(DataConfiguration template) {
-      attributes.read(template.attributes());
+   public Builder<?> read(DataConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 }

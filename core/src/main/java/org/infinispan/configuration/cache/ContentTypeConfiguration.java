@@ -36,4 +36,8 @@ public class ContentTypeConfiguration extends ConfigurationElement<ContentTypeCo
    public boolean isObjectStorage() {
       return MediaType.APPLICATION_OBJECT.match(mediaType);
    }
+
+   public boolean isProtoBufStorage() {
+      return MediaType.APPLICATION_PROTOSTREAM.match(mediaType);
+   }
 }

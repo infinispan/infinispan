@@ -1,17 +1,18 @@
 package org.infinispan.notifications.cachelistener;
 
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.mockito.ArgumentMatchers.isNull;
-
 import org.hamcrest.Matcher;
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
 import org.testng.annotations.Test;
+
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.mockito.ArgumentMatchers.isNull;
 
 /**
  * @author Mircea Markus
@@ -21,7 +22,7 @@ import org.testng.annotations.Test;
 public class SimpleCacheNotifierTest extends CacheNotifierTest {
    @Override
    protected Cache<Object, Object> getCache() {
-      cm.defineConfiguration("simple", new ConfigurationBuilder().read(cm.getDefaultCacheConfiguration())
+      cm.defineConfiguration("simple", new ConfigurationBuilder().read(cm.getDefaultCacheConfiguration(), Combine.DEFAULT)
             .clustering().simpleCache(true)
             .statistics().available(false)
             .build());

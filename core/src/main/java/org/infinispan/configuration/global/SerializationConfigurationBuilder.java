@@ -12,6 +12,7 @@ import java.util.Map;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
@@ -156,10 +157,10 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
 
    @Override
    public
-   SerializationConfigurationBuilder read(SerializationConfiguration template) {
-      this.attributes.read(template.attributes());
+   SerializationConfigurationBuilder read(SerializationConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       this.advancedExternalizers = template.advancedExternalizers();
-      this.allowListBuilder.read(template.allowList());
+      this.allowListBuilder.read(template.allowList(), combine);
       return this;
    }
 

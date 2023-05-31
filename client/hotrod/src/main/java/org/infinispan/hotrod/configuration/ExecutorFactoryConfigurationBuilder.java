@@ -3,6 +3,7 @@ package org.infinispan.hotrod.configuration;
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.util.TypedProperties;
@@ -97,7 +98,7 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractConfigurationCh
    }
 
    @Override
-   public ExecutorFactoryConfigurationBuilder read(ExecutorFactoryConfiguration template) {
+   public ExecutorFactoryConfigurationBuilder read(ExecutorFactoryConfiguration template, Combine combine) {
       this.factory = template.factory();
       this.factoryClass = template.factoryClass();
       this.properties = template.properties();

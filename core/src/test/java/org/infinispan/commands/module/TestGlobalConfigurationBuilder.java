@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.function.Consumer;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.factories.ComponentRegistry;
@@ -61,8 +62,8 @@ public class TestGlobalConfigurationBuilder implements Builder<TestGlobalConfigu
    }
 
    @Override
-   public Builder<?> read(TestGlobalConfiguration template) {
-      this.attributes.read(template.attributes());
+   public Builder<?> read(TestGlobalConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 

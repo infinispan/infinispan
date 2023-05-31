@@ -9,6 +9,7 @@ import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.near.DefaultNearCacheFactory;
 import org.infinispan.client.hotrod.near.NearCacheFactory;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
 
@@ -126,7 +127,7 @@ public class NearCacheConfigurationBuilder extends AbstractConfigurationChildBui
    }
 
    @Override
-   public Builder<?> read(NearCacheConfiguration template) {
+   public Builder<?> read(NearCacheConfiguration template, Combine combine) {
       mode = template.mode();
       maxEntries = template.maxEntries();
       bloomFilter = template.bloomFilter();

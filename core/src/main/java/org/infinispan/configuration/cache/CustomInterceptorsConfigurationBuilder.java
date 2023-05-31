@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
@@ -61,10 +62,10 @@ public class CustomInterceptorsConfigurationBuilder extends AbstractConfiguratio
    }
 
    @Override
-   public CustomInterceptorsConfigurationBuilder read(CustomInterceptorsConfiguration template) {
+   public CustomInterceptorsConfigurationBuilder read(CustomInterceptorsConfiguration template, Combine combine) {
       this.interceptorBuilders = new LinkedList<>();
       for (InterceptorConfiguration c : template.interceptors()) {
-         this.interceptorBuilders.add(new InterceptorConfigurationBuilder(this).read(c));
+         this.interceptorBuilders.add(new InterceptorConfigurationBuilder(this).read(c, combine));
       }
       return this;
    }

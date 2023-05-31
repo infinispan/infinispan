@@ -5,6 +5,7 @@ import static org.infinispan.configuration.cache.BackupForConfiguration.REMOTE_S
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 /**
@@ -77,17 +78,13 @@ public class BackupForBuilder extends AbstractConfigurationChildBuilder implemen
    }
 
    @Override
-   public BackupForBuilder read(BackupForConfiguration template) {
-      attributes.read(template.attributes());
+   public BackupForBuilder read(BackupForConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 
    @Override
    public String toString() {
       return "BackupForBuilder [attributes=" + attributes + "]";
-   }
-
-   public void reset() {
-      attributes.reset();
    }
 }

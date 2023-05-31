@@ -6,6 +6,7 @@ import static org.infinispan.configuration.cache.SingleFileStoreConfiguration.LO
 import static org.infinispan.configuration.cache.SingleFileStoreConfiguration.MAX_ENTRIES;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -103,8 +104,8 @@ public class SingleFileStoreConfigurationBuilder
    }
 
    @Override
-   public Builder<?> read(SingleFileStoreConfiguration template) {
-      super.read(template);
+   public Builder<?> read(SingleFileStoreConfiguration template, Combine combine) {
+      super.read(template, combine);
       return this;
    }
 

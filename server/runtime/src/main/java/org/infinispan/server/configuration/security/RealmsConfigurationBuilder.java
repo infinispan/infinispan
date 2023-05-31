@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -35,9 +36,9 @@ public class RealmsConfigurationBuilder implements Builder<RealmsConfiguration> 
    }
 
    @Override
-   public RealmsConfigurationBuilder read(RealmsConfiguration template) {
+   public RealmsConfigurationBuilder read(RealmsConfiguration template, Combine combine) {
       securityRealms.clear();
-      template.realms().entrySet().forEach(e ->  addSecurityRealm(e.getKey()).read(e.getValue()));
+      template.realms().entrySet().forEach(e ->  addSecurityRealm(e.getKey()).read(e.getValue(), combine));
       return this;
    }
 

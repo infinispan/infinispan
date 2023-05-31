@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.api.configuration.Configuration;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
@@ -418,20 +419,20 @@ public class HotRodConfigurationBuilder implements ConfigurationChildBuilder, Bu
    }
 
    @Override
-   public HotRodConfigurationBuilder read(HotRodConfiguration template) {
-      this.attributes.read(template.attributes());
-      this.asyncExecutorFactory.read(template.asyncExecutorFactory());
+   public HotRodConfigurationBuilder read(HotRodConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
+      this.asyncExecutorFactory.read(template.asyncExecutorFactory(), combine);
       this.balancingStrategyFactory = template.balancingStrategyFactory();
-      this.connectionPool.read(template.connectionPool());
+      this.connectionPool.read(template.connectionPool(), combine);
       this.servers.clear();
       for (ServerConfiguration server : template.servers()) {
          this.addServer().host(server.host()).port(server.port());
       }
       this.clusters.clear();
-      template.clusters().forEach(cluster -> this.addCluster(cluster.getClusterName()).read(cluster));
-      this.security.read(template.security());
+      template.clusters().forEach(cluster -> this.addCluster(cluster.getClusterName()).read(cluster, combine));
+      this.security.read(template.security(), combine);
       this.transportFactory = template.transportFactory();
-      this.statistics.read(template.statistics());
+      this.statistics.read(template.statistics(), combine);
       this.contextInitializers.clear();
       this.contextInitializers.addAll(template.getContextInitializers());
       return this;

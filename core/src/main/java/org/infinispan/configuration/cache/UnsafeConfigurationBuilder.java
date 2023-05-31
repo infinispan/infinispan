@@ -5,6 +5,7 @@ import static org.infinispan.configuration.cache.UnsafeConfiguration.UNRELIABLE_
 import java.util.Map;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
@@ -59,8 +60,8 @@ public class UnsafeConfigurationBuilder extends AbstractConfigurationChildBuilde
    }
 
    @Override
-   public UnsafeConfigurationBuilder read(UnsafeConfiguration template) {
-      this.attributes.read(template.attributes());
+   public UnsafeConfigurationBuilder read(UnsafeConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 

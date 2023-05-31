@@ -8,6 +8,7 @@ import static org.infinispan.configuration.cache.LockingConfiguration.USE_LOCK_S
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -106,8 +107,8 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
    }
 
    @Override
-   public LockingConfigurationBuilder read(LockingConfiguration template) {
-      this.attributes.read(template.attributes());
+   public LockingConfigurationBuilder read(LockingConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 

@@ -16,8 +16,8 @@ import org.infinispan.configuration.parsing.Element;
  *
  */
 public class ClusteringConfiguration extends ConfigurationElement<ClusteringConfiguration> {
-
-   public static final AttributeDefinition<CacheMode> CACHE_MODE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MODE, CacheMode.LOCAL).immutable().build();
+   public static final AttributeDefinition<CacheType> CACHE_TYPE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.TYPE, CacheType.LOCAL).immutable().autoPersist(false).build();
+   public static final AttributeDefinition<Boolean> CACHE_SYNC = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MODE, true, Boolean.class).immutable().autoPersist(false).build();
    public static final AttributeDefinition<Long> REMOTE_TIMEOUT =
          AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.REMOTE_TIMEOUT, TimeUnit.SECONDS.toMillis(15)).build();
    public static final AttributeDefinition<Integer> INVALIDATION_BATCH_SIZE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.INVALIDATION_BATCH_SIZE,  128).immutable().build();
@@ -25,10 +25,10 @@ public class ClusteringConfiguration extends ConfigurationElement<ClusteringConf
    public static final AttributeDefinition<Long> BIAS_LIFESPAN = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.BIAS_LIFESPAN, TimeUnit.MINUTES.toMillis(5)).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(ClusteringConfiguration.class, CACHE_MODE, REMOTE_TIMEOUT, INVALIDATION_BATCH_SIZE, BIAS_ACQUISITION, BIAS_LIFESPAN);
+      return new AttributeSet(ClusteringConfiguration.class, CACHE_TYPE, CACHE_SYNC, REMOTE_TIMEOUT, INVALIDATION_BATCH_SIZE, BIAS_ACQUISITION, BIAS_LIFESPAN);
    }
 
-   private final Attribute<CacheMode> cacheMode;
+   private final CacheMode cacheMode;
    private final Attribute<Long> remoteTimeout;
    private final Attribute<Integer> invalidationBatchSize;
    private final HashConfiguration hashConfiguration;
@@ -40,7 +40,7 @@ public class ClusteringConfiguration extends ConfigurationElement<ClusteringConf
                            L1Configuration l1Configuration, StateTransferConfiguration stateTransferConfiguration,
                            PartitionHandlingConfiguration partitionHandlingStrategy) {
       super(Element.CLUSTERING, attributes, hashConfiguration, l1Configuration, stateTransferConfiguration, partitionHandlingStrategy);
-      this.cacheMode = attributes.attribute(CACHE_MODE);
+      this.cacheMode = CacheMode.of(attributes.attribute(CACHE_TYPE).get(), attributes.attribute(CACHE_SYNC).get());
       this.remoteTimeout = attributes.attribute(REMOTE_TIMEOUT);
       this.invalidationBatchSize = attributes.attribute(INVALIDATION_BATCH_SIZE);
       this.hashConfiguration = hashConfiguration;
@@ -53,7 +53,7 @@ public class ClusteringConfiguration extends ConfigurationElement<ClusteringConf
     * Cache mode. See {@link CacheMode} for information on the various cache modes available.
     */
    public CacheMode cacheMode() {
-      return cacheMode.get();
+      return cacheMode;
    }
 
    /**

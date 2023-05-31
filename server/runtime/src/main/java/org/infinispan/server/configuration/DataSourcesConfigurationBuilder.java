@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.Server;
 
@@ -47,8 +48,8 @@ public class DataSourcesConfigurationBuilder implements Builder<DataSourcesConfi
    }
 
    @Override
-   public DataSourcesConfigurationBuilder read(DataSourcesConfiguration template) {
-      this.attributes.read(template.attributes());
+   public DataSourcesConfigurationBuilder read(DataSourcesConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       dataSources.clear();
       //template.dataSources().forEach(s -> dataSource(s.name(), s.port(), s.interfaceName()));
       return this;

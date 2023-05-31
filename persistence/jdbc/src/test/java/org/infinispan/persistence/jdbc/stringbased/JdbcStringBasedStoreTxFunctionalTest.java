@@ -11,6 +11,7 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.test.ExceptionRunnable;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
@@ -85,7 +86,7 @@ public class JdbcStringBasedStoreTxFunctionalTest extends JdbcStringBasedStoreFu
          if (cb != null) {
             String defaultName = JdbcStringBasedStoreTxFunctionalTest.class.getName() + "-default";
             global.defaultCacheName(defaultName);
-            holder.newConfigurationBuilder(defaultName).read(cb.build());
+            holder.newConfigurationBuilder(defaultName).read(cb.build(), Combine.DEFAULT);
          }
          global.transport().defaultTransport();
          return TestCacheManagerFactory.createClusteredCacheManager(start, holder);

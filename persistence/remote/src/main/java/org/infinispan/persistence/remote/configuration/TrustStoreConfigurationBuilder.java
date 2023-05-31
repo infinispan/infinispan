@@ -7,6 +7,7 @@ import static org.infinispan.persistence.remote.configuration.TrustStoreConfigur
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -44,8 +45,8 @@ public class TrustStoreConfigurationBuilder extends AbstractSecurityConfiguratio
    }
 
    @Override
-   public TrustStoreConfigurationBuilder read(TrustStoreConfiguration template) {
-      this.attributes.read(template.attributes());
+   public TrustStoreConfigurationBuilder read(TrustStoreConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 

@@ -20,6 +20,7 @@ import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
@@ -242,9 +243,9 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    @Override
-   public TransactionConfigurationBuilder read(TransactionConfiguration template) {
-      this.attributes.read(template.attributes());
-      this.recovery.read(template.recovery());
+   public TransactionConfigurationBuilder read(TransactionConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
+      this.recovery.read(template.recovery(), combine);
 
       return this;
    }

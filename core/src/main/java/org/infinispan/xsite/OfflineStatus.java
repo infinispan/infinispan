@@ -2,6 +2,7 @@ package org.infinispan.xsite;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.configuration.cache.TakeOfflineConfigurationBuilder;
@@ -109,7 +110,7 @@ public class OfflineStatus {
 
    public void amend(Integer afterFailures, Long minTimeToWait) {
       TakeOfflineConfigurationBuilder builder = new TakeOfflineConfigurationBuilder(null, null);
-      builder.read(getTakeOffline());
+      builder.read(getTakeOffline(), Combine.DEFAULT);
       if (afterFailures != null) {
          builder.afterFailures(afterFailures);
       }

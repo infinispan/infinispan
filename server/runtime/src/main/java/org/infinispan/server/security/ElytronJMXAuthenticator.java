@@ -55,6 +55,4 @@ public class ElytronJMXAuthenticator implements BiPredicate<CallbackHandler, Sub
          return false;
       }
    }
-
-
 }

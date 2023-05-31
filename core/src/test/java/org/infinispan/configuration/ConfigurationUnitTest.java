@@ -23,6 +23,7 @@ import javax.xml.validation.SchemaFactory;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
@@ -449,7 +450,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
       }
 
       @Override
-      public Builder<?> read(Object template) {
+      public Builder<?> read(Object template, Combine combine) {
          return this;
       }
    }

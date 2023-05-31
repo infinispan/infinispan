@@ -1,9 +1,8 @@
-package org.infinispan.xsite;
+package org.infinispan.configuration;
 
 import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.DEFAULT_TIMEOUT;
 import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration.DEFAULT_WAIT_TIME;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.ByteArrayInputStream;
@@ -50,14 +49,6 @@ public class XSiteStateTransferFileParsingTest extends SingleCacheManagerTest {
       Configuration dcc = cacheManager.getCacheConfiguration("inheritor");
       assertEquals(1, dcc.sites().allBackups().size());
       testDefault(dcc);
-   }
-
-   public void testNoStateTransfer() {
-      Configuration dcc = cacheManager.getCacheConfiguration("noStateTransfer");
-      assertEquals(1, dcc.sites().allBackups().size());
-      assertTrue(dcc.sites().allBackups().contains(createDefault()));
-      assertNull(dcc.sites().backupFor().remoteSite());
-      assertNull(dcc.sites().backupFor().remoteCache());
    }
 
    public void testStateTransferDifferentConfig() {

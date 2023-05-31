@@ -11,6 +11,7 @@ import static org.infinispan.hotrod.impl.ConfigurationProperties.STATISTICS;
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.util.TypedProperties;
@@ -116,8 +117,8 @@ public class StatisticsConfigurationBuilder extends AbstractConfigurationChildBu
    }
 
    @Override
-   public Builder<?> read(StatisticsConfiguration template) {
-      this.attributes.read(template.attributes());
+   public Builder<?> read(StatisticsConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 

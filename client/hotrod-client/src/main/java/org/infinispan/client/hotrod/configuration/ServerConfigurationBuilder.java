@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.configuration;
 import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -48,7 +49,7 @@ public class ServerConfigurationBuilder extends AbstractConfigurationChildBuilde
    }
 
    @Override
-   public ServerConfigurationBuilder read(ServerConfiguration template) {
+   public ServerConfigurationBuilder read(ServerConfiguration template, Combine combine) {
       this.host = template.host();
       this.port = template.port();
 

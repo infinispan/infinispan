@@ -9,6 +9,7 @@ import static org.infinispan.configuration.cache.BackupConfiguration.USE_TWO_PHA
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.xsite.XSiteNamedCache;
@@ -180,10 +181,10 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
    }
 
    @Override
-   public BackupConfigurationBuilder read(BackupConfiguration template) {
-      attributes.read(template.attributes());
-      takeOfflineBuilder.read(template.takeOffline());
-      stateTransferBuilder.read(template.stateTransfer());
+   public BackupConfigurationBuilder read(BackupConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
+      takeOfflineBuilder.read(template.takeOffline(), combine);
+      stateTransferBuilder.read(template.stateTransfer(), combine);
       return this;
    }
 

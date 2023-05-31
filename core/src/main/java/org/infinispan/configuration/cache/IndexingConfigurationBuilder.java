@@ -22,6 +22,7 @@ import java.util.Set;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
@@ -414,8 +415,8 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    }
 
    @Override
-   public IndexingConfigurationBuilder read(IndexingConfiguration template) {
-      attributes.read(template.attributes());
+   public IndexingConfigurationBuilder read(IndexingConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
 
       // ensures inheritance works properly even when inheriting from an old config
       // that uses INDEX or AUTO_CONFIG instead of ENABLED

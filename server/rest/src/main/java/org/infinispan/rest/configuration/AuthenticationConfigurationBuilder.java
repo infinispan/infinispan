@@ -7,6 +7,7 @@ import static org.infinispan.rest.configuration.AuthenticationConfiguration.SECU
 import java.util.List;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.server.core.configuration.AbstractProtocolServerConfigurationChildBuilder;
@@ -104,8 +105,8 @@ public class AuthenticationConfigurationBuilder extends AbstractProtocolServerCo
    }
 
    @Override
-   public Builder<?> read(AuthenticationConfiguration template) {
-      this.attributes.read(template.attributes());
+   public Builder<?> read(AuthenticationConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 

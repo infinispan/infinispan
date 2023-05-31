@@ -4,6 +4,7 @@ import static org.infinispan.configuration.cache.EncodingConfiguration.MEDIA_TYP
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -66,6 +67,11 @@ public class EncodingConfigurationBuilder extends AbstractConfigurationChildBuil
       return this;
    }
 
+   public EncodingConfigurationBuilder mediaType(MediaType keyValueMediaType) {
+      mediaType.set(keyValueMediaType);
+      return this;
+   }
+
    public boolean isStorageBinary() {
       // global takes precedence
       if (!mediaType.isNull()) {
@@ -87,10 +93,10 @@ public class EncodingConfigurationBuilder extends AbstractConfigurationChildBuil
    }
 
    @Override
-   public Builder<?> read(EncodingConfiguration template) {
-      this.attributes.read(template.attributes());
-      this.keyContentTypeBuilder = new ContentTypeConfigurationBuilder(Element.KEY_DATA_TYPE, this).read(template.keyDataType());
-      this.valueContentTypeBuilder = new ContentTypeConfigurationBuilder(Element.VALUE_DATA_TYPE, this).read(template.valueDataType());
+   public Builder<?> read(EncodingConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
+      this.keyContentTypeBuilder = new ContentTypeConfigurationBuilder(Element.KEY_DATA_TYPE, this).read(template.keyDataType(), combine);
+      this.valueContentTypeBuilder = new ContentTypeConfigurationBuilder(Element.VALUE_DATA_TYPE, this).read(template.valueDataType(), combine);
       return this;
    }
 

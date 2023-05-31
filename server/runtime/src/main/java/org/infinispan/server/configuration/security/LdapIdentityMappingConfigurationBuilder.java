@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -81,11 +82,11 @@ public class LdapIdentityMappingConfigurationBuilder implements Builder<LdapIden
    }
 
    @Override
-   public LdapIdentityMappingConfigurationBuilder read(LdapIdentityMappingConfiguration template) {
-      attributes.read(template.attributes());
+   public LdapIdentityMappingConfigurationBuilder read(LdapIdentityMappingConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       attributeMappings.clear();
-      template.attributeMappings().forEach(a -> addAttributeMapping().read(a));
-      userPasswordMapper.read(template.userPasswordMapper());
+      template.attributeMappings().forEach(a -> addAttributeMapping().read(a, combine));
+      userPasswordMapper.read(template.userPasswordMapper(), combine);
       return this;
    }
 }

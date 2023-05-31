@@ -16,6 +16,7 @@ import java.util.concurrent.locks.LockSupport;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.api.Lifecycle;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -317,7 +318,7 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
          decorateGlobalConfiguration(gcb, siteIndex, i);
 
          ConfigurationBuilder builder = new ConfigurationBuilder();
-         builder.read(cacheTemplate.build());
+         builder.read(cacheTemplate.build(), Combine.DEFAULT);
          decorateCacheConfiguration(builder, siteIndex, i);
 
 

@@ -1,6 +1,7 @@
 package org.infinispan.persistence.sql.configuration;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.logging.Log;
@@ -46,9 +47,9 @@ public abstract class AbstractSchemaJdbcConfigurationBuilder<T extends AbstractS
    }
 
    @Override
-   public Builder<?> read(T template) {
-      super.read(template);
-      schemaBuilder.read(template.schema());
+   public Builder<?> read(T template, Combine combine) {
+      super.read(template, combine);
+      schemaBuilder.read(template.schema(), combine);
       return this;
    }
 }

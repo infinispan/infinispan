@@ -9,6 +9,7 @@ import static org.infinispan.util.logging.Log.CONFIG;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.eviction.EvictionStrategy;
@@ -124,8 +125,8 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
    }
 
    @Override
-   public L1ConfigurationBuilder read(L1Configuration template) {
-      attributes.read(template.attributes());
+   public L1ConfigurationBuilder read(L1Configuration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

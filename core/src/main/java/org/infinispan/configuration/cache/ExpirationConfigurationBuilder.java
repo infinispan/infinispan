@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -173,8 +174,8 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
    }
 
    @Override
-   public ExpirationConfigurationBuilder read(ExpirationConfiguration template) {
-      this.attributes.read(template.attributes());
+   public ExpirationConfigurationBuilder read(ExpirationConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 

@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -27,7 +28,7 @@ public class MemoryStorageConfigurationBuilder extends AbstractConfigurationChil
    }
 
    @Override
-   public MemoryStorageConfigurationBuilder read(MemoryStorageConfiguration template) {
+   public MemoryStorageConfigurationBuilder read(MemoryStorageConfiguration template, Combine combine) {
       return this;
    }
 

@@ -3,6 +3,7 @@ package org.infinispan.server.configuration.security;
 import java.util.function.Supplier;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.security.PasswordCredentialSource;
 import org.wildfly.security.credential.source.CredentialSource;
@@ -72,8 +73,8 @@ public class OAuth2ConfigurationBuilder implements Builder<OAuth2Configuration> 
    }
 
    @Override
-   public OAuth2ConfigurationBuilder read(OAuth2Configuration template) {
-      attributes.read(template.attributes());
+   public OAuth2ConfigurationBuilder read(OAuth2Configuration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 }

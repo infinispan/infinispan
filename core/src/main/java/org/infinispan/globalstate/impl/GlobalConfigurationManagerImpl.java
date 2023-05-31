@@ -6,6 +6,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
@@ -13,10 +14,12 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.parsing.CacheParser;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -117,8 +120,9 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       GlobalConfigurationStateListener stateCacheListener = new GlobalConfigurationStateListener(this);
       getStateCache().addListener(stateCacheListener);
 
-      Map<String, Configuration> persistedCaches = localConfigurationManager.loadAllCaches();
+      // Load the persisted configurations
       Map<String, Configuration> persistedTemplates = localConfigurationManager.loadAllTemplates();
+      Map<String, Configuration> persistedCaches = localConfigurationManager.loadAllCaches();
 
       getStateCache().forEach((key, v) -> {
          String scope = key.getScope();
@@ -134,20 +138,19 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       });
 
       EnumSet<CacheContainerAdmin.AdminFlag> adminFlags = EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class);
-      persistedCaches.forEach((name, configuration) -> {
-         ensurePersistenceCompatibility(name, configuration);
-         // First create the cache locally to ensure that it's available on startup
-         createCacheLocally(name, null, configuration, adminFlags);
-         // The cache configuration was permanent, it still needs to be
-         CompletionStages.join(getOrCreateCache(name, configuration, adminFlags));
-      });
 
+      // Create the templates
       persistedTemplates.forEach((name, configuration) -> {
          ensurePersistenceCompatibility(name, configuration);
-         // First create the cache locally to ensure that it's available on startup
-         createTemplateLocally(name, configuration, adminFlags);
          // The template was permanent, it still needs to be
          CompletionStages.join(getOrCreateTemplate(name, configuration, adminFlags));
+      });
+
+      // Create the caches
+      persistedCaches.forEach((name, configuration) -> {
+         ensurePersistenceCompatibility(name, configuration);
+         // The cache configuration was permanent, it still needs to be
+         CompletionStages.join(getOrCreateCache(name, configuration, adminFlags));
       });
    }
 
@@ -239,11 +242,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
             return CompletableFuture.completedFuture(configurationManager.getConfiguration(cacheName, true));
          else {
             Optional<String> defaultCacheName = configurationManager.getGlobalConfiguration().defaultCacheName();
-            if (defaultCacheName.isPresent()) {
-               configuration = configurationManager.getConfiguration(defaultCacheName.get(), true);
-            } else {
-               configuration = null;
-            }
+            configuration = defaultCacheName.map(s -> configurationManager.getConfiguration(s, true)).orElse(null);
          }
          if (configuration == null) {
             configuration = new ConfigurationBuilder().build();
@@ -317,7 +316,10 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    }
 
    private Configuration buildConfiguration(String name, String configStr, boolean template) {
-      ConfigurationBuilderHolder builderHolder = parserRegistry.parse(configStr);
+      Properties properties = new Properties(System.getProperties());
+      properties.put(CacheParser.IGNORE_DUPLICATES, true);
+      ConfigurationReader reader = ConfigurationReader.from(configStr).withProperties(properties).build();
+      ConfigurationBuilderHolder builderHolder = parserRegistry.parse(reader, configurationManager.toBuilderHolder());
       return builderHolder.getNamedConfigurationBuilders().get(name).template(template).build(configurationManager.getGlobalConfiguration());
    }
 

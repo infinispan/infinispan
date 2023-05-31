@@ -5,6 +5,7 @@ import static org.infinispan.persistence.jdbc.configuration.SegmentColumnConfigu
 import static org.infinispan.persistence.jdbc.configuration.SegmentColumnConfiguration.SEGMENT_COLUMN_TYPE;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.persistence.jdbc.common.configuration.AbstractJdbcStoreConfigurationBuilder;
@@ -48,8 +49,8 @@ public class SegmentColumnConfigurationBuilder implements Builder<SegmentColumnC
    }
 
    @Override
-   public Builder<?> read(SegmentColumnConfiguration template) {
-      attributes.read(template.attributes());
+   public Builder<?> read(SegmentColumnConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

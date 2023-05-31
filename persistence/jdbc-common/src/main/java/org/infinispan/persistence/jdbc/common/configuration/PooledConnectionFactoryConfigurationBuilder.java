@@ -9,6 +9,7 @@ import static org.infinispan.persistence.jdbc.common.configuration.PooledConnect
 import java.sql.Driver;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
@@ -83,8 +84,8 @@ public class PooledConnectionFactoryConfigurationBuilder<S extends AbstractJdbcS
    }
 
    @Override
-   public PooledConnectionFactoryConfigurationBuilder<S> read(PooledConnectionFactoryConfiguration template) {
-      attributes.read(template.attributes);
+   public PooledConnectionFactoryConfigurationBuilder<S> read(PooledConnectionFactoryConfiguration template, Combine combine) {
+      attributes.read(template.attributes, combine);
       return this;
    }
 

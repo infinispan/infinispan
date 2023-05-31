@@ -8,6 +8,7 @@ import static org.infinispan.configuration.cache.IndexMergeConfiguration.MAX_SIZ
 import static org.infinispan.configuration.cache.IndexMergeConfiguration.MIN_SIZE;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
@@ -85,8 +86,8 @@ public class IndexMergeConfigurationBuilder extends AbstractIndexingConfiguratio
    }
 
    @Override
-   public IndexMergeConfigurationBuilder read(IndexMergeConfiguration template) {
-      this.attributes.read(template.attributes());
+   public IndexMergeConfigurationBuilder read(IndexMergeConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 }

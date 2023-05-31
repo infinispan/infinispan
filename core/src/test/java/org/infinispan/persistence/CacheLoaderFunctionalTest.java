@@ -22,6 +22,7 @@ import javax.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Configurations;
@@ -352,7 +353,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
 
    ConfigurationBuilder newPreloadConfiguration(Configuration configuration, String storeName) {
       ConfigurationBuilder preloadingCfg = new ConfigurationBuilder();
-      preloadingCfg.read(configuration);
+      preloadingCfg.read(configuration, Combine.DEFAULT);
       preloadingCfg.persistence()
             .clearStores()
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)
@@ -365,7 +366,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
    @Test(groups = "unstable")
    public void testPurgeOnStartup() throws PersistenceException {
       ConfigurationBuilder purgingCfg = new ConfigurationBuilder();
-      purgingCfg.read(cfg.build());
+      purgingCfg.read(cfg.build(), Combine.DEFAULT);
       purgingCfg.persistence().clearStores().addStore(DummyInMemoryStoreConfigurationBuilder.class)
          .storeName("purgingCache").purgeOnStartup(true);
       cm.defineConfiguration("purgingCache", purgingCfg.build());

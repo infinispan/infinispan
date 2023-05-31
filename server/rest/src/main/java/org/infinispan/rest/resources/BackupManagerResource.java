@@ -78,7 +78,7 @@ class BackupManagerResource {
          return invocationHelper.newResponse(request, CONFLICT).toFuture();
 
       String body = request.contents().asString();
-      Json json = body.length() > 0 ? Json.read(body) : Json.object();
+      Json json = !body.isEmpty() ? Json.read(body) : Json.object();
       Json dirJson = json.at(DIR_KEY);
       Path workingDir = dirJson == null ? null : Paths.get(dirJson.asString());
       if (workingDir != null && !Files.isDirectory(workingDir)) {

@@ -11,15 +11,13 @@ import static org.infinispan.configuration.cache.AbstractStoreConfiguration.TRAN
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.WRITE_ONLY;
 import static org.infinispan.util.logging.Log.CONFIG;
 
-import java.lang.reflect.Method;
 import java.util.Properties;
 
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.persistence.Store;
-import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.persistence.spi.NonBlockingStore;
@@ -228,16 +226,9 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
    }
 
    @Override
-   public Builder<?> read(T template) {
-
-      Method attributesMethod = ReflectionUtil.findMethod(template.getClass(), "attributes");
-      try {
-         attributes.read((AttributeSet) attributesMethod.invoke(template, null));
-      } catch (Exception e) {
-         throw new CacheConfigurationException(e);
-      }
-      async.read(template.async());
-
+   public Builder<?> read(T template, Combine combine) {
+      attributes.read(template.attributes(), combine);
+      async.read(template.async(), combine);
       return this;
    }
 

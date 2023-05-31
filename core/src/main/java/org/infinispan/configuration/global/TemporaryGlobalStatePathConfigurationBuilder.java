@@ -1,6 +1,7 @@
 package org.infinispan.configuration.global;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.parsing.ParseUtils;
 
@@ -32,8 +33,8 @@ public class TemporaryGlobalStatePathConfigurationBuilder extends AbstractGlobal
    }
 
    @Override
-   public TemporaryGlobalStatePathConfigurationBuilder read(TemporaryGlobalStatePathConfiguration template) {
-      attributes.read(template.attributes());
+   public TemporaryGlobalStatePathConfigurationBuilder read(TemporaryGlobalStatePathConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       location = template.getLocation();
       return this;
    }

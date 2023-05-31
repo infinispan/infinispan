@@ -1,4 +1,4 @@
-package org.infinispan.xsite;
+package org.infinispan.configuration;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
@@ -15,6 +15,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.xsite.CountingCustomFailurePolicy;
+import org.infinispan.xsite.CustomXSiteEntryMergePolicy;
 import org.infinispan.xsite.spi.AlwaysRemoveXSiteEntryMergePolicy;
 import org.infinispan.xsite.spi.DefaultXSiteEntryMergePolicy;
 import org.infinispan.xsite.spi.PreferNonNullXSiteEntryMergePolicy;
@@ -48,7 +50,7 @@ public class XSiteFileParsingTest extends SingleCacheManagerTest {
 
    public void testBackupNyc() {
       Configuration dcc = cacheManager.getCacheConfiguration("backupNyc");
-      assertEquals(dcc.sites().allBackups().size(), 0);
+      assertEquals(0, dcc.sites().allBackups().size());
       BackupForConfiguration backupForConfiguration = dcc.sites().backupFor();
       assertEquals("someCache", backupForConfiguration.remoteCache());
       assertEquals("NYC", backupForConfiguration.remoteSite());
@@ -61,14 +63,14 @@ public class XSiteFileParsingTest extends SingleCacheManagerTest {
 
    public void testNoBackups() {
       Configuration dcc = cacheManager.getCacheConfiguration("noBackups");
-      assertEquals(dcc.sites().allBackups().size(), 0);
+      assertEquals(0, dcc.sites().allBackups().size());
       assertNull(dcc.sites().backupFor().remoteCache());
       assertNull(dcc.sites().backupFor().remoteSite());
    }
 
    public void testCustomBackupPolicy() {
       Configuration dcc = cacheManager.getCacheConfiguration("customBackupPolicy");
-      assertEquals(dcc.sites().allBackups().size(), 1);
+      assertEquals(1, dcc.sites().allBackups().size());
       BackupConfigurationBuilder nyc2 = new BackupConfigurationBuilder(null).site("NYC2").strategy(BackupStrategy.SYNC)
             .backupFailurePolicy(BackupFailurePolicy.CUSTOM)
             .failurePolicyClass(CountingCustomFailurePolicy.class.getName()).replicationTimeout(160000)
@@ -80,25 +82,25 @@ public class XSiteFileParsingTest extends SingleCacheManagerTest {
 
    public void testXSiteMergePolicy() {
       Configuration dcc = cacheManager.getCacheConfiguration("conflictResolver");
-      assertEquals(dcc.sites().allBackups().size(), 1);
+      assertEquals(1, dcc.sites().allBackups().size());
       assertEquals(PreferNonNullXSiteEntryMergePolicy.getInstance(), dcc.sites().mergePolicy());
    }
 
    public void testXSiteMergePolicy2() {
       Configuration dcc = cacheManager.getCacheConfiguration("conflictResolver2");
-      assertEquals(dcc.sites().allBackups().size(), 1);
+      assertEquals(1, dcc.sites().allBackups().size());
       assertEquals(PreferNullXSiteEntryMergePolicy.getInstance(), dcc.sites().mergePolicy());
    }
 
    public void testXSiteMergePolicy3() {
       Configuration dcc = cacheManager.getCacheConfiguration("conflictResolver3");
-      assertEquals(dcc.sites().allBackups().size(), 1);
+      assertEquals(1, dcc.sites().allBackups().size());
       assertEquals(AlwaysRemoveXSiteEntryMergePolicy.getInstance(), dcc.sites().mergePolicy());
    }
 
    public void testCustomXSiteMergePolicy() {
       Configuration dcc = cacheManager.getCacheConfiguration("customConflictResolver");
-      assertEquals(dcc.sites().allBackups().size(), 1);
+      assertEquals(1, dcc.sites().allBackups().size());
       assertEquals(CustomXSiteEntryMergePolicy.class, dcc.sites().mergePolicy().getClass());
       Cache<?, ?> cache = cacheManager.getCache("customConflictResolver");
       XSiteEntryMergePolicy<? ,?> resolver = cache.getAdvancedCache().getComponentRegistry().getComponent(XSiteEntryMergePolicy.class);
@@ -107,19 +109,19 @@ public class XSiteFileParsingTest extends SingleCacheManagerTest {
 
    public void testAutoStateTransfer() {
       Configuration dcc = cacheManager.getCacheConfiguration("autoStateTransfer");
-      assertEquals(dcc.sites().allBackups().size(), 1);
-      assertEquals(dcc.sites().allBackups().get(0).stateTransfer().mode(), XSiteStateTransferMode.AUTO);
+      assertEquals(1, dcc.sites().allBackups().size());
+      assertEquals(XSiteStateTransferMode.AUTO, dcc.sites().allBackups().get(0).stateTransfer().mode());
    }
 
    public void testTombstoneConfiguration() {
       Configuration dcc = cacheManager.getCacheConfiguration("tombstoneCleanup");
-      assertEquals(dcc.sites().maxTombstoneCleanupDelay(), 3000);
-      assertEquals(dcc.sites().tombstoneMapSize(), 4000);
+      assertEquals(3000, dcc.sites().maxTombstoneCleanupDelay());
+      assertEquals(4000, dcc.sites().tombstoneMapSize());
    }
 
 
    private void testDefault(Configuration dcc) {
-      assertEquals(dcc.sites().allBackups().size(), 2);
+      assertEquals(2, dcc.sites().allBackups().size());
       assertEquals(DefaultXSiteEntryMergePolicy.getInstance(), dcc.sites().mergePolicy());
       BackupConfigurationBuilder nyc = new BackupConfigurationBuilder(null).site("NYC").strategy(BackupStrategy.SYNC)
             .backupFailurePolicy(BackupFailurePolicy.IGNORE).failurePolicyClass(null).replicationTimeout(12003)

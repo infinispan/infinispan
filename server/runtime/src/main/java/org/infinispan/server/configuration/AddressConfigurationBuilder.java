@@ -3,6 +3,7 @@ package org.infinispan.server.configuration;
 import static org.infinispan.server.configuration.AddressConfiguration.VALUE;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -42,8 +43,8 @@ class AddressConfigurationBuilder implements Builder<AddressConfiguration> {
    }
 
    @Override
-   public AddressConfigurationBuilder read(AddressConfiguration template) {
-      this.attributes.read(template.attributes());
+   public AddressConfigurationBuilder read(AddressConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       this.addressType = template.addressType();
       return this;
    }

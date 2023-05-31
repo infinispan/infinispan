@@ -1,6 +1,7 @@
 package org.infinispan.persistence.sql.configuration;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
@@ -66,9 +67,9 @@ public class QueriesJdbcStoreConfigurationBuilder extends AbstractSchemaJdbcConf
    }
 
    @Override
-   public Builder<?> read(QueriesJdbcStoreConfiguration template) {
-      super.read(template);
-      queriesBuilder.read(template.getQueriesJdbcConfiguration());
+   public Builder<?> read(QueriesJdbcStoreConfiguration template, Combine combine) {
+      super.read(template, combine);
+      queriesBuilder.read(template.getQueriesJdbcConfiguration(), combine);
       return this;
    }
 

@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 public class InterfacesConfigurationBuilder implements Builder<InterfacesConfiguration> {
@@ -29,9 +30,9 @@ public class InterfacesConfigurationBuilder implements Builder<InterfacesConfigu
    }
 
    @Override
-   public InterfacesConfigurationBuilder read(InterfacesConfiguration template) {
+   public InterfacesConfigurationBuilder read(InterfacesConfiguration template, Combine combine) {
       interfaces.clear();
-      template.interfaces().forEach((n, i) -> addInterface(i.name()).read(i));
+      template.interfaces().forEach((n, i) -> addInterface(i.name()).read(i, combine));
       return this;
    }
 }

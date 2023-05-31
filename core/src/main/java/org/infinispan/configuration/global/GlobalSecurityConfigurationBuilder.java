@@ -6,6 +6,7 @@ import static org.infinispan.configuration.global.GlobalSecurityConfiguration.CA
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -57,9 +58,9 @@ public class GlobalSecurityConfigurationBuilder extends AbstractGlobalConfigurat
    }
 
    @Override
-   public GlobalSecurityConfigurationBuilder read(GlobalSecurityConfiguration template) {
-      this.authorizationBuilder.read(template.authorization());
-      this.attributes.read(template.attributes());
+   public GlobalSecurityConfigurationBuilder read(GlobalSecurityConfiguration template, Combine combine) {
+      this.authorizationBuilder.read(template.authorization(), combine);
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 }

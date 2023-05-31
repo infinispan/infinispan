@@ -1,6 +1,7 @@
 package org.infinispan.cloudevents.configuration;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -41,8 +42,8 @@ public class CloudEventsConfigurationBuilder implements Builder<CloudEventsConfi
    }
 
    @Override
-   public Builder<?> read(CloudEventsConfiguration template) {
-      attributes.read(template.attributes());
+   public Builder<?> read(CloudEventsConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 }

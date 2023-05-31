@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -116,8 +117,8 @@ public class CounterManagerConfigurationBuilder implements Builder<CounterManage
    }
 
    @Override
-   public Builder<?> read(CounterManagerConfiguration template) {
-      this.attributes.read(template.attributes());
+   public Builder<?> read(CounterManagerConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 

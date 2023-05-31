@@ -81,6 +81,7 @@ import org.infinispan.client.hotrod.security.BasicCallbackHandler;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.transaction.lookup.RemoteTransactionManagerLookup;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
@@ -301,7 +302,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       validateConfiguration(configuration);
 
       ConfigurationBuilder newBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      newBuilder.read(configuration);
+      newBuilder.read(configuration, Combine.DEFAULT);
       Configuration newConfiguration = newBuilder.build();
       validateConfiguration(newConfiguration);
 
@@ -322,7 +323,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       validateSSLContextConfiguration(configuration);
 
       ConfigurationBuilder newBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      newBuilder.read(configuration);
+      newBuilder.read(configuration, Combine.DEFAULT);
       Configuration newConfiguration = newBuilder.build();
       validateSSLContextConfiguration(newConfiguration);
    }
@@ -339,7 +340,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       validateSniContextConfiguration(configuration);
 
       ConfigurationBuilder newBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      newBuilder.read(configuration);
+      newBuilder.read(configuration, Combine.DEFAULT);
       Configuration newConfiguration = newBuilder.build();
       validateSniContextConfiguration(newConfiguration);
    }
@@ -352,7 +353,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       validateSSLContextConfiguration(configuration);
 
       ConfigurationBuilder newBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      newBuilder.read(configuration);
+      newBuilder.read(configuration, Combine.DEFAULT);
       Configuration newConfiguration = newBuilder.build();
       validateSSLContextConfiguration(newConfiguration);
    }
@@ -367,7 +368,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       validateSniContextConfiguration(configuration);
 
       ConfigurationBuilder newBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      newBuilder.read(configuration);
+      newBuilder.read(configuration, Combine.DEFAULT);
       Configuration newConfiguration = newBuilder.build();
       validateSniContextConfiguration(newConfiguration);
    }

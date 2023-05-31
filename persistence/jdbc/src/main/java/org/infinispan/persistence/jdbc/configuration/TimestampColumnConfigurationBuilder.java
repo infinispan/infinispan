@@ -4,6 +4,7 @@ import static org.infinispan.persistence.jdbc.configuration.TimestampColumnConfi
 import static org.infinispan.persistence.jdbc.configuration.TimestampColumnConfiguration.TIMESTAMP_COLUMN_TYPE;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 public class TimestampColumnConfigurationBuilder implements Builder<TimestampColumnConfiguration> {
@@ -40,8 +41,8 @@ public class TimestampColumnConfigurationBuilder implements Builder<TimestampCol
    }
 
    @Override
-   public Builder<?> read(TimestampColumnConfiguration template) {
-      attributes.read(template.attributes());
+   public Builder<?> read(TimestampColumnConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

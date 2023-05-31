@@ -9,6 +9,7 @@ import static org.infinispan.server.configuration.security.TrustStoreConfigurati
 import java.util.function.Supplier;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.security.PasswordCredentialSource;
 import org.wildfly.security.credential.source.CredentialSource;
@@ -66,8 +67,8 @@ public class TrustStoreConfigurationBuilder implements Builder<TrustStoreConfigu
    }
 
    @Override
-   public TrustStoreConfigurationBuilder read(TrustStoreConfiguration template) {
-      attributes.read(template.attributes());
+   public TrustStoreConfigurationBuilder read(TrustStoreConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 }

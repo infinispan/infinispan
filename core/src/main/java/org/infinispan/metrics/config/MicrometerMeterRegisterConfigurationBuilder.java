@@ -3,6 +3,7 @@ package org.infinispan.metrics.config;
 import java.util.Objects;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 
@@ -47,7 +48,7 @@ public class MicrometerMeterRegisterConfigurationBuilder implements Builder<Micr
    }
 
    @Override
-   public MicrometerMeterRegisterConfigurationBuilder read(MicrometerMeterRegistryConfiguration template) {
+   public MicrometerMeterRegisterConfigurationBuilder read(MicrometerMeterRegistryConfiguration template, Combine combine) {
       meterRegistry(template.meterRegistry());
       return this;
    }

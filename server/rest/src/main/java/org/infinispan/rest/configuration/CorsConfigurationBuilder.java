@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 import io.netty.handler.codec.http.cors.CorsConfig;
@@ -39,9 +40,9 @@ public class CorsConfigurationBuilder implements Builder<CorsConfiguration> {
    }
 
    @Override
-   public CorsConfigurationBuilder read(CorsConfiguration template) {
+   public CorsConfigurationBuilder read(CorsConfiguration template, Combine combine) {
       corsRules.clear();
-      template.corsRules().forEach(r -> addNewRule().read(r));
+      template.corsRules().forEach(r -> addNewRule().read(r, combine));
       return this;
    }
 }

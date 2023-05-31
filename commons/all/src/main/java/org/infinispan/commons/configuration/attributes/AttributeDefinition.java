@@ -42,7 +42,8 @@ public final class AttributeDefinition<T> {
 
    AttributeDefinition(String name, T initialValue, Class<T> type,
                        boolean immutable, boolean autoPersist, boolean global,
-                       AttributeCopier<T> copier, AttributeValidator<? super T> validator,
+                       AttributeCopier<T> copier,
+                       AttributeValidator<? super T> validator,
                        AttributeInitializer<? extends T> initializer,
                        AttributeSerializer<? super T> serializer,
                        AttributeParser<? super T> parser,

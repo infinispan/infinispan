@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.logging.LogFactory;
@@ -89,8 +90,8 @@ public class ClusteredLockManagerConfigurationBuilder implements Builder<Cluster
    }
 
    @Override
-   public Builder<?> read(ClusteredLockManagerConfiguration template) {
-      this.attributes.read(template.attributes());
+   public Builder<?> read(ClusteredLockManagerConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 

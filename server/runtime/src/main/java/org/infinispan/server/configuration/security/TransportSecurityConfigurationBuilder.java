@@ -3,6 +3,7 @@ package org.infinispan.server.configuration.security;
 import static org.infinispan.server.configuration.security.TransportSecurityConfiguration.SECURITY_REALM;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -31,8 +32,8 @@ public class TransportSecurityConfigurationBuilder implements Builder<TransportS
    }
 
    @Override
-   public Builder<?> read(TransportSecurityConfiguration template) {
-      attributes.read(template.attributes());
+   public Builder<?> read(TransportSecurityConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

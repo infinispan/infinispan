@@ -66,7 +66,6 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.configuration.parsing.CacheParser;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.container.entries.CacheEntry;
@@ -353,7 +352,6 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       return CompletableFuture.supplyAsync(() -> {
          ParserRegistry parserRegistry = invocationHelper.getParserRegistry();
          Properties properties = new Properties();
-         properties.put(CacheParser.IGNORE_MISSING_TEMPLATES, "true");
          ConfigurationReader reader = ConfigurationReader.from(contents)
                .withResolver(ConfigurationResourceResolvers.DEFAULT)
                .withType(request.contentType())

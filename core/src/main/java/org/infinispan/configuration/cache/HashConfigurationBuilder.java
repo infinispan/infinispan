@@ -7,6 +7,7 @@ import static org.infinispan.configuration.cache.HashConfiguration.NUM_OWNERS;
 import static org.infinispan.configuration.cache.HashConfiguration.NUM_SEGMENTS;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -126,9 +127,9 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    }
 
    @Override
-   public HashConfigurationBuilder read(HashConfiguration template) {
-      this.attributes.read(template.attributes());
-      this.groupsConfigurationBuilder.read(template.groups());
+   public HashConfigurationBuilder read(HashConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
+      this.groupsConfigurationBuilder.read(template.groups(), combine);
       return this;
    }
 

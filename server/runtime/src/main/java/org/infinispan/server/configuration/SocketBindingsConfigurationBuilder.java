@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.Server;
 
@@ -64,8 +65,8 @@ public class SocketBindingsConfigurationBuilder implements Builder<SocketBinding
    }
 
    @Override
-   public SocketBindingsConfigurationBuilder read(SocketBindingsConfiguration template) {
-      this.attributes.read(template.attributes());
+   public SocketBindingsConfigurationBuilder read(SocketBindingsConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       socketBindings.clear();
       template.socketBindings().forEach((n, s) -> socketBinding(s.name(), s.port(), s.interfaceName()));
       return this;

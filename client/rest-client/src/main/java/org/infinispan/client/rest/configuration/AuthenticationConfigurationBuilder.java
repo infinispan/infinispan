@@ -5,6 +5,7 @@ import java.util.Properties;
 import javax.security.auth.Subject;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
 
@@ -118,7 +119,7 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
    }
 
    @Override
-   public Builder<?> read(AuthenticationConfiguration template) {
+   public Builder<?> read(AuthenticationConfiguration template, Combine combine) {
       this.username = template.username();
       this.password = template.password();
       this.clientSubject = template.clientSubject();

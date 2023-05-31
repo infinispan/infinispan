@@ -12,6 +12,7 @@ import javax.net.ssl.SSLContext;
 
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
 
@@ -256,7 +257,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    }
 
    @Override
-   public SslConfigurationBuilder read(SslConfiguration template) {
+   public SslConfigurationBuilder read(SslConfiguration template, Combine combine) {
       this.enabled = template.enabled();
       this.keyStoreFileName = template.keyStoreFileName();
       this.keyStoreType = template.keyStoreType();

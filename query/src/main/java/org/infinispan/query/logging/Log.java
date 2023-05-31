@@ -8,7 +8,6 @@ import static org.jboss.logging.Logger.Level.WARN;
 import javax.transaction.Transaction;
 
 import org.hibernate.search.util.common.SearchException;
-
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.objectfilter.ParsingException;
@@ -192,7 +191,8 @@ public interface Log extends org.infinispan.query.core.impl.Log {
          + " There is probably a concurrent reindexing ongoing.", id = 14060)
    void concurrentReindexingOnGetStatistics(@Cause Throwable cause);
 
-   // ID 14061 only from Infinispan 15
+   @Message(value = "Failed to load declared indexed class '%s'", id = 14061)
+   CacheConfigurationException cannotLoadIndexedClass(String name, @Cause Throwable t);
 
    @LogMessage(level = DEBUG)
    @Message(value = "Search engine is reloaded before the reindexing.", id = 14062)

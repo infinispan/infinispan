@@ -5,6 +5,7 @@ import static org.infinispan.persistence.remote.configuration.MechanismConfigura
 import static org.infinispan.persistence.remote.configuration.MechanismConfiguration.USERNAME;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -51,8 +52,8 @@ public class MechanismConfigurationBuilder extends AbstractSecurityConfiguration
    }
 
    @Override
-   public Builder<?> read(MechanismConfiguration template) {
-      this.attributes.read(template.attributes());
+   public Builder<?> read(MechanismConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 }

@@ -1,6 +1,7 @@
 package org.infinispan.counter.configuration;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -27,8 +28,8 @@ public class WeakCounterConfigurationBuilder extends
    }
 
    @Override
-   public Builder<?> read(WeakCounterConfiguration template) {
-      attributes.read(template.attributes());
+   public Builder<?> read(WeakCounterConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

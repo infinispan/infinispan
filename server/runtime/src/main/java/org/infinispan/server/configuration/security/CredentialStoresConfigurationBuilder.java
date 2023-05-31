@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
 import org.wildfly.security.credential.source.CredentialSource;
@@ -51,9 +52,9 @@ public class CredentialStoresConfigurationBuilder implements Builder<CredentialS
    }
 
    @Override
-   public Builder<?> read(CredentialStoresConfiguration template) {
+   public Builder<?> read(CredentialStoresConfiguration template, Combine combine) {
       credentialStores.clear();
-      template.credentialStores().forEach((k, v) -> addCredentialStore(k).read(v));
+      template.credentialStores().forEach((k, v) -> addCredentialStore(k).read(v, combine));
       return this;
    }
 
