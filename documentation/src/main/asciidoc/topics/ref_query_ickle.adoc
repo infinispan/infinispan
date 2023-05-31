@@ -53,18 +53,15 @@ of any pagination parameter. The hit count is only available for indexed queries
 
 === Hit Count Accuracy
 
-By default, for performance reasons the accuracy of the hit count is limited to `10,000`.
-This means that if the effective hit count is higher than `10,000`, the value couldn't be returned.
-In this case a `null` (if the HotRod client or embedded query API is used) or `-1L` (if the REST query API is used) will be returned for it.
-To get a proper result this value could be raised up to `Integer.MAX`, but this could badly affect the query performances.
+For performance reasons, the default accuracy of the hit count is limited to `10,000`.
+This means that, if the effective hit count is higher than `10,000`, the value cannot be returned.
+In this case a `null` (if the HotRod client or embedded query API is used) or `-1L` (if the REST query API is used) will be returned.
+Setting this value to `Integer.MAX` would return accurate results for any query, but it would have a very adverse effect on query performance.
 
 You can change the default limit by setting the `query.hit-count-accuracy` cache property.
 Alternatively, it can be set on each query instance.
 
-Sizing wisely the hit count accuracy can huge improve the query time,
-in particular if the query is executed on large indexes, or we don't require an accurate hit count.
-
-For optimal performances set this value not much above the expected hit count.
+For optimal performances set this value not much above the expected hit count. If you do not require accurate hit counts, set it to a low value.
 
 == Iteration
 
