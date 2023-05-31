@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import static org.infinispan.configuration.cache.IndexShardingConfiguration.SHARDS;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
@@ -37,8 +38,8 @@ public class IndexShardingConfigurationBuilder extends AbstractIndexingConfigura
    }
 
    @Override
-   public IndexShardingConfigurationBuilder read(IndexShardingConfiguration template) {
-      this.attributes.read(template.attributes());
+   public IndexShardingConfigurationBuilder read(IndexShardingConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 

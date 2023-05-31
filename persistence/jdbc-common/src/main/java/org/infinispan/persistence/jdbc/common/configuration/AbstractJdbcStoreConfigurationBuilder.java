@@ -6,6 +6,7 @@ import java.lang.reflect.Constructor;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.ConfigurationUtils;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
@@ -127,12 +128,12 @@ public abstract class AbstractJdbcStoreConfigurationBuilder<T extends AbstractJd
    }
 
    @Override
-   public Builder<?> read(T template) {
-      super.read(template);
+   public Builder<?> read(T template, Combine combine) {
+      super.read(template, combine);
       Class<? extends ConnectionFactoryConfigurationBuilder<?>> cfb = (Class<? extends ConnectionFactoryConfigurationBuilder<?>>) ConfigurationUtils.builderFor(template
             .connectionFactory());
       connectionFactory(cfb);
-      connectionFactory.read(template.connectionFactory());
+      connectionFactory.read(template.connectionFactory(), combine);
 
       return this;
    }

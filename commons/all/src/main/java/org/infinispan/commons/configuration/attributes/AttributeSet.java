@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.util.TypedProperties;
 
@@ -29,6 +30,7 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
    private boolean protect;
 
    private final Map<String, RemovedAttribute> removed;
+   private boolean touched;
 
    public AttributeSet(Class<?> klass, AttributeDefinition<?>... attributeDefinitions) {
       this(klass, klass.getSimpleName(), null, attributeDefinitions);
@@ -146,15 +148,30 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
    }
 
    /**
-    * Copies all attribute from another AttributeSet
+    * Copies all attribute from another AttributeSet using the supplied {@link Combine.Attributes} strategy.
     *
-    * @param other the source AttributeSet
+    * @param other   the source AttributeSet
+    * @param combine the attribute combine strategy
     */
-   public void read(AttributeSet other) {
+   public void read(AttributeSet other, Combine combine) {
       for (Attribute<?> attribute : attributes.values()) {
-         Attribute<Object> a = other.attribute(attribute.name());
-         if (a.isModified()) {
-            ((Attribute<Object>) attribute).read(a);
+         if (attribute.getAttributeDefinition().isRepeated()) {
+            Attribute<Object> a = other.attribute(attribute.name());
+            if (a.isModified()) {
+               if (combine.repeatedAttributes() == Combine.RepeatedAttributes.MERGE) {
+                  ((Attribute<Object>) attribute).merge(a);
+               } else {
+                  ((Attribute<Object>) attribute).read(a);
+               }
+            }
+         } else {
+            if (combine.attributes() == Combine.Attributes.OVERRIDE) {
+               attribute.reset();
+            }
+            Attribute<Object> a = other.attribute(attribute.name());
+            if (a.isModified()) {
+               ((Attribute<Object>) attribute).read(a);
+            }
          }
       }
    }
@@ -177,6 +194,7 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
          attribute.protect();
       }
       protectedSet.protect = true;
+      protectedSet.touched = this.touched;
       return protectedSet;
    }
 
@@ -423,6 +441,14 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
    public boolean isRemoved(String name, int major, int minor) {
       RemovedAttribute r = removed.get(name);
       return r != null && (major < r.major || (major == r.major && minor < r.minor));
+   }
+
+   public void touch() {
+      this.touched = true;
+   }
+
+   public boolean isTouched() {
+      return touched;
    }
 
    public static final class RemovedAttribute {

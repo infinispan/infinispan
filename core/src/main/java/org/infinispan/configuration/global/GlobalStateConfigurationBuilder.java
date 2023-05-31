@@ -6,6 +6,7 @@ import static org.infinispan.util.logging.Log.CONFIG;
 import java.util.function.Supplier;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.parsing.Element;
 import org.infinispan.globalstate.ConfigurationStorage;
@@ -141,12 +142,12 @@ public class GlobalStateConfigurationBuilder extends AbstractGlobalConfiguration
    }
 
    @Override
-   public Builder<?> read(GlobalStateConfiguration template) {
-      attributes.read(template.attributes());
-      persistentLocation.read(template.persistenceConfiguration());
-      sharedPersistentLocation.read(template.sharedPersistenceConfiguration());
-      temporaryLocation.read(template.temporaryLocationConfiguration());
-      storageConfiguration.read(template.globalStorageConfiguration());
+   public Builder<?> read(GlobalStateConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
+      persistentLocation.read(template.persistenceConfiguration(), combine);
+      sharedPersistentLocation.read(template.sharedPersistenceConfiguration(), combine);
+      temporaryLocation.read(template.temporaryLocationConfiguration(), combine);
+      storageConfiguration.read(template.globalStorageConfiguration(), combine);
       return this;
    }
 }

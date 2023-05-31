@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 import javax.net.ssl.SSLContext;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -65,10 +66,10 @@ public class EncryptionConfigurationBuilder implements Builder<EncryptionConfigu
    }
 
    @Override
-   public EncryptionConfigurationBuilder read(EncryptionConfiguration template) {
-      attributes.read(template.attributes());
+   public EncryptionConfigurationBuilder read(EncryptionConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       sniConfigurations.clear();
-      template.sniConfigurations().forEach(s -> addSni().read(s));
+      template.sniConfigurations().forEach(s -> addSni().read(s, combine));
       return this;
    }
 }

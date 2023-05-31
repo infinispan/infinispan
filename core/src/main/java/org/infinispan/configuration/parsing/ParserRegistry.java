@@ -86,6 +86,7 @@ public class ParserRegistry implements NamespaceMappingParser {
             for (Namespace ns : namespaces) {
                if ("".equals(ns.uri())) {
                   skipParser = false;
+                  break;
                }
             }
          }
@@ -123,13 +124,8 @@ public class ParserRegistry implements NamespaceMappingParser {
       }
    }
 
-
-
    public ConfigurationBuilderHolder parseFile(File file) throws IOException {
       InputStream is = new FileInputStream(file);
-      if (is == null) {
-         throw new FileNotFoundException(file.getAbsolutePath());
-      }
       try {
          URL url = file.toURI().toURL();
          return parse(is, new URLConfigurationResourceResolver(url), MediaType.fromExtension(url.getFile()));
@@ -156,8 +152,7 @@ public class ParserRegistry implements NamespaceMappingParser {
       try {
          ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder(cl);
          parse(is, holder, resourceResolver, mediaType);
-         holder.validate();
-         return holder;
+         return holder.validate();
       } catch (CacheConfigurationException e) {
          throw e;
       } catch (Exception e) {
@@ -174,13 +169,15 @@ public class ParserRegistry implements NamespaceMappingParser {
    public ConfigurationBuilderHolder parse(InputStream is, ConfigurationBuilderHolder holder, ConfigurationResourceResolver resourceResolver, MediaType mediaType) {
       ConfigurationReader reader = ConfigurationReader.from(is).withResolver(resourceResolver).withType(mediaType).withProperties(properties).withNamingStrategy(NamingStrategy.KEBAB_CASE).build();
       parse(reader, holder);
+      // Resolve configuration templates
+      holder.resolveConfigurations();
       // Fire all parsingComplete events if any
       holder.fireParserListeners();
       return holder;
    }
 
    public ConfigurationBuilderHolder parse(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
-      try {
+      try (reader) {
          holder.setNamespaceMappingParser(this);
          reader.require(ConfigurationReader.ElementType.START_DOCUMENT);
          ConfigurationReader.ElementType elementType = reader.nextElement();
@@ -192,11 +189,6 @@ public class ParserRegistry implements NamespaceMappingParser {
             elementType = reader.nextElement();
          }
          return holder;
-      } finally {
-         try {
-            reader.close();
-         } catch (Exception e) {
-         }
       }
    }
 
@@ -254,7 +246,7 @@ public class ParserRegistry implements NamespaceMappingParser {
       if (reqVersion < Version.getVersionShort(namespace.since())) {
          return false;
       }
-      short untilVersion = namespace.until().length() > 0 ? Version.getVersionShort(namespace.until()) : Version.getVersionShort();
+      short untilVersion = !namespace.until().isEmpty() ? Version.getVersionShort(namespace.until()) : Version.getVersionShort();
       return reqVersion <= untilVersion;
    }
 
@@ -318,7 +310,7 @@ public class ParserRegistry implements NamespaceMappingParser {
       try {
          ByteArrayOutputStream os = new ByteArrayOutputStream();
          serialize(os, name, configuration);
-         return os.toString("UTF-8");
+         return os.toString(StandardCharsets.UTF_8);
       } catch (Exception e) {
          throw new CacheConfigurationException(e);
       }

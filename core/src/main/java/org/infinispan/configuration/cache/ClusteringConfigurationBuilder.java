@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.ClusteringConfiguration.CACHE_MODE;
+import static org.infinispan.configuration.cache.ClusteringConfiguration.CACHE_SYNC;
+import static org.infinispan.configuration.cache.ClusteringConfiguration.CACHE_TYPE;
 import static org.infinispan.configuration.cache.ClusteringConfiguration.REMOTE_TIMEOUT;
 import static org.infinispan.util.logging.Log.CONFIG;
 
@@ -8,6 +9,7 @@ import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.partitionhandling.PartitionHandling;
@@ -44,12 +46,23 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
     * Cache mode. See {@link CacheMode} for information on the various cache modes available.
     */
    public ClusteringConfigurationBuilder cacheMode(CacheMode cacheMode) {
-      attributes.attribute(CACHE_MODE).set(cacheMode);
+      cacheType(cacheMode.cacheType());
+      cacheSync(cacheMode.isSynchronous());
       return this;
    }
 
    public CacheMode cacheMode() {
-      return attributes.attribute(CACHE_MODE).get();
+      return CacheMode.of(attributes.attribute(CACHE_TYPE).get(), attributes.attribute(CACHE_SYNC).get());
+   }
+
+   public ClusteringConfigurationBuilder cacheType(CacheType type) {
+      attributes.attribute(CACHE_TYPE).set(type);
+      return this;
+   }
+
+   public ClusteringConfigurationBuilder cacheSync(boolean sync) {
+      attributes.attribute(CACHE_SYNC).set(sync);
+      return this;
    }
 
    /**
@@ -131,12 +144,12 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    }
 
    @Override
-   public ClusteringConfigurationBuilder read(ClusteringConfiguration template) {
-      attributes.read(template.attributes());
-      hashConfigurationBuilder.read(template.hash());
-      l1ConfigurationBuilder.read(template.l1());
-      stateTransferConfigurationBuilder.read(template.stateTransfer());
-      partitionHandlingConfigurationBuilder.read(template.partitionHandling());
+   public ClusteringConfigurationBuilder read(ClusteringConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
+      hashConfigurationBuilder.read(template.hash(), combine);
+      l1ConfigurationBuilder.read(template.l1(), combine);
+      stateTransferConfigurationBuilder.read(template.stateTransfer(), combine);
+      partitionHandlingConfigurationBuilder.read(template.partitionHandling(), combine);
 
       return this;
    }

@@ -2,6 +2,8 @@ package org.infinispan.commons.configuration.attributes;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -10,6 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.util.TypedProperties;
 import org.junit.Test;
 
@@ -52,16 +55,10 @@ public class AttributeTest {
 
    @Test
    public void testAttributeInitializer() {
-      AttributeDefinition<Properties> def = AttributeDefinition.builder("props", null, Properties.class).initializer(new AttributeInitializer<Properties>() {
-
-         @Override
-         public Properties initialize() {
-            return new Properties();
-         }
-      }).build();
+      AttributeDefinition<Properties> def = AttributeDefinition.builder("props", null, Properties.class).initializer(Properties::new).build();
       Attribute<Properties> attribute1 = def.toAttribute();
       Attribute<Properties> attribute2 = def.toAttribute();
-      assertTrue(attribute1.get() != attribute2.get());
+      assertNotSame(attribute1.get(), attribute2.get());
    }
 
    @Test
@@ -70,19 +67,26 @@ public class AttributeTest {
       AttributeSet set1 = new AttributeSet("set", def);
       set1.attribute(def).set(true);
       AttributeSet set2 = new AttributeSet("set", def);
-      set2.read(set1);
+      set2.read(set1, Combine.DEFAULT);
       assertEquals(set1.attribute(def).get(), set2.attribute(def).get());
    }
 
+   @Test
+   public void testAttributeOverride() {
+      AttributeDefinition<Boolean> one = AttributeDefinition.builder("one", false).build();
+      AttributeDefinition<Boolean> two = AttributeDefinition.builder("two", false).build();
+      AttributeSet set1 = new AttributeSet("set", one, two);
+      set1.attribute(one).set(true);
+      AttributeSet set2 = new AttributeSet("set", one, two);
+      set2.attribute(two).set(true);
+      set2.read(set1, new Combine(Combine.RepeatedAttributes.OVERRIDE, Combine.Attributes.OVERRIDE));
+      assertEquals(set1.attribute(one).get(), set2.attribute(one).get());
+      assertFalse(set2.attribute(two).isModified());
+   }
 
    @Test
    public void testCollectionAttributeCopy() {
-      AttributeDefinition<TypedProperties> def = AttributeDefinition.builder("properties", null, TypedProperties.class).copier(TypedPropertiesAttributeCopier.INSTANCE).initializer(new AttributeInitializer<TypedProperties>() {
-         @Override
-         public TypedProperties initialize() {
-            return new TypedProperties();
-         }
-      }).build();
+      AttributeDefinition<TypedProperties> def = AttributeDefinition.builder("properties", null, TypedProperties.class).copier(TypedPropertiesAttributeCopier.INSTANCE).initializer(TypedProperties::new).build();
       AttributeSet set1 = new AttributeSet("set", def);
       TypedProperties typedProperties = set1.attribute(def).get();
       typedProperties.setProperty("key", "value");
@@ -91,24 +95,21 @@ public class AttributeTest {
       typedProperties = set1.attribute(def).get();
       typedProperties.setProperty("key", "anotherValue");
       AttributeSet set2 = new AttributeSet("set", def);
-      set2.read(set1);
+      set2.read(set1, Combine.DEFAULT);
    }
 
    @Test
    public void testCustomAttributeCopier() {
-      AttributeDefinition<List<String>> def = AttributeDefinition.builder("test", Arrays.asList("a", "b")).copier(new AttributeCopier<List<String>>() {
-         @Override
-         public List<String> copyAttribute(List<String> attribute) {
-            if (attribute == null)
-               return null;
-            else
-               return new ArrayList(attribute);
-         }
+      AttributeDefinition<List<String>> def = AttributeDefinition.builder("test", Arrays.asList("a", "b")).copier(attribute -> {
+         if (attribute == null)
+            return null;
+         else
+            return new ArrayList<>(attribute);
       }).build();
       AttributeSet set1 = new AttributeSet("set", def);
       set1.attribute(def).set(Arrays.asList("b", "a"));
       AttributeSet set2 = new AttributeSet("set", def);
-      set2.read(set1);
+      set2.read(set1, Combine.DEFAULT);
       assertEquals(set1.attribute(def).get(), set2.attribute(def).get());
       assertFalse(set1.attribute(def).get() == set2.attribute(def).get());
    }
@@ -118,14 +119,10 @@ public class AttributeTest {
       AttributeDefinition<Boolean> def = AttributeDefinition.builder("test", false).build();
       Attribute<Boolean> attribute = def.toAttribute();
       final Holder<Boolean> listenerInvoked = new Holder<>(false);
-      attribute.addListener(new AttributeListener<Boolean>() {
-
-         @Override
-         public void attributeChanged(Attribute<Boolean> attribute, Boolean oldValue) {
-            assertTrue(attribute.get());
-            assertFalse(oldValue);
-            listenerInvoked.set(true);
-         }
+      attribute.addListener((attribute1, oldValue) -> {
+         assertTrue(attribute1.get());
+         assertFalse(oldValue);
+         listenerInvoked.set(true);
       });
       attribute.set(true);
       assertTrue("Attribute listener was not invoked", listenerInvoked.get());
@@ -142,10 +139,10 @@ public class AttributeTest {
       setB.attribute("local").set("B");
       setB.attribute("global").set("A");
       assertTrue(setA.matches(setB));
-      assertFalse(setA.equals(setB));
+      assertNotEquals(setA, setB);
       setB.attribute("global").set("B");
       assertFalse(setA.matches(setB));
-      assertFalse(setA.equals(setB));
+      assertNotEquals(setA, setB);
 
       setA = new AttributeSet(getClass(), local);
       setB = new AttributeSet(getClass(), local, global);
@@ -153,7 +150,7 @@ public class AttributeTest {
       setB.attribute("local").set("A");
       setB.attribute("global").set("A");
       assertFalse(setA.matches(setB));
-      assertFalse(setA.equals(setB));
+      assertNotEquals(setA, setB);
 
       AttributeDefinition<String> global2 = AttributeDefinition.builder("global2", "").build();
       setA = new AttributeSet(getClass(), local, global);
@@ -163,7 +160,7 @@ public class AttributeTest {
       setB.attribute("local").set("A");
       setB.attribute("global2").set("A");
       assertFalse(setA.matches(setB));
-      assertFalse(setA.equals(setB));
+      assertNotEquals(setA, setB);
    }
 
    static class Holder<T> {

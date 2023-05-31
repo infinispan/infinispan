@@ -6,6 +6,7 @@ import static org.infinispan.server.configuration.security.UserPropertiesConfigu
 import static org.infinispan.server.configuration.security.UserPropertiesConfiguration.RELATIVE_TO;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -53,8 +54,8 @@ public class UserPropertiesConfigurationBuilder implements Builder<UserPropertie
    }
 
    @Override
-   public UserPropertiesConfigurationBuilder read(UserPropertiesConfiguration template) {
-      attributes.read(template.attributes());
+   public UserPropertiesConfigurationBuilder read(UserPropertiesConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 }

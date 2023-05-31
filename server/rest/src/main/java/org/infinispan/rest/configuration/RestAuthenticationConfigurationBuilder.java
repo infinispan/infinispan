@@ -7,6 +7,7 @@ import static org.infinispan.rest.configuration.RestAuthenticationConfiguration.
 import java.util.List;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.rest.authentication.RestAuthenticator;
 import org.infinispan.server.core.configuration.AbstractProtocolServerConfigurationChildBuilder;
@@ -105,8 +106,8 @@ public class RestAuthenticationConfigurationBuilder extends AbstractProtocolServ
    }
 
    @Override
-   public Builder<?> read(RestAuthenticationConfiguration template) {
-      this.attributes.read(template.attributes());
+   public Builder<?> read(RestAuthenticationConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 

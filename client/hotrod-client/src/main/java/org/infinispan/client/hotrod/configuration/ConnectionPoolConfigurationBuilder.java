@@ -4,6 +4,7 @@ import java.util.Properties;
 
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
 
@@ -150,7 +151,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractConfigurationChi
    }
 
    @Override
-   public ConnectionPoolConfigurationBuilder read(ConnectionPoolConfiguration template) {
+   public ConnectionPoolConfigurationBuilder read(ConnectionPoolConfiguration template, Combine combine) {
       exhaustedAction = template.exhaustedAction();
       maxActive = template.maxActive();
       maxWait = template.maxWait();

@@ -35,6 +35,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.test.Exceptions;
@@ -200,7 +201,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
          assertTrue(override.invocationBatching().enabled());
          assertTrue(cm.defineConfiguration("test1", override).invocationBatching().enabled());
          ConfigurationBuilder cb = new ConfigurationBuilder();
-         cb.read(override);
+         cb.read(override, Combine.DEFAULT);
          Configuration config = cb.build();
          assertTrue(config.invocationBatching().enabled());
          assertTrue(cm.defineConfiguration("test2", config).invocationBatching().enabled());
@@ -414,7 +415,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
             ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
             holder.getGlobalConfigurationBuilder().read(globalCfg);
             holder.getNamedConfigurationBuilders().put(TestCacheManagerFactory.DEFAULT_CACHE_NAME,
-                                                       new ConfigurationBuilder().read(cfg));
+                                                       new ConfigurationBuilder().read(cfg, Combine.DEFAULT));
 
             withCacheManager(new CacheManagerCallable(new DefaultCacheManager(holder, true)) {
                @Override

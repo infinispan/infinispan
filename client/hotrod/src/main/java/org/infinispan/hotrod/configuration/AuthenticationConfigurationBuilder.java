@@ -17,6 +17,7 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.Sasl;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
@@ -209,8 +210,8 @@ public class AuthenticationConfigurationBuilder extends AbstractConfigurationChi
    }
 
    @Override
-   public AuthenticationConfigurationBuilder read(AuthenticationConfiguration template) {
-      this.attributes.read(template.attributes());
+   public AuthenticationConfigurationBuilder read(AuthenticationConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 

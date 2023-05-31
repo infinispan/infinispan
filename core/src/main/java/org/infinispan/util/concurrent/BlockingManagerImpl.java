@@ -101,7 +101,7 @@ public class BlockingManagerImpl implements BlockingManager {
       }
       return continueOnNonBlockingThread(Flowable.fromPublisher(valuePublisher)
             // Unfortunately rxjava doesn't have the generics as they should :(
-            .collect((Collector<T, A, R>) collector)
+            .collect(collector)
             .toCompletionStage(), traceId);
    }
 

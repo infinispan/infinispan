@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -59,7 +60,7 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
       if (configPresent) {
          return;
       }
-      ConfigurationBuilder builder = new ConfigurationBuilder().read(configuration);
+      ConfigurationBuilder builder = new ConfigurationBuilder().read(configuration, Combine.DEFAULT);
       builder.statistics().disable(); // Internal caches must not be included in stats counts
       if (flags.contains(Flag.GLOBAL) && globalConfiguration.isClustered()) {
          // TODO: choose a merge policy

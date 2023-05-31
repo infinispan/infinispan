@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 public class ThreadsConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<ThreadsConfiguration> {
@@ -126,21 +127,21 @@ public class ThreadsConfigurationBuilder extends AbstractGlobalConfigurationBuil
    }
 
    @Override
-   public ThreadsConfigurationBuilder read(ThreadsConfiguration template) {
-      this.asyncThreadPool.read(template.asyncThreadPool());
-      this.expirationThreadPool.read(template.expirationThreadPool());
-      this.listenerThreadPool.read(template.listenerThreadPool());
-      this.persistenceThreadPool.read(template.persistenceThreadPool());
-      this.remoteCommandThreadPool.read(template.remoteThreadPool());
-      this.stateTransferThreadPool.read(template.stateTransferThreadPool());
-      this.transportThreadPool.read(template.transportThreadPool());
-      this.nonBlockingThreadPool.read(template.nonBlockingThreadPool());
-      this.blockingThreadPool.read(template.blockingThreadPool());
+   public ThreadsConfigurationBuilder read(ThreadsConfiguration template, Combine combine) {
+      this.asyncThreadPool.read(template.asyncThreadPool(), combine);
+      this.expirationThreadPool.read(template.expirationThreadPool(), combine);
+      this.listenerThreadPool.read(template.listenerThreadPool(), combine);
+      this.persistenceThreadPool.read(template.persistenceThreadPool(), combine);
+      this.remoteCommandThreadPool.read(template.remoteThreadPool(), combine);
+      this.stateTransferThreadPool.read(template.stateTransferThreadPool(), combine);
+      this.transportThreadPool.read(template.transportThreadPool(), combine);
+      this.nonBlockingThreadPool.read(template.nonBlockingThreadPool(), combine);
+      this.blockingThreadPool.read(template.blockingThreadPool(), combine);
 
-      template.threadFactories().forEach(s -> threadFactoryBuilders.add(new ThreadFactoryConfigurationBuilder(getGlobalConfig(), s.name().get()).read(s)));
-      template.boundedThreadPools().forEach(s -> boundedThreadPoolBuilders.add(new BoundedThreadPoolConfigurationBuilder(getGlobalConfig(), s.name()).read(s)));
-      template.cachedThreadPools().forEach(s -> cachedThreadPoolBuilders.add(new CachedThreadPoolConfigurationBuilder(getGlobalConfig(), s.name()).read(s)));
-      template.scheduledThreadPools().forEach(s -> scheduledThreadPoolBuilders.add(new ScheduledThreadPoolConfigurationBuilder(getGlobalConfig(), s.name()).read(s)));
+      template.threadFactories().forEach(s -> threadFactoryBuilders.add(new ThreadFactoryConfigurationBuilder(getGlobalConfig(), s.name().get()).read(s, combine)));
+      template.boundedThreadPools().forEach(s -> boundedThreadPoolBuilders.add(new BoundedThreadPoolConfigurationBuilder(getGlobalConfig(), s.name()).read(s, combine)));
+      template.cachedThreadPools().forEach(s -> cachedThreadPoolBuilders.add(new CachedThreadPoolConfigurationBuilder(getGlobalConfig(), s.name()).read(s, combine)));
+      template.scheduledThreadPools().forEach(s -> scheduledThreadPoolBuilders.add(new ScheduledThreadPoolConfigurationBuilder(getGlobalConfig(), s.name()).read(s, combine)));
       return this;
    }
 

@@ -9,7 +9,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.ComponentRegistry;
@@ -87,14 +86,6 @@ final class Target_org_infinispan_query_remote_impl_LifecycleManager {
 
    @Substitute
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
-   }
-}
-
-@TargetClass(IndexingConfiguration.class)
-final class Target_IndexingConfiguration {
-   @Substitute
-   public Set<Class<?>> indexedEntities() {
-      return Collections.emptySet();
    }
 }
 

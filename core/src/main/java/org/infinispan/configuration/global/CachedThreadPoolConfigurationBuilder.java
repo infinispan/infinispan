@@ -4,6 +4,7 @@ import static org.infinispan.configuration.global.CachedThreadPoolConfiguration.
 import static org.infinispan.configuration.global.CachedThreadPoolConfiguration.THREAD_FACTORY;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
 import org.infinispan.factories.threads.DefaultThreadFactory;
@@ -44,8 +45,8 @@ public class CachedThreadPoolConfigurationBuilder extends AbstractGlobalConfigur
    }
 
    @Override
-   public CachedThreadPoolConfigurationBuilder read(CachedThreadPoolConfiguration template) {
-      attributes.read(template.attributes());
+   public CachedThreadPoolConfigurationBuilder read(CachedThreadPoolConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

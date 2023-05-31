@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.server.core.configuration.EncryptionConfigurationBuilder;
@@ -111,12 +112,12 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
    }
 
    @Override
-   public Builder<?> read(RestServerConfiguration template) {
-      super.read(template);
-      this.attributes.read(template.attributes());
-      this.authentication.read(template.authentication());
-      this.cors.read(template.cors());
-      this.encryption.read(template.encryption());
+   public Builder<?> read(RestServerConfiguration template, Combine combine) {
+      super.read(template, combine);
+      this.attributes.read(template.attributes(), combine);
+      this.authentication.read(template.authentication(), combine);
+      this.cors.read(template.cors(), combine);
+      this.encryption.read(template.encryption(), combine);
       return this;
    }
 

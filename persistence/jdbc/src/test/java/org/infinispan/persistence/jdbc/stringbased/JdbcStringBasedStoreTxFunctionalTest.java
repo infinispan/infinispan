@@ -5,12 +5,9 @@ import static org.testng.AssertJUnit.assertNull;
 
 import java.lang.reflect.Method;
 
-import jakarta.transaction.NotSupportedException;
-import jakarta.transaction.SystemException;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.test.ExceptionRunnable;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
@@ -25,6 +22,10 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.NotSupportedException;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.TransactionManager;
 
 @Test(groups = {"functional", "smoke"}, testName = "persistence.jdbc.stringbased.JdbcStringBasedStoreTxFunctionalTest")
 public class JdbcStringBasedStoreTxFunctionalTest extends JdbcStringBasedStoreFunctionalTest {
@@ -85,7 +86,7 @@ public class JdbcStringBasedStoreTxFunctionalTest extends JdbcStringBasedStoreFu
          if (cb != null) {
             String defaultName = JdbcStringBasedStoreTxFunctionalTest.class.getName() + "-default";
             global.defaultCacheName(defaultName);
-            holder.newConfigurationBuilder(defaultName).read(cb.build());
+            holder.newConfigurationBuilder(defaultName).read(cb.build(), Combine.DEFAULT);
          }
          global.transport().defaultTransport();
          return TestCacheManagerFactory.createClusteredCacheManager(start, holder);

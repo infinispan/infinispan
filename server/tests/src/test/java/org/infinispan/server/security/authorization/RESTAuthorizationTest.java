@@ -43,6 +43,7 @@ import org.infinispan.client.rest.RestServerClient;
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.client.rest.impl.okhttp.StringRestEntityOkHttp;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.test.Exceptions;
@@ -479,7 +480,7 @@ abstract class RESTAuthorizationTest {
       for (TestUser user : TestUser.ALL) {
          RestClientConfiguration cfg = restBuilders.get(user).build();
          boolean followRedirects = !cfg.security().authentication().mechanism().equals("SPNEGO");
-         RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder().read(cfg).clearServers().followRedirects(followRedirects);
+         RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder().read(cfg, Combine.DEFAULT).clearServers().followRedirects(followRedirects);
          InetSocketAddress serverAddress = ext.getServerDriver().getServerSocket(0, 11222);
          builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
          RestClient client = ext.rest().withClientConfiguration(builder).get();

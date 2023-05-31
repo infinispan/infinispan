@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 import javax.net.ssl.SSLContext;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.server.configuration.endpoint.EndpointsConfigurationBuilder;
@@ -91,7 +92,7 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
    }
 
    @Override
-   public Builder<?> read(ServerConfiguration template) {
+   public Builder<?> read(ServerConfiguration template, Combine combine) {
       // Do nothing
       return this;
    }

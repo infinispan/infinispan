@@ -1,6 +1,7 @@
 package org.infinispan.configuration.module;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractModuleConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -35,7 +36,7 @@ public class MyModuleConfigurationBuilder extends AbstractModuleConfigurationBui
    }
 
    @Override
-   public MyModuleConfigurationBuilder read(MyModuleConfiguration template) {
+   public MyModuleConfigurationBuilder read(MyModuleConfiguration template, Combine combine) {
       this.attribute(template.attribute());
       return this;
    }

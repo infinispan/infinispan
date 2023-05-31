@@ -3,6 +3,7 @@ package org.infinispan.configuration.global;
 import static org.infinispan.configuration.global.PrincipalRoleMapperConfiguration.CLASS;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.mappers.ClusterRoleMapper;
@@ -39,8 +40,8 @@ public class PrincipalRoleMapperConfigurationBuilder extends AbstractGlobalConfi
    }
 
    @Override
-   public PrincipalRoleMapperConfigurationBuilder read(PrincipalRoleMapperConfiguration template) {
-      attributes.read(template.attributes());
+   public PrincipalRoleMapperConfigurationBuilder read(PrincipalRoleMapperConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       this.principalRoleMapper = template.roleMapper();
       return this;
    }

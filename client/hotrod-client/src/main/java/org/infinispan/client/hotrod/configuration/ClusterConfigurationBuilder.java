@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -73,7 +74,7 @@ public class ClusterConfigurationBuilder extends AbstractConfigurationChildBuild
    }
 
    @Override
-   public Builder<?> read(ClusterConfiguration template) {
+   public Builder<?> read(ClusterConfiguration template, Combine combine) {
       template.getCluster().forEach(server -> this.addClusterNode(server.host(), server.port()));
       clusterClientIntelligence(template.getClientIntelligence());
       return this;

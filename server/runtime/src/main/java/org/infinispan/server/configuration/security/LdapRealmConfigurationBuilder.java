@@ -4,6 +4,7 @@ import static org.infinispan.server.configuration.security.DistributedRealmConfi
 
 import java.util.function.Supplier;
 
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.security.PasswordCredentialSource;
@@ -109,9 +110,9 @@ public class LdapRealmConfigurationBuilder implements RealmProviderBuilder<LdapR
    }
 
    @Override
-   public LdapRealmConfigurationBuilder read(LdapRealmConfiguration template) {
-      attributes.read(template.attributes());
-      identityMapping.read(template.identityMapping());
+   public LdapRealmConfigurationBuilder read(LdapRealmConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
+      identityMapping.read(template.identityMapping(), combine);
       return this;
    }
 

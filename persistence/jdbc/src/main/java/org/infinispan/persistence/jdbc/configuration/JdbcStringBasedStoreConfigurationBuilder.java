@@ -3,6 +3,7 @@ package org.infinispan.persistence.jdbc.configuration;
 import static org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration.KEY2STRING_MAPPER;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -76,9 +77,9 @@ public class JdbcStringBasedStoreConfigurationBuilder extends AbstractJdbcStoreC
    }
 
    @Override
-   public Builder<?> read(JdbcStringBasedStoreConfiguration template) {
-      super.read(template);
-      this.table.read(template.table());
+   public Builder<?> read(JdbcStringBasedStoreConfiguration template, Combine combine) {
+      super.read(template, combine);
+      this.table.read(template.table(), combine);
       return this;
    }
 

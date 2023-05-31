@@ -14,8 +14,7 @@ public class NonIndexedRestSearchTest extends BaseRestSearchTest {
    @Override
    protected ConfigurationBuilder getConfigBuilder() {
       ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
-      configurationBuilder.encoding().key().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE);
-      configurationBuilder.encoding().value().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE);
+      configurationBuilder.encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM);
       return configurationBuilder;
    }
 }

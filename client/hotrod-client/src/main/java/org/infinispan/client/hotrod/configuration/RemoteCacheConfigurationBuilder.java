@@ -33,6 +33,7 @@ import org.infinispan.client.hotrod.near.NearCacheFactory;
 import org.infinispan.client.hotrod.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
@@ -256,8 +257,8 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
    }
 
    @Override
-   public Builder<?> read(RemoteCacheConfiguration template) {
-      this.attributes.read(template.attributes());
+   public Builder<?> read(RemoteCacheConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 

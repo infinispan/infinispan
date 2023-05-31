@@ -5,6 +5,7 @@ import static org.infinispan.persistence.jdbc.configuration.IdColumnConfiguratio
 import static org.infinispan.persistence.jdbc.configuration.IdColumnConfiguration.ID_COLUMN_TYPE;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 public class IdColumnConfigurationBuilder implements Builder<IdColumnConfiguration> {
@@ -41,8 +42,8 @@ public class IdColumnConfigurationBuilder implements Builder<IdColumnConfigurati
    }
 
    @Override
-   public Builder<?> read(IdColumnConfiguration template) {
-      attributes.read(template.attributes());
+   public Builder<?> read(IdColumnConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

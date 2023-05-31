@@ -1,6 +1,7 @@
 package org.infinispan.server.core.configuration;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -72,9 +73,9 @@ public class SaslAuthenticationConfigurationBuilder implements AuthenticationCon
    }
 
    @Override
-   public Builder<?> read(SaslAuthenticationConfiguration template) {
+   public Builder<?> read(SaslAuthenticationConfiguration template, Combine combine) {
       this.enabled = template.enabled();
-      this.sasl.read(template.sasl());
+      this.sasl.read(template.sasl(), combine);
       return this;
    }
 }

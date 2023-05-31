@@ -20,8 +20,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.transaction.Synchronization;
-import jakarta.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.commands.ReplicableCommand;
@@ -72,6 +70,9 @@ import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.Once;
 import org.jboss.logging.annotations.Param;
 import org.jgroups.View;
+
+import jakarta.transaction.Synchronization;
+import jakarta.transaction.TransactionManager;
 
 /**
  * Infinispan's log abstraction layer on top of JBoss Logging.
@@ -1322,7 +1323,7 @@ public interface Log extends BasicLogger {
    @Message(value = "No such template '%s' when declaring '%s'", id = 374)
    CacheConfigurationException undeclaredConfiguration(String template, String name);
 
-   @Message(value = "Cannot use configuration '%s' as a template", id = 375)
+   @Message(value = "No such template/configuration '%s'", id = 375)
    CacheConfigurationException noConfiguration(String extend);
 
    @Message(value = "Interceptor stack is not supported in simple cache", id = 376)
@@ -1525,10 +1526,10 @@ public interface Log extends BasicLogger {
    CacheConfigurationException noSuchCacheConfiguration(String name);
 
    @LogMessage(level = WARN)
-   @Message(value = "Unable to validate %s with the implementing store as the @ConfigurationFor annotation is missing", id = 437)
+   @Message(value = "Unable to validate '%s' with the implementing store as the @ConfigurationFor annotation is missing", id = 437)
    void warnConfigurationForAnnotationMissing(String name);
 
-   @Message(value = "Cache with name %s is defined more than once!", id = 438)
+   @Message(value = "Cache with name '%s' is defined more than once!", id = 438)
    CacheConfigurationException duplicateCacheName(String name);
 
    @LogMessage(level = INFO)
@@ -2355,4 +2356,6 @@ public interface Log extends BasicLogger {
          "This cache has been probably removed by another thread. Skip to writing it.", id = 690)
    void configurationNotFound(String cacheName, Collection<String> definedConfigurations);
 
+   @Message(value = "Indexed entity name must not be null or empty", id = 691)
+   CacheConfigurationException indexedEntityNameMissing();
 }

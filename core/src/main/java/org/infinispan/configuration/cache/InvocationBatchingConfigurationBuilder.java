@@ -6,6 +6,7 @@ import static org.infinispan.transaction.TransactionMode.TRANSACTIONAL;
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -75,8 +76,8 @@ public class InvocationBatchingConfigurationBuilder extends AbstractConfiguratio
    }
 
    @Override
-   public InvocationBatchingConfigurationBuilder read(InvocationBatchingConfiguration template) {
-      attributes.read(template.attributes());
+   public InvocationBatchingConfigurationBuilder read(InvocationBatchingConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
 
       return this;
    }

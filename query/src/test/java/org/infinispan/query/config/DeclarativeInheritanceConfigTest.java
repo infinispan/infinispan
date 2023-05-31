@@ -29,8 +29,7 @@ public class DeclarativeInheritanceConfigTest extends SingleCacheManagerTest {
 
       configuration = cacheManager.getCacheConfiguration("extended");
       indexedEntities = configuration.indexing().indexedEntityTypes();
-      assertEquals(2, indexedEntities.size());
-      assertTrue(indexedEntities.contains(Book.class.getName()));
+      assertEquals(1, indexedEntities.size());
       assertTrue(indexedEntities.contains(AnotherGrassEater.class.getName()));
    }
 }

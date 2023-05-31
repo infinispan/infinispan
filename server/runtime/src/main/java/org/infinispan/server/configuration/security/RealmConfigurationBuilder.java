@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.BuiltBy;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.Server;
@@ -123,13 +124,13 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
    }
 
    @Override
-   public RealmConfigurationBuilder read(RealmConfiguration template) {
-      this.attributes.read(template.attributes());
-      serverIdentitiesConfiguration.read(template.serverIdentitiesConfiguration());
+   public RealmConfigurationBuilder read(RealmConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
+      serverIdentitiesConfiguration.read(template.serverIdentitiesConfiguration(), combine);
       this.builders.clear();
       for(RealmProvider provider : template.realmProviders()) {
          RealmProviderBuilder builder = Util.getInstance(provider.getClass().getAnnotation(BuiltBy.class).value().asSubclass(RealmProviderBuilder.class));
-         builder.read(provider);
+         builder.read(provider, combine);
          builders.add(builder);
       }
       return this;

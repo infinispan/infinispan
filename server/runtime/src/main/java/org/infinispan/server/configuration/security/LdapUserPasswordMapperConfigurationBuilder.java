@@ -1,6 +1,7 @@
 package org.infinispan.server.configuration.security;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.server.Server;
 
@@ -37,8 +38,8 @@ public class LdapUserPasswordMapperConfigurationBuilder implements Builder<LdapU
    }
 
    @Override
-   public LdapUserPasswordMapperConfigurationBuilder read(LdapUserPasswordMapperConfiguration template) {
-      attributes.read(template.attributes());
+   public LdapUserPasswordMapperConfigurationBuilder read(LdapUserPasswordMapperConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

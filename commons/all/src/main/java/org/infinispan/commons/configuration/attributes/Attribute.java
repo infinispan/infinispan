@@ -2,6 +2,7 @@ package org.infinispan.commons.configuration.attributes;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -167,6 +168,12 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>>, U
          this.value = copier.copyAttribute(other.value);
       }
       this.modified = other.modified;
+   }
+
+   public void merge(Attribute<T> other) {
+      Collection<Object> collection = (Collection<Object>) other.value;
+      ((Collection<Object>) this.value).addAll(collection);
+      this.modified = !collection.isEmpty();
    }
 
    @Override

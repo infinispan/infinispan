@@ -6,6 +6,7 @@ import static org.infinispan.configuration.global.ExecutorFactoryConfiguration.P
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.util.TypedProperties;
@@ -76,8 +77,8 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractGlobalConfigura
 
    @Override
    public
-   ExecutorFactoryConfigurationBuilder read(ExecutorFactoryConfiguration template) {
-      attributes.read(template.attributes());
+   ExecutorFactoryConfigurationBuilder read(ExecutorFactoryConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

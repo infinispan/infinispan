@@ -1,6 +1,7 @@
 package org.infinispan.server.core.configuration;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -13,7 +14,7 @@ public class MockAuthenticationConfigurationBuilder implements AuthenticationCon
    }
 
    @Override
-   public Builder<?> read(MockAuthenticationConfiguration template) {
+   public Builder<?> read(MockAuthenticationConfiguration template, Combine combine) {
       return this;
    }
 

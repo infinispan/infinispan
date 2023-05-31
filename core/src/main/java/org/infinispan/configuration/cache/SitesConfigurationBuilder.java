@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.xsite.spi.XSiteEntryMergePolicy;
@@ -153,12 +154,16 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
    }
 
    @Override
-   public SitesConfigurationBuilder read(SitesConfiguration template) {
-      attributes.read(template.attributes());
-      backupForBuilder.read(template.backupFor());
+   public SitesConfigurationBuilder read(SitesConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
+      backupForBuilder.read(template.backupFor(), combine);
+      if (combine.repeatedAttributes() == Combine.RepeatedAttributes.OVERRIDE && template.attributes().isTouched()) {
+         backups.clear();
+      }
       for (BackupConfiguration bc : template.allBackups()) {
          BackupConfigurationBuilder bcb = new BackupConfigurationBuilder(getBuilder());
-         bcb.read(bc);
+         bcb.read(bc, combine);
+         backups.removeIf(b -> b.site().equals(bcb.site())); // no-op in case of Combine.Children.OVERRIDE
          backups.add(bcb);
       }
       return this;

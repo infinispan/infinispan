@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ClassAllowList;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -96,8 +97,8 @@ public class AllowListConfigurationBuilder implements Builder<AllowListConfigura
    }
 
    @Override
-   public Builder<?> read(AllowListConfiguration template) {
-      this.attributes.read(template.attributes());
+   public Builder<?> read(AllowListConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       this.classes.addAll(template.getClasses());
       this.regexps.addAll(template.getRegexps());
       return this;

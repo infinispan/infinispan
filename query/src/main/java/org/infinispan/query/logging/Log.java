@@ -5,11 +5,8 @@ import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.WARN;
 
-import jakarta.transaction.Transaction;
-
 import org.hibernate.search.engine.common.EntityReference;
 import org.hibernate.search.util.common.SearchException;
-
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.objectfilter.ParsingException;
@@ -18,6 +15,8 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+
+import jakarta.transaction.Transaction;
 
 //TODO [anistor] query-core and query modules share the id range!
 /**
@@ -191,6 +190,9 @@ public interface Log extends org.infinispan.query.core.impl.Log {
    @Message(value = "We're getting some errors from Hibernate Search or Lucene while we compute the index count/size for statistics."
          + " There is probably a concurrent reindexing ongoing.", id = 14060)
    void concurrentReindexingOnGetStatistics(@Cause Throwable cause);
+
+   @Message(value = "Failed to load declared indexed class '%s'", id = 14061)
+   CacheConfigurationException cannotLoadIndexedClass(String name, @Cause Throwable t);
 
    // !!!!!! When adding anything new here please check the last used id in org.infinispan.query.core.impl.Log !!!!!!
 }

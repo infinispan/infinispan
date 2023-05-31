@@ -1,6 +1,7 @@
 package org.infinispan.configuration.global;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.security.RolePermissionMapper;
 import org.infinispan.security.mappers.ClusterPermissionMapper;
@@ -37,8 +38,8 @@ public class RolePermissionMapperConfigurationBuilder extends AbstractGlobalConf
    }
 
    @Override
-   public RolePermissionMapperConfigurationBuilder read(RolePermissionMapperConfiguration template) {
-      attributes.read(template.attributes());
+   public RolePermissionMapperConfigurationBuilder read(RolePermissionMapperConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       this.permissionMapper = template.permissionMapper();
       return this;
    }

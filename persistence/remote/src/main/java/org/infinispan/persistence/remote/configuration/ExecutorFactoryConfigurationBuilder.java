@@ -6,6 +6,7 @@ import static org.infinispan.persistence.remote.configuration.ExecutorFactoryCon
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.util.TypedProperties;
@@ -82,8 +83,8 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractRemoteStoreConf
    }
 
    @Override
-   public ExecutorFactoryConfigurationBuilder read(ExecutorFactoryConfiguration template) {
-      attributes.read(template.attributes());
+   public ExecutorFactoryConfigurationBuilder read(ExecutorFactoryConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

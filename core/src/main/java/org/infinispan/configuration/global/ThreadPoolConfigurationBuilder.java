@@ -3,6 +3,7 @@ package org.infinispan.configuration.global;
 import java.util.concurrent.ThreadFactory;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 
@@ -51,7 +52,7 @@ public class ThreadPoolConfigurationBuilder extends AbstractGlobalConfigurationB
    }
 
    @Override
-   public ThreadPoolConfigurationBuilder read(ThreadPoolConfiguration template) {
+   public ThreadPoolConfigurationBuilder read(ThreadPoolConfiguration template, Combine combine) {
       this.threadFactory = template.threadFactory();
       this.threadPoolFactory = template.threadPoolFactory();
       return this;

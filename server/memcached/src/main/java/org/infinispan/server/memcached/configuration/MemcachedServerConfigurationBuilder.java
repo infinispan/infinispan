@@ -6,6 +6,7 @@ import static org.infinispan.server.memcached.configuration.MemcachedServerConfi
 import static org.infinispan.server.memcached.configuration.MemcachedServerConfiguration.PROTOCOL;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.server.core.admin.AdminOperationsHandler;
@@ -106,9 +107,9 @@ public class MemcachedServerConfigurationBuilder extends ProtocolServerConfigura
    }
 
    @Override
-   public Builder<?> read(MemcachedServerConfiguration template) {
-      this.authentication.read(template.authentication());
-      this.encryption.read(template.encryption());
+   public Builder<?> read(MemcachedServerConfiguration template, Combine combine) {
+      this.authentication.read(template.authentication(), combine);
+      this.encryption.read(template.encryption(), combine);
       return this;
    }
 }

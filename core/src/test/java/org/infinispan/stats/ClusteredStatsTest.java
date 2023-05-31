@@ -6,6 +6,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -99,7 +100,7 @@ public class ClusteredStatsTest extends SingleStatsTest {
       GlobalConfigurationBuilder globalConfigurationBuilder = defaultGlobalConfigurationBuilder();
       globalConfigurationBuilder.metrics().accurateSize(true);
       ConfigurationBuilder cb = new ConfigurationBuilder()
-            .read(cache.getAdvancedCache().getCacheConfiguration());
+            .read(cache.getAdvancedCache().getCacheConfiguration(), Combine.DEFAULT);
       cb.persistence().clearStores();
       Configuration configuration = cb.persistence()
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)

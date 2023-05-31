@@ -6,6 +6,7 @@ import static org.infinispan.configuration.global.ThreadFactoryConfiguration.PRI
 import static org.infinispan.configuration.global.ThreadFactoryConfiguration.THREAD_NAME_PATTERN;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /*
@@ -71,8 +72,8 @@ public class ThreadFactoryConfigurationBuilder extends AbstractGlobalConfigurati
    }
 
    @Override
-   public ThreadFactoryConfigurationBuilder read(ThreadFactoryConfiguration template) {
-      attributes.read(template.attributes());
+   public ThreadFactoryConfigurationBuilder read(ThreadFactoryConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 }

@@ -24,6 +24,7 @@ import java.util.Properties;
 import org.ietf.jgss.Oid;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.wildfly.common.Assert;
@@ -132,8 +133,8 @@ public class KerberosSecurityFactoryConfigurationBuilder implements Builder<Kerb
    }
 
    @Override
-   public KerberosSecurityFactoryConfigurationBuilder read(KerberosSecurityFactoryConfiguration template) {
-      attributes.read(template.attributes());
+   public KerberosSecurityFactoryConfigurationBuilder read(KerberosSecurityFactoryConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

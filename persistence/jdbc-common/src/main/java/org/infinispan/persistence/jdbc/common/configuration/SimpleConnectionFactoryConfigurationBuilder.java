@@ -8,6 +8,7 @@ import static org.infinispan.persistence.jdbc.common.configuration.SimpleConnect
 import java.sql.Driver;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
@@ -75,8 +76,8 @@ public class SimpleConnectionFactoryConfigurationBuilder<S extends AbstractJdbcS
    }
 
    @Override
-   public SimpleConnectionFactoryConfigurationBuilder<S> read(SimpleConnectionFactoryConfiguration template) {
-      attributes.read(template.attributes());
+   public SimpleConnectionFactoryConfigurationBuilder<S> read(SimpleConnectionFactoryConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

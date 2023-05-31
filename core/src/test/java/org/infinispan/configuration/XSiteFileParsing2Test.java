@@ -1,7 +1,6 @@
-package org.infinispan.xsite;
+package org.infinispan.configuration;
 
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import org.infinispan.configuration.cache.BackupConfiguration;
@@ -38,22 +37,6 @@ public class XSiteFileParsing2Test extends SingleCacheManagerTest {
    public void testInheritor() {
       Configuration dcc = cacheManager.getCacheConfiguration("inheritor");
       testDefault(dcc);
-   }
-
-   public void testNoBackupFor() {
-      Configuration dcc = cacheManager.getCacheConfiguration("noBackupFor");
-      assertEquals(1, dcc.sites().allBackups().size());
-      BackupConfiguration nyc = new BackupConfigurationBuilder(null).site("NYC").strategy(BackupStrategy.SYNC)
-            .backupFailurePolicy(BackupFailurePolicy.WARN).failurePolicyClass(null).replicationTimeout(12003)
-            .useTwoPhaseCommit(false).create();
-      assertTrue(dcc.sites().allBackups().contains(nyc));
-      assertNull(dcc.sites().backupFor().remoteSite());
-      assertNull(dcc.sites().backupFor().remoteCache());
-   }
-
-   public void testNoBackupFor2() {
-      Configuration dcc = cacheManager.getCacheConfiguration("noBackupFor2");
-      assertEquals(0, dcc.sites().allBackups().size());
    }
 
    private void testDefault(Configuration dcc) {

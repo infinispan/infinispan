@@ -5,6 +5,7 @@ import static org.infinispan.configuration.cache.StatisticsConfiguration.ENABLED
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -83,8 +84,8 @@ public class StatisticsConfigurationBuilder extends JMXStatisticsConfigurationBu
    }
 
    @Override
-   public StatisticsConfigurationBuilder read(StatisticsConfiguration template) {
-      this.attributes.read(template.attributes());
+   public StatisticsConfigurationBuilder read(StatisticsConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 

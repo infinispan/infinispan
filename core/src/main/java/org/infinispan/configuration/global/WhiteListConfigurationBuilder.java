@@ -2,6 +2,7 @@ package org.infinispan.configuration.global;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ClassAllowList;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -64,8 +65,8 @@ public class WhiteListConfigurationBuilder implements Builder<WhiteListConfigura
    }
 
    @Override
-   public Builder<?> read(WhiteListConfiguration template) {
-      delegate.read(template.delegate);
+   public Builder<?> read(WhiteListConfiguration template, Combine combine) {
+      delegate.read(template.delegate, combine);
       return this;
    }
 }

@@ -8,6 +8,7 @@ import static org.infinispan.configuration.cache.XSiteStateTransferConfiguration
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
@@ -117,8 +118,8 @@ public class XSiteStateTransferConfigurationBuilder extends AbstractConfiguratio
    }
 
    @Override
-   public Builder<XSiteStateTransferConfiguration> read(XSiteStateTransferConfiguration template) {
-      this.attributes.read(template.attributes());
+   public Builder<XSiteStateTransferConfiguration> read(XSiteStateTransferConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 

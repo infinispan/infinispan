@@ -1,10 +1,7 @@
 package org.infinispan.configuration;
 
-import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
-
 import org.infinispan.Cache;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -15,6 +12,10 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
+
+import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 @Test(groups = "functional", testName = "configuration.ConfigurationOverrideTest")
 public class ConfigurationOverrideTest extends AbstractInfinispanTest {
@@ -32,7 +33,7 @@ public class ConfigurationOverrideTest extends AbstractInfinispanTest {
 
       cm = TestCacheManagerFactory.createCacheManager(defaultCfgBuilder);
       final ConfigurationBuilder cacheCfgBuilder =
-            new ConfigurationBuilder().read(defaultCfgBuilder.build());
+            new ConfigurationBuilder().read(defaultCfgBuilder.build(), Combine.DEFAULT);
       cm.defineConfiguration("my-cache", cacheCfgBuilder.build());
       Cache<?, ?> cache = cm.getCache("my-cache");
       assertEquals(200, cache.getCacheConfiguration().memory().size());
@@ -77,7 +78,7 @@ public class ConfigurationOverrideTest extends AbstractInfinispanTest {
       builder1.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class);
       cm = TestCacheManagerFactory.createCacheManager(builder1);
       ConfigurationBuilder builder2 = new ConfigurationBuilder();
-      builder2.read(cm.getDefaultCacheConfiguration());
+      builder2.read(cm.getDefaultCacheConfiguration(), Combine.DEFAULT);
       builder2.memory().size(1000);
       Configuration configuration = cm.defineConfiguration("named", builder2.build());
       assertEquals(1, configuration.persistence().stores().size());
@@ -88,7 +89,7 @@ public class ConfigurationOverrideTest extends AbstractInfinispanTest {
       baseBuilder.memory().size(200).storageType(StorageType.BINARY);
       Configuration base = baseBuilder.build();
       ConfigurationBuilder overrideBuilder = new ConfigurationBuilder();
-      overrideBuilder.read(base).locking().concurrencyLevel(31);
+      overrideBuilder.read(base, Combine.DEFAULT).locking().concurrencyLevel(31);
       Configuration override = overrideBuilder.build();
       assertEquals(200, base.memory().size());
       assertEquals(200, override.memory().size());

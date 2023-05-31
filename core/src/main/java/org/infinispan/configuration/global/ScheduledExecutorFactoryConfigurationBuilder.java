@@ -6,6 +6,7 @@ import static org.infinispan.configuration.global.ScheduledExecutorFactoryConfig
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.executors.ScheduledExecutorFactory;
@@ -76,8 +77,8 @@ public class ScheduledExecutorFactoryConfigurationBuilder extends AbstractGlobal
    }
 
    @Override
-   public ScheduledExecutorFactoryConfigurationBuilder read(ScheduledExecutorFactoryConfiguration template) {
-      attributes.read(template.attributes());
+   public ScheduledExecutorFactoryConfigurationBuilder read(ScheduledExecutorFactoryConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

@@ -3,6 +3,7 @@ package org.infinispan.anchored.configuration;
 import static org.infinispan.anchored.impl.Log.CONFIG;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.Experimental;
@@ -98,8 +99,8 @@ public class AnchoredKeysConfigurationBuilder implements Builder<AnchoredKeysCon
    }
 
    @Override
-   public Builder<?> read(AnchoredKeysConfiguration template) {
-      attributes.read(template.attributes());
+   public Builder<?> read(AnchoredKeysConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 }

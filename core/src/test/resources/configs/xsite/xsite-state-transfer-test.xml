@@ -14,12 +14,6 @@
         </replicated-cache-configuration>
         <replicated-cache name="default" configuration="base"/>
         <replicated-cache name="inheritor" configuration="base"/>
-        <replicated-cache name="noStateTransfer" configuration="base">
-            <backups>
-                <backup site="NYC" strategy="SYNC" failure-policy="WARN" timeout="12003"/>
-            </backups>
-            <backup-for/>
-        </replicated-cache>
         <replicated-cache name="stateTransferDifferentConfiguration" configuration="base">
             <backups>
                 <backup site="NYC" strategy="SYNC" failure-policy="WARN" timeout="12003">

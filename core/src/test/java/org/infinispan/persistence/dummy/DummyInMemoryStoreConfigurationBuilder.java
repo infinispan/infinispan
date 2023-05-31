@@ -4,6 +4,7 @@ import static org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration.S
 import static org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration.START_FAILURES;
 import static org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration.STORE_NAME;
 
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 
@@ -50,8 +51,8 @@ public class DummyInMemoryStoreConfigurationBuilder extends
    }
 
    @Override
-   public DummyInMemoryStoreConfigurationBuilder read(DummyInMemoryStoreConfiguration template) {
-      super.read(template);
+   public DummyInMemoryStoreConfigurationBuilder read(DummyInMemoryStoreConfiguration template, Combine combine) {
+      super.read(template, combine);
       return this;
    }
 

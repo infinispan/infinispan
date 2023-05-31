@@ -13,6 +13,7 @@ import java.util.Properties;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
@@ -196,8 +197,8 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
    }
 
    @Override
-   public InterceptorConfigurationBuilder read(InterceptorConfiguration template) {
-      attributes.read(template.attributes());
+   public InterceptorConfigurationBuilder read(InterceptorConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 

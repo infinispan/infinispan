@@ -10,6 +10,7 @@ import static org.infinispan.server.configuration.security.JwtConfiguration.PUBL
 import static org.infinispan.server.configuration.security.JwtConfiguration.READ_TIMEOUT;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 /**
@@ -77,8 +78,8 @@ public class JwtConfigurationBuilder implements Builder<JwtConfiguration> {
    }
 
    @Override
-   public JwtConfigurationBuilder read(JwtConfiguration template) {
-      attributes.read(template.attributes());
+   public JwtConfigurationBuilder read(JwtConfiguration template, Combine combine) {
+      attributes.read(template.attributes(), combine);
       return this;
    }
 }

@@ -3,6 +3,7 @@ package org.infinispan.cloudevents.configuration;
 import static org.infinispan.cloudevents.impl.Log.CONFIG;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -66,8 +67,8 @@ public class CloudEventsGlobalConfigurationBuilder implements Builder<CloudEvent
    }
 
    @Override
-   public Builder<?> read(CloudEventsGlobalConfiguration template) {
-      this.attributes.read(template.attributes());
+   public Builder<?> read(CloudEventsGlobalConfiguration template, Combine combine) {
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 
