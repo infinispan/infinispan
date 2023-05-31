@@ -278,7 +278,7 @@ public class ContainerResource implements ResourceHandler {
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       EmbeddedCacheManager subjectCacheManager = cacheManager.withSubject(request.getSubject());
       // Remove internal caches
-      Set<String> cacheNames = new HashSet<>(subjectCacheManager.getCacheNames());
+      Set<String> cacheNames = new HashSet<>(subjectCacheManager.getAccessibleCacheNames());
       cacheNames.removeAll(internalCacheRegistry.getInternalCacheNames());
 
 

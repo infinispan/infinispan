@@ -12,6 +12,7 @@ import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.assertStatusAndBodyEquals;
 import static org.infinispan.server.test.core.Common.awaitStatus;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.Closeable;
@@ -25,6 +26,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -460,6 +462,31 @@ public class RESTAuthorizationTest extends BaseTest {
          Json subject = acl.asJsonMap().get("subject");
          Map<String, Object> principal = subject.asJsonList().get(0).asMap();
          assertEquals(expectedServerPrincipalName(user), principal.get("name"));
+      }
+   }
+
+   @Test
+   public void testRestCacheNames() {
+      restCreateAuthzCache("admin", "observer", "deployer");
+      String name = suite.getServerTest().getMethodName();
+
+      for (TestUser type : EnumSet.of(TestUser.ADMIN, TestUser.OBSERVER, TestUser.DEPLOYER)) {
+         try (RestResponse caches = CompletionStages.join(suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(type)).get().cacheManager("default").caches())) {
+            assertEquals(OK, caches.getStatus());
+            Json json = Json.read(caches.getBody());
+            Set<String> names = json.asJsonList().stream().map(Json::asJsonMap).map(j -> j.get("name").asString()).collect(Collectors.toSet());
+            assertTrue(names.toString(), names.contains(name));
+         }
+      }
+
+      // Types with no access.
+      for (TestUser type : EnumSet.complementOf(EnumSet.of(TestUser.ADMIN, TestUser.OBSERVER, TestUser.DEPLOYER, TestUser.ANONYMOUS))) {
+         try (RestResponse caches = CompletionStages.join(suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(type)).get().cacheManager("default").caches())) {
+            assertEquals(OK, caches.getStatus());
+            Json json = Json.read(caches.getBody());
+            Set<String> names = json.asJsonList().stream().map(Json::asJsonMap).map(j -> j.get("name").asString()).collect(Collectors.toSet());
+            assertFalse(names.toString(), names.contains(name));
+         }
       }
    }
 
