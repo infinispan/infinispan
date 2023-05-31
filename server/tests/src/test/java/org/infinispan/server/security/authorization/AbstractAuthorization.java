@@ -32,8 +32,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.infinispan.client.hotrod.RemoteCache;
@@ -68,6 +70,7 @@ import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.ContainerInfinispanServerDriver;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
 import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.junit.AssumptionViolatedException;
 import org.junit.Test;
 
@@ -755,6 +758,47 @@ public abstract class AbstractAuthorization {
          Json subject = acl.asJsonMap().get("subject");
          Map<String, Object> principal = subject.asJsonList().get(0).asMap();
          assertEquals(expectedServerPrincipalName(user), principal.get("name"));
+      }
+   }
+
+   @Test
+   public void testHotRodCacheNames() {
+      hotRodCreateAuthzCache("admin", "observer", "deployer");
+      String name = getServerTest().getMethodName();
+
+      for (TestUser type : EnumSet.of(TestUser.ADMIN, TestUser.OBSERVER, TestUser.DEPLOYER)) {
+         Set<String> caches = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get(type)).get().getRemoteCacheContainer().getCacheNames();
+         assertTrue(caches.toString(), caches.contains(name));
+      }
+
+      // Types with no access.
+      for (TestUser type : EnumSet.complementOf(EnumSet.of(TestUser.ADMIN, TestUser.OBSERVER, TestUser.DEPLOYER, TestUser.ANONYMOUS))) {
+         Set<String> caches = getServerTest().hotrod().withClientConfiguration(hotRodBuilders.get(type)).get().getRemoteCacheContainer().getCacheNames();
+         assertFalse(caches.toString(), caches.contains(name));
+      }
+   }
+
+   @Test
+   public void testRestCacheNames() {
+      restCreateAuthzCache("admin", "observer", "deployer");
+      String name = getServerTest().getMethodName();
+
+      for (TestUser type : EnumSet.of(TestUser.ADMIN, TestUser.OBSERVER, TestUser.DEPLOYER)) {
+         try (RestResponse caches = CompletionStages.join(getServerTest().rest().withClientConfiguration(restBuilders.get(type)).get().cacheManager("default").caches())) {
+            assertEquals(OK, caches.getStatus());
+            Json json = Json.read(caches.getBody());
+            Set<String> names = json.asJsonList().stream().map(Json::asJsonMap).map(j -> j.get("name").asString()).collect(Collectors.toSet());
+            assertTrue(names.toString(), names.contains(name));
+         }
+      }
+      // Types with no access.
+      for (TestUser type : EnumSet.complementOf(EnumSet.of(TestUser.ADMIN, TestUser.OBSERVER, TestUser.DEPLOYER, TestUser.ANONYMOUS))) {
+         try (RestResponse caches = CompletionStages.join(getServerTest().rest().withClientConfiguration(restBuilders.get(type)).get().cacheManager("default").caches())) {
+            assertEquals(OK, caches.getStatus());
+            Json json = Json.read(caches.getBody());
+            Set<String> names = json.asJsonList().stream().map(Json::asJsonMap).map(j -> j.get("name").asString()).collect(Collectors.toSet());
+            assertFalse(names.toString(), names.contains(name));
+         }
       }
    }
 
