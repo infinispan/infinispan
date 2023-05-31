@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -319,6 +320,23 @@ public class HotRodAuthorizationTest extends BaseTest {
          assertStatus(OK, userCache.searchStats());
          assertStatus(OK, userCache.indexStats());
          assertStatus(OK, userCache.queryStats());
+      }
+   }
+
+   @Test
+   public void testHotRodCacheNames() {
+      hotRodCreateAuthzCache("admin", "observer", "deployer");
+      String name = suite.getServerTest().getMethodName();
+
+      for (TestUser type : EnumSet.of(TestUser.ADMIN, TestUser.OBSERVER, TestUser.DEPLOYER)) {
+         Set<String> caches = suite.getServerTest().hotrod().withClientConfiguration(suite.hotRodBuilders.get(type)).get().getRemoteCacheContainer().getCacheNames();
+         assertTrue(caches.toString(), caches.contains(name));
+      }
+
+      // Types with no access.
+      for (TestUser type : EnumSet.complementOf(EnumSet.of(TestUser.ADMIN, TestUser.OBSERVER, TestUser.DEPLOYER, TestUser.ANONYMOUS))) {
+         Set<String> caches = suite.getServerTest().hotrod().withClientConfiguration(suite.hotRodBuilders.get(type)).get().getRemoteCacheContainer().getCacheNames();
+         assertFalse(caches.toString(), caches.contains(name));
       }
    }
 
