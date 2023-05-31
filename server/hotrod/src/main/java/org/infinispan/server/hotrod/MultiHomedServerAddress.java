@@ -116,6 +116,9 @@ public class MultiHomedServerAddress implements ServerAddress {
       if (HotRodServer.log.isDebugEnabled()) {
          HotRodServer.log.debugf("Matching incoming address '%s' with '%s'/%d", inetAddress, interfaceAddress, prefixLength);
       }
+      if (inetAddress.length != interfaceAddress.length) {
+         return false;
+      }
       for (int i = 0; i < inetAddress.length; i++) {
          byte a = inetAddress[i];
          byte b = interfaceAddress[i];
