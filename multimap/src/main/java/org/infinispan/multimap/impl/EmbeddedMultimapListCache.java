@@ -13,6 +13,7 @@ import org.infinispan.multimap.impl.function.InsertFunction;
 import org.infinispan.multimap.impl.function.OfferFunction;
 import org.infinispan.multimap.impl.function.PollFunction;
 import org.infinispan.multimap.impl.function.RemoveCountFunction;
+import org.infinispan.multimap.impl.function.RotateFunction;
 import org.infinispan.multimap.impl.function.SetFunction;
 import org.infinispan.multimap.impl.function.SubListFunction;
 import org.infinispan.multimap.impl.function.TrimFunction;
@@ -174,7 +175,15 @@ public class EmbeddedMultimapListCache<K, V> {
       return poll(key, count, false);
    }
 
-   private CompletableFuture<Collection<V>> poll(K key, long count, boolean first) {
+   /**
+    * Removes the given count of elements from the tail or the head of the list
+    * @param key, the name of the list
+    * @param count, the number of elements
+    * @param first, true if it's the head, false for the tail
+    * @return  {@link CompletionStage} containing a {@link Collection<V>} of values removed,
+    * or null if the key does not exit
+    */
+   public CompletableFuture<Collection<V>> poll(K key, long count, boolean first) {
       requireNonNull(key, "key can't be null");
       requirePositive(count, "count can't be negative");
       return readWriteMap.eval(key, new PollFunction<>(first, count));
@@ -288,6 +297,17 @@ public class EmbeddedMultimapListCache<K, V> {
    public CompletionStage<Boolean> trim(K key, long from, long to) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       return readWriteMap.eval(key, new TrimFunction<>(from, to));
+   }
+
+   /**
+    * Rotates an element in the list from head to tail or tail to head, depending on the rotateRight parameter.
+    * @param key, the name of the list
+    * @param rotateRight, true to rotate an element from the left to the right (head -> tail)
+    * @return the rotated element value, null if the list does not exist
+    */
+   public CompletionStage<V> rotate(K key, boolean rotateRight) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      return readWriteMap.eval(key, new RotateFunction<>(rotateRight));
    }
 
    private static void requirePositive(long number, String message) {

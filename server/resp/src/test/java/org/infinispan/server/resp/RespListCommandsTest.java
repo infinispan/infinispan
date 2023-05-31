@@ -1,5 +1,6 @@
 package org.infinispan.server.resp;
 
+import io.lettuce.core.LMoveArgs;
 import io.lettuce.core.LPosArgs;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -376,4 +377,81 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
       }).isInstanceOf(RedisCommandExecutionException.class)
             .hasMessageContaining("ERRWRONGTYPE");
    }
+
+   public void testLMOVE() {
+      redis.rpush("leads", "william", "tristan", "pedro", "jose", "ryan");
+      assertThat(redis.lmove("not_existing", "leads", LMoveArgs.Builder.rightRight())).isNull();
+
+      // Rotate
+      assertThat(redis.lmove("leads", "leads", LMoveArgs.Builder.rightRight())).isEqualTo("ryan");
+      assertThat(redis.lrange("leads", 0, -1)).containsExactly("william", "tristan", "pedro", "jose", "ryan");
+      assertThat(redis.lmove("leads", "leads", LMoveArgs.Builder.leftLeft())).isEqualTo("william");
+      assertThat(redis.lrange("leads", 0, -1)).containsExactly("william", "tristan", "pedro", "jose", "ryan");
+      assertThat(redis.lmove("leads", "leads", LMoveArgs.Builder.leftRight())).isEqualTo("william");
+      assertThat(redis.lrange("leads", 0, -1)).containsExactly("tristan", "pedro", "jose", "ryan", "william");
+      assertThat(redis.lmove("leads", "leads", LMoveArgs.Builder.rightLeft())).isEqualTo("william");
+      assertThat(redis.lrange("leads", 0, -1)).containsExactly("william", "tristan", "pedro", "jose", "ryan");
+
+      // Move from two lists
+      redis.rpush("fantasy_leads", "doraemon", "son goku", "snape");
+      assertThat(redis.lmove("leads", "fantasy_leads", LMoveArgs.Builder.rightRight())).isEqualTo("ryan");
+      assertThat(redis.lrange("leads", 0, -1)).containsExactly("william", "tristan", "pedro", "jose");
+      assertThat(redis.lrange("fantasy_leads", 0, -1)).containsExactly("doraemon", "son goku", "snape", "ryan");
+
+      assertThat(redis.lmove("leads", "fantasy_leads", LMoveArgs.Builder.rightLeft())).isEqualTo("jose");
+      assertThat(redis.lrange("leads", 0, -1)).containsExactly("william", "tristan", "pedro");
+      assertThat(redis.lrange("fantasy_leads", 0, -1)).containsExactly("jose", "doraemon", "son goku", "snape", "ryan");
+
+      assertThat(redis.lmove("leads", "fantasy_leads", LMoveArgs.Builder.leftRight())).isEqualTo("william");
+      assertThat(redis.lrange("leads", 0, -1)).containsExactly("tristan", "pedro");
+      assertThat(redis.lrange("fantasy_leads", 0, -1)).containsExactly("jose", "doraemon", "son goku", "snape", "ryan", "william");
+
+      assertThat(redis.lmove("leads", "fantasy_leads", LMoveArgs.Builder.leftLeft())).isEqualTo("tristan");
+      assertThat(redis.lrange("leads", 0, -1)).containsExactly("pedro");
+      assertThat(redis.lrange("fantasy_leads", 0, -1)).containsExactly("tristan", "jose", "doraemon", "son goku", "snape", "ryan", "william");
+
+      assertThat(redis.lmove("leads", "new_leads", LMoveArgs.Builder.leftLeft())).isEqualTo("pedro");
+      assertThat(redis.lrange("leads", 0, -1)).isEmpty();
+      assertThat(redis.lrange("new_leads", 0, -1)).containsExactly("pedro");
+
+      // Set a String Command
+      redis.set("another", "tristan");
+
+      // LMOVE on an existing key that contains a String, not a Collection!
+      assertThatThrownBy(() -> {
+         redis.lmove("another", "another", LMoveArgs.Builder.leftRight());
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERRWRONGTYPE");
+   }
+
+   public void testRPOPLPUSH() {
+      redis.rpush("leads", "william", "tristan", "pedro", "jose", "ryan");
+      assertThat(redis.rpoplpush("not_existing", "leads")).isNull();
+
+      // Rotate
+      assertThat(redis.lrange("leads", 0, -1)).containsExactly("william", "tristan", "pedro", "jose", "ryan");
+      assertThat(redis.rpoplpush("leads", "leads")).isEqualTo("ryan");
+      assertThat(redis.lrange("leads", 0, -1)).containsExactly("ryan", "william", "tristan", "pedro", "jose");
+
+      // Move from two lists
+      redis.rpush("fantasy_leads", "doraemon", "son goku", "snape");
+
+      assertThat(redis.rpoplpush("leads", "fantasy_leads")).isEqualTo("jose");
+      assertThat(redis.lrange("leads", 0, -1)).containsExactly("ryan", "william", "tristan", "pedro");
+      assertThat(redis.lrange("fantasy_leads", 0, -1)).containsExactly("jose", "doraemon", "son goku", "snape");
+
+      assertThat(redis.rpoplpush("leads", "new_leads")).isEqualTo("pedro");
+      assertThat(redis.lrange("leads", 0, -1)).containsExactly("ryan", "william", "tristan");
+      assertThat(redis.lrange("new_leads", 0, -1)).containsExactly("pedro");
+
+      // Set a String Command
+      redis.set("another", "tristan");
+
+      // LMOVE on an existing key that contains a String, not a Collection!
+      assertThatThrownBy(() -> {
+         redis.rpoplpush("another", "another");
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERRWRONGTYPE");
+   }
+
 }
