@@ -151,7 +151,7 @@ public class XSiteCliOperations {
 
          //check invalid mode
          terminal.send("site state-transfer-mode set --mode=ABC --site=" + NYC);
-         terminal.assertContains("No enum constant org.infinispan.configuration.cache.XSiteStateTransferMode.ABC");
+         terminal.assertContains("No enum constant org.infinispan.client.rest.XSiteStateTransferMode.ABC");
          terminal.clear();
       });
    }
