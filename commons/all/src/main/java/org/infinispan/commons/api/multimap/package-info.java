@@ -3,4 +3,4 @@
  *
  * @api.public
  */
-package org.infinispan.multimap.api;
+package org.infinispan.commons.api.multimap;

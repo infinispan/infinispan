@@ -19,7 +19,6 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
-import org.infinispan.multimap.api.BasicMultimapCache;
 import org.infinispan.multimap.api.embedded.MultimapCache;
 import org.infinispan.multimap.impl.function.multimap.ContainsFunction;
 import org.infinispan.multimap.impl.function.multimap.GetFunction;
@@ -39,8 +38,8 @@ import jakarta.transaction.TransactionManager;
  * technically possible :
  *
  * <ul>
- *    <li>{@link BasicMultimapCache#size()} </li>
- *    <li>{@link BasicMultimapCache#containsEntry(Object, Object)}</li>
+ *    <li>{@link org.infinispan.commons.api.multimap.BasicMultimapCache#size()} </li>
+ *    <li>{@link org.infinispan.commons.api.multimap.BasicMultimapCache#containsEntry(Object, Object)}</li>
  * </ul>
  *
  * More about transactions in :
