@@ -21,7 +21,7 @@ import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.MediaTypeIds;
 import org.infinispan.counter.api.CounterConfiguration;
-import org.infinispan.counter.util.EncodeUtil;
+import org.infinispan.commons.util.CounterEncodeUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.server.hotrod.tx.ControlByte;
@@ -281,7 +281,7 @@ modificationData
 counterName: string;
 counterFlags: byte;
 counterConfiguration returns CounterConfiguration.Builder
-   : counterFlags { counterConfiguration = CounterConfiguration.builder(EncodeUtil.decodeType(counterFlags)).storage(EncodeUtil.decodeStorage(counterFlags)) }
+   : counterFlags { counterConfiguration = CounterConfiguration.builder(CounterEncodeUtil.decodeType(counterFlags)).storage(CounterEncodeUtil.decodeStorage(counterFlags)) }
       counterConcurrency counterBounds initialValue { counterConfiguration.initialValue(initialValue); }
    ;
 // applies only to weak counters
