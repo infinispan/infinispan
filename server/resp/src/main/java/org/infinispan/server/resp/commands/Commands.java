@@ -12,6 +12,7 @@ import org.infinispan.server.resp.commands.connection.COMMAND;
 import org.infinispan.server.resp.commands.connection.DBSIZE;
 import org.infinispan.server.resp.commands.connection.ECHO;
 import org.infinispan.server.resp.commands.connection.HELLO;
+import org.infinispan.server.resp.commands.connection.MEMORY;
 import org.infinispan.server.resp.commands.connection.MODULE;
 import org.infinispan.server.resp.commands.connection.PING;
 import org.infinispan.server.resp.commands.connection.QUIT;
@@ -79,7 +80,7 @@ public final class Commands {
       ALL_COMMANDS[7] = new RespCommand[]{new HELLO()};
       ALL_COMMANDS[8] = new RespCommand[]{new INCR(), new INCRBY(), new INCRBYFLOAT(), new INFO()};
       ALL_COMMANDS[11] = new RespCommand[]{new LINDEX(), new LINSERT(), new LPUSH(), new LPUSHX(), new LPOP(), new LRANGE(), new LLEN(), new LPOS(), new LREM(), new LSET() };
-      ALL_COMMANDS[12] = new RespCommand[]{new MGET(), new MSET(), new MODULE()};
+      ALL_COMMANDS[12] = new RespCommand[]{new MGET(), new MSET(), new MODULE(), new MEMORY()};
       ALL_COMMANDS[15] = new RespCommand[]{new PUBLISH(), new PING(), new PSUBSCRIBE(), new PUNSUBSCRIBE()};
       ALL_COMMANDS[16] = new RespCommand[]{new QUIT()};
       ALL_COMMANDS[17] = new RespCommand[]{new RPUSH(), new RPUSHX(), new RPOP(), new RESET(), new READWRITE(), new READONLY()};

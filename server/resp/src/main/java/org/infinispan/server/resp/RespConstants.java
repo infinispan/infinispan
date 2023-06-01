@@ -8,7 +8,10 @@ public interface RespConstants {
    byte ARRAY = '*';
    byte NUMERIC = ':';
    byte HELLO = '@';
-   String CRLF = "\r\n";
+   String CRLF_STRING = "\r\n";
+
+   byte[] CRLF = CRLF_STRING.getBytes(StandardCharsets.US_ASCII);
 
    byte[] OK = "+OK\r\n".getBytes(StandardCharsets.US_ASCII);
+   byte[] NIL = "$-1\r\n".getBytes(StandardCharsets.US_ASCII);
 }

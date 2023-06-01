@@ -1,6 +1,6 @@
 package org.infinispan.server.resp;
 
-import static org.infinispan.server.resp.RespConstants.CRLF;
+import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
 
 import java.lang.invoke.MethodHandles;
 import java.nio.ByteBuffer;
@@ -67,9 +67,9 @@ public class SubscriberHandler extends CacheRespRequestHandler {
                   + 2 + key.length + 2 + 1 + (int) Math.log10(value.length) + 1 + 2 + value.length + 2;
             // TODO: this is technically an issue with concurrent events before/after register/unregister message
             ByteBuf byteBuf = channel.alloc().buffer(byteSize, byteSize);
-            byteBuf.writeCharSequence("*3\r\n$7\r\nmessage\r\n$" + key.length + CRLF, CharsetUtil.US_ASCII);
+            byteBuf.writeCharSequence("*3\r\n$7\r\nmessage\r\n$" + key.length + CRLF_STRING, CharsetUtil.US_ASCII);
             byteBuf.writeBytes(key);
-            byteBuf.writeCharSequence("\r\n$" + value.length + CRLF, CharsetUtil.US_ASCII);
+            byteBuf.writeCharSequence("\r\n$" + value.length + CRLF_STRING, CharsetUtil.US_ASCII);
             byteBuf.writeBytes(value);
             byteBuf.writeByte('\r');
             byteBuf.writeByte('\n');
@@ -168,7 +168,7 @@ public class SubscriberHandler extends CacheRespRequestHandler {
             int sizeRequired = initialCharSeq.length() + (int) Math.log10(keyChannel.length) + 1 + 2 + keyChannel.length + 2;
             ByteBuf subscribeBuffer = alloc.apply(sizeRequired);
             int initialPos = subscribeBuffer.writerIndex();
-            subscribeBuffer.writeCharSequence(initialCharSeq + keyChannel.length + CRLF, CharsetUtil.US_ASCII);
+            subscribeBuffer.writeCharSequence(initialCharSeq + keyChannel.length + CRLF_STRING, CharsetUtil.US_ASCII);
             subscribeBuffer.writeBytes(keyChannel);
             subscribeBuffer.writeByte('\r');
             subscribeBuffer.writeByte('\n');

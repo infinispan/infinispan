@@ -1,6 +1,6 @@
 package org.infinispan.server.resp.commands.generic;
 
-import static org.infinispan.server.resp.RespConstants.CRLF;
+import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -120,9 +120,9 @@ public class SCAN extends RespCommand implements Resp3Command {
          } else {
             response.append('$');
             response.append(cursor.length());
-            response.append(CRLF);
+            response.append(CRLF_STRING);
             response.append(cursor);
-            response.append(CRLF);
+            response.append(CRLF_STRING);
          }
          ByteBufferUtils.stringToByteBuf(response, handler.allocator());
          List<byte[]> keys = new ArrayList<>(size);

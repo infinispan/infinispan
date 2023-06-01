@@ -1,5 +1,8 @@
 package org.infinispan.server.resp;
 
+import static org.infinispan.server.resp.RespConstants.CRLF;
+import static org.infinispan.server.resp.RespConstants.NIL;
+
 import java.util.Collection;
 
 import io.netty.buffer.ByteBuf;
@@ -52,22 +55,23 @@ public final class ByteBufferUtils {
       buffer.writeByte('$');
       // This method is anywhere from 10-100% faster than ByteBufUtil.writeAscii and avoids allocations
       setIntChars(length, stringLength, buffer);
-      buffer.writeByte('\r').writeByte('\n');
+      buffer.writeBytes(CRLF);
       buffer.writeBytes(result);
-      buffer.writeByte('\r').writeByte('\n');
+      buffer.writeBytes(CRLF);
 
       return buffer;
    }
 
-   public static ByteBuf writeLong(long result, ByteBufPool alloc) {
+   public static ByteBuf writeLong(Long result, ByteBufPool alloc) {
+      if (result == null) {
+         return alloc.acquire(NIL.length).writeBytes(NIL);
+      }
       // : + number of digits + \r\n
       int size = 1 + stringSize(result) + 2;
       ByteBuf buffer = alloc.acquire(size);
       buffer.writeByte(':');
       setIntChars(result, size - 3, buffer);
-      buffer.writeByte('\r')
-            .writeByte('\n');
-      return buffer;
+      return buffer.writeBytes(CRLF);
    }
 
    public static ByteBuf bytesToResult(Collection<byte[]> results, ByteBufPool alloc) {
@@ -93,19 +97,16 @@ public final class ByteBufferUtils {
       int byteAmount = 1 + (int) Math.log10(elements) + 1 + 2 + resultBytesSize;
       ByteBuf byteBuf = alloc.apply(byteAmount);
       byteBuf.writeCharSequence("*" + results.size(), CharsetUtil.US_ASCII);
-      byteBuf.writeByte('\r');
-      byteBuf.writeByte('\n');
+      byteBuf.writeBytes(CRLF);
       for (byte[] value : results) {
          if (value == null) {
             byteBuf.writeCharSequence("$-1", CharsetUtil.US_ASCII);
          } else {
             byteBuf.writeCharSequence("$" + value.length, CharsetUtil.US_ASCII);
-            byteBuf.writeByte('\r');
-            byteBuf.writeByte('\n');
+            byteBuf.writeBytes(CRLF);
             byteBuf.writeBytes(value);
          }
-         byteBuf.writeByte('\r');
-         byteBuf.writeByte('\n');
+         byteBuf.writeBytes(CRLF);
       }
       return byteBuf;
    }

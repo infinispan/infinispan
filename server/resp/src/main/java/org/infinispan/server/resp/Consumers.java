@@ -1,6 +1,6 @@
 package org.infinispan.server.resp;
 
-import static org.infinispan.server.resp.RespConstants.CRLF;
+import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
 import static org.infinispan.server.resp.RespConstants.OK;
 
 import java.util.Collection;
@@ -48,7 +48,7 @@ public final class Consumers {
    };
 
    public static final BiConsumer<byte[], ByteBufPool> DELETE_BICONSUMER = (prev, alloc) ->
-         ByteBufferUtils.stringToByteBuf(":" + (prev == null ? "0" : "1") + CRLF, alloc);
+         ByteBufferUtils.stringToByteBuf(":" + (prev == null ? "0" : "1") + CRLF_STRING, alloc);
 
    public static final BiConsumer<SetResponse, ByteBufPool> SET_BICONSUMER = (res, alloc) -> {
       // The set operation has three return options, with a precedence:
