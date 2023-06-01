@@ -2,7 +2,7 @@ package org.infinispan.client.hotrod.multimap;
 
 import java.util.concurrent.CompletableFuture;
 
-import org.infinispan.multimap.api.BasicMultimapCache;
+import org.infinispan.commons.api.multimap.BasicMultimapCache;
 
 /**
  * {@inheritDoc}

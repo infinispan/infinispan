@@ -10,23 +10,23 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
-import jakarta.transaction.SystemException;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.api.multimap.BasicMultimapCache;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
-import org.infinispan.multimap.api.BasicMultimapCache;
 import org.infinispan.multimap.api.embedded.MultimapCache;
 import org.infinispan.multimap.impl.function.ContainsFunction;
 import org.infinispan.multimap.impl.function.GetFunction;
 import org.infinispan.multimap.impl.function.PutFunction;
 import org.infinispan.multimap.impl.function.RemoveFunction;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
+
+import jakarta.transaction.SystemException;
+import jakarta.transaction.TransactionManager;
 
 /**
  * Embedded implementation of {@link MultimapCache}
