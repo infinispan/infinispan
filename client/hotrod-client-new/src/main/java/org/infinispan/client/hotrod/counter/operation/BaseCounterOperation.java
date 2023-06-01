@@ -9,8 +9,7 @@ import org.infinispan.client.hotrod.counter.impl.CounterOperationFactory;
 import org.infinispan.client.hotrod.impl.operations.AbstractNoCacheHotRodOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
-import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.logging.Log;
+import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.counter.exception.CounterException;
 
 import io.netty.buffer.ByteBuf;
@@ -24,7 +23,6 @@ import io.netty.channel.Channel;
  */
 abstract class BaseCounterOperation<T> extends AbstractNoCacheHotRodOperation<T> {
 
-   private static final Log commonsLog = LogFactory.getLog(BaseCounterOperation.class, Log.class);
    private static final Charset CHARSET = StandardCharsets.UTF_8;
    private final String counterName;
    private final boolean useConsistentHash;
@@ -55,7 +53,7 @@ abstract class BaseCounterOperation<T> extends AbstractNoCacheHotRodOperation<T>
     */
    void checkStatus(short status) {
       if (status == KEY_DOES_NOT_EXIST_STATUS) {
-         throw commonsLog.undefinedCounter(counterName);
+         throw Log.HOTROD.undefinedCounter(counterName);
       }
    }
 

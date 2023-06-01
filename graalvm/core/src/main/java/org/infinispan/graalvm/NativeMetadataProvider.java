@@ -46,6 +46,7 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
          "proto/generated/user\\.commons\\.proto",
          "proto/generated/persistence\\.commons\\.proto",
          "proto/generated/persistence\\.core\\.proto",
+         "proto/generated/persistence\\.counters-api\\.proto",
          "proto/generated/global\\.commons\\.proto",
          "default-configs/default-jgroups-udp\\.xml",
          "default-configs/default-jgroups-tcp\\.xml",

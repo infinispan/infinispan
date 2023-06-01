@@ -11,8 +11,7 @@ import java.util.function.Supplier;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
-import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.logging.Log;
+import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.counter.api.CounterType;
@@ -28,7 +27,6 @@ import org.infinispan.counter.exception.CounterException;
  */
 public class RemoteCounterManager implements CounterManager {
 
-   private static final Log commonsLog = LogFactory.getLog(RemoteCounterManager.class, Log.class);
    private final Map<String, Object> counters;
    private CounterOperationFactory factory;
    private NotificationManager notificationManager;
@@ -45,13 +43,13 @@ public class RemoteCounterManager implements CounterManager {
    @Override
    public StrongCounter getStrongCounter(String name) {
       return getOrCreateCounter(name, StrongCounter.class, this::createStrongCounter,
-            () -> commonsLog.invalidCounterType("Strong", "Weak"));
+            () -> Log.HOTROD.invalidCounterType("Strong", "Weak"));
    }
 
    @Override
    public WeakCounter getWeakCounter(String name) {
       return getOrCreateCounter(name, WeakCounter.class, this::createWeakCounter,
-            () -> commonsLog.invalidCounterType("Weak", "Strong"));
+            () -> Log.HOTROD.invalidCounterType("Weak", "Strong"));
    }
 
    @Override
@@ -100,14 +98,14 @@ public class RemoteCounterManager implements CounterManager {
 
    private void assertWeakCounter(CounterConfiguration configuration) {
       if (configuration.type() != CounterType.WEAK) {
-         throw commonsLog.invalidCounterType("Weak", "Strong");
+         throw Log.HOTROD.invalidCounterType("Weak", "Strong");
       }
    }
 
    private WeakCounter createWeakCounter(String counterName) {
       CounterConfiguration configuration = getConfiguration(counterName);
       if (configuration == null) {
-         throw commonsLog.undefinedCounter(counterName);
+         throw org.infinispan.client.hotrod.logging.Log.HOTROD.undefinedCounter(counterName);
       }
       assertWeakCounter(configuration);
       return new WeakCounterImpl(counterName, configuration, factory, notificationManager);
@@ -116,7 +114,7 @@ public class RemoteCounterManager implements CounterManager {
    private StrongCounter createStrongCounter(String counterName) {
       CounterConfiguration configuration = getConfiguration(counterName);
       if (configuration == null) {
-         throw commonsLog.undefinedCounter(counterName);
+         throw Log.HOTROD.undefinedCounter(counterName);
       }
       assertStrongCounter(configuration);
       return new StrongCounterImpl(counterName, configuration, factory, notificationManager);
@@ -124,7 +122,7 @@ public class RemoteCounterManager implements CounterManager {
 
    private void assertStrongCounter(CounterConfiguration configuration) {
       if (configuration.type() == CounterType.WEAK) {
-         throw commonsLog.invalidCounterType("Strong", "Weak");
+         throw Log.HOTROD.invalidCounterType("Strong", "Weak");
       }
    }
 }

@@ -2,15 +2,15 @@ package org.infinispan.client.hotrod.counter.operation;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.counter.exception.CounterOutOfBoundsException;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 
 /**
  * Add operation.
@@ -23,9 +23,6 @@ import org.infinispan.counter.exception.CounterOutOfBoundsException;
  * @since 9.2
  */
 public class AddOperation extends BaseCounterOperation<Long> {
-
-   private static final Log commonsLog = LogFactory.getLog(AddOperation.class, Log.class);
-
    private final long delta;
 
    public AddOperation(ChannelFactory channelFactory, AtomicReference<ClientTopology> topologyId, Configuration cfg,
@@ -52,9 +49,9 @@ public class AddOperation extends BaseCounterOperation<Long> {
    private void assertBoundaries(short status) {
       if (status == NOT_EXECUTED_WITH_PREVIOUS) {
          if (delta > 0) {
-            throw commonsLog.counterOurOfBounds(CounterOutOfBoundsException.UPPER_BOUND);
+            throw Log.HOTROD.counterOurOfBounds(CounterOutOfBoundsException.UPPER_BOUND);
          } else {
-            throw commonsLog.counterOurOfBounds(CounterOutOfBoundsException.LOWER_BOUND);
+            throw Log.HOTROD.counterOurOfBounds(CounterOutOfBoundsException.LOWER_BOUND);
          }
       }
    }

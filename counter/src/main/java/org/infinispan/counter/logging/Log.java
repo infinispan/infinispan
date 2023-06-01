@@ -5,6 +5,7 @@ import java.io.File;
 import org.infinispan.counter.exception.CounterConfigurationException;
 import org.infinispan.counter.exception.CounterException;
 import org.infinispan.counter.exception.CounterNotFoundException;
+import org.infinispan.counter.exception.CounterOutOfBoundsException;
 import org.infinispan.util.ByteString;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
@@ -23,7 +24,8 @@ public interface Log extends BasicLogger {
    String LOG_ROOT = "org.infinispan.";
    Log CONTAINER = Logger.getMessageLogger(Log.class, LOG_ROOT + "CONTAINER");
 
-   //29501 is in commons log
+   @Message(value = CounterOutOfBoundsException.FORMAT_MESSAGE, id = 29501)
+   CounterOutOfBoundsException counterOurOfBounds(String bound);
 
 //   @Message(value = "The counter was deleted.", id = 29502)
 //   CounterException counterDeleted();
