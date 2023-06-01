@@ -1,7 +1,10 @@
 package org.infinispan.server.resp.commands.list;
 
-import io.netty.channel.ChannelHandlerContext;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
@@ -12,10 +15,7 @@ import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.util.concurrent.CompletionStages;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @link https://redis.io/commands/lpos/
@@ -68,7 +68,7 @@ public class LPOS extends RespCommand implements Resp3Command {
 
       for (int i = 2; i < arguments.size(); i++) {
          String argumentName = new String(arguments.get(i++)).toUpperCase();
-         Long argumentValue = ArgumentUtils.toLong(arguments.get(i));
+         long argumentValue = ArgumentUtils.toLong(arguments.get(i));
 
          switch (argumentName) {
             case COUNT:
@@ -108,9 +108,6 @@ public class LPOS extends RespCommand implements Resp3Command {
 
          if (returnSingleElement) {
             Long singleIndex = indexes == null || indexes.isEmpty() ? null : indexes.iterator().next();
-            if (singleIndex == null) {
-               handler.stageToReturn(CompletableFutures.completedNull(), ctx, Consumers.GET_BICONSUMER);
-            }
             return handler.stageToReturn(CompletableFuture.completedFuture(singleIndex), ctx, Consumers.LONG_BICONSUMER);
          }
 

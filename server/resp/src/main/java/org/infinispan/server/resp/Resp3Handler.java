@@ -1,8 +1,12 @@
 package org.infinispan.server.resp;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
-import io.netty.channel.ChannelHandlerContext;
+import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.context.Flag;
@@ -11,12 +15,9 @@ import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.resp.commands.Resp3Command;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.CompletionStage;
-import java.util.stream.Collectors;
-
-import static org.infinispan.server.resp.RespConstants.CRLF;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
+import io.netty.channel.ChannelHandlerContext;
 
 public class Resp3Handler extends Resp3AuthHandler {
    protected AdvancedCache<byte[], byte[]> ignorePreviousValueCache;
@@ -49,7 +50,7 @@ public class Resp3Handler extends Resp3AuthHandler {
       return super.actualHandleRequest(ctx, type, arguments);
    }
 
-   protected static void handleLongResult(long result, ByteBufPool alloc) {
+   protected static void handleLongResult(Long result, ByteBufPool alloc) {
       ByteBufferUtils.writeLong(result, alloc);
    }
 
@@ -62,7 +63,7 @@ public class Resp3Handler extends Resp3AuthHandler {
       if (collection == null) {
          handleNullResult(alloc);
       } else {
-         String result = "*" + collection.size() + CRLF + collection.stream().map(value -> ":" + value  + CRLF).collect(Collectors.joining());
+         String result = "*" + collection.size() + CRLF_STRING + collection.stream().map(value -> ":" + value  + CRLF_STRING).collect(Collectors.joining());
          ByteBufferUtils.stringToByteBuf(result, alloc);
       }
    }
@@ -71,7 +72,7 @@ public class Resp3Handler extends Resp3AuthHandler {
       if (result == null) {
          handleNullResult(alloc);
       }  else {
-         ByteBufferUtils.stringToByteBuf("$" + ByteBufUtil.utf8Bytes(result) + CRLF + result + CRLF, alloc);
+         ByteBufferUtils.stringToByteBuf("$" + ByteBufUtil.utf8Bytes(result) + CRLF_STRING + result + CRLF_STRING, alloc);
       }
    }
 
@@ -87,7 +88,7 @@ public class Resp3Handler extends Resp3AuthHandler {
    }
 
    protected static void handleThrowable(ByteBufPool alloc, Throwable t) {
-      ByteBufferUtils.stringToByteBuf("-ERR " + t.getMessage() + CRLF, alloc);
+      ByteBufferUtils.stringToByteBuf("-ERR " + t.getMessage() + CRLF_STRING, alloc);
    }
 
    public AdvancedCache<byte[], byte[]> ignorePreviousValuesCache() {

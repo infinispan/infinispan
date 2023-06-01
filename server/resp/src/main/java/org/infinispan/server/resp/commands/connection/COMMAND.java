@@ -1,6 +1,6 @@
 package org.infinispan.server.resp.commands.connection;
 
-import static org.infinispan.server.resp.RespConstants.CRLF;
+import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
 
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -37,7 +37,7 @@ public class COMMAND extends RespCommand implements Resp3Command {
          List<RespCommand> commands = Commands.all();
          commandBuilder.append("*");
          commandBuilder.append(commands.size());
-         commandBuilder.append(CRLF);
+         commandBuilder.append(CRLF_STRING);
          for (RespCommand command : commands){
             addCommand(commandBuilder, command);
          }
@@ -49,16 +49,16 @@ public class COMMAND extends RespCommand implements Resp3Command {
    private void addCommand(StringBuilder builder, RespCommand command) {
       builder.append("*6\r\n");
       // Name
-      builder.append("$").append(ByteBufUtil.utf8Bytes(command.getName())).append(CRLF).append(command.getName()).append(CRLF);
+      builder.append("$").append(ByteBufUtil.utf8Bytes(command.getName())).append(CRLF_STRING).append(command.getName()).append(CRLF_STRING);
       // Arity
-      builder.append(":").append(command.getArity()).append(CRLF);
+      builder.append(":").append(command.getArity()).append(CRLF_STRING);
       // Flags
       builder.append("*0\r\n");
       // First key
-      builder.append(":").append(command.getFirstKeyPos()).append(CRLF);
+      builder.append(":").append(command.getFirstKeyPos()).append(CRLF_STRING);
       // Second key
-      builder.append(":").append(command.getLastKeyPos()).append(CRLF);
+      builder.append(":").append(command.getLastKeyPos()).append(CRLF_STRING);
       // Step
-      builder.append(":").append(command.getSteps()).append(CRLF);
+      builder.append(":").append(command.getSteps()).append(CRLF_STRING);
    }
 }

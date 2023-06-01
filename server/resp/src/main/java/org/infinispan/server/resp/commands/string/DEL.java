@@ -1,6 +1,6 @@
 package org.infinispan.server.resp.commands.string;
 
-import static org.infinispan.server.resp.RespConstants.CRLF;
+import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
 
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -52,7 +52,7 @@ public class DEL extends RespCommand implements Resp3Command {
                }));
       }
       return handler.stageToReturn(deleteStages.freeze(), ctx, (removals, alloc) -> {
-         ByteBufferUtils.stringToByteBuf(":" + removals.get() + CRLF, alloc);
+         ByteBufferUtils.stringToByteBuf(":" + removals.get() + CRLF_STRING, alloc);
       });
    }
 }

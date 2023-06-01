@@ -1,6 +1,6 @@
 package org.infinispan.server.resp.commands.cluster;
 
-import static org.infinispan.server.resp.RespConstants.CRLF;
+import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
 
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -94,7 +94,7 @@ public class SHARDS extends RespCommand implements Resp3Command {
                StringBuilder response = new StringBuilder();
 
                // Number of elements.
-               response.append('*').append(segmentOwners.size()).append(CRLF);
+               response.append('*').append(segmentOwners.size()).append(CRLF_STRING);
 
                for (Map.Entry<List<Address>, IntSet> entry : segmentOwners.entrySet()) {
                   List<Address> addresses = entry.getKey();
@@ -163,22 +163,22 @@ public class SHARDS extends RespCommand implements Resp3Command {
       sb.append("*14\r\n");
 
       sb.append("$2\r\n").append("id\r\n");
-      sb.append("$").append(name.length()).append(CRLF).append(name).append(CRLF);
+      sb.append("$").append(name.length()).append(CRLF_STRING).append(name).append(CRLF_STRING);
 
       sb.append("$4\r\n").append("port\r\n");
-      sb.append(":").append(port).append(CRLF);
+      sb.append(":").append(port).append(CRLF_STRING);
 
       sb.append("$2\r\n").append("ip\r\n");
-      sb.append("$").append(address.length()).append(CRLF).append(address).append(CRLF);
+      sb.append("$").append(address.length()).append(CRLF_STRING).append(address).append(CRLF_STRING);
 
       sb.append("$8\r\n").append("endpoint\r\n");
-      sb.append("$").append(address.length()).append(CRLF).append(address).append(CRLF);
+      sb.append("$").append(address.length()).append(CRLF_STRING).append(address).append(CRLF_STRING);
 
       sb.append("$18\r\n").append("replication-offset\r\n");
       sb.append(":0\r\n");
 
       sb.append("$6\r\n").append("health\r\n");
-      sb.append("$").append(health.length()).append(CRLF).append(health).append(CRLF);
+      sb.append("$").append(health.length()).append(CRLF_STRING).append(health).append(CRLF_STRING);
    }
 
    private static Address findPhysicalAddress(EmbeddedCacheManager ecm) {
@@ -216,19 +216,19 @@ public class SHARDS extends RespCommand implements Resp3Command {
             i++;
          }
 
-         segments.append(":").append(runStart).append(CRLF);
-         segments.append(":").append(i).append(CRLF);
+         segments.append(":").append(runStart).append(CRLF_STRING);
+         segments.append(":").append(i).append(CRLF_STRING);
          segmentCount++;
       }
 
       // Serializing the ranges.
       output.append("$5\r\n").append("slots\r\n");
-      output.append("*").append(segmentCount * 2).append(CRLF).append(segments);
+      output.append("*").append(segmentCount * 2).append(CRLF_STRING).append(segments);
 
       // Now serialize information about the nodes.
       // We start with the segment owner.
       output.append("$5\r\n").append("nodes\r\n");
-      output.append("*").append(replicas == null || replicas.isEmpty() ? 1 : replicas.size() + 1).append(CRLF);
+      output.append("*").append(replicas == null || replicas.isEmpty() ? 1 : replicas.size() + 1).append(CRLF_STRING);
 
       if (leader != null) {
          output.append(leader).append("$4\r\nrole\r\n$6\r\nmaster\r\n");
