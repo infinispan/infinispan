@@ -17,7 +17,6 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.counter.api.CounterType;
-import org.infinispan.counter.api.PropertyFormatter;
 import org.infinispan.counter.api.StrongCounter;
 import org.infinispan.counter.api.WeakCounter;
 import org.infinispan.counter.impl.factory.StrongCounterFactory;

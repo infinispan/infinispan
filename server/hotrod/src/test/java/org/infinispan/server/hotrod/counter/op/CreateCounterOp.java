@@ -1,6 +1,6 @@
 package org.infinispan.server.hotrod.counter.op;
 
-import static org.infinispan.counter.util.EncodeUtil.encodeConfiguration;
+import static org.infinispan.commons.util.CounterEncodeUtil.encodeConfiguration;
 import static org.infinispan.server.hotrod.HotRodOperation.COUNTER_CREATE;
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeUnsignedInt;
 

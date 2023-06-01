@@ -1,8 +1,8 @@
 package org.infinispan.counter.jmx;
 
+import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.counter.api.CounterConfiguration.builder;
 import static org.infinispan.counter.impl.Util.awaitCounterOperation;
-import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -30,11 +30,11 @@ import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterType;
-import org.infinispan.counter.api.PropertyFormatter;
 import org.infinispan.counter.exception.CounterOutOfBoundsException;
 import org.infinispan.counter.impl.BaseCounterTest;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
+import org.infinispan.counter.impl.manager.PropertyFormatter;
 import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;

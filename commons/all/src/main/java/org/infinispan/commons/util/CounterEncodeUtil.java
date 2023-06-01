@@ -1,4 +1,4 @@
-package org.infinispan.counter.util;
+package org.infinispan.commons.util;
 
 import static org.infinispan.commons.logging.Log.CONTAINER;
 
@@ -19,7 +19,7 @@ import org.infinispan.counter.api.Storage;
  * @author Pedro Ruivo
  * @since 9.2
  */
-public final class EncodeUtil {
+public final class CounterEncodeUtil {
 
    /*
    00000000
@@ -31,7 +31,7 @@ public final class EncodeUtil {
    private static final byte BOUNDED_COUNTER = 0x02;
    private static final byte UNBOUNDED_COUNTER = 0x00;
 
-   private EncodeUtil() {
+   private CounterEncodeUtil() {
    }
 
    /**
