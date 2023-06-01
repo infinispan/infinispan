@@ -5,9 +5,9 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
+import org.infinispan.commons.api.multimap.BasicMultimapCache;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.multimap.api.BasicMultimapCache;
 import org.infinispan.util.function.SerializablePredicate;
 
 /**
