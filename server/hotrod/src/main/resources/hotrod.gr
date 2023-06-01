@@ -21,7 +21,7 @@ import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.MediaTypeIds;
 import org.infinispan.counter.api.CounterConfiguration;
-import org.infinispan.commons.util.CounterEncodeUtil;
+import org.infinispan.counter.api._private.CounterEncodeUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.server.hotrod.tx.ControlByte;

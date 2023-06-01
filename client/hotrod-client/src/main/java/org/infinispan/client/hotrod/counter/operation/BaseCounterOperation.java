@@ -9,18 +9,18 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.operations.RetryOnFailureOperation;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
-import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.logging.Log;
+import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.commons.util.Util;
 import org.infinispan.counter.exception.CounterException;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 
 /**
  * A base operation class for the counter's operation.
@@ -29,8 +29,6 @@ import org.infinispan.counter.exception.CounterException;
  * @since 9.2
  */
 abstract class BaseCounterOperation<T> extends RetryOnFailureOperation<T> {
-
-   private static final Log commonsLog = LogFactory.getLog(BaseCounterOperation.class, Log.class);
    private static final Charset CHARSET = StandardCharsets.UTF_8;
    private static final byte[] EMPTY_CACHE_NAME = Util.EMPTY_BYTE_ARRAY;
    private final String counterName;
@@ -71,7 +69,7 @@ abstract class BaseCounterOperation<T> extends RetryOnFailureOperation<T> {
     */
    void checkStatus(short status) {
       if (status == KEY_DOES_NOT_EXIST_STATUS) {
-         throw commonsLog.undefinedCounter(counterName);
+         throw Log.HOTROD.undefinedCounter(counterName);
       }
    }
 

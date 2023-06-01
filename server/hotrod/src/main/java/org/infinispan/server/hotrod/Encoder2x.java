@@ -1,7 +1,7 @@
 package org.infinispan.server.hotrod;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
-import static org.infinispan.commons.util.CounterEncodeUtil.encodeConfiguration;
+import static org.infinispan.counter.api._private.CounterEncodeUtil.encodeConfiguration;
 import static org.infinispan.server.core.logging.Log.SERVER;
 import static org.infinispan.server.core.transport.VInt.write;
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeString;
