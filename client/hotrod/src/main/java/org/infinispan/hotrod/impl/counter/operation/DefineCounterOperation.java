@@ -1,6 +1,6 @@
 package org.infinispan.hotrod.impl.counter.operation;
 
-import static org.infinispan.counter.util.EncodeUtil.encodeConfiguration;
+import static org.infinispan.commons.util.CounterEncodeUtil.encodeConfiguration;
 
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterManager;

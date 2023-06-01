@@ -1,10 +1,14 @@
-package org.infinispan.counter.api;
+package org.infinispan.counter.impl.manager;
 
 import static org.infinispan.counter.api.CounterConfiguration.builder;
 
 import java.util.Properties;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import org.infinispan.counter.api.CounterConfiguration;
+import org.infinispan.counter.api.CounterType;
+import org.infinispan.counter.api.Storage;
 
 /**
  * A property style format for {@link CounterConfiguration}.
