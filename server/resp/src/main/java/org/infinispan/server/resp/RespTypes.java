@@ -4,6 +4,7 @@ package org.infinispan.server.resp;
  * @since 15.0
  **/
 public enum RespTypes {
+   none,
    hash,
    list,
    set,
