@@ -5,7 +5,6 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.configuration.cache.XSiteStateTransferMode;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;

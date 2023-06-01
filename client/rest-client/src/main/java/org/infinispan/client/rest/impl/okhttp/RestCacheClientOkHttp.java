@@ -12,8 +12,8 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
+import org.infinispan.client.rest.XSiteStateTransferMode;
 import org.infinispan.commons.api.CacheContainerAdmin;
-import org.infinispan.configuration.cache.XSiteStateTransferMode;
 
 import okhttp3.FormBody;
 import okhttp3.MediaType;

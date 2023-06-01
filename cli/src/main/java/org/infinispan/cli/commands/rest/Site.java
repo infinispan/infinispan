@@ -29,7 +29,7 @@ import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestCacheManagerClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
-import org.infinispan.configuration.cache.XSiteStateTransferMode;
+import org.infinispan.client.rest.XSiteStateTransferMode;
 import org.kohsuke.MetaInfServices;
 
 /**
