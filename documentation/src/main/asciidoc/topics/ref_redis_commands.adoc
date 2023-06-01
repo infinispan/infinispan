@@ -73,6 +73,12 @@ The {brandname} RESP endpoint implements the following Redis commands:
 | link:https://redis.io/commands/info[LINDEX]
 |
 
+| link:https://redis.io/commands/memory-info[MEMORY-USAGE]
+| This command will return the memory used by the key and the value. It doesn't include the memory used by additional metadata associated with the entry.
+
+| link:https://redis.io/commands/memory-stats[MEMORY-STATS]
+| This command will return the same fields as a real Redis server, but all values will be set to 0.
+
 | link:https://redis.io/commands/mget[MGET]
 |
 
@@ -109,6 +115,9 @@ The {brandname} RESP endpoint implements the following Redis commands:
 | link:https://redis.io/commands/psubscribe[PSUBSCRIBE]
 |
 
+| link:https://redis.io/commands/pttl[PTTL]
+|
+
 | link:https://redis.io/commands/publish[PUBLISH]
 |
 
@@ -133,7 +142,6 @@ The {brandname} RESP endpoint implements the following Redis commands:
 | https://redis.io/commands/readwrite[READWRITE]
 |
 
-
 | link:https://redis.io/commands/reset[RESET]
 |
 
@@ -147,6 +155,12 @@ The {brandname} RESP endpoint implements the following Redis commands:
 |
 
 | link:https://redis.io/commands/subscribe[SUBSCRIBE]
+|
+
+| link:https://redis.io/commands/ttl[TTL]
+|
+
+| link:https://redis.io/commands/type[TYPE]
 |
 
 | link:https://redis.io/commands/unsubscribe[UNSUBSCRIBE]

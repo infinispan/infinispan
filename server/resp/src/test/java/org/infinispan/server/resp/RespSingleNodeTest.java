@@ -677,4 +677,33 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       assertThat(res.getLen()).isEqualTo(resp.length());
       assertThat(res.getMatchString()).isNull();
    }
+
+   @Test
+   public void testTTL() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      assertThat(redis.ttl(k())).isEqualTo(-1);
+      assertThat(redis.ttl(k(1))).isEqualTo(-2);
+      redis.set(k(2), v(2), SetArgs.Builder.ex(10_000));
+      assertThat(redis.ttl(k(2))).isEqualTo(10_000L);
+   }
+
+   @Test
+   public void testPTTL() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      assertThat(redis.pttl(k())).isEqualTo(-1);
+      assertThat(redis.pttl(k(1))).isEqualTo(-2);
+      redis.set(k(2), v(2), SetArgs.Builder.ex(10_000));
+      assertThat(redis.pttl(k(2))).isEqualTo(10_000_000L);
+   }
+
+   @Test
+   public void testMemoryUsage() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), "1");
+      assertThat(redis.memoryUsage(k())).isEqualTo(16);
+      redis.set(k(1), "a".repeat(1001));
+      assertThat(redis.memoryUsage(k(1))).isEqualTo(1032);
+   }
 }
