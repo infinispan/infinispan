@@ -47,22 +47,22 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestResponseInfo;
 import org.infinispan.client.rest.RestSecurityClient;
 import org.infinispan.client.rest.RestServerClient;
+import org.infinispan.client.rest.XSiteStateTransferMode;
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.protostream.sampledomain.TestDomainSCI;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.resources.WeakSSEListener;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.junit.jupiter.api.Test;
 
 abstract class RESTAuthorizationTest {

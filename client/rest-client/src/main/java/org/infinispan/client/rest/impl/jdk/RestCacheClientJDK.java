@@ -13,9 +13,9 @@ import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestHeaders;
 import org.infinispan.client.rest.RestResponse;
+import org.infinispan.client.rest.XSiteStateTransferMode;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.configuration.cache.XSiteStateTransferMode;
 
 /**
  * @since 14.0
