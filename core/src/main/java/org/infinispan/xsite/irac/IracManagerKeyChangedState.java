@@ -4,15 +4,12 @@ import static java.util.concurrent.atomic.AtomicReferenceFieldUpdater.newUpdater
 import static org.infinispan.commons.util.Util.toStr;
 
 import java.lang.invoke.MethodHandles;
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.BitSet;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.xsite.XSiteBackup;
 
 import net.jcip.annotations.GuardedBy;
 
@@ -33,17 +30,19 @@ class IracManagerKeyChangedState implements IracManagerKeyState {
    private final Object owner;
    private final boolean expiration;
 
-   @GuardedBy("sentTo")
-   private final Set<XSiteBackup> sentTo;
+   @GuardedBy("backupMissing")
+   private final BitSet backupMissing;
 
    private volatile Status status = Status.READY;
 
-   public IracManagerKeyChangedState(int segment, Object key, Object owner, boolean expiration) {
+   public IracManagerKeyChangedState(int segment, Object key, Object owner, boolean expiration, int numberOfBackups) {
       this.segment = segment;
       this.key = Objects.requireNonNull(key);
       this.owner = Objects.requireNonNull(owner);
       this.expiration = expiration;
-      this.sentTo = new HashSet<>();
+      BitSet backupMissing = new BitSet(numberOfBackups);
+      backupMissing.set(0, numberOfBackups);
+      this.backupMissing = backupMissing;
    }
 
    @Override
@@ -88,11 +87,8 @@ class IracManagerKeyChangedState implements IracManagerKeyState {
    }
 
    @Override
-   public boolean done() {
-      if (log.isTraceEnabled()) {
-         log.tracef("[IRAC] State.setCompleted for key %s (status=%s)", toStr(key), status);
-      }
-      return STATUS_UPDATER.compareAndSet(this, Status.SENDING, Status.DONE);
+   public boolean isDone() {
+      return STATUS_UPDATER.get(this) == Status.DONE;
    }
 
    @Override
@@ -104,23 +100,22 @@ class IracManagerKeyChangedState implements IracManagerKeyState {
    }
 
    @Override
-   public void successFor(XSiteBackup site) {
-      synchronized (sentTo) {
-         sentTo.add(site);
+   public void successFor(IracXSiteBackup site) {
+      synchronized (backupMissing) {
+         backupMissing.clear(site.siteIndex());
+         if (backupMissing.isEmpty()) {
+            if (log.isTraceEnabled()) {
+               log.tracef("[IRAC] State.setCompleted for key %s (status=%s)", toStr(key), status);
+            }
+            STATUS_UPDATER.set(this, Status.DONE);
+         }
       }
    }
 
    @Override
-   public boolean wasSuccessful(XSiteBackup site) {
-      synchronized (sentTo) {
-         return sentTo.contains(site);
-      }
-   }
-
-   @Override
-   public boolean successfullySent(Collection<? extends XSiteBackup> sites) {
-      synchronized (sentTo) {
-         return sentTo.containsAll(sites);
+   public boolean wasSuccessful(IracXSiteBackup site) {
+      synchronized (backupMissing) {
+         return !backupMissing.get(site.siteIndex());
       }
    }
 

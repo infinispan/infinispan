@@ -15,11 +15,8 @@ import org.infinispan.container.offheap.OffHeapEntryFactory;
 import org.infinispan.container.offheap.OffHeapEntryFactoryImpl;
 import org.infinispan.container.offheap.OffHeapMemoryAllocator;
 import org.infinispan.container.offheap.UnpooledOffHeapMemoryAllocator;
-import org.infinispan.container.versioning.irac.DefaultIracTombstoneManager;
 import org.infinispan.container.versioning.irac.DefaultIracVersionGenerator;
-import org.infinispan.container.versioning.irac.IracTombstoneManager;
 import org.infinispan.container.versioning.irac.IracVersionGenerator;
-import org.infinispan.container.versioning.irac.NoOpIracTombstoneManager;
 import org.infinispan.container.versioning.irac.NoOpIracVersionGenerator;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.NonTransactionalInvocationContextFactory;
@@ -63,9 +60,6 @@ import org.infinispan.xsite.BackupSender;
 import org.infinispan.xsite.BackupSenderImpl;
 import org.infinispan.xsite.ClusteredCacheBackupReceiver;
 import org.infinispan.xsite.NoOpBackupSender;
-import org.infinispan.xsite.irac.DefaultIracManager;
-import org.infinispan.xsite.irac.IracManager;
-import org.infinispan.xsite.irac.NoOpIracManager;
 import org.infinispan.xsite.metrics.DefaultXSiteMetricsCollector;
 import org.infinispan.xsite.metrics.NoOpXSiteMetricsCollector;
 import org.infinispan.xsite.metrics.XSiteMetricsCollector;
@@ -98,9 +92,9 @@ import org.infinispan.xsite.status.TakeOfflineManager;
                               XSiteStateTransferManager.class, XSiteStateConsumer.class, XSiteStateProvider.class,
                               FunctionalNotifier.class, CommandAckCollector.class, TriangleOrderManager.class,
                               TransactionOriginatorChecker.class, OffHeapEntryFactory.class, OffHeapMemoryAllocator.class,
-                              PublisherHandler.class, InvocationHelper.class, TakeOfflineManager.class, IracManager.class,
+                              PublisherHandler.class, InvocationHelper.class, TakeOfflineManager.class,
                               IracVersionGenerator.class, BackupReceiver.class, StorageConfigurationManager.class,
-                              XSiteMetricsCollector.class, IracTombstoneManager.class
+                              XSiteMetricsCollector.class
 })
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
@@ -195,10 +189,6 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          return configuration.sites().hasBackups() ?
                new DefaultTakeOfflineManager(componentRegistry.getCacheName()) :
                NoOpTakeOfflineManager.getInstance();
-      } else if (componentName.equals(IracManager.class.getName())) {
-         return configuration.sites().hasAsyncEnabledBackups() ?
-                new DefaultIracManager(configuration) :
-                NoOpIracManager.INSTANCE;
       } else if (componentName.equals(IracVersionGenerator.class.getName())) {
          return configuration.sites().hasAsyncEnabledBackups() ?
                 new DefaultIracVersionGenerator(configuration.clustering().hash().numSegments()) :
@@ -213,10 +203,6 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          return configuration.sites().hasBackups() ?
                 new DefaultXSiteMetricsCollector(configuration) :
                 NoOpXSiteMetricsCollector.getInstance();
-      } else if (componentName.equals(IracTombstoneManager.class.getName())) {
-         return configuration.sites().hasAsyncEnabledBackups() ?
-               new DefaultIracTombstoneManager(configuration) :
-               NoOpIracTombstoneManager.getInstance();
       }
 
       throw CONTAINER.factoryCannotConstructComponent(componentName);

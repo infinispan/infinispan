@@ -1,7 +1,5 @@
 package org.infinispan.xsite.irac;
 
-import org.infinispan.configuration.cache.BackupConfiguration;
-import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.util.ExponentialBackOff;
 import org.infinispan.xsite.XSiteBackup;
 
@@ -15,21 +13,21 @@ import net.jcip.annotations.GuardedBy;
 public class IracXSiteBackup extends XSiteBackup implements Runnable {
 
    private final boolean logExceptions;
-
-   @GuardedBy("this")
-   private ExponentialBackOff backOff;
-
+   private final short index;
    @GuardedBy("this")
    private boolean backOffEnabled;
-
+   @GuardedBy("this")
+   private ExponentialBackOff backOff;
    @GuardedBy("this")
    private Runnable afterBackOff = () -> {};
 
-   public IracXSiteBackup(String siteName, boolean sync, long timeout, boolean logExceptions) {
+   public IracXSiteBackup(String siteName, boolean sync, long timeout, boolean logExceptions, short index) {
       super(siteName, sync, timeout);
+      assert index >= 0;
       this.logExceptions = logExceptions;
       this.backOff = ExponentialBackOff.NO_OP;
       this.backOffEnabled = false;
+      this.index = index;
    }
 
    public boolean logExceptions() {
@@ -69,7 +67,7 @@ public class IracXSiteBackup extends XSiteBackup implements Runnable {
       return super.toString() + (isBackOffEnabled() ? " [backoff-enabled]" : "");
    }
 
-   public static IracXSiteBackup fromBackupConfiguration(BackupConfiguration backupConfiguration) {
-      return new IracXSiteBackup(backupConfiguration.site(), true, backupConfiguration.replicationTimeout(), backupConfiguration.backupFailurePolicy() == BackupFailurePolicy.WARN);
+   public int siteIndex() {
+      return index;
    }
 }

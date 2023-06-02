@@ -4,6 +4,8 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Queue;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.CompletionStage;
@@ -16,6 +18,7 @@ import java.util.function.Function;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracTombstoneRemoteSiteCheckCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -31,7 +34,6 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.xsite.status.SiteState;
 import org.infinispan.xsite.status.TakeOfflineManager;
@@ -60,6 +62,9 @@ public class IracTombstoneUnitTest extends AbstractInfinispanTest {
       return builder.build();
    }
 
+   private static Collection<IracXSiteBackup> backups() {
+      return Collections.singleton(new IracXSiteBackup("A", true, 1000L, false, (short) 0));
+   }
 
    private static DistributionManager createDistributionManager() {
       DistributionManager dm = Mockito.mock(DistributionManager.class);
@@ -138,7 +143,7 @@ public class IracTombstoneUnitTest extends AbstractInfinispanTest {
    }
 
    private static DefaultIracTombstoneManager createIracTombstoneManager(Queue<? super RunnableData> queue, int targetSize, long maxDelay, AtomicBoolean keep) {
-      DefaultIracTombstoneManager manager = new DefaultIracTombstoneManager(createConfiguration(targetSize, maxDelay));
+      DefaultIracTombstoneManager manager = new DefaultIracTombstoneManager(createConfiguration(targetSize, maxDelay), backups());
       TestingUtil.inject(manager,
             createDistributionManager(),
             createTakeOfflineManager(),

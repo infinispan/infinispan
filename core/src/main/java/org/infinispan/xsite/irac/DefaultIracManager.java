@@ -20,7 +20,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.irac.IracCleanupKeysCommand;
@@ -58,7 +57,6 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.ExponentialBackOff;
@@ -124,21 +122,15 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    private final LongAdder conflictRemoteWinsCount = new LongAdder();
    private final LongAdder conflictMergedCount = new LongAdder();
 
-   public DefaultIracManager(Configuration config) {
+   public DefaultIracManager(Configuration config, Collection<IracXSiteBackup> backups) {
       updatedKeys = new ConcurrentHashMap<>(64);
       iracExecutor = new IracExecutor(this::run);
-      asyncBackups = asyncBackups(config);
+      asyncBackups = backups;
       statisticsEnabled = config.statistics().enabled();
       batchSize = config.sites().asyncBackupsStream()
             .map(BackupConfiguration::stateTransfer)
             .mapToInt(XSiteStateTransferConfiguration::chunkSize)
             .reduce(1, Integer::max);
-   }
-
-   public static Collection<IracXSiteBackup> asyncBackups(Configuration config) {
-      return config.sites().asyncBackupsStream()
-            .map(IracXSiteBackup::fromBackupConfiguration) //convert to sync
-            .collect(Collectors.toList());
    }
 
    @Inject
@@ -151,25 +143,17 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
 
    @Start
    public void start() {
-      Transport transport = rpcManager.getTransport();
-      transport.checkCrossSiteAvailable();
-      String localSiteName = transport.localSiteName();
-      asyncBackups.removeIf(xSiteBackup -> localSiteName.equals(xSiteBackup.getSiteName()));
-      if (log.isTraceEnabled()) {
-         String b = asyncBackups.stream().map(XSiteBackup::getSiteName).collect(Collectors.joining(", "));
-         log.tracef("Async remote sites found: %s", b);
-      }
       hasClear = false;
    }
 
    @Override
    public void trackUpdatedKey(int segment, Object key, Object lockOwner) {
-      trackState(new IracManagerKeyChangedState(segment, key, lockOwner, false));
+      trackState(new IracManagerKeyChangedState(segment, key, lockOwner, false, asyncBackups.size()));
    }
 
    @Override
    public void trackExpiredKey(int segment, Object key, Object lockOwner) {
-      trackState(new IracManagerKeyChangedState(segment, key, lockOwner, true));
+      trackState(new IracManagerKeyChangedState(segment, key, lockOwner, true, asyncBackups.size()));
    }
 
    @Override
@@ -177,11 +161,12 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       if (log.isTraceEnabled()) {
          log.tracef("[IRAC] Tracking state for state transfer: %s", Util.toStr(stateList));
       }
+      // TODO we have way to send only to a single site, we can improve this code!
       AggregateCompletionStage<Void> cf = CompletionStages.aggregateCompletionStage();
       LocalizedCacheTopology topology = clusteringDependentLogic.getCacheTopology();
       for (XSiteState state : stateList) {
          int segment = topology.getSegment(state.key());
-         IracManagerStateTransferState iracState = new IracManagerStateTransferState(segment, state.key());
+         IracManagerStateTransferState iracState = new IracManagerStateTransferState(segment, state.key(), asyncBackups.size());
          // if an update is in progress, we don't need to send the same value again.
          if (updatedKeys.putIfAbsent(iracState.getKey(), iracState) == null) {
             cf.dependsOn(iracState.getCompletionStage());
@@ -256,7 +241,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    @Override
    public void receiveState(int segment, Object key, Object lockOwner, IracMetadata tombstone) {
       iracTombstoneManager.storeTombstoneIfAbsent(segment, key, tombstone);
-      updatedKeys.putIfAbsent(key, new IracManagerKeyChangedState(segment, key, lockOwner, false));
+      updatedKeys.putIfAbsent(key, new IracManagerKeyChangedState(segment, key, lockOwner, false, asyncBackups.size()));
       iracExecutor.run();
    }
 
@@ -580,7 +565,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       switch (result) {
          case OK:
             for (IracManagerKeyState state : successfulSent) {
-               if (sentKeyToAllBackups(state) && state.done()) {
+               if (state.isDone()) {
                   doneKeys.add(state);
                }
             }
@@ -596,11 +581,6 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
             break;
       }
       removeStateFromCluster(doneKeys);
-   }
-
-   private boolean sentKeyToAllBackups(IracManagerKeyInfo state) {
-      IracManagerKeyState imks = updatedKeys.get(state.getKey());
-      return imks != null && imks.successfullySent(asyncBackups);
    }
 
    @ManagedAttribute(description = "Number of keys that need to be sent to remote site(s)",

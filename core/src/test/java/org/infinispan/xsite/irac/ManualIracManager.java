@@ -13,7 +13,6 @@ import org.infinispan.Cache;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.statetransfer.XSiteState;
 
 /**
@@ -199,7 +198,7 @@ public class ManualIracManager extends ControlledIracManager {
       }
 
       @Override
-      public boolean done() {
+      public boolean isDone() {
          return false;
       }
 
@@ -209,16 +208,11 @@ public class ManualIracManager extends ControlledIracManager {
       }
 
       @Override
-      public void successFor(XSiteBackup site) {
+      public void successFor(IracXSiteBackup site) {
       }
 
       @Override
-      public boolean wasSuccessful(XSiteBackup site) {
-         return false;
-      }
-
-      @Override
-      public boolean successfullySent(Collection<? extends XSiteBackup> sites) {
+      public boolean wasSuccessful(IracXSiteBackup site) {
          return false;
       }
    }
