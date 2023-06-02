@@ -1,8 +1,8 @@
 package org.infinispan.container.versioning.irac;
 
+import static org.infinispan.commons.util.concurrent.CompletableFutures.completedNull;
 import static org.infinispan.remoting.transport.impl.VoidResponseCollector.ignoreLeavers;
 import static org.infinispan.remoting.transport.impl.VoidResponseCollector.validOnly;
-import static org.infinispan.commons.util.concurrent.CompletableFutures.completedNull;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -29,6 +29,7 @@ import org.infinispan.commands.irac.IracTombstoneRemoteSiteCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.XSiteStateTransferConfiguration;
@@ -49,15 +50,11 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.xsite.XSiteBackup;
-import org.infinispan.xsite.irac.DefaultIracManager;
 import org.infinispan.xsite.irac.IracExecutor;
 import org.infinispan.xsite.irac.IracManager;
 import org.infinispan.xsite.irac.IracXSiteBackup;
@@ -121,25 +118,21 @@ public class DefaultIracTombstoneManager implements IracTombstoneManager {
    private final int batchSize;
    private final int segmentCount;
 
-   public DefaultIracTombstoneManager(Configuration configuration) {
+   public DefaultIracTombstoneManager(Configuration config, Collection<IracXSiteBackup> backups) {
       iracExecutor = new IracExecutor(this::performCleanup);
-      asyncBackups = DefaultIracManager.asyncBackups(configuration);
-      tombstoneMap = new ConcurrentHashMap<>(configuration.sites().tombstoneMapSize());
-      scheduler = new Scheduler(configuration.sites().tombstoneMapSize(), configuration.sites().maxTombstoneCleanupDelay());
-      batchSize = configuration.sites().asyncBackupsStream()
+      asyncBackups = backups;
+      tombstoneMap = new ConcurrentHashMap<>(config.sites().tombstoneMapSize());
+      scheduler = new Scheduler(config.sites().tombstoneMapSize(), config.sites().maxTombstoneCleanupDelay());
+      batchSize = config.sites().asyncBackupsStream()
             .map(BackupConfiguration::stateTransfer)
             .map(XSiteStateTransferConfiguration::chunkSize)
             .reduce(1, Integer::max);
-      segmentCount = configuration.clustering().hash().numSegments();
+      segmentCount = config.clustering().hash().numSegments();
 
    }
 
    @Start
    public void start() {
-      Transport transport = rpcManager.getTransport();
-      transport.checkCrossSiteAvailable();
-      String localSiteName = transport.localSiteName();
-      asyncBackups.removeIf(xSiteBackup -> localSiteName.equals(xSiteBackup.getSiteName()));
       iracExecutor.setExecutor(blockingManager.asExecutor(commandsFactory.getCacheName() + "-tombstone-cleanup"));
       stopped = false;
       scheduler.disabled = false;
@@ -387,7 +380,7 @@ public class DefaultIracTombstoneManager implements IracTombstoneManager {
          IracTombstoneRemoteSiteCheckCommand cmd = commandsFactory.buildIracTombstoneRemoteSiteCheckCommand(keys);
          // if one of the site return true (i.e. the key is in updateKeys map, then do not remove it)
          AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
-         for (XSiteBackup backup : asyncBackups) {
+         for (IracXSiteBackup backup : asyncBackups) {
             if (takeOfflineManager.getSiteState(backup.getSiteName()) == SiteState.OFFLINE) {
                continue; // backup is offline
             }

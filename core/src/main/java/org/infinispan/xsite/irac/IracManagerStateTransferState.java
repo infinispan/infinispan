@@ -12,8 +12,8 @@ class IracManagerStateTransferState extends IracManagerKeyChangedState {
 
    private final CompletableFuture<Void> completableFuture = new CompletableFuture<>();
 
-   public IracManagerStateTransferState(int segment, Object key) {
-      super(segment, key, "state-transfer", false);
+   public IracManagerStateTransferState(int segment, Object key, int numberOfBackups) {
+      super(segment, key, "state-transfer", false, numberOfBackups);
    }
 
    @Override
@@ -22,8 +22,8 @@ class IracManagerStateTransferState extends IracManagerKeyChangedState {
    }
 
    @Override
-   public boolean done() {
-      if (super.done()) {
+   public boolean isDone() {
+      if (super.isDone()) {
          completableFuture.complete(null);
          return true;
       }
