@@ -84,7 +84,9 @@ import org.infinispan.globalstate.impl.CacheState;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.PartitionHandling;
+import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
@@ -805,6 +807,25 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       for (int i = 0; i < size; i++) {
          assertTrue(cacheNames.contains(jsonNode.at(i).asString()));
       }
+   }
+
+   @Test
+   public void testCacheHealth() {
+      String cacheName = "default";
+      CompletionStage<RestResponse> response = client.cache(cacheName).health();
+      assertThat(response).isOk().hasReturnedText("HEALTHY");
+
+      Cache<?, ?> cache = cacheManagers.get(0).getCache(cacheName);
+      ComponentRegistry cr = TestingUtil.extractComponentRegistry(cache);
+      PartitionHandlingManager phm = cr.getComponent(PartitionHandlingManager.class);
+      PartitionHandlingManager spyPhm = Mockito.spy(phm);
+      Mockito.when(spyPhm.getAvailabilityMode()).thenReturn(AvailabilityMode.DEGRADED_MODE);
+      TestingUtil.replaceComponent(cache, PartitionHandlingManager.class, spyPhm, true);
+      response = client.cache(cacheName).health();
+      assertThat(response).isOk().hasReturnedText("DEGRADED");
+
+      response = client.cache("UnknownCache").health();
+      assertThat(response).isNotFound();
    }
 
    @Test

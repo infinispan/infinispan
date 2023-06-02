@@ -19,6 +19,11 @@ public interface RestCacheClient {
    String name();
 
    /**
+    * Returns the health of the cache
+    */
+   CompletionStage<RestResponse> health();
+
+   /**
     * Retrieve all keys
     *
     * @return Response with inputStream to get all the keys

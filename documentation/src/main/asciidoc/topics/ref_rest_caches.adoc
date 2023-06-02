@@ -56,11 +56,18 @@ PUT /rest/v2/caches/{cacheName}
 
 [id='rest_v2_cache_exists']
 = Verifying Caches
-Check if caches are available in {brandname} clusters with `HEAD` requests.
+Check if a cache exists in {brandname} clusters with `HEAD` requests.
 
 [source,options="nowrap",subs=attributes+]
 ----
 HEAD /rest/v2/caches/{cacheName}
+----
+
+Retrieve a caches health with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/caches/{cacheName}?action=health
 ----
 
 [id='rest_v2_create_cache_template']

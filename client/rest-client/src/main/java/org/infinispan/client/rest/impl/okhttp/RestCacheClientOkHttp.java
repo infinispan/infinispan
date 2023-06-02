@@ -44,6 +44,12 @@ public class RestCacheClientOkHttp implements RestCacheClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> health() {
+      Request.Builder builder = new Request.Builder().url(cacheUrl + "?action=health");
+      return client.execute(builder);
+   }
+
+   @Override
    public CompletionStage<RestResponse> clear() {
       Request.Builder builder = new Request.Builder();
       builder.post(EMPTY_BODY).url(cacheUrl + "?action=clear");

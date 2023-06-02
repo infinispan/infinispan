@@ -8,11 +8,11 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 
-class CacheHealthImpl implements CacheHealth {
+public class CacheHealthImpl implements CacheHealth {
 
    private final ComponentRegistry cr;
 
-   CacheHealthImpl(ComponentRegistry cr) {
+   public CacheHealthImpl(ComponentRegistry cr) {
       this.cr = cr;
    }
 

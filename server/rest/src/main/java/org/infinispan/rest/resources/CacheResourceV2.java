@@ -73,6 +73,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.health.impl.CacheHealthImpl;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerAdmin;
 import org.infinispan.marshall.core.EncoderRegistry;
@@ -167,6 +168,9 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
             // List
             .invocation().methods(GET).path("/v2/caches/").handleWith(this::getCacheNames)
+
+            // Health
+            .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("health").handleWith(this::getCacheHealth)
 
             // Cache lifecycle
             .invocation().methods(POST, PUT).path("/v2/caches/{cacheName}").handleWith(this::createOrUpdate)
@@ -897,6 +901,23 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    private CompletionStage<RestResponse> getCacheNames(RestRequest request) throws RestResponseException {
       Collection<String> cacheNames = invocationHelper.getRestCacheManager().getAccessibleCacheNames();
       return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(cacheNames), isPretty(request));
+   }
+
+   private CompletionStage<RestResponse> getCacheHealth(RestRequest request) throws RestResponseException {
+      String cacheName = request.variables().get("cacheName");
+      RestCacheManager<?> restCacheManager = invocationHelper.getRestCacheManager();
+      if (!restCacheManager.cacheExists(cacheName))
+         return invocationHelper.newResponse(request, NOT_FOUND).toFuture();
+
+      AdvancedCache<?, ?> cache = restCacheManager.getCache(cacheName, request);
+      ComponentRegistry cr = SecurityActions.getCacheComponentRegistry(cache);
+      return completedFuture(
+            invocationHelper.newResponse(request)
+                  .contentType(TEXT_PLAIN)
+                  .entity(new CacheHealthImpl(cr).getStatus().toString())
+                  .status(OK)
+                  .build()
+      );
    }
 
    private CompletionStage<RestResponse> setRebalancing(boolean enable, RestRequest request) {
