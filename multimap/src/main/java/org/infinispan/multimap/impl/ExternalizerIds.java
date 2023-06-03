@@ -24,4 +24,5 @@ public interface ExternalizerIds {
    Integer HASH_MAP_PUT_FUNCTION = 2062;
    Integer MULTIMAP_CONVERTER = 2063;
    Integer ADD_FUNCTION = 2064;
+   Integer TRIM_FUNCTION = 2065;
 }

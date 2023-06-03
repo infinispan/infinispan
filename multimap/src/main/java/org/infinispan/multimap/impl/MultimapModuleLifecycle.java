@@ -23,6 +23,8 @@ import org.infinispan.multimap.impl.function.RemoveFunction;
 import org.infinispan.multimap.impl.function.SetFunction;
 import org.infinispan.multimap.impl.function.SubListFunction;
 import org.infinispan.multimap.internal.MultimapDataConverter;
+import org.infinispan.multimap.impl.function.TrimFunction;
+
 
 /**
  * MultimapModuleLifecycle is necessary for the Multimap Cache module.
@@ -62,5 +64,6 @@ public class MultimapModuleLifecycle implements ModuleLifecycle {
       addAdvancedExternalizer(externalizerMap, HashMapPutFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, MultimapDataConverter.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, AddFunction.EXTERNALIZER);
+      addAdvancedExternalizer(externalizerMap, TrimFunction.EXTERNALIZER);
    }
 }

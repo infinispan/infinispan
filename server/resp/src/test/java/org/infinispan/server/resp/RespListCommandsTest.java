@@ -355,4 +355,25 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
       }).isInstanceOf(RedisCommandExecutionException.class)
             .hasMessageContaining("ERRWRONGTYPE");
    }
+
+   public void testLTRIM() {
+      assertThat(redis.lrange("noexisting", -1, 3)).isEmpty();
+
+      redis.rpush("leads", "william", "jose", "ryan", "pedro", "vittorio");
+      assertThat(redis.ltrim("leads", 0, 2)).isEqualTo("OK");
+      assertThat(redis.lrange("leads", 0, -1)).containsExactly("william", "jose", "ryan");
+      assertThat(redis.ltrim("leads", 1, 1)).isEqualTo("OK");
+      assertThat(redis.lrange("leads", 0, -1)).containsExactly("jose");
+      assertThat(redis.ltrim("leads", 1, -1)).isEqualTo("OK");
+      assertThat(redis.exists("leads")).isEqualTo(0);
+
+      // Set a String Command
+      redis.set("another", "tristan");
+
+      // LLEN on an existing key that contains a String, not a Collection!
+      assertThatThrownBy(() -> {
+         redis.ltrim("another", 0, 2);
+      }).isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERRWRONGTYPE");
+   }
 }
