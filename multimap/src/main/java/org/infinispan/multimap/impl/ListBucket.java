@@ -186,6 +186,49 @@ public class ListBucket<V> {
       return result;
    }
 
+   public void trim(long from, long to) {
+      // from and to are + but from is bigger
+      // example: from 2 > to 1 -> empty
+      // from and to are - and to is smaller
+      // example: from -1 > to -2 -> empty
+      if ((from > 0 && to > 0 && from > to) || (from < 0 && to < 0 && from > to)) {
+         values.clear();
+         return;
+      }
+
+      // index request
+      if (from == to) {
+         V element = index(from);
+         if (element != null) {
+            values.clear();
+            values.add(element);
+         }
+         return;
+      }
+
+      long startRemoveCount = from < 0 ? values.size() + from : from;
+      long keepCount = (to < 0 ? values.size() + to : to) - startRemoveCount;
+
+      Iterator<V> ite = values.iterator();
+      while(ite.hasNext() && startRemoveCount > 0) {
+         ite.next();
+         ite.remove();
+         startRemoveCount--;
+      }
+
+      // keep elements
+      while(ite.hasNext() && keepCount >= 0) {
+         ite.next();
+         keepCount--;
+      }
+
+      // remove remaining elements
+      while(ite.hasNext()) {
+         ite.next();
+         ite.remove();
+      }
+   }
+
    public Collection<Long> indexOf(V element, long count, long rank, long maxLen) {
       long matches = count == 0 ? values.size() : count;
       long rankCount = Math.abs(rank);

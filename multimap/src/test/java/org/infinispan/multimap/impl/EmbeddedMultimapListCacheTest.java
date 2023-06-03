@@ -537,4 +537,49 @@ public class EmbeddedMultimapListCacheTest extends SingleCacheManagerTest {
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining(ERR_ELEMENT_CAN_T_BE_NULL);
    }
+
+   public void testTrim() {
+      await(listCache.offerLast(NAMES_KEY, OIHANA));
+      await(listCache.offerLast(NAMES_KEY, ELAIA));
+      await(listCache.offerLast(NAMES_KEY, KOLDO));
+      await(listCache.offerLast(NAMES_KEY, RAMON));
+      await(listCache.offerLast(NAMES_KEY, JULIEN));
+
+      assertThat(await(listCache.trim("not_existing", 0, 0))).isFalse();
+      assertThat(await(listCache.trim(NAMES_KEY, 0, 0))).isTrue();
+      assertThat(await(listCache.subList(NAMES_KEY, 0, -1))).containsExactly(OIHANA);
+      await(listCache.offerLast(NAMES_KEY, ELAIA));
+      await(listCache.offerLast(NAMES_KEY, KOLDO));
+      await(listCache.offerLast(NAMES_KEY, RAMON));
+      await(listCache.offerLast(NAMES_KEY, JULIEN));
+      assertThat(await(listCache.trim(NAMES_KEY, -3, -3))).isTrue();
+      assertThat(await(listCache.subList(NAMES_KEY, 0, -1))).containsExactly(KOLDO);
+      await(listCache.offerFirst(NAMES_KEY, ELAIA));
+      await(listCache.offerFirst(NAMES_KEY, OIHANA));
+      await(listCache.offerLast(NAMES_KEY, RAMON));
+      await(listCache.offerLast(NAMES_KEY, JULIEN));
+      assertThat(await(listCache.trim(NAMES_KEY, 0, 2))).isTrue();
+      assertThat(await(listCache.subList(NAMES_KEY, 0, -1))).containsExactly(OIHANA, ELAIA, KOLDO);
+      await(listCache.offerLast(NAMES_KEY, RAMON));
+      await(listCache.offerLast(NAMES_KEY, JULIEN));
+      assertThat(await(listCache.trim(NAMES_KEY, -1, -3))).isTrue();
+      assertThat(await(listCache.subList(NAMES_KEY, 0, -1))).isNull();
+      await(listCache.offerLast(NAMES_KEY, ELAIA));
+      await(listCache.offerLast(NAMES_KEY, KOLDO));
+      await(listCache.offerLast(NAMES_KEY, RAMON));
+      await(listCache.offerLast(NAMES_KEY, JULIEN));
+      assertThat(await(listCache.trim(NAMES_KEY, 3, 2))).isTrue();
+      assertThat(await(listCache.subList(NAMES_KEY, 0, -1))).isNull();
+      await(listCache.offerLast(NAMES_KEY, OIHANA));
+      await(listCache.offerLast(NAMES_KEY, ELAIA));
+      await(listCache.offerLast(NAMES_KEY, KOLDO));
+      await(listCache.offerLast(NAMES_KEY, RAMON));
+      await(listCache.offerLast(NAMES_KEY, JULIEN));
+      assertThat(await(listCache.trim(NAMES_KEY, 1, -2))).isTrue();
+      assertThat(await(listCache.subList(NAMES_KEY, 0, -1))).containsExactly(ELAIA, KOLDO, RAMON);
+
+      assertThatThrownBy(() -> await(listCache.subList(null, 1, 10)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
+   }
 }

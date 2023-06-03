@@ -15,6 +15,7 @@ import org.infinispan.multimap.impl.function.PollFunction;
 import org.infinispan.multimap.impl.function.RemoveCountFunction;
 import org.infinispan.multimap.impl.function.SetFunction;
 import org.infinispan.multimap.impl.function.SubListFunction;
+import org.infinispan.multimap.impl.function.TrimFunction;
 
 import java.util.Collection;
 import java.util.List;
@@ -271,6 +272,22 @@ public class EmbeddedMultimapListCache<K, V> {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       requireNonNull(element, ERR_ELEMENT_CAN_T_BE_NULL);
       return readWriteMap.eval(key, new RemoveCountFunction<>(count, element));
+   }
+
+   /**
+    * Trims the list removing the elements with the provided indexes 'from' and 'to'.
+    * Negative indexes point positions counting from the tail of the list.
+    * For example 0 is the first element, 1 is the second element, -1 the last element.
+    * Iteration is done from head to tail.
+    *
+    * @param key, the name of the list
+    * @param from, the starting offset
+    * @param to, the final offset
+    * @return {@link CompletionStage<Boolean>} true when the list exist and the trim has been done.
+    */
+   public CompletionStage<Boolean> trim(K key, long from, long to) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      return readWriteMap.eval(key, new TrimFunction<>(from, to));
    }
 
    private static void requirePositive(long number, String message) {

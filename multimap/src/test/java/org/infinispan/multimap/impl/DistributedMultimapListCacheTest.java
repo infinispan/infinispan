@@ -19,6 +19,7 @@ import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.multimap.impl.MultimapTestUtils.ELAIA;
 import static org.infinispan.multimap.impl.MultimapTestUtils.NAMES_KEY;
 import static org.infinispan.multimap.impl.MultimapTestUtils.OIHANA;
+import static org.infinispan.multimap.impl.MultimapTestUtils.RAMON;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -215,6 +216,19 @@ public class DistributedMultimapListCacheTest extends BaseDistFunctionalTest<Str
                   .thenCompose(r1 -> list.remove(NAMES_KEY, 1, OIHANA))
                   .thenAccept(v -> assertThat(v).isEqualTo(1))
 
+      );
+   }
+
+   public void testTrim() {
+      initAndTest();
+      EmbeddedMultimapListCache<String, Person> list = getMultimapCacheMember();
+      await(
+            list.offerLast(NAMES_KEY, OIHANA)
+                  .thenCompose(r -> list.offerLast(NAMES_KEY, ELAIA))
+                  .thenCompose(r -> list.offerLast(NAMES_KEY, RAMON))
+                  .thenCompose(r -> list.trim(NAMES_KEY, 1, 2))
+                  .thenCompose(r -> list.subList(NAMES_KEY, 0, -1))
+                  .thenAccept(v -> assertThat(v).containsExactly(ELAIA, RAMON))
       );
    }
 

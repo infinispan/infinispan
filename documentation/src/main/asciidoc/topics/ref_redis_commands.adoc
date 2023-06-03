@@ -109,6 +109,9 @@ The {brandname} RESP endpoint implements the following Redis commands:
 | link:https://redis.io/commands/lset[LSET]
 |
 
+| link:https://redis.io/commands/ltrim[LTRIM]
+|
+
 | link:https://redis.io/commands/ping[PING]
 |
 
