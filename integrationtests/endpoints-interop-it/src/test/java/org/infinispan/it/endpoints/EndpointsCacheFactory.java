@@ -33,6 +33,7 @@ import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.rest.OkHttpCloseable;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.server.core.DummyServerManagement;
@@ -65,7 +66,7 @@ public class EndpointsCacheFactory<K, V> {
 
    private Cache<K, V> embeddedCache;
    private RemoteCache<K, V> hotrodCache;
-   private RestClient restClient;
+   private OkHttpCloseable restClient;
    private RestCacheClient restCacheClient;
    private MemcachedClient memcachedClient;
    private final Transcoder<Object> transcoder;
@@ -178,8 +179,8 @@ public class EndpointsCacheFactory<K, V> {
       });
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       builder.addServer().host(restServer.getHost()).port(restServer.getPort());
-      restClient = RestClient.forConfiguration(builder.build());
-      restCacheClient = restClient.cache(cacheName);
+      restClient = OkHttpCloseable.forConfiguration(builder.build());
+      restCacheClient = restClient().cache(cacheName);
    }
 
    private void createMemcachedCache() throws IOException {
@@ -267,6 +268,10 @@ public class EndpointsCacheFactory<K, V> {
 
    HotRodServer getHotrodServer() {
       return hotrod;
+   }
+
+   public RestClient restClient() {
+      return restClient.client();
    }
 
    public static class Builder<K, V> {

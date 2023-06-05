@@ -30,7 +30,7 @@ public class ProtoRegistrationJsonTest extends JsonIndexingProtobufStoreTest {
 
       //initialize server-side serialization context via rest endpoint
       RestEntity protoFile = RestEntity.create(MediaType.TEXT_PLAIN, sci.getProtoFile());
-      RestResponse response = join(restClient.cache(PROTOBUF_METADATA_CACHE_NAME).put(sci.getProtoFileName(), protoFile));
+      RestResponse response = join(restClient().cache(PROTOBUF_METADATA_CACHE_NAME).put(sci.getProtoFileName(), protoFile));
       assertEquals(response.getStatus(), 204);
 
       return remoteCacheManager;

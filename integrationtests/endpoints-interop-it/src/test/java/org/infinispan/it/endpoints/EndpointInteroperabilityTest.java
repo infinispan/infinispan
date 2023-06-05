@@ -38,6 +38,7 @@ import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.rest.OkHttpCloseable;
 import org.infinispan.rest.RequestHeader;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
@@ -79,7 +80,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
    private RestServer restServer;
    private HotRodServer hotRodServer;
-   private RestClient restClient;
+   private OkHttpCloseable restClient;
    private EmbeddedCacheManager cacheManager;
 
    private RemoteCache<byte[], byte[]> defaultRemoteCache;
@@ -101,7 +102,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       restServer.start(builder.build(), cacheManager);
       RestClientConfigurationBuilder clientBuilder = new RestClientConfigurationBuilder();
       RestClientConfiguration configuration = clientBuilder.addServer().host(restServer.getHost()).port(restServer.getPort()).build();
-      restClient = RestClient.forConfiguration(configuration);
+      restClient = OkHttpCloseable.forConfiguration(configuration);
 
       HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
       serverBuilder.adminOperationsHandler(new EmbeddedServerAdminOperationHandler());
@@ -413,6 +414,10 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       return content.toString();
    }
 
+   protected RestClient restClient() {
+      return restClient.client();
+   }
+
    private class RestRequest {
       private String cacheName;
       private Object key;
@@ -424,7 +429,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
       public RestRequest cache(String cacheName) {
          this.cacheName = cacheName;
-         this.restCacheClient = restClient.cache(cacheName);
+         this.restCacheClient = restClient().cache(cacheName);
          return this;
       }
 

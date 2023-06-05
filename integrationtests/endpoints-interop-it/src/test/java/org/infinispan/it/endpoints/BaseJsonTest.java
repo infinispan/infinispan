@@ -27,6 +27,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.rest.OkHttpCloseable;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.server.core.DummyServerManagement;
@@ -46,7 +47,7 @@ import org.testng.annotations.Test;
 public abstract class BaseJsonTest extends AbstractInfinispanTest {
 
    RestServer restServer;
-   RestClient restClient;
+   private OkHttpCloseable restClient;
    private EmbeddedCacheManager cacheManager;
    private RemoteCacheManager remoteCacheManager;
    private RemoteCache<String, CryptoCurrency> remoteCache;
@@ -75,8 +76,8 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
       restServer = new RestServer();
       restServer.setServerManagement(new DummyServerManagement(), true);
       restServer.start(builder.build(), cacheManager);
-      restClient = RestClient.forConfiguration(new RestClientConfigurationBuilder().addServer().host(restServer.getHost()).port(restServer.getPort()).build());
-      restCacheClient = restClient.cache(CACHE_NAME);
+      restClient = OkHttpCloseable.forConfiguration(new RestClientConfigurationBuilder().addServer().host(restServer.getHost()).port(restServer.getPort()).build());
+      restCacheClient = restClient().cache(CACHE_NAME);
       hotRodServer = startHotRodServer(cacheManager);
       remoteCacheManager = createRemoteCacheManager();
       remoteCache = remoteCacheManager.getCache(CACHE_NAME);
@@ -174,5 +175,9 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
       cacheManager = null;
       killServers(hotRodServer);
       hotRodServer = null;
+   }
+
+   protected RestClient restClient() {
+      return restClient.client();
    }
 }

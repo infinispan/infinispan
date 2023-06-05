@@ -75,6 +75,12 @@
          <scope>test</scope>
       </dependency>
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-server-rest</artifactId>
+         <scope>test</scope>
+         <type>test-jar</type>
+      </dependency>
+      <dependency>
          <groupId>org.infinispan.protostream</groupId>
          <artifactId>protostream-processor</artifactId>
          <scope>test</scope>
