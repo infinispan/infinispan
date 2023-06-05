@@ -36,7 +36,7 @@ public class RespServerTest extends AbstractInfinispanTest {
       config.expiration().lifespan(10);
       Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager(config), cm ->
             Stoppable.useServer(new RespServer(), ms -> {
-               ms.start(new RespServerConfigurationBuilder().defaultCacheName(cm.getCacheManagerConfiguration().defaultCacheName().get()).build(), cm);
+               ms.start(new RespServerConfigurationBuilder().port(0).defaultCacheName(cm.getCacheManagerConfiguration().defaultCacheName().get()).build(), cm);
                assertEquals(10, ms.getCache().getCacheConfiguration().expiration().lifespan());
             }));
    }

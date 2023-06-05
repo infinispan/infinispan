@@ -1,5 +1,7 @@
 package org.infinispan.server.resp;
 
+import java.nio.charset.StandardCharsets;
+
 public class Util {
    private Util() { }
 
@@ -50,5 +52,9 @@ public class Util {
 
    public static boolean isAsciiLowercase(byte b) {
       return b >= 97 && b <= 122;
+   }
+
+   public static String utf8(byte[] b) {
+      return new String(b, StandardCharsets.UTF_8);
    }
 }
