@@ -61,7 +61,7 @@ public class StaticResourceTest extends AbstractRestResourceTest {
    }
 
    private RestResponse call(String path) {
-      RestRawClient rawClient = client.raw();
+      RestRawClient rawClient = client().raw();
       return join(rawClient.get(path, NO_COMPRESSION));
    }
 
@@ -69,7 +69,7 @@ public class StaticResourceTest extends AbstractRestResourceTest {
       Map<String, String> allHeaders = new HashMap<>(NO_COMPRESSION);
       allHeaders.put(IF_MODIFIED_SINCE.getValue(), ifModifiedSince);
       allHeaders.putAll(NO_COMPRESSION);
-      RestRawClient rawClient = client.raw();
+      RestRawClient rawClient = client().raw();
       return join(rawClient.get(path, allHeaders));
    }
 

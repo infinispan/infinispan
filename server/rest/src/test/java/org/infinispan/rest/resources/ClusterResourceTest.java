@@ -33,7 +33,7 @@ public class ClusterResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testClusterDistribution() {
-      CompletionStage<RestResponse> response = adminClient.cluster().distribution();
+      CompletionStage<RestResponse> response = adminClient().cluster().distribution();
       assertThat(response).isOk();
 
       Json json = Json.read(join(response).getBody());

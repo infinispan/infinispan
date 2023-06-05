@@ -9,8 +9,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.security.Principal;
 import java.util.AbstractMap;
@@ -346,14 +349,20 @@ public class TestingUtil {
       replaceField(owner.getClass(), owner, fieldName, func);
    }
 
-   public static <T> void replaceField(Class<?> baseType, Object owner, String fieldName, Function<T, T> func) {
+   public static <T> T replaceField(Class<?> baseType, Object owner, String fieldName, Function<T, T> func) {
       Field field;
       try {
          field = baseType.getDeclaredField(fieldName);
          field.setAccessible(true);
-         Object prevValue = field.get(owner);
-         Object newValue = func.apply((T) prevValue);
+
+         MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(Field.class, MethodHandles.lookup());
+         VarHandle modifiersField = lookup.findVarHandle(Field.class, "modifiers", int.class);
+         modifiersField.set(field, field.getModifiers() & ~Modifier.FINAL);
+
+         T prevValue = (T) field.get(owner);
+         Object newValue = func.apply(prevValue);
          field.set(owner, newValue);
+         return prevValue;
       }
       catch (Exception e) {
          throw new RuntimeException(e);//just to simplify exception handling

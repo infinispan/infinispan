@@ -1,6 +1,5 @@
 package org.infinispan.rest.resources;
 
-import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -29,21 +28,21 @@ public class ServerResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testServerInfo() {
-      CompletionStage<RestResponse> response = client.server().info();
+      CompletionStage<RestResponse> response = client().server().info();
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).containsReturnedText(Version.printVersion());
    }
 
    @Test
    public void testServerConnectorNames() {
-      CompletionStage<RestResponse> response = adminClient.server().connectorNames();
+      CompletionStage<RestResponse> response = adminClient().server().connectorNames();
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).containsReturnedText("DummyProtocol");
    }
 
    @Test
    public void testServerConnectorDetail() {
-      CompletionStage<RestResponse> response = adminClient.server().connector("DummyProtocol");
+      CompletionStage<RestResponse> response = adminClient().server().connector("DummyProtocol");
       ResponseAssertion.assertThat(response).isOk();
       String body = join(response).getBody();
       Json jsonNode = Json.read(body);
@@ -65,7 +64,7 @@ public class ServerResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testServerReport() {
-      CompletionStage<RestResponse> response = adminClient.server().report();
+      CompletionStage<RestResponse> response = adminClient().server().report();
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasContentType("application/gzip");
    }

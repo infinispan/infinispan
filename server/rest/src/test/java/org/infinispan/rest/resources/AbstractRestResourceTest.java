@@ -40,6 +40,7 @@ import org.infinispan.counter.configuration.CounterConfigurationSerializer;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.remote.ProtobufMetadataManager;
+import org.infinispan.rest.OkHttpCloseable;
 import org.infinispan.rest.RestTestSCI;
 import org.infinispan.rest.TestClass;
 import org.infinispan.rest.assertion.ResponseAssertion;
@@ -69,8 +70,8 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
    public static final Subject USER = TestingUtil.makeSubject("USER", ScriptingManager.SCRIPT_MANAGER_ROLE, ProtobufMetadataManager.SCHEMA_MANAGER_ROLE);
 
    private final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
-   protected RestClient client;
-   protected RestClient adminClient;
+   private OkHttpCloseable client;
+   private OkHttpCloseable adminClient;
    protected static final int NUM_SERVERS = 2;
    private final List<RestServerHelper> restServers = new ArrayList<>(NUM_SERVERS);
 
@@ -159,8 +160,8 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
          }
       });
 
-      adminClient = RestClient.forConfiguration(getClientConfig("admin", "admin").build());
-      client = RestClient.forConfiguration(getClientConfig("user", "user").build());
+      adminClient = OkHttpCloseable.forConfiguration(getClientConfig("admin", "admin").build());
+      client = OkHttpCloseable.forConfiguration(getClientConfig("user", "user").build());
    }
 
    protected RestServerHelper configureServer(RestServerHelper helper) {
@@ -199,7 +200,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
       Map<String, String> headers = new HashMap<>();
       if (keyContentType != null) headers.put(KEY_CONTENT_TYPE_HEADER.getValue(), contentType);
 
-      CompletionStage<RestResponse> response = client.raw().putValue(url, headers, value, contentType);
+      CompletionStage<RestResponse> response = client().raw().putValue(url, headers, value, contentType);
 
       ResponseAssertion.assertThat(response).isOk();
    }
@@ -222,7 +223,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
 
    void putBinaryValueInCache(String cacheName, String key, byte[] value, MediaType mediaType) {
       RestEntity restEntity = RestEntity.create(mediaType, value);
-      CompletionStage<RestResponse> response = client.cache(cacheName).put(key, restEntity);
+      CompletionStage<RestResponse> response = client().cache(cacheName).put(key, restEntity);
       ResponseAssertion.assertThat(response).isOk();
    }
 
@@ -231,7 +232,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
       Map<String, String> headers = new HashMap<>();
       if (keyContentType != null) headers.put(KEY_CONTENT_TYPE_HEADER.getValue(), keyContentType);
 
-      CompletionStage<RestResponse> response = client.raw().delete(url, headers);
+      CompletionStage<RestResponse> response = client().raw().delete(url, headers);
 
       ResponseAssertion.assertThat(response).isOk();
    }
@@ -293,5 +294,13 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
             assertEquals("max-age=31536000 ; includeSubDomains", response.getHeader("Strict-Transport-Security"));
          }
       }
+   }
+
+   protected RestClient client() {
+      return client.client();
+   }
+
+   protected RestClient adminClient() {
+      return adminClient.client();
    }
 }

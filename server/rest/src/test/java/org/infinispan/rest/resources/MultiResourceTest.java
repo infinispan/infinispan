@@ -69,12 +69,12 @@ public class MultiResourceTest extends AbstractRestResourceTest {
 
    @AfterMethod
    public void tearDown() {
-      join(client.cache("cache1").delete());
-      join(client.cache("cache2").delete());
-      join(client.counter("counter1").delete());
-      join(client.counter("counter2").delete());
-      join(client.schemas().delete("1.proto"));
-      join(client.schemas().delete("2.proto"));
+      join(client().cache("cache1").delete());
+      join(client().cache("cache2").delete());
+      join(client().counter("counter1").delete());
+      join(client().counter("counter2").delete());
+      join(client().schemas().delete("1.proto"));
+      join(client().schemas().delete("2.proto"));
       service.shutdown();
    }
 
@@ -131,7 +131,7 @@ public class MultiResourceTest extends AbstractRestResourceTest {
             callCounterOp(counterName, "decrement");
             callCounterOp(counterName, "decrement");
             callCounterOp(counterName, "decrement");
-            RestCounterClient counterClient = client.counter(counterName);
+            RestCounterClient counterClient = client().counter(counterName);
             eventually(() -> {
                RestResponse r = join(counterClient.get());
                ResponseAssertion.assertThat(r).isOk();
@@ -168,7 +168,7 @@ public class MultiResourceTest extends AbstractRestResourceTest {
    }
 
    private void callCounterOp(String name, String op) {
-      RestCounterClient counterClient = client.counter(name);
+      RestCounterClient counterClient = client().counter(name);
       RestResponse response = null;
       switch (op) {
          case "increment":
@@ -184,18 +184,18 @@ public class MultiResourceTest extends AbstractRestResourceTest {
    }
 
    private String getValue(String cacheName, String key) {
-      RestResponse response = join(client.cache(cacheName).get(key));
+      RestResponse response = join(client().cache(cacheName).get(key));
       ResponseAssertion.assertThat(response).isOk();
       return response.getBody();
    }
 
    private void changeValue(String cacheName, String key, String value) {
-      RestResponse response = join(client.cache(cacheName).put(key, value));
+      RestResponse response = join(client().cache(cacheName).put(key, value));
       ResponseAssertion.assertThat(response).isOk();
    }
 
    private void createSchema(String name, String value) throws Exception {
-      RestSchemaClient schemas = client.schemas();
+      RestSchemaClient schemas = client().schemas();
       RestResponse response = join(schemas.put(name, value));
       ResponseAssertion.assertThat(response).isOk();
       ObjectMapper objectMapper = new ObjectMapper();
@@ -204,7 +204,7 @@ public class MultiResourceTest extends AbstractRestResourceTest {
    }
 
    private String getProtobuf(String name) {
-      RestSchemaClient schemas = client.schemas();
+      RestSchemaClient schemas = client().schemas();
       RestResponse response = join(schemas.get(name));
       ResponseAssertion.assertThat(response).isOk();
       return response.getBody();
@@ -217,7 +217,7 @@ public class MultiResourceTest extends AbstractRestResourceTest {
             .initialValue(0).build();
       for (String counterName : names) {
          AbstractCounterConfiguration config = ConvertUtil.configToParsedConfig(counterName, configuration);
-         RestResponse response = join(client.counter(counterName).create(RestEntity.create(APPLICATION_JSON, counterConfigToJson(config))));
+         RestResponse response = join(client().counter(counterName).create(RestEntity.create(APPLICATION_JSON, counterConfigToJson(config))));
          ResponseAssertion.assertThat(response).isOk();
       }
    }
@@ -226,7 +226,7 @@ public class MultiResourceTest extends AbstractRestResourceTest {
       RestEntity jsonEntity = RestEntity.create(APPLICATION_JSON, "{}");
 
       for (String cacheName : names) {
-         CompletionStage<RestResponse> response = client.cache(cacheName).createWithConfiguration(jsonEntity, CacheContainerAdmin.AdminFlag.VOLATILE);
+         CompletionStage<RestResponse> response = client().cache(cacheName).createWithConfiguration(jsonEntity, CacheContainerAdmin.AdminFlag.VOLATILE);
          ResponseAssertion.assertThat(response).isOk();
       }
    }

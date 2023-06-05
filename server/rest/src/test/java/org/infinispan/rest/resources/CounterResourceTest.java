@@ -49,7 +49,7 @@ public class CounterResourceTest extends AbstractRestResourceTest {
             .initialValue(5).storage(Storage.VOLATILE).concurrencyLevel(6).build();
       createCounter("sample-counter", counterConfig);
 
-      RestCounterClient counterClient = client.counter("sample-counter");
+      RestCounterClient counterClient = client().counter("sample-counter");
 
       RestResponse response = join(counterClient.configuration(APPLICATION_JSON_TYPE));
       Json jsonNode = Json.read(response.getBody());
@@ -70,7 +70,7 @@ public class CounterResourceTest extends AbstractRestResourceTest {
       String name = "weak-test";
       createCounter(name, CounterConfiguration.builder(CounterType.WEAK).initialValue(5).build());
 
-      RestCounterClient counterClient = client.counter(name);
+      RestCounterClient counterClient = client().counter(name);
 
       CompletionStage<RestResponse> response = counterClient.increment();
       assertThat(response).hasNoContent();
@@ -103,7 +103,7 @@ public class CounterResourceTest extends AbstractRestResourceTest {
       createCounter(name, CounterConfiguration.builder(CounterType.BOUNDED_STRONG).lowerBound(0).upperBound(100)
             .initialValue(0).build());
 
-      RestCounterClient counterClient = client.counter(name);
+      RestCounterClient counterClient = client().counter(name);
 
       CompletionStage<RestResponse> response = counterClient.increment();
       assertThat(response).hasReturnedText("1");
@@ -145,7 +145,7 @@ public class CounterResourceTest extends AbstractRestResourceTest {
          createCounter(String.format(name, i), CounterConfiguration.builder(CounterType.WEAK).initialValue(5).build());
       }
 
-      RestResponse response = join(client.counters());
+      RestResponse response = join(client().counters());
       assertThat(response).isOk();
       Json jsonNode = Json.read(response.getBody());
       Collection<String> counterNames = EmbeddedCounterManagerFactory.asCounterManager(cacheManagers.get(0)).getCounterNames();
@@ -167,7 +167,7 @@ public class CounterResourceTest extends AbstractRestResourceTest {
    private CompletionStage<RestResponse> doCounterCreateRequest(String name, CounterConfiguration configuration) {
       AbstractCounterConfiguration config = ConvertUtil.configToParsedConfig(name, configuration);
       RestEntity restEntity = RestEntity.create(APPLICATION_JSON, counterConfigToJson(config));
-      return client.counter(name).create(restEntity);
+      return client().counter(name).create(restEntity);
    }
 
    private void createCounter(String name, CounterConfiguration configuration) {
@@ -175,7 +175,7 @@ public class CounterResourceTest extends AbstractRestResourceTest {
    }
 
    private void waitForCounterToReach(String name, int i) {
-      RestCounterClient counterClient = client.counter(name);
+      RestCounterClient counterClient = client().counter(name);
       eventually(() -> {
          RestResponse r = join(counterClient.get());
          assertThat(r).isOk();

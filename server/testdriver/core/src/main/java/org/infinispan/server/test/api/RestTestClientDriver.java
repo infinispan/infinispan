@@ -7,10 +7,8 @@ import java.lang.invoke.VarHandle;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -39,8 +37,6 @@ import okhttp3.internal.connection.RealConnectionPool;
 public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDriver> {
    public static final int TIMEOUT = Integer.getInteger("org.infinispan.test.server.http.timeout", 10);
 
-   private final ThreadPoolExecutor OK_HTTP_POOL = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
-
    private RestClientConfigurationBuilder clientConfiguration = new RestClientConfigurationBuilder();
    private final TestServer testServer;
    private final TestClient testClient;
@@ -49,7 +45,6 @@ public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDri
    public RestTestClientDriver(TestServer testServer, TestClient testClient) {
       this.testServer = testServer;
       this.testClient = testClient;
-      testServer.callOnDriverStop(OK_HTTP_POOL::shutdown);
    }
 
    /**
@@ -74,7 +69,7 @@ public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDri
     * @return a new instance of the {@link RestClient}
     */
    public RestClient get() {
-      return testClient.registerResource(new OkHttpCloseable(testServer.newRestClient(clientConfiguration, port), OK_HTTP_POOL)).client;
+      return testClient.registerResource(new OkHttpCloseable(testServer.newRestClient(clientConfiguration, port))).client;
    }
 
    /**
@@ -83,7 +78,7 @@ public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDri
     * @return a new instance of the {@link RestClient}
     */
    public RestClient get(int n) {
-      return testClient.registerResource(new OkHttpCloseable(testServer.newRestClientForServer(clientConfiguration, port, n), OK_HTTP_POOL)).client;
+      return testClient.registerResource(new OkHttpCloseable(testServer.newRestClientForServer(clientConfiguration, port, n))).client;
    }
 
    /**
@@ -126,7 +121,7 @@ public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDri
    }
 
    public static RestClient forConfiguration(RestClientConfiguration cfg) {
-      return new OkHttpCloseable(RestClient.forConfiguration(cfg), Executors.newSingleThreadExecutor(), true).client;
+      return new OkHttpCloseable(RestClient.forConfiguration(cfg)).client;
    }
 
    @Override
@@ -137,45 +132,35 @@ public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDri
    private static class OkHttpCloseable implements Closeable {
       private final RestClient client;
       private final ExecutorService executor;
-      private final boolean closeExecutor;
 
-      private OkHttpCloseable(RestClient client, ExecutorService executor) {
-         this(client, executor, false);
-      }
-
-      private OkHttpCloseable(RestClient client, ExecutorService executor, boolean closeExecutor) {
+      private OkHttpCloseable(RestClient client) {
          this.client = client;
-         this.executor = executor;
-         this.closeExecutor = closeExecutor;
-         okHttpRealConnectionOperate();
+         this.executor = okHttpRealConnectionOperate();
       }
 
-      private void okHttpRealConnectionOperate() {
+      private ExecutorService okHttpRealConnectionOperate() {
          OkHttpClient httpClient = extractField(client, "httpClient");
          ConnectionPool cp = httpClient.connectionPool();
          RealConnectionPool rcp = extractField(cp, "delegate");
 
          // The original runnable would block with `wait`.
          replaceField(RealConnectionPool.class, rcp,"cleanupRunnable", prev -> (Runnable) () -> { });
-
-         // The original thread pool was static for connections to run the clean runnable.
-         replaceField(RealConnectionPool.class, rcp, "executor", prev -> {
-            if (prev instanceof ExecutorService) {
-               ((ExecutorService) prev).shutdownNow();
-            }
-            return executor;
-         });
+         Executor og = replaceField(RealConnectionPool.class, rcp, "executor", ignore -> r -> { });
+         if (og instanceof ExecutorService) {
+            return (ExecutorService) og;
+         }
+         return null;
       }
 
       @Override
       public void close() throws IOException {
          client.close();
-         if (closeExecutor) {
+         if (executor != null) {
             executor.shutdown();
          }
       }
 
-      private static <T> void replaceField(Class<?> baseType, Object owner, String fieldName, Function<T, T> func) {
+      private static <T> T replaceField(Class<?> baseType, Object owner, String fieldName, Function<T, T> func) {
          Field field;
          try {
             field = baseType.getDeclaredField(fieldName);
@@ -185,9 +170,10 @@ public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDri
             VarHandle modifiersField = lookup.findVarHandle(Field.class, "modifiers", int.class);
             modifiersField.set(field, field.getModifiers() & ~Modifier.FINAL);
 
-            Object prevValue = field.get(owner);
-            Object newValue = func.apply((T) prevValue);
+            T prevValue = (T) field.get(owner);
+            Object newValue = func.apply(prevValue);
             field.set(owner, newValue);
+            return prevValue;
          } catch (Exception e) {
             throw new RuntimeException(e);
          }

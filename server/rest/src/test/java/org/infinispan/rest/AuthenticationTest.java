@@ -14,7 +14,6 @@ import java.util.concurrent.CompletionStage;
 
 import javax.security.auth.Subject;
 
-import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.test.TestResourceTracker;
@@ -33,7 +32,7 @@ public class AuthenticationTest extends AbstractInfinispanTest {
 
    public static final String REALM = "ApplicationRealm";
    private static final String URL = String.format("/rest/v2/caches/%s/%s", "default", "test");
-   private RestClient client;
+   private OkHttpCloseable client;
    private RestServerHelper restServer;
 
 
@@ -47,7 +46,7 @@ public class AuthenticationTest extends AbstractInfinispanTest {
 
       RestClientConfigurationBuilder configurationBuilder = new RestClientConfigurationBuilder();
       configurationBuilder.addServer().host(restServer.getHost()).port(restServer.getPort());
-      client = RestClient.forConfiguration(configurationBuilder.build());
+      client = OkHttpCloseable.forConfiguration(configurationBuilder.build());
    }
 
    @AfterMethod(alwaysRun = true)
@@ -62,7 +61,7 @@ public class AuthenticationTest extends AbstractInfinispanTest {
    @Test
    public void shouldAuthenticateWhenProvidingProperCredentials() {
       Map<String, String> headers = singletonMap(AUTHORIZATION.toString(), "Basic " + Base64.getEncoder().encodeToString("test:test".getBytes()));
-      CompletionStage<RestResponse> response = client.raw().head(URL, headers);
+      CompletionStage<RestResponse> response = client.client().raw().head(URL, headers);
 
       ResponseAssertion.assertThat(response).isNotFound();
    }
@@ -72,14 +71,14 @@ public class AuthenticationTest extends AbstractInfinispanTest {
       Map<String, String> headers = new HashMap<>();
       headers.put(AUTHORIZATION.toString(), "Invalid string");
 
-      CompletionStage<RestResponse> response = client.raw().get(URL, headers);
+      CompletionStage<RestResponse> response = client.client().raw().get(URL, headers);
 
       ResponseAssertion.assertThat(response).isUnauthorized();
    }
 
    @Test
    public void shouldRejectNoAuthentication() {
-      CompletionStage<RestResponse> response = client.raw().get(URL);
+      CompletionStage<RestResponse> response = client.client().raw().get(URL);
 
       //then
       ResponseAssertion.assertThat(response).isUnauthorized();
@@ -87,7 +86,7 @@ public class AuthenticationTest extends AbstractInfinispanTest {
 
    @Test
    public void shouldAllowHealthAnonymously() {
-      CompletionStage<RestResponse> response = client.cacheManager("default").healthStatus();
+      CompletionStage<RestResponse> response = client.client().cacheManager("default").healthStatus();
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasContentType("text/plain");
       ResponseAssertion.assertThat(response).hasReturnedText("HEALTHY");

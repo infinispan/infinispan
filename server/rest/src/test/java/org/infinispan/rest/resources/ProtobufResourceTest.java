@@ -36,7 +36,7 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
    }
 
    public void listSchemasWhenEmpty() {
-      CompletionStage<RestResponse> response = client.schemas().names();
+      CompletionStage<RestResponse> response = client().schemas().names();
 
       ResponseAssertion.assertThat(response).isOk();
       Json jsonNode = Json.read(join(response).getBody());
@@ -45,7 +45,7 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void getNotExistingSchema() {
-      CompletionStage<RestResponse> response = client.schemas().get("coco");
+      CompletionStage<RestResponse> response = client().schemas().get("coco");
       ResponseAssertion.assertThat(response).isNotFound();
    }
 
@@ -53,13 +53,13 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
    public void updateNonExistingSchema() throws Exception {
       String person = getResourceAsString("person.proto", getClass().getClassLoader());
 
-      CompletionStage<RestResponse> response = client.schemas().put("person", person);
+      CompletionStage<RestResponse> response = client().schemas().put("person", person);
       ResponseAssertion.assertThat(response).isOk();
    }
 
    @Test
    public void putAndGetWrongProtobuf() throws Exception {
-      RestSchemaClient schemaClient = client.schemas();
+      RestSchemaClient schemaClient = client().schemas();
 
       String errorProto = getResourceAsString("error.proto", getClass().getClassLoader());
 
@@ -84,7 +84,7 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void crudSchema() throws Exception {
-      RestSchemaClient schemaClient = client.schemas();
+      RestSchemaClient schemaClient = client().schemas();
       String personProto = getResourceAsString("person.proto", getClass().getClassLoader());
 
       // Create
@@ -119,7 +119,7 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void createTwiceSchema() throws Exception {
-      RestSchemaClient schemaClient = client.schemas();
+      RestSchemaClient schemaClient = client().schemas();
 
       String personProto = getResourceAsString("person.proto", getClass().getClassLoader());
       CompletionStage<RestResponse> response = schemaClient.post("person", personProto);
@@ -130,7 +130,7 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void addAndGetListOrderedByName() throws Exception {
-      RestSchemaClient schemaClient = client.schemas();
+      RestSchemaClient schemaClient = client().schemas();
 
       String personProto = getResourceAsString("person.proto", getClass().getClassLoader());
 
@@ -150,7 +150,7 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void getSchemaTypes() throws Exception {
-      RestSchemaClient schemaClient = client.schemas();
+      RestSchemaClient schemaClient = client().schemas();
 
       String personProto = getResourceAsString("person.proto", getClass().getClassLoader());
 
@@ -165,12 +165,12 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void uploadEmptySchema() {
-      CompletionStage<RestResponse> response = client.schemas().put("empty", "");
+      CompletionStage<RestResponse> response = client().schemas().put("empty", "");
       ResponseAssertion.assertThat(response).isBadRequest();
    }
 
    private void checkListProtobufEndpointUrl(String fileName, String errorMessage) {
-      RestSchemaClient schemaClient = client.schemas();
+      RestSchemaClient schemaClient = client().schemas();
 
       RestResponse response = join(schemaClient.names());
 

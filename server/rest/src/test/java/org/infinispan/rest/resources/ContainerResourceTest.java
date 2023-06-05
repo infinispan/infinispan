@@ -100,8 +100,8 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
    protected void createCacheManagers() throws Exception {
       Util.recursiveFileRemove(PERSISTENT_LOCATION);
       super.createCacheManagers();
-      cacheManagerClient = client.cacheManager(CACHE_MANAGER_NAME);
-      adminCacheManagerClient = adminClient.cacheManager(CACHE_MANAGER_NAME);
+      cacheManagerClient = client().cacheManager(CACHE_MANAGER_NAME);
+      adminCacheManagerClient = adminClient().cacheManager(CACHE_MANAGER_NAME);
       timeService = new ControlledTimeService();
       cacheManagers.forEach(cm -> TestingUtil.replaceComponent(cm, TimeService.class, timeService, true));
    }
@@ -339,7 +339,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
    @Test
    public void testConfigListener() throws InterruptedException, IOException {
       SSEListener sseListener = new SSEListener();
-      try (Closeable ignored = adminClient.raw().listen("/rest/v2/container/config?action=listen&includeCurrentState=true", Collections.emptyMap(), sseListener)) {
+      try (Closeable ignored = adminClient().raw().listen("/rest/v2/container/config?action=listen&includeCurrentState=true", Collections.emptyMap(), sseListener)) {
          AssertJUnit.assertTrue(sseListener.openLatch.await(10, TimeUnit.SECONDS));
 
          // Assert that all of the existing caches and templates have a corresponding event
@@ -358,14 +358,14 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
          sseListener.expectEvent("create-cache", "application/octet-stream");
 
          // Assert that deletions create an event
-         assertThat(client.cache("listen1").delete()).isOk();
+         assertThat(client().cache("listen1").delete()).isOk();
          sseListener.expectEvent("remove-cache", "listen1");
       }
    }
 
    private void createCache(String json, String name) {
       RestEntity jsonEntity = RestEntity.create(APPLICATION_JSON, json);
-      CompletionStage<RestResponse> response = client.cache(name).createWithConfiguration(jsonEntity);
+      CompletionStage<RestResponse> response = client().cache(name).createWithConfiguration(jsonEntity);
       assertThat(response).isOk();
    }
 

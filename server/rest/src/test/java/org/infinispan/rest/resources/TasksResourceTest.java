@@ -50,7 +50,7 @@ public class TasksResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testTaskList() {
-      RestTaskClient taskClient = adminClient.tasks();
+      RestTaskClient taskClient = adminClient().tasks();
 
       RestResponse response = join(taskClient.list(ALL));
       ResponseAssertion.assertThat(response).isOk();
@@ -65,7 +65,7 @@ public class TasksResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testTaskExec() {
-      RestTaskClient taskClient = client.tasks();
+      RestTaskClient taskClient = client().tasks();
       RestResponse response = join(taskClient.exec("SUCCESSFUL_TASK"));
       ResponseAssertion.assertThat(response).isOk();
       Json jsonNode = Json.read(response.getBody());
@@ -74,7 +74,7 @@ public class TasksResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testParameterizedTaskExec() {
-      RestTaskClient taskClient = client.tasks();
+      RestTaskClient taskClient = client().tasks();
       CompletionStage<RestResponse> response = taskClient.exec("PARAMETERIZED_TASK", singletonMap("parameter", "Hello"));
       ResponseAssertion.assertThat(response).isOk();
       Json jsonNode = Json.read(join(response).getBody());
@@ -83,14 +83,14 @@ public class TasksResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testFailingTaskExec() {
-      RestTaskClient taskClient = client.tasks();
+      RestTaskClient taskClient = client().tasks();
       CompletionStage<RestResponse> response = taskClient.exec("FAILING_TASK");
       ResponseAssertion.assertThat(response).isError();
    }
 
    @Test
    public void testTaskUpload() throws Exception {
-      RestTaskClient taskClient = client.tasks();
+      RestTaskClient taskClient = client().tasks();
 
       String script = getResourceAsString("hello.js", getClass().getClassLoader());
       RestEntity scriptEntity = RestEntity.create(APPLICATION_JAVASCRIPT, script);
@@ -110,7 +110,7 @@ public class TasksResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testCacheTask() {
-      RestTaskClient taskClient = client.tasks();
+      RestTaskClient taskClient = client().tasks();
       CompletionStage<RestResponse> response = taskClient.exec("CACHE_TASK", "default", Collections.emptyMap());
       ResponseAssertion.assertThat(response).isOk();
       Json jsonNode = Json.read(join(response).getBody());
