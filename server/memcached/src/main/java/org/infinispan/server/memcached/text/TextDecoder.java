@@ -5,10 +5,12 @@ import java.util.concurrent.CompletionStage;
 import javax.security.auth.Subject;
 
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.server.memcached.MemcachedBaseDecoder;
 import org.infinispan.server.memcached.MemcachedServer;
 import org.infinispan.server.memcached.logging.Header;
 
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 
@@ -18,6 +20,14 @@ import io.netty.util.concurrent.GenericFutureListener;
 abstract class TextDecoder extends MemcachedBaseDecoder {
    protected TextDecoder(MemcachedServer server, Subject subject) {
       super(server, subject, server.getCache().getAdvancedCache().withMediaType(MediaType.TEXT_PLAIN, server.getConfiguration().clientEncoding()));
+   }
+
+   @Override
+   public void handlerAdded(ChannelHandlerContext ctx) {
+      super.handlerAdded(ctx);
+      ConnectionMetadata metadata = ConnectionMetadata.getInstance(channel);
+      metadata.subject(subject);
+      metadata.protocolVersion("MCTXT");
    }
 
    @Override

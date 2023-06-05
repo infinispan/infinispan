@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.server.core.transport.IpSubnetFilterRule;
 
 /**
@@ -59,6 +60,11 @@ public class DummyServerStateManager implements ServerStateManager {
    @Override
    public CompletableFuture<Void> clearConnectorIpFilterRules(String name) {
       return CompletableFuture.completedFuture(null);
+   }
+
+   @Override
+   public CompletableFuture<Json> listConnections() {
+      return CompletableFuture.completedFuture(Json.array());
    }
 
    @Override

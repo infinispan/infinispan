@@ -10,12 +10,14 @@ import javax.security.auth.Subject;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Util;
+import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.server.memcached.MemcachedBaseDecoder;
 import org.infinispan.server.memcached.MemcachedServer;
 import org.infinispan.server.memcached.MemcachedStatus;
 import org.infinispan.server.memcached.logging.Header;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 
@@ -26,6 +28,14 @@ abstract class BinaryDecoder extends MemcachedBaseDecoder {
 
    protected BinaryDecoder(MemcachedServer server, Subject subject) {
       super(server, subject, server.getCache().getAdvancedCache().withMediaType(MediaType.APPLICATION_OCTET_STREAM, server.getConfiguration().clientEncoding()));
+   }
+
+   @Override
+   public void handlerAdded(ChannelHandlerContext ctx) {
+      super.handlerAdded(ctx);
+      ConnectionMetadata metadata = ConnectionMetadata.getInstance(channel);
+      metadata.subject(subject);
+      metadata.protocolVersion("MCBIN");
    }
 
    protected void config(BinaryHeader header, byte[] key) {

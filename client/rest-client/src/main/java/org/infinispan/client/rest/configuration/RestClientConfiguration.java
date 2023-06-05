@@ -95,6 +95,7 @@ public class RestClientConfiguration {
       properties.setProperty(RestClientConfigurationProperties.TCP_NO_DELAY, tcpNoDelay());
       properties.setProperty(RestClientConfigurationProperties.TCP_KEEP_ALIVE, tcpKeepAlive());
       properties.setProperty(RestClientConfigurationProperties.CONTEXT_PATH, contextPath());
+      properties.setProperty(RestClientConfigurationProperties.USER_AGENT, headers.get("User-Agent"));
 
       StringBuilder servers = new StringBuilder();
       for (ServerConfiguration server : servers()) {

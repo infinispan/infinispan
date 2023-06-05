@@ -27,6 +27,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1194,6 +1195,8 @@ public class Json implements java.io.Serializable {
          else if (anything instanceof Enum) {
             return factory().string(anything.toString());
          } else if (anything instanceof MediaType) {
+            return factory().string(anything.toString());
+         } else if (anything instanceof Instant) {
             return factory().string(anything.toString());
          } else if (anything.getClass().isArray()) {
             Class<?> comp = anything.getClass().getComponentType();

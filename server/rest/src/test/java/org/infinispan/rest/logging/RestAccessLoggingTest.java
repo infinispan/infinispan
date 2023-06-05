@@ -68,6 +68,6 @@ public class RestAccessLoggingTest extends SingleCacheManagerTest {
 
       String logline = logAppender.getLog(0);
 
-      assertTrue(logline, logline.matches("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d+] \"PUT /rest/v2/caches/default/key HTTP/1\\.1\" 404 \\d+ \\d+ \\d+ okhttp/\\p{Graph}+$"));
+      assertTrue(logline, logline.matches("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d+] \"PUT /rest/v2/caches/default/key HTTP/1\\.1\" 404 \\d+ \\d+ \\d+ Infinispan/\\p{Graph}+$"));
    }
 }

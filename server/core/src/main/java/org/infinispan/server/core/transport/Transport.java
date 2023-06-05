@@ -2,6 +2,7 @@ package org.infinispan.server.core.transport;
 
 import java.util.concurrent.CompletionStage;
 
+import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.ChannelMatcher;
 
 /**
@@ -43,4 +44,6 @@ public interface Transport {
    int getNumberOfGlobalConnections();
 
    CompletionStage<Void> closeChannels(ChannelMatcher channelMatcher);
+
+   ChannelGroup getAcceptedChannels();
 }

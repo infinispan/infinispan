@@ -1,5 +1,7 @@
 package org.infinispan.server.core.transport;
 
+import java.time.Instant;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 import org.infinispan.server.core.ProtocolServer;
@@ -26,10 +28,12 @@ import io.netty.util.DomainNameMappingBuilder;
  * @since 4.1
  */
 public class NettyChannelInitializer<A extends ProtocolServerConfiguration> implements NettyInitializer {
+   static final AtomicLong CHANNEL_ID = new AtomicLong();
    protected final ProtocolServer<A> server;
    protected final NettyTransport transport;
    protected final ChannelOutboundHandler encoder;
    protected final Supplier<ChannelInboundHandler> decoderSupplier;
+
 
    public NettyChannelInitializer(ProtocolServer<A> server, NettyTransport transport, ChannelOutboundHandler encoder, Supplier<ChannelInboundHandler> decoderSupplier) {
       this.server = server;
@@ -40,6 +44,9 @@ public class NettyChannelInitializer<A extends ProtocolServerConfiguration> impl
 
    @Override
    public void initializeChannel(Channel ch) throws Exception {
+      ConnectionMetadata info = ConnectionMetadata.getInstance(ch);
+      info.id(CHANNEL_ID.getAndIncrement());
+      info.created(Instant.now());
       ChannelPipeline pipeline = ch.pipeline();
       pipeline.addLast("iprules", new AccessControlFilter<>(server.getConfiguration()));
       if (transport != null) {

@@ -21,6 +21,8 @@ SYNOPSIS
 
 *server heap-dump* [--live]
 
+*server connections ls* [--global]
+
 *server connector ls*
 
 *server connector describe* 'connector-name'
@@ -55,6 +57,10 @@ Obtains a server report, including information about network, threads, memory, e
 
 `server heap-dump` +
 Generates a JVM heap dump in the server data directory, returning the name of the generated file.
+
+`server connections ls` +
+Lists all active client connections to the server. The `--global` argument will return connections from all cluster
+members.
 
 `server connector ls` +
 Lists all available connectors on the server.

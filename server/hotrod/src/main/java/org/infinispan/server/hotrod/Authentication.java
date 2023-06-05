@@ -11,6 +11,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.server.core.configuration.SaslAuthenticationConfiguration;
 import org.infinispan.server.core.security.sasl.SaslAuthenticator;
 import org.infinispan.server.core.security.sasl.SubjectSaslServer;
+import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.server.core.transport.SaslQopHandler;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.hotrod.logging.Log;
@@ -99,7 +100,8 @@ public class Authentication extends BaseRequestProcessor {
       // Obtaining the subject might be expensive, so do it before sending the final server challenge, otherwise the
       // client might send another operation before this is complete
       subject = (Subject) saslServer.getNegotiatedProperty(SubjectSaslServer.SUBJECT);
-
+      ConnectionMetadata metadata = ConnectionMetadata.getInstance(channel);
+      metadata.subject(subject);
       // Finally we setup the QOP handler if required
       String qop = (String) saslServer.getNegotiatedProperty(Sasl.QOP);
       if ("auth-int".equals(qop) || "auth-conf".equals(qop)) {

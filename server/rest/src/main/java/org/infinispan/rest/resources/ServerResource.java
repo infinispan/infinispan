@@ -117,6 +117,9 @@ public class ServerResource implements ResourceHandler {
             .invocation().methods(POST, DELETE).path("/v2/server/ignored-caches/{cache-manager}/{cache}")
             .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER)
             .handleWith(this::doIgnoreOp)
+            .invocation().methods(GET).path("/v2/server/connections")
+            .permission(AuthorizationPermission.ADMIN).name("CONNECTION LIST").auditContext(AuditContext.SERVER)
+            .handleWith(this::listConnections)
             .invocation().methods(GET).path("/v2/server/connectors")
             .permission(AuthorizationPermission.ADMIN).name("CONNECTOR LIST").auditContext(AuditContext.SERVER)
             .handleWith(this::listConnectors)
@@ -261,6 +264,39 @@ public class ServerResource implements ResourceHandler {
    private ProtocolServer<?> getProtocolServer(RestRequest restRequest) {
       String connectorName = restRequest.variables().get("connector");
       return invocationHelper.getServer().getProtocolServers().get(connectorName);
+   }
+
+   private CompletionStage<RestResponse> listConnections(RestRequest request) {
+      boolean global = Boolean.parseBoolean(request.getParameter("global"));
+      if (global) {
+         List<Json> results = Collections.synchronizedList(new ArrayList<>());
+         return SecurityActions.getClusterExecutor(invocationHelper.getProtocolServer().getCacheManager())
+               .submitConsumer(
+                     ecm -> {
+                        GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(ecm);
+                        BasicComponentRegistry bcr = gcr.getComponent(BasicComponentRegistry.class);
+                        ServerStateManager ssm = bcr.getComponent(ServerStateManager.class).wired();
+                        return CompletableFutures.uncheckedAwait(ssm.listConnections()).toString();
+                     }, (ignore, s, t) -> {
+                        if (t != null) {
+                           throw CompletableFutures.asCompletionException(t);
+                        } else {
+                           results.add(Json.read(s));
+                        }
+                     })
+               .thenApply(ignore -> {
+                  Json all = Json.array();
+                  for (Json result : results) {
+                     for (Json c : result.asJsonList()) {
+                        all.add(c);
+                     }
+                  }
+                  return asJsonResponse(invocationHelper.newResponse(request), all, isPretty(request));
+               });
+      } else {
+         ServerStateManager serverStateManager = invocationHelper.getServer().getServerStateManager();
+         return serverStateManager.listConnections().thenApply(j -> asJsonResponse(invocationHelper.newResponse(request), j, isPretty(request)));
+      }
    }
 
    private CompletionStage<RestResponse> connectorIpFilterClear(RestRequest request) {

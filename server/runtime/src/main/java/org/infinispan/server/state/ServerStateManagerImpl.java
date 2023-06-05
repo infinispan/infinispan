@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -13,6 +14,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.globalstate.GlobalConfigurationManager;
@@ -31,17 +33,21 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.Security;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.Server;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.ServerManagement;
 import org.infinispan.server.core.ServerStateManager;
 import org.infinispan.server.core.transport.CompositeChannelMatcher;
+import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.server.core.transport.IpFilterRuleChannelMatcher;
 import org.infinispan.server.core.transport.IpSubnetFilterRule;
 import org.infinispan.server.core.transport.Transport;
 
+import io.netty.channel.group.ChannelGroup;
 import io.netty.handler.ipfilter.IpFilterRuleType;
+import io.netty.handler.ssl.SslHandler;
 
 /**
  * Manages cluster-wide server state for a given {@link EmbeddedCacheManager}. This handles:
@@ -144,6 +150,39 @@ public final class ServerStateManagerImpl implements ServerStateManager {
    public CompletableFuture<Void> clearConnectorIpFilterRules(String name) {
       SecurityActions.checkPermission(cacheManager, AuthorizationPermission.ADMIN);
       return cache.putAsync(new ScopedState(CONNECTOR_IPFILTER_SCOPE, name), new IpFilterRules()).thenApply(v -> null);
+   }
+
+   @Override
+   public CompletableFuture<Json> listConnections() {
+      Json r = Json.array();
+      for (Map.Entry<String, ProtocolServer> ps : server.getProtocolServers().entrySet()) {
+         Transport transport = ps.getValue().getTransport();
+         if (transport != null) {
+            ChannelGroup channels = transport.getAcceptedChannels();
+            channels.forEach(ch -> {
+               ConnectionMetadata metadata = ConnectionMetadata.getInstance(ch);
+               Json o = Json.object();
+               o.set("id", metadata.id());
+               o.set("server-node-name", server.getCacheManager().getAddress().toString());
+               o.set("name", metadata.clientName());
+               o.set("created", metadata.created());
+               o.set("principal", Security.getSubjectUserPrincipalName(metadata.subject()));
+               o.set("local-address", metadata.localAddress().toString());
+               o.set("remote-address", metadata.remoteAddress().toString());
+               o.set("protocol-version", metadata.protocolVersion());
+               o.set("client-library", metadata.clientLibraryName());
+               o.set("client-version", metadata.clientLibraryVersion());
+               SslHandler ssl = ch.pipeline().get(SslHandler.class);
+               if (ssl != null) {
+                  o.set("ssl-application-protocol", ssl.applicationProtocol());
+                  o.set("ssl-cipher-suite", ssl.engine().getSession().getCipherSuite());
+                  o.set("ssl-protocol", ssl.engine().getSession().getProtocol());
+               }
+               r.add(o);
+            });
+         }
+      }
+      return CompletableFuture.completedFuture(r);
    }
 
    @Override

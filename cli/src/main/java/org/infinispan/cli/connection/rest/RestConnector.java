@@ -11,6 +11,7 @@ import org.infinispan.cli.connection.Connector;
 import org.infinispan.cli.impl.SSLContextSettings;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.client.rest.configuration.SslConfigurationBuilder;
+import org.infinispan.commons.util.Version;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -60,6 +61,7 @@ public class RestConnector implements Connector {
                }
             }
          }
+         builder.header("User-Agent", Version.getBrandName()+" CLI " + Version.getBrandVersion());
          return new RestConnection(builder);
       } catch (Throwable e) {
          return null;
