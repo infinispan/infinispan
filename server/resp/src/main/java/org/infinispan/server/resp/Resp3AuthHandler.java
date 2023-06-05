@@ -8,6 +8,7 @@ import javax.security.auth.Subject;
 import javax.security.sasl.SaslException;
 
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.server.resp.authentication.RespAuthenticator;
 import org.infinispan.server.resp.commands.AuthResp3Command;
 
@@ -77,7 +78,8 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
          ByteBufferUtils.stringToByteBuf("-ERR Client sent AUTH, but no password is set\r\n", allocatorToUse);
          return false;
       }
-
+      ConnectionMetadata metadata = ConnectionMetadata.getInstance(ctx.channel());
+      metadata.subject(subject);
       setCache(cache.withSubject(subject));
       Consumers.OK_BICONSUMER.accept(null, allocatorToUse);
       return true;

@@ -12,6 +12,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -25,6 +26,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.Exceptions;
@@ -40,6 +42,8 @@ import io.lettuce.core.KeyValue;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.ScanArgs;
 import io.lettuce.core.SetArgs;
+import io.lettuce.core.StrAlgoArgs;
+import io.lettuce.core.StringMatchResult;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.ArrayOutput;
@@ -413,6 +417,21 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       assertThat(redis.dbsize()).isEqualTo(size + 1);
    }
 
+
+   @Test
+   public void testClient() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      Long l = redis.clientId();
+      assertThat(l).isNotNull();
+      String list = redis.clientList();
+      assertThat(list).contains("id=" + l);
+      assertThat(list).contains("name= ");
+      redis.clientSetname("test");
+      assertThat(redis.clientGetname()).isEqualTo("test");
+      list = redis.clientList();
+      assertThat(list).contains("name=test");
+   }
+
    public static class SimpleCommand implements ProtocolKeyword {
       private final String name;
 
@@ -551,5 +570,111 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       assertThatThrownBy(redis::clusterShards)
             .isInstanceOf(RedisCommandExecutionException.class)
             .hasMessageContaining("ERR This instance has cluster support disabled");
+   }
+
+   @Test(dataProvider = "lcsCases")
+   public void testLcs(String v1, String v2, String resp, int[][] idx) {
+      String key1 = "lcs-base-1";
+      String key2 = "lcs-base-2";
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(key1, v1);
+      redis.set(key2, v2);
+      StrAlgoArgs args = StrAlgoArgs.Builder.keys(key1, key2);
+      StringMatchResult res = redis.stralgoLcs(args);
+      assertThat(res.getMatchString()).isEqualTo(resp);
+      assertThat(res.getLen()).isZero();
+   }
+
+   @Test(dataProvider = "lcsCases")
+   public void testLcsLen(String v1, String v2, String resp, int[][] idx) {
+      String key1 = "lcs-base-1";
+      String key2 = "lcs-base-2";
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(key1, v1);
+      redis.set(key2, v2);
+      StrAlgoArgs args = StrAlgoArgs.Builder.keys(key1, key2).justLen();
+      StringMatchResult res = redis.stralgoLcs(args);
+      assertThat(res.getLen()).isEqualTo(resp.length());
+      assertThat(res.getMatchString()).isNull();
+   }
+
+   @Test(dataProvider = "lcsCases")
+   public void testLcsIdx(String v1, String v2, String resp, int[][] idx) {
+      String key1 = "lcs-base-1";
+      String key2 = "lcs-base-2";
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(key1, v1);
+      redis.set(key2, v2);
+      StrAlgoArgs args = StrAlgoArgs.Builder.keys(key1, key2).withIdx();
+      StringMatchResult res = redis.stralgoLcs(args);
+      checkIdx(resp, idx, res, false);
+   }
+
+   @Test(dataProvider = "lcsCases")
+   public void testLcsIdxWithLen(String v1, String v2, String resp, int[][] idx) {
+      String key1 = "lcs-base-1";
+      String key2 = "lcs-base-2";
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(key1, v1);
+      redis.set(key2, v2);
+      StrAlgoArgs args = StrAlgoArgs.Builder.keys(key1, key2).withIdx().withMatchLen();
+      StringMatchResult res = redis.stralgoLcs(args);
+      checkIdx(resp, idx, res, true);
+   }
+
+   @Test(dataProvider = "lcsCasesWithMinLen")
+   public void testLcsIdxWithMinLen(String v1, String v2, String resp, int[][] idxs, int minLen) {
+      String key1 = "lcs-base-1";
+      String key2 = "lcs-base-2";
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(key1, v1);
+      redis.set(key2, v2);
+      StrAlgoArgs args = StrAlgoArgs.Builder.keys(key1, key2).withIdx().minMatchLen(minLen);
+      int[][] idx = Arrays.stream(idxs).filter(pos -> pos.length == 1 || pos[1] - pos[0] >= minLen)
+            .toArray(int[][]::new);
+      StringMatchResult res = redis.stralgoLcs(args);
+      checkIdx(resp, idx, res, false);
+   }
+
+   @DataProvider
+   public Object[][] lcsCases() {
+      return new Object[][]{
+            {"GAC", "AGCAT", "AC", new int[][]{{2, 2, 2, 2}, {1, 1, 0, 0}, {2}}},
+            {"XMJYAUZ", "MZJAWXU", "MJAU",
+                  new int[][]{{5, 5, 6, 6}, {4, 4, 3, 3}, {2, 2, 2, 2}, {1, 1, 0, 0}, {4}}},
+            {"ohmytext", "mynewtext", "mytext", new int[][]{{4, 7, 5, 8}, {2, 3, 0, 1}, {6}}},
+            {"ABCBDAB", "BDCABA", "BDAB", new int[][]{{5, 6, 3, 4}, {3, 4, 0, 1}, {4}}},
+            {"ABCEZ12 21AAZ", "12ABZ 21AZAZ", "ABZ 21AAZ",
+                  new int[][]{{11, 12, 10, 11}, {7, 10, 5, 8}, {4, 4, 4, 4}, {0, 1, 2, 3}, {9}}}
+      };
+   }
+
+   @DataProvider
+   public Object[][] lcsCasesWithMinLen() {
+      var minLengths = new Object[][]{{1}, {2}, {4}, {10}};
+      var lcsCases = this.lcsCases();
+      var result = new Object[lcsCases.length][];
+      for (Object[] len : minLengths) {
+         for (int i = 0; i < lcsCases.length; i++) {
+            result[i] = Stream.concat(Arrays.stream(lcsCases[i]), Arrays.stream(len)).toArray();
+         }
+      }
+      return result;
+   }
+
+   private void checkIdx(String resp, int[][] idx, StringMatchResult res, boolean withLen) {
+      var matches = res.getMatches();
+      assertThat(matches.size()).isEqualTo(idx.length - 1);
+      for (int i = 0; i < matches.size(); i++) {
+         assertThat(matches.get(i).getA().getStart()).isEqualTo(idx[i][0]);
+         assertThat(matches.get(i).getA().getEnd()).isEqualTo(idx[i][1]);
+         assertThat(matches.get(i).getB().getStart()).isEqualTo(idx[i][2]);
+         assertThat(matches.get(i).getB().getEnd()).isEqualTo(idx[i][3]);
+         if (withLen) {
+            assertThat(matches.get(i).getMatchLen()).isEqualTo(idx[i][1] - idx[i][0] + 1);
+         }
+      }
+      assertThat(res.getLen()).isEqualTo(resp.length());
+      assertThat(res.getMatchString()).isNull();
    }
 }
