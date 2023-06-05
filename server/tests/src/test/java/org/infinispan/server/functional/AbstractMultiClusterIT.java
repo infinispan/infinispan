@@ -22,6 +22,7 @@ import org.infinispan.client.rest.impl.okhttp.StringRestEntityOkHttp;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.server.test.api.RestTestClientDriver;
 import org.infinispan.server.test.core.AbstractInfinispanServerDriver;
 import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
@@ -156,7 +157,7 @@ class AbstractMultiClusterIT {
                String pass = credentials.getValue();
                configurationBuilder.security().authentication().enable().mechanism("BASIC").username(user).password(pass);
             }
-            return RestClient.forConfiguration(configurationBuilder.build());
+            return RestTestClientDriver.forConfiguration(configurationBuilder.build());
          });
       }
    }

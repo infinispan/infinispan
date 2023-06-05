@@ -38,7 +38,6 @@ public class RespTestClientDriver extends BaseTestClientDriver<RespTestClientDri
       client.setOptions(configuration.clientOptions);
       testClient.registerResource(() -> {
          resources.shutdown(0, 15, TimeUnit.SECONDS).getNow();
-         client.shutdown(0, 15, TimeUnit.SECONDS);
       });
       return client;
    }

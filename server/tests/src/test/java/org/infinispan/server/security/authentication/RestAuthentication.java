@@ -79,7 +79,7 @@ public class RestAuthentication {
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder().followRedirects(false);
       builder.addServer().host(serverAddress.getHostString()).port(serverAddress.getPort());
 
-      try (RestClient restClient = RestClient.forConfiguration(builder.build())) {
+      try (RestClient restClient = SERVER_TEST.newRestClient(builder)) {
          assertStatus(307, restClient.raw().get("/")); // The root resource redirects to the console
       }
    }
@@ -93,7 +93,7 @@ public class RestAuthentication {
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder().followRedirects(false);
       builder.addServer().host(serverAddress.getHostString()).port(serverAddress.getPort());
 
-      try (RestClient restClient = RestClient.forConfiguration(builder.build());
+      try (RestClient restClient = SERVER_TEST.newRestClient(builder);
            RestResponse response = sync(restClient.raw().get("/rest/v2/caches"))) {
          assertEquals(401, response.getStatus());
          String auth = response.headers().get("Www-Authenticate").stream().filter(h -> h.startsWith("Digest")).findFirst().get();

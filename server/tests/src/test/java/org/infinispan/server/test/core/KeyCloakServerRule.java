@@ -21,6 +21,7 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.server.test.api.RestTestClientDriver;
 import org.infinispan.test.TestingUtil;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -102,7 +103,7 @@ public class KeyCloakServerRule implements TestRule {
          port = 8080;
       }
       builder.addServer().host(container.getContainerIpAddress()).port(container.getMappedPort(port)).connectionTimeout(5000).socketTimeout(5000);
-      try (RestClient c = RestClient.forConfiguration(builder.build())) {
+      try (RestClient c = RestTestClientDriver.forConfiguration(builder.build())) {
          String url = String.format("/auth/realms/%s/protocol/openid-connect/token", realm);
          Map<String, List<String>> form = new HashMap<>();
          form.put("client_id", Collections.singletonList(client));

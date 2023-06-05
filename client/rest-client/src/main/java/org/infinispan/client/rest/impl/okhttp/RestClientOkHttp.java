@@ -160,7 +160,8 @@ public class RestClientOkHttp implements RestClient {
 
    @Override
    public void close() throws IOException {
-      httpClient.dispatcher().executorService().shutdownNow();
+      httpClient.dispatcher().executorService().shutdown();
+      httpClient.dispatcher().cancelAll();
       ConnectionPool connectionPool = httpClient.connectionPool();
       connectionPool.evictAll();
 

@@ -1,11 +1,23 @@
 package org.infinispan.server.test.api;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
+import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -13,6 +25,10 @@ import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
+
+import okhttp3.ConnectionPool;
+import okhttp3.OkHttpClient;
+import okhttp3.internal.connection.RealConnectionPool;
 
 /**
  * REST operations for the testing framework
@@ -23,14 +39,17 @@ import org.infinispan.server.test.core.TestServer;
 public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDriver> {
    public static final int TIMEOUT = Integer.getInteger("org.infinispan.test.server.http.timeout", 10);
 
+   private final ThreadPoolExecutor OK_HTTP_POOL = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
+
    private RestClientConfigurationBuilder clientConfiguration = new RestClientConfigurationBuilder();
-   private TestServer testServer;
-   private TestClient testClient;
+   private final TestServer testServer;
+   private final TestClient testClient;
    private int port = 11222;
 
    public RestTestClientDriver(TestServer testServer, TestClient testClient) {
       this.testServer = testServer;
       this.testClient = testClient;
+      testServer.callOnDriverStop(OK_HTTP_POOL::shutdown);
    }
 
    /**
@@ -55,7 +74,7 @@ public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDri
     * @return a new instance of the {@link RestClient}
     */
    public RestClient get() {
-      return testClient.registerResource(testServer.newRestClient(clientConfiguration, port));
+      return testClient.registerResource(new OkHttpCloseable(testServer.newRestClient(clientConfiguration, port), OK_HTTP_POOL)).client;
    }
 
    /**
@@ -64,7 +83,7 @@ public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDri
     * @return a new instance of the {@link RestClient}
     */
    public RestClient get(int n) {
-      return testClient.registerResource(testServer.newRestClientForServer(clientConfiguration, port, n));
+      return testClient.registerResource(new OkHttpCloseable(testServer.newRestClientForServer(clientConfiguration, port, n), OK_HTTP_POOL)).client;
    }
 
    /**
@@ -106,8 +125,94 @@ public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDri
       }
    }
 
+   public static RestClient forConfiguration(RestClientConfiguration cfg) {
+      return new OkHttpCloseable(RestClient.forConfiguration(cfg), Executors.newSingleThreadExecutor(), true).client;
+   }
+
    @Override
    public RestTestClientDriver self() {
       return this;
+   }
+
+   private static class OkHttpCloseable implements Closeable {
+      private final RestClient client;
+      private final ExecutorService executor;
+      private final boolean closeExecutor;
+
+      private OkHttpCloseable(RestClient client, ExecutorService executor) {
+         this(client, executor, false);
+      }
+
+      private OkHttpCloseable(RestClient client, ExecutorService executor, boolean closeExecutor) {
+         this.client = client;
+         this.executor = executor;
+         this.closeExecutor = closeExecutor;
+         okHttpRealConnectionOperate();
+      }
+
+      private void okHttpRealConnectionOperate() {
+         OkHttpClient httpClient = extractField(client, "httpClient");
+         ConnectionPool cp = httpClient.connectionPool();
+         RealConnectionPool rcp = extractField(cp, "delegate");
+
+         // The original runnable would block with `wait`.
+         replaceField(RealConnectionPool.class, rcp,"cleanupRunnable", prev -> (Runnable) () -> { });
+
+         // The original thread pool was static for connections to run the clean runnable.
+         replaceField(RealConnectionPool.class, rcp, "executor", prev -> {
+            if (prev instanceof ExecutorService) {
+               ((ExecutorService) prev).shutdownNow();
+            }
+            return executor;
+         });
+      }
+
+      @Override
+      public void close() throws IOException {
+         client.close();
+         if (closeExecutor) {
+            executor.shutdown();
+         }
+      }
+
+      private static <T> void replaceField(Class<?> baseType, Object owner, String fieldName, Function<T, T> func) {
+         Field field;
+         try {
+            field = baseType.getDeclaredField(fieldName);
+            field.setAccessible(true);
+
+            MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(Field.class, MethodHandles.lookup());
+            VarHandle modifiersField = lookup.findVarHandle(Field.class, "modifiers", int.class);
+            modifiersField.set(field, field.getModifiers() & ~Modifier.FINAL);
+
+            Object prevValue = field.get(owner);
+            Object newValue = func.apply((T) prevValue);
+            field.set(owner, newValue);
+         } catch (Exception e) {
+            throw new RuntimeException(e);
+         }
+      }
+
+      private static <T> T extractField(Object target, String fieldName) {
+         return extractField(target.getClass(), target, fieldName);
+      }
+
+      private static <T> T extractField(Class<?> type, Object target, String fieldName) {
+         while (true) {
+            Field field;
+            try {
+               field = type.getDeclaredField(fieldName);
+               field.setAccessible(true);
+               return (T) field.get(target);
+            } catch (Exception e) {
+               if (type.equals(Object.class)) {
+                  throw new RuntimeException(e);
+               } else {
+                  // try with superclass!!
+                  type = type.getSuperclass();
+               }
+            }
+         }
+      }
    }
 }

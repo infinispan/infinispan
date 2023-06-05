@@ -86,7 +86,6 @@ public class ThreadLeakChecker {
                       "|ducttape" +
                       "|testcontainers" +
                       "|Okio Watchdog" +
-                      "|OkHttp ConnectionPool" +
                        // OkHttp uses daemon threads for HTTP/2
                       "|OkHttp Http2Connection" +
                       // The mysql driver uses a daemon thread to check for connection leaks

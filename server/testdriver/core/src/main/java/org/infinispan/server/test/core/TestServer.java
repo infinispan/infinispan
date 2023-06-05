@@ -27,6 +27,7 @@ public class TestServer {
    protected InfinispanServerDriver serverDriver;
    protected final List<Consumer<File>> configurationEnhancers = new ArrayList<>();
    protected InfinispanServerTestConfiguration configuration;
+   protected Runnable onDriverStop = () -> {};
 
    public TestServer(InfinispanServerTestConfiguration configuration) {
       this.configuration = configuration;
@@ -121,6 +122,11 @@ public class TestServer {
 
    public void afterListeners() {
       configuration.listeners().forEach(l -> l.after(serverDriver));
+      onDriverStop.run();
+   }
+
+   public void callOnDriverStop(Runnable onDriverStop) {
+      this.onDriverStop = onDriverStop;
    }
 
    public boolean isContainerRunWithDefaultServerConfig() {
