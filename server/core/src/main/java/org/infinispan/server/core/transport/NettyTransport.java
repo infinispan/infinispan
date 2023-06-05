@@ -348,6 +348,11 @@ public class NettyTransport implements Transport {
       return closed;
    }
 
+   @Override
+   public ChannelGroup getAcceptedChannels() {
+      return acceptedChannels;
+   }
+
    private Class<? extends ServerChannel> getServerSocketChannel() {
       Class<? extends ServerChannel> channel = NativeTransport.serverSocketChannelClass();
       log.createdSocketChannel(channel.getName(), configuration.toString());

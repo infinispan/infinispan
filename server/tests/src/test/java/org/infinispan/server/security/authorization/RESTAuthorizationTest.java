@@ -261,6 +261,9 @@ public class RESTAuthorizationTest extends BaseTest {
       assertStatus(OK, client.server().memory());
       assertStatus(OK, client.server().env());
       assertStatus(OK, client.server().configuration());
+      String connections = assertStatus(OK, client.server().listConnections(true));
+      Json json = Json.read(connections);
+      assertTrue(json.isArray());
    }
 
    @Test

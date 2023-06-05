@@ -14,6 +14,7 @@ import org.infinispan.client.rest.RestURI;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.commons.util.Version;
 
 /**
  * <p>ConfigurationBuilder used to generate immutable {@link RestClientConfiguration} objects.
@@ -45,6 +46,7 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
    public RestClientConfigurationBuilder() {
       this.security = new SecurityConfigurationBuilder(this);
       this.servers = new ArrayList<>();
+      this.headers.put("User-Agent", Version.getBrandName() + "/" + Version.getVersion());
    }
 
    @Override
@@ -226,7 +228,6 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
       this.security.read(template.security());
       this.headers.clear();
       this.headers.putAll(template.headers());
-
       return this;
    }
 }

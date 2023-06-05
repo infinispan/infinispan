@@ -1,0 +1,30 @@
+[
+  {
+    "id": 2,
+    "name": "flower",
+    "created": "2023-05-18T14:54:37.882566188Z",
+    "principal": "admin",
+    "local-address": "/127.0.0.1:11222",
+    "remote-address": "/127.0.0.1:58230",
+    "protocol-version": "RESP3",
+    "client-library": null,
+    "client-version": null,
+    "ssl-application-protocol": "http/1.1",
+    "ssl-cipher-suite": "TLS_AES_256_GCM_SHA384",
+    "ssl-protocol": "TLSv1.3"
+  },
+  {
+    "id": 0,
+    "name": null,
+    "created": "2023-05-18T14:54:07.727775875Z",
+    "principal": "admin",
+    "local-address": "/127.0.0.1:11222",
+    "remote-address": "/127.0.0.1:35716",
+    "protocol-version": "HTTP/1.1",
+    "client-library": "Infinispan CLI 15.0.0-SNAPSHOT",
+    "client-version": null,
+    "ssl-application-protocol": "http/1.1",
+    "ssl-cipher-suite": "TLS_AES_256_GCM_SHA384",
+    "ssl-protocol": "TLSv1.3"
+  }
+]

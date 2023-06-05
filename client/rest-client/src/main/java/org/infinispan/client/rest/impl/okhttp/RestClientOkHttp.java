@@ -261,7 +261,7 @@ public class RestClientOkHttp implements RestClient {
    }
 
    CompletionStage<RestResponse> execute(Request.Builder builder) {
-      configuration.headers().forEach((name, value) -> builder.header(name, value));
+      configuration.headers().forEach(builder::header);
       Request request = builder.build();
       log.tracef("Request %s", request);
       CompletableFuture<RestResponse> response = new CompletableFuture<>();

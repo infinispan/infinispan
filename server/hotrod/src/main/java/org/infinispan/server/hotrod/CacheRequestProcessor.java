@@ -24,6 +24,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.security.actions.SecurityActions;
+import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.server.hotrod.HotRodServer.ExtendedCacheInfo;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.tracing.HotRodTelemetryService;
@@ -55,6 +56,8 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       if (!header.cacheName.isEmpty()) {
          server.cache(server.getCacheInfo(header), header, subject);
       }
+      ConnectionMetadata metadata = ConnectionMetadata.getInstance(channel);
+      metadata.protocolVersion(HotRodVersion.forVersion(header.version).toString());
       writeResponse(header, header.encoder().pingResponse(header, server, channel, OperationStatus.Success));
    }
 
@@ -69,7 +72,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
          ClusterCacheStats clusterCacheStats =
                SecurityActions.getCacheComponentRegistry(cache).getComponent(ClusterCacheStats.class);
          ByteBuf buf = header.encoder().statsResponse(header, server, channel, stats, server.getTransport(),
-                                                      clusterCacheStats);
+               clusterCacheStats);
          writeResponse(header, buf);
       } catch (Throwable t) {
          writeException(header, t);

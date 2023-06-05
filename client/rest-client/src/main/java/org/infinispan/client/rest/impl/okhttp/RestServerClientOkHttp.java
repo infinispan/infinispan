@@ -103,6 +103,11 @@ public class RestServerClientOkHttp implements RestServerClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> listConnections(boolean global) {
+      return client.execute(baseServerURL, "connections?global=" + global);
+   }
+
+   @Override
    public CompletionStage<RestResponse> connectorNames() {
       return client.execute(baseServerURL, "connectors");
    }

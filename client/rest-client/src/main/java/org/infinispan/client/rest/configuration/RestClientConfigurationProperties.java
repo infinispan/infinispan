@@ -3,6 +3,7 @@ package org.infinispan.client.rest.configuration;
 import java.util.Properties;
 
 import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.commons.util.Version;
 
 /**
  * Encapsulate all config properties here
@@ -22,6 +23,7 @@ public class RestClientConfigurationProperties {
    public static final String PROTOCOL = ICR + "protocol";
    public static final String SO_TIMEOUT = ICR + "socket_timeout";
    public static final String CONNECT_TIMEOUT = ICR + "connect_timeout";
+   public static final String USER_AGENT = Version.printVersion();
 
    // Encryption properties
    public static final String USE_SSL = ICR + "use_ssl";

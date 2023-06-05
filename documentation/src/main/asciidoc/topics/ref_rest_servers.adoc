@@ -174,3 +174,29 @@ POST /rest/v2/server?action=stop
 ----
 
 {brandname} responds with `204 (No Content)` and then stops running.
+
+[id='rest_v2_server_connections']
+= Retrieving Client Connection Information
+List information about clients connected to {brandname} Servers with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/server/connections
+----
+
+{brandname} responds with details about all active client connections in JSON format as in the following example:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/rest_server_connections_response.json[]
+----
+
+.Request Parameters
+
+|===
+|Parameter |Required or Optional |Value
+
+|`global`
+|OPTIONAL
+| `true`: will collect connections from all servers in the cluster
+|===

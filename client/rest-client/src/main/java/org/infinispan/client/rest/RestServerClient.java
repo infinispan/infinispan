@@ -55,6 +55,8 @@ public interface RestServerClient {
 
    RestLoggingClient logging();
 
+   CompletionStage<RestResponse> listConnections(boolean global);
+
    CompletionStage<RestResponse> connectorNames();
 
    CompletionStage<RestResponse> connector(String name);

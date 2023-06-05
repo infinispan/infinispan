@@ -30,6 +30,7 @@ import org.infinispan.rest.framework.LookupResult;
 import org.infinispan.rest.framework.Method;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.rest.logging.RestAccessLoggingHandler;
+import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.topology.MissingMembersException;
 import org.infinispan.util.logging.LogFactory;
 
@@ -124,6 +125,12 @@ public class RestRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
          return;
       }
 
+      ConnectionMetadata metadata = ConnectionMetadata.getInstance(ctx.channel());
+      metadata.protocolVersion(request.protocolVersion().text());
+      String userAgent = request.headers().get(HttpHeaderNames.USER_AGENT);
+      if (userAgent != null) {
+         metadata.clientLibraryName(userAgent);
+      }
       NettyRestRequest restRequest;
       LookupResult invocationLookup;
       try {
@@ -171,6 +178,7 @@ public class RestRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
          if (authorized) {
             authorization = restRequest.getAuthorizationHeader();
             subject = restRequest.getSubject();
+            metadata.subject(subject);
             handleRestRequest(ctx, restRequest, invocationLookup);
          } else {
             try {
@@ -223,7 +231,7 @@ public class RestRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
          logger.debugf(e, "Native IO Exception from %s", ctx.channel().remoteAddress());
          ctx.close();
       } else if (!ctx.channel().isActive() && e instanceof IllegalStateException &&
-                 e.getMessage().equals("ssl is null")) {
+            e.getMessage().equals("ssl is null")) {
          // Workaround for ISPN-12558 -- OpenSSLEngine shut itself down too soon
          // Ignore the exception, trying to close the context will cause a StackOverflowError
       } else {
