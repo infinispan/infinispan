@@ -84,6 +84,11 @@ public class RangeSet implements IntSet {
    }
 
    @Override
+   public int nextSetBit(int fromIndex) {
+      return contains(fromIndex) ? fromIndex : -1;
+   }
+
+   @Override
    public Object[] toArray() {
       Object[] array = new Object[size];
       for (int i = 0; i < size; i++) {

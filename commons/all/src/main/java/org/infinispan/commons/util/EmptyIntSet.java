@@ -89,6 +89,11 @@ class EmptyIntSet extends AbstractImmutableIntSet {
    }
 
    @Override
+   public int nextSetBit(int fromIndex) {
+      return -1;
+   }
+
+   @Override
    public boolean equals(Object obj) {
       if (obj instanceof Set) {
          return ((Set) obj).size() == 0;

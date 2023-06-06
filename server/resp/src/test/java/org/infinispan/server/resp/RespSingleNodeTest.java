@@ -706,4 +706,11 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       redis.set(k(1), "a".repeat(1001));
       assertThat(redis.memoryUsage(k(1))).isEqualTo(1032);
    }
+
+   public void testClusterNodesSingleNode() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThatThrownBy(redis::clusterNodes)
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR This instance has cluster support disabled");
+   }
 }

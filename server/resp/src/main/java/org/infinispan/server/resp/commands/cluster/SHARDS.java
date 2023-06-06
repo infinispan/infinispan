@@ -1,9 +1,11 @@
 package org.infinispan.server.resp.commands.cluster;
 
 import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
+import static org.infinispan.server.resp.commands.cluster.CLUSTER.findPhysicalAddress;
+import static org.infinispan.server.resp.commands.cluster.CLUSTER.findPort;
+import static org.infinispan.server.resp.commands.cluster.CLUSTER.getOnlyIp;
 
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,8 +22,6 @@ import org.infinispan.manager.CacheManagerInfo;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.resp.ByteBufferUtils;
 import org.infinispan.server.resp.Resp3Handler;
@@ -30,7 +30,6 @@ import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.topology.CacheTopology;
-import org.jgroups.stack.IpAddress;
 
 import io.netty.channel.ChannelHandlerContext;
 import net.jcip.annotations.GuardedBy;
@@ -145,11 +144,7 @@ public class SHARDS extends RespCommand implements Resp3Command {
       CacheManagerInfo manager = ecm.getCacheManagerInfo();
       String name = manager.getNodeName();
       Address address = findPhysicalAddress(ecm);
-      int port = 0;
-      if (address instanceof JGroupsAddress && ((JGroupsAddress) address).getJGroupsAddress() instanceof IpAddress) {
-         JGroupsAddress jAddress = (JGroupsAddress) address;
-         port = ((IpAddress) jAddress.getJGroupsAddress()).getPort();
-      }
+      int port = findPort(address);
       String addressString = address != null ? getOnlyIp(address) : ecm.getCacheManagerInfo().getNodeAddress();
 
       StringBuilder sb = new StringBuilder();
@@ -181,38 +176,15 @@ public class SHARDS extends RespCommand implements Resp3Command {
       sb.append("$").append(health.length()).append(CRLF_STRING).append(health).append(CRLF_STRING);
    }
 
-   private static Address findPhysicalAddress(EmbeddedCacheManager ecm) {
-      Transport transport = ecm.getTransport();
-      if (transport == null) {
-         return null;
-      }
-
-      List<Address> addresses = transport.getPhysicalAddresses();
-      if (addresses.isEmpty()) {
-         // Returning a logical address.
-         return ecm.getAddress();
-      }
-      return addresses.get(0);
-   }
-
-   private static String getOnlyIp(Address address) {
-      if (address instanceof JGroupsAddress && ((JGroupsAddress) address).getJGroupsAddress() instanceof IpAddress) {
-         JGroupsAddress jAddress = (JGroupsAddress) address;
-         return ((IpAddress) jAddress.getJGroupsAddress()).getIpAddress().getHostAddress();
-      }
-      return address.toString();
-   }
-
    private static void serialize(StringBuilder output, String leader, List<String> replicas, IntSet ranges) {
       // Each element in the list has 2 properties, the ranges and nodes, and the associated values.
       output.append("*4\r\n");
 
       int segmentCount = 0;
       StringBuilder segments = new StringBuilder();
-      BitSet bitSet = BitSet.valueOf(ranges.toBitSet());
-      for (int i = bitSet.nextSetBit(0); i >= 0; i = bitSet.nextSetBit(i + 1)) {
+      for (int i = ranges.nextSetBit(0); i >= 0; i = ranges.nextSetBit(i + 1)) {
          int runStart = i;
-         while (bitSet.get(i + 1)) {
+         while (ranges.contains(i + 1)) {
             i++;
          }
 

@@ -102,6 +102,11 @@ public class ImmutableIntSet extends AbstractImmutableIntSet {
       return set.toBitSet();
    }
 
+   @Override
+   public int nextSetBit(int fromIndex) {
+      return set.nextSetBit(fromIndex);
+   }
+
    private static class ImmutableIterator implements PrimitiveIterator.OfInt {
       private OfInt iterator;
 

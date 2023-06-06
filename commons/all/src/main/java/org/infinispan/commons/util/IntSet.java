@@ -212,4 +212,12 @@ public interface IntSet extends Set<Integer> {
     * @since 12.0
     */
    byte[] toBitSet();
+
+   /**
+    * Returns the next int in the set that is greater than or equal to the given value.
+    *
+    * @param fromIndex: inclusive index to start searching.
+    * @return the index of the next set bit, or -1 if there is no such bit
+    */
+   int nextSetBit(int fromIndex);
 }

@@ -66,6 +66,11 @@ class SingletonIntSet extends AbstractImmutableIntSet {
       return array;
    }
 
+   @Override
+   public int nextSetBit(int fromIndex) {
+      return contains(fromIndex) ? fromIndex : -1;
+   }
+
    private class SingleIntIterator implements PrimitiveIterator.OfInt {
       boolean available = true;
 
