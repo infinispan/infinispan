@@ -32,6 +32,14 @@
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-cli-client-jakarta</artifactId>
+        </dependency>`
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-client-rest-jakarta</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-core-jakarta</artifactId>
         </dependency>
         <dependency>
