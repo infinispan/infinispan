@@ -114,6 +114,7 @@
       <module>server/testdriver</module>
       <module>server/tests</module>
       <module>client/rest-client</module>
+      <module>client/rest-client-jakarta</module>
       <module>client/hotrod-client</module>
       <module>client/hotrod-client-jakarta</module>
       <module>client/hotrod</module>
@@ -127,6 +128,7 @@
       <module>spring/spring6</module>
       <module>spring/spring-boot-3</module>
       <module>cli</module>
+      <module>cli-jakarta</module>
       <module>tasks/api</module>
       <module>tasks/manager</module>
       <module>tasks/scripting</module>
