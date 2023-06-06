@@ -75,7 +75,8 @@ class ConcurrentSmallIntSet implements IntSet {
    }
 
    // Same idea as BitSet#nextSetBit
-   private int nextSetBit(int fromIndex) {
+   @Override
+   public int nextSetBit(int fromIndex) {
       if (fromIndex < 0)
          throw new IndexOutOfBoundsException("fromIndex < 0: " + fromIndex);
 

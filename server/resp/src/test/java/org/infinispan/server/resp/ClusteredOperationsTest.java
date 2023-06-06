@@ -6,6 +6,7 @@ import static org.infinispan.server.resp.test.RespTestingUtil.OK;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.testng.annotations.Test;
 
@@ -26,6 +27,26 @@ public class ClusteredOperationsTest extends BaseMultipleRespTest {
    public void retrieveShardsInformation() {
       validate(redisConnection1.sync().clusterShards());
       validate(redisConnection2.sync().clusterShards());
+   }
+
+   public void retrieveNodesInformation() {
+      assertClusterNodesResponse(redisConnection1.sync().clusterNodes());
+      assertClusterNodesResponse(redisConnection2.sync().clusterNodes());
+   }
+
+   private void assertClusterNodesResponse(String response) {
+      String[] nodes = response.split("\n");
+      assertThat(nodes).hasSize(2);
+
+      for (String node : nodes) {
+         String[] information = node.split(" ");
+         assertThat(information)
+               // Number of slots vary.
+               .hasSizeGreaterThan(8)
+               .containsAnyOf("master", "myself,master")
+               .satisfies(c -> assertThat(Stream.of(c).anyMatch(s -> s.startsWith("127.0.0.1:"))).isTrue())
+               .contains("connected", "-", "0");
+      }
    }
 
    private void validate(List<Object> shards) {

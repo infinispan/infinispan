@@ -20,6 +20,7 @@ import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.api.sync.BaseRedisCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.api.sync.RedisServerCommands;
+import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 
 @Category(Security.class)
 public class RESPAuthorizationTest extends BaseTest {
@@ -120,6 +121,25 @@ public class RESPAuthorizationTest extends BaseTest {
       assertThatThrownBy(() -> redis.hmset("plain", Map.of("k1", "v1")))
             .isInstanceOf(RedisCommandExecutionException.class)
             .hasMessageContaining("ERRWRONGTYPE");
+   }
+
+   @Test
+   public void testClusterNodes() {
+      for (TestUser user: TestUser.values()) {
+         try (RedisClient client = createClient(user)) {
+            if (user == TestUser.ANONYMOUS) {
+               assertAnonymous(client, RedisClusterCommands::clusterNodes);
+               continue;
+            }
+
+            RedisCommands<String, String> conn = createConnection(client);
+            String nodes = conn.clusterNodes();
+            assertThat(nodes).isNotNull().isNotEmpty();
+            assertThat(nodes.split("\n"))
+                  .isNotEmpty()
+                  .hasSize(2);
+         }
+      }
    }
 
    private void assertAnonymous(RedisClient client, Consumer<RedisCommands<String, String>> consumer) {
