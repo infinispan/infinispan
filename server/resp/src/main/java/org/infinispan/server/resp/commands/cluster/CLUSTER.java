@@ -18,6 +18,7 @@ public class CLUSTER extends FamilyCommand {
       CLUSTER_COMMANDS = new RespCommand[] {
             new SHARDS(),
             new NODES(),
+            new SLOTS(),
       };
    }
 

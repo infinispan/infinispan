@@ -142,7 +142,6 @@ public class NODES extends RespCommand implements Resp3Command {
                   serializeSegments(response, owner);
                   response.append('\n');
                }
-               System.out.println(response);
                return "$" + response.length() + CRLF_STRING + response + CRLF_STRING;
             });
    }
