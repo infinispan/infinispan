@@ -49,6 +49,30 @@ public class ClusteredOperationsTest extends BaseMultipleRespTest {
       }
    }
 
+   public void retrieveSlotsInformation() {
+      List<Object> slots = redisConnection1.sync().clusterSlots();
+
+      // With 2 nodes, we should have at least 2 slots.
+      assertThat(slots).hasSizeGreaterThanOrEqualTo(2);
+      for (Object slot : slots) {
+         List<Object> values = (List<Object>) slot;
+
+         // Base information includes the slot range start, end, and at least 1 owner.
+         assertThat(values).hasSizeGreaterThanOrEqualTo(3);
+
+         assertThat(values.get(0)).isInstanceOf(Long.class);
+         assertThat(values.get(1)).isInstanceOf(Long.class);
+
+         List<Object> owner = asList(values, 2);
+         assertThat(owner).hasSizeGreaterThanOrEqualTo(3);
+
+         assertThat(owner.get(0)).isInstanceOf(String.class)
+               .satisfies(h -> assertThat(h.equals(server1.getHost()) || h.equals(server2.getHost())).isTrue());
+         assertThat(owner.get(1)).isInstanceOf(Long.class)
+               .satisfies(v -> assertThat(v.equals((long) server1.getPort()) || v.equals((long) server2.getPort())).isTrue());
+      }
+   }
+
    private void validate(List<Object> shards) {
       // We have 2 nodes in the system.
       assertThat(shards).hasSize(2);
