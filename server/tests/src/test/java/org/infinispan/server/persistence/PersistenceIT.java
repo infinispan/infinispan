@@ -1,5 +1,7 @@
 package org.infinispan.server.persistence;
 
+import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED;
+
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -50,6 +52,7 @@ public class PersistenceIT extends InfinispanSuite {
                                     .mavenArtifacts(getJdbcDrivers())
                                     .artifacts(getJavaArchive())
                                     .addListener(DATABASE_LISTENER)
+                                    .property(INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED, "true")
                                     .build();
 
    private static String[] getJdbcDrivers() {

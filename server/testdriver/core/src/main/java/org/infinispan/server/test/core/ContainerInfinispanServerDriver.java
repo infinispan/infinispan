@@ -5,6 +5,7 @@ import static org.infinispan.server.Server.DEFAULT_SERVER_CONFIG;
 import static org.infinispan.server.test.core.Containers.DOCKER_CLIENT;
 import static org.infinispan.server.test.core.Containers.getDockerBridgeAddress;
 import static org.infinispan.server.test.core.Containers.imageArchitecture;
+import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_LOG_FILE;
 
 import java.io.ByteArrayInputStream;
@@ -27,7 +28,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
@@ -276,7 +276,8 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
 
    private GenericContainer<?> createContainer(int i, Consumer<OutputFrame>... logConsumers) {
 
-      if (this.volumes[i] == null) {
+      boolean volumesRequired = Boolean.parseBoolean(configuration.properties().getProperty(INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED));
+      if (volumesRequired && this.volumes[i] == null) {
          String volumeName = Util.threadLocalRandomUUID().toString();
          DOCKER_CLIENT.createVolumeCmd().withName(volumeName).exec();
          this.volumes[i] = volumeName;
@@ -284,9 +285,11 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
 
       GenericContainer<?> container = new GenericContainer<>(image)
             .withCreateContainerCmdModifier(cmd -> {
-               cmd.getHostConfig().withMounts(
-                     Arrays.asList(new Mount().withSource(this.volumes[i]).withTarget(serverPath()).withType(MountType.VOLUME))
-               );
+               if (volumesRequired) {
+                  cmd.getHostConfig().withMounts(
+                        Collections.singletonList(new Mount().withSource(this.volumes[i]).withTarget(serverPath()).withType(MountType.VOLUME))
+                  );
+               }
                if (IMAGE_MEMORY != null) {
                   cmd.getHostConfig().withMemory(IMAGE_MEMORY);
                }
