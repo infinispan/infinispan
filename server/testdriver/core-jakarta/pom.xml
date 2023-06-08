@@ -33,7 +33,7 @@
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cli-client-jakarta</artifactId>
-        </dependency>`
+        </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-client-rest-jakarta</artifactId>
