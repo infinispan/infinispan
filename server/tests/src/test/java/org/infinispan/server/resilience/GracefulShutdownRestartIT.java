@@ -1,6 +1,7 @@
 package org.infinispan.server.resilience;
 
 import static org.infinispan.server.test.core.Common.sync;
+import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.concurrent.TimeUnit;
@@ -29,6 +30,7 @@ public class GracefulShutdownRestartIT {
          InfinispanServerExtensionBuilder.config("configuration/ClusteredServerTest.xml")
                                     .numServers(2)
                                     .runMode(ServerRunMode.CONTAINER)
+                                    .property(INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED, "true")
                                     .build();
 
    @Test
