@@ -7,31 +7,26 @@ import static org.infinispan.server.test.core.Common.assertStatus;
 
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.server.test.core.ServerRunMode;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @author Ryan Emerson
  * @since 13.0
  */
 public class ShutdownContainerIT {
-   @ClassRule
-   public static final InfinispanServerRule SERVER =
-         InfinispanServerRuleBuilder.config("configuration/ClusteredServerTest.xml")
+   @RegisterExtension
+   public static final InfinispanServerExtension SERVER =
+         InfinispanServerExtensionBuilder.config("configuration/ClusteredServerTest.xml")
                .numServers(1)
                .runMode(ServerRunMode.CONTAINER)
                .build();
 
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVER);
-
    @Test
    public void testShutDown() {
-      RestClient client = SERVER_TEST.rest().get();
+      RestClient client = SERVER.rest().get();
 
       String containerName = "default";
       assertStatus(OK, client.cacheManager(containerName).caches());

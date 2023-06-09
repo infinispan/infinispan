@@ -1,6 +1,6 @@
 package org.infinispan.server.security.authentication;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -8,12 +8,10 @@ import java.util.List;
 
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.server.test.core.category.Security;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.junit.jupiter.api.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.RedisClient;
@@ -31,11 +29,8 @@ import io.lettuce.core.protocol.CommandType;
 @Category(Security.class)
 public class RespAuthentication {
 
-   @ClassRule
-   public static InfinispanServerRule SERVERS = AuthenticationIT.SERVERS;
-
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
+   @RegisterExtension
+   public static InfinispanServerExtension SERVERS = AuthenticationIT.SERVERS;
 
    @Test
    public void testRestReadWrite() {

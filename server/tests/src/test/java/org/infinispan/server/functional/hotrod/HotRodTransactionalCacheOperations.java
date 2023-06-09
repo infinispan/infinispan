@@ -1,12 +1,7 @@
 package org.infinispan.server.functional.hotrod;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-
-import java.util.ArrayList;
-import java.util.Collection;
-
-import jakarta.transaction.TransactionManager;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -15,20 +10,18 @@ import org.infinispan.client.hotrod.transaction.lookup.RemoteTransactionManagerL
 import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.server.functional.ClusteredIT;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+
+import jakarta.transaction.TransactionManager;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @author Pedro Ruivo
  * @since 10.0
  **/
-@RunWith(Parameterized.class)
 public class HotRodTransactionalCacheOperations {
    private static final String TEST_CACHE_XML_CONFIG =
          "<infinispan><cache-container>" +
@@ -38,37 +31,20 @@ public class HotRodTransactionalCacheOperations {
                "  </distributed-cache-configuration>" +
                "</cache-container></infinispan>";
 
-   @ClassRule
-   public static InfinispanServerRule SERVERS = ClusteredIT.SERVERS;
+   @RegisterExtension
+   public static InfinispanServerExtension SERVERS = ClusteredIT.SERVERS;
 
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
-
-   @Parameterized.Parameters(name = "{0}")
-   public static Collection<Object[]> data() {
-      ArrayList<Object[]> txModes = new ArrayList<>();
-      txModes.add(new Object[]{Parser.TransactionMode.NON_XA});
-      txModes.add(new Object[]{Parser.TransactionMode.NON_DURABLE_XA});
-      txModes.add(new Object[]{Parser.TransactionMode.FULL_XA});
-      return txModes;
-   }
-
-   private final Parser.TransactionMode txMode;
-
-   public HotRodTransactionalCacheOperations(Parser.TransactionMode txMode) {
-      this.txMode = txMode;
-   }
-
-   @Test
-   public void testTransactionalCache() throws Exception {
+   @ParameterizedTest(name = "{0}")
+   @EnumSource(value = Parser.TransactionMode.class, names = {"NON_XA", "NON_DURABLE_XA", "FULL_XA"})
+   public void testTransactionalCache(Parser.TransactionMode txMode) throws Exception {
       ConfigurationBuilder config = new ConfigurationBuilder();
-      config.remoteCache(SERVER_TEST.getMethodName())
+      config.remoteCache(SERVERS.getMethodName())
             .transactionMode(TransactionMode.NON_XA)
             .transactionManagerLookup(RemoteTransactionManagerLookup.getInstance());
 
-      String xml = String.format(TEST_CACHE_XML_CONFIG, SERVER_TEST.getMethodName(), txMode.name());
+      String xml = String.format(TEST_CACHE_XML_CONFIG, SERVERS.getMethodName(), txMode.name());
 
-      RemoteCache<String, String> cache = SERVER_TEST.hotrod().withClientConfiguration(config).withServerConfiguration(new StringConfiguration(xml)).create();
+      RemoteCache<String, String> cache = SERVERS.hotrod().withClientConfiguration(config).withServerConfiguration(new StringConfiguration(xml)).create();
       TransactionManager tm = cache.getTransactionManager();
       tm.begin();
       cache.put("k", "v1");

@@ -3,11 +3,11 @@ package org.infinispan.server.security;
 import static org.infinispan.server.test.core.Common.HTTP_MECHS;
 import static org.infinispan.server.test.core.Common.HTTP_PROTOCOLS;
 import static org.infinispan.server.test.core.Common.sync;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -20,65 +20,57 @@ import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.category.Security;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
 import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 11.0
  **/
 
-@RunWith(Parameterized.class)
 @Category(Security.class)
 public class AuthenticationImplicitIT {
-   @ClassRule
-   public static InfinispanServerRule SERVERS =
-         InfinispanServerRuleBuilder.config("configuration/AuthenticationServerImplicitTest.xml")
+   @RegisterExtension
+   public static InfinispanServerExtension SERVERS =
+         InfinispanServerExtensionBuilder.config("configuration/AuthenticationServerImplicitTest.xml")
                                     .addListener(new SecurityRealmServerListener("alternate"))
                                     .build();
 
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
+   static class ArgsProvider implements ArgumentsProvider {
+      @Override
+      public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
+         List<Arguments> args = Common.SASL_MECHS.stream()
+               .map(mech -> Arguments.of("Hot Rod", mech))
+               .collect(Collectors.toList());
 
-   private final String mechanism;
-   private final String protocol;
 
-   @Parameterized.Parameters(name = "{1}({0})")
-   public static Collection<Object[]> data() {
-      List<Object[]> params = new ArrayList<>();
-      for(Object[] mech : Common.SASL_MECHS) {
-         params.add(new Object[]{"Hot Rod", mech[0]});
-      }
-      for (Protocol protocol : HTTP_PROTOCOLS) {
-         for (Object[] mech : HTTP_MECHS) {
-            params.add(new Object[]{protocol.name(), mech[0]});
+         for (Protocol protocol : HTTP_PROTOCOLS) {
+            for (String mech : HTTP_MECHS) {
+               args.add(Arguments.of(protocol.name(), mech));
+            }
          }
+         return args.stream();
       }
-      return params;
    }
 
-   public AuthenticationImplicitIT(String protocol, String mechanism) {
-      this.protocol = protocol;
-      this.mechanism = mechanism;
-   }
-
-   @Test
-   public void testProtocol() {
+   @ParameterizedTest
+   @ArgumentsSource(ArgsProvider.class)
+   public void testProtocol(String protocol, String mechanism) {
       if ("Hot Rod".equals(protocol)) {
-         testHotRod();
+         testHotRod(mechanism);
       } else {
-         testRest(Protocol.valueOf(protocol));
+         testRest(Protocol.valueOf(protocol), mechanism);
       }
    }
 
-   public void testHotRod() {
+   public void testHotRod(String mechanism) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       if (!mechanism.isEmpty()) {
          builder.security().authentication()
@@ -89,7 +81,7 @@ public class AuthenticationImplicitIT {
       }
 
       try {
-         RemoteCache<String, String> cache = SERVER_TEST.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create();
+         RemoteCache<String, String> cache = SERVERS.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create();
          cache.put("k1", "v1");
          assertEquals(1, cache.size());
          assertEquals("v1", cache.get("k1"));
@@ -99,7 +91,7 @@ public class AuthenticationImplicitIT {
       }
    }
 
-   public void testRest(Protocol protocol) {
+   public void testRest(Protocol protocol, String mechanism) {
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       if (!mechanism.isEmpty()) {
          builder
@@ -111,15 +103,15 @@ public class AuthenticationImplicitIT {
                .password("all");
       }
       if (mechanism.isEmpty() || "BASIC".equals(mechanism)) {
-         Exceptions.expectException(SecurityException.class, () -> SERVER_TEST.rest().withClientConfiguration(builder).create());
+         Exceptions.expectException(SecurityException.class, () -> SERVERS.rest().withClientConfiguration(builder).create());
       } else {
-         RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).create();
-         try (RestResponse response = sync(client.cache(SERVER_TEST.getMethodName()).post("k1", "v1"))) {
+         RestClient client = SERVERS.rest().withClientConfiguration(builder).create();
+         try (RestResponse response = sync(client.cache(SERVERS.getMethodName()).post("k1", "v1"))) {
             assertEquals(204, response.getStatus());
             assertEquals(protocol, response.getProtocol());
          }
 
-         try (RestResponse response = sync(client.cache(SERVER_TEST.getMethodName()).get("k1"))) {
+         try (RestResponse response = sync(client.cache(SERVERS.getMethodName()).get("k1"))) {
             assertEquals(200, response.getStatus());
             assertEquals(protocol, response.getProtocol());
             assertEquals("v1", response.getBody());

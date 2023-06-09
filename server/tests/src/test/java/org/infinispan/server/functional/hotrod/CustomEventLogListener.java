@@ -1,9 +1,9 @@
 package org.infinispan.server.functional.hotrod;
 
 import static org.infinispan.server.test.core.Common.assertAnyEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -183,8 +183,8 @@ public abstract class CustomEventLogListener<K, V, E> {
       }
 
       private void expectTimeOrdered(CustomEvent<K> before, CustomEvent<K> after) {
-         assertTrue("Before timestamp=" + before.getTimestamp() + ", after timestamp=" + after.getTimestamp(),
-               before.getTimestamp() < after.getTimestamp());
+         assertTrue(before.getTimestamp() < after.getTimestamp(),
+               "Before timestamp=" + before.getTimestamp() + ", after timestamp=" + after.getTimestamp());
       }
    }
 

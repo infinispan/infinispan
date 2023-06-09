@@ -1,27 +1,21 @@
 package org.infinispan.server.persistence;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.test.Eventually;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.category.Persistence;
 import org.infinispan.server.test.core.persistence.Database;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 
 /**
  * Tests String-based jdbc cache store under the following circumstances:
@@ -34,36 +28,17 @@ import org.junit.runners.Parameterized;
  *
  */
 @Category(Persistence.class)
-@RunWith(Parameterized.class)
 public class JdbcStringBasedCacheStorePassivation {
 
-    @ClassRule
-    public static InfinispanServerRule SERVERS = PersistenceIT.SERVERS;
+    @RegisterExtension
+    public static InfinispanServerExtension SERVERS = PersistenceIT.SERVERS;
 
-    @Rule
-    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
-
-    private final Database database;
-
-    @Parameterized.Parameters(name = "{0}")
-    public static Collection<Object[]> data() {
-        String[] databaseTypes = PersistenceIT.DATABASE_LISTENER.getDatabaseTypes();
-        List<Object[]> params = new ArrayList<>(databaseTypes.length);
-        for (String databaseType : databaseTypes) {
-            params.add(new Object[]{databaseType});
-        }
-        return params;
-    }
-
-    public JdbcStringBasedCacheStorePassivation(String databaseType) {
-        this.database = PersistenceIT.DATABASE_LISTENER.getDatabase(databaseType);
-    }
-
-    @Test
-    public void testFailover() throws Exception {
+    @ParameterizedTest
+    @ArgumentsSource(Common.DatabaseProvider.class)
+    public void testFailover(Database database) throws Exception {
         JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, false, true)
                 .setLockingConfigurations();
-        RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
+        RemoteCache<String, String> cache = SERVERS.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
         try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration())) {
             cache.put("k1", "v1");
             cache.put("k2", "v2");
@@ -87,11 +62,12 @@ public class JdbcStringBasedCacheStorePassivation {
         }
     }
 
-    @Test
-    public void testPreload() throws Exception {
+    @ParameterizedTest
+    @ArgumentsSource(Common.DatabaseProvider.class)
+    public void testPreload(Database database) throws Exception {
         JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, false, true)
                 .setLockingConfigurations();
-        RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
+        RemoteCache<String, String> cache = SERVERS.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
         try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration())) {
             cache.clear();
             cache.put("k1", "v1");
@@ -114,11 +90,12 @@ public class JdbcStringBasedCacheStorePassivation {
      * This should verify that DefaultTwoWayKey2StringMapper on server side can work with ByteArrayKey which
      * is always produced by HotRod client regardless of type of key being stored in a cache.
      */
-    @Test
-    public void testDefaultTwoWayKey2StringMapper() throws Exception {
+    @ParameterizedTest
+    @ArgumentsSource(Common.DatabaseProvider.class)
+    public void testDefaultTwoWayKey2StringMapper(Database database) throws Exception {
         JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, false, true)
                 .setLockingConfigurations();
-        RemoteCache<Object, Object> cache = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
+        RemoteCache<Object, Object> cache = SERVERS.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
         try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration())) {
             Double doubleKey = 10.0;
             Double doubleValue = 20.0;
@@ -131,12 +108,13 @@ public class JdbcStringBasedCacheStorePassivation {
         }
     }
 
-    @Test
-    public void testSoftRestartWithPassivation() throws Exception {
+    @ParameterizedTest
+    @ArgumentsSource(Common.DatabaseProvider.class)
+    public void testSoftRestartWithPassivation(Database database) throws Exception {
         JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, true, false)
               .setEviction()
               .setLockingConfigurations();
-        RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
+        RemoteCache<String, String> cache = SERVERS.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
         try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration())) {
             cache.put("k1", "v1");
             cache.put("k2", "v2");
@@ -165,12 +143,13 @@ public class JdbcStringBasedCacheStorePassivation {
      * after fail-over instead of 3 when doing soft
      * restart.
      */
-    @Test
-    public void testFailoverWithPassivation() throws Exception {
+    @ParameterizedTest
+    @ArgumentsSource(Common.DatabaseProvider.class)
+    public void testFailoverWithPassivation(Database database) throws Exception {
         JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, true, false)
               .setEviction()
               .setLockingConfigurations();
-        RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
+        RemoteCache<String, String> cache = SERVERS.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
         try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration())) {
             cache.put("k1", "v1");
             cache.put("k2", "v2");

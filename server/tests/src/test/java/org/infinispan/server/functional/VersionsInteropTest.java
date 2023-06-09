@@ -1,12 +1,12 @@
 package org.infinispan.server.functional;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.client.hotrod.DefaultTemplate;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.server.test.core.InfinispanContainer;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class VersionsInteropTest {
 

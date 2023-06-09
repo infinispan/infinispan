@@ -38,7 +38,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
  * @author Gustavo Lira
  * @since 12
  */
-public class InfinispanXSiteServerExtension implements
+public class InfinispanXSiteServerExtension extends AbstractServerExtension implements
       TestClientXSiteDriver,
       BeforeAllCallback,
       BeforeEachCallback,
@@ -54,25 +54,15 @@ public class InfinispanXSiteServerExtension implements
 
    @Override
    public void beforeAll(ExtensionContext extensionContext) {
-      String testName = extensionContext.getRequiredTestClass().getName();
-
-      testServers.forEach((it) -> {
-         // Don't manage the server when a test is using the same InfinispanServerRule instance as the parent suite
-         boolean manageServer = !it.isDriverInitialized();
-         if (manageServer) {
-            it.initServerDriver();
-            it.beforeListeners();
-            it.getDriver().prepare(testName);
-            it.getDriver().start(testName);
-         }
-      });
+      initSuiteClasses(extensionContext);
+      testServers.forEach((it) -> startTestServer(extensionContext, it));
    }
 
    @Override
    public void beforeEach(ExtensionContext extensionContext) {
       testServers.forEach((it) -> {
          TestClient testClient = new TestClient(it);
-         testClient.initResources();
+         startTestClient(extensionContext, testClient);
          testClients.put(it.getSiteName(), testClient);
       });
    }
@@ -84,13 +74,11 @@ public class InfinispanXSiteServerExtension implements
 
    @Override
    public void afterAll(ExtensionContext extensionContext) {
-      String testName = extensionContext.getRequiredTestClass().getName();
-      testServers.forEach((it) -> {
-         if (it.isDriverInitialized()) {
-            it.afterListeners();
-            it.getDriver().stop(testName);
-         }
-      });
+      if (suiteTestClasses.isEmpty()) {
+         testServers.stream()
+               .filter(TestServer::isDriverInitialized)
+               .forEach(server -> stopTestServer(extensionContext, server));
+      }
    }
 
    @Override
@@ -122,5 +110,9 @@ public class InfinispanXSiteServerExtension implements
    @Override
    public <K, V> MultimapCacheManager<K, V> getMultimapCacheManager(String siteName) {
       return testClients.get(siteName).getRemoteMultimapCacheManager();
+   }
+
+   public List<TestServer> getTestServers() {
+      return testServers;
    }
 }

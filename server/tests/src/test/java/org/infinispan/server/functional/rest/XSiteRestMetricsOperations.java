@@ -5,19 +5,17 @@ import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.LON;
 import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.NYC;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestMetricsClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.server.functional.XSiteIT;
-import org.infinispan.server.test.junit4.InfinispanXSiteServerRule;
-import org.infinispan.server.test.junit4.InfinispanXSiteServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanXSiteServerExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * Test site status metrics
@@ -44,24 +42,21 @@ public class XSiteRestMetricsOperations {
                "  </replicated-cache>" +
                "</cache-container></infinispan>";
 
-   @ClassRule
-   public static final InfinispanXSiteServerRule SERVERS = XSiteIT.SERVERS;
-
-   @Rule
-   public InfinispanXSiteServerTestMethodRule SERVER_TEST = new InfinispanXSiteServerTestMethodRule(SERVERS);
+   @RegisterExtension
+   public static final InfinispanXSiteServerExtension SERVERS = XSiteIT.SERVERS;
 
    @Test
    public void testSiteStatus() throws Exception {
-      String lonXML = String.format(LON_CACHE_XML_CONFIG, SERVER_TEST.getMethodName());
-      String nycXML = String.format(NYC_CACHE_XML_CONFIG, SERVER_TEST.getMethodName());
+      String lonXML = String.format(LON_CACHE_XML_CONFIG, SERVERS.getMethodName());
+      String nycXML = String.format(NYC_CACHE_XML_CONFIG, SERVERS.getMethodName());
 
-      RestClient client = SERVER_TEST.rest(LON).withServerConfiguration(new StringConfiguration(lonXML)).create();
+      RestClient client = SERVERS.rest(LON).withServerConfiguration(new StringConfiguration(lonXML)).create();
       RestMetricsClient metricsClient = client.metrics();
 
       // create cache in NYC
-      SERVER_TEST.rest(NYC).withServerConfiguration(new StringConfiguration(nycXML)).create();
+      SERVERS.rest(NYC).withServerConfiguration(new StringConfiguration(nycXML)).create();
 
-      String statusMetricName = "cache_manager_default_cache_" + SERVER_TEST.getMethodName() + "_x_site_admin_nyc_status";
+      String statusMetricName = "cache_manager_default_cache_" + SERVERS.getMethodName() + "_x_site_admin_nyc_status";
 
       try (RestResponse response = sync(metricsClient.metrics(true))) {
          assertEquals(200, response.getStatus());

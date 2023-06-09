@@ -2,29 +2,63 @@ package org.infinispan.server.security.authorization;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.fail;
 
-import java.util.Map;
+import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import org.assertj.core.api.AssertionsForClassTypes;
 import org.infinispan.server.test.api.RespTestClientDriver;
 import org.infinispan.server.test.api.TestUser;
-import org.infinispan.server.test.core.category.Security;
-import org.junit.AssumptionViolatedException;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.junit.jupiter.api.Test;
 
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisConnectionException;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.sync.BaseRedisCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.api.sync.RedisServerCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
+import io.lettuce.core.resource.DefaultClientResources;
 
-@Category(Security.class)
-public class RESPAuthorizationTest extends BaseTest {
+abstract class RESPAuthorizationTest {
+
+   protected final InfinispanServerExtension ext;
+
+   protected final boolean cert;
+   protected final Function<TestUser, String> serverPrincipal;
+   protected final Map<TestUser, RespTestClientDriver.LettuceConfiguration> respBuilders;
+
+   public RESPAuthorizationTest(InfinispanServerExtension ext) {
+      this(ext, false, TestUser::getUser, user -> {
+         InetSocketAddress serverSocket = ext.getServerDriver().getServerSocket(0, 11222);
+         ClientOptions clientOptions = ClientOptions.builder()
+               .autoReconnect(false)
+               .build();
+         RedisURI.Builder uriBuilder = RedisURI.builder()
+               .withHost(serverSocket.getHostString())
+               .withPort(serverSocket.getPort());
+
+         if (user != TestUser.ANONYMOUS) {
+            uriBuilder = uriBuilder.withAuthentication(user.getUser(), user.getPassword());
+         }
+         return new RespTestClientDriver.LettuceConfiguration(DefaultClientResources.builder(), clientOptions, uriBuilder.build());
+      });
+   }
+
+   public RESPAuthorizationTest(InfinispanServerExtension ext, boolean cert, Function<TestUser, String> serverPrincipal, Function<TestUser, RespTestClientDriver.LettuceConfiguration> respBuilder) {
+      this.ext = ext;
+      this.cert = cert;
+      this.serverPrincipal = serverPrincipal;
+      this.respBuilders = Stream.of(TestUser.values()).collect(Collectors.toMap(user -> user, respBuilder));
+   }
 
    @Test
    public void testSetGetDelete() {
@@ -116,8 +150,8 @@ public class RESPAuthorizationTest extends BaseTest {
       Map<String, String> map = Map.of("key1", "value1", "key2", "value2", "key3", "value3");
       assertThat(redis.hmset("HMSET", map)).isEqualTo("OK");
 
-      AssertionsForClassTypes.assertThat(redis.hget("HMSET", "key1")).isEqualTo("value1");
-      AssertionsForClassTypes.assertThat(redis.hget("HMSET", "unknown")).isNull();
+      assertThat(redis.hget("HMSET", "key1")).isEqualTo("value1");
+      assertThat(redis.hget("HMSET", "unknown")).isNull();
 
       assertThat(redis.set("plain", "string")).isEqualTo("OK");
       assertThatThrownBy(() -> redis.hmset("plain", Map.of("k1", "v1")))
@@ -146,7 +180,7 @@ public class RESPAuthorizationTest extends BaseTest {
 
    private void assertAnonymous(RedisClient client, Consumer<RedisCommands<String, String>> consumer) {
       // When using certificates, an anonymous user can not connect.
-      if (suite.isUsingCert()) {
+      if (cert) {
          assertThatThrownBy(client::connect).isExactlyInstanceOf(RedisConnectionException.class);
          return;
       }
@@ -158,30 +192,30 @@ public class RESPAuthorizationTest extends BaseTest {
    }
 
    private RedisClient createClient(TestUser user) {
-      RespTestClientDriver.LettuceConfiguration config = suite.respBuilders.get(user);
+      RespTestClientDriver.LettuceConfiguration config = respBuilders.get(user);
 
       if (config == null) {
-         throw new AssumptionViolatedException(this.getClass().getSimpleName() + " does not define configuration for user " + user);
+         fail(this.getClass().getSimpleName() + " does not define configuration for user " + user);
       }
 
-      return suite.getServerTest().resp().withConfiguration(config).get();
+      return ext.resp().withConfiguration(config).get();
    }
 
    private RedisCommands<String, String> createConnection(TestUser user) {
-      RespTestClientDriver.LettuceConfiguration config = suite.respBuilders.get(user);
+      RespTestClientDriver.LettuceConfiguration config = respBuilders.get(user);
 
       if (config == null) {
-         throw new AssumptionViolatedException(this.getClass().getSimpleName() + " does not define configuration for user " + user);
+         fail(this.getClass().getSimpleName() + " does not define configuration for user " + user);
       }
 
-      return suite.getServerTest().resp()
+      return ext.resp()
             .withConfiguration(config)
             .getConnection()
             .sync();
    }
 
    private RedisCommands<String, String> createConnection(RedisClient client) {
-      return suite.getServerTest().resp()
+      return ext.resp()
             .connect(client)
             .sync();
    }

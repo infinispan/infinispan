@@ -5,9 +5,9 @@ import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
 import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.sync;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -29,11 +29,9 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.server.functional.ClusteredIT;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.prometheus.client.exporter.common.TextFormat;
 
@@ -45,30 +43,27 @@ import io.prometheus.client.exporter.common.TextFormat;
  */
 public class RestMetricsResource {
 
-   @ClassRule
-   public static InfinispanServerRule SERVERS = ClusteredIT.SERVERS;
-
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
+   @RegisterExtension
+   public static InfinispanServerExtension SERVERS = ClusteredIT.SERVERS;
 
    @Test
    public void testOpenMetrics() {
-      RestMetricsClient metricsClient = SERVER_TEST.rest().create().metrics();
+      RestMetricsClient metricsClient = SERVERS.rest().create().metrics();
 
-      String metricName = "cache_manager_default_cache_" + SERVER_TEST.getMethodName() + "_statistics_stores";
+      String metricName = "cache_manager_default_cache_" + SERVERS.getMethodName() + "_statistics_stores";
 
       try (RestResponse response = sync(metricsClient.metrics(true))) {
          assertEquals(200, response.getStatus());
          checkIsOpenmetrics(response.contentType());
          String metricsText = response.getBody();
          assertTrue(metricsText.contains("# TYPE vendor_" + metricName + " gauge\n"));
-         assertTrue(metricsText.contains("vendor_" + metricName + "{cache=\"" + SERVER_TEST.getMethodName()));
+         assertTrue(metricsText.contains("vendor_" + metricName + "{cache=\"" + SERVERS.getMethodName()));
       }
    }
 
    @Test
    public void testBaseAndVendorMetrics() throws Exception {
-      RestMetricsClient metricsClient = SERVER_TEST.rest().create().metrics();
+      RestMetricsClient metricsClient = SERVERS.rest().create().metrics();
 
       try (RestResponse response = sync(metricsClient.metrics())) {
          assertEquals(200, response.getStatus());
@@ -90,10 +85,10 @@ public class RestMetricsResource {
 
    @Test
    public void testMetrics() throws Exception {
-      RestClient client = SERVER_TEST.rest().create();
+      RestClient client = SERVERS.rest().create();
       RestMetricsClient metricsClient = client.metrics();
 
-      String cacheName = SERVER_TEST.getMethodName();
+      String cacheName = SERVERS.getMethodName();
       String metricName = String.format("cache_manager_default_cache_%s_statistics_stores{cache=\"%s\"", cacheName, cacheName);
       int NUM_PUTS = 10;
 
@@ -111,7 +106,7 @@ public class RestMetricsResource {
       }
 
       // put some entries then check that the stats were updated
-      RestCacheClient cache = client.cache(SERVER_TEST.getMethodName());
+      RestCacheClient cache = client.cache(SERVERS.getMethodName());
 
       for (int i = 0; i < NUM_PUTS; i++) {
          assertStatus(NO_CONTENT, cache.put("k" + i, "v" + i));
@@ -131,7 +126,7 @@ public class RestMetricsResource {
       }
 
       // delete cache and check that the metric is gone
-      assertStatus(OK, client.cache(SERVER_TEST.getMethodName()).delete());
+      assertStatus(OK, client.cache(SERVERS.getMethodName()).delete());
 
       try (RestResponse response = sync(metricsClient.metrics())) {
          assertEquals(200, response.getStatus());
@@ -147,11 +142,11 @@ public class RestMetricsResource {
 
    @Test
    public void testTimerMetrics() throws Exception {
-      RestClient client = SERVER_TEST.rest().create();
+      RestClient client = SERVERS.rest().create();
       RestMetricsClient metricsClient = client.metrics();
 
       // this is a histogram of write times
-      String metricName = "cache_manager_default_cache_" + SERVER_TEST.getMethodName() + "_statistics_store_times";
+      String metricName = "cache_manager_default_cache_" + SERVERS.getMethodName() + "_statistics_store_times";
       int NUM_PUTS = 10;
 
       try (RestResponse response = sync(metricsClient.metrics())) {
@@ -168,7 +163,7 @@ public class RestMetricsResource {
       }
 
       // put some entries then check that the stats were updated
-      RestCacheClient cache = client.cache(SERVER_TEST.getMethodName());
+      RestCacheClient cache = client.cache(SERVERS.getMethodName());
 
       for (int i = 0; i < NUM_PUTS; i++) {
          assertStatus(NO_CONTENT, cache.put("k" + i, "v" + i));
@@ -190,10 +185,10 @@ public class RestMetricsResource {
 
    @Test
    public void testMetricsMetadata() throws Exception {
-      RestClient client = SERVER_TEST.rest().create();
+      RestClient client = SERVERS.rest().create();
       RestMetricsClient metricsClient = client.metrics();
 
-      String cacheName = SERVER_TEST.getMethodName();
+      String cacheName = SERVERS.getMethodName();
       String metricName = String.format("cache_manager_default_cache_%s_statistics_stores{cache=\"%s\"", cacheName, cacheName);
 
       try (RestResponse response = sync(metricsClient.metricsMetadata())) {
@@ -210,7 +205,7 @@ public class RestMetricsResource {
       }
 
       // delete cache and check that the metric is gone
-      assertStatus(OK, client.cache(SERVER_TEST.getMethodName()).delete());
+      assertStatus(OK, client.cache(SERVERS.getMethodName()).delete());
 
       try (RestResponse response = sync(metricsClient.metricsMetadata())) {
          assertEquals(200, response.getStatus());
@@ -226,7 +221,7 @@ public class RestMetricsResource {
 
    @Test
    public void testJGroupsMetrics() throws IOException, URISyntaxException {
-      try (RestClient client = SERVER_TEST.rest().create()) {
+      try (RestClient client = SERVERS.rest().create()) {
          RestMetricsClient metricsClient = client.metrics();
          try (RestResponse response = sync(metricsClient.metricsMetadata())) {
             assertEquals(200, response.getStatus());

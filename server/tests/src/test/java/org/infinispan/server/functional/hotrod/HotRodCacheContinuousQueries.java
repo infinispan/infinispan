@@ -3,13 +3,10 @@ package org.infinispan.server.functional.hotrod;
 import static org.infinispan.server.functional.hotrod.HotRodCacheQueries.BANK_PROTO_FILE;
 import static org.infinispan.server.functional.hotrod.HotRodCacheQueries.ENTITY_USER;
 import static org.infinispan.server.test.core.Common.createQueryableCache;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -22,44 +19,24 @@ import org.infinispan.query.api.continuous.ContinuousQueryListener;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.server.functional.ClusteredIT;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-@RunWith(Parameterized.class)
 public class HotRodCacheContinuousQueries {
 
-   @ClassRule
-   public static InfinispanServerRule SERVERS = ClusteredIT.SERVERS;
+   @RegisterExtension
+   public static InfinispanServerExtension SERVERS = ClusteredIT.SERVERS;
 
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
-
-   private final boolean indexed;
-
-   @Parameterized.Parameters(name = "{0}")
-   public static Collection<Object[]> data() {
-      List<Object[]> data = new ArrayList<>();
-      data.add(new Object[]{true});
-      data.add(new Object[]{false});
-      return data;
-   }
-
-   public HotRodCacheContinuousQueries(boolean indexed) {
-      this.indexed = indexed;
-   }
-
-   @Test
-   public void testQueries() {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVER_TEST, indexed, BANK_PROTO_FILE, ENTITY_USER);
+   @ParameterizedTest
+   @ValueSource(booleans = {true, false})
+   public void testQueries(boolean indexed) {
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, BANK_PROTO_FILE, ENTITY_USER);
 
       remoteCache.put(1, createUser(1, 25));
       remoteCache.put(2, createUser(2, 25));
@@ -144,7 +121,7 @@ public class HotRodCacheContinuousQueries {
       for (int i = 0; i < numElements; i++) {
          try {
             Object e = queue.poll(5, TimeUnit.SECONDS);
-            assertNotNull("Queue was empty!", e);
+            assertNotNull(e, "Queue was empty!");
          } catch (InterruptedException e) {
             throw new AssertionError("Interrupted while waiting for condition", e);
          }
@@ -152,7 +129,7 @@ public class HotRodCacheContinuousQueries {
       try {
          // no more elements expected here
          Object e = queue.poll(500, TimeUnit.MILLISECONDS);
-         assertNull("No more elements expected in queue!", e);
+         assertNull(e, "No more elements expected in queue!");
       } catch (InterruptedException e) {
          throw new AssertionError("Interrupted while waiting for condition", e);
       }

@@ -77,7 +77,7 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
     */
    public <K, V> RemoteCache<K, V> get() {
       RemoteCacheManager remoteCacheManager = createRemoteCacheManager();
-      String name = testClient.getMethodName(qualifier);
+      String name = testClient.getMethodName(qualifiers);
       return remoteCacheManager.getCache(name);
    }
 
@@ -113,7 +113,7 @@ public class HotRodTestClientDriver extends BaseTestClientDriver<HotRodTestClien
       } else {
          remoteCacheManager = createRemoteCacheManager();
       }
-      String name = testClient.getMethodName(qualifier);
+      String name = testClient.getMethodName(qualifiers);
       if (serverConfiguration != null) {
          return remoteCacheManager.administration().withFlags(flags).getOrCreateCache(name, serverConfiguration);
       } else if (mode != null) {

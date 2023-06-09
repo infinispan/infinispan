@@ -47,7 +47,7 @@ public class InfinispanServerRule implements TestRule {
       return new Statement() {
          @Override
          public void evaluate() throws Throwable {
-            String testName = description.getTestClass().getName();
+            String testName = description.getTestClass().getName().replaceAll("\\$", "-");
             RunWith runWith = description.getTestClass().getAnnotation(RunWith.class);
             boolean inSuite = runWith != null && Suite.class.isAssignableFrom(runWith.value());
             boolean hasXsite = testServer.hasCrossSiteEnabled();

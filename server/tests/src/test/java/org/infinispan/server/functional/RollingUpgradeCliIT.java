@@ -9,7 +9,7 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.test.core.AeshTestConnection;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.BeforeAll;
 
 /**
  * @since 11.0
@@ -19,7 +19,7 @@ public class RollingUpgradeCliIT extends RollingUpgradeIT {
    private static File workingDir;
    private static Properties properties;
 
-   @BeforeClass
+   @BeforeAll
    public static void setup() {
       workingDir = new File(CommonsTestingUtil.tmpDirectory(RollingUpgradeCliIT.class));
       Util.recursiveFileRemove(workingDir);

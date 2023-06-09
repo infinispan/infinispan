@@ -10,8 +10,9 @@ import static org.infinispan.server.functional.XSiteIT.NYC_CACHE_CUSTOM_NAME_XML
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.LON;
 import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.NYC;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,12 +32,9 @@ import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.functional.XSiteIT;
-import org.infinispan.server.test.junit4.InfinispanXSiteServerRule;
-import org.infinispan.server.test.junit4.InfinispanXSiteServerTestMethodRule;
-import org.junit.Assert;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanXSiteServerExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @author Pedro Ruivo
@@ -45,30 +43,27 @@ import org.junit.Test;
  **/
 public class XSiteHotRodCacheOperations {
 
-   @ClassRule
-   public static final InfinispanXSiteServerRule SERVERS = XSiteIT.SERVERS;
-
-   @Rule
-   public InfinispanXSiteServerTestMethodRule SERVER_TEST = new InfinispanXSiteServerTestMethodRule(SERVERS);
+   @RegisterExtension
+   public static final InfinispanXSiteServerExtension SERVERS = XSiteIT.SERVERS;
 
    @Test
    public void testHotRodOperations() {
-      String lonXML = String.format(XSiteIT.LON_CACHE_XML_CONFIG, SERVER_TEST.getMethodName());
-      RemoteCache<String, String> lonCache = SERVER_TEST.hotrod(LON)
+      String lonXML = String.format(XSiteIT.LON_CACHE_XML_CONFIG, SERVERS.getMethodName());
+      RemoteCache<String, String> lonCache = SERVERS.hotrod(LON)
             .withServerConfiguration(new StringConfiguration(lonXML)).create();
-      RemoteCache<String, String> nycCache = SERVER_TEST.hotrod(NYC).create(); //nyc cache don't backup to lon
+      RemoteCache<String, String> nycCache = SERVERS.hotrod(NYC).create(); //nyc cache don't backup to lon
 
       insertAndVerifyEntries(lonCache, nycCache, false);
    }
 
    @Test
    public void testHotRodOperationsWithDifferentCacheName() {
-      RemoteCache<String, String> lonCache = SERVER_TEST.hotrod(LON)
+      RemoteCache<String, String> lonCache = SERVERS.hotrod(LON)
             .createRemoteCacheManager()
             .administration()
             .createCache("lon-cache", new StringConfiguration(LON_CACHE_CUSTOM_NAME_XML_CONFIG));
 
-      RemoteCache<String, String> nycCache = SERVER_TEST.hotrod(NYC)
+      RemoteCache<String, String> nycCache = SERVERS.hotrod(NYC)
             .createRemoteCacheManager()
             .administration()
             .createCache("nyc-cache", new StringConfiguration(NYC_CACHE_CUSTOM_NAME_XML_CONFIG));
@@ -78,10 +73,10 @@ public class XSiteHotRodCacheOperations {
 
    @Test
    public void testHotRodOperationsWithOffHeapFileStore() {
-      String lonXML = String.format(LON_CACHE_OFF_HEAP, SERVER_TEST.getMethodName());
-      RemoteCache<Integer, Integer> lonCache = SERVER_TEST.hotrod(LON)
+      String lonXML = String.format(LON_CACHE_OFF_HEAP, SERVERS.getMethodName());
+      RemoteCache<Integer, Integer> lonCache = SERVERS.hotrod(LON)
             .withServerConfiguration(new StringConfiguration(lonXML)).create();
-      RemoteCache<Integer, Integer> nycCache = SERVER_TEST.hotrod(NYC).create(); //nyc cache don't backup to lon
+      RemoteCache<Integer, Integer> nycCache = SERVERS.hotrod(NYC).create(); //nyc cache don't backup to lon
 
       //Just to make sure that the file store is empty
       assertEquals(0, getTotalMemoryEntries(lonXML));
@@ -101,8 +96,8 @@ public class XSiteHotRodCacheOperations {
             .site(NYC).strategy(BackupConfiguration.BackupStrategy.SYNC).backupFailurePolicy(BackupFailurePolicy.WARN);
       builder.sites().addBackup()
             .site(LON).strategy(BackupConfiguration.BackupStrategy.SYNC).backupFailurePolicy(BackupFailurePolicy.WARN);
-      SERVER_TEST.hotrod(LON).createRemoteCacheManager().administration().getOrCreateCache(multimapCacheName, builder.build());
-      SERVER_TEST.hotrod(NYC).createRemoteCacheManager().administration().getOrCreateCache(multimapCacheName, builder.build());
+      SERVERS.hotrod(LON).createRemoteCacheManager().administration().getOrCreateCache(multimapCacheName, builder.build());
+      SERVERS.hotrod(NYC).createRemoteCacheManager().administration().getOrCreateCache(multimapCacheName, builder.build());
 
 
       RemoteMultimapCache<String, String> lonCache = multimapCache(LON, multimapCacheName);
@@ -123,14 +118,14 @@ public class XSiteHotRodCacheOperations {
 
    private void assertMultimapData(RemoteMultimapCache<String, String> cache, String key, Collection<String> values) {
       Collection<String> data = cache.get(key).join();
-      Assert.assertEquals(values.size(), data.size());
+      assertEquals(values.size(), data.size());
       for (String v : values) {
-         Assert.assertTrue(data.contains(v));
+         assertTrue(data.contains(v));
       }
    }
 
    private RemoteMultimapCache<String, String> multimapCache(String site, String cacheName) {
-      MultimapCacheManager<String, String> multimapCacheManager = SERVER_TEST.getMultimapCacheManager(site);
+      MultimapCacheManager<String, String> multimapCacheManager = SERVERS.getMultimapCacheManager(site);
       return multimapCacheManager.get(cacheName);
    }
 
@@ -149,10 +144,10 @@ public class XSiteHotRodCacheOperations {
    }
 
    private int getTotalMemoryEntries(String lonXML) {
-      RestClient restClient = SERVER_TEST.rest(LON)
+      RestClient restClient = SERVERS.rest(LON)
             .withServerConfiguration(new StringConfiguration(lonXML)).get();
 
-      RestCacheClient client = restClient.cache(SERVER_TEST.getMethodName());
+      RestCacheClient client = restClient.cache(SERVERS.getMethodName());
       Json json = Json.read(assertStatus(OK, client.stats()));
       return json.asJsonMap().get("current_number_of_entries_in_memory").asInteger();
    }

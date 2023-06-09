@@ -1,12 +1,11 @@
 package org.infinispan.server.security.authentication;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.security.Provider;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -17,14 +16,11 @@ import org.infinispan.client.hotrod.security.BasicCallbackHandler;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.category.Security;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import net.spy.memcached.ConnectionFactoryBuilder;
 import net.spy.memcached.MemcachedClient;
@@ -35,17 +31,11 @@ import net.spy.memcached.internal.OperationFuture;
  * @since 15.0
  **/
 
-@RunWith(Parameterized.class)
 @Category(Security.class)
 public class MemcachedAuthentication {
 
-   @ClassRule
-   public static InfinispanServerRule SERVERS = AuthenticationIT.SERVERS;
-
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
-
-   private final String mechanism;
+   @RegisterExtension
+   public static InfinispanServerExtension SERVERS = AuthenticationIT.SERVERS;
 
    private static final Provider[] SECURITY_PROVIDERS;
 
@@ -67,21 +57,13 @@ public class MemcachedAuthentication {
       SECURITY_PROVIDERS = providers.toArray(new Provider[0]);
    }
 
-   @Parameterized.Parameters(name = "{0}")
-   public static Collection<Object[]> data() {
-      return Common.SASL_MECHS;
-   }
-
-   public MemcachedAuthentication(String mechanism) {
-      this.mechanism = mechanism;
-   }
-
-   @Test
-   public void testMemcachedReadWrite() throws ExecutionException, InterruptedException, TimeoutException {
+   @ParameterizedTest
+   @ArgumentsSource(Common.SaslMechsArgumentProvider.class)
+   public void testMemcachedReadWrite(String mechanism) throws ExecutionException, InterruptedException, TimeoutException {
       ConnectionFactoryBuilder builder = new ConnectionFactoryBuilder();
       builder.setProtocol(mechanism.isEmpty() ? ConnectionFactoryBuilder.Protocol.TEXT : ConnectionFactoryBuilder.Protocol.BINARY);
       builder.setAuthDescriptor(new AuthDescriptor(new String[]{mechanism}, new BasicCallbackHandler("all_user", "default", "all".toCharArray()), null, null, SECURITY_PROVIDERS));
-      MemcachedClient client = SERVER_TEST.memcached().withClientConfiguration(builder).get();
+      MemcachedClient client = SERVERS.memcached().withClientConfiguration(builder).get();
       OperationFuture<Boolean> f = client.set("k" + mechanism, 0, "v");
       assertTrue(f.get(10, TimeUnit.SECONDS));
       assertEquals(client.get("k" + mechanism), "v");

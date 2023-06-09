@@ -75,7 +75,7 @@ public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDri
     */
    public RestClient create() {
       RestClient restClient = get();
-      String name = testClient.getMethodName(qualifier);
+      String name = testClient.getMethodName(qualifiers);
       CompletionStage<RestResponse> future;
       if (serverConfiguration != null) {
          RestEntity configEntity = RestEntity.create(MediaType.APPLICATION_XML, serverConfiguration.toStringConfiguration(name));

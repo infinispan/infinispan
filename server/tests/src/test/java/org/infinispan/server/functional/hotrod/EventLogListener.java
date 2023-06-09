@@ -1,9 +1,9 @@
 package org.infinispan.server.functional.hotrod;
 
 import static org.infinispan.server.test.core.Common.assertAnyEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -90,16 +90,16 @@ public class EventLogListener<K, V> {
    public void expectNoEvents(ClientEvent.Type type) {
       switch (type) {
          case CLIENT_CACHE_ENTRY_CREATED:
-            assertEquals(createdEvents.toString(), 0, createdEvents.size());
+            assertEquals(0, createdEvents.size(), createdEvents.toString());
             break;
          case CLIENT_CACHE_ENTRY_MODIFIED:
-            assertEquals(modifiedEvents.toString(), 0, modifiedEvents.size());
+            assertEquals(0, modifiedEvents.size(), modifiedEvents.toString());
             break;
          case CLIENT_CACHE_ENTRY_REMOVED:
-            assertEquals(removedEvents.toString(), 0, removedEvents.size());
+            assertEquals(0, removedEvents.size(), removedEvents.toString());
             break;
          case CLIENT_CACHE_ENTRY_EXPIRED:
-            assertEquals(expiredEvents.toString(), 0, expiredEvents.size());
+            assertEquals(0, expiredEvents.size(), expiredEvents.toString());
             break;
       }
    }

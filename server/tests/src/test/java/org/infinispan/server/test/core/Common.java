@@ -4,19 +4,19 @@ import static javax.security.auth.login.AppConfigurationEntry.LoginModuleControl
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.CompletionStage;
@@ -24,6 +24,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.security.auth.Subject;
 import javax.security.auth.login.AppConfigurationEntry;
@@ -49,9 +51,13 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
+import org.infinispan.server.persistence.PersistenceIT;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.test.TestingUtil;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.wildfly.security.http.HttpConstants;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
@@ -62,13 +68,41 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
 public class Common {
    private static final boolean IS_IBM = System.getProperty("java.vendor").contains("IBM");
 
-   public static final Collection<Object[]> SASL_MECHS;
+   public static final Collection<String> SASL_MECHS = List.of(
+         "",
+         SaslMechanismInformation.Names.PLAIN,
 
-   public static final Collection<Object[]> SASL_KERBEROS_MECHS;
+         SaslMechanismInformation.Names.DIGEST_MD5,
+         SaslMechanismInformation.Names.DIGEST_SHA_512,
+         SaslMechanismInformation.Names.DIGEST_SHA_384,
+         SaslMechanismInformation.Names.DIGEST_SHA_256,
+         SaslMechanismInformation.Names.DIGEST_SHA,
 
-   public static final Collection<Object[]> HTTP_MECHS;
+         SaslMechanismInformation.Names.SCRAM_SHA_512,
+         SaslMechanismInformation.Names.SCRAM_SHA_384,
+         SaslMechanismInformation.Names.SCRAM_SHA_256,
+         SaslMechanismInformation.Names.SCRAM_SHA_1
+   );
+   public static final Collection<Arguments> SASL_MECH_ARGUMENTS = SASL_MECHS.stream()
+         .map(Arguments::of)
+         .collect(Collectors.toList());
 
-   public static final Collection<Object[]> HTTP_KERBEROS_MECHS;
+   public static final Collection<String> SASL_KERBEROS = List.of(
+         "",
+         SaslMechanismInformation.Names.GSSAPI,
+         SaslMechanismInformation.Names.GS2_KRB5
+   );
+
+   public static final Collection<String> HTTP_MECHS = List.of(
+         "",
+         HttpConstants.BASIC_NAME,
+         HttpConstants.DIGEST_NAME
+   );
+
+   public static final Collection<String> HTTP_KERBEROS_MECHS = List.of(
+         "",
+         HttpConstants.SPNEGO_NAME
+   );
 
    public static final Collection<Protocol> HTTP_PROTOCOLS = Arrays.asList(Protocol.values());
 
@@ -81,35 +115,20 @@ public class Common {
          "org.ow2.asm:asm-util:9.5"
    };
 
-   static {
-      SASL_MECHS = new ArrayList<>();
-      SASL_MECHS.add(new Object[]{""});
-      SASL_MECHS.add(new Object[]{SaslMechanismInformation.Names.PLAIN});
+   public static class SaslMechsArgumentProvider implements ArgumentsProvider {
+      @Override
+      public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
+         return SASL_MECH_ARGUMENTS.stream();
+      }
+   }
 
-      SASL_MECHS.add(new Object[]{SaslMechanismInformation.Names.DIGEST_MD5});
-      SASL_MECHS.add(new Object[]{SaslMechanismInformation.Names.DIGEST_SHA_512});
-      SASL_MECHS.add(new Object[]{SaslMechanismInformation.Names.DIGEST_SHA_384});
-      SASL_MECHS.add(new Object[]{SaslMechanismInformation.Names.DIGEST_SHA_256});
-      SASL_MECHS.add(new Object[]{SaslMechanismInformation.Names.DIGEST_SHA});
-
-      SASL_MECHS.add(new Object[]{SaslMechanismInformation.Names.SCRAM_SHA_512});
-      SASL_MECHS.add(new Object[]{SaslMechanismInformation.Names.SCRAM_SHA_384});
-      SASL_MECHS.add(new Object[]{SaslMechanismInformation.Names.SCRAM_SHA_256});
-      SASL_MECHS.add(new Object[]{SaslMechanismInformation.Names.SCRAM_SHA_1});
-
-      SASL_KERBEROS_MECHS = new ArrayList<>();
-      SASL_KERBEROS_MECHS.add(new Object[]{""});
-      SASL_KERBEROS_MECHS.add(new Object[]{SaslMechanismInformation.Names.GSSAPI});
-      SASL_KERBEROS_MECHS.add(new Object[]{SaslMechanismInformation.Names.GS2_KRB5});
-
-      HTTP_MECHS = new ArrayList<>();
-      HTTP_MECHS.add(new Object[]{""});
-      HTTP_MECHS.add(new Object[]{HttpConstants.BASIC_NAME});
-      HTTP_MECHS.add(new Object[]{HttpConstants.DIGEST_NAME});
-
-      HTTP_KERBEROS_MECHS = new ArrayList<>();
-      HTTP_KERBEROS_MECHS.add(new Object[]{""});
-      HTTP_KERBEROS_MECHS.add(new Object[]{HttpConstants.SPNEGO_NAME});
+   public static class DatabaseProvider implements ArgumentsProvider {
+      @Override
+      public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
+         return Arrays.stream(PersistenceIT.DATABASE_LISTENER.getDatabaseTypes())
+               .map(PersistenceIT.DATABASE_LISTENER::getDatabase)
+               .map(Arguments::of);
+      }
    }
 
    public static <T> T awaitStatus(Supplier<CompletionStage<RestResponse>> request, int pendingStatus, int completeStatus, Function<RestResponse, T> f) {
@@ -162,7 +181,7 @@ public class Common {
    public static String assertStatus(int status, CompletionStage<RestResponse> request) {
       try (RestResponse response = sync(request)) {
          String body = response.getBody();
-         assertEquals(body, status, response.getStatus());
+         assertEquals(status, response.getStatus(), body);
          return body;
       }
    }
@@ -173,7 +192,7 @@ public class Common {
 
    public static void assertStatusAndBodyContains(int status, String body, CompletionStage<RestResponse> response) {
       String responseBody = assertStatus(status, response);
-      assertTrue(responseBody, responseBody.contains(body));
+      assertTrue(responseBody.contains(body), responseBody);
    }
 
    public static void assertResponse(int status, CompletionStage<RestResponse> request, Consumer<RestResponse> consumer) {
@@ -228,16 +247,16 @@ public class Common {
    }
 
 
-   public static <K, V> RemoteCache<K, V> createQueryableCache(InfinispanServerTestMethodRule testMethodRule, boolean indexed, String protoFile, String entityName) {
+   public static <K, V> RemoteCache<K, V> createQueryableCache(InfinispanServerExtension server, boolean indexed, String protoFile, String entityName) {
 
       ConfigurationBuilder config = new ConfigurationBuilder();
       config.marshaller(new ProtoStreamMarshaller());
 
-      HotRodTestClientDriver hotRodTestClientDriver = testMethodRule.hotrod().withClientConfiguration(config);
+      HotRodTestClientDriver hotRodTestClientDriver = server.hotrod().withClientConfiguration(config);
       RemoteCacheManager remoteCacheManager = hotRodTestClientDriver.createRemoteCacheManager();
 
       RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      String schema = Exceptions.unchecked(() -> Util.getResourceAsString(protoFile, testMethodRule.getClass().getClassLoader()));
+      String schema = Exceptions.unchecked(() -> Util.getResourceAsString(protoFile, server.getClass().getClassLoader()));
       metadataCache.putIfAbsent(protoFile, schema);
       assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
       assertNotNull(metadataCache.get(protoFile));

@@ -2,16 +2,15 @@ package org.infinispan.server.functional.rest;
 
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 import static org.infinispan.server.test.core.Common.HTTP_PROTOCOLS;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.Closeable;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.Protocol;
@@ -20,13 +19,13 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.rest.resources.WeakSSEListener;
 import org.infinispan.server.functional.ClusteredIT;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.testcontainers.shaded.org.yaml.snakeyaml.Yaml;
 
 /**
@@ -34,38 +33,28 @@ import org.testcontainers.shaded.org.yaml.snakeyaml.Yaml;
  *
  * @since 14.0
  */
-@RunWith(Parameterized.class)
 public class RestContainerListenerTest {
 
-   @ClassRule
-   public static InfinispanServerRule SERVERS = ClusteredIT.SERVERS;
-   private final Protocol protocol;
-   private final AcceptSerialization serialization;
+   @RegisterExtension
+   public static InfinispanServerExtension SERVERS = ClusteredIT.SERVERS;
 
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
-
-   @Parameterized.Parameters(name = "{0}-{1}")
-   public static Collection<Object[]> data() {
-      List<Object[]> params = new ArrayList<>(HTTP_PROTOCOLS.size());
-      for (Protocol protocol : HTTP_PROTOCOLS) {
-         for (AcceptSerialization serialization : AcceptSerialization.values()) {
-            params.add(new Object[]{protocol, serialization});
-         }
+   static class ArgsProvider implements ArgumentsProvider {
+      @Override
+      public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
+         return HTTP_PROTOCOLS.stream()
+               .flatMap(protocol ->
+                     Arrays.stream(AcceptSerialization.values())
+                           .map(serialization -> Arguments.of(protocol, serialization))
+               );
       }
-      return params;
    }
 
-   public RestContainerListenerTest(Protocol protocol, AcceptSerialization serialization) {
-      this.protocol = protocol;
-      this.serialization = serialization;
-   }
-
-   @Test
-   public void testSSECluster() throws Exception {
+   @ParameterizedTest(name = "{0}-{1}")
+   @ArgumentsSource(ArgsProvider.class)
+   public void testSSECluster(Protocol protocol, AcceptSerialization serialization) throws Exception {
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       builder.protocol(protocol);
-      RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).create();
+      RestClient client = SERVERS.rest().withClientConfiguration(builder).create();
       WeakSSEListener sseListener = new WeakSSEListener();
       Map<String, String> headers = Collections.singletonMap("Accept", serialization.header());
 
@@ -76,10 +65,10 @@ public class RestContainerListenerTest {
 
          sseListener.expectEvent("create-cache", "caching-listen");
          sseListener.expectEvent("lifecycle-event", "ISPN100002", pair -> {
-            assertTrue("Not a " + serialization.header() + ": " + pair.getValue(), serialization.isAccepted(pair.getValue()));
+            assertTrue(serialization.isAccepted(pair.getValue()), "Not a " + serialization.header() + ": " + pair.getValue());
          });
          sseListener.expectEvent("lifecycle-event", "ISPN100010", pair -> {
-            assertTrue("Not a " + serialization.header() + ": " + pair.getValue(), serialization.isAccepted(pair.getValue()));
+            assertTrue(serialization.isAccepted(pair.getValue()), "Not a " + serialization.header() + ": " + pair.getValue());
          });
 
          assertThat(client.cache("caching-listen").delete()).isOk();
@@ -138,7 +127,7 @@ public class RestContainerListenerTest {
 
          @Override
          public boolean isAccepted(String content) {
-            return content.startsWith("<?xml version=\"1.0\"?>\n<log category=")
+            return content.startsWith("<?xml version=\"1.0\"?><log category=")
                   && content.endsWith("</log>");
          }
       };

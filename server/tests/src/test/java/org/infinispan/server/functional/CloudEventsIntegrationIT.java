@@ -1,8 +1,8 @@
 package org.infinispan.server.functional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
 import java.util.Collections;
@@ -17,12 +17,10 @@ import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.server.test.core.InfinispanServerDriver;
 import org.infinispan.server.test.core.InfinispanServerListener;
 import org.infinispan.server.test.core.ServerRunMode;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -37,9 +35,9 @@ public class CloudEventsIntegrationIT {
          new KafkaContainer(DockerImageName.parse("quay.io/cloudservices/cp-kafka:5.4.3")
                                            .asCompatibleSubstituteFor("confluentinc/cp-kafka"));
 
-   @ClassRule
-   public static final InfinispanServerRule SERVERS =
-         InfinispanServerRuleBuilder.config("configuration/CloudEventsIntegration.xml")
+   @RegisterExtension
+   public static final InfinispanServerExtension SERVERS =
+         InfinispanServerExtensionBuilder.config("configuration/CloudEventsIntegration.xml")
                .numServers(1)
                .runMode(ServerRunMode.EMBEDDED)
                .addListener(new InfinispanServerListener() {
@@ -57,9 +55,6 @@ public class CloudEventsIntegrationIT {
                })
                .build();
 
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
-
    @Test
    public void testSendCacheEntryEvent() {
       Properties kafkaProperties = new Properties();
@@ -72,7 +67,7 @@ public class CloudEventsIntegrationIT {
          assertTrue(kafkaConsumer.listTopics().containsKey(CACHE_ENTRIES_TOPIC));
          kafkaConsumer.subscribe(Collections.singleton(CACHE_ENTRIES_TOPIC));
 
-         RemoteCacheManager rcm = SERVER_TEST.hotrod().createRemoteCacheManager();
+         RemoteCacheManager rcm = SERVERS.hotrod().createRemoteCacheManager();
          RemoteCache<String, String> cache = rcm.getCache("default");
          assertNotNull(cache);
          cache.put("k1", "v1");

@@ -7,8 +7,8 @@ import org.infinispan.server.functional.hotrod.HotRodMultiMapOperations;
 import org.infinispan.server.functional.hotrod.HotRodTransactionalCacheOperations;
 import org.infinispan.server.functional.rest.RestOperations;
 import org.infinispan.server.functional.rest.RestRouter;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+import org.junit.platform.suite.api.SelectClasses;
+import org.junit.platform.suite.api.Suite;
 
 /**
  * We must extend {@link ClusteredIT} so that we can specify the test classes required in the suite. All of these tests
@@ -18,8 +18,8 @@ import org.junit.runners.Suite;
  * @author Ryan Emerson
  * @since 11.0
  */
-@RunWith(Suite.class)
-@Suite.SuiteClasses({
+@Suite
+@SelectClasses({
       HotRodCacheOperations.class,
       HotRodCounterOperations.class,
       HotRodMultiMapOperations.class,

@@ -4,7 +4,7 @@ import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
 import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.assertStatusAndBodyContains;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -15,13 +15,11 @@ import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.category.Security;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.junit.jupiter.api.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -30,13 +28,10 @@ import org.junit.experimental.categories.Category;
 @Category(Security.class)
 public class AuthenticationCertIT {
 
-   @ClassRule
-   public static InfinispanServerRule SERVERS =
-         InfinispanServerRuleBuilder.config("configuration/AuthenticationServerTrustTest.xml")
+   @RegisterExtension
+   public static InfinispanServerExtension SERVERS =
+         InfinispanServerExtensionBuilder.config("configuration/AuthenticationServerTrustTest.xml")
                                     .build();
-
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
 
    @Test
    public void testTrustedCertificateHotRod() {
@@ -50,7 +45,7 @@ public class AuthenticationCertIT {
             .serverName("infinispan")
             .realm("default");
 
-      RemoteCache<String, String> cache = SERVER_TEST.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create();
+      RemoteCache<String, String> cache = SERVERS.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create();
       cache.put("k1", "v1");
       assertEquals(1, cache.size());
       assertEquals("v1", cache.get("k1"));
@@ -68,7 +63,7 @@ public class AuthenticationCertIT {
             .serverName("infinispan")
             .realm("default");
 
-      Exceptions.expectException(TransportException.class, () -> SERVER_TEST.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create());
+      Exceptions.expectException(TransportException.class, () -> SERVERS.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create());
    }
 
    @Test
@@ -92,7 +87,7 @@ public class AuthenticationCertIT {
             .ssl()
             .sniHostName("infinispan")
             .hostnameVerifier((hostname, session) -> true).connectionTimeout(120_000).socketTimeout(120_000);
-      RestCacheClient cache = SERVER_TEST.rest().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create().cache(SERVER_TEST.getMethodName());
+      RestCacheClient cache = SERVERS.rest().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create().cache(SERVERS.getMethodName());
 
       assertStatus(NO_CONTENT, cache.put("k1", "v1"));
       assertStatusAndBodyContains(OK, "1", cache.size());
