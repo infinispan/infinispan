@@ -12,11 +12,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.server.functional.ClusteredIT;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.junit.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import net.spy.memcached.MemcachedClient;
 import net.spy.memcached.internal.GetFuture;
@@ -27,22 +25,19 @@ import net.spy.memcached.internal.GetFuture;
  **/
 public class MemcachedOperations {
 
-   @ClassRule
-   public static InfinispanServerRule SERVERS = ClusteredIT.SERVERS;
-
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
+   @RegisterExtension
+   public static InfinispanServerExtension SERVERS = ClusteredIT.SERVERS;
 
    @Test
    public void testMemcachedOperations() throws ExecutionException, InterruptedException, TimeoutException {
-      MemcachedClient cache = SERVER_TEST.getMemcachedClient();
+      MemcachedClient cache = SERVERS.getMemcachedClient();
       cache.set("k1", 0, "v1").get(10, TimeUnit.SECONDS);
       assertEquals("v1", cache.get("k1"));
    }
 
    @Test
    public void testSetGetNewLineChars() throws ExecutionException, InterruptedException, TimeoutException {
-      MemcachedClient cache = SERVER_TEST.getMemcachedClient();
+      MemcachedClient cache = SERVERS.getMemcachedClient();
       // make sure the set()) finishes before retrieving the key
       cache.set("a",0, "A\r\nA").get(10, TimeUnit.SECONDS);
       assertEquals("A\r\nA", cache.get("a"));
@@ -50,7 +45,7 @@ public class MemcachedOperations {
 
    @Test
    public void testFlush() throws Exception {
-      MemcachedClient cache = SERVER_TEST.getMemcachedClient();
+      MemcachedClient cache = SERVERS.getMemcachedClient();
       cache.set("k1", 0, "v1");
       cache.set("k2", 0, "v2").get(10, TimeUnit.SECONDS);
       assertTrue(cache.flush().get());
@@ -60,7 +55,7 @@ public class MemcachedOperations {
 
    @Test
    public void testPutAsync() throws ExecutionException, InterruptedException {
-      MemcachedClient cache = SERVER_TEST.getMemcachedClient();
+      MemcachedClient cache = SERVERS.getMemcachedClient();
       Future<Boolean> key1 = cache.add("k1", 10, "v1");
       assertTrue(key1.get());
       assertEquals("v1", cache.get("k1"));
@@ -69,13 +64,13 @@ public class MemcachedOperations {
 
    @Test
    public void testNonExistentkey() {
-      MemcachedClient cache = SERVER_TEST.getMemcachedClient();
+      MemcachedClient cache = SERVERS.getMemcachedClient();
       assertNull(cache.get("nonExistentkey"));
    }
 
    @Test
    public void testConcurrentGets() throws ExecutionException, InterruptedException, TimeoutException {
-      MemcachedClient cache = SERVER_TEST.getMemcachedClient();
+      MemcachedClient cache = SERVERS.getMemcachedClient();
       int nKeys = 10;
       for (int i = 0; i < nKeys - 1; ++i) {
          cache.set("key-" + i, 0, "value-" + i);

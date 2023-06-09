@@ -3,9 +3,9 @@ package org.infinispan.server.functional.hotrod;
 import static org.infinispan.server.functional.hotrod.HotRodCacheQueries.BANK_PROTO_FILE;
 import static org.infinispan.server.functional.hotrod.HotRodCacheQueries.ENTITY_USER;
 import static org.infinispan.server.test.core.Common.createQueryableCache;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
@@ -35,14 +35,11 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.client.FilterResult;
 import org.infinispan.server.functional.ClusteredIT;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * Basic test for query DSL based remote event filters.
@@ -51,18 +48,12 @@ import org.junit.rules.ExpectedException;
  * @since 8.1
  */
 public class HotRodListenerWithDslFilter {
-   @ClassRule
-   public static InfinispanServerRule SERVERS = ClusteredIT.SERVERS;
-
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
-
-   @Rule
-   public ExpectedException expectedException = ExpectedException.none();
+   @RegisterExtension
+   public static InfinispanServerExtension SERVERS = ClusteredIT.SERVERS;
 
    @Test
    public void testEventFilter() {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVER_TEST, true, BANK_PROTO_FILE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, true, BANK_PROTO_FILE, ENTITY_USER);
       User user1 = new User();
       user1.setId(1);
       user1.setName("John");
@@ -131,7 +122,7 @@ public class HotRodListenerWithDslFilter {
       for (int i = 0; i < numElements; i++) {
          try {
             Object e = queue.poll(5, TimeUnit.SECONDS);
-            assertNotNull("Queue was empty!", e);
+            assertNotNull(e, "Queue was empty!");
          } catch (InterruptedException e) {
             throw new AssertionError("Interrupted while waiting for condition", e);
          }
@@ -139,7 +130,7 @@ public class HotRodListenerWithDslFilter {
       try {
          // no more elements expected here
          Object e = queue.poll(5, TimeUnit.SECONDS);
-         assertNull("No more elements expected in queue!", e);
+         assertNull(e, "No more elements expected in queue!");
       } catch (InterruptedException e) {
          throw new AssertionError("Interrupted while waiting for condition", e);
       }

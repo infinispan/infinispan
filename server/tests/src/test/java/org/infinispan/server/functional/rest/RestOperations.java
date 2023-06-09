@@ -4,16 +4,13 @@ import static org.infinispan.client.rest.RestResponse.NOT_FOUND;
 import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
 import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
-import static org.infinispan.server.test.core.Common.HTTP_PROTOCOLS;
 import static org.infinispan.server.test.core.Common.assertResponse;
 import static org.infinispan.server.test.core.Common.assertStatus;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.Closeable;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -34,47 +31,27 @@ import org.infinispan.counter.configuration.ConvertUtil;
 import org.infinispan.rest.resources.AbstractRestResourceTest;
 import org.infinispan.rest.resources.WeakSSEListener;
 import org.infinispan.server.functional.ClusteredIT;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-@RunWith(Parameterized.class)
 public class RestOperations {
 
-   @ClassRule
-   public static InfinispanServerRule SERVERS = ClusteredIT.SERVERS;
-   private final Protocol protocol;
+   @RegisterExtension
+   public static InfinispanServerExtension SERVERS = ClusteredIT.SERVERS;
 
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
-
-   @Parameterized.Parameters(name = "{0}")
-   public static Collection<Object[]> data() {
-      List<Object[]> params = new ArrayList<>(HTTP_PROTOCOLS.size());
-      for (Protocol protocol : HTTP_PROTOCOLS) {
-         params.add(new Object[]{protocol});
-      }
-      return params;
-   }
-
-   public RestOperations(Protocol protocol) {
-      this.protocol = protocol;
-   }
-
-   @Test
-   public void testRestOperations() {
+   @ParameterizedTest
+   @EnumSource(Protocol.class)
+   public void testRestOperations(Protocol protocol) {
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       builder.protocol(protocol);
-      RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).create();
-      RestCacheClient cache = client.cache(SERVER_TEST.getMethodName());
+      RestClient client = SERVERS.rest().withClientConfiguration(builder).create();
+      RestCacheClient cache = client.cache(SERVERS.getMethodName());
       assertResponse(NO_CONTENT, cache.post("k1", "v1"), r -> assertEquals(protocol, r.getProtocol()));
       assertResponse(OK, cache.get("k1"), r -> {
          assertEquals(protocol, r.getProtocol());
@@ -84,12 +61,13 @@ public class RestOperations {
       assertResponse(NOT_FOUND, cache.get("k1"), r -> assertEquals(protocol, r.getProtocol()));
    }
 
-   @Test
-   public void testPutWithTimeToLive() throws InterruptedException {
+   @ParameterizedTest
+   @EnumSource(Protocol.class)
+   public void testPutWithTimeToLive(Protocol protocol) throws InterruptedException {
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       builder.protocol(protocol);
-      RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).create();
-      RestCacheClient cache = client.cache(SERVER_TEST.getMethodName());
+      RestClient client = SERVERS.rest().withClientConfiguration(builder).create();
+      RestCacheClient cache = client.cache(SERVERS.getMethodName());
       assertStatus(NO_CONTENT, cache.post("k1", "v1", 1, 1));
       assertStatus(OK, cache.get("k1"));
       Thread.sleep(2000);
@@ -97,21 +75,23 @@ public class RestOperations {
    }
 
 
-   @Test
-   public void taskFilter() {
+   @ParameterizedTest
+   @EnumSource(Protocol.class)
+   public void taskFilter(Protocol protocol) {
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       builder.protocol(protocol);
-      RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).create();
+      RestClient client = SERVERS.rest().withClientConfiguration(builder).create();
 
       List<Json> taskListNode = Json.read(assertStatus(OK, client.tasks().list(ResultType.USER))).asJsonList();
       taskListNode.forEach(n -> assertFalse(n.at("name").asString().startsWith("@@")));
    }
 
-   @Test
-   public void testCounter() {
+   @ParameterizedTest
+   @EnumSource(Protocol.class)
+   public void testCounter(Protocol protocol) {
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       builder.protocol(protocol);
-      RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).create();
+      RestClient client = SERVERS.rest().withClientConfiguration(builder).create();
 
       CounterConfiguration configuration = CounterConfiguration
             .builder(CounterType.WEAK)
@@ -121,17 +101,18 @@ public class RestOperations {
 
       AbstractCounterConfiguration config = ConvertUtil.configToParsedConfig("test-counter", configuration);
       String configJson = AbstractRestResourceTest.counterConfigToJson(config);
-      RestCounterClient counter = client.counter(SERVER_TEST.getMethodName(protocol.name()));
+      RestCounterClient counter = client.counter(SERVERS.getMethodName(protocol.name()));
       assertStatus(OK, counter.create(RestEntity.create(MediaType.APPLICATION_JSON, configJson)));
 
       assertEquals("5", assertStatus(OK, counter.get()));
    }
 
-   @Test
-   public void testSSECluster() throws Exception {
+   @ParameterizedTest
+   @EnumSource(Protocol.class)
+   public void testSSECluster(Protocol protocol) throws Exception {
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       builder.protocol(protocol);
-      RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).create();
+      RestClient client = SERVERS.rest().withClientConfiguration(builder).create();
       WeakSSEListener sseListener = new WeakSSEListener();
 
       try (Closeable ignored = client.raw().listen("/rest/v2/container?action=listen", Collections.emptyMap(), sseListener)) {

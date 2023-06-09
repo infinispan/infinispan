@@ -1,40 +1,53 @@
 package org.infinispan.server.functional;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.net.ServerSocket;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
-import org.junit.Test;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
+import org.infinispan.server.test.core.ServerRunMode;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.AfterAllCallback;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @author Dan Berindei
  * @since 14
  **/
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@ExtendWith(StartupFailureIT.Extension.class)
 public class StartupFailureIT {
 
-   @Test
-   public void testAddressAlreadyBound() throws Throwable {
-      try (ServerSocket serverSocket = new ServerSocket(11222)) {
-         AtomicBoolean ran = new AtomicBoolean();
-         InfinispanServerRule rule = InfinispanServerRuleBuilder.server(false);
-         Statement serverStatement = rule.apply(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-               ran.set(true);
-            }
-         }, Description.createTestDescription(StartupFailureIT.class, "testAddressAlreadyBound"));
+   @RegisterExtension
+   public static final InfinispanServerExtension SERVER =
+         InfinispanServerExtensionBuilder.config("configuration/ClusteredServerTest.xml")
+               .numServers(1)
+               .runMode(ServerRunMode.EMBEDDED)
+               .build();
 
-         try {
-            serverStatement.evaluate();
-         } catch (Throwable e) {
-            // Expected?
-         }
-         assertFalse(ran.get());
+   @Test
+   public void testAddressAlreadyBound() {
+      assertFalse(SERVER.getServerDriver().isRunning(0));
+   }
+
+   static class Extension implements AfterAllCallback, BeforeAllCallback {
+
+      ServerSocket socket;
+
+      @Override
+      public void beforeAll(ExtensionContext context) throws Exception {
+         socket = new ServerSocket(11222);
+      }
+
+      @Override
+      public void afterAll(ExtensionContext context) throws Exception {
+         if (socket != null)
+            socket.close();
       }
    }
 }

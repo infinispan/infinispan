@@ -6,6 +6,7 @@ import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.BasicConfiguration;
 import org.infinispan.commons.configuration.Self;
 import org.infinispan.commons.configuration.StringConfiguration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 
 /**
  * Base class for the driver API
@@ -18,7 +19,7 @@ abstract class BaseTestClientDriver<S extends BaseTestClientDriver<S>> implement
    protected BasicConfiguration serverConfiguration = null;
    protected EnumSet<CacheContainerAdmin.AdminFlag> flags = EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class);
    protected String mode = null;
-   protected String qualifier;
+   protected Object[] qualifiers;
 
    public S withServerConfiguration(BasicConfiguration serverConfiguration) {
       if (mode != null) {
@@ -26,6 +27,10 @@ abstract class BaseTestClientDriver<S extends BaseTestClientDriver<S>> implement
       }
       this.serverConfiguration = serverConfiguration;
       return self();
+   }
+
+   public S withServerConfiguration(ConfigurationBuilder serverConfiguration) {
+      return withServerConfiguration(serverConfiguration.build());
    }
 
    public S withServerConfiguration(StringConfiguration configuration) {
@@ -53,7 +58,11 @@ abstract class BaseTestClientDriver<S extends BaseTestClientDriver<S>> implement
    }
 
    public S withQualifier(String qualifier) {
-      this.qualifier = qualifier;
+      return withQualifiers(qualifier);
+   }
+
+   public S withQualifiers(Object... qualifiers) {
+      this.qualifiers = qualifiers;
       return self();
    }
 

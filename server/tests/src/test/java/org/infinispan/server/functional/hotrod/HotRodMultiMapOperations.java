@@ -1,8 +1,8 @@
 package org.infinispan.server.functional.hotrod;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
@@ -13,11 +13,9 @@ import org.infinispan.client.hotrod.multimap.MultimapCacheManager;
 import org.infinispan.client.hotrod.multimap.RemoteMultimapCache;
 import org.infinispan.client.hotrod.multimap.RemoteMultimapCacheManagerFactory;
 import org.infinispan.server.functional.ClusteredIT;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -25,11 +23,8 @@ import org.junit.Test;
  **/
 public class HotRodMultiMapOperations {
 
-   @ClassRule
-   public static InfinispanServerRule SERVERS = ClusteredIT.SERVERS;
-
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
+   @RegisterExtension
+   public static InfinispanServerExtension SERVERS = ClusteredIT.SERVERS;
 
    @Test
    public void testMultiMap() {
@@ -133,7 +128,7 @@ public class HotRodMultiMapOperations {
    }
 
    private <K, V> RemoteMultimapCache<K, V> multimapCache() {
-      RemoteCache<K, V> cache = SERVER_TEST.hotrod().create();
+      RemoteCache<K, V> cache = SERVERS.hotrod().create();
       MultimapCacheManager<K, V> multimapCacheManager = RemoteMultimapCacheManagerFactory.from(cache.getRemoteCacheManager());
 
       return multimapCacheManager.get(cache.getName());

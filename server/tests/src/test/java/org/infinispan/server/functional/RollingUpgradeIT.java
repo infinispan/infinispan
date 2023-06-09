@@ -3,8 +3,8 @@ package org.infinispan.server.functional;
 import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
 import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.server.test.core.Common.assertStatus;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.rest.RestCacheClient;
@@ -14,9 +14,9 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.util.KeyValuePair;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @since 11.0
@@ -25,15 +25,7 @@ public class RollingUpgradeIT extends AbstractMultiClusterIT {
    protected static final String CACHE_NAME = "rolling";
    protected static final int ENTRIES = 50;
 
-   public RollingUpgradeIT() {
-      super("configuration/ClusteredServerTest.xml");
-   }
-
-   protected RollingUpgradeIT(String config) {
-      super(config);
-   }
-
-   @Before
+   @BeforeEach
    public void before() {
       // Start two embedded clusters with 2-node each
       startSourceCluster();
@@ -45,7 +37,7 @@ public class RollingUpgradeIT extends AbstractMultiClusterIT {
       assertNotSame(source.getMembers(), target.getMembers());
    }
 
-   @After
+   @AfterEach
    public void after() throws Exception {
       stopTargetCluster();
       stopSourceCluster();

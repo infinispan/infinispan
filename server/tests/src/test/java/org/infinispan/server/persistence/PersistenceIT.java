@@ -14,26 +14,27 @@ import org.infinispan.commons.test.Exceptions;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.infinispan.server.test.core.persistence.DatabaseServerListener;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.infinispan.server.test.junit5.InfinispanSuite;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
-import org.junit.ClassRule;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.platform.suite.api.SelectClasses;
+import org.junit.platform.suite.api.Suite;
 
 /**
  * @author Gustavo Lira &lt;glira@redhat.com&gt;
  * @since 10.0
  **/
-@RunWith(Suite.class)
-@Suite.SuiteClasses({
+@Suite
+@SelectClasses({
       PooledConnectionOperations.class,
       ManagedConnectionOperations.class,
       JdbcStringBasedCacheStorePassivation.class,
       AsyncJdbcStringBasedCacheStore.class
 })
-public class PersistenceIT {
+public class PersistenceIT extends InfinispanSuite {
 
    private static final String DATABASE_LIBS = System.getProperty(TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_LIBS);
    private static final String EXTERNAL_JDBC_DRIVER = System.getProperty(TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_EXTERNAL_DRIVERS);
@@ -41,9 +42,9 @@ public class PersistenceIT {
 
    public static final DatabaseServerListener DATABASE_LISTENER = new DatabaseServerListener("h2", "mysql", "postgres");
 
-   @ClassRule
-   public static InfinispanServerRule SERVERS =
-         InfinispanServerRuleBuilder.config(System.getProperty(PersistenceIT.class.getName(), "configuration/PersistenceTest.xml"))
+   @RegisterExtension
+   public static InfinispanServerExtension SERVERS =
+         InfinispanServerExtensionBuilder.config(System.getProperty(PersistenceIT.class.getName(), "configuration/PersistenceTest.xml"))
                                     .numServers(1)
                                     .runMode(ServerRunMode.CONTAINER)
                                     .mavenArtifacts(getJdbcDrivers())
