@@ -1,12 +1,10 @@
 package org.infinispan.server.functional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collection;
-
-import jakarta.transaction.TransactionManager;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -23,12 +21,12 @@ import org.infinispan.counter.api.CounterType;
 import org.infinispan.counter.api.SyncStrongCounter;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
+import jakarta.transaction.TransactionManager;
 
 /**
  * @since 15.0
@@ -45,20 +43,17 @@ public class HotRodCompCacheOperationsIT {
                + "    <encoding media-type=\"application/x-protostream\"/>\n"
                + "</distributed-cache>";
 
-   @ClassRule
-   public static final InfinispanServerRule SERVERS =
-         InfinispanServerRuleBuilder.config("configuration/ClusteredServerIspn13Test.xml")
+   @RegisterExtension
+   public static final InfinispanServerExtension SERVERS =
+         InfinispanServerExtensionBuilder.config("configuration/ClusteredServerIspn13Test.xml")
                .numServers(2)
                .property(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_BASE_IMAGE_NAME, "quay.io/infinispan/server:13.0")
                .runMode(ServerRunMode.CONTAINER)
                .build();
 
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
-
    @Test
    public void testHotRodOperations() {
-      RemoteCache<String, String> cache = SERVER_TEST.hotrod().create();
+      RemoteCache<String, String> cache = SERVERS.hotrod().create();
       cache.put("k1", "v1");
       assertEquals(1, cache.size());
       assertEquals("v1", cache.get("k1"));
@@ -68,8 +63,8 @@ public class HotRodCompCacheOperationsIT {
 
    @Test
    public void testCounter() {
-      String counterName = SERVER_TEST.getMethodName();
-      CounterManager counterManager = SERVER_TEST.getCounterManager();
+      String counterName = SERVERS.getMethodName();
+      CounterManager counterManager = SERVERS.getCounterManager();
       assertNull(counterManager.getConfiguration(counterName));
       assertTrue(counterManager.defineCounter(counterName, CounterConfiguration.builder(CounterType.BOUNDED_STRONG).build()));
       SyncStrongCounter strongCounter = counterManager.getStrongCounter(counterName).sync();
@@ -80,13 +75,13 @@ public class HotRodCompCacheOperationsIT {
    @Test
    public void testTransaction() throws Exception {
       ConfigurationBuilder config = new ConfigurationBuilder();
-      config.remoteCache(SERVER_TEST.getMethodName())
+      config.remoteCache(SERVERS.getMethodName())
             .transactionMode(TransactionMode.NON_XA)
             .transactionManagerLookup(RemoteTransactionManagerLookup.getInstance());
 
-      String xml = String.format(TX_CACHE_CONFIG, SERVER_TEST.getMethodName());
+      String xml = String.format(TX_CACHE_CONFIG, SERVERS.getMethodName());
 
-      RemoteCache<String, String> cache = SERVER_TEST.hotrod()
+      RemoteCache<String, String> cache = SERVERS.hotrod()
             .withClientConfiguration(config)
             .withServerConfiguration(new StringConfiguration(xml))
             .create();
@@ -101,18 +96,18 @@ public class HotRodCompCacheOperationsIT {
    @Test
    public void testMultiMap() {
       ConfigurationBuilder config = new ConfigurationBuilder();
-      config.remoteCache(SERVER_TEST.getMethodName());
+      config.remoteCache(SERVERS.getMethodName());
 
-      String xml = String.format(MULTIMAP_CACHE_CONFIG, SERVER_TEST.getMethodName());
+      String xml = String.format(MULTIMAP_CACHE_CONFIG, SERVERS.getMethodName());
 
-      RemoteCacheManager rcm = SERVER_TEST.hotrod()
+      RemoteCacheManager rcm = SERVERS.hotrod()
             .withClientConfiguration(config)
             .withServerConfiguration(new StringConfiguration(xml))
             .create().getRemoteCacheManager();
 
       MultimapCacheManager<String, String> multimapCacheManager = RemoteMultimapCacheManagerFactory.from(rcm);
 
-      RemoteMultimapCache<String, String> people = multimapCacheManager.get(SERVER_TEST.getMethodName());
+      RemoteMultimapCache<String, String> people = multimapCacheManager.get(SERVERS.getMethodName());
 
       people.put("coders", "Will");
       people.put("coders", "Auri");
@@ -127,18 +122,18 @@ public class HotRodCompCacheOperationsIT {
    @Test
    public void testMultiMapWithDuplicates() {
       ConfigurationBuilder config = new ConfigurationBuilder();
-      config.remoteCache(SERVER_TEST.getMethodName());
+      config.remoteCache(SERVERS.getMethodName());
 
-      String xml = String.format(MULTIMAP_CACHE_CONFIG, SERVER_TEST.getMethodName());
+      String xml = String.format(MULTIMAP_CACHE_CONFIG, SERVERS.getMethodName());
 
-      RemoteCacheManager rcm = SERVER_TEST.hotrod()
+      RemoteCacheManager rcm = SERVERS.hotrod()
             .withClientConfiguration(config)
             .withServerConfiguration(new StringConfiguration(xml))
             .create().getRemoteCacheManager();
 
       MultimapCacheManager<String, String> multimapCacheManager = RemoteMultimapCacheManagerFactory.from(rcm);
 
-      RemoteMultimapCache<String, String> people = multimapCacheManager.get(SERVER_TEST.getMethodName(), true);
+      RemoteMultimapCache<String, String> people = multimapCacheManager.get(SERVERS.getMethodName(), true);
 
       people.put("coders", "Will");
       people.put("coders", "Will");

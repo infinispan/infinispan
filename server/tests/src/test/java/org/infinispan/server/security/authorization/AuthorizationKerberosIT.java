@@ -1,7 +1,6 @@
 package org.infinispan.server.security.authorization;
 
 import java.net.InetSocketAddress;
-import java.nio.file.Paths;
 
 import javax.security.auth.Subject;
 
@@ -13,86 +12,75 @@ import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.LdapServerListener;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.category.Security;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.infinispan.server.test.junit5.InfinispanSuite;
 import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.platform.suite.api.SelectClasses;
+import org.junit.platform.suite.api.Suite;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.1
  **/
-@RunWith(AuthorizationSuiteRunner.class)
-@Suite.SuiteClasses({HotRodAuthorizationTest.class, RESTAuthorizationTest.class})
+@Suite
+@SelectClasses({AuthorizationKerberosIT.HotRod.class, AuthorizationKerberosIT.Rest.class})
 @Category(Security.class)
-public class AuthorizationKerberosIT extends AbstractAuthorization {
-   @ClassRule
-   public static InfinispanServerRule SERVERS =
-         InfinispanServerRuleBuilder.config("configuration/AuthorizationKerberosTest.xml")
+public class AuthorizationKerberosIT extends InfinispanSuite {
+
+   @RegisterExtension
+   public static InfinispanServerExtension SERVERS =
+         InfinispanServerExtensionBuilder.config("configuration/AuthorizationKerberosTest.xml")
                .numServers(1)
                .property("java.security.krb5.conf", "${infinispan.server.config.path}/krb5.conf")
                .addListener(new LdapServerListener(true))
                .runMode(ServerRunMode.EMBEDDED)
                .build();
 
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
+   static class HotRod extends HotRodAuthorizationTest {
+      @RegisterExtension
+      static InfinispanServerExtension SERVERS = AuthorizationKerberosIT.SERVERS;
 
-   private static String oldKrb5Conf;
-
-   @BeforeClass
-   public static void setKrb5Conf() {
-      oldKrb5Conf = System.setProperty("java.security.krb5.conf", Paths.get("src/test/resources/configuration/krb5.conf").toString());
-   }
-
-   @AfterClass
-   public static void restoreKrb5Conf() {
-      if (oldKrb5Conf != null) {
-         System.setProperty("java.security.krb5.conf", oldKrb5Conf);
+      public HotRod() {
+         super(SERVERS, AuthorizationKerberosIT::expectedServerPrincipalName, user -> {
+            ConfigurationBuilder hotRodBuilder = new ConfigurationBuilder();
+            if (user != TestUser.ANONYMOUS) {
+               Subject subject = Common.createSubject(user.getUser(), "INFINISPAN.ORG", user.getPassword().toCharArray());
+               hotRodBuilder.security().authentication()
+                     .saslMechanism("GSSAPI")
+                     .serverName("datagrid")
+                     .realm("default")
+                     .callbackHandler(new VoidCallbackHandler())
+                     .clientSubject(subject);
+            }
+            return hotRodBuilder;
+         });
       }
    }
 
-   @Override
-   protected InfinispanServerRule getServers() {
-      return SERVERS;
-   }
+   static class Rest extends RESTAuthorizationTest {
+      @RegisterExtension
+      static InfinispanServerExtension SERVERS = AuthorizationKerberosIT.SERVERS;
 
-   @Override
-   protected InfinispanServerTestMethodRule getServerTest() {
-      return SERVER_TEST;
-   }
-
-   @Override
-   protected void addClientBuilders(TestUser user) {
-      ConfigurationBuilder hotRodBuilder = new ConfigurationBuilder();
-      RestClientConfigurationBuilder restBuilder = new RestClientConfigurationBuilder();
-      if (user != TestUser.ANONYMOUS) {
-         Subject subject = Common.createSubject(user.getUser(), "INFINISPAN.ORG", user.getPassword().toCharArray());
-         hotRodBuilder.security().authentication()
-               .saslMechanism("GSSAPI")
-               .serverName("datagrid")
-               .realm("default")
-               .callbackHandler(new VoidCallbackHandler())
-               .clientSubject(subject);
-         restBuilder.security().authentication()
-               .mechanism("SPNEGO")
-               .clientSubject(subject);
-         // Kerberos is strict about the hostname, so we do this by hand
-         InetSocketAddress serverAddress = SERVERS.getServerDriver().getServerSocket(0, 11222);
-         restBuilder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
+      public Rest() {
+         super(SERVERS, AuthorizationKerberosIT::expectedServerPrincipalName, user -> {
+            RestClientConfigurationBuilder restBuilder = new RestClientConfigurationBuilder();
+            if (user != TestUser.ANONYMOUS) {
+               Subject subject = Common.createSubject(user.getUser(), "INFINISPAN.ORG", user.getPassword().toCharArray());
+               restBuilder.security().authentication()
+                     .mechanism("SPNEGO")
+                     .clientSubject(subject);
+               // Kerberos is strict about the hostname, so we do this by hand
+               InetSocketAddress serverAddress = SERVERS.getServerDriver().getServerSocket(0, 11222);
+               restBuilder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
+            }
+            return restBuilder;
+         });
       }
-      hotRodBuilders.put(user, hotRodBuilder);
-      restBuilders.put(user, restBuilder);
-      respBuilders.clear();
    }
 
-   protected String expectedServerPrincipalName(TestUser user) {
+   private static String expectedServerPrincipalName(TestUser user) {
       return String.format("%s@INFINISPAN.ORG", user.getUser());
    }
 }

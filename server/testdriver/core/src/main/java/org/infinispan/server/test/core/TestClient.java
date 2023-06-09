@@ -141,11 +141,18 @@ public class TestClient {
    }
 
    public String getMethodName() {
-      return getMethodName(null);
+      return getMethodName((Object) null);
    }
 
-   public String getMethodName(String qualifier) {
-      String cacheName = "C" + methodName + (qualifier != null ? qualifier : "");
+   public String getMethodName(Object... qualifiers) {
+      StringBuilder sb = new StringBuilder("C").append(methodName);
+      if (qualifiers != null) {
+         for (Object q : qualifiers) {
+            if (q != null)
+               sb.append(q);
+         }
+      }
+      String cacheName = sb.toString();
       try {
          MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
          byte[] digest = sha1.digest(cacheName.getBytes(StandardCharsets.UTF_8));

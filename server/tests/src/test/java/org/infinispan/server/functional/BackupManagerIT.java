@@ -17,10 +17,10 @@ import static org.infinispan.server.test.core.Common.assertStatusAndBodyContains
 import static org.infinispan.server.test.core.Common.assertStatusAndBodyEquals;
 import static org.infinispan.server.test.core.Common.awaitResponse;
 import static org.infinispan.server.test.core.Common.awaitStatus;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.InputStream;
@@ -62,9 +62,9 @@ import org.infinispan.counter.configuration.Element;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.test.core.AeshTestConnection;
 import org.infinispan.server.test.core.Common;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Ryan Emerson
@@ -76,15 +76,15 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
    static final int NUM_ENTRIES = 10;
 
    public BackupManagerIT() {
-      super("configuration/ClusteredServerTest.xml", Common.NASHORN_DEPS);
+      super(Common.NASHORN_DEPS);
    }
 
-   @BeforeClass
+   @BeforeAll
    public static void setup() {
       WORKING_DIR.mkdirs();
    }
 
-   @AfterClass
+   @AfterAll
    public static void teardown() {
       Util.recursiveFileRemove(WORKING_DIR);
    }
@@ -450,7 +450,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
 
       // Upload the backup to the target cluster
       try (RestResponse restoreResponse = restore.apply(backupZip, client)) {
-         assertEquals(restoreResponse.getBody(), 201, restoreResponse.getStatus());
+         assertEquals(201, restoreResponse.getStatus(), restoreResponse.getBody());
       }
 
       // Assert that all content has been restored as expected, connecting to the second node in the cluster to ensure
@@ -543,7 +543,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
          assertTrue(workingDir.isDirectory());
          String[] files = workingDir.list();
          assertNotNull(files);
-         assertEquals(Arrays.toString(files), 0, files.length);
+         assertEquals(0, files.length, Arrays.toString(files));
       }
    }
 }

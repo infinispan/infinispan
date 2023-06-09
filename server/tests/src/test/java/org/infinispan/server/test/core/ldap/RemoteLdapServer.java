@@ -19,7 +19,7 @@ import org.testcontainers.shaded.com.google.common.io.Files;
 
 public class RemoteLdapServer extends AbstractLdapServer {
 
-   private String initLDIF;
+   private final String initLDIF;
 
    public RemoteLdapServer(String initLDIF) {
       this.initLDIF = initLDIF;

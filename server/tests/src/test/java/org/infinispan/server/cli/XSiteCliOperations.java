@@ -24,13 +24,11 @@ import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.server.functional.XSiteIT;
 import org.infinispan.server.test.core.AeshTestConnection;
 import org.infinispan.server.test.core.TestServer;
-import org.infinispan.server.test.junit4.InfinispanXSiteServerRule;
-import org.infinispan.server.test.junit4.InfinispanXSiteServerTestMethodRule;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanXSiteServerExtension;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * CLI test for 'site' command
@@ -40,16 +38,13 @@ import org.junit.Test;
  */
 public class XSiteCliOperations {
 
-   @ClassRule
-   public static final InfinispanXSiteServerRule SERVERS = XSiteIT.SERVERS;
-
-   @Rule
-   public InfinispanXSiteServerTestMethodRule SERVER_TEST = new InfinispanXSiteServerTestMethodRule(SERVERS);
+   @RegisterExtension
+   public static final InfinispanXSiteServerExtension SERVERS = XSiteIT.SERVERS;
 
    private static File workingDir;
    private static Properties properties;
 
-   @BeforeClass
+   @BeforeAll
    public static void setup() {
       workingDir = new File(CommonsTestingUtil.tmpDirectory(XSiteCliOperations.class));
       Util.recursiveFileRemove(workingDir);
@@ -59,7 +54,7 @@ public class XSiteCliOperations {
       properties.put("cli.dir", workingDir.getAbsolutePath());
    }
 
-   @AfterClass
+   @AfterAll
    public static void teardown() {
       Util.recursiveFileRemove(workingDir);
    }
@@ -101,7 +96,7 @@ public class XSiteCliOperations {
             .strategy(BackupConfiguration.BackupStrategy.ASYNC)
             .stateTransfer().mode(XSiteStateTransferMode.AUTO);
 
-      SERVER_TEST.hotrod(LON).createRemoteCacheManager()
+      SERVERS.hotrod(LON).createRemoteCacheManager()
             .administration()
             .createCache("st-mode", builder.build());
 

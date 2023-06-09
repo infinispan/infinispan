@@ -22,9 +22,9 @@ import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.test.TestingUtil;
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
+import org.junit.jupiter.api.extension.AfterAllCallback;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.testcontainers.containers.FixedHostPortGenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.MountableFile;
@@ -33,37 +33,23 @@ import org.testcontainers.utility.MountableFile;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-public class KeyCloakServerRule implements TestRule {
+public class KeyCloakServerExtension implements AfterAllCallback, BeforeAllCallback {
    public static final String KEYCLOAK_IMAGE = System.getProperty(TestSystemPropertyNames.KEYCLOAK_IMAGE, "quay.io/keycloak/keycloak:10.0.1");
    private final String realmJsonFile;
 
    private FixedHostPortGenericContainer<?> container;
-   private final List<Consumer<KeyCloakServerRule>> beforeListeners = new ArrayList<>();
+   private final List<Consumer<KeyCloakServerExtension>> beforeListeners = new ArrayList<>();
    private final File keycloakDirectory;
 
-   public KeyCloakServerRule(String realmJsonFile) {
+   public KeyCloakServerExtension(String realmJsonFile) {
       this.realmJsonFile = realmJsonFile;
       this.keycloakDirectory = new File(tmpDirectory("keycloak"));
    }
 
    @Override
-   public Statement apply(Statement base, Description description) {
-      return new Statement() {
-         @Override
-         public void evaluate() throws Throwable {
-            before(description.getTestClass());
-            try {
-               base.evaluate();
-            } finally {
-               after();
-            }
-         }
-      };
-   }
-
-   private void before(Class<?> testClass) {
+   public void beforeAll(ExtensionContext context) {
+      Class<?> testClass = context.getRequiredTestClass();
       keycloakDirectory.mkdirs();
-
       beforeListeners.forEach(l -> l.accept(this));
 
       File keycloakImport = new File(keycloakDirectory, "keycloak.json");
@@ -118,11 +104,12 @@ public class KeyCloakServerRule implements TestRule {
       }
    }
 
-   private void after() {
+   @Override
+   public void afterAll(ExtensionContext context) {
       container.close();
    }
 
-   public KeyCloakServerRule addBeforeListener(Consumer<KeyCloakServerRule> listener) {
+   public KeyCloakServerExtension addBeforeListener(Consumer<KeyCloakServerExtension> listener) {
       beforeListeners.add(listener);
       return this;
    }

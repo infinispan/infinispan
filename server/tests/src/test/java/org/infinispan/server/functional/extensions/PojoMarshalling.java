@@ -1,6 +1,6 @@
 package org.infinispan.server.functional.extensions;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -8,11 +8,9 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.functional.ClusteredIT;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -20,11 +18,8 @@ import org.junit.Test;
  **/
 public class PojoMarshalling {
 
-   @ClassRule
-   public static final InfinispanServerRule SERVERS = ClusteredIT.SERVERS;
-
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
+   @RegisterExtension
+   public static final InfinispanServerExtension SERVERS = ClusteredIT.SERVERS;
 
    @Test
    public void testPojoMarshalling() {
@@ -35,7 +30,7 @@ public class PojoMarshalling {
       cacheBuilder.encoding().key().mediaType(MediaType.APPLICATION_SERIALIZED_OBJECT_TYPE);
       cacheBuilder.encoding().value().mediaType(MediaType.APPLICATION_SERIALIZED_OBJECT_TYPE);
       cacheBuilder.clustering().cacheMode(CacheMode.DIST_SYNC);
-      RemoteCache<String, Person> cache = SERVER_TEST.hotrod().withServerConfiguration(cacheBuilder).withClientConfiguration(builder).withMarshaller(JavaSerializationMarshaller.class).create();
+      RemoteCache<String, Person> cache = SERVERS.hotrod().withServerConfiguration(cacheBuilder).withClientConfiguration(builder).withMarshaller(JavaSerializationMarshaller.class).create();
       cache.put("123", new Person("Enrique", 29));
       Person person = cache.get("123");
       assertEquals("Enrique", person.getName());

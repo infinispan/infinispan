@@ -5,9 +5,10 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 import static org.infinispan.server.test.core.Common.createQueryableCache;
 import static org.infinispan.server.test.core.Common.sync;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,50 +36,27 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.functional.extensions.entities.Entities;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-@RunWith(Parameterized.class)
 public class HotRodCacheQueries {
 
    public static final String BANK_PROTO_FILE = "/sample_bank_account/bank.proto";
    public static final String ENTITY_USER = "sample_bank_account.User";
-   @ClassRule
-   public static InfinispanServerRule SERVERS = ClusteredIT.SERVERS;
+   @RegisterExtension
+   public static InfinispanServerExtension SERVERS = ClusteredIT.SERVERS;
 
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
-
-   @Rule
-   public ExpectedException expectedException = ExpectedException.none();
-
-   private final boolean indexed;
-
-   @Parameterized.Parameters(name = "{0}")
-   public static Collection<Object[]> data() {
-      List<Object[]> data = new ArrayList<>();
-      data.add(new Object[]{true});
-      data.add(new Object[]{false});
-      return data;
-   }
-
-   public HotRodCacheQueries(boolean indexed) {
-      this.indexed = indexed;
-   }
-
-   @Test
-   public void testAttributeQuery() {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVER_TEST, indexed, BANK_PROTO_FILE, ENTITY_USER);
+   @ParameterizedTest
+   @ValueSource(booleans = {true, false})
+   public void testAttributeQuery(boolean indexed) {
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, BANK_PROTO_FILE, ENTITY_USER);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
@@ -96,9 +74,10 @@ public class HotRodCacheQueries {
       assertUser1(list.get(0));
    }
 
-   @Test
-   public void testEmbeddedAttributeQuery() {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVER_TEST, indexed, BANK_PROTO_FILE, ENTITY_USER);
+   @ParameterizedTest
+   @ValueSource(booleans = {true, false})
+   public void testEmbeddedAttributeQuery(boolean indexed) {
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, BANK_PROTO_FILE, ENTITY_USER);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
@@ -112,9 +91,10 @@ public class HotRodCacheQueries {
       assertUser1(list.get(0));
    }
 
-   @Test
-   public void testProjections() {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVER_TEST, indexed, BANK_PROTO_FILE, ENTITY_USER);
+   @ParameterizedTest
+   @ValueSource(booleans = {true, false})
+   public void testProjections(boolean indexed) {
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, BANK_PROTO_FILE, ENTITY_USER);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
@@ -138,9 +118,10 @@ public class HotRodCacheQueries {
     *
     * @see <a href="https://issues.jboss.org/browse/ISPN-5729">https://issues.jboss.org/browse/ISPN-5729</a>
     */
-   @Test
-   public void testUninverting() {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVER_TEST, indexed, BANK_PROTO_FILE, ENTITY_USER);
+   @ParameterizedTest
+   @ValueSource(booleans = {true, false})
+   public void testUninverting(boolean indexed) {
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, BANK_PROTO_FILE, ENTITY_USER);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
@@ -149,9 +130,10 @@ public class HotRodCacheQueries {
       assertEquals(0, query.execute().list().size());
    }
 
-   @Test
-   public void testIteratorWithQuery() {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVER_TEST, indexed, BANK_PROTO_FILE, ENTITY_USER);
+   @ParameterizedTest
+   @ValueSource(booleans = {true, false})
+   public void testIteratorWithQuery(boolean indexed) {
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, BANK_PROTO_FILE, ENTITY_USER);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
@@ -168,9 +150,10 @@ public class HotRodCacheQueries {
       assertEquals("Cat", ((User) entries.get(0).getValue()).getSurname());
    }
 
-   @Test
-   public void testIteratorWithQueryAndProjections() {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVER_TEST, indexed, BANK_PROTO_FILE, ENTITY_USER);
+   @ParameterizedTest
+   @ValueSource(booleans = {true, false})
+   public void testIteratorWithQueryAndProjections(boolean indexed) {
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, BANK_PROTO_FILE, ENTITY_USER);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
@@ -189,24 +172,26 @@ public class HotRodCacheQueries {
       assertEquals("Tom", projections[1]);
    }
 
-   @Test
-   public void testQueryViaRest() {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVER_TEST, indexed, BANK_PROTO_FILE, ENTITY_USER);
+   @ParameterizedTest
+   @ValueSource(booleans = {true, false})
+   public void testQueryViaRest(boolean indexed) {
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, BANK_PROTO_FILE, ENTITY_USER);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
       String query = "FROM sample_bank_account.User WHERE name='Adrian'";
 
-      RestClient restClient = SERVER_TEST.newRestClient(new RestClientConfigurationBuilder());
-      try (RestResponse response = sync(restClient.cache(SERVER_TEST.getMethodName()).query(query))) {
+      RestClient restClient = SERVERS.rest().withClientConfiguration(new RestClientConfigurationBuilder()).get();
+      try (RestResponse response = sync(restClient.cache(SERVERS.getMethodName()).query(query))) {
          Json results = Json.read(response.getBody());
          assertEquals(1, results.at("total_results").asInteger());
       }
    }
 
-   @Test
-   public void testManyInClauses() {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVER_TEST, indexed, BANK_PROTO_FILE, ENTITY_USER);
+   @ParameterizedTest
+   @ValueSource(booleans = {true, false})
+   public void testManyInClauses(boolean indexed) {
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, BANK_PROTO_FILE, ENTITY_USER);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
@@ -233,14 +218,10 @@ public class HotRodCacheQueries {
       assertUser1(list.get(0));
    }
 
-   @Test
-   public void testWayTooManyInClauses() {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVER_TEST, indexed, BANK_PROTO_FILE, ENTITY_USER);
-
-      if (indexed) {
-         expectedException.expect(HotRodClientException.class);
-         expectedException.expectMessage("org.apache.lucene.search.BooleanQuery$TooManyClauses: maxClauseCount is set to 1025");
-      }
+   @ParameterizedTest
+   @ValueSource(booleans = {true, false})
+   public void testWayTooManyInClauses(boolean indexed) {
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, BANK_PROTO_FILE, ENTITY_USER);
 
       Set<String> values = new HashSet<>();
       for (int i = 0; i < 1026; i++) {
@@ -253,7 +234,12 @@ public class HotRodCacheQueries {
       // this Ickle query translates to a BooleanQuery with 1026 clauses, 1 more than the configured
       // -Dinfinispan.query.lucene.max-boolean-clauses=1025, so executing the query is expected to fail
 
-      query.execute();
+      if (indexed) {
+         Exception expectedException = assertThrows(HotRodClientException.class, query::execute);
+         assertTrue(expectedException.getMessage().contains("org.apache.lucene.search.BooleanQuery$TooManyClauses: maxClauseCount is set to 1025"));
+      } else {
+         query.execute();
+      }
    }
 
    @Test
@@ -264,7 +250,7 @@ public class HotRodCacheQueries {
       org.infinispan.configuration.cache.ConfigurationBuilder cache = new org.infinispan.configuration.cache.ConfigurationBuilder();
       cache.clustering().cacheMode(CacheMode.DIST_SYNC).encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE);
 
-      RemoteCache<String, Entities.Person> peopleCache = SERVER_TEST.hotrod().withClientConfiguration(builder).withServerConfiguration(cache).create();
+      RemoteCache<String, Entities.Person> peopleCache = SERVERS.hotrod().withClientConfiguration(builder).withServerConfiguration(cache).create();
       RemoteCache<String, String> metadataCache = peopleCache.getRemoteCacheContainer().getCache(PROTOBUF_METADATA_CACHE_NAME);
       metadataCache.put(Entities.INSTANCE.getProtoFileName(), Entities.INSTANCE.getProtoFile());
 
@@ -281,7 +267,7 @@ public class HotRodCacheQueries {
       List<Entities.Person> rossignols = query.execute().list();
       assertThat(rossignols).extracting("firstName").containsExactlyInAnyOrder("Oihana", "Elaia");
 
-      RestClient restClient = SERVER_TEST.rest().get();
+      RestClient restClient = SERVERS.rest().get();
       try (RestResponse response = sync(restClient.cache(peopleCache.getName()).entries(1000))) {
          if (response.getStatus() != 200) {
             fail(response.getBody());

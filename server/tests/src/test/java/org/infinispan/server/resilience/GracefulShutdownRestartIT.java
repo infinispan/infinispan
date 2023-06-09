@@ -1,7 +1,7 @@
 package org.infinispan.server.resilience;
 
 import static org.infinispan.server.test.core.Common.sync;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.concurrent.TimeUnit;
 
@@ -14,33 +14,28 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.test.core.ContainerInfinispanServerDriver;
 import org.infinispan.server.test.core.ServerRunMode;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @since 10.0
  */
 public class GracefulShutdownRestartIT {
 
-   @ClassRule
-   public static final InfinispanServerRule SERVER =
-         InfinispanServerRuleBuilder.config("configuration/ClusteredServerTest.xml")
+   @RegisterExtension
+   public static final InfinispanServerExtension SERVER =
+         InfinispanServerExtensionBuilder.config("configuration/ClusteredServerTest.xml")
                                     .numServers(2)
                                     .runMode(ServerRunMode.CONTAINER)
                                     .build();
-
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVER);
 
    @Test
    public void testGracefulShutdownRestart() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC).persistence().addSingleFileStore().segmented(false);
-      RemoteCache<Object, Object> hotRod = SERVER_TEST.hotrod().withServerConfiguration(builder).create();
+      RemoteCache<Object, Object> hotRod = SERVER.hotrod().withServerConfiguration(builder).create();
 
       for (int i = 0; i < 100; i++) {
          hotRod.put(String.format("k%03d", i), String.format("v%03d", i));
@@ -49,7 +44,7 @@ public class GracefulShutdownRestartIT {
       RestClientConfigurationBuilder restClientBuilder = new RestClientConfigurationBuilder()
             .socketTimeout(RestClientConfigurationProperties.DEFAULT_SO_TIMEOUT * 60)
             .connectionTimeout(RestClientConfigurationProperties.DEFAULT_CONNECT_TIMEOUT * 60);
-      RestClient rest = SERVER_TEST.rest().withClientConfiguration(restClientBuilder).get();
+      RestClient rest = SERVER.rest().withClientConfiguration(restClientBuilder).get();
       sync(rest.cluster().stop(), 5, TimeUnit.MINUTES).close();
       ContainerInfinispanServerDriver serverDriver = (ContainerInfinispanServerDriver) SERVER.getServerDriver();
       Eventually.eventually(

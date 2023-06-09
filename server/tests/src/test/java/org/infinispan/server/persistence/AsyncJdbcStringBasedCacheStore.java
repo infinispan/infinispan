@@ -1,60 +1,35 @@
 package org.infinispan.server.persistence;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.category.Persistence;
 import org.infinispan.server.test.core.persistence.Database;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 
 @Category(Persistence.class)
-@RunWith(Parameterized.class)
 public class AsyncJdbcStringBasedCacheStore {
 
-    @ClassRule
-    public static InfinispanServerRule SERVERS = PersistenceIT.SERVERS;
+    @RegisterExtension
+    public static InfinispanServerExtension SERVERS = PersistenceIT.SERVERS;
 
-    @Rule
-    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
-
-    private final Database database;
-
-    public AsyncJdbcStringBasedCacheStore(String databaseType) {
-        this.database = PersistenceIT.DATABASE_LISTENER.getDatabase(databaseType);
-    }
-
-    @Parameterized.Parameters(name = "{0}")
-    public static Collection<Object[]> data() {
-        String[] databaseTypes = PersistenceIT.DATABASE_LISTENER.getDatabaseTypes();
-        List<Object[]> params = new ArrayList<>(databaseTypes.length);
-        for (String databaseType : databaseTypes) {
-            params.add(new Object[]{databaseType});
-        }
-        return params;
-    }
-
-    @Test
-    public void testPutRemove() throws Exception {
+    @ParameterizedTest
+    @ArgumentsSource(Common.DatabaseProvider.class)
+    public void testPutRemove(Database database) throws Exception {
         int numEntries = 10;
         String keyPrefix = "testPutRemove-k-";
         String valuePrefix = "testPutRemove-k-";
 
         JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, false, true)
                 .setLockingConfigurations();
-        RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
+        RemoteCache<String, String> cache = SERVERS.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
         try(TableManipulation table = new TableManipulation(cache.getName(), jdbcUtil.getPersistenceConfiguration())) {
             // test PUT operation
             for (int i = 0; i < numEntries; i++) {

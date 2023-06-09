@@ -16,8 +16,8 @@ import static org.infinispan.server.test.core.Common.assertResponse;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.LON;
 import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.NYC;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.stream.IntStream;
 
@@ -27,12 +27,10 @@ import org.infinispan.client.rest.RestEntity;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.server.functional.XSiteIT;
-import org.infinispan.server.test.junit4.InfinispanXSiteServerRule;
-import org.infinispan.server.test.junit4.InfinispanXSiteServerTestMethodRule;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanXSiteServerExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @author Pedro Ruivo
@@ -41,19 +39,16 @@ import org.junit.Test;
  **/
 public class XSiteRestCacheOperations {
 
-   @ClassRule
-   public static final InfinispanXSiteServerRule SERVERS = XSiteIT.SERVERS;
-
-   @Rule
-   public InfinispanXSiteServerTestMethodRule SERVER_TEST = new InfinispanXSiteServerTestMethodRule(SERVERS);
+   @RegisterExtension
+   public static final InfinispanXSiteServerExtension SERVERS = XSiteIT.SERVERS;
 
    String cacheName;
    private RestCacheClient lonCache;
    private RestCacheClient nycCache;
 
-   @Before
+   @BeforeEach
    public void setup() {
-      cacheName = SERVER_TEST.getMethodName();
+      cacheName = SERVERS.getMethodName();
    }
 
    @Test
@@ -146,13 +141,13 @@ public class XSiteRestCacheOperations {
    }
 
    private RestCacheClient createRestCacheClient(String siteName, String xml) {
-      RestCacheClient cache = SERVER_TEST.rest(siteName).get().cache(cacheName);
+      RestCacheClient cache = SERVERS.rest(siteName).get().cache(cacheName);
       assertStatus(200, cache.createWithConfiguration(RestEntity.create(MediaType.APPLICATION_XML, xml)));
       return cache;
    }
 
    private RestCacheClient createRestCacheClient(String siteName) {
-      RestCacheClient cache = SERVER_TEST.rest(siteName).get().cache(cacheName);
+      RestCacheClient cache = SERVERS.rest(siteName).get().cache(cacheName);
       assertStatus(200, cache.createWithTemplate(DefaultTemplate.DIST_SYNC.getTemplateName()));
       return cache;
    }

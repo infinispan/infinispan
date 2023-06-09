@@ -1,12 +1,9 @@
 package org.infinispan.server.persistence;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import java.util.Properties;
 
 import org.infinispan.cli.commands.CLI;
@@ -15,44 +12,22 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.server.test.core.AeshTestConnection;
+import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.category.Persistence;
 import org.infinispan.server.test.core.persistence.Database;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 
 @Category(Persistence.class)
-@RunWith(Parameterized.class)
 public class ManagedConnectionOperations {
 
-   @ClassRule
-   public static InfinispanServerRule SERVERS = PersistenceIT.SERVERS;
+   @RegisterExtension
+   public static InfinispanServerExtension SERVERS = PersistenceIT.SERVERS;
 
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
-
-   private final Database database;
-
-   @Parameterized.Parameters(name = "{0}")
-   public static Collection<Object[]> data() {
-      String[] databaseTypes = PersistenceIT.DATABASE_LISTENER.getDatabaseTypes();
-      List<Object[]> params = new ArrayList<>(databaseTypes.length);
-      for (String databaseType : databaseTypes) {
-         params.add(new Object[]{databaseType});
-      }
-      return params;
-   }
-
-   public ManagedConnectionOperations(String databaseType) {
-      this.database = PersistenceIT.DATABASE_LISTENER.getDatabase(databaseType);
-   }
-
-   private org.infinispan.configuration.cache.ConfigurationBuilder createConfigurationBuilder() {
+   private org.infinispan.configuration.cache.ConfigurationBuilder createConfigurationBuilder(Database database) {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       builder.persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
@@ -67,10 +42,11 @@ public class ManagedConnectionOperations {
       return builder;
    }
 
-   @Test
-   public void testTwoCachesSameCacheStore() {
-      RemoteCache<String, String> cache1 = SERVER_TEST.hotrod().withServerConfiguration(createConfigurationBuilder()).withQualifier("1").create();
-      RemoteCache<String, String> cache2 = SERVER_TEST.hotrod().withServerConfiguration(createConfigurationBuilder()).withQualifier("2").create();
+   @ParameterizedTest
+   @ArgumentsSource(Common.DatabaseProvider.class)
+   public void testTwoCachesSameCacheStore(Database database) {
+      RemoteCache<String, String> cache1 = SERVERS.hotrod().withServerConfiguration(createConfigurationBuilder(database)).withQualifier("1").create();
+      RemoteCache<String, String> cache2 = SERVERS.hotrod().withServerConfiguration(createConfigurationBuilder(database)).withQualifier("2").create();
       cache1.put("k1", "v1");
       String firstK1 = cache1.get("k1");
       assertEquals("v1", firstK1);
@@ -83,9 +59,10 @@ public class ManagedConnectionOperations {
       assertCleanCacheAndStore(cache2);
    }
 
-   @Test
-   public void testPutGetRemove() {
-      RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(createConfigurationBuilder()).create();
+   @ParameterizedTest
+   @ArgumentsSource(Common.DatabaseProvider.class)
+   public void testPutGetRemove(Database database) {
+      RemoteCache<String, String> cache = SERVERS.hotrod().withServerConfiguration(createConfigurationBuilder(database)).create();
       cache.put("k1", "v1");
       cache.put("k2", "v2");
 
@@ -108,11 +85,12 @@ public class ManagedConnectionOperations {
       assertEquals(0, cache.size());
    }
 
-   @Test
-   public void testDataSourceCLI() {
+   @ParameterizedTest
+   @ArgumentsSource(Common.DatabaseProvider.class)
+   public void testDataSourceCLI(Database database) {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{}, new Properties());
-         terminal.send("connect " + SERVERS.getTestServer().getDriver().getServerAddress(0).getHostAddress() + ":11222");
+         terminal.send("connect " + SERVERS.getServerDriver().getServerAddress(0).getHostAddress() + ":11222");
          terminal.assertContains("//containers/default]>");
          terminal.clear();
          terminal.send("server datasource ls");

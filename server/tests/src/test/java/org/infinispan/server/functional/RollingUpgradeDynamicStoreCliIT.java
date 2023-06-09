@@ -15,8 +15,8 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.test.core.AeshTestConnection;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 
 /**
  * @since 13.0
@@ -28,7 +28,7 @@ public class RollingUpgradeDynamicStoreCliIT extends RollingUpgradeDynamicStoreI
    private static Path dest;
    private static final String REMOTE_STORE_CFG_FILE = "remote-store.json";
 
-   @BeforeClass
+   @BeforeAll
    public static void setup() {
       workingDir = new File(CommonsTestingUtil.tmpDirectory(RollingUpgradeDynamicStoreCliIT.class));
       Util.recursiveFileRemove(workingDir);
@@ -43,7 +43,7 @@ public class RollingUpgradeDynamicStoreCliIT extends RollingUpgradeDynamicStoreI
       }
    }
 
-   @AfterClass
+   @AfterAll
    public static void teardown() {
       Util.recursiveFileRemove(workingDir);
    }

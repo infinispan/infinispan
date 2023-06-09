@@ -5,13 +5,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
-import org.infinispan.server.test.core.KeyCloakServerRule;
+import org.infinispan.server.test.core.KeyCloakServerExtension;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -19,13 +17,13 @@ import org.junit.Rule;
  **/
 public class AuthenticationKeyCloakIT extends AbstractAuthenticationKeyCloak {
 
-   @ClassRule
-   public static final InfinispanServerRule SERVERS =
-         InfinispanServerRuleBuilder.config("configuration/AuthenticationKeyCloakTest.xml")
+   @RegisterExtension
+   public static final InfinispanServerExtension SERVERS =
+         InfinispanServerExtensionBuilder.config("configuration/AuthenticationKeyCloakTest.xml")
                .build();
 
-   @ClassRule
-   public static KeyCloakServerRule KEYCLOAK = new KeyCloakServerRule(System.getProperty(TestSystemPropertyNames.KEYCLOAK_REALM, "keycloak/infinispan-keycloak-realm.json"))
+   @RegisterExtension
+   public static KeyCloakServerExtension KEYCLOAK = new KeyCloakServerExtension(System.getProperty(TestSystemPropertyNames.KEYCLOAK_REALM, "keycloak/infinispan-keycloak-realm.json"))
          .addBeforeListener(k -> {
             Path serverConfPath = SERVERS.getServerDriver().getConfDir().toPath();
             Path keyCloakPath = k.getKeycloakDirectory().toPath();
@@ -37,12 +35,8 @@ public class AuthenticationKeyCloakIT extends AbstractAuthenticationKeyCloak {
             }
          });
 
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
-
-   @Override
-   protected InfinispanServerTestMethodRule getServerTest() {
-      return SERVER_TEST;
+   public AuthenticationKeyCloakIT() {
+      super(SERVERS);
    }
 
    @Override

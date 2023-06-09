@@ -1,62 +1,37 @@
 package org.infinispan.server.persistence;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.category.Persistence;
 import org.infinispan.server.test.core.persistence.Database;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 
 /**
  * @author Gustavo Lira &lt;glira@redhat.com&gt;
  * @since 10.0
  **/
 @Category(Persistence.class)
-@RunWith(Parameterized.class)
 public class PooledConnectionOperations {
 
-   @ClassRule
-   public static InfinispanServerRule SERVERS = PersistenceIT.SERVERS;
+   @RegisterExtension
+   public static InfinispanServerExtension SERVERS = PersistenceIT.SERVERS;
 
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
-
-   private final Database database;
-
-   @Parameterized.Parameters(name = "{0}")
-   public static Collection<Object[]> data() {
-      String[] databaseTypes = PersistenceIT.DATABASE_LISTENER.getDatabaseTypes();
-      List<Object[]> params = new ArrayList<>(databaseTypes.length);
-      for (String databaseType : databaseTypes) {
-         params.add(new Object[]{databaseType});
-      }
-      return params;
-   }
-
-   public PooledConnectionOperations(String databaseType) {
-      this.database = PersistenceIT.DATABASE_LISTENER.getDatabase(databaseType);
-   }
-
-   @Test
-   public void testTwoCachesSameCacheStore() {
+   @ParameterizedTest
+   @ArgumentsSource(Common.DatabaseProvider.class)
+   public void testTwoCachesSameCacheStore(Database database) {
       JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.DIST_SYNC, database, false, false);
-      RemoteCache<String, String> cache1 = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).withQualifier("1").create();
-      RemoteCache<String, String> cache2 = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).withQualifier("2").create();
+      RemoteCache<String, String> cache1 = SERVERS.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).withQualifier("1").create();
+      RemoteCache<String, String> cache2 = SERVERS.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).withQualifier("2").create();
 
       cache1.put("k1", "v1");
       String firstK1 = cache1.get("k1");
@@ -71,10 +46,11 @@ public class PooledConnectionOperations {
       assertCleanCacheAndStore(cache2);
    }
 
-   @Test
-   public void testPutGetRemove() {
+   @ParameterizedTest
+   @ArgumentsSource(Common.DatabaseProvider.class)
+   public void testPutGetRemove(Database database) {
       JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.DIST_SYNC, database, false, false);
-      RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
+      RemoteCache<String, String> cache = SERVERS.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
 
       cache.put("k1", "v1");
       cache.put("k2", "v2");
@@ -94,11 +70,12 @@ public class PooledConnectionOperations {
       assertCleanCacheAndStore(cache);
    }
 
-   @Test
-   public void testPreload() throws Exception {
+   @ParameterizedTest
+   @ArgumentsSource(Common.DatabaseProvider.class)
+   public void testPreload(Database database) throws Exception {
       JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, false, true)
               .setLockingConfigurations();
-      RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
+      RemoteCache<String, String> cache = SERVERS.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
       cache.put("k1", "v1");
       cache.put("k2", "v2");
 
@@ -112,12 +89,13 @@ public class PooledConnectionOperations {
       cache.clear();
    }
 
-   @Test
-   public void testSoftRestartWithPassivation() throws Exception {
+   @ParameterizedTest
+   @ArgumentsSource(Common.DatabaseProvider.class)
+   public void testSoftRestartWithPassivation(Database database) throws Exception {
       JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, true, false)
               .setEviction()
               .setLockingConfigurations();
-      RemoteCache<String, String> cache = SERVER_TEST.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
+      RemoteCache<String, String> cache = SERVERS.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();
       cache.put("k1", "v1");
       cache.put("k2", "v2");
       cache.put("k3", "v3");

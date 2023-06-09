@@ -9,17 +9,15 @@ import org.infinispan.server.test.core.InfinispanServerDriver;
 import org.infinispan.server.test.core.InfinispanServerListener;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.testcontainers.containers.GenericContainer;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import org.testcontainers.containers.GenericContainer;
 
 /**
  * Test OpenTelemetry tracing integration with the Jaeger client
@@ -36,9 +34,9 @@ public class RequestTracingIT {
    private static final GenericContainer JAEGER = new GenericContainer(JAEGER_IMAGE)
          .withEnv("COLLECTOR_OTLP_ENABLED", "true");
 
-   @ClassRule
-   public static final InfinispanServerRule SERVER =
-         InfinispanServerRuleBuilder.config("configuration/ClusteredServerTest.xml")
+   @RegisterExtension
+   public static final InfinispanServerExtension SERVER =
+         InfinispanServerExtensionBuilder.config("configuration/ClusteredServerTest.xml")
                .runMode(ServerRunMode.CONTAINER)
                .numServers(1)
                .property("infinispan.tracing.enabled", "true")
@@ -60,13 +58,9 @@ public class RequestTracingIT {
                })
                .build();
 
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVER);
-
-
    @Test
    public void testRequestIsTraced() {
-      RemoteCache<Object, Object> remoteCache = SERVER_TEST.hotrod().create();
+      RemoteCache<Object, Object> remoteCache = SERVER.hotrod().create();
       for (int i = 0; i < NUM_KEYS; i++) {
          remoteCache.put("key" + i, "value");
       }

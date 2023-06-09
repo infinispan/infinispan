@@ -3,9 +3,9 @@ package org.infinispan.server.functional.rest;
 import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.sync;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -13,57 +13,52 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.server.functional.ClusteredIT;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @since 11.0
  */
 public class RestLoggingResource {
 
-   @ClassRule
-   public static InfinispanServerRule SERVERS = ClusteredIT.SERVERS;
-
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
+   @RegisterExtension
+   public static InfinispanServerExtension SERVERS = ClusteredIT.SERVERS;
 
    @Test
    public void testListLoggers() {
-      RestClient client = SERVER_TEST.rest().create();
+      RestClient client = SERVERS.rest().create();
       Json loggers = Json.read(assertStatus(OK, client.server().logging().listLoggers()));
       assertTrue(loggers.asJsonList().size() > 0);
    }
 
    @Test
    public void testListAppenders() {
-      RestClient client = SERVER_TEST.rest().create();
+      RestClient client = SERVERS.rest().create();
       String body = assertStatus(OK, client.server().logging().listAppenders());
       Json appenders = Json.read(body);
-      assertEquals(body, 5, appenders.asMap().size());
+      assertEquals(5, appenders.asMap().size(), body);
    }
 
    @Test
    public void testManipulateLogger() {
-      RestClient client = SERVER_TEST.rest().create();
+      RestClient client = SERVERS.rest().create();
       // Create the logger
       assertStatus(204, client.server().logging().setLogger("org.infinispan.TESTLOGGER", "WARN", "STDOUT"));
       try (RestResponse response = sync(client.server().logging().listLoggers())) {
-         assertTrue("Logger not found", findLogger(response, "org.infinispan.TESTLOGGER", "WARN", "STDOUT"));
+         assertTrue(findLogger(response, "org.infinispan.TESTLOGGER", "WARN", "STDOUT"), "Logger not found");
       }
 
       // Update it
       assertStatus(204, client.server().logging().setLogger("org.infinispan.TESTLOGGER", "ERROR", "FILE"));
       try (RestResponse response = sync(client.server().logging().listLoggers())) {
-         assertTrue("Logger not found", findLogger(response, "org.infinispan.TESTLOGGER", "ERROR", "FILE"));
+         assertTrue(findLogger(response, "org.infinispan.TESTLOGGER", "ERROR", "FILE"), "Logger not found");
       }
 
       // Remove it
       assertStatus(204, client.server().logging().removeLogger("org.infinispan.TESTLOGGER"));
       try (RestResponse response = sync(client.server().logging().listLoggers())) {
-         assertFalse("Logger should not be found", findLogger(response, "org.infinispan.TESTLOGGER", "ERROR"));
+         assertFalse(findLogger(response, "org.infinispan.TESTLOGGER", "ERROR"), "Logger should not be found");
       }
    }
 

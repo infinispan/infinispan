@@ -40,21 +40,22 @@ import org.infinispan.server.functional.rest.RestRouter;
 import org.infinispan.server.functional.rest.RestServerResource;
 import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.ServerRunMode;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.infinispan.server.test.junit5.InfinispanSuite;
 import org.infinispan.tasks.ServerTask;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
-import org.junit.ClassRule;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.platform.suite.api.SelectClasses;
+import org.junit.platform.suite.api.Suite;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-@RunWith(Suite.class)
-@Suite.SuiteClasses({
+@Suite
+@SelectClasses({
       // This needs to be first as it collects all metrics and all the tests below add a lot which due to inefficiencies
       // in small rye can be very very slow!
       RestMetricsResource.class,
@@ -77,11 +78,11 @@ import org.junit.runners.Suite;
       ServerTasks.class,
       PojoMarshalling.class
 })
-public class ClusteredIT {
+public class ClusteredIT extends InfinispanSuite {
 
-   @ClassRule
-   public static final InfinispanServerRule SERVERS =
-         InfinispanServerRuleBuilder.config("configuration/ClusteredServerTest.xml")
+   @RegisterExtension
+   public static final InfinispanServerExtension SERVERS =
+         InfinispanServerExtensionBuilder.config("configuration/ClusteredServerTest.xml")
                .numServers(2)
                .runMode(ServerRunMode.CONTAINER)
                .mavenArtifacts(mavenArtifacts())

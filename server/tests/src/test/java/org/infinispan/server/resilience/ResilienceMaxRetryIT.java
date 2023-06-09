@@ -2,8 +2,8 @@ package org.infinispan.server.resilience;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -18,13 +18,11 @@ import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.category.Resilience;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.junit.jupiter.api.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * Test that a client can reset to the initial server list
@@ -34,20 +32,17 @@ import org.junit.experimental.categories.Category;
 @Category(Resilience.class)
 public class ResilienceMaxRetryIT {
 
-   @ClassRule
-   public static InfinispanServerRule SERVERS =
-         InfinispanServerRuleBuilder.config("configuration/ClusteredServerTest.xml")
+   @RegisterExtension
+   public static InfinispanServerExtension SERVERS =
+         InfinispanServerExtensionBuilder.config("configuration/ClusteredServerTest.xml")
                .runMode(ServerRunMode.EMBEDDED)
                .numServers(3)
                .build();
 
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
-
    @Test
    public void testMaxRetries0() {
       // Start the client with initial_server_list=server0 and max_retries=0
-      RemoteCache<Integer, String> cache = SERVER_TEST.hotrod()
+      RemoteCache<Integer, String> cache = SERVERS.hotrod()
             .withClientConfiguration(new ConfigurationBuilder().maxRetries(0).connectionTimeout(500))
             .withCacheMode(CacheMode.REPL_SYNC)
             .create(0);
@@ -71,7 +66,7 @@ public class ResilienceMaxRetryIT {
             break;
          } catch (TransportException e) {
             // Assert that the failed server is the one that we killed
-            assertTrue(serverAddress0.toString() + " not found in " + e.getMessage(), e.getMessage().contains(serverAddress0.toString()));
+            assertTrue(e.getMessage().contains(serverAddress0.toString()), serverAddress0 + " not found in " + e.getMessage());
          }
       }
 
@@ -94,7 +89,7 @@ public class ResilienceMaxRetryIT {
             break;
          } catch (TransportException e) {
             // Expected to fail to connect to server1 or server2, not server0
-            assertTrue(e.getMessage(), e.getMessage().contains(serverAddress1.toString()) || e.getMessage().contains(serverAddress2.toString()));
+            assertTrue(e.getMessage().contains(serverAddress1.toString()) || e.getMessage().contains(serverAddress2.toString()), e.getMessage());
          }
       }
 

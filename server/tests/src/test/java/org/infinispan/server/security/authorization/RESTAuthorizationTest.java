@@ -11,9 +11,9 @@ import static org.infinispan.client.rest.RestResponse.TEMPORARY_REDIRECT;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.assertStatusAndBodyEquals;
 import static org.infinispan.server.test.core.Common.awaitStatus;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.Closeable;
 import java.io.File;
@@ -30,7 +30,9 @@ import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestCacheManagerClient;
@@ -40,28 +42,50 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestServerClient;
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.client.rest.impl.okhttp.StringRestEntityOkHttp;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.XSiteStateTransferMode;
+import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.rest.resources.WeakSSEListener;
 import org.infinispan.server.test.api.TestUser;
-import org.infinispan.server.test.core.ContainerInfinispanServerDriver;
-import org.infinispan.server.test.core.category.Security;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.util.concurrent.CompletionStages;
-import org.junit.AssumptionViolatedException;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Test;
 
-@Category(Security.class)
-public class RESTAuthorizationTest extends BaseTest {
+abstract class RESTAuthorizationTest {
+
+   public static final String BANK_PROTO = "bank.proto";
+
+   protected final InfinispanServerExtension ext;
+
+   protected final Function<TestUser, String> serverPrincipal;
+   protected final Map<TestUser, RestClientConfigurationBuilder> restBuilders;
+   public RESTAuthorizationTest(InfinispanServerExtension ext) {
+      this(ext, TestUser::getUser, user -> {
+         RestClientConfigurationBuilder restBuilder = new RestClientConfigurationBuilder();
+         restBuilder.security().authentication()
+               .mechanism("AUTO")
+               .username(user.getUser())
+               .password(user.getPassword());
+         return restBuilder;
+      });
+   }
+
+   public RESTAuthorizationTest(InfinispanServerExtension ext, Function<TestUser, String> serverPrincipal, Function<TestUser, RestClientConfigurationBuilder> restBuilder) {
+      this.ext = ext;
+      this.serverPrincipal = serverPrincipal;
+      this.restBuilders = Stream.of(TestUser.values()).collect(Collectors.toMap(user -> user, restBuilder));
+   }
 
    @Test
    public void testRestAdminCanDoEverything() {
-      RestCacheClient adminCache = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(TestUser.ADMIN))
-            .withCacheMode(CacheMode.DIST_SYNC).create().cache(suite.getServerTest().getMethodName());
+      RestCacheClient adminCache = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN))
+            .withCacheMode(CacheMode.DIST_SYNC).create().cache(ext.getMethodName());
       assertStatus(NO_CONTENT, adminCache.put("k", "v"));
       assertStatusAndBodyEquals(OK, "v", adminCache.get("k"));
       assertStatus(OK, adminCache.distribution());
@@ -81,14 +105,14 @@ public class RESTAuthorizationTest extends BaseTest {
 
    private void actualTestCacheDistribution() {
       for (TestUser type : EnumSet.of(TestUser.ADMIN, TestUser.MONITOR)) {
-         RestCacheClient cache = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(type)).get()
-               .cache(suite.getServerTest().getMethodName());
+         RestCacheClient cache = ext.rest().withClientConfiguration(restBuilders.get(type)).get()
+               .cache(ext.getMethodName());
          assertStatus(OK, cache.distribution());
       }
 
       // Types with no access.
       for (TestUser type : EnumSet.complementOf(EnumSet.of(TestUser.ANONYMOUS, TestUser.ADMIN, TestUser.MONITOR))) {
-         RestCacheClient cache = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(type)).get().cache(suite.getServerTest().getMethodName());
+         RestCacheClient cache = ext.rest().withClientConfiguration(restBuilders.get(type)).get().cache(ext.getMethodName());
          assertStatus(FORBIDDEN, cache.distribution());
       }
    }
@@ -96,21 +120,21 @@ public class RESTAuthorizationTest extends BaseTest {
    @Test
    public void testRestKeyDistribution() {
       restCreateAuthzCache("admin", "observer", "deployer", "application", "writer", "reader", "monitor");
-      RestCacheClient adminCache = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(TestUser.ADMIN))
-            .get().cache(suite.getServerTest().getMethodName());
+      RestCacheClient adminCache = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN))
+            .get().cache(ext.getMethodName());
       assertStatus(NO_CONTENT, adminCache.put("existentKey", "v"));
 
       for (TestUser type : EnumSet.of(TestUser.ADMIN, TestUser.MONITOR)) {
-         RestCacheClient cache = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(type)).get()
-               .cache(suite.getServerTest().getMethodName());
+         RestCacheClient cache = ext.rest().withClientConfiguration(restBuilders.get(type)).get()
+               .cache(ext.getMethodName());
          assertStatus(OK, cache.distribution("somekey"));
          assertStatus(OK, cache.distribution("existentKey"));
       }
 
       // Types with no access.
       for (TestUser type : EnumSet.complementOf(EnumSet.of(TestUser.ANONYMOUS, TestUser.ADMIN, TestUser.MONITOR))) {
-         RestCacheClient cache = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(type)).get()
-               .cache(suite.getServerTest().getMethodName());
+         RestCacheClient cache = ext.rest().withClientConfiguration(restBuilders.get(type)).get()
+               .cache(ext.getMethodName());
          assertStatus(FORBIDDEN, cache.distribution("somekey"));
          assertStatus(FORBIDDEN, cache.distribution("existentKey"));
       }
@@ -121,15 +145,15 @@ public class RESTAuthorizationTest extends BaseTest {
       restCreateAuthzCache("admin", "observer", "deployer", "application", "writer", "reader", "monitor");
 
       for (TestUser type : EnumSet.of(TestUser.ADMIN, TestUser.MONITOR)) {
-         RestCacheClient cache = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(type)).get()
-               .cache(suite.getServerTest().getMethodName());
+         RestCacheClient cache = ext.rest().withClientConfiguration(restBuilders.get(type)).get()
+               .cache(ext.getMethodName());
          assertStatus(OK, cache.stats());
       }
 
       // Types with no access.
       for (TestUser type : EnumSet.complementOf(EnumSet.of(TestUser.ANONYMOUS, TestUser.ADMIN, TestUser.MONITOR))) {
-         RestCacheClient cache = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(type)).get()
-               .cache(suite.getServerTest().getMethodName());
+         RestCacheClient cache = ext.rest().withClientConfiguration(restBuilders.get(type)).get()
+               .cache(ext.getMethodName());
          assertStatus(FORBIDDEN, cache.stats());
       }
    }
@@ -139,15 +163,15 @@ public class RESTAuthorizationTest extends BaseTest {
       restCreateAuthzCache("admin", "observer", "deployer", "application", "writer", "reader", "monitor");
 
       for (TestUser type : EnumSet.of(TestUser.ADMIN)) {
-         RestCacheClient cache = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(type)).get()
-               .cache(suite.getServerTest().getMethodName());
+         RestCacheClient cache = ext.rest().withClientConfiguration(restBuilders.get(type)).get()
+               .cache(ext.getMethodName());
          assertStatus(NO_CONTENT, cache.statsReset());
       }
 
       // Types with no access.
       for (TestUser type : EnumSet.complementOf(EnumSet.of(TestUser.ANONYMOUS, TestUser.ADMIN))) {
-         RestCacheClient cache = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(type)).get()
-               .cache(suite.getServerTest().getMethodName());
+         RestCacheClient cache = ext.rest().withClientConfiguration(restBuilders.get(type)).get()
+               .cache(ext.getMethodName());
          assertStatus(FORBIDDEN, cache.statsReset());
       }
    }
@@ -156,7 +180,7 @@ public class RESTAuthorizationTest extends BaseTest {
    public void testRestNonAdminsMustNotCreateCache() {
       for (TestUser user : EnumSet.of(TestUser.APPLICATION, TestUser.OBSERVER, TestUser.MONITOR)) {
          Exceptions.expectException(SecurityException.class, "(?s).*403.*",
-               () -> suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(user)).withCacheMode(CacheMode.DIST_SYNC).create()
+               () -> ext.rest().withClientConfiguration(restBuilders.get(user)).withCacheMode(CacheMode.DIST_SYNC).create()
          );
       }
    }
@@ -173,13 +197,13 @@ public class RESTAuthorizationTest extends BaseTest {
 
    private void testRestWriterCannotRead(String... explicitRoles) {
       restCreateAuthzCache(explicitRoles);
-      RestCacheClient writerCache = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(TestUser.WRITER)).get()
-            .cache(suite.getServerTest().getMethodName());
+      RestCacheClient writerCache = ext.rest().withClientConfiguration(restBuilders.get(TestUser.WRITER)).get()
+            .cache(ext.getMethodName());
       assertStatus(NO_CONTENT, writerCache.put("k1", "v1"));
       assertStatus(FORBIDDEN, writerCache.get("k1"));
       for (TestUser user : EnumSet.of(TestUser.OBSERVER, TestUser.DEPLOYER)) {
-         RestCacheClient userCache = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(user)).get()
-               .cache(suite.getServerTest().getMethodName());
+         RestCacheClient userCache = ext.rest().withClientConfiguration(restBuilders.get(user)).get()
+               .cache(ext.getMethodName());
          assertStatusAndBodyEquals(OK, "v1", userCache.get("k1"));
       }
    }
@@ -196,40 +220,40 @@ public class RESTAuthorizationTest extends BaseTest {
 
    private void testRestReaderCannotWrite(String... explicitRoles) {
       restCreateAuthzCache(explicitRoles);
-      RestCacheClient readerCache = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(TestUser.OBSERVER)).get()
-            .cache(suite.getServerTest().getMethodName());
+      RestCacheClient readerCache = ext.rest().withClientConfiguration(restBuilders.get(TestUser.OBSERVER)).get()
+            .cache(ext.getMethodName());
       assertStatus(FORBIDDEN, readerCache.put("k1", "v1"));
       for (TestUser user : EnumSet.of(TestUser.APPLICATION, TestUser.DEPLOYER)) {
-         RestCacheClient userCache = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(user)).get()
-               .cache(suite.getServerTest().getMethodName());
+         RestCacheClient userCache = ext.rest().withClientConfiguration(restBuilders.get(user)).get()
+               .cache(ext.getMethodName());
          assertStatus(NO_CONTENT, userCache.put(user.name(), user.name()));
       }
    }
 
    @Test
    public void testAnonymousHealthPredefinedCache() {
-      RestClient client = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(TestUser.ANONYMOUS)).get();
+      RestClient client = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ANONYMOUS)).get();
       assertStatusAndBodyEquals(OK, "HEALTHY", client.cacheManager("default").healthStatus());
    }
 
    @Test
    public void testRestNonAdminsMustNotShutdownServer() {
       for (TestUser user : TestUser.NON_ADMINS) {
-         assertStatus(FORBIDDEN, suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(user)).get().server().stop());
+         assertStatus(FORBIDDEN, ext.rest().withClientConfiguration(restBuilders.get(user)).get().server().stop());
       }
    }
 
    @Test
    public void testRestNonAdminsMustNotShutdownCluster() {
       for (TestUser user : TestUser.NON_ADMINS) {
-         assertStatus(FORBIDDEN, suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(user)).get().cluster().stop());
+         assertStatus(FORBIDDEN, ext.rest().withClientConfiguration(restBuilders.get(user)).get().cluster().stop());
       }
    }
 
    @Test
    public void testRestNonAdminsMustNotModifyCacheIgnores() {
       for (TestUser user : TestUser.NON_ADMINS) {
-         RestClient client = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(user)).get();
+         RestClient client = ext.rest().withClientConfiguration(restBuilders.get(user)).get();
          assertStatus(FORBIDDEN, client.server().ignoreCache("default", "predefined"));
          assertStatus(FORBIDDEN, client.server().unIgnoreCache("default", "predefined"));
       }
@@ -237,7 +261,7 @@ public class RESTAuthorizationTest extends BaseTest {
 
    @Test
    public void testRestAdminsShouldBeAbleToModifyLoggers() {
-      RestClient client = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(TestUser.ADMIN)).get();
+      RestClient client = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get();
       assertStatus(NO_CONTENT, client.server().logging().setLogger("org.infinispan.TEST_LOGGER", "ERROR", "STDOUT"));
       assertStatus(NO_CONTENT, client.server().logging().removeLogger("org.infinispan.TEST_LOGGER"));
    }
@@ -245,15 +269,15 @@ public class RESTAuthorizationTest extends BaseTest {
    @Test
    public void testRestNonAdminsMustNotModifyLoggers() {
       for (TestUser user : TestUser.NON_ADMINS) {
-         assertStatus(FORBIDDEN, suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(user)).get().server().logging().setLogger("org.infinispan.TEST_LOGGER", "ERROR", "STDOUT"));
-         assertStatus(FORBIDDEN, suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(user)).get().server().logging().removeLogger("org.infinispan.TEST_LOGGER"));
+         assertStatus(FORBIDDEN, ext.rest().withClientConfiguration(restBuilders.get(user)).get().server().logging().setLogger("org.infinispan.TEST_LOGGER", "ERROR", "STDOUT"));
+         assertStatus(FORBIDDEN, ext.rest().withClientConfiguration(restBuilders.get(user)).get().server().logging().removeLogger("org.infinispan.TEST_LOGGER"));
       }
    }
 
    @Test
    public void testRestAdminsShouldBeAbleToAdminServer() {
-      RestClientConfigurationBuilder adminConfig = suite.restBuilders.get(TestUser.ADMIN);
-      RestClient client = suite.getServerTest().rest().withClientConfiguration(adminConfig).get();
+      RestClientConfigurationBuilder adminConfig = restBuilders.get(TestUser.ADMIN);
+      RestClient client = ext.rest().withClientConfiguration(adminConfig).get();
       assertStatus(NO_CONTENT, client.server().connectorStop("endpoint-alternate-1"));
       assertStatus(NO_CONTENT, client.server().connectorStart("endpoint-alternate-1"));
       assertStatus(NO_CONTENT, client.server().connectorIpFilterSet("endpoint-alternate-1", Collections.emptyList()));
@@ -269,8 +293,8 @@ public class RESTAuthorizationTest extends BaseTest {
    @Test
    public void testRestNonAdminsMustNotAdminServer() {
       for (TestUser user : TestUser.NON_ADMINS) {
-         RestClientConfigurationBuilder userConfig = suite.restBuilders.get(user);
-         RestClient client = suite.getServerTest().rest().withClientConfiguration(userConfig).get();
+         RestClientConfigurationBuilder userConfig = restBuilders.get(user);
+         RestClient client = ext.rest().withClientConfiguration(userConfig).get();
          assertStatus(FORBIDDEN, client.server().report());
          assertStatus(FORBIDDEN, client.server().connectorStop("endpoint-default"));
          assertStatus(FORBIDDEN, client.server().connectorStart("endpoint-default"));
@@ -295,8 +319,8 @@ public class RESTAuthorizationTest extends BaseTest {
    }
 
    private void assertXSiteOps(TestUser user, int status, int noContentStatus, int notModifiedStatus) {
-      RestClientConfigurationBuilder userConfig = suite.restBuilders.get(user);
-      RestClient client = suite.getServerTest().rest().withClientConfiguration(userConfig).get();
+      RestClientConfigurationBuilder userConfig = restBuilders.get(user);
+      RestClient client = ext.rest().withClientConfiguration(userConfig).get();
       RestCacheClient xsiteCache = client.cache("xsite");
       assertStatus(status, xsiteCache.takeSiteOffline("NYC"));
       assertStatus(status, xsiteCache.bringSiteOnline("NYC"));
@@ -320,13 +344,13 @@ public class RESTAuthorizationTest extends BaseTest {
    @Test
    public void testRestNonAdminsMustNotPerformSearchActions() {
       String schema = Exceptions.unchecked(() -> Util.getResourceAsString("/sample_bank_account/bank.proto", this.getClass().getClassLoader()));
-      assertStatus(OK, suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(TestUser.ADMIN)).get().schemas().put(BANK_PROTO, schema));
+      assertStatus(OK, ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().schemas().put(BANK_PROTO, schema));
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       builder.indexing().enable().addIndexedEntity("sample_bank_account.User").statistics().enable();
-      RestClient restClient = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(TestUser.ADMIN))
+      RestClient restClient = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN))
             .withServerConfiguration(builder).create();
-      String indexedCache = suite.getServerTest().getMethodName();
+      String indexedCache = ext.getMethodName();
       RestCacheClient cache = restClient.cache(indexedCache);
       for (TestUser user : TestUser.NON_ADMINS) {
          searchActions(user, indexedCache, FORBIDDEN, FORBIDDEN);
@@ -335,7 +359,7 @@ public class RESTAuthorizationTest extends BaseTest {
    }
 
    private void searchActions(TestUser user, String indexedCache, int status, int noContentStatus) {
-      RestClient client = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(user)).get();
+      RestClient client = ext.rest().withClientConfiguration(restBuilders.get(user)).get();
       assertStatus(status, client.cache(indexedCache).clearSearchStats());
       assertStatus(noContentStatus, client.cache(indexedCache).reindex());
       assertStatus(noContentStatus, client.cache(indexedCache).clearIndex());
@@ -345,29 +369,28 @@ public class RESTAuthorizationTest extends BaseTest {
    public void testRestClusterDistributionPermission() {
       EnumSet<TestUser> allowed = EnumSet.of(TestUser.ADMIN, TestUser.MONITOR);
       for (TestUser user : allowed) {
-         RestClusterClient client = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(user)).get().cluster();
+         RestClusterClient client = ext.rest().withClientConfiguration(restBuilders.get(user)).get().cluster();
          assertStatus(OK, client.distribution());
       }
 
       for (TestUser user : EnumSet.complementOf(EnumSet.of(TestUser.ANONYMOUS, allowed.toArray(new TestUser[0])))) {
-         RestClusterClient client = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(user)).get().cluster();
+         RestClusterClient client = ext.rest().withClientConfiguration(restBuilders.get(user)).get().cluster();
          assertStatus(FORBIDDEN, client.distribution());
       }
    }
 
    @Test
    public void testRestServerNodeReport() {
-      if (!(suite.getServers().getServerDriver() instanceof ContainerInfinispanServerDriver)) {
-         throw new AssumptionViolatedException("Requires CONTAINER mode");
-      }
-      RestClusterClient restClient = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(TestUser.ADMIN)).get().cluster();
+      ext.assumeContainerMode();
+
+      RestClusterClient restClient = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().cluster();
       CompletionStage<RestResponse> distribution = restClient.distribution();
       RestResponse distributionResponse = CompletionStages.join(distribution);
       assertEquals(OK, distributionResponse.getStatus());
       Json json = Json.read(distributionResponse.getBody());
       List<String> nodes = json.asJsonList().stream().map(j -> j.at("node_name").asString()).collect(Collectors.toList());
 
-      RestServerClient client = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(TestUser.ADMIN)).get().server();
+      RestServerClient client = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().server();
       for (String name : nodes) {
          RestResponse response = CompletionStages.join(client.report(name));
          assertEquals(OK, response.getStatus());
@@ -379,19 +402,19 @@ public class RESTAuthorizationTest extends BaseTest {
       assertEquals(NOT_FOUND, response.getStatus());
 
       for (TestUser user : EnumSet.complementOf(EnumSet.of(TestUser.ANONYMOUS, TestUser.ADMIN))) {
-         RestServerClient otherClient = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(user)).get().server();
-         assertStatus(FORBIDDEN, otherClient.report(suite.getServerTest().getMethodName()));
+         RestServerClient otherClient = ext.rest().withClientConfiguration(restBuilders.get(user)).get().server();
+         assertStatus(FORBIDDEN, otherClient.report(ext.getMethodName()));
       }
    }
 
    @Test
    public void testRestAdminsMustAccessBackupsAndRestores() {
       String BACKUP_NAME = "backup";
-      RestClusterClient client = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(TestUser.ADMIN)).get().cluster();
+      RestClusterClient client = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().cluster();
       assertStatus(ACCEPTED, client.createBackup(BACKUP_NAME));
       File zip = awaitStatus(() -> client.getBackup(BACKUP_NAME, false), ACCEPTED, OK, response -> {
          String fileName = response.getHeader("Content-Disposition").split("=")[1];
-         File backupZip = new File(suite.getServers().getServerDriver().getRootDir(), fileName);
+         File backupZip = new File(ext.getServerDriver().getRootDir(), fileName);
          try (InputStream is = response.getBodyAsStream()) {
             Files.copy(is, backupZip.toPath(), StandardCopyOption.REPLACE_EXISTING);
          } catch (IOException e) {
@@ -410,7 +433,7 @@ public class RESTAuthorizationTest extends BaseTest {
    @Test
    public void testRestNonAdminsMustNotAccessBackupsAndRestores() {
       for (TestUser user : TestUser.NON_ADMINS) {
-         RestClusterClient client = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(user)).get().cluster();
+         RestClusterClient client = ext.rest().withClientConfiguration(restBuilders.get(user)).get().cluster();
          assertStatus(FORBIDDEN, client.createBackup("backup"));
          assertStatus(FORBIDDEN, client.getBackup("backup", true));
          assertStatus(FORBIDDEN, client.getBackupNames());
@@ -424,7 +447,7 @@ public class RESTAuthorizationTest extends BaseTest {
 
    @Test
    public void testRestListenSSEAuthorizations() throws Exception {
-      RestClient adminClient = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(TestUser.ADMIN)).get();
+      RestClient adminClient = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get();
       WeakSSEListener sseListener = new WeakSSEListener();
 
       // admin must be able to listen events.
@@ -435,7 +458,7 @@ public class RESTAuthorizationTest extends BaseTest {
       // non-admins must receive 403 status code.
       for (TestUser nonAdmin : TestUser.NON_ADMINS) {
          CountDownLatch latch = new CountDownLatch(1);
-         RestClient client = suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(nonAdmin)).get();
+         RestClient client = ext.rest().withClientConfiguration(restBuilders.get(nonAdmin)).get();
          WeakSSEListener listener = new WeakSSEListener() {
             @Override
             public void onError(Throwable t, RestResponse response) {
@@ -454,43 +477,82 @@ public class RESTAuthorizationTest extends BaseTest {
    @Test
    public void testConsoleLogin() {
       for (TestUser user : TestUser.ALL) {
-         RestClientConfiguration cfg = suite.restBuilders.get(user).build();
+         RestClientConfiguration cfg = restBuilders.get(user).build();
          boolean followRedirects = !cfg.security().authentication().mechanism().equals("SPNEGO");
          RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder().read(cfg).clearServers().followRedirects(followRedirects);
-         InetSocketAddress serverAddress = suite.getServers().getServerDriver().getServerSocket(0, 11222);
+         InetSocketAddress serverAddress = ext.getServerDriver().getServerSocket(0, 11222);
          builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
-         RestClient client = suite.getServerTest().rest().withClientConfiguration(builder).get();
+         RestClient client = ext.rest().withClientConfiguration(builder).get();
          assertStatus(followRedirects ? OK : TEMPORARY_REDIRECT, client.raw().get("/rest/v2/login"));
          Json acl = Json.read(assertStatus(OK, client.raw().get("/rest/v2/security/user/acl")));
          Json subject = acl.asJsonMap().get("subject");
          Map<String, Object> principal = subject.asJsonList().get(0).asMap();
-         assertEquals(expectedServerPrincipalName(user), principal.get("name"));
+         assertEquals(serverPrincipal.apply(user), principal.get("name"));
       }
    }
 
    @Test
    public void testRestCacheNames() {
       restCreateAuthzCache("admin", "observer", "deployer");
-      String name = suite.getServerTest().getMethodName();
+      String name = ext.getMethodName();
 
       for (TestUser type : EnumSet.of(TestUser.ADMIN, TestUser.OBSERVER, TestUser.DEPLOYER)) {
-         try (RestResponse caches = CompletionStages.join(suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(type)).get().cacheManager("default").caches())) {
+         try (RestResponse caches = CompletionStages.join(ext.rest().withClientConfiguration(restBuilders.get(type)).get().cacheManager("default").caches())) {
             assertEquals(OK, caches.getStatus());
             Json json = Json.read(caches.getBody());
             Set<String> names = json.asJsonList().stream().map(Json::asJsonMap).map(j -> j.get("name").asString()).collect(Collectors.toSet());
-            assertTrue(names.toString(), names.contains(name));
+            assertTrue(names.contains(name), names.toString());
          }
       }
 
       // Types with no access.
       for (TestUser type : EnumSet.complementOf(EnumSet.of(TestUser.ADMIN, TestUser.OBSERVER, TestUser.DEPLOYER, TestUser.ANONYMOUS))) {
-         try (RestResponse caches = CompletionStages.join(suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(type)).get().cacheManager("default").caches())) {
+         try (RestResponse caches = CompletionStages.join(ext.rest().withClientConfiguration(restBuilders.get(type)).get().cacheManager("default").caches())) {
             assertEquals(OK, caches.getStatus());
             Json json = Json.read(caches.getBody());
             Set<String> names = json.asJsonList().stream().map(Json::asJsonMap).map(j -> j.get("name").asString()).collect(Collectors.toSet());
-            assertFalse(names.toString(), names.contains(name));
+            assertFalse(names.contains(name), names.toString());
          }
       }
+   }
+
+   @Test
+   public void testBulkReadUsersCanQuery() {
+      createIndexedCache();
+      for (TestUser user : EnumSet.of(TestUser.ADMIN, TestUser.DEPLOYER, TestUser.APPLICATION, TestUser.OBSERVER)) {
+         RestCacheClient userCache = ext.rest().withClientConfiguration(restBuilders.get(user)).get().cache(ext.getMethodName());
+         assertStatus(OK, userCache.query("FROM sample_bank_account.User WHERE name = 'Tom'"));
+         assertStatus(OK, userCache.searchStats());
+         assertStatus(OK, userCache.indexStats());
+         assertStatus(OK, userCache.queryStats());
+      }
+   }
+
+   @Test
+   public void testNonBulkReadUsersCannotQuery() {
+      createIndexedCache();
+      for (TestUser user : EnumSet.of(TestUser.READER, TestUser.WRITER, TestUser.MONITOR)) {
+         RestCacheClient userCache = ext.rest().withClientConfiguration(restBuilders.get(user)).get().cache(ext.getMethodName());
+         assertStatus(FORBIDDEN, userCache.query("FROM sample_bank_account.User WHERE name = 'Tom'"));
+         assertStatus(OK, userCache.searchStats());
+         assertStatus(OK, userCache.indexStats());
+         assertStatus(OK, userCache.queryStats());
+      }
+   }
+
+   private void createIndexedCache() {
+      String schema = Exceptions.unchecked(() -> Util.getResourceAsString("/sample_bank_account/bank.proto", this.getClass().getClassLoader()));
+      RestClient adminClient = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get();
+      RestCacheClient protobufCache = adminClient.cache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+      assertStatus(NO_CONTENT, protobufCache.put(BANK_PROTO, schema));
+
+      String cacheName = ext.getMethodName();
+      String cacheConfig = "{\"distributed-cache\":{\"statistics\":true,\"encoding\":{\"media-type\":\"application/x-protostream\"},\"indexing\":{\"enabled\":true,\"storage\":\"local-heap\",\"indexed-entities\":[\"sample_bank_account.User\"]},\"security\":{\"authorization\":{}}}}";
+
+      assertStatus(OK,
+            adminClient.cache(cacheName)
+                  .createWithConfiguration(new StringRestEntityOkHttp(MediaType.APPLICATION_JSON, cacheConfig))
+      );
    }
 
    private RestClient restCreateAuthzCache(String... explicitRoles) {
@@ -509,10 +571,6 @@ public class RESTAuthorizationTest extends BaseTest {
             authorizationConfigurationBuilder.role(role);
          }
       }
-      return suite.getServerTest().rest().withClientConfiguration(suite.restBuilders.get(TestUser.ADMIN)).withServerConfiguration(builder).create();
-   }
-
-   protected String expectedServerPrincipalName(TestUser user) {
-      return suite.expectedServerPrincipalName(user);
+      return ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).withServerConfiguration(builder).create();
    }
 }

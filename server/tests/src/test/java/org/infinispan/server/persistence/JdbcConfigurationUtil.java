@@ -10,8 +10,8 @@ import org.infinispan.util.concurrent.IsolationLevel;
 public class JdbcConfigurationUtil {
 
     private PooledConnectionFactoryConfigurationBuilder persistenceConfiguration;
-    private ConfigurationBuilder configurationBuilder;
-    private CacheMode cacheMode;
+    private final ConfigurationBuilder configurationBuilder;
+    private final CacheMode cacheMode;
 
     public JdbcConfigurationUtil(CacheMode cacheMode, Database database, boolean passivation, boolean preload) {
         configurationBuilder = new ConfigurationBuilder();

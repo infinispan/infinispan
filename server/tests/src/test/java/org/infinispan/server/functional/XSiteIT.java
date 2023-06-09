@@ -8,12 +8,13 @@ import org.infinispan.server.functional.hotrod.XSiteHotRodCacheOperations;
 import org.infinispan.server.functional.rest.XSiteRestCacheOperations;
 import org.infinispan.server.functional.rest.XSiteRestMetricsOperations;
 import org.infinispan.server.test.core.ServerRunMode;
-import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
-import org.infinispan.server.test.junit4.InfinispanXSiteServerRule;
-import org.infinispan.server.test.junit4.InfinispanXSiteServerRuleBuilder;
-import org.junit.ClassRule;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.infinispan.server.test.junit5.InfinispanSuite;
+import org.infinispan.server.test.junit5.InfinispanXSiteServerExtension;
+import org.infinispan.server.test.junit5.InfinispanXSiteServerExtensionBuilder;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.platform.suite.api.SelectClasses;
+import org.junit.platform.suite.api.Suite;
 
 /**
  * Cross-Site suite
@@ -22,14 +23,14 @@ import org.junit.runners.Suite;
  * @author Gustavo Lira
  * @since 11.0
  */
-@RunWith(Suite.class)
-@Suite.SuiteClasses({
+@Suite
+@SelectClasses({
       XSiteRestMetricsOperations.class,
       XSiteHotRodCacheOperations.class,
       XSiteRestCacheOperations.class,
       XSiteCliOperations.class
 })
-public class XSiteIT {
+public class XSiteIT extends InfinispanSuite {
 
    public static final int NUM_SERVERS = 3;
    public static final String LON_CACHE_XML_CONFIG =
@@ -87,18 +88,18 @@ public class XSiteIT {
                "  </distributed-cache>" +
                "</cache-container></infinispan>";
 
-   static InfinispanServerRuleBuilder lonServerRule = InfinispanServerRuleBuilder
+   static InfinispanServerExtensionBuilder lonServerRule = InfinispanServerExtensionBuilder
          .config("configuration/XSiteServerTest.xml")
          .runMode(ServerRunMode.CONTAINER)
          .numServers(NUM_SERVERS);
 
-   static InfinispanServerRuleBuilder nycServerRule = InfinispanServerRuleBuilder
+   static InfinispanServerExtensionBuilder nycServerRule = InfinispanServerExtensionBuilder
          .config("configuration/XSiteServerTest.xml")
          .runMode(ServerRunMode.CONTAINER)
          .numServers(NUM_SERVERS);
 
-   @ClassRule
-   public static final InfinispanXSiteServerRule SERVERS = new InfinispanXSiteServerRuleBuilder()
+   @RegisterExtension
+   public static final InfinispanXSiteServerExtension SERVERS = new InfinispanXSiteServerExtensionBuilder()
             .addSite(LON, lonServerRule)
             .addSite(NYC, nycServerRule)
             .build();

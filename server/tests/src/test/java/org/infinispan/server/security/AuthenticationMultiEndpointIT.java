@@ -2,12 +2,12 @@ package org.infinispan.server.security;
 
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.sync;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -19,15 +19,20 @@ import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.category.Security;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
 import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.ParameterContext;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.aggregator.AggregateWith;
+import org.junit.jupiter.params.aggregator.ArgumentsAccessor;
+import org.junit.jupiter.params.aggregator.ArgumentsAggregationException;
+import org.junit.jupiter.params.aggregator.ArgumentsAggregator;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.wildfly.security.http.HttpConstants;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
@@ -36,196 +41,214 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
  * @since 12.0
  **/
 
-@RunWith(Parameterized.class)
 @Category(Security.class)
 public class AuthenticationMultiEndpointIT {
-   @ClassRule
-   public static InfinispanServerRule SERVERS =
-         InfinispanServerRuleBuilder.config("configuration/AuthenticationServerMultipleEndpoints.xml")
+   @RegisterExtension
+   public static InfinispanServerExtension SERVERS =
+         InfinispanServerExtensionBuilder.config("configuration/AuthenticationServerMultipleEndpoints.xml")
                .addListener(new SecurityRealmServerListener("alternate"))
                .build();
 
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
+   static class ArgsProvider implements ArgumentsProvider {
+      @Override
+      public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
+         List<Arguments> args = new ArrayList<>();
+         // We test against different realms.
+         for (String realm : Arrays.asList("default", "alternate")) {
 
-   private final String mechanism;
-   private final String protocol;
-   private final String realm;
-   private final String userPrefix;
-   private final int port;
-   private final boolean isAnonymous;
-   private final boolean isAdmin;
-   private final boolean isPlain;
-   private final boolean isAlternateRealm;
-   private final boolean useAuth;
-   private final boolean isMechanismClearText;
+            String userPrefix = "alternate".equals(realm) ? "alternate_" : "";
+            // We test against different ports with different configurations
+            for (int p = 11222; p < 11227; p++) {
+               Integer port = Integer.valueOf(p);
 
-   @Parameterized.Parameters(name = "protocol={0}, mech={1}, realm={2}, userPrefix={3}, port={4}, anon={5}, admin={6}, plain={7}")
-   public static Collection<Object[]> data() {
-      List<Object[]> params = new ArrayList<>();
+               final boolean isAnonymous;
+               final boolean isAdmin;
+               final boolean isPlain;
+               final boolean isAlternateRealmHotRod;
+               final boolean isAlternateRealmHTTP;
+               switch (p) {
+                  case 11222:
+                     isAnonymous = false;
+                     isAdmin = true;
+                     isPlain = true;
+                     isAlternateRealmHotRod = false;
+                     isAlternateRealmHTTP = false;
+                     break;
+                  case 11223:
+                     isAnonymous = true;
+                     isAdmin = false;
+                     isPlain = false;
+                     isAlternateRealmHotRod = false;
+                     isAlternateRealmHTTP = false;
+                     break;
+                  case 11224:
+                     isAnonymous = false;
+                     isAdmin = false;
+                     isPlain = true;
+                     isAlternateRealmHotRod = true;
+                     isAlternateRealmHTTP = true;
+                     break;
+                  case 11225:
+                     isAnonymous = false;
+                     isAdmin = true;
+                     isPlain = false;
+                     isAlternateRealmHotRod = true;
+                     isAlternateRealmHTTP = false;
+                     break;
+                  case 11226:
+                     isAnonymous = false;
+                     isAdmin = true;
+                     isPlain = false;
+                     isAlternateRealmHotRod = false;
+                     isAlternateRealmHTTP = false;
+                     break;
+                  default:
+                     throw new IllegalArgumentException();
+               }
 
-      // We test against different realms.
-      for (String realm : Arrays.asList("default", "alternate")) {
+               // We test with different Hot Rod mechs
+               Common.SASL_MECHS.forEach(m ->
+                     args.add(Arguments.of("Hot Rod", m, realm, userPrefix, port, isAnonymous, isAdmin, isPlain, isAlternateRealmHotRod))
+               );
 
-         String userPrefix = "alternate".equals(realm) ? "alternate_" : "";
-         // We test against different ports with different configurations
-         for (int p = 11222; p < 11227; p++) {
-            Integer port = Integer.valueOf(p);
+               Common.HTTP_MECHS.forEach(m ->
+                     args.add(Arguments.of(Protocol.HTTP_11.name(), m, realm, userPrefix, port, isAnonymous, isAdmin, isPlain, isAlternateRealmHTTP))
+               );
+            }
+         }
+         return args.stream();
+      }
+   }
 
-            final boolean isAnonymous;
-            final boolean isAdmin;
-            final boolean isPlain;
-            final boolean isAlternateRealmHotRod;
-            final boolean isAlternateRealmHTTP;
-            switch (p) {
-               case 11222:
-                  isAnonymous = false;
-                  isAdmin = true;
-                  isPlain = true;
-                  isAlternateRealmHotRod = false;
-                  isAlternateRealmHTTP = false;
-                  break;
-               case 11223:
-                  isAnonymous = true;
-                  isAdmin = false;
-                  isPlain = false;
-                  isAlternateRealmHotRod = false;
-                  isAlternateRealmHTTP = false;
-                  break;
-               case 11224:
-                  isAnonymous = false;
-                  isAdmin = false;
-                  isPlain = true;
-                  isAlternateRealmHotRod = true;
-                  isAlternateRealmHTTP = true;
-                  break;
-               case 11225:
-                  isAnonymous = false;
-                  isAdmin = true;
-                  isPlain = false;
-                  isAlternateRealmHotRod = true;
-                  isAlternateRealmHTTP = false;
-                  break;
-               case 11226:
-                  isAnonymous = false;
-                  isAdmin = true;
-                  isPlain = false;
-                  isAlternateRealmHotRod = false;
-                  isAlternateRealmHTTP = false;
-                  break;
-               default:
-                  throw new IllegalArgumentException();
+   @ParameterizedTest(name = "protocol={0}, mech={1}, realm={2}, userPrefix={3}, port={4}, anon={5}, admin={6}, plain={7}")
+   @ArgumentsSource(AuthenticationMultiEndpointIT.ArgsProvider.class)
+   public void testProtocol(@AggregateWith(EndpointAggregator.class) Endpoint endpoint) {
+      endpoint.test();
+   }
+
+   static class EndpointAggregator implements ArgumentsAggregator {
+      @Override
+      public Object aggregateArguments(ArgumentsAccessor accessor, ParameterContext context) throws ArgumentsAggregationException {
+         return new AuthenticationMultiEndpointIT.Endpoint(
+               accessor.getString(0),
+               accessor.getString(1),
+               accessor.getString(2),
+               accessor.getString(3),
+               accessor.getInteger(4),
+               accessor.getBoolean(5),
+               accessor.getBoolean(6),
+               accessor.getBoolean(7),
+               accessor.getBoolean(8)
+         );
+      }
+   }
+   static class Endpoint {
+      private final String protocol;
+      private final String mechanism;
+      private final String realm;
+      private final String userPrefix;
+      private final int port;
+      private final boolean isAnonymous;
+      private final boolean isAdmin;
+      private final boolean isPlain;
+      private final boolean isAlternateRealm;
+      private final boolean useAuth;
+      private final boolean isMechanismClearText;
+
+
+      public Endpoint(String protocol, String mechanism, String realm, String userPrefix, int port, boolean isAnonymous, boolean isAdmin, boolean isPlain, boolean isAlternateRealm) {
+         this.protocol = protocol;
+         this.mechanism = mechanism;
+         this.realm = realm;
+         this.userPrefix = userPrefix;
+         this.port = port;
+         this.isAnonymous = isAnonymous;
+         this.isAdmin = isAdmin;
+         this.isPlain = isPlain;
+         this.isAlternateRealm = isAlternateRealm;
+         this.useAuth = !mechanism.isEmpty();
+         this.isMechanismClearText = SaslMechanismInformation.Names.PLAIN.equals(mechanism) || HttpConstants.BASIC_NAME.equals(mechanism);
+      }
+
+      public void test() {
+         if (protocol.equals("Hot Rod")) {
+            testHotRod();
+         } else {
+            testRest();
+         }
+      }
+
+      private void testHotRod() {
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         if (useAuth) {
+            builder.security().authentication()
+                  .saslMechanism(mechanism)
+                  .realm(realm)
+                  .username(userPrefix + "all_user")
+                  .password("all");
+         }
+         try {
+            RemoteCache<String, String> cache = SERVERS.hotrod().withClientConfiguration(builder).withPort(port).withCacheMode(CacheMode.DIST_SYNC).create();
+            validateSuccess();
+            cache.put("k1", "v1");
+            assertEquals(1, cache.size());
+            assertEquals("v1", cache.get("k1"));
+         } catch (HotRodClientException e) {
+            validateException(e);
+         }
+      }
+
+      private void testRest() {
+         Protocol proto = Protocol.valueOf(protocol);
+         RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder().followRedirects(false);
+         if (useAuth) {
+            builder
+                  .protocol(proto)
+                  .security().authentication()
+                  .mechanism(mechanism)
+                  .realm(realm)
+                  .username(userPrefix + "all_user")
+                  .password("all");
+         }
+
+         try {
+            RestClient client = SERVERS.rest().withClientConfiguration(builder).withPort(port).create();
+            validateSuccess();
+            try (RestResponse response = sync(client.cache(SERVERS.getMethodName()).post("k1", "v1"))) {
+               assertEquals(204, response.getStatus());
+               assertEquals(proto, response.getProtocol());
             }
 
-            // We test with different Hot Rod mechs
-            Common.SASL_MECHS.stream().map(m -> m[0]).forEach(m -> {
-               params.add(new Object[]{"Hot Rod", m, realm, userPrefix, port, isAnonymous, isAdmin, isPlain, isAlternateRealmHotRod});
-            });
+            try (RestResponse response = sync(client.cache(SERVERS.getMethodName()).get("k1"))) {
+               assertEquals(200, response.getStatus());
+               assertEquals(proto, response.getProtocol());
+               assertEquals("v1", response.getBody());
+            }
 
-            Common.HTTP_MECHS.stream().map(m -> m[0]).forEach(m -> {
-               params.add(new Object[]{Protocol.HTTP_11.name(), m, realm, userPrefix, port, isAnonymous, isAdmin, isPlain, isAlternateRealmHTTP});
-            });
+            assertStatus(isAdmin ? 307 : 404, client.raw().get("/"));
+            assertStatus(isAdmin ? 200 : 404, client.server().info());
+         } catch (SecurityException e) {
+            validateException(e);
          }
       }
-      return params;
-   }
 
-   public AuthenticationMultiEndpointIT(String protocol, String mechanism, String realm, String userPrefix, int port, boolean isAnonymous, boolean isAdmin, boolean isPlain, boolean isAlternateRealm) {
-      this.protocol = protocol;
-      this.mechanism = mechanism;
-      this.realm = realm;
-      this.userPrefix = userPrefix;
-      this.port = port;
-      this.isAdmin = isAdmin;
-      this.isAnonymous = isAnonymous;
-      this.isPlain = isPlain;
-      this.isAlternateRealm = isAlternateRealm;
-      this.useAuth = !mechanism.isEmpty();
-      this.isMechanismClearText = SaslMechanismInformation.Names.PLAIN.equals(mechanism) || HttpConstants.BASIC_NAME.equals(mechanism);
-   }
-
-   @Test
-   public void testProtocol() {
-      switch (protocol) {
-         case "Hot Rod":
-            testHotRod();
-            break;
-         default:
-            testRest();
-            break;
-      }
-   }
-
-   private void testHotRod() {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      if (useAuth) {
-         builder.security().authentication()
-               .saslMechanism(mechanism)
-               .realm(realm)
-               .username(userPrefix + "all_user")
-               .password("all");
-      }
-      try {
-         RemoteCache<String, String> cache = SERVER_TEST.hotrod().withClientConfiguration(builder).withPort(port).withCacheMode(CacheMode.DIST_SYNC).create();
-         validateSuccess();
-         cache.put("k1", "v1");
-         assertEquals(1, cache.size());
-         assertEquals("v1", cache.get("k1"));
-      } catch (HotRodClientException e) {
-         validateException(e);
-      }
-   }
-
-   private void testRest() {
-      Protocol proto = Protocol.valueOf(protocol);
-      RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder().followRedirects(false);
-      if (useAuth) {
-         builder
-               .protocol(proto)
-               .security().authentication()
-               .mechanism(mechanism)
-               .realm(realm)
-               .username(userPrefix + "all_user")
-               .password("all");
-      }
-
-      try {
-         RestClient client = SERVER_TEST.rest().withClientConfiguration(builder).withPort(port).create();
-         validateSuccess();
-         try (RestResponse response = sync(client.cache(SERVER_TEST.getMethodName()).post("k1", "v1"))) {
-            assertEquals(204, response.getStatus());
-            assertEquals(proto, response.getProtocol());
+      private void validateSuccess() {
+         if (isAnonymous && useAuth) {
+            throw new IllegalStateException("Authenticated client should not be allowed to connect to anonymous server");
          }
-
-         try (RestResponse response = sync(client.cache(SERVER_TEST.getMethodName()).get("k1"))) {
-            assertEquals(200, response.getStatus());
-            assertEquals(proto, response.getProtocol());
-            assertEquals("v1", response.getBody());
+         if (!isAnonymous && !useAuth) {
+            throw new IllegalStateException("Unauthenticated client should not be allowed to connect to authenticated server");
          }
-
-         assertStatus(isAdmin ? 307 : 404, client.raw().get("/"));
-         assertStatus(isAdmin ? 200 : 404, client.server().info());
-      } catch (SecurityException e) {
-         validateException(e);
       }
-   }
 
-   private void validateSuccess() {
-      if (isAnonymous && useAuth) {
-         throw new IllegalStateException("Authenticated client should not be allowed to connect to anonymous server");
+      private void validateException(RuntimeException e) {
+         if (useAuth && isAnonymous) return;
+         if (!useAuth && !isAnonymous) return;
+         if (isAlternateRealm && "default".equals(realm)) return;
+         if (!isAlternateRealm && !"default".equals(realm)) return;
+         if (isPlain && !isMechanismClearText) return;
+         if (!isPlain && isMechanismClearText) return;
+         throw e;
       }
-      if (!isAnonymous && !useAuth) {
-         throw new IllegalStateException("Unauthenticated client should not be allowed to connect to authenticated server");
-      }
-   }
-
-   private void validateException(RuntimeException e) {
-      if (useAuth && isAnonymous) return;
-      if (!useAuth && !isAnonymous) return;
-      if (isAlternateRealm && "default".equals(realm)) return;
-      if (!isAlternateRealm && !"default".equals(realm)) return;
-      if (isPlain && !isMechanismClearText) return;
-      if (!isPlain && isMechanismClearText) return;
-      throw e;
    }
 }

@@ -19,7 +19,7 @@ abstract class BaseTestClientDriver<S extends BaseTestClientDriver<S>> implement
    protected BasicConfiguration serverConfiguration = null;
    protected EnumSet<CacheContainerAdmin.AdminFlag> flags = EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class);
    protected CacheMode mode = null;
-   protected String qualifier;
+   protected Object[] qualifiers;
 
    public S withServerConfiguration(org.infinispan.configuration.cache.ConfigurationBuilder serverConfiguration) {
       if (mode != null) {
@@ -46,7 +46,11 @@ abstract class BaseTestClientDriver<S extends BaseTestClientDriver<S>> implement
    }
 
    public S withQualifier(String qualifier) {
-      this.qualifier = qualifier;
+      return withQualifiers(qualifier);
+   }
+
+   public S withQualifiers(Object... qualifiers) {
+      this.qualifiers = qualifiers;
       return self();
    }
 
