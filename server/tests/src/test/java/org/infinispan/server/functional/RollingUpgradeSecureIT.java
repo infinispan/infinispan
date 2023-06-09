@@ -10,8 +10,9 @@ public class RollingUpgradeSecureIT extends RollingUpgradeIT {
    static final String USER = "all_user";
    static final String PASS = "all";
 
-   public RollingUpgradeSecureIT() {
-      super("configuration/AuthenticationServerTest.xml");
+   @Override
+   protected String configFile() {
+      return "configuration/AuthenticationServerTest.xml";
    }
 
    @Override

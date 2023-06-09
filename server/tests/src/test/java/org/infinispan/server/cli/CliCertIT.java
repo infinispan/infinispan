@@ -12,14 +12,12 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.server.test.core.AeshTestConnection;
 import org.infinispan.server.test.core.InfinispanServerDriver;
 import org.infinispan.server.test.core.ServerRunMode;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -27,19 +25,16 @@ import org.junit.Test;
  **/
 public class CliCertIT {
 
-   @ClassRule
-   public static InfinispanServerRule SERVERS =
-         InfinispanServerRuleBuilder.config("configuration/AuthenticationServerTrustTest.xml")
+   @RegisterExtension
+   public static InfinispanServerExtension SERVERS =
+         InfinispanServerExtensionBuilder.config("configuration/AuthenticationServerTrustTest.xml")
                .runMode(ServerRunMode.CONTAINER)
                .build();
-
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
 
    private static File workingDir;
    private static Properties properties;
 
-   @BeforeClass
+   @BeforeAll
    public static void setup() {
       workingDir = new File(CommonsTestingUtil.tmpDirectory(CliCertIT.class));
       Util.recursiveFileRemove(workingDir);
@@ -48,7 +43,7 @@ public class CliCertIT {
       properties.put("cli.dir", workingDir.getAbsolutePath());
    }
 
-   @AfterClass
+   @AfterAll
    public static void teardown() {
       Util.recursiveFileRemove(workingDir);
    }
@@ -96,6 +91,6 @@ public class CliCertIT {
    }
 
    private String hostAddress() {
-      return SERVERS.getTestServer().getDriver().getServerAddress(0).getHostAddress();
+      return SERVERS.getServerDriver().getServerAddress(0).getHostAddress();
    }
 }

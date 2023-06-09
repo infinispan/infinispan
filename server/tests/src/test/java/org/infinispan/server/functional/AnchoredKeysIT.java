@@ -1,7 +1,7 @@
 package org.infinispan.server.functional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -9,12 +9,10 @@ import org.infinispan.commons.configuration.BasicConfiguration;
 import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.commons.util.Version;
 import org.infinispan.server.test.core.ServerRunMode;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @author Ryan Emerson
@@ -22,20 +20,17 @@ import org.junit.Test;
  */
 public class AnchoredKeysIT {
 
-   @ClassRule
-   public static final InfinispanServerRule SERVERS =
-         InfinispanServerRuleBuilder.config("configuration/AnchoredKeys.xml")
+   @RegisterExtension
+   public static final InfinispanServerExtension SERVERS =
+         InfinispanServerExtensionBuilder.config("configuration/AnchoredKeys.xml")
                .numServers(2)
                .runMode(ServerRunMode.EMBEDDED)
                .featuresEnabled("anchored-keys")
                .build();
 
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
-
    @Test
    public void testAnchoredKeysCache() {
-      RemoteCacheManager rcm = SERVER_TEST.hotrod().createRemoteCacheManager();
+      RemoteCacheManager rcm = SERVERS.hotrod().createRemoteCacheManager();
       test(rcm.getCache("default"));
    }
 
@@ -45,7 +40,7 @@ public class AnchoredKeysIT {
                         "<locking concurrency-level=\"100\" acquire-timeout=\"1000\"/>\n" +
                            "<anchored-keys xmlns=\"urn:infinispan:config:anchored-keys:" + Version.getMajorMinor() + "\" enabled=\"true\"/>\n" +
                        "</replicated-cache></cache-container></infinispan>");
-      RemoteCacheManager rcm = SERVER_TEST.hotrod().createRemoteCacheManager();
+      RemoteCacheManager rcm = SERVERS.hotrod().createRemoteCacheManager();
       rcm.administration().createCache("anchored2", config);
       test(rcm.getCache("anchored2"));
    }

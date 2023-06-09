@@ -71,4 +71,11 @@ public abstract class Database {
    public abstract void start();
 
    public abstract void stop();
+
+   @Override
+   public String toString() {
+      return "Database{" +
+            "type='" + type + '\'' +
+            '}';
+   }
 }

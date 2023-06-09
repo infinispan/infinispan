@@ -15,7 +15,7 @@ public class LdapServerListener implements InfinispanServerListener {
    private static final String DEFAULT_LDIF = "ldif/infinispan.ldif";
    private static final String KERBEROS_LDIF = "ldif/infinispan-kerberos.ldif";
 
-   private AbstractLdapServer ldapServer;
+   private final AbstractLdapServer ldapServer;
 
    public LdapServerListener() {
       this(false);

@@ -52,8 +52,8 @@ public class ApacheLdapServer extends AbstractLdapServer {
    private DirectoryService directoryService;
    private LdapServer ldapServer;
    private KdcServer kdcServer;
-   private boolean withKdc;
-   private String initLDIF;
+   private final boolean withKdc;
+   private final String initLDIF;
 
    public ApacheLdapServer(boolean withKdc, String initLDIF) {
       this.withKdc = withKdc;

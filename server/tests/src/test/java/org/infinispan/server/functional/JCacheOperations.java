@@ -16,28 +16,25 @@ import javax.cache.Caching;
 import javax.cache.spi.CachingProvider;
 
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 11.0
  **/
 public class JCacheOperations {
-   @ClassRule
-   public static InfinispanServerRule SERVERS = ClusteredIT.SERVERS;
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
+
+   @RegisterExtension
+   public static final InfinispanServerExtension SERVERS = ClusteredIT.SERVERS;
 
    @Test
    public void testJCacheOperations() throws IOException {
       Properties properties = new Properties();
       InetAddress serverAddress = SERVERS.getServerDriver().getServerAddress(0);
       properties.put(ConfigurationProperties.SERVER_LIST, serverAddress.getHostAddress() + ":11222");
-      properties.put(ConfigurationProperties.CACHE_PREFIX + SERVER_TEST.getMethodName() + ConfigurationProperties.CACHE_TEMPLATE_NAME_SUFFIX, "org.infinispan.DIST_SYNC");
+      properties.put(ConfigurationProperties.CACHE_PREFIX + SERVERS.getMethodName() + ConfigurationProperties.CACHE_TEMPLATE_NAME_SUFFIX, "org.infinispan.DIST_SYNC");
       doJCacheOperations(properties);
    }
 
@@ -46,19 +43,19 @@ public class JCacheOperations {
       Properties properties = new Properties();
       InetAddress serverAddress = SERVERS.getServerDriver().getServerAddress(0);
       properties.put(ConfigurationProperties.SERVER_LIST, serverAddress.getHostAddress() + ":11222");
-      properties.put(ConfigurationProperties.CACHE_PREFIX + '[' + SERVER_TEST.getMethodName().substring(0, 8) + "*]" + ConfigurationProperties.CACHE_TEMPLATE_NAME_SUFFIX, "org.infinispan.DIST_SYNC");
+      properties.put(ConfigurationProperties.CACHE_PREFIX + '[' + SERVERS.getMethodName().substring(0, 8) + "*]" + ConfigurationProperties.CACHE_TEMPLATE_NAME_SUFFIX, "org.infinispan.DIST_SYNC");
       doJCacheOperations(properties);
    }
 
    private void doJCacheOperations(Properties properties) throws IOException {
-      File file = new File(String.format("target/test-classes/%s-hotrod-client.properties", SERVER_TEST.getMethodName()));
+      File file = new File(String.format("target/test-classes/%s-hotrod-client.properties", SERVERS.getMethodName()));
       try (FileOutputStream fos = new FileOutputStream(file)) {
          properties.store(fos, null);
       }
       URI uri = file.toURI();
       CachingProvider provider = Caching.getCachingProvider();
       try (CacheManager cacheManager = provider.getCacheManager(uri, this.getClass().getClassLoader())) {
-         Cache<String, String> cache = cacheManager.getCache(SERVER_TEST.getMethodName());
+         Cache<String, String> cache = cacheManager.getCache(SERVERS.getMethodName());
          cache.put("k1", "v1");
          int size = getCacheSize(cache);
          assertEquals(1, size);

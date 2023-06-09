@@ -28,24 +28,28 @@ import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.infinispan.util.KeyValuePair;
-import org.junit.After;
+import org.junit.jupiter.api.AfterEach;
 
 /**
  * @author Ryan Emerson
  * @since 12.0
  */
-class AbstractMultiClusterIT {
+abstract class AbstractMultiClusterIT {
 
    protected final String config;
    protected final String[] mavenArtifacts;
    protected Cluster source, target;
 
-   public AbstractMultiClusterIT(String config, String... mavenArtifacts) {
-      this.config = config;
+   public AbstractMultiClusterIT(String... mavenArtifacts) {
+      this.config = configFile();
       this.mavenArtifacts = mavenArtifacts;
    }
 
-   @After
+   protected String configFile() {
+      return "configuration/ClusteredServerTest.xml";
+   }
+
+   @AfterEach
    public void cleanup() throws Exception {
       stopSourceCluster();
       stopTargetCluster();

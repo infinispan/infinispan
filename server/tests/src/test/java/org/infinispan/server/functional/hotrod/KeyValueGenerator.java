@@ -1,11 +1,11 @@
 package org.infinispan.server.functional.hotrod;
 
 import static org.infinispan.test.TestingUtil.v;
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 import org.infinispan.commons.jdkspecific.CallerId;
 import org.infinispan.test.TestingUtil;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 
 /**
  * A key and value generator for Hot Rod testing.
@@ -28,7 +28,7 @@ public interface KeyValueGenerator<K, V> {
 
       @Override
       public void assertEquals(String expected, String actual) {
-         Assert.assertEquals(expected, actual);
+         Assertions.assertEquals(expected, actual);
       }
 
       @Override

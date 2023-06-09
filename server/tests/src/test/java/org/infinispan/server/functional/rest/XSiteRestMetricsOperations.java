@@ -22,11 +22,9 @@ import org.infinispan.client.rest.RestMetricsClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.server.functional.XSiteIT;
-import org.infinispan.server.test.junit4.InfinispanXSiteServerRule;
-import org.infinispan.server.test.junit4.InfinispanXSiteServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanXSiteServerExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * Test site status metrics
@@ -53,11 +51,8 @@ public class XSiteRestMetricsOperations {
                "  </replicated-cache>" +
                "</cache-container></infinispan>";
 
-   @ClassRule
-   public static final InfinispanXSiteServerRule SERVERS = XSiteIT.SERVERS;
-
-   @Rule
-   public InfinispanXSiteServerTestMethodRule SERVER_TEST = new InfinispanXSiteServerTestMethodRule(SERVERS);
+   @RegisterExtension
+   public static final InfinispanXSiteServerExtension SERVERS = XSiteIT.SERVERS;
 
    // copied from regex101.com
    private static final Pattern PROMETHEUS_PATTERN = Pattern.compile("^(?<metric>[a-zA-Z_:][a-zA-Z0-9_:]*]*)(?<tags>\\{.*})?[\\t ]*(?<value>-?[0-9E.]*)[\\t ]*(?<timestamp>[0-9]+)?$");
@@ -95,16 +90,14 @@ public class XSiteRestMetricsOperations {
 
    @Test
    public void testSiteStatus() throws Exception {
-      String lonXML = String.format(LON_CACHE_XML_CONFIG, SERVER_TEST.getMethodName());
-      String nycXML = String.format(NYC_CACHE_XML_CONFIG, SERVER_TEST.getMethodName());
+      String lonXML = String.format(LON_CACHE_XML_CONFIG, SERVERS.getMethodName());
+      String nycXML = String.format(NYC_CACHE_XML_CONFIG, SERVERS.getMethodName());
 
-      //noinspection resource
-      RestClient client = SERVER_TEST.rest(LON).withServerConfiguration(new StringConfiguration(lonXML)).create();
+      RestClient client = SERVERS.rest(LON).withServerConfiguration(new StringConfiguration(lonXML)).create();
       RestMetricsClient metricsClient = client.metrics();
 
       // create cache in NYC
-      //noinspection resource
-      SERVER_TEST.rest(NYC).withServerConfiguration(new StringConfiguration(nycXML)).create();
+      SERVERS.rest(NYC).withServerConfiguration(new StringConfiguration(nycXML)).create();
 
       String statusMetricName = "x_site_admin_status";
 
@@ -132,16 +125,16 @@ public class XSiteRestMetricsOperations {
       assertEquals("Metrics names are not unique", TAGGED_METRICS.length + UNTAGGED_METRICS.length, uniqueMetrics);
 
 
-      String lonXML = String.format(LON_CACHE_XML_CONFIG, SERVER_TEST.getMethodName());
-      String nycXML = String.format(NYC_CACHE_XML_CONFIG, SERVER_TEST.getMethodName());
+      String lonXML = String.format(LON_CACHE_XML_CONFIG, SERVERS.getMethodName());
+      String nycXML = String.format(NYC_CACHE_XML_CONFIG, SERVERS.getMethodName());
 
       //noinspection resource
-      RestClient client = SERVER_TEST.rest(LON).withServerConfiguration(new StringConfiguration(lonXML)).create();
+      RestClient client = SERVERS.rest(LON).withServerConfiguration(new StringConfiguration(lonXML)).create();
       RestMetricsClient metricsClient = client.metrics();
 
       // create cache in NYC
       //noinspection resource
-      SERVER_TEST.rest(NYC).withServerConfiguration(new StringConfiguration(nycXML)).create();
+      SERVERS.rest(NYC).withServerConfiguration(new StringConfiguration(nycXML)).create();
 
       Map<String, String> metricsAndTags = getMetrics(metricsClient);
 

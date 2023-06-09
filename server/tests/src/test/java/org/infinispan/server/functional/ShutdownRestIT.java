@@ -9,30 +9,25 @@ import java.net.ConnectException;
 
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.commons.util.Util;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @since 10.0
  */
 public class ShutdownRestIT {
 
-   @ClassRule
-   public static final InfinispanServerRule SERVER =
-         InfinispanServerRuleBuilder.config("configuration/ClusteredServerTest.xml")
+   @RegisterExtension
+   public static final InfinispanServerExtension SERVER =
+         InfinispanServerExtensionBuilder.config("configuration/ClusteredServerTest.xml")
                                     .numServers(1)
                                     .build();
 
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVER);
-
    @Test
    public void testShutDown() {
-      RestClient client = SERVER_TEST.rest().create();
+      RestClient client = SERVER.rest().create();
       assertStatus(NO_CONTENT, client.server().stop());
       eventually(() -> isServerShutdown(client));
       eventually(() -> !SERVER.getServerDriver().isRunning(0));

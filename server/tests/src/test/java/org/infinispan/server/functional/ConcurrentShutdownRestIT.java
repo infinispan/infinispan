@@ -9,31 +9,26 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @since 10.1
  */
 public class ConcurrentShutdownRestIT {
 
-   @ClassRule
-   public static final InfinispanServerRule SERVER =
-         InfinispanServerRuleBuilder.config("configuration/ClusteredServerTest.xml")
+   @RegisterExtension
+   public static final InfinispanServerExtension SERVER =
+         InfinispanServerExtensionBuilder.config("configuration/ClusteredServerTest.xml")
                                     .numServers(2)
                                     .build();
 
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVER);
-
    @Test
    public void testShutDown() {
-      RestClient client0 = SERVER_TEST.rest().create();
-      RestClient client1 = SERVER_TEST.rest().get(1);
+      RestClient client0 = SERVER.rest().create();
+      RestClient client1 = SERVER.rest().get(1);
       CompletionStage<RestResponse> stop0 = client0.server().stop();
       CompletionStage<RestResponse> stop1 = client1.server().stop();
       assertStatus(NO_CONTENT, stop0);

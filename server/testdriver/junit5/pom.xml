@@ -40,6 +40,12 @@
          <scope>compile</scope>
       </dependency>
       <dependency>
+         <groupId>org.junit.platform</groupId>
+         <artifactId>junit-platform-suite-api</artifactId>
+         <version>${versionx.junit.platform}</version>
+         <scope>compile</scope>
+      </dependency>
+      <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-testdriver-core</artifactId>
          <scope>compile</scope>

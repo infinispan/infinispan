@@ -4,7 +4,7 @@ import static org.infinispan.client.rest.RestResponse.NOT_FOUND;
 import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
 import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.server.test.core.Common.assertStatus;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.util.List;
@@ -18,15 +18,12 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.remote.configuration.RemoteServerConfiguration;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
 import org.infinispan.persistence.remote.upgrade.SerializationUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @since 13.0
  */
 public class RollingUpgradeDynamicStoreIT extends RollingUpgradeIT {
-   public RollingUpgradeDynamicStoreIT() {
-      super("configuration/ClusteredServerTest.xml");
-   }
 
    @Test
    @Override

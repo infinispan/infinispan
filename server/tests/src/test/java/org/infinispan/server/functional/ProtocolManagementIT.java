@@ -2,7 +2,7 @@ package org.infinispan.server.functional;
 
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.sync;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -21,12 +21,10 @@ import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.server.network.NetworkAddress;
 import org.infinispan.server.test.core.ServerRunMode;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -34,34 +32,31 @@ import org.junit.Test;
  **/
 public class ProtocolManagementIT {
 
-   @ClassRule
-   public static InfinispanServerRule SERVERS =
-         InfinispanServerRuleBuilder.config("configuration/MultiEndpointClusteredServerTest.xml")
+   @RegisterExtension
+   public static InfinispanServerExtension SERVERS =
+         InfinispanServerExtensionBuilder.config("configuration/MultiEndpointClusteredServerTest.xml")
                .runMode(ServerRunMode.EMBEDDED)
                .numServers(2)
                .property("infinispan.bind.address", "0.0.0.0")
                .build();
-
-   @Rule
-   public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
 
    @Test
    public void testIpFilter() throws IOException {
       NetworkAddress loopback = NetworkAddress.loopback("loopback");
       RestClientConfigurationBuilder loopbackBuilder = new RestClientConfigurationBuilder();
       loopbackBuilder.addServer().host(loopback.getAddress().getHostAddress()).port(11222);
-      RestClient loopbackClient = SERVER_TEST.rest().withClientConfiguration(loopbackBuilder).get();
+      RestClient loopbackClient = SERVERS.rest().withClientConfiguration(loopbackBuilder).get();
       assertStatus(200, loopbackClient.server().connectorNames());
 
       NetworkAddress siteLocal = NetworkAddress.match("sitelocal", iF -> !iF.getName().startsWith("docker"), InetAddress::isSiteLocalAddress);
       RestClientConfigurationBuilder siteLocalBuilder0 = new RestClientConfigurationBuilder();
       siteLocalBuilder0.addServer().host(siteLocal.getAddress().getHostAddress()).port(11222);
-      RestClient siteLocalClient0 = SERVER_TEST.rest().withClientConfiguration(siteLocalBuilder0).get();
+      RestClient siteLocalClient0 = SERVERS.rest().withClientConfiguration(siteLocalBuilder0).get();
       assertStatus(200, siteLocalClient0.server().connectorNames());
 
       RestClientConfigurationBuilder siteLocalBuilder1 = new RestClientConfigurationBuilder();
       siteLocalBuilder1.addServer().host(siteLocal.getAddress().getHostAddress()).port(11322);
-      RestClient siteLocalClient1 = SERVER_TEST.rest().withClientConfiguration(siteLocalBuilder1).get();
+      RestClient siteLocalClient1 = SERVERS.rest().withClientConfiguration(siteLocalBuilder1).get();
       assertStatus(200, siteLocalClient1.server().connectorNames());
 
       List<IpFilterRule> rules = new ArrayList<>();
@@ -81,7 +76,7 @@ public class ProtocolManagementIT {
       assertStatus(204, loopbackClient.server().connectorIpFilterSet("HotRod-hotrod", rules));
       ConfigurationBuilder hotRodSiteLocalBuilder = new ConfigurationBuilder();
       hotRodSiteLocalBuilder.addServer().host(siteLocal.getAddress().getHostAddress()).port(11222).clientIntelligence(ClientIntelligence.BASIC);
-      RemoteCacheManager siteLocalRemoteCacheManager = SERVER_TEST.hotrod().withClientConfiguration(hotRodSiteLocalBuilder).createRemoteCacheManager();
+      RemoteCacheManager siteLocalRemoteCacheManager = SERVERS.hotrod().withClientConfiguration(hotRodSiteLocalBuilder).createRemoteCacheManager();
       Exceptions.expectException(TransportException.class, siteLocalRemoteCacheManager::getCacheNames);
       // REST should still work, so let's clear the rules
       assertStatus(204, siteLocalClient0.server().connectorIpFiltersClear("HotRod-hotrod"));
@@ -94,12 +89,12 @@ public class ProtocolManagementIT {
       NetworkAddress loopback = NetworkAddress.loopback("loopback");
       RestClientConfigurationBuilder defaultBuilder = new RestClientConfigurationBuilder();
       defaultBuilder.addServer().host(loopback.getAddress().getHostAddress()).port(11222);
-      RestClient defaultClient = SERVER_TEST.rest().withClientConfiguration(defaultBuilder).get();
+      RestClient defaultClient = SERVERS.rest().withClientConfiguration(defaultBuilder).get();
       assertStatus(200, defaultClient.caches());
 
       RestClientConfigurationBuilder alternateBuilder = new RestClientConfigurationBuilder();
       alternateBuilder.addServer().host(loopback.getAddress().getHostAddress()).port(11223);
-      RestClient alternateClient = SERVER_TEST.rest().withClientConfiguration(alternateBuilder).get();
+      RestClient alternateClient = SERVERS.rest().withClientConfiguration(alternateBuilder).get();
       assertStatus(200, alternateClient.caches());
 
       assertStatus(204, defaultClient.server().connectorStop("endpoint-alternate-1"));
