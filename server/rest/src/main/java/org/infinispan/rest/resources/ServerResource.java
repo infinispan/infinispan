@@ -30,6 +30,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
@@ -37,6 +39,9 @@ import java.util.concurrent.Executor;
 import javax.sql.DataSource;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
@@ -47,6 +52,8 @@ import org.infinispan.commons.util.JVMMemoryInfoInfo;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.manager.CacheManagerInfo;
@@ -147,6 +154,7 @@ public class ServerResource implements ResourceHandler {
             .invocation().methods(POST).path("/v2/server/datasources/{datasource}").withAction("test")
             .permission(AuthorizationPermission.ADMIN).name("DATASOURCE TEST").auditContext(AuditContext.SERVER)
             .handleWith(this::dataSourceTest)
+            .invocation().methods(GET).path("/v2/server/caches/defaults").handleWith(this::getCacheConfigDefaultAttributes)
             .create();
    }
 
@@ -500,6 +508,39 @@ public class ServerResource implements ResourceHandler {
          }
          return builder.build();
       }, invocationHelper.getExecutor());
+   }
+
+   private CompletionStage<RestResponse> getCacheConfigDefaultAttributes(RestRequest request) {
+      Configuration configuration = new ConfigurationBuilder().build();
+      Map<String, Object> attributes = new LinkedHashMap<>();
+      allAttributes(configuration, attributes, configuration.elementName());
+      return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(attributes), isPretty(request));
+   }
+
+   private static void allAttributes(ConfigurationElement<?> element, Map<String, Object> attributes, String prefix) {
+      Map<String, Object> attributeMap = new LinkedHashMap<>();
+      for (Attribute<?> attribute : element.attributes().attributes()) {
+         AttributeDefinition<?> definition = attribute.getAttributeDefinition();
+         String value;
+         if (attribute.getInitialValue() == null) {
+            value = null;
+         } else {
+            value = attribute.getInitialValue().toString();
+         }
+         attributeMap.put(definition.name(), value);
+      }
+
+      Map<String, Object> relative = attributes;
+      String[] path = prefix.split("\\.");
+      for (int i = 0; i < path.length - 1; i++) {
+         String key = path[i];
+         relative = (Map<String, Object>) relative.computeIfAbsent(key, ignore -> new LinkedHashMap<>());
+      }
+      relative.put(path[path.length - 1], attributeMap);
+
+      for (ConfigurationElement<?> child : element.children()) {
+         allAttributes(child, attributes, prefix + "." + child.elementName());
+      }
    }
 
    static class ServerInfo implements JsonSerialization {

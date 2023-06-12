@@ -74,4 +74,6 @@ public interface RestServerClient {
    CompletionStage<RestResponse> dataSourceNames();
 
    CompletionStage<RestResponse> dataSourceTest(String name);
+
+   CompletionStage<RestResponse> cacheConfigDefaults();
 }

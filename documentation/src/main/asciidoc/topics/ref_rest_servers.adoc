@@ -200,3 +200,14 @@ include::json/rest_server_connections_response.json[]
 |OPTIONAL
 | `true`: will collect connections from all servers in the cluster
 |===
+
+[id='rest_v2_server_caches_defaults']
+= Retrieving Default values for Cache Configuration
+Retrieve default values for cache configuration with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+POST /rest/v2/server/caches/defaults
+----
+
+{brandname} responds with the default values for cache configuration in JSON format.
