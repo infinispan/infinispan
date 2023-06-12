@@ -165,4 +165,9 @@ public class RestServerClientOkHttp implements RestServerClient {
       Request.Builder builder = new Request.Builder().url(url).post(new FormBody.Builder().build());
       return client.execute(builder);
    }
+
+   @Override
+   public CompletionStage<RestResponse> cacheConfigDefaults() {
+      return client.execute(baseServerURL+ "/caches/defaults");
+   }
 }
