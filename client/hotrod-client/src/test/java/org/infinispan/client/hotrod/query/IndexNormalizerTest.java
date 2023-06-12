@@ -41,6 +41,6 @@ public class IndexNormalizerTest extends SingleHotRodServerTest {
       remoteCache.put(1, new Book("LIBERTY"));
 
       QueryFactory queryFactory = Search.getQueryFactory(remoteCache);
-      assertEquals(1, queryFactory.create("from Book where title : 'li*ty'").execute().hitCount().orElse(-1));
+      assertEquals(1, queryFactory.create("from Book where title : 'li*ty'").execute().count().value());
    }
 }

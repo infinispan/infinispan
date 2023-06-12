@@ -71,7 +71,7 @@ public class IndexingOperationOffloadingTest extends SingleCacheManagerTest {
       QueryFactory factory = Search.getQueryFactory(types);
       Query<TypeA> queryAll = factory.create("from org.infinispan.query.model.TypeA");
       QueryResult<TypeA> result = queryAll.execute();
-      assertThat(result.hitCount()).hasValue(SIZE);
+      assertThat(result.count().value()).isEqualTo(SIZE);
    }
 
    @Test
@@ -111,7 +111,7 @@ public class IndexingOperationOffloadingTest extends SingleCacheManagerTest {
       QueryFactory factory = Search.getQueryFactory(types);
       Query<TypeB> queryAll = factory.create("from org.infinispan.query.model.TypeB");
       QueryResult<TypeB> result = queryAll.execute();
-      assertThat(result.hitCount()).hasValue(CHUNKS_NUMBER * CHUNK_SIZE);
+      assertThat(result.count().value()).isEqualTo(CHUNKS_NUMBER * CHUNK_SIZE);
    }
 
    private long getElapsed(long timeZero) {

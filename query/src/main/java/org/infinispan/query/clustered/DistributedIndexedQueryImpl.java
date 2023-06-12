@@ -21,6 +21,7 @@ import org.infinispan.query.SearchTimeoutException;
 import org.infinispan.query.core.impl.QueryResultImpl;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.QueryResult;
+import org.infinispan.query.dsl.TotalHitCount;
 import org.infinispan.query.impl.IndexedQuery;
 import org.infinispan.query.impl.IndexedQueryImpl;
 import org.infinispan.query.impl.QueryDefinition;
@@ -140,7 +141,7 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
          partitionHandlingSupport.checkCacheAvailable();
          List<E> hits = stream(spliteratorUnknownSize(iterator(), 0), false)
                .filter(Objects::nonNull).collect(Collectors.toList());
-         return countIsExact ? new QueryResultImpl<>(resultSize, hits) : new QueryResultImpl<>(hits);
+         return new QueryResultImpl<>(new TotalHitCount(resultSize, countIsExact), hits);
       } catch (org.hibernate.search.util.common.SearchTimeoutException timeoutException) {
          throw new SearchTimeoutException();
       }

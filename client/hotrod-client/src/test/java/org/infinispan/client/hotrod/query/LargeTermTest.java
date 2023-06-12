@@ -57,7 +57,7 @@ public class LargeTermTest extends SingleHotRodServerTest {
       remoteCache.put(1, entity);
 
       QueryFactory queryFactory = Search.getQueryFactory(remoteCache);
-      assertEquals(1, queryFactory.create("from KeywordEntity where keyword : 'foo bar0 baz'").execute().hitCount().orElse(-1));
+      assertEquals(1, queryFactory.create("from KeywordEntity where keyword : 'foo bar0 baz'").execute().count().value());
    }
 
    public String createLargeDescription(int times) {

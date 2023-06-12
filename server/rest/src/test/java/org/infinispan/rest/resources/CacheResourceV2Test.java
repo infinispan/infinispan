@@ -1586,7 +1586,8 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
          RestResponse response1 = join(cacheClient.query(indexedQuery));
          assertThat(response1).isOk();
          Json queryJson = Json.read(response1.getBody());
-         assertEquals(2, queryJson.at("total_results").asInteger());
+         assertEquals(2, queryJson.at("hit_count").asInteger());
+         assertEquals(true, queryJson.at("hit_count_exact").asBoolean());
       });
       response = join(cacheClient.searchStats());
       statJson = Json.read(response.getBody());
@@ -1612,7 +1613,8 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       String hybrid = "FROM Entity WHERE value > 5 AND description = 'One'";
       response = join(cacheClient.query(hybrid));
       Json queryJson = Json.read(response.getBody());
-      assertEquals(0, queryJson.at("total_results").asInteger());
+      assertEquals(0, queryJson.at("hit_count").asInteger());
+      assertEquals(true, queryJson.at("hit_count_exact").asBoolean());
       response = join(cacheClient.searchStats());
       statJson = Json.read(response.getBody());
 

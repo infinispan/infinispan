@@ -12,5 +12,8 @@ public interface BaseQueryResponse<T> {
 
    List<T> extractResults(SerializationContext serializationContext) throws IOException;
 
-   long getTotalResults();
+   int hitCount();
+
+   boolean hitCountExact();
+
 }

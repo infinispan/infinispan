@@ -45,7 +45,7 @@ public class LocalCacheMassIndexerTest extends SingleCacheManagerTest {
       // queryFactory.refresh(Object.class);
 
       Query<?> query = queryFactory.create("FROM " + Person.class.getName());
-      return query.execute().hitCount().orElse(-1);
+      return query.execute().count().value();
    }
 
    private void fillData() {
@@ -98,6 +98,6 @@ public class LocalCacheMassIndexerTest extends SingleCacheManagerTest {
       QueryFactory queryFactory = Search.getQueryFactory(cache);
       String q = String.format("FROM %s where name:'%s'", Person.class.getName(), name);
       Query cacheQuery = queryFactory.create(q);
-      assertEquals(expectedCount, cacheQuery.execute().hitCount().orElse(-1));
+      assertEquals(expectedCount, cacheQuery.execute().count().value());
    }
 }

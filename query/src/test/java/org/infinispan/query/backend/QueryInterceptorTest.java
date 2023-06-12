@@ -178,7 +178,7 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
 
    private long countIndex(Class<?> entityType, Cache<?, ?> cache) {
       Query<?> query = Search.getQueryFactory(cache).create("FROM " + entityType.getName());
-      return query.execute().hitCount().orElse(-1);
+      return query.execute().count().value();
    }
 
    private void forceCommit(Cache<?, ?> cache) {

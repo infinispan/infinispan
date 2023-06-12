@@ -2,7 +2,7 @@ package org.infinispan.rest.search;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.query.remote.json.JSONConstants.HIT;
-import static org.infinispan.query.remote.json.JSONConstants.TOTAL_RESULTS;
+import static org.infinispan.query.remote.json.JSONConstants.HIT_COUNT;
 import static org.infinispan.rest.JSONConstants.TYPE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
@@ -173,7 +173,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    @Test(dataProvider = "HttpMethodProvider")
    public void testSimpleQuery(Method method) throws Exception {
       Json queryResult = query("from org.infinispan.rest.search.entity.Person p where p.surname = 'Cage'", method);
-      assertEquals(queryResult.at("total_results").asInteger(), 1);
+      assertEquals(queryResult.at("hit_count").asInteger(), 1);
 
       Json hits = queryResult.at("hits");
       List<Json> jsonHits = hits.asJsonList();
@@ -190,7 +190,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    public void testMultiResultQuery(Method method) throws Exception {
       Json results = query("from org.infinispan.rest.search.entity.Person p where p.id < 5 and p.gender = 'MALE'", method);
 
-      assertEquals(results.at(TOTAL_RESULTS).asInteger(), 3);
+      assertEquals(results.at(HIT_COUNT).asInteger(), 3);
 
       Json hits = results.at("hits");
       assertEquals(hits.asList().size(), 3);
@@ -200,7 +200,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    public void testProjections(Method method) throws Exception {
       Json results = query("Select name, surname from org.infinispan.rest.search.entity.Person", method);
 
-      assertEquals(results.at(TOTAL_RESULTS).asInteger(), ENTRIES);
+      assertEquals(results.at(HIT_COUNT).asInteger(), ENTRIES);
 
       Json hits = results.at("hits");
 
@@ -227,7 +227,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    public void testGrouping(Method method) throws Exception {
       Json results = query("select p.gender, count(p.name) from org.infinispan.rest.search.entity.Person p where p.id < 5 group by p.gender order by p.gender", method);
 
-      assertEquals(results.at(TOTAL_RESULTS).asInteger(), 2);
+      assertEquals(results.at(HIT_COUNT).asInteger(), 2);
 
       Json hits = results.at("hits");
 
@@ -243,7 +243,8 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       String q = "select p.name from org.infinispan.rest.search.entity.Person p where p.id < 5 order by p.name desc";
       Json results = query(q, method, 2, 2);
 
-      assertEquals(results.at("total_results").asInteger(), 4);
+      assertEquals(results.at("hit_count").asInteger(), 4);
+      assertEquals(results.at("hit_count_exact").asBoolean(), true);
       Json hits = results.at("hits");
       assertEquals(hits.asList().size(), 2);
 
@@ -298,7 +299,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
    private int getCount() throws Exception {
       Json results = query("from org.infinispan.rest.search.entity.Person", GET);
-      return results.at("total_results").asInteger();
+      return results.at("hit_count").asInteger();
    }
 
    @Test
@@ -394,7 +395,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
       int sum = clients.stream().map(cli -> {
          RestResponse queryResponse = join(cli.cache(CACHE_NAME).query("FROM org.infinispan.rest.search.entity.Person", true));
-         return Json.read(queryResponse.getBody()).at(TOTAL_RESULTS).asInteger();
+         return Json.read(queryResponse.getBody()).at(HIT_COUNT).asInteger();
       }).mapToInt(value -> value).sum();
 
       int expected = ENTRIES;

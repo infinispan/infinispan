@@ -77,7 +77,8 @@ public final class Externalizers {
             results.add(o.getValue());
          }
          output.writeObject(results);
-         output.writeLong(queryResponse.getTotalResults());
+         output.writeInt(queryResponse.hitCount());
+         output.writeBoolean(queryResponse.hitCountExact());
       }
 
       @Override
@@ -92,7 +93,8 @@ public final class Externalizers {
             wrappedResults.add(new WrappedMessage(o));
          }
          queryResponse.setResults(wrappedResults);
-         queryResponse.setTotalResults(input.readLong());
+         queryResponse.hitCount(input.readInt());
+         queryResponse.hitCountExact(input.readBoolean());
          return queryResponse;
       }
    }

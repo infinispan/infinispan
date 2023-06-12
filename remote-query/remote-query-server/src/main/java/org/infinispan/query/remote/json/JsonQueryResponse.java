@@ -7,13 +7,19 @@ import org.infinispan.commons.dataconversion.internal.JsonSerialization;
  */
 public abstract class JsonQueryResponse implements JsonSerialization {
 
-   private final long totalResults;
+   private final int hitCount;
+   private final boolean hitCountExact;
 
-   JsonQueryResponse(long totalResults) {
-      this.totalResults = totalResults;
+   JsonQueryResponse(int hitCount, boolean hitCountExact) {
+      this.hitCount = hitCount;
+      this.hitCountExact = hitCountExact;
    }
 
-   public long getTotalResults() {
-      return totalResults;
+   public int hitCount() {
+      return hitCount;
+   }
+
+   public boolean hitCountExact() {
+      return hitCountExact;
    }
 }

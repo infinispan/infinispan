@@ -60,7 +60,7 @@ public class MultipleCachesTest extends SingleCacheManagerTest {
       final Cache<Object, Object> notIndexedCache = cacheManager.getCache("notIndexedA");
       notIndexedCache.put("1", new Person("A Person's Name", "A paragraph containing some text", 75));
       Query<Person> fullTextQuery = TestQueryHelperFactory.createCacheQuery(Person.class, cache, "name", "Name");
-      assertEquals(1, fullTextQuery.execute().hitCount().orElse(-1));
+      assertEquals(1, fullTextQuery.execute().count().value());
       List<Person> l = fullTextQuery.execute().list();
       assertEquals(1, l.size());
       Person p = l.get(0);
@@ -86,7 +86,7 @@ public class MultipleCachesTest extends SingleCacheManagerTest {
    private void useQuery(Cache<Object, Object> indexedCache) {
       indexedCache.put("1", new Person("A Person's Name", "A paragraph containing some text", 75));
       Query<Person> cq = TestQueryHelperFactory.createCacheQuery(Person.class, indexedCache, "name", "Name");
-      assertEquals(1, cq.execute().hitCount().orElse(-1));
+      assertEquals(1, cq.execute().count().value());
       List<Person> l = cq.execute().list();
       assertEquals(1, l.size());
       Person p = l.get(0);

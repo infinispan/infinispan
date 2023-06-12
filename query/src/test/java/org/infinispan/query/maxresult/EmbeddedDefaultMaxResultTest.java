@@ -48,14 +48,14 @@ public class EmbeddedDefaultMaxResultTest extends SingleCacheManagerTest {
       Query<NonIndexedGame> query = factory.create("from org.infinispan.query.model.NonIndexedGame");
       QueryResult<NonIndexedGame> result = query.execute();
 
-      assertThat(result.hitCount()).hasValue(110);
+      assertThat(result.count().value()).isEqualTo(110);
       assertThat(result.list()).hasSize(100); // use the default
 
       query = factory.create("from org.infinispan.query.model.NonIndexedGame");
       query.maxResults(200); // raise it
       result = query.execute();
 
-      assertThat(result.hitCount()).hasValue(110);
+      assertThat(result.count().value()).isEqualTo(110);
       assertThat(result.list()).hasSize(110);
    }
 
@@ -71,14 +71,14 @@ public class EmbeddedDefaultMaxResultTest extends SingleCacheManagerTest {
       Query<Game> query = factory.create("from org.infinispan.query.model.Game");
       QueryResult<Game> result = query.execute();
 
-      assertThat(result.hitCount()).hasValue(110);
+      assertThat(result.count().value()).isEqualTo(110);
       assertThat(result.list()).hasSize(100); // use the default
 
       query = factory.create("from org.infinispan.query.model.Game");
       query.maxResults(200); // raise it
       result = query.execute();
 
-      assertThat(result.hitCount()).hasValue(110);
+      assertThat(result.count().value()).isEqualTo(110);
       assertThat(result.list()).hasSize(110);
    }
 }

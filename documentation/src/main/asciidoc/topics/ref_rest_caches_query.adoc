@@ -13,7 +13,8 @@ GET /rest/v2/caches/{cacheName}?action=search&query={ickle query}
 include::json/rest_query_results.json[]
 ----
 
-* `total_results` displays the total number of results from the query.
+* `hit_count` displays the total number of results from the query.
+* `hit_count_exact` is `true` whether the `hit_count` is exact, otherwise it is a lower-bound.
 * `hits` is an array of matches from the query.
 * `hit` is an object that matches the query.
 +

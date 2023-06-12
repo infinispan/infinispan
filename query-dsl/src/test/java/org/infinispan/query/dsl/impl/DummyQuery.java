@@ -4,12 +4,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.OptionalLong;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryResult;
+import org.infinispan.query.dsl.TotalHitCount;
 
 /**
  * @author anistor@redhat.com
@@ -34,7 +34,7 @@ class DummyQuery<T> implements Query<T> {
 
    @Override
    public CloseableIterator<T> iterator() {
-      return new CloseableIterator<T>() {
+      return new CloseableIterator<>() {
 
          @Override
          public void close() {
@@ -96,8 +96,8 @@ class DummyQuery<T> implements Query<T> {
    public QueryResult<T> execute() {
       return new QueryResult<T>() {
          @Override
-         public OptionalLong hitCount() {
-            return OptionalLong.empty();
+         public TotalHitCount count() {
+            return TotalHitCount.EMPTY;
          }
 
          @Override

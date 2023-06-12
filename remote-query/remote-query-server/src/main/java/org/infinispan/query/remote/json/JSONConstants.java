@@ -13,6 +13,7 @@ public interface JSONConstants {
    String OFFSET = "offset";
    String HIT_COUNT_ACCURACY = "hit_count_accuracy";
    String QUERY_STRING = "query";
-   String TOTAL_RESULTS = "total_results";
+   String HIT_COUNT = "hit_count";
+   String HIT_COUNT_EXACT = "hit_count_exact";
    String TYPE = "_type";
 }

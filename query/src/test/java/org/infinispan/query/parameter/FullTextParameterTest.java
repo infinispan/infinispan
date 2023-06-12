@@ -42,7 +42,7 @@ public class FullTextParameterTest extends SingleCacheManagerTest {
       query.setParameter("description", "place");
       QueryResult<Book> result = query.execute();
 
-      assertThat(result.hitCount()).hasValue(1L);
+      assertThat(result.count().value()).isEqualTo(1);
       assertThat(result.list()).extracting("title").contains("island");
    }
 
@@ -52,7 +52,7 @@ public class FullTextParameterTest extends SingleCacheManagerTest {
       query.setParameter("title", "island");
       QueryResult<Book> result = query.execute();
 
-      assertThat(result.hitCount()).hasValue(1L);
+      assertThat(result.count().value()).isEqualTo(1);
       assertThat(result.list()).extracting("title").contains("island");
    }
 }

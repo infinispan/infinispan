@@ -114,6 +114,6 @@ public class ReindexCacheTest extends SingleHotRodServerTest {
    private long query(RemoteCache<?, ?> cache) {
       QueryFactory qf = Search.getQueryFactory(cache);
       Query<User> q = qf.create("FROM sample_bank_account.User");
-      return q.execute().hitCount().orElse(-1);
+      return q.execute().count().value();
    }
 }

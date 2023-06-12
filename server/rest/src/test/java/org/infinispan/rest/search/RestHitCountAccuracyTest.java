@@ -98,16 +98,17 @@ public class RestHitCountAccuracyTest extends SingleCacheManagerTest {
       assertThat(response).isOk();
 
       Json body = Json.read(response.toCompletableFuture().get().getBody());
-      Object totalResults = body.at("total_results").getValue();
-      assertEquals(totalResults, -1L);
+      Object hitCountExact = body.at("hit_count_exact").getValue();
+      assertEquals(hitCountExact, false);
 
       // raise the default accuracy
       response = cacheClient.query("from Game where description : 'game'", 10, 0, ENTRIES);
       assertThat(response).isOk();
 
       body = Json.read(response.toCompletableFuture().get().getBody());
-      totalResults = body.at("total_results").getValue();
-      assertEquals(totalResults, (long) ENTRIES);
+      hitCountExact = body.at("hit_count_exact").getValue();
+      assertEquals(hitCountExact, true);
+      assertEquals(body.at("hit_count").asInteger(), ENTRIES);
    }
 
    private static void writeEntries(int entries, RestCacheClient cacheClient) {

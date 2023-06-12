@@ -88,7 +88,7 @@ public class PerfTest extends MultipleCacheManagersTest {
    private void verifyFindsCar(Cache cache, int expectedCount, String carMake) {
       String q = String.format("FROM %s WHERE make:'%s'", Car.class.getName(), carMake);
       Query cacheQuery = Search.getQueryFactory(cache).create(q);
-      assertEquals(expectedCount, cacheQuery.execute().hitCount().orElse(-1));
+      assertEquals(expectedCount, cacheQuery.execute().count().value());
    }
 
    /**

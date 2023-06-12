@@ -23,7 +23,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
- * Tests for the query "total_results" for all types of query.
+ * Tests for the query "hit_count" for all types of query.
  *
  * @since 12.1
  */
@@ -328,12 +328,14 @@ public class SearchCountClusteredTest extends MultiNodeRestTest {
       assertTotalAndPageSize(result, NOT_INDEXED_ENTRIES, 0);
    }
 
-   private void assertTotalAndPageSize(CompletionStage<RestResponse> response, int totalResults, int pageSize) {
+   private void assertTotalAndPageSize(CompletionStage<RestResponse> response, int expectedHitCount, int pageSize) {
       RestResponse restResponse = await(response);
       String body = restResponse.getBody();
       Json responseDoc = Json.read(body);
-      Json total = responseDoc.at("total_results");
-      assertEquals(totalResults, total.asLong());
+      Json hitCount = responseDoc.at("hit_count");
+      assertEquals(expectedHitCount, hitCount.asInteger());
+      Json hitCountExact = responseDoc.at("hit_count_exact");
+      assertEquals(true, hitCountExact.getValue());
       long hitsSize = responseDoc.at("hits").asJsonList().size();
       assertEquals(pageSize, hitsSize);
    }

@@ -62,7 +62,8 @@ public class DistributedQueryExpiredEntitiesTest extends MultipleCacheManagersTe
       Query<Game> query = factory.create("from org.infinispan.query.model.Game where description : 'trilogy'");
       QueryResult<Game> result = query.execute();
 
-      assertThat(result.hitCount()).hasValue(1L);
+      assertThat(result.count().isExact()).isTrue();
+      assertThat(result.count().value()).isEqualTo(1);
       assertThat(result.list()).extracting("name").contains("Ultima IV: Quest of the Avatar");
 
       timeService.advance(TIME * 2);
@@ -70,7 +71,8 @@ public class DistributedQueryExpiredEntitiesTest extends MultipleCacheManagersTe
       query = factory.create("from org.infinispan.query.model.Game where description : 'trilogy'");
       result = query.execute();
 
-      assertThat(result.hitCount()).hasValue(1L);
+      assertThat(result.count().isExact()).isTrue();
+      assertThat(result.count().value()).isEqualTo(1);
 
       // verify that the result list does not contain any null value, but it is empty in this case
       assertThat(result.list()).isEmpty();

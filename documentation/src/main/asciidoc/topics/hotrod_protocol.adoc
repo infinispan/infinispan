@@ -2795,7 +2795,8 @@ Query Response (0x20):
 | Response payload | byte array | Byte array containing the JSON encoded response object, having a length specified by previous field. Example payload:
 
  {
-   "total_results":801,
+   "hit_count":801,
+   "hit_count_exact":true,
    "hits":[
       {
          "hit":{
@@ -2814,7 +2815,8 @@ Query Response (0x20):
 
 Where:
 
- total_results: the total number of results of the query.
+ hit_count: the total number of results of the query.
+ hit_count_exact: is true whether the "hit_count" is exact, otherwise it is a lower-bound.
  hits: an ARRAY of OBJECT representing the results.
  hit: each OBJECT above contain another OBJECT in the "hit" field, containing the result of the query, in JSON format.
 |==============================================================================

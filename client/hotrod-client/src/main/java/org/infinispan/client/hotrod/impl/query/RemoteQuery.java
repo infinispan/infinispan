@@ -5,7 +5,6 @@ import static org.infinispan.client.hotrod.impl.Util.await;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.OptionalLong;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.RemoteCache;
@@ -19,6 +18,7 @@ import org.infinispan.commons.util.Closeables;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.QueryResult;
+import org.infinispan.query.dsl.TotalHitCount;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.remote.client.impl.BaseQueryResponse;
 
@@ -66,9 +66,8 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
       BaseQueryResponse<T> response = executeRemotely(true);
       return new QueryResult<>() {
          @Override
-         public OptionalLong hitCount() {
-            long totalResults = response.getTotalResults();
-            return totalResults == -1 ? OptionalLong.empty() : OptionalLong.of(totalResults);
+         public TotalHitCount count() {
+            return new TotalHitCount(response.hitCount(), response.hitCountExact());
          }
 
          @Override
@@ -85,7 +84,7 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
    @Override
    public int executeStatement() {
       BaseQueryResponse<?> response = executeRemotely(false);
-      return (int) response.getTotalResults();
+      return response.hitCount();
    }
 
    @Override
@@ -99,7 +98,7 @@ public final class RemoteQuery<T> extends BaseQuery<T> {
    @Override
    public int getResultSize() {
       BaseQueryResponse<?> response = executeRemotely(true);
-      return (int) response.getTotalResults();
+      return response.hitCount();
    }
 
    private BaseQueryResponse<T> executeRemotely(boolean withHitCount) {

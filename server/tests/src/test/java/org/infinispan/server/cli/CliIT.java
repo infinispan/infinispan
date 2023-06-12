@@ -105,7 +105,7 @@ public class CliIT {
          }
          terminal.clear();
          terminal.send("query \"from org.infinispan.rest.search.entity.Person p where p.gender = 'MALE'\"");
-         terminal.assertContains("\"total_results\":3,");
+         terminal.assertContains("\"hit_count\":3,");
          terminal.clear();
 
          terminal.send("index stats qcache");

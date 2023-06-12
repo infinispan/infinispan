@@ -114,10 +114,10 @@ public class MultipleIndexedCacheTest extends MultiHotRodServersTest {
    @Test
    public void testLocalQueries() {
       Query<?> matchAll = Search.getQueryFactory(userCache).create("FROM  sample_bank_account.User");
-      long totalUsers = matchAll.execute().hitCount().orElse(-1);
+      long totalUsers = matchAll.execute().count().value();
       assertEquals(totalUsers, NUM_ENTRIES);
 
-      long partialCount = matchAll.local(true).execute().hitCount().orElse(-1);
+      long partialCount = matchAll.local(true).execute().count().value();
       assertTrue(partialCount > 0 && partialCount < NUM_ENTRIES);
    }
 
@@ -130,6 +130,6 @@ public class MultipleIndexedCacheTest extends MultiHotRodServersTest {
    private <T> long query(String entity, RemoteCache<?, ?> cache, String fieldName, String fieldValue) {
       QueryFactory qf = Search.getQueryFactory(cache);
       Query<T> q = qf.create("FROM " + entity + " WHERE " + fieldName + " = " + fieldValue);
-      return q.execute().hitCount().orElse(-1);
+      return q.execute().count().value();
    }
 }

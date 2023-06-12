@@ -86,7 +86,13 @@ message QueryResponse {
     * Total number of results that match the query. This is usually larger than numResults due to
     * QueryRequest.startOffset and QueryRequest.maxResults.
     */
-   required int64 totalResults = 4;
+   required int32 hitCount = 4;
+
+   /**
+    * Whether the hitCount is exact or a lower-bound.
+    */
+   required bool hitCountExact = 5;
+
 }
 
 /**

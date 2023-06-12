@@ -47,25 +47,25 @@ public class MultipleIndexFieldAnnotationsTest extends SingleCacheManagerTest {
       Query<Book> query = factory.create("from org.infinispan.query.model.Color where name = 'red'");
       QueryResult<Book> result = query.execute();
 
-      assertThat(result.hitCount()).hasValue(1L);
+      assertThat(result.count().value()).isEqualTo(1L);
       assertThat(result.list()).extracting("name").contains("red");
 
       query = factory.create(String.format("from %s where desc1 = '%s'", Color.class.getName(), RED_DESCRIPTION));
       result = query.execute();
 
-      assertThat(result.hitCount()).hasValue(1L);
+      assertThat(result.count().value()).isEqualTo(1L);
       assertThat(result.list()).extracting("name").contains("red");
 
       query = factory.create(String.format("from %s where desc2 = '%s'", Color.class.getName(), BLUE_DESCRIPTION));
       result = query.execute();
 
-      assertThat(result.hitCount()).hasValue(1L);
+      assertThat(result.count().value()).isEqualTo(1L);
       assertThat(result.list()).extracting("name").contains("blue");
 
       query = factory.create(String.format("from %s where desc3 : 'cyan'", Color.class.getName()));
       result = query.execute();
 
-      assertThat(result.hitCount()).hasValue(1L);
+      assertThat(result.count().value()).isEqualTo(1L);
       assertThat(result.list()).extracting("name").contains("green");
    }
 }

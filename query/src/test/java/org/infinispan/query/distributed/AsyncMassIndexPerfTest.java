@@ -164,7 +164,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
 
    protected long countIndex() {
       Query<?> q = Search.getQueryFactory(cache1).create("FROM " + Transaction.class.getName());
-      return q.execute().hitCount().orElse(-1);
+      return q.execute().count().value();
    }
 
    protected void clearIndex() {

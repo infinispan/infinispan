@@ -2,38 +2,32 @@ package org.infinispan.query.core.impl;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.OptionalLong;
 
 import org.infinispan.query.dsl.QueryResult;
+import org.infinispan.query.dsl.TotalHitCount;
 
 /**
  * @since 11.0
  */
 public final class QueryResultImpl<E> implements QueryResult<E> {
 
-   public static final QueryResult<?> EMPTY = new QueryResultImpl<>(0, Collections.emptyList());
+   public static final QueryResult<?> EMPTY = new QueryResultImpl<>(TotalHitCount.EMPTY, Collections.emptyList());
 
-   private final OptionalLong hitCount;
-
+   private final TotalHitCount count;
    private final List<E> list;
 
-   public QueryResultImpl(long hitCount, List<E> list) {
-      this(OptionalLong.of(hitCount), list);
+   public QueryResultImpl(int hitCount, List<E> list) {
+      this(new TotalHitCount(hitCount, true), list);
    }
 
-   public QueryResultImpl(List<E> list) {
-      this(OptionalLong.empty(), list);
-   }
-
-   public QueryResultImpl(OptionalLong hitCount, List<E> list) {
-      this.hitCount = hitCount;
+   public QueryResultImpl(TotalHitCount count, List<E> list) {
+      this.count = count;
       this.list = list;
    }
 
-   //todo [anistor] why not int? cache size is not a long!
    @Override
-   public OptionalLong hitCount() {
-      return hitCount;
+   public TotalHitCount count() {
+      return count;
    }
 
    @Override

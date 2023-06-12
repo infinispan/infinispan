@@ -24,7 +24,9 @@ public final class QueryResponse implements BaseQueryResponse {
 
    private List<WrappedMessage> results;
 
-   private long totalResults;
+   private int hitCount;
+
+   private boolean hitCountExact;
 
    public int getNumResults() {
       return numResults;
@@ -83,12 +85,22 @@ public final class QueryResponse implements BaseQueryResponse {
       return unwrappedResults;
    }
 
-   public long getTotalResults() {
-      return totalResults;
+   @Override
+   public int hitCount() {
+      return hitCount;
    }
 
-   public void setTotalResults(long totalResults) {
-      this.totalResults = totalResults;
+   public void hitCount(int hitCount) {
+      this.hitCount = hitCount;
+   }
+
+   @Override
+   public boolean hitCountExact() {
+      return hitCountExact;
+   }
+
+   public void hitCountExact(boolean hitCountExact) {
+      this.hitCountExact = hitCountExact;
    }
 
    static final class Marshaller implements MessageMarshaller<QueryResponse> {
@@ -99,7 +111,8 @@ public final class QueryResponse implements BaseQueryResponse {
          queryResponse.setNumResults(reader.readInt("numResults"));
          queryResponse.setProjectionSize(reader.readInt("projectionSize"));
          queryResponse.setResults(reader.readCollection("results", new ArrayList<>(), WrappedMessage.class));
-         queryResponse.setTotalResults(reader.readLong("totalResults"));
+         queryResponse.hitCount(reader.readInt("hitCount"));
+         queryResponse.hitCountExact(reader.readBoolean("hitCountExact"));
          return queryResponse;
       }
 
@@ -108,7 +121,8 @@ public final class QueryResponse implements BaseQueryResponse {
          writer.writeInt("numResults", queryResponse.numResults);
          writer.writeInt("projectionSize", queryResponse.projectionSize);
          writer.writeCollection("results", queryResponse.results, WrappedMessage.class);
-         writer.writeLong("totalResults", queryResponse.totalResults);
+         writer.writeInt("hitCount", queryResponse.hitCount);
+         writer.writeBoolean("hitCountExact", queryResponse.hitCountExact);
       }
 
       @Override

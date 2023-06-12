@@ -131,7 +131,7 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
 
    private long countIndexedDocuments(Class<?> clazz) {
       Query<?> query = Search.getQueryFactory(cache).create("FROM " + clazz.getName());
-      return query.execute().hitCount().orElse(-1);
+      return query.execute().count().value();
    }
 
    @Indexed(index = "theIndex1")
