@@ -538,6 +538,6 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    }
 
    private long getNumberOfHits(QueryResult<?> queryResult) {
-      return queryResult.hitCount().orElse(-1);
+      return queryResult.count().value();
    }
 }

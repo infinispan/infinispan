@@ -46,7 +46,8 @@ public class ProtobufEncodedIndexedCacheTest extends SingleCacheManagerTest {
       Query<Book> query = factory.create("from org.infinispan.query.model.Game where description : 'game'");
       QueryResult<Book> result = query.execute();
 
-      assertThat(result.hitCount()).hasValue(1L);
+      assertThat(result.count().isExact()).isTrue();
+      assertThat(result.count().value()).isEqualTo(1);
       assertThat(result.list()).extracting("name").contains("Civilization 1");
    }
 }

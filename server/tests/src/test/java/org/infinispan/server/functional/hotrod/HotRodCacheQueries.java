@@ -184,7 +184,7 @@ public class HotRodCacheQueries {
       RestClient restClient = SERVERS.rest().withClientConfiguration(new RestClientConfigurationBuilder()).get();
       try (RestResponse response = sync(restClient.cache(SERVERS.getMethodName()).query(query))) {
          Json results = Json.read(response.getBody());
-         assertEquals(1, results.at("total_results").asInteger());
+         assertEquals(1, results.at("hit_count").asInteger());
       }
    }
 

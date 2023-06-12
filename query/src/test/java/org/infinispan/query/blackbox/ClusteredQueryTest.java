@@ -112,7 +112,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
 
       for (int i = 0; i < 2; i++) {
          try (CloseableIterator<Person> iterator = cacheQuery.iterator()) {
-            assertEquals(10, cacheQuery.execute().hitCount().orElse(-1));
+            assertEquals(10, cacheQuery.execute().count().value());
 
             int previousAge = 0;
             while (iterator.hasNext()) {
@@ -129,7 +129,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    @Test(enabled = false)
    public void testLazyNonOrdered() {
       try (CloseableIterator<Person> ignored = cacheQuery.iterator()) {
-         assertEquals(10, cacheQuery.execute().hitCount().orElse(-1));
+         assertEquals(10, cacheQuery.execute().count().value());
       }
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
    }
@@ -151,7 +151,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       Query<Person> cacheQuery = createSortedQuery();
 
       try (CloseableIterator<Person> iterator = cacheQuery.iterator()) {
-         assertEquals(10, cacheQuery.execute().hitCount().orElse(-1));
+         assertEquals(10, cacheQuery.execute().count().value());
 
          int previousAge = 0;
          while (iterator.hasNext()) {
@@ -191,7 +191,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
 
       QueryResult<Person> result = cacheQuery.execute();
       List<Person> results = result.list();
-      assertEquals(10, result.hitCount().orElse(-1));
+      assertEquals(10, result.count().value());
 
       int previousAge = 0;
       for (Person person : results) {
@@ -213,7 +213,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       QueryResult<Person> results = cacheQuery.execute();
       List<Person> list = results.list();
       assertEquals(1, list.size());
-      assertEquals(10, results.hitCount().orElse(-1));
+      assertEquals(10, results.count().value());
       Person result = list.get(0);
       assertEquals(12, result.getAge());
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);

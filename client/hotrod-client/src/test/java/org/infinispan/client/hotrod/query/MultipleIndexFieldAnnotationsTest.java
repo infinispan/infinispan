@@ -64,7 +64,7 @@ public class MultipleIndexFieldAnnotationsTest extends SingleHotRodServerTest {
       Query<Color> query = queryFactory.create("from Color where name = 'red'");
       QueryResult<Color> result = query.execute();
 
-      assertThat(result.hitCount()).hasValue(1L);
+      assertThat(result.count().value()).isEqualTo(1L);
       assertThat(result.list()).extracting("name").contains("red");
    }
 }

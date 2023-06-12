@@ -41,7 +41,7 @@ public class SpecialCharTextTest extends SingleCacheManagerTest {
       Query<Book> query = factory.create("from org.infinispan.query.model.Book where naming : 'pl*ce'");
       QueryResult<Book> result = query.execute();
 
-      assertThat(result.hitCount()).hasValue(1L);
+      assertThat(result.count().value()).isEqualTo(1);
       assertThat(result.list()).extracting("title").contains("is*and");
    }
 
@@ -50,7 +50,7 @@ public class SpecialCharTextTest extends SingleCacheManagerTest {
       Query<Book> query = factory.create("from org.infinispan.query.model.Book where title = 'is*and'");
       QueryResult<Book> result = query.execute();
 
-      assertThat(result.hitCount()).hasValue(1L);
+      assertThat(result.count().value()).isEqualTo(1);
       assertThat(result.list()).extracting("title").contains("is*and");
    }
 }

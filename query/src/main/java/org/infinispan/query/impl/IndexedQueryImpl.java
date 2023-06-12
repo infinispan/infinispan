@@ -10,7 +10,6 @@ import static org.infinispan.query.logging.Log.CONTAINER;
 import org.hibernate.search.backend.lucene.search.query.LuceneSearchQuery;
 import org.hibernate.search.engine.search.query.SearchQuery;
 import org.hibernate.search.engine.search.query.SearchResult;
-import org.hibernate.search.engine.search.query.SearchResultTotal;
 import org.hibernate.search.util.common.SearchException;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterator;
@@ -21,6 +20,7 @@ import org.infinispan.query.core.impl.PartitionHandlingSupport;
 import org.infinispan.query.core.impl.QueryResultImpl;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.QueryResult;
+import org.infinispan.query.dsl.TotalHitCount;
 import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
 import org.hibernate.search.engine.common.EntityReference;
 
@@ -168,13 +168,10 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
 
          if (queryStatistics.isEnabled()) recordQuery(System.nanoTime() - start);
 
-         // TODO ISPN-14198 Make the accuracy of the query count more expressive
-         SearchResultTotal total = searchResult.total();
-         if (total.isHitCountExact()) {
-            return new QueryResultImpl<>(searchResult.total().hitCount(), searchResult.hits());
-         }
-
-         return new QueryResultImpl<>(searchResult.hits());
+         return new QueryResultImpl<>(
+               // the hit count cannot exceed the cache size
+               new TotalHitCount((int) searchResult.total().hitCountLowerBound(), searchResult.total().isHitCountExact()),
+               searchResult.hits());
       } catch (org.hibernate.search.util.common.SearchTimeoutException timeoutException) {
          throw new SearchTimeoutException();
       }

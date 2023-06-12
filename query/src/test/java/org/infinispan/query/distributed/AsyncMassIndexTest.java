@@ -67,7 +67,7 @@ public class AsyncMassIndexTest extends MultipleCacheManagersTest {
    protected void checkIndex(int expectedNumber) {
       Cache<Integer, Transaction> c = cache(0);
       Query<Transaction> q = Search.getQueryFactory(c).create("FROM " + Transaction.class.getName());
-      long resultSize = q.execute().hitCount().orElse(-1);
+      long resultSize = q.execute().count().value();
       assertEquals(expectedNumber, resultSize);
    }
 }

@@ -77,8 +77,8 @@ public class BuiltInAnalyzersTest extends SingleHotRodServerTest {
 
       QueryFactory queryFactory = Search.getQueryFactory(remoteCache);
 
-      assertEquals(1, queryFactory.create("From TestEntity where name4:'name-with-dashes'").execute().hitCount().orElse(-1));
-      assertEquals(1, queryFactory.create("From TestEntity p where p.child.name4:'name-with-dashes'").execute().hitCount().orElse(-1));
+      assertEquals(1, queryFactory.create("From TestEntity where name4:'name-with-dashes'").execute().count().value());
+      assertEquals(1, queryFactory.create("From TestEntity p where p.child.name4:'name-with-dashes'").execute().count().value());
    }
 
    @Test
@@ -90,18 +90,18 @@ public class BuiltInAnalyzersTest extends SingleHotRodServerTest {
 
       QueryFactory queryFactory = Search.getQueryFactory(remoteCache);
 
-      assertEquals(1, queryFactory.create("From TestEntity where name1:'jane'").execute().hitCount().orElse(-1));
-      assertEquals(1, queryFactory.create("From TestEntity where name2:'McDougall'").execute().hitCount().orElse(-1));
-      assertEquals(1, queryFactory.create("From TestEntity where name3:'Connor'").execute().hitCount().orElse(-1));
-      assertEquals(1, queryFactory.create("From TestEntity where name4:'Oswald Lee'").execute().hitCount().orElse(-1));
-      assertEquals(1, queryFactory.create("From TestEntity where name5:'hawk'").execute().hitCount().orElse(-1));
-      assertEquals(1, queryFactory.create("From TestEntity where name6:'constan'").execute().hitCount().orElse(-1));
+      assertEquals(1, queryFactory.create("From TestEntity where name1:'jane'").execute().count().value());
+      assertEquals(1, queryFactory.create("From TestEntity where name2:'McDougall'").execute().count().value());
+      assertEquals(1, queryFactory.create("From TestEntity where name3:'Connor'").execute().count().value());
+      assertEquals(1, queryFactory.create("From TestEntity where name4:'Oswald Lee'").execute().count().value());
+      assertEquals(1, queryFactory.create("From TestEntity where name5:'hawk'").execute().count().value());
+      assertEquals(1, queryFactory.create("From TestEntity where name6:'constan'").execute().count().value());
 
-      assertEquals(0, queryFactory.create("From TestEntity where name1:'sara'").execute().hitCount().orElse(-1));
-      assertEquals(0, queryFactory.create("From TestEntity where name2:'John McDougal'").execute().hitCount().orElse(-1));
-      assertEquals(0, queryFactory.create("From TestEntity where name3:'James-Connor'").execute().hitCount().orElse(-1));
-      assertEquals(0, queryFactory.create("From TestEntity where name4:'Oswald lee'").execute().hitCount().orElse(-1));
-      assertEquals(0, queryFactory.create("From TestEntity where name5:'json'").execute().hitCount().orElse(-1));
-      assertEquals(0, queryFactory.create("From TestEntity where name6:'Georje'").execute().hitCount().orElse(-1));
+      assertEquals(0, queryFactory.create("From TestEntity where name1:'sara'").execute().count().value());
+      assertEquals(0, queryFactory.create("From TestEntity where name2:'John McDougal'").execute().count().value());
+      assertEquals(0, queryFactory.create("From TestEntity where name3:'James-Connor'").execute().count().value());
+      assertEquals(0, queryFactory.create("From TestEntity where name4:'Oswald lee'").execute().count().value());
+      assertEquals(0, queryFactory.create("From TestEntity where name5:'json'").execute().count().value());
+      assertEquals(0, queryFactory.create("From TestEntity where name6:'Georje'").execute().count().value());
    }
 }

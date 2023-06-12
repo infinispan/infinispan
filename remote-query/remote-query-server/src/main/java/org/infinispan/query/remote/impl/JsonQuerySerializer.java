@@ -37,7 +37,8 @@ class JsonQuerySerializer implements QuerySerializer<JsonQueryResponse> {
 
    @Override
    public JsonQueryResponse createQueryResponse(RemoteQueryResult remoteQueryResult) {
-      long totalResults = remoteQueryResult.getTotalResults();
+      int hitCount = remoteQueryResult.hitCount();
+      boolean hitCountExact = remoteQueryResult.hitCountExact();
       String[] projections = remoteQueryResult.getProjections();
       JsonQueryResponse response;
       if (projections == null) {
@@ -45,9 +46,9 @@ class JsonQuerySerializer implements QuerySerializer<JsonQueryResponse> {
                .map(o -> transcoderFromStorage.transcode(o, storageMediaTye, APPLICATION_JSON))
                .collect(toList());
          List<Hit> hits = results.stream().map(Hit::new).collect(Collectors.toList());
-         response = new JsonQueryResult(hits, totalResults);
+         response = new JsonQueryResult(hits, hitCount, hitCountExact);
       } else {
-         response = new ProjectedJsonResult(totalResults, projections, remoteQueryResult.getResults());
+         response = new ProjectedJsonResult(hitCount, hitCountExact, projections, remoteQueryResult.getResults());
       }
       return response;
    }

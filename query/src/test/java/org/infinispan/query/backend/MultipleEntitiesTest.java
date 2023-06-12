@@ -51,10 +51,10 @@ public class MultipleEntitiesTest extends SingleCacheManagerTest {
       assertEquals(query.list().size() + query2.list().size(), 3);
 
       Query<?> queryBond = queryFactory.create("FROM " + Bond.class.getName());
-      assertEquals(queryBond.execute().hitCount().orElse(-1), 2);
+      assertEquals(queryBond.execute().count().value(), 2);
 
       Query<?> queryDeb = queryFactory.create("FROM " + Debenture.class.getName());
-      assertEquals(queryDeb.execute().hitCount().orElse(-1), 1);
+      assertEquals(queryDeb.execute().count().value(), 1);
    }
 }
 

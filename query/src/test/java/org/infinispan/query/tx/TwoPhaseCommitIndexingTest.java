@@ -72,7 +72,7 @@ public class TwoPhaseCommitIndexingTest extends SingleCacheManagerTest {
       QueryFactory queryFactory = Search.getQueryFactory(cache);
       String q = String.format("FROM %s WHERE blurb:'%s'", Person.class.getName(), keyword);
       Query<?> cacheQuery = queryFactory.create(q);
-      long resultSize = cacheQuery.execute().hitCount().orElse(-1);
+      int resultSize = cacheQuery.execute().count().value();
       Assert.assertEquals(resultSize, expectedCount);
    }
 

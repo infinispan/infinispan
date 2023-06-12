@@ -66,13 +66,13 @@ public class ClusteredCacheWithLongIndexNameTest extends MultipleCacheManagersTe
 
       String q = String.format("FROM %s WHERE name:'value*'", ClassWithLongIndexName.class.getName());
       Query cq = Search.getQueryFactory(cache2).create(q);
-      assertEquals(100, cq.execute().hitCount().orElse(-1));
+      assertEquals(100, cq.execute().count().value());
 
       addClusterEnabledCacheManager(SCI.INSTANCE, getDefaultConfiguration());
       TestingUtil.waitForNoRebalance(cache(0), cache(1), cache(2), cache(3));
 
       cq = Search.getQueryFactory(cache(3)).create(q);
-      assertEquals(100, cq.execute().hitCount().orElse(-1));
+      assertEquals(100, cq.execute().count().value());
    }
 
    // index name as in bug description

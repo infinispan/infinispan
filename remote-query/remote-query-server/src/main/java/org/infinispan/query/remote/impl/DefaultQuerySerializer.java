@@ -56,7 +56,8 @@ class DefaultQuerySerializer implements QuerySerializer<QueryResponse> {
          }
       }
       QueryResponse response = new QueryResponse();
-      response.setTotalResults(remoteQueryResult.getTotalResults());
+      response.hitCount(remoteQueryResult.hitCount());
+      response.hitCountExact(remoteQueryResult.hitCountExact());
       response.setNumResults(numResults);
       response.setProjectionSize(projSize);
       response.setResults(results);

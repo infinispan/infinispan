@@ -54,14 +54,14 @@ public class RemoteDefaultMaxResultTest extends SingleHotRodServerTest {
       Query<NonIndexedGame> query = factory.create("from NonIndexedGame");
       QueryResult<NonIndexedGame> result = query.execute();
 
-      assertThat(result.hitCount()).hasValue(110);
+      assertThat(result.count().value()).isEqualTo(110);
       assertThat(result.list()).hasSize(100); // use the default
 
       query = factory.create("from NonIndexedGame");
       query.maxResults(200); // raise it
       result = query.execute();
 
-      assertThat(result.hitCount()).hasValue(110);
+      assertThat(result.count().value()).isEqualTo(110);
       assertThat(result.list()).hasSize(110);
    }
 
@@ -77,14 +77,14 @@ public class RemoteDefaultMaxResultTest extends SingleHotRodServerTest {
       Query<Game> query = factory.create("from Game");
       QueryResult<Game> result = query.execute();
 
-      assertThat(result.hitCount()).hasValue(110);
+      assertThat(result.count().value()).isEqualTo(110);
       assertThat(result.list()).hasSize(100); // use the default
 
       query = factory.create("from Game");
       query.maxResults(200); // raise it
       result = query.execute();
 
-      assertThat(result.hitCount()).hasValue(110);
+      assertThat(result.count().value()).isEqualTo(110);
       assertThat(result.list()).hasSize(110);
    }
 }

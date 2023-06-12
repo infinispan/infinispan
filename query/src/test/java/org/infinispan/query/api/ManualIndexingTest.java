@@ -54,7 +54,7 @@ public class ManualIndexingTest extends MultipleCacheManagersTest {
          QueryFactory queryFactory = Search.getQueryFactory(cache);
          Query<Car> query = queryFactory.create(String.format("FROM %s where make:'%s'", Car.class.getName(), carMake));
          QueryResult<Car> queryResult = query.execute();
-         assertEquals("Expected count not met on cache " + cache, expectedCount, queryResult.hitCount().orElse(-1));
+         assertEquals("Expected count not met on cache " + cache, expectedCount, queryResult.count().value());
          assertEquals("Expected count not met on cache " + cache, expectedCount, queryResult.list().size());
       }
    }

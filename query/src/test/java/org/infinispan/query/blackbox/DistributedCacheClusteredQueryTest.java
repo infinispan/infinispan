@@ -35,8 +35,8 @@ public class DistributedCacheClusteredQueryTest extends ClusteredQueryTest {
       final Query<Object> normalQueryA = queryFactoryA.create(queryString);
       final Query<Object> normalQueryB = queryFactoryB.create(queryString);
 
-      assertEquals(10, normalQueryA.execute().hitCount().orElse(-1));
-      assertEquals(10, normalQueryB.execute().hitCount().orElse(-1));
+      assertEquals(10, normalQueryA.execute().count().value());
+      assertEquals(10, normalQueryB.execute().count().value());
 
       List<?> results1 = normalQueryA.local(true).execute().list();
       List<?> results2 = normalQueryB.local(true).execute().list();

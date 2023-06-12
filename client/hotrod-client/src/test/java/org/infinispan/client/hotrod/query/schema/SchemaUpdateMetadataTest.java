@@ -81,7 +81,7 @@ public class SchemaUpdateMetadataTest extends SingleHotRodServerTest {
 
       kQuery = queryFactory.create(QUERY_SORT);
       kResult = kQuery.execute();
-      assertThat(kResult.hitCount()).hasValue(1);
+      assertThat(kResult.count().value()).isEqualTo(1);
 
       verifySortable(false);
       queryIsOnTheCache(true);
@@ -93,7 +93,7 @@ public class SchemaUpdateMetadataTest extends SingleHotRodServerTest {
 
       kQuery = queryFactory.create(QUERY_SORT);
       kResult = kQuery.execute();
-      assertThat(kResult.hitCount()).hasValue(1);
+      assertThat(kResult.count().value()).isEqualTo(1);
 
       queryIsOnTheCache(true);
    }

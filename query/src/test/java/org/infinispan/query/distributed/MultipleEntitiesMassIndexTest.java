@@ -1,8 +1,8 @@
 package org.infinispan.query.distributed;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.Assert.assertNull;
-import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -11,6 +11,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.Person;
@@ -86,19 +87,22 @@ public class MultipleEntitiesMassIndexTest extends DistributedMassIndexingTest {
 
    private void checkIndex(int expectedCount, String fieldName, String fieldValue, Class<?> entity) {
       String q = String.format("FROM %s where %s:'%s'", entity.getName(), fieldName, fieldValue);
-      checkIndex(expectedCount, q, entity);
+      checkIndex(expectedCount, q);
    }
 
    private void checkIndex(int expectedCount, Class<?> entity) {
-      checkIndex(expectedCount, "FROM " + entity.getName(), entity);
+      checkIndex(expectedCount, "FROM " + entity.getName());
    }
 
-   private void checkIndex(int expectedCount, String q, Class<?> entity) {
+   private void checkIndex(int expectedCount, String q) {
       for (Cache<?, ?> cache : caches()) {
          StaticTestingErrorHandler.assertAllGood(cache);
          QueryFactory searchManager = Search.getQueryFactory(cache);
          Query cacheQuery = searchManager.create(q);
-         assertEquals(expectedCount, cacheQuery.execute().hitCount().orElse(-1));
+         QueryResult result = cacheQuery.execute();
+
+         assertThat(result.count().isExact()).isTrue();
+         assertThat(result.count().value()).isEqualTo(expectedCount);
       }
    }
 }

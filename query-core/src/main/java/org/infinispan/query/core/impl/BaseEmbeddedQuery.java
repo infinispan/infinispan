@@ -108,7 +108,7 @@ public abstract class BaseEmbeddedQuery<T> extends BaseQuery<T> {
                results = StreamSupport.stream(spliteratorUnknownSize(iterator, 0), false)
                      .map(this::mapFilterResult)
                      .collect(collector);
-               return new QueryResultImpl(collector.getCount(), results);
+               return new QueryResultImpl((int) collector.getCount(), results);
             } else {
                log.warnPerfSortedNonIndexed(queryString);
                final int[] count = new int[1];

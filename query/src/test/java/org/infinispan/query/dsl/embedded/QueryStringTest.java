@@ -1,16 +1,20 @@
 package org.infinispan.query.dsl.embedded;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+import static org.testng.AssertJUnit.assertEquals;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.OptionalLong;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
@@ -19,9 +23,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Test string-based queries.
@@ -411,12 +412,16 @@ public class QueryStringTest extends AbstractQueryDslTest {
       getCacheForWrite().put("notIndexedToBeDeleted", new NotIndexed("testing delete"));
 
       Query<NotIndexed> select = createQueryFromString("FROM " + NotIndexed.class.getName() + " WHERE notIndexedField = 'testing delete'");
-      assertEquals(OptionalLong.of(1), select.execute().hitCount());
+      QueryResult<NotIndexed> result = select.execute();
+      assertEquals(1, result.count().value());
+      assertEquals(true, result.count().isExact());
 
       Query<Transaction> delete = createQueryFromString("DELETE FROM " + NotIndexed.class.getName() + " WHERE notIndexedField = 'testing delete'");
       assertEquals(1, delete.executeStatement());
 
-      assertEquals(OptionalLong.of(0), select.execute().hitCount());
+      result = select.execute();
+      assertEquals(0, result.count().value());
+      assertEquals(true, result.count().isExact());
    }
 
    public void testDeleteByQueryOnIndexedField() throws Exception {
@@ -432,12 +437,16 @@ public class QueryStringTest extends AbstractQueryDslTest {
       getCacheForWrite().put("transaction_" + tx.getId(), tx);
 
       Query<Transaction> select = createQueryFromString("FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'Holiday booking'");
-      assertEquals(OptionalLong.of(1), select.execute().hitCount());
+      QueryResult<Transaction> result = select.execute();
+      assertEquals(1, result.count().value());
+      assertEquals(true, result.count().isExact());
 
       Query<Transaction> delete = createQueryFromString("DELETE FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'Holiday booking'");
       assertEquals(1, delete.executeStatement());
 
-      assertEquals(OptionalLong.of(0), select.execute().hitCount());
+      result = select.execute();
+      assertEquals(0, result.count().value());
+      assertEquals(true, result.count().isExact());
    }
 
    public void testDeleteByHybridQuery() throws Exception {
@@ -453,12 +462,16 @@ public class QueryStringTest extends AbstractQueryDslTest {
       getCacheForWrite().put("transaction_" + tx.getId(), tx);
 
       Query<Transaction> select = createQueryFromString("FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'Holiday booking' AND isValid = false");
-      assertEquals(OptionalLong.of(1), select.execute().hitCount());
+      QueryResult<Transaction> result = select.execute();
+      assertThat(result.count().value()).isEqualTo(1);
+      assertThat(result.count().isExact()).isTrue();
 
       Query<Transaction> delete = createQueryFromString("DELETE FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'Holiday booking' AND isValid = false");
       assertEquals(1, delete.executeStatement());
 
-      assertEquals(OptionalLong.of(0), select.execute().hitCount());
+      result = select.execute();
+      assertThat(result.count().value()).isEqualTo(0);
+      assertThat(result.count().isExact()).isTrue();
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028526: Invalid query.*")

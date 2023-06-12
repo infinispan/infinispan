@@ -2,8 +2,6 @@ package org.infinispan.query.startup;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.OptionalLong;
-
 import org.infinispan.Cache;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
@@ -13,6 +11,7 @@ import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.TotalHitCount;
 import org.infinispan.query.model.Developer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -179,13 +178,13 @@ public class IndexStartupModeTest extends AbstractInfinispanTest {
 
    private void verifyMatches(int i, String nick) {
       String query = String.format("from %s where nick = '%s'", Developer.class.getName(), nick);
-      assertThat(queryFactory.create(query).execute().hitCount()).hasValue(i);
+      assertThat(queryFactory.create(query).execute().count().value()).isEqualTo(i);
    }
 
-   private boolean matches(long i, String nick) {
+   private boolean matches(int i, String nick) {
       String query = String.format("from %s where nick = '%s'", Developer.class.getName(), nick);
-      OptionalLong hitCount = queryFactory.create(query).execute().hitCount();
-      assertThat(hitCount).isPresent();
-      return hitCount.getAsLong() == i;
+      TotalHitCount hitCount = queryFactory.create(query).execute().count();
+      assertThat(hitCount.isExact()).isTrue();
+      return hitCount.value() == i;
    }
 }

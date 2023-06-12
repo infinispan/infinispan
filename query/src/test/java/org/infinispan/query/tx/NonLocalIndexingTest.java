@@ -68,7 +68,7 @@ public class NonLocalIndexingTest extends MultipleCacheManagersTest {
    private static void assertFind(Cache cache, String keyword, int expectedCount) {
       String q = String.format("FROM %s WHERE blurb:'%s'", Person.class.getName(), keyword);
       Query<Object> cacheQuery = Search.getQueryFactory(cache).create(q);
-      long resultSize = cacheQuery.execute().hitCount().orElse(-1);
+      long resultSize = cacheQuery.execute().count().value();
       Assert.assertEquals(resultSize, expectedCount);
    }
 

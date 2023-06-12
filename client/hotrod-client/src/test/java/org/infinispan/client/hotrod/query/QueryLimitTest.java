@@ -49,7 +49,7 @@ public class QueryLimitTest extends SingleHotRodServerTest {
       query.maxResults(-1);
 
       QueryResult<KeywordEntity> result = query.execute();
-      assertThat(result.hitCount()).hasValue(20);
+      assertThat(result.count().value()).isEqualTo(20);
       assertThat(result.list()).hasSize(10);
    }
 }

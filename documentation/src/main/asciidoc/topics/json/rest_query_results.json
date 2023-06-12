@@ -1,5 +1,6 @@
 {
-  "total_results" : 150,
+  "hit_count" : 150,
+  "hit_count_exact" : true,
   "hits" : [ {
     "hit" : {
       "name" : "user1",

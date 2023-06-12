@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.query;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
@@ -8,7 +9,6 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.OptionalLong;
 
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -28,6 +28,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.dsl.embedded.QueryStringTest;
 import org.infinispan.query.dsl.embedded.testdomain.ModelFactory;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
@@ -215,12 +216,16 @@ public class RemoteQueryStringTest extends QueryStringTest {
       getCacheForWrite().put("notIndexedToBeDeleted", new NotIndexed("testing delete"));
 
       Query<NotIndexed> select = createQueryFromString("FROM sample_bank_account.NotIndexed WHERE notIndexedField = 'testing delete'");
-      assertEquals(OptionalLong.of(1), select.execute().hitCount());
+      QueryResult<NotIndexed> result = select.execute();
+      assertThat(result.count().value()).isOne();
+      assertThat(result.count().isExact()).isTrue();
 
       Query<Transaction> delete = createQueryFromString("DELETE FROM sample_bank_account.NotIndexed WHERE notIndexedField = 'testing delete'");
       assertEquals(1, delete.executeStatement());
 
-      assertEquals(OptionalLong.of(0), select.execute().hitCount());
+      result = select.execute();
+      assertThat(result.count().value()).isZero();
+      assertThat(result.count().isExact()).isTrue();
    }
 
    @Override

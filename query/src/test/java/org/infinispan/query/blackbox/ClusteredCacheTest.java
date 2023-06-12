@@ -249,9 +249,9 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       StaticTestingErrorHandler.assertAllGood(cache1, cache2);
    }
 
-   protected long countIndex(Cache<?, ?> cache) {
+   protected int countIndex(Cache<?, ?> cache) {
       Query<?> query = Search.getQueryFactory(cache).create("FROM " + Person.class.getName());
-      return query.execute().hitCount().orElse(-1);
+      return query.execute().count().value();
    }
 
    private Optional<Cache<Object, Person>> findCache(Ownership ownership, Object key) {
@@ -310,7 +310,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
       assertTrue(replaced);
       assertEquals(createQuery(cache1, "blurb:'wow'").execute().list().size(), 0);
-      assertEquals(createQuery(cache, "blurb:'wow'").execute().hitCount().orElse(-1), 0);
+      assertEquals(createQuery(cache, "blurb:'wow'").execute().count().value(), 0);
    }
 
    private void testConditionalRemoveFrom(Ownership owneship) throws Exception {
@@ -420,7 +420,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       eventually(() -> {
          QueryResult<Person> result = query.execute();
          List<Person> found = result.list();
-         return found.size() == 4 && result.hitCount().orElse(-1) == 4 &&
+         return found.size() == 4 && result.count().value() == 4 &&
                found.contains(person4) && !found.contains(person5);
       });
 
@@ -518,8 +518,8 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       Query<Person> cacheQuery1 = createQuery(cache1, predicate);
       Query<Person> cacheQuery2 = createQuery(cache2, predicate);
 
-      assertEquals(3, cacheQuery1.execute().hitCount().orElse(-1));
-      assertEquals(3, cacheQuery2.execute().hitCount().orElse(-1));
+      assertEquals(3, cacheQuery1.execute().count().value());
+      assertEquals(3, cacheQuery2.execute().count().value());
 
       cache2.clear();
 

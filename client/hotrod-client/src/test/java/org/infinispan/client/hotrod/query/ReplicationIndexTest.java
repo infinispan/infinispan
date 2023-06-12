@@ -118,7 +118,7 @@ public class ReplicationIndexTest extends MultiHotRodServersTest {
    }
 
    private long queryCount(String query, RemoteCache<?, ?> remoteCache) {
-      return Search.getQueryFactory(remoteCache).create(query).execute().hitCount().orElse(-1);
+      return Search.getQueryFactory(remoteCache).create(query).execute().count().value();
    }
 
    @Test

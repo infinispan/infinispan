@@ -11,9 +11,10 @@ import org.infinispan.protostream.SerializationContext;
  */
 public class JsonClientQueryResponse implements BaseQueryResponse<String> {
 
-   private static final String JSON_TOTAL_RESULTS = "total_results";
    private static final String JSON_HITS = "hits";
    private static final String JSON_HIT = "hit";
+   private static final String JSON_HIT_COUNT = "hit_count";
+   private static final String JSON_HIT_COUNT_EXACT = "hit_count_exact";
 
    private final Json jsonObject;
 
@@ -28,7 +29,12 @@ public class JsonClientQueryResponse implements BaseQueryResponse<String> {
    }
 
    @Override
-   public long getTotalResults() {
-      return jsonObject.at(JSON_TOTAL_RESULTS).asInteger();
+   public int hitCount() {
+      return jsonObject.at(JSON_HIT_COUNT).asInteger();
+   }
+
+   @Override
+   public boolean hitCountExact() {
+      return jsonObject.at(JSON_HIT_COUNT_EXACT).asBoolean();
    }
 }

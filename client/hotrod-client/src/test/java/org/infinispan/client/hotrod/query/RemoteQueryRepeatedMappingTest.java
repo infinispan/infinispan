@@ -64,10 +64,10 @@ public class RemoteQueryRepeatedMappingTest extends SingleHotRodServerTest {
       Query<Object> queryFieldChildren = Search.getQueryFactory(cache).create("SELECT COUNT(*) FROM Parent p WHERE p.fieldLessChildren.id = 0");
       Query<Object> queryNotIndexedWithFieldChildren = Search.getQueryFactory(cache).create("SELECT COUNT(*) FROM Parent p WHERE p.notIndexedWithFieldChild.id = 37");
 
-      assertEquals(1, querySlowChildren.execute().hitCount().orElse(-1));
-      assertEquals(1, queryFastChildren.execute().hitCount().orElse(-1));
-      assertEquals(1, queryFieldChildren.execute().hitCount().orElse(-1));
-      assertEquals(1, queryNotIndexedWithFieldChildren.execute().hitCount().orElse(-1));
+      assertEquals(1, querySlowChildren.execute().count().value());
+      assertEquals(1, queryFastChildren.execute().count().value());
+      assertEquals(1, queryFieldChildren.execute().count().value());
+      assertEquals(1, queryNotIndexedWithFieldChildren.execute().count().value());
    }
 
    private byte[] keyAsJson() {
