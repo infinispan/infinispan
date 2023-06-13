@@ -19,7 +19,9 @@ public class HashOperationsTest extends SingleNodeRespBaseTest {
       Map<String, String> map = Map.of("key1", "value1", "key2", "value2", "key3", "value3");
       assertThat(redis.hmset("HMSET", map)).isEqualTo("OK");
 
-      // TODO: check when get method added.
+      assertThat(redis.hget("HMSET", "key1")).isEqualTo("value1");
+      assertThat(redis.hget("HMSET", "unknown")).isNull();
+      assertThat(redis.hget("UNKNOWN", "unknown")).isNull();
 
       assertThat(redis.set("plain", "string")).isEqualTo("OK");
       assertThatThrownBy(() -> redis.hmset("plain", Map.of("k1", "v1")))
@@ -39,10 +41,15 @@ public class HashOperationsTest extends SingleNodeRespBaseTest {
       // Mixing update and new keys.
       assertThat(redis.hset("HSET", Map.of("key2", "other-value2", "key4", "value4"))).isEqualTo(1);
 
-      // TODO: check when get method added.
+      assertThat(redis.hget("HSET", "key1")).isEqualTo("other-value1");
+      assertThat(redis.hget("HSET", "unknown")).isNull();
+      assertThat(redis.hget("UNKNOWN", "unknown")).isNull();
 
       assertThat(redis.set("plain", "string")).isEqualTo("OK");
       assertThatThrownBy(() -> redis.hmset("plain", Map.of("k1", "v1")))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERRWRONGTYPE");
+      assertThatThrownBy(() -> redis.hget("plain", "k1"))
             .isInstanceOf(RedisCommandExecutionException.class)
             .hasMessageContaining("ERRWRONGTYPE");
    }

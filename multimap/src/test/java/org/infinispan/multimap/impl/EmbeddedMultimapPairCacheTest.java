@@ -1,6 +1,7 @@
 package org.infinispan.multimap.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 
 import java.util.Map;
@@ -40,5 +41,14 @@ public class EmbeddedMultimapPairCacheTest extends SingleCacheManagerTest {
             .containsEntry("age", "1")
             .containsEntry("birthday", "2023-05-26")
             .hasSize(3);
+
+      assertThat(await(embeddedPairCache.get("person1", "name"))).isEqualTo("Ramon");
+      assertThat(await(embeddedPairCache.get("person1", "unknown"))).isNull();
+      assertThat(await(embeddedPairCache.get("unknown", "unknown"))).isNull();
+
+      assertThatThrownBy(() -> await(embeddedPairCache.get(null, "property")))
+            .isInstanceOf(NullPointerException.class);
+      assertThatThrownBy(() -> await(embeddedPairCache.get("person1", null)))
+            .isInstanceOf(NullPointerException.class);
    }
 }

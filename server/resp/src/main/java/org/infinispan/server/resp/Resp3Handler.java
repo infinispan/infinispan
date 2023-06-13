@@ -99,6 +99,10 @@ public class Resp3Handler extends Resp3AuthHandler {
    }
 
    protected static void handleBulkResult(byte[] result, ByteBufPool alloc) {
+      if (result == null) {
+         handleNullResult(alloc);
+         return;
+      }
       var buffer = handleLengthPrefix('$', result.length, alloc, result.length + 2);
       buffer.writeBytes(result);
       buffer.writeByte('\r');

@@ -80,4 +80,18 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
                return bucket.values(converter);
             });
    }
+
+   public CompletionStage<HV> get(K key, HK property) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      requireNonNull(property, ERR_KEY_CAN_T_BE_NULL);
+      return cache.getCacheEntryAsync(key)
+            .thenApply(entry -> {
+               if (entry == null) {
+                  return null;
+               }
+
+               HashMapBucket<HK, HV> bucket = entry.getValue();
+               return bucket.get(property, converter);
+            });
+   }
 }
