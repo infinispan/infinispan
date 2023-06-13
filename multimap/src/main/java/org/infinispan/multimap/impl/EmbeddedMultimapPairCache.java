@@ -16,10 +16,10 @@ import org.infinispan.Cache;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
-import org.infinispan.multimap.impl.function.hmap.HashMapRemoveFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapKeySetFunction;
-import org.infinispan.multimap.impl.function.hmap.HashMapValuesFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapPutFunction;
+import org.infinispan.multimap.impl.function.hmap.HashMapRemoveFunction;
+import org.infinispan.multimap.impl.function.hmap.HashMapValuesFunction;
 
 /**
  * Multimap which holds a collection of key-values pairs.
