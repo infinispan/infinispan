@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
@@ -15,6 +16,7 @@ import org.infinispan.Cache;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
+import org.infinispan.multimap.impl.function.hmap.HashMapRemoveFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapKeySetFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapValuesFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapPutFunction;
@@ -158,5 +160,38 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
                HashMapBucket<HK, HV> bucket = entry.getValue();
                return bucket.containsKey(property);
             });
+   }
+
+   /**
+    * Remove the properties in the hash map under the given key.
+    *
+    * @param key: Cache key to remove the properties.
+    * @param property: Property to remove.
+    * @param properties: Additional properties to remove.
+    * @return {@link CompletionStage} with the number of removed properties.
+    */
+   @SafeVarargs
+   public final CompletionStage<Integer> remove(K key, HK property, HK ...properties) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      requireNonNull(property, ERR_PROPERTY_CANT_BE_NULL);
+      List<HK> propertiesList = new ArrayList<>();
+      propertiesList.add(property);
+      propertiesList.addAll(Arrays.asList(properties));
+      return readWriteMap.eval(key, new HashMapRemoveFunction<>(propertiesList));
+   }
+
+   /**
+    * Remove the given properties in the hash map stored under the given key.
+    *
+    * @param key:  Cache key to remove the properties.
+    * @param properties: Properties to remove.
+    * @return {@link CompletionStage} with the number of removed properties.
+    */
+   public final CompletionStage<Integer> remove(K key, Collection<HK> properties) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      requireNonNull(properties, ERR_PROPERTY_CANT_BE_NULL);
+
+      if (properties.isEmpty()) return CompletableFuture.completedFuture(0);
+      return readWriteMap.eval(key, new HashMapRemoveFunction<>(properties));
    }
 }

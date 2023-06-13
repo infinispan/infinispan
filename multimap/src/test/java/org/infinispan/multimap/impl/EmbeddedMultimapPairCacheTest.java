@@ -101,4 +101,22 @@ public class EmbeddedMultimapPairCacheTest extends SingleCacheManagerTest {
       assertThatThrownBy(() -> await(embeddedPairCache.contains("contains-test", null)))
             .isInstanceOf(NullPointerException.class);
    }
+
+   public void testSetAndRemove() {
+      // Does not exist
+      assertThat(await(embeddedPairCache.remove("some-unknown-key", "name"))).isZero();
+
+      assertThat(await(embeddedPairCache.set("set-and-remove", Map.entry("k1", "v1"), Map.entry("k2", "v2"), Map.entry("k3", "v3"))))
+            .isEqualTo(3);
+
+      assertThat(await(embeddedPairCache.remove("set-and-remove", "k1"))).isEqualTo(1);
+      assertThat(await(embeddedPairCache.remove("set-and-remove", "k2", "k3", "k4"))).isEqualTo(2);
+
+      assertThat(await(embeddedPairCache.get("set-and-remove"))).isEmpty();
+
+      assertThatThrownBy(() -> await(embeddedPairCache.remove("set-and-remove", null)))
+            .isInstanceOf(NullPointerException.class);
+      assertThatThrownBy(() -> await(embeddedPairCache.remove(null, "k1")))
+            .isInstanceOf(NullPointerException.class);
+   }
 }

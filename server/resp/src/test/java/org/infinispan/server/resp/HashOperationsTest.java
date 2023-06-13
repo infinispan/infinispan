@@ -180,4 +180,20 @@ public class HashOperationsTest extends SingleNodeRespBaseTest {
 
       assertWrongType(() -> redis.set("plain", "string"), () -> redis.hexists("plain", "key"));
    }
+
+   public void testSetAndGet() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      assertThat(redis.hdel("not-existent", "key1")).isEqualTo(0);
+      assertThat(redis.hset("HSET-HDEL", Map.of("key1", "value1", "key2", "value2", "key3", "value3")))
+            .isEqualTo(3);
+
+      assertThat(redis.hdel("HSET-HDEL", "key1")).isEqualTo(1);
+      assertThat(redis.hdel("HSET-HDEL", "key1")).isEqualTo(0);
+      assertThat(redis.hdel("HSET-HDEL", "key2", "key3", "key4")).isEqualTo(2);
+
+      // TODO: check when get method added.
+
+      assertWrongType(() -> redis.set("plain", "string"), () -> redis.hdel("plain", "key1"));
+   }
 }
