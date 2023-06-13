@@ -1,19 +1,17 @@
 package org.infinispan.server.resp.commands.list;
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-
+import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.util.concurrent.CompletionStages;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 /**
  * @link https://redis.io/commands/llen/
@@ -34,27 +32,16 @@ public class LLEN extends RespCommand implements Resp3Command {
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
 
-      if (arguments.size() < 1) {
-         // ERROR
-         RespErrorUtil.wrongArgumentNumber(this, handler.allocator());
-         return handler.myStage();
-      }
-
-      return indexAndReturn(handler, ctx, arguments);
-   }
-
-   protected CompletionStage<RespRequestHandler> indexAndReturn(Resp3Handler handler,
-                                                              ChannelHandlerContext ctx,
-                                                              List<byte[]> arguments) {
       byte[] key = arguments.get(0);
       EmbeddedMultimapListCache<byte[], byte[]> listMultimap = handler.getListMultimap();
 
       return CompletionStages.handleAndCompose(listMultimap.size(key) ,(size, t) -> {
          if (t != null) {
-           return handleException(handler, t);
+            return handleException(handler, t);
          }
 
          return handler.stageToReturn(CompletableFuture.completedFuture(size), ctx, Consumers.LONG_BICONSUMER);
       });
    }
+
 }

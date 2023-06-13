@@ -1,9 +1,7 @@
 package org.infinispan.server.resp.commands.string;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
-
-import org.infinispan.server.resp.ByteBufferUtils;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
@@ -11,8 +9,8 @@ import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
 
-import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
 
 /**
  * SETRANGE Resp Command
@@ -29,11 +27,6 @@ public class SETRANGE extends RespCommand implements Resp3Command {
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
          ChannelHandlerContext ctx,
          List<byte[]> arguments) {
-      if (arguments.size() != this.getArity() - 1) {
-         ByteBufferUtils.stringToByteBuf("-ERR wrong number of arguments for 'getrange' command\r\n",
-               handler.allocator());
-         return handler.myStage();
-      }
       byte[] keyBytes = arguments.get(0);
       int offset = ArgumentUtils.toInt(arguments.get(1));
       byte[] patch = arguments.get(2);

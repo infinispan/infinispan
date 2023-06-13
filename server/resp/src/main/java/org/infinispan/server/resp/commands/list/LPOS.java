@@ -1,10 +1,6 @@
 package org.infinispan.server.resp.commands.list;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-
+import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
@@ -15,7 +11,10 @@ import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.util.concurrent.CompletionStages;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 /**
  * @link https://redis.io/commands/lpos/
@@ -43,12 +42,7 @@ public class LPOS extends RespCommand implements Resp3Command {
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
 
-      if (arguments.size() < 2 || arguments.size() > 8) {
-         // ERROR
-         RespErrorUtil.wrongArgumentNumber(this, handler.allocator());
-         return handler.myStage();
-      }
-      if (arguments.size() % 2 != 0) {
+      if (arguments.size() % 2 != 0  || arguments.size() > 8) {
          //(error) (arguments must come in pairs)
          RespErrorUtil.syntaxError(handler.allocator());
          return handler.myStage();

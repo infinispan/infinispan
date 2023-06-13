@@ -1,16 +1,14 @@
 package org.infinispan.server.resp.commands;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
-
+import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.server.resp.ByteBufferUtils;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.cluster.CLUSTER;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
 
 /**
  * An umbrella command.
@@ -28,11 +26,6 @@ public abstract class FamilyCommand extends RespCommand implements Resp3Command 
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
-      if (arguments.isEmpty()) {
-         RespErrorUtil.wrongArgumentNumber(this, handler.allocator());
-         return handler.myStage();
-      }
-
       byte[] subCommand = arguments.get(0);
       for (RespCommand cmd : getFamilyCommands()) {
          if (cmd.match(subCommand)) {

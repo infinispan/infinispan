@@ -6,7 +6,6 @@ import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
@@ -41,18 +40,6 @@ public class LTRIM extends RespCommand implements Resp3Command {
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
 
-      if (arguments.size() != 3) {
-         // ERROR
-         RespErrorUtil.wrongArgumentNumber(this, handler.allocator());
-         return handler.myStage();
-      }
-
-      return ltrimAndReturn(handler, ctx, arguments);
-   }
-
-   protected CompletionStage<RespRequestHandler> ltrimAndReturn(Resp3Handler handler,
-                                                                ChannelHandlerContext ctx,
-                                                                List<byte[]> arguments) {
       byte[] key = arguments.get(0);
       int start = ArgumentUtils.toInt(arguments.get(1));
       int stop = ArgumentUtils.toInt(arguments.get(2));
@@ -66,5 +53,4 @@ public class LTRIM extends RespCommand implements Resp3Command {
          return handler.stageToReturn(CompletableFutures.completedTrue(), ctx, Consumers.OK_BICONSUMER);
       });
    }
-
 }

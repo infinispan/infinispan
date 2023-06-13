@@ -39,18 +39,6 @@ public class LREM extends RespCommand implements Resp3Command {
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
 
-      if (arguments.size() != 3) {
-         // ERROR
-         RespErrorUtil.wrongArgumentNumber(this, handler.allocator());
-         return handler.myStage();
-      }
-
-      return lremAndReturn(handler, ctx, arguments);
-   }
-
-   protected CompletionStage<RespRequestHandler> lremAndReturn(Resp3Handler handler,
-                                                                ChannelHandlerContext ctx,
-                                                                List<byte[]> arguments) {
       byte[] key = arguments.get(0);
       Long count;
       try {
@@ -71,5 +59,4 @@ public class LREM extends RespCommand implements Resp3Command {
          return handler.stageToReturn(CompletableFuture.completedFuture(result), ctx, Consumers.LONG_BICONSUMER);
       });
    }
-
 }

@@ -1,14 +1,17 @@
 package org.infinispan.server.resp;
 
-import static org.infinispan.server.resp.commands.Commands.ALL_COMMANDS;
-
-import java.nio.charset.StandardCharsets;
-
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import org.infinispan.commons.CacheException;
 import org.infinispan.server.resp.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
+
+import static org.infinispan.server.resp.commands.Commands.ALL_COMMANDS;
 
 public abstract class RespCommand {
    protected final static Log log = LogFactory.getLog(RespCommand.class, Log.class);
@@ -19,6 +22,40 @@ public abstract class RespCommand {
    private final int steps;
    private final byte[] bytes;
 
+   public boolean hasValidNumberOfArguments(List<byte[]> arguments){
+      // Command arity always includes the command's name itself (and the subcommand when applicable).
+      // A positive integer means a fixed number of arguments.
+      // A negative integer means a minimal number of arguments.
+      int numberOfArgs = Math.abs(arity) - 1;
+      if ((arity > 0 && arguments.size() != numberOfArgs)
+            || (arity < 0 && arguments.size() < numberOfArgs)) {
+         // ERROR
+         return false;
+      }
+
+      return true;
+   }
+
+   public CompletionStage<RespRequestHandler> handleException(RespRequestHandler handler, Throwable t) {
+      Throwable ex = t;
+      if (t instanceof CompletionException) {
+         ex = t.getCause();
+      }
+      if (ex instanceof CacheException) {
+         ex = ex.getCause();
+      }
+      if (ex instanceof ClassCastException) {
+         RespErrorUtil.wrongType(handler.allocator());
+         return handler.myStage();
+      }
+
+      if (ex instanceof IndexOutOfBoundsException) {
+         RespErrorUtil.indexOutOfRange(handler.allocator());
+         return handler.myStage();
+      }
+
+      throw new RuntimeException(t);
+   }
 
    /**
     * @param arity       the number of arguments

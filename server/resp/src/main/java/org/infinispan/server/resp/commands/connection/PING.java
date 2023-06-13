@@ -21,7 +21,7 @@ public class PING extends RespCommand implements Resp3Command, PubSubResp3Comman
    public static final String NAME = "PING";
 
    public PING() {
-      super(NAME, -2, 0, 0, 0);
+      super(NAME, -1, 0, 0, 0);
    }
 
    @Override
