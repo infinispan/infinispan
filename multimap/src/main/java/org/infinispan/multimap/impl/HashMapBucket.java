@@ -59,6 +59,12 @@ public class HashMapBucket<K, V> {
       return fromStore(converter);
    }
 
+   public V get(K k, MultimapDataConverter<K, V> converter) {
+      Object value = values.get(converter.convertKeyToStore(k));
+      if (value == null) return null;
+      return converter.convertValueFromStore(value);
+   }
+
    private Map<Object, Object> toStore(Map<K, V> raw, MultimapDataConverter<K, V> converter) {
       Map<Object, Object> converted = new HashMap<>();
       for (Map.Entry<K, V> entry : raw.entrySet()) {

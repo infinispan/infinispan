@@ -53,5 +53,9 @@ public class DistributedMultimapPairCacheTest extends BaseDistFunctionalTest<Str
             .containsEntry("age", "0")
             .containsEntry("birthday", "2023-05-26")
             .hasSize(3);
+
+      assertThat(await(multimap.get("person1", "name"))).isEqualTo("Oihana");
+      assertThat(await(multimap.get("person1", "unknown"))).isNull();
+      assertThat(await(multimap.get("unknown", "unknown"))).isNull();
    }
 }
