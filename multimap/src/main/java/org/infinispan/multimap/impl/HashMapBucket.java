@@ -52,6 +52,19 @@ public class HashMapBucket<K, V> {
       return fromStore();
    }
 
+   public boolean isEmpty() {
+      return values.isEmpty();
+   }
+
+   public int removeAll(Collection<K> keys) {
+      int res = 0;
+      for (K key : keys) {
+         Object prev = values.remove(new MultimapObjectWrapper<>(key));
+         if (prev != null) res++;
+      }
+      return res;
+   }
+
    public V get(K k) {
       return values.get(new MultimapObjectWrapper<>(k));
    }

@@ -1,6 +1,7 @@
 package org.infinispan.multimap.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.multimap.impl.MultimapTestUtils.FELIX;
 import static org.infinispan.multimap.impl.MultimapTestUtils.KOLDO;
@@ -76,6 +77,21 @@ public class DistributedMultimapPairCacheTest extends BaseDistFunctionalTest<Str
             .thenCompose(ignore -> multimap.keySet("keyset-test"))
             .thenApply(s -> s.stream().map(String::new).collect(Collectors.toSet()));
       assertThat(await(cs)).contains("oihana", "koldo");
+   }
+
+   public void testSetAndRemove() {
+      EmbeddedMultimapPairCache<String, byte[], Person> multimap = getMultimapMember();
+      await(multimap.set("set-and-remove", Map.entry(toBytes("oihana"), OIHANA), Map.entry(toBytes("koldo"), KOLDO))
+            .thenCompose(ignore -> multimap.remove("set-and-remove", toBytes("oihana")))
+            .thenCompose(v -> {
+               assertThat(v).isEqualTo(1);
+               return multimap.remove("set-and-remove", toBytes("koldo"), toBytes("ramon"));
+            })
+            .thenAccept(v -> assertThat(v).isEqualTo(1)));
+      assertThatThrownBy(() -> await(multimap.remove("set-and-remove", null)))
+            .isInstanceOf(NullPointerException.class);
+      assertThatThrownBy(() -> await(multimap.remove(null, new byte[] { 1 })))
+            .isInstanceOf(NullPointerException.class);
    }
 
    protected void assertFromAllCaches(String key, Map<String, Person> expected) {
