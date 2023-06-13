@@ -1,18 +1,9 @@
 package org.infinispan.server.resp;
 
-import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
-
-import java.lang.invoke.MethodHandles;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletionStage;
-
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.CharsetUtil;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -29,10 +20,18 @@ import org.infinispan.server.resp.commands.pubsub.KeyChannelUtils;
 import org.infinispan.server.resp.logging.Log;
 import org.infinispan.util.concurrent.CompletionStages;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.util.CharsetUtil;
+import java.lang.invoke.MethodHandles;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletionStage;
+
+import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
 
 public class SubscriberHandler extends CacheRespRequestHandler {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
@@ -113,13 +112,13 @@ public class SubscriberHandler extends CacheRespRequestHandler {
    }
 
    @Override
-   protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, RespCommand type, List<byte[]> arguments) {
+   protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, RespCommand command, List<byte[]> arguments) {
       initializeIfNecessary(ctx);
-      if (type instanceof PubSubResp3Command) {
-         PubSubResp3Command command = (PubSubResp3Command) type;
-         return command.perform(this, ctx, arguments);
+      if (command instanceof PubSubResp3Command) {
+         PubSubResp3Command pubSubsCommand = (PubSubResp3Command) command;
+         return pubSubsCommand.perform(this, ctx, arguments);
       }
-      return super.actualHandleRequest(ctx, type, arguments);
+      return super.actualHandleRequest(ctx, command, arguments);
    }
 
    public CompletionStage<Void> handleStageListenerError(CompletionStage<Void> stage, byte[] keyChannel, boolean subscribeOrUnsubscribe) {

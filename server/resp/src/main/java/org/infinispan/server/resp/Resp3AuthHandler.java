@@ -1,18 +1,16 @@
 package org.infinispan.server.resp;
 
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.concurrent.CompletionStage;
-
-import javax.security.auth.Subject;
-import javax.security.sasl.SaslException;
-
+import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.server.resp.authentication.RespAuthenticator;
 import org.infinispan.server.resp.commands.AuthResp3Command;
 
-import io.netty.channel.ChannelHandlerContext;
+import javax.security.auth.Subject;
+import javax.security.sasl.SaslException;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
 
 public class Resp3AuthHandler extends CacheRespRequestHandler {
 
@@ -21,14 +19,14 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
    }
 
    @Override
-   protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, RespCommand type, List<byte[]> arguments) {
-      if (type instanceof AuthResp3Command) {
-         AuthResp3Command type1 = (AuthResp3Command) type;
-         return type1.perform(this, ctx, arguments);
+   protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, RespCommand command, List<byte[]> arguments) {
+      if (command instanceof AuthResp3Command) {
+         AuthResp3Command authCommand = (AuthResp3Command) command;
+         return authCommand.perform(this, ctx, arguments);
       }
 
       if (isAuthorized()) {
-         return super.actualHandleRequest(ctx, type, arguments);
+         return super.actualHandleRequest(ctx, command, arguments);
       } else {
          handleUnauthorized(ctx);
       }

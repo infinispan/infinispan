@@ -1,13 +1,6 @@
 package org.infinispan.server.resp.commands.generic;
 
-import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
-
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CompletionStage;
-
+import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
@@ -25,7 +18,13 @@ import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.filter.GlobMatchFilterConverterFactory;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
+import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
 
 /**
  * <a href="https://redis.io/commands/scan/">SCAN</a>
@@ -47,10 +46,6 @@ public class SCAN extends RespCommand implements Resp3Command {
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
       int argc = arguments.size();
-      if (argc < 1) {
-         RespErrorUtil.wrongArgumentCount(this, handler.allocator());
-         return handler.myStage();
-      }
       String filterConverterFactory = null;
       List<byte[]> filterConverterParams = null;
       int count = -1;

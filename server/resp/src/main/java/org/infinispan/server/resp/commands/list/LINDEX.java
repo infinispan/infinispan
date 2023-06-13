@@ -1,20 +1,18 @@
 package org.infinispan.server.resp.commands.list;
 
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-
+import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.util.concurrent.CompletionStages;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 /**
  * @link https://redis.io/commands/lindex/
@@ -36,19 +34,6 @@ public class LINDEX extends RespCommand implements Resp3Command {
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
-
-      if (arguments.size() < 2) {
-         // ERROR
-         RespErrorUtil.wrongArgumentNumber(this, handler.allocator());
-         return handler.myStage();
-      }
-
-      return indexAndReturn(handler, ctx, arguments);
-   }
-
-   protected CompletionStage<RespRequestHandler> indexAndReturn(Resp3Handler handler,
-                                                              ChannelHandlerContext ctx,
-                                                              List<byte[]> arguments) {
       byte[] key = arguments.get(0);
       final long index = Long.parseLong(new String(arguments.get(1), StandardCharsets.US_ASCII));
 
@@ -56,11 +41,10 @@ public class LINDEX extends RespCommand implements Resp3Command {
       CompletionStage<byte[]> value = listMultimap.index(key, index);
       return CompletionStages.handleAndCompose(value ,(v, t) -> {
          if (t != null) {
-           return handleException(handler, t);
+            return handleException(handler, t);
          }
 
          return handler.stageToReturn(CompletableFuture.completedFuture(v), ctx, Consumers.GET_BICONSUMER);
       });
    }
-
 }

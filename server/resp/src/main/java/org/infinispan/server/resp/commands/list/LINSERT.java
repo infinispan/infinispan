@@ -1,9 +1,6 @@
 package org.infinispan.server.resp.commands.list;
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-
+import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
@@ -13,7 +10,9 @@ import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.util.concurrent.CompletionStages;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 /**
  * @link https://redis.io/commands/linsert/
@@ -40,18 +39,6 @@ public class LINSERT extends RespCommand implements Resp3Command {
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
 
-      if (arguments.size() != 4) {
-         // ERROR
-         RespErrorUtil.wrongArgumentNumber(this, handler.allocator());
-         return handler.myStage();
-      }
-
-      return linsertAndReturn(handler, ctx, arguments);
-   }
-
-   protected CompletionStage<RespRequestHandler> linsertAndReturn(Resp3Handler handler,
-                                                                ChannelHandlerContext ctx,
-                                                                List<byte[]> arguments) {
       byte[] key = arguments.get(0);
       String position = new String(arguments.get(1)).toUpperCase();
       boolean isBefore = position.equals(BEFORE);
@@ -72,5 +59,4 @@ public class LINSERT extends RespCommand implements Resp3Command {
          return handler.stageToReturn(CompletableFuture.completedFuture(result), ctx, Consumers.LONG_BICONSUMER);
       });
    }
-
 }

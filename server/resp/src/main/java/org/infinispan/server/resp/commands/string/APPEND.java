@@ -1,16 +1,14 @@
 package org.infinispan.server.resp.commands.string;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
-
-import org.infinispan.server.resp.ByteBufferUtils;
+import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
 
 /**
  * @link https://redis.io/commands/append/
@@ -25,11 +23,6 @@ public class APPEND extends RespCommand implements Resp3Command {
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
          ChannelHandlerContext ctx,
          List<byte[]> arguments) {
-      if (arguments.size() != getArity() - 1) {
-         ByteBufferUtils.stringToByteBuf("-ERR wrong number of arguments for 'append' command\r\n",
-               handler.allocator());
-         return handler.myStage();
-      }
       return handler
             .stageToReturn(StringMutators.append(handler.cache(), arguments.get(0), arguments.get(1)),
                   ctx, Consumers.LONG_BICONSUMER);

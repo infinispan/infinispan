@@ -1,22 +1,20 @@
 package org.infinispan.server.resp.commands.set;
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.atomic.AtomicLong;
-
+import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.multimap.impl.EmbeddedSetCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletionStages;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Abstract class for common code on SADD operations
@@ -33,18 +31,6 @@ public class SADD extends RespCommand implements Resp3Command {
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
 
-      if (arguments.size() < 2) {
-         // ERROR
-         RespErrorUtil.wrongArgumentNumber(this, handler.allocator());
-         return handler.myStage();
-      }
-
-      return addAndReturn(handler, ctx, arguments);
-   }
-
-   protected CompletionStage<RespRequestHandler> addAndReturn(Resp3Handler handler,
-                                                               ChannelHandlerContext ctx,
-                                                               List<byte[]> arguments) {
       byte[] key = arguments.get(0);
       EmbeddedSetCache<byte[],WrappedByteArray> esc = handler.getEmbeddedSetCache();
       AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();

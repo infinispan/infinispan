@@ -38,13 +38,18 @@ public abstract class RespRequestHandler {
       return allocatorToUse;
    }
 
-   public final CompletionStage<RespRequestHandler> handleRequest(ChannelHandlerContext ctx, RespCommand type, List<byte[]> arguments) {
+   public final CompletionStage<RespRequestHandler> handleRequest(ChannelHandlerContext ctx, RespCommand command, List<byte[]> arguments) {
       initializeIfNecessary(ctx);
-      if (type == null) {
+      if (command == null) {
          RespErrorUtil.unknownCommand(allocatorToUse);
          return myStage;
       }
-      return actualHandleRequest(ctx, type, arguments);
+
+      if (!command.hasValidNumberOfArguments(arguments)) {
+         RespErrorUtil.wrongArgumentNumber(command, allocator());
+         return myStage;
+      }
+      return actualHandleRequest(ctx, command, arguments);
    }
 
    /**

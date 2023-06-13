@@ -1,12 +1,8 @@
 package org.infinispan.server.resp;
 
-import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.CompletionStage;
-import java.util.stream.Collectors;
-
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
+import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -20,14 +16,17 @@ import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.resp.commands.Resp3Command;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
-import io.netty.channel.ChannelHandlerContext;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
+
+import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
 public class Resp3Handler extends Resp3AuthHandler {
    protected AdvancedCache<byte[], byte[]> ignorePreviousValueCache;
    protected EmbeddedMultimapListCache<byte[], byte[]> listMultimap;
    protected EmbeddedMultimapPairCache<byte[], byte[], byte[]> mapMultimap;
-   // Entry type for SetBUcket needs proper hashcode, equals methods. Using WrappedByteArray
+   // Entry type for SetBucket needs proper hashcode, equals methods. Using WrappedByteArray
    protected EmbeddedSetCache<byte[],WrappedByteArray> embeddedSetCache;
 
    private final MediaType valueMediaType;
@@ -61,12 +60,12 @@ public class Resp3Handler extends Resp3AuthHandler {
    }
 
    @Override
-   protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, RespCommand type, List<byte[]> arguments) {
-      if (type instanceof Resp3Command) {
-         Resp3Command resp3Command = (Resp3Command) type;
+   protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, RespCommand command, List<byte[]> arguments) {
+      if (command instanceof Resp3Command) {
+         Resp3Command resp3Command = (Resp3Command) command;
          return resp3Command.perform(this, ctx, arguments);
       }
-      return super.actualHandleRequest(ctx, type, arguments);
+      return super.actualHandleRequest(ctx, command, arguments);
    }
 
    protected static void handleLongResult(Long result, ByteBufPool alloc) {
