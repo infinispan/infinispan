@@ -48,6 +48,20 @@ public class EmbeddedMultimapCacheManager<K, V> implements MultimapCacheManager<
       return new EmbeddedMultimapListCache<>(cache);
    }
 
+   /**
+    * Provides an api to manipulate key/values with sorted sets.
+    *
+    * @param cacheName, name of the cache
+    * @return EmbeddedMultimapSortedSetCache
+    */
+   public EmbeddedMultimapSortedSetCache<K, V> getMultimapSortedSet(String cacheName) {
+      Cache<K, SortedSetBucket<V>> cache = cacheManager.getCache(cacheName);
+      if (cache == null) {
+         throw new IllegalStateException("Cache must exist: " + cacheName);
+      }
+      return new EmbeddedMultimapSortedSetCache<>(cache);
+   }
+
    public <HK, HV> EmbeddedMultimapPairCache<K, HK, HV> getMultimapPair(String cacheName) {
       Cache<K, HashMapBucket<HK, HV>> cache = cacheManager.getCache(cacheName);
       if (cache == null) {

@@ -13,7 +13,7 @@ import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
-import org.infinispan.multimap.impl.function.AddFunction;
+import org.infinispan.multimap.impl.function.set.AddFunction;
 
 /**
  * SetCache with Set Implementation methods

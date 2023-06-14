@@ -3,6 +3,7 @@ package org.infinispan.server.resp.commands.string;
 import io.netty.util.CharsetUtil;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.server.resp.commands.ArgumentUtils;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -19,8 +20,7 @@ final class CounterIncOrDec {
       return cache.getAsync(key)
             .thenCompose(currentValueBytes -> {
                if (currentValueBytes != null) {
-                  // Numbers are always ASCII
-                  String prevValue = new String(currentValueBytes, CharsetUtil.US_ASCII);
+                  String prevValue = ArgumentUtils.toNumberString(currentValueBytes);
                   long prevIntValue;
                   try {
                      prevIntValue = Long.parseLong(prevValue) + (increment ? by : -by);
@@ -57,8 +57,7 @@ final class CounterIncOrDec {
       return cache.getAsync(key)
             .thenCompose(currentValueBytes -> {
                if (currentValueBytes != null) {
-                  // Numbers are always ASCII
-                  String prevValue = new String(currentValueBytes, CharsetUtil.US_ASCII);
+                  String prevValue = ArgumentUtils.toNumberString(currentValueBytes);
                   double prevDoubleValue;
                   try {
                      prevDoubleValue = Double.parseDouble(prevValue) + by;

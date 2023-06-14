@@ -15,8 +15,8 @@ import io.lettuce.core.StrAlgoArgs;
 import io.lettuce.core.StringMatchResult;
 import io.lettuce.core.api.sync.RedisCommands;
 
-@Test(groups = "functional", testName = "server.resp.RespStringCommandsTest")
-public class RespStringCommandsTest extends SingleNodeRespBaseTest {
+@Test(groups = "functional", testName = "server.resp.StringCommandsTest")
+public class StringCommandsTest extends SingleNodeRespBaseTest {
     @Test
     public void testIncrNotPresent() {
         RedisCommands<String, String> redis = redisConnection.sync();

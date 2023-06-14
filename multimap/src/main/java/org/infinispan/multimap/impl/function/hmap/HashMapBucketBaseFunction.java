@@ -1,4 +1,4 @@
-package org.infinispan.multimap.impl.function;
+package org.infinispan.multimap.impl.function.hmap;
 
 import org.infinispan.functional.EntryView;
 import org.infinispan.multimap.impl.HashMapBucket;

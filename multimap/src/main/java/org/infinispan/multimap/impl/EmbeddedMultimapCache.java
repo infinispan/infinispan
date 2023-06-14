@@ -22,10 +22,10 @@ import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.multimap.api.BasicMultimapCache;
 import org.infinispan.multimap.api.embedded.MultimapCache;
-import org.infinispan.multimap.impl.function.ContainsFunction;
-import org.infinispan.multimap.impl.function.GetFunction;
-import org.infinispan.multimap.impl.function.PutFunction;
-import org.infinispan.multimap.impl.function.RemoveFunction;
+import org.infinispan.multimap.impl.function.multimap.ContainsFunction;
+import org.infinispan.multimap.impl.function.multimap.GetFunction;
+import org.infinispan.multimap.impl.function.multimap.PutFunction;
+import org.infinispan.multimap.impl.function.multimap.RemoveFunction;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**

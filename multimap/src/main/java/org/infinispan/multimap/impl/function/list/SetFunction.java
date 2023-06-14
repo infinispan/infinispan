@@ -1,4 +1,4 @@
-package org.infinispan.multimap.impl.function;
+package org.infinispan.multimap.impl.function.list;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
