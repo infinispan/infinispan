@@ -155,6 +155,9 @@ for concurrent operations or failures unless the resp cache is configured to use
 | link:https://redis.io/commands/reset[RESET]
 |
 
+| link:https://redis.io/commands/scard[SCARD]
+|
+
 | link:https://redis.io/commands/scan[SCAN]
 | Cursors are reaped in case they have not been used within a timeout (5 minutes)
 
@@ -165,6 +168,18 @@ for concurrent operations or failures unless the resp cache is configured to use
 |
 
 | link:https://redis.io/commands/set[SETRANGE]
+|
+
+| link:https://redis.io/commands/sinter[SINTER]
+|
+
+| link:https://redis.io/commands/sintercard[SINTERCARD]
+|
+
+| link:https://redis.io/commands/sinterstore[SINTERSTORE]
+|
+
+| link:https://redis.io/commands/members[SMEMBERS]
 |
 
 | link:https://redis.io/commands/subscribe[SUBSCRIBE]

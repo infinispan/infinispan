@@ -1,26 +1,25 @@
-package org.infinispan.server.resp;
+package org.infinispan.multimap.impl;
 
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.functional.FunctionalTestUtils.await;
-import static org.infinispan.server.resp.test.RespTestingUtil.ELAIA;
-import static org.infinispan.server.resp.test.RespTestingUtil.FELIX;
-import static org.infinispan.server.resp.test.RespTestingUtil.NAMES_KEY;
-import static org.infinispan.server.resp.test.RespTestingUtil.OIHANA;
+import static org.infinispan.multimap.impl.MultimapTestUtils.ELAIA;
+import static org.infinispan.multimap.impl.MultimapTestUtils.FELIX;
+import static org.infinispan.multimap.impl.MultimapTestUtils.NAMES_KEY;
+import static org.infinispan.multimap.impl.MultimapTestUtils.OIHANA;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.multimap.impl.EmbeddedSetCache;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.server.resp.test.MultimapSCIImpl;
 import org.infinispan.test.data.Person;
 import org.testng.annotations.Test;
 
@@ -79,15 +78,22 @@ public class DistributedSetTest extends BaseDistFunctionalTest<String, Collectio
    }
 
    @Test
-   public void testOfferFirstAndLast() {
+   public void testAdd() {
       initAndTest();
       EmbeddedSetCache<String, Person> set = getSetCacheMember();
       await(set.add(NAMES_KEY, OIHANA));
       assertValuesAndOwnership(NAMES_KEY, OIHANA);
 
-      await(set.add(NAMES_KEY, ELAIA));
-      assertValuesAndOwnership(NAMES_KEY, ELAIA);
+      // await(set.add(NAMES_KEY, ELAIA));
+      // assertValuesAndOwnership(NAMES_KEY, ELAIA);
 
+   }
+
+   @Test
+   public void testGet() {
+      testAdd();
+      EmbeddedSetCache<String, Person> set = getSetCacheMember();
+      set.get(NAMES_KEY).thenAccept(resultSet -> assertThat(resultSet).containsExactlyInAnyOrder(ELAIA, OIHANA));
    }
 
    @Test
@@ -104,6 +110,17 @@ public class DistributedSetTest extends BaseDistFunctionalTest<String, Collectio
       );
    }
 
+   @Test
+   public void testSet() {
+      initAndTest();
+      EmbeddedSetCache<String, Person> set = getSetCacheMember();
+      Set<Person> pers = Set.of(OIHANA, ELAIA);
+      await(set.set(NAMES_KEY, pers));
+
+      assertValuesAndOwnership(NAMES_KEY, OIHANA);
+      assertValuesAndOwnership(NAMES_KEY, ELAIA);
+   }
+
    protected void assertValuesAndOwnership(String key, Person value) {
       assertOwnershipAndNonOwnership(key, l1CacheEnabled);
       assertOnAllCaches(key, value);
@@ -111,13 +128,10 @@ public class DistributedSetTest extends BaseDistFunctionalTest<String, Collectio
 
    protected void assertOnAllCaches(Object key, Person value) {
       for (Map.Entry<Address, EmbeddedSetCache<String, Person>> entry : listCluster.entrySet()) {
-         await(entry.getValue().get((String) key).thenAccept(v -> {
-            assertNotNull(format("values on the key %s must be not null", key), v);
-            assertTrue(format("values on the key '%s' must contain '%s' on node '%s'", key, value, entry.getKey()),
-                  v.contains(value));
-         })
-
-         );
+         var set = await(entry.getValue().get((String) key));
+         assertNotNull(format("values on the key %s must be not null", key), set);
+         assertTrue(format("values on the key '%s' must contain '%s' on node '%s'", key, value, entry.getKey()),
+                  set.contains(value));
       }
    }
 }

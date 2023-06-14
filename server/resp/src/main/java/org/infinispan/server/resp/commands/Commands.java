@@ -61,6 +61,11 @@ import org.infinispan.server.resp.commands.pubsub.PUNSUBSCRIBE;
 import org.infinispan.server.resp.commands.pubsub.SUBSCRIBE;
 import org.infinispan.server.resp.commands.pubsub.UNSUBSCRIBE;
 import org.infinispan.server.resp.commands.set.SADD;
+import org.infinispan.server.resp.commands.set.SCARD;
+import org.infinispan.server.resp.commands.set.SINTER;
+import org.infinispan.server.resp.commands.set.SINTERCARD;
+import org.infinispan.server.resp.commands.set.SINTERSTORE;
+import org.infinispan.server.resp.commands.set.SMEMBERS;
 import org.infinispan.server.resp.commands.sortedset.ZADD;
 import org.infinispan.server.resp.commands.sortedset.ZCARD;
 import org.infinispan.server.resp.commands.sortedset.ZCOUNT;
@@ -111,7 +116,7 @@ public final class Commands {
       ALL_COMMANDS[16] = new RespCommand[]{new QUIT()};
       ALL_COMMANDS[17] = new RespCommand[]{new RPUSH(), new RPUSHX(), new RPOP(), new RESET(), new READWRITE(), new READONLY(), new RPOPLPUSH() };
       // SET should always be first here
-      ALL_COMMANDS[18] = new RespCommand[]{new SET(), new SADD(), new STRLEN(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN(), new SETRANGE()};
+      ALL_COMMANDS[18] = new RespCommand[]{new SET(), new SMEMBERS(), new SADD(), new STRLEN(), new SCARD(), new SINTER(), new SINTERSTORE(), new SINTERCARD(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN(), new SETRANGE()};
       ALL_COMMANDS[19] = new RespCommand[]{new TTL(), new TYPE()};
       ALL_COMMANDS[20] = new RespCommand[]{new UNSUBSCRIBE()};
       ALL_COMMANDS[25] = new RespCommand[]{new ZADD(), new ZCARD(), new ZCOUNT(), new ZPOPMAX(), new ZPOPMIN(), new ZRANGE()};
