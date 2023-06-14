@@ -1,7 +1,11 @@
 package org.infinispan.server.resp.test;
 
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisCommandExecutionException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.time.Duration;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.test.TestResourceTracker;
@@ -10,13 +14,9 @@ import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.resp.RespServer;
 import org.infinispan.server.resp.configuration.RespServerConfiguration;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
-import org.infinispan.test.data.Person;
 
-import java.time.Duration;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisCommandExecutionException;
 
 /**
  * Utils for RESP tests.
@@ -25,18 +25,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @since 14.0
  */
 public class RespTestingUtil {
-   public static final String NAMES_KEY = "names";
-   public static final String EMPTY_KEY = "";
-   public static final String NULL_KEY = null;
-   public static final Person JULIEN = new Person("Julien");
-   public static final Person OIHANA = new Person("Oihana");
-   public static final Person RAMON = new Person("Ramon");
-   public static final Person KOLDO = new Person("Koldo");
-   public static final Person ELAIA = new Person("Elaia");
-   public static final Person FELIX = new Person("Felix");
-   public static final SuperPerson PEPE = new SuperPerson("Pepe");
-   public static final SuperPerson NULL_USER = null;
-
    private static final Log log = LogFactory.getLog(RespTestingUtil.class, Log.class);
 
    public static final String OK = "OK";
@@ -120,7 +108,9 @@ public class RespTestingUtil {
 
    /**
     * Common assertion to check the Resp Wrong Type Error.
-    * This occurs when, for example, when setting a key string and then trying to apply a list command to that key.
+    * This occurs when, for example, when setting a key string and then trying to
+    * apply a list command to that key.
+    *
     * @param command1, sets a key value with a command
     * @param command2, runs another command type on the same key of command1
     */

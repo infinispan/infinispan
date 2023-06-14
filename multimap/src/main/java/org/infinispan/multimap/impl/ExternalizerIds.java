@@ -31,4 +31,6 @@ public interface ExternalizerIds {
    Integer HASH_MAP_VALUES_FUNCTION = 2069;
    Integer SORTED_SET_COUNT_FUNCTION = 2070;
    Integer SORTED_SET_POP_FUNCTION = 2071;
+   Integer SET_GET_FUNCTION = 2072;
+   Integer SET_SET_FUNCTION = 2073;
 }

@@ -14,19 +14,18 @@ import org.infinispan.multimap.impl.SetBucket;
 
 /**
  * Serializable function used by
- * {@link org.infinispan.multimap.impl.EmbeddedMultimapListCache#offerFirst(Object, Object)} and
- * {@link org.infinispan.multimap.impl.EmbeddedMultimapListCache#offerLast(Object, Object)} (Object, Object)}
- * to insert a key/value pair at the head or the tail of the multimap list value.
+ * {@link org.infinispan.multimap.impl.EmbeddedSetCache#add}
+ * to add elements to a Set.
  *
  * @author Vittorio Rigamonti
  * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
-public final class AddFunction<K, V> implements SetBucketBaseFunction<K, V, Boolean> {
-   public static final AdvancedExternalizer<AddFunction> EXTERNALIZER = new Externalizer();
+public final class SAddFunction<K, V> implements SetBucketBaseFunction<K, V, Boolean> {
+   public static final AdvancedExternalizer<SAddFunction> EXTERNALIZER = new Externalizer();
    private final V value;
 
-   public AddFunction(V value) {
+   public SAddFunction(V value) {
       this.value = value;
    }
 
@@ -48,11 +47,11 @@ public final class AddFunction<K, V> implements SetBucketBaseFunction<K, V, Bool
       return retVal;
    }
 
-   private static class Externalizer implements AdvancedExternalizer<AddFunction> {
+   private static class Externalizer implements AdvancedExternalizer<SAddFunction> {
 
       @Override
-      public Set<Class<? extends AddFunction>> getTypeClasses() {
-         return Collections.singleton(AddFunction.class);
+      public Set<Class<? extends SAddFunction>> getTypeClasses() {
+         return Collections.singleton(SAddFunction.class);
       }
 
       @Override
@@ -61,13 +60,13 @@ public final class AddFunction<K, V> implements SetBucketBaseFunction<K, V, Bool
       }
 
       @Override
-      public void writeObject(ObjectOutput output, AddFunction object) throws IOException {
+      public void writeObject(ObjectOutput output, SAddFunction object) throws IOException {
          output.writeObject(object.value);
       }
 
       @Override
-      public AddFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new AddFunction(input.readObject());
+      public SAddFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         return new SAddFunction(input.readObject());
       }
    }
 }

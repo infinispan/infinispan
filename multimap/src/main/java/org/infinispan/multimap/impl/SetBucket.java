@@ -1,17 +1,18 @@
 package org.infinispan.multimap.impl;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.protostream.impl.MarshallableUserObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
-
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Bucket used to store Set data type.
@@ -21,11 +22,10 @@ import java.util.stream.Collectors;
  */
 @ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_SET_BUCKET)
 public class SetBucket<V> {
-
    final Set<V> values;
 
    public SetBucket() {
-      this.values = new HashSet<>(null);
+      this.values = new HashSet<>();
    }
 
    public SetBucket(V value) {
@@ -34,7 +34,7 @@ public class SetBucket<V> {
       this.values = set;
    }
 
-   private SetBucket(Set<V> values) {
+   public SetBucket(HashSet<V> values) {
       this.values = values;
    }
 
@@ -44,13 +44,17 @@ public class SetBucket<V> {
 
    @ProtoFactory
    SetBucket(Collection<MarshallableUserObject<V>> wrappedValues) {
-      this((Set<V>) wrappedValues.stream().map(MarshallableUserObject::get)
+      this((HashSet<V>) wrappedValues.stream().map(MarshallableUserObject::get)
             .collect(Collectors.toCollection(HashSet::new)));
    }
 
-   @ProtoField(number = 1, collectionImplementation = HashSet.class)
+   @ProtoField(number = 1, collectionImplementation = ArrayList.class)
    Collection<MarshallableUserObject<V>> getWrappedValues() {
-      return this.values.stream().map(MarshallableUserObject::new).collect(Collectors.toSet());
+      return this.values.stream().map(MarshallableUserObject::new).collect(Collectors.toList());
+   }
+
+   public Set<V> values() {
+      return new HashSet<>(values);
    }
 
    public boolean contains(V value) {
@@ -84,5 +88,9 @@ public class SetBucket<V> {
 
    public boolean add(V value) {
       return values.add(value);
+   }
+
+   public boolean addAll(Collection<V> values) {
+      return this.values.addAll(values);
    }
 }
