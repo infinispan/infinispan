@@ -10,6 +10,7 @@ import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.context.Flag;
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.multimap.impl.EmbeddedMultimapPairCache;
+import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
 import org.infinispan.multimap.impl.EmbeddedSetCache;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
@@ -28,6 +29,7 @@ public class Resp3Handler extends Resp3AuthHandler {
    protected EmbeddedMultimapPairCache<byte[], byte[], byte[]> mapMultimap;
    // Entry type for SetBucket needs proper hashcode, equals methods. Using WrappedByteArray
    protected EmbeddedSetCache<byte[],WrappedByteArray> embeddedSetCache;
+   protected EmbeddedMultimapSortedSetCache<byte[],byte[]> sortedSetMultimap;
 
    private final MediaType valueMediaType;
 
@@ -44,6 +46,7 @@ public class Resp3Handler extends Resp3AuthHandler {
       listMultimap = new EmbeddedMultimapListCache<>(toMultimap);
       mapMultimap = new EmbeddedMultimapPairCache<>(toMultimap);
       embeddedSetCache = new EmbeddedSetCache<>(toMultimap);
+      sortedSetMultimap = new EmbeddedMultimapSortedSetCache<>(toMultimap);
    }
 
    public EmbeddedMultimapListCache<byte[], byte[]> getListMultimap() {
@@ -56,6 +59,10 @@ public class Resp3Handler extends Resp3AuthHandler {
 
    public EmbeddedSetCache<byte[],WrappedByteArray> getEmbeddedSetCache() {
       return embeddedSetCache;
+   }
+
+   public EmbeddedMultimapSortedSetCache<byte[], byte[]> getSortedSeMultimap() {
+      return sortedSetMultimap;
    }
 
    @Override

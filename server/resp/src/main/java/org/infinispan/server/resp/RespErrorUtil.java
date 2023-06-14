@@ -52,6 +52,10 @@ public final class RespErrorUtil {
       ByteBufferUtils.stringToByteBuf("-ERR value is not an integer or out of range\r\n", allocator);
    }
 
+   public static void valueNotAValidFloat(ByteBufPool allocator) {
+      ByteBufferUtils.stringToByteBuf("-ERR value is not a valid float\r\n", allocator);
+   }
+
    public static void customError(String message, ByteBufPool allocatorToUse) {
       ByteBufferUtils.stringToByteBuf(
             "-ERR " + message + "\r\n", allocatorToUse);

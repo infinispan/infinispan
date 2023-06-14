@@ -1,5 +1,7 @@
 package org.infinispan.server.resp.commands;
 
+import io.netty.util.CharsetUtil;
+
 /**
  * Utility class to transform byte[] arguments.
  *
@@ -9,6 +11,20 @@ public final class ArgumentUtils {
 
    private ArgumentUtils() {
 
+   }
+
+   /**
+    * Numbers are always ASCII.
+    *
+    * @param argument, byte[]
+    * @return String
+    */
+   public static String toNumberString(byte[] argument) {
+      return new String(argument, CharsetUtil.US_ASCII);
+   }
+
+   public static double toDouble(byte[] argument) {
+      return Double.parseDouble(toNumberString(argument));
    }
 
    public static long toLong(byte[] argument) {

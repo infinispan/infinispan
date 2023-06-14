@@ -1,7 +1,5 @@
 package org.infinispan.marshall.protostream.impl;
 
-import java.io.IOException;
-
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
@@ -13,6 +11,9 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.protostream.descriptors.WireType;
+
+import java.io.IOException;
+import java.util.Objects;
 
 /**
  * A wrapper message used by ProtoStream Marshallers to allow user objects to be marshalled/unmarshalled via the {@link
@@ -63,7 +64,7 @@ public class MarshallableUserObject<T> {
       if (o == null || getClass() != o.getClass()) return false;
 
       MarshallableUserObject other = (MarshallableUserObject) o;
-      return object != null ? object.equals(other.object) : other.object == null;
+      return Objects.equals(object, other.object);
    }
 
    @Override

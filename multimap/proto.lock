@@ -74,6 +74,34 @@
                 ]
               }
             ]
+          },
+          {
+            "name": "SortedSetBucket",
+            "fields": [
+              {
+                "id": 1,
+                "name": "wrappedValues",
+                "type": "SortedSetBucket.ScoredValue",
+                "is_repeated": true
+              }
+            ],
+            "messages": [
+              {
+                "name": "ScoredValue",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "score",
+                    "type": "double"
+                  },
+                  {
+                    "id": 2,
+                    "name": "wrappedValue",
+                    "type": "org.infinispan.persistence.core.MarshallableUserObject"
+                  }
+                ]
+              }
+            ]
           }
         ],
         "imports": [

@@ -1,4 +1,4 @@
-package org.infinispan.multimap.impl.function;
+package org.infinispan.multimap.impl.function.set;
 
 import java.io.IOException;
 import java.io.ObjectInput;

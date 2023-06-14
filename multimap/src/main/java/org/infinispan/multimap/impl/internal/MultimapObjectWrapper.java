@@ -1,14 +1,15 @@
 package org.infinispan.multimap.impl.internal;
 
-import static org.infinispan.commons.marshall.ProtoStreamTypeIds.MULTIMAP_OBJECT_WRAPPER;
-
-import java.util.Arrays;
-import java.util.Objects;
-
+import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.protostream.impl.MarshallableUserObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+
+import java.util.Arrays;
+import java.util.Objects;
+
+import static org.infinispan.commons.marshall.ProtoStreamTypeIds.MULTIMAP_OBJECT_WRAPPER;
 
 /**
  * Wrapper for objects stored in multimap buckets.
@@ -20,7 +21,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  * @since 15.0
  */
 @ProtoTypeId(MULTIMAP_OBJECT_WRAPPER)
-public class MultimapObjectWrapper<T> {
+public class MultimapObjectWrapper<T> implements Comparable<MultimapObjectWrapper> {
 
    final T object;
 
@@ -60,5 +61,30 @@ public class MultimapObjectWrapper<T> {
          return java.util.Arrays.hashCode((byte[]) object);
 
       return Objects.hashCode(object);
+   }
+
+   @Override
+   public int compareTo(MultimapObjectWrapper other) {
+      if (this.equals(other)) {
+         return 0;
+      }
+
+      if (this.object instanceof Comparable && other.object instanceof Comparable) {
+         return ((Comparable) this.object).compareTo(other.object);
+      }
+
+      if (object instanceof byte[] && other.object instanceof byte[]) {
+         return Arrays.compare((byte[]) object, (byte[]) other.object);
+      }
+
+      return object.toString().compareTo(other.toString());
+   }
+
+   @Override
+   public String toString() {
+      if (object instanceof byte[]) {
+         return "MultimapObjectWrapper{" + "object=" + Util.hexDump((byte[])object) + '}';
+      }
+      return "MultimapObjectWrapper{" + "object=" + object + '}';
    }
 }

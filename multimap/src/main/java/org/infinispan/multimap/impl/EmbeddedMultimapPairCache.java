@@ -13,7 +13,7 @@ import org.infinispan.Cache;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
-import org.infinispan.multimap.impl.function.HashMapPutFunction;
+import org.infinispan.multimap.impl.function.hmap.HashMapPutFunction;
 
 /**
  * Multimap which holds a collection of key-values pairs.
