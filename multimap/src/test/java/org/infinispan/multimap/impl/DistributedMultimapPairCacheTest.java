@@ -7,6 +7,7 @@ import static org.infinispan.multimap.impl.MultimapTestUtils.KOLDO;
 import static org.infinispan.multimap.impl.MultimapTestUtils.OIHANA;
 import static org.infinispan.multimap.impl.MultimapTestUtils.RAMON;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -97,5 +98,12 @@ public class DistributedMultimapPairCacheTest extends BaseDistFunctionalTest<Str
 
    private static String toString(byte[] b) {
       return new String(b);
+   }
+
+   public void testValuesOperation() {
+      EmbeddedMultimapPairCache<String, byte[], Person> multimap = getMultimapMember();
+      CompletionStage<Collection<Person>> cs = multimap.set("values-test", Map.entry(toBytes("oihana"), OIHANA), Map.entry(toBytes("koldo"), KOLDO))
+                  .thenCompose(ignore -> multimap.values("values-test"));
+      assertThat(await(cs)).contains(OIHANA, KOLDO);
    }
 }

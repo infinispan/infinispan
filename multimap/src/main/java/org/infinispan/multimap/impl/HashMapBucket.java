@@ -48,7 +48,7 @@ public class HashMapBucket<K, V> {
       return res;
    }
 
-   public Map<K, V> values() {
+   public Map<K, V> converted() {
       return fromStore();
    }
 
@@ -58,6 +58,10 @@ public class HashMapBucket<K, V> {
 
    public int size() {
       return values.size();
+   }
+
+   public Collection<V> values() {
+      return new ArrayList<>(values.values());
    }
 
    public Set<K> keySet() {

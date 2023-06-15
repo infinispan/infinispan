@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,6 +16,7 @@ import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.multimap.impl.function.hmap.HashMapKeySetFunction;
+import org.infinispan.multimap.impl.function.hmap.HashMapValuesFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapPutFunction;
 
 /**
@@ -76,7 +78,7 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
                }
 
                HashMapBucket<HK, HV> bucket = entry.getValue();
-               return bucket.values();
+               return bucket.converted();
             });
    }
 
@@ -115,11 +117,24 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
 
    /**
     * Get the key set from the hash map stored under the given key.
+    *
     * @param key: Cache key to retrieve the hash map.
     * @return {@link CompletionStage} containing a {@link Set} with the keys or an empty set if the key is not found.
     */
    public CompletionStage<Set<HK>> keySet(K key) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       return readWriteMap.eval(key, new HashMapKeySetFunction<>());
+   }
+
+   /**
+    * Get the values from the hash map stored under the given key.
+    *
+    * @param key: Cache key to retrieve the hash map.
+    * @return {@link CompletionStage} containing a {@link Collection} with the values or an empty collection if the key
+    *        is not found.
+    */
+   public CompletionStage<Collection<HV>> values(K key) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      return readWriteMap.eval(key, new HashMapValuesFunction<>());
    }
 }
