@@ -12,11 +12,11 @@ import org.hibernate.search.backend.lucene.LuceneExtension;
 import org.hibernate.search.backend.lucene.search.query.LuceneSearchQuery;
 import org.hibernate.search.backend.lucene.search.query.dsl.LuceneSearchQueryOptionsStep;
 import org.hibernate.search.engine.backend.common.DocumentReference;
+import org.hibernate.search.engine.common.EntityReference;
 import org.hibernate.search.engine.search.predicate.SearchPredicate;
 import org.hibernate.search.engine.search.projection.SearchProjection;
 import org.hibernate.search.engine.search.projection.dsl.SearchProjectionFactory;
 import org.hibernate.search.engine.search.sort.SearchSort;
-import org.infinispan.search.mapper.common.EntityReference;
 import org.infinispan.search.mapper.scope.SearchScope;
 import org.infinispan.search.mapper.session.SearchSession;
 
@@ -52,8 +52,8 @@ public final class SearchQueryBuilder {
       return build(projectionInfo.getProjection());
    }
 
-   public LuceneSearchQuery<EntityReference> entityReference() {
-      return build(scope.projection().entityReference().toProjection());
+   public LuceneSearchQuery<Object> ids() {
+      return build(scope.projection().id().toProjection());
    }
 
    public LuceneSearchQuery<List<Object>> keyAndEntity() {
@@ -87,7 +87,7 @@ public final class SearchQueryBuilder {
    }
 
    public Sort getLuceneSort() {
-      return entityReference().luceneSort();
+      return ids().luceneSort();
    }
 
    private <T> LuceneSearchQuery<T> build(SearchProjection<T> searchProjection) {

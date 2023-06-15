@@ -1,8 +1,8 @@
 package org.infinispan.search.mapper.scope.impl;
 
-import org.hibernate.search.engine.backend.common.spi.DocumentReferenceConverter;
 import org.hibernate.search.engine.backend.mapping.spi.BackendMappingContext;
 import org.hibernate.search.engine.backend.session.spi.DetachedBackendSessionContext;
+import org.hibernate.search.engine.common.EntityReference;
 import org.hibernate.search.engine.search.aggregation.dsl.SearchAggregationFactory;
 import org.hibernate.search.engine.search.predicate.dsl.SearchPredicateFactory;
 import org.hibernate.search.engine.search.projection.dsl.SearchProjectionFactory;
@@ -12,7 +12,6 @@ import org.hibernate.search.mapper.pojo.loading.spi.PojoSelectionEntityLoader;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
 import org.hibernate.search.mapper.pojo.scope.spi.PojoScopeDelegate;
 import org.hibernate.search.mapper.pojo.scope.spi.PojoScopeSessionContext;
-import org.infinispan.search.mapper.common.EntityReference;
 import org.infinispan.search.mapper.scope.SearchScope;
 import org.infinispan.search.mapper.scope.SearchWorkspace;
 import org.infinispan.search.mapper.search.loading.context.impl.InfinispanLoadingContext;
@@ -56,9 +55,7 @@ public class SearchScopeImpl<E> implements SearchScope<E> {
       return new SearchWorkspaceImpl(delegate.workspace(DetachedBackendSessionContext.of(mappingContext, null)));
    }
 
-   public SearchQuerySelectStep<?, EntityReference, E, ?, ?, ?> search(
-         PojoScopeSessionContext sessionContext, DocumentReferenceConverter<EntityReference> documentReferenceConverter) {
-      return delegate.search(sessionContext, documentReferenceConverter,
-            new InfinispanLoadingContext.Builder<>(entityLoader));
+   public SearchQuerySelectStep<?, EntityReference, E, ?, ?, ?> search(PojoScopeSessionContext sessionContext) {
+      return delegate.search(sessionContext, new InfinispanLoadingContext.Builder<>(entityLoader));
    }
 }

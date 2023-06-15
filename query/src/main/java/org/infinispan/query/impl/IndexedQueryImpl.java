@@ -21,7 +21,7 @@ import org.infinispan.query.core.impl.QueryResultImpl;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
-import org.infinispan.search.mapper.common.EntityReference;
+import org.hibernate.search.engine.common.EntityReference;
 
 /**
  * Lucene based indexed query implementation.
@@ -129,7 +129,7 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
          @Override
          public K getKey() {
             // todo [anistor] should also apply keyDataConversion.fromStorage() maybe ?
-            return (K) ((EntityReference) projection.get(0)).key();
+            return (K) ((EntityReference) projection.get(0)).id();
          }
 
          @Override
@@ -184,12 +184,12 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
          long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
 
          SearchQueryBuilder searchQueryBuilder = queryDefinition.getSearchQueryBuilder();
-         LuceneSearchQuery<EntityReference> searchQuery = searchQueryBuilder.entityReference();
-         List<EntityReference> hits = searchQuery.fetchAllHits();
+         LuceneSearchQuery<Object> searchQuery = searchQueryBuilder.ids();
+         List<Object> hits = searchQuery.fetchAllHits();
 
          int count = 0;
-         for (EntityReference ref : hits) {
-            Object removed = cache.remove(ref.key());
+         for (Object id : hits) {
+            Object removed = cache.remove(id);
             if (removed != null) {
                count++;
             }

@@ -2,6 +2,7 @@ package org.infinispan.search.mapper.scope;
 
 import java.util.function.Function;
 
+import org.hibernate.search.engine.common.EntityReference;
 import org.hibernate.search.engine.search.aggregation.AggregationKey;
 import org.hibernate.search.engine.search.aggregation.SearchAggregation;
 import org.hibernate.search.engine.search.aggregation.dsl.SearchAggregationFactory;
@@ -11,7 +12,6 @@ import org.hibernate.search.engine.search.query.dsl.SearchQueryOptionsStep;
 import org.hibernate.search.engine.search.query.dsl.SearchQuerySelectStep;
 import org.hibernate.search.engine.search.query.dsl.SearchQueryWhereStep;
 import org.hibernate.search.engine.search.sort.dsl.SearchSortFactory;
-import org.infinispan.search.mapper.common.EntityReference;
 import org.infinispan.search.mapper.session.SearchSession;
 
 /**
@@ -59,7 +59,7 @@ public interface SearchScope<E> {
     * scope or another scope instance targeting the same indexes.
     * <p>
     * Note this method is only necessary if you do not want to use lambda expressions, since you can {@link
-    * SearchQuerySelectStep#asProjection(Function)} define projections with lambdas} within the search query DSL,
+    * SearchQuerySelectStep#select(Function)} define projections with lambdas} within the search query DSL,
     * removing the need to create separate objects to represent the projections.
     *
     * @return A projection factory.

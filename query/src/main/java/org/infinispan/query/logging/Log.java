@@ -7,12 +7,12 @@ import static org.jboss.logging.Logger.Level.WARN;
 
 import jakarta.transaction.Transaction;
 
+import org.hibernate.search.engine.common.EntityReference;
 import org.hibernate.search.util.common.SearchException;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.objectfilter.ParsingException;
-import org.infinispan.search.mapper.common.EntityReference;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
