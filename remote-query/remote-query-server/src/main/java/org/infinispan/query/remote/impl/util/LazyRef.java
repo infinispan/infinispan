@@ -27,4 +27,8 @@ public class LazyRef<R> implements Supplier<R> {
       }
       return supplied;
    }
+
+   public boolean available() {
+      return available;
+   }
 }

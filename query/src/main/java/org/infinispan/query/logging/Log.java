@@ -187,5 +187,10 @@ public interface Log extends org.infinispan.query.core.impl.Log {
    @Message(value = "The indexing engine is restarting, index updates will be skipped for the current data changes.", id = 14059)
    void mappingIsRestarting();
 
+   @LogMessage(level = INFO)
+   @Message(value = "We're getting some errors from Hibernate Search or Lucene while we compute the index count/size for statistics."
+         + " There is probably a concurrent reindexing ongoing.", id = 14060)
+   void concurrentReindexingOnGetStatistics(@Cause Throwable cause);
+
    // !!!!!! When adding anything new here please check the last used id in org.infinispan.query.core.impl.Log !!!!!!
 }

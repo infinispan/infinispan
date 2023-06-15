@@ -69,6 +69,10 @@ public interface SearchMapping extends AutoCloseable {
     */
    Collection<? extends SearchIndexedEntity> allIndexedEntities();
 
+   default Collection<? extends SearchIndexedEntity> indexedEntitiesForStatistics() {
+      return allIndexedEntities();
+   }
+
    /**
     * @return A set containing the name of {@link #allIndexedEntities() all indexed entities}.
     */
