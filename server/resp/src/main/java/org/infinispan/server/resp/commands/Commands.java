@@ -33,6 +33,7 @@ import org.infinispan.server.resp.commands.hash.HLEN;
 import org.infinispan.server.resp.commands.hash.HMSET;
 import org.infinispan.server.resp.commands.hash.HSCAN;
 import org.infinispan.server.resp.commands.hash.HSET;
+import org.infinispan.server.resp.commands.hash.HVALS;
 import org.infinispan.server.resp.commands.list.LINDEX;
 import org.infinispan.server.resp.commands.list.LINSERT;
 import org.infinispan.server.resp.commands.list.LLEN;
@@ -93,7 +94,7 @@ public final class Commands {
       ALL_COMMANDS[5] = new RespCommand[]{new FLUSHDB(), new FLUSHALL()};
       // GET should always be first here
       ALL_COMMANDS[6] = new RespCommand[]{new GET(), new GETDEL(), new GETRANGE()};
-      ALL_COMMANDS[7] = new RespCommand[]{new HELLO(), new HGET(), new HSET(), new HLEN(), new HKEYS(), new HSCAN(), new HMSET()};
+      ALL_COMMANDS[7] = new RespCommand[]{new HELLO(), new HGET(), new HSET(), new HLEN(), new HKEYS(), new HVALS(), new HSCAN(), new HMSET()};
       ALL_COMMANDS[8] = new RespCommand[]{new INCR(), new INCRBY(), new INCRBYFLOAT(), new INFO()};
       ALL_COMMANDS[11] = new RespCommand[]{new LINDEX(), new LINSERT(), new LPUSH(), new LPUSHX(), new LPOP(), new LRANGE(), new LLEN(), new LPOS(), new LREM(), new LSET(), new LTRIM(), new LMOVE() };
       ALL_COMMANDS[12] = new RespCommand[]{new MGET(), new MSET(), new MODULE(), new MEMORY()};

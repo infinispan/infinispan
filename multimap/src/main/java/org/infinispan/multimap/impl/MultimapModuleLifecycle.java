@@ -1,5 +1,7 @@
 package org.infinispan.multimap.impl;
 
+import java.util.Map;
+
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -8,6 +10,7 @@ import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.multimap.impl.function.hmap.HashMapKeySetFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapPutFunction;
+import org.infinispan.multimap.impl.function.hmap.HashMapValuesFunction;
 import org.infinispan.multimap.impl.function.list.IndexFunction;
 import org.infinispan.multimap.impl.function.list.IndexOfFunction;
 import org.infinispan.multimap.impl.function.list.InsertFunction;
@@ -24,8 +27,6 @@ import org.infinispan.multimap.impl.function.multimap.PutFunction;
 import org.infinispan.multimap.impl.function.multimap.RemoveFunction;
 import org.infinispan.multimap.impl.function.set.AddFunction;
 import org.infinispan.multimap.impl.function.sortedset.AddManyFunction;
-
-import java.util.Map;
 
 
 /**
@@ -92,6 +93,7 @@ public class MultimapModuleLifecycle implements ModuleLifecycle {
    private void addHashMapExternalizers(Map<Integer, AdvancedExternalizer<?>> externalizerMap) {
       addAdvancedExternalizer(externalizerMap, HashMapPutFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, HashMapKeySetFunction.EXTERNALIZER);
+      addAdvancedExternalizer(externalizerMap, HashMapValuesFunction.EXTERNALIZER);
    }
 
    /**

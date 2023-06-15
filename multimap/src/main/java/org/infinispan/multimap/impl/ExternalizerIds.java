@@ -28,4 +28,5 @@ public interface ExternalizerIds {
    Integer ROTATE_FUNCTION = 2066;
    Integer SORTED_SET_ADDMANY_FUNCTION = 2067;
    Integer HASH_MAP_KEYSET_FUNCTION = 2068;
+   Integer HASH_MAP_VALUES_FUNCTION = 2069;
 }
