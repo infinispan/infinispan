@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
@@ -13,6 +14,7 @@ import org.infinispan.Cache;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
+import org.infinispan.multimap.impl.function.hmap.HashMapKeySetFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapPutFunction;
 
 /**
@@ -109,5 +111,15 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
                HashMapBucket<HK, HV> bucket = entry.getValue();
                return bucket.size();
             });
+   }
+
+   /**
+    * Get the key set from the hash map stored under the given key.
+    * @param key: Cache key to retrieve the hash map.
+    * @return {@link CompletionStage} containing a {@link Set} with the keys or an empty set if the key is not found.
+    */
+   public CompletionStage<Set<HK>> keySet(K key) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      return readWriteMap.eval(key, new HashMapKeySetFunction<>());
    }
 }

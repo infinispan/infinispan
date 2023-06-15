@@ -62,4 +62,15 @@ public class EmbeddedMultimapPairCacheTest extends SingleCacheManagerTest {
       assertThatThrownBy(() -> await(embeddedPairCache.size(null)))
             .isInstanceOf(NullPointerException.class);
    }
+
+   public void testKeySetOperation() {
+      assertThat(await(embeddedPairCache.set("keyset-test", Map.entry("name", "Oihana"), Map.entry("age", "1"))))
+            .isEqualTo(2);
+
+      assertThat(await(embeddedPairCache.keySet("keyset-test"))).contains("name", "age");
+      assertThat(await(embeddedPairCache.keySet("unknown-entry"))).isEmpty();
+
+      assertThatThrownBy(() -> await(embeddedPairCache.keySet(null)))
+            .isInstanceOf(NullPointerException.class);
+   }
 }
