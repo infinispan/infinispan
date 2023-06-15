@@ -72,6 +72,10 @@ public class HashMapBucket<K, V> {
       return keys;
    }
 
+   public boolean containsKey(K key) {
+      return values.containsKey(new MultimapObjectWrapper<>(key));
+   }
+
    private Map<MultimapObjectWrapper<K>, V> toStore(Map<K, V> raw) {
       Map<MultimapObjectWrapper<K>, V> converted = new HashMap<>();
       for (Map.Entry<K, V> entry : raw.entrySet()) {

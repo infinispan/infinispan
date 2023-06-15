@@ -106,4 +106,20 @@ public class DistributedMultimapPairCacheTest extends BaseDistFunctionalTest<Str
                   .thenCompose(ignore -> multimap.values("values-test"));
       assertThat(await(cs)).contains(OIHANA, KOLDO);
    }
+
+   public void testContainsProperty() {
+      EmbeddedMultimapPairCache<String, byte[], Person> multimap = getMultimapMember();
+      await(multimap.set("contains-test", Map.entry(toBytes("oihana"), OIHANA))
+            .thenAccept(ignore -> assertFromAllCaches("contains-test", Map.of("oihana", OIHANA)))
+            .thenCompose(ignore -> multimap.contains("contains-test", toBytes("oihana"))
+            .thenCompose(b -> {
+               assertThat(b).isTrue();
+               return multimap.contains("contains-test", toBytes("unknown"));
+            })
+            .thenCompose(b -> {
+               assertThat(b).isFalse();
+               return multimap.contains("unknown", toBytes("unknown"));
+            })
+            .thenAccept(b -> assertThat(b).isFalse())));
+   }
 }

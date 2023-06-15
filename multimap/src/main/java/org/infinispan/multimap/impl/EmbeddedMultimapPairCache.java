@@ -36,6 +36,7 @@ import org.infinispan.multimap.impl.function.hmap.HashMapPutFunction;
 public class EmbeddedMultimapPairCache<K, HK, HV> {
 
    public static final String ERR_KEY_CAN_T_BE_NULL = "key can't be null";
+   public static final String ERR_PROPERTY_CANT_BE_NULL = "property can't be null";
 
    private final FunctionalMap.ReadWriteMap<K, HashMapBucket<HK, HV>> readWriteMap;
    private final AdvancedCache<K, HashMapBucket<HK, HV>> cache;
@@ -136,5 +137,26 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
    public CompletionStage<Collection<HV>> values(K key) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       return readWriteMap.eval(key, new HashMapValuesFunction<>());
+   }
+
+   /**
+    * Verify if the property is present in the hash map stored under the given key.
+    *
+    * @param key: Cache key to retrieve the hash map.
+    * @param property: Property to verify in the hash map.
+    * @return {@link CompletionStage} with {@code true} if the property is present or {@code false} otherwise.
+    */
+   public CompletionStage<Boolean> contains(K key, HK property) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      requireNonNull(property, ERR_PROPERTY_CANT_BE_NULL);
+      return cache.getCacheEntryAsync(key)
+            .thenApply(entry -> {
+               if (entry == null) {
+                  return false;
+               }
+
+               HashMapBucket<HK, HV> bucket = entry.getValue();
+               return bucket.containsKey(property);
+            });
    }
 }
