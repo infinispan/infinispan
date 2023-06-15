@@ -25,7 +25,7 @@ import org.hibernate.search.util.common.AssertionFailure;
 import org.hibernate.search.util.common.impl.Closer;
 import org.hibernate.search.util.common.logging.impl.LoggerFactory;
 import org.infinispan.query.concurrent.FailureCounter;
-import org.infinispan.search.mapper.common.EntityReference;
+import org.hibernate.search.engine.common.EntityReference;
 import org.infinispan.search.mapper.common.impl.EntityReferenceImpl;
 import org.infinispan.search.mapper.log.impl.Log;
 import org.infinispan.search.mapper.mapping.EntityConverter;
@@ -43,7 +43,7 @@ import org.infinispan.search.mapper.work.impl.SearchIndexerImpl;
 import org.infinispan.util.concurrent.BlockingManager;
 
 public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapping>
-      implements SearchMapping, InfinispanSearchSessionMappingContext, EntityReferenceFactory<EntityReference> {
+      implements SearchMapping, InfinispanSearchSessionMappingContext, EntityReferenceFactory {
 
    private static final Log log = LoggerFactory.make(Log.class, MethodHandles.lookup());
 
@@ -67,7 +67,7 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
       this.typeContextContainer = typeContextContainer;
       this.entityLoader = entityLoader;
       this.entityConverter = entityConverter;
-      this.mappingSession = new InfinispanSearchSession(this, entityLoader, typeContextContainer);
+      this.mappingSession = new InfinispanSearchSession(this, entityLoader);
       this.searchIndexer = new SearchIndexerImpl(mappingSession.createIndexer(), entityConverter, typeContextContainer,
             blockingManager);
       this.failureCounter = failureCounter;
@@ -198,11 +198,6 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
 
    @Override
    public SearchMapping toConcreteType() {
-      return this;
-   }
-
-   @Override
-   public EntityReferenceFactory<EntityReference> entityReferenceFactory() {
       return this;
    }
 

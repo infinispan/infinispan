@@ -8,7 +8,6 @@ import java.util.concurrent.CompletionStage;
 import org.hibernate.search.backend.lucene.search.query.LuceneSearchResult;
 import org.infinispan.query.clustered.QueryResponse;
 import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
-import org.infinispan.search.mapper.common.EntityReference;
 
 /**
  * Deletes the matching results on current node.
@@ -28,19 +27,19 @@ final class CQDelete extends CQWorker {
       }
 
       SearchQueryBuilder query = queryDefinition.getSearchQueryBuilder();
-      return blockingManager.supplyBlocking(() -> fetchReferences(query), this)
-            .thenApply(queryResult -> queryResult.hits().stream().map(ref -> cache.remove(ref.key()) != null ? 1 : 0).reduce(0, Integer::sum))
+      return blockingManager.supplyBlocking(() -> fetchIds(query), this)
+            .thenApply(queryResult -> queryResult.hits().stream().map(id -> cache.remove(id) != null ? 1 : 0).reduce(0, Integer::sum))
             .thenApply(QueryResponse::new);
    }
 
-   private LuceneSearchResult<EntityReference> fetchReferences(SearchQueryBuilder query) {
+   public LuceneSearchResult<Object> fetchIds(SearchQueryBuilder query) {
       long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
 
-      LuceneSearchResult<EntityReference> result = query.entityReference().fetchAll();
+      LuceneSearchResult<Object> result = query.ids().fetch(queryDefinition.getMaxResults());
 
-      if (queryStatistics.isEnabled())
+      if (queryStatistics.isEnabled()) {
          queryStatistics.localIndexedQueryExecuted(queryDefinition.getQueryString(), System.nanoTime() - start);
-
+      }
       return result;
    }
 }

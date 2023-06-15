@@ -2,8 +2,8 @@ package org.infinispan.search.mapper.common.impl;
 
 import java.util.Objects;
 
+import org.hibernate.search.engine.common.EntityReference;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
-import org.infinispan.search.mapper.common.EntityReference;
 
 public class EntityReferenceImpl implements EntityReference {
 
@@ -32,7 +32,7 @@ public class EntityReferenceImpl implements EntityReference {
    }
 
    @Override
-   public Object key() {
+   public Object id() {
       return id;
    }
 

@@ -3,9 +3,9 @@ package org.infinispan.search.mapper.session;
 import java.util.Collection;
 import java.util.Collections;
 
+import org.hibernate.search.engine.common.EntityReference;
 import org.hibernate.search.engine.search.query.dsl.SearchQuerySelectStep;
 import org.hibernate.search.mapper.pojo.work.spi.PojoIndexer;
-import org.infinispan.search.mapper.common.EntityReference;
 import org.infinispan.search.mapper.scope.SearchScope;
 
 /**

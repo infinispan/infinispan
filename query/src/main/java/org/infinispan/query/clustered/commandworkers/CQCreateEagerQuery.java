@@ -8,7 +8,6 @@ import org.hibernate.search.backend.lucene.search.query.LuceneSearchResult;
 import org.infinispan.query.clustered.NodeTopDocs;
 import org.infinispan.query.clustered.QueryResponse;
 import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
-import org.infinispan.search.mapper.common.EntityReference;
 
 /**
  * Returns the results of a node to create an eager distributed iterator.
@@ -39,24 +38,23 @@ final class CQCreateEagerQuery extends CQWorker {
       return result;
    }
 
-   private LuceneSearchResult<EntityReference> fetchReferences(SearchQueryBuilder query) {
+   public LuceneSearchResult<Object> fetchIds(SearchQueryBuilder query) {
       long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
 
-      LuceneSearchResult<EntityReference> result = query.entityReference().fetch(queryDefinition.getMaxResults());
+      LuceneSearchResult<Object> result = query.ids().fetch(queryDefinition.getMaxResults());
 
-      if (queryStatistics.isEnabled())
+      if (queryStatistics.isEnabled()) {
          queryStatistics.localIndexedQueryExecuted(queryDefinition.getQueryString(), System.nanoTime() - start);
-
+      }
       return result;
    }
 
    private CompletionStage<NodeTopDocs> collectKeys(SearchQueryBuilder query) {
-      return blockingManager.supplyBlocking(() -> fetchReferences(query), "CQCreateEagerQuery#collectKeys")
+      return blockingManager.supplyBlocking(() -> fetchIds(query), "CQCreateEagerQuery#collectKeys")
             .thenApply(queryResult -> {
                long hitCount = queryResult.total().hitCount();
 
                Object[] keys = queryResult.hits().stream()
-                     .map(EntityReference::key)
                      .toArray(Object[]::new);
                return new NodeTopDocs(cache.getRpcManager().getAddress(), queryResult.topDocs(), hitCount, keys, null);
             });

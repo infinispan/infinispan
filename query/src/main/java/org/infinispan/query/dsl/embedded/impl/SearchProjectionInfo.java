@@ -1,8 +1,8 @@
 package org.infinispan.query.dsl.embedded.impl;
 
+import org.hibernate.search.engine.common.EntityReference;
 import org.hibernate.search.engine.search.projection.SearchProjection;
 import org.hibernate.search.engine.search.projection.dsl.SearchProjectionFactory;
-import org.infinispan.search.mapper.common.EntityReference;
 
 final class SearchProjectionInfo {
 
