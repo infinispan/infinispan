@@ -169,4 +169,15 @@ public class HashOperationsTest extends SingleNodeRespBaseTest {
 
       assertWrongType(() -> redis.set("plain", "string"), () -> redis.hvals("plain"));
    }
+
+   public void testPropertyExists() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThat(redis.hexists("something", "key")).isFalse();
+
+      assertThat(redis.hset("exists-test", "key", "value")).isTrue();
+      assertThat(redis.hexists("exists-test", "key")).isTrue();
+      assertThat(redis.hexists("exists-test", "key2")).isFalse();
+
+      assertWrongType(() -> redis.set("plain", "string"), () -> redis.hexists("plain", "key"));
+   }
 }
