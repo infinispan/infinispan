@@ -8,6 +8,7 @@ import static org.testng.AssertJUnit.assertFalse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.Cache;
@@ -19,6 +20,7 @@ import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.commons.test.annotation.TestForIssue;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -29,12 +31,13 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-@Test(groups = "unit", testName = "rest.search.reindex.LocalRestIndexerRemoveTest")
-public class LocalRestIndexerRemoveTest extends SingleCacheManagerTest {
+@Test(groups = "unit", testName = "rest.search.reindex.RestReindexRemoveAndStatisticsTest")
+public class RestReindexRemoveAndStatisticsTest extends SingleCacheManagerTest {
 
    private static final String CACHE_NAME = "types";
 
    private static final int ENTRIES = 5_000;
+   private static final int FEW_ENTRIES = 5;
 
    private RestServerHelper restServer;
    private RestClient restClient;
@@ -68,27 +71,52 @@ public class LocalRestIndexerRemoveTest extends SingleCacheManagerTest {
    }
 
    @Test
-   public void test() {
+   @TestForIssue(jiraKey = "ISPN-14189")
+   public void reindexRemoveAndGetStatistics() {
       RestCacheClient cacheClient = restClient.cache(CACHE_NAME);
-      List<CompletionStage<RestResponse>> responses = new ArrayList<>(ENTRIES);
 
-      for (int i = 0; i < ENTRIES; i++) {
-         Json game = Json.object()
-               .set("_type", "Game")
-               .set("name", "Game n." + i)
-               .set("description", "This is the game #" + i);
+      assertThat(cacheClient.clearIndex()).isOk();
+      assertEquals(0, count(cacheClient));
 
-         responses.add(cacheClient.put("game-" + i, RestEntity.create(MediaType.APPLICATION_JSON, game.toString())));
-      }
-      for (CompletionStage<RestResponse> response : responses) {
-         assertThat(response).isOk();
-      }
+      writeEntries(ENTRIES, cacheClient);
+      assertEquals(ENTRIES, count(cacheClient));
 
       assertThat(cacheClient.reindex()).isOk();
       assertEquals(ENTRIES, count(cacheClient));
 
       assertThat(cacheClient.clearIndex()).isOk();
       assertEquals(0, count(cacheClient));
+   }
+
+   @Test
+   public void reindexAsFirstOperation() {
+      // Test mass indexing as first operation,
+      // executed when the LazySearchMapping#searchMappingRef is not available.
+      // See LazySearchMapping#allIndexedEntityJavaClasses.
+      RestCacheClient cacheClient = restClient.cache(CACHE_NAME);
+      assertThat(cacheClient.reindex()).isOk();
+   }
+
+   @Test
+   @TestForIssue(jiraKey = "ISPN-14901")
+   public void reindexAndConcurrentlyGetStatistics() throws Exception {
+      RestCacheClient cacheClient = restClient.cache(CACHE_NAME);
+
+      assertThat(cacheClient.clearIndex()).isOk();
+      assertEquals(0, count(cacheClient));
+
+      writeEntries(FEW_ENTRIES, cacheClient);
+      assertEquals(FEW_ENTRIES, count(cacheClient));
+
+      // Do some tries to reproduce the proper interleaving
+      for (int i=0; i<3; i++) {
+         CompletableFuture<RestResponse> reindexOperation = cacheClient.reindex().toCompletableFuture();
+         while (!reindexOperation.isDone()) {
+            CompletionStage<RestResponse> searchStatsRequest = cacheClient.searchStats();
+            assertThat(searchStatsRequest).isOk();
+         }
+         assertThat(reindexOperation).isOk();
+      }
    }
 
    @Override
@@ -103,6 +131,21 @@ public class LocalRestIndexerRemoveTest extends SingleCacheManagerTest {
          } finally {
             super.teardown();
          }
+      }
+   }
+
+   private static void writeEntries(int entries, RestCacheClient cacheClient) {
+      List<CompletionStage<RestResponse>> responses = new ArrayList<>(entries);
+      for (int i = 0; i < entries; i++) {
+         Json game = Json.object()
+               .set("_type", "Game")
+               .set("name", "Game n." + i)
+               .set("description", "This is the game #" + i);
+
+         responses.add(cacheClient.put("game-" + i, RestEntity.create(MediaType.APPLICATION_JSON, game.toString())));
+      }
+      for (CompletionStage<RestResponse> response : responses) {
+         assertThat(response).isOk();
       }
    }
 
