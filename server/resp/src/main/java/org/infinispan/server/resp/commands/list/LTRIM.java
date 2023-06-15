@@ -1,7 +1,8 @@
 package org.infinispan.server.resp.commands.list;
 
-import io.netty.channel.ChannelHandlerContext;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
@@ -9,10 +10,8 @@ import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.util.concurrent.CompletionStages;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @link https://redis.io/commands/ltrim/
@@ -45,12 +44,6 @@ public class LTRIM extends RespCommand implements Resp3Command {
       int stop = ArgumentUtils.toInt(arguments.get(2));
 
       EmbeddedMultimapListCache<byte[], byte[]> listMultimap = handler.getListMultimap();
-
-      return CompletionStages.handleAndCompose(listMultimap.trim(key, start, stop) ,(r, t) -> {
-         if (t != null) {
-            return handleException(handler, t);
-         }
-         return handler.stageToReturn(CompletableFutures.completedTrue(), ctx, Consumers.OK_BICONSUMER);
-      });
+      return handler.stageToReturn(listMultimap.trim(key, start, stop), ctx, Consumers.OK_BICONSUMER);
    }
 }

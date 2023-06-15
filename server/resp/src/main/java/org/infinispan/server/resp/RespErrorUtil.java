@@ -1,5 +1,10 @@
 package org.infinispan.server.resp;
 
+import java.util.concurrent.CompletionException;
+import java.util.function.Consumer;
+
+import org.infinispan.commons.CacheException;
+
 public final class RespErrorUtil {
 
    private RespErrorUtil() {
@@ -50,5 +55,22 @@ public final class RespErrorUtil {
    public static void customError(String message, ByteBufPool allocatorToUse) {
       ByteBufferUtils.stringToByteBuf(
             "-ERR " + message + "\r\n", allocatorToUse);
+   }
+
+   public static Consumer<ByteBufPool> handleException(Throwable t) {
+      Throwable ex = t;
+      while (ex instanceof CompletionException || ex instanceof CacheException) {
+         ex = ex.getCause();
+      }
+
+      if (ex instanceof ClassCastException) {
+         return RespErrorUtil::wrongType;
+      }
+
+      if (ex instanceof IndexOutOfBoundsException) {
+         return RespErrorUtil::indexOutOfRange;
+      }
+
+      return null;
    }
 }
