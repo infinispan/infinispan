@@ -1,18 +1,17 @@
 package org.infinispan.server.resp.commands.list;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.util.concurrent.CompletionStages;
 
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @link https://redis.io/commands/lindex/
@@ -39,12 +38,6 @@ public class LINDEX extends RespCommand implements Resp3Command {
 
       EmbeddedMultimapListCache<byte[], byte[]> listMultimap = handler.getListMultimap();
       CompletionStage<byte[]> value = listMultimap.index(key, index);
-      return CompletionStages.handleAndCompose(value ,(v, t) -> {
-         if (t != null) {
-            return handleException(handler, t);
-         }
-
-         return handler.stageToReturn(CompletableFuture.completedFuture(v), ctx, Consumers.GET_BICONSUMER);
-      });
+      return handler.stageToReturn(value, ctx, Consumers.GET_BICONSUMER);
    }
 }

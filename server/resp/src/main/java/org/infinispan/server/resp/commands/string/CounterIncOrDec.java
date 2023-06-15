@@ -14,9 +14,7 @@ final class CounterIncOrDec {
    static CompletionStage<Long> counterIncOrDec(Cache<byte[], byte[]> cache, byte[] key, boolean increment) {
       return counterIncOrDecBy(cache, key, 1, increment);
    }
-   static CompletionStage<Long> counterIncOrDecBy(Cache<byte[], byte[]> cache, byte[] key, String by, boolean increment) {
-      return counterIncOrDecBy(cache, key, Long.parseLong(by), increment);
-   }
+
    static CompletionStage<Long> counterIncOrDecBy(Cache<byte[], byte[]> cache, byte[] key, long by, boolean increment) {
       return cache.getAsync(key)
             .thenCompose(currentValueBytes -> {

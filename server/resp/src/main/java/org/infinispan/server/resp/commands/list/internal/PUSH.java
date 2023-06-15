@@ -1,6 +1,8 @@
 package org.infinispan.server.resp.commands.list.internal;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
@@ -10,8 +12,7 @@ import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletionStages;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Abstract class for common code on PUSH operations
@@ -46,12 +47,7 @@ public abstract class PUSH extends RespCommand implements Resp3Command {
          aggregateCompletionStage.dependsOn(push);
       }
 
-      return CompletionStages.handleAndCompose(aggregateCompletionStage.freeze(), (r, t) -> {
-         if (t != null) {
-            return handleException(handler, t);
-         }
-
-         return handler.stageToReturn(listMultimap.size(key), ctx, Consumers.LONG_BICONSUMER);
-      });
+      CompletionStage<Long> cs = aggregateCompletionStage.freeze().thenCompose(ignore -> listMultimap.size(key));
+      return handler.stageToReturn(cs, ctx, Consumers.LONG_BICONSUMER);
    }
 }

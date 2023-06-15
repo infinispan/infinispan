@@ -19,6 +19,7 @@ import org.infinispan.server.resp.commands.Resp3Command;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
@@ -106,7 +107,12 @@ public class Resp3Handler extends Resp3AuthHandler {
    }
 
    protected static void handleThrowable(ByteBufPool alloc, Throwable t) {
-      ByteBufferUtils.stringToByteBuf("-ERR " + t.getMessage() + CRLF_STRING, alloc);
+      Consumer<ByteBufPool> writer = RespErrorUtil.handleException(t);
+      if (writer != null) {
+         writer.accept(alloc);
+      } else {
+         ByteBufferUtils.stringToByteBuf("-ERR " + t.getMessage() + CRLF_STRING, alloc);
+      }
    }
 
    public AdvancedCache<byte[], byte[]> ignorePreviousValuesCache() {

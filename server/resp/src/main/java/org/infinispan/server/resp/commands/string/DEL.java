@@ -1,11 +1,11 @@
 package org.infinispan.server.resp.commands.string;
 
-import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
-
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 
+import org.infinispan.server.resp.ByteBufPool;
 import org.infinispan.server.resp.ByteBufferUtils;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
@@ -22,6 +22,10 @@ import io.netty.channel.ChannelHandlerContext;
  * @since 14.0
  */
 public class DEL extends RespCommand implements Resp3Command {
+
+   private static final BiConsumer<AtomicInteger, ByteBufPool> AI_CONSUMER = (ai, buf) ->
+         Consumers.LONG_BICONSUMER.accept(ai.longValue(), buf);
+
    public DEL() {
       super(-2, 1, -1, 1);
    }
@@ -51,8 +55,6 @@ public class DEL extends RespCommand implements Resp3Command {
                   }
                }));
       }
-      return handler.stageToReturn(deleteStages.freeze(), ctx, (removals, alloc) -> {
-         ByteBufferUtils.stringToByteBuf(":" + removals.get() + CRLF_STRING, alloc);
-      });
+      return handler.stageToReturn(deleteStages.freeze(), ctx, AI_CONSUMER);
    }
 }

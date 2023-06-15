@@ -1,6 +1,9 @@
 package org.infinispan.server.resp.commands.set;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.multimap.impl.EmbeddedSetCache;
 import org.infinispan.server.resp.Consumers;
@@ -11,10 +14,7 @@ import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletionStages;
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.atomic.AtomicLong;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Abstract class for common code on SADD operations
@@ -40,11 +40,7 @@ public class SADD extends RespCommand implements Resp3Command {
          aggregateCompletionStage.dependsOn(add);
       }
 
-      return CompletionStages.handleAndCompose(aggregateCompletionStage.freeze(), (r, t) -> {
-         if (t != null) {
-            return handleException(handler, t);
-         }
-         return handler.stageToReturn(CompletableFuture.completedFuture(addedCount.get()), ctx, Consumers.LONG_BICONSUMER);
-      });
+      CompletionStage<Long> cs = aggregateCompletionStage.freeze().thenApply(ignore -> addedCount.get());
+      return handler.stageToReturn(cs, ctx, Consumers.LONG_BICONSUMER);
    }
 }

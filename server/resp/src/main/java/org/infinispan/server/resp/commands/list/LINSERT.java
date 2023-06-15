@@ -1,6 +1,8 @@
 package org.infinispan.server.resp.commands.list;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
@@ -8,11 +10,8 @@ import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.util.concurrent.CompletionStages;
 
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @link https://redis.io/commands/linsert/
@@ -51,12 +50,6 @@ public class LINSERT extends RespCommand implements Resp3Command {
       byte[] element = arguments.get(3);
 
       EmbeddedMultimapListCache<byte[], byte[]> listMultimap = handler.getListMultimap();
-      return CompletionStages.handleAndCompose(listMultimap.insert(key, isBefore, pivot, element), (result, t) -> {
-         if (t != null) {
-            return handleException(handler, t);
-         }
-
-         return handler.stageToReturn(CompletableFuture.completedFuture(result), ctx, Consumers.LONG_BICONSUMER);
-      });
+      return handler.stageToReturn(listMultimap.insert(key, isBefore, pivot, element), ctx, Consumers.LONG_BICONSUMER);
    }
 }
