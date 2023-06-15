@@ -3,7 +3,9 @@ package org.infinispan.multimap.impl;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
@@ -56,6 +58,14 @@ public class HashMapBucket<K, V> {
 
    public int size() {
       return values.size();
+   }
+
+   public Set<K> keySet() {
+      Set<K> keys = new HashSet<>(values.size());
+      for (MultimapObjectWrapper<K> key : values.keySet()) {
+         keys.add(key.get());
+      }
+      return keys;
    }
 
    private Map<MultimapObjectWrapper<K>, V> toStore(Map<K, V> raw) {

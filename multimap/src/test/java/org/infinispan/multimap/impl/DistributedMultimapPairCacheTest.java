@@ -9,6 +9,7 @@ import static org.infinispan.multimap.impl.MultimapTestUtils.RAMON;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
@@ -66,6 +67,14 @@ public class DistributedMultimapPairCacheTest extends BaseDistFunctionalTest<Str
       CompletionStage<Integer> cs = multimap.set("size-test", Map.entry(toBytes("oihana"), OIHANA), Map.entry(toBytes("ramon"), RAMON))
             .thenCompose(ignore -> multimap.size("size-test"));
       assertThat(await(cs)).isEqualTo(2);
+   }
+
+   public void testKeySetOperation() {
+      EmbeddedMultimapPairCache<String, byte[], Person> multimap = getMultimapMember();
+      CompletionStage<Set<String>> cs = multimap.set("keyset-test", Map.entry(toBytes("oihana"), OIHANA), Map.entry(toBytes("koldo"), KOLDO))
+            .thenCompose(ignore -> multimap.keySet("keyset-test"))
+            .thenApply(s -> s.stream().map(String::new).collect(Collectors.toSet()));
+      assertThat(await(cs)).contains("oihana", "koldo");
    }
 
    protected void assertFromAllCaches(String key, Map<String, Person> expected) {

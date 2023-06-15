@@ -155,4 +155,20 @@ public class HashOperationsTest extends SingleNodeRespBaseTest {
             .hasSize(6)
             .containsKeys("k1", "k10", "k11", "k12", "k13", "k14");
    }
+
+   public void testKeySetOperation() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThat(redis.hkeys("something")).asList().isEmpty();
+
+      Map<String, String> map = Map.of("key1", "value1", "key2", "value2", "key3", "value3");
+      assertThat(redis.hset("keyset-operation", map)).isEqualTo(3);
+
+      assertThat(redis.hkeys("keyset-operation")).asList()
+            .hasSize(3).containsAll(map.keySet());
+
+      redis.set("plain", "string");
+      assertThatThrownBy(() -> redis.hkeys("plain"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERRWRONGTYPE");
+   }
 }
