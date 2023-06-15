@@ -3,18 +3,25 @@ package org.infinispan.query.stats.impl;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.hibernate.search.backend.lucene.index.LuceneIndexManager;
+import org.hibernate.search.engine.backend.work.execution.OperationSubmitter;
+import org.hibernate.search.engine.common.execution.spi.SimpleScheduledExecutor;
 import org.hibernate.search.engine.search.predicate.dsl.SearchPredicateFactory;
+import org.hibernate.search.util.common.SearchException;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.query.Indexer;
+import org.infinispan.query.concurrent.InfinispanIndexingExecutorProvider;
 import org.infinispan.query.core.stats.IndexInfo;
 import org.infinispan.query.core.stats.IndexStatistics;
 import org.infinispan.query.core.stats.IndexStatisticsSnapshot;
 import org.infinispan.query.core.stats.impl.IndexStatisticsSnapshotImpl;
+import org.infinispan.query.logging.Log;
 import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.scope.SearchScope;
@@ -22,6 +29,7 @@ import org.infinispan.search.mapper.session.SearchSession;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * A {@link IndexStatistics} for an indexed Cache.
@@ -31,6 +39,8 @@ import org.infinispan.util.concurrent.CompletionStages;
 @Scope(Scopes.NAMED_CACHE)
 public class LocalIndexStatistics implements IndexStatistics {
 
+   private static final Log log = LogFactory.getLog(LocalIndexStatistics.class, Log.class);
+
    @Inject
    SearchMapping searchMapping;
 
@@ -39,6 +49,13 @@ public class LocalIndexStatistics implements IndexStatistics {
 
    @Inject
    Indexer indexer;
+
+   private SimpleScheduledExecutor offloadingExecutor;
+
+   @Start
+   void start() {
+      offloadingExecutor = InfinispanIndexingExecutorProvider.writeExecutor(blockingManager);
+   }
 
    @Override
    public Set<String> indexedEntities() {
@@ -50,7 +67,7 @@ public class LocalIndexStatistics implements IndexStatistics {
       Map<String, CompletionStage<IndexInfo>> infoStages = new HashMap<>();
       AggregateCompletionStage<Map<String, IndexInfo>> aggregateCompletionStage =
             CompletionStages.aggregateCompletionStage(new HashMap<>());
-      for (SearchIndexedEntity entity : searchMapping.allIndexedEntities()) {
+      for (SearchIndexedEntity entity : searchMapping.indexedEntitiesForStatistics()) {
          CompletionStage<IndexInfo> stage = indexInfos(entity);
          infoStages.put(entity.name(), stage);
          aggregateCompletionStage.dependsOn(stage);
@@ -64,15 +81,46 @@ public class LocalIndexStatistics implements IndexStatistics {
    }
 
    private CompletionStage<IndexInfo> indexInfos(SearchIndexedEntity indexedEntity) {
-      SearchSession session = searchMapping.getMappingSession();
-      SearchScope<?> scope = session.scope(indexedEntity.javaClass(), indexedEntity.name());
-
       CompletionStage<Long> countStage = blockingManager.supplyBlocking(
-            () -> session.search(scope).where(SearchPredicateFactory::matchAll).fetchTotalHitCount(), this);
+            () -> {
+               SearchSession session = searchMapping.getMappingSession();
+               SearchScope<?> scope = session.scope(indexedEntity.javaClass(), indexedEntity.name());
+               long hitCount = -1;
+               try {
+                  hitCount = session.search(scope).where(SearchPredicateFactory::matchAll).fetchTotalHitCount();
+               } catch (Throwable throwable) {
+                  log.concurrentReindexingOnGetStatistics(throwable);
+               }
+               return hitCount;
+               }, this);
 
       return countStage
-            .thenCompose(count -> indexedEntity.indexManager().unwrap(LuceneIndexManager.class).computeSizeInBytesAsync()
-            .thenApply(size -> new IndexInfo(count, size)));
+            .thenCompose(count -> {
+               CompletionStage<Long> sizeStage;
+               if (count == -1L || reindexing()) {
+                  sizeStage = CompletableFuture.completedFuture(-1L);
+               } else {
+                  try {
+                     sizeStage = indexedEntity.indexManager().unwrap(LuceneIndexManager.class)
+                           .computeSizeInBytesAsync(OperationSubmitter.offloading(task -> offloadingExecutor.submit(task)))
+                           .exceptionally(throwable -> {
+                              log.concurrentReindexingOnGetStatistics(throwable);
+                              return -1L;
+                           });
+                  } catch (SearchException exception) {
+                     if (exception.getMessage().contains("HSEARCH000563")) {
+                        // in this case the engine orchestrator is stopped (not allowing to submit more tasks),
+                        // it means that the engine is stopping,
+                        // it means we cannot compute side at the moment
+                        sizeStage = CompletableFuture.completedFuture(-1L);
+                     } else {
+                        // in the all other cases we get an unexpected error from the search engine
+                        throw exception;
+                     }
+                  }
+               }
+               return sizeStage.thenApply(size -> new IndexInfo(count, size));
+            });
    }
 
    @Override

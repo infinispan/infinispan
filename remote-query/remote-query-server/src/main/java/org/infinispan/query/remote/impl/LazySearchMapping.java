@@ -3,6 +3,7 @@ package org.infinispan.query.remote.impl;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -117,13 +118,44 @@ public class LazySearchMapping implements SearchMapping {
    }
 
    @Override
+   public Collection<? extends SearchIndexedEntity> indexedEntitiesForStatistics() {
+      long stamp = stampedLock.tryReadLock();
+      if (stamp == 0L) {
+         return Collections.emptySet();
+      }
+
+      try {
+         if (!searchMappingRef.available()) {
+            return Collections.emptySet();
+         }
+         return allIndexedEntities();
+      } finally {
+         stampedLock.unlockRead(stamp);
+      }
+   }
+
+   @Override
    public Set<String> allIndexedEntityNames() {
       return mapping().allIndexedEntityNames();
    }
 
    @Override
    public Set<Class<?>> allIndexedEntityJavaClasses() {
-      return mapping().allIndexedEntityJavaClasses();
+      // Create the mapping is a very expensive and blocking operation.
+      // It is better to avoid to invoke it if we don't need it.
+      long stamp = stampedLock.tryReadLock();
+      if (stamp == 0L) {
+         return Collections.singleton(byte[].class);
+      }
+
+      try {
+         if (!searchMappingRef.available()) {
+            return Collections.singleton(byte[].class);
+         }
+         return mapping().allIndexedEntityJavaClasses();
+      } finally {
+         stampedLock.unlockRead(stamp);
+      }
    }
 
    @Override
@@ -138,12 +170,36 @@ public class LazySearchMapping implements SearchMapping {
 
    @Override
    public int genericIndexingFailures() {
-      return mapping().genericIndexingFailures();
+      long stamp = stampedLock.tryReadLock();
+      if (stamp == 0L) {
+         return -1;
+      }
+
+      try {
+         if (!searchMappingRef.available()) {
+            return -1;
+         }
+         return mapping().genericIndexingFailures();
+      } finally {
+         stampedLock.unlockRead(stamp);
+      }
    }
 
    @Override
    public int entityIndexingFailures() {
-      return mapping().entityIndexingFailures();
+      long stamp = stampedLock.tryReadLock();
+      if (stamp == 0L) {
+         return -1;
+      }
+
+      try {
+         if (!searchMappingRef.available()) {
+            return -1;
+         }
+         return mapping().entityIndexingFailures();
+      } finally {
+         stampedLock.unlockRead(stamp);
+      }
    }
 
    @Override
