@@ -66,6 +66,7 @@ import org.infinispan.commons.configuration.io.yaml.YamlConfigurationReader;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
+import org.infinispan.commons.test.annotation.TestForIssue;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -528,6 +529,18 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertThat(response).isOk();
       response = cacheClient.stats();
       assertThat(response).isOk().hasJson().hasProperty("current_number_of_entries").is(0);
+   }
+
+   @Test
+   @TestForIssue(jiraKey = "ISPN-14957")
+   public void getCacheInfoInternalCache() {
+      RestCacheClient scriptCache = client.cache("___script_cache");
+      CompletionStage<RestResponse> details = scriptCache.details();
+      assertThat(details).isOk();
+
+      RestResponse response = join(details);
+      String body = response.getBody();
+      assertThat(body).isNotBlank();
    }
 
    @Test
