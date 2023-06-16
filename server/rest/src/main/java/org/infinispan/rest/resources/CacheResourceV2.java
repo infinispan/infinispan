@@ -73,6 +73,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerAdmin;
 import org.infinispan.marshall.core.EncoderRegistry;
@@ -87,13 +88,13 @@ import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
 import org.infinispan.persistence.remote.upgrade.SerializationUtils;
-import org.infinispan.query.Search;
-import org.infinispan.query.core.stats.IndexStatistics;
-import org.infinispan.query.core.stats.SearchStatistics;
+import org.infinispan.query.core.stats.impl.SearchStatsRetriever;
+import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.reactive.publisher.PublisherTransformers;
 import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
+import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.rest.EventStream;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestRequest;
@@ -138,9 +139,13 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    private static final String MIGRATOR_NAME = "hotrod";
 
    private final ParserRegistry parserRegistry = new ParserRegistry();
+   private final InternalCacheRegistry internalCacheRegistry;
 
    public CacheResourceV2(InvocationHelper invocationHelper, RestTelemetryService telemetryService) {
       super(invocationHelper, telemetryService);
+      EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
+      GlobalComponentRegistry globalComponentRegistry = SecurityActions.getGlobalComponentRegistry(cacheManager);
+      this.internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
    }
 
    @Override
@@ -683,9 +688,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
          }
       }
 
-      SearchStatistics searchStatistics = Search.getSearchStatistics(cache);
-      IndexStatistics indexStatistics = searchStatistics.getIndexStatistics();
-      indexingInProgress = indexStatistics.reindexing();
+      indexingInProgress = reindexingInProgress(cache);
       queryable = invocationHelper.getRestCacheManager().isCacheQueryable(cache);
 
       boolean statistics = configuration.statistics().enabled();
@@ -714,6 +717,16 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       fullDetail.valueStorage = cache.getAdvancedCache().getValueDataConversion().getStorageMediaType();
 
       return addEntityAsJson(fullDetail.toJson(), invocationHelper.newResponse(request), pretty).build();
+   }
+
+   private boolean reindexingInProgress(Cache<?,?> cache) {
+      SearchStatsRetriever searchStatsRetriever = ComponentRegistryUtils.getSearchStatsRetriever(cache);
+      if (searchStatsRetriever != null || !internalCacheRegistry.isInternalCache(cache.getName())) {
+         return searchStatsRetriever.getSearchStatistics().getIndexStatistics().reindexing();
+      }
+
+      // safely returning false in case of internal cache
+      return false;
    }
 
    private CompletionStage<RestResponse> getCacheConfig(RestRequest request) {
