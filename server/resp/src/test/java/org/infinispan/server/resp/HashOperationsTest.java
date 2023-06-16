@@ -53,4 +53,19 @@ public class HashOperationsTest extends SingleNodeRespBaseTest {
             .isInstanceOf(RedisCommandExecutionException.class)
             .hasMessageContaining("ERRWRONGTYPE");
    }
+
+   public void testHashLength() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      Map<String, String> map = Map.of("key1", "value1", "key2", "value2", "key3", "value3");
+      assertThat(redis.hset("len-test", map)).isEqualTo(3);
+
+      assertThat(redis.hlen("len-test")).isEqualTo(3);
+      assertThat(redis.hlen("UNKNOWN")).isEqualTo(0);
+
+      redis.set("plain", "string");
+      assertThatThrownBy(() -> redis.hlen("plain"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERRWRONGTYPE");
+   }
 }
