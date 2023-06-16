@@ -23,7 +23,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class HSET extends HMSET {
 
-   private static final BiConsumer<Integer, ByteBufPool> CONSUMER = (r, t) -> Consumers.LONG_BICONSUMER.accept((long) r, t);
+   static final BiConsumer<Integer, ByteBufPool> CONSUMER = (r, t) -> Consumers.LONG_BICONSUMER.accept((long) r, t);
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {

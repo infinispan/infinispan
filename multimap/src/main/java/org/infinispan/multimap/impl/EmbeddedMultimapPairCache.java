@@ -94,4 +94,23 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
                return bucket.get(property, converter);
             });
    }
+
+   /**
+    * Get the size of the hash map stored under key.
+    *
+    * @param key: Cache key to retrieve the hash map.
+    * @return {@link CompletionStage} containing the size of the hash map or 0 if the key is not found.
+    */
+   public CompletionStage<Integer> size(K key) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      return cache.getCacheEntryAsync(key)
+            .thenApply(entry -> {
+               if (entry == null) {
+                  return 0;
+               }
+
+               HashMapBucket<HK, HV> bucket = entry.getValue();
+               return bucket.size();
+            });
+   }
 }

@@ -5,6 +5,7 @@ import static org.infinispan.functional.FunctionalTestUtils.await;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -57,5 +58,12 @@ public class DistributedMultimapPairCacheTest extends BaseDistFunctionalTest<Str
       assertThat(await(multimap.get("person1", "name"))).isEqualTo("Oihana");
       assertThat(await(multimap.get("person1", "unknown"))).isNull();
       assertThat(await(multimap.get("unknown", "unknown"))).isNull();
+   }
+
+   public void testSizeOperation() {
+      EmbeddedMultimapPairCache<String, String, String> multimap = getMultimapMember();
+      CompletionStage<Integer> cs = multimap.set("size-test", Map.entry("name", "Oihana"), Map.entry("age", "1"))
+            .thenCompose(ignore -> multimap.size("size-test"));
+      assertThat(await(cs)).isEqualTo(2);
    }
 }
