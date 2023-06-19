@@ -80,10 +80,10 @@ public interface Log extends org.infinispan.query.core.impl.Log {
    CacheException cacheIsStoppingNoCommandAllowed(String cacheName);
 
    @LogMessage(level = INFO)
-   @Message(value = "Reindexed %1$d entities", id = 14014)
-   void indexingEntitiesCompleted(long nbrOfEntities);
+   @Message(value = "Reindexed %1$d entities in %2$d ms", id = 14014)
+   void indexingEntitiesCompleted(long nbrOfEntities, long elapsedMs);
 
-   @LogMessage(level = INFO)
+   @LogMessage(level = DEBUG)
    @Message(value = "%1$d documents indexed in %2$d ms", id = 14015)
    void indexingDocumentsCompleted(long doneCount, long elapsedMs);
 
@@ -173,8 +173,8 @@ public interface Log extends org.infinispan.query.core.impl.Log {
    @Message(value = "Indexing instance of entity '%s' during mass indexing", id = 14052)
    String massIndexerIndexingInstance(String entityName);
 
-   @Message(value = "Invalid property key '%1$s`, it's not a string.", id = 14053)
-   CacheException invalidPropertyKey(Object propertyKey);
+//   @Message(value = "Invalid property key '%1$s`, it's not a string.", id = 14053)
+//   CacheException invalidPropertyKey(Object propertyKey);
 
    @Message(value = "Trying to execute query `%1$s`, but no type is indexed on cache.", id = 14054)
    CacheException noTypeIsIndexed(String ickle);
@@ -193,6 +193,14 @@ public interface Log extends org.infinispan.query.core.impl.Log {
 
    @Message(value = "Failed to load declared indexed class '%s'", id = 14061)
    CacheConfigurationException cannotLoadIndexedClass(String name, @Cause Throwable t);
+
+   @LogMessage(level = DEBUG)
+   @Message(value = "Search engine is reloaded before the reindexing.", id = 14062)
+   void preIndexingReloading();
+
+   @LogMessage(level = INFO)
+   @Message(value = "Reindexing starting.", id = 14063)
+   void indexingStarting();
 
    // !!!!!! When adding anything new here please check the last used id in org.infinispan.query.core.impl.Log !!!!!!
 }

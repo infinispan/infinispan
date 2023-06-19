@@ -1,6 +1,7 @@
 package org.infinispan.query.impl.massindex;
 
 import java.util.Collection;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.AdvancedCache;
@@ -22,6 +23,8 @@ public class IndexUpdater {
 
    private static final Log LOG = LogFactory.getLog(IndexUpdater.class, Log.class);
 
+   private static final Collection<Class<?>> PROTO_CLASSES = Set.of(new Class[]{byte[].class});
+
    private final AdvancedCache<?, ?> cache;
 
    private SearchMapping searchMapping;
@@ -40,7 +43,7 @@ public class IndexUpdater {
          return;
       }
 
-      LOG.flushingIndex(javaClasses.toString());
+      LOG.flushingIndex(getEntityTypes(javaClasses));
       getSearchMapping().scope(javaClasses).workspace().flush();
    }
 
@@ -49,7 +52,7 @@ public class IndexUpdater {
          return;
       }
 
-      LOG.flushingIndex(javaClasses.toString());
+      LOG.flushingIndex(getEntityTypes(javaClasses));
       getSearchMapping().scope(javaClasses).workspace().refresh();
    }
 
@@ -58,7 +61,7 @@ public class IndexUpdater {
          return;
       }
 
-      LOG.purgingIndex(javaClasses.toString());
+      LOG.purgingIndex(getEntityTypes(javaClasses));
       getSearchMapping().scope(javaClasses).workspace().purge();
    }
 
@@ -76,6 +79,14 @@ public class IndexUpdater {
       }
 
       return getSearchMapping().getSearchIndexer().addOrUpdate(key, String.valueOf(segment), value);
+   }
+
+   private String getEntityTypes(Collection<Class<?>> javaClasses) {
+      if (PROTO_CLASSES.equals(javaClasses)) {
+         return getSearchMapping().allIndexedEntityNames().toString();
+      }
+
+      return javaClasses.toString();
    }
 
    private SearchMapping getSearchMapping() {

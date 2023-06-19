@@ -20,10 +20,10 @@ public class MassIndexerProgressMonitor {
    private final TimeService timeService;
 
    /**
-    * Logs progress of indexing job every 50 documents written.
+    * Logs progress of indexing job every 1000 documents written.
     */
    public MassIndexerProgressMonitor(TimeService timeService) {
-      this(50, timeService);
+      this(1000, timeService);
    }
 
    /**
@@ -48,8 +48,17 @@ public class MassIndexerProgressMonitor {
       }
    }
 
+   public void preIndexingReloading() {
+      log.preIndexingReloading();
+   }
+
+   public void indexingStarting() {
+      log.indexingStarting();
+   }
+
    public void indexingCompleted() {
-      log.indexingEntitiesCompleted(documentsDoneCounter.get());
+      log.indexingEntitiesCompleted(documentsDoneCounter.get(),
+            timeService.timeDuration(startTime, TimeUnit.MILLISECONDS));
    }
 
    protected int getStatusMessagePeriod() {
