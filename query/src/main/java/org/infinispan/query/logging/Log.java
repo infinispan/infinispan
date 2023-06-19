@@ -81,10 +81,10 @@ public interface Log extends org.infinispan.query.core.impl.Log {
    CacheException cacheIsStoppingNoCommandAllowed(String cacheName);
 
    @LogMessage(level = INFO)
-   @Message(value = "Reindexed %1$d entities", id = 14014)
-   void indexingEntitiesCompleted(long nbrOfEntities);
+   @Message(value = "Reindexed %1$d entities in %2$d ms", id = 14014)
+   void indexingEntitiesCompleted(long nbrOfEntities, long elapsedMs);
 
-   @LogMessage(level = INFO)
+   @LogMessage(level = DEBUG)
    @Message(value = "%1$d documents indexed in %2$d ms", id = 14015)
    void indexingDocumentsCompleted(long doneCount, long elapsedMs);
 
@@ -191,6 +191,16 @@ public interface Log extends org.infinispan.query.core.impl.Log {
    @Message(value = "We're getting some errors from Hibernate Search or Lucene while we compute the index count/size for statistics."
          + " There is probably a concurrent reindexing ongoing.", id = 14060)
    void concurrentReindexingOnGetStatistics(@Cause Throwable cause);
+
+   // ID 14061 only from Infinispan 15
+
+   @LogMessage(level = DEBUG)
+   @Message(value = "Search engine is reloaded before the reindexing.", id = 14062)
+   void preIndexingReloading();
+
+   @LogMessage(level = INFO)
+   @Message(value = "Reindexing starting.", id = 14063)
+   void indexingStarting();
 
    // !!!!!! When adding anything new here please check the last used id in org.infinispan.query.core.impl.Log !!!!!!
 }
