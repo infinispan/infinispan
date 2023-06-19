@@ -11,7 +11,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.multimap.impl.EmbeddedMultimapPairCache;
 import org.infinispan.multimap.impl.EmbeddedSetCache;
-import org.infinispan.multimap.impl.SetBucket;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.resp.commands.Resp3Command;
@@ -44,8 +43,7 @@ public class Resp3Handler extends Resp3AuthHandler {
       Cache toMultimap = cache.withMediaType(MediaType.APPLICATION_OCTET_STREAM, valueMediaType);
       listMultimap = new EmbeddedMultimapListCache<>(toMultimap);
       mapMultimap = new EmbeddedMultimapPairCache<>(toMultimap);
-      Cache<byte[],SetBucket<WrappedByteArray>> wCache = cache.getCacheManager().getCache(cache.getName());
-      embeddedSetCache = new EmbeddedSetCache<byte[],WrappedByteArray>(wCache);
+      embeddedSetCache = new EmbeddedSetCache<>(toMultimap);
    }
 
    public EmbeddedMultimapListCache<byte[], byte[]> getListMultimap() {

@@ -1,6 +1,5 @@
 package org.infinispan.multimap.impl;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
@@ -49,7 +48,7 @@ public class SetBucket<V> {
             .collect(Collectors.toCollection(HashSet::new)));
    }
 
-   @ProtoField(number = 1, collectionImplementation = ArrayList.class)
+   @ProtoField(number = 1, collectionImplementation = HashSet.class)
    Collection<MarshallableUserObject<V>> getWrappedValues() {
       return this.values.stream().map(MarshallableUserObject::new).collect(Collectors.toSet());
    }
