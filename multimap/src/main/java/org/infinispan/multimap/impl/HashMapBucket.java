@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -87,6 +88,25 @@ public class HashMapBucket<K, V> {
 
    public boolean containsKey(K key) {
       return values.containsKey(new MultimapObjectWrapper<>(key));
+   }
+
+   public boolean replace(K key, V expected, V replacement) {
+      MultimapObjectWrapper<K> storeKey = new MultimapObjectWrapper<>(key);
+      V current = values.get(storeKey);
+      if (current == null && expected == null && replacement != null) {
+         values.put(storeKey, replacement);
+         return true;
+      }
+
+      if (Objects.equals(current, expected)) {
+         if (replacement == null) {
+            values.remove(storeKey);
+         } else {
+            values.put(storeKey, replacement);
+         }
+         return true;
+      }
+      return false;
    }
 
    private Map<MultimapObjectWrapper<K>, V> toStore(Map<K, V> raw) {

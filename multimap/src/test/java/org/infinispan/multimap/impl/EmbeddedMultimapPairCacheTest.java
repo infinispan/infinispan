@@ -119,4 +119,20 @@ public class EmbeddedMultimapPairCacheTest extends SingleCacheManagerTest {
       assertThatThrownBy(() -> await(embeddedPairCache.remove(null, "k1")))
             .isInstanceOf(NullPointerException.class);
    }
+
+   public void testCompute() {
+      assertThat(await(embeddedPairCache.compute("compute-test", "name", (k, v) -> {
+         assertThat(k).isEqualTo("name");
+         assertThat(v).isNull();
+         return "Oihana";
+      }))).isEqualTo("Oihana");
+
+      assertThat(await(embeddedPairCache.compute("compute-test", "name", (k, v) -> {
+         assertThat(k).isEqualTo("name");
+         assertThat(v).isEqualTo("Oihana");
+         return "Ramon";
+      }))).isEqualTo("Ramon");
+
+      assertThat(await(embeddedPairCache.get("compute-test", "name"))).isEqualTo("Ramon");
+   }
 }
