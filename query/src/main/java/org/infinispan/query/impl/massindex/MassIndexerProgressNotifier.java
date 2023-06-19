@@ -31,6 +31,14 @@ class MassIndexerProgressNotifier {
       this.searchMapping = searchMapping;
    }
 
+   void notifyPreIndexingReloading() {
+      monitor.preIndexingReloading();
+   }
+
+   void notifyIndexingStarting() {
+      monitor.indexingStarting();
+   }
+
    void notifyDocumentsAdded(int size) {
       monitor.documentsAdded(size);
    }
