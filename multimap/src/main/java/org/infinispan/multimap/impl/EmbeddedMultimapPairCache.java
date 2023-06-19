@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.function.BiFunction;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -19,6 +20,7 @@ import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.multimap.impl.function.hmap.HashMapKeySetFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapPutFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapRemoveFunction;
+import org.infinispan.multimap.impl.function.hmap.HashMapReplaceFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapValuesFunction;
 
 /**
@@ -193,5 +195,28 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
 
       if (properties.isEmpty()) return CompletableFuture.completedFuture(0);
       return readWriteMap.eval(key, new HashMapRemoveFunction<>(properties));
+   }
+
+   public CompletionStage<HV> compute(K key, HK property, BiFunction<HK, HV, HV> biConsumer) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      requireNonNull(property, ERR_PROPERTY_CANT_BE_NULL);
+      return cache.getCacheEntryAsync(key)
+            .thenCompose(entry -> {
+               HV newValue;
+               HV oldValue = null;
+
+               if (entry != null) {
+                  oldValue = entry.getValue().get(property);
+               }
+
+               newValue = biConsumer.apply(property, oldValue);
+               CompletionStage<Boolean> done = readWriteMap.eval(key, new HashMapReplaceFunction<>(property, oldValue, newValue));
+               return done.thenCompose(replaced -> {
+                  if (replaced)
+                     return CompletableFuture.completedFuture(newValue);
+
+                  return compute(key, property, biConsumer);
+               });
+            });
    }
 }

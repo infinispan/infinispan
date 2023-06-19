@@ -201,4 +201,20 @@ public class HashOperationsTest extends SingleNodeRespBaseTest {
 
       assertWrongType(() -> redis.set("plain", "string"), () -> redis.hdel("plain", "key1"));
    }
+
+   public void testIncrementOperations() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      assertThat(redis.hincrby("incr-test", "age", 5)).isEqualTo(5);
+      assertThat(redis.hincrby("incr-test", "age", 2)).isEqualTo(7);
+      assertThat(redis.hincrby("incr-test", "age", -3)).isEqualTo(4);
+      assertThat(redis.hincrby("incr-test", "age", 0)).isEqualTo(4);
+
+      // Now we verify if it is working with additional properties.
+      Map<String, String> map = Map.of("key1", "value1", "key2", "value2", "key3", "value3");
+      assertThat(redis.hset("incr-test", map)).isEqualTo(3);
+
+      assertThat(redis.hget("incr-test", "key1")).isEqualTo("value1");
+      assertThat(redis.hget("incr-test", "age")).isEqualTo("4");
+   }
 }

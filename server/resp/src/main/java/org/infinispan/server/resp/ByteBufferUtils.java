@@ -114,7 +114,7 @@ public final class ByteBufferUtils {
    // This code is a modified version of Integer.toString to write the underlying bytes directly to the ByteBuffer
    // instead of creating a String around a byte[]
 
-   protected static int setIntChars(long i, int index, ByteBuf buf) {
+   public static int setIntChars(long i, int index, ByteBuf buf) {
       int writeIndex = buf.writerIndex();
       long q;
       int r;
@@ -151,7 +151,7 @@ public final class ByteBufferUtils {
       return charPos;
    }
 
-   private static int stringSize(long x) {
+   public static int stringSize(long x) {
       int d = 1;
       if (x >= 0) {
          d = 0;
