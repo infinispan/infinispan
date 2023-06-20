@@ -22,11 +22,15 @@ import org.infinispan.protostream.annotations.ProtoName;
 public class GlobMatchFilterConverter<K, V> extends AbstractKeyValueFilterConverter<byte[], V, byte[]> {
    @ProtoField()
    final String glob;
+
+   @ProtoField(number = 2, defaultValue = "false")
+   final boolean returnValue;
    private transient final Pattern pattern;
 
    @ProtoFactory
-   GlobMatchFilterConverter(String glob) {
+   GlobMatchFilterConverter(String glob, boolean returnValue) {
       this.glob = glob;
+      this.returnValue = returnValue;
       this.pattern = Pattern.compile(GlobUtils.globToRegex(glob));
    }
 
@@ -39,7 +43,7 @@ public class GlobMatchFilterConverter<K, V> extends AbstractKeyValueFilterConver
    public byte[] filterAndConvert(byte[] key, V value, Metadata metadata) {
       String k = new String(key, StandardCharsets.UTF_8);
       if (pattern.matcher(k).matches()) {
-         return Util.EMPTY_BYTE_ARRAY;
+         return returnValue ? (byte[]) value : Util.EMPTY_BYTE_ARRAY;
       } else {
          return null;
       }

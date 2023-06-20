@@ -15,6 +15,7 @@ import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.transport.NettyChannelInitializer;
 import org.infinispan.server.core.transport.NettyInitializers;
 import org.infinispan.server.iteration.DefaultIterationManager;
+import org.infinispan.server.iteration.ExternalSourceIterationManager;
 import org.infinispan.server.resp.configuration.RespServerConfiguration;
 import org.infinispan.server.resp.filter.GlobMatchFilterConverterFactory;
 import org.infinispan.server.resp.logging.Log;
@@ -36,6 +37,7 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
    private final static Log log = LogFactory.getLog(RespServer.class, Log.class);
    private MediaType configuredValueType = MediaType.APPLICATION_OCTET_STREAM;
    private DefaultIterationManager iterationManager;
+   private ExternalSourceIterationManager dataStructureIterationManager;
 
    public RespServer() {
       super("Resp");
@@ -45,7 +47,9 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
    protected void startInternal() {
       GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(cacheManager);
       this.iterationManager = new DefaultIterationManager(gcr.getTimeService());
+      this.dataStructureIterationManager = new ExternalSourceIterationManager(gcr.getTimeService());
       iterationManager.addKeyValueFilterConverterFactory(GlobMatchFilterConverterFactory.class.getName(), new GlobMatchFilterConverterFactory());
+      dataStructureIterationManager.addKeyValueFilterConverterFactory(GlobMatchFilterConverterFactory.class.getName(), new GlobMatchFilterConverterFactory(true));
       if (!cacheManager.getCacheManagerConfiguration().features().isAvailable(RESP_SERVER_FEATURE)) {
          throw CONFIG.featureDisabled(RESP_SERVER_FEATURE);
       }
@@ -112,5 +116,9 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
 
    public DefaultIterationManager getIterationManager() {
       return iterationManager;
+   }
+
+   public ExternalSourceIterationManager getDataStructureIterationManager() {
+      return dataStructureIterationManager;
    }
 }
