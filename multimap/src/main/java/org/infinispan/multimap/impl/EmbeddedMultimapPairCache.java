@@ -197,6 +197,18 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
       return readWriteMap.eval(key, new HashMapRemoveFunction<>(properties));
    }
 
+   /**
+    * Execute the given {@param biConsumer} on the value mapped to the {@param property} stored under {@param key}.
+    * <p>
+    * If the key is not present, a new entry is created. The {@param biConsumer} is executed until the value is
+    * replaced with the new value. This is implementation behaves like {@link Map#compute(Object, BiFunction)}.
+    *
+    * @param key: The key to retrieve the {@link HashMapBucket}.
+    * @param property: The property to be updated.
+    * @param biConsumer: Receives the key and previous value and returns the new value.
+    * @return A {@link CompletionStage} with the new value returned from {@param biConsumer}.
+    * @see Map#compute(Object, BiFunction)
+    */
    public CompletionStage<HV> compute(K key, HK property, BiFunction<HK, HV, HV> biConsumer) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       requireNonNull(property, ERR_PROPERTY_CANT_BE_NULL);

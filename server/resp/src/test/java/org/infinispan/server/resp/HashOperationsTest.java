@@ -1,6 +1,7 @@
 package org.infinispan.server.resp;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 
 import java.util.HashMap;
@@ -9,6 +10,7 @@ import java.util.Map;
 import org.testng.annotations.Test;
 
 import io.lettuce.core.MapScanCursor;
+import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.ScanArgs;
 import io.lettuce.core.api.sync.RedisCommands;
 
@@ -211,10 +213,36 @@ public class HashOperationsTest extends SingleNodeRespBaseTest {
       assertThat(redis.hincrby("incr-test", "age", 0)).isEqualTo(4);
 
       // Now we verify if it is working with additional properties.
-      Map<String, String> map = Map.of("key1", "value1", "key2", "value2", "key3", "value3");
-      assertThat(redis.hset("incr-test", map)).isEqualTo(3);
+      Map<String, String> map = Map.of("key1", "value1");
+      assertThat(redis.hset("incr-test", map)).isEqualTo(1);
 
       assertThat(redis.hget("incr-test", "key1")).isEqualTo("value1");
       assertThat(redis.hget("incr-test", "age")).isEqualTo("4");
+
+      // Incr does not work with something that is not a long.
+      assertThatThrownBy(() -> redis.hincrby("incr-test", "key1", 1))
+            .hasCauseInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("value is not an integer or out of range");
+
+      assertThat(redis.hincrbyfloat("incr-test", "age", 0.5)).isEqualTo(4.5);
+
+      // Incrbyfloat only work with numbers.
+      assertThatThrownBy(() -> redis.hincrbyfloat("incr-test", "key1", 1))
+            .hasCauseInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("value is not an integer or out of range");
+
+      // Since the value has an increment of 0.5, we can't use hincrby anymore, the value is not a long.
+      assertThatThrownBy(() -> redis.hincrby("incr-test", "age", 1))
+            .hasCauseInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("value is not an integer or out of range");
+
+      // Increment by 0.5 leaves with a long value again.
+      assertThat(redis.hincrbyfloat("incr-test", "age", 0.5)).isEqualTo(5);
+      assertThat(redis.hincrby("incr-test", "age", -1)).isEqualTo(4);
+      assertThat(redis.hincrbyfloat("incr-test", "age", -0.5)).isEqualTo(3.5);
+
+
+      assertThat(redis.hget("incr-test", "key1")).isEqualTo("value1");
+      assertThat(redis.hget("incr-test", "age")).isEqualTo("3.5");
    }
 }

@@ -138,4 +138,17 @@ public class DistributedMultimapPairCacheTest extends BaseDistFunctionalTest<Str
             })
             .thenAccept(b -> assertThat(b).isFalse())));
    }
+
+   public void testCompute() {
+      EmbeddedMultimapPairCache<String, byte[], Person> multimap = getMultimapMember();
+      byte[] oihana = toBytes("oihana");
+      await(multimap.set("compute-test", Map.entry(oihana, OIHANA))
+            .thenAccept(ignore -> assertFromAllCaches("compute-test", Map.of("oihana", OIHANA)))
+            .thenCompose(ignore -> multimap.compute("compute-test", oihana, (k, v) -> {
+               assertThat(k).isEqualTo(oihana);
+               assertThat(v).isEqualTo(OIHANA);
+               return FELIX;
+            }))
+            .thenAccept(ignore -> assertFromAllCaches("compute-test", Map.of("oihana", FELIX))));
+   }
 }
