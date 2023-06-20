@@ -225,6 +225,9 @@ provides a read-uncommitted isolation.
 | link:https://redis.io/commands/members[SMEMBERS]
 |
 
+| link:https://redis.io/commands/smove[SMOVE]
+|
+
 | link:https://redis.io/commands/subscribe[SUBSCRIBE]
 |
 

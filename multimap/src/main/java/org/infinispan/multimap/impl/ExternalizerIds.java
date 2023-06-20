@@ -42,4 +42,5 @@ public interface ExternalizerIds {
    Integer SORTED_SET_AGGREGATE_FUNCTION = 2080;
    Integer SORTED_SET_REMOVE_MANY_FUNCTION = 2081;
    Integer SORTED_SET_RANDOM_FUNCTION = 2082;
+   Integer SET_REMOVE_FUNCTION = 2083;
 }

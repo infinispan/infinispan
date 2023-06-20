@@ -34,7 +34,7 @@ public class SetBucket<V> {
       this.values = set;
    }
 
-   public SetBucket(HashSet<V> values) {
+   public SetBucket(Set<V> values) {
       this.values = values.stream().map(MultimapObjectWrapper::new).collect(Collectors.toSet());
    }
 
@@ -89,7 +89,16 @@ public class SetBucket<V> {
       return values.add(new MultimapObjectWrapper<>(value));
    }
 
+   public boolean remove(V value) {
+      return values.remove(new MultimapObjectWrapper<>(value));
+   }
+
    public boolean addAll(Collection<V> values) {
       return this.values.addAll(values.stream().map(MultimapObjectWrapper::new).collect(Collectors.toSet()));
    }
+
+   public boolean removeAll(Collection<V> values) {
+      return this.values.removeAll(values.stream().map(MultimapObjectWrapper::new).collect(Collectors.toSet()));
+   }
+
 }

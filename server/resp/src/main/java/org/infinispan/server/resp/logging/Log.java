@@ -52,4 +52,11 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Multi-key operations without batching have a relaxed isolation level. Consider enabling batching.", id = 12007)
    void multiKeyOperationUseBatching();
+
+   @LogMessage(level = WARN)
+   @Message(value = "SMOVE command can't guarantee atomicity and consistency when the source list and the destination set are different", id = 12008)
+   @Once
+   void smoveConsistencyMessage();
+
+
 }

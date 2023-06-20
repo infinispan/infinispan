@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.multimap.impl.MultimapTestUtils.ELAIA;
 import static org.infinispan.multimap.impl.MultimapTestUtils.FELIX;
+import static org.infinispan.multimap.impl.MultimapTestUtils.RAMON;
 import static org.infinispan.multimap.impl.MultimapTestUtils.NAMES_KEY;
 import static org.infinispan.multimap.impl.MultimapTestUtils.OIHANA;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -93,7 +94,7 @@ public class DistributedSetTest extends BaseDistFunctionalTest<String, Collectio
    public void testGet() {
       testAdd();
       EmbeddedSetCache<String, Person> set = getSetCacheMember();
-      set.get(NAMES_KEY).thenAccept(resultSet -> assertThat(resultSet).containsExactlyInAnyOrder(ELAIA, OIHANA));
+      set.get(NAMES_KEY).thenApply(v->v.values()).thenAccept(resultSet -> assertThat(resultSet).containsExactlyInAnyOrder(ELAIA, OIHANA));
    }
 
    @Test
@@ -119,6 +120,26 @@ public class DistributedSetTest extends BaseDistFunctionalTest<String, Collectio
 
       assertValuesAndOwnership(NAMES_KEY, OIHANA);
       assertValuesAndOwnership(NAMES_KEY, ELAIA);
+   }
+
+   @Test
+   public void testPutAll() {
+      initAndTest();
+
+      EmbeddedSetCache<String, Person> set = getSetCacheMember();
+      Set<Person> pers = Set.of(OIHANA, ELAIA);
+      await(set.set(NAMES_KEY, pers));
+
+      String name_key2 = "names2";
+      Set<Person> pers2 = Set.of(FELIX, RAMON);
+      await(set.set(NAMES_KEY, pers));
+      await(set.set(name_key2, pers2));
+
+      assertValuesAndOwnership(NAMES_KEY, OIHANA);
+      assertValuesAndOwnership(NAMES_KEY, ELAIA);
+
+      assertValuesAndOwnership(name_key2, FELIX);
+      assertValuesAndOwnership(name_key2, RAMON);
    }
 
    protected void assertValuesAndOwnership(String key, Person value) {
