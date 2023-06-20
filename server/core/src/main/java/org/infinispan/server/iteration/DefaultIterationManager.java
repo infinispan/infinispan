@@ -142,7 +142,8 @@ public class DefaultIterationManager implements IterationManager {
    }
 
    @Override
-   public IterationState start(AdvancedCache cache, BitSet segments, String filterConverterFactory, List<byte[]> filterConverterParams, MediaType requestValueType, int batch, boolean metadata, DeliveryGuarantee guarantee) {
+   public IterationState start(AdvancedCache cache, BitSet segments, String filterConverterFactory, List<byte[]> filterConverterParams,
+                               MediaType requestValueType, int batch, boolean metadata, DeliveryGuarantee guarantee, IterationInitializationContext ctx) {
       String iterationId = String.valueOf(globalIterationId.incrementAndGet());
 
       EmbeddedCacheManager cacheManager = SecurityActions.getEmbeddedCacheManager(cache);
@@ -158,7 +159,7 @@ public class DefaultIterationManager implements IterationManager {
       Function<Object, Object> resultTransformer = Function.identity();
       AdvancedCache iterationCache = cache;
       if (filterConverterFactory == null) {
-         stream = cache.cacheEntrySet().stream();
+         stream = baseStream(cache, ctx);
          if (segments != null) {
             stream.filterKeySegments(IntSets.from(segments.stream().iterator()));
          }
@@ -172,7 +173,7 @@ public class DefaultIterationManager implements IterationManager {
          if (filterMediaType != null && filterMediaType.equals(storageMediaType)) {
             iterationCache = cache.withMediaType(filterMediaType, filterMediaType);
          }
-         stream = iterationCache.cacheEntrySet().stream();
+         stream = baseStream(iterationCache, ctx);
          if (segments != null) {
             stream.filterKeySegments(IntSets.from(segments.stream().iterator()));
          }
@@ -189,6 +190,10 @@ public class DefaultIterationManager implements IterationManager {
       iterationStateMap.put(iterationId, iterationState);
       if (log.isTraceEnabled()) log.tracef("Started iteration %s", iterationId);
       return iterationState;
+   }
+
+   protected CacheStream<CacheEntry<Object, Object>> baseStream(AdvancedCache cache, IterationInitializationContext ctx) {
+      return cache.cacheEntrySet().stream();
    }
 
    private KeyValueFilterConverterFactory getFactory(String name) {

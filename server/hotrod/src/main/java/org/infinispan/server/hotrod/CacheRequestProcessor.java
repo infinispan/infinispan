@@ -612,7 +612,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       executor.execute(() -> {
          try {
             IterationState iterationState = server.getIterationManager().start(cache, segmentMask != null ? BitSet.valueOf(segmentMask) : null,
-                  filterConverterFactory, filterConverterParams, header.getValueMediaType(), batch, includeMetadata, DeliveryGuarantee.EXACTLY_ONCE);
+                  filterConverterFactory, filterConverterParams, header.getValueMediaType(), batch, includeMetadata, DeliveryGuarantee.EXACTLY_ONCE, null);
             iterationState.getReaper().registerChannel(channel);
             writeResponse(header, header.encoder().iterationStartResponse(header, server, channel, iterationState.getId()));
          } catch (Throwable t) {
