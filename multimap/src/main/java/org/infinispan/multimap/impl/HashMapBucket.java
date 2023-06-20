@@ -90,6 +90,9 @@ public class HashMapBucket<K, V> {
       return values.containsKey(new MultimapObjectWrapper<>(key));
    }
 
+   /**
+    * We do not use the original replace method here. Our implementation allows to create and delete entries.
+    */
    public boolean replace(K key, V expected, V replacement) {
       MultimapObjectWrapper<K> storeKey = new MultimapObjectWrapper<>(key);
       V current = values.get(storeKey);
@@ -98,15 +101,14 @@ public class HashMapBucket<K, V> {
          return true;
       }
 
-      if (Objects.equals(current, expected)) {
-         if (replacement == null) {
-            values.remove(storeKey);
-         } else {
-            values.put(storeKey, replacement);
-         }
-         return true;
+      if (!Objects.equals(current, expected)) return false;
+
+      if (replacement == null) {
+         values.remove(storeKey);
+      } else {
+         values.put(storeKey, replacement);
       }
-      return false;
+      return true;
    }
 
    private Map<MultimapObjectWrapper<K>, V> toStore(Map<K, V> raw) {

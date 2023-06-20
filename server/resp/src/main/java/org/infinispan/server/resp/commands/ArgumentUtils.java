@@ -1,12 +1,9 @@
 package org.infinispan.server.resp.commands;
 
-import java.nio.charset.StandardCharsets;
-
 import org.infinispan.server.resp.ByteBufferUtils;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-
 import io.netty.util.CharsetUtil;
 
 /**
@@ -109,12 +106,6 @@ public final class ArgumentUtils {
          return false;
 
       return arg[0] == (byte) '+' && arg[1] == (byte) 'i' && arg[2] == (byte) 'n' && arg[3] == (byte) 'f';
-   }
-
-   public static Number toNumber(byte[] argument) {
-      double d = Double.parseDouble(new String(argument, StandardCharsets.US_ASCII));
-      if (Math.rint(d) == d) return (long) d;
-      return d;
    }
 
    public static byte[] toByteArray(long value) {

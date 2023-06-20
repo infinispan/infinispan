@@ -75,6 +75,10 @@ public final class RespErrorUtil {
          return RespErrorUtil::indexOutOfRange;
       }
 
+      if (ex instanceof NumberFormatException) {
+         return RespErrorUtil::valueNotInteger;
+      }
+
       return null;
    }
 }

@@ -2,10 +2,8 @@ package org.infinispan.server.resp.commands.hash;
 
 import java.util.List;
 import java.util.concurrent.CompletionStage;
-import java.util.function.BiConsumer;
 
 import org.infinispan.multimap.impl.EmbeddedMultimapPairCache;
-import org.infinispan.server.resp.ByteBufPool;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
@@ -16,35 +14,31 @@ import org.infinispan.server.resp.commands.Resp3Command;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * `<code>HINCRBY key field increment</code>` command.
+ * `<code>HINCRBYFLOAT key field increment</code>` command.
  * <p>
- * Increments the long value at the <code>field</code> in the hash map stored at <code>key</code> by <code>increment</code>.
- * The command returns an error if the stored value is not a numeric long.
+ * Increments the value at the <code>field</code> in the hash map stored at <code>key</code> by <code>increment</code>.
+ * The command fails if the stored value is not a number.
  *
  * @since 15.0
- * @see <a href="https://redis.io/commands/hincrby/">Redis Documentation</a>
+ * @see <a href="https://redis.io/commands/hincrbyfloat/">Redis Documentation</a>
  * @author José Bolina
  */
-public class HINCRBY extends RespCommand implements Resp3Command {
+public class HINCRBYFLOAT extends RespCommand implements Resp3Command {
 
-   private static final BiConsumer<byte[], ByteBufPool> CONVERTER =
-         (value, pool) -> Consumers.LONG_BICONSUMER.accept(ArgumentUtils.toLong(value), pool);
-
-   public HINCRBY() {
+   public HINCRBYFLOAT() {
       super(4, 1, 1, 1);
    }
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
       EmbeddedMultimapPairCache<byte[], byte[], byte[]> multimap = handler.getHashMapMultimap();
-      long delta = ArgumentUtils.toLong(arguments.get(2));
+      double delta = ArgumentUtils.toDouble(arguments.get(2));
       CompletionStage<byte[]> cs = multimap.compute(arguments.get(0), arguments.get(1), (ignore, prev) -> {
          if (prev == null) return arguments.get(2);
 
-         // This is supposed to throw when the `prev` is not a long.
-         long prevLong = ArgumentUtils.toLong(prev);
-         return ArgumentUtils.toByteArray(prevLong + delta);
+         double prevDouble = ArgumentUtils.toDouble(prev);
+         return ArgumentUtils.toByteArray(prevDouble + delta);
       });
-      return handler.stageToReturn(cs, ctx, CONVERTER);
+      return handler.stageToReturn(cs, ctx, Consumers.GET_BICONSUMER);
    }
 }

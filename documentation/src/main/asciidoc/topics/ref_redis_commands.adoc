@@ -61,6 +61,36 @@ The {brandname} RESP endpoint implements the following Redis commands:
 | link:https://redis.io/commands/hello[HELLO]
 |
 
+| link:https://redis.io/commands/hexists[HEXISTS]
+|
+
+| link:https://redis.io/commands/hget[HGET]
+|
+
+| link:https://redis.io/commands/hincrby[HINCRBY]
+|
+
+| link:https://redis.io/commands/hincrbyfloat[HINCRBYFLOAT]
+|
+
+| link:https://redis.io/commands/hkeys[HKEYS]
+|
+
+| link:https://redis.io/commands/hlen[HLEN]
+|
+
+| link:https://redis.io/commands/hmset[HMSET]
+|
+
+| link:https://redis.io/commands/hscan[HSCAN]
+|
+
+| link:https://redis.io/commands/hset[HSET]
+|
+
+| link:https://redis.io/commands/hvals[HVALS]
+|
+
 | link:https://redis.io/commands/incr[INCR]
 |
 
