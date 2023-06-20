@@ -29,6 +29,6 @@ public class SMEMBERS extends RespCommand implements Resp3Command {
          ChannelHandlerContext ctx,
          List<byte[]> arguments) {
       EmbeddedSetCache<byte[], byte[]> esc = handler.getEmbeddedSetCache();
-      return handler.stageToReturn(esc.get(arguments.get(0)), ctx, Consumers.COLLECTION_BULK_BICONSUMER);
+      return handler.stageToReturn(esc.getAsSet(arguments.get(0)), ctx, Consumers.COLLECTION_BULK_BICONSUMER);
    }
 }
