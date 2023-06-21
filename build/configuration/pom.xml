@@ -206,8 +206,8 @@
       <version.graalvm>23.0.1</version.graalvm>
       <version.jandex>3.1.5</version.jandex>
 
-      <version.opentelemetry>1.15.0</version.opentelemetry>
-      <version.opentelemetry.sdk-autoconfigure>1.15.0-alpha</version.opentelemetry.sdk-autoconfigure>
+      <version.opentelemetry>1.31.0</version.opentelemetry>
+      <version.opentelemetry.alpha>1.31.0-alpha</version.opentelemetry.alpha>
 
       <version.smallrye-mutiny>2.2.0</version.smallrye-mutiny>
       <!-- Spring 6, Spring Boot 3 versions -->

@@ -27,7 +27,7 @@ import okhttp3.Response;
 public class RequestTracingIT {
 
    public static final int JAEGER_QUERY_PORT = 16686;
-   public static final String JAEGER_IMAGE = System.getProperty(TestSystemPropertyNames.JAEGER_IMAGE, "quay.io/jaegertracing/all-in-one:1.35.2");
+   public static final String JAEGER_IMAGE = System.getProperty(TestSystemPropertyNames.JAEGER_IMAGE, "quay.io/jaegertracing/all-in-one:1.46.0");
    public static final String SERVICE_NAME = RequestTracingIT.class.getName();
    public static final int NUM_KEYS = 10;
 
@@ -46,7 +46,7 @@ public class RequestTracingIT {
                   @Override
                   public void before(InfinispanServerDriver driver) {
                      JAEGER.start();
-                     String endpoint = String.format("http://%s:%s", ipAddress(JAEGER), "4317");
+                     String endpoint = String.format("http://%s:%s", ipAddress(JAEGER), "4318");
                      driver.getConfiguration().properties()
                            .setProperty("otel.exporter.otlp.endpoint", endpoint);
                   }
