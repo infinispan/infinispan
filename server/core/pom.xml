@@ -124,26 +124,31 @@
             </exclusion>
          </exclusions>
       </dependency>
+      <!-- OpenTelemetry compile dependencies -->
+      <dependency>
+         <groupId>io.opentelemetry</groupId>
+         <artifactId>opentelemetry-sdk-extension-autoconfigure</artifactId>
+      </dependency>
       <dependency>
          <groupId>io.opentelemetry</groupId>
          <artifactId>opentelemetry-exporter-otlp</artifactId>
       </dependency>
       <dependency>
          <groupId>io.opentelemetry</groupId>
-         <artifactId>opentelemetry-sdk-extension-autoconfigure</artifactId>
+         <artifactId>opentelemetry-exporter-sender-jdk</artifactId>
       </dependency>
-
-      <!-- The following dependencies are runtime dependencies of `opentelemetry-exporter-otlp` and
-         `opentelemetry-sdk-extension-autoconfigure`.
-         Transitive runtime dependencies won't be added to the server lib
-         o we need to make them scope compile -->
+      <!-- OpenTelemetry runtime dependencies -->
       <dependency>
          <groupId>io.opentelemetry</groupId>
-         <artifactId>opentelemetry-semconv</artifactId>
+         <artifactId>opentelemetry-exporter-common</artifactId>
       </dependency>
       <dependency>
          <groupId>io.opentelemetry</groupId>
          <artifactId>opentelemetry-exporter-otlp-common</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>io.opentelemetry</groupId>
+         <artifactId>opentelemetry-api-events</artifactId>
       </dependency>
 
       <dependency>

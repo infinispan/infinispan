@@ -1,6 +1,6 @@
 package org.infinispan.server.core.telemetry;
 
-import java.util.Collections;
+import java.util.Map;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
@@ -33,7 +33,10 @@ public class TelemetryServiceFactory extends AbstractComponentFactory implements
          OpenTelemetry openTelemetry = AutoConfiguredOpenTelemetrySdk.builder()
                // At the moment we don't export Infinispan server metrics with OpenTelemetry,
                // so we manually disable any metrics export
-               .addPropertiesSupplier(() -> Collections.singletonMap("otel.metrics.exporter", "none"))
+               .addPropertiesSupplier(() -> Map.of(
+                     "otel.metrics.exporter", "none",
+                     "otel.exporter.otlp.protocol", "http/protobuf"
+               ))
                .build()
                .getOpenTelemetrySdk();
 
