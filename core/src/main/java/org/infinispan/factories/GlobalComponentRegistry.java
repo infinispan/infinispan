@@ -279,8 +279,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       }
    }
 
-   @Override
-   protected void postStart() {
+   public void postStart() {
       modulesManagerStarted();
    }
 

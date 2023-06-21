@@ -21,6 +21,8 @@ import org.infinispan.factories.scopes.Scopes;
 public interface GlobalConfigurationManager {
    String CONFIG_STATE_CACHE_NAME = "org.infinispan.CONFIG";
 
+   default void postStart() {}
+
    /**
     * Returns the global state cache
     */

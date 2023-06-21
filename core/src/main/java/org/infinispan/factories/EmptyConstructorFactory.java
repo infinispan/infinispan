@@ -16,6 +16,8 @@ import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistryImpl;
 import org.infinispan.remoting.inboundhandler.GlobalInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
+import org.infinispan.security.PrincipalRoleMapper;
+import org.infinispan.security.RolePermissionMapper;
 import org.infinispan.topology.PersistentUUIDManager;
 import org.infinispan.topology.PersistentUUIDManagerImpl;
 import org.infinispan.util.EmbeddedTimeService;
@@ -42,7 +44,7 @@ import org.infinispan.util.logging.events.impl.EventLoggerNotifierImpl;
       RemoteCommandsFactory.class, TimeService.class, DataOperationOrderer.class,
       GlobalStateManager.class, GlobalConfigurationManager.class,
       SerializationContextRegistry.class, BlockingManager.class, NonBlockingManager.class,
-      RankCalculator.class, EventLoggerNotifier.class,
+      RankCalculator.class, EventLoggerNotifier.class, PrincipalRoleMapper.class, RolePermissionMapper.class
 })
 @Scope(Scopes.GLOBAL)
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
@@ -75,6 +77,10 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
          return new RankCalculator();
       else if (componentName.equals(EventLoggerNotifier.class.getName()))
          return new EventLoggerNotifierImpl();
+      else if (componentName.equals(PrincipalRoleMapper.class.getName()))
+         return globalConfiguration.security().authorization().principalRoleMapper();
+      else if (componentName.equals(RolePermissionMapper.class.getName()))
+         return globalConfiguration.security().authorization().rolePermissionMapper();
 
       throw CONTAINER.factoryCannotConstructComponent(componentName);
    }

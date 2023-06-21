@@ -167,10 +167,9 @@ public class Generator {
          writer.printf("%n");
       }
 
-      if (!c.startMethods.isEmpty() || !c.postStartMethods.isEmpty()) {
+      if (!c.startMethods.isEmpty()) {
          writer.printf("         protected void start(%s instance) throws Exception {%n", simpleClassName);
          writeLifecycleMethodInvocations(writer, c.startMethods);
-         writeLifecycleMethodInvocations(writer, c.postStartMethods);
          writer.printf("         }%n");
          writer.printf("%n");
       }

@@ -4,8 +4,9 @@ import java.security.Principal;
 import java.util.Collections;
 import java.util.Set;
 
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.security.PrincipalRoleMapper;
-import org.infinispan.security.PrincipalRoleMapperContext;
 
 /**
  * CommonNameRoleMapper. A simple mapper which extracts the Common Name (CN) from an
@@ -15,6 +16,7 @@ import org.infinispan.security.PrincipalRoleMapperContext;
  * @since 7.0
  * @api.public
  */
+@Scope(Scopes.GLOBAL)
 public class CommonNameRoleMapper implements PrincipalRoleMapper {
 
    @Override
@@ -25,11 +27,6 @@ public class CommonNameRoleMapper implements PrincipalRoleMapper {
       } else {
          return null;
       }
-   }
-
-   @Override
-   public void setContext(PrincipalRoleMapperContext context) {
-      // Do nothing
    }
 
    @Override

@@ -31,6 +31,7 @@ import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.marshall.core.MarshallableFunctions;
 import org.infinispan.partitionhandling.PartitionHandling;
+import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
@@ -159,11 +160,13 @@ public class ReadAfterLostDataTest extends MultipleCacheManagersTest {
          controlledTransport.excludeCommands(HeartBeatCommand.class);
          cleanup.add(controlledTransport::stopBlocking);
 
+         InternalCacheRegistry icr = coordCache.getCacheManager().getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+         int cacheCount = icr.getInternalCacheNames().size() + 1; // include default
+         List<CompletableFuture<ControlledTransport.BlockedRequest<TopologyUpdateCommand>>> topologyUpdateRequests = new ArrayList<>();
          // Block the sending of the TopologyUpdateCommand until a command asks for the transaction data future
-         CompletableFuture<ControlledTransport.BlockedRequest<TopologyUpdateCommand>> topologyUpdateRequest1 =
-               controlledTransport.expectCommandAsync(TopologyUpdateCommand.class);
-         CompletableFuture<ControlledTransport.BlockedRequest<TopologyUpdateCommand>> topologyUpdateRequest2 =
-               controlledTransport.expectCommandAsync(TopologyUpdateCommand.class);
+         for(int i = 0; i < cacheCount; i++) {
+            topologyUpdateRequests.add(controlledTransport.expectCommandAsync(TopologyUpdateCommand.class));
+         }
 
          CompletableFuture<Void> firstTransactionDataRequest = new CompletableFuture<>();
          for (Cache<?, ?> c : Arrays.asList(cache(0), cache(1))) {
@@ -174,11 +177,9 @@ public class ReadAfterLostDataTest extends MultipleCacheManagersTest {
                   stl -> new UnblockingStateTransferLock(stl, currentTopology + 1, firstTransactionDataRequest));
          }
          firstTransactionDataRequest.thenAccept(__ -> {
-            // One for the default cache, one for the CONFIG cache
-            topologyUpdateRequest1.thenAccept(
-                  topologyUpdateCommandBlockedRequest -> topologyUpdateCommandBlockedRequest.send());
-            topologyUpdateRequest2.thenAccept(
-                  topologyUpdateCommandBlockedRequest -> topologyUpdateCommandBlockedRequest.send());
+            for(CompletableFuture<ControlledTransport.BlockedRequest<TopologyUpdateCommand>> request : topologyUpdateRequests) {
+               request.thenAccept(ControlledTransport.BlockedRequest::send);
+            }
          });
       }
 
