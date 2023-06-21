@@ -696,6 +696,7 @@
             <artifactId>runtimes-java-core-runtime</artifactId>
             <version>${version.insights}</version>
          </dependency>
+         <!-- OpenTelemetry compile dependencies -->
          <dependency>
             <groupId>io.opentelemetry</groupId>
             <artifactId>opentelemetry-api</artifactId>
@@ -703,24 +704,46 @@
          </dependency>
          <dependency>
             <groupId>io.opentelemetry</groupId>
-            <artifactId>opentelemetry-exporter-otlp</artifactId>
+            <artifactId>opentelemetry-sdk-extension-autoconfigure</artifactId>
             <version>${version.opentelemetry}</version>
          </dependency>
          <dependency>
             <groupId>io.opentelemetry</groupId>
-            <artifactId>opentelemetry-sdk-extension-autoconfigure</artifactId>
-            <version>${version.opentelemetry.sdk-autoconfigure}</version>
+            <artifactId>opentelemetry-exporter-otlp</artifactId>
+            <version>${version.opentelemetry}</version>
+            <exclusions>
+               <exclusion>
+                  <groupId>io.opentelemetry</groupId>
+                  <artifactId>opentelemetry-exporter-sender-okhttp</artifactId>
+               </exclusion>
+               <exclusion>
+                  <groupId>io.opentelemetry</groupId>
+                  <artifactId>opentelemetry-extension-incubator</artifactId>
+               </exclusion>
+            </exclusions>
          </dependency>
          <dependency>
             <groupId>io.opentelemetry</groupId>
-            <artifactId>opentelemetry-semconv</artifactId>
-            <version>${version.opentelemetry.sdk-autoconfigure}</version>
+            <artifactId>opentelemetry-exporter-sender-jdk</artifactId>
+            <version>${version.opentelemetry.alpha}</version>
+         </dependency>
+         <!-- OpenTelemetry runtime dependencies -->
+         <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-exporter-common</artifactId>
+            <version>${version.opentelemetry}</version>
          </dependency>
          <dependency>
             <groupId>io.opentelemetry</groupId>
             <artifactId>opentelemetry-exporter-otlp-common</artifactId>
             <version>${version.opentelemetry}</version>
          </dependency>
+         <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-api-events</artifactId>
+            <version>${version.opentelemetry.alpha}</version>
+         </dependency>
+
          <dependency>
             <groupId>io.smallrye.reactive</groupId>
             <artifactId>mutiny</artifactId>
