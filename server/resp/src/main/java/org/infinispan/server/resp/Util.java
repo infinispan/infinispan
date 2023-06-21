@@ -2,6 +2,8 @@ package org.infinispan.server.resp;
 
 import java.nio.charset.StandardCharsets;
 
+import org.infinispan.commons.time.TimeService;
+
 public class Util {
    private Util() { }
 
@@ -56,5 +58,17 @@ public class Util {
 
    public static String utf8(byte[] b) {
       return new String(b, StandardCharsets.UTF_8);
+   }
+
+   public static long toUnixTime(long time, TimeService timeService) {
+      if (time < 0) return time;
+      long unixTime = time + timeService.wallClockTime();
+      return unixTime < 0 ? 0 : unixTime;
+   }
+
+   public static long fromUnixTime(long unixTime, TimeService timeService) {
+      if (unixTime < 0) return unixTime;
+      long time = unixTime - timeService.wallClockTime();
+      return time < 0 ? 0 : time;
    }
 }

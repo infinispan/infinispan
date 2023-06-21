@@ -21,8 +21,12 @@ import org.infinispan.server.resp.commands.connection.READWRITE;
 import org.infinispan.server.resp.commands.connection.RESET;
 import org.infinispan.server.resp.commands.connection.SELECT;
 import org.infinispan.server.resp.commands.generic.EXISTS;
+import org.infinispan.server.resp.commands.generic.EXPIRE;
+import org.infinispan.server.resp.commands.generic.EXPIREAT;
+import org.infinispan.server.resp.commands.generic.EXPIRETIME;
 import org.infinispan.server.resp.commands.generic.FLUSHALL;
 import org.infinispan.server.resp.commands.generic.FLUSHDB;
+import org.infinispan.server.resp.commands.generic.PEXPIRETIME;
 import org.infinispan.server.resp.commands.generic.PTTL;
 import org.infinispan.server.resp.commands.generic.SCAN;
 import org.infinispan.server.resp.commands.generic.TTL;
@@ -93,7 +97,7 @@ public final class Commands {
       ALL_COMMANDS[2] = new RespCommand[]{new CONFIG(), new COMMAND(), new CLUSTER(), new CLIENT() };
       // DEL should always be first here
       ALL_COMMANDS[3] = new RespCommand[]{new DEL(), new DECR(), new DECRBY(), new DBSIZE()};
-      ALL_COMMANDS[4] = new RespCommand[]{new ECHO(), new EXISTS()};
+      ALL_COMMANDS[4] = new RespCommand[]{new ECHO(), new EXISTS(), new EXPIRE(), new EXPIREAT(), new EXPIRETIME()};
       ALL_COMMANDS[5] = new RespCommand[]{new FLUSHDB(), new FLUSHALL()};
       // GET should always be first here
       ALL_COMMANDS[6] = new RespCommand[]{new GET(), new GETDEL(), new GETRANGE()};
@@ -101,7 +105,7 @@ public final class Commands {
       ALL_COMMANDS[8] = new RespCommand[]{new INCR(), new INCRBY(), new INCRBYFLOAT(), new INFO()};
       ALL_COMMANDS[11] = new RespCommand[]{new LINDEX(), new LINSERT(), new LPUSH(), new LPUSHX(), new LPOP(), new LRANGE(), new LLEN(), new LPOS(), new LREM(), new LSET(), new LTRIM(), new LMOVE() };
       ALL_COMMANDS[12] = new RespCommand[]{new MGET(), new MSET(), new MODULE(), new MEMORY()};
-      ALL_COMMANDS[15] = new RespCommand[]{new PUBLISH(), new PING(), new PSUBSCRIBE(), new PUNSUBSCRIBE(), new PTTL()};
+      ALL_COMMANDS[15] = new RespCommand[]{new PUBLISH(), new PING(), new PSUBSCRIBE(), new PUNSUBSCRIBE(), new PTTL(), new PEXPIRETIME()};
       ALL_COMMANDS[16] = new RespCommand[]{new QUIT()};
       ALL_COMMANDS[17] = new RespCommand[]{new RPUSH(), new RPUSHX(), new RPOP(), new RESET(), new READWRITE(), new READONLY(), new RPOPLPUSH() };
       // SET should always be first here

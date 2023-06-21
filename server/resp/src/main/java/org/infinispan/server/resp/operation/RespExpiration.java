@@ -1,41 +1,41 @@
 package org.infinispan.server.resp.operation;
 
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.server.resp.Util;
 
 public enum RespExpiration {
    EX {
       @Override
-      protected long convert(long value) {
+      protected long convert(long value, TimeService timeService) {
          return TimeUnit.SECONDS.toMillis(value);
       }
    },
    PX {
       @Override
-      protected long convert(long value) {
+      protected long convert(long value, TimeService timeService) {
          return value;
       }
    },
    EXAT {
       @Override
-      protected long convert(long value) {
-         return (value - Instant.now().getEpochSecond()) * 1000;
+      protected long convert(long value, TimeService timeService) {
+         return (value - timeService.instant().getEpochSecond()) * 1000;
       }
    },
    PXAT {
       @Override
-      protected long convert(long value) {
-         return value - Instant.now().toEpochMilli();
+      protected long convert(long value, TimeService timeService) {
+         return value - timeService.instant().toEpochMilli();
       }
    };
 
    public static final byte[] EXAT_BYTES = "EXAT".getBytes(StandardCharsets.US_ASCII);
    public static final byte[] PXAT_BYTES = "PXAT".getBytes(StandardCharsets.US_ASCII);
 
-   protected abstract long convert(long value);
+   protected abstract long convert(long value, TimeService timeService);
 
    public static RespExpiration valueOf(byte[] type) {
       if (type.length == 2) {

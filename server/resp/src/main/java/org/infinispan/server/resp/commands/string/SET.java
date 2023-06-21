@@ -1,15 +1,16 @@
 package org.infinispan.server.resp.commands.string;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.server.resp.Consumers;
-import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
+import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.operation.SetOperation;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @link https://redis.io/commands/set/
@@ -26,7 +27,7 @@ public class SET extends RespCommand implements Resp3Command {
                                                       List<byte[]> arguments) {
       if (arguments.size() != 2) {
          return handler
-               .stageToReturn(SetOperation.performOperation(handler.cache(), arguments), ctx,
+               .stageToReturn(SetOperation.performOperation(handler.cache(), arguments, handler.respServer().getTimeService()), ctx,
                      Consumers.SET_BICONSUMER);
       }
       return handler.stageToReturn(

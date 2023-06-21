@@ -1,13 +1,13 @@
 package org.infinispan.server.resp.operation;
 
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.server.resp.Util;
 import org.infinispan.server.resp.response.SetResponse;
@@ -21,19 +21,19 @@ public class SetOperation {
    private static final byte[] KEEP_TTL_BYTES = "KEEPTTL".getBytes(StandardCharsets.US_ASCII);
    private static final CompletionStage<SetResponse> MISSING_ARGUMENTS = CompletableFuture.failedFuture(new IllegalStateException("Missing arguments"));
 
-   public static CompletionStage<SetResponse> performOperation(AdvancedCache<byte[], byte[]> cache, List<byte[]> arguments) {
+   public static CompletionStage<SetResponse> performOperation(AdvancedCache<byte[], byte[]> cache, List<byte[]> arguments, TimeService timeService) {
       try {
          if (arguments.size() < 2) return MISSING_ARGUMENTS;
 
-         SetOperationOptions options = new SetOperationOptions(arguments);
+         SetOperationOptions options = new SetOperationOptions(arguments, timeService);
          if (options.operationType == XX_BYTES) {
-            return performOperationWithXX(cache, options);
+            return performOperationWithXX(cache, options, timeService);
          }
 
          CompletionStage<byte[]> cacheOperation;
          if (options.isKeepingTtl()) {
             cacheOperation =  cache.getCacheEntryAsync(options.key)
-                  .thenCompose(e -> performOperation(cache, options, e != null ? extractCurrentTTL(e) : -1));
+                  .thenCompose(e -> performOperation(cache, options, e != null ? extractCurrentTTL(e, timeService) : -1));
          } else {
             cacheOperation = performOperation(cache, options, options.expirationMs);
          }
@@ -62,7 +62,7 @@ public class SetOperation {
             : new SetResponse(v, options.isReturningPrevious(), v == null);
    }
 
-   private static CompletionStage<SetResponse> performOperationWithXX(AdvancedCache<byte[], byte[]> cache, SetOperationOptions options) {
+   private static CompletionStage<SetResponse> performOperationWithXX(AdvancedCache<byte[], byte[]> cache, SetOperationOptions options, TimeService timeService) {
       byte[] key = options.key;
       byte[] value = options.value;
       return cache.getCacheEntryAsync(key)
@@ -73,7 +73,7 @@ public class SetOperation {
 
                long exp = -1;
                if (options.isKeepingTtl()) {
-                  exp = extractCurrentTTL(e);
+                  exp = extractCurrentTTL(e, timeService);
                }
 
                byte[] prev = e.getValue();
@@ -82,9 +82,9 @@ public class SetOperation {
             });
    }
 
-   private static long extractCurrentTTL(CacheEntry<?, ?> entry) {
+   private static long extractCurrentTTL(CacheEntry<?, ?> entry, TimeService timeService) {
       long lifespan = entry.getLifespan();
-      long delta = Instant.now().toEpochMilli() - entry.getCreated();
+      long delta = timeService.instant().toEpochMilli() - entry.getCreated();
       return lifespan - delta;
    }
 
@@ -97,7 +97,7 @@ public class SetOperation {
       private boolean setAndReturnPrevious;
       private byte[] operationType;
 
-      public SetOperationOptions(List<byte[]> arguments) {
+      public SetOperationOptions(List<byte[]> arguments, TimeService timeService) {
          this.arguments = arguments;
          this.key = null;
          this.value = null;
@@ -105,7 +105,7 @@ public class SetOperation {
          this.keepTtl = false;
          this.setAndReturnPrevious = false;
          this.operationType = null;
-         parseAndLoadOptions();
+         parseAndLoadOptions(timeService);
       }
 
       public void withKey(byte[] key) {
@@ -144,7 +144,7 @@ public class SetOperation {
          return expirationMs > 0 || isKeepingTtl();
       }
 
-      private void parseAndLoadOptions() {
+      private void parseAndLoadOptions(TimeService timeService) {
          withKey(arguments.get(0));
          withValue(arguments.get(1));
 
@@ -191,7 +191,7 @@ public class SetOperation {
                      if (isKeepingTtl()) throw new IllegalArgumentException("KEEPTTL and EX/PX/EXAT/PXAT are mutually exclusive");
                      if (i + 1 > arguments.size()) throw new IllegalArgumentException("No argument accompanying expiration");
 
-                     withExpiration(expiration.convert(Long.parseLong(new String(arguments.get(i + 1), StandardCharsets.US_ASCII))));
+                     withExpiration(expiration.convert(Long.parseLong(new String(arguments.get(i + 1), StandardCharsets.US_ASCII)), timeService));
                      i++;
                      continue;
                }

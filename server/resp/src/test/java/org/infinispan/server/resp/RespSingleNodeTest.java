@@ -36,6 +36,7 @@ import org.infinispan.server.resp.test.CommonRespTests;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import io.lettuce.core.ExpireArgs;
 import io.lettuce.core.FlushMode;
 import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.KeyValue;
@@ -63,7 +64,7 @@ import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 public class RespSingleNodeTest extends SingleNodeRespBaseTest {
 
    @Test
-   public void testSetMultipleOptions() throws Exception {
+   public void testSetMultipleOptions() {
       RedisCommands<String, String> redis = redisConnection.sync();
 
       // Should return (nil), failed since value does not exist
@@ -94,9 +95,6 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       assertThat(new String((byte[]) entry.getValue())).isEqualTo("value3");
       assertThat(entry.getLifespan()).isEqualTo(60_000);
 
-      // Making sure we won't go that fast.
-      Thread.sleep(50);
-
       // We insert while keeping the TTL.
       args = SetArgs.Builder.keepttl();
       assertThat(redis.set("key", "value4", args)).isEqualTo(OK);
@@ -104,7 +102,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
             .withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OCTET_STREAM)
             .getCacheEntry("key".getBytes(StandardCharsets.UTF_8));
       assertThat(new String((byte[]) entry.getValue())).isEqualTo("value4");
-      assertThat(entry.getLifespan()).isLessThan(60_000);
+      assertThat(entry.getLifespan()).isEqualTo(60_000);
 
       // Conditional operation keeping TTL.
       args = SetArgs.Builder.keepttl().xx();
@@ -114,7 +112,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
             .withMediaType(MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_OCTET_STREAM)
             .getCacheEntry("key".getBytes(StandardCharsets.UTF_8));
       assertThat(new String((byte[]) entry.getValue())).isEqualTo("value5");
-      assertThat(entry.getLifespan()).isLessThan(60_000);
+      assertThat(entry.getLifespan()).isEqualTo(60_000);
 
       // Key exist and keeping TTL, but conditional failing. Should return nil.
       args = SetArgs.Builder.keepttl().nx();
@@ -556,7 +554,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       Set<String> keys = new HashSet<>();
       ScanArgs args = ScanArgs.Builder.matches("k1*");
       for (KeyScanCursor<String> cursor = redis.scan(args); ; cursor = redis.scan(cursor, args)) {
-         for(String key : cursor.getKeys()) {
+         for (String key : cursor.getKeys()) {
             assertThat(key).startsWith("k1");
             keys.add(key);
          }
@@ -699,6 +697,26 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
    }
 
    @Test
+   public void testExpireTime() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      assertThat(redis.expiretime(k())).isEqualTo(-1);
+      assertThat(redis.expiretime(k(1))).isEqualTo(-2);
+      redis.set(k(2), v(2), SetArgs.Builder.exAt(timeService.wallClockTime() + 10_000));
+      assertThat(redis.expiretime(k(2))).isEqualTo(timeService.wallClockTime() + 10_000L);
+   }
+
+   @Test
+   public void testPExpireTime() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      assertThat(redis.pexpiretime(k())).isEqualTo(-1);
+      assertThat(redis.pexpiretime(k(1))).isEqualTo(-2);
+      redis.set(k(2), v(2), SetArgs.Builder.exAt(timeService.wallClockTime() + 10_000));
+      assertThat(redis.pexpiretime(k(2))).isEqualTo((timeService.wallClockTime() + 10_000L) * 1000L);
+   }
+
+   @Test
    public void testMemoryUsage() {
       RedisCommands<String, String> redis = redisConnection.sync();
       redis.set(k(), "1");
@@ -729,5 +747,43 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       redis.zadd(k(4), 1.0, "a");
       assertThat(redis.type(k(4))).isEqualTo("zset");
       assertThat(redis.type(k(100))).isEqualTo("none");
+   }
+
+   @Test
+   public void testExpire() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      assertThat(redis.ttl(k())).isEqualTo(-1);
+      assertThat(redis.expire(k(), 1000)).isTrue();
+      assertThat(redis.ttl(k())).isEqualTo(1000);
+      assertThat(redis.expire(k(), 500, ExpireArgs.Builder.gt())).isFalse();
+      assertThat(redis.expire(k(), 1500, ExpireArgs.Builder.gt())).isTrue();
+      assertThat(redis.expire(k(), 2000, ExpireArgs.Builder.lt())).isFalse();
+      assertThat(redis.expire(k(), 1000, ExpireArgs.Builder.lt())).isTrue();
+      assertThat(redis.expire(k(), 1250, ExpireArgs.Builder.xx())).isTrue();
+      assertThat(redis.expire(k(), 1000, ExpireArgs.Builder.nx())).isFalse();
+      assertThat(redis.expire(k(1), 1000)).isFalse();
+      redis.set(k(1), v(1));
+      assertThat(redis.expire(k(1), 1000, ExpireArgs.Builder.xx())).isFalse();
+      assertThat(redis.expire(k(1), 1000, ExpireArgs.Builder.nx())).isTrue();
+   }
+
+   @Test
+   public void testExpireAt() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      assertThat(redis.expiretime(k())).isEqualTo(-1);
+      assertThat(redis.expireat(k(), timeService.wallClockTime() + 1000)).isTrue();
+      assertThat(redis.expiretime(k())).isEqualTo((timeService.wallClockTime() + 1000) / 1000);
+      assertThat(redis.expireat(k(), timeService.wallClockTime() + 500, ExpireArgs.Builder.gt())).isFalse();
+      assertThat(redis.expireat(k(), timeService.wallClockTime() + 1500, ExpireArgs.Builder.gt())).isTrue();
+      assertThat(redis.expireat(k(), timeService.wallClockTime() + 2000, ExpireArgs.Builder.lt())).isFalse();
+      assertThat(redis.expireat(k(), timeService.wallClockTime() + 1000, ExpireArgs.Builder.lt())).isTrue();
+      assertThat(redis.expireat(k(), timeService.wallClockTime() + 1250, ExpireArgs.Builder.xx())).isTrue();
+      assertThat(redis.expireat(k(), timeService.wallClockTime() + 1000, ExpireArgs.Builder.nx())).isFalse();
+      assertThat(redis.expireat(k(1), timeService.wallClockTime() + 1000)).isFalse();
+      redis.set(k(1), v(1));
+      assertThat(redis.expireat(k(1), timeService.wallClockTime() + 1000, ExpireArgs.Builder.xx())).isFalse();
+      assertThat(redis.expireat(k(1), timeService.wallClockTime() + 1000, ExpireArgs.Builder.nx())).isTrue();
    }
 }
