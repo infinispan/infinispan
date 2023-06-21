@@ -777,7 +777,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       try {
          globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).start();
          globalComponentRegistry.start();
-
          log.debugf("Started cache manager %s", identifierString());
       } catch (Exception e) {
          throw new EmbeddedCacheManagerStartupException(e);

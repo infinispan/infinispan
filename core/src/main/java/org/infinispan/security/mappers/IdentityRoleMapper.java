@@ -4,8 +4,9 @@ import java.security.Principal;
 import java.util.Collections;
 import java.util.Set;
 
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.security.PrincipalRoleMapper;
-import org.infinispan.security.PrincipalRoleMapperContext;
 
 /**
  * IdentityRoleMapper. A very simple role which simply returns the principal's name as the role name.
@@ -14,16 +15,12 @@ import org.infinispan.security.PrincipalRoleMapperContext;
  * @since 7.0
  * @api.public
  */
+@Scope(Scopes.GLOBAL)
 public class IdentityRoleMapper implements PrincipalRoleMapper {
 
    @Override
    public Set<String> principalToRoles(Principal principal) {
       return Collections.singleton(principal.getName());
-   }
-
-   @Override
-   public void setContext(PrincipalRoleMapperContext context) {
-      // Do nothing
    }
 
    @Override

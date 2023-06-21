@@ -12,16 +12,14 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.context.Flag;
-import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
-import org.infinispan.security.AuthorizationMapperContext;
 import org.infinispan.security.MutableRolePermissionMapper;
 import org.infinispan.security.Role;
-import org.infinispan.security.RolePermissionMapper;
 import org.infinispan.security.actions.SecurityActions;
 
 /**
@@ -33,30 +31,29 @@ import org.infinispan.security.actions.SecurityActions;
  */
 @Scope(Scopes.GLOBAL)
 public class ClusterPermissionMapper implements MutableRolePermissionMapper {
-   private static final String CLUSTER_PERMISSION_MAPPER_CACHE = "org.infinispan.PERMISSIONS";
-   private EmbeddedCacheManager cacheManager;
+   public static final String CLUSTER_PERMISSION_MAPPER_CACHE = "org.infinispan.PERMISSIONS";
+   @Inject
+   EmbeddedCacheManager cacheManager;
+   @Inject
+   InternalCacheRegistry internalCacheRegistry;
    private Cache<String, Role> clusterPermissionMap;
    private Cache<String, Role> clusterPermissionReadMap;
 
    @Start
    void start() {
+      initializeInternalCache();
       clusterPermissionMap = cacheManager.getCache(CLUSTER_PERMISSION_MAPPER_CACHE);
       clusterPermissionReadMap = clusterPermissionMap.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD, Flag.CACHE_MODE_LOCAL);
    }
 
-   @Override
-   public void setContext(AuthorizationMapperContext context) {
-      this.cacheManager = context.getCacheManager();
+   private void initializeInternalCache() {
       GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(cacheManager);
       CacheMode cacheMode = globalConfiguration.isClustered() ? CacheMode.REPL_SYNC : CacheMode.LOCAL;
       ConfigurationBuilder cfg = new ConfigurationBuilder();
       cfg.clustering().cacheMode(cacheMode)
-            .stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(globalConfiguration.isClustered())
+            .stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false)
             .security().authorization().disable();
-      GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(cacheManager);
-      InternalCacheRegistry internalCacheRegistry = gcr.getComponent(InternalCacheRegistry.class);
       internalCacheRegistry.registerInternalCache(CLUSTER_PERMISSION_MAPPER_CACHE, cfg.build(), EnumSet.of(InternalCacheRegistry.Flag.PERSISTENT));
-      gcr.registerComponent(this, RolePermissionMapper.class);
    }
 
    @Override
@@ -81,10 +78,10 @@ public class ClusterPermissionMapper implements MutableRolePermissionMapper {
 
    @Override
    public boolean hasRole(String name) {
-      return isActive() && clusterPermissionReadMap.containsKey(name);
+      return !isActive() || clusterPermissionReadMap.containsKey(name);
    }
 
    private boolean isActive() {
-      return cacheManager != null && cacheManager.getStatus().allowInvocations();
+      return clusterPermissionReadMap != null && cacheManager.getStatus().allowInvocations();
    }
 }

@@ -2,18 +2,22 @@ package org.infinispan.security;
 
 import java.util.Map;
 
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
+
 /**
  * Maps roles to permissions
  *
  * @since 14.0
  **/
+@Scope(Scopes.GLOBAL)
 public interface RolePermissionMapper {
    /**
     * Sets the context for this {@link RolePermissionMapper}
     *
     * @param context
     */
-   void setContext(AuthorizationMapperContext context);
+   default void setContext(AuthorizationMapperContext context) {}
 
    /**
     * @param name the name of the role

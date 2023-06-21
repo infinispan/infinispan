@@ -3,12 +3,16 @@ package org.infinispan.security;
 import java.security.Principal;
 import java.util.Set;
 
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
+
 /**
  * PrincipalRoleMapper.
  *
  * @author Tristan Tarrant
  * @since 7.0
  */
+@Scope(Scopes.GLOBAL)
 public interface PrincipalRoleMapper {
    /**
     * Maps a principal name to a set of role names. The principal name depends on
@@ -26,5 +30,5 @@ public interface PrincipalRoleMapper {
     *
     * @param context
     */
-   void setContext(PrincipalRoleMapperContext context);
+   default void setContext(PrincipalRoleMapperContext context) {}
 }
