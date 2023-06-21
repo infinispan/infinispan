@@ -14,7 +14,6 @@ import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.multimap.impl.function.HashMapPutFunction;
-import org.infinispan.multimap.internal.MultimapDataConverter;
 
 /**
  * Multimap which holds a collection of key-values pairs.
@@ -36,13 +35,11 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
 
    private final FunctionalMap.ReadWriteMap<K, HashMapBucket<HK, HV>> readWriteMap;
    private final AdvancedCache<K, HashMapBucket<HK, HV>> cache;
-   private final MultimapDataConverter<HK, HV> converter;
 
    public EmbeddedMultimapPairCache(Cache<K, HashMapBucket<HK, HV>> cache) {
       this.cache = cache.getAdvancedCache();
       FunctionalMapImpl<K, HashMapBucket<HK, HV>> functionalMap = FunctionalMapImpl.create(this.cache);
       this.readWriteMap = ReadWriteMapImpl.create(functionalMap);
-      this.converter = new MultimapDataConverter<>(cache);
    }
 
    /**
@@ -58,7 +55,7 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
    public final CompletionStage<Integer> set(K key, Map.Entry<HK, HV>... entries) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       List<Map.Entry<HK, HV>> values = new ArrayList<>(Arrays.asList(entries));
-      return readWriteMap.eval(key, new HashMapPutFunction<>(converter, values));
+      return readWriteMap.eval(key, new HashMapPutFunction<>(values));
    }
 
    /**
@@ -77,7 +74,7 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
                }
 
                HashMapBucket<HK, HV> bucket = entry.getValue();
-               return bucket.values(converter);
+               return bucket.values();
             });
    }
 
@@ -91,7 +88,7 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
                }
 
                HashMapBucket<HK, HV> bucket = entry.getValue();
-               return bucket.get(property, converter);
+               return bucket.get(property);
             });
    }
 

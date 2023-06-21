@@ -38,6 +38,16 @@
             ]
           },
           {
+            "name": "MultimapObjectWrapper",
+            "fields": [
+              {
+                "id": 1,
+                "name": "wrapper",
+                "type": "org.infinispan.persistence.core.MarshallableUserObject"
+              }
+            ]
+          },
+          {
             "name": "HashMapBucket",
             "fields": [
               {
