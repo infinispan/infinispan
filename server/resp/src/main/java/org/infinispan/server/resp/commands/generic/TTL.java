@@ -1,5 +1,7 @@
 package org.infinispan.server.resp.commands.generic;
 
+import static org.infinispan.server.resp.Util.toUnixTime;
+
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
@@ -14,11 +16,21 @@ import io.netty.channel.ChannelHandlerContext;
 /**
  * TTL Resp Command
  * <a href="https://redis.io/commands/ttl/">ttl</a>
+ *
  * @since 15.0
  */
 public class TTL extends RespCommand implements Resp3Command {
+   private final boolean unixTime;
+   private final boolean milliseconds;
+
    public TTL() {
+      this(false, false);
+   }
+
+   protected TTL(boolean unixTime, boolean milliseconds) {
       super(2, 1, 1, 1);
+      this.unixTime = unixTime;
+      this.milliseconds = milliseconds;
    }
 
    @Override
@@ -32,7 +44,14 @@ public class TTL extends RespCommand implements Resp3Command {
             return -2L;
          } else {
             long ttl = e.getLifespan();
-            return ttl < 0 ? ttl : ttl / 1000;
+            if (unixTime) {
+               ttl = toUnixTime(ttl, handler.respServer().getTimeService());
+            }
+            if (milliseconds) {
+               return ttl;
+            } else {
+               return ttl < 0 ? ttl : ttl / 1000;
+            }
          }
       }), ctx, Consumers.LONG_BICONSUMER);
    }
