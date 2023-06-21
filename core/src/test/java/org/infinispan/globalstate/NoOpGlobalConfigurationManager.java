@@ -1,14 +1,20 @@
 package org.infinispan.globalstate;
 
+import java.util.Collections;
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.security.PrincipalRoleMapper;
+import org.infinispan.security.Role;
+import org.infinispan.security.RolePermissionMapper;
+import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /*
  * A no-op implementation for tests which mess up with initial state transfer and RPCs
@@ -60,6 +66,23 @@ public class NoOpGlobalConfigurationManager implements GlobalConfigurationManage
    }
 
    public static void amendCacheManager(EmbeddedCacheManager cm) {
+      TestingUtil.replaceComponent(cm, PrincipalRoleMapper.class, new IdentityRoleMapper(), true);
+      TestingUtil.replaceComponent(cm, RolePermissionMapper.class, new RolePermissionMapper() {
+         @Override
+         public Role getRole(String name) {
+            return null;
+         }
+
+         @Override
+         public Map<String, Role> getAllRoles() {
+            return Collections.emptyMap();
+         }
+
+         @Override
+         public boolean hasRole(String name) {
+            return false;
+         }
+      }, true);
       TestingUtil.replaceComponent(cm, GlobalConfigurationManager.class, new NoOpGlobalConfigurationManager(), true);
    }
 }

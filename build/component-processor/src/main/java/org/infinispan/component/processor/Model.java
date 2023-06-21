@@ -89,7 +89,6 @@ public class Model {
       final List<InjectField> injectFields = new ArrayList<>();
       final List<InjectMethod> injectMethods = new ArrayList<>();
       final List<LifecycleMethod> startMethods = new ArrayList<>();
-      final List<LifecycleMethod> postStartMethods = new ArrayList<>();
       final List<LifecycleMethod> stopMethods = new ArrayList<>();
 
       public Component(Scope scope, boolean survivesRestarts, List<String> factoryComponentNames,
@@ -106,7 +105,7 @@ public class Model {
       }
 
       private boolean hasLifecycle() {
-         return !startMethods.isEmpty() || !postStartMethods.isEmpty() || !stopMethods.isEmpty();
+         return !startMethods.isEmpty() || !stopMethods.isEmpty();
       }
    }
 

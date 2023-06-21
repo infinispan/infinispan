@@ -27,6 +27,7 @@ import io.netty.util.internal.logging.JdkLoggerFactory;
  *
  * @author Sebastian Łaskawiec
  */
+@Test(testName = "rest.profiling.Http11VsHttp20Benchmark")
 public class Http11VsHttp20Benchmark {
 
    private static final int MEASUREMENT_ITERATIONS_COUNT = 10;

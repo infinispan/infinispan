@@ -6,6 +6,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.DefineConfigurationAction;
+import org.infinispan.security.actions.GetCacheAction;
 import org.infinispan.security.actions.UndefineConfigurationAction;
 
 /**
@@ -33,6 +34,15 @@ final class SecurityActions {
 
    static void undefineConfiguration(EmbeddedCacheManager cacheManager, String name) {
       UndefineConfigurationAction action = new UndefineConfigurationAction(cacheManager, name);
+      if (System.getSecurityManager() != null) {
+         AccessController.doPrivileged(action);
+      } else {
+         Security.doPrivileged(action);
+      }
+   }
+
+   static void getCache(EmbeddedCacheManager cacheManager, String cacheName) {
+      GetCacheAction action = new GetCacheAction(cacheManager, cacheName);
       if (System.getSecurityManager() != null) {
          AccessController.doPrivileged(action);
       } else {
