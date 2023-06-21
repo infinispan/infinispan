@@ -40,8 +40,7 @@ import org.infinispan.factories.annotations.Inject;
  * breaks the cycle by allowing the registry to inject/start the dependency lazily.</p>
  *
  * <p>Components are not started by default.
- * Methods annotated with {@link org.infinispan.factories.annotations.Start} and
- * {@link org.infinispan.factories.annotations.PostStart} are invoked only on
+ * Methods annotated with {@link org.infinispan.factories.annotations.Start} are invoked only on
  * {@link ComponentRef#running()}.</p>
  *
  * <p>During shutdown, registration of new components is not allowed.

@@ -127,4 +127,12 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
       EnumSet<Flag> flags = internalCaches.get(name);
       return flags != null && flags.contains(flag);
    }
+
+   @Override
+   public void startInternalCaches() {
+      log.debugf("Starting internal caches: %s", internalCaches.keySet());
+      for (String cacheName : internalCaches.keySet()) {
+         SecurityActions.getCache(cacheManager, cacheName);
+      }
+   }
 }

@@ -43,7 +43,6 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.PostStart;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.annotations.SurvivesRestarts;
@@ -64,7 +63,6 @@ import org.kohsuke.MetaInfServices;
                            ComponentAnnotationProcessor.SCOPE,
                            ComponentAnnotationProcessor.MBEAN,
                            ComponentAnnotationProcessor.INJECT,
-                           ComponentAnnotationProcessor.POST_START,
                            ComponentAnnotationProcessor.START,
                            ComponentAnnotationProcessor.STOP,
                            ComponentAnnotationProcessor.MANAGED_ATTRIBUTE,
@@ -79,7 +77,6 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
    static final String MBEAN = "org.infinispan.jmx.annotations.MBean";
 
    static final String INJECT = "org.infinispan.factories.annotations.Inject";
-   static final String POST_START = "org.infinispan.factories.annotations.PostStart";
    static final String START = "org.infinispan.factories.annotations.Start";
    static final String STOP = "org.infinispan.factories.annotations.Stop";
    static final String MANAGED_ATTRIBUTE = "org.infinispan.jmx.annotations.ManagedAttribute";
@@ -374,12 +371,7 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
             }
          }
          addLifecycleMethod(e, Start.class, c -> c.startMethods, Start::priority);
-         addLifecycleMethod(e, PostStart.class, c -> c.postStartMethods, PostStart::priority);
          addLifecycleMethod(e, Stop.class, c -> c.stopMethods, Stop::priority);
-
-         if (getAnnotation(e, PostStart.class) != null) {
-            warn(e, "The @PostStart annotation is deprecated and will be ignored in the future");
-         }
 
          if (getAnnotation(e, ManagedAttribute.class) != null && isValidMComponent(e, ManagedAttribute.class)) {
             ManagedAttribute attribute = getAnnotation(e, ManagedAttribute.class);

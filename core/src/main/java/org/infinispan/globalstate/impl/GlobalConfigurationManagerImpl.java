@@ -19,7 +19,6 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
-import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
@@ -31,6 +30,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.event.ConfigurationChangedEvent;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.security.PrincipalRoleMapper;
+import org.infinispan.security.RolePermissionMapper;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.BlockingManager;
@@ -60,11 +61,13 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    @Inject
    InternalCacheRegistry internalCacheRegistry;
    @Inject
-   GlobalComponentRegistry globalComponentRegistry;
-   @Inject
    BlockingManager blockingManager;
    @Inject
    CacheManagerNotifier cacheManagerNotifier;
+   @Inject
+   RolePermissionMapper rolePermissionMapper;
+   @Inject
+   PrincipalRoleMapper principalRoleMapper;
 
    private Cache<ScopedState, Object> stateCache;
    private ParserRegistry parserRegistry;
@@ -96,16 +99,13 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
             CONFIG_STATE_CACHE_NAME,
             new ConfigurationBuilder().build(),
             EnumSet.of(InternalCacheRegistry.Flag.GLOBAL));
+
+      internalCacheRegistry.startInternalCaches();
+
       parserRegistry = new ParserRegistry();
 
-      Set<String> internalCacheNames = new TreeSet<>(internalCacheRegistry.getInternalCacheNames());
-      log.debugf("Starting internal caches: %s", internalCacheNames);
-      for (String cacheName : internalCacheNames) {
-         SecurityActions.getCache(cacheManager, cacheName);
-      }
-
       Set<String> staticCacheNames = new TreeSet<>(configurationManager.getDefinedCaches());
-      staticCacheNames.removeAll(internalCacheNames);
+      staticCacheNames.removeAll(internalCacheRegistry.getInternalCacheNames());
       log.debugf("Starting user defined caches: %s", staticCacheNames);
       for (String cacheName : staticCacheNames) {
          SecurityActions.getCache(cacheManager, cacheName);
