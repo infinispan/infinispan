@@ -81,7 +81,7 @@ public final class AddManyFunction<K, V> implements SortedSetBucketBaseFunction<
 
       @Override
       public Integer getId() {
-         return ExternalizerIds.SORTED_SET_ADDMANY_FUNCTION;
+         return ExternalizerIds.SORTED_SET_ADD_MANY_FUNCTION;
       }
 
       @Override

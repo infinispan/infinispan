@@ -101,4 +101,14 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
       assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zadd("another", 2.3, "tristan"));
    }
 
+   public void testZCARD() {
+      assertThat(redis.zcard("not_existing")).isEqualTo(0);
+      assertThat(redis.zadd("people", ZAddArgs.Builder.ch(),
+            just(18.9, "fabio"),
+            just(21.9, "marc")))
+            .isEqualTo(2);
+      assertThat(redis.zcard("people")).isEqualTo(2);
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zcard("another"));
+   }
+
 }
