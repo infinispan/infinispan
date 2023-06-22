@@ -41,45 +41,19 @@ public class TextIntrinsics {
       return null;
    }
 
-   /**
-    * Reads the next token from the buffer, accepting only valid characters. If a non-valid character is found, the
-    * buffer is consumed to the end of the line and an {@link IllegalArgumentException} is thrown.
-    *
-    * @param buf   the buffer
-    * @param valid the valid characters
-    * @return the token as a {@link ByteBuf}
-    */
-   private static ByteBuf token(ByteBuf buf, BitSet valid) {
-      buf.markReaderIndex();
-      int startIndex = buf.readerIndex();
-      while (buf.readableBytes() > 0) {
-         short b = buf.readUnsignedByte();
-         // Found a space, return the current slice
-         if (b == 32) {
-            return buf.slice(startIndex, buf.readerIndex() - startIndex - 1);
-         } else if (b == 13) {
-            // Found CR
-            if ((buf.readerIndex() - startIndex) == 1) {
-               if (!buf.isReadable())
-                  break;
-               // If it's the first byte, chomp the LF and return null
-               buf.readByte();
-               return null;
-            } else {
-               // We leave the CR alone, backtracking the reader index
-               return buf.readerIndex(buf.readerIndex() - 1).slice(startIndex, buf.readerIndex() - startIndex);
-            }
-         } else if (!valid.get(b)) {
-            consumeLine(buf);
-            throw new IllegalArgumentException("Invalid byte " + b);
-         }
+   private static ByteBuf token(ByteBuf buf, TokenReader reader) {
+      int offset = buf.forEachByte(reader);
+      if (offset <= 0) return null;
+
+      try {
+         return reader.output();
+      } finally {
+         buf.skipBytes(reader.readBytesSize());
       }
-      buf.resetReaderIndex();
-      return null;
    }
 
-   public static long long_number(ByteBuf buf) {
-      ByteBuf s = token(buf, NUMBERS);
+   public static long long_number(ByteBuf buf, TokenReader reader) {
+      ByteBuf s = token(buf, reader.forToken(NUMBERS));
       if (s == null) {
          return 0;
       } else if (s.isReadable()) {
@@ -90,8 +64,8 @@ public class TextIntrinsics {
       }
    }
 
-   public static int int_number(ByteBuf buf) {
-      ByteBuf s = token(buf, NUMBERS);
+   public static int int_number(ByteBuf buf, TokenReader reader) {
+      ByteBuf s = token(buf, reader.forToken(NUMBERS));
       if (s == null) {
          return 0;
       } else if (s.isReadable()) {
@@ -102,64 +76,52 @@ public class TextIntrinsics {
       }
    }
 
-   public static String id(ByteBuf buf) {
-      ByteBuf s = token(buf, LETTERS);
-      if (s == null) {
-         return null;
-      } else if (s.isReadable()) {
-         return s.toString(US_ASCII);
-      } else {
-         consumeLine(buf);
-         throw new IllegalArgumentException("Expected identifier, got empty string");
-      }
-   }
-
-   public static TextCommand command(ByteBuf buf) {
-      String id = id(buf);
+   public static TextCommand command(ByteBuf buf, TokenReader reader) {
+      ByteBuf id = token(buf, reader.forToken(LETTERS));
       try {
          return id == null ? null : TextCommand.valueOf(id);
       } catch (IllegalArgumentException e) {
          consumeLine(buf);
-         throw new UnsupportedOperationException(id);
+         throw new UnsupportedOperationException(id.toString(US_ASCII));
       }
    }
 
-   public static byte[] text(ByteBuf buf) {
-      ByteBuf s = token(buf, TEXT);
+   public static byte[] text(ByteBuf buf, TokenReader reader) {
+      ByteBuf s = token(buf, reader.forToken(TEXT));
       if (s == null || !s.isReadable()) {
          return null;
       } else {
-         byte[] b = new byte[s.capacity()];
+         byte[] b = new byte[s.readableBytes()];
          s.readBytes(b);
          return b;
       }
    }
 
-   public static byte[] text_key(ByteBuf buf) {
-      ByteBuf s = token(buf, TEXT);
+   public static byte[] text_key(ByteBuf buf, TokenReader reader) {
+      ByteBuf s = token(buf, reader.forToken(TEXT));
       if (s == null || !s.isReadable()) {
          return null;
-      } else if (s.capacity() > 250) {
+      } else if (s.readableBytes() > 250) {
          consumeLine(buf);
          throw new IllegalArgumentException("Key length over the 250 character limit");
       } else {
-         byte[] b = new byte[s.capacity()];
+         byte[] b = new byte[s.readableBytes()];
          s.readBytes(b);
          return b;
       }
    }
 
-   public static List<byte[]> text_list(ByteBuf buf) {
+   public static List<byte[]> text_list(ByteBuf buf, TokenReader reader) {
       List<byte[]> list = new ArrayList<>();
-      for (byte[] b = text(buf); b != null; b = text(buf)) {
+      for (byte[] b = text(buf, reader); b != null; b = text(buf, reader)) {
          list.add(b);
       }
       return list;
    }
 
-   public static List<byte[]> text_key_list(ByteBuf buf) {
+   public static List<byte[]> text_key_list(ByteBuf buf, TokenReader reader) {
       List<byte[]> list = new ArrayList<>();
-      for (byte[] b = text_key(buf); b != null; b = text_key(buf)) {
+      for (byte[] b = text_key(buf, reader); b != null; b = text_key(buf, reader)) {
          list.add(b);
       }
       return list;

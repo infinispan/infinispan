@@ -101,7 +101,7 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
       assertEquals(stats.getVal1().get("version"), Version.getVersion());
    }
 
-   public void testTodoStats() {
+   public void testConnStats() {
       Triple<Map<String, String>, Integer, Integer> stats = getStats(-1, -1);
       assertEquals(stats.getVal1().get("curr_connections"), "1");
       assertEquals(stats.getVal1().get("total_connections"), "1");

@@ -6,9 +6,12 @@ import static org.infinispan.server.memcached.text.TextConstants.STORED;
 import java.nio.charset.StandardCharsets;
 
 import org.infinispan.server.core.security.UsernamePasswordAuthenticator;
+import org.infinispan.server.memcached.MemcachedBaseDecoder;
+import org.infinispan.server.memcached.MemcachedInboundAdapter;
 import org.infinispan.server.memcached.MemcachedServer;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 
 /**
  * @since 15.0
@@ -32,11 +35,16 @@ public abstract class TextAuthDecoder extends TextDecoder {
             if (t != null) {
                authFailure(t.getMessage());
             } else {
-               channel.eventLoop().submit(() -> {
-                  ByteBuf buf = channel.alloc().ioBuffer();
+               ctx.channel().eventLoop().submit(() -> {
+                  ByteBuf buf = MemcachedInboundAdapter.getAllocator(ctx).acquire(STORED.length);
                   buf.writeBytes(STORED);
-                  channel.writeAndFlush(buf);
-                  channel.pipeline().replace("decoder", "decoder", new TextOpDecoderImpl(server, subject));
+
+                  MemcachedInboundAdapter inbound = ctx.pipeline().get(MemcachedInboundAdapter.class);
+                  MemcachedBaseDecoder decoder = new TextOpDecoderImpl(server, subject);
+                  decoder.registerExceptionHandler(inbound::handleExceptionally);
+                  ctx.pipeline().replace("decoder", "decoder", decoder);
+
+                  inbound.flushBufferIfNeeded(ctx);
                });
             }
             return null;
@@ -45,10 +53,10 @@ public abstract class TextAuthDecoder extends TextDecoder {
    }
 
    private void authFailure(String message) {
-      channel.eventLoop().submit(() -> {
-         ByteBuf buf = channel.alloc().ioBuffer();
-         buf.writeCharSequence(CLIENT_ERROR_AUTH + message, StandardCharsets.US_ASCII);
-         channel.writeAndFlush(buf);
+      ctx.channel().eventLoop().submit(() -> {
+         String s = CLIENT_ERROR_AUTH + message;
+         ByteBuf buf = MemcachedInboundAdapter.getAllocator(ctx).acquire(s.length());
+         ByteBufUtil.writeAscii(buf, s);
       });
    }
 }

@@ -33,7 +33,10 @@ public class MemcachedAutoDetector extends ProtocolDetector {
       byte b = in.getByte(in.readerIndex());
       trimPipeline(ctx);
       MemcachedProtocol protocol = b == BinaryConstants.MAGIC_REQ ? MemcachedProtocol.BINARY : MemcachedProtocol.TEXT;
-      ctx.pipeline().replace(this, "decoder", ((MemcachedServer) server).getDecoder(protocol));
+
+      MemcachedBaseDecoder decoder = (MemcachedBaseDecoder) ((MemcachedServer) server).getDecoder(protocol);
+      ctx.pipeline().replace(this, "decoder", decoder);
+      ((MemcachedServer) server).installMemcachedInboundHandler(ctx.channel(), decoder);
       // Make sure to fire registered on the newly installed handlers
       ctx.fireChannelRegistered();
       Log.SERVER.tracef("Detected %s connection", protocol);

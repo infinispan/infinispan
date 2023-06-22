@@ -15,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 
 import javax.security.auth.Subject;
 
@@ -34,7 +35,7 @@ import org.infinispan.server.memcached.logging.MemcachedAccessLogging;
 import org.infinispan.stats.Stats;
 import org.infinispan.util.logging.LogFactory;
 
-import io.netty.channel.Channel;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.util.concurrent.Future;
@@ -51,13 +52,14 @@ public abstract class MemcachedBaseDecoder extends ByteToMessageDecoder {
    protected final boolean statsEnabled;
    protected final boolean accessLogging;
    protected Temporal requestStart;
-   protected Channel channel;
+   protected ChannelHandlerContext ctx;
    protected final TimeService timeService;
    protected final VersionGenerator versionGenerator;
    protected final AdvancedCache<byte[], byte[]> cache;
    protected final Subject subject;
    protected final String principalName;
    protected final ByRef<MemcachedResponse> current = ByRef.create(null);
+   private BiConsumer<ChannelHandlerContext, MemcachedResponse> errorHandler;
 
    protected MemcachedBaseDecoder(MemcachedServer server, Subject subject, AdvancedCache<byte[], byte[]> cache) {
       this.server = server;
@@ -77,14 +79,44 @@ public abstract class MemcachedBaseDecoder extends ByteToMessageDecoder {
       this.accessLogging = MemcachedAccessLogging.isEnabled();
    }
 
-   @Override
-   public void handlerAdded(ChannelHandlerContext ctx) {
-      channel = ctx.channel();
+   public void registerExceptionHandler(BiConsumer<ChannelHandlerContext, MemcachedResponse> handler) {
+      this.errorHandler = handler;
    }
 
-   protected abstract void send(Header header, CompletionStage<?> response);
+   protected final void exceptionCaught(Header header, Throwable t) {
+      if (errorHandler != null) {
+         errorHandler.accept(ctx, failedResponse(header, t));
+      }
+   }
 
-   protected abstract void send(Header header, CompletionStage<?> response, GenericFutureListener<? extends Future<? super Void>> listener);
+   @Override
+   public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+      this.ctx = ctx;
+      super.handlerAdded(ctx);
+   }
+
+   public void resumeRead() {
+      // Also double check auto read in case if enabling auto read caused more bytes to be read which in turn disabled
+      // auto read again
+      if (internalBuffer().isReadable() && ctx.channel().config().isAutoRead()) {
+         // Schedule the read for later to prevent possible StackOverflow
+         ctx.channel().eventLoop().submit(() -> {
+            try {
+               // We HAVE to use our ctx otherwise a read may be in the wrong spot of the pipeline
+               channelRead(ctx, Unpooled.EMPTY_BUFFER);
+               channelReadComplete(ctx);
+            } catch (Throwable t) {
+               ctx.fireExceptionCaught(t);
+            }
+         });
+      }
+   }
+
+   protected abstract MemcachedResponse failedResponse(Header header, Throwable t);
+
+   protected abstract MemcachedResponse send(Header header, CompletionStage<?> response);
+
+   protected abstract MemcachedResponse send(Header header, CompletionStage<?> response, GenericFutureListener<? extends Future<? super Void>> listener);
 
    protected Map<byte[], byte[]> statsMap() {
       Stats stats = cache.getAdvancedCache().getStats();
