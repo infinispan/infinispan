@@ -40,7 +40,7 @@ public class TelemetryServiceFactory extends AbstractComponentFactory implements
          log.telemetryLoaded(openTelemetry);
          return new OpenTelemetryService(openTelemetry);
       } catch (Throwable e) {
-         log.errorOnLoadingTelemetry();
+         log.errorOnLoadingTelemetry(e);
          return null;
       }
    }
