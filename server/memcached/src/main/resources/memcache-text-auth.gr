@@ -39,11 +39,11 @@ root request
    : command_name { requestStart = Instant.now(); } parameters
    ;
 
-key: text_key;
-command_name: command;
-exptime: long_number;
-flags: int_number;
-vsize: int_number;
+key: text_key[reader];
+command_name: command[reader];
+exptime: long_number[reader];
+flags: int_number[reader];
+vsize: int_number[reader];
 value returns byte[]
    : { vsize > 0 }? fixedArray[vsize]
    | { org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY }

@@ -45,7 +45,7 @@ root request
 header returns BinaryHeader
    : { magic != MAGIC_REQ }? { throw new IllegalStateException("Error reading magic byte or message id: " + magic); }
    | { deadEnd = false } op keyLength extrasLength dataType vbucketId totalBodyLength opaque cas valueLength
-     { new BinaryHeader(requestStart, requestBytes, principalName, key, opCode, opaque, cas) }
+     { singleHeader.replace(requestStart, requestBytes, principalName, key, opCode, opaque, cas) }
    ;
 
 magic: byte;
@@ -76,10 +76,10 @@ value returns byte[]
 
 parameters switch op
 // Operations
-   : { SASL_LIST_MECHS }? { saslListMechs(header) }
-   | { SASL_AUTH }? key value { saslAuth(header, key, value) }
-   | { SASL_STEP }? key value { saslStep(header, key, value) }
-   | { CONFIG_GET }? key { config(header, key) }
+   : { SASL_LIST_MECHS }? { if (out.add(saslListMechs(header))) { state=0; return false;} }
+   | { SASL_AUTH }? key value { if (out.add(saslAuth(header, key, value))) { state=0; return false;} }
+   | { SASL_STEP }? key value { if (out.add(saslStep(header, key, value))) { state=0; return false;} }
+   | { CONFIG_GET }? key { if (out.add(config(header, key))) { state=0; return false;} }
 // Unknown
    | { throw new IllegalArgumentException("Unknown operation " + op); }
    ;

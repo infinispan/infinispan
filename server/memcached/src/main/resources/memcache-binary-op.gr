@@ -30,14 +30,26 @@ init {
 exceptionally {
    log.trace("Parsing error", t);
    state = 0;
+   exceptionCaught(header, t);
 }
 
 deadend {
    if (!deadEnd) {
       log.tracef("Invalid state of parsing");
+      exceptionCaught(header, new IllegalStateException("Dead end processing request"));
       deadEnd = true;
    }
    state = 0;
+}
+
+beforedecode {
+   // We cannot read more than one command at a time
+   if (!ctx.channel().config().isAutoRead()) {
+      log.tracef("Auto read was disabled, not reading next bytes yet");
+      return;
+   } else {
+      log.tracef("Auto read was enabled, reading next bytes");
+   }
 }
 
 // this is the root
@@ -50,7 +62,7 @@ root request
 header returns BinaryHeader
    : { magic != MAGIC_REQ }? { throw new IllegalStateException("Error reading magic byte or message id: " + magic); }
    | { deadEnd = false } op keyLength extrasLength dataType vbucketId totalBodyLength opaque cas valueLength
-     { new BinaryHeader(requestStart, requestBytes, principalName, key, opCode, opaque, cas) }
+     { singleHeader.replace(requestStart, requestBytes, principalName, key, opCode, opaque, cas) }
    ;
 
 magic: byte;
@@ -88,40 +100,40 @@ value returns byte[]
 
 parameters switch op
 // Operations
-   : { GET }? key { get(header, key, false) }
-   | { GETQ }? key { get(header, key, true) }
-   | { GETK }? key { get(header, key, false) }
-   | { GETKQ }? key { get(header, key, true) }
-   | { SET }? flags expiration key value { set(header, key, value, flags, expiration, false) }
-   | { SETQ }? flags expiration key value { set(header, key, value, flags, expiration, true) }
-   | { ADD }? flags expiration key value { add(header, key, value, flags, expiration, false) }
-   | { ADDQ }? flags expiration key value { add(header, key, value, flags, expiration, true) }
-   | { REPLACE }? flags expiration key value { replace(header, key, value, flags, expiration, false) }
-   | { REPLACEQ }? flags expiration key value { replace(header, key, value, flags, expiration, true) }
-   | { DELETE }? key { delete(header, key, false) }
-   | { DELETEQ }? key { delete(header, key, true) }
-   | { INCREMENT }? delta initial expiration key { increment(header, key, delta, initial, expiration, false) }
-   | { INCREMENTQ }? delta initial expiration key { increment(header, key, delta, initial, expiration, true) }
-   | { DECREMENT }? delta initial expiration key { increment(header, key, -delta, initial, expiration, false) }
-   | { DECREMENTQ }? delta initial expiration key { increment(header, key, -delta, initial, expiration, true) }
-   | { QUIT }? { quit(header, false) }
+   : { GET }? key { if (out.add(get(header, key, false))) { state=0; return false; } }
+   | { GETQ }? key { if (out.add(get(header, key, true))) { state=0; return false; } }
+   | { GETK }? key { if (out.add(get(header, key, false))) { state=0; return false; } }
+   | { GETKQ }? key { if (out.add(get(header, key, true))) { state=0; return false; } }
+   | { SET }? flags expiration key value { if (out.add(set(header, key, value, flags, expiration, false))) { state=0; return false; } }
+   | { SETQ }? flags expiration key value { if (out.add(set(header, key, value, flags, expiration, true))) { state=0; return false; } }
+   | { ADD }? flags expiration key value { if (out.add(add(header, key, value, flags, expiration, false))) { state=0; return false; } }
+   | { ADDQ }? flags expiration key value { if (out.add(add(header, key, value, flags, expiration, true))) { state=0; return false; } }
+   | { REPLACE }? flags expiration key value { if (out.add(replace(header, key, value, flags, expiration, false))) { state=0; return false; } }
+   | { REPLACEQ }? flags expiration key value { if (out.add(replace(header, key, value, flags, expiration, true))) { state=0; return false; } }
+   | { DELETE }? key { if (out.add(delete(header, key, false))) { state=0; return false; } }
+   | { DELETEQ }? key { if (out.add(delete(header, key, true))) { state=0; return false; } }
+   | { INCREMENT }? delta initial expiration key { if (out.add(increment(header, key, delta, initial, expiration, false))) { state=0; return false; } }
+   | { INCREMENTQ }? delta initial expiration key { if (out.add(increment(header, key, delta, initial, expiration, true))) { state=0; return false; } }
+   | { DECREMENT }? delta initial expiration key { if (out.add(increment(header, key, -delta, initial, expiration, false))) { state=0; return false; } }
+   | { DECREMENTQ }? delta initial expiration key { if (out.add(increment(header, key, -delta, initial, expiration, true))) { state=0; return false; } }
+   | { QUIT }? { if (out.add(quit(header, false))) { state=0; return false; } }
    | { QUITQ }? { quit(header, true) }
-   | { FLUSH }? expiration { flush(header, expiration, false) }
+   | { FLUSH }? expiration { if (out.add(flush(header, expiration, false))) { state=0; return false; } }
    | { FLUSHQ }? expiration { flush(header, expiration, true) }
-   | { NO_OP }? { noop(header) }
-   | { VERSION }? { version(header) }
-   | { APPEND }? key value { append(header, key, value, false) }
-   | { APPENDQ }? key value { append(header, key, value, true) }
-   | { PREPEND }? key value { prepend(header, key, value, false) }
-   | { PREPENDQ }? key value { prepend(header, key, value, true) }
-   | { VERBOSITY }? verbosity { verbosityLevel(header, verbosity) }
-   | { TOUCH }? expiration key { touch(header, key, expiration) }
-   | { GAT }? expiration key { gat(header, key, expiration, false) }
-   | { GATQ }? expiration key { gat(header, key, expiration, true) }
-   | { GATK }? expiration key { gat(header, key, expiration, false) }
-   | { GATKQ }? expiration key { gat(header, key, expiration, true) }
-   | { STAT }? key { stat(header, key) }
-   | { CONFIG_GET }? key { config(header, key) }
+   | { NO_OP }? { if (out.add(noop(header))) { state=0; return false; } }
+   | { VERSION }? { if (out.add(version(header))) { state=0; return false; } }
+   | { APPEND }? key value { if (out.add(append(header, key, value, false))) { state=0; return false; } }
+   | { APPENDQ }? key value { if (out.add(append(header, key, value, true))) { state=0; return false; } }
+   | { PREPEND }? key value { if (out.add(prepend(header, key, value, false))) { state=0; return false; } }
+   | { PREPENDQ }? key value { if (out.add(prepend(header, key, value, true))) { state=0; return false; } }
+   | { VERBOSITY }? verbosity { if (out.add(verbosityLevel(header, verbosity))) { state=0; return false; } }
+   | { TOUCH }? expiration key { if (out.add(touch(header, key, expiration))) { state=0; return false; } }
+   | { GAT }? expiration key { if (out.add(gat(header, key, expiration, false))) { state=0; return false; } }
+   | { GATQ }? expiration key { if (out.add(gat(header, key, expiration, true))) { state=0; return false; } }
+   | { GATK }? expiration key { if (out.add(gat(header, key, expiration, false))) { state=0; return false; } }
+   | { GATKQ }? expiration key { if (out.add(gat(header, key, expiration, true))) { state=0; return false; } }
+   | { STAT }? key { if (out.add(stat(header, key))) { state=0; return false; } }
+   | { CONFIG_GET }? key { if (out.add(config(header, key))) { state=0; return false; } }
 // Unknown
    | { throw new IllegalArgumentException("Unknown operation " + op); }
    ;

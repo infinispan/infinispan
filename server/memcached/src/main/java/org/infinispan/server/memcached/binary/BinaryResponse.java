@@ -1,31 +1,31 @@
 package org.infinispan.server.memcached.binary;
 
-import org.infinispan.commons.util.ByRef;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.server.memcached.ByteBufPool;
 import org.infinispan.server.memcached.MemcachedResponse;
 import org.infinispan.server.memcached.logging.Header;
-import org.infinispan.server.memcached.logging.MemcachedAccessLogging;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 
 /**
  * @since 15.0
  **/
 public class BinaryResponse extends MemcachedResponse {
 
-   public BinaryResponse(ByRef<MemcachedResponse> current, Channel ch) {
-      super(current, ch);
+   public BinaryResponse(CompletionStage<?> response, Header header, GenericFutureListener<? extends Future<? super Void>> listener) {
+      super(response, header, listener);
+   }
+
+   public BinaryResponse(Throwable failure, Header header) {
+      super(failure, header);
    }
 
    @Override
-   protected ChannelFuture writeThrowable(Header header, Throwable throwable) {
+   public void writeFailure(Throwable throwable, ByteBufPool allocator) {
       Throwable cause = CompletableFutures.extractException(throwable);
-      ch.pipeline().fireExceptionCaught(cause);
-      ChannelFuture future = ch.newFailedFuture(cause);
-      if (header != null) {
-         MemcachedAccessLogging.logException(future, header, cause.getMessage(), 0);
-      }
-      return future;
+      useErrorMessage(cause.getMessage());
    }
 }

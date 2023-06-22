@@ -1,98 +1,118 @@
 package org.infinispan.server.memcached;
 
 import java.util.concurrent.CompletionStage;
-import java.util.function.BiConsumer;
 
-import org.infinispan.commons.util.ByRef;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.server.memcached.logging.Header;
 import org.infinispan.server.memcached.logging.MemcachedAccessLogging;
-import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.util.concurrent.CompletionStages;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 
-public abstract class MemcachedResponse implements BiConsumer<Object, Throwable>, Runnable {
-   private volatile Object response;
-   private volatile Throwable throwable;
-   protected Header header;
-   private CompletionStage<Void> responseSent;
-   private final ByRef<MemcachedResponse> current;
-   protected final Channel ch;
+public abstract class MemcachedResponse {
+   private final CompletionStage<?> response;
+   private final Throwable failure;
+   protected final Header header;
    private GenericFutureListener<? extends Future<? super Void>> listener;
+   protected int responseBytes = 0;
 
-   protected MemcachedResponse(ByRef<MemcachedResponse> current, Channel ch) {
-      this.current = current;
-      this.ch = ch;
+   private String errorMessage;
+
+   public MemcachedResponse(CompletionStage<?> response, Header header, GenericFutureListener<? extends Future<? super Void>> listener) {
+      this(response, null, header, listener);
    }
 
-   public void queueResponse(Header header, CompletionStage<?> response) {
-      queueResponse(header, response, null);
+   public MemcachedResponse(Throwable failure, Header header) {
+      this(null, failure, header, null);
    }
 
-   public void queueResponse(Header header, CompletionStage<?> operationResponse, GenericFutureListener<? extends Future<? super Void>> listener) {
-      assert ch.eventLoop().inEventLoop();
-      AggregateCompletionStage<Void> all = CompletionStages.aggregateCompletionStage();
-      MemcachedResponse c = current.get();
-      if (c != null) {
-         all.dependsOn(c.responseSent);
-      }
-      all.dependsOn(operationResponse.whenComplete(this));
-      this.listener = listener;
-      this.header = header;
-      responseSent = all.freeze()
-            .exceptionally(CompletableFutures.toNullFunction())
-            .thenRunAsync(this, ch.eventLoop());
-      current.set(this);
-   }
-
-   @Override
-   public void accept(Object response, Throwable throwable) {
-      // store the response
+   private MemcachedResponse(CompletionStage<?> response, Throwable failure, Header header, GenericFutureListener<? extends Future<? super Void>> listener) {
       this.response = response;
-      this.throwable = throwable;
+      this.failure = failure;
+      this.header = header;
+      this.listener = listener;
    }
 
-   @Override
-   public void run() {
-      ChannelFuture future = throwable != null ? writeThrowable(header, throwable) : writeResponse(header, response);
+   public CompletionStage<?> getResponse() {
+      return response;
+   }
+
+   public boolean isSuccessful() {
+      return failure == null;
+   }
+
+   public void writeResponse(Object response, ByteBufPool allocator) {
+      if (response != null) {
+         if (response instanceof ByteBuf[]) {
+            responseBytes = writeResponse((ByteBuf[]) response, allocator);
+         } else if (response instanceof byte[]) {
+            responseBytes = writeResponse((byte[]) response, allocator);
+         } else if (response instanceof CharSequence) {
+            responseBytes = writeResponse((CharSequence) response, allocator);
+         } else {
+            responseBytes = writeResponse((ByteBuf) response, allocator);
+         }
+      }
+   }
+
+   public abstract void writeFailure(Throwable throwable, ByteBufPool allocator);
+
+   public void writeFailure(ByteBufPool allocator) {
+      writeFailure(failure, allocator);
+   }
+
+   protected void useErrorMessage(String message) {
+      this.errorMessage = message;
+   }
+
+   public void flushed(ChannelFuture future) {
+      if (header != null) {
+         if (isSuccessful()) {
+            MemcachedAccessLogging.logOK(future, header, responseBytes);
+         } else {
+            MemcachedAccessLogging.logException(future, header, errorMessage, errorMessage.length());
+         }
+      }
+
       if (listener != null) {
          future.addListener(listener);
       }
    }
 
-   protected abstract ChannelFuture writeThrowable(Header header, Throwable throwable);
-
-   protected ChannelFuture writeResponse(Header header, Object response) {
-      if (response != null) {
-         ChannelFuture future = null;
-         int responseBytes = 0;
-         if (response instanceof ByteBuf[]) {
-            for (ByteBuf buf : (ByteBuf[]) response) {
-               responseBytes += buf.readableBytes();
-               future = ch.writeAndFlush(buf);
-            }
-         } else if (response instanceof byte[]) {
-            responseBytes = ((byte[]) response).length;
-            future = ch.writeAndFlush(ch.alloc().buffer(((byte[]) response).length).writeBytes((byte[]) response));
-         } else if (response instanceof CharSequence) {
-            responseBytes = ((CharSequence) response).length();
-            future = ch.writeAndFlush(ByteBufUtil.writeAscii(ch.alloc(), (CharSequence) response));
-         } else {
-            responseBytes = ((ByteBuf) response).readableBytes();
-            future = ch.writeAndFlush(response);
-         }
-         if (header != null) {
-            MemcachedAccessLogging.logOK(future, header, responseBytes);
-         }
-         return future;
-      } else {
-         return null;
+   private static int writeResponse(ByteBuf[] response, ByteBufPool allocator) {
+      int size = 0;
+      for (ByteBuf buf : response) {
+         size += buf.readableBytes();
       }
+
+      ByteBuf output = allocator.acquire(size);
+      for (ByteBuf buf : response) {
+         output.writeBytes(buf);
+      }
+
+      return size;
+   }
+
+   private static int writeResponse(byte[] response, ByteBufPool allocator) {
+      int size = response.length;
+      ByteBuf output = allocator.acquire(size);
+      output.writeBytes(response);
+      return size;
+   }
+
+   private static int writeResponse(CharSequence response, ByteBufPool allocator) {
+      int size = response.length();
+      ByteBuf output = allocator.acquire(size);
+      ByteBufUtil.writeAscii(output, response);
+      return size;
+   }
+
+   private static int writeResponse(ByteBuf response, ByteBufPool allocator) {
+      int size = response.readableBytes();
+      ByteBuf output = allocator.acquire(size);
+      output.writeBytes(response);
+      return size;
    }
 }

@@ -29,6 +29,7 @@ import org.infinispan.server.memcached.MemcachedServer;
 import org.infinispan.server.memcached.configuration.MemcachedProtocol;
 import org.infinispan.server.memcached.configuration.MemcachedServerConfigurationBuilder;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.Test;
 
 import net.spy.memcached.CASResponse;
 import net.spy.memcached.CASValue;
@@ -37,6 +38,7 @@ import net.spy.memcached.internal.OperationFuture;
 /**
  * Tests Memcached protocol functionality against Infinispan Memcached server.
  */
+@Test(groups = "functional", testName = "server.memcached.test.MemcachedFunctionalTest")
 public abstract class MemcachedFunctionalTest extends MemcachedSingleNodeTest {
 
    public void testSetBasic(Method m) throws InterruptedException, ExecutionException, TimeoutException {

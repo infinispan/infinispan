@@ -1,6 +1,7 @@
 package org.infinispan.server.memcached.logging;
 
 import static org.jboss.logging.Logger.Level.ERROR;
+import static org.jboss.logging.Logger.Level.WARN;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.jboss.logging.BasicLogger;
@@ -30,4 +31,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot enable Memcached text-protocol detection when authentication is disabled", id = 11002)
    CacheConfigurationException cannotDetectMemcachedTextWithoutAuthentication();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Received an unexpected exception.", id = 11003)
+   void unexpectedException(@Cause Throwable cause);
 }

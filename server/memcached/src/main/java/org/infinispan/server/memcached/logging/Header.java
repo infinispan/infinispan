@@ -6,9 +6,9 @@ import java.time.temporal.Temporal;
  * @since 15.0
  **/
 public abstract class Header {
-   protected final Temporal requestStart;
-   protected final int requestBytes;
-   protected final String principalName;
+   protected Temporal requestStart;
+   protected int requestBytes;
+   protected String principalName;
 
    protected Header(Temporal requestStart, int requestBytes, String principalName) {
       this.requestStart = requestStart;

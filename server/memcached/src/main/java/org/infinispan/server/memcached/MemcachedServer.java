@@ -114,6 +114,12 @@ public class MemcachedServer extends AbstractProtocolServer<MemcachedServerConfi
       }
    }
 
+   public void installMemcachedInboundHandler(Channel ch, MemcachedBaseDecoder decoder) {
+      MemcachedInboundAdapter inboundAdapter = new MemcachedInboundAdapter(decoder);
+      decoder.registerExceptionHandler(inboundAdapter::handleExceptionally);
+      ch.pipeline().addLast("handler", inboundAdapter);
+   }
+
    @Override
    public ChannelMatcher getChannelMatcher() {
       return channel -> (channel.pipeline().get(TextOpDecoderImpl.class) != null || channel.pipeline().get(BinaryOpDecoderImpl.class) != null);
@@ -121,14 +127,16 @@ public class MemcachedServer extends AbstractProtocolServer<MemcachedServerConfi
 
    @Override
    public ChannelInitializer<Channel> getInitializer() {
-      return new NettyInitializers(new NettyChannelInitializer<>(this, transport, getEncoder(), this::getDecoder));
+      return new NettyInitializers(new NettyChannelInitializer<>(this, transport, getEncoder(), null),
+            new MemcachedChannelInitializer(this));
    }
 
    /**
     * This initializer is invoked by the detector
     */
    public ChannelInitializer<Channel> getInitializer(MemcachedProtocol protocol) {
-      return new NettyInitializers(new NettyChannelInitializer<>(this, transport, getEncoder(), () -> getDecoder(protocol)));
+      return new NettyInitializers(new NettyChannelInitializer<>(this, transport, getEncoder(), null),
+            new MemcachedChannelInitializer(this, protocol));
    }
 
    @Override

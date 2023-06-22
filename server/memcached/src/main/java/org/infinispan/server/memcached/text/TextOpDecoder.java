@@ -49,9 +49,13 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.server.memcached.MemcachedInboundAdapter;
 import org.infinispan.server.memcached.MemcachedMetadata;
+import org.infinispan.server.memcached.MemcachedResponse;
 import org.infinispan.server.memcached.MemcachedServer;
 import org.infinispan.server.memcached.ParseUtil;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.CompletionStages;
 
 import io.netty.buffer.ByteBuf;
 
@@ -64,35 +68,48 @@ public abstract class TextOpDecoder extends TextDecoder {
       super(server, subject);
    }
 
-   protected void get(TextHeader header, List<byte[]> keys, boolean withVersions) {
+   protected MemcachedResponse get(TextHeader header, List<byte[]> keys, boolean withVersions) {
       int numberOfKeys = keys.size();
       if (numberOfKeys > 1) {
          CacheEntry<byte[], byte[]>[] entries = new CacheEntry[numberOfKeys];
-         CompletionStage<Void> lastStage = doGetMultipleKeys(keys, entries, 0);
-         for (int i = 1; i < numberOfKeys; ++i) {
-            final int idx = i;
-            lastStage = lastStage.thenCompose(unused -> doGetMultipleKeys(keys, entries, idx));
+         AggregateCompletionStage<CacheEntry<byte[], byte[]>[]> acs = CompletionStages.aggregateCompletionStage(entries);
+         for (int i = 0; i < numberOfKeys; ++i) {
+            acs.dependsOn(doGetMultipleKeys(keys, entries, i));
          }
-         send(header, lastStage.thenApply(unused -> createMultiGetResponse(entries)));
-      } else {
-         byte[] key = keys.get(0);
-         send(header, cache.getCacheEntryAsync(key).thenApply(entry -> createGetResponse(key, entry, withVersions)));
+
+         CompletionStage<CacheEntry<byte[], byte[]>[]> cs = acs.freeze();
+         if (CompletionStages.isCompletedSuccessfully(cs)) {
+            return send(header, CompletableFuture.completedFuture(createMultiGetResponse(entries)));
+         }
+
+         return send(header, cs.thenApply(unused -> createMultiGetResponse(entries)));
       }
+
+      byte[] key = keys.get(0);
+      CompletionStage<CacheEntry<byte[], byte[]>> cs = cache.getCacheEntryAsync(key);
+      if (CompletionStages.isCompletedSuccessfully(cs)) {
+         return send(header, CompletableFuture.completedFuture(createGetResponse(key, CompletionStages.join(cs), withVersions)));
+      }
+
+      return send(header, cs.thenApply(entry -> createGetResponse(key, entry, withVersions)));
    }
 
-   protected void set(TextHeader header, byte[] key, byte[] value, int flags, int expiration, boolean quiet) {
-      send(header, cache.withFlags(Flag.IGNORE_RETURN_VALUES)
-            .putAsync(key, value, metadata(flags, expiration))
-            .thenApply(unused -> createSuccessResponse(TextCommand.set, quiet)));
+   protected MemcachedResponse set(TextHeader header, byte[] key, byte[] value, int flags, int expiration, boolean quiet) {
+      CompletionStage<?> cs = cache.withFlags(Flag.IGNORE_RETURN_VALUES).putAsync(key, value, metadata(flags, expiration));
+
+      if (CompletionStages.isCompletedSuccessfully(cs)) {
+         return send(header, CompletableFuture.completedFuture(createSuccessResponse(TextCommand.set, quiet)));
+      }
+      return send(header, cs.thenApply(unused -> createSuccessResponse(TextCommand.set, quiet)));
    }
 
-   protected void delete(TextHeader header, byte[] key, boolean quiet) {
-      send(header, cache.removeAsync(key)
+   protected MemcachedResponse delete(TextHeader header, byte[] key, boolean quiet) {
+      return send(header, cache.removeAsync(key)
             .thenApply(prev -> prev == null ? createNotExistResponse(TextCommand.delete, quiet) : createSuccessResponse(TextCommand.delete, quiet)));
    }
 
-   protected void concat(TextHeader header, byte[] key, byte[] value, int flags, int expiration, boolean quiet, boolean append) {
-      send(header, cache.getAsync(key)
+   protected MemcachedResponse concat(TextHeader header, byte[] key, byte[] value, int flags, int expiration, boolean quiet, boolean append) {
+      return send(header, cache.getAsync(key)
             .thenCompose(prev -> {
                if (prev == null) {
                   return completedFuture(quiet ? null : NOT_STORED);
@@ -106,8 +123,8 @@ public abstract class TextOpDecoder extends TextDecoder {
             }));
    }
 
-   protected void replace(TextHeader header, byte[] key, byte[] value, int flags, int expiration, boolean quiet) {
-      send(header, cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION)
+   protected MemcachedResponse replace(TextHeader header, byte[] key, byte[] value, int flags, int expiration, boolean quiet) {
+      return send(header, cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION)
             .getAsync(key)
             .thenCompose(prev -> prev == null ?
                   CompletableFutures.completedNull() :
@@ -115,16 +132,16 @@ public abstract class TextOpDecoder extends TextDecoder {
             .thenApply(prev -> prev == null ? createNotExecutedResponse(TextCommand.replace, quiet) : createSuccessResponse(TextCommand.replace, quiet)));
    }
 
-   protected void add(TextHeader header, byte[] key, byte[] value, int flags, int expiration, boolean quiet) {
-      send(header, cache.getAsync(key)
+   protected MemcachedResponse add(TextHeader header, byte[] key, byte[] value, int flags, int expiration, boolean quiet) {
+      return send(header, cache.getAsync(key)
             .thenCompose(prev -> prev == null ?
                   cache.putIfAbsentAsync(key, value, metadata(flags, expiration)) :
                   completedFuture(prev))
             .thenApply(prev -> prev == null ? createSuccessResponse(TextCommand.add, quiet) : createNotExecutedResponse(TextCommand.add, quiet)));
    }
 
-   protected void cas(TextHeader header, byte[] key, byte[] value, int flags, int expiration, long cas, boolean quiet) {
-      send(header, cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION)
+   protected MemcachedResponse cas(TextHeader header, byte[] key, byte[] value, int flags, int expiration, long cas, boolean quiet) {
+      return send(header, cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION)
             .getCacheEntryAsync(key)
             .thenCompose(entry -> {
                if (entry == null) {
@@ -140,8 +157,8 @@ public abstract class TextOpDecoder extends TextDecoder {
             }));
    }
 
-   protected void touch(TextHeader header, byte[] key, int expiration, boolean quiet) {
-      send(header, cache.getCacheEntryAsync(key)
+   protected MemcachedResponse touch(TextHeader header, byte[] key, int expiration, boolean quiet) {
+      return send(header, cache.getCacheEntryAsync(key)
             .thenCompose(entry -> {
                if (entry == null) {
                   return completedFuture(createNotExistResponse(TextCommand.touch, quiet));
@@ -151,7 +168,7 @@ public abstract class TextOpDecoder extends TextDecoder {
             }));
    }
 
-   protected void gat(TextHeader header, int expiration, List<byte[]> keys, boolean withVersions) {
+   protected MemcachedResponse gat(TextHeader header, int expiration, List<byte[]> keys, boolean withVersions) {
       int numberOfKeys = keys.size();
       if (numberOfKeys > 1) {
          CacheEntry<byte[], byte[]>[] entries = new CacheEntry[numberOfKeys];
@@ -160,10 +177,10 @@ public abstract class TextOpDecoder extends TextDecoder {
             final int idx = i;
             lastStage = lastStage.thenCompose(unused -> doGatMultipleKeys(keys, entries, expiration, idx));
          }
-         send(header, lastStage.thenApply(unused -> createMultiGetResponse(entries)));
+         return send(header, lastStage.thenApply(unused -> createMultiGetResponse(entries)));
       } else {
          byte[] key = keys.get(0);
-         send(header, cache.getCacheEntryAsync(key).thenCompose(entry -> {
+         return send(header, cache.getCacheEntryAsync(key).thenCompose(entry -> {
             if (entry == null) {
                return completedFuture(END);
             } else {
@@ -175,27 +192,27 @@ public abstract class TextOpDecoder extends TextDecoder {
    }
 
 
-   protected void md(TextHeader header, byte[] key, List<byte[]> args) {
+   protected MemcachedResponse md(TextHeader header, byte[] key, List<byte[]> args) {
       throw new UnsupportedOperationException();
    }
 
-   protected void ma(TextHeader header, byte[] key, List<byte[]> args) {
+   protected MemcachedResponse ma(TextHeader header, byte[] key, List<byte[]> args) {
       throw new UnsupportedOperationException();
    }
 
-   protected void me(TextHeader header, byte[] key, List<byte[]> args) {
+   protected MemcachedResponse me(TextHeader header, byte[] key, List<byte[]> args) {
       throw new UnsupportedOperationException();
    }
 
-   protected void mn(TextHeader header) {
-      send(header, CompletableFuture.completedFuture(MN));
+   protected MemcachedResponse mn(TextHeader header) {
+      return send(header, CompletableFuture.completedFuture(MN));
    }
 
-   protected void ms(TextHeader header, byte[] key, byte[] value, List<byte[]> args) {
+   protected MemcachedResponse ms(TextHeader header, byte[] key, byte[] value, List<byte[]> args) {
       throw new UnsupportedOperationException();
    }
 
-   protected void mg(TextHeader header, byte[] key, List<byte[]> args) {
+   protected MemcachedResponse mg(TextHeader header, byte[] key, List<byte[]> args) {
       throw new UnsupportedOperationException();
    }
 
@@ -230,7 +247,7 @@ public abstract class TextOpDecoder extends TextDecoder {
             });
    }
 
-   protected void flush_all(TextHeader header, List<byte[]> varargs) {
+   protected MemcachedResponse flush_all(TextHeader header, List<byte[]> varargs) {
       boolean noreply = false;
       int delay = 0;
       for (byte[] arg : varargs) {
@@ -243,23 +260,22 @@ public abstract class TextOpDecoder extends TextDecoder {
       }
       boolean quiet = noreply;
       if (delay == 0) {
-         send(header, cache.clearAsync().thenApply(unused -> quiet ? null : OK));
-         return;
+         return send(header, cache.clearAsync().thenApply(unused -> quiet ? null : OK));
       }
       server.getScheduler().schedule(cache::clear, toMillis(delay), TimeUnit.MILLISECONDS);
-      send(header, CompletableFuture.completedFuture(quiet ? null : OK));
+      return send(header, CompletableFuture.completedFuture(quiet ? null : OK));
    }
 
-   protected void version(TextHeader header) {
-      send(header, CompletableFuture.completedFuture("VERSION " + Version.getVersion() + CRLF));
+   protected MemcachedResponse version(TextHeader header) {
+      return send(header, CompletableFuture.completedFuture("VERSION " + Version.getVersion() + CRLF));
    }
 
    protected void quit(TextHeader header) {
-      channel.close();
+      ctx.close();
    }
 
-   protected void incr(TextHeader header, byte[] key, byte[] delta, boolean quiet, boolean isIncrement) {
-      send(header, cache.getAsync(key)
+   protected MemcachedResponse incr(TextHeader header, byte[] key, byte[] delta, boolean quiet, boolean isIncrement) {
+      return send(header, cache.getAsync(key)
             .thenCompose(prev -> {
                if (prev == null) {
                   if (statsEnabled) {
@@ -300,28 +316,28 @@ public abstract class TextOpDecoder extends TextDecoder {
             }));
    }
 
-   protected void stats(TextHeader header, List<byte[]> names) {
-      send(header, server.getBlockingManager().supplyBlocking(() -> {
+   protected MemcachedResponse stats(TextHeader header, List<byte[]> names) {
+      return send(header, server.getBlockingManager().supplyBlocking(() -> {
          Map<byte[], byte[]> stats = statsMap();
-         ByteBuf buf = channel.alloc().buffer();
+         ByteBuf buf = MemcachedInboundAdapter.getAllocator(ctx).acquire(1024);
          if (names.isEmpty()) {
             for (Map.Entry<byte[], byte[]> stat : stats.entrySet()) {
                stat(buf, stat.getKey(), stat.getValue());
             }
          } else {
             for (byte[] name : names) {
-               byte[] value = stats.get(name);
-               if (value == null) {
-                  buf.clear();
+               if (!stats.containsKey(name)) {
                   buf.writeCharSequence("CLIENT_ERROR\r\n", StandardCharsets.US_ASCII);
-                  return buf;
-               } else {
-                  stat(buf, name, value);
+                  return null;
                }
+            }
+
+            for (byte[] name : names) {
+               stat(buf, name, stats.get(name));
             }
          }
          buf.writeBytes(END);
-         return buf;
+         return null;
       }, "memcached-stats"));
    }
 

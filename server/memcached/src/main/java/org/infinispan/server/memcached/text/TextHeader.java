@@ -21,6 +21,7 @@ public class TextHeader extends Header {
 
    @Override
    public Object getKey() {
+      if (key == null) return null;
       return new String(key, StandardCharsets.US_ASCII);
    }
 

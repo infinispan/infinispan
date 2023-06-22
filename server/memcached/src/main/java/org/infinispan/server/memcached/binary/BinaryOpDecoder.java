@@ -25,15 +25,16 @@ import javax.security.auth.Subject;
 import org.infinispan.commons.util.SimpleImmutableEntry;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.server.memcached.MemcachedMetadata;
+import org.infinispan.server.memcached.MemcachedResponse;
 import org.infinispan.server.memcached.MemcachedServer;
 import org.infinispan.server.memcached.ParseUtil;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.jgroups.util.CompletableFutures;
-
-import io.netty.buffer.ByteBuf;
 
 abstract class BinaryOpDecoder extends BinaryDecoder {
 
@@ -41,140 +42,164 @@ abstract class BinaryOpDecoder extends BinaryDecoder {
       super(server, subject);
    }
 
-   protected void get(BinaryHeader header, byte[] key, boolean quiet) {
-      CompletableFuture<ByteBuf> response = cache.getCacheEntryAsync(key).thenApply(e -> {
-         boolean withKey = header.op == BinaryCommand.GETK || header.op == BinaryCommand.GETKQ;
-         // getq/getkq
-         if (e == null) {
-            if (quiet)
-               return null;
-            return response(header, KEY_NOT_FOUND, withKey ? key : Util.EMPTY_BYTE_ARRAY, Util.EMPTY_BYTE_ARRAY);
-         } else {
-            MemcachedMetadata metadata = (MemcachedMetadata) e.getMetadata();
-            header.cas = ((NumericVersion) metadata.version()).getVersion();
-            return response(header, NO_ERROR, metadata.flags, withKey ? key : Util.EMPTY_BYTE_ARRAY, e.getValue());
-         }
-      });
-      send(header, response);
-   }
-
-   protected void set(BinaryHeader header, byte[] key, byte[] value, int flags, int expiration, boolean quiet) {
-      Metadata metadata = metadata(flags, expiration);
-      CompletableFuture<ByteBuf> response;
-      if (header.cas == 0) {
-         response = cache.withFlags(Flag.IGNORE_RETURN_VALUES)
-               .putAsync(key, value, metadata)
-               .thenApply(ignore -> storeResponse(header, quiet, metadata));
-      } else {
-         response = cache.getCacheEntryAsync(key).thenCompose(e -> {
-            if (e == null) {
-               return CompletableFuture.completedFuture(response(header, KEY_NOT_FOUND));
-            } else {
-               long version = ((NumericVersion) e.getMetadata().version()).getVersion();
-               if (version == header.cas) {
-                  return cache.replaceAsync(key, e.getValue(), value, metadata).thenApply(ignore -> storeResponse(header, quiet, metadata));
-               } else {
-                  return CompletableFuture.completedFuture(response(header, KEY_EXISTS));
-               }
-            }
-         });
+   protected MemcachedResponse get(BinaryHeader header, byte[] key, boolean quiet) {
+      CompletableFuture<CacheEntry<byte[], byte[]>> cs = cache.getCacheEntryAsync(key);
+      if (CompletionStages.isCompletedSuccessfully(cs)) {
+         handleGet(CompletionStages.join(cs), header, key, quiet);
+         return send(header, CompletableFutures.completedNull());
       }
-      send(header, response);
+      return send(header, cs.thenAccept(e -> handleGet(e, header, key, quiet)));
    }
 
-   protected void add(BinaryHeader header, byte[] key, byte[] value, int flags, int expiration, boolean quiet) {
+   private void handleGet(CacheEntry<byte[], byte[]> e, BinaryHeader header, byte[] key, boolean quiet) {
+      boolean withKey = header.getCommand() == BinaryCommand.GETK || header.getCommand() == BinaryCommand.GETKQ;
+      // getq/getkq
+      if (e == null) {
+         if (!quiet)
+            response(header, KEY_NOT_FOUND, withKey ? key : Util.EMPTY_BYTE_ARRAY, Util.EMPTY_BYTE_ARRAY);
+      } else {
+         MemcachedMetadata metadata = (MemcachedMetadata) e.getMetadata();
+         header.setCas(((NumericVersion) metadata.version()).getVersion());
+         response(header, NO_ERROR, metadata.flags, withKey ? key : Util.EMPTY_BYTE_ARRAY, e.getValue());
+      }
+   }
+
+   protected MemcachedResponse set(BinaryHeader header, byte[] key, byte[] value, int flags, int expiration, boolean quiet) {
       Metadata metadata = metadata(flags, expiration);
-      CompletableFuture<ByteBuf> response = cache
+
+      if (header.getCas() == 0) {
+         CompletionStage<?> cs = cache.withFlags(Flag.IGNORE_RETURN_VALUES)
+               .putAsync(key, value, metadata);
+         if (CompletionStages.isCompletedSuccessfully(cs)) {
+            storeResponse(header, quiet, metadata);
+            return send(header, CompletableFutures.completedNull());
+         }
+
+         return send(header, cs.thenAccept(ignore -> storeResponse(header, quiet, metadata)));
+      }
+
+      CompletionStage<CacheEntry<byte[], byte[]>> cs = cache.getCacheEntryAsync(key);
+      if (CompletionStages.isCompletedSuccessfully(cs)) {
+         return send(header, handleSet(CompletionStages.join(cs), metadata, header, key, value, flags, expiration, quiet));
+      }
+
+      CompletableFuture<Void> response = cache.getCacheEntryAsync(key)
+            .thenCompose(e -> handleSet(e, metadata, header, key, value, flags, expiration, quiet));
+      return send(header, response);
+   }
+
+   private CompletionStage<Void> handleSet(CacheEntry<byte[], byte[]> e, Metadata metadata, BinaryHeader header,
+                                           byte[] key, byte[] value, int flags, int expiration, boolean quiet) {
+      if (e == null) {
+         response(header, KEY_NOT_FOUND);
+         return CompletableFutures.completedNull();
+      } else {
+         long version = ((NumericVersion) e.getMetadata().version()).getVersion();
+         if (version == header.getCas()) {
+            return cache.replaceAsync(key, e.getValue(), value, metadata)
+                  .thenAccept(ignore -> storeResponse(header, quiet, metadata));
+         } else {
+            response(header, KEY_EXISTS);
+            return CompletableFutures.completedNull();
+         }
+      }
+   }
+
+   protected MemcachedResponse add(BinaryHeader header, byte[] key, byte[] value, int flags, int expiration, boolean quiet) {
+      Metadata metadata = metadata(flags, expiration);
+      CompletableFuture<Void> response = cache
             .putIfAbsentAsyncEntry(key, value, metadata)
-            .thenApply(e -> {
+            .thenAccept(e -> {
                if (e != null) {
-                  return response(header, KEY_EXISTS);
+                  response(header, KEY_EXISTS);
                } else {
-                  return storeResponse(header, quiet, metadata);
+                  storeResponse(header, quiet, metadata);
                }
             });
-      send(header, response);
+      return send(header, response);
    }
 
-   protected void replace(BinaryHeader header, byte[] key, byte[] value, int flags, int expiration, boolean quiet) {
+   protected MemcachedResponse replace(BinaryHeader header, byte[] key, byte[] value, int flags, int expiration, boolean quiet) {
       Metadata metadata = metadata(flags, expiration);
-      CompletableFuture<ByteBuf> response;
-      if (header.cas == 0) {
+      CompletableFuture<Void> response;
+      if (header.getCas() == 0) {
          response = cache
                .replaceAsync(key, value, metadata)
-               .thenApply(e -> {
+               .thenAccept(e -> {
                   if (e == null) {
-                     return response(header, KEY_NOT_FOUND);
+                     response(header, KEY_NOT_FOUND);
                   } else {
-                     return storeResponse(header, quiet, metadata);
+                     storeResponse(header, quiet, metadata);
                   }
                });
       } else {
          response = cache.getCacheEntryAsync(key).thenCompose(e -> {
             if (e == null) {
                CAS_MISSES.incrementAndGet(statistics);
-               return CompletableFuture.completedFuture(response(header, KEY_NOT_FOUND));
+               response(header, KEY_NOT_FOUND);
+               return CompletableFutures.completedNull();
             } else {
                long version = ((NumericVersion) metadata.version()).getVersion();
-               if (header.cas == version) {
-                  return cache.replaceAsync(key, e.getValue(), value, metadata).thenApply(ignore -> {
+               if (header.getCas() == version) {
+                  return cache.replaceAsync(key, e.getValue(), value, metadata).thenAccept(ignore -> {
                      CAS_HITS.incrementAndGet(statistics);
-                     return storeResponse(header, quiet, metadata);
+                     storeResponse(header, quiet, metadata);
                   });
                } else {
                   CAS_BADVAL.incrementAndGet(statistics);
-                  return CompletableFuture.completedFuture(response(header, ITEM_NOT_STORED));
+                  response(header, ITEM_NOT_STORED);
+                  return CompletableFutures.completedNull();
                }
             }
          });
       }
-      send(header, response);
+      return send(header, response);
    }
 
-   private ByteBuf storeResponse(BinaryHeader header, boolean quiet, Metadata metadata) {
+   private void storeResponse(BinaryHeader header, boolean quiet, Metadata metadata) {
       if (quiet) {
-         return null;
+         return;
       }
-      header.cas = ((NumericVersion) metadata.version()).getVersion();
-      return response(header, NO_ERROR);
+
+      header.setCas(((NumericVersion) metadata.version()).getVersion());
+      response(header, NO_ERROR);
    }
 
-   protected void delete(BinaryHeader header, byte[] key, boolean quiet) {
-      CompletableFuture<ByteBuf> response;
-      if (header.cas == 0) {
+   protected MemcachedResponse delete(BinaryHeader header, byte[] key, boolean quiet) {
+      CompletableFuture<Void> response;
+      if (header.getCas() == 0) {
          response = cache.removeAsync(key)
-               .thenApply(v -> {
-                  if (v != null && quiet) {
-                     return null;
-                  } else {
-                     return response(header, v == null ? KEY_NOT_FOUND : DELETED);
-                  }
+               .thenAccept(v -> {
+                  if (v != null && quiet) return;
+                  response(header, v == null ? KEY_NOT_FOUND : DELETED);
                });
       } else {
          response = cache.getCacheEntryAsync(key)
                .thenCompose(e -> {
                   if (e == null) {
-                     return CompletableFuture.completedFuture(response(header, KEY_NOT_FOUND));
+                     response(header, KEY_NOT_FOUND);
+                     return CompletableFutures.completedNull();
                   } else {
                      long version = ((NumericVersion) e.getMetadata().version()).getVersion();
-                     if (header.cas == version) {
-                        return cache.removeAsync(key, e.getValue()).thenApply(d -> {
+                     if (header.getCas() == version) {
+                        return cache.removeAsync(key, e.getValue()).thenAccept(d -> {
                            if (d) {
-                              return quiet ? null : response(header, DELETED);
+                              if (!quiet) response(header, DELETED);
                            } else {
-                              return response(header, KEY_EXISTS);
+                              response(header, KEY_EXISTS);
                            }
                         });
                      } else {
-                        return CompletableFuture.completedFuture(response(header, KEY_EXISTS));
+                        response(header, KEY_EXISTS);
+                        return CompletableFutures.completedNull();
                      }
                   }
                });
       }
-      send(header, response);
+      return send(header, response);
    }
 
-   protected void increment(BinaryHeader header, byte[] key, long delta, long initial, int expiration, boolean quiet) {
+   protected MemcachedResponse increment(BinaryHeader header, byte[] key, long delta, long initial, int expiration, boolean quiet) {
       Metadata metadata = metadata(0, expiration);
       CompletableFuture<byte[]> f;
       if (expiration == -1) {
@@ -182,7 +207,7 @@ abstract class BinaryOpDecoder extends BinaryDecoder {
       } else {
          f = cache.mergeAsync(key, ParseUtil.writeAsciiLong(initial), (v1, v2) -> increment(delta, v1), metadata);
       }
-      CompletableFuture<ByteBuf> response = f.thenApply(v -> {
+      CompletableFuture<Void> response = f.thenAccept(v -> {
          if (v == null) {
             if (statsEnabled) {
                if (delta > 0) {
@@ -191,7 +216,8 @@ abstract class BinaryOpDecoder extends BinaryDecoder {
                   DECR_MISSES.incrementAndGet(statistics);
                }
             }
-            return response(header, KEY_NOT_FOUND);
+            response(header, KEY_NOT_FOUND);
+            return;
          }
          if (statsEnabled) {
             if (delta > 0) {
@@ -201,11 +227,11 @@ abstract class BinaryOpDecoder extends BinaryDecoder {
             }
          }
          if (quiet)
-            return null;
-         header.cas = ((NumericVersion) metadata.version()).getVersion();
-         return response(header, NO_ERROR, ParseUtil.readLong(v));
+            return;
+         header.setCas(((NumericVersion) metadata.version()).getVersion());
+         response(header, NO_ERROR, ParseUtil.readLong(v));
       });
-      send(header, response);
+      return send(header, response);
    }
 
    private static byte[] increment(long delta, byte[] v1) {
@@ -215,108 +241,104 @@ abstract class BinaryOpDecoder extends BinaryDecoder {
       return ParseUtil.writeAsciiLong(l);
    }
 
-   protected void append(BinaryHeader header, byte[] key, byte[] value, boolean quiet) {
-      CompletableFuture<ByteBuf> response = cache.computeIfPresentAsync(key, (k, v) -> {
+   protected MemcachedResponse append(BinaryHeader header, byte[] key, byte[] value, boolean quiet) {
+      CompletableFuture<Void> response = cache.computeIfPresentAsync(key, (k, v) -> {
          byte[] r = Arrays.copyOf(v, v.length + value.length);
          System.arraycopy(value, 0, r, v.length, value.length);
          return r;
-      }, null).thenApply(v -> {
-         if (quiet)
-            return null;
-         return response(header, v == null ? KEY_NOT_FOUND : NO_ERROR);
+      }, null).thenAccept(v -> {
+         if (!quiet) response(header, v == null ? KEY_NOT_FOUND : NO_ERROR);
       });
-      send(header, response);
+      return send(header, response);
    }
 
-   protected void prepend(BinaryHeader header, byte[] key, byte[] value, boolean quiet) {
-      CompletableFuture<ByteBuf> response = cache.computeIfPresentAsync(key, (k, v) -> {
+   protected MemcachedResponse prepend(BinaryHeader header, byte[] key, byte[] value, boolean quiet) {
+      CompletableFuture<Void> response = cache.computeIfPresentAsync(key, (k, v) -> {
          byte[] r = Arrays.copyOf(value, v.length + value.length);
          System.arraycopy(v, 0, r, value.length, v.length);
          return r;
-      }, null).thenApply(v -> {
-         if (quiet)
-            return null;
-         return response(header, v == null ? KEY_NOT_FOUND : NO_ERROR);
+      }, null).thenAccept(v -> {
+         if (!quiet) response(header, v == null ? KEY_NOT_FOUND : NO_ERROR);
       });
-      send(header, response);
+      return send(header, response);
    }
 
-   protected void quit(BinaryHeader header, boolean quiet) {
+   protected MemcachedResponse quit(BinaryHeader header, boolean quiet) {
       if (quiet) {
-         channel.close();
+         ctx.close();
+         return null;
       } else {
-         ByteBuf buf = response(header, NO_ERROR);
-         send(header, CompletableFuture.completedFuture(buf), (v) -> channel.close());
+         response(header, NO_ERROR);
+         return send(header, CompletableFutures.completedNull(), (v) -> ctx.close());
       }
    }
 
-   protected void version(BinaryHeader header) {
-      ByteBuf r = response(header, NO_ERROR, Version.getVersion().getBytes(StandardCharsets.US_ASCII));
-      send(header, CompletableFuture.completedFuture(r));
+   protected MemcachedResponse version(BinaryHeader header) {
+      response(header, NO_ERROR, Version.getVersion().getBytes(StandardCharsets.US_ASCII));
+      return send(header, CompletableFutures.completedNull());
    }
 
-   protected void noop(BinaryHeader header) {
-      send(header, CompletableFuture.completedFuture(response(header, NO_ERROR)));
+   protected MemcachedResponse noop(BinaryHeader header) {
+      response(header, NO_ERROR);
+      return send(header, CompletableFutures.completedNull());
    }
 
-   protected void touch(BinaryHeader header, byte[] key, int expiration) {
-      CompletableFuture<Object> r = cache.getCacheEntryAsync(key)
+   protected MemcachedResponse touch(BinaryHeader header, byte[] key, int expiration) {
+      CompletableFuture<Void> r = cache.getCacheEntryAsync(key)
             .thenCompose(e -> {
                if (e == null) {
-                  return CompletableFuture.completedFuture(response(header, KEY_NOT_FOUND));
+                  response(header, KEY_NOT_FOUND);
+                  return CompletableFutures.completedNull();
                } else {
                   return cache.replaceAsync(e.getKey(), e.getValue(), touchMetadata(e, expiration))
-                        .thenApply(ignore -> response(header, NO_ERROR));
+                        .thenAccept(ignore -> response(header, NO_ERROR));
                }
             });
-      send(header, r);
+      return send(header, r);
    }
 
-   protected void gat(BinaryHeader header, byte[] key, int expiration, boolean quiet) {
-      CompletableFuture<Object> r = cache.getCacheEntryAsync(key)
+   protected MemcachedResponse gat(BinaryHeader header, byte[] key, int expiration, boolean quiet) {
+      CompletableFuture<Void> r = cache.getCacheEntryAsync(key)
             .thenCompose(e -> {
-               boolean withKey = header.op == BinaryCommand.GATK || header.op == BinaryCommand.GATKQ;
+               boolean withKey = header.getCommand() == BinaryCommand.GATK || header.getCommand() == BinaryCommand.GATKQ;
                if (e == null) {
-                  if (quiet)
-                     return CompletableFutures.completedNull();
-                  else
-                     return CompletableFuture.completedFuture(response(header, KEY_NOT_FOUND, withKey ? key : Util.EMPTY_BYTE_ARRAY, Util.EMPTY_BYTE_ARRAY));
+                  if (!quiet) response(header, KEY_NOT_FOUND, withKey ? key : Util.EMPTY_BYTE_ARRAY, Util.EMPTY_BYTE_ARRAY);
+                  return CompletableFutures.completedNull();
                } else {
                   MemcachedMetadata metadata = (MemcachedMetadata) e.getMetadata();
-                  header.cas = ((NumericVersion) metadata.version()).getVersion();
+                  header.setCas(((NumericVersion) metadata.version()).getVersion());
                   return cache.replaceAsync(e.getKey(), e.getValue(), touchMetadata(e, expiration))
-                        .thenApply(x -> response(header, NO_ERROR, metadata.flags, withKey ? e.getKey() : Util.EMPTY_BYTE_ARRAY, e.getValue()));
+                        .thenAccept(ignore -> response(header, NO_ERROR, metadata.flags, withKey ? e.getKey() : Util.EMPTY_BYTE_ARRAY, e.getValue()));
                }
             });
-      send(header, r);
+      return send(header, r);
    }
 
-   protected void stat(BinaryHeader header, byte[] key) {
-      CompletionStage<ByteBuf> s = server.getBlockingManager().supplyBlocking(() -> {
+   protected MemcachedResponse stat(BinaryHeader header, byte[] key) {
+      CompletionStage<Void> s = server.getBlockingManager().supplyBlocking(() -> {
          Map<byte[], byte[]> map = statsMap();
          if (key != null) {
             if (!map.containsKey(key)) {
-               return response(header, KEY_NOT_FOUND);
+               response(header, KEY_NOT_FOUND);
             } else {
-               return singleStat(header, new SimpleImmutableEntry<>(key, map.get(key)));
+               singleStat(header, new SimpleImmutableEntry<>(key, map.get(key)));
             }
          } else {
-            ByteBuf buf = channel.alloc().buffer();
             for (Map.Entry<byte[], byte[]> e : map.entrySet()) {
-               buf.writeBytes(singleStat(header, e));
+               singleStat(header, e);
             }
-            buf.writeBytes(response(header, NO_ERROR));
-            return buf;
+            response(header, NO_ERROR);
          }
+         return null;
       }, "memcached-stats");
-      send(header, s);
+      return send(header, s);
    }
 
-   private ByteBuf singleStat(BinaryHeader header, Map.Entry<byte[], byte[]> e) {
-      return response(header, NO_ERROR, e.getKey(), e.getValue());
+   private void singleStat(BinaryHeader header, Map.Entry<byte[], byte[]> e) {
+      response(header, NO_ERROR, e.getKey(), e.getValue());
    }
 
-   protected void flush(BinaryHeader header, int expiration, boolean quiet) {
+   protected MemcachedResponse flush(BinaryHeader header, int expiration, boolean quiet) {
       final CompletableFuture<Void> future;
       if (expiration == 0) {
          future = cache.clearAsync();
@@ -325,11 +347,12 @@ abstract class BinaryOpDecoder extends BinaryDecoder {
          future = CompletableFuture.completedFuture(null);
       }
       if (quiet)
-         return;
-      send(header, future.thenApply(ignore -> response(header, NO_ERROR)));
+         return null;
+      return send(header, future.thenAccept(ignore -> response(header, NO_ERROR)));
    }
 
-   protected void verbosityLevel(BinaryHeader header, int verbosity) {
-      send(header, CompletableFuture.completedFuture(response(header, NO_ERROR)));
+   protected MemcachedResponse verbosityLevel(BinaryHeader header, int verbosity) {
+      response(header, NO_ERROR);
+      return send(header, CompletableFutures.completedNull());
    }
 }

@@ -28,69 +28,79 @@ init {
    }
 
    private TextHeader getHeader() {
-      return new TextHeader(requestBytes, requestStart, principalName, key, command_name);
+      return accessLogging ? new TextHeader(requestBytes, requestStart, principalName, key, command_name) : null;
    }
 }
 
 exceptionally {
    state = 0;
-   send(getHeader(), CompletableFuture.failedFuture(t));
+   exceptionCaught(getHeader(), t);
 }
 
 deadend {
    if (!deadEnd) {
-      send(getHeader(), CompletableFuture.failedFuture(new IllegalStateException()));
+      exceptionCaught(getHeader(), new IllegalStateException("Dead end processing request"));
       deadEnd = true;
    }
    state = 0;
+}
+
+beforedecode {
+   // We cannot read more than one command at a time
+   if (!ctx.channel().config().isAutoRead()) {
+      log.tracef("Auto read was disabled, not reading next bytes yet");
+      return;
+   } else {
+      log.tracef("Auto read was enabled, reading next bytes");
+   }
 }
 
 root request
    : command_name { requestStart = Instant.now(); } parameters
    ;
 
-key: text_key;
-keys: text_key_list;
-command_name: command;
-exptime: int_number;
-flags: int_number;
-vsize: int_number;
+key: text_key[reader];
+keys: text_key_list[reader];
+command_name: command[reader];
+exptime: int_number[reader];
+flags: int_number[reader];
+vsize: int_number[reader];
 value returns byte[]
    : { vsize > 0 }? fixedArray[vsize]
    | { org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY }
    ;
-cas_unique: long_number;
+cas_unique: long_number[reader];
 eol: short;
-delta: text;
+delta: text[reader];
 noreply: eowc;
-varargs: text_list;
+varargs: text_list[reader];
 
 parameters switch command_name
 // Operations
-   : { set }? key flags exptime vsize noreply value eol { set(getHeader(), key, value, flags, exptime, noreply) }
-   | { add }? key flags exptime vsize noreply value eol { add(getHeader(), key, value, flags, exptime, noreply) }
-   | { replace }? key flags exptime vsize noreply value eol { replace(getHeader(), key, value, flags, exptime, noreply) }
-   | { delete }? key noreply { delete(getHeader(), key, noreply) }
-   | { append }? key flags exptime vsize noreply value eol { concat(getHeader(), key, value, flags, exptime, noreply, true) }
-   | { prepend }? key flags exptime vsize noreply value eol { concat(getHeader(), key, value, flags, exptime, noreply, false) }
-   | { cas }? key flags exptime vsize cas_unique noreply value eol { cas(getHeader(), key, value, flags, exptime, cas_unique, noreply) }
-   | { get }? keys { get(getHeader(), keys, false) }
-   | { gets }? keys { get(getHeader(), keys, true) }
-   | { incr }? key delta noreply { incr(getHeader(), key, delta, noreply, true) }
-   | { decr }? key delta noreply { incr(getHeader(), key, delta, noreply, false) }
-   | { touch }? key exptime noreply { touch(getHeader(), key, exptime, noreply) }
-   | { gat }? exptime keys { gat(getHeader(), exptime, keys, false) }
-   | { gats }? exptime keys { gat(getHeader(), exptime, keys, true) }
-   | { flush_all }? varargs { flush_all(getHeader(), varargs) }
-   | { version }? eol { version(getHeader()) }
+   : { set }? key flags exptime vsize noreply value eol { if (out.add(set(getHeader(), key, value, flags, exptime, noreply))) { state = 0; return false; } }
+   | { add }? key flags exptime vsize noreply value eol { if (out.add(add(getHeader(), key, value, flags, exptime, noreply))) { state = 0; return false; } }
+   | { replace }? key flags exptime vsize noreply value eol { if (out.add(replace(getHeader(), key, value, flags, exptime, noreply))) { state = 0; return false; } }
+   | { delete }? key noreply { if (out.add(delete(getHeader(), key, noreply))) { state = 0; return false; } }
+   | { append }? key flags exptime vsize noreply value eol { if (out.add(concat(getHeader(), key, value, flags, exptime, noreply, true))) { state = 0; return false; } }
+   | { prepend }? key flags exptime vsize noreply value eol { if (out.add(concat(getHeader(), key, value, flags, exptime, noreply, false))) { state = 0; return false; } }
+   | { cas }? key flags exptime vsize cas_unique noreply value eol { if (out.add(cas(getHeader(), key, value, flags, exptime, cas_unique, noreply))) { state = 0; return false; } }
+   | { get }? keys { if (out.add(get(getHeader(), keys, false))) { state = 0; return false; } }
+   | { gets }? keys { if (out.add(get(getHeader(), keys, true))) { state = 0; return false; } }
+   | { incr }? key delta noreply { if (out.add(incr(getHeader(), key, delta, noreply, true))) { state = 0; return false; } }
+   | { decr }? key delta noreply { if (out.add(incr(getHeader(), key, delta, noreply, false))) { state = 0; return false; } }
+   | { touch }? key exptime noreply { if (out.add(touch(getHeader(), key, exptime, noreply))) { state = 0; return false; } }
+   | { gat }? exptime keys { if (out.add(gat(getHeader(), exptime, keys, false))) { state = 0; return false; } }
+   | { gats }? exptime keys { if (out.add(gat(getHeader(), exptime, keys, true))) { state = 0; return false; } }
+   | { flush_all }? varargs { if (out.add(flush_all(getHeader(), varargs))) { state = 0; return false; } }
+   | { version }? eol { if (out.add(version(getHeader()))) { state = 0; return false; } }
    | { quit }? eol { quit(getHeader()) }
-   | { stats }? keys { stats(getHeader(), keys) }
-   | { mg }? key varargs { mg(getHeader(), key, varargs) }
-   | { ms }? key vsize varargs value eol { ms(getHeader(), key, value, varargs) }
-   | { md }? key varargs { md(getHeader(), key, varargs) }
-   | { ma }? key varargs { ma(getHeader(), key, varargs) }
-   | { mn }? eol { mn(getHeader()) }
-   | { me }? key varargs { me(getHeader(), key, varargs) }
+   | { stats }? keys { if (out.add(stats(getHeader(), keys))) { state = 0; return false; } }
+   | { mg }? key varargs { if (out.add(mg(getHeader(), key, varargs))) { state = 0; return false; } }
+   | { ms }? key vsize varargs value eol { if (out.add(ms(getHeader(), key, value, varargs))) { state = 0; return false; } }
+   | { md }? key varargs { if (out.add(md(getHeader(), key, varargs))) { state = 0; return false; } }
+   | { ma }? key varargs { if (out.add(ma(getHeader(), key, varargs))) { state = 0; return false; } }
+   | { mn }? eol { if (out.add(mn(getHeader()))) { state = 0; return false; } }
+   | { me }? key varargs { if (out.add(me(getHeader(), key, varargs))) { state = 0; return false; } }
 // Unknown
    | { throw new IllegalArgumentException("Unknown command " + command_name); }
    ;

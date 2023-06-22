@@ -5,30 +5,33 @@ import static org.infinispan.server.memcached.text.TextConstants.CRLF;
 import static org.infinispan.server.memcached.text.TextConstants.SERVER_ERROR;
 
 import java.io.IOException;
-import java.nio.CharBuffer;
-import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.server.memcached.ByteBufPool;
 import org.infinispan.server.memcached.MemcachedResponse;
 import org.infinispan.server.memcached.logging.Header;
-import org.infinispan.server.memcached.logging.MemcachedAccessLogging;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 
 /**
  * @since 15.0
  **/
 public class TextResponse extends MemcachedResponse {
 
-   public TextResponse(ByRef<MemcachedResponse> current, Channel ch) {
-      super(current, ch);
+   public TextResponse(CompletionStage<?> response, Header header, GenericFutureListener<? extends Future<? super Void>> listener) {
+      super(response, header, listener);
+   }
+
+   public TextResponse(Throwable failure, Header header) {
+      super(failure, header);
    }
 
    @Override
-   protected ChannelFuture writeThrowable(Header header, Throwable throwable) {
+   public void writeFailure(Throwable throwable, ByteBufPool allocator) {
       Throwable cause = CompletableFutures.extractException(throwable);
       String error;
       if (cause instanceof IOException || cause instanceof IllegalArgumentException) {
@@ -38,10 +41,9 @@ public class TextResponse extends MemcachedResponse {
       } else {
          error = SERVER_ERROR + " " + cause.getMessage() + CRLF;
       }
-      ChannelFuture future = ch.writeAndFlush(ByteBufUtil.encodeString(ch.alloc(), CharBuffer.wrap(error), StandardCharsets.US_ASCII));
-      if (header != null) {
-         MemcachedAccessLogging.logException(future, header, error, error.length());
-      }
-      return future;
+      useErrorMessage(error);
+      responseBytes = error.length();
+      ByteBuf output = allocator.acquire(responseBytes);
+      ByteBufUtil.writeAscii(output, error);
    }
 }
