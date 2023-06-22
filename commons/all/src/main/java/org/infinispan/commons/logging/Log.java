@@ -234,23 +234,22 @@ public interface Log extends BasicLogger {
    CacheConfigurationException attributeMustBeGreaterThanZero(Number value, Enum<?> attribute);
 
    @LogMessage(level = INFO)
-   @Message(value = "OpenTelemetry instance loaded: %s", id = 952)
+   @Message(value = "OpenTelemetry tracing instance loaded: %s", id = 952)
    void telemetryLoaded(Object telemetry);
 
    @LogMessage(level = INFO)
-   @Message(value = "OpenTelemetry integration is disabled", id = 953)
+   @Message(value = "OpenTelemetry tracing integration is disabled", id = 953)
    void telemetryDisabled();
 
    @LogMessage(level = WARN)
-   @Message(value = "OpenTelemetry cannot be configured", id = 954)
-   void errorOnLoadingTelemetry();
+   @Message(value = "OpenTelemetry tracing cannot be configured.", id = 954)
+   void errorOnLoadingTelemetry(@Cause Throwable t);
 
    @Message(value = "'%s' is not a valid boolean value (true|false|yes|no|y|n|on|off)", id = 955)
    IllegalArgumentException illegalBooleanValue(String value);
 
    @Message(value = "'%s' is not one of %s", id = 956)
    IllegalArgumentException illegalEnumValue(String value, EnumSet<?> set);
-
 
    @LogMessage(level = ERROR)
    @Message(value = "Cannot load %s", id = 957)
