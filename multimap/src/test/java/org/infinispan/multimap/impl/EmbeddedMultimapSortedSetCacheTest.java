@@ -16,6 +16,8 @@ import static org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache.ERR_SC
 import static org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache.ERR_VALUES_CAN_T_BE_NULL;
 import static org.infinispan.multimap.impl.MultimapTestUtils.ELAIA;
 import static org.infinispan.multimap.impl.MultimapTestUtils.FELIX;
+import static org.infinispan.multimap.impl.MultimapTestUtils.IGOR;
+import static org.infinispan.multimap.impl.MultimapTestUtils.IZARO;
 import static org.infinispan.multimap.impl.MultimapTestUtils.JULIEN;
 import static org.infinispan.multimap.impl.MultimapTestUtils.KOLDO;
 import static org.infinispan.multimap.impl.MultimapTestUtils.NAMES_KEY;
@@ -70,7 +72,6 @@ public class EmbeddedMultimapSortedSetCacheTest extends SingleCacheManagerTest {
       assertThatThrownBy(() -> SortedSetAddArgs.create().updateLessScoresOnly().updateGreaterScoresOnly().build()).isInstanceOf(
             IllegalStateException.class).hasMessageContaining(SortedSetAddArgs.ADD_AND_UPDATE_OPTIONS_INCOMPATIBLE_ERROR);
 
-
    }
 
    public void testAddMany() {
@@ -90,7 +91,7 @@ public class EmbeddedMultimapSortedSetCacheTest extends SingleCacheManagerTest {
       // add only
       assertThat(await(sortedSetCache.addMany(NAMES_KEY, new double[] { 9.9, 1 }, new Person[] { ELAIA, JULIEN },
             SortedSetAddArgs.create().addOnly().build()))).isEqualTo(1);
-      assertThat(await(sortedSetCache.getValue(NAMES_KEY))).containsExactly(of(1, JULIEN), of(9.9, ELAIA), of(10, OIHANA), of(90, KOLDO) );
+      assertThat(await(sortedSetCache.getValue(NAMES_KEY))).containsExactly(of(1, JULIEN), of(7.9, ELAIA), of(10, OIHANA), of(90, KOLDO) );
       // update only (does not create)
       assertThat(await(sortedSetCache.addMany(NAMES_KEY, new double[] { 9.9, 2.2 }, new Person[] { ELAIA, RAMON },
             SortedSetAddArgs.create().updateOnly().build()))).isEqualTo(0);
@@ -98,15 +99,15 @@ public class EmbeddedMultimapSortedSetCacheTest extends SingleCacheManagerTest {
       // update less than provided scores and create new ones
       assertThat(await(sortedSetCache.addMany(NAMES_KEY, new double[] { 8.9, 11.1, 0.8 }, new Person[] { ELAIA, OIHANA, RAMON },
             SortedSetAddArgs.create().updateLessScoresOnly().build()))).isEqualTo(1);
-      assertThat(await(sortedSetCache.getValue(NAMES_KEY))).containsExactly(of(0.8, RAMON), of(1, JULIEN), of(9.9, ELAIA), of(11.1, OIHANA), of(90, KOLDO) );
+      assertThat(await(sortedSetCache.getValue(NAMES_KEY))).containsExactly(of(0.8, RAMON), of(1, JULIEN), of(8.9, ELAIA), of(10, OIHANA), of(90, KOLDO) );
       // update greater than provided scores and create new ones
-      assertThat(await(sortedSetCache.addMany(NAMES_KEY, new double[] { 8.9, 12.1, 32.98 }, new Person[] { ELAIA, OIHANA, FELIX },
+      assertThat(await(sortedSetCache.addMany(NAMES_KEY, new double[] { 6.9, 12.1, 32.98 }, new Person[] { ELAIA, OIHANA, FELIX },
             SortedSetAddArgs.create().updateGreaterScoresOnly().build()))).isEqualTo(1);
-      assertThat(await(sortedSetCache.getValue(NAMES_KEY))).containsExactly(of(0.8, RAMON), of(1, JULIEN), of(8.9, ELAIA), of(11.1, OIHANA), of(32.98, FELIX), of(90, KOLDO) );
+      assertThat(await(sortedSetCache.getValue(NAMES_KEY))).containsExactly(of(0.8, RAMON), of(1, JULIEN), of(8.9, ELAIA), of(12.1, OIHANA), of(32.98, FELIX), of(90, KOLDO) );
 
       // add a new value with the same score as other
       assertThat(await(sortedSetCache.addMany(NAMES_KEY, new double[] { 1 }, new Person[] { PEPE }, emptyArgs))).isEqualTo(1);
-      assertThat(await(sortedSetCache.getValue(NAMES_KEY))).containsExactly(of(0.8, RAMON), of(1, JULIEN),  of(1, PEPE), of(8.9, ELAIA), of(11.1, OIHANA), of(32.98, FELIX), of(90, KOLDO) );
+      assertThat(await(sortedSetCache.getValue(NAMES_KEY))).containsExactly(of(0.8, RAMON), of(1, JULIEN),  of(1, PEPE), of(8.9, ELAIA), of(12.1, OIHANA), of(32.98, FELIX), of(90, KOLDO) );
 
       // Errors
       assertThatThrownBy(() -> await(sortedSetCache.addMany(NAMES_KEY, new double[] { 1 }, new Person[] {}, emptyArgs)))
@@ -132,6 +133,27 @@ public class EmbeddedMultimapSortedSetCacheTest extends SingleCacheManagerTest {
       assertThatThrownBy(() -> await(sortedSetCache.addMany(NAMES_KEY, new double[0], null, emptyArgs)))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining(ERR_VALUES_CAN_T_BE_NULL);
+   }
+
+   public void testCount() {
+      assertThat(await(sortedSetCache.count(NAMES_KEY, 0, false, 0, false))).isEqualTo(0);
+      await(sortedSetCache.addMany(NAMES_KEY,
+            new double[] {-5, 1, 2, 5, 8, 8, 8, 9, 10},
+            new Person[] {OIHANA, ELAIA, KOLDO, RAMON, JULIEN, FELIX, PEPE, IGOR, IZARO},
+            SortedSetAddArgs.create().build()));
+
+      assertThat(await(sortedSetCache.count(NAMES_KEY, 8, true, 8, true))).isEqualTo(3);
+      assertThat(await(sortedSetCache.count(NAMES_KEY, 8, false, 8, false))).isEqualTo(0);
+      assertThat(await(sortedSetCache.count(NAMES_KEY, 8, true, 8, false))).isEqualTo(0);
+      assertThat(await(sortedSetCache.count(NAMES_KEY, 8, false, 8, true))).isEqualTo(0);
+      assertThat(await(sortedSetCache.count(NAMES_KEY, 1, true, 9, true))).isEqualTo(7);
+      assertThat(await(sortedSetCache.count(NAMES_KEY, 1, true, 9, false))).isEqualTo(6);
+      assertThat(await(sortedSetCache.count(NAMES_KEY, 1, false, 9, false))).isEqualTo(5);
+      assertThat(await(sortedSetCache.count(NAMES_KEY, 1, false, 9, true))).isEqualTo(6);
+
+      assertThatThrownBy(() -> await(sortedSetCache.count(null, 0, false, 0, false)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
    }
 
 }

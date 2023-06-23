@@ -184,3 +184,6 @@ for concurrent operations or failures unless the resp cache is configured to use
 
 | link:https://redis.io/commands/zcard[ZCARD]
 |
+
+| link:https://redis.io/commands/zcard[ZCOUNT]
+|

@@ -1,10 +1,14 @@
 package org.infinispan.server.resp;
 
+import io.lettuce.core.Range;
+import io.lettuce.core.ScoredValue;
 import io.lettuce.core.ZAddArgs;
 import io.lettuce.core.api.sync.RedisCommands;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import static io.lettuce.core.Range.Boundary.excluding;
+import static io.lettuce.core.Range.Boundary.including;
 import static io.lettuce.core.ScoredValue.just;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
@@ -109,6 +113,88 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
             .isEqualTo(2);
       assertThat(redis.zcard("people")).isEqualTo(2);
       assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zcard("another"));
+   }
+
+   public void testZCOUNT() {
+      Range<Double> unbounded = Range.unbounded();
+      assertThat(redis.zcount("not_existing", unbounded)).isEqualTo(0);
+      redis.zadd("people", ZAddArgs.Builder.ch(),
+            ScoredValue.just(-10, "tristan"),
+            ScoredValue.just(1, "ryan"),
+            ScoredValue.just(17, "vittorio"),
+            ScoredValue.just(18.9, "fabio"),
+            ScoredValue.just(18.9, "jose"),
+            ScoredValue.just(18.9, "katia"),
+            ScoredValue.just(21.9, "marc"));
+      assertThat(redis.zcard("people")).isEqualTo(7);
+      assertThat(redis.zcount("people", unbounded)).isEqualTo(7);
+      assertThat(redis.zcount("people", Range.from(including(-10d), including(21.9d)))).isEqualTo(7);
+      assertThat(redis.zcount("people", Range.from(including(-11d), including(22.9d)))).isEqualTo(7);
+      assertThat(redis.zcount("people", Range.from(including(1d), including(17d)))).isEqualTo(2);
+      assertThat(redis.zcount("people", Range.from(including(0d), including(18d)))).isEqualTo(2);
+      assertThat(redis.zcount("people", Range.from(including(0d), including(18.9d)))).isEqualTo(5);
+      assertThat(redis.zcount("people", Range.from(including(18.9d), including(22d)))).isEqualTo(4);
+      assertThat(redis.zcount("people", Range.from(excluding(1d), including(19)))).isEqualTo(4);
+      assertThat(redis.zcount("people", Range.from(including(1d), excluding(19)))).isEqualTo(5);
+      assertThat(redis.zcount("people", Range.from(including(-10d), excluding(18.9)))).isEqualTo(3);
+      assertThat(redis.zcount("people", Range.from(including(-10d), excluding(-10.d)))).isEqualTo(0);
+      assertThat(redis.zcount("people", Range.from(excluding(-10d), including(-10.d)))).isEqualTo(0);
+      assertThat(redis.zcount("people", Range.from(including(-10d), including(-10.d)))).isEqualTo(1);
+      assertThat(redis.zcount("people", Range.from(excluding(-10d), excluding(-10.d)))).isEqualTo(0);
+      assertThat(redis.zcount("people", Range.from(including(18.9d), excluding(18.9d)))).isEqualTo(0);
+      assertThat(redis.zcount("people", Range.from(excluding(18.9d), excluding(18.9d)))).isEqualTo(0);
+      assertThat(redis.zcount("people", Range.from(including(18.9d), including(18.9d)))).isEqualTo(3);
+      assertThat(redis.zcount("people", Range.from(excluding(18.9d), including(18.9d)))).isEqualTo(0);
+
+      redis.zadd("manyduplicates", ZAddArgs.Builder.ch(),
+            ScoredValue.just(1, "a"),
+            ScoredValue.just(1, "b"),
+            ScoredValue.just(1, "c"),
+            ScoredValue.just(2, "d"),
+            ScoredValue.just(2, "e"),
+            ScoredValue.just(2, "f"),
+            ScoredValue.just(2, "g"),
+            ScoredValue.just(2, "h"),
+            ScoredValue.just(2, "i"),
+            ScoredValue.just(3, "j"),
+            ScoredValue.just(3, "k"),
+            ScoredValue.just(3, "l"),
+            ScoredValue.just(3, "m"),
+            ScoredValue.just(3, "n"));
+
+      assertThat(redis.zcount("manyduplicates",
+            Range.from(including(1), including(3)))).isEqualTo(14);
+
+      assertThat(redis.zcount("manyduplicates",
+            Range.from(excluding(1), excluding(3)))).isEqualTo(6);
+
+      assertThat(redis.zcount("manyduplicates",
+            Range.from(including(1), excluding(2)))).isEqualTo(3);
+
+      assertThat(redis.zcount("manyduplicates",
+            Range.from(excluding(1), including(2)))).isEqualTo(6);
+
+      assertThat(redis.zcount("manyduplicates",
+            Range.from(including(1), including(1)))).isEqualTo(3);
+
+      assertThat(redis.zcount("manyduplicates",
+            Range.from(including(2), including(2)))).isEqualTo(6);
+
+      assertThat(redis.zcount("manyduplicates",
+            Range.from(including(3), including(3)))).isEqualTo(5);
+
+      assertThat(redis.zcount("manyduplicates",
+            Range.from(including(1.5), excluding(2.1)))).isEqualTo(6);
+
+      assertThat(redis.zcount("manyduplicates",
+            Range.from(excluding(1), excluding(2)))).isEqualTo(0);
+
+      assertThat(redis.zcount("manyduplicates",
+            Range.from(excluding(2.5), excluding(3)))).isEqualTo(0);
+
+      assertThat(redis.zcount("manyduplicates",
+            Range.from(including(1), excluding(3)))).isEqualTo(9);
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zcount("another", unbounded));
    }
 
 }

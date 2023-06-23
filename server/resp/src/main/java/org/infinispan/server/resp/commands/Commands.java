@@ -59,6 +59,7 @@ import org.infinispan.server.resp.commands.pubsub.UNSUBSCRIBE;
 import org.infinispan.server.resp.commands.set.SADD;
 import org.infinispan.server.resp.commands.sortedset.ZADD;
 import org.infinispan.server.resp.commands.sortedset.ZCARD;
+import org.infinispan.server.resp.commands.sortedset.ZCOUNT;
 import org.infinispan.server.resp.commands.sortedset.ZRANGE;
 import org.infinispan.server.resp.commands.string.APPEND;
 import org.infinispan.server.resp.commands.string.DECR;
@@ -107,7 +108,7 @@ public final class Commands {
       ALL_COMMANDS[18] = new RespCommand[]{new SET(), new SADD(), new STRLEN(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN(), new SETRANGE()};
       ALL_COMMANDS[19] = new RespCommand[]{new TTL(), new TYPE()};
       ALL_COMMANDS[20] = new RespCommand[]{new UNSUBSCRIBE()};
-      ALL_COMMANDS[25] = new RespCommand[]{new ZADD(), new ZCARD(), new ZRANGE()};
+      ALL_COMMANDS[25] = new RespCommand[]{new ZADD(), new ZCARD(), new ZCOUNT(), new ZRANGE()};
    }
 
    public static List<RespCommand> all() {

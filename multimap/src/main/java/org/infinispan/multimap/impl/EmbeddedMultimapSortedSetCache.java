@@ -8,6 +8,7 @@ import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.multimap.impl.function.sortedset.AddManyFunction;
+import org.infinispan.multimap.impl.function.sortedset.CountFunction;
 
 import java.util.Collection;
 import java.util.Set;
@@ -113,6 +114,22 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
    public CompletionStage<SortedSet<SortedSetBucket.ScoredValue<V>>> getValue(K key) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       return cache.getAsync(key).thenApply(b -> b.getScoredEntries());
+   }
+
+   /**
+    * Counts the number of elements between the given min and max scores.
+    *
+    * @param key, the name of the sorted set
+    * @param min, the min score
+    * @param max, the max score
+    * @param includeMin, include elements with the min score in the count
+    * @param includeMax, include elements with the max score in the count
+    * @return the number of elements in between min and max scores
+    */
+   public CompletionStage<Long> count(K key, double min, boolean includeMin, double max, boolean includeMax) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      return readWriteMap.eval(key,
+            new CountFunction<>(min, includeMin, max, includeMax));
    }
 
    private void requireSameLength(double[] scores, V[] values) {

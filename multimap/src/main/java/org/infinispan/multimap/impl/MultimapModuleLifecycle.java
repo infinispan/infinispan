@@ -27,6 +27,7 @@ import org.infinispan.multimap.impl.function.multimap.PutFunction;
 import org.infinispan.multimap.impl.function.multimap.RemoveFunction;
 import org.infinispan.multimap.impl.function.set.AddFunction;
 import org.infinispan.multimap.impl.function.sortedset.AddManyFunction;
+import org.infinispan.multimap.impl.function.sortedset.CountFunction;
 
 
 /**
@@ -90,7 +91,7 @@ public class MultimapModuleLifecycle implements ModuleLifecycle {
     *
     * @param externalizerMap
     */
-   private void addHashMapExternalizers(Map<Integer, AdvancedExternalizer<?>> externalizerMap) {
+   private static void addHashMapExternalizers(Map<Integer, AdvancedExternalizer<?>> externalizerMap) {
       addAdvancedExternalizer(externalizerMap, HashMapPutFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, HashMapKeySetFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, HashMapValuesFunction.EXTERNALIZER);
@@ -112,6 +113,7 @@ public class MultimapModuleLifecycle implements ModuleLifecycle {
     */
    private static void addSortedSetExternalizers(Map<Integer, AdvancedExternalizer<?>> externalizerMap) {
       addAdvancedExternalizer(externalizerMap, AddManyFunction.EXTERNALIZER);
+      addAdvancedExternalizer(externalizerMap, CountFunction.EXTERNALIZER);
    }
 
    private static void addAdvancedExternalizer(Map<Integer, AdvancedExternalizer<?>> map, AdvancedExternalizer<?> ext) {
