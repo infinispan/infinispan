@@ -65,6 +65,9 @@ public class MultimapObjectWrapper<T> implements Comparable<MultimapObjectWrappe
 
    @Override
    public int compareTo(MultimapObjectWrapper other) {
+      if (other == null) {
+         throw new NullPointerException();
+      }
       if (this.equals(other)) {
          return 0;
       }
@@ -77,7 +80,7 @@ public class MultimapObjectWrapper<T> implements Comparable<MultimapObjectWrappe
          return Arrays.compare((byte[]) object, (byte[]) other.object);
       }
 
-      return object.toString().compareTo(other.toString());
+      throw new ClassCastException("can't compare");
    }
 
    @Override

@@ -18,8 +18,14 @@ import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.multimap.impl.MultimapTestUtils.ELAIA;
+import static org.infinispan.multimap.impl.MultimapTestUtils.FELIX;
+import static org.infinispan.multimap.impl.MultimapTestUtils.IGOR;
+import static org.infinispan.multimap.impl.MultimapTestUtils.IZARO;
+import static org.infinispan.multimap.impl.MultimapTestUtils.JULIEN;
 import static org.infinispan.multimap.impl.MultimapTestUtils.NAMES_KEY;
 import static org.infinispan.multimap.impl.MultimapTestUtils.OIHANA;
+import static org.infinispan.multimap.impl.MultimapTestUtils.PEPE;
+import static org.infinispan.multimap.impl.MultimapTestUtils.RAMON;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -81,19 +87,29 @@ public class DistributedMultimapSortedSetCacheTest extends BaseDistFunctionalTes
 
    public void testAddMany() {
       initAndTest();
-      EmbeddedMultimapSortedSetCache<String, Person> list = getMultimapCacheMember();
-      await(list.addMany(NAMES_KEY, new double[] { 1.1, 9.1 }, new Person[] { OIHANA, ELAIA }, SortedSetAddArgs.create().build()));
+      EmbeddedMultimapSortedSetCache<String, Person> sortedSet = getMultimapCacheMember();
+      await(sortedSet.addMany(NAMES_KEY, new double[] { 1.1, 9.1 }, new Person[] { OIHANA, ELAIA }, SortedSetAddArgs.create().build()));
       assertValuesAndOwnership(NAMES_KEY, SortedSetBucket.ScoredValue.of(1.1, OIHANA));
       assertValuesAndOwnership(NAMES_KEY, SortedSetBucket.ScoredValue.of(9.1, ELAIA));
    }
 
+   public void testCount() {
+      initAndTest();
+      EmbeddedMultimapSortedSetCache<String, Person> sortedSet = getMultimapCacheMember();
+      await(sortedSet.addMany(NAMES_KEY,
+            new double[] { 1, 1, 2, 2, 2, 3, 3, 3 },
+            new Person[] { OIHANA, ELAIA, FELIX, RAMON, JULIEN, PEPE, IGOR, IZARO },
+            SortedSetAddArgs.create().build()));
+      assertThat(await(sortedSet.size(NAMES_KEY))).isEqualTo(8);
+      assertThat(await(sortedSet.count(NAMES_KEY, 1, true, 3, true))).isEqualTo(8);
+   }
 
-   protected void assertValuesAndOwnership(String key, SortedSetBucket.ScoredValue value) {
+   protected void assertValuesAndOwnership(String key, SortedSetBucket.ScoredValue<Person> value) {
       assertOwnershipAndNonOwnership(key, l1CacheEnabled);
       assertOnAllCaches(key, value);
    }
 
-   protected void assertOnAllCaches(Object key, SortedSetBucket.ScoredValue value) {
+   protected void assertOnAllCaches(Object key, SortedSetBucket.ScoredValue<Person> value) {
       for (Map.Entry<Address, EmbeddedMultimapSortedSetCache<String, Person>> entry : sortedSetCluster.entrySet()) {
          FunctionalTestUtils.await(entry.getValue().get((String) key).thenAccept(v -> {
                   assertNotNull(format("values on the key %s must be not null", key), v);

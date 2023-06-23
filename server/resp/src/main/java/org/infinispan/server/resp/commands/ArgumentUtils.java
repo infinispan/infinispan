@@ -23,7 +23,23 @@ public final class ArgumentUtils {
       return new String(argument, CharsetUtil.US_ASCII);
    }
 
+   /**
+    * Parse Double, removing an offset from the argument
+    * @param argument
+    * @param offset, starting from
+    * @return double value
+    */
+   public static double toDouble(byte[] argument, int offset) {
+      if (argument == null || argument.length == 0)
+         throw new NumberFormatException("Empty argument");
+
+      return Double.parseDouble(new String(argument, offset, argument.length - offset, CharsetUtil.US_ASCII));
+   }
+
    public static double toDouble(byte[] argument) {
+      if (argument == null || argument.length == 0)
+         throw new NumberFormatException("Empty argument");
+
       return Double.parseDouble(toNumberString(argument));
    }
 
@@ -62,5 +78,29 @@ public final class ArgumentUtils {
       if (v > Integer.MAX_VALUE || v < Integer.MIN_VALUE)
          throw new NumberFormatException("Value out of range: " + v);
       return (int) v;
+   }
+
+   /**
+    * Checks if a possible numeric argument is "-inf".
+    * @param arg
+    * @return true if byte[] is -inf
+    */
+   public static boolean isNegativeInf(byte[] arg) {
+      if (arg.length != 4)
+         return false;
+
+      return arg[0] == (byte) '-' && arg[1] == (byte) 'i' && arg[2] == (byte) 'n' && arg[3] == (byte) 'f';
+   }
+
+   /**
+    * Checks if a possible numeric argument is "+inf".
+    * @param arg
+    * @return true if byte[] is +inf
+    */
+   public static boolean isPositiveInf(byte[] arg) {
+      if (arg.length != 4)
+         return false;
+
+      return arg[0] == (byte) '+' && arg[1] == (byte) 'i' && arg[2] == (byte) 'n' && arg[3] == (byte) 'f';
    }
 }
