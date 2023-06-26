@@ -1,0 +1,70 @@
+[id='tracing_cache']
+= Configure tracing at cache level
+
+Once the tracing is link:#configuring-tracing_{context}[configured at server level],
+it will be automatically enabled by default for all caches.
+A cache configuration level of tracing allows on the other hand to enable or disable it at cache level and at runtime.
+
+[discrete]
+== Tracing categories
+
+Several categories are potentially traced:
+
+* Container. That are all the main cache operations, such as replace, put, clear, getForReplace, remove operations and size. With the exception of all the getting operation.
+* Cluster. Operations that are replicated to another node in the same cluster.
+* X-Site. Operations that are replicated to another external site.
+* Persistence. All the operations involving persistence via a cache store and/or cache loader.
+
+Each of category can be enabled/disabled at start time or runtime using the related tracing configuration attributes.
+By default only the container category is enabled.
+
+There is also the `Security` category, to trace security audit events.
+This category is configured globally, not only at cache level, since their events can have different scopes (cache, container or server),
+not only cache scope.
+
+[discrete]
+== Enable/disable tracing for a given cache
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/tracing_cache_config.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/tracing_cache_config.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/tracing_cache_config.yaml[]
+----
+
+[discrete]
+== Enable/disable tracing at runtime
+
+The cache-level tracing attribute `enable` is a mutable attribute,
+it means it can be changed at runtime without the need to restart the Infinispan cluster.
+
+To change a mutable attribute both HotRod and REST APIs can be used.
+
+.HotRod
+[source,java,options="nowrap",subs=attributes+,role="primary"]
+----
+remoteCacheManager.administration()
+   .updateConfigurationAttribute(CACHE_A, "tracing.enabled", "false");
+----
+
+.REST
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+restClient.cache(CACHE_A)
+   .updateConfigurationAttribute("tracing.enabled", "false");
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:{rest_docs}#rest_v2_cache_mutable_attribute_set[Updating cache configuration attributes]
