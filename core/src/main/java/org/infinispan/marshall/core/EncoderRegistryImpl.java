@@ -99,22 +99,20 @@ public class EncoderRegistryImpl implements EncoderRegistry {
          throw new NullPointerException("Encoder class or identifier must be provided!");
       }
 
-      Encoder encoder;
       if (encoderId != EncoderIds.NO_ENCODER) {
-         encoder = encoderMap.get(encoderId);
+         Encoder encoder = encoderMap.get(encoderId);
          if (encoder == null) {
             throw CONTAINER.encoderIdNotFound(encoderId);
          }
+         return encoder;
       } else {
-         encoder = encoderMap.values().stream()
-                             .filter(e -> e.getClass().equals(clazz))
-                             .findFirst()
-                             .orElse(null);
-         if (encoder == null) {
-            throw CONTAINER.encoderClassNotFound(clazz);
+         for (Encoder e : encoderMap.values()) {
+            if (e.getClass().equals(clazz)) {
+               return e;
+            }
          }
+         throw CONTAINER.encoderClassNotFound(clazz);
       }
-      return encoder;
    }
 
    @Override
