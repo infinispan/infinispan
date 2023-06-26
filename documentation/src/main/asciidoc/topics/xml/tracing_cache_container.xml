@@ -1,0 +1,9 @@
+<infinispan>
+  <cache-container statistics="true">
+    <tracing collector-endpoint="http://localhost:4318"
+             enabled="true"
+             exporter-protocol="otlp"
+             service-name="infinispan-server"
+             security="false" />
+  </cache-container>
+</infinispan>
