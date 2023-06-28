@@ -57,7 +57,7 @@ public final class AddFunction<K, V> implements SetBucketBaseFunction<K, V, Bool
 
       @Override
       public Integer getId() {
-         return ExternalizerIds.ADD_FUNCTION;
+         return ExternalizerIds.SET_ADD_FUNCTION;
       }
 
       @Override
