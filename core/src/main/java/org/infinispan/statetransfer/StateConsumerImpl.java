@@ -161,9 +161,6 @@ public class StateConsumerImpl implements StateConsumer {
    protected volatile KeyInvalidationListener keyInvalidationListener; //for test purpose only!
 
    protected volatile CacheTopology cacheTopology;
-   // The first topology in which the local node was a member. Any command with a lower
-   // topology id will be ignored.
-   private final int firstTopologyAsMember = Integer.MAX_VALUE;
 
    /**
     * Indicates if there is a state transfer in progress. It is set to the new topology id when onTopologyUpdate with
@@ -678,7 +675,7 @@ public class StateConsumerImpl implements StateConsumer {
                       boolean lastChunk = stateChunk.isLastChunk();
                       inboundTransfer.onStateReceived(stateChunk.getSegmentId(), lastChunk);
                       if (lastChunk) {
-                         onCompletedSegment(stateChunk.getSegmentId());
+                         onCompletedSegment(stateChunk.getSegmentId(), inboundTransfer);
                       }
                    });
       } else {
@@ -689,10 +686,13 @@ public class StateConsumerImpl implements StateConsumer {
       return CompletableFutures.completedNull();
    }
 
-   protected void onCompletedSegment(int segmentId) {
-      commitManager.stopTrackFor(PUT_FOR_STATE_TRANSFER, segmentId);
+   private void onCompletedSegment(int segmentId, InboundTransferTask inboundTransfer) {
       synchronized (transferMapsLock) {
-         transfersBySegment.remove(segmentId);
+         List<InboundTransferTask> innerTransfers = transfersBySegment.get(segmentId);
+         if (innerTransfers != null && innerTransfers.remove(inboundTransfer) && innerTransfers.isEmpty()) {
+            commitManager.stopTrackFor(PUT_FOR_STATE_TRANSFER, segmentId);
+            transfersBySegment.remove(segmentId);
+         }
       }
    }
 
