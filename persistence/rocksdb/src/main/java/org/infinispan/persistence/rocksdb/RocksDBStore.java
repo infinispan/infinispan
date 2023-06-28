@@ -37,6 +37,7 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshallableEntryImpl;
@@ -55,7 +56,6 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
@@ -419,13 +419,13 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
          iterator.seekToFirst();
 
          return Flowable.fromIterable(() ->
-               new AbstractIterator<byte[]>() {
+               new BaseRocksIterator<>(iterator) {
                   @Override
                   protected byte[] getNext() {
-                     if (!iterator.isValid()) {
+                     byte[] keyBytes = readKey();
+                     if (keyBytes == null)
                         return null;
-                     }
-                     byte[] keyBytes = iterator.key();
+
                      Long time = unmarshall(keyBytes);
                      if (time > now)
                         return null;
@@ -434,16 +434,20 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
                      } catch (RocksDBException e) {
                         throw new PersistenceException(e);
                      }
-                     byte[] value = iterator.value();
-                     iterator.next();
+                     byte[] value = readValue();
+                     moveNext();
                      return value;
                   }
+
+
                });
       }, entry -> {
          entry.getKey().close();
          RocksIterator rocksIterator = entry.getValue();
          if (rocksIterator != null) {
-            rocksIterator.close();
+            synchronized (rocksIterator) {
+               rocksIterator.close();
+            }
          }
       });
 
@@ -605,14 +609,13 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
       }
    }
 
-   private class RocksLegacyEntryIterator extends AbstractIterator<MarshallableEntry<K, V>> {
-      private final RocksIterator it;
+   private class RocksLegacyEntryIterator extends BaseRocksIterator<MarshallableEntry<K, V>> {
       private final long now;
       private final PersistenceMarshaller pm;
       private final Marshaller userMarshaller;
 
       RocksLegacyEntryIterator(RocksIterator it) {
-         this.it = it;
+         super(it);
          this.now = timeService.wallClockTime();
          this.pm = ctx.getPersistenceMarshaller();
          this.userMarshaller = pm.getUserMarshaller();
@@ -621,9 +624,12 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
       @Override
       protected MarshallableEntry<K, V> getNext() {
          MarshallableEntry<K, V> entry = null;
-         while (entry == null && it.isValid()) {
-            K key = unmarshall(it.key(), userMarshaller);
-            MarshalledValue mv = unmarshall(it.value(), pm);
+         while (entry == null ) {
+            K key = unmarshall(readKey(), userMarshaller);
+            if (key == null) break;
+
+            MarshalledValue mv = unmarshall(readValue(), pm);
+            if (mv == null) break;
             V value = unmarshall(mv.getValueBytes().getBuf(), userMarshaller);
             Metadata meta;
             try {
@@ -638,19 +644,55 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
             if (me != null && !me.isExpired(now)) {
                entry = me;
             }
-            it.next();
+            moveNext();
          }
          return entry;
       }
    }
 
-   private class RocksEntryIterator extends AbstractIterator<MarshallableEntry<K, V>> {
+   private static abstract class BaseRocksIterator<T> extends AbstractIterator<T> {
       private final RocksIterator it;
+
+      private BaseRocksIterator(RocksIterator it) {
+         this.it = it;
+      }
+
+      protected boolean isValid() {
+         synchronized (it) {
+            return it.isOwningHandle() && it.isValid();
+         }
+      }
+
+      protected byte[] readKey() {
+         synchronized (it) {
+            if (!isValid()) return null;
+
+            return it.key();
+         }
+      }
+
+      protected byte[] readValue() {
+         synchronized (it) {
+            if (!isValid()) return null;
+            return it.value();
+         }
+      }
+
+      protected void moveNext() {
+         synchronized (it) {
+            if (isValid()) {
+               it.next();
+            }
+         }
+      }
+   }
+
+   private class RocksEntryIterator extends BaseRocksIterator<MarshallableEntry<K, V>> {
       private final Predicate<? super K> filter;
       private final long now;
 
       RocksEntryIterator(RocksIterator it, Predicate<? super K> filter, long now) {
-         this.it = it;
+         super(it);
          this.filter = filter;
          this.now = now;
       }
@@ -658,15 +700,16 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
       @Override
       protected MarshallableEntry<K, V> getNext() {
          MarshallableEntry<K, V> entry = null;
-         while (entry == null && it.isValid()) {
-            K key = unmarshall(it.key());
+         while (entry == null) {
+            K key = unmarshall(readKey());
+            if (key == null) break;
             if (filter == null || filter.test(key)) {
-               MarshallableEntry<K, V> me = unmarshallEntry(key, it.value());
+               MarshallableEntry<K, V> me = unmarshallEntry(key, readValue());
                if (me != null && !me.isExpired(now)) {
                   entry = me;
                }
             }
-            it.next();
+            moveNext();
          }
          return entry;
       }
@@ -799,11 +842,14 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
             if (iterator == null) {
                return Flowable.empty();
             }
+            // Called first, no need for synchronization.
             iterator.seekToFirst();
             return function.apply(iterator);
          }, iterator -> {
             if (iterator != null) {
-               iterator.close();
+               synchronized (iterator) {
+                  iterator.close();
+               }
             }
             readOptions.close();
          }));
