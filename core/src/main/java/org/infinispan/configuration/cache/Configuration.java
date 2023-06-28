@@ -36,6 +36,7 @@ public class Configuration extends ConfigurationElement<Configuration> implement
    private final SecurityConfiguration securityConfiguration;
    private final SitesConfiguration sitesConfiguration;
    private final StatisticsConfiguration statisticsConfiguration;
+   private final TracingConfiguration tracingConfiguration;
    private final TransactionConfiguration transactionConfiguration;
    private final UnsafeConfiguration unsafeConfiguration;
    private final boolean template;
@@ -46,6 +47,7 @@ public class Configuration extends ConfigurationElement<Configuration> implement
                  EncodingConfiguration encodingConfiguration,
                  QueryConfiguration queryConfiguration,
                  IndexingConfiguration indexingConfiguration,
+                 TracingConfiguration tracingConfiguration,
                  InvocationBatchingConfiguration invocationBatchingConfiguration,
                  StatisticsConfiguration statisticsConfiguration,
                  PersistenceConfiguration persistenceConfiguration,
@@ -62,6 +64,7 @@ public class Configuration extends ConfigurationElement<Configuration> implement
             encodingConfiguration,
             queryConfiguration,
             indexingConfiguration,
+            tracingConfiguration,
             statisticsConfiguration,
             persistenceConfiguration,
             lockingConfiguration,
@@ -77,6 +80,7 @@ public class Configuration extends ConfigurationElement<Configuration> implement
       this.expirationConfiguration = expirationConfiguration;
       this.queryConfiguration = queryConfiguration;
       this.indexingConfiguration = indexingConfiguration;
+      this.tracingConfiguration = tracingConfiguration;
       this.invocationBatchingConfiguration = invocationBatchingConfiguration;
       this.statisticsConfiguration = statisticsConfiguration;
       this.persistenceConfiguration = persistenceConfiguration;
@@ -115,6 +119,10 @@ public class Configuration extends ConfigurationElement<Configuration> implement
 
    public IndexingConfiguration indexing() {
       return indexingConfiguration;
+   }
+
+   public TracingConfiguration tracing() {
+      return tracingConfiguration;
    }
 
    public InvocationBatchingConfiguration invocationBatching() {
@@ -173,6 +181,7 @@ public class Configuration extends ConfigurationElement<Configuration> implement
             ", expiration=" + expirationConfiguration +
             ", query=" + queryConfiguration +
             ", indexing=" + indexingConfiguration +
+            ", tracing=" + tracingConfiguration +
             ", invocationBatching=" + invocationBatchingConfiguration +
             ", locking=" + lockingConfiguration +
             ", memory=" + memoryConfiguration +
@@ -208,6 +217,7 @@ public class Configuration extends ConfigurationElement<Configuration> implement
             && Objects.equals(securityConfiguration, that.securityConfiguration)
             && Objects.equals(sitesConfiguration, that.sitesConfiguration)
             && Objects.equals(statisticsConfiguration, that.statisticsConfiguration)
+            && Objects.equals(tracingConfiguration, that.tracingConfiguration)
             && Objects.equals(transactionConfiguration, that.transactionConfiguration)
             && Objects.equals(unsafeConfiguration, that.unsafeConfiguration);
    }
@@ -228,6 +238,7 @@ public class Configuration extends ConfigurationElement<Configuration> implement
             securityConfiguration,
             sitesConfiguration,
             statisticsConfiguration,
+            tracingConfiguration,
             transactionConfiguration,
             unsafeConfiguration,
             template
@@ -261,6 +272,8 @@ public class Configuration extends ConfigurationElement<Configuration> implement
       if (!sitesConfiguration.matches(other.sitesConfiguration))
          return false;
       if (!statisticsConfiguration.matches(other.statisticsConfiguration))
+         return false;
+      if (!tracingConfiguration.matches(other.tracingConfiguration))
          return false;
       if (!transactionConfiguration.matches(other.transactionConfiguration))
          return false;

@@ -1,0 +1,27 @@
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xi="http://www.w3.org/2001/XInclude"
+        xsi:schemaLocation="urn:infinispan:config:15.0 https://infinispan.org/schemas/infinispan-config-15.0.xsd
+                            urn:infinispan:server:15.0 https://infinispan.org/schemas/infinispan-server-15.0.xsd"
+        xmlns="urn:infinispan:config:15.0"
+        xmlns:server="urn:infinispan:server:15.0">
+
+   <xi:include href="jgroups/none.xml"/>
+
+   <cache-container name="default">
+      <tracing collector-endpoint="${infinispan.tracing.collector-endpoint}" />
+   </cache-container>
+
+   <server xmlns="urn:infinispan:server:15.0">
+
+      <xi:include href="interfaces/default.xml"/>
+
+      <xi:include href="socket-bindings/default.xml"/>
+
+      <xi:include href="security/none.xml"/>
+
+      <endpoints>
+         <xi:include href="endpoints/noauth.xml"/>
+      </endpoints>
+   </server>
+</infinispan>

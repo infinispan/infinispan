@@ -1,0 +1,4 @@
+infinispan:
+  cacheContainer:
+    tracing:
+      collector-endpoint: "sdjsd92k2..21232"

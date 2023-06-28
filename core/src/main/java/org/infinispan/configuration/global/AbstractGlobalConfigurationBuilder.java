@@ -27,6 +27,11 @@ abstract class AbstractGlobalConfigurationBuilder implements GlobalConfiguration
    }
 
    @Override
+   public GlobalTracingConfigurationBuilder tracing() {
+      return globalConfig.tracing();
+   }
+
+   @Override
    public GlobalJmxConfigurationBuilder jmx() {
       //TODO [anistor] globalConfig.jmx().enabled(true);  ????
       return globalConfig.jmx();

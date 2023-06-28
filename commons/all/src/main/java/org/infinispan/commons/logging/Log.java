@@ -283,6 +283,9 @@ public interface Log extends BasicLogger {
    @Message(value = "RESP cache '%s' should use RESPHashFunctionPartitioner but is using %s", id = 966)
    IllegalArgumentException respCacheUseDefineConsistentHash(String cacheName, String configured);
 
+   @Message(value = "Cannot parse Prometheus URL for tracing.'", id = 967)
+   CacheConfigurationException errorOnParsingPrometheusURLForTracing(@Cause Throwable t);
+
    //----- counters exceptions // don't use the same id range ------
 
    @Message(value = CounterOutOfBoundsException.FORMAT_MESSAGE, id = 29501)

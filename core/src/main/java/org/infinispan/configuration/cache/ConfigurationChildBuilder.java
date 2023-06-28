@@ -18,6 +18,8 @@ public interface ConfigurationChildBuilder {
 
    IndexingConfigurationBuilder indexing();
 
+   TracingConfigurationBuilder tracing();
+
    InvocationBatchingConfigurationBuilder invocationBatching();
 
    StatisticsConfigurationBuilder statistics();

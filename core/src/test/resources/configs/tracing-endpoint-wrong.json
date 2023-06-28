@@ -1,0 +1,9 @@
+{
+  "infinispan": {
+    "cache-container": {
+      "tracing" : {
+        "collector-endpoint" : "sdjsd92k2..21232"
+      }
+    }
+  }
+}

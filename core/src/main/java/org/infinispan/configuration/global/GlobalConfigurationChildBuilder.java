@@ -18,6 +18,11 @@ public interface GlobalConfigurationChildBuilder {
    GlobalMetricsConfigurationBuilder metrics();
 
    /**
+    * Global tracing configuration.
+    */
+   GlobalTracingConfigurationBuilder tracing();
+
+   /**
     * Global JMX configuration.
     */
    GlobalJmxConfigurationBuilder jmx();

@@ -28,4 +28,10 @@ public class YamlParsingTest extends AbstractInfinispanTest {
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), true, System.getProperties());
       Exceptions.expectException("^ISPN000327:.*broken.yaml\\[18,18\\].*", () -> parserRegistry.parseFile("configs/broken.yaml"), CacheConfigurationException.class);
    }
+
+   public void testInvalidTracingCollector() throws Exception {
+      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), true, System.getProperties());
+      ConfigurationBuilderHolder holder = parserRegistry.parseFile("configs/tracing-endpoint-wrong.yaml");
+      Exceptions.expectException("^ISPN000972:.*Tracing collector endoint 'sdjsd92k2..21232' is not valid.*", () -> holder.getGlobalConfigurationBuilder().build(), CacheConfigurationException.class);
+   }
 }

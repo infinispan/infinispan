@@ -400,6 +400,17 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
    }
 
+   public void testInvalidTracingCollector() {
+      String config = TestingUtil.wrapXMLWithSchema(
+            "<cache-container name=\"default\">\n" +
+                  "      <tracing collector-endpoint=\"sdjsd92k2..21232\" />\n" +
+                  "   </cache-container>"
+      );
+
+      InputStream is = new ByteArrayInputStream(config.getBytes());
+      expectException(CacheConfigurationException.class, "ISPN000972:.*", () -> TestCacheManagerFactory.parseStream(is, false));
+   }
+
    public void testNodeNameNotInRaftMembers() {
       String config = TestingUtil.wrapXMLWithSchema(
             "<cache-container>" +

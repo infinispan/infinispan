@@ -355,6 +355,10 @@ public class CacheParser implements ConfigurationParser {
             this.parseIndexing(reader, holder);
             break;
          }
+         case TRACING: {
+            this.parseTracing(reader, holder);
+            break;
+         }
          case CUSTOM_INTERCEPTORS: {
             ParseUtils.removedSince(reader, 15, 0);
             CONFIG.customInterceptorsIgnored();
@@ -1478,6 +1482,25 @@ public class CacheParser implements ConfigurationParser {
             }
          }
       }
+   }
+
+   private void parseTracing(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
+      ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+         switch (attribute) {
+            case ENABLED:
+               builder.tracing().enabled(ParseUtils.parseBoolean(reader, i, value));
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+
+      // no nested properties at the moment
+      ParseUtils.requireNoContent(reader);
    }
 
    private void parseKeyTransformers(ConfigurationReader reader, ConfigurationBuilderHolder holder, ConfigurationBuilder builder) {

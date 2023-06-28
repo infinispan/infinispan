@@ -47,6 +47,11 @@ abstract class AbstractConfigurationChildBuilder implements ConfigurationChildBu
    }
 
    @Override
+   public TracingConfigurationBuilder tracing() {
+      return builder.tracing();
+   }
+
+   @Override
    public InvocationBatchingConfigurationBuilder invocationBatching() {
       return builder.invocationBatching();
    }

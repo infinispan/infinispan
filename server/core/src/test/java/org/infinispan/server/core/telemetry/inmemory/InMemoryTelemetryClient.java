@@ -1,6 +1,8 @@
 package org.infinispan.server.core.telemetry.inmemory;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanKind;
@@ -46,5 +48,9 @@ public class InMemoryTelemetryClient {
 
    public InMemoryTelemetryService telemetryService() {
       return telemetryService;
+   }
+
+   public static Map<String, List<SpanData>> aggregateByName(List<SpanData> spans) {
+      return spans.stream().collect(Collectors.groupingBy(SpanData::getName, Collectors.toList()));
    }
 }

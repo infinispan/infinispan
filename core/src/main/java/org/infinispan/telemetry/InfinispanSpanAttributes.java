@@ -8,7 +8,6 @@ import org.infinispan.configuration.cache.Configuration;
 public class InfinispanSpanAttributes {
 
    private final String cacheName;
-   // TODO ISPN-14974 Use cache category and configuration to enable/disable tracing
    private final Configuration cacheConfiguration;
    private final SpanCategory category;
 
@@ -27,8 +26,11 @@ public class InfinispanSpanAttributes {
    }
 
    public boolean isCategoryDisabled() {
-      // TODO ISPN-14974 Use cache category and configuration to enable/disable tracing
-      return false;
+      if (cacheConfiguration == null) {
+         return false;
+      }
+
+      return !cacheConfiguration.tracing().enabled();
    }
 
    public static class Builder {

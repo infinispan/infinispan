@@ -93,6 +93,10 @@ public class GlobalConfiguration {
       return cacheContainerConfiguration.blockingThreadPool();
    }
 
+   public GlobalTracingConfiguration tracing() {
+      return cacheContainerConfiguration.tracing();
+   }
+
    public GlobalMetricsConfiguration metrics() {
       return cacheContainerConfiguration.metrics();
    }

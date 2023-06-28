@@ -46,6 +46,7 @@ class CacheContainerConfiguration {
 
    private final ThreadsConfiguration threads;
    private final GlobalMetricsConfiguration metrics;
+   private final GlobalTracingConfiguration tracing;
    private final GlobalJmxConfiguration jmx;
    private final TransportConfiguration transport;
    private final GlobalSecurityConfiguration security;
@@ -57,6 +58,7 @@ class CacheContainerConfiguration {
    CacheContainerConfiguration(AttributeSet attributes,
                                ThreadsConfiguration threadsConfiguration,
                                GlobalMetricsConfiguration metrics,
+                               GlobalTracingConfiguration tracing,
                                GlobalJmxConfiguration jmx,
                                TransportConfiguration transport,
                                GlobalSecurityConfiguration security,
@@ -71,6 +73,7 @@ class CacheContainerConfiguration {
       this.zeroCapacityNode = attributes.attribute(ZERO_CAPACITY_NODE);
       this.threads = threadsConfiguration;
       this.metrics = metrics;
+      this.tracing = tracing;
       this.jmx = jmx;
       this.globalState = globalState;
       this.shutdown = shutdown;
@@ -102,6 +105,10 @@ class CacheContainerConfiguration {
 
    public GlobalMetricsConfiguration metrics() {
       return metrics;
+   }
+
+   public GlobalTracingConfiguration tracing() {
+      return tracing;
    }
 
    public GlobalJmxConfiguration jmx() {
