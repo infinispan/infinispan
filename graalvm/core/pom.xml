@@ -149,6 +149,8 @@
                         <phase>integration-test</phase>
                         <configuration>
                            <buildArgs>
+                              -H:+ReportExceptionStackTraces
+                              -H:+AllowDeprecatedBuilderClassesOnImageClasspath
                               -J-Djava.util.logging.manager=org.jboss.logmanager.LogManager
                               -H:IncludeResources=embedded.xml
                               -H:IncludeResources=stacks/udp.xml
