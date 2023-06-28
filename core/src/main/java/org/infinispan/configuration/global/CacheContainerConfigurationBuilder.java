@@ -26,6 +26,7 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
 
    private final AttributeSet attributes;
    private final GlobalMetricsConfigurationBuilder metrics;
+   private final GlobalTracingConfigurationBuilder tracing;
    private final GlobalJmxConfigurationBuilder jmx;
    private final GlobalStateConfigurationBuilder globalState;
    private final TransportConfigurationBuilder transport;
@@ -38,6 +39,7 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
       super(globalConfig);
       this.attributes = CacheContainerConfiguration.attributeDefinitionSet();
       this.metrics = new GlobalMetricsConfigurationBuilder(globalConfig);
+      this.tracing = new GlobalTracingConfigurationBuilder(globalConfig);
       this.jmx = new GlobalJmxConfigurationBuilder(globalConfig);
       this.globalState = new GlobalStateConfigurationBuilder(globalConfig);
       this.threads = new ThreadsConfigurationBuilder(globalConfig);
@@ -79,6 +81,11 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
    @Override
    public GlobalMetricsConfigurationBuilder metrics() {
       return metrics;
+   }
+
+   @Override
+   public GlobalTracingConfigurationBuilder tracing() {
+      return tracing;
    }
 
    @Override
@@ -231,6 +238,7 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
 
       Arrays.asList(
             metrics,
+            tracing,
             jmx,
             globalState,
             transport,
@@ -260,6 +268,7 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
             attributes.protect(),
             threads.create(),
             metrics.create(),
+            tracing.create(),
             jmx.create(),
             transport.create(),
             security.create(),

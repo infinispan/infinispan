@@ -266,6 +266,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
          writeSecurity(writer, globalConfiguration);
          writeSerialization(writer, globalConfiguration);
          writeMetrics(writer, globalConfiguration);
+         writeTracing(writer, globalConfiguration);
          writeJMX(writer, globalConfiguration);
          writeGlobalState(writer, globalConfiguration);
          writeExtraConfiguration(writer, globalConfiguration.modules(), ParserScope.CACHE_CONTAINER);
@@ -568,6 +569,10 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       }
    }
 
+   private void writeTracing(ConfigurationWriter writer, GlobalConfiguration globalConfiguration) {
+      globalConfiguration.tracing().attributes().write(writer, Element.TRACING);
+   }
+
    private void writeJMX(ConfigurationWriter writer, GlobalConfiguration globalConfiguration) {
       GlobalJmxConfiguration jmx = globalConfiguration.jmx();
       AttributeSet attributes = jmx.attributes();
@@ -632,6 +637,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       writePersistence(writer, configuration);
       writeQuery(writer, configuration);
       writeIndexing(writer, configuration);
+      writeTracing(writer, configuration);
       writeSecurity(writer, configuration);
       if (configuration.clustering().cacheMode().needsStateTransfer()) {
          configuration.clustering().stateTransfer().attributes().write(writer, Element.STATE_TRANSFER.getLocalName());
@@ -747,6 +753,10 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
          attributes.write(writer, GlobalJmxConfiguration.PROPERTIES);
          writer.writeEndElement();
       }
+   }
+
+   private void writeTracing(ConfigurationWriter writer, Configuration configuration) {
+      configuration.tracing().attributes().write(writer, Element.TRACING);
    }
 
    private void writePersistence(ConfigurationWriter writer, Configuration configuration) {

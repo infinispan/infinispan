@@ -24,6 +24,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    private final ExpirationConfigurationBuilder expiration;
    private final QueryConfigurationBuilder query;
    private final IndexingConfigurationBuilder indexing;
+   private final TracingConfigurationBuilder tracing;
    private final InvocationBatchingConfigurationBuilder invocationBatching;
    private final StatisticsConfigurationBuilder statistics;
    private final PersistenceConfigurationBuilder persistence;
@@ -45,6 +46,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       this.expiration = new ExpirationConfigurationBuilder(this);
       this.query = new QueryConfigurationBuilder(this);
       this.indexing = new IndexingConfigurationBuilder(this);
+      this.tracing = new TracingConfigurationBuilder(this);
       this.invocationBatching = new InvocationBatchingConfigurationBuilder(this);
       this.statistics = new StatisticsConfigurationBuilder(this);
       this.persistence = new PersistenceConfigurationBuilder(this);
@@ -90,6 +92,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    @Override
    public IndexingConfigurationBuilder indexing() {
       return indexing;
+   }
+
+   @Override
+   public TracingConfigurationBuilder tracing() {
+      return tracing;
    }
 
    @Override
@@ -180,7 +187,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       }
       List<RuntimeException> validationExceptions = new ArrayList<>();
       for (Builder<?> validatable:
-            asList(clustering, expiration, indexing, encoding,
+            asList(clustering, expiration, query, indexing, tracing, encoding,
                    invocationBatching, statistics, persistence, locking, transaction,
                    unsafe, sites, memory)) {
          try {
@@ -214,7 +221,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    public void validate(GlobalConfiguration globalConfig) {
       List<RuntimeException> validationExceptions = new ArrayList<>();
       for (ConfigurationChildBuilder validatable:
-            asList(clustering, expiration, indexing,
+            asList(clustering, expiration, query, indexing, tracing,
                    invocationBatching, statistics, persistence, locking, transaction,
                    unsafe, sites, security, memory)) {
          try {
@@ -245,7 +252,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       for (Builder<?> module : modules)
          modulesConfig.add(module.create());
       return new Configuration(template, attributes.protect(), clustering.create(),
-                               expiration.create(), encoding.create(), query.create(), indexing.create(), invocationBatching.create(),
+                               expiration.create(), encoding.create(), query.create(), indexing.create(), tracing.create(), invocationBatching.create(),
                                statistics.create(), persistence.create(), locking.create(), security.create(),
                                transaction.create(), unsafe.create(), sites.create(), memory.create(), modulesConfig);
    }
@@ -260,6 +267,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       this.expiration.read(template.expiration(), combine);
       this.query.read(template.query(), combine);
       this.indexing.read(template.indexing(), combine);
+      this.tracing.read(template.tracing());
       this.invocationBatching.read(template.invocationBatching(), combine);
       this.statistics.read(template.statistics(), combine);
       this.persistence.read(template.persistence(), combine);
@@ -287,6 +295,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
             ", expiration=" + expiration +
             ", query=" + query +
             ", indexing=" + indexing +
+            ", tracing=" + tracing +
             ", invocationBatching=" + invocationBatching +
             ", statistics=" + statistics +
             ", persistence=" + persistence +

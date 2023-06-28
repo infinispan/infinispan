@@ -46,6 +46,7 @@ import org.infinispan.configuration.cache.QueryConfiguration;
 import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.configuration.cache.TracingConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalStateConfiguration;
 import org.infinispan.configuration.global.JGroupsConfiguration;
@@ -124,7 +125,9 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       INFINISPAN_150(15, 0) {
          @Override
          public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
-            IndexingConfiguration indexed = getConfiguration(holder, "indexed-manual-indexing").indexing();
+            Configuration manualIndexingConfig = getConfiguration(holder, "indexed-manual-indexing");
+
+            IndexingConfiguration indexed = manualIndexingConfig.indexing();
             assertThat(indexed.enabled()).isTrue();
             assertThat(indexed.indexingMode()).isEqualTo(IndexingMode.MANUAL);
             assertThat(indexed.sharding()).isNotNull();
@@ -141,6 +144,15 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
             query = getConfiguration(holder, "custom-default-max-results").query();
             assertThat(query.hitCountAccuracy()).isEqualTo(1000);
+
+            TracingConfiguration tracing = manualIndexingConfig.tracing();
+            // enabled by default, even if the tracing property is not present in the cache configuration
+            assertThat(tracing).isNotNull();
+            assertThat(tracing.enabled()).isTrue();
+
+            tracing = getConfiguration(holder, "disabled-tracing").tracing();
+            assertThat(tracing).isNotNull();
+            assertThat(tracing.enabled()).isFalse();
          }
       },
       INFINISPAN_140(14, 0) {

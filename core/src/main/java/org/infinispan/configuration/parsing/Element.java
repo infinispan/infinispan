@@ -135,6 +135,7 @@ public enum Element {
     THREAD_FACTORIES,
     THREAD_FACTORY,
     THREAD_POOLS,
+    TRACING,
     TRANSACTION,
     TRANSPORT,
     UNSAFE,

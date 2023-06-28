@@ -84,6 +84,10 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return cacheContainerConfiguration.metrics();
    }
 
+   public GlobalTracingConfigurationBuilder tracing() {
+      return cacheContainerConfiguration.tracing();
+   }
+
    @Override
    public GlobalJmxConfigurationBuilder jmx() {
       return cacheContainerConfiguration.jmx();

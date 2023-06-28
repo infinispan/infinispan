@@ -31,6 +31,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.cache.QueryConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.configuration.cache.TracingConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
@@ -123,6 +124,7 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
       compareAttributeSets(name, configurationBefore.expiration().attributes(), configurationAfter.expiration().attributes());
       compareIndexing(name, configurationBefore.indexing(), configurationAfter.indexing());
       compareQuery(name, configurationBefore.query(), configurationAfter.query());
+      compareTracing(name, configurationBefore.tracing(), configurationAfter.tracing());
       compareAttributeSets(name, configurationBefore.locking().attributes(), configurationAfter.locking().attributes());
       compareAttributeSets(name, configurationBefore.statistics().attributes(), configurationAfter.statistics().attributes());
       compareAttributeSets(name, configurationBefore.sites().attributes(), configurationAfter.sites().attributes());
@@ -145,6 +147,10 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
       assertEquals(String.format("Indexing attributes for %s mismatch", name), before.attributes(), after.attributes());
       assertEquals(String.format("Indexing reader for %s mismatch", name), before.reader(), after.reader());
       assertEquals(String.format("Indexing writer for %s mismatch", name), before.writer(), after.writer());
+   }
+
+   private void compareTracing(String name, TracingConfiguration before, TracingConfiguration after) {
+      assertEquals(String.format("Tracing attributes for %s mismatch", name), before.attributes(), after.attributes());
    }
 
    protected void compareExtraConfiguration(String name, Configuration configurationBefore, Configuration configurationAfter) {

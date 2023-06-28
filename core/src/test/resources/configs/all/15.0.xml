@@ -225,6 +225,9 @@
             </indexed-entities>
          </indexing>
       </distributed-cache>
+      <replicated-cache name="disabled-tracing">
+         <tracing enabled="false" />
+      </replicated-cache>
       <local-cache name="custom-default-max-results">
          <query default-max-results="10" hit-count-accuracy="1000" />
       </local-cache>

@@ -297,6 +297,13 @@
           </xs:documentation>
         </xs:annotation>
       </xs:element>
+      <xs:element name="tracing" type="tns:tracing" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Configures tracing, can be collected by an OpenTelemetry collector.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
       <xs:element name="jmx" type="tns:jmx" minOccurs="0">
         <xs:annotation>
           <xs:documentation>
@@ -833,6 +840,41 @@
     </xs:attribute>
   </xs:complexType>
 
+  <xs:complexType name="tracing">
+    <xs:attribute name="collector-endpoint" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          Enables tracing collection defining the collector that will receive the spans created by Infinispan.
+          The value is supposed to be a valid parsable URL containing the protocol,
+          the address and the port of the remote receiving process.
+          E.g., http://otlp-collector-host:4317.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="enabled" type="xs:boolean" default="${GlobalTracing.enabled}">
+      <xs:annotation>
+        <xs:documentation>
+          Tracing is enabled by default if "collector-endpoint" is defined.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="exporter-protocol" type="tns:tracing-exporter-protocol" default="${GlobalTracing.exporter-protocol}">
+      <xs:annotation>
+        <xs:documentation>
+          By default, the tracing spans will be exported applying the OTLP (OpenTelemetry Protocol).
+          This protocol can be changed, but an extra exporter dependency should be added in case.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="service-name" type="xs:string" default="${GlobalTracing.service-name}">
+      <xs:annotation>
+        <xs:documentation>
+          The service name used by tracing to identify the server process.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
   <xs:complexType name="jmx">
     <xs:sequence>
       <xs:element name="property" type="tns:property" minOccurs="0" maxOccurs="unbounded">
@@ -1168,6 +1210,23 @@
               <xs:documentation>
                 Affects how cache operations will be propagated to the indexes.
                 By default, all the changes to the cache will be immediately applied to the indexes.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="tracing" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>
+            Configures tracing for cache.
+          </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:attribute name="enabled" type="xs:boolean" default="${Tracing.enabled}">
+            <xs:annotation>
+              <xs:documentation>
+                Enable or disable tracing on the given cache.
+                This property can be used to enable or disable tracing at runtime.
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
@@ -2794,6 +2853,43 @@
       <xs:enumeration value="DONT_REGISTER">
         <xs:annotation>
           <xs:documentation>Don't register a shutdown hook</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="tracing-exporter-protocol">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="otlp">
+        <xs:annotation>
+          <xs:documentation>
+            Use the OpenTelemetry Protocol (OTLP). This is the default and the recommended option.
+            This option does not require any extra dependency.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="jaeger">
+        <xs:annotation>
+          <xs:documentation>
+            Tracing will be exported using gRPC and the Jaeger format.
+            This option will require the Jaeger exporter as extra dependency.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="zipkin">
+        <xs:annotation>
+          <xs:documentation>
+            Tracing will be exported in JSON Zipkin format using HTTP.
+            This option will require the Zipkin exporter as extra dependency.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="prometheus">
+        <xs:annotation>
+          <xs:documentation>
+            Tracing will be exported for a Prometheus collector.
+            This option will require the Prometheus exporter as extra dependency.
+          </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
     </xs:restriction>

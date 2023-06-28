@@ -4,10 +4,8 @@ import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
 import org.assertj.core.api.Assertions;
@@ -19,24 +17,28 @@ import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.helper.RestServerHelper;
-import org.infinispan.server.core.telemetry.OpenTelemetryService;
+import org.infinispan.server.core.telemetry.TelemetryServiceFactory;
 import org.infinispan.server.core.telemetry.inmemory.InMemoryTelemetryClient;
-import org.infinispan.telemetry.InfinispanTelemetry;
+import org.infinispan.telemetry.SpanCategory;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
+import io.opentelemetry.api.common.AttributeKey;
+import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.sdk.trace.data.SpanData;
 
-@Test(groups = "tracing", testName = "rest.tracing.TracingPropagationTest")
-public class TracingPropagationTest extends SingleCacheManagerTest {
+@Test(groups = "tracing", testName = "rest.tracing.RestTracingPropagationTest")
+public class RestTracingPropagationTest extends SingleCacheManagerTest {
 
    private static final String CACHE_NAME = "tracing";
+   private static final String CLIENT_SPAN_NAME = "user-client-side-span";
+   private static final String PUT_OPERATION_SPAN_NAME = "putValueToCache";
 
    // Configure OpenTelemetry SDK for tests
    private final InMemoryTelemetryClient telemetryClient = new InMemoryTelemetryClient();
@@ -46,12 +48,11 @@ public class TracingPropagationTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager();
-      cacheManager.createCache(CACHE_NAME, getDefaultClusteredCacheConfig(CacheMode.LOCAL).build());
+      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder().nonClusteredDefault();
+      global.tracing().collectorEndpoint(TelemetryServiceFactory.IN_MEMORY_COLLECTOR_ENDPOINT);
 
-      GlobalComponentRegistry globalComponentRegistry = GlobalComponentRegistry.of(cacheManager);
-      globalComponentRegistry.registerComponent(
-            new OpenTelemetryService(telemetryClient.telemetryService().openTelemetry()), InfinispanTelemetry.class);
+      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createServerModeCacheManager(global);
+      cacheManager.createCache(CACHE_NAME, getDefaultClusteredCacheConfig(CacheMode.LOCAL).build());
 
       restServer = new RestServerHelper(cacheManager);
       restServer.start(TestResourceTracker.getCurrentTestShortName());
@@ -66,7 +67,7 @@ public class TracingPropagationTest extends SingleCacheManagerTest {
    public void smokeTest() {
       RestCacheClient client = restClient.cache(CACHE_NAME);
 
-      telemetryClient.withinClientSideSpan("user-client-side-span", () -> {
+      telemetryClient.withinClientSideSpan(CLIENT_SPAN_NAME, () -> {
          // verify that the client thread contains the span context
          Map<String, String> contextMap = getContextMap();
          Assertions.assertThat(contextMap).isNotEmpty();
@@ -80,39 +81,29 @@ public class TracingPropagationTest extends SingleCacheManagerTest {
          assertThat(resp2).isOk();
       });
 
-      // Verify that the client span (user-client-side-span) and the two PUT server spans are exported correctly.
-      // We're going now to correlate the client span with the server spans!
-      List<SpanData> spans = telemetryClient.finishedSpanItems();
-      Assertions.assertThat(spans).hasSize(3);
+      // Verify that the client span (user-client-side-span) and the two PUT server spans are exported correctly
+      List<SpanData> allSpans = telemetryClient.finishedSpanItems();
+      Map<String, List<SpanData>> spansByName = InMemoryTelemetryClient.aggregateByName(allSpans);
 
-      String traceId = null;
-      Set spanIds = new HashSet();
-      Map<String, Integer> parentSpanIds = new HashMap<>();
-      String parentSpan = null;
+      Assertions.assertThat(spansByName).containsKeys(PUT_OPERATION_SPAN_NAME, CLIENT_SPAN_NAME);
 
-      for (SpanData span : spans) {
-         if (traceId == null) {
-            traceId = span.getTraceId();
-         } else {
-            // check that the spans have all the same trace id
-            Assertions.assertThat(span.getTraceId()).isEqualTo(traceId);
-         }
+      List<SpanData> clientSpans = spansByName.get(CLIENT_SPAN_NAME);
+      Assertions.assertThat(clientSpans).hasSize(1);
+      SpanData clientSpan = clientSpans.get(0);
+      String clientTraceId = clientSpan.getTraceId();
+      String clientSpanId = clientSpan.getSpanId();
 
-         spanIds.add(span.getSpanId());
-         parentSpanIds.compute(span.getParentSpanId(), (key, value) -> (value == null) ? 1 : value + 1);
+      List<SpanData> serverSpans = spansByName.get(PUT_OPERATION_SPAN_NAME);
+      Assertions.assertThat(serverSpans).hasSize(2).allSatisfy(spanData -> {
+         // Verify server spans are correctly correlated to the client span
+         Assertions.assertThat(spanData.getTraceId()).isEqualTo(clientTraceId);
+         Assertions.assertThat(spanData.getParentSpanId()).isEqualTo(clientSpanId);
 
-         Integer times = parentSpanIds.get(span.getParentSpanId());
-         if (times == 2) {
-            parentSpan = span.getParentSpanId();
-         }
-      }
-
-      // we have 3 different spans:
-      Assertions.assertThat(spanIds).hasSize(3);
-      // two of which have the same parent span
-      Assertions.assertThat(parentSpanIds).hasSize(2);
-      // that is the other span
-      Assertions.assertThat(spanIds).contains(parentSpan);
+         Attributes attributes = spanData.getAttributes();
+         Assertions.assertThat(attributes.get(AttributeKey.stringKey("cache"))).isEqualTo(CACHE_NAME);
+         Assertions.assertThat(attributes.get(AttributeKey.stringKey("category")))
+               .isEqualTo(SpanCategory.CONTAINER.toString());
+      });
    }
 
    @Override

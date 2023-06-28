@@ -45,6 +45,7 @@ import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.global.ThreadPoolBuilderAdapter;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.configuration.global.ThreadsConfigurationBuilder;
+import org.infinispan.configuration.global.TracingExporterProtocol;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.globalstate.ConfigurationStorage;
@@ -781,6 +782,10 @@ public class Parser extends CacheParser {
                parseMetrics(reader, holder);
                break;
             }
+            case TRACING: {
+               parseTracing(reader, holder);
+               break;
+            }
             case JMX: {
                parseJmx(reader, holder);
                break;
@@ -1104,6 +1109,37 @@ public class Parser extends CacheParser {
       }
 
       ParseUtils.requireNoContent(reader);
+   }
+
+   private void parseTracing(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
+      GlobalConfigurationBuilder builder = holder.getGlobalConfigurationBuilder();
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+         ParseUtils.requireNoContent(reader);
+         switch (attribute) {
+            case COLLECTOR_ENDPOINT: {
+               builder.tracing().collectorEndpoint(value);
+               break;
+            }
+            case ENABLED: {
+               builder.tracing().enabled(ParseUtils.parseBoolean(reader, i, value));
+               break;
+            }
+            case EXPORTER_PROTOCOL: {
+               builder.tracing().exporterProtocol(ParseUtils.parseEnum(reader, i, TracingExporterProtocol.class, value));
+               break;
+            }
+            case SERVICE_NAME: {
+               builder.tracing().serviceName(value);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
    }
 
    private void parseJmx(ConfigurationReader reader, ConfigurationBuilderHolder holder) {

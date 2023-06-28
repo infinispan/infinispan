@@ -42,6 +42,7 @@ public enum Attribute {
     CHUNK_SIZE,
     CLASS,
     CLUSTER,
+    COLLECTOR_ENDPOINT,
     COMMIT_INTERVAL,
     COMPACTION_THRESHOLD,
     COMPLETED_TX_TIMEOUT("complete-timeout"),
@@ -67,6 +68,7 @@ public enum Attribute {
     @Deprecated(forRemoval=true)
     EVICTION_STRATEGY,
     EXPIRATION_EXECUTOR,
+    EXPORTER_PROTOCOL,
     EXTENDS,
     FACTOR,
     FAIL_SILENTLY,
@@ -169,6 +171,7 @@ public enum Attribute {
     ROLES,
     SEGMENTED,
     SEGMENTS,
+    SERVICE_NAME,
     SHARDS,
     SHARED,
     SHUTDOWN_HOOK,
