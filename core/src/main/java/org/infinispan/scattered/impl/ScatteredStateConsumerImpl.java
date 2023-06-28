@@ -357,7 +357,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
    }
 
    @Override
-   protected void onCompletedSegment(int segmentId) {
+   protected void onCompletedSegment(int segmentId, InboundTransferTask inboundTransfer) {
       // On scattered mode is used only the `onTaskCompletion` method to remove a task when all segments are completed.
       // We override this method with no operation for scattered mode.
    }
