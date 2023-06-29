@@ -13,7 +13,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
+import org.infinispan.commons.configuration.io.ConfigurationResourceResolvers;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -89,7 +89,7 @@ class CacheConfigResource extends AbstractContainerResource {
             String zipPath = root.resolve(configFile).toString();
             ZipEntry entry = zip.getEntry(zipPath);
             try (InputStream is = zip.getInputStream(entry)) {
-               ConfigurationBuilderHolder builderHolder = parserRegistry.parse(is, ConfigurationResourceResolver.DEFAULT, MediaType.fromExtension(entry.getName()));
+               ConfigurationBuilderHolder builderHolder = parserRegistry.parse(is, ConfigurationResourceResolvers.DEFAULT, MediaType.fromExtension(entry.getName()));
                ConfigurationBuilder builder = builderHolder.getNamedConfigurationBuilders().get(configName);
                Configuration cfg = builder.template(true).build();
 

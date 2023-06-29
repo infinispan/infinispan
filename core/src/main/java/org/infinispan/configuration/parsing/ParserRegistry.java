@@ -26,6 +26,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.commons.configuration.io.ConfigurationReaderException;
 import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
+import org.infinispan.commons.configuration.io.ConfigurationResourceResolvers;
 import org.infinispan.commons.configuration.io.ConfigurationSchemaVersion;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.configuration.io.ConfigurationWriterException;
@@ -138,11 +139,11 @@ public class ParserRegistry implements NamespaceMappingParser {
    }
 
    public ConfigurationBuilderHolder parse(String s) {
-      return parse(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)), ConfigurationResourceResolver.DEFAULT, MediaType.APPLICATION_XML);
+      return parse(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)), ConfigurationResourceResolvers.DEFAULT, MediaType.APPLICATION_XML);
    }
 
    public ConfigurationBuilderHolder parse(String s, MediaType mediaType) {
-      return parse(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)), ConfigurationResourceResolver.DEFAULT, mediaType);
+      return parse(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8)), ConfigurationResourceResolvers.DEFAULT, mediaType);
    }
 
    /**

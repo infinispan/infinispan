@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.io.ConfigurationReader;
-import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
+import org.infinispan.commons.configuration.io.ConfigurationResourceResolvers;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.configuration.io.NamingStrategy;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -35,7 +35,7 @@ public class ConfigurationConversionTest {
         Properties properties = new Properties();
         properties.put(CacheParser.IGNORE_MISSING_TEMPLATES, "true");
         ConfigurationReader reader = ConfigurationReader.from(source)
-                .withResolver(ConfigurationResourceResolver.DEFAULT)
+                .withResolver(ConfigurationResourceResolvers.DEFAULT)
                 .withType(src)
                 .withProperties(properties)
                 .withNamingStrategy(NamingStrategy.KEBAB_CASE).build();
