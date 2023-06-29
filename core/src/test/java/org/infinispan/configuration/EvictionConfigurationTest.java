@@ -17,7 +17,7 @@ import java.util.ArrayDeque;
 import java.util.Queue;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
+import org.infinispan.commons.configuration.io.ConfigurationResourceResolvers;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.Configuration;
@@ -418,7 +418,7 @@ public class EvictionConfigurationTest extends AbstractInfinispanTest {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       REGISTRY.serialize(baos, "local", before);
       ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-      ConfigurationBuilderHolder holderAfter = REGISTRY.parse(bais, ConfigurationResourceResolver.DEFAULT, MediaType.APPLICATION_XML);
+      ConfigurationBuilderHolder holderAfter = REGISTRY.parse(bais, ConfigurationResourceResolvers.DEFAULT, MediaType.APPLICATION_XML);
 
       // Parse again from the serialized
       ConfigurationBuilder afterParsing = holderAfter.getNamedConfigurationBuilders().get("local");

@@ -26,7 +26,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.CacheContainerAdmin;
-import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
+import org.infinispan.commons.configuration.io.ConfigurationResourceResolvers;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.MarshallingException;
@@ -133,7 +133,7 @@ public class CacheResource extends AbstractContainerResource {
             String configFile = configFile(cacheName);
             String zipPath = cacheRoot.resolve(configFile).toString();
             try (InputStream is = zip.getInputStream(zip.getEntry(zipPath))) {
-               ConfigurationBuilderHolder builderHolder = parserRegistry.parse(is, ConfigurationResourceResolver.DEFAULT, MediaType.fromExtension(configFile));
+               ConfigurationBuilderHolder builderHolder = parserRegistry.parse(is, ConfigurationResourceResolvers.DEFAULT, MediaType.fromExtension(configFile));
                Configuration config = builderHolder.getNamedConfigurationBuilders().get(cacheName).build();
                log.debugf("Restoring Cache %s: %s", cacheName, config.toStringConfiguration(cacheName));
 

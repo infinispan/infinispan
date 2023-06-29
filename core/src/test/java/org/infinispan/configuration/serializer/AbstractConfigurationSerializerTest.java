@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
+import org.infinispan.commons.configuration.io.ConfigurationResourceResolvers;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.FileLookupFactory;
@@ -93,7 +93,7 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
       }
       log.debug(baos);
       ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-      ConfigurationBuilderHolder holderAfter = parameter.registry.parse(bais, ConfigurationResourceResolver.DEFAULT, parameter.mediaType);
+      ConfigurationBuilderHolder holderAfter = parameter.registry.parse(bais, ConfigurationResourceResolvers.DEFAULT, parameter.mediaType);
       GlobalConfiguration globalConfigurationBefore = holderBefore.getGlobalConfigurationBuilder().build();
       GlobalConfiguration globalConfigurationAfter = holderAfter.getGlobalConfigurationBuilder().build();
       assertEquals(globalConfigurationBefore.security().securityCacheTimeout(), globalConfigurationAfter.security().securityCacheTimeout());

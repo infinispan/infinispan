@@ -6,7 +6,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
-import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
+import org.infinispan.commons.configuration.io.ConfigurationResourceResolvers;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.io.StringBuilderWriter;
@@ -45,7 +45,7 @@ public final class SerializationUtils {
       holder.newConfigurationBuilder(PLACEHOLDER);
 
       try (ByteArrayInputStream bais = new ByteArrayInputStream(json.getBytes(UTF_8))) {
-         ConfigurationBuilderHolder parsedHolder = parserRegistry.parse(bais, holder, ConfigurationResourceResolver.DEFAULT, APPLICATION_JSON);
+         ConfigurationBuilderHolder parsedHolder = parserRegistry.parse(bais, holder, ConfigurationResourceResolvers.DEFAULT, APPLICATION_JSON);
          Configuration parsedConfig = parsedHolder.getNamedConfigurationBuilders().get(PLACEHOLDER).build();
          return (RemoteStoreConfiguration) parsedConfig.persistence().stores().iterator().next();
       }

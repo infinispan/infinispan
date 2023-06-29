@@ -8,7 +8,7 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 
-import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
+import org.infinispan.commons.configuration.io.ConfigurationResourceResolvers;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.commons.jmx.MBeanServerLookup;
@@ -150,7 +150,7 @@ public class TestCacheManagerFactory {
    public static ConfigurationBuilderHolder parseStream(InputStream is, boolean defaultParsersOnly) {
       ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
       ParserRegistry parserRegistry = new ParserRegistry(classLoader, defaultParsersOnly, System.getProperties());
-      ConfigurationBuilderHolder holder = parserRegistry.parse(is, ConfigurationResourceResolver.DEFAULT, MediaType.APPLICATION_XML);
+      ConfigurationBuilderHolder holder = parserRegistry.parse(is, ConfigurationResourceResolvers.DEFAULT, MediaType.APPLICATION_XML);
       return updateTestName(holder);
    }
 

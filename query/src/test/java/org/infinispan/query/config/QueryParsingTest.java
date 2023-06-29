@@ -13,14 +13,14 @@ import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "query.config.QueryParsingTest")
 public class QueryParsingTest extends AbstractInfinispanTest {
 
    public void testConfigurationFileParsing() throws IOException {
-      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
-      ConfigurationBuilderHolder holder = parserRegistry.parseFile("configuration-parsing-test.xml");
+      ConfigurationBuilderHolder holder = TestCacheManagerFactory.parseFile("configuration-parsing-test.xml", false);
       Map<String, ConfigurationBuilder> namedConfigurations = holder.getNamedConfigurationBuilders();
       Configuration defaultConfiguration = namedConfigurations.get("default").build();
 
