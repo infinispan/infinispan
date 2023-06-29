@@ -27,7 +27,7 @@ public interface ConfigurationReader extends AutoCloseable {
       private MediaType type;
       private PropertyReplacer replacer = PropertyReplacer.DEFAULT;
       private Properties properties = new Properties();
-      private ConfigurationResourceResolver resolver = ConfigurationResourceResolver.DEFAULT;
+      private ConfigurationResourceResolver resolver = ConfigurationResourceResolvers.DEFAULT;
       private NamingStrategy namingStrategy = NamingStrategy.IDENTITY;
 
       private Builder(InputStream is) {

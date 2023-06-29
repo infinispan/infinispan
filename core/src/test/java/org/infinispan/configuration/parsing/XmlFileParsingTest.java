@@ -16,7 +16,7 @@ import java.util.Collection;
 import java.util.Map;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
+import org.infinispan.commons.configuration.io.ConfigurationResourceResolvers;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
@@ -95,7 +95,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    private static ConfigurationBuilderHolder parseStringConfiguration(String config) {
       InputStream is = new ByteArrayInputStream(config.getBytes());
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), true, System.getProperties());
-      return parserRegistry.parse(is, ConfigurationResourceResolver.DEFAULT, MediaType.APPLICATION_XML);
+      return parserRegistry.parse(is, ConfigurationResourceResolvers.DEFAULT, MediaType.APPLICATION_XML);
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class)
