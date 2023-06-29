@@ -197,4 +197,47 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
       assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zcount("another", unbounded));
    }
 
+   public void testZPOPMIN() {
+      assertThat(redis.zpopmin("not_existing").isEmpty()).isTrue();
+      assertThat(redis.zpopmin("not_existing", 2)).isEmpty();
+      redis.zadd("people", ZAddArgs.Builder.ch(),
+            ScoredValue.just(-10, "tristan"),
+            ScoredValue.just(1, "ryan"),
+            ScoredValue.just(17, "vittorio"),
+            ScoredValue.just(18.9, "fabio"),
+            ScoredValue.just(18.9, "jose"),
+            ScoredValue.just(18.9, "katia"),
+            ScoredValue.just(21.9, "marc"));
+      assertThat(redis.zcard("people")).isEqualTo(7);
+      assertThat(redis.zpopmin("people")).isEqualTo(just(-10.0, "tristan"));
+      assertThat(redis.zcard("people")).isEqualTo(6);
+      assertThat(redis.zpopmin("people", 2))
+            .containsExactly(just(1, "ryan"), just(17, "vittorio"));
+      assertThat(redis.zcard("people")).isEqualTo(4);
+      redis.zpopmin("people", 10);
+      assertThat(redis.exists("people")).isEqualTo(0);
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zpopmin("another"));
+   }
+
+   public void testZPOPMAX() {
+      assertThat(redis.zpopmax("not_existing").isEmpty()).isTrue();
+      assertThat(redis.zpopmax("not_existing", 2)).isEmpty();
+      redis.zadd("people", ZAddArgs.Builder.ch(),
+            ScoredValue.just(-10, "tristan"),
+            ScoredValue.just(1, "ryan"),
+            ScoredValue.just(17, "vittorio"),
+            ScoredValue.just(18.9, "fabio"),
+            ScoredValue.just(18.9, "jose"),
+            ScoredValue.just(18.9, "katia"),
+            ScoredValue.just(21.9, "marc"));
+      assertThat(redis.zcard("people")).isEqualTo(7);
+      assertThat(redis.zpopmax("people")).isEqualTo(just(21.9, "marc"));
+      assertThat(redis.zcard("people")).isEqualTo(6);
+      assertThat(redis.zpopmax("people", 2))
+            .containsExactly(just(18.9, "katia"), just(18.9, "jose"));
+      assertThat(redis.zcard("people")).isEqualTo(4);
+      redis.zpopmax("people", 10);
+      assertThat(redis.exists("people")).isEqualTo(0);
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zpopmax("another"));
+   }
 }

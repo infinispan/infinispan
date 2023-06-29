@@ -156,4 +156,26 @@ public class EmbeddedMultimapSortedSetCacheTest extends SingleCacheManagerTest {
             .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
    }
 
+   public void testPop() {
+      assertThat(await(sortedSetCache.pop(NAMES_KEY, false, 10))).isEmpty();
+      await(sortedSetCache.addMany(NAMES_KEY,
+            new double[] {-5, 1},
+            new Person[] {OIHANA, ELAIA},
+            SortedSetAddArgs.create().build()));
+      assertThat(await(sortedSetCache.pop(NAMES_KEY, true, 1))).containsExactly(of(-5, OIHANA));
+      assertThat(await(sortedSetCache.pop(NAMES_KEY, true, 10))).containsExactly(of(1, ELAIA));
+      assertThat(await(sortedSetCache.getValue(NAMES_KEY))).isNull();
+      await(sortedSetCache.addMany(NAMES_KEY,
+            new double[] {-5, 1, 2, 5, 8, 8, 8, 9, 10},
+            new Person[] {OIHANA, ELAIA, KOLDO, RAMON, FELIX, JULIEN, PEPE, IGOR, IZARO},
+            SortedSetAddArgs.create().build()));
+      assertThat(await(sortedSetCache.pop(NAMES_KEY, true, 2)))
+            .containsExactly(of(-5, OIHANA), of(1, ELAIA));
+      assertThat(await(sortedSetCache.pop(NAMES_KEY, false, 2)))
+            .containsExactly(of(10, IZARO), of(9, IGOR));
+
+      assertThatThrownBy(() -> await(sortedSetCache.pop(null, true, 1)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
+   }
 }

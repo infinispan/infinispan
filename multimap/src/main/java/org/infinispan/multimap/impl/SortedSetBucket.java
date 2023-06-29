@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.SortedSet;
@@ -54,6 +55,16 @@ public class SortedSetBucket<V> {
    public SortedSetBucket() {
       this.scoredEntries = new TreeSet<>(scoreComparator);
       this.entries = new HashMap<>();
+   }
+
+   public Collection<ScoredValue<V>> pop(boolean min, long count) {
+      List<ScoredValue<V>> popValuesList = new ArrayList<>();
+      for (long i = 0; i < count && !scoredEntries.isEmpty(); i++) {
+         ScoredValue<V> popedScoredValue = min ? scoredEntries.pollFirst() : scoredEntries.pollLast();
+         entries.remove(popedScoredValue.wrappedValue());
+         popValuesList.add(popedScoredValue);
+      }
+      return popValuesList;
    }
 
    public static class AddResult {

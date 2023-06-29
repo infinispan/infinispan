@@ -1,7 +1,5 @@
 package org.infinispan.multimap.impl;
 
-import java.util.Map;
-
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -28,7 +26,9 @@ import org.infinispan.multimap.impl.function.multimap.RemoveFunction;
 import org.infinispan.multimap.impl.function.set.AddFunction;
 import org.infinispan.multimap.impl.function.sortedset.AddManyFunction;
 import org.infinispan.multimap.impl.function.sortedset.CountFunction;
+import org.infinispan.multimap.impl.function.sortedset.PopFunction;
 
+import java.util.Map;
 
 /**
  * MultimapModuleLifecycle is necessary for the Multimap Cache module.
@@ -114,6 +114,7 @@ public class MultimapModuleLifecycle implements ModuleLifecycle {
    private static void addSortedSetExternalizers(Map<Integer, AdvancedExternalizer<?>> externalizerMap) {
       addAdvancedExternalizer(externalizerMap, AddManyFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, CountFunction.EXTERNALIZER);
+      addAdvancedExternalizer(externalizerMap, PopFunction.EXTERNALIZER);
    }
 
    private static void addAdvancedExternalizer(Map<Integer, AdvancedExternalizer<?>> map, AdvancedExternalizer<?> ext) {
