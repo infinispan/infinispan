@@ -26,14 +26,14 @@ public class SortedSetBucket<V> {
    private final SortedSet<ScoredValue<V>> scoredEntries;
    private final Map<MultimapObjectWrapper<V>, Double> entries;
 
-   private final Comparator<ScoredValue> scoreComparator = Comparator.naturalOrder();
+   private final Comparator<ScoredValue<V>> scoreComparator = Comparator.naturalOrder();
 
    @ProtoFactory
    SortedSetBucket(Collection<ScoredValue<V>> wrappedValues) {
       scoredEntries = new TreeSet<>(scoreComparator);
       scoredEntries.addAll(wrappedValues);
       entries = new HashMap<>();
-      wrappedValues.stream().forEach(e -> entries.put(e.wrappedValue(), e.score));
+      wrappedValues.stream().forEach(e -> entries.put(e.wrappedValue(), e.score()));
    }
 
    @ProtoField(number = 1, collectionImplementation = ArrayList.class)
@@ -80,7 +80,7 @@ public class SortedSetBucket<V> {
          } else if (updateOnly) {
             Double actualScore = entries.get(newScoredValue.wrappedValue());
             if (actualScore != null && actualScore != newScoredValue.score()) {
-               ScoredValue oldScoredValue = ScoredValue.of(actualScore, newScoredValue.wrappedValue());
+               ScoredValue<V> oldScoredValue = ScoredValue.of(actualScore, newScoredValue.getValue());
                scoredEntries.remove(oldScoredValue);
                scoredEntries.add(newScoredValue);
                entries.put(newScoredValue.wrappedValue(), newScoredValue.score());
@@ -94,7 +94,7 @@ public class SortedSetBucket<V> {
                entries.put(newScoredValue.wrappedValue(), newScoredValue.score());
             } else if (newScoredValue.score() > actualScore) {
                // Update
-               ScoredValue oldScoredValue = ScoredValue.of(actualScore, newScoredValue.wrappedValue());
+               ScoredValue<V> oldScoredValue = ScoredValue.of(actualScore, newScoredValue.getValue());
                scoredEntries.remove(oldScoredValue);
                scoredEntries.add(newScoredValue);
                entries.put(newScoredValue.wrappedValue(), newScoredValue.score());
@@ -106,8 +106,8 @@ public class SortedSetBucket<V> {
             if (actualScore == null) {
                scoredEntries.add(newScoredValue);
                entries.put(newScoredValue.wrappedValue(), newScoredValue.score());
-            } else if (newScoredValue.score < actualScore) {
-               ScoredValue oldScoredValue = ScoredValue.of(actualScore, newScoredValue.wrappedValue());
+            } else if (newScoredValue.score() < actualScore) {
+               ScoredValue<V> oldScoredValue = ScoredValue.of(actualScore, newScoredValue.getValue());
                scoredEntries.remove(oldScoredValue);
                scoredEntries.add(newScoredValue);
                entries.put(newScoredValue.wrappedValue(), newScoredValue.score());
@@ -119,9 +119,9 @@ public class SortedSetBucket<V> {
                // add new entry
                scoredEntries.add(newScoredValue);
                entries.put(newScoredValue.wrappedValue(), newScoredValue.score());
-            } else if (actualScore != newScoredValue.score) {
+            } else if (actualScore != newScoredValue.score()) {
                // entry exists, check score
-               ScoredValue oldScoredValue = ScoredValue.of(actualScore, newScoredValue.wrappedValue());
+               ScoredValue<V> oldScoredValue = ScoredValue.of(actualScore, newScoredValue.getValue());
                scoredEntries.remove(oldScoredValue);
                scoredEntries.add(newScoredValue);
                entries.put(newScoredValue.wrappedValue(), newScoredValue.score());
@@ -142,17 +142,17 @@ public class SortedSetBucket<V> {
    }
 
    @ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_SORTED_SET_SCORED_ENTRY)
-   public static class ScoredValue<V> implements Comparable<ScoredValue> {
+   public static class ScoredValue<V> implements Comparable<ScoredValue<V>> {
       private final double score;
       private final MultimapObjectWrapper<V> value;
 
       private ScoredValue(double score, V value) {
          this.score = score;
-         this.value = new MultimapObjectWrapper(value);
+         this.value = new MultimapObjectWrapper<V>(value);
       }
 
-      public static ScoredValue of(double score, Object value) {
-         return new ScoredValue(score, value);
+      public static <T> ScoredValue<T> of(double score, T value) {
+         return new ScoredValue<T>(score, value);
       }
 
       @ProtoFactory
@@ -165,7 +165,7 @@ public class SortedSetBucket<V> {
          return score;
       }
 
-      @ProtoField(2)
+      @ProtoField(value = 2)
       public MultimapObjectWrapper<V> wrappedValue() {
          return value;
       }
@@ -186,7 +186,7 @@ public class SortedSetBucket<V> {
          if (this == entry) return true;
          if (entry == null || getClass() != entry.getClass()) return false;
 
-         ScoredValue other = (ScoredValue) entry;
+         ScoredValue<V> other = (ScoredValue<V>) entry;
 
          return this.value.equals(other.value) && this.score == other.score;
       }
@@ -197,7 +197,7 @@ public class SortedSetBucket<V> {
       }
 
       @Override
-      public int compareTo(ScoredValue other) {
+      public int compareTo(ScoredValue<V> other) {
          if (this == other) return 0;
 
          int compare = Double.compare(this.score, other.score);
