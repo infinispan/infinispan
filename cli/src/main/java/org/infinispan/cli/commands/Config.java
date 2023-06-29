@@ -29,6 +29,7 @@ import org.infinispan.cli.completers.MediaTypeCompleter;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.logging.Messages;
 import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
+import org.infinispan.commons.configuration.io.ConfigurationResourceResolvers;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.configuration.io.URLConfigurationResourceResolver;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -165,7 +166,7 @@ public class Config extends CliCommand {
             ParserRegistry registry = new ParserRegistry();
             if (input == null) {
                is = System.in;
-               resolver = ConfigurationResourceResolver.DEFAULT;
+               resolver = ConfigurationResourceResolvers.DEFAULT;
             } else {
                File file = new File(input.getAbsolutePath());
                is = new FileInputStream(file);

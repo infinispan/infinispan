@@ -4,14 +4,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.inject.Produces;
-
-import jakarta.inject.Singleton;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
+import org.infinispan.commons.configuration.io.ConfigurationResourceResolvers;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.commons.util.FileLookupFactory;
@@ -23,6 +19,10 @@ import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Singleton;
 
 @ApplicationScoped
 public class InfinispanEmbeddedProducer {
@@ -41,7 +41,7 @@ public class InfinispanEmbeddedProducer {
             try {
                 InputStream configurationStream = FileLookupFactory.newInstance().lookupFileStrict(configurationFile,
                         Thread.currentThread().getContextClassLoader());
-                ConfigurationBuilderHolder configHolder = new ParserRegistry().parse(configurationStream, ConfigurationResourceResolver.DEFAULT, MediaType.APPLICATION_XML);
+                ConfigurationBuilderHolder configHolder = new ParserRegistry().parse(configurationStream, ConfigurationResourceResolvers.DEFAULT, MediaType.APPLICATION_XML);
                 verifyTransactionConfiguration(configHolder.getDefaultConfigurationBuilder(), "default");
                 for (Map.Entry<String, ConfigurationBuilder> entry : configHolder.getNamedConfigurationBuilders().entrySet()) {
                     verifyTransactionConfiguration(entry.getValue(), entry.getKey());

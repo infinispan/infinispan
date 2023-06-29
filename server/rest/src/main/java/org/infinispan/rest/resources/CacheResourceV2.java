@@ -54,7 +54,7 @@ import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.commons.configuration.io.ConfigurationReader;
-import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
+import org.infinispan.commons.configuration.io.ConfigurationResourceResolvers;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.configuration.io.NamingStrategy;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -357,7 +357,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
          Properties properties = new Properties();
          properties.put(CacheParser.IGNORE_MISSING_TEMPLATES, "true");
          ConfigurationReader reader = ConfigurationReader.from(contents)
-               .withResolver(ConfigurationResourceResolver.DEFAULT)
+               .withResolver(ConfigurationResourceResolvers.DEFAULT)
                .withType(request.contentType())
                .withProperties(properties)
                .withNamingStrategy(NamingStrategy.KEBAB_CASE).build();
