@@ -1,9 +1,13 @@
 package org.infinispan.server.test.api;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
@@ -12,6 +16,8 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.resource.ClientResources;
 
 public class RespTestClientDriver extends BaseTestClientDriver<RespTestClientDriver> {
+
+   private static final Logger log = LoggerFactory.getLogger(RespTestClientDriver.class);
 
    private final TestServer testServer;
    private final TestClient testClient;
@@ -37,8 +43,12 @@ public class RespTestClientDriver extends BaseTestClientDriver<RespTestClientDri
       RedisClient client = RedisClient.create(resources, configuration.redisURI);
       client.setOptions(configuration.clientOptions);
       testClient.registerResource(() -> {
-         resources.shutdown(0, 15, TimeUnit.SECONDS).getNow();
-         client.shutdown(0, 15, TimeUnit.SECONDS);
+         try {
+            resources.shutdown(0, 15, TimeUnit.SECONDS).getNow();
+            client.shutdownAsync(0, 15, TimeUnit.SECONDS).get(15, TimeUnit.SECONDS);
+         } catch (InterruptedException | TimeoutException | ExecutionException e) {
+            log.error("Timed out waiting RESP client to shutdown", e);
+         }
       });
       return client;
    }
