@@ -9,6 +9,7 @@ import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.multimap.impl.function.sortedset.AddManyFunction;
 import org.infinispan.multimap.impl.function.sortedset.CountFunction;
+import org.infinispan.multimap.impl.function.sortedset.PopFunction;
 
 import java.util.Collection;
 import java.util.Set;
@@ -113,7 +114,12 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
     */
    public CompletionStage<SortedSet<SortedSetBucket.ScoredValue<V>>> getValue(K key) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
-      return cache.getAsync(key).thenApply(b -> b.getScoredEntries());
+      return cache.getAsync(key).thenApply(b -> {
+         if (b != null) {
+            return b.getScoredEntries();
+         }
+         return null;
+      });
    }
 
    /**
@@ -130,6 +136,19 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       return readWriteMap.eval(key,
             new CountFunction<>(min, includeMin, max, includeMax));
+   }
+
+   /**
+    * Pops the number of elements provided by the count parameter.
+    * Elements are pop from the head or the tail, depending on the min parameter.
+    * @param key, the sorted set name
+    * @param min, if true pops lower scores, if false pops higher scores
+    * @param count, number of values
+    * @return, empty if the sorted set does not exist
+    */
+   public CompletionStage<Collection<SortedSetBucket.ScoredValue<V>>> pop(K key, boolean min, long count) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      return readWriteMap.eval(key, new PopFunction<>(min, count));
    }
 
    private void requireSameLength(double[] scores, V[] values) {

@@ -26,6 +26,7 @@ import static org.infinispan.multimap.impl.MultimapTestUtils.NAMES_KEY;
 import static org.infinispan.multimap.impl.MultimapTestUtils.OIHANA;
 import static org.infinispan.multimap.impl.MultimapTestUtils.PEPE;
 import static org.infinispan.multimap.impl.MultimapTestUtils.RAMON;
+import static org.infinispan.multimap.impl.SortedSetBucket.ScoredValue.of;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -89,8 +90,8 @@ public class DistributedMultimapSortedSetCacheTest extends BaseDistFunctionalTes
       initAndTest();
       EmbeddedMultimapSortedSetCache<String, Person> sortedSet = getMultimapCacheMember();
       await(sortedSet.addMany(NAMES_KEY, new double[] { 1.1, 9.1 }, new Person[] { OIHANA, ELAIA }, SortedSetAddArgs.create().build()));
-      assertValuesAndOwnership(NAMES_KEY, SortedSetBucket.ScoredValue.of(1.1, OIHANA));
-      assertValuesAndOwnership(NAMES_KEY, SortedSetBucket.ScoredValue.of(9.1, ELAIA));
+      assertValuesAndOwnership(NAMES_KEY, of(1.1, OIHANA));
+      assertValuesAndOwnership(NAMES_KEY, of(9.1, ELAIA));
    }
 
    public void testCount() {
@@ -102,6 +103,18 @@ public class DistributedMultimapSortedSetCacheTest extends BaseDistFunctionalTes
             SortedSetAddArgs.create().build()));
       assertThat(await(sortedSet.size(NAMES_KEY))).isEqualTo(8);
       assertThat(await(sortedSet.count(NAMES_KEY, 1, true, 3, true))).isEqualTo(8);
+   }
+
+   public void testPop() {
+      initAndTest();
+      EmbeddedMultimapSortedSetCache<String, Person> sortedSet = getMultimapCacheMember();
+      await(sortedSet.addMany(NAMES_KEY,
+            new double[] { 1, 1, 2, 2, 2, 3, 3, 3 },
+            new Person[] { OIHANA, ELAIA, FELIX, RAMON, JULIEN, IGOR, IZARO, PEPE },
+            SortedSetAddArgs.create().build()));
+      assertThat(await(sortedSet.size(NAMES_KEY))).isEqualTo(8);
+      assertThat(await(sortedSet.pop(NAMES_KEY, false, 3)))
+            .containsExactly(of(3, PEPE), of(3, IZARO), of(3, IGOR));
    }
 
    protected void assertValuesAndOwnership(String key, SortedSetBucket.ScoredValue<Person> value) {
