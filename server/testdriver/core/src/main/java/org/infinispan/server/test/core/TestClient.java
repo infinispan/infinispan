@@ -7,6 +7,12 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -17,6 +23,7 @@ import org.infinispan.client.hotrod.multimap.RemoteMultimapCacheManagerFactory;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.test.CommonsTestingUtil;
+import org.infinispan.commons.test.Eventually;
 import org.infinispan.commons.util.Util;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.scripting.ScriptingManager;
@@ -88,8 +95,21 @@ public class TestClient {
 
    public void clearResources() {
       if (resources != null) {
-         resources.forEach(Util::close);
-         resources.clear();
+         ExecutorService executor = Executors.newSingleThreadExecutor();
+         try {
+            CompletableFuture
+                  .allOf(
+                        resources.stream()
+                              .map(resource -> CompletableFuture.runAsync(() -> Util.close(resource), executor))
+                              .toArray(i -> new CompletableFuture<?>[i])
+                  )
+                  .get(Eventually.DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+         } catch (ExecutionException | InterruptedException | TimeoutException e) {
+            throw new IllegalStateException("Unable to close resources for " + methodName, e);
+         } finally {
+            resources.clear();
+            executor.shutdown();
+         }
       }
    }
 
