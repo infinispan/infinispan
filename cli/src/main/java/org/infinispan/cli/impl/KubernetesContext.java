@@ -5,8 +5,8 @@ import java.util.Properties;
 import org.infinispan.cli.logging.Messages;
 import org.infinispan.commons.util.Util;
 
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientBuilder;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -21,7 +21,7 @@ public class KubernetesContext extends ContextImpl {
    }
 
    public KubernetesContext(Properties defaults) {
-      this(defaults, new DefaultKubernetesClient());
+      this(defaults, new KubernetesClientBuilder().build());
    }
 
    public static KubernetesClient getClient(ContextAwareCommandInvocation invocation) {
