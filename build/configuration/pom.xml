@@ -131,7 +131,7 @@
       <version.caffeine>3.1.1</version.caffeine>
       <version.commons.compress>1.22</version.commons.compress>
       <version.console>15.0.0.Dev01</version.console>
-      <version.fabric8.kubernetes-client>6.5.1</version.fabric8.kubernetes-client>
+      <version.fabric8.kubernetes-client>6.7.2</version.fabric8.kubernetes-client>
       <version.glassfish.jaxb>2.3.1</version.glassfish.jaxb>
       <version.glassfish.json>1.1.4</version.glassfish.json>
       <version.graalvm>22.3.0</version.graalvm>
@@ -146,8 +146,8 @@
       <version.io.agroal>2.1</version.io.agroal>
       <version.io.lettuce>6.2.4.RELEASE</version.io.lettuce>
       <version.io.mashona>1.0.0</version.io.mashona>
-      <version.jackson>2.14.1</version.jackson>
-      <version.jackson.databind>2.14.1</version.jackson.databind>
+      <version.jackson>2.15.2</version.jackson>
+      <version.jackson.databind>2.15.2</version.jackson.databind>
       <version.jacoco>0.8.7</version.jacoco>
       <version.jakarta.annotation-api>2.1.1</version.jakarta.annotation-api>
       <version.jakarta.json-api>2.0.0</version.jakarta.json-api>
@@ -155,7 +155,6 @@
       <version.jakarta.transaction>2.0.1</version.jakarta.transaction>
       <version.jakarta.enterprise.cdi>4.0.1</version.jakarta.enterprise.cdi>
       <version.jakarta.persistence>3.1.0</version.jakarta.persistence>
-      <version.jandex>3.0.5</version.jandex>
       <version.jboss.logging>3.5.0.Final</version.jboss.logging>
       <version.jboss.marshalling>2.1.1.Final</version.jboss.marshalling>
       <version.jboss.naming>5.0.6.CR1</version.jboss.naming>
@@ -177,7 +176,7 @@
       <version.mockito_dep.bytebuddy>1.14.4</version.mockito_dep.bytebuddy>
       <version.mockito_dep.objenesis>3.3</version.mockito_dep.objenesis>
       <version.nashorn>15.4</version.nashorn>
-      <version.netty>4.1.91.Final</version.netty>
+      <version.netty>4.1.94.Final</version.netty>
       <version.netty.incubator.iouring>0.0.19.Final</version.netty.incubator.iouring>
       <version.okhttp>3.14.9</version.okhttp>
       <version.openjdk.jmh>1.23</version.openjdk.jmh>
@@ -202,13 +201,9 @@
       <version.latencyutils>2.0.3</version.latencyutils>
 
       <!-- These versions must be kept in sync with ${version.quarkus} -->
-      <version.quarkus>3.0.2.Final</version.quarkus>
-      <version.graalvm>22.3.0</version.graalvm>
-      <version.jandex>3.0.5</version.jandex>
-      <version.microprofile.metrics>4.0.1</version.microprofile.metrics>
-      <version.restassured>5.3.0</version.restassured>
-      <version.resteasy>6.2.1.Final</version.resteasy>
-      <version.vertx>4.4.1</version.vertx>
+      <version.quarkus>3.1.3.Final</version.quarkus>
+      <version.graalvm>22.3.2</version.graalvm>
+      <version.jandex>3.1.2</version.jandex>
 
       <version.opentelemetry>1.15.0</version.opentelemetry>
       <version.opentelemetry.sdk-autoconfigure>1.15.0-alpha</version.opentelemetry.sdk-autoconfigure>
