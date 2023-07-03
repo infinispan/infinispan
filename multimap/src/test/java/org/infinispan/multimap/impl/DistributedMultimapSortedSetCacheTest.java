@@ -117,6 +117,14 @@ public class DistributedMultimapSortedSetCacheTest extends BaseDistFunctionalTes
             .containsExactly(of(3, PEPE), of(3, IZARO), of(3, IGOR));
    }
 
+   public void testScore() {
+      initAndTest();
+      EmbeddedMultimapSortedSetCache<String, Person> sortedSet = getMultimapCacheMember();
+      await(sortedSet.addMany(NAMES_KEY, new double[] { 1.1, 9.1 }, new Person[] { OIHANA, ELAIA }, SortedSetAddArgs.create().build()));
+      assertThat(await(sortedSet.score(NAMES_KEY, OIHANA))).isEqualTo(1.1);
+      assertThat(await(sortedSet.score(NAMES_KEY, ELAIA))).isEqualTo(9.1);
+   }
+
    protected void assertValuesAndOwnership(String key, SortedSetBucket.ScoredValue<Person> value) {
       assertOwnershipAndNonOwnership(key, l1CacheEnabled);
       assertOnAllCaches(key, value);

@@ -67,6 +67,10 @@ public class SortedSetBucket<V> {
       return popValuesList;
    }
 
+   public Double score(V member) {
+      return entries.get(new MultimapObjectWrapper<>(member));
+   }
+
    public static class AddResult {
       public long created = 0;
       public long updated = 0;

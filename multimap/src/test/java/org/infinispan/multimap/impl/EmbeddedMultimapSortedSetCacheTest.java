@@ -11,6 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache.ERR_KEY_CAN_T_BE_NULL;
+import static org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache.ERR_MEMBER_CAN_T_BE_NULL;
 import static org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache.ERR_SCORES_CAN_T_BE_NULL;
 import static org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache.ERR_SCORES_VALUES_MUST_HAVE_SAME_SIZE;
 import static org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache.ERR_VALUES_CAN_T_BE_NULL;
@@ -177,5 +178,22 @@ public class EmbeddedMultimapSortedSetCacheTest extends SingleCacheManagerTest {
       assertThatThrownBy(() -> await(sortedSetCache.pop(null, true, 1)))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
+   }
+
+   public void testScore() {
+      assertThat(await(sortedSetCache.score(NAMES_KEY, OIHANA))).isNull();
+      await(sortedSetCache.addMany(NAMES_KEY,
+            new double[] {-5, 1},
+            new Person[] {OIHANA, ELAIA},
+            SortedSetAddArgs.create().build()));
+      assertThat(await(sortedSetCache.score(NAMES_KEY, OIHANA))).isEqualTo(-5);
+      assertThat(await(sortedSetCache.score(NAMES_KEY, OIHANA))).isEqualTo(-5);
+      assertThat(await(sortedSetCache.score(NAMES_KEY, FELIX))).isNull();
+      assertThatThrownBy(() -> await(sortedSetCache.score(null, null)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
+      assertThatThrownBy(() -> await(sortedSetCache.score(NAMES_KEY, null)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_MEMBER_CAN_T_BE_NULL);
    }
 }
