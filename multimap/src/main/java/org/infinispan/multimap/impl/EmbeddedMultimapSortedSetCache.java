@@ -10,6 +10,7 @@ import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.multimap.impl.function.sortedset.AddManyFunction;
 import org.infinispan.multimap.impl.function.sortedset.CountFunction;
 import org.infinispan.multimap.impl.function.sortedset.PopFunction;
+import org.infinispan.multimap.impl.function.sortedset.ScoreFunction;
 
 import java.util.Collection;
 import java.util.Set;
@@ -27,6 +28,7 @@ import static java.util.Objects.requireNonNull;
  */
 public class EmbeddedMultimapSortedSetCache<K, V> {
    public static final String ERR_KEY_CAN_T_BE_NULL = "key can't be null";
+   public static final String ERR_MEMBER_CAN_T_BE_NULL = "member can't be null";
    public static final String ERR_SCORES_CAN_T_BE_NULL = "scores can't be null";
    public static final String ERR_VALUES_CAN_T_BE_NULL = "values can't be null";
    public static final String ERR_SCORES_VALUES_MUST_HAVE_SAME_SIZE = "scores and values must have the same size";
@@ -76,7 +78,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
     */
    public CompletionStage<Long> size(K key) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
-      return cache.getAsync(key).thenApply(b -> b == null ? 0 : (long) b.size());
+      return cache.getAsync(key).thenApply(b -> b == null ? 0 : b.size());
    }
 
    /**
@@ -149,6 +151,19 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
    public CompletionStage<Collection<SortedSetBucket.ScoredValue<V>>> pop(K key, boolean min, long count) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       return readWriteMap.eval(key, new PopFunction<>(min, count));
+   }
+
+   /**
+    * Returns the score of member in the sorted.
+    *
+    * @param key, the name of the sorted set
+    * @param member, the score value to be retrieved
+    * @return {@link CompletionStage} with the score, or null if the score of the key does not exist.
+    */
+   public CompletionStage<Double> score(K key, V member) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      requireNonNull(member, ERR_MEMBER_CAN_T_BE_NULL);
+      return readWriteMap.eval(key, new ScoreFunction<>(member));
    }
 
    private void requireSameLength(double[] scores, V[] values) {

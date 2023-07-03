@@ -211,3 +211,6 @@ for concurrent operations or failures unless the resp cache is configured to use
 
 | link:https://redis.io/commands/zpopmin[ZPOPMIN]
 |
+
+| link:https://redis.io/commands/zscore[ZSCORE]
+|

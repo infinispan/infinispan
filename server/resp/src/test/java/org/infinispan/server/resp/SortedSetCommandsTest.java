@@ -240,4 +240,19 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.exists("people")).isEqualTo(0);
       assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zpopmax("another"));
    }
+
+   public void testZSCORE() {
+      assertThat(redis.zscore("not_existing", "no_existing")).isNull();
+      redis.zadd("people", ZAddArgs.Builder.ch(),
+            ScoredValue.just(-10, "tristan"),
+            ScoredValue.just(1, "ryan"),
+            ScoredValue.just(17, "vittorio"),
+            ScoredValue.just(18.9, "fabio"),
+            ScoredValue.just(18.9, "jose"),
+            ScoredValue.just(18.9, "katia"),
+            ScoredValue.just(21.9, "marc"));
+      assertThat(redis.zscore("people", "jose")).isEqualTo(18.9);
+      assertThat(redis.zscore("people", "takolo")).isNull();
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zscore("another", "tristan"));
+   }
 }
