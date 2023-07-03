@@ -24,6 +24,10 @@ public class AuthorizationLDAPIT extends AbstractAuthorization {
                .addListener(new LdapServerListener())
                .build();
 
+   public AuthorizationLDAPIT() {
+      super(SERVERS);
+   }
+
    @Override
    protected InfinispanServerExtension getServers() {
       return SERVERS;

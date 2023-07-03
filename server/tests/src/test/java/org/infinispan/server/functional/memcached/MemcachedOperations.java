@@ -1,8 +1,8 @@
 package org.infinispan.server.functional.memcached;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +13,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import net.spy.memcached.MemcachedClient;

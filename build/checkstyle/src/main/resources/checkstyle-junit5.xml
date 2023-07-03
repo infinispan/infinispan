@@ -1,0 +1,108 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC "-//Puppy Crawl//DTD Check Configuration 1.2//EN"
+        "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
+
+<module name="Checker">
+
+    <!-- Source code is not formatted using tabs -->
+    <module name="FileTabCharacter" />
+
+    <module name="SuppressWarningsFilter" />
+
+    <module name="TreeWalker">
+        <!-- Checks for imports -->
+        <module name="AvoidStarImport" />
+        <module name="RedundantImport" />
+        <module name="UnusedImports" />
+
+        <!-- Checks for common coding problems -->
+        <!--<module name="EqualsHashCode" />-->
+        <module name="IllegalInstantiation" />
+
+        <!-- Miscellaneous other checks. -->
+        <module name="GenericWhitespace" />
+        <module name="PackageAnnotation" />
+        <module name="EmptyStatement" />
+        <module name="DefaultComesLast" />
+
+        <!-- Nobody should be using StringBuffer anymore -->
+        <module name="RegexpSinglelineJava">
+            <property name="format" value=" StringBuffer" />
+            <!-- The last sentence of the message is a keyword to trigger exclusion: see ExcludeTestPackages -->
+            <property name="message" value="Nobody should be using StringBuffer anymore" />
+        </module>
+
+        <!--  Avoid some import statements -->
+        <module name="IllegalImport">
+            <property name="regexp" value="true"/>
+            <property name="illegalPkgs" value="org\.codehaus\.jackson"/>
+            <!-- Reject any Junit 4 imports -->
+            <property name="illegalClasses" value="^org\.junit\.(?!jupiter|platform|experimental\.).+"/>
+        </module>
+
+       <!-- In TestNG a test is a group of classes, so it's always better to use @AfterClass and @BeforeClass -->
+       <!-- This might have been faster with the IllegalImport module, but that always flags our use of sun.reflect.Reflection -->
+       <module name="RegexpSinglelineJava">
+          <property name="format" value="@AfterTest|@BeforeTest"/>
+          <property name="message" value="In TestNG a test is a group of classes, so it's always better to use @AfterClass and @BeforeClass"/>
+       </module>
+
+        <!-- The severity of following rules should be eventually set to error -->
+        <module name="org.infinispan.checkstyle.checks.interceptors.InterceptorDefinesAllReadsCheck">
+            <property name="severity" value="${checkstyle.interceptors.reads.severity}" default="warning"/>
+        </module>
+        <module name="org.infinispan.checkstyle.checks.interceptors.InterceptorDefinesAllReadWritesCheck">
+            <property name="severity" value="${checkstyle.interceptors.writes.severity}" default="warning"/>
+        </module>
+
+        <!--&lt;!&ndash; Required to get SuppressionCommentFilter to work &ndash;&gt;-->
+        <!--<module name="FileContentsHolder" />-->
+
+        <!-- We don't want to run tasks on the common pool -->
+        <module name="org.infinispan.checkstyle.checks.ForbiddenMethodCheck">
+            <property name="methodPattern" value="(acceptEither|applyToEither|runAfterBoth|runAfterEither|thenAcceptBoth|thenCombine)Async"/>
+            <property name="argumentCount" value="2"/>
+        </module>
+        <module name="org.infinispan.checkstyle.checks.ForbiddenMethodCheck">
+            <property name="methodPattern"
+                      value="(handle|thenAccept|thenApply|thenCompose|thenRun|whenComplete|run|supply)Async"/>
+            <property name="argumentCount" value="1"/>
+        </module>
+
+        <!-- Prevent invoking Flowable#blocking methods (We allow (Single|Maybe)#blockingGet for now) -->
+        <module name="org.infinispan.checkstyle.checks.ForbiddenMethodCheck">
+            <property name="methodPattern"
+                      value="blocking(First|ForEach|Get|Iterable|Last|Latest|MostRecent|Next|Single|Subscribe)"/>
+        </module>
+        <!-- Prevent invoking completedStage and failedStage methods, should use completedFuture or failedFuture -->
+        <module name="org.infinispan.checkstyle.checks.ForbiddenMethodCheck">
+            <property name="methodPattern" value="(completed|failed)Stage"/>
+        </module>
+
+        <!-- Allow annotated code to disable checkstyle check -->
+        <module name="SuppressWarningsHolder"/>
+    </module>
+
+    <!-- We are not using NewLineAtEndOfFile because the new line chars change
+        on different operating systems and that rule allows only one type. This rule
+        is not actually checking for new lines, but it will work if we check that
+        there are not white spaces at the end of a line with another rule. -->
+    <module name="RegexpMultiline">
+        <property name="format" value="\S\z" />
+        <property name="message" value="Missing new line at the end of file" />
+    </module>
+
+    <module name="RegexpMultiline">
+        <property name="format" value="((\r\n){2,}|(\n){2,}|(\r){2,})\z" />
+        <property name="message" value="Only one new line is allowed at the end of a file" />
+    </module>
+
+    <module name="RegexpSingleline">
+        <property name="format" value="\s+$" />
+        <property name="message" value="White spaces at the end of line" />
+    </module>
+
+    <!-- Allow for some code sanity rules to be violated by test code -->
+    <module name="org.infinispan.checkstyle.filters.ExcludeTestPackages" />
+    <module name="org.infinispan.checkstyle.filters.ExcludeGeneratedTestPackages" />
+</module>

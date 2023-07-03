@@ -23,6 +23,10 @@ public class AuthorizationPropertiesIT extends AbstractAuthorization {
                .artifacts(ClusteredIT.artifacts())
                .build();
 
+   public AuthorizationPropertiesIT() {
+      super(SERVERS);
+   }
+
    @Override
    protected InfinispanServerExtension getServers() {
       return SERVERS;

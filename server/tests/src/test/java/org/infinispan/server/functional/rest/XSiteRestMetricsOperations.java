@@ -5,9 +5,9 @@ import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.server.functional.XSiteIT.LON;
 import static org.infinispan.server.functional.XSiteIT.NYC;
 import static org.infinispan.server.test.core.Common.sync;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -122,7 +122,7 @@ public class XSiteRestMetricsOperations {
       var uniqueMetrics = Stream.concat(Arrays.stream(TAGGED_METRICS), Arrays.stream(UNTAGGED_METRICS))
             .distinct()
             .count();
-      assertEquals("Metrics names are not unique", TAGGED_METRICS.length + UNTAGGED_METRICS.length, uniqueMetrics);
+      assertEquals(TAGGED_METRICS.length + UNTAGGED_METRICS.length, uniqueMetrics, "Metrics names are not unique");
 
 
       String lonXML = String.format(LON_CACHE_XML_CONFIG, SERVERS.getMethodName());
@@ -164,8 +164,8 @@ public class XSiteRestMetricsOperations {
 
    private void expectNycSiteTag(boolean containsTag, String metric, Map<String, String> metricsAndTags) {
       String tags = metricsAndTags.get("vendor_" + metric);
-      assertNotNull("Missing tag. metric: " + metric, tags );
-      assertEquals("Unexpected tag. metric: " + metric + ", tags=" + tags, containsTag, tags.contains("site=\"NYC\""));
+      assertNotNull(tags, "Missing tag. metric: " + metric);
+      assertEquals(containsTag, tags.contains("site=\"NYC\""), "Unexpected tag. metric: " + metric + ", tags=" + tags);
    }
 
    private static void assertSiteStatusMetrics(RestMetricsClient client, String metric, int expected) throws Exception {
