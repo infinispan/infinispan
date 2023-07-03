@@ -327,11 +327,6 @@
       <versionx.org.jboss.naming.jnpserver>${version.jboss.naming}</versionx.org.jboss.naming.jnpserver>
       <versionx.org.jboss.security.jboss-negotiation-extras>${version.jboss.security}</versionx.org.jboss.security.jboss-negotiation-extras>
       <versionx.org.jboss.shrinkwrap.depchain>${version.jboss.shrinkwrap}</versionx.org.jboss.shrinkwrap.depchain>
-      <versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-api>${version.jboss.shrinkwrap.resolver}</versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-api>
-      <versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-api-maven>${version.jboss.shrinkwrap.resolver}</versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-api-maven>
-      <versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-depchain>${version.jboss.shrinkwrap.resolver}</versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-depchain>
-      <versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-impl-maven>${version.jboss.shrinkwrap.resolver}</versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-impl-maven>
-      <versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-impl-maven-archive>${version.jboss.shrinkwrap.resolver}</versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-impl-maven-archive>
       <versionx.org.jboss.spec.javax.ejb.jboss-ejb-api_3.2_spec>2.0.0.Final</versionx.org.jboss.spec.javax.ejb.jboss-ejb-api_3.2_spec>
       <versionx.org.jboss.spec.javax.jms.jboss-jms-api_2.0_spec>2.0.0.Final</versionx.org.jboss.spec.javax.jms.jboss-jms-api_2.0_spec>
       <versionx.org.jboss.spec.jboss-jakartaee-8.0>1.0.1.Final</versionx.org.jboss.spec.jboss-jakartaee-8.0>
@@ -1454,32 +1449,6 @@
             <version>${versionx.org.jboss.shrinkwrap.depchain}</version>
             <type>pom</type>
             <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.shrinkwrap.resolver</groupId>
-            <artifactId>shrinkwrap-resolver-api</artifactId>
-            <version>${versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-api}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.shrinkwrap.resolver</groupId>
-            <artifactId>shrinkwrap-resolver-api-maven</artifactId>
-            <version>${versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-api-maven}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.shrinkwrap.resolver</groupId>
-            <artifactId>shrinkwrap-resolver-depchain</artifactId>
-            <version>${versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-depchain}</version>
-            <type>pom</type>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.shrinkwrap.resolver</groupId>
-            <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
-            <version>${versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-impl-maven}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.shrinkwrap.resolver</groupId>
-            <artifactId>shrinkwrap-resolver-impl-maven-archive</artifactId>
-            <version>${versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-impl-maven-archive}</version>
          </dependency>
          <dependency>
             <groupId>org.jboss.spec</groupId>
