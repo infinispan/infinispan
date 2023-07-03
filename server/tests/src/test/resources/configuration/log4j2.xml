@@ -71,7 +71,7 @@
 
     <Logger name="org.jgroups" level="INFO"/>
 
-    <Logger name="tc" level="DEBUG"/>
+    <Logger name="tc" level="INFO"/>
 
     <!-- Set to TRACE to enable access logging for Hot Rod requests -->
     <Logger name="org.infinispan.HOTROD_ACCESS_LOG" additivity="false" level="INFO">

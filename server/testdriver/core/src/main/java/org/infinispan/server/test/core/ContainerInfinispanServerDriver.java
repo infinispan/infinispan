@@ -44,6 +44,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.test.Ansi;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.ThreadLeakChecker;
@@ -94,6 +95,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    private final String[] volumes;
    private String name;
    ImageFromDockerfile image;
+   private static final List<String> sites = new ArrayList<>();
 
    static {
       // Ensure there are no left-overs from previous runs
@@ -299,7 +301,13 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
             });
       String debug = configuration.properties().getProperty(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_DEBUG);
       String javaOpts = null;
-      if (i == 0 && configuration.site() == null) {
+      String site = configuration.site();
+      if (site != null) {
+         if (!sites.contains(site)) {
+            sites.add(site);
+         }
+      }
+      if (i == 0 && site == null) {
          javaOpts = "-D" + JOIN_TIMEOUT + "=0";
       }
       if (debug != null && Integer.parseInt(debug) == i) {
@@ -312,7 +320,23 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       }
 
       // Process any enhancers
-      container.withLogConsumer(new JBossLoggingConsumer(LogFactory.getLogger("CONTAINER")).withPrefix(name + "#" + i));
+      final String color;
+      final String reset;
+      if (Ansi.useColor) {
+         final int offset;
+         if (site == null) {
+            offset = 0;
+         } else {
+            offset = 4 * sites.indexOf(site);
+         }
+         color = Ansi.DISTINCT_COLORS[(offset + i) % Ansi.DISTINCT_COLORS.length];
+         reset = Ansi.RESET;
+      } else {
+         color = "";
+         reset = "";
+      }
+      String logPrefix = site == null ? name + "#" + i : name + "#" + site + "#" + i;
+      container.withLogConsumer(new JBossLoggingConsumer(LogFactory.getLogger("CONTAINER")).withPrefix(color + "[" + logPrefix + "]").withSuffix(reset));
       for (Consumer<OutputFrame> consumer : logConsumers)
          container.withLogConsumer(consumer);
 
@@ -354,7 +378,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    public void pause(int server) {
       InfinispanGenericContainer container = containers[server];
       container.pause();
-      eventually("Container wasn't paused.", () -> container.isPaused());
+      eventually("Container wasn't paused.", container::isPaused);
       System.out.printf("[%d] PAUSE %n", server);
    }
 

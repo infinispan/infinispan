@@ -1,5 +1,11 @@
 package org.infinispan.commons.test;
 
+import static org.infinispan.commons.test.Ansi.CYAN;
+import static org.infinispan.commons.test.Ansi.GREEN;
+import static org.infinispan.commons.test.Ansi.RED;
+import static org.infinispan.commons.test.Ansi.RESET;
+import static org.infinispan.commons.test.Ansi.YELLOW;
+
 import java.io.PrintStream;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -14,20 +20,13 @@ import org.jboss.logging.Logger;
  */
 public class TestSuiteProgress {
    private static final Logger log = Logger.getLogger(TestSuiteProgress.class);
-   private static final String RED = "\u001b[31m";
-   private static final String GREEN = "\u001b[32m";
-   private static final String YELLOW = "\u001b[33m";
-   private static final String RESET = "\u001b[0m";
-
-   private AtomicInteger failed = new AtomicInteger(0);
-   private AtomicInteger succeeded = new AtomicInteger(0);
-   private AtomicInteger skipped = new AtomicInteger(0);
+   private final AtomicInteger failed = new AtomicInteger(0);
+   private final AtomicInteger succeeded = new AtomicInteger(0);
+   private final AtomicInteger skipped = new AtomicInteger(0);
    private final PrintStream out;
-   private final boolean useColor;
 
    public TestSuiteProgress() {
       // Use a system property to avoid color
-      useColor = !Boolean.getBoolean("ansi.strip");
       out = System.out;
    }
 
@@ -106,13 +105,25 @@ public class TestSuiteProgress {
 
    private synchronized void progress(String color, CharSequence message, Throwable t) {
       String actualColor = "";
-      String actualReset = "";
-      if (useColor && color != null) {
+      String reset = "";
+      String okColor = "";
+      String koColor = "";
+      String skipColor = "";
+      if (Ansi.useColor && color != null) {
          actualColor = color;
-         actualReset = RESET;
+         reset = RESET;
+         if (succeeded.get() > 0) {
+            okColor = GREEN;
+         }
+         if (failed.get() > 0) {
+            okColor = RED;
+         }
+         if (skipped.get() > 0) {
+            skipColor = CYAN;
+         }
       }
       // Must format explicitly, see SUREFIRE-1814
-      out.println(String.format("%s[OK: %5s, KO: %5s, SKIP: %5s] %s%s", actualColor, succeeded.get(), failed.get(), skipped.get(), message, actualReset));
+      out.println(String.format("[%sOK: %5s%s, %sKO: %5s%s, %sSKIP: %5s%s] %s%s%s", okColor, succeeded.get(), reset, koColor, failed.get(), reset, skipColor, skipped.get(), reset, actualColor, message, reset));
       if (t != null) {
          t.printStackTrace(out);
       }
