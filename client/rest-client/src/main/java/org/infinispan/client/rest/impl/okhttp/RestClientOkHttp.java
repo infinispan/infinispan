@@ -1,8 +1,8 @@
 package org.infinispan.client.rest.impl.okhttp;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
@@ -226,18 +226,13 @@ public class RestClientOkHttp implements RestClient {
    }
 
    static String sanitize(String s) {
-      try {
-         return URLEncoder.encode(s, "UTF-8");
-      } catch (UnsupportedEncodingException e) {
-         // never going to happen
-         return null;
-      }
+      return URLEncoder.encode(s, StandardCharsets.UTF_8);
    }
 
-   static Request.Builder addEnumHeader(String name, Request.Builder builder, Enum[] es) {
+   static Request.Builder addEnumHeader(String name, Request.Builder builder, Enum<?>[] es) {
       if (es != null && es.length > 0) {
          StringJoiner joined = new StringJoiner(" ");
-         for (Enum e : es) {
+         for (Enum<?> e : es) {
             joined.add(e.name());
          }
          builder.header(name, joined.toString());
