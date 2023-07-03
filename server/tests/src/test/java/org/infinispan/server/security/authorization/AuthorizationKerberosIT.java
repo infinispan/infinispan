@@ -1,7 +1,6 @@
 package org.infinispan.server.security.authorization;
 
 import java.net.InetSocketAddress;
-import java.nio.file.Paths;
 
 import javax.security.auth.Subject;
 
@@ -15,8 +14,6 @@ import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.category.Security;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.experimental.categories.Category;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -36,18 +33,8 @@ public class AuthorizationKerberosIT extends AbstractAuthorization {
                .runMode(ServerRunMode.EMBEDDED)
                .build();
 
-   private static String oldKrb5Conf;
-
-   @BeforeClass
-   public static void setKrb5Conf() {
-      oldKrb5Conf = System.setProperty("java.security.krb5.conf", Paths.get("src/test/resources/configuration/krb5.conf").toString());
-   }
-
-   @AfterClass
-   public static void restoreKrb5Conf() {
-      if (oldKrb5Conf != null) {
-         System.setProperty("java.security.krb5.conf", oldKrb5Conf);
-      }
+   public AuthorizationKerberosIT() {
+      super(SERVERS);
    }
 
    @Override

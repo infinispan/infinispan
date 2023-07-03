@@ -27,6 +27,10 @@ public class AuthorizationCertIT extends AbstractAuthorization {
                .artifacts(ClusteredIT.artifacts())
                .build();
 
+   public AuthorizationCertIT() {
+      super(SERVERS);
+   }
+
    @Override
    protected InfinispanServerExtension getServers() {
       return SERVERS;

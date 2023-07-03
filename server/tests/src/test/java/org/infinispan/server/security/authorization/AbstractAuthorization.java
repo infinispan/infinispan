@@ -12,11 +12,11 @@ import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.awaitStatus;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.HOTROD_CLIENT_SASL_MECHANISM;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.Closeable;
 import java.io.File;
@@ -69,12 +69,10 @@ import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.rest.resources.WeakSSEListener;
 import org.infinispan.server.functional.hotrod.HotRodCacheQueries;
 import org.infinispan.server.test.api.TestUser;
-import org.infinispan.server.test.core.ContainerInfinispanServerDriver;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.util.concurrent.CompletionStages;
-import org.junit.AssumptionViolatedException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 
 /**
@@ -85,11 +83,14 @@ import org.junit.Test;
 public abstract class AbstractAuthorization {
    public static final String BANK_PROTO = "bank.proto";
    public static final String UNAUTHORIZED_EXCEPTION = "(?s).*ISPN000287.*";
+
+   final InfinispanServerExtension ext;
    final Map<TestUser, ConfigurationBuilder> hotRodBuilders;
    final Map<TestUser, RestClientConfigurationBuilder> restBuilders;
    final Map<String, String> bulkData;
 
-   protected AbstractAuthorization() {
+   protected AbstractAuthorization(InfinispanServerExtension ext) {
+      this.ext = ext;
       hotRodBuilders = new HashMap<>();
       restBuilders = new HashMap<>();
       Stream.of(TestUser.values()).forEach(this::addClientBuilders);
@@ -300,9 +301,8 @@ public abstract class AbstractAuthorization {
 
    @Test
    public void testServerTaskWithParameters() {
-      if (!(getServers().getServerDriver() instanceof ContainerInfinispanServerDriver)) {
-         throw new AssumptionViolatedException("Requires CONTAINER mode");
-      }
+      ext.assumeContainerMode();
+
       InfinispanServerExtension serverTest = getServers();
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
 
@@ -348,9 +348,8 @@ public abstract class AbstractAuthorization {
 
    @Test
    public void testDistributedServerTaskWithParameters() {
-      if (!(getServers().getServerDriver() instanceof ContainerInfinispanServerDriver)) {
-         throw new AssumptionViolatedException("Requires CONTAINER mode");
-      }
+      ext.assumeContainerMode();
+
       InfinispanServerExtension serverTest = getServers();
       serverTest.hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.ADMIN)).create();
       for (TestUser user : EnumSet.of(TestUser.ADMIN, TestUser.APPLICATION, TestUser.DEPLOYER)) {
@@ -364,7 +363,7 @@ public abstract class AbstractAuthorization {
          greetings = cache.execute("dist-hello", Collections.emptyMap());
          assertEquals(2, greetings.size());
          for (String greeting : greetings) {
-            assertTrue(greeting, greeting.startsWith("Hello " + expectedServerPrincipalName(user) + " from "));
+            assertTrue(greeting.startsWith("Hello " + expectedServerPrincipalName(user) + " from "), greeting);
          }
       }
    }
@@ -794,13 +793,13 @@ public abstract class AbstractAuthorization {
 
       for (TestUser type : EnumSet.of(TestUser.ADMIN, TestUser.OBSERVER, TestUser.DEPLOYER)) {
          Set<String> caches = getServers().hotrod().withClientConfiguration(hotRodBuilders.get(type)).get().getRemoteCacheContainer().getCacheNames();
-         assertTrue(caches.toString(), caches.contains(name));
+         assertTrue(caches.contains(name), caches.toString());
       }
 
       // Types with no access.
       for (TestUser type : EnumSet.complementOf(EnumSet.of(TestUser.ADMIN, TestUser.OBSERVER, TestUser.DEPLOYER, TestUser.ANONYMOUS))) {
          Set<String> caches = getServers().hotrod().withClientConfiguration(hotRodBuilders.get(type)).get().getRemoteCacheContainer().getCacheNames();
-         assertFalse(caches.toString(), caches.contains(name));
+         assertFalse(caches.contains(name), caches.toString());
       }
    }
 
@@ -814,7 +813,7 @@ public abstract class AbstractAuthorization {
             assertEquals(OK, caches.getStatus());
             Json json = Json.read(caches.getBody());
             Set<String> names = json.asJsonList().stream().map(Json::asJsonMap).map(j -> j.get("name").asString()).collect(Collectors.toSet());
-            assertTrue(names.toString(), names.contains(name));
+            assertTrue(names.contains(name), names.toString());
          }
       }
       // Types with no access.
@@ -823,7 +822,7 @@ public abstract class AbstractAuthorization {
             assertEquals(OK, caches.getStatus());
             Json json = Json.read(caches.getBody());
             Set<String> names = json.asJsonList().stream().map(Json::asJsonMap).map(j -> j.get("name").asString()).collect(Collectors.toSet());
-            assertFalse(names.toString(), names.contains(name));
+            assertFalse(names.contains(name), names.toString());
          }
       }
    }
