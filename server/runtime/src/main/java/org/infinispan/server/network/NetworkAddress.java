@@ -104,19 +104,19 @@ public class NetworkAddress {
    }
 
    public static NetworkAddress globalAddress(String name) throws IOException {
-      return new NetworkAddress(name, findAddress(a -> !a.isLoopbackAddress() && !a.isSiteLocalAddress() && !a.isLinkLocalAddress()));
+      return new NetworkAddress(name, findAddress(a -> !a.getAddress().isLoopbackAddress() && !a.getAddress().isSiteLocalAddress() && !a.getAddress().isLinkLocalAddress()));
    }
 
    public static NetworkAddress loopback(String name) throws IOException {
-      return new NetworkAddress(name, findAddress(InetAddress::isLoopbackAddress));
+      return new NetworkAddress(name, findAddress(a -> a.getAddress().isLoopbackAddress()));
    }
 
    public static NetworkAddress nonLoopback(String name) throws IOException {
-      return new NetworkAddress(name, findAddress(a -> !a.isLoopbackAddress()));
+      return new NetworkAddress(name, findAddress(a -> !a.getAddress().isLoopbackAddress()));
    }
 
    public static NetworkAddress siteLocal(String name) throws IOException {
-      return new NetworkAddress(name, findAddress(InetAddress::isSiteLocalAddress));
+      return new NetworkAddress(name, findAddress(a -> a.getAddress().isSiteLocalAddress()));
    }
 
    public static NetworkAddress matchInterface(String name, String regex) throws IOException {
@@ -124,21 +124,26 @@ public class NetworkAddress {
    }
 
    public static NetworkAddress matchAddress(String name, String regex) throws IOException {
-      return new NetworkAddress(name, findAddress(a -> a.getHostAddress().matches(regex)));
+      return new NetworkAddress(name, findAddress(a -> a.getAddress().getHostAddress().matches(regex)));
    }
 
    public static NetworkAddress matchHost(String name, String regex) throws IOException {
-      return new NetworkAddress(name, findAddress(a -> a.getHostName().matches(regex)));
+      return new NetworkAddress(name, findAddress(a -> a.getAddress().getHostName().matches(regex)));
    }
 
-   public static NetworkAddress match(String name, Predicate<NetworkInterface> ifMatcher, Predicate<InetAddress> addressMatcher) throws IOException {
-      NetworkInterface networkInterface = findInterface(ifMatcher);
-      InterfaceAddress address = findAddress(networkInterface, addressMatcher);
-      if (address != null) {
-         return new NetworkAddress(name, address);
-      } else {
-         throw new IOException("No matching addresses found");
+   public static NetworkAddress match(String name, Predicate<NetworkInterface> ifMatcher, Predicate<InterfaceAddress> addressMatcher) throws IOException {
+      for (Enumeration<java.net.NetworkInterface> interfaces = java.net.NetworkInterface.getNetworkInterfaces(); interfaces.hasMoreElements(); ) {
+         NetworkInterface networkInterface = interfaces.nextElement();
+         if (networkInterface.isUp()) {
+            if (ifMatcher.test(networkInterface)) {
+               InterfaceAddress address = findAddress(networkInterface, addressMatcher);
+               if (address != null) {
+                  return new NetworkAddress(name, address);
+               }
+            }
+         }
       }
+      throw new IOException("No matching addresses found");
    }
 
    public static NetworkAddress inetAddress(String name, String value) throws UnknownHostException {
@@ -150,10 +155,10 @@ public class NetworkAddress {
    }
 
    public static NetworkAddress linkLocalAddress(String name) throws IOException {
-      return new NetworkAddress(name, findAddress(InetAddress::isLinkLocalAddress));
+      return new NetworkAddress(name, findAddress(a -> a.getAddress().isLinkLocalAddress()));
    }
 
-   private static InterfaceAddress findAddress(Predicate<InetAddress> matcher) throws IOException {
+   private static InterfaceAddress findAddress(Predicate<InterfaceAddress> matcher) throws IOException {
       for (Enumeration<java.net.NetworkInterface> interfaces = java.net.NetworkInterface.getNetworkInterfaces(); interfaces.hasMoreElements(); ) {
          NetworkInterface networkInterface = interfaces.nextElement();
          if (networkInterface.isUp()) {
@@ -167,13 +172,13 @@ public class NetworkAddress {
       throw new IOException("No matching addresses found");
    }
 
-   private static InterfaceAddress findAddress(NetworkInterface networkInterface, Predicate<InetAddress> matcher) throws IOException {
+   private static InterfaceAddress findAddress(NetworkInterface networkInterface, Predicate<InterfaceAddress> matcher) {
       for (InterfaceAddress ifAddress : networkInterface.getInterfaceAddresses()) {
          InetAddress address = ifAddress.getAddress();
          if (Server.log.isDebugEnabled()) {
             Server.log.debugf("Network address %s (loopback=%b linklocal=%b sitelocal=%b)", address, address.isLoopbackAddress(), address.isLinkLocalAddress(), address.isSiteLocalAddress());
          }
-         if (matcher.test(address)) {
+         if (matcher.test(ifAddress)) {
             return ifAddress;
          }
       }

@@ -1,11 +1,11 @@
 package org.infinispan.server.functional;
 
+import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +18,9 @@ import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.rest.IpFilterRule;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.server.hotrod.MultiHomedServerAddress;
 import org.infinispan.server.network.NetworkAddress;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.junit4.InfinispanServerRule;
@@ -53,7 +55,7 @@ public class ProtocolManagementIT {
       RestClient loopbackClient = SERVER_TEST.rest().withClientConfiguration(loopbackBuilder).get();
       assertStatus(200, loopbackClient.server().connectorNames());
 
-      NetworkAddress siteLocal = NetworkAddress.match("sitelocal", iF -> !iF.getName().startsWith("docker"), InetAddress::isSiteLocalAddress);
+      NetworkAddress siteLocal = NetworkAddress.match("sitelocal", iF -> !iF.getName().startsWith("docker"), a -> a.getAddress().isSiteLocalAddress());
       RestClientConfigurationBuilder siteLocalBuilder0 = new RestClientConfigurationBuilder();
       siteLocalBuilder0.addServer().host(siteLocal.getAddress().getHostAddress()).port(11222);
       RestClient siteLocalClient0 = SERVER_TEST.rest().withClientConfiguration(siteLocalBuilder0).get();
@@ -64,8 +66,21 @@ public class ProtocolManagementIT {
       RestClient siteLocalClient1 = SERVER_TEST.rest().withClientConfiguration(siteLocalBuilder1).get();
       assertStatus(200, siteLocalClient1.server().connectorNames());
 
+      // Use the server connection list to determine the client address
       List<IpFilterRule> rules = new ArrayList<>();
-      rules.add(new IpFilterRule(IpFilterRule.RuleType.REJECT, siteLocal.cidr()));
+      Json connections = Json.read(assertStatus(OK, loopbackClient.server().listConnections(false)));
+      for (Json connection : connections.asJsonList()) {
+         String remoteAddress = connection.at("remote-address").asString();
+         NetworkAddress r = NetworkAddress.inetAddress("r", remoteAddress.substring(1, remoteAddress.lastIndexOf(':')));
+         try {
+            NetworkAddress remote = NetworkAddress.match("remote", iF -> Exceptions.unchecked(() -> !iF.isLoopback()), a ->
+                  MultiHomedServerAddress.inetAddressMatchesInterfaceAddress(r.getAddress().getAddress(), a.getAddress().getAddress(), a.getNetworkPrefixLength())
+            );
+            rules.add(new IpFilterRule(IpFilterRule.RuleType.REJECT, remote.cidr()));
+         } catch (IOException e) {
+            // Ignore unmatched
+         }
+      }
 
       assertStatus(204, loopbackClient.server().connectorIpFilterSet("endpoint-default", rules));
       Exceptions.expectException(RuntimeException.class, ExecutionException.class, SocketException.class, () -> sync(siteLocalClient0.server().connectorNames()));

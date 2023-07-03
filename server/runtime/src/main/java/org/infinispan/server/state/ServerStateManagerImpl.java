@@ -201,7 +201,7 @@ public final class ServerStateManagerImpl implements ServerStateManager {
    }
 
    private CompletionStage<Void> updateIpFilters(String connector, Collection<IpFilterRule> rules) {
-      ProtocolServer protocolServer = server.getProtocolServers().get(connector);
+      ProtocolServer<?> protocolServer = server.getProtocolServers().get(connector);
       if (rules.isEmpty()) {
          protocolServer.getConfiguration().ipFilter().rules(Collections.emptyList());
          Server.log.connectorIpFilterCleared(connector);
