@@ -11,13 +11,19 @@ import org.testcontainers.containers.output.OutputFrame;
 public class JBossLoggingConsumer extends BaseConsumer<JBossLoggingConsumer> {
    private final BasicLogger logger;
    private String prefix = "";
+   private String suffix = "";
 
    public JBossLoggingConsumer(BasicLogger logger) {
       this.logger = logger;
    }
 
    public JBossLoggingConsumer withPrefix(String prefix) {
-      this.prefix = "[" + prefix + "] ";
+      this.prefix = prefix;
+      return this;
+   }
+
+   public JBossLoggingConsumer withSuffix(String suffix) {
+      this.suffix = suffix;
       return this;
    }
 
@@ -28,10 +34,10 @@ public class JBossLoggingConsumer extends BaseConsumer<JBossLoggingConsumer> {
       utf8String = utf8String.replaceAll("((\\r?\\n)|(\\r))$", "");
       switch (outputType) {
          case STDOUT:
-            this.logger.infof("%s%s: %s", prefix, outputType, utf8String);
+            this.logger.infof("%s%s: %s%s", prefix, outputType, utf8String, suffix);
             break;
          case STDERR:
-            this.logger.errorf("%s%s: %s", prefix, outputType, utf8String);
+            this.logger.errorf("%s%s: %s%s", prefix, outputType, utf8String, suffix);
             break;
          case END:
             break;
