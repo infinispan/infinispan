@@ -1,4 +1,4 @@
 /**
-   * @Field(analyze = Analyze.YES, store = Store.YES)
+   * @Field(analyze = Analyze.YES, store = Store.YES, sortable = true)
    */
 required string street = 1;
