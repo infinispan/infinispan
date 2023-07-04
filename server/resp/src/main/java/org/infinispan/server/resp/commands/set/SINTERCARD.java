@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.multimap.impl.EmbeddedSetCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
@@ -13,8 +14,6 @@ import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.util.concurrent.CompletionStages;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -42,7 +41,7 @@ public class SINTERCARD extends RespCommand implements Resp3Command {
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
          ChannelHandlerContext ctx,
          List<byte[]> arguments) {
-
+      EmbeddedSetCache<byte[], WrappedByteArray> esc = handler.getEmbeddedSetCache();
       var keysNum = ArgumentUtils.toInt(arguments.get(0));
 
       final int limit = processArgs(keysNum, arguments, handler);
@@ -50,9 +49,9 @@ public class SINTERCARD extends RespCommand implements Resp3Command {
          return handler.myStage();
       }
       var keys = arguments.subList(1, keysNum + 1);
-      AggregateCompletionStage<Void> acs = CompletionStages.aggregateCompletionStage();
-      var sets = SINTER.aggregateSets(handler, keys, acs);
-      return handler.stageToReturn(acs.freeze().thenApply((v) -> (long) SINTER.intersect(sets, limit).size()),
+      var uniqueKeys = SINTER.getUniqueKeys(handler, keys);
+      var allEntries= esc.getAll(uniqueKeys);
+      return handler.stageToReturn(allEntries.thenApply((sets) -> sets.size() == uniqueKeys.size() ? (long) SINTER.intersect(sets.values(), limit).size() : SINTER.checkTypesAndReturnEmpty(sets.values()).size()),
             ctx,
             Consumers.LONG_BICONSUMER);
    }

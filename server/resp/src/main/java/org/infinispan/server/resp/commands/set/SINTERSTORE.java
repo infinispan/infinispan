@@ -6,13 +6,12 @@ import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.multimap.impl.EmbeddedSetCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.util.concurrent.CompletionStages;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -36,14 +35,15 @@ public class SINTERSTORE extends RespCommand implements Resp3Command {
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
          ChannelHandlerContext ctx,
          List<byte[]> arguments) {
+      EmbeddedSetCache<byte[], WrappedByteArray> esc = handler.getEmbeddedSetCache();
 
       var destination = arguments.get(0);
       var keys = arguments.subList(1, arguments.size());
 
-      AggregateCompletionStage<Void> acs = CompletionStages.aggregateCompletionStage();
-      var sets = SINTER.aggregateSets(handler, keys, acs);
+      var uniqueKeys = SINTER.getUniqueKeys(handler, keys);
+      var allEntries= esc.getAll(uniqueKeys);
       return handler.stageToReturn(
-            acs.freeze().thenCompose(v -> handler.getEmbeddedSetCache().set(destination, SINTER.intersect(sets, 0))),
+            allEntries.thenCompose(sets -> handler.getEmbeddedSetCache().set(destination, SINTER.intersect(sets.values(), 0))),
             ctx,
             Consumers.LONG_BICONSUMER);
    }
