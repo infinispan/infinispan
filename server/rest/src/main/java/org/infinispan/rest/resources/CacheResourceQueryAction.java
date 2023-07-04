@@ -65,7 +65,7 @@ class CacheResourceQueryAction {
       MediaType keyContentType = request.keyContentType();
       AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, keyContentType, MediaType.APPLICATION_JSON, request);
 
-      QueryConfiguration queryConfiguration = cache.getCacheConfiguration().query();
+      QueryConfiguration queryConfiguration = SecurityActions.getCacheConfiguration(cache).query();
       query.setDefaultHitCountAccuracy(queryConfiguration.hitCountAccuracy());
       String queryString = query.getQuery();
 
