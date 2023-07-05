@@ -135,4 +135,20 @@ public class EmbeddedMultimapPairCacheTest extends SingleCacheManagerTest {
 
       assertThat(await(embeddedPairCache.get("compute-test", "name"))).isEqualTo("Ramon");
    }
+
+   public void testSubSelect() {
+      assertThat(await(embeddedPairCache.subSelect("unknown-subselect", 10))).isNull();
+
+      Map<String, String> map = Map.of("name", "Oihana", "age", "1", "birthday", "2023-05-26");
+      assertThat(await(embeddedPairCache.set("subselect-test", map.entrySet().toArray(new Map.Entry[0]))))
+            .isEqualTo(3);
+
+      assertThat(await(embeddedPairCache.subSelect("subselect-test", 2)))
+            .hasSize(2)
+            .satisfies(m -> assertThat(map).containsAllEntriesOf(m));
+
+      assertThat(await(embeddedPairCache.subSelect("subselect-test", 30)))
+            .containsAllEntriesOf(map)
+            .hasSize(map.size());
+   }
 }

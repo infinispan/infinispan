@@ -5,12 +5,14 @@ import static java.util.Objects.requireNonNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -21,6 +23,7 @@ import org.infinispan.multimap.impl.function.hmap.HashMapKeySetFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapPutFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapRemoveFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapReplaceFunction;
+import org.infinispan.multimap.impl.function.hmap.HashMapValuesFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapValuesFunction;
 
 /**
@@ -229,6 +232,28 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
 
                   return compute(key, property, biConsumer);
                });
+            });
+   }
+
+   /**
+    * Select {@param count} key-value pairs from the hash map stored under the given key.
+    * <p>
+    * The returned values follow the iteration order of {@link HashMap#entrySet()}. An {@param count} bigger than the
+    * size of the stored map does not raise an exception.
+    *
+    * @param key: Cache key to retrieve the stored hash map.
+    * @param count: Number of key-value pairs to select.
+    * @return {@link CompletionStage} containing a {@link Map} with the key-value pairs or null if not found.
+    */
+   public CompletionStage<Map<HK, HV>> subSelect(K key, int count) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      return cache.getCacheEntryAsync(key)
+            .thenApply(entry -> {
+               if (entry == null) return null;
+
+               return entry.getValue().converted().entrySet().stream()
+                     .limit(count)
+                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
             });
    }
 }
