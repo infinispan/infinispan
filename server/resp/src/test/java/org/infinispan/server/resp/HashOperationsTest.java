@@ -245,4 +245,29 @@ public class HashOperationsTest extends SingleNodeRespBaseTest {
       assertThat(redis.hget("incr-test", "key1")).isEqualTo("value1");
       assertThat(redis.hget("incr-test", "age")).isEqualTo("3.5");
    }
+
+   public void testHrandField() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      assertThat(redis.hrandfield("something")).isNull();
+
+      Map<String, String> map = Map.of("key1", "value1", "key2", "value2", "key3", "value3");
+      assertThat(redis.hset("hrand-operations", map)).isEqualTo(3);
+
+      assertThat(redis.hrandfield("hrand-operations")).isIn(map.keySet());
+      assertThat(redis.hrandfieldWithvalues("hrand-operations"))
+            .satisfies(kv -> assertThat(map.get(kv.getKey())).isEqualTo(kv.getValue()));
+
+      assertThat(redis.hrandfield("hrand-operations", 0)).isEmpty();
+
+      assertThat(redis.hrandfield("hrand-operations", 2)).hasSize(2);
+      assertThat(redis.hrandfieldWithvalues("hrand-operations", 2)).hasSize(2);
+      assertThat(redis.hrandfield("hrand-operations", 20)).hasSize(3);
+      assertThat(redis.hrandfieldWithvalues("hrand-operations", 20)).hasSize(3);
+
+      assertThat(redis.hrandfield("hrand-operations", -20)).hasSize(20);
+      assertThat(redis.hrandfieldWithvalues("hrand-operations", -20)).hasSize(20);
+
+      assertWrongType(() -> redis.set("plain", "string"), () -> redis.hrandfield("plain"));
+   }
 }

@@ -75,6 +75,9 @@ public final class ByteBufferUtils {
    }
 
    public static ByteBuf bytesToResult(Collection<byte[]> results, ByteBufPool alloc) {
+      if (results.isEmpty())
+         return stringToByteBuf("*0\r\n", alloc);
+
       int resultBytesSize = 0;
       for (byte[] result: results) {
          int length = result.length;
