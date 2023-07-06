@@ -8,8 +8,8 @@ import org.testng.annotations.Test;
 @Test(testName = "persistence.remote.configuration.ConfigurationSerializerTest", groups="functional")
 public class ConfigurationSerializerTest extends AbstractConfigurationSerializerTest {
    @Override
-   protected void compareStoreConfiguration(String name, StoreConfiguration beforeStore, StoreConfiguration afterStore) {
-      super.compareStoreConfiguration(name, beforeStore, afterStore);
+   protected void compareStoreConfiguration(String name, StoreConfiguration beforeStore, StoreConfiguration afterStore, String... excludes) {
+      super.compareStoreConfiguration(name, beforeStore, afterStore, "transport-factory");
       RemoteStoreConfiguration before = (RemoteStoreConfiguration) beforeStore;
       RemoteStoreConfiguration after = (RemoteStoreConfiguration) afterStore;
       AssertJUnit.assertEquals("Wrong connection pool for " + name + " configuration.", before.connectionPool(), after.connectionPool());

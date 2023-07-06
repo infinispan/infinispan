@@ -50,7 +50,7 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
    private void parseRemoteStore(final ConfigurationReader reader, PersistenceConfigurationBuilder persistenceBuilder,
                                  ClassLoader classLoader) {
       RemoteStoreConfigurationBuilder builder = new RemoteStoreConfigurationBuilder(persistenceBuilder);
-      parseRemoteStoreAttributes(reader, builder);
+      parseRemoteStoreAttributes(reader, builder, classLoader);
 
       while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
@@ -364,7 +364,7 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseRemoteStoreAttributes(ConfigurationReader reader, RemoteStoreConfigurationBuilder builder) {
+   private void parseRemoteStoreAttributes(ConfigurationReader reader, RemoteStoreConfigurationBuilder builder, ClassLoader classLoader) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
@@ -424,7 +424,7 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
                break;
             }
             case TRANSPORT_FACTORY: {
-               builder.transportFactory(value);
+               builder.transportFactory(Util.getInstance(value, classLoader));
                break;
             }
             case VALUE_SIZE_ESTIMATE: {

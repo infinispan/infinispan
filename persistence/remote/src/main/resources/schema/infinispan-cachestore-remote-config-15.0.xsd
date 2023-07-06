@@ -50,6 +50,13 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
+        <xs:attribute name="transport-factory" type="xs:string" default="${RemoteStore.transportFactory}">
+          <xs:annotation>
+            <xs:documentation>
+              The Hot Rod transport factory.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
         <xs:attribute name="hotrod-wrapping" type="xs:boolean" default="${RemoteStore.hotRodWrapping}">
           <xs:annotation>
             <xs:documentation>

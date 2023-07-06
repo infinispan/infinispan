@@ -12,6 +12,7 @@ import static org.infinispan.persistence.remote.configuration.RemoteStoreConfigu
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.REMOTE_CACHE_NAME;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.SOCKET_TIMEOUT;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.TCP_NO_DELAY;
+import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.TRANSPORT_FACTORY;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.URI;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.VALUE_SIZE_ESTIMATE;
 import static org.infinispan.persistence.remote.logging.Log.CONFIG;
@@ -21,7 +22,7 @@ import java.util.List;
 import java.util.Properties;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.TransportFactory;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
@@ -157,13 +158,8 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
    }
 
    @Override
-   public RemoteStoreConfigurationBuilder transportFactory(String transportFactory) {
-      return this;
-   }
-
-   @Override
-   public RemoteStoreConfigurationBuilder transportFactory(Class<? extends ChannelFactory> transportFactory) {
-      transportFactory(transportFactory.getName());
+   public RemoteStoreConfigurationBuilder transportFactory(TransportFactory transportFactory) {
+      attributes.attribute(TRANSPORT_FACTORY).set(transportFactory);
       return this;
    }
 

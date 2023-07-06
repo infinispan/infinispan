@@ -3,12 +3,14 @@ package org.infinispan.persistence.remote.configuration;
 import java.util.List;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
+import org.infinispan.client.hotrod.TransportFactory;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
@@ -44,10 +46,12 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration<RemoteS
 
    static final AttributeDefinition<Long> SOCKET_TIMEOUT = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.SOCKET_TIMEOUT, (long) ConfigurationProperties.DEFAULT_SO_TIMEOUT).build();
    static final AttributeDefinition<Boolean> TCP_NO_DELAY = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.TCP_NO_DELAY, true).build();
+   static final AttributeDefinition<TransportFactory> TRANSPORT_FACTORY = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.TRANSPORT_FACTORY, TransportFactory.DEFAULT)
+         .immutable().serializer(AttributeSerializer.INSTANCE_CLASS_NAME).build();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(RemoteStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), BALANCING_STRATEGY, CONNECTION_TIMEOUT, FORCE_RETURN_VALUES,
-            HOTROD_WRAPPING, RAW_VALUES, KEY_SIZE_ESTIMATE, MARSHALLER, PROTOCOL_VERSION, REMOTE_CACHE_NAME, SOCKET_TIMEOUT, TCP_NO_DELAY, VALUE_SIZE_ESTIMATE, URI);
+            HOTROD_WRAPPING, RAW_VALUES, KEY_SIZE_ESTIMATE, MARSHALLER, PROTOCOL_VERSION, REMOTE_CACHE_NAME, SOCKET_TIMEOUT, TCP_NO_DELAY, TRANSPORT_FACTORY, VALUE_SIZE_ESTIMATE, URI);
    }
 
    private final Attribute<String> balancingStrategy;
@@ -163,13 +167,10 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration<RemoteS
       return tcpNoDelay.get();
    }
 
-   /**
-    * @deprecated since 10.0. This method always returns null
-    */
-   @Deprecated
-   public String transportFactory() {
-      return null;
+   public TransportFactory transportFactory() {
+      return attributes.attribute(TRANSPORT_FACTORY).get();
    }
+
 
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0

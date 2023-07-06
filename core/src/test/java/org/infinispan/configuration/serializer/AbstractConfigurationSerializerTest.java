@@ -167,11 +167,15 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
    }
 
    protected void compareStoreConfiguration(String name, StoreConfiguration beforeStore, StoreConfiguration afterStore) {
+      compareStoreConfiguration(name, beforeStore, afterStore, new String[0]);
+   }
+
+   protected void compareStoreConfiguration(String name, StoreConfiguration beforeStore, StoreConfiguration afterStore, String... exclude) {
       if (beforeStore instanceof AbstractStoreConfiguration) {
          AbstractStoreConfiguration beforeASC = (AbstractStoreConfiguration) beforeStore;
          AbstractStoreConfiguration afterASC = (AbstractStoreConfiguration) afterStore;
-         compareAttributeSets(name, beforeASC.attributes(), afterASC.attributes());
-         compareAttributeSets(name, beforeASC.async().attributes(), afterASC.async().attributes());
+         compareAttributeSets(name, beforeASC.attributes(), afterASC.attributes(), exclude);
+         compareAttributeSets(name, beforeASC.async().attributes(), afterASC.async().attributes(), exclude);
       } else {
          throw new IllegalArgumentException("Cannot compare stores of type: " + beforeStore.getClass().getName());
       }

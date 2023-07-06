@@ -470,6 +470,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
             .asyncExecutorFactory().withExecutorProperties(configuration.asyncExecutorFactory().properties())
             .socketTimeout(socketTimeout.intValue())
             .tcpNoDelay(configuration.tcpNoDelay())
+            .transportFactory(configuration.transportFactory())
             .valueSizeEstimate(configuration.valueSizeEstimate())
             .version(configuration.protocol() == null ? ProtocolVersion.DEFAULT_PROTOCOL_VERSION : configuration.protocol());
 
