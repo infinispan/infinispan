@@ -8,6 +8,7 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
+import org.infinispan.server.test.api.JmxTestClient;
 import org.infinispan.server.test.api.MemcachedTestClientDriver;
 import org.infinispan.server.test.api.RespTestClientDriver;
 import org.infinispan.server.test.api.RestTestClientDriver;
@@ -53,6 +54,11 @@ public class InfinispanServerTestMethodRule implements TestRule, TestClientDrive
    @Override
    public RespTestClientDriver resp() {
       return testClient.resp();
+   }
+
+   @Override
+   public JmxTestClient jmx() {
+      return testClient.jmx();
    }
 
    @Override

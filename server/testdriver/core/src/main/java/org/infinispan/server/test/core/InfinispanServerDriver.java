@@ -1,8 +1,10 @@
 package org.infinispan.server.test.core;
 
+import java.io.Closeable;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.function.Consumer;
 
 import javax.management.MBeanServerConnection;
 
@@ -140,7 +142,7 @@ public interface InfinispanServerDriver {
     *
     * @param server the index of the server
     */
-   MBeanServerConnection getJmxConnection(int server);
+   MBeanServerConnection getJmxConnection(int server, String username, String password, Consumer<Closeable> reaper);
 
    RemoteCacheManager createRemoteCacheManager(ConfigurationBuilder builder);
 

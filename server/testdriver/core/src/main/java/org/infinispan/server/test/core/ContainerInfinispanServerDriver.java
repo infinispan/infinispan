@@ -10,6 +10,7 @@ import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,9 +28,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -37,8 +42,9 @@ import java.util.stream.IntStream;
 
 import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
+import javax.management.remote.rmi.RMIConnector;
+import javax.management.remote.rmi.RMIServer;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -60,7 +66,6 @@ import org.testcontainers.images.builder.dockerfile.statement.RawStatement;
 
 import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
-import com.github.dockerjava.api.model.ContainerNetwork;
 import com.github.dockerjava.api.model.Mount;
 import com.github.dockerjava.api.model.MountType;
 
@@ -77,7 +82,6 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    private static final Long IMAGE_MEMORY = Long.getLong(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_MEMORY, null);
    private static final Long IMAGE_MEMORY_SWAP = Long.getLong(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_MEMORY_SWAP, null);
    public static final String INFINISPAN_SERVER_HOME = "/opt/infinispan";
-   public static final int JMX_PORT = 9999;
    public static final String JDK_BASE_IMAGE_NAME = "registry.access.redhat.com/ubi8/openjdk-17-runtime";
    public static final String IMAGE_USER = "185";
    public static final Integer[] EXPOSED_PORTS = {
@@ -88,7 +92,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          11225, // Alternate single port endpoint
          7800,  // JGroups TCP
          46655, // JGroups UDP
-         9999
+         9999   // JMX Remoting
    };
    public static final String SNAPSHOT_IMAGE = "localhost/infinispan/server-snapshot";
    private final InfinispanGenericContainer[] containers;
@@ -142,9 +146,8 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       args.add("-Dinfinispan.cluster.name=" + name);
       args.add("-D" + TEST_HOST_ADDRESS + "=" + testHostAddress.getHostAddress());
       if (configuration.isJMXEnabled()) {
-         args.add("-Dcom.sun.management.jmxremote.port=" + JMX_PORT);
-         args.add("-Dcom.sun.management.jmxremote.authenticate=false");
-         args.add("-Dcom.sun.management.jmxremote.ssl=false");
+         args.add("--jmx");
+         args.add(Integer.toString(JMX_PORT));
       }
 
       String logFile = System.getProperty(INFINISPAN_TEST_SERVER_LOG_FILE);
@@ -234,7 +237,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
                      .workDir(INFINISPAN_SERVER_HOME)
                      .entryPoint(args.toArray(new String[]{}))
                      .expose(
-                           EXPOSED_PORTS   // JMX Remoting
+                           EXPOSED_PORTS
                      )
 
                ;
@@ -437,13 +440,20 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
    }
 
    @Override
-   public MBeanServerConnection getJmxConnection(int server) {
+   public MBeanServerConnection getJmxConnection(int server, String username, String password, Consumer<Closeable> reaper) {
       return Exceptions.unchecked(() -> {
          InfinispanGenericContainer container = containers[server];
-         ContainerNetwork network = container.getContainerNetwork();
-         JMXServiceURL url = new JMXServiceURL(String.format("service:jmx:rmi:///jndi/rmi://%s:%d/jmxrmi", network.getIpAddress(), JMX_PORT));
-         JMXConnector jmxConnector = JMXConnectorFactory.connect(url);
-         return jmxConnector.getMBeanServerConnection();
+         final String urlPath = "/jndi/rmi://" + container.getIpAddress() + ":" + JMX_PORT + "/jmxrmi";
+         JMXServiceURL url = new JMXServiceURL("rmi", "", 0, urlPath);
+         Registry registry = LocateRegistry.getRegistry(container.getIpAddress().getHostAddress(), JMX_PORT);
+         RMIServer stub = (RMIServer) registry.lookup("jmxrmi");
+         JMXConnector connector = new RMIConnector(stub, null);
+         Map<String, Object> env = new HashMap<>();
+         env.put(JMXConnector.CREDENTIALS, new String[] {username, password});
+         connector.connect(env);
+         log.infof("Connecting to JMX URL %s", url.toString());
+         reaper.accept(connector);
+         return connector.getMBeanServerConnection();
       });
    }
 

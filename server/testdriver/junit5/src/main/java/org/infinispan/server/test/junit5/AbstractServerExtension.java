@@ -14,7 +14,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;
 
-public class AbstractServerExtension {
+public abstract class AbstractServerExtension {
 
    protected final List<Consumer<File>> configurationEnhancers = new ArrayList<>();
    protected final Set<Class<?>> suiteTestClasses = new HashSet<>();

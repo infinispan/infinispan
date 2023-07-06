@@ -74,6 +74,7 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    public static final String KEY_PASSWORD = "secret";
    public static final String KEY_ALGORITHM = "RSA";
    public static final String KEY_SIGNATURE_ALGORITHM = "SHA256withRSA";
+   public static final int JMX_PORT = 9999;
 
    protected final InfinispanServerTestConfiguration configuration;
    protected final InetAddress testHostAddress;

@@ -1,5 +1,6 @@
 package org.infinispan.server.test.core;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import javax.management.MBeanServerConnection;
 
@@ -110,6 +112,9 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
          // Replace 99 with index of server to debug
          if (i == 99) {
             server.setJvmOptions(debugJvmOption());
+         }
+         if (configuration.isJMXEnabled()) {
+            server.addArgument("--jmx "+ JMX_PORT);
          }
          copyArtifactsToUserLibDir(server.getServerLib());
          forkedServers.add(server.start());
@@ -246,8 +251,8 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
    }
 
    @Override
-   public MBeanServerConnection getJmxConnection(int server) {
-      return null;
+   public MBeanServerConnection getJmxConnection(int server, String username, String password, Consumer<Closeable> reaper) {
+      throw new UnsupportedOperationException();
    }
 
    @Override

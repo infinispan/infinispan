@@ -10,7 +10,7 @@ import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
 
 /**
- *  REST operations for the testing framework
+ *  Hot Rod operations for the testing framework
  *
  * @author Tristan Tarrant
  * @since 10

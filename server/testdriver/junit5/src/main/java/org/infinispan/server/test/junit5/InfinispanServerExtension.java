@@ -3,6 +3,7 @@ package org.infinispan.server.test.junit5;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
+import org.infinispan.server.test.api.JmxTestClient;
 import org.infinispan.server.test.api.MemcachedTestClientDriver;
 import org.infinispan.server.test.api.RespTestClientDriver;
 import org.infinispan.server.test.api.RestTestClientDriver;
@@ -103,6 +104,11 @@ public class InfinispanServerExtension extends AbstractServerExtension implement
    @Override
    public MemcachedTestClientDriver memcached() {
       return testClient.memcached();
+   }
+
+   @Override
+   public JmxTestClient jmx() {
+      return testClient.jmx();
    }
 
    @Override

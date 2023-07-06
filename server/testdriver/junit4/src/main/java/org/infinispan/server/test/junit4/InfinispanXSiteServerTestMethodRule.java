@@ -4,8 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import javax.management.MBeanServerConnection;
-
 import org.infinispan.client.hotrod.multimap.MultimapCacheManager;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
@@ -57,10 +55,6 @@ public class InfinispanXSiteServerTestMethodRule implements TestRule, TestClient
    @Override
    public <K, V> MultimapCacheManager<K, V> getMultimapCacheManager(String siteName) {
       return testClients.get(siteName).getRemoteMultimapCacheManager();
-   }
-
-   public MBeanServerConnection getJmxConnection(String siteName, int server) {
-      return testClients.get(siteName).getServerDriver().getJmxConnection(server);
    }
 
    @Override
