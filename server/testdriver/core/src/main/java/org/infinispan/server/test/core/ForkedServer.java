@@ -211,4 +211,8 @@ public class ForkedServer {
    public void addSystemProperty(String key, Object value) {
       commands.add(String.format("-D%s=%s", key, value));
    }
+
+   public void addArgument(String argument) {
+      commands.add(argument);
+   }
 }

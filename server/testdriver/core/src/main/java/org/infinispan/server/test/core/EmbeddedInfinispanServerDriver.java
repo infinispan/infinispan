@@ -2,6 +2,7 @@ package org.infinispan.server.test.core;
 
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_EMBEDDED_TIMEOUT_SECONDS;
 
+import java.io.Closeable;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -10,6 +11,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import javax.management.MBeanServerConnection;
@@ -165,7 +167,7 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
    }
 
    @Override
-   public MBeanServerConnection getJmxConnection(int server) {
+   public MBeanServerConnection getJmxConnection(int server, String username, String password, Consumer<Closeable> reaper) {
       DefaultCacheManager cacheManager = servers.get(server).getCacheManager();
       return cacheManager.getCacheManagerConfiguration().jmx().mbeanServerLookup().getMBeanServer();
    }

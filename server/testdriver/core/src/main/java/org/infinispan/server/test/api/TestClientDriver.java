@@ -35,6 +35,8 @@ public interface TestClientDriver {
     */
    MemcachedTestClientDriver memcached();
 
+   JmxTestClient jmx();
+
    /**
     * Returns a unique identifier for the current test method
     *

@@ -28,6 +28,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
+import org.infinispan.server.test.api.JmxTestClient;
 import org.infinispan.server.test.api.MemcachedTestClientDriver;
 import org.infinispan.server.test.api.RespTestClientDriver;
 import org.infinispan.server.test.api.RestTestClientDriver;
@@ -79,6 +80,10 @@ public class TestClient {
       return new MemcachedTestClientDriver(testServer, this);
    }
 
+   public JmxTestClient jmx() {
+      return new JmxTestClient(testServer, this);
+   }
+
    public CounterManager getCounterManager() {
       RemoteCacheManager remoteCacheManager = registerResource(testServer.newHotRodClient());
       return RemoteCounterManagerFactory.asCounterManager(remoteCacheManager);
@@ -121,7 +126,7 @@ public class TestClient {
       RemoteCache<String, String> scriptCache = remoteCacheManager.getCache(ScriptingManager.SCRIPT_CACHE);
       try (InputStream in = this.getClass().getClassLoader().getResourceAsStream(script)) {
          scriptCache.put(getMethodName(), CommonsTestingUtil.loadFileAsString(in));
-      }  catch (HotRodClientException e) {
+      } catch (HotRodClientException e) {
          throw e;
       } catch (Exception e) {
          throw new RuntimeException(e);

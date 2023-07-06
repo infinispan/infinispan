@@ -68,6 +68,7 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.GlobalSecurityManager;
 import org.infinispan.security.Security;
 import org.infinispan.security.audit.LoggingAuditLogger;
+import org.infinispan.security.impl.Authorizer;
 import org.infinispan.server.configuration.DataSourceConfiguration;
 import org.infinispan.server.configuration.ServerConfiguration;
 import org.infinispan.server.configuration.ServerConfigurationBuilder;
@@ -421,8 +422,8 @@ public class Server implements ServerManagement, AutoCloseable {
 
          // Start the cache manager
          SecurityActions.startCacheManager(cacheManager);
-
-         BasicComponentRegistry bcr = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(BasicComponentRegistry.class.getName());
+         GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(cacheManager);
+         BasicComponentRegistry bcr = gcr.getComponent(BasicComponentRegistry.class.getName());
          blockingManager = bcr.getComponent(BlockingManager.class).running();
          serverStateManager = new ServerStateManagerImpl(this, cacheManager, bcr.getComponent(GlobalConfigurationManager.class).running());
          bcr.registerComponent(ServerStateManager.class, serverStateManager, false);
@@ -438,7 +439,7 @@ public class Server implements ServerManagement, AutoCloseable {
          taskManager = bcr.getComponent(TaskManager.class).running();
          taskManager.registerTaskEngine(extensions.getServerTaskEngine(cacheManager));
 
-         ElytronJMXAuthenticator.init(serverConfiguration);
+         ElytronJMXAuthenticator.init(gcr.getComponent(Authorizer.class), serverConfiguration);
 
          for (EndpointConfiguration endpoint : serverConfiguration.endpoints().endpoints()) {
             // Start the protocol servers

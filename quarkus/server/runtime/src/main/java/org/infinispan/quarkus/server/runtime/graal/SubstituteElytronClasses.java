@@ -1,7 +1,12 @@
 package org.infinispan.quarkus.server.runtime.graal;
 
-import com.oracle.svm.core.annotate.Substitute;
-import com.oracle.svm.core.annotate.TargetClass;
+import java.security.Principal;
+import java.util.Properties;
+
+import javax.security.auth.Subject;
+import javax.security.auth.callback.CallbackHandler;
+
+import org.infinispan.security.impl.Authorizer;
 import org.infinispan.server.configuration.ServerConfiguration;
 import org.infinispan.server.configuration.security.LdapRealmConfiguration;
 import org.infinispan.server.configuration.security.RealmConfiguration;
@@ -13,10 +18,8 @@ import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityRealm;
 
-import javax.security.auth.Subject;
-import javax.security.auth.callback.CallbackHandler;
-import java.security.Principal;
-import java.util.Properties;
+import com.oracle.svm.core.annotate.Substitute;
+import com.oracle.svm.core.annotate.TargetClass;
 public class SubstituteElytronClasses {
 }
 
@@ -31,8 +34,8 @@ final class Target_LdapRealmConfiguration {
 @TargetClass(ElytronJMXAuthenticator.class)
 final class Target_ElytronJMXAuthenticator {
    @Substitute
-   public static void init(ServerConfiguration serverConfiguration) {
-      // no-op
+   public static void init(Authorizer authorizer, ServerConfiguration serverConfiguration) {
+   // no-op
    }
 
    @Substitute
