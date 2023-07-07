@@ -49,6 +49,15 @@ public class HashMapBucket<K, V> {
       return res;
    }
 
+   public Map<K, V> getAll(Set<K> keys) {
+      // We can have null vales here, so we need HashMap.
+      Map<K, V> response = new HashMap<>(keys.size());
+      for (K key : keys) {
+         response.put(key, values.get(new MultimapObjectWrapper<>(key)));
+      }
+      return response;
+   }
+
    public Map<K, V> converted() {
       return fromStore();
    }

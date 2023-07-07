@@ -5,12 +5,13 @@ import static java.util.Objects.requireNonNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -23,7 +24,6 @@ import org.infinispan.multimap.impl.function.hmap.HashMapKeySetFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapPutFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapRemoveFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapReplaceFunction;
-import org.infinispan.multimap.impl.function.hmap.HashMapValuesFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapValuesFunction;
 
 /**
@@ -44,6 +44,8 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
 
    public static final String ERR_KEY_CAN_T_BE_NULL = "key can't be null";
    public static final String ERR_PROPERTY_CANT_BE_NULL = "property can't be null";
+   public static final String ERR_PROPERTIES_CANT_BE_EMPTY = "properties can't be empty";
+   public static final String ERR_COUNT_MUST_BE_POSITIVE = "count must be positive";
 
    private final FunctionalMap.ReadWriteMap<K, HashMapBucket<HK, HV>> readWriteMap;
    private final AdvancedCache<K, HashMapBucket<HK, HV>> cache;
@@ -101,6 +103,34 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
 
                HashMapBucket<HK, HV> bucket = entry.getValue();
                return bucket.get(property);
+            });
+   }
+
+   /**
+    * Return the values of the given {@param properties} stored under the given {@param key}.
+    *
+    * @param key: Cache key to retrieve the hash map.
+    * @param properties: Properties to retrieve.
+    * @return {@link CompletionStage} containing a {@link Map} with the key-value pairs or an empty map if the key
+    *        is not found.
+    */
+   @SafeVarargs
+   public final CompletionStage<Map<HK, HV>> get(K key, HK ... properties) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      requireNonNull(properties, ERR_PROPERTY_CANT_BE_NULL);
+      requireTrue(properties.length > 0, ERR_PROPERTIES_CANT_BE_EMPTY);
+
+      Set<HK> propertySet = Set.of(properties);
+      requireNonNullArgument(propertySet, ERR_PROPERTY_CANT_BE_NULL);
+
+      return cache.getCacheEntryAsync(key)
+            .thenApply(entry -> {
+               if (entry == null) {
+                  return Map.of();
+               }
+
+               HashMapBucket<HK, HV> bucket = entry.getValue();
+               return bucket.getAll(propertySet);
             });
    }
 
@@ -238,7 +268,7 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
    /**
     * Select {@param count} key-value pairs from the hash map stored under the given key.
     * <p>
-    * The returned values follow the iteration order of {@link HashMap#entrySet()}. An {@param count} bigger than the
+    * The returned values are randomly selected from the underlying map. An {@param count} bigger than the
     * size of the stored map does not raise an exception.
     *
     * @param key: Cache key to retrieve the stored hash map.
@@ -247,13 +277,37 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
     */
    public CompletionStage<Map<HK, HV>> subSelect(K key, int count) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      requirePositive(count, ERR_COUNT_MUST_BE_POSITIVE);
       return cache.getCacheEntryAsync(key)
             .thenApply(entry -> {
                if (entry == null) return null;
 
-               return entry.getValue().converted().entrySet().stream()
+               Map<HK, HV> converted = entry.getValue().converted();
+               if (count >= converted.size()) return converted;
+
+               List<Map.Entry<HK, HV>> entries = new ArrayList<>(converted.entrySet());
+               Collections.shuffle(entries, ThreadLocalRandom.current());
+               return entries.stream()
                      .limit(count)
                      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
             });
+   }
+
+   private static void requirePositive(int value, String message) {
+      if (value <= 0) {
+         throw new IllegalArgumentException(message);
+      }
+   }
+
+   private static void requireTrue(boolean condition, String message) {
+      if (!condition) {
+         throw new IllegalArgumentException(message);
+      }
+   }
+
+   private static void requireNonNullArgument(Collection<?> arguments, String message) {
+      for (Object argument : arguments) {
+         requireNonNull(argument, message);
+      }
    }
 }

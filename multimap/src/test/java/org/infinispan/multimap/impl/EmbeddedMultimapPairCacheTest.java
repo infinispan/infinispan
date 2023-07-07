@@ -48,7 +48,7 @@ public class EmbeddedMultimapPairCacheTest extends SingleCacheManagerTest {
 
       assertThatThrownBy(() -> await(embeddedPairCache.get(null, "property")))
             .isInstanceOf(NullPointerException.class);
-      assertThatThrownBy(() -> await(embeddedPairCache.get("person1", null)))
+      assertThatThrownBy(() -> await(embeddedPairCache.get("person1", (String) null)))
             .isInstanceOf(NullPointerException.class);
    }
 
@@ -150,5 +150,40 @@ public class EmbeddedMultimapPairCacheTest extends SingleCacheManagerTest {
       assertThat(await(embeddedPairCache.subSelect("subselect-test", 30)))
             .containsAllEntriesOf(map)
             .hasSize(map.size());
+
+      assertThatThrownBy(() -> await(embeddedPairCache.subSelect(null, 10)))
+            .isInstanceOf(NullPointerException.class);
+      assertThatThrownBy(() -> await(embeddedPairCache.subSelect("subselect-test", -1)))
+            .isInstanceOf(IllegalArgumentException.class);
+   }
+
+   public void testGetMultipleProperties() {
+      // ENTRY not exist, so an empty map.
+      assertThat(await(embeddedPairCache.get("unknown-multiple", "k1", "k2"))).isEmpty();
+
+      Map<String, String> map = Map.of("name", "Oihana", "age", "1", "birthday", "2023-05-26");
+      assertThat(await(embeddedPairCache.set("multiple-test", map.entrySet().toArray(new Map.Entry[0]))))
+            .isEqualTo(3);
+
+      assertThat(await(embeddedPairCache.get("multiple-test", "name", "age")))
+            .containsEntry("name", "Oihana")
+            .containsEntry("age", "1")
+            .hasSize(2);
+
+      // An existing entry but with an unknown property.
+      assertThat(await(embeddedPairCache.get("multiple-test", "name", "something-not-there", "age")))
+            .containsEntry("name", "Oihana")
+            .containsEntry("age", "1")
+            .containsEntry("something-not-there", null)
+            .hasSize(3);
+
+      assertThatThrownBy(() -> await(embeddedPairCache.get(null, "k1", "k2")))
+            .isInstanceOf(NullPointerException.class);
+      assertThatThrownBy(() -> await(embeddedPairCache.get(null, "k1", null)))
+            .isInstanceOf(NullPointerException.class);
+      assertThatThrownBy(() -> await(embeddedPairCache.get("multiple-test", (String[]) null)))
+            .isInstanceOf(NullPointerException.class);
+      assertThatThrownBy(() -> await(embeddedPairCache.get("multiple-test", new String[0])))
+            .isInstanceOf(IllegalArgumentException.class);
    }
 }

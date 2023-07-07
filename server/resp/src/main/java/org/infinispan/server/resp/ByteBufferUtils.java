@@ -80,8 +80,11 @@ public final class ByteBufferUtils {
 
       int resultBytesSize = 0;
       for (byte[] result: results) {
-         int length = result.length;
-         if (length > 0) {
+         int length;
+         if (result == null) {
+            // $-1
+            resultBytesSize += 3;
+         } else if ((length = result.length) > 0) {
             // $ + digit length (log10 + 1) + \r\n + byte length
             resultBytesSize += (1 + (int) Math.log10(length) + 1 + 2 + length);
          } else {

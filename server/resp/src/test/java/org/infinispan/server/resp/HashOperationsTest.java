@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.testng.annotations.Test;
 
+import io.lettuce.core.KeyValue;
 import io.lettuce.core.MapScanCursor;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.ScanArgs;
@@ -269,5 +270,25 @@ public class HashOperationsTest extends SingleNodeRespBaseTest {
       assertThat(redis.hrandfieldWithvalues("hrand-operations", -20)).hasSize(20);
 
       assertWrongType(() -> redis.set("plain", "string"), () -> redis.hrandfield("plain"));
+   }
+
+   public void testHMultiGet() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      assertThat(redis.hmget("something", "k1"))
+            .hasSize(1)
+            .contains(KeyValue.empty("k1"));
+
+      Map<String, String> map = Map.of("key1", "value1", "key2", "value2", "key3", "value3");
+      assertThat(redis.hset("hmget-operations", map)).isEqualTo(3);
+
+      assertThat(redis.hmget("hmget-operations", "key1", "key2", "key3"))
+            .hasSize(3)
+            .satisfies(entries -> entries.forEach(kv -> assertThat(map.get(kv.getKey())).isEqualTo(kv.getValue())));
+
+      assertThat(redis.hmget("hmget-operations", "key3", "key4"))
+            .hasSize(2)
+            .contains(KeyValue.just("key3", "value3"))
+            .contains(KeyValue.empty("key4"));
    }
 }
