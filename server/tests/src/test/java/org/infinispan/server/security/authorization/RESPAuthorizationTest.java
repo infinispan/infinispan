@@ -1,59 +1,89 @@
 package org.infinispan.server.security.authorization;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.infinispan.server.test.api.RespTestClientDriver;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.core.ClientOptions;
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisCommandExecutionException;
-import io.lettuce.core.RedisConnectionException;
-import io.lettuce.core.RedisURI;
-import io.lettuce.core.api.sync.BaseRedisCommands;
-import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.api.sync.RedisServerCommands;
-import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
-import io.lettuce.core.resource.DefaultClientResources;
+import io.vertx.core.CompositeFuture;
+import io.vertx.core.Future;
+import io.vertx.core.Vertx;
+import io.vertx.core.impl.NoStackTraceThrowable;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
+import io.vertx.redis.client.Redis;
+import io.vertx.redis.client.RedisAPI;
+import io.vertx.redis.client.RedisClientType;
+import io.vertx.redis.client.RedisOptions;
+import io.vertx.redis.client.Response;
+import io.vertx.redis.client.impl.types.ErrorType;
+import io.vertx.redis.client.impl.types.MultiType;
 
+@ExtendWith(VertxExtension.class)
 abstract class RESPAuthorizationTest {
 
    protected final InfinispanServerExtension ext;
 
    protected final boolean cert;
    protected final Function<TestUser, String> serverPrincipal;
-   protected final Map<TestUser, RespTestClientDriver.LettuceConfiguration> respBuilders;
+   protected final Map<TestUser, RedisOptions> respBuilders;
 
    public RESPAuthorizationTest(InfinispanServerExtension ext) {
       this(ext, false, TestUser::getUser, user -> {
-         InetSocketAddress serverSocket = ext.getServerDriver().getServerSocket(0, 11222);
-         ClientOptions clientOptions = ClientOptions.builder()
-               .autoReconnect(false)
-               .build();
-         RedisURI.Builder uriBuilder = RedisURI.builder()
-               .withHost(serverSocket.getHostString())
-               .withPort(serverSocket.getPort());
+         int size = ext.getServerDriver().getConfiguration().numServers();
+         RedisOptions options = new RedisOptions()
+               .setPoolName("pool-" + user);
 
-         if (user != TestUser.ANONYMOUS) {
-            uriBuilder = uriBuilder.withAuthentication(user.getUser(), user.getPassword());
+         if (size > 1) {
+            options = options.setType(RedisClientType.CLUSTER);
+         } else {
+            options = options.setType(RedisClientType.STANDALONE);
          }
-         return new RespTestClientDriver.LettuceConfiguration(DefaultClientResources.builder(), clientOptions, uriBuilder.build());
+
+         for (int i = 0; i < size; i++) {
+            InetSocketAddress serverSocket = ext.getServerDriver().getServerSocket(i, 11222);
+            options = options.addConnectionString(redisURI(serverSocket, user, false));
+         }
+
+         return options;
       });
    }
 
-   public RESPAuthorizationTest(InfinispanServerExtension ext, boolean cert, Function<TestUser, String> serverPrincipal, Function<TestUser, RespTestClientDriver.LettuceConfiguration> respBuilder) {
+   static String redisURI(InetSocketAddress serverSocket, TestUser user, boolean ssl) {
+      StringBuilder sb = new StringBuilder();
+
+      if (ssl) {
+         sb.append("rediss://");
+      } else {
+         sb.append("redis://");
+      }
+
+      if (user != null && user != TestUser.ANONYMOUS) {
+         sb.append(user.getUser()).append(":").append(user.getPassword()).append("@");
+      }
+
+      sb.append(serverSocket.getHostString()).append(":").append(serverSocket.getPort());
+
+      if (ssl) {
+         sb.append("?verifyPeer=NONE");
+      }
+
+      return sb.toString();
+   }
+
+   public RESPAuthorizationTest(InfinispanServerExtension ext, boolean cert, Function<TestUser, String> serverPrincipal, Function<TestUser, RedisOptions> respBuilder) {
       this.ext = ext;
       this.cert = cert;
       this.serverPrincipal = serverPrincipal;
@@ -61,162 +91,192 @@ abstract class RESPAuthorizationTest {
    }
 
    @Test
-   public void testSetGetDelete() {
-      RedisCommands<String, String> redis = createConnection(TestUser.ADMIN);
-
-      redis.set("k1", "v1");
-      String v = redis.get("k1");
-      assertThat(v).isEqualTo("v1");
-
-      redis.del("k1");
-
-      assertThat(redis.get("k1")).isNull();
-      assertThat(redis.get("something")).isNull();
+   public void testSetGetDelete(Vertx vertx, VertxTestContext ctx) {
+      RedisAPI redis = createConnection(TestUser.ADMIN, vertx);
+      redis.set(List.of("k1", "v1"))
+            .onFailure(ctx::failNow)
+            .compose(ignore -> redis.get("k1").onFailure(ctx::failNow))
+            .onSuccess(v -> ctx.verify(() -> assertThat(v.toString()).isEqualTo("v1")))
+            .compose(ignore -> redis.del(List.of("k1")).onFailure(ctx::failNow))
+            .compose(ignore -> redis.get("k1").onFailure(ctx::failNow))
+            .onFailure(ctx::failNow)
+            .onSuccess(v -> {
+               ctx.verify(() -> assertThat(v).isNull());
+               ctx.completeNow();
+            });
    }
 
    @Test
-   public void testAllUsersConnectingAndOperating() {
+   public void testAllUsersConnectingAndOperating(Vertx vertx, VertxTestContext ctx) {
+      List<Future> futures = new ArrayList<>();
       for (TestUser user: TestUser.values()) {
-         try (RedisClient client = createClient(user)) {
-            if (user == TestUser.ANONYMOUS) {
-               assertAnonymous(client, BaseRedisCommands::ping);
-               continue;
-            }
-            RedisCommands<String, String> conn = createConnection(client);
-            assertThat(conn.ping()).isEqualTo("PONG");
+         if (user == TestUser.ANONYMOUS) {
+            assertAnonymous(createClient(user, vertx), r -> r.ping(Collections.emptyList()), ctx);
+            continue;
          }
+
+         RedisAPI redis = createConnection(user, vertx);
+         Future<Response> f = redis.ping(Collections.emptyList())
+               .onFailure(ctx::failNow)
+               .onSuccess(res -> ctx.verify(() -> assertThat(res.toString()).isEqualTo("PONG")));
+         futures.add(f);
       }
+
+      CompositeFuture.all(futures)
+            .onFailure(ctx::failNow)
+            .onComplete(ignore -> ctx.completeNow());
    }
 
    @Test
-   public void testRPUSH() {
-      RedisCommands<String, String> redis = createConnection(TestUser.ADMIN);
-      long result = redis.rpush("people", "tristan");
-      assertThat(result).isEqualTo(1);
-
-      result = redis.rpush("people", "william");
-      assertThat(result).isEqualTo(2);
-
-      result = redis.rpush("people", "william", "jose", "pedro");
-      assertThat(result).isEqualTo(5);
-
-      // Set a String Command
-      redis.set("leads", "tristan");
-
-      // Push on an existing key that contains a String, not a Collection!
-      assertThatThrownBy(() -> {
-         redis.rpush("leads", "william");
-      }).isInstanceOf(RedisCommandExecutionException.class)
-            .hasMessageContaining("ERRWRONGTYPE");
+   public void testRPUSH(Vertx vertx, VertxTestContext ctx) {
+      RedisAPI redis = createConnection(TestUser.ADMIN, vertx);
+      redis.rpush(List.of("people", "tristan"))
+            .onFailure(ctx::failNow)
+            .compose(v -> {
+               ctx.verify(() -> assertThat(v.toLong()).isEqualTo(1));
+               return redis.rpush(List.of("people", "william"));
+            })
+            .compose(v -> {
+               ctx.verify(() -> assertThat(v.toLong()).isEqualTo(2));
+               return redis.rpush(List.of("people", "william", "jose", "pedro"));
+            })
+            .onSuccess(v -> ctx.verify(() -> assertThat(v.toLong()).isEqualTo(5)))
+            .andThen(ignore -> redis.set(List.of("leads", "tristan")))
+            .compose(ignore -> ctx.assertFailure(redis.rpush(List.of("leads", "william")))
+                  .onFailure(t -> ctx.verify(() -> assertThat(t)
+                        .isInstanceOf(ErrorType.class)
+                        .hasMessageContaining("ERRWRONGTYPE")))
+            ).onComplete(ignore -> ctx.completeNow());
    }
 
    @Test
-   public void testInfoCommand() {
+   public void testInfoCommand(Vertx vertx, VertxTestContext ctx) {
+      List<Future> futures = new ArrayList<>();
+
       for (TestUser user: TestUser.values()) {
-         try (RedisClient client = createClient(user)) {
-            if (user == TestUser.ANONYMOUS) {
-               assertAnonymous(client, RedisServerCommands::info);
-               continue;
-            }
-
-            RedisCommands<String, String> conn = createConnection(client);
-            assertThat(conn.info()).isNotEmpty();
+         if (user == TestUser.ANONYMOUS) {
+            assertAnonymous(createClient(user, vertx), r -> r.info(Collections.emptyList()), ctx);
+            continue;
          }
+
+         RedisAPI redis = createConnection(user, vertx);
+         Future<?> f = redis.info(Collections.emptyList())
+               .onFailure(ctx::failNow)
+               .onSuccess(r -> ctx.verify(() -> assertThat(r.toString()).contains("redis_version")));
+         futures.add(f);
       }
+
+      CompositeFuture.all(futures)
+            .onFailure(ctx::failNow)
+            .onComplete(ignore -> ctx.completeNow());
    }
 
    @Test
-   public void testClusterSHARDS() {
+   public void testClusterSHARDS(Vertx vertx, VertxTestContext ctx) {
+      List<Future> futures = new ArrayList<>();
+
       for (TestUser user: TestUser.values()) {
-         try (RedisClient client = createClient(user)) {
-            if (user == TestUser.ANONYMOUS) {
-               assertAnonymous(client, RedisServerCommands::info);
-               continue;
-            }
-
-            RedisCommands<String, String> conn = createConnection(client);
-            List<Object> shards = conn.clusterShards();
-            assertThat(shards)
-                  .isNotEmpty()
-                  .size().isEqualTo(2);
+         if (user == TestUser.ANONYMOUS) {
+            assertAnonymous(createClient(user, vertx), r -> r.cluster(List.of("SHARDS")), ctx);
+            continue;
          }
+
+         RedisAPI redis = createConnection(user, vertx);
+         Future<?> f = redis.cluster(List.of("SHARDS"))
+               .onFailure(ctx::failNow)
+               .onSuccess(r -> ctx.verify(() -> assertThat(r)
+                     .isExactlyInstanceOf(MultiType.class)
+                     .size().isEqualTo(2)));
+         futures.add(f);
       }
+
+      CompositeFuture.all(futures)
+            .onFailure(ctx::failNow)
+            .onComplete(ignore -> ctx.completeNow());
    }
 
    @Test
-   public void testHMSETCommand() {
-      RedisCommands<String, String> redis = createConnection(TestUser.ADMIN);
+   public void testHMSETCommand(Vertx vertx, VertxTestContext ctx) {
+      RedisAPI redis = createConnection(TestUser.ADMIN, vertx);
 
       Map<String, String> map = Map.of("key1", "value1", "key2", "value2", "key3", "value3");
-      assertThat(redis.hmset("HMSET", map)).isEqualTo("OK");
+      List<String> args = new ArrayList<>();
+      args.add("HMSET");
+      args.addAll(map.entrySet().stream().flatMap(e -> Stream.of(e.getKey(), e.getValue())).collect(Collectors.toList()));
 
-      assertThat(redis.hget("HMSET", "key1")).isEqualTo("value1");
-      assertThat(redis.hget("HMSET", "unknown")).isNull();
-
-      assertThat(redis.set("plain", "string")).isEqualTo("OK");
-      assertThatThrownBy(() -> redis.hmset("plain", Map.of("k1", "v1")))
-            .isInstanceOf(RedisCommandExecutionException.class)
-            .hasMessageContaining("ERRWRONGTYPE");
+      redis.hmset(args)
+            .onFailure(ctx::failNow)
+            .compose(v -> {
+               ctx.verify(() -> assertThat(v.toString()).isEqualTo("OK"));
+               return redis.hget("HMSET", "key1");
+            })
+            .compose(v -> {
+               ctx.verify(() -> assertThat(v.toString()).isEqualTo("value1"));
+               return redis.hget("HMSET", "unknown");
+            })
+            .onSuccess(v -> ctx.verify(() -> assertThat(v).isNull()))
+            .andThen(ignore -> redis.set(List.of("plain", "string")))
+            .compose(ignore -> ctx.assertFailure(redis.hmset(List.of("plain", "k1", "v1")))
+                  .onFailure(t -> ctx.verify(() -> assertThat(t)
+                        .isInstanceOf(ErrorType.class)
+                        .hasMessageContaining("ERRWRONGTYPE"))))
+            .onComplete(ignore -> ctx.completeNow());
    }
 
    @Test
-   public void testClusterNodes() {
-      for (TestUser user: TestUser.values()) {
-         try (RedisClient client = createClient(user)) {
-            if (user == TestUser.ANONYMOUS) {
-               assertAnonymous(client, RedisClusterCommands::clusterNodes);
-               continue;
-            }
+   public void testClusterNodes(Vertx vertx, VertxTestContext ctx) {
+      List<Future> futures = new ArrayList<>();
 
-            RedisCommands<String, String> conn = createConnection(client);
-            String nodes = conn.clusterNodes();
-            assertThat(nodes).isNotNull().isNotEmpty();
-            assertThat(nodes.split("\n"))
-                  .isNotEmpty()
-                  .hasSize(2);
+      for (TestUser user: TestUser.values()) {
+         if (user == TestUser.ANONYMOUS) {
+            assertAnonymous(createClient(user, vertx), r -> r.cluster(List.of("NODES")), ctx);
+            continue;
          }
+
+         RedisAPI redis = createConnection(user, vertx);
+         Future<?> f = redis.cluster(List.of("NODES"))
+               .onFailure(ctx::failNow)
+               .onSuccess(r -> ctx.verify(() -> assertThat(r.toString().split("\n")).hasSize(2)));
+         futures.add(f);
       }
+
+      CompositeFuture.all(futures)
+            .onFailure(ctx::failNow)
+            .onComplete(ignore -> ctx.completeNow());
    }
 
-   private void assertAnonymous(RedisClient client, Consumer<RedisCommands<String, String>> consumer) {
-      // When using certificates, an anonymous user can not connect.
-      if (cert) {
-         assertThatThrownBy(client::connect).isExactlyInstanceOf(RedisConnectionException.class);
-         return;
-      }
-
+   private void assertAnonymous(Redis redis, Function<RedisAPI, Future<?>> consumer, VertxTestContext ctx) {
       // If using USERNAME + PASSWORD, redis accepts anonymous connections.
       // But following requests will fail, as user needs to be authenticated.
-      RedisCommands<String, String> conn = createConnection(client);
-      assertThatThrownBy(() -> consumer.accept(conn)).isExactlyInstanceOf(RedisCommandExecutionException.class);
+      RedisAPI client = createConnection(redis);
+      ctx.assertFailure(consumer.apply(client))
+            .onComplete(r -> {
+               if (r.succeeded()) {
+                  ctx.failNow("Exception not thrown!");
+                  return;
+               }
+
+               ctx.verify(() -> assertThat(r.cause())
+                     .isExactlyInstanceOf(NoStackTraceThrowable.class)
+                     .hasMessage("Cannot connect to any of the provided endpoints"));
+            });
    }
 
-   private RedisClient createClient(TestUser user) {
-      RespTestClientDriver.LettuceConfiguration config = respBuilders.get(user);
+   private Redis createClient(TestUser user, Vertx vertx) {
+      RedisOptions config = respBuilders.get(user);
 
       if (config == null) {
          fail(this.getClass().getSimpleName() + " does not define configuration for user " + user);
       }
 
-      return ext.resp().withConfiguration(config).get();
+      return ext.resp().withOptions(config).withVertx(vertx).get();
    }
 
-   private RedisCommands<String, String> createConnection(TestUser user) {
-      RespTestClientDriver.LettuceConfiguration config = respBuilders.get(user);
-
-      if (config == null) {
-         fail(this.getClass().getSimpleName() + " does not define configuration for user " + user);
-      }
-
-      return ext.resp()
-            .withConfiguration(config)
-            .getConnection()
-            .sync();
+   private RedisAPI createConnection(TestUser user, Vertx vertx) {
+      return RedisAPI.api(createClient(user, vertx));
    }
 
-   private RedisCommands<String, String> createConnection(RedisClient client) {
-      return ext.resp()
-            .connect(client)
-            .sync();
+   private RedisAPI createConnection(Redis client) {
+      return RedisAPI.api(client);
    }
 }

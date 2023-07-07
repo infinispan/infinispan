@@ -1,16 +1,18 @@
 package org.infinispan.server.resp;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
+import javax.security.auth.Subject;
+import javax.security.sasl.SaslException;
+
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.server.core.transport.ConnectionMetadata;
 import org.infinispan.server.resp.authentication.RespAuthenticator;
 import org.infinispan.server.resp.commands.AuthResp3Command;
 
-import javax.security.auth.Subject;
-import javax.security.sasl.SaslException;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 public class Resp3AuthHandler extends CacheRespRequestHandler {
 
@@ -73,7 +75,7 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
    private boolean handleAuthResponse(ChannelHandlerContext ctx, Subject subject) {
       assert ctx.channel().eventLoop().inEventLoop();
       if (subject == null) {
-         ByteBufferUtils.stringToByteBuf("-ERR Client sent AUTH, but no password is set\r\n", allocatorToUse);
+         RespErrorUtil.customError("-WRONGPASS", "invalid username-password pair or user is disabled.", allocatorToUse);
          return false;
       }
       ConnectionMetadata metadata = ConnectionMetadata.getInstance(ctx.channel());

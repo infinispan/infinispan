@@ -1,19 +1,17 @@
 package org.infinispan.server.test.api;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.io.Closeable;
 
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.lettuce.core.ClientOptions;
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisURI;
-import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.resource.ClientResources;
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Vertx;
+import io.vertx.redis.client.Redis;
+import io.vertx.redis.client.RedisConnection;
+import io.vertx.redis.client.RedisOptions;
 
 public class RespTestClientDriver extends BaseTestClientDriver<RespTestClientDriver> {
 
@@ -21,7 +19,8 @@ public class RespTestClientDriver extends BaseTestClientDriver<RespTestClientDri
 
    private final TestServer testServer;
    private final TestClient testClient;
-   private LettuceConfiguration configuration;
+   private Vertx vertx;
+   private RedisOptions options;
 
    public RespTestClientDriver(TestServer testServer, TestClient testClient) {
       this.testServer = testServer;
@@ -33,45 +32,52 @@ public class RespTestClientDriver extends BaseTestClientDriver<RespTestClientDri
       return this;
    }
 
-   public RespTestClientDriver withConfiguration(LettuceConfiguration configuration) {
-      this.configuration = configuration;
-      return self();
+   public RespTestClientDriver withOptions(RedisOptions options) {
+      this.options = options;
+      return this;
    }
 
-   public RedisClient get() {
-      ClientResources resources = configuration.clientResources.build();
-      RedisClient client = RedisClient.create(resources, configuration.redisURI);
-      client.setOptions(configuration.clientOptions);
-      testClient.registerResource(() -> {
-         try {
-            resources.shutdown(0, 15, TimeUnit.SECONDS).getNow();
-            client.shutdownAsync(0, 15, TimeUnit.SECONDS).get(15, TimeUnit.SECONDS);
-         } catch (InterruptedException | TimeoutException | ExecutionException e) {
-            log.error("Timed out waiting RESP client to shutdown", e);
-         }
-      });
-      return client;
+   public RespTestClientDriver withVertx(Vertx vertx) {
+      this.vertx = vertx;
+      return this;
    }
 
-   public StatefulRedisConnection<String, String> connect(RedisClient client) {
-      StatefulRedisConnection<String, String> connection = client.connect();
-      testClient.registerResource(connection::close);
-      return connection;
+   public Redis get() {
+      RespVertxClient client = new RespVertxClient(options, vertx);
+      testClient.registerResource(client);
+      return client.get();
    }
 
-   public StatefulRedisConnection<String, String> getConnection() {
+   public RedisConnection connect(Redis client) {
+      RedisConnection conn = client.connect().result();
+      testClient.registerResource(conn::close);
+      return conn;
+   }
+
+   public RedisConnection getConnection() {
       return connect(get());
    }
 
-   public static class LettuceConfiguration {
-      private final ClientResources.Builder clientResources;
-      private final ClientOptions clientOptions;
-      private final RedisURI redisURI;
+   private static class RespVertxClient extends AbstractVerticle implements Closeable {
 
-      public LettuceConfiguration(ClientResources.Builder clientResourcesBuilder, ClientOptions clientOptions, RedisURI redisURI) {
-         this.clientResources = clientResourcesBuilder;
-         this.clientOptions = clientOptions;
-         this.redisURI = redisURI;
+      private final RedisOptions options;
+      private Redis client;
+
+      private RespVertxClient(RedisOptions options, Vertx vertx) {
+         this.options = options;
+         this.vertx = vertx;
+      }
+
+      private Redis get() {
+         assert client == null : "Vertx Redis client already created";
+         return client = Redis.createClient(vertx, options);
+      }
+
+      @Override
+      public void close() {
+         if (client != null) {
+            client.close();
+         }
       }
    }
 }

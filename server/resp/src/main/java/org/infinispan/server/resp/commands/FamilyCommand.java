@@ -1,14 +1,15 @@
 package org.infinispan.server.resp.commands;
 
-import io.netty.channel.ChannelHandlerContext;
-import org.infinispan.server.resp.ByteBufferUtils;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
+import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.cluster.CLUSTER;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * An umbrella command.
@@ -40,7 +41,7 @@ public abstract class FamilyCommand extends RespCommand implements Resp3Command 
             break;
          }
       }
-      ByteBufferUtils.stringToByteBuf("-ERR unknown command\r\n", handler.allocator());
+      RespErrorUtil.unknownCommand(handler.allocator());
       return handler.myStage();
    }
 

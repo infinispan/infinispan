@@ -2,12 +2,9 @@ package org.infinispan.server.security.authorization;
 
 import static org.infinispan.server.test.core.AbstractInfinispanServerDriver.KEY_PASSWORD;
 
-import java.net.InetSocketAddress;
-
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.server.functional.ClusteredIT;
-import org.infinispan.server.test.api.RespTestClientDriver;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.category.Security;
@@ -19,11 +16,10 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;
 
-import io.lettuce.core.ClientOptions;
-import io.lettuce.core.RedisURI;
-import io.lettuce.core.SslOptions;
-import io.lettuce.core.SslVerifyMode;
-import io.lettuce.core.resource.DefaultClientResources;
+import io.vertx.core.net.JdkSSLEngineOptions;
+import io.vertx.core.net.PfxOptions;
+import io.vertx.redis.client.RedisClientType;
+import io.vertx.redis.client.RedisOptions;
 
 /**
  * @author Ryan Emerson
@@ -92,34 +88,42 @@ public class AuthorizationCertIT extends InfinispanSuite {
 
       public Resp() {
          super(SERVERS, true, AuthorizationCertIT::expectedServerPrincipalName, user -> {
-            DefaultClientResources.Builder builder = DefaultClientResources.builder();
-            SslOptions.Builder sslBuilder = SslOptions.builder()
-                  .jdkSslProvider()
-                  .truststore(SERVERS.getServerDriver().getCertificateFile("ca.pfx"), KEY_PASSWORD);
+            int size = SERVERS.getServerDriver().getConfiguration().numServers();
+            RedisOptions options = new RedisOptions()
+                  .setPoolName("pool-" + user.getUser());
 
-            RedisURI uri;
-            InetSocketAddress serverSocket = SERVERS.getServerDriver().getServerSocket(0, 11222);
-            if (user == TestUser.ANONYMOUS) {
-               sslBuilder.keystore(SERVERS.getServerDriver().getCertificateFile("server.pfx"), KEY_PASSWORD.toCharArray())
-                     .keyStoreType("pkcs12");
-               uri = RedisURI.create(serverSocket.getHostString(), serverSocket.getPort());
+            if (size > 1) {
+               options = options.setType(RedisClientType.CLUSTER);
             } else {
-               sslBuilder.keystore(SERVERS.getServerDriver().getCertificateFile(user.getUser() + ".pfx"), KEY_PASSWORD.toCharArray())
-                     .keyStoreType("pkcs12");
-               uri = RedisURI.builder()
-                     .withSsl(true)
-                     .withHost(serverSocket.getHostString())
-                     .withPort(serverSocket.getPort())
-                     .withVerifyPeer(SslVerifyMode.NONE)
-                     .build();
+               options = options.setType(RedisClientType.STANDALONE);
             }
 
-            ClientOptions options = ClientOptions.builder()
-                  .sslOptions(sslBuilder.build())
-                  .autoReconnect(false) // Otherwise, Lettuce keeps retrying.
-                  .build();
+            for (int i = 0; i < size; i++) {
+               String uri = redisURI(SERVERS.getServerDriver().getServerSocket(i, 11222), null, user != TestUser.ANONYMOUS);
+               options = options.addConnectionString(uri);
+            }
 
-            return new RespTestClientDriver.LettuceConfiguration(builder, options, uri);
+            PfxOptions certOpts;
+            if (user == TestUser.ANONYMOUS) {
+               certOpts = new PfxOptions()
+                     .setPath(SERVERS.getServerDriver().getCertificateFile("server.pfx").getPath())
+                     .setPassword(KEY_PASSWORD);
+            } else {
+               certOpts = new PfxOptions()
+                     .setPath(SERVERS.getServerDriver().getCertificateFile(user.getUser() + ".pfx").getPath())
+                     .setPassword(KEY_PASSWORD);
+            }
+
+            PfxOptions trustOpts = new PfxOptions()
+                  .setPath(SERVERS.getServerDriver().getCertificateFile("ca.pfx").getPath())
+                  .setPassword(KEY_PASSWORD);
+            options.getNetClientOptions()
+                  .setSsl(true)
+                  .setSslEngineOptions(new JdkSSLEngineOptions())
+                  .setPfxKeyCertOptions(certOpts)
+                  .setPfxTrustOptions(trustOpts);
+
+            return options;
          });
       }
    }
