@@ -65,6 +65,10 @@ public final class RespErrorUtil {
             "-ERR " + message + "\r\n", allocatorToUse);
    }
 
+   public static void customError(String prefix, String message, ByteBufPool allocator) {
+      ByteBufferUtils.stringToByteBuf(prefix + " " + message + "\r\n", allocator);
+   }
+
    public static Consumer<ByteBufPool> handleException(Throwable t) {
       Throwable ex = t;
       while (ex instanceof CompletionException || ex instanceof CacheException) {

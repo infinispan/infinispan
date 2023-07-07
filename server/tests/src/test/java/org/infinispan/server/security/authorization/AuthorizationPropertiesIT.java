@@ -33,6 +33,7 @@ public class AuthorizationPropertiesIT extends InfinispanSuite {
                .runMode(ServerRunMode.CONTAINER)
                .mavenArtifacts(ClusteredIT.mavenArtifacts())
                .artifacts(ClusteredIT.artifacts())
+               .numServers(2)
                .build();
 
    static class HotRod extends HotRodAuthorizationTest {
