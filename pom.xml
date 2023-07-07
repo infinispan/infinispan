@@ -2292,6 +2292,8 @@
                </executions>
                <configuration>
                   <assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
+                  <cveUrlModified>https://beny23.github.io/nvd-nist-mirror/feeds/json/cve/1.1/nvdcve-1.1-modified.json.gz</cveUrlModified>
+                  <cveUrlBase>https://beny23.github.io/nvd-nist-mirror/feeds/json/cve/1.1/nvdcve-1.1-%d.json.gz</cveUrlBase>
                   <failOnError>false</failOnError>
                   <suppressionFile>${infinispan.root}/etc/dependency-check-suppressions.xml</suppressionFile>
                </configuration>
