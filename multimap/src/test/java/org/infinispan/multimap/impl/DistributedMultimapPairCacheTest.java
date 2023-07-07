@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.distribution.BaseDistFunctionalTest;
@@ -102,6 +103,12 @@ public class DistributedMultimapPairCacheTest extends BaseDistFunctionalTest<Str
       }
    }
 
+   protected void assertFromAllCaches(Function<EmbeddedMultimapPairCache<String, byte[], Person>, CompletionStage<?>> f) {
+      for (EmbeddedMultimapPairCache<String, byte[], Person> multimap : pairCacheCluster.values()) {
+         await(f.apply(multimap));
+      }
+   }
+
    private static byte[] toBytes(String s) {
       return s.getBytes();
    }
@@ -150,5 +157,26 @@ public class DistributedMultimapPairCacheTest extends BaseDistFunctionalTest<Str
                return FELIX;
             }))
             .thenAccept(ignore -> assertFromAllCaches("compute-test", Map.of("oihana", FELIX))));
+   }
+
+   public void testSubSelect() {
+      // Not existent key.
+      assertFromAllCaches(m -> m.subSelect("something-not-existent", 10)
+            .thenAccept(v -> assertThat(v).isNull()));
+      assertFromAllCaches(multimap -> multimap.set("sub-select-test", Map.entry(toBytes("oihana"), OIHANA), Map.entry(toBytes("koldo"), KOLDO))
+            .thenCompose(ignore -> multimap.subSelect("sub-select-test", 1))
+            .thenAccept(m ->
+                  assertThat(convertKeys(m))
+                        .hasSize(1)
+                        .containsAnyOf(Map.entry("oihana", OIHANA), Map.entry("koldo", KOLDO))));
+   }
+
+   public void testGetMultiple() {
+      assertFromAllCaches(multimap -> multimap.set("get-multiple-test", Map.entry(toBytes("oihana"), OIHANA), Map.entry(toBytes("koldo"), KOLDO))
+            .thenCompose(ignore -> multimap.get("get-multiple-test", toBytes("oihana"), toBytes("koldo")))
+            .thenAccept(m -> assertThat(convertKeys(m))
+                  .hasSize(2)
+                  .containsEntry("oihana", OIHANA)
+                  .containsEntry("koldo", KOLDO)));
    }
 }

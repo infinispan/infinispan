@@ -31,6 +31,7 @@ import io.netty.channel.ChannelHandlerContext;
  *
  * @since 15.0
  * @see <a href="https://redis.io/commands/hrandfield/">Redis documentation</a>
+ * @author José Bolina
  */
 public class HRANDFIELD extends RespCommand implements Resp3Command {
 
