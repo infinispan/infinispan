@@ -9,7 +9,6 @@ Indexing and querying are both done on top of Java objects.
 
 include::{topics}/proc_query_querying_embedded_caches.adoc[leveloffset=+1]
 include::{topics}/ref_query_entity_mapping_annotations.adoc[leveloffset=+1]
-include::{topics}/ref_query_programmatic_entity_mapping.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]
