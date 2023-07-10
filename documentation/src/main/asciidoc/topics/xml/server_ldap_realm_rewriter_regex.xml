@@ -7,19 +7,10 @@
                     credential="strongPassword">
           <name-rewriter>
             <!-- Defines a rewriter that extracts the username from the principal using a regular expression. -->
-            <regex-principal-transformer name="domain-remover"
-                                         pattern="(.*)@INFINISPAN\.ORG"
+            <regex-principal-transformer pattern="(.*)@INFINISPAN\.ORG"
                                          replacement="$1"/>
           </name-rewriter>
-          <identity-mapping rdn-identifier="uid"
-                            search-dn="ou=People,dc=infinispan,dc=org">
-            <attribute-mapping>
-              <attribute from="cn" to="Roles"
-                         filter="(&amp;(objectClass=groupOfNames)(member={1}))"
-                         filter-dn="ou=Roles,dc=infinispan,dc=org"/>
-            </attribute-mapping>
-            <user-password-mapper from="userPassword"/>
-          </identity-mapping>
+          <!-- further configuration omitted -->
         </ldap-realm>
       </security-realm>
     </security-realms>
