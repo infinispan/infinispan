@@ -1,0 +1,12 @@
+server:
+  security:
+    securityRealms:
+      - name: "ldap-realm"
+        ldapRealm:
+          principal: "uid=admin,ou=People,dc=infinispan,dc=org"
+          url: "ldap://${org.infinispan.test.host.address}:10389"
+          credential: "strongPassword"
+          nameRewriter:
+            casePrincipalTransformer:
+              uppercase: false
+          # further configuration omitted
