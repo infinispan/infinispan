@@ -1,0 +1,26 @@
+# Users
+
+dn: uid=root,ou=People,dc=infinispan,dc=org
+objectclass: top
+objectclass: uidObject
+objectclass: person
+uid: root
+cn: root
+sn: root
+userPassword: strongPassword
+
+# Groups
+
+dn: cn=admin,ou=Roles,dc=infinispan,dc=org
+objectClass: top
+objectClass: groupOfNames
+cn: admin
+description: the Infinispan admin group
+member: uid=root,ou=People,dc=infinispan,dc=org
+
+dn: cn=monitor,ou=Roles,dc=infinispan,dc=org
+objectClass: top
+objectClass: groupOfNames
+cn: monitor
+description: the Infinispan monitor group
+member: uid=root,ou=People,dc=infinispan,dc=org

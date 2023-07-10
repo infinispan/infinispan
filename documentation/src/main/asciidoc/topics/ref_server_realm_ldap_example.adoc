@@ -1,0 +1,28 @@
+== LDAP user and group mapping process with {brandname}
+
+This example illustrates the process of loading and internally mapping LDAP users and groups to {brandname} subjects.
+The following is a LDIF (LDAP Data Interchange Format) file, which describes multiple LDAP entries:
+
+.LDIF
+[source,ldif,options="nowrap",subs=attributes+]
+----
+include::ldif/example.ldif[]
+----
+
+The `root` user is a member of the `admin` and `monitor` groups.
+
+When a request to authenticate the user `root` with the password `strongPassword` is made on one of the endpoints, the following operations are performed:
+
+* The username is optionally rewritten using the chosen principal transformer.
+* The realm searches within the `ou=People,dc=infinispan,dc=org` tree for an entry whose `uid` attribute is equal to `root` and finds the entry with DN `uid=root,ou=People,dc=infinispan,dc=org`, which becomes the user principal.
+* The realm searches within the `u=Roles,dc=infinispan,dc=org` tree for entries of `objectClass=groupOfNames` that include `uid=root,ou=People,dc=infinispan,dc=org` in the `member` attribute. In this case it finds two entries:
+`cn=admin,ou=Roles,dc=infinispan,dc=org` and `cn=monitor,ou=Roles,dc=infinispan,dc=org`. From these entries, it extracts the `cn` attributes which become the group principals.
+
+The resulting subject will therefore look like:
+
+* NamePrincipal: `uid=root,ou=People,dc=infinispan,dc=org`
+* RolePrincipal: `admin`
+* RolePrincipal: `monitor`
+
+At this point, the global authorization mappers are applied on the above subject to convert the principals into roles.
+The roles are then expanded into a set of permissions, which are validated against the requested cache and operation.

@@ -11,39 +11,58 @@ LDAP servers can have different entry layouts, depending on the type of server a
 It is beyond the scope of this document to provide examples for all possible configurations.
 ====
 
+== LDAP connection properties
+Specify the LDAP connection properties in the LDAP realm configuration.
+
+The following properties are required:
+
+[horizontal]
+url:: Specifies the URL of the LDAP server. The URL should be in format `ldap://hostname:port` or `ldaps://hostname:port` for secure connections using TLS.
+principal:: Specifies a distinguished name (DN) of a valid user in the LDAp server. The DN uniquely identifies the user within the LDAP directory structure.
+credential:: Corresponds to the password associated with the principal mentioned above.
+
 [IMPORTANT]
 ====
-The principal for LDAP connections must have necessary privileges to perform
-LDAP queries and access specific attributes.
+The principal for LDAP connections must have necessary privileges to perform LDAP queries and access specific attributes.
 ====
 
-As an alternative to verifying user credentials with the `direct-verification` attribute, you can specify an LDAP attribute that validates passwords with the `user-password-mapper` element.
+== LDAP realm user authentication methods
+Configure the user authentication method in the LDAP realm.
 
-[NOTE]
+The LDAP realm can authenticate users in two ways:
+
+[horizontal]
+Hashed password comparison:: by comparing the hashed password stored in a user's password attribute (usually `userPassword`)
+Direct verification:: by authenticating against the LDAP server using the supplied credentials
++
+Direct verification is the only approach that works with Active Directory, because access to the `password` attribute is forbidden.
+
+[IMPORTANT]
 ====
-You cannot use endpoint authentication mechanisms that perform hashing with the `direct-verification` attribute.
-
-Because Active Directory does not expose the `password` attribute you can use the `direct-verification` attribute only and not the `user-password-mapper` element.
+You cannot use endpoint authentication mechanisms that performs hashing with the `direct-verification` attribute, since this method requires having the password in clear text.
 As a result you must use the `BASIC` authentication mechanism with the REST endpoint and `PLAIN` with the Hot Rod endpoint to integrate with Active Directory Server.
 A more secure alternative is to use Kerberos, which allows the `SPNEGO`, `GSSAPI`, and `GS2-KRB5` authentication mechanisms.
 ====
 
+The LDAP realm searches the directory to find the entry which corresponds to the authenticated user.
 The `rdn-identifier` attribute specifies an LDAP attribute that finds the user entry based on a provided identifier, which is typically a username; for example, the `uid` or `sAMAccountName` attribute.
 Add `search-recursive="true"` to the configuration to search the directory recursively.
 By default, the search for the user entry uses the `(rdn_identifier={0})` filter.
-Specify a different filter with the `filter-name` attribute.
+You can specify a different filter using the `filter-name` attribute.
 
-    The `attribute-mapping` element retrieves all the groups of which the user is a member. There are typically two ways in which membership information is stored:
+== Mapping user entries to their associated groups
+In the LDAP realm configuration, specify the `attribute-mapping` element to retrieve and associate all groups that a user is a member of.
 
-* Under group entries that usually have class `groupOfNames` in the `member` attribute. In this case, you can use an attribute filter as in the preceding example configuration. This filter searches for entries that match the supplied filter, which locates groups with a `member` attribute equal to the user's DN. The filter then extracts the group entry's CN as specified by `from`, and adds it to the user's `Roles`.
-* In the user entry in the `memberOf` attribute. In this case you should use an attribute reference such as the following:
+The membership information is stored typically in two ways:
+
+* Under group entries that usually have class `groupOfNames` or `groupOfUniqueNames` in the `member` attribute. This is the default behavior in most LDAP installations, except for Active Directory. In this case, you can use an attribute filter. This filter searches for entries that match the supplied filter, which locates groups with a `member` attribute equal to the user's DN. The filter then extracts the group entry's CN as specified by `from`, and adds it to the user's `Roles`.
+* In the user entry in the `memberOf` attribute. This is typically the case for Active Directory. In this case you should use an attribute reference such as the following:
 +
 `<attribute-reference reference="memberOf" from="cn" to="Roles" />`
 +
-This reference gets all `memberOf` attributes from the user's entry, extracts the CN as specified by `from`, and adds them to the user's `Roles`.
+This reference gets all `memberOf` attributes from the user's entry, extracts the CN as specified by `from`, and adds them to the user's groups (`Roles` is the internal name used to map the groups).
 
-[discrete]
-== LDAP realm configuration
+== LDAP realm configuration reference
 
 .XML
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
