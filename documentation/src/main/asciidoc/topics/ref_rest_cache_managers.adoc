@@ -7,8 +7,9 @@ Retrieving information about Cache Managers with `GET` requests.
 GET /rest/v2/cache-managers/{cacheManagerName}
 ----
 
-{brandname} responds with information in JSON format, as in the following
-example:
+{brandname} responds with information in JSON format, as in the following example:
+
+NOTE: Information about caches with security authorization is available only to users with the specific roles and permissions assigned to them.
 
 [source,json,options="nowrap",subs=attributes+]
 ----
@@ -18,7 +19,7 @@ include::json/rest_cache_manager_response.json[]
 * `version` contains the {brandname} version
 * `name` contains the name of the Cache Manager as defined in the configuration
 * `coordinator` is true if the Cache Manager is the coordinator of the cluster
-* `cache_configuration_names` contains an array of all caches configurations defined in the Cache Manager
+* `cache_configuration_names` contains an array of all caches configurations defined in the Cache Manager that are accessible to the current user
 * `cluster_name` contains the name of the cluster as defined in the configuration
 * `physical_addresses` contains the physical network addresses associated with the Cache Manager
 * `coordinator_address` contains the physical network addresses of the coordinator of the cluster
