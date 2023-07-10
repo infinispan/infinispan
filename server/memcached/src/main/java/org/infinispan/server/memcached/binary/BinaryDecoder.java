@@ -28,10 +28,15 @@ import io.netty.util.concurrent.GenericFutureListener;
  **/
 abstract class BinaryDecoder extends MemcachedBaseDecoder {
 
-   protected BinaryHeader singleHeader = new BinaryHeader();
+   private final BinaryHeader singleHeader = new BinaryHeader();
 
    protected BinaryDecoder(MemcachedServer server, Subject subject) {
       super(server, subject, server.getCache().getAdvancedCache().withMediaType(MediaType.APPLICATION_OCTET_STREAM, server.getConfiguration().clientEncoding()));
+   }
+
+   // Used by the generated decoder.
+   public BinaryHeader acquireHeader() {
+      return singleHeader;
    }
 
    @Override

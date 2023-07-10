@@ -33,25 +33,31 @@ public final class MemcachedAccessLogging {
 
    private static void logAfterComplete(ChannelFuture future, Header header, int responseBytes, String status) {
       String remoteAddress = ((InetSocketAddress)future.channel().remoteAddress()).getHostString();
-      future.addListener(f -> {
-         // Duration
-         long duration;
-         if (header.requestStart == null) {
-            duration = -1;
-         } else {
-            duration = ChronoUnit.MILLIS.between(header.requestStart, Instant.now());
-         }
-         MDC.clear();
-         MDC.put("address", remoteAddress);
-         MDC.put("user", checkForNull(header.principalName));
-         MDC.put("method", checkForNull(header.getOp()));
-         MDC.put("protocol", header.getProtocol());
-         MDC.put("status", checkForNull(status));
-         MDC.put("responseSize", responseBytes);
-         MDC.put("requestSize", header.requestBytes);
-         MDC.put("duration", duration);
-         log.tracef("/%s", checkForNull(header.getKey()));
-      });
+      if (future.isDone()) {
+         logAfterComplete(remoteAddress, header, responseBytes, status);
+         return;
+      }
+      future.addListener(f -> logAfterComplete(remoteAddress, header, responseBytes, status));
+   }
+
+   private static void logAfterComplete(String remoteAddress, Header header, int responseBytes, String status) {
+      // Duration
+      long duration;
+      if (header.requestStart == null) {
+         duration = -1;
+      } else {
+         duration = ChronoUnit.MILLIS.between(header.requestStart, Instant.now());
+      }
+      MDC.clear();
+      MDC.put("address", remoteAddress);
+      MDC.put("user", checkForNull(header.principalName));
+      MDC.put("method", checkForNull(header.getOp()));
+      MDC.put("protocol", header.getProtocol());
+      MDC.put("status", checkForNull(status));
+      MDC.put("responseSize", responseBytes);
+      MDC.put("requestSize", header.requestBytes);
+      MDC.put("duration", duration);
+      log.tracef("/%s", checkForNull(header.getKey()));
    }
 
    private static String checkForNull(Object obj) {

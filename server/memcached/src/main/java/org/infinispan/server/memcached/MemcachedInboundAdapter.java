@@ -8,11 +8,13 @@ import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelProgressiveFuture;
 import io.netty.channel.ChannelProgressiveFutureListener;
 import io.netty.channel.ChannelProgressivePromise;
+import io.netty.channel.ChannelPromise;
 import io.netty.util.AttributeKey;
 
 public class MemcachedInboundAdapter extends ChannelInboundHandlerAdapter {
@@ -52,21 +54,25 @@ public class MemcachedInboundAdapter extends ChannelInboundHandlerAdapter {
       if (outbound != null) {
          if (runOnEventLoop) {
             ctx.channel().eventLoop().execute(() -> {
+               ChannelPromise p = ctx.newPromise();
+               ctx.writeAndFlush(outbound, p);
+
                if (res != null && progressive != null) {
-                  res.flushed(ctx.writeAndFlush(outbound));
-               } else {
-                  ctx.writeAndFlush(outbound, ctx.voidPromise());
-                  notifyPendingResponses(ctx);
+                  res.flushed(p);
                }
+
+               notifyPendingResponses(ctx, p);
                outbound = null;
             });
          } else {
+            ChannelPromise p = ctx.newPromise();
+            ctx.writeAndFlush(outbound, p);
+
             if (res != null && progressive != null) {
-               res.flushed(ctx.writeAndFlush(outbound));
-            } else {
-               ctx.writeAndFlush(outbound, ctx.voidPromise());
-               notifyPendingResponses(ctx);
+               res.flushed(p);
             }
+
+            notifyPendingResponses(ctx, p);
             outbound = null;
          }
       }
@@ -78,11 +84,14 @@ public class MemcachedInboundAdapter extends ChannelInboundHandlerAdapter {
       flushBufferIfNeeded(ctx, false, null);
    }
 
-   private void notifyPendingResponses(ChannelHandlerContext ctx) {
+   private void notifyPendingResponses(ChannelHandlerContext ctx, ChannelFuture future) {
       assert ctx.channel().eventLoop().inEventLoop();
       if (progressive == null) return;
+      if (progressiveEnd == progressiveStart) return;
 
-      progressive.tryProgress(progressiveStart, progressiveEnd);
+      final long s = progressiveStart;
+      final long e = progressiveEnd;
+      future.addListener(ignore -> progressive.tryProgress(s, e));
       progressiveStart = progressiveEnd;
    }
 
@@ -120,8 +129,7 @@ public class MemcachedInboundAdapter extends ChannelInboundHandlerAdapter {
 
    @Override
    public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-      if (progressive != null)
-         progressive.setFailure(new IllegalStateException("Channel unregistered"));
+      if (progressive != null) progressive.setSuccess();
       super.channelUnregistered(ctx);
    }
 
@@ -189,24 +197,25 @@ public class MemcachedInboundAdapter extends ChannelInboundHandlerAdapter {
 
    private void registerResponseForLater(MemcachedResponse res) {
       if (progressive != null) {
-         progressiveEnd++;
-         progressive = progressive.addListener(new MemcachedProgressiveListener(res, progressive));
+         progressive.addListener(new MemcachedProgressiveListener(res, progressiveEnd++));
       }
    }
 
    private static class MemcachedProgressiveListener implements ChannelProgressiveFutureListener {
       private final MemcachedResponse res;
-      private final ChannelProgressivePromise promise;
+      private final long id;
 
-      private MemcachedProgressiveListener(MemcachedResponse res, ChannelProgressivePromise promise) {
+      private MemcachedProgressiveListener(MemcachedResponse res, long offset) {
          this.res = res;
-         this.promise = promise;
+         this.id = offset;
       }
 
       @Override
       public void operationProgressed(ChannelProgressiveFuture future, long progress, long total) {
-         res.flushed(future.channel().newSucceededFuture());
-         promise.removeListener(this);
+         if (id >= progress && id <= total) {
+            res.flushed(future.channel().newSucceededFuture());
+            future.removeListener(this);
+         }
       }
 
       @Override
