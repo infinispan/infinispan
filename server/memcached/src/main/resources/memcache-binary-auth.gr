@@ -45,7 +45,7 @@ root request
 header returns BinaryHeader
    : { magic != MAGIC_REQ }? { throw new IllegalStateException("Error reading magic byte or message id: " + magic); }
    | { deadEnd = false } op keyLength extrasLength dataType vbucketId totalBodyLength opaque cas valueLength
-     { singleHeader.replace(requestStart, requestBytes, principalName, key, opCode, opaque, cas) }
+     { acquireHeader().replace(requestStart, requestBytes, principalName, key, opCode, opaque, cas) }
    ;
 
 magic: byte;

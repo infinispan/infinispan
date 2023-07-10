@@ -137,18 +137,27 @@ public abstract class MemcachedBaseDecoder extends ByteToMessageDecoder {
       map.put(MemcachedStats.MemcachedStatsKeys.GET_MISSES, ParseUtil.writeAsciiLong(stats.getMisses()));
       map.put(MemcachedStats.MemcachedStatsKeys.DELETE_MISSES, ParseUtil.writeAsciiLong(stats.getRemoveMisses()));
       map.put(MemcachedStats.MemcachedStatsKeys.DELETE_HITS, ParseUtil.writeAsciiLong(stats.getRemoveHits()));
-      map.put(MemcachedStats.MemcachedStatsKeys.INCR_MISSES, ParseUtil.writeAsciiLong(INCR_MISSES.get(statistics)));
-      map.put(MemcachedStats.MemcachedStatsKeys.INCR_HITS, ParseUtil.writeAsciiLong(INCR_HITS.get(statistics)));
-      map.put(MemcachedStats.MemcachedStatsKeys.DECR_MISSES, ParseUtil.writeAsciiLong(DECR_MISSES.get(statistics)));
-      map.put(MemcachedStats.MemcachedStatsKeys.DECR_HITS, ParseUtil.writeAsciiLong(DECR_HITS.get(statistics)));
-      map.put(MemcachedStats.MemcachedStatsKeys.CAS_MISSES, ParseUtil.writeAsciiLong(CAS_MISSES.get(statistics)));
-      map.put(MemcachedStats.MemcachedStatsKeys.CAS_HITS, ParseUtil.writeAsciiLong(CAS_HITS.get(statistics)));
-      map.put(MemcachedStats.MemcachedStatsKeys.CAS_BADVAL, ParseUtil.writeAsciiLong(CAS_BADVAL.get(statistics)));
+
+      if (statsEnabled) {
+         map.put(MemcachedStats.MemcachedStatsKeys.INCR_MISSES, ParseUtil.writeAsciiLong(INCR_MISSES.get(statistics)));
+         map.put(MemcachedStats.MemcachedStatsKeys.INCR_HITS, ParseUtil.writeAsciiLong(INCR_HITS.get(statistics)));
+         map.put(MemcachedStats.MemcachedStatsKeys.DECR_MISSES, ParseUtil.writeAsciiLong(DECR_MISSES.get(statistics)));
+         map.put(MemcachedStats.MemcachedStatsKeys.DECR_HITS, ParseUtil.writeAsciiLong(DECR_HITS.get(statistics)));
+         map.put(MemcachedStats.MemcachedStatsKeys.CAS_MISSES, ParseUtil.writeAsciiLong(CAS_MISSES.get(statistics)));
+         map.put(MemcachedStats.MemcachedStatsKeys.CAS_HITS, ParseUtil.writeAsciiLong(CAS_HITS.get(statistics)));
+         map.put(MemcachedStats.MemcachedStatsKeys.CAS_BADVAL, ParseUtil.writeAsciiLong(CAS_BADVAL.get(statistics)));
+      }
+
       map.put(MemcachedStats.MemcachedStatsKeys.AUTH_CMDS, ParseUtil.ZERO); // Unsupported
       map.put(MemcachedStats.MemcachedStatsKeys.AUTH_ERRORS, ParseUtil.ZERO); // Unsupported
       //TODO: Evictions are measured by evict calls, but not by nodes are that are expired after the entry's lifespan has expired.
       map.put(MemcachedStats.MemcachedStatsKeys.EVICTIONS, ParseUtil.writeAsciiLong(stats.getEvictions()));
+
       NettyTransport transport = server.getTransport();
+      if (transport == null) {
+         transport = (NettyTransport) server.getEnclosingProtocolServer().getTransport();
+      }
+
       map.put(MemcachedStats.MemcachedStatsKeys.BYTES_READ, ParseUtil.writeAsciiLong(transport.getTotalBytesRead()));
       map.put(MemcachedStats.MemcachedStatsKeys.BYTES_WRITTEN, ParseUtil.writeAsciiLong(transport.getTotalBytesWritten()));
       map.put(MemcachedStats.MemcachedStatsKeys.CURR_CONNECTIONS, ParseUtil.writeAsciiLong(transport.getNumberOfLocalConnections()));

@@ -34,6 +34,8 @@ import static org.infinispan.server.memcached.text.TextConstants.ZERO;
 import java.io.StreamCorruptedException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -71,18 +73,19 @@ public abstract class TextOpDecoder extends TextDecoder {
    protected MemcachedResponse get(TextHeader header, List<byte[]> keys, boolean withVersions) {
       int numberOfKeys = keys.size();
       if (numberOfKeys > 1) {
-         CacheEntry<byte[], byte[]>[] entries = new CacheEntry[numberOfKeys];
-         AggregateCompletionStage<CacheEntry<byte[], byte[]>[]> acs = CompletionStages.aggregateCompletionStage(entries);
+         CacheEntry<byte[], byte[]>[] arr = new CacheEntry[numberOfKeys];
+         List<CacheEntry<byte[], byte[]>> entries = Collections.synchronizedList(Arrays.asList(arr));
+         AggregateCompletionStage<List<CacheEntry<byte[], byte[]>>> acs = CompletionStages.aggregateCompletionStage(entries);
          for (int i = 0; i < numberOfKeys; ++i) {
             acs.dependsOn(doGetMultipleKeys(keys, entries, i));
          }
 
-         CompletionStage<CacheEntry<byte[], byte[]>[]> cs = acs.freeze();
+         var cs = acs.freeze();
          if (CompletionStages.isCompletedSuccessfully(cs)) {
             return send(header, CompletableFuture.completedFuture(createMultiGetResponse(entries)));
          }
 
-         return send(header, cs.thenApply(unused -> createMultiGetResponse(entries)));
+         return send(header, cs.thenApply(this::createMultiGetResponse));
       }
 
       byte[] key = keys.get(0);
@@ -171,7 +174,8 @@ public abstract class TextOpDecoder extends TextDecoder {
    protected MemcachedResponse gat(TextHeader header, int expiration, List<byte[]> keys, boolean withVersions) {
       int numberOfKeys = keys.size();
       if (numberOfKeys > 1) {
-         CacheEntry<byte[], byte[]>[] entries = new CacheEntry[numberOfKeys];
+         CacheEntry<byte[], byte[]>[] arr = new CacheEntry[numberOfKeys];
+         List<CacheEntry<byte[], byte[]>> entries = Collections.synchronizedList(Arrays.asList(arr));
          CompletionStage<Void> lastStage = doGatMultipleKeys(keys, entries, expiration, 0);
          for (int i = 1; i < numberOfKeys; ++i) {
             final int idx = i;
@@ -216,33 +220,32 @@ public abstract class TextOpDecoder extends TextDecoder {
       throw new UnsupportedOperationException();
    }
 
-   private Object createMultiGetResponse(CacheEntry<byte[], byte[]>[] entries) {
-      ByteBuf[] elements = new ByteBuf[entries.length + 1];
-      for (int i = 0; i < entries.length; i++) {
-         elements[i] = buildGetResponse(entries[i]);
+   private Object createMultiGetResponse(List<CacheEntry<byte[], byte[]>> entries) {
+      ByteBuf[] elements = new ByteBuf[entries.size() + 1];
+      for (int i = 0; i < entries.size(); i++) {
+         elements[i] = buildGetResponse(entries.get(i));
       }
-      elements[entries.length] = wrappedBuffer(END);
+      elements[entries.size()] = wrappedBuffer(END);
       return elements;
    }
 
-   private CompletionStage<Void> doGetMultipleKeys(List<byte[]> keys, CacheEntry<byte[], byte[]>[] entries, int i) {
+   private CompletionStage<Void> doGetMultipleKeys(List<byte[]> keys, List<CacheEntry<byte[], byte[]>> entries, int i) {
       try {
-         return cache.getCacheEntryAsync(keys.get(i)).thenAccept(entry -> entries[i] = entry);
+         return cache.getCacheEntryAsync(keys.get(i))
+               .thenAccept(entry -> entries.set(i, entry));
       } catch (Throwable t) {
          return failedFuture(t);
       }
    }
 
-   private CompletionStage<Void> doGatMultipleKeys(List<byte[]> keys, CacheEntry<byte[], byte[]>[] entries, int expiration, int idx) {
+   private CompletionStage<Void> doGatMultipleKeys(List<byte[]> keys, List<CacheEntry<byte[], byte[]>> entries, int expiration, int idx) {
       return cache.getCacheEntryAsync(keys.get(idx))
             .thenCompose(entry -> {
                if (entry == null) {
                   return CompletableFutures.completedNull();
                } else {
-                  return cache.replaceAsync(entry.getKey(), entry.getValue(), touchMetadata(entry, expiration)).thenApply(unused -> {
-                     entries[idx] = entry;
-                     return null;
-                  });
+                  return cache.replaceAsync(entry.getKey(), entry.getValue(), touchMetadata(entry, expiration))
+                        .thenAccept(unused -> entries.set(idx, entry));
                }
             });
    }
@@ -317,7 +320,7 @@ public abstract class TextOpDecoder extends TextDecoder {
    }
 
    protected MemcachedResponse stats(TextHeader header, List<byte[]> names) {
-      return send(header, server.getBlockingManager().supplyBlocking(() -> {
+      return send(header, server.getBlockingManager().runBlocking(() -> {
          Map<byte[], byte[]> stats = statsMap();
          ByteBuf buf = MemcachedInboundAdapter.getAllocator(ctx).acquire(1024);
          if (names.isEmpty()) {
@@ -328,7 +331,7 @@ public abstract class TextOpDecoder extends TextDecoder {
             for (byte[] name : names) {
                if (!stats.containsKey(name)) {
                   buf.writeCharSequence("CLIENT_ERROR\r\n", StandardCharsets.US_ASCII);
-                  return null;
+                  return;
                }
             }
 
@@ -337,7 +340,6 @@ public abstract class TextOpDecoder extends TextDecoder {
             }
          }
          buf.writeBytes(END);
-         return null;
       }, "memcached-stats"));
    }
 
