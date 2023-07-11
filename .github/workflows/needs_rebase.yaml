@@ -3,7 +3,7 @@ name: Needs Rebase Check
 on:
   push:
     branches:
-      - *
+      - '*'
 jobs:
   triage:
     runs-on: ubuntu-latest
