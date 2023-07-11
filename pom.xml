@@ -326,7 +326,7 @@
       <versionx.org.jboss.naming.jnp-client>${version.jboss.naming}</versionx.org.jboss.naming.jnp-client>
       <versionx.org.jboss.naming.jnpserver>${version.jboss.naming}</versionx.org.jboss.naming.jnpserver>
       <versionx.org.jboss.security.jboss-negotiation-extras>${version.jboss.security}</versionx.org.jboss.security.jboss-negotiation-extras>
-      <versionx.org.jboss.shrinkwrap.depchain>${version.jboss.shrinkwrap}</versionx.org.jboss.shrinkwrap.depchain>
+      <versionx.org.jboss.shrinkwrap>${version.jboss.shrinkwrap}</versionx.org.jboss.shrinkwrap>
       <versionx.org.jboss.spec.javax.ejb.jboss-ejb-api_3.2_spec>2.0.0.Final</versionx.org.jboss.spec.javax.ejb.jboss-ejb-api_3.2_spec>
       <versionx.org.jboss.spec.javax.jms.jboss-jms-api_2.0_spec>2.0.0.Final</versionx.org.jboss.spec.javax.jms.jboss-jms-api_2.0_spec>
       <versionx.org.jboss.spec.jboss-jakartaee-8.0>1.0.1.Final</versionx.org.jboss.spec.jboss-jakartaee-8.0>
@@ -1445,10 +1445,8 @@
          </dependency>
          <dependency>
             <groupId>org.jboss.shrinkwrap</groupId>
-            <artifactId>shrinkwrap-depchain</artifactId>
-            <version>${versionx.org.jboss.shrinkwrap.depchain}</version>
-            <type>pom</type>
-            <scope>test</scope>
+            <artifactId>shrinkwrap-impl-base</artifactId>
+            <version>${versionx.org.jboss.shrinkwrap}</version>
          </dependency>
          <dependency>
             <groupId>org.jboss.spec</groupId>
@@ -2132,7 +2130,6 @@
                   <minimumTokens>100</minimumTokens>
                   <targetJdk>${jdk.min.version}</targetJdk>
                   <linkXRef>false</linkXRef>
-                  <sourceEncoding>utf-8</sourceEncoding>
                   <printFailingErrors>true</printFailingErrors>
                   <excludeRoots>
                      <excludeRoot>target/generated-sources</excludeRoot>

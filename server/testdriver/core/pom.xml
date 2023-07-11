@@ -44,9 +44,7 @@
       </dependency>
       <dependency>
          <groupId>org.jboss.shrinkwrap</groupId>
-         <artifactId>shrinkwrap-depchain</artifactId>
-         <type>pom</type>
-         <scope>compile</scope>
+         <artifactId>shrinkwrap-impl-base</artifactId>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
