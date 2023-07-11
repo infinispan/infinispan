@@ -235,7 +235,7 @@
       <versionx.com.fasterxml.jackson.modules.jackson-modules-java8>${version.jackson}</versionx.com.fasterxml.jackson.modules.jackson-modules-java8>
       <versionx.com.github.ben-manes.caffeine.caffeine>${version.caffeine}</versionx.com.github.ben-manes.caffeine.caffeine>
       <versionx.com.google.errorprone.error_prone_annotations>2.1.3</versionx.com.google.errorprone.error_prone_annotations>
-      <versionx.com.google.guava.guava>30.1.1-jre</versionx.com.google.guava.guava>
+      <versionx.com.google.guava.guava>32.1.1-jre</versionx.com.google.guava.guava>
       <versionx.com.google.testing.compile>0.18</versionx.com.google.testing.compile>
       <versionx.com.h2database.h2>2.1.214</versionx.com.h2database.h2>
       <versionx.com.ibm.db2>11.5.6.0</versionx.com.ibm.db2>
@@ -2291,6 +2291,7 @@
                   <assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
                   <cveUrlModified>https://beny23.github.io/nvd-nist-mirror/feeds/json/cve/1.1/nvdcve-1.1-modified.json.gz</cveUrlModified>
                   <cveUrlBase>https://beny23.github.io/nvd-nist-mirror/feeds/json/cve/1.1/nvdcve-1.1-%d.json.gz</cveUrlBase>
+                  <dataDirectory>${user.home}/.m2/nvd-cve-data</dataDirectory>
                   <failOnError>false</failOnError>
                   <suppressionFile>${infinispan.root}/etc/dependency-check-suppressions.xml</suppressionFile>
                </configuration>
