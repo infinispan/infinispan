@@ -27,6 +27,7 @@ import static org.infinispan.multimap.impl.MultimapTestUtils.OIHANA;
 import static org.infinispan.multimap.impl.MultimapTestUtils.PEPE;
 import static org.infinispan.multimap.impl.MultimapTestUtils.RAMON;
 import static org.infinispan.multimap.impl.SortedSetBucket.ScoredValue.of;
+import static org.infinispan.multimap.impl.SortedSetSubsetArgs.create;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -123,6 +124,35 @@ public class DistributedMultimapSortedSetCacheTest extends BaseDistFunctionalTes
       await(sortedSet.addMany(NAMES_KEY, new double[] { 1.1, 9.1 }, new Person[] { OIHANA, ELAIA }, SortedSetAddArgs.create().build()));
       assertThat(await(sortedSet.score(NAMES_KEY, OIHANA))).isEqualTo(1.1);
       assertThat(await(sortedSet.score(NAMES_KEY, ELAIA))).isEqualTo(9.1);
+   }
+
+   public void testSubset() {
+      initAndTest();
+      EmbeddedMultimapSortedSetCache<String, Person> sortedSetCache = getMultimapCacheMember();
+      await(sortedSetCache.addMany(NAMES_KEY, new double[] { 1, 1, 1, 1}, new Person[] { ELAIA, FELIX, IZARO, OIHANA }, SortedSetAddArgs.create().build()));
+      SortedSetSubsetArgs.Builder<Long> argsIndex = create();
+      assertThat(await(sortedSetCache.subsetByIndex(NAMES_KEY, argsIndex.start(0L).stop(-1L).isRev(false).build())))
+            .containsExactly(
+                  of(1, ELAIA),
+                  of(1, FELIX),
+                  of(1, IZARO),
+                  of(1, OIHANA));
+
+      SortedSetSubsetArgs.Builder<Double> argsScore = create();
+      assertThat(await(sortedSetCache.subsetByScore(NAMES_KEY, argsScore.start(0d).stop(2d).isRev(false).build())))
+            .containsExactly(
+                  of(1, ELAIA),
+                  of(1, FELIX),
+                  of(1, IZARO),
+                  of(1, OIHANA));
+
+      SortedSetSubsetArgs.Builder<Person> argsLex = create();
+      assertThat(await(sortedSetCache.subsetByLex(NAMES_KEY,
+            argsLex.start(FELIX).includeStart(true).stop(OIHANA).includeStop(true).isRev(false).build())))
+            .containsExactly(
+                  of(1, FELIX),
+                  of(1, IZARO),
+                  of(1, OIHANA));
    }
 
    protected void assertValuesAndOwnership(String key, SortedSetBucket.ScoredValue<Person> value) {

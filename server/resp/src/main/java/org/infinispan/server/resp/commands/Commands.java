@@ -1,9 +1,5 @@
 package org.infinispan.server.resp.commands;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.commands.cluster.CLUSTER;
 import org.infinispan.server.resp.commands.connection.AUTH;
@@ -78,6 +74,11 @@ import org.infinispan.server.resp.commands.sortedset.ZCOUNT;
 import org.infinispan.server.resp.commands.sortedset.ZPOPMAX;
 import org.infinispan.server.resp.commands.sortedset.ZPOPMIN;
 import org.infinispan.server.resp.commands.sortedset.ZRANGE;
+import org.infinispan.server.resp.commands.sortedset.ZRANGEBYLEX;
+import org.infinispan.server.resp.commands.sortedset.ZRANGEBYSCORE;
+import org.infinispan.server.resp.commands.sortedset.ZREVRANGE;
+import org.infinispan.server.resp.commands.sortedset.ZREVRANGEBYLEX;
+import org.infinispan.server.resp.commands.sortedset.ZREVRANGEBYSCORE;
 import org.infinispan.server.resp.commands.sortedset.ZSCORE;
 import org.infinispan.server.resp.commands.string.APPEND;
 import org.infinispan.server.resp.commands.string.DECR;
@@ -96,6 +97,10 @@ import org.infinispan.server.resp.commands.string.SET;
 import org.infinispan.server.resp.commands.string.SETRANGE;
 import org.infinispan.server.resp.commands.string.STRALGO;
 import org.infinispan.server.resp.commands.string.STRLEN;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @since 15.0
@@ -127,7 +132,9 @@ public final class Commands {
       ALL_COMMANDS[18] = new RespCommand[]{new SET(), new SMEMBERS(), new SADD(), new STRLEN(), new SCARD(), new SINTER(), new SINTERSTORE(), new SINTERCARD(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN(), new SETRANGE()};
       ALL_COMMANDS[19] = new RespCommand[]{new TTL(), new TYPE()};
       ALL_COMMANDS[20] = new RespCommand[]{new UNSUBSCRIBE()};
-      ALL_COMMANDS[25] = new RespCommand[]{new ZADD(), new ZCARD(), new ZCOUNT(), new ZPOPMAX(), new ZPOPMIN(), new ZRANGE(), new ZSCORE()};
+      ALL_COMMANDS[25] = new RespCommand[]{new ZADD(), new ZCARD(), new ZCOUNT(), new ZPOPMAX(), new ZPOPMIN(),
+            new ZRANGE(), new ZREVRANGE(), new ZRANGEBYSCORE(), new ZREVRANGEBYSCORE(), new ZRANGEBYLEX(), new ZREVRANGEBYLEX(),
+            new ZSCORE()};
    }
 
    public static List<RespCommand> all() {

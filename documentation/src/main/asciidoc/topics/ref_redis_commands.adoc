@@ -242,5 +242,23 @@ for concurrent operations or failures unless the resp cache is configured to use
 | link:https://redis.io/commands/zpopmin[ZPOPMIN]
 |
 
+| link:https://redis.io/commands/zrange[ZRANGE]
+|
+
+| link:https://redis.io/commands/zrangebylex[ZRANGEBYLEX]
+|
+
+| link:https://redis.io/commands/zrangebyscore[ZRANGEBYSCORE]
+|
+
+| link:https://redis.io/commands/zrevrange[ZREVRANGE]
+|
+
+| link:https://redis.io/commands/zrevrangebylex[ZREVRANGEBYLEX]
+|
+
+| link:https://redis.io/commands/zrevrangebyscore[ZREVRANGEBYSCORE]
+|
+
 | link:https://redis.io/commands/zscore[ZSCORE]
 |

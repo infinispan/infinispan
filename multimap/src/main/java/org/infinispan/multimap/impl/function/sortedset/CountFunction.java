@@ -44,7 +44,7 @@ public final class CountFunction<K, V> implements SortedSetBucketBaseFunction<K,
       long count = 0;
       if (existing.isPresent()) {
          SortedSet<SortedSetBucket.ScoredValue<V>> scoredValues = existing.get()
-               .subsetByScores(min, includeMin, max, includeMax);
+               .subset(min, includeMin, max, includeMax, false);
          count = scoredValues.size();
       }
       return count;
