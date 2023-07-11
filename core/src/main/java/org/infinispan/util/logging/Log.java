@@ -2358,4 +2358,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Indexed entity name must not be null or empty", id = 691)
    CacheConfigurationException indexedEntityNameMissing();
+
+   @LogMessage(level = INFO)
+   @Message(value = "Flushed ACL Cache", id = 692)
+   void flushedACLCache();
 }

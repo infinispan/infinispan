@@ -1,0 +1,6 @@
+server:
+  security:
+    securityRealms:
+      - name: "default"
+        cache-max-size: 1024
+        cache-lifespan: 120000

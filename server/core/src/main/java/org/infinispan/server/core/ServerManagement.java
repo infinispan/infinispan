@@ -66,4 +66,6 @@ public interface ServerManagement {
    Path getServerDataPath();
 
    Map<String, List<Principal>> getPrincipalList();
+
+   CompletionStage<Void> flushSecurityCaches();
 }

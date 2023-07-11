@@ -49,6 +49,10 @@ include::json/authorization_acl_cache.json[]
 include::yaml/authorization_acl_cache.yaml[]
 ----
 
+== Flushing ACL caches
+
+It is possible to flush the ACL cache using the `GlobalSecurityManager` MBean, accessible over JMX.
+
 [role="_additional-resources"]
 .Additional resources
 * link:{configdocroot}[{brandname} configuration schema reference]

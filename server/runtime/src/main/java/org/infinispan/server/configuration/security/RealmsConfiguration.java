@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.infinispan.server.Server;
+import org.infinispan.server.core.logging.Log;
 
 /**
  * @since 10.0
@@ -31,6 +32,13 @@ public class RealmsConfiguration {
    void init(SecurityConfiguration security, Properties properties) {
       for(RealmConfiguration realm : realms.values()) {
          realm.init(security, properties);
+      }
+   }
+
+   public void flushRealmCaches() {
+      for(RealmConfiguration realm : realms.values()) {
+         realm.flushCache();
+         Log.SERVER.flushRealmCache(realm.name());
       }
    }
 }

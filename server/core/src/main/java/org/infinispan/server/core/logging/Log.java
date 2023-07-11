@@ -199,4 +199,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Removed unclosed iterator '%s'", id = 28026)
    void removedUnclosedIterator(String iteratorId);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Flushed cache for security realm '%s'", id = 28027)
+   void flushRealmCache(String name);
 }
