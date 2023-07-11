@@ -6,10 +6,10 @@ import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
-import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -35,7 +35,6 @@ public class ZCOUNT extends RespCommand implements Resp3Command {
    public ZCOUNT() {
       super(4, 1, 1, 1);
    }
-   public static byte INCLUDE = ((byte)'(');
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
@@ -44,35 +43,26 @@ public class ZCOUNT extends RespCommand implements Resp3Command {
       byte[] name = arguments.get(0);
       byte[] min = arguments.get(1);
       byte[] max = arguments.get(2);
-      boolean includeMin = true;
-      boolean includeMax = true;
-      double min_val;
-      double max_val;
-      try {
-         if (ArgumentUtils.isNegativeInf(min)) {
-            min_val = Double.MIN_VALUE;
-         } else if (min[0] == INCLUDE) {
-            includeMin = false;
-            min_val = ArgumentUtils.toDouble(min, 1);
-         } else {
-            min_val = ArgumentUtils.toDouble(min);
-         }
-
-         if (ArgumentUtils.isPositiveInf(max)) {
-            max_val = Double.MAX_VALUE;
-         } else if (max[0] == INCLUDE) {
-            includeMax = false;
-            max_val = ArgumentUtils.toDouble(max, 1);
-         } else {
-            max_val = ArgumentUtils.toDouble(max);
-         }
-
-      } catch (NumberFormatException ex) {
-         RespErrorUtil.customError("min or max is not a float", handler.allocator());
+      SortedSetArgumentsUtils.Score minScore = SortedSetArgumentsUtils.parseScore(min);
+      SortedSetArgumentsUtils.Score maxScore = SortedSetArgumentsUtils.parseScore(max);
+      if (minScore == null || maxScore == null) {
+         RespErrorUtil.minOrMaxNotAValidFloat(handler.allocator());
          return handler.myStage();
+      }
+      if (maxScore.unboundedMin || minScore.unboundedMax) {
+         // minScore +inf or maxScore is -inf, return 0 without performing any call
+         return handler.stageToReturn(CompletableFuture.completedFuture(0L), ctx, Consumers.LONG_BICONSUMER);
+      }
+
+      if (minScore.value == null) {
+         minScore.value = Double.MIN_VALUE;
+      }
+
+      if (maxScore.value == null) {
+         maxScore.value = Double.MAX_VALUE;
       }
 
       return handler.stageToReturn(handler.getSortedSeMultimap()
-            .count(name, min_val, includeMin, max_val, includeMax), ctx, Consumers.LONG_BICONSUMER);
+            .count(name, minScore.value, minScore.include, maxScore.value, maxScore.include), ctx, Consumers.LONG_BICONSUMER);
    }
 }

@@ -10,11 +10,15 @@ import org.testng.annotations.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.functional.FunctionalTestUtils.await;
+import static org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache.ERR_ARGS_CAN_T_BE_NULL;
+import static org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache.ERR_ARGS_INDEXES_CAN_T_BE_NULL;
 import static org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache.ERR_KEY_CAN_T_BE_NULL;
 import static org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache.ERR_MEMBER_CAN_T_BE_NULL;
 import static org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache.ERR_SCORES_CAN_T_BE_NULL;
 import static org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache.ERR_SCORES_VALUES_MUST_HAVE_SAME_SIZE;
 import static org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache.ERR_VALUES_CAN_T_BE_NULL;
+import static org.infinispan.multimap.impl.MultimapTestUtils.CHARY;
+import static org.infinispan.multimap.impl.MultimapTestUtils.ELA;
 import static org.infinispan.multimap.impl.MultimapTestUtils.ELAIA;
 import static org.infinispan.multimap.impl.MultimapTestUtils.FELIX;
 import static org.infinispan.multimap.impl.MultimapTestUtils.IGOR;
@@ -26,6 +30,7 @@ import static org.infinispan.multimap.impl.MultimapTestUtils.OIHANA;
 import static org.infinispan.multimap.impl.MultimapTestUtils.PEPE;
 import static org.infinispan.multimap.impl.MultimapTestUtils.RAMON;
 import static org.infinispan.multimap.impl.SortedSetBucket.ScoredValue.of;
+import static org.infinispan.multimap.impl.SortedSetSubsetArgs.create;
 
 /**
  * Single Multimap Cache Test with Linked List
@@ -110,6 +115,13 @@ public class EmbeddedMultimapSortedSetCacheTest extends SingleCacheManagerTest {
       assertThat(await(sortedSetCache.addMany(NAMES_KEY, new double[] { 1 }, new Person[] { PEPE }, emptyArgs))).isEqualTo(1);
       assertThat(await(sortedSetCache.getValue(NAMES_KEY))).containsExactly(of(0.8, RAMON), of(1, JULIEN),  of(1, PEPE), of(8.9, ELAIA), of(12.1, OIHANA), of(32.98, FELIX), of(90, KOLDO) );
 
+      await(sortedSetCache.addMany(NAMES_KEY + "_lex",
+            new double[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            new Person[] {OIHANA, FELIX, KOLDO, ELA, ELAIA, RAMON, IZARO, IGOR, CHARY, JULIEN},
+            SortedSetAddArgs.create().build()));
+      assertThat(await(sortedSetCache.getValue(NAMES_KEY + "_lex")))
+            .containsExactly(of(0, CHARY), of(0, ELA), of(0, ELAIA), of(0, FELIX), of(0, IGOR),
+                  of(0, IZARO), of(0, JULIEN), of(0, KOLDO), of(0, OIHANA), of(0, RAMON));
       // Errors
       assertThatThrownBy(() -> await(sortedSetCache.addMany(NAMES_KEY, new double[] { 1 }, new Person[] {}, emptyArgs)))
             .isInstanceOf(IllegalArgumentException.class)
@@ -195,5 +207,305 @@ public class EmbeddedMultimapSortedSetCacheTest extends SingleCacheManagerTest {
       assertThatThrownBy(() -> await(sortedSetCache.score(NAMES_KEY, null)))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining(ERR_MEMBER_CAN_T_BE_NULL);
+   }
+
+   public void testSubsetByIndex() {
+      SortedSetSubsetArgs.Builder<Long> args = create();
+      assertThat(await(sortedSetCache.subsetByIndex(NAMES_KEY, args.start(0L).stop(0L).isRev(false).build()))).isEmpty();
+      assertThat(await(sortedSetCache.subsetByIndex(NAMES_KEY, args.start(0L).stop(0L).isRev(true).build()))).isEmpty();
+      await(sortedSetCache.addMany(NAMES_KEY,
+            new double[] {0, 1, 2, 4, 4, 5, 6, 7, 8, 8},
+            new Person[] {OIHANA, FELIX, KOLDO, ELA, ELAIA, RAMON, IZARO, IGOR, CHARY, JULIEN},
+            SortedSetAddArgs.create().build()));
+
+      assertThat(await(sortedSetCache.subsetByIndex(NAMES_KEY, args.start(0L).stop(-1L).isRev(false).build())))
+            .containsExactly(
+                  of(0, OIHANA),
+                  of(1, FELIX),
+                  of(2, KOLDO),
+                  of(4, ELA),
+                  of(4, ELAIA),
+                  of(5, RAMON),
+                  of(6, IZARO),
+                  of(7, IGOR),
+                  of(8, CHARY),
+                  of(8, JULIEN));
+      assertThat(await(sortedSetCache.subsetByIndex(NAMES_KEY, args.start(0L).stop(-1L).isRev(true).build())))
+            .containsExactly(
+                  of(8, JULIEN),
+                  of(8, CHARY),
+                  of(7, IGOR),
+                  of(6, IZARO),
+                  of(5, RAMON),
+                  of(4, ELAIA),
+                  of(4, ELA),
+                  of(2, KOLDO),
+                  of(1, FELIX),
+                  of(0, OIHANA));
+      assertThat(await(sortedSetCache.subsetByIndex(NAMES_KEY, args.start(-100L).stop(100L).isRev(false).build()))).hasSize(10);
+      assertThat(await(sortedSetCache.subsetByIndex(NAMES_KEY, args.start(1L).stop(2L).isRev(false).build())))
+            .containsExactly(of(1, FELIX), of(2, KOLDO));
+      assertThat(await(sortedSetCache.subsetByIndex(NAMES_KEY, args.start(1L).stop(2L).isRev(true).build())))
+            .containsExactly(of(8, CHARY), of(7, IGOR));
+      assertThat(await(sortedSetCache.subsetByIndex(NAMES_KEY, args.start(0L).stop(0L).isRev(false).build())))
+            .containsExactly(of(0, OIHANA));
+      assertThat(await(sortedSetCache.subsetByIndex(NAMES_KEY, args.start(0L).stop(0L).isRev(true).build())))
+            .containsExactly(of(8, JULIEN));
+      assertThat(await(sortedSetCache.subsetByIndex(NAMES_KEY, args.start(-1L).stop(-1L).isRev(false).build())))
+            .containsExactly(of(8, JULIEN));
+      assertThat(await(sortedSetCache.subsetByIndex(NAMES_KEY, args.start(-1L).stop(-1L).isRev(true).build())))
+            .containsExactly(of(0, OIHANA));
+      assertThat(await(sortedSetCache.subsetByIndex(NAMES_KEY, args.start(3L).stop(3L).isRev(true).build())))
+            .containsExactly(of(6, IZARO));
+      assertThat(await(sortedSetCache.subsetByIndex(NAMES_KEY, args.start(3L).stop(3L).isRev(false).build())))
+            .containsExactly(of(4, ELA));
+      assertThat(await(sortedSetCache.subsetByIndex(NAMES_KEY, args.start(3L).stop(3L).isRev(true).build())))
+            .containsExactly(of(6, IZARO));
+
+      assertThat(await(sortedSetCache.subsetByIndex(NAMES_KEY, args.start(-1L).stop(0L).isRev(false).build()))).isEmpty();
+      assertThat(await(sortedSetCache.subsetByIndex(NAMES_KEY, args.start(3L).stop(2L).isRev(false).build()))).isEmpty();
+      assertThat(await(sortedSetCache.subsetByIndex(NAMES_KEY, args.start(3L).stop(2L).isRev(true).build()))).isEmpty();
+      assertThat(await(sortedSetCache.subsetByIndex(NAMES_KEY, args.start(-1L).stop(0L).isRev(true).build()))).isEmpty();
+
+      // Errors
+      assertThatThrownBy(() -> await(sortedSetCache.subsetByIndex(null, null)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
+      assertThatThrownBy(() -> await(sortedSetCache.subsetByIndex(NAMES_KEY, null)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_ARGS_CAN_T_BE_NULL);
+      assertThatThrownBy(() -> await(sortedSetCache.subsetByIndex(NAMES_KEY,  create().build())))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_ARGS_INDEXES_CAN_T_BE_NULL);
+      assertThatThrownBy(() -> await(sortedSetCache.subsetByIndex(NAMES_KEY,  create().start(12L).build())))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_ARGS_INDEXES_CAN_T_BE_NULL);
+   }
+
+   public void testSubsetByScore() {
+      SortedSetSubsetArgs.Builder<Double> args = create();
+      assertThat(await(sortedSetCache.subsetByScore(NAMES_KEY, args.isRev(false).build()))).isEmpty();
+      await(sortedSetCache.addMany(NAMES_KEY,
+            new double[] {0, 1, 2, 4, 4, 5, 6, 7, 8, 8},
+            new Person[] {OIHANA, FELIX, KOLDO, ELA, ELAIA, RAMON, IZARO, IGOR, CHARY, JULIEN},
+            SortedSetAddArgs.create().build()));
+
+      assertThat(await(sortedSetCache.subsetByScore(NAMES_KEY, args.isRev(false).build())))
+            .containsExactly(
+                  of(0, OIHANA),
+                  of(1, FELIX),
+                  of(2, KOLDO),
+                  of(4, ELA),
+                  of(4, ELAIA),
+                  of(5, RAMON),
+                  of(6, IZARO),
+                  of(7, IGOR),
+                  of(8, CHARY),
+                  of(8, JULIEN));
+
+      assertThat(await(sortedSetCache.subsetByScore(NAMES_KEY, args.isRev(true).build())))
+            .containsExactly(
+                  of(8, JULIEN),
+                  of(8, CHARY),
+                  of(7, IGOR),
+                  of(6, IZARO),
+                  of(5, RAMON),
+                  of(4, ELAIA),
+                  of(4, ELA),
+                  of(2, KOLDO),
+                  of(1, FELIX),
+                  of(0, OIHANA));
+
+      assertThat(await(sortedSetCache.subsetByScore(NAMES_KEY, args.start(1d).stop(5d).isRev(false).build())))
+            .containsExactly(
+                  of(2, KOLDO),
+                  of(4, ELA),
+                  of(4, ELAIA));
+
+      assertThat(await(sortedSetCache.subsetByScore(NAMES_KEY, args.start(1d)
+            .includeStart(true).stop(5d).includeStop(true).isRev(false).build())))
+            .containsExactly(
+                  of(1, FELIX),
+                  of(2, KOLDO),
+                  of(4, ELA),
+                  of(4, ELAIA),
+                  of(5, RAMON));
+
+      assertThat(await(sortedSetCache.subsetByScore(NAMES_KEY, args.start(1d)
+            .includeStart(false).stop(5d).includeStop(true).isRev(false).build())))
+            .containsExactly(
+                  of(2, KOLDO),
+                  of(4, ELA),
+                  of(4, ELAIA),
+                  of(5, RAMON));
+
+      assertThat(await(sortedSetCache.subsetByScore(NAMES_KEY, args.start(1d)
+            .includeStart(true).stop(5d).includeStop(false).isRev(false).build())))
+            .containsExactly(
+                  of(1, FELIX),
+                  of(2, KOLDO),
+                  of(4, ELA),
+                  of(4, ELAIA));
+
+
+      assertThat(await(sortedSetCache.subsetByScore(NAMES_KEY, args.start(5d)
+            .includeStart(true).stop(1d).includeStop(true).isRev(true).build())))
+            .containsExactly(
+                  of(5, RAMON),
+                  of(4, ELAIA),
+                  of(4, ELA),
+                  of(2, KOLDO),
+                  of(1, FELIX));
+
+      assertThat(await(sortedSetCache.subsetByScore(NAMES_KEY, args.start(5d)
+            .includeStart(false).stop(1d).includeStop(false).isRev(true).build())))
+            .containsExactly(
+                  of(4, ELAIA),
+                  of(4, ELA),
+                  of(2, KOLDO));
+
+      assertThat(await(sortedSetCache.subsetByScore(NAMES_KEY, args.start(5d)
+            .includeStart(false).stop(1d).includeStop(true).isRev(true).build())))
+            .containsExactly(
+                  of(4, ELAIA),
+                  of(4, ELA),
+                  of(2, KOLDO),
+                  of(1, FELIX));
+
+      assertThat(await(sortedSetCache.subsetByScore(NAMES_KEY, args.start(5d)
+            .includeStart(true).stop(1d).includeStop(false).isRev(true).build())))
+            .containsExactly(
+                  of(5, RAMON),
+                  of(4, ELAIA),
+                  of(4, ELA),
+                  of(2, KOLDO));
+
+      // Errors
+      assertThatThrownBy(() -> await(sortedSetCache.subsetByScore(null, null)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
+      assertThatThrownBy(() -> await(sortedSetCache.subsetByScore(NAMES_KEY,  null)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_ARGS_CAN_T_BE_NULL);
+   }
+
+   public void testSubsetByLex() {
+      SortedSetSubsetArgs.Builder<Person> args = create();
+      assertThat(await(sortedSetCache.subsetByLex(NAMES_KEY, args.isRev(false).build()))).isEmpty();
+      await(sortedSetCache.addMany(NAMES_KEY,
+            new double[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            new Person[] {CHARY, ELA, ELAIA, FELIX, IZARO, IZARO, IGOR, IGOR, JULIEN, KOLDO, OIHANA, RAMON},
+            SortedSetAddArgs.create().build()));
+
+      // unbounded
+      assertThat(await(sortedSetCache.subsetByLex(NAMES_KEY, args.isRev(false).build())))
+            .containsExactly(
+                  of(0, CHARY),
+                  of(0, ELA),
+                  of(0, ELAIA),
+                  of(0, FELIX),
+                  of(0, IGOR),
+                  of(0, IZARO),
+                  of(0, JULIEN),
+                  of(0, KOLDO),
+                  of(0, OIHANA),
+                  of(0, RAMON));
+
+      assertThat(await(sortedSetCache.subsetByLex(NAMES_KEY, args.isRev(true).build())))
+            .containsExactly(
+                  of(0, RAMON),
+                  of(0, OIHANA),
+                  of(0, KOLDO),
+                  of(0, JULIEN),
+                  of(0, IZARO),
+                  of(0, IGOR),
+                  of(0, FELIX),
+                  of(0, ELAIA),
+                  of(0, ELA),
+                  of(0, CHARY));
+
+      assertThat(await(sortedSetCache.subsetByLex(NAMES_KEY, args.isRev(false).start(JULIEN).includeStart(false).build())))
+            .containsExactly(
+                  of(0, KOLDO),
+                  of(0, OIHANA),
+                  of(0, RAMON));
+
+      assertThat(await(sortedSetCache.subsetByLex(NAMES_KEY, args.isRev(true).start(null).stop(JULIEN).includeStart(false).build())))
+            .containsExactly(
+                  of(0, RAMON),
+                  of(0, OIHANA),
+                  of(0, KOLDO));
+
+      assertThat(await(sortedSetCache.subsetByLex(NAMES_KEY, args.isRev(false).start(JULIEN).stop(null).includeStart(true).build())))
+            .containsExactly(
+                  of(0, JULIEN),
+                  of(0, KOLDO),
+                  of(0, OIHANA),
+                  of(0, RAMON));
+
+      assertThat(await(sortedSetCache.subsetByLex(NAMES_KEY, args.isRev(false).start(null).stop(IGOR).includeStop(false).build())))
+            .containsExactly(
+                  of(0, CHARY),
+                  of(0, ELA),
+                  of(0, ELAIA),
+                  of(0, FELIX));
+
+      assertThat(await(sortedSetCache.subsetByLex(NAMES_KEY, args.isRev(false)
+            .start(null).stop(IGOR).includeStop(true).build())))
+            .containsExactly(
+                  of(0, CHARY),
+                  of(0, ELA),
+                  of(0, ELAIA),
+                  of(0, FELIX),
+                  of(0, IGOR));
+
+      assertThat(await(sortedSetCache.subsetByLex(NAMES_KEY, args.isRev(true)
+            .start(IGOR).includeStart(true).stop(null).build())))
+            .containsExactly(
+                  of(0, IGOR),
+                  of(0, FELIX),
+                  of(0, ELAIA),
+                  of(0, ELA),
+                  of(0, CHARY));
+
+      assertThat(await(sortedSetCache.subsetByLex(NAMES_KEY, args.start(ELA).stop(FELIX).
+            includeStop(true).includeStart(true).isRev(false).build())))
+            .containsExactly(
+                  of(0, ELA),
+                  of(0, ELAIA),
+                  of(0, FELIX));
+
+      assertThat(await(sortedSetCache.subsetByLex(NAMES_KEY, args.start(FELIX).stop(ELA).
+            includeStop(true).includeStart(true).isRev(true).build())))
+            .containsExactly(
+                  of(0, FELIX),
+                  of(0, ELAIA),
+                  of(0, ELA));
+
+      assertThat(await(sortedSetCache.subsetByLex(NAMES_KEY, args.start(ELA).stop(FELIX).
+            includeStop(false).includeStart(true).isRev(false).build())))
+            .containsExactly(
+                  of(0, ELA),
+                  of(0, ELAIA));
+
+      assertThat(await(sortedSetCache.subsetByLex(NAMES_KEY, args.start(ELA).stop(FELIX).
+            includeStop(true).includeStart(false).isRev(false).build())))
+            .containsExactly(
+                  of(0, ELAIA),
+                  of(0, FELIX));
+
+      assertThat(await(sortedSetCache.subsetByLex(NAMES_KEY, args.start(FELIX).stop(ELA).
+            includeStop(true).includeStart(false).isRev(true).build())))
+            .containsExactly(
+                  of(0, ELAIA),
+                  of(0, ELA));
+
+      // Errors
+      assertThatThrownBy(() -> await(sortedSetCache.subsetByLex(null, null)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
+      assertThatThrownBy(() -> await(sortedSetCache.subsetByLex(NAMES_KEY,  null)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_ARGS_CAN_T_BE_NULL);
    }
 }

@@ -9,10 +9,11 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -29,11 +30,9 @@ public class SortedSetBucket<V> {
    private final TreeSet<ScoredValue<V>> scoredEntries;
    private final Map<MultimapObjectWrapper<V>, Double> entries;
 
-   private final Comparator<ScoredValue<V>> scoreComparator = Comparator.naturalOrder();
-
    @ProtoFactory
    SortedSetBucket(Collection<ScoredValue<V>> wrappedValues) {
-      scoredEntries = new TreeSet<>(scoreComparator);
+      scoredEntries = new TreeSet<>();
       scoredEntries.addAll(wrappedValues);
       entries = new HashMap<>();
       wrappedValues.forEach(e -> entries.put(e.wrappedValue(), e.score()));
@@ -53,7 +52,7 @@ public class SortedSetBucket<V> {
    }
 
    public SortedSetBucket() {
-      this.scoredEntries = new TreeSet<>(scoreComparator);
+      this.scoredEntries = new TreeSet<>();
       this.entries = new HashMap<>();
    }
 
@@ -72,10 +71,10 @@ public class SortedSetBucket<V> {
    }
 
    public static class AddResult {
+
       public long created = 0;
       public long updated = 0;
    }
-
    public AddResult addMany(double[] scores,
                    V[] values,
                    boolean addOnly,
@@ -144,55 +143,142 @@ public class SortedSetBucket<V> {
       entries.put(value, newScore);
    }
 
+   public Collection<ScoredValue<V>> subsetByIndex(long from, long to, boolean rev) {
+      // from and to are + but from is bigger
+      // example: from 2 > to 1 -> empty result
+      // from and to are - and to is smaller
+      // example: from -1 > to -2 -> empty result
+      if ((from > 0 && to > 0 && from > to) || (from < 0 && to < 0 && from > to)) {
+         return Collections.emptyList();
+      }
+
+      long fromIte = from < 0 ? scoredEntries.size() + from : from;
+      long toIte = to < 0 ? scoredEntries.size() + to : to;
+
+      if (fromIte > toIte) {
+         return Collections.emptyList();
+      }
+
+      List<ScoredValue<V>> results = new ArrayList<>();
+      Iterator<ScoredValue<V>> ite;
+      if (rev) {
+         ite = scoredEntries.descendingIterator();
+      } else {
+         ite = scoredEntries.iterator();
+      }
+
+      long pos = 0;
+      while ((pos < fromIte) && ite.hasNext()) {
+         ite.next();
+         pos++;
+      }
+
+      while ((pos <= toIte) && ite.hasNext()) {
+         results.add(ite.next());
+         pos++;
+      }
+
+      return results;
+   }
+
    @SuppressWarnings({ "unchecked", "rawtypes" })
-   public SortedSet<ScoredValue<V>> subsetByScores(double min, boolean includeMin, double max, boolean includeMax) {
-      ScoredValue<V> minSv;
-      ScoredValue<V> maxSv;
-      boolean unboundedMin = false;
-      boolean unboundedMax = false;
-      if (min == max && (!includeMin || !includeMax)) {
+   public SortedSet<ScoredValue<V>> subset(Double startScore, boolean includeStart, Double stopScore, boolean includeStop, boolean isRev) {
+      if (stopScore != null && stopScore.equals(startScore) && (!includeStart || !includeStop)) {
          return Collections.emptySortedSet();
       }
 
-      if (min == Double.MIN_VALUE) {
-         minSv = scoredEntries.first();
-         unboundedMin = true;
+      Double min = isRev? stopScore : startScore;
+      boolean includeMin = isRev? includeStop : includeStart;
+      Double max = isRev? startScore : stopScore;
+      boolean includeMax = isRev? includeStart : includeStop;
+      boolean unboundedMin = min == null || min == Double.MIN_VALUE;
+      boolean unboundedMax = max == null || max == Double.MAX_VALUE;
+
+      if (unboundedMin && unboundedMax) {
+         return isRev ? scoredEntries.descendingSet() : new TreeSet<>(scoredEntries);
+      }
+
+      ScoredValue<V> startSv;
+      ScoredValue<V> stopSv;
+      if (unboundedMin) {
+         startSv = scoredEntries.first();
       } else {
          if (includeMin) {
-            minSv = scoredEntries.lower(new ScoredValue(min, NO_VALUE));
+            startSv = scoredEntries.lower(new ScoredValue(min, NO_VALUE));
          } else {
-            minSv = scoredEntries.higher(new ScoredValue(min, NO_VALUE));
+            startSv = scoredEntries.higher(new ScoredValue(min, NO_VALUE));
          }
 
-         if (minSv == null) {
-            minSv = scoredEntries.first();
+         if (startSv == null) {
+            startSv = scoredEntries.first();
          }
       }
 
-      if (max == Double.MAX_VALUE) {
-         maxSv = scoredEntries.last();
-         unboundedMax = true;
+      if (unboundedMax) {
+         stopSv = scoredEntries.last();
       } else {
          if (includeMax) {
-            maxSv = scoredEntries.higher(new ScoredValue(max, NO_VALUE));
+            stopSv = scoredEntries.higher(new ScoredValue(max, NO_VALUE));
          } else {
-            maxSv = scoredEntries.lower(new ScoredValue(max, NO_VALUE));
+            stopSv = scoredEntries.lower(new ScoredValue(max, NO_VALUE));
          }
 
-         if (maxSv == null) {
-            maxSv = scoredEntries.last();
+         if (stopSv == null) {
+            stopSv = scoredEntries.last();
          }
       }
 
-      if (minSv.score() > maxSv.score()) {
+      if (startSv.score() > stopSv.score()) {
          return Collections.emptySortedSet();
       }
 
-      return scoredEntries
-            .subSet(minSv,
-                  unboundedMin || (minSv.score() > min || (includeMin && minSv.score() == min)),
-                  maxSv,
-                  unboundedMax || (maxSv.score() < max || (includeMax && maxSv.score() == max)));
+      NavigableSet<ScoredValue<V>> subset = scoredEntries.subSet(
+            startSv,
+            unboundedMin || (startSv.score() > min || (includeMin && startSv.score() == min)),
+            stopSv,
+            unboundedMax || (stopSv.score() < max || (includeMax && stopSv.score() == max)));
+
+      return isRev? subset.descendingSet(): subset;
+   }
+
+   public SortedSet<ScoredValue<V>> subset(V startValue, boolean includeStart, V stopValue, boolean includeStop, boolean isRev) {
+      V minValue = isRev ? stopValue : startValue;
+      V maxValue = isRev ? startValue : stopValue;
+      boolean includeMin = isRev ? includeStop : includeStart;
+      boolean includeMax = isRev ? includeStart : includeStop;
+
+      if (maxValue != null && maxValue.equals(minValue) && (!includeMin || !includeMax)) {
+         return Collections.emptySortedSet();
+      }
+      boolean unboundedMin = minValue == null;
+      boolean unboundedMax = maxValue == null;
+
+      if (unboundedMin && unboundedMax) {
+         return isRev ? scoredEntries.descendingSet() : new TreeSet<>(scoredEntries);
+      }
+      // if all the scoredEntries have the same score, then we can pick up first score for lex
+      // when all the entries don't have the same score, this method can't work. This is the expected behaviour.
+      double score = scoredEntries.first().score;
+
+      ScoredValue<V> minScoredValue = new ScoredValue<>(score, minValue);
+      ScoredValue<V> maxScoredValue = new ScoredValue<>(score, maxValue);
+
+      if (unboundedMin) {
+         NavigableSet<ScoredValue<V>> entries = scoredEntries.headSet(maxScoredValue, includeMax);
+         return isRev? entries.descendingSet() : entries;
+      }
+
+      if (unboundedMax) {
+         NavigableSet<ScoredValue<V>> entries = scoredEntries.tailSet(minScoredValue, includeMin);
+         return isRev? entries.descendingSet() : entries;
+      }
+
+      try {
+         NavigableSet<ScoredValue<V>> entries = scoredEntries.subSet(minScoredValue, includeMin, maxScoredValue, includeMax);
+         return isRev? entries.descendingSet() : entries;
+      } catch (IllegalArgumentException e) {
+         return Collections.emptySortedSet();
+      }
    }
 
    public Collection<ScoredValue<V>> toTreeSet() {

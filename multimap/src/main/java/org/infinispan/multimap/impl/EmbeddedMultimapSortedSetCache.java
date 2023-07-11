@@ -11,6 +11,7 @@ import org.infinispan.multimap.impl.function.sortedset.AddManyFunction;
 import org.infinispan.multimap.impl.function.sortedset.CountFunction;
 import org.infinispan.multimap.impl.function.sortedset.PopFunction;
 import org.infinispan.multimap.impl.function.sortedset.ScoreFunction;
+import org.infinispan.multimap.impl.function.sortedset.SubsetFunction;
 
 import java.util.Collection;
 import java.util.Set;
@@ -29,6 +30,8 @@ import static java.util.Objects.requireNonNull;
 public class EmbeddedMultimapSortedSetCache<K, V> {
    public static final String ERR_KEY_CAN_T_BE_NULL = "key can't be null";
    public static final String ERR_MEMBER_CAN_T_BE_NULL = "member can't be null";
+   public static final String ERR_ARGS_CAN_T_BE_NULL = "args can't be null";
+   public static final String ERR_ARGS_INDEXES_CAN_T_BE_NULL = "min and max indexes (from-to) can't be null";
    public static final String ERR_SCORES_CAN_T_BE_NULL = "scores can't be null";
    public static final String ERR_VALUES_CAN_T_BE_NULL = "values can't be null";
    public static final String ERR_SCORES_VALUES_MUST_HAVE_SAME_SIZE = "scores and values must have the same size";
@@ -164,6 +167,48 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       requireNonNull(member, ERR_MEMBER_CAN_T_BE_NULL);
       return readWriteMap.eval(key, new ScoreFunction<>(member));
+   }
+
+   /**
+    * Subset elements in the sorted set by index. Indexes can be explained as negative numbers.
+    * Subset can be reversed, depending on args.
+    * @param key, the name of the sorted set
+    * @param args, options for the operation
+    * @return resulting collection
+    */
+   public CompletionStage<Collection<SortedSetBucket.ScoredValue<V>>> subsetByIndex(K key, SortedSetSubsetArgs<Long> args) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      requireNonNull(args, ERR_ARGS_CAN_T_BE_NULL);
+      requireNonNull(args.getStart(), ERR_ARGS_INDEXES_CAN_T_BE_NULL);
+      requireNonNull(args.getStop(), ERR_ARGS_INDEXES_CAN_T_BE_NULL);
+      return readWriteMap.eval(key, new SubsetFunction<>(args, SubsetFunction.SubsetType.INDEX));
+   }
+
+   /**
+    * Subset elements using the score.
+    * Subset can be reversed, depending on args.
+    * @param key, the name of the sorted set
+    * @param args, options for the operation
+    * @return resulting collection
+    */
+   public CompletionStage<Collection<SortedSetBucket.ScoredValue<V>>> subsetByScore(K key, SortedSetSubsetArgs<Double> args) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      requireNonNull(args, ERR_ARGS_CAN_T_BE_NULL);
+      return readWriteMap.eval(key, new SubsetFunction<>(args, SubsetFunction.SubsetType.SCORE));
+   }
+
+   /**
+    * Subset elements using the natural ordering of the values.
+    * All the elements in the sorted set must have the same score, so they are ordered by natural ordering.
+    * Subset can be reversed, depending on args.
+    * @param key, the name of the sorted set
+    * @param args, options for the operation
+    * @return resulting collection
+    */
+   public CompletionStage<Collection<SortedSetBucket.ScoredValue<V>>> subsetByLex(K key, SortedSetSubsetArgs<V> args) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      requireNonNull(args, ERR_ARGS_CAN_T_BE_NULL);
+      return readWriteMap.eval(key, new SubsetFunction<>(args, SubsetFunction.SubsetType.LEX));
    }
 
    private void requireSameLength(double[] scores, V[] values) {

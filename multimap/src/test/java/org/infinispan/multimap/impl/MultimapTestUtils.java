@@ -24,6 +24,8 @@ public class MultimapTestUtils {
    public static final Person FELIX = new Person("Felix");
    public static final Person IGOR = new Person("Igor");
    public static final Person IZARO = new Person("Izaro");
+   public static final Person ELA = new Person("Ela");
+   public static final Person CHARY = new Person("Chary");
    public static final SuperPerson PEPE = new SuperPerson("Pepe");
    public static final SuperPerson NULL_USER = null;
 

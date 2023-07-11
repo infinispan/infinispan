@@ -12,6 +12,7 @@ import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
 import static org.infinispan.multimap.impl.SortedSetAddArgs.ADD_AND_UPDATE_ONLY_INCOMPATIBLE_ERROR;
@@ -53,7 +54,7 @@ public class ZADD extends RespCommand implements Resp3Command {
    public static final String CH = "CH";
    public static final String INCR = "INCR";
 
-   public static final List<String> ARGUMENTS = List.of(XX, NX, LT, GT, CH, INCR);
+   public static final Set<String> ARGUMENTS = Set.of(XX, NX, LT, GT, CH, INCR);
 
    public ZADD() {
       super(-4, 1, 1, 1);

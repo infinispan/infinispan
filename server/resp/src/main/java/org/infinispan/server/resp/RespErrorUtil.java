@@ -56,6 +56,10 @@ public final class RespErrorUtil {
       ByteBufferUtils.stringToByteBuf("-ERR value is not a valid float\r\n", allocator);
    }
 
+   public static void minOrMaxNotAValidFloat(ByteBufPool allocator) {
+      ByteBufferUtils.stringToByteBuf("-ERR min or max is not a float\r\n", allocator);
+   }
+
    public static void customError(String message, ByteBufPool allocatorToUse) {
       ByteBufferUtils.stringToByteBuf(
             "-ERR " + message + "\r\n", allocatorToUse);
