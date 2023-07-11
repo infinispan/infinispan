@@ -289,8 +289,7 @@
       </dependency>
       <dependency>
          <groupId>org.jboss.shrinkwrap</groupId>
-         <artifactId>shrinkwrap-depchain</artifactId>
-         <type>pom</type>
+         <artifactId>shrinkwrap-impl-base</artifactId>
          <scope>test</scope>
       </dependency>
    </dependencies>
