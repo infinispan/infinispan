@@ -229,41 +229,41 @@
       <version.xstream>1.4.20</version.xstream>
 
       <!-- Plugin dependencies -->
-      <version.checkstyle.maven-plugin>3.1.1</version.checkstyle.maven-plugin>
+      <version.checkstyle.maven-plugin>3.3.0</version.checkstyle.maven-plugin>
       <version.maven>3.8.2</version.maven>
       <version.maven.antlr3>${version.antlr3}</version.maven.antlr3>
       <version.maven.antrun>3.1.0</version.maven.antrun>
-      <version.maven.buildhelper>3.3.0</version.maven.buildhelper>
+      <version.maven.buildhelper>3.4.0</version.maven.buildhelper>
       <version.maven.bundle>4.2.1</version.maven.bundle>
-      <version.maven.gpg>3.0.1</version.maven.gpg>
-      <version.maven.clean>3.2.0</version.maven.clean>
-      <version.maven-compiler-plugin>3.10.1</version.maven-compiler-plugin>
-      <version.maven.enforcer>3.1.0</version.maven.enforcer>
-      <version.maven.install>3.0.1</version.maven.install>
-      <version.maven.invoker>3.2.1</version.maven.invoker>
-      <version.maven.jar>3.2.0</version.maven.jar>
-      <version.maven.javadoc>3.4.0</version.maven.javadoc>
-      <version.maven-plugin-plugin>3.6.0</version.maven-plugin-plugin>
-      <version.maven.release>3.0.0-M1</version.maven.release>
-      <version.maven.remote.resource>1.5</version.maven.remote.resource>
-      <version.maven.resources>3.2.0</version.maven.resources>
-      <version.maven.shade>3.4.1</version.maven.shade>
-      <version.maven.source>3.2.0</version.maven.source>
-      <version.maven.surefire>3.0.0-M8</version.maven.surefire>
+      <version.maven.gpg>3.1.0</version.maven.gpg>
+      <version.maven.clean>3.3.1</version.maven.clean>
+      <version.maven-compiler-plugin>3.11.0</version.maven-compiler-plugin>
+      <version.maven.enforcer>3.3.0</version.maven.enforcer>
+      <version.maven.install>3.1.1</version.maven.install>
+      <version.maven.invoker>3.6.0</version.maven.invoker>
+      <version.maven.jar>3.3.0</version.maven.jar>
+      <version.maven.javadoc>3.5.0</version.maven.javadoc>
+      <version.maven-plugin-plugin>3.9.0</version.maven-plugin-plugin>
+      <version.maven.release>3.0.1</version.maven.release>
+      <version.maven.remote.resource>3.1.0</version.maven.remote.resource>
+      <version.maven.resources>3.3.1</version.maven.resources>
+      <version.maven.shade>3.5.0</version.maven.shade>
+      <version.maven.source>3.3.0</version.maven.source>
+      <version.maven.surefire>3.1.2</version.maven.surefire>
       <version.org.jboss.galleon>4.2.8.Final</version.org.jboss.galleon>
       <version.org.wildfly.galleon-plugins>5.2.1.Final</version.org.wildfly.galleon-plugins>
       <version.sonatype.nexus-staging-plugin>1.6.13</version.sonatype.nexus-staging-plugin>
       <version.eclipse.transformer>0.5.0</version.eclipse.transformer>
       <!-- overwrite version in jboss-parent -->
-      <version.pmd.plugin>3.16.0</version.pmd.plugin>
-      <version.owasp-dependency-check-plugin>7.1.0</version.owasp-dependency-check-plugin>
-      <version.spotbugs.plugin>4.7.0.0</version.spotbugs.plugin>
+      <version.pmd.plugin>3.21.0</version.pmd.plugin>
+      <version.owasp-dependency-check-plugin>8.3.1</version.owasp-dependency-check-plugin>
+      <version.spotbugs.plugin>4.7.3.5</version.spotbugs.plugin>
       <version.weld-servlet>2.4.8.Final</version.weld-servlet>
-      <version.deploy.plugin>3.0.0</version.deploy.plugin>
+      <version.deploy.plugin>3.1.1</version.deploy.plugin>
 
       <!-- versionx -->
-      <versionx.com.puppycrawl.tools.checkstyle>8.32</versionx.com.puppycrawl.tools.checkstyle>
-      <versionx.net.sourceforge.pmd>6.29.0</versionx.net.sourceforge.pmd>
+      <versionx.com.puppycrawl.tools.checkstyle>10.12.1</versionx.com.puppycrawl.tools.checkstyle>
+      <versionx.net.sourceforge.pmd>7.0.0-rc3</versionx.net.sourceforge.pmd>
 
       <!-- configuration properties -->
       <org.infinispan.attachServerZip>false</org.infinispan.attachServerZip>
