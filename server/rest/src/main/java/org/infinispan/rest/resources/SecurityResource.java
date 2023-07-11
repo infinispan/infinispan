@@ -24,7 +24,6 @@ import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalAuthorizationConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.cachemanager.RestCacheManager;
@@ -35,7 +34,6 @@ import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationPermission;
-import org.infinispan.security.GlobalSecurityManager;
 import org.infinispan.security.MutablePrincipalRoleMapper;
 import org.infinispan.security.MutableRolePermissionMapper;
 import org.infinispan.security.PrincipalRoleMapper;
@@ -45,6 +43,7 @@ import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.security.impl.Authorizer;
 import org.infinispan.security.impl.CacheRoleImpl;
 import org.infinispan.security.impl.SubjectACL;
+import org.infinispan.server.core.ServerManagement;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -139,9 +138,8 @@ public class SecurityResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> aclCacheFlush(RestRequest request) {
-      EmbeddedCacheManager cm = invocationHelper.getRestCacheManager().getInstance();
-      return SecurityActions.getGlobalComponentRegistry(cm).getComponent(GlobalSecurityManager.class).flushGlobalACLCache()
-            .thenApply(v -> invocationHelper.newResponse(request).status(NO_CONTENT).build());
+      ServerManagement server = invocationHelper.getServer();
+      return server.flushSecurityCaches().thenApply(v -> invocationHelper.newResponse(request).status(NO_CONTENT).build());
    }
 
    private CompletionStage<RestResponse> deny(RestRequest request) {

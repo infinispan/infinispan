@@ -66,6 +66,7 @@ abstract class RESTAuthorizationTest {
 
    protected final Function<TestUser, String> serverPrincipal;
    protected final Map<TestUser, RestClientConfigurationBuilder> restBuilders;
+
    public RESTAuthorizationTest(InfinispanServerExtension ext) {
       this(ext, TestUser::getUser, user -> {
          RestClientConfigurationBuilder restBuilder = new RestClientConfigurationBuilder();
@@ -538,6 +539,18 @@ abstract class RESTAuthorizationTest {
          assertStatus(OK, userCache.searchStats());
          assertStatus(OK, userCache.indexStats());
          assertStatus(OK, userCache.queryStats());
+      }
+   }
+
+   @Test
+   public void testFlushACL() {
+      for (TestUser user : EnumSet.of(TestUser.ADMIN)) {
+         RestClient client = ext.rest().withClientConfiguration(restBuilders.get(user)).get();
+         assertStatus(NO_CONTENT, client.security().flushCache());
+      }
+      for (TestUser user : EnumSet.complementOf(EnumSet.of(TestUser.ADMIN, TestUser.ANONYMOUS))) {
+         RestClient client = ext.rest().withClientConfiguration(restBuilders.get(user)).get();
+         assertStatus(FORBIDDEN, client.security().flushCache());
       }
    }
 

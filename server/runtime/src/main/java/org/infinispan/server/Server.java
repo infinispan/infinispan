@@ -49,6 +49,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.globalstate.GlobalConfigurationManager;
@@ -63,6 +64,7 @@ import org.infinispan.rest.RestServer;
 import org.infinispan.rest.authentication.RestAuthenticator;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.GlobalSecurityManager;
 import org.infinispan.security.Security;
 import org.infinispan.security.audit.LoggingAuditLogger;
 import org.infinispan.server.configuration.DataSourceConfiguration;
@@ -452,7 +454,7 @@ public class Server implements ServerManagement, AutoCloseable {
                      ElytronUsernamePasswordAuthenticator.init((RespServerConfiguration) configuration, serverConfiguration, blockingManager);
                   } else if (configuration instanceof MemcachedServerConfiguration) {
                      ElytronSASLAuthenticator.init((MemcachedServerConfiguration) configuration, serverConfiguration, timeoutExecutor);
-                     ElytronUsernamePasswordAuthenticator.init(((MemcachedServerConfiguration)configuration).authentication().text().authenticator(), serverConfiguration, blockingManager);
+                     ElytronUsernamePasswordAuthenticator.init(((MemcachedServerConfiguration) configuration).authentication().text().authenticator(), serverConfiguration, blockingManager);
                   }
                   protocolServers.put(protocolServer.getName() + "-" + configuration.name(), protocolServer);
                   SecurityActions.startProtocolServer(protocolServer, configuration, cacheManager);
@@ -768,5 +770,18 @@ public class Server implements ServerManagement, AutoCloseable {
    @Override
    public Path getServerDataPath() {
       return dataPath;
+   }
+
+   @Override
+   public CompletionStage<Void> flushSecurityCaches() {
+      return SecurityActions.getClusterExecutor(cacheManager)
+            .submitConsumer(ecm -> {
+               GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(ecm);
+               ServerConfiguration serverConfiguration = SecurityActions.getCacheManagerConfiguration(ecm).module(ServerConfiguration.class);
+               serverConfiguration.security().realms().flushRealmCaches();
+               gcr.getComponent(GlobalSecurityManager.class).flushLocalACLCache();
+               return null;
+            }, (a, b, c) -> {
+            }).thenApply(ignore -> null);
    }
 }

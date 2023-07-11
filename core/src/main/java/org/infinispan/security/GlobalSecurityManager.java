@@ -26,4 +26,5 @@ public interface GlobalSecurityManager {
     */
    CompletionStage<Void> flushGlobalACLCache();
 
+   void flushLocalACLCache();
 }

@@ -16,8 +16,8 @@ include::json/rest_security_user_acl.json[]
 ----
 
 [id='rest_v2_flush_acl_cache']
-= Flushing the ACL cache
-Flush the access-control list cache across the cluster.
+= Flushing the security caches
+Flush the security caches across the cluster.
 
 [source,options="nowrap",subs=attributes+]
 ----

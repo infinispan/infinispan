@@ -15,6 +15,7 @@ import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.GlobalSecurityManager;
 import org.infinispan.security.actions.SecurityActions;
+import org.infinispan.util.logging.Log;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 
@@ -61,7 +62,7 @@ public class GlobalSecurityManagerImpl implements GlobalSecurityManager {
          ClusterExecutor executor = SecurityActions.getClusterExecutor(embeddedCacheManager);
          return executor.submitConsumer(cm -> {
             GlobalSecurityManager globalSecurityManager = SecurityActions.getGlobalComponentRegistry(cm).getComponent(GlobalSecurityManager.class);
-            ((GlobalSecurityManagerImpl) globalSecurityManager).flushGlobalACLCache0();
+            globalSecurityManager.flushLocalACLCache();
             return null;
          }, (a, v, t) -> {
          });
@@ -70,9 +71,11 @@ public class GlobalSecurityManagerImpl implements GlobalSecurityManager {
       }
    }
 
-   public void flushGlobalACLCache0() {
+   @Override
+   public void flushLocalACLCache() {
       if (cacheEnabled) {
          globalACLCache().clear();
+         Log.CONTAINER.flushedACLCache();
       }
    }
 }

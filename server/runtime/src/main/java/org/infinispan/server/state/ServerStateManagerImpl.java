@@ -105,7 +105,7 @@ public final class ServerStateManagerImpl implements ServerStateManager {
       SecurityActions.checkPermission(cacheManager, AuthorizationPermission.ADMIN);
       synchronized (this) {
          ignored.caches.add(cacheName);
-         hasIgnores = !ignored.caches.isEmpty();
+         hasIgnores = true;
          return cache.putAsync(IGNORED_CACHES_KEY, ignored).thenApply(r -> null);
       }
    }

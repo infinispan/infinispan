@@ -38,7 +38,7 @@ public class RealmConfiguration extends ConfigurationElement<RealmConfiguration>
    static final AttributeDefinition<String> NAME = AttributeDefinition.builder(Attribute.NAME, null, String.class).build();
    static final AttributeDefinition<String> DEFAULT_REALM = AttributeDefinition.builder(Attribute.DEFAULT_REALM, null, String.class).immutable().build();
    static final AttributeDefinition<Integer> CACHE_MAX_SIZE = AttributeDefinition.builder(Attribute.CACHE_MAX_SIZE, 256).build();
-   static final AttributeDefinition<Long> CACHE_LIFESPAN = AttributeDefinition.builder(Attribute.CACHE_LIFESPAN, -1l).build();
+   static final AttributeDefinition<Long> CACHE_LIFESPAN = AttributeDefinition.builder(Attribute.CACHE_LIFESPAN, 60_000L).build();
    static final AttributeDefinition<EvidenceDecoder> EVIDENCE_DECODER = AttributeDefinition.builder(Attribute.EVIDENCE_DECODER, null, EvidenceDecoder.class).immutable().build();
    private final EnumSet<ServerSecurityRealm.Feature> features = EnumSet.noneOf(ServerSecurityRealm.Feature.class);
    Map<String, SecurityRealm> realms; // visible to DistributedRealmConfiguration
@@ -180,5 +180,11 @@ public class RealmConfiguration extends ConfigurationElement<RealmConfiguration>
 
    void setHttpChallengeReadiness(Supplier<Boolean> httpChallengeReadiness) {
       this.httpChallengeReadiness = httpChallengeReadiness;
+   }
+
+   public void flushCache() {
+      if (cache != null) {
+         cache.clear();
+      }
    }
 }

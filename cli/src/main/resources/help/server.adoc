@@ -43,6 +43,8 @@ SYNOPSIS
 
 *server principals ls*
 
+*server aclcache flush*
+
 
 SERVER CONNECTOR IPFILTER OPTIONS
 ---------------------------------
@@ -95,3 +97,6 @@ Performs a test connection on the datasource.
 
 `server principals ls` +
 Lists principals known by the server.
+
+`server aclcache flush` +
+Flushes the security caches cluster-wide.
