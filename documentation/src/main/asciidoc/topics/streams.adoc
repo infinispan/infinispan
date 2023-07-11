@@ -113,7 +113,7 @@ The simplest way is to use a CacheStream instance and use a lambda just as you w
 {brandname} overrides all of the various Stream intermediate and terminal methods to take
 Serializable versions of the arguments (ie. SerializableFunction, SerializablePredicate...)
 You can find these methods at
-link:{javadocroot}/org/infinispan/stream/CacheStream.html[CacheStream].
+link:{javadocroot}/org/infinispan/CacheStream.html[CacheStream].
 This relies on the spec to pick the most specific method as defined link:https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.12.2.5[here].
 
 In our previous example we used a `Collector` to collect all the results into a `Map`.
@@ -365,7 +365,7 @@ operation returns just the first value they find, whether it was from a remote n
 or locally.  Note this supports early termination in that once a value is found it
 will not process others.  Note the findFirst method is special since it requires a sorted
 intermediate operation, which is detailed in the
-link:user_guide.html#intermediate_operation_exceptions[exceptions] section.
+link:{library_docs}#intermediate_operation_exceptions[exceptions] section.
 
 max min::
 The link:{jdkdocroot}/java/util/stream/Stream.html#max-java.util.Comparator-[max] and
