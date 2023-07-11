@@ -48,9 +48,7 @@ pipeline {
 
         stage('Build') {
             steps {
-                configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
-                    sh "$MAVEN_HOME/bin/mvn clean install $REPORTS_BUILD -B -V -e -s $MAVEN_SETTINGS -DskipTests $DISTRIBUTION_BUILD"
-                }
+                sh "$MAVEN_HOME/bin/mvn clean install $REPORTS_BUILD -B -V -e -DskipTests $DISTRIBUTION_BUILD"
             }
         }
 
@@ -95,9 +93,8 @@ pipeline {
 
         stage('Tests') {
             steps {
-                configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
-                    sh "$MAVEN_HOME/bin/mvn verify -B -V -e -s $MAVEN_SETTINGS -Dmaven.test.failure.ignore=true -Dansi.strip=true $ALT_TEST_BUILD"
-                }
+                sh "$MAVEN_HOME/bin/mvn verify -B -V -e -Dmaven.test.failure.ignore=true -Dansi.strip=true $ALT_TEST_BUILD"
+
                 // TODO Add StabilityTestDataPublisher after https://issues.jenkins-ci.org/browse/JENKINS-42610 is fixed
                 // Capture target/surefire-reports/*.xml, target/failsafe-reports/*.xml,
                 // target/failsafe-reports-embedded/*.xml, target/failsafe-reports-remote/*.xml
@@ -139,9 +136,7 @@ pipeline {
         success {
             script {
                 if (!env.BRANCH_NAME.startsWith('PR-')) {
-                    configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
-                        sh "$MAVEN_HOME/bin/mvn deploy -B -V -e -s $MAVEN_SETTINGS -Pdistribution -DdeployServerZip=true -Dmaven.main.skip=true -Dmaven.test.skip=true"
-                    }
+                    sh "$MAVEN_HOME/bin/mvn deploy -B -V -e -Pdistribution -DdeployServerZip=true -Dmaven.main.skip=true -Dmaven.test.skip=true"
                 }
             }
         }
