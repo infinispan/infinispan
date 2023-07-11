@@ -9,7 +9,7 @@ You can configure your {brandname} Server to use encryption ciphers that adhere 
 
 .Additional resources
 
-* link:{jdkroot}/security/pkcs11-reference-guide1.html[Java PKCS#11 cryptographic provider]
+* link:https://docs.oracle.com/en/java/javase/17/security/pkcs11-reference-guide1.html[Java PKCS#11 cryptographic provider]
 * link:https://www.bouncycastle.org/fips_faq.html[The Legion of the Bouncy Castle cryptographic provider]
 
 == Configuring the PKCS11 cryptographic provider
