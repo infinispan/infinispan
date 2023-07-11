@@ -40,9 +40,7 @@ pipeline {
             steps {
                 script {
                     if ("${version}".endsWith('Final')) {
-                        configFileProvider([configFile(fileId: 'maven-settings-with-deploy-snapshot', variable: 'MAVEN_SETTINGS')]) {
-                            sh "$MAVEN_HOME/bin/mvn clean install -B -V -e -s $MAVEN_SETTINGS -DskipTests -DcommitProtoLockChanges=true"
-                        }
+                        sh "$MAVEN_HOME/bin/mvn clean install -B -V -e -DskipTests -DcommitProtoLockChanges=true"
                         sh "git add '**/proto.lock'"
                         sh "git diff-index --quiet HEAD || git commit -m 'Committing proto.lock files for ${version}'"
                     }
