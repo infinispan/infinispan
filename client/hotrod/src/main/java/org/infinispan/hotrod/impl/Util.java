@@ -77,9 +77,9 @@ public class Util {
 
    protected static RuntimeException rewrap(ExecutionException e) {
       if (e.getCause() instanceof HotRodClientException) {
-         return (HotRodClientException) e.getCause();
+         return new HotRodClientException(e);
       } else if (e.getCause() instanceof CacheException) {
-         return (CacheException) e.getCause();
+         return new CacheException(e);
       } else {
          return new TransportException(e.getCause(), null);
       }
