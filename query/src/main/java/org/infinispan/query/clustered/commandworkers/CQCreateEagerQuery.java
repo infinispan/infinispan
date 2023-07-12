@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.hibernate.search.backend.lucene.search.query.LuceneSearchResult;
+import org.hibernate.search.engine.search.query.SearchResultTotal;
 import org.infinispan.query.clustered.NodeTopDocs;
 import org.infinispan.query.clustered.QueryResponse;
 import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
@@ -53,23 +54,29 @@ final class CQCreateEagerQuery extends CQWorker {
    private CompletionStage<NodeTopDocs> collectKeys(SearchQueryBuilder query) {
       return blockingManager.supplyBlocking(() -> fetchReferences(query), "CQCreateEagerQuery#collectKeys")
             .thenApply(queryResult -> {
-               long hitCount = queryResult.total().hitCount();
+               SearchResultTotal total = queryResult.total();
+               int hitCount = Math.toIntExact(total.hitCountLowerBound());
+               boolean countIsExact = total.isHitCountExact();
 
                Object[] keys = queryResult.hits().stream()
                      .map(EntityReference::key)
                      .toArray(Object[]::new);
-               return new NodeTopDocs(cache.getRpcManager().getAddress(), queryResult.topDocs(), hitCount, keys, null);
+               return new NodeTopDocs(cache.getRpcManager().getAddress(), queryResult.topDocs(), hitCount, countIsExact,
+                     keys, null);
             });
    }
 
    private CompletionStage<NodeTopDocs> collectProjections(SearchQueryBuilder query) {
       return blockingManager.supplyBlocking(() -> fetchHits(query), "CQCreateEagerQuery#collectProjections")
             .thenApply(queryResult -> {
-               long hitCount = queryResult.total().hitCount();
+               SearchResultTotal total = queryResult.total();
+               int hitCount = Math.toIntExact(total.hitCountLowerBound());
+               boolean countIsExact = total.isHitCountExact();
 
                List<?> hits = queryResult.hits();
                Object[] projections = hits.toArray(new Object[0]);
-               return new NodeTopDocs(cache.getRpcManager().getAddress(), queryResult.topDocs(), hitCount, null, projections);
+               return new NodeTopDocs(cache.getRpcManager().getAddress(), queryResult.topDocs(), hitCount, countIsExact,
+                     null, projections);
             });
    }
 }
