@@ -35,6 +35,7 @@ import org.infinispan.remoting.transport.Address;
 public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
 
    private Integer resultSize;
+   private boolean countIsExact = true;
 
    private final ClusteredQueryInvoker invoker;
 
@@ -64,7 +65,7 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
    @Override
    public int getResultSize() {
       partitionHandlingSupport.checkCacheAvailable();
-      if (resultSize == null) {
+      if (resultSize == null || !countIsExact) {
          List<QueryResponse> responses = invoker.broadcast(ClusteredQueryOperation.getResultSize(queryDefinition));
          int accumulator = 0;
          for (QueryResponse response : responses) {
@@ -119,6 +120,9 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
          if (queryResponse.getNodeTopDocs().topDocs != null) {
             topDocsResponses.put(queryResponse.getNodeTopDocs().address, queryResponse.getNodeTopDocs());
          }
+         if (!queryResponse.countIsExact()) {
+            countIsExact = false;
+         }
          resultSize += queryResponse.getResultSize();
       }
 
@@ -136,7 +140,7 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
          partitionHandlingSupport.checkCacheAvailable();
          List<E> hits = stream(spliteratorUnknownSize(iterator(), 0), false)
                .filter(Objects::nonNull).collect(Collectors.toList());
-         return new QueryResultImpl<>(resultSize, hits);
+         return countIsExact ? new QueryResultImpl<>(resultSize, hits) : new QueryResultImpl<>(hits);
       } catch (org.hibernate.search.util.common.SearchTimeoutException timeoutException) {
          throw new SearchTimeoutException();
       }

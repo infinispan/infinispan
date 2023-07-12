@@ -18,15 +18,18 @@ import org.infinispan.query.impl.externalizers.ExternalizerIds;
 public final class QueryResponse {
 
    private final NodeTopDocs nodeTopDocs;
-   private final long resultSize;
+   private final int resultSize;
+   private final boolean countIsExact;
 
-   public QueryResponse(long resultSize) {
+   public QueryResponse(int resultSize) {
       this.resultSize = resultSize;
+      countIsExact = true; // count from CQGetResultSize is always exact
       nodeTopDocs = null;
    }
 
    public QueryResponse(NodeTopDocs nodeTopDocs) {
       this.resultSize = nodeTopDocs.totalHitCount;
+      this.countIsExact = nodeTopDocs.countIsExact;
       this.nodeTopDocs = nodeTopDocs;
    }
 
@@ -34,8 +37,12 @@ public final class QueryResponse {
       return nodeTopDocs;
    }
 
-   public long getResultSize() {
+   public int getResultSize() {
       return resultSize;
+   }
+
+   public boolean countIsExact() {
+      return countIsExact;
    }
 
    public static final class Externalizer implements AdvancedExternalizer<QueryResponse> {
@@ -54,7 +61,7 @@ public final class QueryResponse {
       public void writeObject(ObjectOutput output, QueryResponse queryResponse) throws IOException {
          output.writeObject(queryResponse.nodeTopDocs);
          if (queryResponse.nodeTopDocs == null) {
-            output.writeLong(queryResponse.resultSize);
+            output.writeInt(queryResponse.resultSize);
          }
       }
 
@@ -64,7 +71,7 @@ public final class QueryResponse {
          if (nodeTopDocs != null) {
             return new QueryResponse(nodeTopDocs);
          }
-         return new QueryResponse(input.readLong());
+         return new QueryResponse(input.readInt());
       }
    }
 }
