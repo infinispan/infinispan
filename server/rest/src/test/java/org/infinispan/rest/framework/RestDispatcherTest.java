@@ -133,7 +133,7 @@ public class RestDispatcherTest {
       manager.registerResource("ctx", new SecureResource());
 
       CustomAuditLoggerTest.TestAuditLogger auditLogger = new CustomAuditLoggerTest.TestAuditLogger();
-      GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder().security().authorization().enable()
+      GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder().security().authorization().enable().groupOnlyMapping(false)
             .auditLogger(auditLogger).principalRoleMapper(new IdentityRoleMapper()).build();
 
 

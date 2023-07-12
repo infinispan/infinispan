@@ -42,6 +42,11 @@ The following defaults have changed for the Hot Rod client:
 
 * The `index` attribute has been removed.
 
+== Security
+
+The principal role mapper now applies only to groups instead of both groups and user principals.
+Use the `cache-manager.security.authorization.group-only-mapping=false` configuration to use the old behavior.
+
 == Scattered cache removal
 
 The scattered cache mode have been removed a bit earlier. Please use Distributed caches instead.

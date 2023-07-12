@@ -888,12 +888,17 @@ public class Parser extends CacheParser {
 
    private void parseGlobalAuthorization(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       GlobalAuthorizationConfigurationBuilder builder = holder.getGlobalConfigurationBuilder().security().authorization().enable();
+      Boolean groupOnlyMapping = reader.getSchema().since(15,0 ) ? null : false;
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case AUDIT_LOGGER: {
                builder.auditLogger(Util.getInstance(value, holder.getClassLoader()));
+               break;
+            }
+            case GROUP_ONLY_MAPPING: {
+               groupOnlyMapping = ParseUtils.parseBoolean(reader, i, value);
                break;
             }
             default: {
@@ -914,6 +919,9 @@ public class Parser extends CacheParser {
                }
                if (roleMapper != null) {
                   builder.principalRoleMapper(roleMapper);
+               }
+               if (groupOnlyMapping != null) {
+                  builder.groupOnlyMapping(groupOnlyMapping);
                }
                return;
             }

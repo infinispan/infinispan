@@ -2,6 +2,7 @@ package org.infinispan.configuration.global;
 
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.configuration.parsing.Attribute;
 import org.infinispan.security.RolePermissionMapper;
 
 /**
@@ -9,7 +10,7 @@ import org.infinispan.security.RolePermissionMapper;
  */
 public class RolePermissionMapperConfiguration {
 
-   public static final AttributeDefinition<Class> CLASS = AttributeDefinition.builder("class", null, Class.class).immutable().build();
+   public static final AttributeDefinition<Class> CLASS = AttributeDefinition.builder(Attribute.CLASS, null, Class.class).immutable().build();
 
    private final RolePermissionMapper permissionMapper;
 

@@ -47,6 +47,7 @@ public class ReplicatedSecuredScriptingTest extends MultipleCacheManagersTest {
       final GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
       final ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC);
       global.security().authorization().enable()
+            .groupOnlyMapping(false)
             .principalRoleMapper(new IdentityRoleMapper()).role("admin").permission(AuthorizationPermission.ALL)
             .role("runner")
             .permission(AuthorizationPermission.EXEC)

@@ -23,7 +23,7 @@ import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "security.SecurityXmlFileParsingTest")
 public class SecurityXmlFileParsingTest extends AbstractInfinispanTest {
-   Subject ADMIN = TestingUtil.makeSubject("admin");
+   Subject ADMIN = TestingUtil.makeSubject("admin", "admin");
 
    public void testParseAndConstructUnifiedXmlFile() {
       Security.doAs(ADMIN, () -> withCacheManager(new CacheManagerCallable(Exceptions.unchecked(() -> TestCacheManagerFactory.fromXml("configs/security.xml", true))) {

@@ -18,6 +18,7 @@ public class RolePermissionNoACLCacheTest extends RolePermissionTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
       GlobalAuthorizationConfigurationBuilder globalRoles = global.security().securityCacheTimeout(0, TimeUnit.SECONDS).authorization().enable()
+            .groupOnlyMapping(false)
             .principalRoleMapper(new IdentityRoleMapper());
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       AuthorizationConfigurationBuilder authConfig = config.security().authorization().enable();

@@ -60,6 +60,7 @@ public class DynamicRBACRestartTest extends MultipleCacheManagersTest {
       global.globalState().enable().persistentLocation(stateDirectory).
             configurationStorage(ConfigurationStorage.OVERLAY);
       GlobalAuthorizationConfigurationBuilder globalRoles = global.security().authorization().enable()
+            .groupOnlyMapping(false)
             .principalRoleMapper(new ClusterRoleMapper())
             .rolePermissionMapper(new ClusterPermissionMapper());
 

@@ -574,6 +574,13 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
+          <xs:attribute name="group-only-mapping" type="xs:boolean" default="true">
+            <xs:annotation>
+              <xs:documentation>
+                Specifies whether principal-to-role mapping applies only to group principals or also to user principals. Defaults to true.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
         </xs:complexType>
       </xs:element>
     </xs:sequence>
