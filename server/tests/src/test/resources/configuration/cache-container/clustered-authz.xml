@@ -5,7 +5,7 @@
    <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack}"/>
    <security>
       <authorization group-only-mapping="false">
-         <identity-role-mapper/>
+         <cluster-role-mapper/>
          <roles>
             <role name="admin" permissions="ALL"/>
             <role name="application" permissions="ALL_READ ALL_WRITE LISTEN EXEC"/>

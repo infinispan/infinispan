@@ -1,0 +1,1 @@
+DELETE /rest/v2/security/permissions/somerole

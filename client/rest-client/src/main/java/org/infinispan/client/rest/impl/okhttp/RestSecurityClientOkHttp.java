@@ -84,4 +84,11 @@ public class RestSecurityClientOkHttp implements RestSecurityClient {
       builder.url(baseSecurityURL + "/permissions/" + name);
       return client.execute(builder.delete());
    }
+
+   @Override
+   public CompletionStage<RestResponse> describeRole(String name) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(baseSecurityURL + "/permissions/" + name);
+      return client.execute(builder.get());
+   }
 }

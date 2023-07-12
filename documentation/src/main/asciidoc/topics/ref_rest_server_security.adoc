@@ -111,3 +111,48 @@ include::rest_examples/get_v2_security_list_principals.adoc[]
 ----
 include::json/rest_security_principals.json[]
 ----
+
+[id='rest_v2_create_role']
+= Creating roles
+Create a role by defining its permissions.
+
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/get_v2_security_roles_create.adoc[]
+----
+
+.Request Parameters
+
+|===
+|Parameter |Required or Optional |Value
+
+|`permission`
+|REQUIRED
+|The name of a permission
+|===
+
+[id='rest_v2_create_role']
+= Deleting roles
+Delete an existing role.
+
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/get_v2_security_roles_delete.adoc[]
+----
+
+[id='rest_v2_get_principal_roles']
+= Retrieving the permissions for a role
+View all the permissions of a role.
+
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/get_v2_security_roles_get.adoc[]
+----
+
+{brandname} responds with a list of available roles for the specified principal.
+The principal need not exist in the realm in use.
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/rest_security_roles_permissions.json[]
+----

@@ -1,6 +1,7 @@
 package org.infinispan.rest.resources;
 
 import static io.netty.handler.codec.http.HttpResponseStatus.CONFLICT;
+import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.infinispan.rest.framework.Method.DELETE;
@@ -53,14 +54,12 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 public class SecurityResource implements ResourceHandler {
    private final InvocationHelper invocationHelper;
    private final String accessGrantedPath;
-   private final String accessDeniedPath;
    private final MutablePrincipalRoleMapper principalRoleMapper;
    private final MutableRolePermissionMapper rolePermissionMapper;
 
    public SecurityResource(InvocationHelper invocationHelper, String accessGrantedPath, String accessDeniedPath) {
       this.invocationHelper = invocationHelper;
       this.accessGrantedPath = accessGrantedPath;
-      this.accessDeniedPath = accessDeniedPath;
       GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(invocationHelper.getRestCacheManager().getInstance());
       PrincipalRoleMapper mapper = globalConfiguration.security().authorization().principalRoleMapper();
       this.principalRoleMapper = mapper instanceof MutablePrincipalRoleMapper ? (MutablePrincipalRoleMapper) mapper : null;
@@ -99,6 +98,9 @@ public class SecurityResource implements ResourceHandler {
             .invocation().methods(POST, PUT).path("/v2/security/permissions/{role}")
                .permission(AuthorizationPermission.ADMIN).name("ROLES CREATE").auditContext(AuditContext.SERVER)
                .handleWith(this::createRole)
+            .invocation().methods(GET).path("/v2/security/permissions/{role}")
+               .permission(AuthorizationPermission.ADMIN).name("ROLES DESCRIBE").auditContext(AuditContext.SERVER)
+               .handleWith(this::describeRole)
             .invocation().method(DELETE).path("/v2/security/permissions/{role}")
                .permission(AuthorizationPermission.ADMIN).name("ROLES DELETE").auditContext(AuditContext.SERVER)
                .handleWith(this::deleteRole)
@@ -126,6 +128,29 @@ public class SecurityResource implements ResourceHandler {
       Set<AuthorizationPermission> permissions = perms.stream().map(p -> AuthorizationPermission.valueOf(p.toUpperCase())).collect(Collectors.toSet());
       Role role = new CacheRoleImpl(name, true, permissions);
       return rolePermissionMapper.addRole(role).thenCompose(ignore -> aclCacheFlush(request));
+   }
+
+   private CompletionStage<RestResponse> describeRole(RestRequest request) {
+      NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
+      if (rolePermissionMapper == null) {
+         return completedFuture(invocationHelper.newResponse(request).status(CONFLICT).entity(Log.REST.rolePermissionMapperNotMutable()).build());
+      }
+      String name = request.variables().get("role");
+
+      GlobalAuthorizationConfiguration authorization = invocationHelper.getRestCacheManager().getInstance().getCacheManagerConfiguration().security().authorization();
+      Role role = authorization.getRole(name);
+
+      if (role == null) {
+         return completedFuture(builder.status(NOT_FOUND).build());
+      }
+      Json roles = Json.object();
+      roles.set("name", name);
+      Json permissions = Json.array();
+      for (AuthorizationPermission p : role.getPermissions()) {
+         permissions.add(p.toString());
+      }
+      roles.set("permissions", permissions);
+      return asJsonResponseFuture(invocationHelper.newResponse(request), roles, isPretty(request));
    }
 
    private CompletionStage<RestResponse> deleteRole(RestRequest request) {
@@ -186,7 +211,7 @@ public class SecurityResource implements ResourceHandler {
          return completedFuture(invocationHelper.newResponse(request).status(CONFLICT).entity(Log.REST.principalRoleMapperNotMutable()).build());
       }
       Json roles = Json.array();
-      principalRoleMapper.list(principal).forEach(r -> roles.add(r));
+      principalRoleMapper.list(principal).forEach(roles::add);
       return asJsonResponseFuture(invocationHelper.newResponse(request), roles, isPretty(request));
    }
 

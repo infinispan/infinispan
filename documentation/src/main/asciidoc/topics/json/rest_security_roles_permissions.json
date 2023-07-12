@@ -1,0 +1,4 @@
+{
+  "name" : "application",
+  "permissions" : [ "LISTEN","ALL_READ","MONITOR","ALL_WRITE","EXEC" ]
+}

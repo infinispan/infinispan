@@ -11,6 +11,7 @@ import static org.infinispan.client.rest.RestResponse.TEMPORARY_REDIRECT;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.assertStatusAndBodyEquals;
 import static org.infinispan.server.test.core.Common.awaitStatus;
+import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -39,6 +40,7 @@ import org.infinispan.client.rest.RestCacheManagerClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestClusterClient;
 import org.infinispan.client.rest.RestResponse;
+import org.infinispan.client.rest.RestSecurityClient;
 import org.infinispan.client.rest.RestServerClient;
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
@@ -551,6 +553,37 @@ abstract class RESTAuthorizationTest {
       for (TestUser user : EnumSet.complementOf(EnumSet.of(TestUser.ADMIN, TestUser.ANONYMOUS))) {
          RestClient client = ext.rest().withClientConfiguration(restBuilders.get(user)).get();
          assertStatus(FORBIDDEN, client.security().flushCache());
+      }
+   }
+
+   @Test
+   public void testRoleManipulation() {
+      for (TestUser user : EnumSet.of(TestUser.ADMIN)) {
+         RestSecurityClient security = ext.rest().withClientConfiguration(restBuilders.get(user)).get().security();
+         assertStatus(OK, security.listPrincipals());
+         assertStatus(NO_CONTENT, security.createRole("myrole", List.of("ALL_READ", "ALL_WRITE")));
+         Json json = Json.read(assertStatus(OK, security.describeRole("myrole")));
+         assertEquals("myrole", json.at("name").asString());
+         List<Json> permissions = json.at("permissions").asJsonList();
+         assertEquals(2, permissions.size());
+         assertTrue(permissions.stream().map(Json::asString).collect(Collectors.toSet()).containsAll(List.of("ALL_READ", "ALL_WRITE")), permissions.toString());
+
+         // The code below only works when using the cluster mapper
+         try(RestResponse response = sync(security.grant("myuser", List.of("myrole")))) {
+            if (response.getStatus() == NO_CONTENT) {
+               assertStatusAndBodyEquals(OK, "[\"myrole\"]", security.listRoles("myuser"));
+               assertStatus(NO_CONTENT, security.deny("myuser", List.of("myrole")));
+            }
+         }
+      }
+      for (TestUser user : EnumSet.complementOf(EnumSet.of(TestUser.ADMIN, TestUser.ANONYMOUS))) {
+         RestSecurityClient security = ext.rest().withClientConfiguration(restBuilders.get(user)).get().security();
+         assertStatus(FORBIDDEN, security.listPrincipals());
+         assertStatus(FORBIDDEN, security.createRole("myrole", List.of("ALL_READ", "ALL_WRITE")));
+         assertStatus(FORBIDDEN, security.describeRole("myrole"));
+         assertStatus(FORBIDDEN, security.grant("myuser", List.of("myrole")));
+         assertStatus(FORBIDDEN, security.listRoles("myuser"));
+         assertStatus(FORBIDDEN, security.deny("myuser", List.of("myrole")));
       }
    }
 
