@@ -10,6 +10,7 @@ import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
+import org.infinispan.security.GroupPrincipal;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.ServerConfiguration;
 import org.infinispan.server.loader.ServerLoginModule;
@@ -48,7 +49,7 @@ public class ElytronJMXAuthenticator implements BiPredicate<CallbackHandler, Sub
          callbackHandler.handle(new Callback[]{name, password});
          SecurityIdentity securityIdentity = securityDomain.authenticate(name.getName(), new PasswordGuessEvidence(password.getPassword()));
          subject.getPrincipals().add(securityIdentity.getPrincipal());
-         securityIdentity.getRoles().forEach(r -> subject.getPrincipals().add(new RolePrincipal(r)));
+         securityIdentity.getRoles().forEach(r -> subject.getPrincipals().add(new GroupPrincipal(r)));
          return true;
       } catch (IOException | UnsupportedCallbackException e) {
          Server.log.jmxAuthenticationError(e);

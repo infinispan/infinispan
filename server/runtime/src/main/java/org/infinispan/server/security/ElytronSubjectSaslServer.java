@@ -7,6 +7,7 @@ import java.util.Set;
 import javax.security.auth.Subject;
 import javax.security.sasl.SaslServer;
 
+import org.infinispan.security.GroupPrincipal;
 import org.infinispan.server.core.security.sasl.AuthorizingCallbackHandler;
 import org.infinispan.server.core.security.sasl.SubjectSaslServer;
 import org.wildfly.security.auth.server.SecurityIdentity;
@@ -35,7 +36,7 @@ class ElytronSubjectSaslServer extends SubjectSaslServer {
             if (!identity.isAnonymous()) {
                principals.add(identity.getPrincipal());
             }
-            identity.getRoles().forEach(role -> principals.add(new RolePrincipal(role)));
+            identity.getRoles().forEach(role -> principals.add(new GroupPrincipal(role)));
             principals.addAll(this.principals);
             return subject;
          } else {

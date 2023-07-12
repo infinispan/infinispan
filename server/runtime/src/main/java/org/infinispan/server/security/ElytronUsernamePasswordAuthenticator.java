@@ -4,6 +4,7 @@ import java.util.concurrent.CompletionStage;
 
 import javax.security.auth.Subject;
 
+import org.infinispan.security.GroupPrincipal;
 import org.infinispan.server.configuration.ServerConfiguration;
 import org.infinispan.server.core.security.UsernamePasswordAuthenticator;
 import org.infinispan.server.resp.authentication.RespAuthenticator;
@@ -51,7 +52,7 @@ public class ElytronUsernamePasswordAuthenticator implements UsernamePasswordAut
             SecurityIdentity securityIdentity = securityDomain.authenticate(username, new PasswordGuessEvidence(password));
             Subject subject = new Subject();
             subject.getPrincipals().add(securityIdentity.getPrincipal());
-            securityIdentity.getRoles().forEach(r -> subject.getPrincipals().add(new RolePrincipal(r)));
+            securityIdentity.getRoles().forEach(r -> subject.getPrincipals().add(new GroupPrincipal(r)));
             return subject;
          } catch (RealmUnavailableException e) {
             throw new RuntimeException(e);
