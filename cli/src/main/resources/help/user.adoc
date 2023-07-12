@@ -34,6 +34,8 @@ SYNOPSIS
 
 *user roles remove* 'role'
 
+*user roles describe* 'role'
+
 
 DESCRIPTION
 -----------
@@ -79,6 +81,9 @@ Creates a new role with the specified permissions.
 
 *user roles remove* 'role'::
 Deletes an existing role.
+
+*user roles describe* 'role'::
+Describes an existing role.
 
 
 COMMON OPTIONS

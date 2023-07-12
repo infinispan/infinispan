@@ -22,7 +22,7 @@ import org.infinispan.client.rest.RestResponse;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 12.1
  **/
-@GroupCommandDefinition(name = "roles", description = "Manages user roles for security authorization", activator = ConnectionActivator.class, groupCommands = {Roles.Ls.class, Roles.Grant.class, Roles.Deny.class, Roles.Create.class, Roles.Remove.class})
+@GroupCommandDefinition(name = "roles", description = "Manages user roles for security authorization", activator = ConnectionActivator.class, groupCommands = {Roles.Ls.class, Roles.Grant.class, Roles.Deny.class, Roles.Create.class, Roles.Remove.class, Roles.Describe.class})
 public class Roles extends CliCommand {
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -145,6 +145,26 @@ public class Roles extends CliCommand {
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
          return client.security().removeRole(name);
+      }
+   }
+
+   @CommandDefinition(name = "describe", description = "Describes a role")
+   public static class Describe extends RestCliCommand {
+
+      @Argument(description = "Specifies the role to describe.", required = true, completer = RolesCompleter.class)
+      String name;
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      protected boolean isHelp() {
+         return help;
+      }
+
+      @Override
+      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
+         return client.security().describeRole(name);
       }
    }
 }
