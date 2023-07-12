@@ -3,5 +3,6 @@
            xmlns="urn:infinispan:server:15.0" socket-binding="default">
       <hotrod-connector name="hotrod"/>
       <rest-connector name="rest"/>
+      <resp-connector name="resp"/>
       <memcached-connector name="memcached" socket-binding="memcached"/>
 </endpoint>
