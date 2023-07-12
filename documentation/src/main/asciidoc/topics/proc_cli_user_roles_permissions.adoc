@@ -1,0 +1,34 @@
+[id='creating-roles_{context}']
+= Creating new roles
+
+Create new roles and set the permissions.
+
+.Procedure
+
+* Create roles with the [command]`user roles create` command, for example:
++
+[source,options="nowrap",subs=attributes+]
+----
+user roles create --permissions=ALL_READ,ALL_WRITE simple
+----
+
+.Verification
+
+List roles that you grant to users with the [command]`user roles ls` command.
+
+[source,options="nowrap",subs=attributes+]
+----
+user roles ls
+["observer","application","admin","monitor","simple","deployer"]
+----
+
+Describe roles with the [command]`user roles describe` command.
+
+[source,options="nowrap",subs=attributes+]
+----
+user roles describe simple
+{
+  "name" : "simple",
+  "permissions" : [ "ALL_READ","ALL_WRITE" ]
+}
+----

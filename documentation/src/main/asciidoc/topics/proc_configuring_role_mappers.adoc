@@ -2,8 +2,7 @@
 = Configuring role mappers
 
 {brandname} enables the cluster role mapper and cluster permission mapper by default.
-You should configure role mappers if you want to use the identity role mapper, Common Name (CN) role mapper, or a custom implementation.
-For example, if your deployment integrates with an LDAP directory and you want to use the Distinguished Name (DN) as the security principal you can configure {brandname} to use the Common Name (CN) role mapper.
+To use a different implementation for role mapping, you must configure the role mappers.
 
 .Procedure
 
