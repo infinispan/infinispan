@@ -1,9 +1,22 @@
 [id='configuring-cluster-role-mapper_{context}']
-= Configuring the cluster role mapper
+= Configuring the cluster role and permission mappers
 
-The cluster role mapper maintains a dynamic mapping between principals and roles, by storing it in the cluster registry.
-You can manipulate these mappings using either the CLI or the REST API.
-By default, the mapping is performed using a strict string equivalence between principal names and roles. It is possible to configure the cluster role mapper to apply transformation to the principal name before performing a lookup.
+The cluster role mapper maintains a dynamic mapping between principals and roles.
+The cluster permission mapper maintains a dynamic set of role definitions.
+In both cases, the mappings are stored in the cluster registry and can be manipulated at runtime using either the CLI or the REST API.
+
+.Prerequisites
+* Have `ADMIN` permissions for {brandname}.
+* Start the {brandname} CLI.
+* Connect to a running {brandname} cluster.
+
+include::{topics}/proc_cli_user_roles_permissions.adoc[leveloffset=+1]
+include::{topics}/proc_cli_user_grant_roles.adoc[leveloffset=+1]
+
+== Cluster role mapper name rewriters
+
+By default, the mapping is performed using a strict string equivalence between principal names and roles.
+It is possible to configure the cluster role mapper to apply transformation to the principal name before performing a lookup.
 
 .Procedure
 
@@ -11,15 +24,13 @@ By default, the mapping is performed using a strict string equivalence between p
 . Specify a name rewriter for the cluster role mapper as part of the security authorization in the Cache Manager configuration.
 . Save the changes to your configuration.
 
-== Cluster role mapper name rewriters
-
 Principal names may have different forms, depending on the security realm type:
 
 * Properties and Token realms may return simple strings
 * Trust and LDAP realms may return X.500-style distinguished names
 * Kerberos realms may return `user@domain`-style names
 
-Names can be normalized to a common form using one of the following transformers.
+Names can be normalized to a common form using one of the following transformers:
 
 === Case Principal Transformer
 
