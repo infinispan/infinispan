@@ -49,7 +49,7 @@ public class SecureScriptingTaskManagerTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      GlobalAuthorizationConfigurationBuilder globalRoles = global.security().authorization().enable().principalRoleMapper(new IdentityRoleMapper());
+      GlobalAuthorizationConfigurationBuilder globalRoles = global.security().authorization().enable().groupOnlyMapping(false).principalRoleMapper(new IdentityRoleMapper());
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       AuthorizationConfigurationBuilder authConfig = config.security().authorization().enable();
 

@@ -120,7 +120,7 @@ public class ClusterRoleMapper implements MutablePrincipalRoleMapper {
       final Set<String> roles;
 
       RoleSet() {
-         this(new HashSet());
+         this(new HashSet<>());
       }
 
       @ProtoFactory

@@ -30,7 +30,7 @@ public class SecureRemoteCacheAdminTest extends RemoteCacheAdminTest {
       GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
       gcb.defaultCacheName("default");
       gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
-      gcb.security().authorization().enable().principalRoleMapper(new IdentityRoleMapper()).role("admin").permission(AuthorizationPermission.ALL);
+      gcb.security().authorization().enable().groupOnlyMapping(false).principalRoleMapper(new IdentityRoleMapper()).role("admin").permission(AuthorizationPermission.ALL);
       gcb.serialization().addContextInitializer(contextInitializer());
 
       ConfigurationBuilder template = new ConfigurationBuilder();

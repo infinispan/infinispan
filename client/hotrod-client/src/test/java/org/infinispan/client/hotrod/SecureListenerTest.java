@@ -43,7 +43,7 @@ public class SecureListenerTest extends AbstractAuthenticationTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
       GlobalAuthorizationConfigurationBuilder globalRoles =
-            global.security().authorization().enable().principalRoleMapper(new IdentityRoleMapper());
+            global.security().authorization().enable().principalRoleMapper(new IdentityRoleMapper()).groupOnlyMapping(false);
       globalRoles.role("admin").permission(AuthorizationPermission.ALL)
                  .role("RWLuser").permission(AuthorizationPermission.READ, AuthorizationPermission.WRITE,
                                              AuthorizationPermission.LISTEN)

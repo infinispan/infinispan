@@ -2,7 +2,6 @@ package org.infinispan.configuration.global;
 
 import static org.infinispan.commons.configuration.attributes.IdentityAttributeCopier.identityCopier;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -31,50 +30,52 @@ public class GlobalAuthorizationConfiguration {
    public static final AttributeDefinition<AuditLogger> AUDIT_LOGGER = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.AUDIT_LOGGER, (AuditLogger) new NullAuditLogger())
          .copier(identityCopier()).serializer(AttributeSerializer.INSTANCE_CLASS_NAME).immutable().build();
    public static final AttributeDefinition<Map<String, Role>> ROLES = AttributeDefinition.<Map<String, Role>>builder(org.infinispan.configuration.parsing.Attribute.ROLES, new HashMap<>())
-         .initializer(new AttributeInitializer<Map<String, Role>>() {
+         .initializer(new AttributeInitializer<>() {
             @Override
             public Map<String, Role> initialize() {
                return DEFAULT_ROLES;
             }
          }).build();
+   public static final AttributeDefinition<Boolean> GROUP_ONLY_MAPPING = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.GROUP_ONLY_MAPPING, true, Boolean.class).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(GlobalAuthorizationConfiguration.class, ENABLED, AUDIT_LOGGER, ROLES);
+      return new AttributeSet(GlobalAuthorizationConfiguration.class, ENABLED, AUDIT_LOGGER, ROLES, GROUP_ONLY_MAPPING);
    }
 
    static {
-      Map<String, Role> roles = new HashMap<>();
-      roles.put("admin", Role.newRole("admin", true, AuthorizationPermission.ALL));
-      roles.put("application", Role.newRole("application", true,
-            AuthorizationPermission.ALL_READ,
-            AuthorizationPermission.ALL_WRITE,
-            AuthorizationPermission.LISTEN,
-            AuthorizationPermission.EXEC,
-            AuthorizationPermission.MONITOR
-      ));
-      roles.put("deployer", Role.newRole("deployer", true,
-            AuthorizationPermission.ALL_READ,
-            AuthorizationPermission.ALL_WRITE,
-            AuthorizationPermission.LISTEN,
-            AuthorizationPermission.EXEC,
-            AuthorizationPermission.CREATE,
-            AuthorizationPermission.MONITOR
-      ));
-      roles.put("observer", Role.newRole("observer", true,
-            AuthorizationPermission.ALL_READ,
-            AuthorizationPermission.MONITOR
-      ));
-      roles.put("monitor", Role.newRole("monitor", true,
-            AuthorizationPermission.MONITOR
-      ));
-      // Deprecated roles. Will be removed in Infinispan 16.0
-      roles.put("___schema_manager", Role.newRole("___schema_manager", false,
-            AuthorizationPermission.CREATE
-      ));
-      roles.put("___script_manager", Role.newRole("___script_manager", false,
-            AuthorizationPermission.CREATE
-      ));
-      DEFAULT_ROLES = Collections.unmodifiableMap(roles);
+      DEFAULT_ROLES = Map.of(
+            "admin", Role.newRole("admin", true,
+                  AuthorizationPermission.ALL
+            ),
+            "application", Role.newRole("application", true,
+                  AuthorizationPermission.ALL_READ,
+                  AuthorizationPermission.ALL_WRITE,
+                  AuthorizationPermission.LISTEN,
+                  AuthorizationPermission.EXEC,
+                  AuthorizationPermission.MONITOR
+            ),
+            "deployer", Role.newRole("deployer", true,
+                  AuthorizationPermission.ALL_READ,
+                  AuthorizationPermission.ALL_WRITE,
+                  AuthorizationPermission.LISTEN,
+                  AuthorizationPermission.EXEC,
+                  AuthorizationPermission.CREATE,
+                  AuthorizationPermission.MONITOR
+            ),
+            "observer", Role.newRole("observer", true,
+                  AuthorizationPermission.ALL_READ,
+                  AuthorizationPermission.MONITOR
+            ),
+            "monitor", Role.newRole("monitor", true,
+                  AuthorizationPermission.MONITOR
+            ),
+            // Deprecated roles. Will be removed in Infinispan 16.0
+            "___schema_manager", Role.newRole("___schema_manager", false,
+                  AuthorizationPermission.CREATE
+            ),
+            "___script_manager", Role.newRole("___script_manager", false,
+                  AuthorizationPermission.CREATE
+            ));
    }
 
    private final Attribute<Boolean> enabled;
@@ -83,6 +84,7 @@ public class GlobalAuthorizationConfiguration {
    private final PrincipalRoleMapperConfiguration roleMapperConfiguration;
    private final RolePermissionMapperConfiguration permissionMapperConfiguration;
    private final RolePermissionMapper rolePermissionMapper;
+   private final boolean groupOnlyMapping;
 
    private final AttributeSet attributes;
 
@@ -94,6 +96,7 @@ public class GlobalAuthorizationConfiguration {
       this.roleMapperConfiguration = roleMapperConfiguration;
       this.permissionMapperConfiguration = permissionMapperConfiguration;
       this.rolePermissionMapper = permissionMapperConfiguration.permissionMapper();
+      this.groupOnlyMapping = attributes.attribute(GROUP_ONLY_MAPPING).get();
    }
 
    public boolean enabled() {
@@ -118,6 +121,10 @@ public class GlobalAuthorizationConfiguration {
 
    public boolean isDefaultRoles() {
       return roles == DEFAULT_ROLES;
+   }
+
+   public boolean groupOnlyMapping() {
+      return groupOnlyMapping;
    }
 
    public RolePermissionMapperConfiguration permissionMapperConfiguration() {

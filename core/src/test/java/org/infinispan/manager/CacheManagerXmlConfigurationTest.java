@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "manager.CacheManagerXmlConfigurationTest")
 public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
    EmbeddedCacheManager cm;
-   private Subject KING = TestingUtil.makeSubject("king");
+   private Subject KING = TestingUtil.makeSubject("king-arthur", "king");
 
    @AfterMethod
    public void tearDown() {

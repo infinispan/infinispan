@@ -76,6 +76,7 @@ public enum Attribute {
     FRAGMENTATION_FACTOR,
     GAUGES,
     GROUP_NAME,
+    GROUP_ONLY_MAPPING,
     HISTOGRAMS,
     ID,
     INDEX,

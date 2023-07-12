@@ -29,6 +29,7 @@ public class RolePermissionTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
       GlobalAuthorizationConfigurationBuilder globalRoles = global.security().authorization().enable()
+            .groupOnlyMapping(false)
             .principalRoleMapper(new IdentityRoleMapper());
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
 

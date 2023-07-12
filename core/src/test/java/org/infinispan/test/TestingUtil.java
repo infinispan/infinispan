@@ -130,6 +130,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.GroupPrincipal;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.security.impl.SecureCacheImpl;
 import org.infinispan.statetransfer.StateTransferManagerImpl;
@@ -323,7 +324,6 @@ public class TestingUtil {
     *
     * @param target    object to extract field from
     * @param fieldName name of field to extract
-    *
     * @return field value
     */
    public static <T> T extractField(Object target, String fieldName) {
@@ -336,8 +336,7 @@ public class TestingUtil {
          field = baseType.getDeclaredField(fieldName);
          field.setAccessible(true);
          field.set(owner, newValue);
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          throw new RuntimeException(e);//just to simplify exception handling
       }
    }
@@ -354,8 +353,7 @@ public class TestingUtil {
          Object prevValue = field.get(owner);
          Object newValue = func.apply((T) prevValue);
          field.set(owner, newValue);
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          throw new RuntimeException(e);//just to simplify exception handling
       }
    }
@@ -367,8 +365,7 @@ public class TestingUtil {
             field = type.getDeclaredField(fieldName);
             field.setAccessible(true);
             return (T) field.get(target);
-         }
-         catch (Exception e) {
+         } catch (Exception e) {
             if (type.equals(Object.class)) {
                throw new RuntimeException(e);
             } else {
@@ -380,7 +377,7 @@ public class TestingUtil {
    }
 
    public static <T extends AsyncInterceptor> T findInterceptor(Cache<?, ?> cache,
-         Class<T> interceptorToFind) {
+                                                                Class<T> interceptorToFind) {
       return extractInterceptorChain(cache).findInterceptorExtending(interceptorToFind);
    }
 
@@ -399,7 +396,7 @@ public class TestingUtil {
       int zeroCapacityCaches = 0;
       for (Cache<?, ?> c : caches) {
          if (c.getCacheConfiguration().clustering().hash().capacityFactor() == 0f ||
-             c.getCacheManager().getCacheManagerConfiguration().isZeroCapacityNode()) {
+               c.getCacheManager().getCacheManagerConfiguration().isZeroCapacityNode()) {
             zeroCapacityCaches++;
          }
       }
@@ -418,7 +415,7 @@ public class TestingUtil {
                rebalanceInProgress = cacheTopology.getPhase() != CacheTopology.Phase.NO_REBALANCE;
                ConsistentHash currentCH = cacheTopology.getCurrentCH();
                ConsistentHashFactory chf = StateTransferManagerImpl.pickConsistentHashFactory(
-                  extractGlobalConfiguration(c.getCacheManager()), c.getCacheConfiguration());
+                     extractGlobalConfiguration(c.getCacheManager()), c.getCacheConfiguration());
 
                chContainsAllMembers = currentCH.getMembers().size() == caches.length;
                currentChIsBalanced = true;
@@ -453,11 +450,11 @@ public class TestingUtil {
                      addresses[i] = caches[i].getCacheManager().getAddress();
                   }
                   message = String.format("Cache %s timed out waiting for rebalancing to complete on node %s, " +
-                        "expected member list is %s, current member list is %s!", c.getName(), cacheAddress,
+                              "expected member list is %s, current member list is %s!", c.getName(), cacheAddress,
                         Arrays.toString(addresses), cacheTopology == null ? "N/A" : cacheTopology.getCurrentCH().getMembers());
                } else {
                   message = String.format("Cache %s timed out waiting for rebalancing to complete on node %s, " +
-                        "current topology is %s. rebalanceInProgress=%s, currentChIsBalanced=%s", c.getName(),
+                              "current topology is %s. rebalanceInProgress=%s, currentChIsBalanced=%s", c.getName(),
                         c.getCacheManager().getAddress(), cacheTopology, rebalanceInProgress, currentChIsBalanced);
                }
                log.error(message);
@@ -541,7 +538,6 @@ public class TestingUtil {
     *
     * @param caches  caches which must all have consistent views
     * @param timeout max number of ms to loop
-    *
     * @throws RuntimeException if <code>timeout</code> ms have elapse without all caches having the same number of
     *                          members.
     */
@@ -578,8 +574,8 @@ public class TestingUtil {
       }
 
       throw new TimeoutException(String.format(
-         "Timed out before caches had complete views.  Expected %d members in each view.  Views are as follows: %s",
-         cacheContainers.length, incompleteViews));
+            "Timed out before caches had complete views.  Expected %d members in each view.  Views are as follows: %s",
+            cacheContainers.length, incompleteViews));
    }
 
    public static void blockUntilViewsReceivedInt(Cache<?, ?>[] caches, long timeout) throws InterruptedException {
@@ -642,7 +638,7 @@ public class TestingUtil {
    }
 
    /**
-    * An overloaded version of {@link #blockUntilViewsReceived(long,Cache[])} that allows for 'shrinking' clusters.
+    * An overloaded version of {@link #blockUntilViewsReceived(long, Cache[])} that allows for 'shrinking' clusters.
     * I.e., the usual method barfs if there are more members than expected.  This one takes a param
     * (barfIfTooManyMembers) which, if false, will NOT barf but will wait until the cluster 'shrinks' to the desired
     * size.  Useful if in tests, you kill a member and want to wait until this fact is known across the cluster.
@@ -666,7 +662,6 @@ public class TestingUtil {
     *
     * @param groupSize number of caches expected in the group
     * @param timeout   max number of ms to loop
-    *
     * @throws RuntimeException if <code>timeout</code> ms have elapse without all caches having the same number of
     *                          members.
     */
@@ -697,8 +692,8 @@ public class TestingUtil {
       }
 
       throw new RuntimeException(String.format(
-         "Timed out before cache had %d members.  View is %s",
-         groupSize, cache.getCacheManager().getMembers()));
+            "Timed out before cache had %d members.  View is %s",
+            groupSize, cache.getCacheManager().getMembers()));
    }
 
    /**
@@ -706,9 +701,7 @@ public class TestingUtil {
     * EmbeddedCacheManager#getMembers()} matches the size of the <code>caches</code> parameter.
     *
     * @param caches caches that should form a View
-    *
     * @return <code>true</code> if all caches have <code>caches.length</code> members; false otherwise
-    *
     * @throws IllegalStateException if any of the caches have MORE view members than caches.length
     */
    public static boolean areCacheViewsComplete(Cache<?, ?>[] caches) {
@@ -781,9 +774,9 @@ public class TestingUtil {
     * discovering that members have been split, or that they have joined back
     * again.
     *
-    * @param timeout max number of milliseconds to block for
+    * @param timeout       max number of milliseconds to block for
     * @param finalViewSize desired final view size
-    * @param caches caches representing current, or expected members in the cluster.
+    * @param caches        caches representing current, or expected members in the cluster.
     */
    public static void blockUntilViewsChanged(long timeout, int finalViewSize, Cache<?, ?>... caches) {
       blockUntilViewsChanged(caches, timeout, finalViewSize);
@@ -837,8 +830,7 @@ public class TestingUtil {
    public static void sleepThread(long sleeptime, String messageOnInterrupt) {
       try {
          Thread.sleep(sleeptime);
-      }
-      catch (InterruptedException ie) {
+      } catch (InterruptedException ie) {
          if (messageOnInterrupt != null)
             log.error(messageOnInterrupt);
       }
@@ -847,8 +839,7 @@ public class TestingUtil {
    private static void sleepThreadInt(long sleeptime, String messageOnInterrupt) throws InterruptedException {
       try {
          Thread.sleep(sleeptime);
-      }
-      catch (InterruptedException ie) {
+      } catch (InterruptedException ie) {
          if (messageOnInterrupt != null)
             log.error(messageOnInterrupt);
          throw ie;
@@ -925,8 +916,8 @@ public class TestingUtil {
       Set<String> caches = new LinkedHashSet<>();
       try {
          DependencyGraph<String> graph =
-            TestingUtil.extractGlobalComponent(cacheContainer, DependencyGraph.class,
-                                               KnownComponentNames.CACHE_DEPENDENCY_GRAPH);
+               TestingUtil.extractGlobalComponent(cacheContainer, DependencyGraph.class,
+                     KnownComponentNames.CACHE_DEPENDENCY_GRAPH);
          caches.addAll(graph.topologicalSort());
       } catch (Exception ignored) {
       }
@@ -975,7 +966,7 @@ public class TestingUtil {
 
    public static <K, V> List<DummyInMemoryStore> cachestores(List<Cache<K, V>> caches) {
       List<DummyInMemoryStore> l = new LinkedList<>();
-      for (Cache<K, V> c: caches)
+      for (Cache<K, V> c : caches)
          l.add(TestingUtil.getFirstStore(c));
       return l;
    }
@@ -983,7 +974,8 @@ public class TestingUtil {
    private static void removeInMemoryData(Cache<?, ?> cache) {
       log.debugf("Cleaning data for cache %s", cache);
       InternalDataContainer<?, ?> dataContainer = TestingUtil.extractComponent(cache, InternalDataContainer.class);
-      if (log.isDebugEnabled()) log.debugf("Data container size before clear: %d", dataContainer.sizeIncludingExpired());
+      if (log.isDebugEnabled())
+         log.debugf("Data container size before clear: %d", dataContainer.sizeIncludingExpired());
       dataContainer.clear();
    }
 
@@ -1005,8 +997,7 @@ public class TestingUtil {
                if (tm != null) {
                   try {
                      tm.rollback();
-                  }
-                  catch (Exception e) {
+                  } catch (Exception e) {
                      // don't care
                   }
                }
@@ -1019,8 +1010,7 @@ public class TestingUtil {
                }
                c.stop();
             }
-         }
-         catch (Throwable t) {
+         } catch (Throwable t) {
             log.errorf(t, "Error killing cache %s", c.getName());
          }
       }
@@ -1037,8 +1027,7 @@ public class TestingUtil {
             if (txManager.getTransaction() != null) {
                txManager.rollback();
             }
-         }
-         catch (Exception e) {
+         } catch (Exception e) {
             // don't care
          }
       }
@@ -1055,8 +1044,7 @@ public class TestingUtil {
             if (tm != null) {
                try {
                   tm.rollback();
-               }
-               catch (Exception e) {
+               } catch (Exception e) {
                   // don't care
                }
             }
@@ -1068,7 +1056,6 @@ public class TestingUtil {
     * For testing only - introspects a cache and extracts the ComponentRegistry
     *
     * @param cache cache to introspect
-    *
     * @return component registry
     */
    public static ComponentRegistry extractComponentRegistry(Cache<?, ?> cache) {
@@ -1232,7 +1219,6 @@ public class TestingUtil {
     * @param componentType        component type of which to replace
     * @param replacementComponent new instance
     * @param rewire               if true, ComponentRegistry.rewire() is called after replacing.
-    *
     * @return the original component that was replaced
     */
    public static <T> T replaceComponent(Cache<?, ?> cache, Class<? extends T> componentType, T replacementComponent, boolean rewire) {
@@ -1260,7 +1246,7 @@ public class TestingUtil {
     * @return the original component that was replaced
     */
    public static <T extends Lifecycle> T replaceComponent(Cache<?, ?> cache, Class<T> componentType, T replacementComponent, boolean rewire,
-         boolean stopBeforeWire) {
+                                                          boolean stopBeforeWire) {
       if (stopBeforeWire) {
          replacementComponent.stop();
       }
@@ -1274,7 +1260,6 @@ public class TestingUtil {
     * @param componentType        component type of which to replace
     * @param replacementComponent new instance
     * @param rewire               if true, ComponentRegistry.rewire() is called after replacing.
-    *
     * @return the original component that was replaced
     */
    public static <T> T replaceComponent(CacheContainer cacheContainer, Class<T> componentType, T replacementComponent,
@@ -1291,7 +1276,6 @@ public class TestingUtil {
     * @param name                 name of the component
     * @param replacementComponent new instance
     * @param rewire               if true, ComponentRegistry.rewire() is called after replacing.
-    *
     * @return the original component that was replaced
     */
    public static <T> T replaceComponent(CacheContainer cacheContainer, Class<T> componentType, String name, T replacementComponent, boolean rewire) {
@@ -1320,8 +1304,8 @@ public class TestingUtil {
       StringBuilder builder = new StringBuilder(cache.getName() + "[");
       while (it.hasNext()) {
          InternalCacheEntry<?, ?> ce = it.next();
-         builder.append(ce.getKey() ).append("=").append( ce.getValue() ).append( ",l=" ).append( ce.getLifespan() )
-                .append( "; ");
+         builder.append(ce.getKey()).append("=").append(ce.getValue()).append(",l=").append(ce.getLifespan())
+               .append("; ");
       }
       builder.append("]");
       return builder.toString();
@@ -1359,8 +1343,9 @@ public class TestingUtil {
     * Inserts a DELAY protocol in the JGroups stack used by the cache, and returns it.
     * The DELAY protocol can then be used to inject delays in milliseconds both at receiver
     * and sending side.
-    * @param cache cache to inject
-    * @param in_delay_millis inbound delay in millis
+    *
+    * @param cache            cache to inject
+    * @param in_delay_millis  inbound delay in millis
     * @param out_delay_millis outbound delay in millis
     * @return a reference to the DELAY instance being used by the JGroups stack
     */
@@ -1369,7 +1354,7 @@ public class TestingUtil {
       JChannel ch = jgt.getChannel();
       ProtocolStack ps = ch.getProtocolStack();
       DELAY delay = ps.findProtocol(DELAY.class);
-      if (delay==null) {
+      if (delay == null) {
          delay = new DELAY();
          ps.insertProtocol(delay, ProtocolStack.Position.ABOVE, TP.class);
       }
@@ -1482,9 +1467,9 @@ public class TestingUtil {
       GlobalConfiguration cfg = cacheManager.getCacheManagerConfiguration();
       try {
          return new ObjectName(String.format("%s:type=channel,cluster=%s,manager=%s",
-                                             cfg.jmx().domain(),
-                                             ObjectName.quote(cacheManager.getClusterName()),
-                                             ObjectName.quote(cfg.cacheManagerName())));
+               cfg.jmx().domain(),
+               ObjectName.quote(cacheManager.getClusterName()),
+               ObjectName.quote(cfg.cacheManagerName())));
       } catch (MalformedObjectNameException e) {
          throw new RuntimeException(e);
       }
@@ -1520,7 +1505,7 @@ public class TestingUtil {
    /**
     * Verifies the cache doesn't contain any lock
     */
-   public static void assertNoLocks(Cache<?,?> cache) {
+   public static void assertNoLocks(Cache<?, ?> cache) {
       LockManager lm = TestingUtil.extractLockManager(cache);
       if (lm != null) {
          for (Object key : cache.keySet()) assert !lm.isLocked(key);
@@ -1532,8 +1517,8 @@ public class TestingUtil {
     * right pattern is used to make sure that the transaction is always either
     * committed or rollbacked.
     *
-    * @param tm transaction manager
-    * @param c callable instance to run within a transaction
+    * @param tm  transaction manager
+    * @param c   callable instance to run within a transaction
     * @param <T> type returned from the callable
     * @return returns whatever the callable returns
     */
@@ -1583,7 +1568,7 @@ public class TestingUtil {
     * @param c consumer function to execute with cache manager
     */
    public static void withCacheManager(Supplier<EmbeddedCacheManager> s,
-         Consumer<EmbeddedCacheManager> c) {
+                                       Consumer<EmbeddedCacheManager> c) {
       EmbeddedCacheManager cm = null;
       try {
          cm = s.get();
@@ -1599,7 +1584,7 @@ public class TestingUtil {
     * be cleaned up after the task has completed, regardless of the task outcome.
     *
     * @param cm cache manager
-    * @param c consumer function to execute with cache manager
+    * @param c  consumer function to execute with cache manager
     */
    public static void withCacheManager(EmbeddedCacheManager cm,
                                        Consumer<EmbeddedCacheManager> c) {
@@ -1666,7 +1651,7 @@ public class TestingUtil {
    public static <T extends NonBlockingStore<K, V>, K, V> T getStore(Cache<K, V> cache, int position, boolean unwrapped) {
       PersistenceManagerImpl persistenceManager = getActualPersistenceManager(cache);
       NonBlockingStore<K, V> nonBlockingStore = persistenceManager.<K, V>getAllStores(characteristics ->
-            ! characteristics.contains(NonBlockingStore.Characteristic.WRITE_ONLY)).get(position);
+            !characteristics.contains(NonBlockingStore.Characteristic.WRITE_ONLY)).get(position);
       if (unwrapped && nonBlockingStore instanceof DelegatingNonBlockingStore) {
          nonBlockingStore = ((DelegatingNonBlockingStore<K, V>) nonBlockingStore).delegate();
       }
@@ -1684,10 +1669,10 @@ public class TestingUtil {
       return new WaitDelegatingNonBlockingStore<>(nonBlockingStore, keyPartitioner);
    }
 
-   public static <T extends CacheLoader<K, V>, K, V>  T getFirstLoader(Cache<K, V> cache) {
+   public static <T extends CacheLoader<K, V>, K, V> T getFirstLoader(Cache<K, V> cache) {
       PersistenceManagerImpl persistenceManager = getActualPersistenceManager(cache);
       NonBlockingStore<K, V> nonBlockingStore = persistenceManager.<K, V>getAllStores(characteristics ->
-            ! characteristics.contains(NonBlockingStore.Characteristic.WRITE_ONLY)).get(0);
+            !characteristics.contains(NonBlockingStore.Characteristic.WRITE_ONLY)).get(0);
       // TODO: Once stores convert to non blocking implementations this will change
       //noinspection unchecked
       return (T) ((NonBlockingStoreAdapter<K, V>) nonBlockingStore).loader();
@@ -1701,7 +1686,7 @@ public class TestingUtil {
    public static <T extends CacheWriter<K, V>, K, V> T getWriter(Cache<K, V> cache, int position) {
       PersistenceManagerImpl persistenceManager = getActualPersistenceManager(cache);
       NonBlockingStore<K, V> nonBlockingStore = persistenceManager.<K, V>getAllStores(characteristics ->
-            ! characteristics.contains(NonBlockingStore.Characteristic.READ_ONLY)).get(position);
+            !characteristics.contains(NonBlockingStore.Characteristic.READ_ONLY)).get(position);
       // TODO: Once stores convert to non blocking implementations this will change
       return (T) ((NonBlockingStoreAdapter<K, V>) nonBlockingStore).writer();
    }
@@ -1746,7 +1731,7 @@ public class TestingUtil {
    }
 
    public static <K, V> Set<MarshallableEntry<K, V>> allEntries(NonBlockingStore<K, V> store, IntSet segments,
-         Predicate<? super K> filter) {
+                                                                Predicate<? super K> filter) {
       return Flowable.fromPublisher(store.publishEntries(segments, filter, true))
             .collectInto(new HashSet<MarshallableEntry<K, V>>(), Set::add)
             .blockingGet();
@@ -1789,8 +1774,11 @@ public class TestingUtil {
 
    public static Subject makeSubject(String... principals) {
       Set<Principal> set = new LinkedHashSet<>();
-      for (String principal : principals) {
-         set.add(new TestingUtil.TestPrincipal(principal));
+      if (principals.length > 0) {
+         set.add(new TestingUtil.TestPrincipal(principals[0]));
+         for (int i = 1; i < principals.length; i++) {
+            set.add(new GroupPrincipal(principals[i]));
+         }
       }
       return new Subject(true, set, Collections.emptySet(), Collections.emptySet());
    }
@@ -1914,7 +1902,7 @@ public class TestingUtil {
    }
 
    public static void expectCause(Throwable t, Class<? extends Throwable> c, String messageRegex) {
-      for (;;) {
+      for (; ; ) {
          if (c.isAssignableFrom(t.getClass())) {
             if (messageRegex != null && !Pattern.matches(messageRegex, t.getMessage())) {
                throw new RuntimeException(String.format("Exception message '%s' does not match regex '%s'", t.getMessage(), messageRegex), t);
@@ -1934,7 +1922,7 @@ public class TestingUtil {
       return cacheMode.isDistributed() && !transactional;
    }
 
-   public static <K,V> Map.Entry<K,V> createMapEntry(K key, V value) {
+   public static <K, V> Map.Entry<K, V> createMapEntry(K key, V value) {
       return new AbstractMap.SimpleEntry<>(key, value);
    }
 
@@ -2016,7 +2004,7 @@ public class TestingUtil {
    }
 
    public static <E> Publisher<NonBlockingStore.SegmentedPublisher<E>> multipleSegmentPublisher(Publisher<E> flowable,
-         Function<E, Object> toKeyFunction, KeyPartitioner keyPartitioner) {
+                                                                                                Function<E, Object> toKeyFunction, KeyPartitioner keyPartitioner) {
       return Flowable.fromPublisher(flowable)
             .groupBy(e -> keyPartitioner.getSegment(toKeyFunction.apply(e)))
             .map(SegmentPublisherWrapper::wrap);

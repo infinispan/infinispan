@@ -373,6 +373,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       if (attributes.isModified() && authorization.enabled()) {
          writer.writeStartElement(Element.SECURITY);
          writer.writeStartElement(Element.AUTHORIZATION);
+         attributes.write(writer, GlobalAuthorizationConfiguration.GROUP_ONLY_MAPPING, Attribute.GROUP_ONLY_MAPPING);
          attributes.write(writer, GlobalAuthorizationConfiguration.AUDIT_LOGGER, Attribute.AUDIT_LOGGER);
          PrincipalRoleMapper mapper = authorization.principalRoleMapper();
          if (mapper != null) {

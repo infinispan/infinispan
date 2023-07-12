@@ -19,6 +19,7 @@ import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuditLogger;
 import org.infinispan.security.AuditResponse;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.GroupPrincipal;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.Role;
 import org.infinispan.security.Security;
@@ -141,8 +142,12 @@ public class Authorizer {
       PrincipalRoleMapper roleMapper = authorization.principalRoleMapper();
       Set<Principal> principals = subject.getPrincipals();
       Set<String> allRoles = new HashSet<>(principals.size());
+      boolean groupOnlyMapping = authorization.groupOnlyMapping();
       // Map all the Subject's principals to roles using the role mapper. There may be more than one role per principal
       for (Principal principal : principals) {
+         if (groupOnlyMapping && !(principal instanceof GroupPrincipal)) {
+            continue;
+         }
          Set<String> roleNames = roleMapper.principalToRoles(principal);
          if (roleNames != null) {
             allRoles.addAll(roleNames);

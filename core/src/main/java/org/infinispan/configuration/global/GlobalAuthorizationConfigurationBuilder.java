@@ -2,6 +2,7 @@ package org.infinispan.configuration.global;
 
 import static org.infinispan.configuration.global.GlobalAuthorizationConfiguration.AUDIT_LOGGER;
 import static org.infinispan.configuration.global.GlobalAuthorizationConfiguration.ENABLED;
+import static org.infinispan.configuration.global.GlobalAuthorizationConfiguration.GROUP_ONLY_MAPPING;
 import static org.infinispan.configuration.global.GlobalAuthorizationConfiguration.ROLES;
 import static org.infinispan.util.logging.Log.CONFIG;
 
@@ -69,6 +70,15 @@ public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfi
     */
    public GlobalAuthorizationConfigurationBuilder auditLogger(AuditLogger auditLogger) {
       attributes.attribute(AUDIT_LOGGER).set(auditLogger);
+      return this;
+   }
+
+   /**
+    * Determines whether role mapping applies to group principals only or also to user principals. Defaults to true.
+    * @param groupOnlyMapping
+    */
+   public GlobalAuthorizationConfigurationBuilder groupOnlyMapping(boolean groupOnlyMapping) {
+      attributes.attribute(GROUP_ONLY_MAPPING).set(groupOnlyMapping);
       return this;
    }
 

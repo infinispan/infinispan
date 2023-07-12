@@ -64,6 +64,7 @@ public class DynamicRBACTest extends MultipleCacheManagersTest {
    private GlobalConfigurationBuilder getGlobalConfigurationBuilder() {
       GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
       GlobalAuthorizationConfigurationBuilder globalRoles = global.security().authorization().enable()
+            .groupOnlyMapping(false)
             .principalRoleMapper(new ClusterRoleMapper())
             .rolePermissionMapper(new ClusterPermissionMapper());
 

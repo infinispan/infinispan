@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.distributed.SecureMassIndexingTest")
 public class SecureMassIndexingTest extends DistributedMassIndexingTest {
 
-   private static final Subject ADMIN = TestingUtil.makeSubject("admin");
+   private static final Subject ADMIN = TestingUtil.makeSubject("admin", "admin");
 
    @Override
    protected String getConfigurationFile() {

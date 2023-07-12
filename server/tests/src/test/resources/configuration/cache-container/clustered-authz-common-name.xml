@@ -4,7 +4,7 @@
                  name="default">
    <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack}"/>
    <security>
-      <authorization>
+      <authorization group-only-mapping="false">
          <common-name-role-mapper/>
          <roles>
             <role name="admin" permissions="ALL"/>
