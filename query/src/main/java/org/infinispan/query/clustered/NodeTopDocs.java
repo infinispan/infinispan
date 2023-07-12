@@ -22,14 +22,17 @@ public final class NodeTopDocs {
 
    public final Address address;
    public final TopDocs topDocs;
-   public long totalHitCount;
+   public int totalHitCount;
+   public boolean countIsExact;
    public final Object[] keys;
    public final Object[] projections;
 
-   public NodeTopDocs(Address address, TopDocs topDocs, long totalHitCount, Object[] keys, Object[] projections) {
+   public NodeTopDocs(Address address, TopDocs topDocs, int totalHitCount, boolean countIsExact, Object[] keys,
+                      Object[] projections) {
       this.address = address;
       this.topDocs = topDocs;
       this.totalHitCount = totalHitCount;
+      this.countIsExact = countIsExact;
       this.keys = keys;
       this.projections = projections;
    }
@@ -60,8 +63,9 @@ public final class NodeTopDocs {
             projections[i] = input.readObject();
          }
          TopDocs innerTopDocs = (TopDocs) input.readObject();
-         long totalHitCount = input.readLong();
-         return new NodeTopDocs(address, innerTopDocs, totalHitCount, keys, projections);
+         int totalHitCount = input.readInt();
+         boolean countIsExact = input.readBoolean();
+         return new NodeTopDocs(address, innerTopDocs, totalHitCount, countIsExact, keys, projections);
       }
 
       @Override
@@ -80,7 +84,8 @@ public final class NodeTopDocs {
             output.writeObject(projections[i]);
          }
          output.writeObject(topDocs.topDocs);
-         output.writeLong(topDocs.totalHitCount);
+         output.writeInt(topDocs.totalHitCount);
+         output.writeBoolean(topDocs.countIsExact);
       }
    }
 }
