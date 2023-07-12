@@ -14,6 +14,7 @@ import org.infinispan.rest.authentication.RestAuthenticator;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
+import org.infinispan.security.GroupPrincipal;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.ServerConfiguration;
 import org.infinispan.util.concurrent.BlockingManager;
@@ -127,7 +128,7 @@ public class ElytronHTTPAuthenticator implements RestAuthenticator {
       if (securityIdentity != null) {
          Subject subject = new Subject();
          subject.getPrincipals().add(securityIdentity.getPrincipal());
-         securityIdentity.getRoles().forEach(r -> subject.getPrincipals().add(new RolePrincipal(r)));
+         securityIdentity.getRoles().forEach(r -> subject.getPrincipals().add(new GroupPrincipal(r)));
          request.setSubject(subject);
       }
    }

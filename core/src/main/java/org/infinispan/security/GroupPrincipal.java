@@ -1,4 +1,4 @@
-package org.infinispan.server.security;
+package org.infinispan.security;
 
 import java.security.Principal;
 
@@ -6,10 +6,10 @@ import java.security.Principal;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-public class RolePrincipal implements Principal {
+public class GroupPrincipal implements Principal {
    private final String name;
 
-   public RolePrincipal(String name) {
+   public GroupPrincipal(String name) {
       this.name = name;
    }
 
