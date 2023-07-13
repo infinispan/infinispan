@@ -3,6 +3,22 @@
 
 {brandname} preserves global state so that it can restore cluster topology and cached data after restart.
 
+{brandname} uses file locking to prevent concurrent access to the global persistent location. The lock is acquired on
+startup and released on a node shutdown. The presence of a dangling lock file indicates that the node was not shutdown cleanly, either because of a crash or external termination.
+In the default configuration, {brandname} will refuse to start up to avoid data corruption with the following message:
+
+----
+ISPN000693: Dangling lock file '%s' in persistent global state, probably left behind by an unclean shutdown
+----
+
+The behavior can be changed by configuring the global state `unclean-shutdown-action` setting to one of the following:
+
+* `FAIL`: Prevents startup of the cache manager if a dangling lock file is found in the persistent global state. This is the default behavior.
+* `PURGE`: Clears the persistent global state if a dangling lock file is found in the persistent global state.
+* `IGNORE`: Ignores the presence of a dangling lock file in the persistent global state.
+
+
+
 [discrete]
 == Remote caches
 

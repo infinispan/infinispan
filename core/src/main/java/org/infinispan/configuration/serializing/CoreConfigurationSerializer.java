@@ -327,7 +327,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       GlobalStateConfiguration configuration = globalConfiguration.globalState();
       if (configuration.enabled()) {
          writer.writeStartElement(Element.GLOBAL_STATE);
-
+         configuration.attributes().write(writer);
          if (configuration.persistenceConfiguration().attributes().attribute(GlobalStatePathConfiguration.PATH).isModified()) {
             writer.writeStartElement(Element.PERSISTENT_LOCATION);
             writer.writeAttribute(Attribute.PATH, configuration.persistentLocation());

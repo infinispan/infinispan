@@ -8,7 +8,8 @@
 
    <xi:include href="jgroups/stacks.xml"/>
 
-   <xi:include href="cache-container/clustered.xml"/>
+   <!-- One of the tests does a forceful kill, so it should be able to restart with an unclean state-->
+   <xi:include href="cache-container/clustered-ignore-unclean.xml"/>
 
    <server xmlns="urn:infinispan:server:15.0">
 

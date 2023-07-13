@@ -2,9 +2,9 @@ package org.infinispan.configuration.global;
 
 import java.util.function.Supplier;
 
-import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.configuration.parsing.Attribute;
 import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.globalstate.LocalConfigurationStorage;
 
@@ -16,14 +16,15 @@ import org.infinispan.globalstate.LocalConfigurationStorage;
  * @since 8.1
  */
 public class GlobalStateConfiguration {
-   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
+   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder(Attribute.ENABLED, false).autoPersist(false).immutable().build();
+   public static final AttributeDefinition<UncleanShutdownAction> UNCLEAN_SHUTDOWN_ACTION = AttributeDefinition.builder(Attribute.UNCLEAN_SHUTDOWN_ACTION, UncleanShutdownAction.FAIL).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(GlobalStateConfiguration.class, ENABLED);
+      return new AttributeSet(GlobalStateConfiguration.class, ENABLED, UNCLEAN_SHUTDOWN_ACTION);
    }
 
    private final AttributeSet attributes;
-   private final Attribute<Boolean> enabled;
+   private final boolean enabled;
    private final GlobalStatePathConfiguration persistenceLocationConfiguration;
    private final GlobalStatePathConfiguration sharedPersistenceLocationConfiguration;
    private final TemporaryGlobalStatePathConfiguration temporaryLocationConfiguration;
@@ -35,7 +36,7 @@ public class GlobalStateConfiguration {
                                    TemporaryGlobalStatePathConfiguration temporaryLocationConfiguration,
                                    GlobalStorageConfiguration globalStorageConfiguration) {
       this.attributes = attributes.checkProtection();
-      this.enabled = attributes.attribute(ENABLED);
+      this.enabled = attributes.attribute(ENABLED).get();
       this.persistenceLocationConfiguration = persistenceLocationConfiguration;
       this.sharedPersistenceLocationConfiguration = sharedPersistenceLocationConfiguration;
       this.temporaryLocationConfiguration = temporaryLocationConfiguration;
@@ -43,7 +44,11 @@ public class GlobalStateConfiguration {
    }
 
    public boolean enabled() {
-      return enabled.get();
+      return enabled;
+   }
+
+   public UncleanShutdownAction uncleanShutdownAction() {
+      return attributes.attribute(UNCLEAN_SHUTDOWN_ACTION).get();
    }
 
    /**

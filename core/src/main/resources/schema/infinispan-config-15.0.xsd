@@ -941,6 +941,14 @@
         </xs:element>
       </xs:choice>
     </xs:sequence>
+    <xs:attribute name="unclean-shutdown-action" type="tns:unclean-shutdown-action" default="${GlobalState.unclean-shutdown-action}">
+      <xs:annotation>
+        <xs:documentation>
+          Defines the action taken when a dangling lock file is found in the persistent global state, signifying an
+          unclean shutdown of the node (usually because of a crash or an external termination).
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="global-state-path">
@@ -3122,6 +3130,31 @@
             Backup locations that use the asynchronous backup strategy can
             automatically come back online. State transfer operations begin
             when the remote site connections are stable.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="unclean-shutdown-action">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="IGNORE">
+        <xs:annotation>
+          <xs:documentation>
+            Ignores the presence of a dangling lock file in the persistent global state.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="FAIL">
+        <xs:annotation>
+          <xs:documentation>
+            Prevents startup of the cache manager if a dangling lock file is found in the persistent global state.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="PURGE">
+        <xs:annotation>
+          <xs:documentation>
+            Clears the persistent global state if a dangling lock file is found in the persistent global state.
           </xs:documentation>
         </xs:annotation>
       </xs:enumeration>

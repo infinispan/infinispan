@@ -51,6 +51,11 @@ Use the `cache-manager.security.authorization.group-only-mapping=false` configur
 
 The scattered cache mode have been removed a bit earlier. Please use Distributed caches instead.
 
+== Global State
+
+Infinispan will now refuse to start if a dangling lock file is found in the persistent global state, indicating
+an unclean shutdown. The behavior can be changed by configuring the global state `unclean-shutdown-action` setting.
+
 = Upgrading from 13.0 to 14.0
 
 == Security authorization SPI
