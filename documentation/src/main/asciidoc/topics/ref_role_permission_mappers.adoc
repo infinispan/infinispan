@@ -1,18 +1,55 @@
 [id='role-mappers_{context}']
 = Role and permission mappers
 
-{brandname} users are implemented with the `javax.security.auth.Subject` class and represent a grouping of security principals of type `java.security.Principal`.
+{brandname} implements users as a collection of principals.
+Principals represent either an individual user identity, such as a username, or a group to which the users belong. Internally, these are implemented with the `javax.security.auth.Subject` class.
 
-{brandname} includes the `PrincipalRoleMapper` API to associate security principals to roles and the `RolePermissionMapper` API to associate roles with sets of permissions.
-{brandname} also provides the following role and permission mapper implementations:
+To enable authorization, the principals must be mapped to role names, which are then expanded into a set of permissions.
+
+{brandname} includes the `PrincipalRoleMapper` API for associating security principals to roles, and the `RolePermissionMapper` API for associating roles with specific permissions.
+
+{brandname} provides the following role and permission mapper implementations:
 
 Cluster role mapper:: Stores principal to role mappings in the cluster registry.
 
-Cluster permission mapper:: Stores role to permission mappings in the cluster registry and allows you to dynamically modify user roles and permissions.
+Cluster permission mapper:: Stores role to permission mappings in the cluster registry. Allows you to dynamically modify user roles and permissions.
 
-Identity role mapper:: Uses the principal name as the role name. The type or format of the principal name depends on the source. For example in an LDAP directory the principal name could be a Distinguished Name (DN).
+Identity role mapper:: Uses the principal name as the role name. The type or format of the principal name depends on the source. For example, in an LDAP directory the principal name could be a Distinguished Name (DN).
 
-Common name role mapper:: Uses the Common Name (CN) as the role name. You can use this role mapper with an LDAP directory that contains Distinguished Names (DN); for example `cn=managers,ou=people,dc=example,dc=com` maps to the `managers` role.
+Common name role mapper:: Uses the Common Name (CN) as the role name. You can use this role mapper with an LDAP directory or with client certificates that contain Distinguished Names (DN); for example `cn=managers,ou=people,dc=example,dc=com` maps to the `managers` role.
+
+NOTE: By default, principal-to-role mapping is only applied to principals which represent groups.
+It is possible to configure {brandname} to also perform the mapping for user principals.
+
+== Mapping users to roles and permissions in {brandname}
+
+Consider the following user retrieved from an LDAP server, as a collection of DNs:
+
+----
+CN=myapplication,OU=applications,DC=mycompany
+CN=dataprocessors,OU=groups,DC=mycompany
+CN=finance,OU=groups,DC=mycompany
+----
+
+Using the *Common name role mapper*, the user would be mapped to the following roles:
+
+----
+dataprocessors
+finance
+----
+
+{brandname} has the following role definitions:
+
+----
+dataprocessors: ALL_WRITE ALL_READ
+finance: LISTEN
+----
+
+The user would have the following permissions:
+
+----
+ALL_WRITE ALL_READ LISTEN
+----
 
 [role="_additional-resources"]
 .Additional resources

@@ -1,0 +1,17 @@
+<server xmlns="urn:infinispan:server:{schemaversion}">
+  <security>
+    <security-realms>
+      <security-realm name="ldap-realm">
+        <ldap-realm url="ldap://${org.infinispan.test.host.address}:10389"
+                    principal="uid=admin,ou=People,dc=infinispan,dc=org"
+                    credential="strongPassword">
+          <name-rewriter>
+            <!-- Defines a rewriter that obtains the first CN from a DN -->
+            <common-name-principal-transformer />
+          </name-rewriter>
+          <!-- further configuration omitted -->
+        </ldap-realm>
+      </security-realm>
+    </security-realms>
+  </security>
+</server>

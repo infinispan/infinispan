@@ -34,13 +34,13 @@ public class LdapAttributeConfiguration extends ConfigurationElement<LdapAttribu
       AttributeMapping.Builder builder = attributes.attribute(REFERENCE).isModified() ?
             AttributeMapping.fromReference(attributes.attribute(REFERENCE).get()) :
             AttributeMapping.fromFilter(attributes.attribute(FILTER).get());
-      attributes.attribute(FILTER_DN).apply(v -> builder.searchDn(v));
-      attributes.attribute(FROM).apply(v -> builder.from(v));
-      attributes.attribute(TO).apply(v -> builder.to(v));
-      attributes.attribute(SEARCH_RECURSIVE).apply(v -> builder.searchRecursively(v));
-      attributes.attribute(ROLE_RECURSION).apply(v -> builder.roleRecursion(v));
-      attributes.attribute(ROLE_RECURSION_NAME).apply(v -> builder.roleRecursionName(v));
-      attributes.attribute(EXTRACT_RDN).apply(v -> builder.extractRdn(v));
+      attributes.attribute(FILTER_DN).apply(builder::searchDn);
+      attributes.attribute(FROM).apply(builder::from);
+      attributes.attribute(TO).apply(builder::to);
+      attributes.attribute(SEARCH_RECURSIVE).apply(builder::searchRecursively);
+      attributes.attribute(ROLE_RECURSION).apply(builder::roleRecursion);
+      attributes.attribute(ROLE_RECURSION_NAME).apply(builder::roleRecursionName);
+      attributes.attribute(EXTRACT_RDN).apply(builder::extractRdn);
       identity.map(builder.build());
    }
 }
