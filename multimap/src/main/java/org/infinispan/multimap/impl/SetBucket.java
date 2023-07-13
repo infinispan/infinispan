@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.protostream.impl.MarshallableUserObject;
+import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
@@ -22,20 +22,20 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  */
 @ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_SET_BUCKET)
 public class SetBucket<V> {
-   final Set<V> values;
+   final Set<MultimapObjectWrapper<V>> values;
 
    public SetBucket() {
       this.values = new HashSet<>();
    }
 
    public SetBucket(V value) {
-      var set = new HashSet<V>(1);
-      set.add(value);
+      Set<MultimapObjectWrapper<V>> set = new HashSet<>(1);
+      set.add(new MultimapObjectWrapper<>(value));
       this.values = set;
    }
 
    public SetBucket(HashSet<V> values) {
-      this.values = values;
+      this.values = values.stream().map(MultimapObjectWrapper::new).collect(Collectors.toSet());
    }
 
    public static <V> SetBucket<V> create(V value) {
@@ -43,23 +43,22 @@ public class SetBucket<V> {
    }
 
    @ProtoFactory
-   SetBucket(Collection<MarshallableUserObject<V>> wrappedValues) {
-      this((HashSet<V>) wrappedValues.stream().map(MarshallableUserObject::get)
-            .collect(Collectors.toCollection(HashSet::new)));
+   SetBucket(Collection<MultimapObjectWrapper<V>> wrappedValues) {
+      this.values = new HashSet<>(wrappedValues);
    }
 
    @ProtoField(number = 1, collectionImplementation = ArrayList.class)
-   Collection<MarshallableUserObject<V>> getWrappedValues() {
-      return this.values.stream().map(MarshallableUserObject::new).collect(Collectors.toList());
+   Collection<MultimapObjectWrapper<V>> getWrappedValues() {
+      return new ArrayList<>(values);
    }
 
    public Set<V> values() {
-      return new HashSet<>(values);
+      return values.stream().map(MultimapObjectWrapper::get).collect(Collectors.toSet());
    }
 
    public boolean contains(V value) {
-      for (V v : values) {
-         if (Objects.deepEquals(v, value)) {
+      for (MultimapObjectWrapper<V> v : values) {
+         if (Objects.deepEquals(v.get(), value)) {
             return Boolean.TRUE;
          }
       }
@@ -78,7 +77,7 @@ public class SetBucket<V> {
     * @return a defensive copy of the {@link #values} collection.
     */
    public Set<V> toSet() {
-      return new HashSet<>(values);
+      return values();
    }
 
    @Override
@@ -87,10 +86,10 @@ public class SetBucket<V> {
    }
 
    public boolean add(V value) {
-      return values.add(value);
+      return values.add(new MultimapObjectWrapper<>(value));
    }
 
    public boolean addAll(Collection<V> values) {
-      return this.values.addAll(values);
+      return this.values.addAll(values.stream().map(MultimapObjectWrapper::new).collect(Collectors.toSet()));
    }
 }

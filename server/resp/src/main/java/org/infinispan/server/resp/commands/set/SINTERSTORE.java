@@ -35,7 +35,7 @@ public class SINTERSTORE extends RespCommand implements Resp3Command {
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
          ChannelHandlerContext ctx,
          List<byte[]> arguments) {
-      EmbeddedSetCache<byte[], WrappedByteArray> esc = handler.getEmbeddedSetCache();
+      EmbeddedSetCache<byte[], byte[]> esc = handler.getEmbeddedSetCache();
 
       var destination = arguments.get(0);
       var keys = arguments.subList(1, arguments.size());

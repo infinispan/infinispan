@@ -32,7 +32,7 @@
               {
                 "id": 1,
                 "name": "wrappedValues",
-                "type": "org.infinispan.persistence.core.MarshallableUserObject",
+                "type": "MultimapObjectWrapper",
                 "is_repeated": true
               }
             ]

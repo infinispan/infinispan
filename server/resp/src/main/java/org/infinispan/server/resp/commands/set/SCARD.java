@@ -3,7 +3,6 @@ package org.infinispan.server.resp.commands.set;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.multimap.impl.EmbeddedSetCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
@@ -30,7 +29,7 @@ public class SCARD extends RespCommand implements Resp3Command {
          ChannelHandlerContext ctx,
          List<byte[]> arguments) {
 
-      EmbeddedSetCache<byte[], WrappedByteArray> esc = handler.getEmbeddedSetCache();
+      EmbeddedSetCache<byte[], byte[]> esc = handler.getEmbeddedSetCache();
       return handler.stageToReturn(esc.size(arguments.get(0)), ctx, Consumers.LONG_BICONSUMER);
    }
 }
