@@ -77,6 +77,20 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
 
    private void acquireGlobalLock() {
       File lockFile = getLockFile();
+      if (lockFile.exists()) {
+         // The node was not shutdown cleanly
+         switch (globalConfiguration.globalState().uncleanShutdownAction()) {
+            case FAIL:
+               throw CONTAINER.globalStateLockFilePresent(lockFile);
+            case PURGE:
+               deleteScopedState(GLOBAL_SCOPE);
+               lockFile.delete();
+               break;
+            case IGNORE:
+               // Do nothing;
+               break;
+         }
+      }
       try {
          lockFile.getParentFile().mkdirs();
          globalLockFile = new FileOutputStream(lockFile);
@@ -90,11 +104,14 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
    }
 
    private void releaseGlobalLock() {
-      if (globalLock != null && globalLock.isValid())
-         Util.close(globalLock);
-      globalLock = null;
-      Util.close(globalLockFile);
-      getLockFile().delete();
+      if (globalLockFile != null) {
+         if (globalLock != null && globalLock.isValid())
+            Util.close(globalLock);
+         globalLock = null;
+         Util.close(globalLockFile);
+         // Only delete the file if we had successfully acquired it
+         getLockFile().delete();
+      }
    }
 
    private void loadGlobalState() {

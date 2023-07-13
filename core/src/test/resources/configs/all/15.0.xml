@@ -127,7 +127,7 @@
       <jmx enabled="true" domain="my-domain" mbean-server-lookup="org.infinispan.jmx.CustomMBeanServerPropertiesTest$TestLookup">
          <property name="key">value</property>
       </jmx>
-      <global-state>
+      <global-state unclean-shutdown-action="FAIL">
          <persistent-location path="persistentPath" relative-to="jboss.server.temp.dir" />
          <shared-persistent-location path="sharedPath" relative-to="jboss.server.temp.dir" />
          <temporary-location path="tmpPath" relative-to="jboss.server.temp.dir" />

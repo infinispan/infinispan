@@ -2362,4 +2362,6 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Flushed ACL Cache", id = 692)
    void flushedACLCache();
+   @Message(value = "Dangling lock file '%s' in persistent global state, probably left behind by an unclean shutdown. ", id = 693)
+   CacheConfigurationException globalStateLockFilePresent(File lockFile);
 }

@@ -230,8 +230,9 @@ public enum Attribute {
     PATTERN,
     REPLACEMENT,
     REPLACE_ALL,
-    UPPERCASE
-    ;
+    UNCLEAN_SHUTDOWN_ACTION,
+    UPPERCASE,
+   ;
 
     private final String name;
 

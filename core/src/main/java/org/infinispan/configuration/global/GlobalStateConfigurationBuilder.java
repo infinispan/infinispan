@@ -1,6 +1,7 @@
 package org.infinispan.configuration.global;
 
 import static org.infinispan.configuration.global.GlobalStateConfiguration.ENABLED;
+import static org.infinispan.configuration.global.GlobalStateConfiguration.UNCLEAN_SHUTDOWN_ACTION;
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.util.function.Supplier;
@@ -58,6 +59,15 @@ public class GlobalStateConfigurationBuilder extends AbstractGlobalConfiguration
 
    public boolean enabled() {
       return attributes.attribute(ENABLED).get();
+   }
+
+   /**
+    * Defines the action taken when a dangling lock file is found in the persistent global state, signifying an
+    * unclean shutdown of the node (usually because of a crash or an external termination).
+    */
+   public GlobalStateConfigurationBuilder uncleanShutdownAction(UncleanShutdownAction action) {
+      attributes.attribute(UNCLEAN_SHUTDOWN_ACTION).set(action);
+      return this;
    }
 
    /**

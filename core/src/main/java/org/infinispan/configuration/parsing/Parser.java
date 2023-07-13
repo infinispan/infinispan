@@ -1269,8 +1269,8 @@ public class Parser extends CacheParser {
    }
 
    private void parseGlobalState(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
-      ParseUtils.requireNoAttributes(reader);
       GlobalStateConfigurationBuilder builder = holder.getGlobalConfigurationBuilder().globalState().enable();
+      ParseUtils.parseAttributes(reader, builder);
       ConfigurationStorage storage = null;
       while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
