@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.multimap.impl.EmbeddedSetCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
@@ -32,11 +31,11 @@ public class SADD extends RespCommand implements Resp3Command {
                                                       List<byte[]> arguments) {
 
       byte[] key = arguments.get(0);
-      EmbeddedSetCache<byte[],WrappedByteArray> esc = handler.getEmbeddedSetCache();
+      EmbeddedSetCache<byte[],byte[]> esc = handler.getEmbeddedSetCache();
       AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
       var addedCount = new AtomicLong(0);
       for (int i = 1; i < arguments.size(); i++) {
-         CompletionStage<Void> add = esc.add(key, new WrappedByteArray(arguments.get(i))).thenAccept((v) -> {if (v) addedCount.incrementAndGet();});
+         CompletionStage<Void> add = esc.add(key, arguments.get(i)).thenAccept((v) -> {if (v) addedCount.incrementAndGet();});
          aggregateCompletionStage.dependsOn(add);
       }
 

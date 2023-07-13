@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.context.Flag;
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.multimap.impl.EmbeddedMultimapPairCache;
@@ -30,9 +29,7 @@ public class Resp3Handler extends Resp3AuthHandler {
    protected AdvancedCache<byte[], byte[]> ignorePreviousValueCache;
    protected EmbeddedMultimapListCache<byte[], byte[]> listMultimap;
    protected EmbeddedMultimapPairCache<byte[], byte[], byte[]> mapMultimap;
-   // Entry type for SetBucket needs proper hashcode, equals methods. Using
-   // WrappedByteArray
-   protected EmbeddedSetCache<byte[], WrappedByteArray> embeddedSetCache;
+   protected EmbeddedSetCache<byte[], byte[]> embeddedSetCache;
    protected EmbeddedMultimapSortedSetCache<byte[], byte[]> sortedSetMultimap;
 
    private final MediaType valueMediaType;
@@ -61,7 +58,7 @@ public class Resp3Handler extends Resp3AuthHandler {
       return mapMultimap;
    }
 
-   public EmbeddedSetCache<byte[], WrappedByteArray> getEmbeddedSetCache() {
+   public EmbeddedSetCache<byte[], byte[]> getEmbeddedSetCache() {
       return embeddedSetCache;
    }
 
@@ -107,14 +104,14 @@ public class Resp3Handler extends Resp3AuthHandler {
       }
    }
 
-   public static void handleCollectionBulkResult(Collection<WrappedByteArray> collection, ByteBufPool alloc) {
+   public static void handleCollectionBulkResult(Collection<byte[]> collection, ByteBufPool alloc) {
       if (collection == null) {
          handleNullResult(alloc);
          return;
       }
-      int dataLength = collection.stream().mapToInt(wba -> wba.getLength() + 5 + lenghtInChars(wba.getLength())).sum();
+      int dataLength = collection.stream().mapToInt(ba -> ba.length + 5 + lenghtInChars(ba.length)).sum();
       var buffer = allocAndWriteLengthPrefix('*', collection.size(), alloc, dataLength);
-      collection.forEach(wba -> writeBulkResult(wba.getBytes(), buffer));
+      collection.forEach(wba -> writeBulkResult(wba, buffer));
    }
 
    private static void handleNullResult(ByteBufPool alloc) {

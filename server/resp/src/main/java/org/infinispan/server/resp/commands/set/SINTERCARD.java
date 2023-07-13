@@ -1,11 +1,8 @@
 package org.infinispan.server.resp.commands.set;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.multimap.impl.EmbeddedSetCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
@@ -30,7 +27,6 @@ import io.netty.channel.ChannelHandlerContext;
  * @since 15.0
  */
 public class SINTERCARD extends RespCommand implements Resp3Command {
-   static Set<WrappedByteArray> EMPTY_SET = new HashSet<>();
    static String LIMIT_OPT = "LIMIT";
 
    public SINTERCARD() {
@@ -41,7 +37,7 @@ public class SINTERCARD extends RespCommand implements Resp3Command {
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
          ChannelHandlerContext ctx,
          List<byte[]> arguments) {
-      EmbeddedSetCache<byte[], WrappedByteArray> esc = handler.getEmbeddedSetCache();
+      EmbeddedSetCache<byte[], byte[]> esc = handler.getEmbeddedSetCache();
       var keysNum = ArgumentUtils.toInt(arguments.get(0));
 
       final int limit = processArgs(keysNum, arguments, handler);

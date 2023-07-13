@@ -356,7 +356,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
 
    public void testAuth() {
       RedisCommands<String, String> redis = redisConnection.sync();
-      Exceptions.expectException(RedisCommandExecutionException.class, ".*but no password is set",
+      Exceptions.expectException(RedisCommandExecutionException.class, "WRONGPASS invalid username-password pair or user is disabled.",
             () -> redis.auth("user", "pass"));
    }
 

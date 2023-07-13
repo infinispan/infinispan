@@ -26,7 +26,7 @@ public abstract class AbstractRespTest {
    static void beforeAll() {
       int size = SERVERS.getServerDriver().getConfiguration().numServers();
       RedisOptions opts = new RedisOptions()
-            .setPoolName("string-operations-test");
+            .setPoolName("resp-tests-pool");
 
       if (size > 1) {
          opts = opts.setType(RedisClientType.CLUSTER);
@@ -49,5 +49,16 @@ public abstract class AbstractRespTest {
 
    protected final RedisAPI createConnection(Vertx vertx, RedisOptions options) {
       return RedisAPI.api(SERVERS.resp().withOptions(options).withVertx(vertx).get());
+   }
+
+   protected RedisAPI createDirectConnection(int index, Vertx vertx) {
+      InetSocketAddress address = SERVERS.getServerDriver().getServerSocket(index, 11222);
+
+      RedisOptions options = new RedisOptions()
+            .setType(RedisClientType.STANDALONE)
+            .setMaxPoolWaiting(-1)
+            .addConnectionString("redis://" + address.getHostString() + ":" + address.getPort());
+
+      return createConnection(vertx, options);
    }
 }

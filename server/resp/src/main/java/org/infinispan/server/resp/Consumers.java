@@ -1,6 +1,5 @@
 package org.infinispan.server.resp;
 
-import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.server.resp.response.LCSResponse;
 import org.infinispan.server.resp.response.SetResponse;
 
@@ -33,7 +32,7 @@ public final class Consumers {
 
    public static final BiConsumer<byte[], ByteBufPool> BULK_BICONSUMER = Resp3Handler::handleBulkResult;
 
-   public static final BiConsumer<Collection<WrappedByteArray>, ByteBufPool> COLLECTION_BULK_BICONSUMER = Resp3Handler::handleCollectionBulkResult;
+   public static final BiConsumer<Collection<byte[]>, ByteBufPool> COLLECTION_BULK_BICONSUMER = Resp3Handler::handleCollectionBulkResult;
 
    public static final BiConsumer<byte[], ByteBufPool> GET_BICONSUMER = (innerValueBytes, alloc) -> {
       if (innerValueBytes != null) {

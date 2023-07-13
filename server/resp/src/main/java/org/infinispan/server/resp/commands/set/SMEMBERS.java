@@ -3,7 +3,6 @@ package org.infinispan.server.resp.commands.set;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.multimap.impl.EmbeddedSetCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
@@ -29,7 +28,7 @@ public class SMEMBERS extends RespCommand implements Resp3Command {
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
          ChannelHandlerContext ctx,
          List<byte[]> arguments) {
-      EmbeddedSetCache<byte[], WrappedByteArray> esc = handler.getEmbeddedSetCache();
+      EmbeddedSetCache<byte[], byte[]> esc = handler.getEmbeddedSetCache();
       return handler.stageToReturn(esc.get(arguments.get(0)), ctx, Consumers.COLLECTION_BULK_BICONSUMER);
    }
 }
