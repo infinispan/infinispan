@@ -1,9 +1,19 @@
 package org.infinispan.server.resp;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.util.CharsetUtil;
+import static org.infinispan.server.resp.RespConstants.CRLF;
+import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
+
+import java.lang.invoke.MethodHandles;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -20,21 +30,15 @@ import org.infinispan.server.resp.commands.pubsub.KeyChannelUtils;
 import org.infinispan.server.resp.logging.Log;
 import org.infinispan.util.concurrent.CompletionStages;
 
-import java.lang.invoke.MethodHandles;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletionStage;
-
-import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.AttributeKey;
+import io.netty.util.CharsetUtil;
 
 public class SubscriberHandler extends CacheRespRequestHandler {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+   private static final AttributeKey<Long> SUBSCRIPTIONS_COUNTER = AttributeKey.newInstance("channel-subscriptions");
    private final Resp3Handler resp3Handler;
 
    public SubscriberHandler(RespServer respServer, Resp3Handler prevHandler) {
@@ -96,7 +100,7 @@ public class SubscriberHandler extends CacheRespRequestHandler {
       }
    }
 
-   private Map<WrappedByteArray, PubSubListener> specificChannelSubscribers = new HashMap<>();
+   private final Map<WrappedByteArray, PubSubListener> specificChannelSubscribers = new HashMap<>();
 
    public Map<WrappedByteArray, PubSubListener> specificChannelSubscribers() {
       return specificChannelSubscribers;
@@ -160,18 +164,33 @@ public class SubscriberHandler extends CacheRespRequestHandler {
    public CompletionStage<RespRequestHandler> sendSubscriptions(ChannelHandlerContext ctx, CompletionStage<Void> stageToWaitFor,
          Collection<byte[]> keyChannels, boolean subscribeOrUnsubscribe) {
       return stageToReturn(stageToWaitFor, ctx, (__, alloc) -> {
-         for (byte[] keyChannel : keyChannels) {
-            String initialCharSeq = subscribeOrUnsubscribe ? "*2\r\n$9\r\nsubscribe\r\n$" : "*2\r\n$11\r\nunsubscribe\r\n$";
+         assert ctx.executor().inEventLoop();
 
-            // Length of string (all ascii so 1 byte per) + (log10 + 1 = sizes of number as char in bytes) + \r\n + bytes themselves + \r\n
-            int sizeRequired = initialCharSeq.length() + (int) Math.log10(keyChannel.length) + 1 + 2 + keyChannel.length + 2;
+         Long counter = ctx.channel().attr(SUBSCRIPTIONS_COUNTER).get();
+         if (counter == null) counter = 0L;
+
+         for (byte[] keyChannel : keyChannels) {
+            String initialCharSeq = subscribeOrUnsubscribe ? "*3\r\n$9\r\nsubscribe\r\n$" : "*3\r\n$11\r\nunsubscribe\r\n$";
+            counter = Math.max(0, counter + (subscribeOrUnsubscribe ? 1 : -1));
+
+            // Length of string (all ascii so 1 byte per) + (log10 + 1 = sizes of number as char in bytes) + \r\n + bytes themselves + \r\n + : + countSize + \r\n
+            int countSize = counter == 0 ? 1 : (int) Math.log10(counter) + 1;
+            int sizeRequired = initialCharSeq.length() + (int) Math.log10(keyChannel.length) + 1 + 2 + keyChannel.length + 2 + 1 + countSize + 2;
             ByteBuf subscribeBuffer = alloc.apply(sizeRequired);
             int initialPos = subscribeBuffer.writerIndex();
             subscribeBuffer.writeCharSequence(initialCharSeq + keyChannel.length + CRLF_STRING, CharsetUtil.US_ASCII);
             subscribeBuffer.writeBytes(keyChannel);
-            subscribeBuffer.writeByte('\r');
-            subscribeBuffer.writeByte('\n');
+            subscribeBuffer.writeBytes(CRLF);
+            subscribeBuffer.writeByte(':');
+            ByteBufferUtils.setIntChars(counter, countSize, subscribeBuffer);
+            subscribeBuffer.writeBytes(CRLF);
             assert subscribeBuffer.writerIndex() - initialPos == sizeRequired;
+         }
+
+         if (counter == 0) {
+            ctx.channel().attr(SUBSCRIPTIONS_COUNTER).set(null);
+         } else {
+            ctx.channel().attr(SUBSCRIPTIONS_COUNTER).set(counter);
          }
       });
    }

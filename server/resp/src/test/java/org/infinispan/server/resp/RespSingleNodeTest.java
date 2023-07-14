@@ -283,9 +283,9 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       // Subscribe to some channels
       connection.subscribe("channel2", "test");
       String value = handOffQueue.poll(10, TimeUnit.SECONDS);
-      assertThat(value).isEqualTo("subscribed-channel2-0");
+      assertThat(value).isEqualTo("subscribed-channel2-1");
       value = handOffQueue.poll(10, TimeUnit.SECONDS);
-      assertThat(value).isEqualTo("subscribed-test-0");
+      assertThat(value).isEqualTo("subscribed-test-2");
 
       // 2 listeners, one for each sub above
       assertThat(cache.getAdvancedCache().getListeners()).hasSize(listenersBefore + 2);
@@ -307,7 +307,8 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
          for (int i = 0; i < 2; ++i) {
             value = handOffQueue.poll(10, TimeUnit.SECONDS);
             assertThat(value).withFailMessage("Didn't receive any notifications").isNotNull();
-            if (!value.equals("unsubscribed-channel2-0") && !value.equals("unsubscribed-test-0")) {
+            if (!value.startsWith("unsubscribed-channel2-") && !value.startsWith("unsubscribed-test-")
+                  && (!value.endsWith("0") || !value.endsWith("1"))) {
                fail("Notification doesn't match expected, was: " + value);
             }
          }
@@ -321,11 +322,12 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       RedisPubSubCommands<String, String> connection = createPubSubConnection();
       BlockingQueue<String> handOffQueue = addPubSubListener(connection);
       // Subscribe to some channels
+      List<String> channels = Arrays.asList("channel2", "test", "channel");
       connection.subscribe("channel2", "test");
       String value = handOffQueue.poll(10, TimeUnit.SECONDS);
-      assertThat(value).isEqualTo("subscribed-channel2-0");
+      assertThat(value).isEqualTo("subscribed-channel2-1");
       value = handOffQueue.poll(10, TimeUnit.SECONDS);
-      assertThat(value).isEqualTo("subscribed-test-0");
+      assertThat(value).isEqualTo("subscribed-test-2");
 
       // Send a message to confirm it is properly listening
       RedisCommands<String, String> redis = redisConnection.sync();
@@ -335,15 +337,16 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
 
       connection.subscribe("channel");
       value = handOffQueue.poll(10, TimeUnit.SECONDS);
-      assertThat(value).isEqualTo("subscribed-channel-0");
+      assertThat(value).isEqualTo("subscribed-channel-3");
 
       connection.unsubscribe("channel2");
       connection.unsubscribe("doesn't-exist");
       connection.unsubscribe("channel", "test");
 
+      int subscriptions = 3;
       for (String channel : new String[]{"channel2", "doesn't-exist", "channel", "test"}) {
          value = handOffQueue.poll(10, TimeUnit.SECONDS);
-         assertThat(value).isEqualTo("unsubscribed-" + channel + "-0");
+         assertThat(value).isEqualTo("unsubscribed-" + channel + "-" + Math.max(0, --subscriptions));
       }
    }
 

@@ -743,6 +743,17 @@
             <version>${version.io.lettuce}</version>
          </dependency>
          <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-redis-client</artifactId>
+            <version>${version.vertx}</version>
+         </dependency>
+         <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-junit5</artifactId>
+            <version>${version.vertx}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
             <groupId>jakarta.json</groupId>
             <artifactId>jakarta.json-api</artifactId>
             <version>${version.jakarta.json-api}</version>

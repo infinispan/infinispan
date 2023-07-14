@@ -4,8 +4,6 @@ import java.io.Closeable;
 
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
@@ -14,8 +12,6 @@ import io.vertx.redis.client.RedisConnection;
 import io.vertx.redis.client.RedisOptions;
 
 public class RespTestClientDriver extends BaseTestClientDriver<RespTestClientDriver> {
-
-   private static final Logger log = LoggerFactory.getLogger(RespTestClientDriver.class);
 
    private final TestServer testServer;
    private final TestClient testClient;

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
+import io.vertx.redis.client.Redis;
 import io.vertx.redis.client.RedisAPI;
 import io.vertx.redis.client.RedisClientType;
 import io.vertx.redis.client.RedisOptions;
@@ -44,7 +45,11 @@ public abstract class AbstractRespTest {
    }
 
    protected final RedisAPI createConnection(Vertx vertx) {
-      return RedisAPI.api(SERVERS.resp().withOptions(options).withVertx(vertx).get());
+      return RedisAPI.api(createBaseClient(vertx));
+   }
+
+   protected final Redis createBaseClient(Vertx vertx) {
+      return SERVERS.resp().withOptions(options).withVertx(vertx).get();
    }
 
    protected final RedisAPI createConnection(Vertx vertx, RedisOptions options) {

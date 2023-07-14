@@ -99,14 +99,12 @@
       <dependency>
          <groupId>io.vertx</groupId>
          <artifactId>vertx-redis-client</artifactId>
-         <version>4.3.4</version>
          <scope>test</scope>
       </dependency>
 
       <dependency>
          <groupId>io.vertx</groupId>
          <artifactId>vertx-junit5</artifactId>
-         <version>4.4.4</version>
          <scope>test</scope>
       </dependency>
 

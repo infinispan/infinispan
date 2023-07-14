@@ -53,7 +53,6 @@
       <dependency>
          <groupId>io.vertx</groupId>
          <artifactId>vertx-redis-client</artifactId>
-         <version>4.3.4</version>
       </dependency>
       <dependency>
          <groupId>junit</groupId>
