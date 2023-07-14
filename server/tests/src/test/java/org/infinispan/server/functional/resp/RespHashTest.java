@@ -12,7 +12,6 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxTestContext;
@@ -57,7 +56,7 @@ public class RespHashTest extends AbstractRespTest {
       int size = 100;
 
       Map<String, String> data = new HashMap<>(size);
-      List<Future> futures = new ArrayList<>(size);
+      List<Future<?>> futures = new ArrayList<>(size);
 
       CompletableFuture<Void> cs = new CompletableFuture<>();
       Future<?> await = Future.fromCompletionStage(cs);
@@ -78,7 +77,7 @@ public class RespHashTest extends AbstractRespTest {
       }
 
       cs.complete(null);
-      CompositeFuture.all(futures)
+      Future.all(futures)
             .onFailure(ctx::failNow)
             .compose(v -> server0.hgetall("conc-dhash"))
             .onSuccess(v -> {

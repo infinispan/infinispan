@@ -8,7 +8,6 @@ import java.util.concurrent.CompletableFuture;
 
 import org.junit.jupiter.api.Test;
 
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxTestContext;
@@ -48,7 +47,7 @@ public class RespListTest extends AbstractRespTest {
 
       int size = 100;
       List<String> values = new ArrayList<>(size);
-      List<Future> futures = new ArrayList<>(size);
+      List<Future<?>> futures = new ArrayList<>(size);
 
       CompletableFuture<Void> cs = new CompletableFuture<>();
       Future<?> await = Future.fromCompletionStage(cs);
@@ -67,7 +66,7 @@ public class RespListTest extends AbstractRespTest {
       }
 
       cs.complete(null);
-      CompositeFuture.all(futures)
+      Future.all(futures)
             .onFailure(ctx::failNow)
             .compose(ignore -> server0.lrange("conc-dlist", "0", "-1"))
             .onSuccess(v -> {
