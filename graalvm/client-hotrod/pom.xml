@@ -136,7 +136,7 @@
                      <goal>exec</goal>
                   </goals>
                   <configuration>
-                     <executable>java</executable>
+                     <executable>${env.JAVA_HOME}/bin/java</executable>
                      <workingDirectory>target</workingDirectory>
                      <arguments>
                         <argument>-cp</argument>

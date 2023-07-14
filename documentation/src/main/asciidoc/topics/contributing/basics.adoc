@@ -3,7 +3,7 @@ In this chapter we quickly walk through the basics on contributing; future chapt
 
 == Pre-requisites
 |=============
-| Java 17   | {brandname} is built using Java 17 and requires at least Java 11 for runtime (we build with OpenJDK)
+| Java 17   | {brandname} is built with and requires Java 17 for runtime (we build with OpenJDK)
 | Maven 3.5 | The {brandname} build uses Maven, and you should be using at least Maven 3.5
 | Git       | The {brandname} source code is stored in Git.
 |=============

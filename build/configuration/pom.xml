@@ -82,9 +82,9 @@
    </distributionManagement>
 
    <properties>
-      <maven.compiler.source>11</maven.compiler.source>
-      <maven.compiler.target>11</maven.compiler.target>
-      <maven.compiler.release>11</maven.compiler.release>
+      <maven.compiler.source>17</maven.compiler.source>
+      <maven.compiler.target>17</maven.compiler.target>
+      <maven.compiler.release>17</maven.compiler.release>
       <maven.javadoc.skip>false</maven.javadoc.skip>
       <transform.skip>true</transform.skip>
       <transform.tests.skip>true</transform.tests.skip>
@@ -231,6 +231,7 @@
       <version.maven.clean>3.3.1</version.maven.clean>
       <version.maven-compiler-plugin>3.11.0</version.maven-compiler-plugin>
       <version.maven.enforcer>3.3.0</version.maven.enforcer>
+      <version.maven.exec>3.1.1</version.maven.exec>
       <version.maven.install>3.1.1</version.maven.install>
       <version.maven.invoker>3.6.0</version.maven.invoker>
       <version.maven.jar>3.3.0</version.maven.jar>
