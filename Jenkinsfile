@@ -34,7 +34,7 @@ pipeline {
                     // ISPN-9703 Ensure distribution build works on non-prs
                     env.DISTRIBUTION_BUILD = !env.BRANCH_NAME.startsWith('PR-') || pullRequest.labels.contains('Documentation') || pullRequest.labels.contains('Image Required') ? "-Pdistribution" : ""
                     // Collect reports on non-prs
-                    env.REPORTS_BUILD = env.BRANCH_NAME.startsWith('PR-') ? "" : "surefire-report:report pmd:cpd pmd:pmd spotbugs:spotbugs dependency-check:check"
+                    env.REPORTS_BUILD = env.BRANCH_NAME.startsWith('PR-') ? "" : "surefire-report:report pmd:cpd pmd:pmd spotbugs:spotbugs"
                 }
 
                 sh 'cleanup.sh'
