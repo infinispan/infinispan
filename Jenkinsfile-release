@@ -40,7 +40,7 @@ pipeline {
             steps {
                 script {
                     if ("${version}".endsWith('Final')) {
-                        sh "$MAVEN_HOME/bin/mvn clean install -B -V -e -DskipTests -DcommitProtoLockChanges=true"
+                        sh "$MAVEN_HOME/bin/mvn clean install -B -e -DskipTests -DcommitProtoLockChanges=true"
                         sh "git add '**/proto.lock'"
                         sh "git diff-index --quiet HEAD || git commit -m 'Committing proto.lock files for ${version}'"
                     }
@@ -60,22 +60,22 @@ pipeline {
 
         stage('Version') {
             steps {
-                sh "$MAVEN_HOME/bin/mvn -B -V versions:set -DnewVersion=${version} -DprocessAllModules=true"
-                sh "$MAVEN_HOME/bin/mvn -B -V versions:set-property -Dproperty=version.infinispan -DnewVersion=${version}"
+                sh "$MAVEN_HOME/bin/mvn -B versions:set -DnewVersion=${version} -DprocessAllModules=true"
+                sh "$MAVEN_HOME/bin/mvn -B versions:set-property -Dproperty=version.infinispan -DnewVersion=${version}"
             }
         }
 
         stage('Deploy') {
             steps {
-                sh "$MAVEN_HOME/bin/mvn -B -V -Drelease-mode=upstream -Pdistribution -DskipTests clean deploy -Dinfinispan.brand.version=${version}"
+                sh "$MAVEN_HOME/bin/mvn -B -Drelease-mode=upstream -Pdistribution -DskipTests clean deploy -Dinfinispan.brand.version=${version}"
             }
         }
 
         stage('Tag') {
             steps {
                 // Commit and tag once everything is good
-                sh "$MAVEN_HOME/bin/mvn -B -V scm:checkin -Dmessage=\"Releasing version ${version}\" -DpushChanges=false"
-                sh "$MAVEN_HOME/bin/mvn -B -V scm:tag -Dtag=${version}"
+                sh "$MAVEN_HOME/bin/mvn -B scm:checkin -Dmessage=\"Releasing version ${version}\" -DpushChanges=false"
+                sh "$MAVEN_HOME/bin/mvn -B scm:tag -Dtag=${version}"
             }
         }
 
@@ -84,9 +84,9 @@ pipeline {
                 expression { params.nextVersion != '' }
             }
             steps {
-                sh "$MAVEN_HOME/bin/mvn -B -V versions:set -DnewVersion=${nextVersion} -DprocessAllModules=true"
-                sh "$MAVEN_HOME/bin/mvn -B -V versions:set-property -Dproperty=version.infinispan -DnewVersion=${nextVersion}"
-                sh "$MAVEN_HOME/bin/mvn -B -V -Dmessage='next version ${nextVersion}' -DscmVersion=${branch} -DscmVersionType=branch scm:checkin"
+                sh "$MAVEN_HOME/bin/mvn -B versions:set -DnewVersion=${nextVersion} -DprocessAllModules=true"
+                sh "$MAVEN_HOME/bin/mvn -B versions:set-property -Dproperty=version.infinispan -DnewVersion=${nextVersion}"
+                sh "$MAVEN_HOME/bin/mvn -B -Dmessage='next version ${nextVersion}' -DscmVersion=${branch} -DscmVersionType=branch scm:checkin"
             }
         }
 

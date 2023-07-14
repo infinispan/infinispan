@@ -6,7 +6,7 @@ pipeline {
     }
 
     parameters {
-        choice(name: 'TEST_JDK', choices: ['Default', 'JDK 17', 'JDK 20', 'JDK 21'], description: 'The JDK used to run tests')
+        choice(name: 'TEST_JDK', choices: ['Default', 'JDK 17', 'JDK 21', 'JDK latest'], description: 'The JDK used to run tests')
     }
 
     options {
@@ -19,12 +19,10 @@ pipeline {
         stage('Prepare') {
             steps {
                 script {
-                    // Show the agent name in the build list
-                    echo env.NODE_NAME
                     env.MAVEN_HOME = tool('Maven')
                     env.MAVEN_OPTS = "-Xmx1500m -XX:+HeapDumpOnOutOfMemoryError"
                     env.JAVA_HOME = tool('JDK 21')
-                    env.GRAALVM_HOME = tool('GraalVM 20')
+                    env.GRAALVM_HOME = tool('GraalVM 21')
                     if (params.TEST_JDK != 'Default') {
                         env.JAVA_ALT_HOME = tool(params.TEST_JDK)
                         env.ALT_TEST_BUILD = "-Pjava-alt-test"
@@ -36,6 +34,15 @@ pipeline {
                     // Collect reports on non-prs
                     env.REPORTS_BUILD = env.BRANCH_NAME.startsWith('PR-') ? "" : "surefire-report:report pmd:cpd pmd:pmd spotbugs:spotbugs"
                 }
+                echo "-----------"
+                echo env.NODE_NAME
+                echo "-----------"
+                sh "$JAVA_HOME/bin/java --version"
+                echo "-----------"
+                sh "$MAVEN_HOME/bin/mvn --version"
+                echo "-----------"
+                sh "$GRAALVM_HOME/bin/java --version"
+                echo "-----------"
 
                 sh 'cleanup.sh'
             }
@@ -49,7 +56,7 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh "$MAVEN_HOME/bin/mvn clean install $REPORTS_BUILD -B -V -e -DskipTests -Pnative $DISTRIBUTION_BUILD"
+                sh "$MAVEN_HOME/bin/mvn clean install $REPORTS_BUILD -B -e -DskipTests -Pnative $DISTRIBUTION_BUILD"
             }
         }
 
@@ -134,7 +141,7 @@ pipeline {
         stage('Tests') {
             steps {
                 timeout(time: 2, unit: 'HOURS') {
-                    sh "$MAVEN_HOME/bin/mvn verify -B -V -e -DrerunFailingTestsCount=2 -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative $ALT_TEST_BUILD"
+                    sh "$MAVEN_HOME/bin/mvn verify -B -e -DrerunFailingTestsCount=2 -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative $ALT_TEST_BUILD"
                 }
                 // Remove any default TestNG report files as this will result in tests being counted twice by Jenkins statistics
                 sh "rm -rf **/target/*-reports*/**/TEST-TestSuite.xml"
@@ -163,7 +170,7 @@ pipeline {
             steps {
                 script {
                     if (!env.BRANCH_NAME.startsWith('PR-')) {
-                        sh "$MAVEN_HOME/bin/mvn deploy -B -V -e -Pdistribution -Drelease-mode=upstream -DdeployServerZip=true -DskipTests -Dcheckstyle.skip=true"
+                        sh "$MAVEN_HOME/bin/mvn deploy -B -e -Pdistribution -Drelease-mode=upstream -DdeployServerZip=true -DskipTests -Dcheckstyle.skip=true"
                     }
                 }
             }
