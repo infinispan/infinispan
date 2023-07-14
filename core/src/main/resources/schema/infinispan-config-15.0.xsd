@@ -350,6 +350,7 @@
             <xs:documentation>Defines a DIST_* mode cache configuration.</xs:documentation>
           </xs:annotation>
         </xs:element>
+      </xs:choice>
     </xs:sequence>
     <xs:attribute name="name" type="xs:string">
       <xs:annotation>
