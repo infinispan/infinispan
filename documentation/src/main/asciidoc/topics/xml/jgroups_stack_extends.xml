@@ -21,11 +21,11 @@
                    stack.combine="INSERT_AFTER"
                    stack.position="VERIFY_SUSPECT2" />
     </stack>
-    <cache-container name="default" statistics="true">
-      <!-- Uses "my-stack" for cluster transport. -->
-      <transport cluster="${infinispan.cluster.name}"
-                 stack="my-stack"
-                 node-name="${infinispan.node.name:}"/>
-   </cache-container>
   </jgroups>
+  <cache-container name="default" statistics="true">
+    <!-- Uses "my-stack" for cluster transport. -->
+    <transport cluster="${infinispan.cluster.name}"
+               stack="my-stack"
+               node-name="${infinispan.node.name:}"/>
+  </cache-container>
 </infinispan>
