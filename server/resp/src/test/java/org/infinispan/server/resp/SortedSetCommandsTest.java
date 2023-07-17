@@ -805,4 +805,42 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
                   just(6, "ryan"));
       assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zrevrangebylex("another", Range.unbounded()));
    }
+
+   public void testZRANK() {
+      assertThat(redis.zrank("people", "tristan")).isNull();
+      redis.zadd("people", ZAddArgs.Builder.ch(),
+            just(1, "galder"),
+            just(2, "dan"),
+            just(3, "adrian"),
+            just(3.5, "radim"),
+            just(4, "tristan"),
+            just(4, "vittorio"),
+            just(5, "pedro"),
+            just(5, "fabio"),
+            just(6, "jose"),
+            just(6, "ryan"),
+            just(6, "anna"));
+      assertThat(redis.zrank("people", "ramona")).isNull();
+      assertThat(redis.zrank("people", "tristan")).isEqualTo(4);
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zrank("another","tristan"));
+   }
+
+   public void testZREVRANK() {
+      assertThat(redis.zrevrank("people", "tristan")).isNull();
+      redis.zadd("people", ZAddArgs.Builder.ch(),
+            just(1, "galder"),
+            just(2, "dan"),
+            just(3, "adrian"),
+            just(3.5, "radim"),
+            just(4, "tristan"),
+            just(4, "vittorio"),
+            just(5, "pedro"),
+            just(5, "fabio"),
+            just(6, "jose"),
+            just(6, "ryan"),
+            just(6, "anna"));
+      assertThat(redis.zrevrank("people", "ramona")).isNull();
+      assertThat(redis.zrevrank("people", "tristan")).isEqualTo(6);
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zrevrank("another","tristan"));
+   }
 }

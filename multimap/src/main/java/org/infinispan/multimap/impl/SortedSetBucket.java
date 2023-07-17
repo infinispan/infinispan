@@ -70,6 +70,17 @@ public class SortedSetBucket<V> {
       return entries.get(new MultimapObjectWrapper<>(member));
    }
 
+   public IndexValue indexOf(V member, boolean isRev) {
+      MultimapObjectWrapper<V> wrapMember = new MultimapObjectWrapper<>(member);
+      Double score = entries.get(wrapMember);
+      if (score == null) {
+         return null;
+      }
+      SortedSet<ScoredValue<V>> tailedHead = scoredEntries.headSet(new ScoredValue<>(score, wrapMember));
+      return isRev? IndexValue.of(score, scoredEntries.size() - tailedHead.size() - 1)
+            : IndexValue.of(score, tailedHead.size());
+   }
+
    public void replace(Collection<ScoredValue<V>> scoredValues) {
       entries.clear();
       scoredEntries.clear();
@@ -346,6 +357,28 @@ public class SortedSetBucket<V> {
 
    public long size() {
       return scoredEntries.size();
+   }
+
+   public static class IndexValue {
+      private final double score;
+      private final long index;
+
+      private IndexValue(double score, long index) {
+         this.score = score;
+         this.index = index;
+      }
+
+      public static IndexValue of(double score, long index) {
+         return new IndexValue(score, index);
+      }
+
+      public long getValue() {
+         return index;
+      }
+
+      public double getScore() {
+         return score;
+      }
    }
 
    @ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_SORTED_SET_SCORED_ENTRY)

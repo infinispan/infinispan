@@ -493,4 +493,26 @@ public class EmbeddedMultimapSortedSetCacheTest extends SingleCacheManagerTest {
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining(ERR_ARGS_CAN_T_BE_NULL);
    }
+
+   public void testIndexOf() {
+      await(sortedSetCache.addMany(NAMES_KEY,
+            list(of(1, CHARY), of(2, ELA), of(3, ELAIA), of(4, FELIX),
+                  of(5, IZARO), of(6, IGOR), of(7, JULIEN),
+                  of(8, KOLDO), of(9, OIHANA), of(20, RAMON)),
+            SortedSetAddArgs.create().build()));
+
+      assertThat(await(sortedSetCache.indexOf(NAMES_KEY, PEPE, false))).isNull();
+      assertThat(await(sortedSetCache.indexOf(NAMES_KEY, ELA, false)).getScore()).isEqualTo(2);
+      assertThat(await(sortedSetCache.indexOf(NAMES_KEY, ELA, false)).getValue()).isEqualTo(1);
+      assertThat(await(sortedSetCache.indexOf(NAMES_KEY, ELA, true)).getScore()).isEqualTo(2);
+      assertThat(await(sortedSetCache.indexOf(NAMES_KEY, ELA, true)).getValue()).isEqualTo(8);
+
+      assertThatThrownBy(() -> await(sortedSetCache.indexOf(null, null, false)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
+
+      assertThatThrownBy(() -> await(sortedSetCache.indexOf(NAMES_KEY, null, false)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_MEMBER_CAN_T_BE_NULL);
+   }
 }
