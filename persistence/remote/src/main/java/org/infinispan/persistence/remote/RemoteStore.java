@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -56,6 +57,7 @@ import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * Cache store that delegates the call to a infinispan cluster. Communication between this cache store and the remote
@@ -87,6 +89,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
    private static final String MAXIDLE = "maxidle";
    protected InitializationContext ctx;
    private MarshallableEntryFactory<K, V> entryFactory;
+   Executor nonBlockingExecutor;
    private BlockingManager blockingManager;
    private int segmentCount;
    private boolean supportsSegmentation;
@@ -97,6 +100,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
       this.configuration = ctx.getConfiguration();
       this.entryFactory = ctx.getMarshallableEntryFactory();
       this.blockingManager = ctx.getBlockingManager();
+      this.nonBlockingExecutor = ctx.getNonBlockingExecutor();
 
       Configuration cacheConfiguration = ctx.getCache().getCacheConfiguration();
       ClusteringConfiguration clusterConfiguration = cacheConfiguration.clustering();
@@ -215,7 +219,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
    public CompletionStage<Boolean> isAvailable() {
       if (remoteCache != null) {
          return remoteCache.ping()
-               .handle((v, t) -> t == null && v.isSuccess());
+               .handleAsync((v, t) -> t == null && v.isSuccess(), nonBlockingExecutor);
       } else {
          return CompletableFutures.completedFalse();
       }
@@ -225,7 +229,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
    public CompletionStage<MarshallableEntry<K, V>> load(int segment, Object key) {
       if (configuration.rawValues()) {
          Object unwrappedKey = unwrap(key);
-         return remoteCache.getWithMetadataAsync(unwrappedKey).thenApply(metadataValue -> {
+         return remoteCache.getWithMetadataAsync(unwrappedKey).thenApplyAsync(metadataValue -> {
             if (metadataValue == null) {
                return null;
             }
@@ -237,11 +241,11 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
             long lastUsed = metadataValue.getLastUsed();
             Object realValue = wrap(metadataValue.getValue());
             return entryFactory.create(key, realValue, metadata, null, created, lastUsed);
-         });
+         }, nonBlockingExecutor);
       } else {
          Object unwrappedKey = unwrap(key);
          return remoteCache.getAsync(unwrappedKey)
-               .thenApply(value -> {
+               .thenApplyAsync(value -> {
                   if(value == null) {
                      return null;
                   }
@@ -249,14 +253,15 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
                      return entryFactory.create(key, (MarshalledValue) value);
                   }
                   return entryFactory.create(key, value);
-               });
+               }, nonBlockingExecutor);
       }
    }
 
    @Override
    public CompletionStage<Boolean> containsKey(int segment, Object key) {
       key = unwrap(key);
-      return remoteCache.containsKeyAsync(key);
+      return remoteCache.containsKeyAsync(key)
+            .thenApplyAsync(Function.identity(), nonBlockingExecutor);
    }
 
    @Override
@@ -265,6 +270,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
       IntSet segmentsToUse = configuration.segmented() ? segments : null;
       Flowable<K> keyFlowable = Flowable.fromPublisher(remoteCache.publishEntries(Codec27.EMPTY_VALUE_CONVERTER,
             null, segmentsToUse, 512))
+            .observeOn(Schedulers.from(nonBlockingExecutor))
             .map(Map.Entry::getKey)
             .map(RemoteStore::wrap);
 
@@ -283,7 +289,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
          if (filter != null) {
             entryFlowable = entryFlowable.filter(e -> filter.test(wrap(e.getKey())));
          }
-         return entryFlowable.map(e -> {
+         return entryFlowable.observeOn(Schedulers.from(nonBlockingExecutor)).map(e -> {
             MetadataValue<Object> value = e.getValue();
             Metadata metadata = new EmbeddedMetadata.Builder()
                   .version(new NumericVersion(value.getVersion()))
@@ -301,7 +307,8 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
             entryFlowable = entryFlowable.filter(e -> filter.test(wrap(e.getKey())));
          }
          // Technically we will send the metadata and value to the user, no matter what.
-         return entryFlowable.map(e -> e.getValue() == null ? null : entryFactory.create(wrap(e.getKey()), (MarshalledValue) e.getValue()));
+         return entryFlowable.observeOn(Schedulers.from(nonBlockingExecutor))
+               .map(e -> e.getValue() == null ? null : entryFactory.create(wrap(e.getKey()), (MarshalledValue) e.getValue()));
       }
    }
 
@@ -322,7 +329,8 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
    @Override
    public CompletionStage<Long> size(IntSet segments) {
       if (segmentCount == segments.size()) {
-         return remoteCache.sizeAsync();
+         return remoteCache.sizeAsync()
+               .thenApplyAsync(Function.identity(), nonBlockingExecutor);
       }
       return publishKeys(segments, null).count().toCompletionStage();
    }
@@ -333,7 +341,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
       // and that makes the operation O(n) instead of O(1).
       // Ideally we should skip the stats operation in that case.
       return remoteCache.serverStatisticsAsync()
-                        .thenApply(stats -> getApproximateSizeStatistic(stats, segments.size()));
+                        .thenApplyAsync(stats -> getApproximateSizeStatistic(stats, segments.size()), nonBlockingExecutor);
    }
 
    private long getApproximateSizeStatistic(ServerStatistics serverStatistics, long segments) {
@@ -360,7 +368,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
       Object value = getValue(entry);
 
       return remoteCache.putAsync(key, value, lifespan, TimeUnit.SECONDS, maxIdle, TimeUnit.SECONDS)
-            .thenApply(CompletableFutures.toNullFunction());
+            .thenApplyAsync(CompletableFutures.toNullFunction(), nonBlockingExecutor);
    }
 
    private Object getKey(MarshallableEntry entry) {
@@ -397,13 +405,15 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
                            maxIdle, TimeUnit.SECONDS));
                   }));
       return removeCompletable.mergeWith(putCompletable)
+            .observeOn(Schedulers.from(nonBlockingExecutor))
             .toCompletionStage(null);
    }
 
    @Override
    public CompletionStage<Void> clear() {
       if (remoteCache != null) {
-         return remoteCache.clearAsync();
+         return remoteCache.clearAsync()
+               .thenApplyAsync(Function.identity(), nonBlockingExecutor);
       } else {
          return CompletableFutures.completedNull();
       }
@@ -413,7 +423,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
    public CompletionStage<Boolean> delete(int segment, Object key) {
       key = unwrap(key);
       return remoteCache.removeAsync(key)
-            .thenApply(v -> null);
+            .thenApplyAsync(v -> null, nonBlockingExecutor);
    }
 
    private long toSeconds(long millis, Object key, String desc) {
