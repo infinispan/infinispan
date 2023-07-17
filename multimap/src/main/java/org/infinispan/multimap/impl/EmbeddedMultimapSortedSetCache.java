@@ -9,6 +9,7 @@ import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.multimap.impl.function.sortedset.AddManyFunction;
 import org.infinispan.multimap.impl.function.sortedset.CountFunction;
+import org.infinispan.multimap.impl.function.sortedset.IndexOfSortedSetFunction;
 import org.infinispan.multimap.impl.function.sortedset.PopFunction;
 import org.infinispan.multimap.impl.function.sortedset.ScoreFunction;
 import org.infinispan.multimap.impl.function.sortedset.SubsetFunction;
@@ -202,5 +203,21 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       requireNonNull(args, ERR_ARGS_CAN_T_BE_NULL);
       return readWriteMap.eval(key, new SubsetFunction<>(args, SubsetFunction.SubsetType.LEX));
+   }
+
+   /**
+    * Returns the index of member in the sorted set, with the scores ordered from high to low.
+    * Index is 0-based.
+    * When isRev is false, the member with the lowest score has index 0.
+    * When isRev is true, the member with the highest score has index 0
+    * @param key, the name of the sorted set
+    * @param member, the member to be found
+    * @param isRev, perform the operation in reverse order
+    * @return the index of the member and the score
+    */
+   public CompletionStage<SortedSetBucket.IndexValue> indexOf(K key, V member, boolean isRev) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      requireNonNull(member, ERR_MEMBER_CAN_T_BE_NULL);
+      return readWriteMap.eval(key, new IndexOfSortedSetFunction(member, isRev));
    }
 }
