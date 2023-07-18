@@ -4,7 +4,6 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -26,6 +25,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.DDAsyncInterceptor;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -91,19 +91,16 @@ public class ClientListenerFailoverBusyTest extends AbstractRetryTest {
 
       ExecutorService executor = Executors.newScheduledThreadPool(numberOfOperations);
       CyclicBarrier barrier = new CyclicBarrier(numberOfOperations + 1);
-      CountDownLatch latch = new CountDownLatch(1);
-      DelayedInterceptor interceptor = new DelayedInterceptor(latch, barrier, executor);
+      DelayedInterceptor interceptor = new DelayedInterceptor(barrier, executor);
 
-      cache.getAsyncInterceptorChain().addInterceptor(interceptor, 1);
+      TestingUtil.extractInterceptorChain(cache)
+                  .addInterceptor(interceptor, 1);
 
       // We issue all of these operations which do not complete until the latch is released.
       AggregateCompletionStage<?> operations = CompletionStages.aggregateCompletionStage();
       for (int i = 0; i < numberOfOperations; i++) {
          operations.dependsOn(remoteCache.putAsync(1, "v" + i));
       }
-
-      // Await all the operations reach the interceptor.
-      barrier.await(10, TimeUnit.SECONDS);
 
       int eventsBeforeFailover = listener.getReceived();
 
@@ -112,15 +109,15 @@ public class ClientListenerFailoverBusyTest extends AbstractRetryTest {
       eventually(() -> channelFactory.getNumActive() == 1);
 
       try {
-         // We release the latch so operations complete, in the same channel the listener is using.
-         latch.countDown();
+         // Await all the operations reach the interceptor.
+         barrier.await(10, TimeUnit.SECONDS);
          operations.freeze().toCompletableFuture().get(10, TimeUnit.SECONDS);
 
          // If numberOfOperations == 1 we only create the entry, we do not generate events from updates.
          if (numberOfOperations > 1)
             eventually(() -> listener.getReceived() > eventsBeforeFailover);
       } finally {
-         cache.getAsyncInterceptorChain().removeInterceptor(DelayedInterceptor.class);
+         TestingUtil.extractInterceptorChain(cache).removeInterceptor(DelayedInterceptor.class);
          executor.shutdown();
       }
    }
@@ -142,12 +139,10 @@ public class ClientListenerFailoverBusyTest extends AbstractRetryTest {
    }
 
    public static class DelayedInterceptor extends DDAsyncInterceptor {
-      private final CountDownLatch latch;
       private final CyclicBarrier barrier;
       private final ExecutorService executor;
 
-      public DelayedInterceptor(CountDownLatch latch, CyclicBarrier barrier, ExecutorService executor) {
-         this.latch = latch;
+      public DelayedInterceptor(CyclicBarrier barrier, ExecutorService executor) {
          this.barrier = barrier;
          this.executor = executor;
       }
@@ -158,7 +153,6 @@ public class ClientListenerFailoverBusyTest extends AbstractRetryTest {
          executor.submit(() -> {
             try {
                barrier.await();
-               latch.await();
                cf.complete(super.visitPutKeyValueCommand(ctx, command));
             } catch (Throwable e) {
                cf.completeExceptionally(e);

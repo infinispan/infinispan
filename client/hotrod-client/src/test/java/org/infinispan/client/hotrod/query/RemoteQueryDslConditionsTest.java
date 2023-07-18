@@ -96,6 +96,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
 
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort())
+            .socketTimeout(10_000) // Guess.
             .addContextInitializers(TestDomainSCI.INSTANCE, NotIndexedSCI.INSTANCE);
       clientBuilder.version(getProtocolVersion());
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());

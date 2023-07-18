@@ -8,6 +8,8 @@ import java.util.function.BiConsumer;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 
 public class MockNearCacheService<K, V> extends NearCacheService<K, V> {
    final BlockingQueue<MockEvent> events;
@@ -38,6 +40,7 @@ public class MockNearCacheService<K, V> extends NearCacheService<K, V> {
    }
 
    static class MockNearCache<K, V> implements NearCache<K, V> {
+      private static final Log log = LogFactory.getLog(MockNearCache.class);
       final NearCache<K, V> delegate;
       final BlockingQueue<MockEvent> events;
 
@@ -49,26 +52,26 @@ public class MockNearCacheService<K, V> extends NearCacheService<K, V> {
       @Override
       public void put(K key, MetadataValue<V> value) {
          delegate.put(key, value);
-         events.add(new MockPutEvent<>(key, value));
+         addEvent(new MockPutEvent<>(key, value));
       }
 
       @Override
       public void putIfAbsent(K key, MetadataValue<V> value) {
          delegate.putIfAbsent(key, value);
-         events.add(new MockPutIfAbsentEvent<>(key, value));
+         addEvent(new MockPutIfAbsentEvent<>(key, value));
       }
 
       @Override
       public boolean remove(K key) {
          boolean removed = delegate.remove(key);
-         events.add(new MockRemoveEvent<>(key));
+         addEvent(new MockRemoveEvent<>(key));
          return removed;
       }
 
       @Override
       public MetadataValue<V> get(K key) {
          MetadataValue<V> value = delegate.get(key);
-         events.add(new MockGetEvent<>(key, value));
+         addEvent(new MockGetEvent<>(key, value));
          return value;
       }
 
@@ -76,7 +79,7 @@ public class MockNearCacheService<K, V> extends NearCacheService<K, V> {
       public void clear() {
          delegate.clear();
          events.clear();
-         events.add(new MockClearEvent());
+         addEvent(new MockClearEvent());
       }
 
       @Override
@@ -87,6 +90,11 @@ public class MockNearCacheService<K, V> extends NearCacheService<K, V> {
       @Override
       public Iterator<Map.Entry<K, MetadataValue<V>>> iterator() {
          return delegate.iterator();
+      }
+
+      private void addEvent(MockEvent event) {
+         log.info("Adding event: " + event);
+         events.add(event);
       }
    }
 

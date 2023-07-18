@@ -15,6 +15,7 @@ import io.opentelemetry.sdk.trace.SdkTracerProviderBuilder;
 import io.opentelemetry.sdk.trace.SpanProcessor;
 import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor;
 import io.opentelemetry.sdk.trace.export.SpanExporter;
+import io.opentelemetry.sdk.trace.samplers.Sampler;
 
 public class OpenTelemetryClient {
 
@@ -27,6 +28,7 @@ public class OpenTelemetryClient {
       // but this is a test
       SpanProcessor spanProcessor = SimpleSpanProcessor.create(spanExporter);
       SdkTracerProviderBuilder builder = SdkTracerProvider.builder()
+            .setSampler(Sampler.alwaysOn())
             .addSpanProcessor(spanProcessor);
 
       tracerProvider = builder.build();
