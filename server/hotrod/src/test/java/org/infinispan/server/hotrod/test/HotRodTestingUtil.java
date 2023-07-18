@@ -41,6 +41,7 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.core.transport.NettyChannelInitializer;
+import org.infinispan.server.core.transport.NettyInitializer;
 import org.infinispan.server.core.transport.NettyInitializers;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.OperationStatus;
@@ -148,18 +149,26 @@ public class HotRodTestingUtil {
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, String host, int port,
                                                 HotRodServerConfigurationBuilder builder) {
+      return startHotRodServer(manager, host, port, builder, true);
+   }
+
+   public static HotRodServer startHotRodServer(EmbeddedCacheManager manager, String host, int port,
+                                                HotRodServerConfigurationBuilder builder, boolean useTestHandlers) {
       log.infof("Start server in port %d", port);
       HotRodServer server = new HotRodServer() {
          @Override
          public ChannelInitializer<Channel> getInitializer() {
-            if (configuration.idleTimeout() > 0)
-               return new NettyInitializers(
-                     new NettyChannelInitializer<>(this, transport, getEncoder(), getDecoder()),
-                     new TimeoutEnabledChannelInitializer<>(this), new TestHandlersChannelInitializer());
-            else // Idle timeout logic is disabled with -1 or 0 values
-               return new NettyInitializers(
-                     new NettyChannelInitializer<>(this, transport, getEncoder(), getDecoder()),
-                     new TestHandlersChannelInitializer());
+            List<NettyInitializer> initializers = new ArrayList<>();
+            initializers.add(new NettyChannelInitializer<>(this, transport, getEncoder(), getDecoder()));
+            if (configuration.idleTimeout() > 0) {
+               initializers.add(new TimeoutEnabledChannelInitializer<>(this));
+            }
+
+            if (useTestHandlers) {
+               initializers.add(new TestHandlersChannelInitializer());
+            }
+
+            return new NettyInitializers(initializers.toArray(new NettyInitializer[0]));
          }
       };
       String shortTestName = TestResourceTracker.getCurrentTestShortName();

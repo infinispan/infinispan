@@ -165,7 +165,7 @@ public abstract class HotRodOperation<T> extends CompletableFuture<T> implements
    }
 
    public void scheduleTimeout(Channel channel) {
-      assert timeoutFuture == null;
+      assert timeoutFuture == null : this + " is trying to override a timeout";
       this.channel = channel;
       this.timeoutFuture = channel.eventLoop().schedule(this, channelFactory.socketTimeout(), TimeUnit.MILLISECONDS);
    }

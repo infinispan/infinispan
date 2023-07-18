@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiFunction;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.counter.impl.HotRodCounterEvent;
@@ -37,12 +38,15 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
    private static final Log log = LogFactory.getLog(HeaderDecoder.class);
    // used for HeaderOrEventDecoder, too, as the function is similar
    public static final String NAME = "header-decoder";
+   private static final BiFunction<Long, Integer, Integer> INCREMENT = (ignore, v) -> v == null ? 2 : v + 1;
+   private static final BiFunction<Long, Integer, Integer> DECREMENT = (k, v) -> v == 1 ? null : v - 1;
 
    private final ChannelFactory channelFactory;
    private final Configuration configuration;
    private final ClientListenerNotifier listenerNotifier;
    // operations may be registered in any thread, and are removed in event loop thread
    private final ConcurrentMap<Long, HotRodOperation<?>> incomplete = new ConcurrentHashMap<>();
+   private volatile ConcurrentMap<Long, Integer> retries = null;
    private final List<byte[]> listeners = new ArrayList<>();
    private volatile boolean closing;
 
@@ -71,7 +75,11 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
          throw HOTROD.noMoreOperationsAllowed();
       }
       HotRodOperation<?> prev = incomplete.put(operation.header().messageId(), operation);
-      assert prev == null : "Already registered: " + prev + ", new: " + operation;
+      assert prev == null || prev == operation : "Already registered: " + prev + ", new: " + operation;
+      if (prev != null) {
+         if (retries == null) retries = new ConcurrentHashMap<>();
+         retries.compute(operation.header().messageId(), INCREMENT);
+      }
       operation.scheduleTimeout(channel);
    }
 
@@ -120,6 +128,11 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
                operation = incomplete.remove(messageId);
                if (operation == null) {
                   throw HOTROD.unknownMessageId(messageId);
+               }
+               // If we retried the operation multiple times in this channel, we need to keep it around
+               // to parse the received data again. Otherwise, we can remove it.
+               if (retries != null && retries.computeIfPresent(messageId, DECREMENT) != null) {
+                  incomplete.put(messageId, operation);
                }
                if (log.isTraceEnabled()) {
                   log.tracef("Received response for request %d, %s", messageId, operation);
