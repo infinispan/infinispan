@@ -48,11 +48,14 @@ public class ClusterContainerStatsImpl extends AbstractContainerStats implements
    @Override
    protected List<Map<String, Number>> statistics() throws Exception {
       final List<Map<String, Number>> successfulResponseMaps = new ArrayList<>();
-      CompletableFutures.await(clusterExecutor.submitConsumer(ignore -> getLocalStatMaps(), (addr, stats, t) -> {
-         if (t == null) {
-            successfulResponseMaps.add(stats);
-         }
-      }));
+      // protect against stats collection before the component is ready
+      if (clusterExecutor != null) {
+         CompletableFutures.await(clusterExecutor.submitConsumer(ignore -> getLocalStatMaps(), (addr, stats, t) -> {
+            if (t == null) {
+               successfulResponseMaps.add(stats);
+            }
+         }));
+      }
       return successfulResponseMaps;
    }
 
