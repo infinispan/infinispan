@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -75,6 +76,10 @@ public class TracingDisabledTest extends SingleHotRodServerTest {
          remoteCache.put(1, new Poem(new Author("Edgar Allen Poe"), "The Raven", 1845));
          remoteCache.put(2, new Poem(new Author("Emily Dickinson"), "Because I could not stop for Death", 1890));
       });
+
+      // We might have a slight delay between receiving the response and the server span registered.
+      eventually(() -> inMemorySpanExporter.getFinishedSpanItems().toString(),
+            () -> inMemorySpanExporter.getFinishedSpanItems().size() == 3, 10, TimeUnit.SECONDS);
 
       // Verify that the client span (user-client-side-span) and the two PUT server spans are exported correctly.
       // We're going now to correlate the client span with the server spans!

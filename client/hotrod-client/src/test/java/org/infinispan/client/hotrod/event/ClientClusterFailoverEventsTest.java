@@ -11,11 +11,11 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.testng.annotations.Test;
 
@@ -31,9 +31,9 @@ public class ClientClusterFailoverEventsTest extends MultiHotRodServersTest {
    }
 
    private void injectTimeServices() {
-      ts0 = new ControlledTimeService();
+      ts0 = new ControlledTimeService("server-0", 0);
       TestingUtil.replaceComponent(server(0).getCacheManager(), TimeService.class, ts0, true);
-      ts1 = new ControlledTimeService();
+      ts1 = new ControlledTimeService("server-1", 0);
       TestingUtil.replaceComponent(server(1).getCacheManager(), TimeService.class, ts1, true);
    }
 

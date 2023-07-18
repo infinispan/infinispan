@@ -137,6 +137,12 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
       userCache = remoteCacheManager.getCache(USER_CACHE);
    }
 
+   @Override
+   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(String host, int serverPort) {
+      return super.createHotRodClientConfigurationBuilder(host, serverPort)
+            .socketTimeout(5_000);
+   }
+
    public void testIndexing() {
       News news = new News();
       news.setId("testnews");

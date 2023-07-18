@@ -8,6 +8,10 @@ import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.server.core.test.ServerTestingUtil;
+import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
+import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -17,10 +21,23 @@ public class HugeProtobufMessageTest extends SingleHotRodServerTest {
    public static final int SIZE = 68_000_000; // use something that is > 64M (67,108,864)
 
    @Override
+   protected HotRodServer createHotRodServer() {
+      String host = HotRodTestingUtil.host();
+      int port = ServerTestingUtil.findFreePort();
+      HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
+      return HotRodTestingUtil.startHotRodServer(cacheManager, host, port, builder, false);
+   }
+
+   @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       EmbeddedCacheManager manager = TestCacheManagerFactory.createServerModeCacheManager();
       manager.defineConfiguration("homeworks", new ConfigurationBuilder().build());
       return manager;
+   }
+
+   @Override
+   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(String host, int serverPort) {
+      return super.createHotRodClientConfigurationBuilder(host, serverPort).socketTimeout(20_000);
    }
 
    @Override
