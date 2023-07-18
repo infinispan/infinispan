@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.near;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.findServerAndKill;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
@@ -89,11 +90,13 @@ public class InvalidatedFailoverNearCacheTest extends MultiHotRodServersTest {
          if (headClientClear) {
             headClient().expectNearClear();
          }
+         assertThat(headClient().events).isEmpty();
          headClient().get(2, "v1").expectNearGetNull(2).expectNearPutIfAbsent(2, "v1");
          headClient().expectNoNearEvents();
          if (tailClientClear) {
             tailClient().expectNearClear();
          }
+         assertThat(headClient().events).isEmpty();
          tailClient().get(3, "v1").expectNearGetNull(3).expectNearPutIfAbsent(3, "v1");
          tailClient().expectNoNearEvents();
       } finally {

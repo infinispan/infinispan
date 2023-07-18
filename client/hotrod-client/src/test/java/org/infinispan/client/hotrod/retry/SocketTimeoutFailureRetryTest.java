@@ -41,7 +41,7 @@ public class SocketTimeoutFailureRetryTest extends AbstractRetryTest {
             .connectionTimeout(2_000)
             .socketTimeout(2_000)
             .maxRetries(1)
-            //.connectionPool().maxActive(1) //this ensures that only one server is active at a time
+            .connectionPool().maxActive(1) //this ensures that only one server is active at a time
             .addServer().host("127.0.0.1").port(port);
       return new InternalRemoteCacheManager(builder.build());
    }
