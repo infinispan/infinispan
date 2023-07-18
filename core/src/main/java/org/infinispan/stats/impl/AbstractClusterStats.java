@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -117,7 +116,6 @@ public abstract class AbstractClusterStats implements JmxStatisticsExposer {
             updateStats();
          } catch (Exception e) {
             log.error("Could not execute cluster wide cache stats operation ", e);
-            throw new CacheException("Could not execute cluster wide cache stats operation", e);
          } finally {
             statsUpdateTimestamp = timeService.time();
          }
