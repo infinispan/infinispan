@@ -1,14 +1,15 @@
 package org.infinispan.server.resp;
 
-import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
-import static org.infinispan.server.resp.RespConstants.OK;
-
-import java.util.Collection;
-import java.util.function.BiConsumer;
-
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.server.resp.response.LCSResponse;
 import org.infinispan.server.resp.response.SetResponse;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.function.BiConsumer;
+
+import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
+import static org.infinispan.server.resp.RespConstants.OK;
 
 /**
  * Utility class with Consumers
@@ -71,6 +72,7 @@ public final class Consumers {
 
       GET_BICONSUMER.accept(null, alloc);
    };
+
    public static final BiConsumer<LCSResponse, ByteBufPool> LCS_BICONSUMER = (res, alloc) -> {
       // If lcs present, return a bulk_string
       if (res.lcs != null) {
@@ -83,6 +85,16 @@ public final class Consumers {
          return;
       }
       handleIdxArray(res, alloc);
+   };
+
+   public static final BiConsumer<List, ByteBufPool> LMPOP_BICONSUMER = (res, alloc) -> {
+      Resp3Handler.handleArrayPrefix(2, alloc);
+      Resp3Handler.handleBulkResult((byte[])res.get(0), alloc);
+      Collection<byte[]> values = (Collection<byte[]>)res.get(1);
+      Resp3Handler.handleArrayPrefix(values.size(), alloc);
+      for (byte[] val : values) {
+         Resp3Handler.handleBulkResult(val, alloc);
+      }
    };
 
    private static void handleIdxArray(LCSResponse res, ByteBufPool alloc) {

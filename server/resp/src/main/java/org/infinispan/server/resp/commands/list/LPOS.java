@@ -26,6 +26,7 @@ import java.util.concurrent.CompletionStage;
  * When the value at key is not a list, an error is returned.
  *
  * @since 15.0
+ * @see <a href="https://redis.io/commands/lpos">Redis Documentation</a>
  */
 public class LPOS extends RespCommand implements Resp3Command {
 
