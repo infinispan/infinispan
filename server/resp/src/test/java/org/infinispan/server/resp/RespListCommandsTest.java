@@ -1,5 +1,6 @@
 package org.infinispan.server.resp;
 
+import io.lettuce.core.KeyValue;
 import io.lettuce.core.LMoveArgs;
 import io.lettuce.core.LPosArgs;
 import io.lettuce.core.RedisCommandExecutionException;
@@ -7,6 +8,10 @@ import io.lettuce.core.api.sync.RedisCommands;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.List;
+
+import static io.lettuce.core.LMPopArgs.Builder.left;
+import static io.lettuce.core.LMPopArgs.Builder.right;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
@@ -344,4 +349,26 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
       assertWrongType(() -> redis.set("another", "tristan"), () -> redis.rpoplpush("another", "another"));
    }
 
+   public void testLMPOP() {
+      assertThat(redis.lmpop(left(), "unk1")).isNull();
+      assertThat(redis.lmpop(right(), "unk1")).isNull();
+      assertThat(redis.lmpop(left(), "unk1", "unk2", "unk3")).isNull();
+      assertThat(redis.lmpop(right(), "unk1", "unk2", "unk3")).isNull();
+
+      redis.rpush("leads", "william", "jose", "ryan", "pedro", "vittorio");
+      KeyValue<String, List<String>> call = redis.lmpop(right(), "unk1", "unk2", "leads");
+      assertThat(call.getKey()).isEqualTo("leads");
+      assertThat(call.getValue()).containsExactly("vittorio");
+
+      call = redis.lmpop(left().count(2), "unk1", "leads", "unk2");
+      assertThat(call.getKey()).isEqualTo("leads");
+      assertThat(call.getValue()).containsExactly("william", "jose");
+
+      call = redis.lmpop(left().count(4), "leads", "unk1", "unk2");
+      assertThat(call.getKey()).isEqualTo("leads");
+      assertThat(call.getValue()).containsExactly("ryan", "pedro");
+
+      assertThat(redis.exists("leads")).isEqualTo(0);
+      assertWrongType(() -> redis.set("another", "tristan"), () -> redis.lmpop(left(), "another"));
+   }
 }
