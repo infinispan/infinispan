@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
@@ -109,6 +110,10 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
    @Override
    void updateStats() {
+      if (clusterExecutor == null) {
+         // Attempt to retrieve cluster stats before component has been initialized
+         return;
+      }
       ConcurrentMap<Address, Map<String, Number>> resultMap = new ConcurrentHashMap<>();
       TriConsumer<Address, Map<String, Number>, Throwable> triConsumer = (a, v, t) -> {
          if (t != null) {
@@ -127,43 +132,47 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
       };
       boolean accurateSize = globalConfiguration.metrics().accurateSize();
       DistributedCacheStatsCallable task = new DistributedCacheStatsCallable(cache.getName(), accurateSize);
-      CompletableFuture<Void> future = clusterExecutor.submitConsumer(task, triConsumer);
-      future.join();
+      try {
+         CompletableFuture<Void> future = clusterExecutor.submitConsumer(task, triConsumer);
+         future.join();
 
-      Collection<Map<String, Number>> responseList = resultMap.values();
+         Collection<Map<String, Number>> responseList = resultMap.values();
 
-      for (String att : LONG_ATTRIBUTES)
-         putLongAttributes(responseList, att);
+         for (String att : LONG_ATTRIBUTES)
+            putLongAttributes(responseList, att);
 
-      putLongAttributesAverage(responseList, AVERAGE_WRITE_TIME);
-      putLongAttributesAverage(responseList, AVERAGE_WRITE_TIME_NANOS);
-      putLongAttributesAverage(responseList, AVERAGE_READ_TIME);
-      putLongAttributesAverage(responseList, AVERAGE_READ_TIME_NANOS);
-      putLongAttributesAverage(responseList, AVERAGE_REMOVE_TIME);
-      putLongAttributesAverage(responseList, AVERAGE_REMOVE_TIME_NANOS);
-      putLongAttributesAverage(responseList, OFF_HEAP_MEMORY_USED);
+         putLongAttributesAverage(responseList, AVERAGE_WRITE_TIME);
+         putLongAttributesAverage(responseList, AVERAGE_WRITE_TIME_NANOS);
+         putLongAttributesAverage(responseList, AVERAGE_READ_TIME);
+         putLongAttributesAverage(responseList, AVERAGE_READ_TIME_NANOS);
+         putLongAttributesAverage(responseList, AVERAGE_REMOVE_TIME);
+         putLongAttributesAverage(responseList, AVERAGE_REMOVE_TIME_NANOS);
+         putLongAttributesAverage(responseList, OFF_HEAP_MEMORY_USED);
 
-      putIntAttributes(responseList, NUMBER_OF_LOCKS_HELD);
-      putIntAttributes(responseList, NUMBER_OF_LOCKS_AVAILABLE);
-      putIntAttributesMax(responseList, REQUIRED_MIN_NODES);
+         putIntAttributes(responseList, NUMBER_OF_LOCKS_HELD);
+         putIntAttributes(responseList, NUMBER_OF_LOCKS_AVAILABLE);
+         putIntAttributesMax(responseList, REQUIRED_MIN_NODES);
 
-      putLongAttributes(responseList, APPROXIMATE_ENTRIES);
-      putLongAttributes(responseList, APPROXIMATE_ENTRIES_IN_MEMORY);
-      putLongAttributes(responseList, APPROXIMATE_ENTRIES_UNIQUE);
+         putLongAttributes(responseList, APPROXIMATE_ENTRIES);
+         putLongAttributes(responseList, APPROXIMATE_ENTRIES_IN_MEMORY);
+         putLongAttributes(responseList, APPROXIMATE_ENTRIES_UNIQUE);
 
-      if (accurateSize) {
-         // Count each entry only once
-         long numberOfEntriesInMemory = cache.withFlags(Flag.SKIP_CACHE_LOAD).size();
-         statsMap.put(NUMBER_OF_ENTRIES_IN_MEMORY, numberOfEntriesInMemory);
-         int numberOfEntries = cache.size();
-         statsMap.put(NUMBER_OF_ENTRIES, (long) numberOfEntries);
-      } else {
-         statsMap.put(NUMBER_OF_ENTRIES_IN_MEMORY, -1L);
-         statsMap.put(NUMBER_OF_ENTRIES, -1L);
+         if (accurateSize) {
+            // Count each entry only once
+            long numberOfEntriesInMemory = cache.withFlags(Flag.SKIP_CACHE_LOAD).size();
+            statsMap.put(NUMBER_OF_ENTRIES_IN_MEMORY, numberOfEntriesInMemory);
+            int numberOfEntries = cache.size();
+            statsMap.put(NUMBER_OF_ENTRIES, (long) numberOfEntries);
+         } else {
+            statsMap.put(NUMBER_OF_ENTRIES_IN_MEMORY, -1L);
+            statsMap.put(NUMBER_OF_ENTRIES, -1L);
+         }
+
+         updateTimeSinceStart(responseList);
+         updateRatios(responseList);
+      } catch (CompletionException e) {
+         log.debug("Error while collecting cluster-wide cache stats", e.getCause());
       }
-
-      updateTimeSinceStart(responseList);
-      updateRatios(responseList);
    }
 
    // -------------------------------------------- JMX information -----------------------------------------------
