@@ -1,0 +1,31 @@
+name: Automated Backporting
+
+on:
+  pull_request_target:
+    types:
+      - closed
+    branches:
+      - main
+
+jobs:
+  create_backport:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - if: contains(github.event.pull_request.labels.*.name, '13.0.x')
+        name: 13.0.x Backport
+        uses: kiegroup/git-backporting@v4.2.0
+        with:
+          target-branch: 13.0.x
+          pull-request: ${{ github.event.pull_request.url }}
+          auth: ${{ secrets.GITHUB_TOKEN }}
+          no-squash: true
+
+      - if: contains(github.event.pull_request.labels.*.name, '14.0.x')
+        name: 14.0.x Backport
+        uses: kiegroup/git-backporting@v4.2.0
+        with:
+          target-branch: 14.0.x
+          pull-request: ${{ github.event.pull_request.url }}
+          auth: ${{ secrets.GITHUB_TOKEN }}
+          no-squash: true
