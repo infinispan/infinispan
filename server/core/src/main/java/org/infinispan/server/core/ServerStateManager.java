@@ -33,5 +33,7 @@ public interface ServerStateManager extends Lifecycle {
 
    CompletableFuture<Json> listConnections();
 
+   Json clientsReport();
+
    ServerManagement managedServer();
 }

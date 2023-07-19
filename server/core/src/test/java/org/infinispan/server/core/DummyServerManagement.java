@@ -13,6 +13,7 @@ import java.util.concurrent.CompletionStage;
 import javax.sql.DataSource;
 
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.DefaultCacheManager;
@@ -23,7 +24,7 @@ import org.infinispan.tasks.TaskManager;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 13.0
  **/
-public class DummyServerManagement implements ServerManagement {
+public class DummyServerManagement extends BaseServerManagement {
 
    private DefaultCacheManager defaultCacheManager;
    private Map<String, ProtocolServer> protocolServers;
@@ -121,5 +122,10 @@ public class DummyServerManagement implements ServerManagement {
    @Override
    public CompletionStage<Void> flushSecurityCaches() {
       return CompletableFutures.completedNull();
+   }
+
+   @Override
+   public Json securityOverviewReport() {
+      return Json.object();
    }
 }

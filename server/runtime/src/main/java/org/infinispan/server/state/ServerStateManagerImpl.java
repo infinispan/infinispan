@@ -45,6 +45,7 @@ import org.infinispan.server.core.transport.IpFilterRuleChannelMatcher;
 import org.infinispan.server.core.transport.IpSubnetFilterRule;
 import org.infinispan.server.core.transport.Transport;
 
+import io.netty.channel.Channel;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.handler.ipfilter.IpFilterRuleType;
 import io.netty.handler.ssl.SslHandler;
@@ -183,6 +184,62 @@ public final class ServerStateManagerImpl implements ServerStateManager {
          }
       }
       return CompletableFuture.completedFuture(r);
+   }
+
+   @Override
+   public Json clientsReport() {
+      Json result = Json.object();
+      for (ProtocolServer protocolServer : server.getProtocolServers().values()) {
+         Transport transport = protocolServer.getTransport();
+         if (transport == null) {
+            continue;
+         }
+         ChannelGroup channels = transport.getAcceptedChannels();
+         if (channels.isEmpty()) {
+            continue;
+         }
+
+         HashSet<String> clientNames = new HashSet<>();
+         HashSet<String> protocolVersions = new HashSet<>();
+         HashSet<String> clientLibraryNames = new HashSet<>();
+         HashSet<String> clientLibraryVersions = new HashSet<>();
+
+         for (Channel channel : channels) {
+            ConnectionMetadata metadata = ConnectionMetadata.getInstance(channel);
+            String clientName = metadata.clientName();
+            if (clientName != null) {
+               clientNames.add(clientName);
+            }
+            String protocolVersion = metadata.protocolVersion();
+            if (protocolVersion != null) {
+               protocolVersions.add(protocolVersion);
+            }
+            String clientLibraryName = metadata.clientLibraryName();
+            if (clientLibraryName != null) {
+               clientLibraryNames.add(clientLibraryName);
+            }
+            String clientLibraryVersion = metadata.clientLibraryVersion();
+            if (clientLibraryVersion != null) {
+               clientLibraryVersions.add(clientLibraryVersion);
+            }
+         }
+
+         Json protocolServerReport = Json.object();
+         if (!clientNames.isEmpty()){
+            protocolServerReport.set("client-names", Json.make(clientNames));
+         }
+         if (!protocolVersions.isEmpty()){
+            protocolServerReport.set("protocol-versions", Json.make(protocolVersions));
+         }
+         if (!clientLibraryNames.isEmpty()){
+            protocolServerReport.set("client-library-names", Json.make(clientLibraryNames));
+         }
+         if (!clientLibraryVersions.isEmpty()){
+            protocolServerReport.set("client-library-versions", Json.make(clientLibraryVersions));
+         }
+         result.set(protocolServer.getName(), protocolServerReport);
+      }
+      return result;
    }
 
    @Override

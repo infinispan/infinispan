@@ -469,6 +469,11 @@
             <version>${versionx.com.fasterxml.jackson.modules.jackson-modules-java8}</version>
          </dependency>
          <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>${versionx.com.fasterxml.jackson.core.jackson-databind}</version>
+         </dependency>
+         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
             <version>${versionx.com.github.ben-manes.caffeine.caffeine}</version>
@@ -620,6 +625,16 @@
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
             <version>${version.micrometer}</version>
+         </dependency>
+         <dependency>
+            <groupId>com.redhat.insights</groupId>
+            <artifactId>runtimes-java-api</artifactId>
+            <version>${version.insights}</version>
+         </dependency>
+         <dependency>
+            <groupId>com.redhat.insights</groupId>
+            <artifactId>runtimes-java-core-runtime</artifactId>
+            <version>${version.insights}</version>
          </dependency>
          <dependency>
             <groupId>io.opentelemetry</groupId>
@@ -1176,6 +1191,11 @@
             <artifactId>infinispan-server-core</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
+            <version>${version.infinispan}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-server-insights</artifactId>
             <version>${version.infinispan}</version>
          </dependency>
          <dependency>
@@ -3216,6 +3236,12 @@
                </plugin>
             </plugins>
          </build>
+      </profile>
+      <profile>
+         <id>insights</id>
+         <modules>
+            <module>server/insights</module>
+         </modules>
       </profile>
    </profiles>
 </project>
