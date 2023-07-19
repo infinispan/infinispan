@@ -569,7 +569,7 @@ abstract class RESTAuthorizationTest {
          assertTrue(permissions.stream().map(Json::asString).collect(Collectors.toSet()).containsAll(List.of("ALL_READ", "ALL_WRITE")), permissions.toString());
 
          // The code below only works when using the cluster mapper
-         try(RestResponse response = sync(security.grant("myuser", List.of("myrole")))) {
+         try (RestResponse response = sync(security.grant("myuser", List.of("myrole")))) {
             if (response.getStatus() == NO_CONTENT) {
                assertStatusAndBodyEquals(OK, "[\"myrole\"]", security.listRoles("myuser"));
                assertStatus(NO_CONTENT, security.deny("myuser", List.of("myrole")));
@@ -584,6 +584,18 @@ abstract class RESTAuthorizationTest {
          assertStatus(FORBIDDEN, security.grant("myuser", List.of("myrole")));
          assertStatus(FORBIDDEN, security.listRoles("myuser"));
          assertStatus(FORBIDDEN, security.deny("myuser", List.of("myrole")));
+      }
+   }
+
+   @Test
+   public void overviewReport() {
+      RestClient restClient = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get();
+      assertStatus(OK, restClient.server().overviewReport());
+
+      // Types with no access.
+      for (TestUser type : EnumSet.complementOf(EnumSet.of(TestUser.ADMIN, TestUser.ANONYMOUS))) {
+         restClient = ext.rest().withClientConfiguration(restBuilders.get(type)).get();
+         assertStatus(FORBIDDEN, restClient.server().overviewReport());
       }
    }
 

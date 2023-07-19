@@ -11,6 +11,7 @@ import java.util.concurrent.CompletionStage;
 import javax.sql.DataSource;
 
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.tasks.TaskManager;
@@ -68,4 +69,9 @@ public interface ServerManagement {
    Map<String, List<Principal>> getPrincipalList();
 
    CompletionStage<Void> flushSecurityCaches();
+
+   Json overviewReport();
+
+   Json securityOverviewReport();
+
 }

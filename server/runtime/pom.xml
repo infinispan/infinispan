@@ -570,5 +570,14 @@
             </dependency>
          </dependencies>
       </profile>
+      <profile>
+         <id>insights</id>
+         <dependencies>
+            <dependency>
+               <groupId>org.infinispan</groupId>
+               <artifactId>infinispan-server-insights</artifactId>
+            </dependency>
+         </dependencies>
+      </profile>
    </profiles>
 </project>

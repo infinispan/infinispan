@@ -255,5 +255,15 @@
             </plugins>
          </build>
       </profile>
+      <profile>
+         <id>insights</id>
+         <dependencies>
+            <dependency>
+               <groupId>org.infinispan</groupId>
+               <artifactId>infinispan-server-insights</artifactId>
+               <scope>test</scope>
+            </dependency>
+         </dependencies>
+      </profile>
    </profiles>
 </project>

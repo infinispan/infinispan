@@ -68,6 +68,11 @@ public class DummyServerStateManager implements ServerStateManager {
    }
 
    @Override
+   public Json clientsReport() {
+      return Json.object();
+   }
+
+   @Override
    public ServerManagement managedServer() {
       return null;
    }
