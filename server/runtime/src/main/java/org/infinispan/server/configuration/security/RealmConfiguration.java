@@ -106,6 +106,14 @@ public class RealmConfiguration extends ConfigurationElement<RealmConfiguration>
       }
    }
 
+   public boolean hasServerSSLContext() {
+      return serverSslContext != null;
+   }
+
+   public boolean hasClientSSLContext() {
+      return clientSslContext != null;
+   }
+
    void init(SecurityConfiguration security, Properties properties) {
       SSLConfiguration sslConfiguration = serverIdentitiesConfiguration.sslConfiguration();
       SSLContextBuilder sslContextBuilder = sslConfiguration != null ? sslConfiguration.build(properties, features) : null;

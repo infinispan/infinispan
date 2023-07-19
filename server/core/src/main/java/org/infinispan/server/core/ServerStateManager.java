@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commons.api.Lifecycle;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.server.core.transport.IpSubnetFilterRule;
 
 /**
@@ -29,4 +30,7 @@ public interface ServerStateManager extends Lifecycle {
    CompletableFuture<Void> setConnectorIpFilterRule(String name, Collection<IpSubnetFilterRule> filterRule);
 
    CompletableFuture<Void> clearConnectorIpFilterRules(String name);
+
+   Json clientsReport();
+
 }

@@ -8,15 +8,27 @@ import java.util.concurrent.CompletionStage;
 import javax.sql.DataSource;
 
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.tasks.TaskManager;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 13.0
  **/
-public class DummyServerManagement implements ServerManagement {
+public class DummyServerManagement extends BaseServerManagement {
+
+   private final DefaultCacheManager defaultCacheManager;
+
+   public DummyServerManagement() {
+      this(null);
+   }
+
+   public DummyServerManagement(EmbeddedCacheManager defaultCacheManager) {
+      this.defaultCacheManager = (DefaultCacheManager) defaultCacheManager;
+   }
 
    @Override
    public ComponentStatus getStatus() {
@@ -43,7 +55,7 @@ public class DummyServerManagement implements ServerManagement {
 
    @Override
    public DefaultCacheManager getCacheManager() {
-      return null;
+      return defaultCacheManager;
    }
 
    @Override
@@ -84,5 +96,10 @@ public class DummyServerManagement implements ServerManagement {
    @Override
    public Path getServerDataPath() {
       return null;
+   }
+
+   @Override
+   public Json securityOverviewReport() {
+      return Json.object();
    }
 }

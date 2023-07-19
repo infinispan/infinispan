@@ -13,7 +13,9 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.globalstate.ScopeFilter;
 import org.infinispan.globalstate.ScopedState;
@@ -37,7 +39,6 @@ import org.infinispan.server.core.transport.CompositeChannelMatcher;
 import org.infinispan.server.core.transport.IpFilterRuleChannelMatcher;
 import org.infinispan.server.core.transport.IpSubnetFilterRule;
 import org.infinispan.server.core.transport.Transport;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 import io.netty.handler.ipfilter.IpFilterRuleType;
 
@@ -142,6 +143,12 @@ public final class ServerStateManagerImpl implements ServerStateManager {
    public CompletableFuture<Void> clearConnectorIpFilterRules(String name) {
       SecurityActions.checkPermission(cacheManager, AuthorizationPermission.ADMIN);
       return cache.putAsync(new ScopedState(CONNECTOR_IPFILTER_SCOPE, name), new IpFilterRules()).thenApply(v -> null);
+   }
+
+   @Override
+   public Json clientsReport() {
+      // can produced only with Infinispan 15 onward
+      return Json.object();
    }
 
    private void updateLocalIgnoredCaches(IgnoredCaches ignored) {

@@ -40,6 +40,11 @@ public class RestServerClientOkHttp implements RestServerClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> overviewReport() {
+      return client.execute(baseServerURL, "overview-report");
+   }
+
+   @Override
    public CompletionStage<RestResponse> threads() {
       return client.execute(baseServerURL, "threads");
    }

@@ -70,6 +70,7 @@
     <Logger name="com.arjuna" level="WARN"/>
 
     <Logger name="org.jgroups" level="INFO"/>
+    <Logger name="org.infinispan.server.insights" level="DEBUG"/>
 
     <Logger name="tc" level="DEBUG"/>
 

@@ -16,6 +16,11 @@ public interface RestServerClient {
    CompletionStage<RestResponse> stop();
 
    /**
+    * Provides the overview report for the server
+    */
+   CompletionStage<RestResponse> overviewReport();
+
+   /**
     * Returns thread information
     */
    CompletionStage<RestResponse> threads();
