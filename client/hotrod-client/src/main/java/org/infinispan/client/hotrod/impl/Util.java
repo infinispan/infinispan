@@ -77,12 +77,14 @@ public class Util {
    }
 
    protected static RuntimeException rewrap(ExecutionException e) {
-      if (e.getCause() instanceof HotRodClientException) {
-         return new HotRodClientException(e);
-      } else if (e.getCause() instanceof CacheException) {
-         return new CacheException(e);
+      Throwable cause = e.getCause();
+      if (cause instanceof HotRodClientException) {
+         cause.setStackTrace(e.getStackTrace());
+         return (HotRodClientException) cause;
+      } else if (cause instanceof CacheException) {
+         return new CacheException(cause);
       } else {
-         return new TransportException(e.getCause(), null);
+         return new TransportException(cause, null);
       }
    }
 
