@@ -109,6 +109,9 @@ public class ServerResource implements ResourceHandler {
             .invocation().methods(POST).path("/v2/server/").withAction("stop")
             .permission(AuthorizationPermission.ADMIN)
             .handleWith(this::stop)
+            .invocation().methods(GET).path("/v2/server/overview-report")
+            .permission(AuthorizationPermission.ADMIN)
+            .handleWith(this::overviewReport)
             .invocation().methods(GET).path("/v2/server/threads")
             .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).handleWith(this::threads)
             .invocation().methods(GET).path("/v2/server/report")
@@ -382,6 +385,12 @@ public class ServerResource implements ResourceHandler {
 
    private CompletionStage<RestResponse> info(RestRequest request) {
       return asJsonResponseFuture(invocationHelper.newResponse(request), SERVER_INFO.toJson(), isPretty(request));
+   }
+
+   private CompletionStage<RestResponse> overviewReport(RestRequest request) {
+      return CompletableFuture.supplyAsync(() -> asJsonResponse(invocationHelper.newResponse(request),
+            invocationHelper.getServer().overviewReport(),
+            isPretty(request)), blockingExecutor);
    }
 
    private CompletionStage<RestResponse> threads(RestRequest request) {
