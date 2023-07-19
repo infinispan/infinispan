@@ -155,6 +155,16 @@ pipeline {
                 sh 'find . -name "hs_err_*" -exec echo {} \\; -exec grep "^# " {} \\;'
             }
         }
+
+        stage('Deploy snapshot') {
+            steps {
+                script {
+                    if (!env.BRANCH_NAME.startsWith('PR-')) {
+                        sh "$MAVEN_HOME/bin/mvn deploy -B -V -e -Pdistribution -Pcommunity-release -DdeployServerZip=true -Dmaven.main.skip=true -Dmaven.test.skip=true"
+                    }
+                }
+            }
+        }
     }
 
     post {
@@ -170,15 +180,6 @@ pipeline {
                 pmdParser(pattern: '**/target/pmd.xml'),
                 cpd(pattern: '**/target/cpd.xml')
             ]
-        }
-
-        // Deploy snapshots of successful master builds
-        success {
-            script {
-                if (!env.BRANCH_NAME.startsWith('PR-')) {
-                    sh "$MAVEN_HOME/bin/mvn deploy -B -V -e -Pdistribution -DdeployServerZip=true -Dmaven.main.skip=true -Dmaven.test.skip=true"
-                }
-            }
         }
 
         // Send notification email when a build fails, has test failures, or is the first successful build
