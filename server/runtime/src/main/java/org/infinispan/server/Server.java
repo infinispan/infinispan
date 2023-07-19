@@ -34,6 +34,7 @@ import org.apache.logging.log4j.LogManager;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.io.StringBuilderWriter;
 import org.infinispan.commons.jdkspecific.ProcessInfo;
 import org.infinispan.commons.marshall.SerializeWith;
@@ -49,8 +50,8 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.CacheParser;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.ClusterExecutor;
@@ -76,6 +77,7 @@ import org.infinispan.server.configuration.security.TokenRealmConfiguration;
 import org.infinispan.server.configuration.security.TransportSecurityConfiguration;
 import org.infinispan.server.context.ServerInitialContextFactoryBuilder;
 import org.infinispan.server.core.BackupManager;
+import org.infinispan.server.core.BaseServerManagement;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.ServerManagement;
 import org.infinispan.server.core.ServerStateManager;
@@ -126,7 +128,7 @@ import org.wildfly.security.sasl.scram.WildFlyElytronSaslScramProvider;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  */
-public class Server implements ServerManagement, AutoCloseable {
+public class Server extends BaseServerManagement implements AutoCloseable {
    public static final Log log = LogFactory.getLog("SERVER", Log.class);
 
    // Properties
@@ -408,14 +410,15 @@ public class Server implements ServerManagement, AutoCloseable {
             initialContext.bind(dataSourceConfiguration.jndiName(), dataSource);
          }
 
+         // Register ourselves with the global registry
+         GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(cacheManager);
+         gcr.registerComponent(this, ServerManagement.class);
          // Start the cache manager
          SecurityActions.startCacheManager(cacheManager);
-
-         BasicComponentRegistry bcr = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(BasicComponentRegistry.class.getName());
-         blockingManager = bcr.getComponent(BlockingManager.class).running();
-         serverStateManager = new ServerStateManagerImpl(this, cacheManager, bcr.getComponent(GlobalConfigurationManager.class).running());
-         bcr.registerComponent(ServerStateManager.class, serverStateManager, false);
-         ScheduledExecutorService timeoutExecutor = bcr.getComponent(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR, ScheduledExecutorService.class).running();
+         serverStateManager = new ServerStateManagerImpl(this, cacheManager, gcr.getComponent(GlobalConfigurationManager.class));
+         gcr.registerComponent(serverStateManager, ServerStateManager.class);
+         blockingManager = gcr.getComponent(BlockingManager.class);
+         ScheduledExecutorService timeoutExecutor = gcr.getComponent(ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR);
 
          // BlockingManager of single container used for writing the global manifest, but this will need to change
          // when multiple containers are supported by the server. Similarly, the default cache manager is used to create
@@ -424,7 +427,7 @@ public class Server implements ServerManagement, AutoCloseable {
          backupManager.init();
 
          // Register the task manager
-         taskManager = bcr.getComponent(TaskManager.class).running();
+         taskManager = gcr.getComponent(TaskManager.class);
          taskManager.registerTaskEngine(extensions.getServerTaskEngine(cacheManager));
 
          ElytronJMXAuthenticator.init(serverConfiguration);
@@ -729,5 +732,30 @@ public class Server implements ServerManagement, AutoCloseable {
    @Override
    public Path getServerDataPath() {
       return dataPath;
+   }
+
+   @Override
+   public Json securityOverviewReport() {
+      Json result = Json.object();
+
+      Json securityRealms = Json.object();
+      for (Map.Entry<String, RealmConfiguration> realm : serverConfiguration.security().realms().realms().entrySet()) {
+         RealmConfiguration realConfig = realm.getValue();
+         securityRealms.set(realm.getKey(), Json.object(
+               "server-ssl", realConfig.hasServerSSLContext(), "client-ssl", realConfig.hasClientSSLContext()));
+      }
+      result.set("security-realms", securityRealms);
+
+      Json tlsEndpoints = Json.array();
+      for (EndpointConfiguration endpoint : serverConfiguration.endpoints().endpoints()) {
+         for (ProtocolServerConfiguration<?> connector : endpoint.connectors()) {
+            if (connector.ssl().enabled()) {
+               tlsEndpoints.add(endpoint.elementName() + ":" + connector.name());
+            }
+         }
+      }
+      result.set("tls-endpoints", tlsEndpoints);
+
+      return result;
    }
 }

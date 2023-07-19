@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.dataconversion.internal.Json;
@@ -69,8 +70,18 @@ public class CacheManagerInfo implements JsonSerialization {
          return Immutables.immutableSetWrap(names);
    }
 
+   public List<String> externalCacheConfigurations() {
+      return configurationManager.getDefinedConfigurations()
+            .stream().filter(c -> !internalCacheRegistry.isInternalCache(c))
+            .collect(Collectors.toList());
+   }
+
    public long getCreatedCacheCount() {
-      return cacheManager.getCaches().keySet().stream().filter(c -> !internalCacheRegistry.isInternalCache(c)).count();
+      return getCacheNames().count();
+   }
+
+   public Stream<String> getCacheNames() {
+      return cacheManager.getCaches().keySet().stream().filter(c -> !internalCacheRegistry.isInternalCache(c));
    }
 
    public long getRunningCacheCount() {
