@@ -17,6 +17,7 @@ import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * Bucket used to store Sorted Set data type.
@@ -66,8 +67,8 @@ public class SortedSetBucket<V> {
       return popValuesList;
    }
 
-   public Double score(V member) {
-      return entries.get(new MultimapObjectWrapper<>(member));
+   public List<Double> scores(List<V> members) {
+     return members.stream().map(m -> entries.get(new MultimapObjectWrapper<>(m))).collect(Collectors.toList());
    }
 
    public IndexValue indexOf(V member, boolean isRev) {

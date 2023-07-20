@@ -85,6 +85,21 @@ public class Resp3Handler extends Resp3AuthHandler {
       handleBulkResult(Double.toString(result), alloc);
    }
 
+   protected static void handleCollectionDoubleResult(Collection<Double> collection, ByteBufPool alloc) {
+      if (collection == null) {
+         handleNullResult(alloc);
+      } else {
+         handleArrayPrefix(collection.size(), alloc);
+         for(Double d: collection) {
+            if (d == null) {
+               handleNullResult(alloc);
+            } else{
+               handleDoubleResult(d, alloc);
+            }
+         }
+      }
+   }
+
    protected static void handleCollectionLongResult(Collection<Long> collection, ByteBufPool alloc) {
       if (collection == null) {
          handleNullResult(alloc);

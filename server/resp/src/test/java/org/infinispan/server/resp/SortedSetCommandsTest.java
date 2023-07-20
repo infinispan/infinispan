@@ -2,15 +2,17 @@ package org.infinispan.server.resp;
 
 import io.lettuce.core.Limit;
 import io.lettuce.core.Range;
+import io.lettuce.core.ScoredValue;
 import io.lettuce.core.ZAddArgs;
 import io.lettuce.core.api.sync.RedisCommands;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.List;
+
 import static io.lettuce.core.Range.Boundary.excluding;
 import static io.lettuce.core.Range.Boundary.including;
 import static io.lettuce.core.Range.Boundary.unbounded;
-import static io.lettuce.core.Range.create;
 import static io.lettuce.core.Range.from;
 import static io.lettuce.core.ScoredValue.just;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -755,7 +757,7 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
    }
 
    public void testZRANGESTORE() {
-      assertThat(redis.zrangestore("npeople", "not_existing", create(0L, 1L))).isEqualTo(0);
+      assertThat(redis.zrangestore("npeople", "not_existing", Range.create(0L, 1L))).isEqualTo(0);
       assertThat(redis.exists("npeople")).isEqualTo(0);
 
       redis.zadd("people", ZAddArgs.Builder.ch(),
@@ -772,7 +774,7 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
             just(0, "luis")
       );
       assertThat(redis.zrange("people", 1, 5)).containsExactly("bautista", "carlos", "carmela", "carmelo", "daniel");
-      assertThat(redis.zrangestore("npeople", "people", create(1L, 5L))).isEqualTo(5);
+      assertThat(redis.zrangestore("npeople", "people", Range.create(1L, 5L))).isEqualTo(5);
       assertThat(redis.zrange("npeople", 0, -1)).containsExactly("bautista", "carlos", "carmela", "carmelo", "daniel");
       assertThat(redis.zrangestorebylex("npeople", "people", Range.create("deb", "luisa"), Limit.create(1, 2))).isEqualTo(2);
       assertThat(redis.zrange("npeople", 0, -1)).containsExactly("ernesto", "gonzalo");
@@ -842,5 +844,29 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.zrevrank("people", "ramona")).isNull();
       assertThat(redis.zrevrank("people", "tristan")).isEqualTo(6);
       assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zrevrank("another","tristan"));
+   }
+
+   public void testZMSCORE() {
+      // ZMSCORE not_existing not_existing
+      List<Double> notExistingSortedSetCallResult = redis.zmscore("not_existing", "no_existing");
+      assertThat(notExistingSortedSetCallResult).hasSize(1);
+      assertThat(notExistingSortedSetCallResult.get(0)).isNull();
+      // ZADD people -10 tristan 1 ryan 17 vittorio 18.9 fabio 18.9 jose 18.9 katia 21.9 marc
+      redis.zadd("people", ZAddArgs.Builder.ch(),
+            ScoredValue.just(-10, "tristan"),
+            ScoredValue.just(1, "ryan"),
+            ScoredValue.just(17, "vittorio"),
+            ScoredValue.just(18.9, "fabio"),
+            ScoredValue.just(18.9, "jose"),
+            ScoredValue.just(18.9, "katia"),
+            ScoredValue.just(21.9, "marc"));
+      // ZMSCORE people maria juana
+      List<Double> notExistingMemberCallResult = redis.zmscore("people", "maria", "juana");
+      assertThat(notExistingMemberCallResult).hasSize(2);
+      assertThat(notExistingMemberCallResult.get(0)).isNull();
+      assertThat(notExistingMemberCallResult.get(1)).isNull();
+      // ZMSCORE people jose marc juliette
+      assertThat(redis.zmscore("people", "jose", "juliette", "marc")).containsExactly(18.9, null, 21.9);
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zmscore("another", "tristan"));
    }
 }

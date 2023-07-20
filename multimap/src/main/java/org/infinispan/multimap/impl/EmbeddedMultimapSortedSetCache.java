@@ -15,10 +15,13 @@ import org.infinispan.multimap.impl.function.sortedset.ScoreFunction;
 import org.infinispan.multimap.impl.function.sortedset.SubsetFunction;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 
@@ -33,6 +36,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
    public static final String ERR_MEMBER_CAN_T_BE_NULL = "member can't be null";
    public static final String ERR_ARGS_CAN_T_BE_NULL = "args can't be null";
    public static final String ERR_ARGS_INDEXES_CAN_T_BE_NULL = "min and max indexes (from-to) can't be null";
+   public static final String ERR_MEMBERS_CAN_T_BE_NULL = "members can't be null";
    public static final String ERR_SCORES_CAN_T_BE_NULL = "scores can't be null";
    protected final FunctionalMap.ReadWriteMap<K, SortedSetBucket<V>> readWriteMap;
    protected final AdvancedCache<K, SortedSetBucket<V>> cache;
@@ -155,12 +159,36 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
     *
     * @param key, the name of the sorted set
     * @param member, the score value to be retrieved
-    * @return {@link CompletionStage} with the score, or null if the score of the key does not exist.
+    * @return {@link CompletionStage} with the score, or null if the score of the member does not exist.
     */
    public CompletionStage<Double> score(K key, V member) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       requireNonNull(member, ERR_MEMBER_CAN_T_BE_NULL);
-      return readWriteMap.eval(key, new ScoreFunction<>(member));
+      return readWriteMap.eval(key, new ScoreFunction<>(Collections.singletonList(member))).thenApply(c ->{
+         if (c == null || c.isEmpty()) {
+            return null;
+         }
+         return c.get(0);
+      });
+   }
+
+   /**
+    * Returns the scores of members in the sorted.
+    *
+    * @param key, the name of the sorted set
+    * @param members, the scores to be retrieved
+    * @return {@link CompletionStage} with the list of the scores, with null values if the score does not exist.
+    */
+   public CompletionStage<List<Double>> scores(K key, List<V> members) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      requireNonNull(members, ERR_MEMBERS_CAN_T_BE_NULL);
+      return readWriteMap.eval(key, new ScoreFunction<>(members)).thenApply(c ->{
+         if (c == null || c.isEmpty()) {
+            return members.stream().map(m -> (Double) null).collect(Collectors.toList());
+         } else {
+            return c;
+         }
+      });
    }
 
    /**
