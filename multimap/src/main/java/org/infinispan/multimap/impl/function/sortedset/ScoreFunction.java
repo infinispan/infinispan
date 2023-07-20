@@ -1,6 +1,7 @@
 package org.infinispan.multimap.impl.function.sortedset;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.functional.EntryView;
 import org.infinispan.multimap.impl.ExternalizerIds;
 import org.infinispan.multimap.impl.SortedSetBucket;
@@ -8,7 +9,9 @@ import org.infinispan.multimap.impl.SortedSetBucket;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -20,21 +23,21 @@ import java.util.Set;
  * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
-public final class ScoreFunction<K, V> implements SortedSetBucketBaseFunction<K, V, Double> {
+public final class ScoreFunction<K, V> implements SortedSetBucketBaseFunction<K, V, List<Double>> {
    public static final AdvancedExternalizer<ScoreFunction> EXTERNALIZER = new Externalizer();
-   private final V member;
+   private final List<V> members;
 
-   public ScoreFunction(V member) {
-      this.member = member;
+   public ScoreFunction(List<V> members) {
+      this.members = members;
    }
 
    @Override
-   public Double apply(EntryView.ReadWriteEntryView<K, SortedSetBucket<V>> entryView) {
+   public List<Double> apply(EntryView.ReadWriteEntryView<K, SortedSetBucket<V>> entryView) {
       Optional<SortedSetBucket<V>> existing = entryView.peek();
       if (existing.isPresent()) {
-         return existing.get().score(member);
+         return existing.get().scores(members);
       }
-      return null;
+      return Collections.emptyList();
    }
 
    private static class Externalizer implements AdvancedExternalizer<ScoreFunction> {
@@ -51,12 +54,12 @@ public final class ScoreFunction<K, V> implements SortedSetBucketBaseFunction<K,
 
       @Override
       public void writeObject(ObjectOutput output, ScoreFunction object) throws IOException {
-         output.writeObject(object.member);
+         MarshallUtil.marshallCollection(object.members, output);
       }
 
       @Override
       public ScoreFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new ScoreFunction(input.readObject());
+         return new ScoreFunction(MarshallUtil.unmarshallCollection(input, ArrayList::new));
       }
    }
 }

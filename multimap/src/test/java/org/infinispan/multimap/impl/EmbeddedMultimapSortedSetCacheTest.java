@@ -184,10 +184,10 @@ public class EmbeddedMultimapSortedSetCacheTest extends SingleCacheManagerTest {
       assertThat(await(sortedSetCache.score(NAMES_KEY, OIHANA))).isEqualTo(-5);
       assertThat(await(sortedSetCache.score(NAMES_KEY, OIHANA))).isEqualTo(-5);
       assertThat(await(sortedSetCache.score(NAMES_KEY, FELIX))).isNull();
-      assertThatThrownBy(() -> await(sortedSetCache.score(null, null)))
+      assertThatThrownBy(() -> await(sortedSetCache.score(null, ELAIA)))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
-      assertThatThrownBy(() -> await(sortedSetCache.score(NAMES_KEY, null)))
+      assertThatThrownBy(() -> await(sortedSetCache.score(NAMES_KEY, (Person) null)))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining(ERR_MEMBER_CAN_T_BE_NULL);
    }

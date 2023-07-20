@@ -72,6 +72,7 @@ import org.infinispan.server.resp.commands.set.SMEMBERS;
 import org.infinispan.server.resp.commands.sortedset.ZADD;
 import org.infinispan.server.resp.commands.sortedset.ZCARD;
 import org.infinispan.server.resp.commands.sortedset.ZCOUNT;
+import org.infinispan.server.resp.commands.sortedset.ZMSCORE;
 import org.infinispan.server.resp.commands.sortedset.ZPOPMAX;
 import org.infinispan.server.resp.commands.sortedset.ZPOPMIN;
 import org.infinispan.server.resp.commands.sortedset.ZRANGE;
@@ -138,7 +139,7 @@ public final class Commands {
       ALL_COMMANDS[20] = new RespCommand[]{new UNSUBSCRIBE()};
       ALL_COMMANDS[25] = new RespCommand[]{new ZADD(), new ZCARD(), new ZCOUNT(), new ZPOPMAX(), new ZPOPMIN(),
             new ZRANGE(), new ZRANGESTORE(), new ZREVRANGE(), new ZRANGEBYSCORE(), new ZRANK(), new ZREVRANGEBYSCORE(),
-            new ZRANGEBYLEX(), new ZREVRANGEBYLEX(), new ZREVRANK(), new ZSCORE()};
+            new ZRANGEBYLEX(), new ZREVRANGEBYLEX(), new ZREVRANK(), new ZSCORE(), new ZMSCORE()};
    }
 
    public static List<RespCommand> all() {
