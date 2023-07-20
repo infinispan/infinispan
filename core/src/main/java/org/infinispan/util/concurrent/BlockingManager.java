@@ -290,6 +290,22 @@ public interface BlockingManager {
    <V> ScheduledBlockingCompletableStage<V> scheduleRunBlocking(Supplier<V> supplier, long delay, TimeUnit unit, Object traceId);
 
    /**
+    * Replacement for {@link java.util.concurrent.ScheduledExecutorService#scheduleAtFixedRate(Runnable, long, long, TimeUnit)} that
+    * invokes the {@code Runnable} in a blocking thread periodically at fixed rate.
+    * <p>
+    * Unlike other methods in this interface, the submitting thread does not impact this method's behavior.
+    *
+    * @param runnable blocking operation that runs some code
+    * @param initialDelay the time to delay first execution
+    * @param period the period between successive executions
+    * @param unit the time unit of the delay parameter
+    * @param traceId an identifier that can be used to tell in a trace when an operation moves between threads
+    *
+    * @return a stage that is completed after the runnable is done or throws an exception.
+    */
+   ScheduledFuture<Void> scheduleRunBlockingAtFixedRate(Runnable runnable, long initialDelay, long period, TimeUnit unit, Object traceId);
+
+   /**
     * Executor interface that submits task to a blocking pool that returns a stage that is guaranteed
     * to run any chained stages on a non-blocking thread if the stage is not yet complete.
     * <p>
