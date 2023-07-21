@@ -80,6 +80,7 @@
       <module>commons-test</module>
       <module>build/infinispan-defaults-maven-plugin</module>
       <module>core</module>
+      <module>jupiter-tests</module>
       <module>jboss-marshalling</module>
       <module>counter</module>
       <module>multimap</module>
