@@ -52,7 +52,6 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.ClusterExecutor;
@@ -82,6 +81,7 @@ import org.infinispan.server.context.ServerInitialContextFactoryBuilder;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.BaseServerManagement;
 import org.infinispan.server.core.ProtocolServer;
+import org.infinispan.server.core.ServerManagement;
 import org.infinispan.server.core.ServerStateManager;
 import org.infinispan.server.core.backup.BackupManagerImpl;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
@@ -418,12 +418,13 @@ public class Server extends BaseServerManagement implements AutoCloseable {
 
          // Start the cache manager
          SecurityActions.startCacheManager(cacheManager);
-
-         BasicComponentRegistry bcr = SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(BasicComponentRegistry.class.getName());
-         blockingManager = bcr.getComponent(BlockingManager.class).running();
-         serverStateManager = new ServerStateManagerImpl(this, cacheManager, bcr.getComponent(GlobalConfigurationManager.class).running());
-         bcr.registerComponent(ServerStateManager.class, serverStateManager, false);
-         ScheduledExecutorService timeoutExecutor = bcr.getComponent(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR, ScheduledExecutorService.class).running();
+         // Register ourselves with the global registry
+         GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(cacheManager);
+         gcr.registerComponent(this, ServerManagement.class);
+         serverStateManager = new ServerStateManagerImpl(this, cacheManager, gcr.getComponent(GlobalConfigurationManager.class));
+         gcr.registerComponent(serverStateManager, ServerStateManager.class);
+         blockingManager = gcr.getComponent(BlockingManager.class);
+         ScheduledExecutorService timeoutExecutor = gcr.getComponent(ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR);
 
          // BlockingManager of single container used for writing the global manifest, but this will need to change
          // when multiple containers are supported by the server. Similarly, the default cache manager is used to create
@@ -432,7 +433,7 @@ public class Server extends BaseServerManagement implements AutoCloseable {
          backupManager.init();
 
          // Register the task manager
-         taskManager = bcr.getComponent(TaskManager.class).running();
+         taskManager = gcr.getComponent(TaskManager.class);
          taskManager.registerTaskEngine(extensions.getServerTaskEngine(cacheManager));
 
          ElytronJMXAuthenticator.init(serverConfiguration);
