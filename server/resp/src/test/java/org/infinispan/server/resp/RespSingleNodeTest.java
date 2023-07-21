@@ -30,10 +30,13 @@ import java.util.stream.Stream;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.server.resp.commands.Commands;
 import org.infinispan.server.resp.test.CommonRespTests;
 import org.testng.annotations.DataProvider;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import io.lettuce.core.ExpireArgs;
@@ -62,6 +65,37 @@ import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
  */
 @Test(groups = "functional", testName = "server.resp.RespSingleNodeTest")
 public class RespSingleNodeTest extends SingleNodeRespBaseTest {
+
+   private CacheMode cacheMode;
+   private boolean simpleCache;
+
+   @Factory
+   public Object[] factory() {
+      return new Object[]{
+            new RespSingleNodeTest().cacheMode(CacheMode.LOCAL),
+            new RespSingleNodeTest().simpleCache()
+      };
+   }
+
+   RespSingleNodeTest cacheMode(CacheMode cacheMode) {
+      this.cacheMode = cacheMode;
+      return this;
+   }
+
+   RespSingleNodeTest simpleCache() {
+      this.cacheMode = CacheMode.LOCAL;
+      this.simpleCache = true;
+      return this;
+   }
+
+   @Override
+   protected void amendConfiguration(ConfigurationBuilder configurationBuilder) {
+      if (simpleCache) {
+         configurationBuilder.clustering().cacheMode(CacheMode.LOCAL).simpleCache(true);
+      } else {
+         configurationBuilder.clustering().cacheMode(cacheMode);
+      }
+   }
 
    @Test
    public void testSetMultipleOptions() {

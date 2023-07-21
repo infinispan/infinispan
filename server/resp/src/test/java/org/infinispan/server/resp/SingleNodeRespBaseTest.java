@@ -47,9 +47,14 @@ public abstract class SingleNodeRespBaseTest extends SingleCacheManagerTest {
       TestCacheManagerFactory.amendGlobalConfiguration(globalBuilder, new TransportFlags());
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().hash().keyPartitioner(new CRC16HashFunctionPartitioner()).numSegments(256);
+      amendConfiguration(builder);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.newDefaultCacheManager(true, globalBuilder, builder);
       TestingUtil.replaceComponent(cacheManager, TimeService.class, timeService, true);
       return cacheManager;
+   }
+
+   protected void amendConfiguration(ConfigurationBuilder configurationBuilder) {
+
    }
 
    protected RespServerConfigurationBuilder serverConfiguration() {
