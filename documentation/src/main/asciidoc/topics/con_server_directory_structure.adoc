@@ -21,7 +21,7 @@ See the {brandname} Server README, available in the distribution, for descriptio
 endif::community[]
 //Downstream
 ifdef::downstream[]
-See the link:{runtime_readme}[{brandname} Server README] for descriptions of the each folder in your `{server_home}` directory as well as system properties you can use to customize the filesystem.
+See the link:{server_docs}#server_readme[{brandname} Server README] for descriptions of the each folder in your `{server_home}` directory as well as system properties you can use to customize the filesystem.
 endif::downstream[]
 ====
 
@@ -86,6 +86,6 @@ Holds {brandname} Server log files.
 ifdef::downstream[]
 [role="_additional-resources"]
 .Additional resources
-* link:{runtime_readme}[{brandname} Server README]
+* link:{server_docs}#server_readme[{brandname} Server README]
 * link:https://access.redhat.com/solutions/5455731[What is stored in the <server>/data directory used by a RHDG server] (Red Hat Knowledgebase)
 endif::downstream[]
