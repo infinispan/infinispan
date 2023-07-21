@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
@@ -253,7 +254,8 @@ class TestCluster {
                      .remoteCacheName(name).protocolVersion(protocolVersion).shared(true)
                      .addServer().host("localhost").port(remotePort);
                if (builder.trustStoreFileName != null) {
-                  store.remoteSecurity().ssl().enable().trustStoreFileName(builder.trustStoreFileName).trustStorePassword(builder.trustStorePassword);
+                  store.remoteSecurity().ssl().enable().trustStoreFileName(builder.trustStoreFileName).trustStorePassword(builder.trustStorePassword)
+                        .sniHostName("server");
                }
                if (builder.keyStoreFileName != null) {
                   store.remoteSecurity().ssl().keyStoreFileName(builder.keyStoreFileName).keyStorePassword(builder.keyStorePassword);
@@ -331,16 +333,12 @@ class TestCluster {
             clientBuilder.addContextInitializer(ctx);
          }
          if (trustStoreFileName != null) {
-            clientBuilder.security().ssl().enable().trustStoreFileName(trustStoreFileName).trustStorePassword(trustStorePassword);
+            clientBuilder.security().ssl().enable().trustStoreFileName(trustStoreFileName).trustStorePassword(trustStorePassword).hostnameValidation(false);
          }
          if (keyStoreFileName != null) {
             clientBuilder.security().ssl().keyStoreFileName(keyStoreFileName).keyStorePassword(keyStorePassword);
          }
-         if (marshaller != null) {
-            clientBuilder.marshaller(marshaller);
-         } else {
-            clientBuilder.marshaller(GenericJBossMarshaller.class);
-         }
+         clientBuilder.marshaller(Objects.requireNonNullElse(marshaller, GenericJBossMarshaller.class));
          clientBuilder.addJavaSerialAllowList(".*");
          return new TestCluster(hotRodServers, embeddedCacheManagers, new RemoteCacheManager(clientBuilder.build()));
       }

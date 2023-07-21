@@ -287,6 +287,12 @@
  *          For details about cipher lists and possible values, refer to OpenSSL documentation at <a href="https://www.openssl.org/docs/man1.1.1/man1/ciphers">https://www.openssl.org/docs/man1.1.1/man1/ciphers</a></td>
  *       </tr>
  *       <tr>
+ *          <td><b>infinispan.client.hotrod.ssl_hostname_validation</b></td>
+ *          <td>boolean</td>
+ *          <td>true</td>
+ *          <td>Whether to enable TLS hostname validation using the rules defined in RFC 2818.</td>
+ *       </tr>
+ *       <tr>
  *          <td><b>infinispan.client.hotrod.ssl_protocol</b></td>
  *          <td>String</td>
  *          <td>N/A</td>

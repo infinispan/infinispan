@@ -20,20 +20,22 @@ public class ClusterInfo {
    // updates won't be allowed to apply since they refer to older views.
    private final int topologyAge;
    private final ClientIntelligence intelligence;
+   private final String sniHostName;
 
-   public ClusterInfo(String clusterName, List<InetSocketAddress> servers, ClientIntelligence intelligence) {
-      this(clusterName, servers, -1, intelligence);
+   public ClusterInfo(String clusterName, List<InetSocketAddress> servers, ClientIntelligence intelligence, String sniHostName) {
+      this(clusterName, servers, -1, intelligence, sniHostName);
    }
 
-   private ClusterInfo(String clusterName, List<InetSocketAddress> servers, int topologyAge, ClientIntelligence intelligence) {
+   private ClusterInfo(String clusterName, List<InetSocketAddress> servers, int topologyAge, ClientIntelligence intelligence, String sniHostName) {
       this.clusterName = clusterName;
       this.servers = Immutables.immutableListCopy(servers);
       this.topologyAge = topologyAge;
       this.intelligence = Objects.requireNonNull(intelligence);
+      this.sniHostName = sniHostName;
    }
 
    public ClusterInfo withTopologyAge(int topologyAge) {
-      return new ClusterInfo(clusterName, servers, topologyAge, intelligence);
+      return new ClusterInfo(clusterName, servers, topologyAge, intelligence, sniHostName);
    }
 
    public String getName() {
@@ -52,6 +54,10 @@ public class ClusterInfo {
       return intelligence;
    }
 
+   public String getSniHostName() {
+      return sniHostName;
+   }
+
    @Override
    public String toString() {
       return "ClusterInfo{" +
@@ -59,6 +65,7 @@ public class ClusterInfo {
             ", servers=" + servers +
             ", age=" + topologyAge +
             ", intelligence=" + intelligence +
+            ", sniHostName=" + sniHostName +
             '}';
    }
 }

@@ -1,6 +1,7 @@
 package org.infinispan.hotrod.impl.transport.netty;
 
 import java.io.File;
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.security.Principal;
 import java.security.PrivilegedActionException;
@@ -33,6 +34,7 @@ import org.infinispan.hotrod.configuration.SslConfiguration;
 import org.infinispan.hotrod.impl.logging.Log;
 import org.infinispan.hotrod.impl.logging.LogFactory;
 import org.infinispan.hotrod.impl.operations.CacheOperationsFactory;
+import org.infinispan.hotrod.impl.topology.ClusterInfo;
 import org.infinispan.hotrod.impl.transport.handler.CacheRequestProcessor;
 
 import io.netty.bootstrap.Bootstrap;
@@ -40,6 +42,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.handler.ssl.ClientAuth;
+import io.netty.handler.ssl.IdentityCipherSuiteFilter;
 import io.netty.handler.ssl.JdkSslContext;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
@@ -54,6 +57,7 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
    private final CacheOperationsFactory cacheOperationsFactory;
    private final HotRodConfiguration configuration;
    private final ChannelFactory channelFactory;
+   private final ClusterInfo cluster;
    private ChannelPool channelPool;
    private volatile boolean isFirstPing = true;
 
@@ -77,12 +81,13 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
       SECURITY_PROVIDERS = providers.toArray(new Provider[0]);
    }
 
-   ChannelInitializer(Bootstrap bootstrap, SocketAddress unresolvedAddress, CacheOperationsFactory cacheOperationsFactory, HotRodConfiguration configuration, ChannelFactory channelFactory) {
+   ChannelInitializer(Bootstrap bootstrap, SocketAddress unresolvedAddress, CacheOperationsFactory cacheOperationsFactory, HotRodConfiguration configuration, ChannelFactory channelFactory, ClusterInfo cluster) {
       this.bootstrap = bootstrap;
       this.unresolvedAddress = unresolvedAddress;
       this.cacheOperationsFactory = cacheOperationsFactory;
       this.configuration = configuration;
       this.channelFactory = channelFactory;
+      this.cluster = cluster;
    }
 
    CompletableFuture<Channel> createChannel() {
@@ -171,16 +176,25 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
             throw new CacheConfigurationException(e);
          }
       } else {
-         sslContext = new JdkSslContext(ssl.sslContext(), true, ClientAuth.NONE);
+         sslContext = new JdkSslContext(ssl.sslContext(), true, null, IdentityCipherSuiteFilter.INSTANCE,
+               null, ClientAuth.NONE, null, false);
       }
       SslHandler sslHandler = sslContext.newHandler(channel.alloc(), ssl.sniHostName(), -1);
-      if (ssl.sniHostName() != null) {
-         SSLParameters sslParameters = sslHandler.engine().getSSLParameters();
-         sslParameters.setServerNames(Collections.singletonList(new SNIHostName(ssl.sniHostName())));
-         sslHandler.engine().setSSLParameters(sslParameters);
+      String sniHostName;
+      if (cluster != null && cluster.getSniHostName() != null) {
+         sniHostName = cluster.getSniHostName();
+      } else if (ssl.sniHostName() != null) {
+         sniHostName = ssl.sniHostName();
+      } else {
+         sniHostName = ((InetSocketAddress) unresolvedAddress).getHostString();
       }
-      channel.pipeline().addFirst(sslHandler,
-            SslHandshakeExceptionHandler.INSTANCE);
+      SSLParameters sslParameters = sslHandler.engine().getSSLParameters();
+      sslParameters.setServerNames(Collections.singletonList(new SNIHostName(sniHostName)));
+      if (ssl.hostnameValidation()) {
+         sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
+      }
+      sslHandler.engine().setSSLParameters(sslParameters);
+      channel.pipeline().addFirst(sslHandler, SslHandshakeExceptionHandler.INSTANCE);
    }
 
    private void initAuthentication(Channel channel, AuthenticationConfiguration authentication) throws PrivilegedActionException, SaslException {

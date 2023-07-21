@@ -102,6 +102,7 @@ public class ChannelFactory {
    @GuardedBy("lock")
    private final Set<SocketAddress> failedServers = new HashSet<>();
    private final CodecHolder codecHolder;
+   private AddressResolverGroup<?> dnsResolver;
 
    public ChannelFactory(CodecHolder codecHolder) {
       this.codecHolder = codecHolder;
@@ -123,12 +124,17 @@ public class ChannelFactory {
          // Note that each event loop opens a selector which counts
          int maxExecutors = Math.min(asyncThreads, eventLoopThreads);
          this.eventLoopGroup = configuration.transportFactory().createEventLoopGroup(maxExecutors, executorService);
+         DnsNameResolverBuilder builder = new DnsNameResolverBuilder()
+               .channelType(configuration.transportFactory().datagramChannelClass())
+               .ttl(configuration.dnsResolverMinTTL(), configuration.dnsResolverMaxTTL())
+               .negativeTtl(configuration.dnsResolverNegativeTTL());
+         this.dnsResolver = new RoundRobinDnsAddressResolverGroup(builder);
 
          List<InetSocketAddress> initialServers = new ArrayList<>();
          for (ServerConfiguration server : configuration.servers()) {
             initialServers.add(InetSocketAddress.createUnresolved(server.host(), server.port()));
          }
-         ClusterInfo mainCluster = new ClusterInfo(DEFAULT_CLUSTER_NAME, initialServers, configuration.clientIntelligence());
+         ClusterInfo mainCluster = new ClusterInfo(DEFAULT_CLUSTER_NAME, initialServers, configuration.clientIntelligence(), configuration.security().ssl().sniHostName());
          List<ClusterInfo> clustersDefinitions = new ArrayList<>();
          if (log.isDebugEnabled()) {
             log.debugf("Statically configured servers: %s", initialServers);
@@ -145,8 +151,10 @@ public class ChannelFactory {
                ClientIntelligence intelligence = clusterConfiguration.getClientIntelligence() != null ?
                      clusterConfiguration.getClientIntelligence() :
                      configuration.clientIntelligence();
+
+               String sniHostName = clusterConfiguration.sniHostName() != null ? clusterConfiguration.sniHostName() : configuration.security().ssl().sniHostName();
                ClusterInfo alternateCluster =
-                     new ClusterInfo(clusterConfiguration.getClusterName(), alternateServers, intelligence);
+                     new ClusterInfo(clusterConfiguration.getClusterName(), alternateServers, intelligence, sniHostName);
                log.debugf("Add secondary cluster: %s", alternateCluster);
                clustersDefinitions.add(alternateCluster);
             }
@@ -187,12 +195,7 @@ public class ChannelFactory {
    }
 
    private ChannelPool newPool(SocketAddress address) {
-      log.debugf("Creating new channel pool for %s", address);
-      DnsNameResolverBuilder builder = new DnsNameResolverBuilder()
-            .channelType(configuration.transportFactory().datagramChannelClass())
-            .ttl(configuration.dnsResolverMinTTL(), configuration.dnsResolverMaxTTL())
-            .negativeTtl(configuration.dnsResolverNegativeTTL());
-      AddressResolverGroup<?> dnsResolver = new RoundRobinDnsAddressResolverGroup(builder);
+            log.debugf("Creating new channel pool for %s", address);
       Bootstrap bootstrap = new Bootstrap()
             .group(eventLoopGroup)
             .channel(configuration.transportFactory().socketChannelClass())
@@ -210,7 +213,7 @@ public class ChannelFactory {
    }
 
    public ChannelInitializer createChannelInitializer(SocketAddress address, Bootstrap bootstrap) {
-      return new ChannelInitializer(bootstrap, address, operationsFactory, configuration, this);
+      return new ChannelInitializer(bootstrap, address, operationsFactory, configuration, this, topologyInfo.getCluster());
    }
 
    protected ChannelPool createChannelPool(Bootstrap bootstrap, ChannelInitializer channelInitializer, SocketAddress address) {

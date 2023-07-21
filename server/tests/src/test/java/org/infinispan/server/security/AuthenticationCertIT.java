@@ -17,8 +17,8 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.category.Security;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
-import org.junit.jupiter.api.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
@@ -39,6 +39,7 @@ public class AuthenticationCertIT {
       builder.maxRetries(1).connectionPool().maxActive(1);
       SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
       SERVERS.getServerDriver().applyKeyStore(builder, "admin.pfx");
+      builder.security().ssl().sniHostName("infinispan.test");
       builder.security()
             .authentication()
             .saslMechanism("EXTERNAL")
@@ -57,6 +58,7 @@ public class AuthenticationCertIT {
       builder.maxRetries(1).connectionPool().maxActive(1);
       SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
       SERVERS.getServerDriver().applyKeyStore(builder, "untrusted.pfx");
+      builder.security().ssl().sniHostName("infinispan.test");
       builder.security()
             .authentication()
             .saslMechanism("EXTERNAL")

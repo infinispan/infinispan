@@ -15,13 +15,16 @@ import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 import javax.security.auth.x500.X500Principal;
 
+import org.wildfly.security.x500.GeneralName;
 import org.wildfly.security.x500.cert.BasicConstraintsExtension;
 import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
+import org.wildfly.security.x500.cert.SubjectAlternativeNamesExtension;
 import org.wildfly.security.x500.cert.X509CertificateBuilder;
 
 /**
@@ -142,6 +145,7 @@ public class TestCertificates {
             .setPublicKey(publicKey)
             .setSerialNumber(BigInteger.valueOf(CERT_SERIAL.getAndIncrement()))
             .addExtension(new BasicConstraintsExtension(false, false, -1))
+            .addExtension(new SubjectAlternativeNamesExtension(false, List.of(new GeneralName.DNSName(name))))
             .build();
 
       try {

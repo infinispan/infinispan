@@ -275,4 +275,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "The Memcached endpoint text protocol requires a security realm which supports passwords.", id = 80074)
    CacheConfigurationException memcachedTextEndpointRequiresRealmWithPassword();
+
+   @LogMessage(level = Logger.Level.WARN)
+   @Message(value = "The '%2$s' certificate in keystore '%1$s' does not have the subjectAltName extension as recommended by RFC2818.", id = 80075)
+   void serverCertificateWithoutSAN(String keyStoreFileName, String alias);
 }

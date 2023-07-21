@@ -390,4 +390,6 @@ public interface Log extends BasicLogger {
    @Message(value = "OpenTelemetry API is not present in the classpath. Client context tracing will not be propagated.", id = 4109)
    void noOpenTelemetryAPI(@Cause Throwable throwable);
 
+   @Message(value = "The SNI hostname is required when hostname validation is enabled", id = 4112)
+   CacheConfigurationException missingSniHostName();
 }

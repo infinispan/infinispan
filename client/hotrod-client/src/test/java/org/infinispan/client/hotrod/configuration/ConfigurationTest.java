@@ -36,6 +36,7 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SERVER_L
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SNI_HOST_NAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SO_TIMEOUT;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SSL_CONTEXT;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SSL_HOSTNAME_VALIDATION;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.SSL_PROTOCOL;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.STATISTICS;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.TCP_KEEP_ALIVE;
@@ -209,6 +210,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
             .security()
             .ssl()
             .enable()
+            .sniHostName("infinispan.test")
             .keyStoreFileName("my-key-store.file")
             .keyStorePassword("my-key-store.password".toCharArray())
             .keyStoreCertificatePassword("my-key-store-certificate.password".toCharArray())
@@ -278,6 +280,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       p.setProperty(TRUST_STORE_FILE_NAME, "my-trust-store.file");
       p.setProperty(TRUST_STORE_PASSWORD, "my-trust-store.password");
       p.setProperty(SSL_PROTOCOL, "TLSv1.1");
+      p.setProperty(SNI_HOST_NAME, "infinispan.test");
       p.setProperty(USE_AUTH, "true");
       p.setProperty(SASL_MECHANISM, "my-sasl-mechanism");
       p.put(AUTH_CALLBACK_HANDLER, callbackHandler);
@@ -317,6 +320,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       builder.security()
             .ssl()
             .enable()
+            .sniHostName("infinispan.test")
             .sslContext(getSSLContext());
 
       Configuration configuration = builder.build();
@@ -349,6 +353,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       Properties p = new Properties();
       p.put(SSL_CONTEXT, getSSLContext());
+      p.put(SSL_HOSTNAME_VALIDATION, false);
       Configuration configuration = builder.withProperties(p).build();
       validateSSLContextConfiguration(configuration);
 
@@ -719,7 +724,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       assertEquals("host3", configuration.servers().get(2).host());
       assertEquals(11222, configuration.servers().get(2).port());
       assertFalse(configuration.security().ssl().enabled());
-      configuration = HotRodURI.create("hotrods://user:password@host1:11222,host2:11322?trust_store_path=cert.pem").toConfigurationBuilder().build();
+      configuration = HotRodURI.create("hotrods://user:password@host1:11222,host2:11322?trust_store_path=cert.pem&sni_host_name=infinispan.test").toConfigurationBuilder().build();
       assertEquals(2, configuration.servers().size());
       assertEquals("host1", configuration.servers().get(0).host());
       assertEquals(11222, configuration.servers().get(0).port());
