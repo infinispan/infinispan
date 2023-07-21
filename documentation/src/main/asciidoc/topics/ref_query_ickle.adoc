@@ -48,24 +48,26 @@ You can change the default limit by setting the `query.default-max-results` cach
 
 == Number of hits
 
-The `QueryResult` object has the `.hitCount()` method to return a total hit count object whose value
-is the number of results of the query, regardless of any pagination parameter.
+The `QueryResult` object includes the `.hitCount()` method, which returns a hit count value that represents the total number of results from a query, regardless of any pagination parameter.
 
-The same object contains a boolean returned by the `.isExact()` method which indicates whether the result is exact or a lower bound.
+Additionally, `QueryResult` object contains a boolean value returned by the `.isExact()` method which indicates whether the hit count number is exact or a lower bound.
 The hit count is only available for indexed queries for performance reasons.
 
-=== Hit Count Accuracy
+=== Hit count accuracy
+You can limit the required accuracy of hit counts by setting `hit-count-accuracy` attribute.
+When dealing with large data sets, precise hit counts can impact performance.
+Setting a limit to the hit count accuracy, lets you achieve faster query responses while ensuring that the provided hit counts remain sufficiently accurate for your application's needs.
 
-For performance reasons, the default accuracy of the hit count is limited to `10,000`.
-This means that, if the effective hit count is higher than `10,000`, a lower bound of the actual value will be returned.
-
-In this case `.isExact()` method or the `hit_count_exact` JSON field will be `false`.
-Setting this value to `Integer.MAX` would return accurate results for any query, but it would have a very adverse effect on query performance.
-
+The default accuracy of the `hit-count-accuracy` attribute is limited to `10000`.
+This means that for any query, {brandname} provides exact hit count up to maximum of 10,000.
+If the effective hit count is higher than 10,000, {brandname} returns a lower bound estimate of the count.
 You can change the default limit by setting the `query.hit-count-accuracy` cache property.
 Alternatively, it can be set on each query instance.
 
-For optimal performances set this value not much above the expected hit count. If you do not require accurate hit counts, set it to a low value.
+When the actual hit count exceeds the limit set by the `hit-count-accuracy`, the `.isExact()` method or the `hit_count_exact` JSON field will be `false`, indicating that the returned hit count is an estimation.
+Setting this value to `Integer.MAX` would return accurate results for any query, but this can severely impact query performance.
+
+For optimal performance set the property value slightly above the expected hit count. If you do not require accurate hit counts, set it to a low value.
 
 == Iteration
 

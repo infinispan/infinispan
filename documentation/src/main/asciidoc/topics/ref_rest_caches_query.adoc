@@ -13,10 +13,10 @@ GET /rest/v2/caches/{cacheName}?action=search&query={ickle query}
 include::json/rest_query_results.json[]
 ----
 
-* `hit_count` displays the total number of results from the query.
-* `hit_count_exact` is `true` whether the `hit_count` is exact, otherwise it is a lower-bound.
-* `hits` is an array of matches from the query.
-* `hit` is an object that matches the query.
+* `hit_count` shows the total number of results from the query.
+* `hit_count_exact` is `true` which means the `hit_count` is exact. When it's `false`, it implies that the hit count value is a lower bound.
+* `hits` represents an array of individual matches from the query.
+* `hit` refers to each object that corresponds to a match in the query.
 +
 [TIP]
 ====
@@ -42,7 +42,7 @@ Hits can contain all fields or a subset of fields if you use a `Select` clause.
 
 |`hit_count_accuracy`
 |OPTIONAL
-|Limit the required accuracy of the hit count for the indexed queries to an upper-bound. The default is `10_000`. You can change the default limit by setting the `query.hit-count-accuracy` cache property.
+|Limits the required accuracy of the hit count for the indexed queries to an upper-bound. The default is `10_000`. You can change the default limit by setting the `query.hit-count-accuracy` cache property.
 
 |`local`
 |OPTIONAL
