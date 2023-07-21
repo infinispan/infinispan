@@ -469,6 +469,11 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       return channelFactory.manualSwitchToCluster(ChannelFactory.DEFAULT_CLUSTER_NAME);
    }
 
+   @Override
+   public String getCurrentClusterName() {
+      return channelFactory.getCurrentClusterName();
+   }
+
    private Properties loadFromStream(InputStream stream) {
       Properties properties = new Properties();
       try {

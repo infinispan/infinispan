@@ -69,6 +69,7 @@ public class ConfigurationProperties {
    public static final String SSL_PROTOCOL = ICH + "ssl_protocol";
    public static final String SSL_CIPHERS = ICH + "ssl_ciphers";
    public static final String SSL_CONTEXT = ICH + "ssl_context";
+   public static final String SSL_HOSTNAME_VALIDATION = ICH + "ssl_hostname_validation";
    public static final String MAX_RETRIES = ICH + "max_retries";
    // Authentication properties
    public static final String USE_AUTH = ICH + "use_auth";

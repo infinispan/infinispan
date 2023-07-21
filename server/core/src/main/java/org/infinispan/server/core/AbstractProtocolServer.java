@@ -202,7 +202,7 @@ public abstract class AbstractProtocolServer<C extends ProtocolServerConfigurati
       if (configuration == null)
          return protocolName;
 
-      return protocolName + (configuration.name().length() > 0 ? "-" : "") + configuration.name();
+      return protocolName + (!configuration.name().isEmpty() ? "-" : "") + configuration.name();
    }
 
    @Override

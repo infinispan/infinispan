@@ -496,6 +496,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
                .trustStorePassword(ssl.trustStorePassword())
                .trustStoreType(ssl.trustStoreType())
                .protocol(ssl.protocol())
+               .hostnameValidation(ssl.hostnameValidation())
                .sniHostName(ssl.sniHostName());
       }
 

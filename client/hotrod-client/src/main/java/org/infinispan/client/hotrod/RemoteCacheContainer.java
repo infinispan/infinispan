@@ -152,6 +152,13 @@ public interface RemoteCacheContainer extends BasicCacheContainer {
     */
    boolean switchToDefaultCluster();
 
+   /**
+    * Returns the name of the currently active cluster.
+    *
+    * @return the name of the active cluster
+    */
+   String getCurrentClusterName();
+
    Marshaller getMarshaller();
 
    /**

@@ -1,6 +1,7 @@
 package org.infinispan.persistence.remote.configuration;
 
 import static org.infinispan.persistence.remote.configuration.SslConfiguration.ENABLED;
+import static org.infinispan.persistence.remote.configuration.SslConfiguration.HOSTNAME_VALIDATION;
 import static org.infinispan.persistence.remote.configuration.SslConfiguration.PROTOCOL;
 import static org.infinispan.persistence.remote.configuration.SslConfiguration.SNI_HOSTNAME;
 import static org.infinispan.persistence.remote.configuration.SslConfiguration.SSL_CONTEXT;
@@ -55,6 +56,14 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
     */
    public SslConfigurationBuilder enabled(boolean enabled) {
       this.attributes.attribute(ENABLED).set(enabled);
+      return this;
+   }
+
+   /**
+    * Enables or disables SSL hostname validation
+    */
+   public SslConfigurationBuilder hostnameValidation(boolean validation) {
+      this.attributes.attribute(HOSTNAME_VALIDATION).set(validation);
       return this;
    }
 

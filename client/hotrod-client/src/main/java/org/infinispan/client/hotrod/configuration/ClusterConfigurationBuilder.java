@@ -18,6 +18,7 @@ public class ClusterConfigurationBuilder extends AbstractConfigurationChildBuild
    private final List<ServerConfigurationBuilder> servers = new ArrayList<>();
    private final String clusterName;
    private ClientIntelligence intelligence;
+   private String sniHostName;
 
    protected ClusterConfigurationBuilder(ConfigurationBuilder builder, String clusterName) {
       super(builder);
@@ -53,6 +54,11 @@ public class ClusterConfigurationBuilder extends AbstractConfigurationChildBuild
       return this;
    }
 
+   public ClusterConfigurationBuilder clusterSniHostName(String clusterSniHostName) {
+      this.sniHostName = clusterSniHostName;
+      return this;
+   }
+
    @Override
    public void validate() {
       if (clusterName == null || clusterName.isEmpty()) {
@@ -70,7 +76,7 @@ public class ClusterConfigurationBuilder extends AbstractConfigurationChildBuild
    public ClusterConfiguration create() {
       List<ServerConfiguration> serverCluster = servers.stream()
          .map(ServerConfigurationBuilder::create).collect(Collectors.toList());
-      return new ClusterConfiguration(serverCluster, clusterName, intelligence);
+      return new ClusterConfiguration(serverCluster, clusterName, intelligence, sniHostName);
    }
 
    @Override

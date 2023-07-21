@@ -399,4 +399,6 @@ public interface Log extends BasicLogger {
    @Message(value = "OpenTelemetry API is present in the classpath, but the tracing propagation is not enabled. Client context tracing will not be propagated.", id = 4111)
    void openTelemetryPropagationDisabled();
 
+   @Message(value = "The SNI hostname is required when hostname validation is enabled", id = 4112)
+   CacheConfigurationException missingSniHostName();
 }
