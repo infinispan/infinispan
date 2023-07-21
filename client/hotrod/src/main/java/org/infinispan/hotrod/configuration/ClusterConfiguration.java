@@ -13,9 +13,10 @@ public class ClusterConfiguration extends ConfigurationElement<ClusterConfigurat
    static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", null, String.class).build();
    // default intelligence is "null" to use the client intelligence defined globally
    static final AttributeDefinition<ClientIntelligence> CLIENT_INTELLIGENCE = AttributeDefinition.builder("client_intelligence", null, ClientIntelligence.class).build();
+   static final AttributeDefinition<String> SNI_HOSTNAME = AttributeDefinition.builder("sni-hostname", null, String.class).build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(ClusterConfiguration.class, NAME, CLIENT_INTELLIGENCE);
+      return new AttributeSet(ClusterConfiguration.class, NAME, CLIENT_INTELLIGENCE, SNI_HOSTNAME);
    }
 
    private final List<ServerConfiguration> servers;
@@ -35,5 +36,9 @@ public class ClusterConfiguration extends ConfigurationElement<ClusterConfigurat
 
    public ClientIntelligence getClientIntelligence() {
       return attributes.attribute(CLIENT_INTELLIGENCE).get();
+   }
+
+   public String sniHostName() {
+      return attributes.attribute(SNI_HOSTNAME).get();
    }
 }

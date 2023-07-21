@@ -10,13 +10,11 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.LdapServerListener;
 import org.infinispan.server.test.core.category.Security;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
 import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -46,7 +44,8 @@ public class AuthenticationMultiRealmIT {
             .serverName("infinispan")
             .realm("default")
             .username(TestUser.ADMIN.getUser())
-            .password(TestUser.ADMIN.getPassword());
+            .password(TestUser.ADMIN.getPassword())
+            .ssl().sniHostName("infinispan.test");
       performOperations(builder);
    }
 
@@ -54,7 +53,9 @@ public class AuthenticationMultiRealmIT {
    public void testProps() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
-      builder.security().authentication()
+      builder.security()
+            .ssl().sniHostName("infinispan.test")
+            .authentication()
             .saslMechanism("SCRAM-SHA-256")
             .serverName("infinispan")
             .realm("default")
@@ -70,6 +71,7 @@ public class AuthenticationMultiRealmIT {
       SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
       SERVERS.getServerDriver().applyKeyStore(builder, "admin.pfx");
       builder.security()
+            .ssl().sniHostName("infinispan.test")
             .authentication()
             .saslMechanism("EXTERNAL")
             .serverName("infinispan")
@@ -81,7 +83,9 @@ public class AuthenticationMultiRealmIT {
    public void testUnknown() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
-      builder.security().authentication()
+      builder.security()
+            .ssl().sniHostName("infinispan.test")
+            .authentication()
             .saslMechanism("SCRAM-SHA-256")
             .serverName("infinispan")
             .realm("default")

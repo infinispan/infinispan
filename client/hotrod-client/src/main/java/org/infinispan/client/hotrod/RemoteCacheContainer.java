@@ -1,11 +1,11 @@
 package org.infinispan.client.hotrod;
 
-import javax.transaction.TransactionManager;
-
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.TransactionMode;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.marshall.Marshaller;
+
+import jakarta.transaction.TransactionManager;
 
 public interface RemoteCacheContainer extends BasicCacheContainer {
 
@@ -151,6 +151,13 @@ public interface RemoteCacheContainer extends BasicCacheContainer {
     * @return {@code true} if the cluster was switched, {@code false} otherwise
     */
    boolean switchToDefaultCluster();
+
+   /**
+    * Returns the name of the currently active cluster.
+    *
+    * @return the name of the active cluster
+    */
+   String getCurrentClusterName();
 
    Marshaller getMarshaller();
 

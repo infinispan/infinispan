@@ -32,6 +32,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -56,8 +57,10 @@ import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.jboss.shrinkwrap.resolver.api.maven.MavenResolvedArtifact;
 import org.junit.Assume;
+import org.wildfly.security.x500.GeneralName;
 import org.wildfly.security.x500.cert.BasicConstraintsExtension;
 import org.wildfly.security.x500.cert.SelfSignedX509CertificateAndSigningKey;
+import org.wildfly.security.x500.cert.SubjectAlternativeNamesExtension;
 import org.wildfly.security.x500.cert.X509CertificateBuilder;
 
 /**
@@ -412,6 +415,7 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
             .setPublicKey(publicKey)
             .setSerialNumber(BigInteger.valueOf(certSerial.getAndIncrement()))
             .addExtension(new BasicConstraintsExtension(false, false, -1))
+            .addExtension(new SubjectAlternativeNamesExtension(false, List.of(new GeneralName.DNSName("infinispan.test"))))
             .build();
 
       try {

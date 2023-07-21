@@ -52,6 +52,7 @@ public class AuthenticationTLSIT {
    public void testReadWrite() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
+      builder.security().ssl().sniHostName("infinispan.test");
       if (!mechanism.isEmpty()) {
          builder.security().authentication()
                .saslMechanism(mechanism)

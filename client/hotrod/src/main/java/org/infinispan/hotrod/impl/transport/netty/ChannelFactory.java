@@ -88,7 +88,7 @@ public class ChannelFactory {
    private Marshaller marshaller;
    private ClientListenerNotifier listenerNotifier;
    @GuardedBy("lock")
-   private volatile TopologyInfo topologyInfo;
+   protected volatile TopologyInfo topologyInfo;
 
    private List<ClusterInfo> clusters;
 
@@ -122,7 +122,7 @@ public class ChannelFactory {
          for (ServerConfiguration server : configuration.servers()) {
             initialServers.add(InetSocketAddress.createUnresolved(server.host(), server.port()));
          }
-         ClusterInfo mainCluster = new ClusterInfo(DEFAULT_CLUSTER_NAME, initialServers, configuration.clientIntelligence());
+         ClusterInfo mainCluster = new ClusterInfo(DEFAULT_CLUSTER_NAME, initialServers, configuration.clientIntelligence(), configuration.security().ssl().sniHostName());
          List<ClusterInfo> clustersDefinitions = new ArrayList<>();
          if (log.isDebugEnabled()) {
             log.debugf("Statically configured servers: %s", initialServers);
@@ -139,8 +139,9 @@ public class ChannelFactory {
                ClientIntelligence intelligence = clusterConfiguration.getClientIntelligence() != null ?
                      clusterConfiguration.getClientIntelligence() :
                      configuration.clientIntelligence();
+               String sniHostName = clusterConfiguration.sniHostName() != null ? clusterConfiguration.sniHostName() : configuration.security().ssl().sniHostName();
                ClusterInfo alternateCluster =
-                     new ClusterInfo(clusterConfiguration.getClusterName(), alternateServers, intelligence);
+                     new ClusterInfo(clusterConfiguration.getClusterName(), alternateServers, intelligence, sniHostName);
                log.debugf("Add secondary cluster: %s", alternateCluster);
                clustersDefinitions.add(alternateCluster);
             }
@@ -205,7 +206,7 @@ public class ChannelFactory {
    }
 
    protected ChannelInitializer createChannelInitializer(SocketAddress address, Bootstrap bootstrap) {
-      return new ChannelInitializer(bootstrap, address, cacheOperationsFactory, configuration, this);
+      return new ChannelInitializer(bootstrap, address, cacheOperationsFactory, configuration, this, topologyInfo.getCluster());
    }
 
    protected CacheOperationsFactory getCacheOperationsFactory() {

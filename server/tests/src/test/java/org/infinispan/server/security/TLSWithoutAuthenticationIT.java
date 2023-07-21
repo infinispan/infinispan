@@ -13,13 +13,11 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.category.Security;
-import org.infinispan.server.test.junit4.InfinispanServerRule;
-import org.infinispan.server.test.junit4.InfinispanServerRuleBuilder;
-import org.infinispan.server.test.junit4.InfinispanServerTestMethodRule;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
 import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -40,7 +38,8 @@ public class TLSWithoutAuthenticationIT {
    public void testReadWrite() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
-      RemoteCache<String, String> cache = SERVER_TEST.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create();
+      builder.security().ssl().sniHostName("infinispan.test");
+      RemoteCache<String, String> cache = SERVERS.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create();
       cache.put("k1", "v1");
       assertEquals(1, cache.size());
       assertEquals("v1", cache.get("k1"));
@@ -50,7 +49,7 @@ public class TLSWithoutAuthenticationIT {
    public void testDisabledProtocol() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
-      builder.security().ssl().protocol("TLSv1.1");
+      builder.security().ssl().protocol("TLSv1.1").sniHostName("infinispan.test");
       try {
          SERVER_TEST.hotrod().withClientConfiguration(builder)
                     .withCacheMode(CacheMode.DIST_SYNC)
@@ -66,7 +65,7 @@ public class TLSWithoutAuthenticationIT {
    public void testDisabledCipherSuite() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
-      builder.security().ssl().ciphers("TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384");
+      builder.security().ssl().ciphers("TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384").sniHostName("infinispan.test");
       expectException(TransportException.class, ClosedChannelException.class,
                       () -> SERVER_TEST.hotrod().withClientConfiguration(builder)
                                        .withCacheMode(CacheMode.DIST_SYNC)
@@ -77,15 +76,15 @@ public class TLSWithoutAuthenticationIT {
    public void testForceTLSv12() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
-      builder.security().ssl().protocol("TLSv1.2");
-      SERVER_TEST.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create();
+      builder.security().ssl().protocol("TLSv1.2").sniHostName("infinispan.test");
+      SERVERS.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create();
    }
 
    @Test
    public void testForceTLSv13() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
-      builder.security().ssl().protocol("TLSv1.3");
-      SERVER_TEST.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create();
+      builder.security().ssl().protocol("TLSv1.3").sniHostName("infinispan.test");
+      SERVERS.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create();
    }
 }

@@ -26,7 +26,7 @@ public class RoundRobinBalancingStrategy implements FailoverRequestBalancingStra
 
    @Override
    public void setServers(Collection<SocketAddress> servers) {
-      this.servers = servers.toArray(new SocketAddress[servers.size()]);
+      this.servers = servers.toArray(new SocketAddress[0]);
       // Always start with a random server after a topology update
       index = ThreadLocalRandom.current().nextInt(this.servers.length);
       if (log.isTraceEnabled()) {

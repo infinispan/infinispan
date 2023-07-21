@@ -55,6 +55,7 @@ public class AuthenticationTLSBouncyCastleIT {
    public void testReadWrite() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       SERVERS.getServerDriver().applyTrustStore(builder, "ca.bcfks", "BCFKS", "BC");
+      builder.security().ssl().sniHostName("infinispan.test");
       if (!mechanism.isEmpty()) {
          builder.security().authentication()
                .saslMechanism(mechanism)

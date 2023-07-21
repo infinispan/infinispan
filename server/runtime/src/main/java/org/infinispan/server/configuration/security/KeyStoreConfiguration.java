@@ -10,8 +10,11 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.Provider;
+import java.security.cert.X509Certificate;
 import java.util.EnumSet;
+import java.util.Enumeration;
 import java.util.Properties;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import javax.net.ssl.KeyManager;
@@ -34,6 +37,7 @@ import org.wildfly.security.keystore.AliasFilter;
 import org.wildfly.security.keystore.FilteringKeyStore;
 import org.wildfly.security.keystore.KeyStoreUtil;
 import org.wildfly.security.ssl.SSLContextBuilder;
+import org.wildfly.security.x500.X500;
 
 /**
  * @since 10.0
@@ -110,6 +114,24 @@ public class KeyStoreConfiguration extends ConfigurationElement<KeyStoreConfigur
          }
          keyStore = FilteringKeyStore.filteringKeyStore(keyStore, AliasFilter.fromString(keyAlias));
       }
+      // Check that the certificate have SANs
+      for (Enumeration<String> aliases = keyStore.aliases(); aliases.hasMoreElements(); ) {
+         String alias = aliases.nextElement();
+         if (keyStore.isKeyEntry(alias)) {
+            verifyCertificateHasSAN((X509Certificate) keyStore.getCertificateChain(alias)[0], keyStoreFileName, alias);
+         } else if (keyStore.isCertificateEntry(alias)) {
+            verifyCertificateHasSAN((X509Certificate) keyStore.getCertificate(alias), keyStoreFileName, alias);
+         }
+      }
+
       return keyStore;
+   }
+
+   private void verifyCertificateHasSAN(X509Certificate certificate, String keyStoreFileName, String alias) {
+      Set<String> critical = certificate.getCriticalExtensionOIDs();
+      Set<String> nonCritical = certificate.getNonCriticalExtensionOIDs();
+      if ((critical == null || !critical.contains(X500.OID_CE_SUBJECT_ALT_NAME)) && (nonCritical == null || !nonCritical.contains(X500.OID_CE_SUBJECT_ALT_NAME))) {
+         Server.log.serverCertificateWithoutSAN(keyStoreFileName, alias);
+      }
    }
 }

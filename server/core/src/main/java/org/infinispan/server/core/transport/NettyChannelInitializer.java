@@ -12,7 +12,7 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.JdkSslContext;
 import io.netty.handler.ssl.SniHandler;
-import io.netty.util.DomainNameMappingBuilder;
+import io.netty.util.DomainWildcardMappingBuilder;
 
 /**
   * Pipeline factory for Netty based channels. For each pipeline created, a new decoder is created which means that
@@ -55,12 +55,9 @@ public class NettyChannelInitializer<A extends ProtocolServerConfiguration> impl
          JdkSslContext defaultNettySslContext = SslUtils.createNettySslContext(ssl, ssl.sniDomainsConfiguration().get(SslConfiguration.DEFAULT_SNI_DOMAIN), alpnConfig);
          DomainNameMappingBuilder<JdkSslContext> domainMappingBuilder = new DomainNameMappingBuilder<>(defaultNettySslContext);
 
-         //and the rest
-         ssl.sniDomainsConfiguration().forEach((k, v) -> {
-            if (!SslConfiguration.DEFAULT_SNI_DOMAIN.equals(k)) {
-               domainMappingBuilder.add(k, SslUtils.createNettySslContext(ssl, v, alpnConfig));
-            }
-         });
+            //add default domain mapping
+            JdkSslContext defaultNettySslContext = SslUtils.createNettySslContext(ssl, ssl.sniDomainsConfiguration().get(SslConfiguration.DEFAULT_SNI_DOMAIN), alpnConfig);
+            DomainWildcardMappingBuilder<JdkSslContext> domainMappingBuilder = new DomainWildcardMappingBuilder<>(defaultNettySslContext);
 
          pipeline.addLast("sni", new SniHandler(domainMappingBuilder.build()));
       }

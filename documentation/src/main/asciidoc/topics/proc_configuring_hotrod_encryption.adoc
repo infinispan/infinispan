@@ -5,6 +5,8 @@
 To verify certificates issued to {brandname} Server, Hot Rod clients require either the full certificate chain or a partial chain that starts with the Root CA.
 You provide server certificates to Hot Rod clients as trust stores.
 
+By default, Hot Rod clients will also perform hostname validation by matching the `dNSName` or `iPAddress` or both types contained by the server certificate's `subjectAltName` extension with the expected hostname.
+
 [TIP]
 ====
 Alternatively to providing trust stores you can use shared system certificates.
@@ -43,4 +45,4 @@ Add a client trust store to the `{server_home}/server/conf` directory and config
 * link:{server_docs}#endpoint-encryption[Encrypting {brandname} Server Connections]
 * link:{javadocroot}/org/infinispan/client/hotrod/configuration/SslConfigurationBuilder.html[SslConfigurationBuilder]
 * link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html[Hot Rod client configuration properties]
-* link:https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/security_guide/sec-shared-system-certificates[Using Shared System Certificates] (Red Hat Enterprise Linux 7 Security Guide)
+* link:https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/securing_networks/using-shared-system-certificates_securing-networks[Using Shared System Certificates] (Red Hat Enterprise Linux 9 Securing Networks)

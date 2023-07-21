@@ -30,9 +30,24 @@ public class AuthorizationCertIT extends AbstractAuthorization {
    @Rule
    public InfinispanServerTestMethodRule SERVER_TEST = new InfinispanServerTestMethodRule(SERVERS);
 
-   @Override
-   protected InfinispanServerRule getServers() {
-      return SERVERS;
+      public HotRod() {
+         super(SERVERS, AuthorizationCertIT::expectedServerPrincipalName, user -> {
+            ConfigurationBuilder hotRodBuilder = new ConfigurationBuilder();
+            SERVERS.getServerDriver().applyTrustStore(hotRodBuilder, "ca.pfx");
+            if (user == TestUser.ANONYMOUS) {
+               SERVERS.getServerDriver().applyKeyStore(hotRodBuilder, "server.pfx");
+            } else {
+               SERVERS.getServerDriver().applyKeyStore(hotRodBuilder, user.getUser() + ".pfx");
+            }
+            hotRodBuilder.security()
+                  .ssl().sniHostName("infinispan.test")
+                  .authentication()
+                  .saslMechanism("EXTERNAL")
+                  .serverName("infinispan")
+                  .realm("default");
+            return hotRodBuilder;
+         });
+      }
    }
 
    @Override

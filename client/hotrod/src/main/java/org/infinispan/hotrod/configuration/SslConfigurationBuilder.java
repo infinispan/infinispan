@@ -2,6 +2,7 @@ package org.infinispan.hotrod.configuration;
 
 import static org.infinispan.hotrod.configuration.SslConfiguration.CIPHERS;
 import static org.infinispan.hotrod.configuration.SslConfiguration.ENABLED;
+import static org.infinispan.hotrod.configuration.SslConfiguration.HOSTNAME_VALIDATION;
 import static org.infinispan.hotrod.configuration.SslConfiguration.KEYSTORE_FILENAME;
 import static org.infinispan.hotrod.configuration.SslConfiguration.KEYSTORE_PASSWORD;
 import static org.infinispan.hotrod.configuration.SslConfiguration.KEYSTORE_TYPE;
@@ -112,6 +113,17 @@ public class SslConfigurationBuilder extends AbstractConfigurationChildBuilder i
    }
 
    /**
+    * Configures whether to enable hostname validation according to <a href="https://datatracker.ietf.org/doc/html/rfc2818">RFC 2818</a>.
+    * This is enabled by default and requires that the server certificate includes a subjectAltName extension of type dNSName or iPAddress.
+    *
+    * @param hostnameValidation whether to enable hostname validation
+    */
+   public SslConfigurationBuilder hostnameValidation(boolean hostnameValidation) {
+      attributes.attribute(HOSTNAME_VALIDATION).set(hostnameValidation);
+      return enable();
+   }
+
+   /**
     * Specifies the filename of a truststore to use to create the {@link SSLContext} You also need
     * to specify a {@link #trustStorePassword(char[])}. Alternatively specify an initialized {@link #sslContext(SSLContext)}.
     * Setting this property also implicitly enables SSL/TLS (see {@link #enable()}
@@ -203,6 +215,9 @@ public class SslConfigurationBuilder extends AbstractConfigurationChildBuilder i
             if (!attributes.attribute(KEYSTORE_FILENAME).isNull() || !attributes.attribute(TRUSTSTORE_FILENAME).isNull()) {
                throw HOTROD.xorSSLContext();
             }
+         }
+         if (attributes.attribute(HOSTNAME_VALIDATION).get() && attributes.attribute(SNI_HOSTNAME).isNull()) {
+            throw HOTROD.missingSniHostName();
          }
       }
    }
