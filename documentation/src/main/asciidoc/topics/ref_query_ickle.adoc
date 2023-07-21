@@ -48,20 +48,21 @@ You can change the default limit by setting the `query.default-max-results` cach
 
 == Number of hits
 
-The `QueryResult` object has the `.hitCount()` method to return the total number of results of the query, regardless
-of any pagination parameter. The hit count is only available for indexed queries for performance reasons.
+The `QueryResult` object includes the `.hitCount()` method, which returns a hit count value that represents the total number of results from a query, regardless of any pagination parameter.
+The hit count is only available for indexed queries for performance reasons.
 
-=== Hit Count Accuracy
+=== Hit count accuracy
 
-For performance reasons, the default accuracy of the hit count is limited to `10,000`.
-This means that, if the effective hit count is higher than `10,000`, the value cannot be returned.
-In this case a `null` (if the HotRod client or embedded query API is used) or `-1L` (if the REST query API is used) will be returned.
-Setting this value to `Integer.MAX` would return accurate results for any query, but it would have a very adverse effect on query performance.
+To optimize performance, the default accuracy of the hit count is set to `10000`.
+You can limit the required accuracy of hit counts by setting `query.hit-count-accuracy` cache property.
+Alternatively, you can set the limit on each query instance.
 
-You can change the default limit by setting the `query.hit-count-accuracy` cache property.
-Alternatively, it can be set on each query instance.
+When the hit count exceeds the specified limit, {brandname} does not return any value for the hit count.
+When using the HotRod client or embedded query API, {brandname} returns `null`, and when using the REST query API, {brandname} respons with `-1L`.
+While setting the hit count accuracy to `Integer.MAX` would return accurate results for any query, it would negatively impact query performance.
 
-For optimal performances set this value not much above the expected hit count. If you do not require accurate hit counts, set it to a low value.
+For optimal performance, set the property value slightly above the expected hit count.
+If you do not require precise hit counts, set it to a low value.
 
 == Iteration
 

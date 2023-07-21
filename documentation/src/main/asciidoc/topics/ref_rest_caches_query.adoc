@@ -41,7 +41,7 @@ Hits can contain all fields or a subset of fields if you use a `Select` clause.
 
 |`hit_count_accuracy`
 |OPTIONAL
-|Limit the required accuracy of the hit count for the indexed queries to an upper-bound. The default is `10_000`. You can change the default limit by setting the `query.hit-count-accuracy` cache property.
+|Limits the required accuracy of the hit count for the indexed queries to an upper-bound. The default is `10000`. You can change the default limit by setting the `query.hit-count-accuracy` cache property.
 
 |`local`
 |OPTIONAL
