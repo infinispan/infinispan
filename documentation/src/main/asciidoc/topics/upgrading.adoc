@@ -55,6 +55,7 @@ The following defaults have changed for the Hot Rod client:
 * `socket_timeout` is now 2000 ms / 2 seconds (previously 60000 ms / 60 seconds)
 * `max_retries` is now 3 (was 10)
 * `min_evictable_idle_time` is now 180000 ms / 3 minutes (previously 1800000 ms / 30 minutes)
+* `ssl_hostname_validation` is a new property and defaults to `true`. This also requires setting the `sni_hostname`.
 
 == RESP Endpoint
 

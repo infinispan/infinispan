@@ -24,6 +24,7 @@ public class SslConfiguration extends ConfigurationElement<SslConfiguration> {
    static final AttributeDefinition<String> PROVIDER = AttributeDefinition.builder("provider", null, String.class).immutable().build();
    static final AttributeDefinition<String> SNI_HOSTNAME = AttributeDefinition.builder("sni-hostname", null, String.class).immutable().build();
    static final AttributeDefinition<SSLContext> SSL_CONTEXT = AttributeDefinition.builder("ssl-context", null, SSLContext.class).immutable().build();
+   static final AttributeDefinition<Boolean> HOSTNAME_VALIDATION = AttributeDefinition.builder("ssl-hostname-validation", true).immutable().build();
    static final AttributeDefinition<String> TRUSTSTORE_FILENAME = AttributeDefinition.builder("truststore-filename", null, String.class).immutable().build();
    static final AttributeDefinition<char[]> TRUSTSTORE_PASSWORD = AttributeDefinition.builder("truststore-password", null, char[].class).immutable().build();
    static final AttributeDefinition<String> TRUSTSTORE_TYPE = AttributeDefinition.builder("truststore-type", KeyStore.getDefaultType(), String.class).immutable().build();
@@ -31,7 +32,7 @@ public class SslConfiguration extends ConfigurationElement<SslConfiguration> {
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(SslConfiguration.class,
             ENABLED, KEY_ALIAS, KEYSTORE_FILENAME, KEYSTORE_PASSWORD, KEYSTORE_TYPE, PROTOCOL,
-            PROVIDER, SNI_HOSTNAME, SSL_CONTEXT, TRUSTSTORE_FILENAME, TRUSTSTORE_PASSWORD, TRUSTSTORE_TYPE);
+            PROVIDER, SNI_HOSTNAME, SSL_CONTEXT, HOSTNAME_VALIDATION, TRUSTSTORE_FILENAME, TRUSTSTORE_PASSWORD, TRUSTSTORE_TYPE);
    }
 
    SslConfiguration(AttributeSet attributes) {
@@ -60,6 +61,10 @@ public class SslConfiguration extends ConfigurationElement<SslConfiguration> {
 
    public SSLContext sslContext() {
       return attributes.attribute(SSL_CONTEXT).get();
+   }
+
+   public boolean hostnameValidation() {
+      return attributes.attribute(HOSTNAME_VALIDATION).get();
    }
 
    public String trustStoreFileName() {

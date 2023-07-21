@@ -248,7 +248,7 @@ public class SinglePortTest {
         //when
         ConfigurationBuilder builder = new ConfigurationBuilder();
         builder.addServer().host(endpointRouter.getIp().getHostAddress()).port(endpointRouter.getPort());
-        builder.security().ssl().trustStoreFileName(TestCertificates.certificate("ca")).trustStorePassword(TestCertificates.KEY_PASSWORD);
+        builder.security().ssl().trustStoreFileName(TestCertificates.certificate("ca")).trustStorePassword(TestCertificates.KEY_PASSWORD).sniHostName("server");
         hotRodClient = new RemoteCacheManager(builder.build());
         hotRodClient.getCache("default").put("test", "test");
     }

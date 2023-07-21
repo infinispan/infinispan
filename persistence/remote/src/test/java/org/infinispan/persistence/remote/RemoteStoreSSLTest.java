@@ -86,6 +86,7 @@ public class RemoteStoreSSLTest extends BaseNonBlockingStoreTest {
             .remoteSecurity();
       remoteSecurity
             .ssl().enable()
+            .sniHostName("server")
             .keyStoreFileName(TestCertificates.certificate("client"))
             .keyStorePassword(TestCertificates.KEY_PASSWORD)
             .trustStoreFileName(TestCertificates.certificate("ca"))
@@ -101,7 +102,7 @@ public class RemoteStoreSSLTest extends BaseNonBlockingStoreTest {
    }
 
    @Override
-   protected NonBlockingStore<Object, Object> createStore() throws Exception {
+   protected NonBlockingStore<Object, Object> createStore() {
       return new RemoteStore<>();
    }
 

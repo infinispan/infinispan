@@ -39,6 +39,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    private String protocol;
    private Collection<String> ciphers;
    private String provider;
+   private boolean hostnameValidation = true;
 
    protected SslConfigurationBuilder(SecurityConfigurationBuilder builder) {
       super(builder);
@@ -223,6 +224,17 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
       return enable();
    }
 
+   /**
+    * Configures whether to enable hostname validation according to <a href="https://datatracker.ietf.org/doc/html/rfc2818">RFC 2818</a>.
+    * This is enabled by default and requires that the server certificate includes a subjectAltName extension of type dNSName or iPAddress.
+    *
+    * @param hostnameValidation whether to enable hostname validation
+    */
+   public SslConfigurationBuilder hostnameValidation(boolean hostnameValidation) {
+      this.hostnameValidation = hostnameValidation;
+      return enable();
+   }
+
    @Override
    public void validate() {
       if (enabled) {
@@ -244,6 +256,9 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
                throw HOTROD.xorSSLContext();
             }
          }
+         if (hostnameValidation && sniHostName == null) {
+            throw HOTROD.missingSniHostName();
+         }
       }
    }
 
@@ -253,7 +268,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
             keyStoreFileName, keyStoreType, keyStorePassword, keyStoreCertificatePassword, keyAlias,
             sslContext,
             trustStoreFileName, trustStorePath, trustStoreType, trustStorePassword,
-            sniHostName, provider, protocol, ciphers);
+            sniHostName, provider, protocol, ciphers, hostnameValidation);
    }
 
    @Override
@@ -273,6 +288,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
       this.provider = template.provider();
       this.protocol = template.protocol();
       this.ciphers = template.ciphers() != null ? new ArrayList<>(template.ciphers()) : null;
+      this.hostnameValidation = template.hostnameValidation();
       return this;
    }
 
@@ -325,6 +341,9 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
 
       if (typed.containsKey(ConfigurationProperties.USE_SSL))
          this.enabled(typed.getBooleanProperty(ConfigurationProperties.USE_SSL, enabled, true));
+
+      if (typed.containsKey(ConfigurationProperties.SSL_HOSTNAME_VALIDATION))
+         this.hostnameValidation(typed.getBooleanProperty(ConfigurationProperties.SSL_HOSTNAME_VALIDATION, hostnameValidation, true));
 
       return builder.getBuilder();
    }

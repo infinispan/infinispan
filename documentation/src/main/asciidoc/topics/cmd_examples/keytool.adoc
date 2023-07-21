@@ -4,8 +4,8 @@ keytool -genkeypair -validity 365 -keyalg RSA -keysize 2048 -noprompt -storepass
 # Export the CA certificate from the keystore
 keytool -exportcert -validity 365 -keyalg RSA -keysize 2048 -noprompt -storepass secret -alias ca -keystore ca.p12 -file ca.cer
 
-# Generate a server certificate and keystore
-keytool -genkeypair -validity 365 -keyalg RSA -keysize 2048 -noprompt -storepass secret -alias server -dname "CN=Server,OU=Operations,O=Organization,L=ACME" -keystore server.p12
+# Generate a server certificate and keystore including a Subject Alternate Name with the public DNS name
+keytool -genkeypair -validity 365 -keyalg RSA -keysize 2048 -noprompt -storepass secret -alias server -dname "CN=Server,OU=Operations,O=Organization,L=ACME" -ext san=dns:server.org -keystore server.p12
 
 # Create a certificate signing request (CSR) for the server
 keytool -certreq -alias server -dname "CN=Server,OU=Operations,O=Organization,L=ACME" -keystore server.p12 -storepass secret -file server.csr

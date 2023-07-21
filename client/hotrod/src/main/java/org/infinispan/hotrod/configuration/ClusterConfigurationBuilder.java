@@ -2,6 +2,7 @@ package org.infinispan.hotrod.configuration;
 
 import static org.infinispan.hotrod.configuration.ClusterConfiguration.CLIENT_INTELLIGENCE;
 import static org.infinispan.hotrod.configuration.ClusterConfiguration.NAME;
+import static org.infinispan.hotrod.configuration.ClusterConfiguration.SNI_HOSTNAME;
 import static org.infinispan.hotrod.impl.logging.Log.HOTROD;
 
 import java.util.ArrayList;
@@ -50,6 +51,11 @@ public class ClusterConfigurationBuilder extends AbstractConfigurationChildBuild
    public ClusterConfigurationBuilder clusterClientIntelligence(ClientIntelligence intelligence) {
       // null is valid, means using the global intelligence (for backwards compatibility)
       attributes.attribute(CLIENT_INTELLIGENCE).set(intelligence);
+      return this;
+   }
+
+   public ClusterConfigurationBuilder clusterSniHostName(String sniHostName) {
+      attributes.attribute(SNI_HOSTNAME).set(sniHostName);
       return this;
    }
 

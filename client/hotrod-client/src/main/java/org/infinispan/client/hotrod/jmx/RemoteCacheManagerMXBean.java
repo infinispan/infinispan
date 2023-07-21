@@ -47,4 +47,11 @@ public interface RemoteCacheManagerMXBean {
     * @return {@code true} if the cluster was switched, {@code false} otherwise
     */
    boolean switchToDefaultCluster();
+
+   /**
+    * Returns the name of the currently active cluster.
+    *
+    * @return the name of the active cluster
+    */
+   String getCurrentClusterName();
 }

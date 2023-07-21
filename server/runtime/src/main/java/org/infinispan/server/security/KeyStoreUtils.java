@@ -16,10 +16,13 @@ import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
 
 import javax.security.auth.x500.X500Principal;
 
+import org.wildfly.security.x500.GeneralName;
+import org.wildfly.security.x500.cert.SubjectAlternativeNamesExtension;
 import org.wildfly.security.x500.cert.X509CertificateBuilder;
 
 /**
@@ -48,6 +51,7 @@ public class KeyStoreUtils {
       builder.setVersion(3);
       builder.setSignatureAlgorithmName("SHA256withRSA");
       builder.setSigningKey(privkey);
+      builder.addExtension(new SubjectAlternativeNamesExtension(false, List.of(new GeneralName.DNSName(host))));
 
       KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
       keyStore.load(null, keyStorePassword);

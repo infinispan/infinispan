@@ -52,6 +52,7 @@ public class AuthorizationCertIT extends InfinispanSuite {
                SERVERS.getServerDriver().applyKeyStore(hotRodBuilder, user.getUser() + ".pfx");
             }
             hotRodBuilder.security()
+                  .ssl().sniHostName("infinispan.test")
                   .authentication()
                   .saslMechanism("EXTERNAL")
                   .serverName("infinispan")
