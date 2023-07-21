@@ -37,5 +37,5 @@ The {brandname} Server README, available in the distribution, provides example c
 endif::community[]
 //Downstream
 ifdef::downstream[]
-* link:{runtime_readme}[{brandname} Server README] describes the contents of the server distribution.
+* link:{server_docs}#server_readme[{brandname} Server README] describes the contents of the server distribution.
 endif::downstream[]
