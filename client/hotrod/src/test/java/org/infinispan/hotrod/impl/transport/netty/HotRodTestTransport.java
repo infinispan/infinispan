@@ -19,7 +19,7 @@ public class HotRodTestTransport {
                @Override
                protected ChannelInitializer createChannelInitializer(SocketAddress address,
                                                                      Bootstrap bootstrap) {
-                  return new ChannelInitializer(bootstrap, address, getCacheOperationsFactory(), getConfiguration(), this) {
+                  return new ChannelInitializer(bootstrap, address, getCacheOperationsFactory(), getConfiguration(), this, topologyInfo.getCluster()) {
                      @Override
                      protected void initChannel(Channel channel) throws Exception {
                         super.initChannel(channel);

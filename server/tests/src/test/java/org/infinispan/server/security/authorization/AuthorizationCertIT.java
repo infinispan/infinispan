@@ -45,7 +45,8 @@ public class AuthorizationCertIT extends AbstractAuthorization {
             .authentication()
             .saslMechanism("EXTERNAL")
             .serverName("infinispan")
-            .realm("default");
+            .realm("default")
+            .ssl().sniHostName("infinispan.test");
 
       hotRodBuilders.put(user, hotRodBuilder);
 

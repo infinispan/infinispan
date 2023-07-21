@@ -15,12 +15,13 @@ public class SslConfiguration {
    static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false, Boolean.class).immutable().autoPersist(false).build();
    static final AttributeDefinition<SSLContext> SSL_CONTEXT = AttributeDefinition.builder("sslContext", null, SSLContext.class).immutable().autoPersist(false).build();
    static final AttributeDefinition<String> SNI_HOSTNAME = AttributeDefinition.builder("sniHostname", null, String.class).immutable().build();
+   static final AttributeDefinition<Boolean> HOSTNAME_VALIDATION = AttributeDefinition.builder("ssl-hostname-validation", true).immutable().build();
    static final AttributeDefinition<String> PROTOCOL = AttributeDefinition.builder("protocol", null, String.class).immutable().build();
 
    private final AttributeSet attributes;
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(SslConfiguration.class, ENABLED, SNI_HOSTNAME, PROTOCOL);
+      return new AttributeSet(SslConfiguration.class, ENABLED, SNI_HOSTNAME,HOSTNAME_VALIDATION, PROTOCOL);
    }
 
    private KeyStoreConfiguration keyStoreConfiguration;
@@ -82,6 +83,10 @@ public class SslConfiguration {
 
    public char[] trustStorePassword() {
       return trustStoreConfiguration.trustStorePassword();
+   }
+
+   public boolean hostnameValidation() {
+      return attributes.attribute(HOSTNAME_VALIDATION).get();
    }
 
    public String sniHostName() {

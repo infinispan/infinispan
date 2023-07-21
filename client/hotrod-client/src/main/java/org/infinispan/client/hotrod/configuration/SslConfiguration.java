@@ -26,10 +26,12 @@ public class SslConfiguration {
    private final String protocol;
    private final Collection<String> ciphers;
    private final String provider;
+   private final boolean hostnameValidation;
 
    SslConfiguration(boolean enabled, String keyStoreFileName, String keyStoreType, char[] keyStorePassword, char[] keyStoreCertificatePassword, String keyAlias,
                     SSLContext sslContext,
-                    String trustStoreFileName, String trustStorePath, String trustStoreType, char[] trustStorePassword, String sniHostName, String provider, String protocol, Collection<String> ciphers) {
+                    String trustStoreFileName, String trustStorePath, String trustStoreType, char[] trustStorePassword, String sniHostName, String provider, String protocol, Collection<String> ciphers,
+                    boolean hostnameValidation) {
       this.enabled = enabled;
       this.keyStoreFileName = keyStoreFileName;
       this.keyStoreType = keyStoreType;
@@ -45,6 +47,7 @@ public class SslConfiguration {
       this.provider = provider;
       this.protocol = protocol;
       this.ciphers = ciphers;
+      this.hostnameValidation = hostnameValidation;
    }
 
    public boolean enabled() {
@@ -107,6 +110,10 @@ public class SslConfiguration {
       return provider;
    }
 
+   public boolean hostnameValidation() {
+      return hostnameValidation;
+   }
+
    @Override
    public String toString() {
       return "SslConfiguration{" +
@@ -121,6 +128,7 @@ public class SslConfiguration {
             ", provider='" + provider +'\'' +
             ", protocol='" + protocol + '\'' +
             ", ciphers='" + ciphers  + '\'' +
+            ", hostnameValidation=" + hostnameValidation +
             '}';
    }
 }

@@ -29,6 +29,7 @@ public class CertWithoutAuthenticationIT {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
       SERVERS.getServerDriver().applyKeyStore(builder, "admin.pfx");
+      builder.security().ssl().sniHostName("infinispan.test");
 
       RemoteCache<String, String> cache = SERVERS.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create();
       cache.put("k1", "v1");

@@ -37,7 +37,7 @@ public class HotRodUpgradeDynamicWithSSLTest extends HotRodUpgradeWithSSLTest {
       RemoteStoreConfigurationBuilder storeBuilder = builder.persistence().addStore(RemoteStoreConfigurationBuilder.class);
       storeBuilder.remoteCacheName(cacheName).rawValues(true).protocolVersion(version).shared(true).segmented(false)
             .remoteSecurity().ssl().enable().trustStoreFileName(TestCertificates.certificate("ca")).trustStorePassword(TestCertificates.KEY_PASSWORD)
-            .keyStoreFileName(TestCertificates.certificate("client")).keyStorePassword(TestCertificates.KEY_PASSWORD)
+            .keyStoreFileName(TestCertificates.certificate("client")).keyStorePassword(TestCertificates.KEY_PASSWORD).sniHostName("server")
             .addServer().host("localhost").port(sourceCluster.getHotRodPort());
 
       return builder;
