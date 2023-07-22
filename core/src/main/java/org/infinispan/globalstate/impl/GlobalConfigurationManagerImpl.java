@@ -151,7 +151,15 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       persistedCaches.forEach((name, configuration) -> {
          ensurePersistenceCompatibility(name, configuration);
          // The cache configuration was permanent, it still needs to be
-         CompletionStages.join(getOrCreateCache(name, configuration, adminFlags));
+         CompletionStages.join(createCacheInternal(name, null, configuration, adminFlags)
+               .thenCompose(r -> {
+                  if (r instanceof CacheState) {
+                     Configuration remoteConf = buildConfiguration(name, ((CacheState) r).getConfiguration(), false);
+                     ensurePersistenceCompatibility(name, remoteConf);
+                     return createCacheLocally(name, (CacheState) r);
+                  }
+                  return CompletableFutures.completedNull();
+               }));
       });
    }
 
@@ -258,6 +266,10 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    }
 
    CompletionStage<Configuration> createCache(String cacheName, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      return createCacheInternal(cacheName, template, configuration, flags).thenApply((v) -> configuration);
+   }
+
+   private CompletionStage<Object> createCacheInternal(String cacheName, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       assertNameLength(cacheName);
 
       localConfigurationManager.validateFlags(flags);
@@ -271,11 +283,9 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
          if (internalCacheRegistry.isInternalCache(cacheName)) {
             throw CONFIG.cannotUpdateInternalCache(cacheName);
          }
-         return getStateCache().putAsync(new ScopedState(CACHE_SCOPE, cacheName), state)
-               .thenApply((v) -> configuration);
+         return getStateCache().putAsync(new ScopedState(CACHE_SCOPE, cacheName), state);
       } else {
-         return getStateCache().putIfAbsentAsync(new ScopedState(CACHE_SCOPE, cacheName), state)
-               .thenApply((v) -> configuration);
+         return getStateCache().putIfAbsentAsync(new ScopedState(CACHE_SCOPE, cacheName), state);
       }
    }
 
