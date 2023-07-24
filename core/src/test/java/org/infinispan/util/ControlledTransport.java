@@ -202,6 +202,11 @@ public class ControlledTransport extends AbstractDelegatingTransport {
       assertNull("There should be no queued commands", waiters.poll(timeout, timeUnit));
    }
 
+   public int currentWaitersSize() {
+      throwGlobalError();
+      return waiters.size();
+   }
+
    @Override
    public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand,
                                                 ResponseMode mode, long timeout, ResponseFilter responseFilter,

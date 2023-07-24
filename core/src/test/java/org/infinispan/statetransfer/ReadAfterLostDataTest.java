@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -154,8 +155,9 @@ public class ReadAfterLostDataTest extends MultipleCacheManagersTest {
       ClusterTopologyManager clusterTopologyManager = TestingUtil.extractComponent(coordCache, ClusterTopologyManager.class);
       clusterTopologyManager.setRebalancingEnabled(false);
 
+      ControlledTransport controlledTransport = null;
       if (blockUpdates) {
-         ControlledTransport controlledTransport = ControlledTransport.replace(coordCache);
+         controlledTransport = ControlledTransport.replace(coordCache);
          controlledTransport.excludeCacheCommands();
          controlledTransport.excludeCommands(HeartBeatCommand.class);
          cleanup.add(controlledTransport::stopBlocking);
@@ -191,6 +193,15 @@ public class ReadAfterLostDataTest extends MultipleCacheManagersTest {
       if (!write) {
          invokeOperation(cache(1), operation, keys);
       }
+
+      if (controlledTransport != null) {
+         expectNoWaiters(controlledTransport);
+      }
+   }
+
+   private void expectNoWaiters(ControlledTransport transport) {
+      eventually(() -> "Should not have waiters, found: " + transport.currentWaitersSize(),
+            () -> transport.currentWaitersSize() == 0, 10, TimeUnit.SECONDS);
    }
 
    private void invokeOperation(Cache<Object, Object> cache, BiFunction<Cache<Object, Object>, Collection<?>, Map<?, ?>> operation, List<Object> keys) {

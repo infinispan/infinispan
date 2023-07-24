@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.retry;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 import java.net.InetSocketAddress;
@@ -8,14 +9,17 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
+import org.infinispan.client.hotrod.annotation.ClientCacheFailover;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.ClientCacheEntryModifiedEvent;
+import org.infinispan.client.hotrod.event.ClientCacheFailoverEvent;
 import org.infinispan.client.hotrod.impl.protocol.Codec25;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelRecord;
 import org.infinispan.client.hotrod.test.NoopChannelOperation;
@@ -103,10 +107,13 @@ public class ClientListenerFailoverBusyTest extends AbstractRetryTest {
       }
 
       int eventsBeforeFailover = listener.getReceived();
+      assertThat(eventsBeforeFailover).isZero();
+      assertThat(listener.didFailover()).isFalse();
 
       // Now close the listener channel, so it failover to the channel with put operations.
       channel.close().awaitUninterruptibly();
       eventually(() -> channelFactory.getNumActive() == 1);
+      eventually(listener::didFailover);
 
       try {
          // Await all the operations reach the interceptor.
@@ -115,7 +122,8 @@ public class ClientListenerFailoverBusyTest extends AbstractRetryTest {
 
          // If numberOfOperations == 1 we only create the entry, we do not generate events from updates.
          if (numberOfOperations > 1)
-            eventually(() -> listener.getReceived() > eventsBeforeFailover);
+            eventually(() -> String.format("Never got more events: %d of %d", eventsBeforeFailover, listener.getReceived()),
+                  () -> listener.getReceived() > eventsBeforeFailover);
       } finally {
          TestingUtil.extractInterceptorChain(cache).removeInterceptor(DelayedInterceptor.class);
          executor.shutdown();
@@ -127,14 +135,24 @@ public class ClientListenerFailoverBusyTest extends AbstractRetryTest {
    private static class Listener {
 
       private final AtomicInteger count = new AtomicInteger(0);
+      private final AtomicBoolean failover = new AtomicBoolean(false);
 
       @ClientCacheEntryModified
       public void handleModifiedEvent(ClientCacheEntryModifiedEvent<?> ignore) {
          count.incrementAndGet();
       }
 
+      @ClientCacheFailover
+      public void handleFailoverEvent(ClientCacheFailoverEvent ignore) {
+         failover.set(true);
+      }
+
       int getReceived() {
          return count.intValue();
+      }
+
+      boolean didFailover() {
+         return failover.get();
       }
    }
 
