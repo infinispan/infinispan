@@ -37,7 +37,7 @@ Cluster topology changes and network errors might also lead to data inconsistenc
 
 == Cache configuration options
 
-.Encoding
+Encoding:: 
 A format, identified by a media type, that {brandname} uses to store keys and values in caches.
 
 TIP: {brandname} recommends the `application/x-protostream` media type. Protobuf gives you excellent performance as well as interoperability between client applications in different programming languages for both Hot Rod and REST endpoints. Your cache encoding must be compatible with the Hot Rod client marshaller.
@@ -52,15 +52,17 @@ TIP: {brandname} recommends the `application/x-protostream` media type. Protobuf
 </distributed-cache>
 ----
 
-.Expiration
+Expiration::
 Controls how long {brandname} keeps entries in a cache and takes effect across clusters.
 
-Lifespan:: The maximum amount of time, in milliseconds, that cache entries can exist.
+. Lifespan:
+The maximum amount of time, in milliseconds, that cache entries can exist.
 If you set the value to -1, entries never expire.
 Lifespan uses a `creation` timestamp and the value for the `lifespan` property to determine when entries expire.
 The creation time for cache entries provides a value that is consistent across clustered caches.
 
-Max-idle:: The maximum amount of time, in milliseconds, that cache entries can remain idle.
+. Max-idle:
+The maximum amount of time, in milliseconds, that cache entries can remain idle.
 If no operations are performed on entries within the maximum idle time, the entries expire across the cluster.
 If you set the value to -1, entries never expire.
 
@@ -79,7 +81,7 @@ TIP: The {brandname} team recommends setting the value for `lifespan` to be at l
 </distributed-cache>
 ----
 
-.Statistics
+Statistics::
 Start collecting statistics for your cache.
 Keep disabled for optimal performance.
 
@@ -92,12 +94,10 @@ Keep disabled for optimal performance.
 
 === Bounded caches
 
-.Eviction
-Eviction controls the amount of data that {brandname} keeps in memory and takes effect for each node.
+Eviction::
+Eviction controls the amount of data that {brandname} keeps in memory and takes effect for each node. Control the size of data container in one of the following ways:
 
-Control the size of data container in one of the following ways:
-
-Max size:: Maximum size of the data container in bytes.
+* Max size: Maximum size of the data container in bytes.
 Eviction occurs when the approximate memory usage of the data container exceeds the maximum size.
 +
 [source,xml]
@@ -107,7 +107,7 @@ Eviction occurs when the approximate memory usage of the data container exceeds 
 </distributed-cache>
 ----
 
-Max count:: Maximum number of entries.
+* Max count: Maximum number of entries.
 Eviction occurs after the container size exceeds the maximum count.
 +
 [source,xml]
@@ -117,18 +117,18 @@ Eviction occurs after the container size exceeds the maximum count.
 </distributed-cache>
 ----
 
-.Eviction strategies
-* `REMOVE` {brandname} performs eviction. This is the default strategy when you define a size for the data container. Because not all nodes evict the same entries you should use eviction with persistent storage to avoid data inconsistency.
+Eviction strategies::
+* REMOVE: {brandname} performs eviction. This is the default strategy when you define a size for the data container. Because not all nodes evict the same entries you should use eviction with persistent storage to avoid data inconsistency.
 
-* `EXCEPTION` {brandname} throws an exception instead of evicting entries.
+* EXCEPTION: {brandname} throws an exception instead of evicting entries.
 
 If no strategy is defined, but `max-count` or `max-size` is configured, `REMOVE` is used.
 
 === Indexed caches
 Create indexes of values in your caches for faster queries and full-text search capabilities.
 
-.Index storage
-Persistent:: On the host file system, which is the default and persists indexes between restarts.
+Index storage::
+* Persistent: On the host file system, which is the default and persists indexes between restarts.
 +
 [source,xml]
 ----
@@ -139,7 +139,7 @@ Persistent:: On the host file system, which is the default and persists indexes 
 </distributed-cache>
 ----
 
-Volatile:: In JVM heap memory, which means that indexes do not survive restarts.
+* Volatile: In JVM heap memory, which means that indexes do not survive restarts.
 You should store indexes in JVM heap memory only for small datasets.
 +
 [source,xml]
@@ -151,7 +151,8 @@ You should store indexes in JVM heap memory only for small datasets.
 </distributed-cache>
 ----
 
-Index reader:: The index reader provides access to the indexes to perform queries.
+Index reader:: 
+The index reader provides access to the indexes to perform queries.
 As the index content changes, {brandname} needs to refresh the reader so that search results are up to date.
 +
 [source,xml]
@@ -165,7 +166,8 @@ As the index content changes, {brandname} needs to refresh the reader so that se
 </distributed-cache>
 ----
 
-Index writer:: The index writer constructs an index composed of one or more segments (sub-indexes) that can be merged over time to improve performance.
+Index writer:: 
+The index writer constructs an index composed of one or more segments (sub-indexes) that can be merged over time to improve performance.
 +
 [source,xml]
 ----
@@ -176,8 +178,7 @@ Index writer:: The index writer constructs an index composed of one or more segm
                   max-buffered-entries="32"
                   queue-count="1"
                   queue-size="10000"
-                  ram-buffer-size="400"
-                  thread-pool-size="2">
+                  ram-buffer-size="400">
       <index-merge calibrate-by-deletes="true"
                    factor="3"
                    max-entries="2000"
@@ -254,23 +255,25 @@ Timeout:: Specifies timeout, in milliseconds, for synchronous and asynchronous b
 
 === Transactional
 
-.Transaction mode
+Transaction mode::
 Configure the mode that {brandname} uses when carrying out transactions to ensure the cache state is consistent.
 
 NOTE: Enable transaction mode for the cache to ensure consistency for conditional operations, such as `putIfAbsent` or `remove`, that require consistent cache data across the cluster.
 
-NON_XA:: Cache will enlist within transactions as a `jakarta.transaction.Synchronization`.
-NON_DURABLE_XA:: Cache will enlist within transactions as a `javax.transaction.xa.XAResource`, without recovery.
-FULL_XA:: Cache will enlist within transactions as a `javax.transaction.xa.XAResource`, with recovery.
+. NON_XA: Cache will enlist within transactions as a `javax.transaction.Synchronization`.
+. NON_DURABLE_XA: Cache will enlist within transactions as a `javax.transaction.xa.XAResource`, without recovery.
+. FULL_XA: Cache will enlist within transactions as a `javax.transaction.xa.XAResource`, with recovery.
 
-.Locking mode
+//-
+Locking mode::
 Configure how {brandname} locks keys to perform write operations for transactions.
 Locking keys adds contention that increases latency for write operations.
 You can adjust the amount of contention by using optimistic or pessimistic locking.
 
-Optimistic:: {brandname} locks keys when it invokes the `commit()` method.
+[start=1]
+. Optimistic {brandname} locks keys when it invokes the `commit()` method.
 Keys are locked for shorter periods of time which reduces overall latency but makes transaction recovery less efficient.
-Pessimistic:: {brandname} locks keys when it invokes the `put()` method.
+. Pessimistic {brandname} locks keys when it invokes the `put()` method.
 Keys are locked for longer periods of time which increases latency but makes transaction recovery more efficient.
 +
 [source,xml]
@@ -287,7 +290,7 @@ Keys are locked for longer periods of time which increases latency but makes tra
 === Persistence
 Configure non-volatile storage so entries remain available after cluster restarts.
 
-.Passivation
+Passivation::
 {brandname} writes entries to persistent storage when it evicts those entries from memory. Passivation ensures that only a single copy of an entry is maintained, either in-memory or in a cache store, and prevents unnecessary and expensive writes to persistent storage.
 [source,xml]
 ----
