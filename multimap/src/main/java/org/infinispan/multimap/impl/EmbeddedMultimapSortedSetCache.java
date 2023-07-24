@@ -33,8 +33,6 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
    public static final String ERR_ARGS_CAN_T_BE_NULL = "args can't be null";
    public static final String ERR_ARGS_INDEXES_CAN_T_BE_NULL = "min and max indexes (from-to) can't be null";
    public static final String ERR_SCORES_CAN_T_BE_NULL = "scores can't be null";
-   public static final String ERR_VALUES_CAN_T_BE_NULL = "values can't be null";
-   public static final String ERR_SCORES_VALUES_MUST_HAVE_SAME_SIZE = "scores and values must have the same size";
    protected final FunctionalMap.ReadWriteMap<K, SortedSetBucket<V>> readWriteMap;
    protected final AdvancedCache<K, SortedSetBucket<V>> cache;
    protected final InternalEntryFactory entryFactory;
@@ -50,8 +48,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
     * Adds and/or updates, depending on the provided options, the value and the associated score.
     *
     * @param key, the name of the sorted set
-    * @param scores, the score for each of the elements in the values
-    * @param values, the values to be added
+    * @param scoreValues, scores and values pair list to be added
     * @param args to provide different options:
     *       addOnly -> adds new elements only, ignore existing ones.
     *       updateOnly -> updates existing elements only, ignore new elements.
@@ -60,18 +57,14 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
     *       returnChangedCount -> by default returns number of new added elements. If true, counts created and updated elements.
     * @return {@link CompletionStage} containing the number of entries added and/or updated depending on the provided arguments
     */
-   public CompletionStage<Long> addMany(K key, double[] scores, V[] values, SortedSetAddArgs args) {
+   public CompletionStage<Long> addMany(K key, Collection<SortedSetBucket.ScoredValue<V>> scoreValues, SortedSetAddArgs args) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
-      requireNonNull(scores, ERR_SCORES_CAN_T_BE_NULL);
-      requireNonNull(values, ERR_VALUES_CAN_T_BE_NULL);
-      requireSameLength(scores, values);
-      if (scores.length == 0) {
+      requireNonNull(scoreValues, ERR_SCORES_CAN_T_BE_NULL);
+      requireNonNull(args, ERR_ARGS_CAN_T_BE_NULL);
+      if (scoreValues.size() == 0 && !args.replace) {
          return CompletableFuture.completedFuture(0L);
       }
-
-      return readWriteMap.eval(key,
-            new AddManyFunction<>(scores, values, args.addOnly, args.updateOnly, args.updateLessScoresOnly,
-                  args.updateGreaterScoresOnly, args.returnChangedCount));
+      return readWriteMap.eval(key, new AddManyFunction<>(scoreValues, args));
    }
 
    /**
@@ -209,11 +202,5 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       requireNonNull(args, ERR_ARGS_CAN_T_BE_NULL);
       return readWriteMap.eval(key, new SubsetFunction<>(args, SubsetFunction.SubsetType.LEX));
-   }
-
-   private void requireSameLength(double[] scores, V[] values) {
-      if (scores.length != values.length) {
-         throw new IllegalArgumentException(ERR_SCORES_VALUES_MUST_HAVE_SAME_SIZE);
-      }
    }
 }

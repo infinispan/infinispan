@@ -10,6 +10,7 @@ import org.testng.annotations.Test;
 import static io.lettuce.core.Range.Boundary.excluding;
 import static io.lettuce.core.Range.Boundary.including;
 import static io.lettuce.core.Range.Boundary.unbounded;
+import static io.lettuce.core.Range.create;
 import static io.lettuce.core.Range.from;
 import static io.lettuce.core.ScoredValue.just;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -750,6 +751,58 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
             Limit.create(2,  1)))
             .containsExactly("carlos");
 
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zrevrangebylex("another", Range.unbounded()));
+   }
+
+   public void testZRANGESTORE() {
+      assertThat(redis.zrangestore("npeople", "not_existing", create(0L, 1L))).isEqualTo(0);
+      assertThat(redis.exists("npeople")).isEqualTo(0);
+
+      redis.zadd("people", ZAddArgs.Builder.ch(),
+            just(0, "antonio"),
+            just(0, "bautista"),
+            just(0, "carlos"),
+            just(0, "carmela"),
+            just(0, "carmelo"),
+            just(0, "daniel"),
+            just(0, "daniela"),
+            just(0, "debora"),
+            just(0, "ernesto"),
+            just(0, "gonzalo"),
+            just(0, "luis")
+      );
+      assertThat(redis.zrange("people", 1, 5)).containsExactly("bautista", "carlos", "carmela", "carmelo", "daniel");
+      assertThat(redis.zrangestore("npeople", "people", create(1L, 5L))).isEqualTo(5);
+      assertThat(redis.zrange("npeople", 0, -1)).containsExactly("bautista", "carlos", "carmela", "carmelo", "daniel");
+      assertThat(redis.zrangestorebylex("npeople", "people", Range.create("deb", "luisa"), Limit.create(1, 2))).isEqualTo(2);
+      assertThat(redis.zrange("npeople", 0, -1)).containsExactly("ernesto", "gonzalo");
+      assertThat(redis.zrangestorebylex("npeople", "people", Range.create("zi", "zu"), Limit.unlimited())).isEqualTo(0);
+      assertThat(redis.exists("npeople")).isEqualTo(0);
+
+      redis.zadd("infinipeople", ZAddArgs.Builder.ch(),
+            just(1, "galder"),
+            just(2, "dan"),
+            just(3, "adrian"),
+            just(3.5, "radim"),
+            just(4, "tristan"),
+            just(4, "vittorio"),
+            just(5, "pedro"),
+            just(5, "fabio"),
+            just(6, "jose"),
+            just(6, "ryan"),
+            just(6, "anna")
+      );
+      assertThat(redis.zrangestorebyscore("remaining", "infinipeople", Range.from(including(3.4), including(6.8)), Limit.create(1, -1)))
+            .isEqualTo(7);
+      assertThat(redis.zrangeWithScores("remaining", 0, -1))
+            .containsExactly(
+                  just(4, "tristan"),
+                  just(4, "vittorio"),
+                  just(5, "fabio"),
+                  just(5, "pedro"),
+                  just(6, "anna"),
+                  just(6, "jose"),
+                  just(6, "ryan"));
       assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zrevrangebylex("another", Range.unbounded()));
    }
 }
