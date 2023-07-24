@@ -1056,8 +1056,8 @@
             <xs:annotation>
               <xs:documentation>
                 Limit the required accuracy of the hit count for the indexed queries to an upper-bound.
-                Setting the hit-count-accuracy could improve the performance of queries targeting large data sets.
-                For optimal performances set this value not much above the expected hit count.
+                Setting the hit-count-accuracy optimize the performance of queries targeting large data sets.
+                For optimal results, set this value slightly above the expected hit count.
                 If you do not require accurate hit counts, set it to a low value.
               </xs:documentation>
             </xs:annotation>

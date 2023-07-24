@@ -2815,8 +2815,8 @@ Query Response (0x20):
 
 Where:
 
- hit_count: the total number of results of the query.
- hit_count_exact: is true whether the "hit_count" is exact, otherwise it is a lower-bound.
+ hit_count: the total number of results from the query.
+ hit_count_exact: is true when the hit_count is exact. Is false when the hit count value is a lower bound.
  hits: an ARRAY of OBJECT representing the results.
  hit: each OBJECT above contain another OBJECT in the "hit" field, containing the result of the query, in JSON format.
 |==============================================================================
