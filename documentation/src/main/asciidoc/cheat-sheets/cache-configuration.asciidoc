@@ -154,7 +154,7 @@ Store indexes in JVM heap memory for small data sets only.
 ==== Index reader
 The index reader provides access to the indexes to perform queries.
 As the index content changes, {brandname} needs to refresh the reader so that search results are up to date.
-+
+
 [source,xml]
 ----
 <distributed-cache>
@@ -168,7 +168,7 @@ As the index content changes, {brandname} needs to refresh the reader so that se
 
 ==== Index writer
 The index writer constructs an index composed of one or more segments (sub-indexes) that can be merged over time to improve performance.
-+
+
 [source,xml]
 ----
 <distributed-cache>
@@ -199,7 +199,7 @@ Secure your deployment by restricting user access to data.
 * Admin
 * Monitor
 * Deployer
-+
+
 [source,xml]
 ----
 <distributed-cache>
