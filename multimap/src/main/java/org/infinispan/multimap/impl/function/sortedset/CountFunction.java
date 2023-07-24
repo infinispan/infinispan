@@ -11,7 +11,6 @@ import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
-import java.util.SortedSet;
 
 /**
  * Serializable function used by
@@ -43,9 +42,8 @@ public final class CountFunction<K, V> implements SortedSetBucketBaseFunction<K,
       Optional<SortedSetBucket<V>> existing = entryView.peek();
       long count = 0;
       if (existing.isPresent()) {
-         SortedSet<SortedSetBucket.ScoredValue<V>> scoredValues = existing.get()
-               .subset(min, includeMin, max, includeMax, false);
-         count = scoredValues.size();
+         return (long) existing.get()
+               .subset(min, includeMin, max, includeMax, false, null, null).size();
       }
       return count;
    }

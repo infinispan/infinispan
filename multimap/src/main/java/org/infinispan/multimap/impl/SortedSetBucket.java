@@ -70,80 +70,101 @@ public class SortedSetBucket<V> {
       return entries.get(new MultimapObjectWrapper<>(member));
    }
 
-   public static class AddResult {
+   public void replace(Collection<ScoredValue<V>> scoredValues) {
+      entries.clear();
+      scoredEntries.clear();
+      for (ScoredValue<V> scoredValue : scoredValues) {
+         addScoredValue(scoredValue);
+      }
+   }
 
+   public static class AddOrUpdatesCounters {
       public long created = 0;
       public long updated = 0;
    }
-   public AddResult addMany(double[] scores,
-                   V[] values,
-                   boolean addOnly,
-                   boolean updateOnly,
-                   boolean updateLessScoresOnly,
-                   boolean updateGreaterScoresOnly) {
 
-      AddResult addResult = new AddResult();
+   public AddOrUpdatesCounters addMany(Collection<ScoredValue<V>> scoredValues,
+                                       boolean addOnly,
+                                       boolean updateOnly,
+                                       boolean updateLessScoresOnly,
+                                       boolean updateGreaterScoresOnly) {
+
+      AddOrUpdatesCounters addResult = new AddOrUpdatesCounters();
       int startSize = entries.size();
 
-      for (int i = 0 ; i < values.length; i++) {
-         Double newScore = scores[i];
-         MultimapObjectWrapper<V> value = new MultimapObjectWrapper<>(values[i]);
+      for (ScoredValue<V> scoredValue : scoredValues) {
          if (addOnly) {
-            Double existingScore = entries.get(value);
-            if (existingScore == null){
-               addScoredValue(newScore, value);
-            }
+            addOnly(scoredValue);
          } else if (updateOnly) {
-            Double existingScore = entries.get(value);
-            if (existingScore != null && !existingScore.equals(newScore)) {
-               updateScoredValue(addResult, newScore, value, existingScore);
-            }
+            updateOnly(addResult, scoredValue);
          } else if (updateGreaterScoresOnly) {
-            // Adds or updates if the new score is greater than the current score
-            Double existingScore = entries.get(value);
-            if (existingScore == null) {
-               addScoredValue(newScore, value);
-            } else if (newScore > existingScore) {
-               // Update
-               updateScoredValue(addResult, newScore, value, existingScore);
-            }
+            addOrUpdateGreaterScores(addResult, scoredValue);
          } else if (updateLessScoresOnly) {
-            // Adds or updates if the new score is less than the current score
-            Double existingScore = entries.get(value);
-            if (existingScore == null) {
-               addScoredValue(newScore, value);
-            } else if (newScore < existingScore) {
-               updateScoredValue(addResult, newScore, value, existingScore);
-            }
+            addOrUpdateLessScores(addResult, scoredValue);
          } else {
-            Double existingScore = entries.get(value);
-            if (existingScore == null) {
-               addScoredValue(newScore, value);
-            } else if (!newScore.equals(existingScore)) {
-               // entry exists, check score
-               updateScoredValue(addResult, newScore, value, existingScore);
-            }
+            addOrUpdate(addResult, scoredValue);
          }
       }
       addResult.created = entries.size() - startSize;
       return addResult;
    }
 
-   private void updateScoredValue(AddResult addResult, Double newScore, MultimapObjectWrapper<V> value, Double existingScore) {
-      ScoredValue<V> oldScoredValue = new ScoredValue<>(existingScore, value);
-      ScoredValue<V> newScoredValue = new ScoredValue<>(newScore, value);
+   private void addOnly(ScoredValue<V> scoredValue) {
+      Double existingScore = entries.get(scoredValue.wrappedValue());
+      if (existingScore == null){
+         addScoredValue(scoredValue);
+      }
+   }
+
+   private void updateOnly(AddOrUpdatesCounters addResult, ScoredValue<V> scoredValue) {
+      Double existingScore = entries.get(scoredValue.wrappedValue());
+      if (existingScore != null && !existingScore.equals(scoredValue.score())) {
+         updateScoredValue(addResult, scoredValue, existingScore);
+      }
+   }
+
+   private void addOrUpdateGreaterScores(AddOrUpdatesCounters addResult, ScoredValue<V> scoredValue) {
+      Double existingScore = entries.get(scoredValue.wrappedValue());
+      if (existingScore == null) {
+         addScoredValue(scoredValue);
+      } else if (scoredValue.score() > existingScore) {
+         updateScoredValue(addResult, scoredValue, existingScore);
+      }
+   }
+
+   private void addOrUpdateLessScores(AddOrUpdatesCounters addResult, ScoredValue<V> scoredValue) {
+      Double existingScore = entries.get(scoredValue.wrappedValue());
+      if (existingScore == null) {
+         addScoredValue(scoredValue);
+      } else if (scoredValue.score() < existingScore) {
+         updateScoredValue(addResult, scoredValue, existingScore);
+      }
+   }
+
+   private void addOrUpdate(AddOrUpdatesCounters addResult, ScoredValue<V> scoredValue) {
+      Double existingScore = entries.get(scoredValue.wrappedValue());
+      if (existingScore == null) {
+         addScoredValue(scoredValue);
+      } else if (!scoredValue.score().equals(existingScore)) {
+         // entry exists, check score
+         updateScoredValue(addResult, scoredValue, existingScore);
+      }
+   }
+
+   private void updateScoredValue(AddOrUpdatesCounters addResult, ScoredValue<V> newScoredValue, Double existingScore) {
+      ScoredValue<V> oldScoredValue = new ScoredValue<>(existingScore, newScoredValue.wrappedValue());
       scoredEntries.remove(oldScoredValue);
       scoredEntries.add(newScoredValue);
-      entries.put(value, newScore);
+      entries.put(newScoredValue.wrappedValue(), newScoredValue.score());
       addResult.updated++;
    }
 
-   private void addScoredValue(Double newScore, MultimapObjectWrapper<V> value) {
-      scoredEntries.add(new ScoredValue<>(newScore, value));
-      entries.put(value, newScore);
+   private void addScoredValue(ScoredValue<V> scoredValue) {
+      scoredEntries.add(scoredValue);
+      entries.put(scoredValue.wrappedValue(), scoredValue.score());
    }
 
-   public Collection<ScoredValue<V>> subsetByIndex(long from, long to, boolean rev) {
+   public List<ScoredValue<V>> subsetByIndex(long from, long to, boolean rev) {
       // from and to are + but from is bigger
       // example: from 2 > to 1 -> empty result
       // from and to are - and to is smaller
@@ -182,20 +203,20 @@ public class SortedSetBucket<V> {
    }
 
    @SuppressWarnings({ "unchecked", "rawtypes" })
-   public SortedSet<ScoredValue<V>> subset(Double startScore, boolean includeStart, Double stopScore, boolean includeStop, boolean isRev) {
-      if (stopScore != null && stopScore.equals(startScore) && (!includeStart || !includeStop)) {
-         return Collections.emptySortedSet();
+   public List<ScoredValue<V>> subset(Double startScore, boolean includeStart, Double stopScore, boolean includeStop, boolean isRev, Long offset, Long count) {
+      if ((stopScore != null && stopScore.equals(startScore) && (!includeStart || !includeStop)) || (count != null && count == 0) || (offset != null && offset.equals(entries.size()))) {
+         return Collections.emptyList();
       }
 
-      Double min = isRev? stopScore : startScore;
-      boolean includeMin = isRev? includeStop : includeStart;
-      Double max = isRev? startScore : stopScore;
-      boolean includeMax = isRev? includeStart : includeStop;
+      Double min = isRev ? stopScore : startScore;
+      boolean includeMin = isRev ? includeStop : includeStart;
+      Double max = isRev ? startScore : stopScore;
+      boolean includeMax = isRev ? includeStart : includeStop;
       boolean unboundedMin = min == null || min == Double.MIN_VALUE;
       boolean unboundedMax = max == null || max == Double.MAX_VALUE;
 
       if (unboundedMin && unboundedMax) {
-         return isRev ? scoredEntries.descendingSet() : new TreeSet<>(scoredEntries);
+         return applyLimit(scoredEntries, offset, count, isRev);
       }
 
       ScoredValue<V> startSv;
@@ -229,32 +250,32 @@ public class SortedSetBucket<V> {
       }
 
       if (startSv.score() > stopSv.score()) {
-         return Collections.emptySortedSet();
+         return Collections.emptyList();
       }
 
       NavigableSet<ScoredValue<V>> subset = scoredEntries.subSet(
             startSv,
-            unboundedMin || (startSv.score() > min || (includeMin && startSv.score() == min)),
+            unboundedMin || (startSv.score() > min || (includeMin && startSv.score().equals(min))),
             stopSv,
-            unboundedMax || (stopSv.score() < max || (includeMax && stopSv.score() == max)));
+            unboundedMax || (stopSv.score() < max || (includeMax && stopSv.score().equals(max))));
 
-      return isRev? subset.descendingSet(): subset;
+      return applyLimit(subset, offset, count, isRev);
    }
 
-   public SortedSet<ScoredValue<V>> subset(V startValue, boolean includeStart, V stopValue, boolean includeStop, boolean isRev) {
+   public List<ScoredValue<V>> subset(V startValue, boolean includeStart, V stopValue, boolean includeStop, boolean isRev, Long offset, Long count) {
       V minValue = isRev ? stopValue : startValue;
       V maxValue = isRev ? startValue : stopValue;
       boolean includeMin = isRev ? includeStop : includeStart;
       boolean includeMax = isRev ? includeStart : includeStop;
 
-      if (maxValue != null && maxValue.equals(minValue) && (!includeMin || !includeMax)) {
-         return Collections.emptySortedSet();
+      if (maxValue != null && maxValue.equals(minValue) && (!includeMin || !includeMax) || (offset != null && offset.equals(entries.size()) || (count!= null && count == 0))) {
+         return Collections.emptyList();
       }
       boolean unboundedMin = minValue == null;
       boolean unboundedMax = maxValue == null;
 
       if (unboundedMin && unboundedMax) {
-         return isRev ? scoredEntries.descendingSet() : new TreeSet<>(scoredEntries);
+         return applyLimit(scoredEntries, offset, count, isRev);
       }
       // if all the scoredEntries have the same score, then we can pick up first score for lex
       // when all the entries don't have the same score, this method can't work. This is the expected behaviour.
@@ -265,20 +286,58 @@ public class SortedSetBucket<V> {
 
       if (unboundedMin) {
          NavigableSet<ScoredValue<V>> entries = scoredEntries.headSet(maxScoredValue, includeMax);
-         return isRev? entries.descendingSet() : entries;
+         return applyLimit(entries, offset, count, isRev);
       }
 
       if (unboundedMax) {
          NavigableSet<ScoredValue<V>> entries = scoredEntries.tailSet(minScoredValue, includeMin);
-         return isRev? entries.descendingSet() : entries;
+         return applyLimit(entries, offset, count, isRev);
       }
 
       try {
          NavigableSet<ScoredValue<V>> entries = scoredEntries.subSet(minScoredValue, includeMin, maxScoredValue, includeMax);
-         return isRev? entries.descendingSet() : entries;
+         return applyLimit(entries, offset, count, isRev);
       } catch (IllegalArgumentException e) {
-         return Collections.emptySortedSet();
+         return Collections.emptyList();
       }
+   }
+
+   private List<ScoredValue<V>> applyLimit(NavigableSet<ScoredValue<V>> subset, final Long offset, final Long count, boolean isRev) {
+      if (!isLimited(offset, count)) {
+         List<ScoredValue<V>> result = new ArrayList<>(entries.size());
+         Iterator<ScoredValue<V>> ite = isRev ? subset.descendingIterator() : subset.iterator();
+         while (ite.hasNext()) {
+            result.add(ite.next());
+         }
+         return result;
+      }
+
+      List<ScoredValue<V>> result = new ArrayList<>();
+      Iterator<ScoredValue<V>> ite = isRev ? subset.descendingIterator() : subset.iterator();
+      if (count < 0) {
+         skipOffset(offset, ite);
+         while (ite.hasNext()) {
+            result.add(ite.next());
+         }
+      } else {
+         skipOffset(offset, ite);
+         long localCount = 0;
+         while (ite.hasNext() && localCount++ < count) {
+            result.add(ite.next());
+         }
+      }
+      return result;
+   }
+
+   private void skipOffset(Long offset, Iterator<ScoredValue<V>> ite) {
+      long localOffset = 0;
+      while (localOffset++ < offset && ite.hasNext()) {
+         ite.next();
+      }
+   }
+
+   private static boolean isLimited(Long offset, Long count) {
+      return offset != null && count != null;
    }
 
    public Collection<ScoredValue<V>> toTreeSet() {
@@ -291,10 +350,10 @@ public class SortedSetBucket<V> {
 
    @ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_SORTED_SET_SCORED_ENTRY)
    public static class ScoredValue<V> implements Comparable<ScoredValue<V>> {
-      private final double score;
+      private final Double score;
       private final MultimapObjectWrapper<V> value;
 
-      private ScoredValue(double score, V value) {
+      private ScoredValue(Double score, V value) {
          this.score = score;
          this.value = new MultimapObjectWrapper<>(value);
       }
@@ -304,13 +363,13 @@ public class SortedSetBucket<V> {
       }
 
       @ProtoFactory
-      ScoredValue(double score, MultimapObjectWrapper<V> wrappedValue) {
+      ScoredValue(Double score, MultimapObjectWrapper<V> wrappedValue) {
          this.score = score;
          this.value = wrappedValue;
       }
 
-      @ProtoField(value = 1, required = true)
-      public double score() {
+      @ProtoField(1)
+      public Double score() {
          return score;
       }
 
@@ -335,7 +394,7 @@ public class SortedSetBucket<V> {
          @SuppressWarnings("unchecked")
          ScoredValue<V> other = (ScoredValue<V>) entry;
 
-         return this.value.equals(other.value) && this.score == other.score;
+         return this.value.equals(other.value) && this.score.equals(other.score);
       }
 
       @Override

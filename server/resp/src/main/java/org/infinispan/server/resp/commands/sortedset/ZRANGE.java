@@ -2,6 +2,7 @@ package org.infinispan.server.resp.commands.sortedset;
 
 import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
+import org.infinispan.multimap.impl.SortedSetAddArgs;
 import org.infinispan.multimap.impl.SortedSetBucket;
 import org.infinispan.multimap.impl.SortedSetSubsetArgs;
 import org.infinispan.server.resp.Consumers;
@@ -11,6 +12,7 @@ import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.util.concurrent.CompletionStages;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -70,31 +72,33 @@ public class ZRANGE extends RespCommand implements Resp3Command {
       boolean withScores = false;
       Long offset = null;
       Long count = null;
-
-      boolean limit() {
-         return offset != null && count != null;
-      }
    }
 
    @Override
-   public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx,
-                                                                List<byte[]> arguments) {
-      byte[] name = arguments.get(0);
-      byte[] start = arguments.get(1);
-      byte[] stop = arguments.get(2);
-
-      int pos = 3;
+   public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
+                                                      ChannelHandlerContext ctx,
+                                                      List<byte[]> arguments) {
+      int pos = 0;
+      final byte[] destination;
+      if (this.getArity() == -5) {
+         destination = arguments.get(pos++);
+      } else {
+         destination = null;
+      }
+      byte[] name = arguments.get(pos++);
+      byte[] start = arguments.get(pos++);
+      byte[] stop = arguments.get(pos++);
       final ResultOptions resultOpt = new ResultOptions();
       boolean isRev = this.initialRev;
       boolean byLex = this.initialByLex;
       boolean byScore = this.initialByScore;
 
       while (pos < arguments.size()) {
-         switch (Arg.valueOf(new String(arguments.get(pos)))) {
+         switch (Arg.valueOf(new String(arguments.get(pos++)))) {
             case LIMIT:
                try {
-                  resultOpt.offset = ArgumentUtils.toLong(arguments.get(++pos));
-                  resultOpt.count = ArgumentUtils.toLong(arguments.get(++pos));
+                  resultOpt.offset = ArgumentUtils.toLong(arguments.get(pos++));
+                  resultOpt.count = ArgumentUtils.toLong(arguments.get(pos++));
                } catch (NumberFormatException ex) {
                   RespErrorUtil.valueNotInteger(handler.allocator());
                   return handler.myStage();
@@ -119,13 +123,12 @@ public class ZRANGE extends RespCommand implements Resp3Command {
                RespErrorUtil.syntaxError(handler.allocator());
                return handler.myStage();
          }
-         pos++;
       }
 
       EmbeddedMultimapSortedSetCache<byte[], byte[]> sortedSetCache = handler.getSortedSeMultimap();
 
       // Syntax error when byLex and byScore
-      if ((byLex && byScore)) {
+      if (byLex && byScore) {
          RespErrorUtil.syntaxError(handler.allocator());
          return handler.myStage();
       }
@@ -144,11 +147,6 @@ public class ZRANGE extends RespCommand implements Resp3Command {
          return handler.myStage();
       }
 
-      if (resultOpt.count != null && resultOpt.count == 0) {
-         // The call does not need to be done. Count is 0. Size is called to raise ERR type if needed
-         return returnEmptyList(handler, ctx, name, sortedSetCache);
-      }
-
       CompletionStage<Collection<SortedSetBucket.ScoredValue<byte[]>>> getSortedSetCall;
       if (byScore) {
          // ZRANGE by score. Replaces ZRANGEBYSCORE and ZREVRANGEBYSCORE
@@ -159,19 +157,14 @@ public class ZRANGE extends RespCommand implements Resp3Command {
             return handler.myStage();
          }
 
-         if ((isRev && startScore.unboundedMin) || (!isRev && startScore.unboundedMax)
-               || (startScore.unboundedMin && stopScore.unboundedMin)
-               || (startScore.unboundedMax && stopScore.unboundedMax)) {
-            // no call when +inf in min or rev with -inf is empty, or unboundedMin and unboundedMax have the same value
-            return returnEmptyList(handler, ctx, name, sortedSetCache);
-         }
-
          SortedSetSubsetArgs.Builder<Double> builder = SortedSetSubsetArgs.create();
          builder.isRev(isRev);
          builder.start(startScore.value);
          builder.includeStart(startScore.include);
          builder.stop(stopScore.value);
          builder.includeStop(stopScore.include);
+         builder.offset(resultOpt.offset);
+         builder.count(resultOpt.count);
          getSortedSetCall = sortedSetCache.subsetByScore(name, builder.build());
 
       } else if (byLex) {
@@ -182,19 +175,14 @@ public class ZRANGE extends RespCommand implements Resp3Command {
             RespErrorUtil.customError("min or max not valid string range item", handler.allocator());
             return handler.myStage();
          }
-         if ((isRev && startLex.unboundedMin) || (!isRev && startLex.unboundedMax)
-               || (startLex.unboundedMin && stopLex.unboundedMin)
-               || (startLex.unboundedMax && stopLex.unboundedMax)) {
-            // no call when + in min or rev with - is empty, or when we get + + or - -
-            return returnEmptyList(handler, ctx, name, sortedSetCache);
-         }
-
          SortedSetSubsetArgs.Builder<byte[]> builder = SortedSetSubsetArgs.create();
          builder.isRev(isRev);
          builder.start(startLex.value);
          builder.includeStart(startLex.include);
          builder.stop(stopLex.value);
          builder.includeStop(stopLex.include);
+         builder.offset(resultOpt.offset);
+         builder.count(resultOpt.count);
          getSortedSetCall = sortedSetCache.subsetByLex(name, builder.build());
       } else {
          // ZRANGE by index. Replaces ZREVRANGE
@@ -213,17 +201,28 @@ public class ZRANGE extends RespCommand implements Resp3Command {
          builder.stop(to);
          getSortedSetCall = sortedSetCache.subsetByIndex(name, builder.build());
       }
-      CompletionStage<List<byte[]>> list = getSortedSetCall.thenApply(subsetResult -> mapResultsToArrayList(subsetResult, resultOpt));
+      if (destination != null) {
+         // Store range and return size
+         return rangeAndStore(handler, ctx, destination, sortedSetCache, getSortedSetCall);
+      }
+
+      CompletionStage<List<byte[]>> list = getSortedSetCall.thenApply(subsetResult -> mapResultsToArrayList(subsetResult, resultOpt.withScores));
       return handler.stageToReturn(list, ctx, Consumers.GET_ARRAY_BICONSUMER);
    }
 
-   private static CompletionStage<RespRequestHandler> returnEmptyList(Resp3Handler handler,
-                                                                      ChannelHandlerContext ctx,
-                                                                      byte[] name,
-                                                                      EmbeddedMultimapSortedSetCache<byte[], byte[]> sortedSetCache) {
-      // Size is called to raise ERR type if needed
-      return handler.stageToReturn(sortedSetCache.size(name)
-                  .thenApply(r -> Collections.emptyList()), ctx, Consumers.GET_ARRAY_BICONSUMER);
+   private CompletionStage<RespRequestHandler> rangeAndStore(Resp3Handler handler,
+                                                            ChannelHandlerContext ctx,
+                                                            byte[] destination,
+                                                            EmbeddedMultimapSortedSetCache<byte[], byte[]> sortedSetCache,
+                                                            CompletionStage<Collection<SortedSetBucket.ScoredValue<byte[]>>> getSortedSetCall) {
+      return CompletionStages.handleAndCompose(getSortedSetCall, (scoredValues, t1) -> {
+         if (t1 != null) {
+            return handleException(handler, t1);
+         }
+
+         CompletionStage<Long> sortedSetSize = sortedSetCache.addMany(destination, scoredValues, SortedSetAddArgs.create().replace().build());
+         return handler.stageToReturn(sortedSetSize, ctx, Consumers.LONG_BICONSUMER);
+      });
    }
 
    /**
@@ -231,28 +230,14 @@ public class ZRANGE extends RespCommand implements Resp3Command {
     * - return scores
     * - limit results
     * @param scoredValues, scoresValues retrieved
-    * @param resultOpt, result operations options
+    * @param withScores, add scores to the resulting list
     * @return byte[] list to be returned by the command
     */
-   private static List<byte[]> mapResultsToArrayList(Collection<SortedSetBucket.ScoredValue<byte[]>> scoredValues, ResultOptions resultOpt) {
+   private static List<byte[]> mapResultsToArrayList(Collection<SortedSetBucket.ScoredValue<byte[]>> scoredValues, boolean withScores) {
       List<byte[]> elements = new ArrayList<>();
       Iterator<SortedSetBucket.ScoredValue<byte[]>> ite = scoredValues.iterator();
-      if (resultOpt.limit()) {
-         // skip the offset
-         int offset = 0;
-         while (offset++ < resultOpt.offset && ite.hasNext()) {
-            ite.next();
-         }
-      }
-      if (resultOpt.limit() && resultOpt.count > 0) {
-         int count = 0;
-         while (count++ < resultOpt.count && ite.hasNext()) {
-            addScoredValue(elements, ite.next(), resultOpt.withScores);
-         }
-      } else {
-         while (ite.hasNext()) {
-            addScoredValue(elements, ite.next(), resultOpt.withScores);
-         }
+      while (ite.hasNext()) {
+         addScoredValue(elements, ite.next(), withScores);
       }
       return elements;
    }

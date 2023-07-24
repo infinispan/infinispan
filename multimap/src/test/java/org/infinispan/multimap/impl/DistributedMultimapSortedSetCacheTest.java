@@ -16,6 +16,7 @@ import java.util.Map;
 
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.util.Lists.list;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.multimap.impl.MultimapTestUtils.ELAIA;
 import static org.infinispan.multimap.impl.MultimapTestUtils.FELIX;
@@ -90,7 +91,8 @@ public class DistributedMultimapSortedSetCacheTest extends BaseDistFunctionalTes
    public void testAddMany() {
       initAndTest();
       EmbeddedMultimapSortedSetCache<String, Person> sortedSet = getMultimapCacheMember();
-      await(sortedSet.addMany(NAMES_KEY, new double[] { 1.1, 9.1 }, new Person[] { OIHANA, ELAIA }, SortedSetAddArgs.create().build()));
+      await(sortedSet.addMany(NAMES_KEY, list(of(1.1, OIHANA), of(9.1, ELAIA)),
+            SortedSetAddArgs.create().build()));
       assertValuesAndOwnership(NAMES_KEY, of(1.1, OIHANA));
       assertValuesAndOwnership(NAMES_KEY, of(9.1, ELAIA));
    }
@@ -99,9 +101,9 @@ public class DistributedMultimapSortedSetCacheTest extends BaseDistFunctionalTes
       initAndTest();
       EmbeddedMultimapSortedSetCache<String, Person> sortedSet = getMultimapCacheMember();
       await(sortedSet.addMany(NAMES_KEY,
-            new double[] { 1, 1, 2, 2, 2, 3, 3, 3 },
-            new Person[] { OIHANA, ELAIA, FELIX, RAMON, JULIEN, PEPE, IGOR, IZARO },
-            SortedSetAddArgs.create().build()));
+            list(of(1, OIHANA), of(1, ELAIA), of(2, FELIX),
+                  of(2, RAMON), of(2, JULIEN), of(3, PEPE), of(3, IGOR),
+                  of(3, IZARO)), SortedSetAddArgs.create().build()));
       assertThat(await(sortedSet.size(NAMES_KEY))).isEqualTo(8);
       assertThat(await(sortedSet.count(NAMES_KEY, 1, true, 3, true))).isEqualTo(8);
    }
@@ -110,9 +112,9 @@ public class DistributedMultimapSortedSetCacheTest extends BaseDistFunctionalTes
       initAndTest();
       EmbeddedMultimapSortedSetCache<String, Person> sortedSet = getMultimapCacheMember();
       await(sortedSet.addMany(NAMES_KEY,
-            new double[] { 1, 1, 2, 2, 2, 3, 3, 3 },
-            new Person[] { OIHANA, ELAIA, FELIX, RAMON, JULIEN, IGOR, IZARO, PEPE },
-            SortedSetAddArgs.create().build()));
+            list(of(1, OIHANA), of(1, ELAIA), of(2, FELIX),
+                  of(2, RAMON), of(2, JULIEN), of(3, PEPE), of(3, IGOR),
+                  of(3, IZARO)), SortedSetAddArgs.create().build()));
       assertThat(await(sortedSet.size(NAMES_KEY))).isEqualTo(8);
       assertThat(await(sortedSet.pop(NAMES_KEY, false, 3)))
             .containsExactly(of(3, PEPE), of(3, IZARO), of(3, IGOR));
@@ -121,17 +123,20 @@ public class DistributedMultimapSortedSetCacheTest extends BaseDistFunctionalTes
    public void testScore() {
       initAndTest();
       EmbeddedMultimapSortedSetCache<String, Person> sortedSet = getMultimapCacheMember();
-      await(sortedSet.addMany(NAMES_KEY, new double[] { 1.1, 9.1 }, new Person[] { OIHANA, ELAIA }, SortedSetAddArgs.create().build()));
+      await(sortedSet.addMany(NAMES_KEY,
+            list(of(1.1, OIHANA), of(9.1, ELAIA)), SortedSetAddArgs.create().build()));
       assertThat(await(sortedSet.score(NAMES_KEY, OIHANA))).isEqualTo(1.1);
       assertThat(await(sortedSet.score(NAMES_KEY, ELAIA))).isEqualTo(9.1);
    }
 
    public void testSubset() {
       initAndTest();
-      EmbeddedMultimapSortedSetCache<String, Person> sortedSetCache = getMultimapCacheMember();
-      await(sortedSetCache.addMany(NAMES_KEY, new double[] { 1, 1, 1, 1}, new Person[] { ELAIA, FELIX, IZARO, OIHANA }, SortedSetAddArgs.create().build()));
+      EmbeddedMultimapSortedSetCache<String, Person> sortedSet = getMultimapCacheMember();
+      await(sortedSet.addMany(NAMES_KEY,
+            list(of(1, ELAIA), of(1, FELIX), of(1, IZARO), of(1, OIHANA)),
+            SortedSetAddArgs.create().build()));
       SortedSetSubsetArgs.Builder<Long> argsIndex = create();
-      assertThat(await(sortedSetCache.subsetByIndex(NAMES_KEY, argsIndex.start(0L).stop(-1L).isRev(false).build())))
+      assertThat(await(sortedSet.subsetByIndex(NAMES_KEY, argsIndex.start(0L).stop(-1L).isRev(false).build())))
             .containsExactly(
                   of(1, ELAIA),
                   of(1, FELIX),
@@ -139,7 +144,7 @@ public class DistributedMultimapSortedSetCacheTest extends BaseDistFunctionalTes
                   of(1, OIHANA));
 
       SortedSetSubsetArgs.Builder<Double> argsScore = create();
-      assertThat(await(sortedSetCache.subsetByScore(NAMES_KEY, argsScore.start(0d).stop(2d).isRev(false).build())))
+      assertThat(await(sortedSet.subsetByScore(NAMES_KEY, argsScore.start(0d).stop(2d).isRev(false).build())))
             .containsExactly(
                   of(1, ELAIA),
                   of(1, FELIX),
@@ -147,7 +152,7 @@ public class DistributedMultimapSortedSetCacheTest extends BaseDistFunctionalTes
                   of(1, OIHANA));
 
       SortedSetSubsetArgs.Builder<Person> argsLex = create();
-      assertThat(await(sortedSetCache.subsetByLex(NAMES_KEY,
+      assertThat(await(sortedSet.subsetByLex(NAMES_KEY,
             argsLex.start(FELIX).includeStart(true).stop(OIHANA).includeStop(true).isRev(false).build())))
             .containsExactly(
                   of(1, FELIX),

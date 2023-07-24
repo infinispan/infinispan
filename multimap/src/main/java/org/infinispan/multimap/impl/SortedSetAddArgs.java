@@ -12,6 +12,8 @@ public class SortedSetAddArgs {
    public boolean updateLessScoresOnly;
    public boolean updateGreaterScoresOnly;
    public boolean returnChangedCount;
+   public boolean replace;
+
 
    private SortedSetAddArgs(SortedSetAddArgs.Builder builder) {
       this.addOnly = builder.addOnly;
@@ -19,6 +21,7 @@ public class SortedSetAddArgs {
       this.updateLessScoresOnly = builder.updateLessScoresOnly;
       this.updateGreaterScoresOnly = builder.updateGreaterScoresOnly;
       this.returnChangedCount = builder.returnChangedCount;
+      this.replace = builder.replace;
    }
    public static Builder create() {
       return new Builder();
@@ -30,6 +33,7 @@ public class SortedSetAddArgs {
       private boolean updateLessScoresOnly;
       private boolean updateGreaterScoresOnly;
       private boolean returnChangedCount;
+      private boolean replace;
 
       private Builder() {
       }
@@ -56,6 +60,11 @@ public class SortedSetAddArgs {
 
       public SortedSetAddArgs.Builder returnChangedCount() {
          this.returnChangedCount = true;
+         return this;
+      }
+
+      public SortedSetAddArgs.Builder replace() {
+         this.replace = true;
          return this;
       }
 

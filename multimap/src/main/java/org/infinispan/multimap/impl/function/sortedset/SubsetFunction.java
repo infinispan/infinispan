@@ -33,6 +33,8 @@ public class SubsetFunction<K, V, T> implements SortedSetBucketBaseFunction<K, V
    protected final T stop;
    protected final boolean includeStart;
    protected final boolean includeStop;
+   protected final Long offset;
+   protected final Long count;
    protected final SubsetType subsetType;
 
    public enum SubsetType {
@@ -50,14 +52,19 @@ public class SubsetFunction<K, V, T> implements SortedSetBucketBaseFunction<K, V
       this.includeStart = args.isIncludeStart();
       this.includeStop = args.isIncludeStop();
       this.subsetType = subsetType;
+      this.offset = args.getOffset();
+      this.count = args.getCount();
    }
 
-   public SubsetFunction(boolean isRev, T start, T stop, boolean includeStart, boolean includeStop, SubsetType subsetType) {
+   public SubsetFunction(boolean isRev, T start, T stop, boolean includeStart, boolean includeStop,
+                         Long offset, Long count, SubsetType subsetType) {
       this.isRev = isRev;
       this.start = start;
       this.stop = stop;
       this.includeStart = includeStart;
       this.includeStop = includeStop;
+      this.offset = offset;
+      this.count = count;
       this.subsetType = subsetType;
    }
 
@@ -68,9 +75,9 @@ public class SubsetFunction<K, V, T> implements SortedSetBucketBaseFunction<K, V
          SortedSetBucket<V> sortedSetBucket = existing.get();
          switch (subsetType) {
             case LEX:
-               return sortedSetBucket.subset((V) start, includeStart, (V) stop, includeStop, isRev);
+               return sortedSetBucket.subset((V) start, includeStart, (V) stop, includeStop, isRev, offset, count);
             case SCORE:
-               return sortedSetBucket.subset((Double) start, includeStart, (Double) stop, includeStop, isRev);
+               return sortedSetBucket.subset((Double) start, includeStart, (Double) stop, includeStop, isRev, offset, count);
             default:
                return sortedSetBucket.subsetByIndex((long) start, (long) stop, isRev);
          }
@@ -98,13 +105,15 @@ public class SubsetFunction<K, V, T> implements SortedSetBucketBaseFunction<K, V
          output.writeObject(object.stop);
          output.writeBoolean(object.includeStart);
          output.writeBoolean(object.includeStop);
+         output.writeObject(object.offset);
+         output.writeObject(object.count);
          MarshallUtil.marshallEnum(object.subsetType, output);
       }
 
       @Override
       public SubsetFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          return new SubsetFunction(input.readBoolean(), input.readObject(), input.readObject(), input.readBoolean(),
-               input.readBoolean(), MarshallUtil.unmarshallEnum(input, SubsetType::valueOf));
+               input.readBoolean(), (Long) input.readObject(), (Long) input.readObject(), MarshallUtil.unmarshallEnum(input, SubsetType::valueOf));
       }
    }
 }

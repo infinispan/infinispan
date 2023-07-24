@@ -3,6 +3,7 @@ package org.infinispan.server.resp.commands.sortedset;
 import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
 import org.infinispan.multimap.impl.SortedSetAddArgs;
+import org.infinispan.multimap.impl.SortedSetBucket;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
@@ -11,6 +12,7 @@ import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
@@ -103,11 +105,8 @@ public class ZADD extends RespCommand implements Resp3Command {
       }
 
       int count = (arguments.size() - pos) / 2;
+      List<SortedSetBucket.ScoredValue<byte[]>> scoredValues = new ArrayList<>(count);
 
-      double[] scores = new double[count];
-      byte[][] values = new byte[count][];
-
-      int i = 0;
       while (pos < arguments.size()) {
          double score;
          try {
@@ -118,13 +117,11 @@ public class ZADD extends RespCommand implements Resp3Command {
             return handler.myStage();
          }
          byte[] value = arguments.get(pos++);
-         scores[i] = score;
-         values[i] = value;
-         i++;
+         scoredValues.add(SortedSetBucket.ScoredValue.of(score, value));
       }
 
-      return handler.stageToReturn(sortedSetCache.addMany(name, scores, values, sortedSetAddArgs), ctx,
-            Consumers.LONG_BICONSUMER);
+      return handler.stageToReturn(sortedSetCache.addMany(name, scoredValues, sortedSetAddArgs),
+            ctx, Consumers.LONG_BICONSUMER);
    }
 
    private void parseArgument(SortedSetAddArgs.Builder addManyArgs, String argument) {
