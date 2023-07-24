@@ -46,7 +46,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
    private final ClientListenerNotifier listenerNotifier;
    // operations may be registered in any thread, and are removed in event loop thread
    private final ConcurrentMap<Long, HotRodOperation<?>> incomplete = new ConcurrentHashMap<>();
-   private final ConcurrentMap<Long, Integer> retries = new ConcurrentHashMap<>();
+   private volatile ConcurrentMap<Long, Integer> retries = null;
    private final List<byte[]> listeners = new ArrayList<>();
    private volatile boolean closing;
 
@@ -76,8 +76,10 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
       }
       HotRodOperation<?> prev = incomplete.put(operation.header().messageId(), operation);
       assert prev == null || prev == operation : "Already registered: " + prev + ", new: " + operation;
-      if (prev != null)
+      if (prev != null) {
+         if (retries == null) retries = new ConcurrentHashMap<>();
          retries.compute(operation.header().messageId(), INCREMENT);
+      }
       operation.scheduleTimeout(channel);
    }
 
@@ -129,7 +131,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
                }
                // If we retried the operation multiple times in this channel, we need to keep it around
                // to parse the received data again. Otherwise, we can remove it.
-               if (retries.computeIfPresent(messageId, DECREMENT) != null) {
+               if (retries != null && retries.computeIfPresent(messageId, DECREMENT) != null) {
                   incomplete.put(messageId, operation);
                }
                if (log.isTraceEnabled()) {

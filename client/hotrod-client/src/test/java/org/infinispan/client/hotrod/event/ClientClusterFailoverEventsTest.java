@@ -1,31 +1,23 @@
 package org.infinispan.client.hotrod.event;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.findServerAndKill;
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.getLoadBalancer;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
-import java.net.InetSocketAddress;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.annotation.ClientListener;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.client.hotrod.test.NoopChannelOperation;
 import org.infinispan.commons.time.ControlledTimeService;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.commons.time.TimeService;
 import org.testng.annotations.Test;
-
-import io.netty.channel.Channel;
 
 @Test(groups = "functional", testName = "client.hotrod.event.ClientClusterFailoverEventsTest")
 public class ClientClusterFailoverEventsTest extends MultiHotRodServersTest {
@@ -39,13 +31,13 @@ public class ClientClusterFailoverEventsTest extends MultiHotRodServersTest {
    }
 
    private void injectTimeServices() {
-      ts0 = new ControlledTimeService();
+      ts0 = new ControlledTimeService("server-0", 0);
       TestingUtil.replaceComponent(server(0).getCacheManager(), TimeService.class, ts0, true);
-      ts1 = new ControlledTimeService();
+      ts1 = new ControlledTimeService("server-1", 0);
       TestingUtil.replaceComponent(server(1).getCacheManager(), TimeService.class, ts1, true);
    }
 
-   public void testEventReplayWithAndWithoutStateAfterFailover() throws Exception {
+   public void testEventReplayWithAndWithoutStateAfterFailover() {
       ConfigurationBuilder base = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       //base.clustering().hash().numOwners(1);
       ConfigurationBuilder builder = hotRodCacheConfiguration(base);
@@ -91,7 +83,7 @@ public class ClientClusterFailoverEventsTest extends MultiHotRodServersTest {
             failoverListener.expectOnlyCreatedEvent(key41);
             ts0.advance(1001);
             ts1.advance(1001);
-            stopServerAndWait(newClient, servers, cacheManagers);
+            findServerAndKill(newClient, servers, cacheManagers);
             // The failover is asynchronous, triggered by closing the channels. If we did an operation right
             // now we could get this event.
             // c.put(key21, "four");
@@ -118,23 +110,6 @@ public class ClientClusterFailoverEventsTest extends MultiHotRodServersTest {
          destroy();
       }
 
-   }
-
-   private static void stopServerAndWait(RemoteCacheManager rcm, List<HotRodServer> servers,
-                                         List<EmbeddedCacheManager> managers) throws Exception {
-      InetSocketAddress addr = (InetSocketAddress) getLoadBalancer(rcm).nextServer(null);
-      for (HotRodServer server : servers) {
-         if (server.getPort() == addr.getPort()) {
-            ChannelFactory cf = rcm.getChannelFactory();
-            Channel channel = cf.fetchChannelAndInvoke(addr, new NoopChannelOperation()).get(10, TimeUnit.SECONDS);
-
-            findServerAndKill(rcm, servers, managers);
-
-            // Wait until channels is inactive.
-            eventually(() -> !channel.isActive());
-            break;
-         }
-      }
    }
 
    @ClientListener(includeCurrentState = true)

@@ -5,17 +5,12 @@ import static org.infinispan.test.TestingUtil.blockUntilCacheStatusAchieved;
 import static org.infinispan.test.TestingUtil.blockUntilViewReceived;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
 
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
@@ -28,8 +23,6 @@ import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-
-import io.netty.channel.Channel;
 
 /**
  * Base test class for Hot Rod tests.
@@ -169,24 +162,9 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
    protected void killServer(int i) {
       HotRodServer server = servers.get(i);
       killServers(server);
-      HotRodServer s = servers.remove(i);
-
-      Channel channel = null;
-      try {
-         if (i < clients.size()) {
-            InetSocketAddress socketAddress = InetSocketAddress.createUnresolved(s.getHost(), s.getPort());
-            ChannelFactory cf = clients.get(i).getChannelFactory();
-            channel = cf.fetchChannelAndInvoke(socketAddress, new NoopChannelOperation()).get(10, TimeUnit.SECONDS);
-         }
-      } catch (InterruptedException | ExecutionException | TimeoutException ignore) { }
-
+      servers.remove(i);
       killCacheManagers(cacheManagers.get(i));
       cacheManagers.remove(i);
-
-      if (channel != null) {
-         final Channel ch = channel;
-         eventually(() -> !ch.isActive());
-      }
    }
 
    protected RemoteCacheManager client(int i) {

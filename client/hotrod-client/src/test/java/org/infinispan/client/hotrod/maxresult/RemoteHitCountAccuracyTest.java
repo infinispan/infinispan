@@ -39,6 +39,14 @@ public class RemoteHitCountAccuracyTest extends SingleHotRodServerTest {
       return Game.GameSchema.INSTANCE;
    }
 
+   @Override
+   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(String host, int serverPort) {
+      return super.createHotRodClientConfigurationBuilder(host, serverPort)
+            .socketTimeout(60_000)
+            // Avoid outstanding requests after completion.
+            .maxRetries(0);
+   }
+
    @Test
    public void overrideHitCountAccuracy() {
       RemoteCache<Integer, Game> games = remoteCacheManager.getCache("indexed-games");

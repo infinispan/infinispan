@@ -335,7 +335,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       registerProtobuf(changedSchema);
 
       // reindex
-      join(client.cache(CACHE_NAME).reindex());
+      join(client.cache(CACHE_NAME).reindex()).close();
 
       // Query on the new field
       Json result = query("FROM org.infinispan.rest.search.entity.Person where newField = 'value'", GET);
