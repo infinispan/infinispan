@@ -43,8 +43,8 @@ public class ZCOUNT extends RespCommand implements Resp3Command {
       byte[] name = arguments.get(0);
       byte[] min = arguments.get(1);
       byte[] max = arguments.get(2);
-      SortedSetArgumentsUtils.Score minScore = SortedSetArgumentsUtils.parseScore(min);
-      SortedSetArgumentsUtils.Score maxScore = SortedSetArgumentsUtils.parseScore(max);
+      ZSetCommonUtils.Score minScore = ZSetCommonUtils.parseScore(min);
+      ZSetCommonUtils.Score maxScore = ZSetCommonUtils.parseScore(max);
       if (minScore == null || maxScore == null) {
          RespErrorUtil.minOrMaxNotAValidFloat(handler.allocator());
          return handler.myStage();
