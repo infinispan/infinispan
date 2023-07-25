@@ -14,6 +14,7 @@ import java.util.List;
 import static io.lettuce.core.Range.Boundary.excluding;
 import static io.lettuce.core.Range.Boundary.including;
 import static io.lettuce.core.Range.Boundary.unbounded;
+import static io.lettuce.core.Range.create;
 import static io.lettuce.core.Range.from;
 import static io.lettuce.core.ScoredValue.just;
 import static io.lettuce.core.ZAggregateArgs.Builder.max;
@@ -817,7 +818,7 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
    }
 
    public void testZRANGESTORE() {
-      assertThat(redis.zrangestore("npeople", "not_existing", Range.create(0L, 1L))).isEqualTo(0);
+      assertThat(redis.zrangestore("npeople", "not_existing", create(0L, 1L))).isEqualTo(0);
       assertThat(redis.exists("npeople")).isEqualTo(0);
 
       redis.zadd("people", ZAddArgs.Builder.ch(),
@@ -834,11 +835,11 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
             just(0, "luis")
       );
       assertThat(redis.zrange("people", 1, 5)).containsExactly("bautista", "carlos", "carmela", "carmelo", "daniel");
-      assertThat(redis.zrangestore("npeople", "people", Range.create(1L, 5L))).isEqualTo(5);
+      assertThat(redis.zrangestore("npeople", "people", create(1L, 5L))).isEqualTo(5);
       assertThat(redis.zrange("npeople", 0, -1)).containsExactly("bautista", "carlos", "carmela", "carmelo", "daniel");
-      assertThat(redis.zrangestorebylex("npeople", "people", Range.create("deb", "luisa"), Limit.create(1, 2))).isEqualTo(2);
+      assertThat(redis.zrangestorebylex("npeople", "people", create("deb", "luisa"), Limit.create(1, 2))).isEqualTo(2);
       assertThat(redis.zrange("npeople", 0, -1)).containsExactly("ernesto", "gonzalo");
-      assertThat(redis.zrangestorebylex("npeople", "people", Range.create("zi", "zu"), Limit.unlimited())).isEqualTo(0);
+      assertThat(redis.zrangestorebylex("npeople", "people", create("zi", "zu"), Limit.unlimited())).isEqualTo(0);
       assertThat(redis.exists("npeople")).isEqualTo(0);
 
       redis.zadd("infinipeople", ZAddArgs.Builder.ch(),
@@ -1259,5 +1260,190 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
             just(10, "b"));
       assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zinterstore("another", "people"));
       assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zinterstore("people", "another"));
+   }
+
+   public void testZREM() {
+      // ZREM not_existing not_existing
+      assertThat(redis.zrem("not_existing", "value")).isZero();
+      // ZADD people -10 tristan 1 ryan 17 vittorio 18.9 fabio 18.9 jose 18.9 katia 21.9 marc
+      redis.zadd("people", ZAddArgs.Builder.ch(),
+            just(-10, "tristan"),
+            just(1, "ryan"),
+            just(17, "vittorio"),
+            just(18.9, "fabio"),
+            just(18.9, "jose"),
+            just(18.9, "katia"),
+            just(21.9, "marc"));
+      // ZREM people tristan marc fabio pedro
+      assertThat(redis.zrem("people", "tristan", "marc", "fabio", "pedro")).isEqualTo(3);
+      // ZRANGE people 0 -1
+      assertThat(redis.zrange("people", 0, -1)).containsExactly("ryan", "vittorio", "jose", "katia");
+      // ZREM people ryan vittorio jose katia
+      assertThat(redis.zrem("people", "ryan", "vittorio", "jose", "katia")).isEqualTo(4);
+      // ZRANGE people 0 -1
+      assertThat(redis.zrange("people", 0, -1)).isEmpty();
+      // EXISTS people
+      assertThat(redis.exists("people")).isZero();
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zrem("another", "tristan"));
+   }
+
+   public void testZREMRANGEBYRANK() {
+      // ZREMRANGEBYRANK not_existing 0 -1
+      assertThat(redis.zremrangebyrank("not_existing", 0, -1)).isZero();
+      // ZADD people -10 tristan 1 ryan 17 vittorio 18.9 fabio 18.9 jose 18.9 katia 21.9 marc
+      redis.zadd("people", ZAddArgs.Builder.ch(),
+            just(-10, "tristan"),
+            just(1, "ryan"),
+            just(17, "vittorio"),
+            just(18.9, "fabio"),
+            just(18.9, "jose"),
+            just(18.9, "katia"),
+            just(21.9, "marc"));
+      // ZREMRANGEBYRANK people 0 -1
+      assertThat(redis.zremrangebyrank("people", 0, -1)).isEqualTo(7);
+      // EXISTS people
+      assertThat(redis.exists("people")).isZero();
+      redis.zadd("people", ZAddArgs.Builder.ch(),
+            just(-10, "tristan"),
+            just(1, "ryan"),
+            just(17, "vittorio"),
+            just(18.9, "fabio"),
+            just(18.9, "jose"),
+            just(18.9, "katia"),
+            just(21.9, "marc"));
+      // ZREMRANGEBYRANK people 2 6
+      assertThat(redis.zremrangebyrank("people", 7, 8)).isZero();
+      // ZREMRANGEBYRANK people 2 6
+      assertThat(redis.zremrangebyrank("people", 2, 6)).isEqualTo(5);
+      // ZREMRANGEBYRANK people -3 -3
+      assertThat(redis.zremrangebyrank("people", -3, -3)).isZero();
+      // ZRANGE people 0 -1
+      assertThat(redis.zrange("people", 0, -1)).containsExactly("tristan", "ryan");
+      // ZREMRANGEBYRANK people -3 -2
+      assertThat(redis.zremrangebyrank("people", -3, -2)).isEqualTo(1);
+      // ZRANGE people 0 -1
+      assertThat(redis.zrange("people", 0, -1)).containsExactly("ryan");
+      // ZREMRANGEBYRANK people 1 1
+      assertThat(redis.zremrangebyrank("people", 1, 1)).isZero();
+      // ZREMRANGEBYRANK people -1 -1
+      assertThat(redis.zremrangebyrank("people", -1, -1)).isEqualTo(1);
+      // EXISTS people
+      assertThat(redis.exists("people")).isZero();
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zremrangebyrank("another", 0, -1));
+   }
+
+   public void testZREMRANGEBYSCORE() {
+      // ZREMRANGEBYSCORE not_existing -inf +inf
+      assertThat(redis.zremrangebyscore("not_existing", Range.unbounded())).isZero();
+      // ZADD people -10 tristan 1 ryan 17 vittorio 18.9 fabio 18.9 jose 18.9 pedro 18.9 juan 18.9 katia 21.9 marc
+      redis.zadd("people", ZAddArgs.Builder.ch(),
+            just(-10, "tristan"),
+            just(1, "ryan"),
+            just(17, "vittorio"),
+            just(18.9, "fabio"),
+            just(18.9, "jose"),
+            just(18.9, "pedro"),
+            just(18.9, "juan"),
+            just(18.9, "katia"),
+            just(21.9, "marc"));
+      // ZREMRANGEBYSCORE not_existing -inf +inf
+      assertThat(redis.zremrangebyscore("people", Range.unbounded())).isEqualTo(9);
+      // EXISTS people
+      assertThat(redis.exists("people")).isZero();
+      // ZADD people -10 tristan 1 ryan 17 vittorio 18.9 fabio 18.9 jose 18.9 pedro 18.9 juan 18.9 katia 21.9 marc
+      redis.zadd("people", ZAddArgs.Builder.ch(),
+            just(-10, "tristan"),
+            just(1, "ryan"),
+            just(17, "vittorio"),
+            just(18.9, "fabio"),
+            just(18.9, "jose"),
+            just(18.9, "pedro"),
+            just(18.9, "juan"),
+            just(18.9, "katia"),
+            just(21.9, "marc"));
+      // ZREMRANGEBYSCORE people -inf 18.9
+      assertThat(redis.zremrangebyscore("people", from(unbounded(), including(18.9)))).isEqualTo(8);
+      // ZRANGE people 0 -1
+      assertThat(redis.zrange("people", 0, -1)).containsExactly("marc");
+      // ZREMRANGEBYSCORE people -11 22
+      assertThat(redis.zremrangebyscore("people", create(-11, 22))).isEqualTo(1);
+      // EXISTS people
+      assertThat(redis.exists("people")).isZero();
+      // ZADD people -10 tristan 1 ryan 17 vittorio 18.9 fabio 18.9 jose 18.9 pedro 18.9 juan 18.9 katia 21.9 marc
+      redis.zadd("people", ZAddArgs.Builder.ch(),
+            just(-10, "tristan"),
+            just(1, "ryan"),
+            just(17, "vittorio"),
+            just(18.9, "fabio"),
+            just(18.9, "jose"),
+            just(18.9, "pedro"),
+            just(18.9, "juan"),
+            just(18.9, "katia"),
+            just(21.9, "marc"));
+      assertThat(redis.zremrangebyscore("people", Range.unbounded())).isEqualTo(9);
+      // EXISTS people
+      assertThat(redis.exists("people")).isZero();
+      // ZREMRANGEBYSCORE another 0 1
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zremrangebyscore("another", 0, 1));
+   }
+
+   public void testZREMRANGEBYLEX() {
+      // ZREMRANGEBYLEX not_existing - +
+      assertThat(redis.zremrangebylex("not_existing", Range.unbounded())).isZero();
+      // ZADD people 0 antonio 0 bautista 0
+      redis.zadd("people", ZAddArgs.Builder.ch(),
+            just(0, "antonio"),
+            just(0, "bautista")
+      );
+      // ZREMRANGEBYLEX not_existing - +
+      assertThat(redis.zremrangebylex("people", Range.unbounded())).isEqualTo(2);
+      // ZADD people 0 antonio 0 bautista 0 carlos 0 carmela 0 carmelo 0 daniel 0 daniela 0 debora 0 ernesto 0 gonzalo 0 luis
+      redis.zadd("people", ZAddArgs.Builder.ch(),
+            just(0, "antonio"),
+            just(0, "bautista"),
+            just(0, "carlos"),
+            just(0, "carmela"),
+            just(0, "carmelo"),
+            just(0, "daniel"),
+            just(0, "daniela"),
+            just(0, "debora"),
+            just(0, "ernesto"),
+            just(0, "gonzalo"),
+            just(0, "luis")
+      );
+      // ZREMRANGEBYLEX people - (carlos
+      assertThat(redis.zremrangebylex("people", Range.from(unbounded(), excluding("carlos")))).isEqualTo(2);
+      // ZREMRANGEBYLEX people - [daniel
+      assertThat(redis.zremrangebylex("people", Range.from(unbounded(), including("daniel")))).isEqualTo(4);
+      // ZREMRANGEBYLEX people (debora +
+      assertThat(redis.zremrangebylex("people", Range.from(excluding("debora"), unbounded()))).isEqualTo(3);
+      // ZADD people 0 antonio 0 bautista 0 carlos 0 carmela 0 carmelo 0 daniel 0 daniela 0 debora 0 ernesto 0 gonzalo 0 luis
+      redis.zadd("people", ZAddArgs.Builder.ch(),
+            just(0, "antonio"),
+            just(0, "bautista"),
+            just(0, "carlos"),
+            just(0, "carmela"),
+            just(0, "carmelo"),
+            just(0, "daniel"),
+            just(0, "daniela"),
+            just(0, "debora"),
+            just(0, "ernesto"),
+            just(0, "gonzalo"),
+            just(0, "luis")
+      );
+      // ZREMRANGEBYLEX people [debora +
+      assertThat(redis.zremrangebylex("people", Range.from(including("debora"), unbounded()))).isEqualTo(4);
+      // ZREMRANGEBYLEX people [bau [dan
+      assertThat(redis.zremrangebylex("people", Range.from(including("bau"), including("dan")))).isEqualTo(4);
+      // ZREMRANGEBYLEX people (bau (dan
+      assertThat(redis.zremrangebylex("people", Range.from(excluding("bau"), excluding("dan")))).isZero();
+      // ZREMRANGEBYLEX people (antonio (daniela
+      assertThat(redis.zremrangebylex("people", Range.from(excluding("antonio"), excluding("daniela")))).isEqualTo(1);
+      // ZREMRANGEBYLEX people (antonia (danielo
+      assertThat(redis.zremrangebylex("people", Range.from(excluding("antonia"), excluding("danielo")))).isEqualTo(2);
+      // EXISTS people
+      assertThat(redis.exists("people")).isZero();
+      // ZREMRANGEBYLEX another - +
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zremrangebylex("another", Range.unbounded()));
    }
 }

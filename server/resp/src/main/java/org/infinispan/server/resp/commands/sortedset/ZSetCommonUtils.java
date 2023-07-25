@@ -32,15 +32,15 @@ public final class ZSetCommonUtils {
    public static class Score {
       public boolean unboundedMin;
       public boolean unboundedMax;
-      boolean include = true;
-      Double value;
+      public boolean include = true;
+      public Double value;
    }
 
    public static class Lex {
-      boolean include;
-      boolean unboundedMin;
-      boolean unboundedMax;
-      byte[] value;
+      public boolean include;
+      public boolean unboundedMin;
+      public boolean unboundedMax;
+      public byte[] value;
    }
 
    public static Lex parseLex(byte[] arg) {

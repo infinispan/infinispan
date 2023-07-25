@@ -284,5 +284,17 @@ for concurrent operations or failures unless the resp cache is configured to use
 | link:https://redis.io/commands/zrangestore[ZRANGESTORE]
 |
 
+| link:https://redis.io/commands/zrem[ZREM]
+|
+
+| link:https://redis.io/commands/zremrangebylex[ZREMRANGEBYLEX]
+|
+
+| link:https://redis.io/commands/zremrangebyrank[ZREMRANGEBYRANK]
+|
+
+| link:https://redis.io/commands/zremrangebyscore[ZREMRANGEBYSCORE]
+|
+
 | link:https://redis.io/commands/zscore[ZSCORE]
 |

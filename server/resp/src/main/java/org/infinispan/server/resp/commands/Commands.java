@@ -89,6 +89,10 @@ import org.infinispan.server.resp.commands.sortedset.ZRANGEBYLEX;
 import org.infinispan.server.resp.commands.sortedset.ZRANGEBYSCORE;
 import org.infinispan.server.resp.commands.sortedset.ZRANGESTORE;
 import org.infinispan.server.resp.commands.sortedset.ZRANK;
+import org.infinispan.server.resp.commands.sortedset.ZREM;
+import org.infinispan.server.resp.commands.sortedset.ZREMRANGEBYLEX;
+import org.infinispan.server.resp.commands.sortedset.ZREMRANGEBYRANK;
+import org.infinispan.server.resp.commands.sortedset.ZREMRANGEBYSCORE;
 import org.infinispan.server.resp.commands.sortedset.ZREVRANGE;
 import org.infinispan.server.resp.commands.sortedset.ZREVRANGEBYLEX;
 import org.infinispan.server.resp.commands.sortedset.ZREVRANGEBYSCORE;
@@ -148,7 +152,8 @@ public final class Commands {
       ALL_COMMANDS[20] = new RespCommand[]{new UNSUBSCRIBE()};
       ALL_COMMANDS[25] = new RespCommand[]{new ZADD(), new ZCARD(), new ZCOUNT(), new ZDIFF(), new ZDIFFSTORE(), new ZINCRBY(), new ZINTER(), new ZINTERSTORE(),
             new ZPOPMAX(), new ZPOPMIN(), new ZRANGE(), new ZRANGESTORE(), new ZREVRANGE(), new ZRANGEBYSCORE(), new ZRANK(), new ZREVRANGEBYSCORE(),
-            new ZRANGEBYLEX(), new ZREVRANGEBYLEX(), new ZREVRANK(), new ZSCORE(), new ZMSCORE(), new ZUNION(), new ZUNIONSTORE() };
+            new ZRANGEBYLEX(), new ZREVRANGEBYLEX(), new ZREVRANK(),  new ZREM(), new ZREMRANGEBYRANK(), new ZREMRANGEBYLEX(), new ZREMRANGEBYSCORE(),
+            new ZSCORE(), new ZMSCORE(), new ZUNION(), new ZUNIONSTORE() };
    }
 
    public static List<RespCommand> all() {

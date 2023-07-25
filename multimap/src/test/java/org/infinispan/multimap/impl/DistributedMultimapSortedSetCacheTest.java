@@ -18,6 +18,7 @@ import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.util.Lists.list;
 import static org.infinispan.functional.FunctionalTestUtils.await;
+import static org.infinispan.multimap.impl.MultimapTestUtils.CHARY;
 import static org.infinispan.multimap.impl.MultimapTestUtils.ELAIA;
 import static org.infinispan.multimap.impl.MultimapTestUtils.FELIX;
 import static org.infinispan.multimap.impl.MultimapTestUtils.IGOR;
@@ -191,6 +192,42 @@ public class DistributedMultimapSortedSetCacheTest extends BaseDistFunctionalTes
       assertThat(await(sortedSet.union(NAMES_KEY, null, 1, SUM)))
             .containsExactly(of(1.1, OIHANA), of(9.1, ELAIA));
       assertThat(await(sortedSet.score(NAMES_KEY, ELAIA))).isEqualTo(9.1);
+   }
+
+   public void testRemoveAll() {
+      initAndTest();
+      EmbeddedMultimapSortedSetCache<String, Person> sortedSet = getMultimapCacheMember();
+      await(sortedSet.addMany(NAMES_KEY,
+            list(of(1, OIHANA), of(1, ELAIA), of(2, FELIX),
+                  of(2, RAMON), of(2, JULIEN), of(3, PEPE), of(3, IGOR),
+                  of(3, IZARO)), SortedSetAddArgs.create().build()));
+      assertThat(await(sortedSet.size(NAMES_KEY))).isEqualTo(8);
+      assertThat(await(sortedSet.removeAll(NAMES_KEY, list(OIHANA, FELIX, CHARY)))).isEqualTo(2);
+      assertThat(await(sortedSet.size(NAMES_KEY))).isEqualTo(6);
+   }
+
+   public void testRemoveAllRange() {
+      initAndTest();
+      EmbeddedMultimapSortedSetCache<String, Person> sortedSet = getMultimapCacheMember();
+      await(sortedSet.addMany(NAMES_KEY,
+            list(of(1, OIHANA), of(1, ELAIA), of(2, FELIX),
+                  of(2, RAMON), of(2, JULIEN), of(3, IGOR),
+                  of(3, IZARO), of(3, PEPE)), SortedSetAddArgs.create().build()));
+      assertThat(await(sortedSet.size(NAMES_KEY))).isEqualTo(8);
+      assertThat(await(sortedSet.removeAll(NAMES_KEY, 0L, 2L))).isEqualTo(3);
+      assertThat(await(sortedSet.removeAll(NAMES_KEY, 2d, true, 2d, true))).isEqualTo(2);
+      assertThat(await(sortedSet.removeAll(NAMES_KEY, IGOR, true, PEPE, true))).isEqualTo(3);
+      assertThat(await(sortedSet.size(NAMES_KEY))).isZero();
+      await(sortedSet.addMany(NAMES_KEY,
+            list(of(1, OIHANA), of(1, ELAIA), of(2, FELIX),
+                  of(2, RAMON), of(2, JULIEN), of(3, IGOR),
+                  of(3, IZARO), of(3, PEPE)), SortedSetAddArgs.create().build()));
+      assertThat(await(sortedSet.removeAll(NAMES_KEY, null, true, 3d, true))).isEqualTo(8);
+      await(sortedSet.addMany(NAMES_KEY,
+            list(of(0, OIHANA), of(0, ELAIA), of(0, FELIX),
+                  of(0, RAMON), of(0, JULIEN), of(0, IGOR),
+                  of(0, IZARO), of(0, PEPE)), SortedSetAddArgs.create().build()));
+      assertThat(await(sortedSet.removeAll(NAMES_KEY, null, true, RAMON, true))).isEqualTo(8);
    }
 
    protected void assertValuesAndOwnership(String key, SortedSetBucket.ScoredValue<Person> value) {

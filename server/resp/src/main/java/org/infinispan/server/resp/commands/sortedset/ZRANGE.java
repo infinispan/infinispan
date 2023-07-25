@@ -40,7 +40,7 @@ import static org.infinispan.server.resp.commands.sortedset.ZSetCommonUtils.mapR
  * @since 15.0
  */
 public class ZRANGE extends RespCommand implements Resp3Command {
-   protected enum Arg {
+   public enum Arg {
       BYSCORE, BYLEX, REV, LIMIT, WITHSCORES
    }
 

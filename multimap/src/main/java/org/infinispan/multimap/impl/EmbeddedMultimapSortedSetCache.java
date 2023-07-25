@@ -12,11 +12,14 @@ import org.infinispan.multimap.impl.function.sortedset.CountFunction;
 import org.infinispan.multimap.impl.function.sortedset.IncrFunction;
 import org.infinispan.multimap.impl.function.sortedset.IndexOfSortedSetFunction;
 import org.infinispan.multimap.impl.function.sortedset.PopFunction;
+import org.infinispan.multimap.impl.function.sortedset.RemoveManyFunction;
 import org.infinispan.multimap.impl.function.sortedset.ScoreFunction;
 import org.infinispan.multimap.impl.function.sortedset.SortedSetAggregateFunction;
 import org.infinispan.multimap.impl.function.sortedset.SubsetFunction;
+import org.infinispan.multimap.impl.function.sortedset.SubsetType;
 import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -29,6 +32,10 @@ import java.util.stream.Collectors;
 import static java.util.Objects.requireNonNull;
 import static org.infinispan.multimap.impl.function.sortedset.SortedSetAggregateFunction.AggregateType.INTER;
 import static org.infinispan.multimap.impl.function.sortedset.SortedSetAggregateFunction.AggregateType.UNION;
+import static org.infinispan.multimap.impl.function.sortedset.SubsetType.INDEX;
+import static org.infinispan.multimap.impl.function.sortedset.SubsetType.LEX;
+import static org.infinispan.multimap.impl.function.sortedset.SubsetType.OTHER;
+import static org.infinispan.multimap.impl.function.sortedset.SubsetType.SCORE;
 
 /**
  * Multimap with Sorted Map Implementation methods
@@ -38,6 +45,8 @@ import static org.infinispan.multimap.impl.function.sortedset.SortedSetAggregate
  */
 public class EmbeddedMultimapSortedSetCache<K, V> {
    public static final String ERR_KEY_CAN_T_BE_NULL = "key can't be null";
+   public static final String ERR_MIN_CAN_T_BE_NULL = "min can't be null";
+   public static final String ERR_MAX_CAN_T_BE_NULL = "max can't be null";
    public static final String ERR_MEMBER_CAN_T_BE_NULL = "member can't be null";
    public static final String ERR_ARGS_CAN_T_BE_NULL = "args can't be null";
    public static final String ERR_ARGS_INDEXES_CAN_T_BE_NULL = "min and max indexes (from-to) can't be null";
@@ -58,7 +67,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
     * Adds and/or updates, depending on the provided options, the value and the associated score.
     *
     * @param key, the name of the sorted set
-    * @param scoreValues, scores and values pair list to be added
+    * @param scoredValues, scores and values pair list to be added
     * @param args to provide different options:
     *       addOnly -> adds new elements only, ignore existing ones.
     *       updateOnly -> updates existing elements only, ignore new elements.
@@ -110,7 +119,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
       });
    }
 
-   private CompletionStage<CacheEntry<K, Collection<SortedSetBucket.ScoredValue<V>>>> getEntry(K key) {
+   public CompletionStage<CacheEntry<K, Collection<SortedSetBucket.ScoredValue<V>>>> getEntry(K key) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       return cache.getAdvancedCache().getCacheEntryAsync(key)
             .thenApply(entry -> {
@@ -247,7 +256,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
       requireNonNull(args, ERR_ARGS_CAN_T_BE_NULL);
       requireNonNull(args.getStart(), ERR_ARGS_INDEXES_CAN_T_BE_NULL);
       requireNonNull(args.getStop(), ERR_ARGS_INDEXES_CAN_T_BE_NULL);
-      return readWriteMap.eval(key, new SubsetFunction<>(args, SubsetFunction.SubsetType.INDEX));
+      return readWriteMap.eval(key, new SubsetFunction<>(args, INDEX));
    }
 
    /**
@@ -260,7 +269,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
    public CompletionStage<Collection<SortedSetBucket.ScoredValue<V>>> subsetByScore(K key, SortedSetSubsetArgs<Double> args) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       requireNonNull(args, ERR_ARGS_CAN_T_BE_NULL);
-      return readWriteMap.eval(key, new SubsetFunction<>(args, SubsetFunction.SubsetType.SCORE));
+      return readWriteMap.eval(key, new SubsetFunction<>(args, SCORE));
    }
 
    /**
@@ -274,7 +283,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
    public CompletionStage<Collection<SortedSetBucket.ScoredValue<V>>> subsetByLex(K key, SortedSetSubsetArgs<V> args) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       requireNonNull(args, ERR_ARGS_CAN_T_BE_NULL);
-      return readWriteMap.eval(key, new SubsetFunction<>(args, SubsetFunction.SubsetType.LEX));
+      return readWriteMap.eval(key, new SubsetFunction<>(args, LEX));
    }
 
    /**
@@ -328,5 +337,69 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       SortedSetBucket.AggregateFunction agg = aggFunction == null ? SortedSetBucket.AggregateFunction.SUM : aggFunction;
       return readWriteMap.eval(key, new SortedSetAggregateFunction(INTER, scoredValues, weight, agg));
+   }
+   /**
+    * Removes the given elements from the sorted set, if such exist.
+    * @param key, the name of the sorted set
+    * @param members, members to be removed
+    * @return removed members count
+    */
+   public CompletionStage<Long> removeAll(K key, List<V> members) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      requireNonNull(members, ERR_MEMBERS_CAN_T_BE_NULL);
+      return readWriteMap.eval(key, new RemoveManyFunction<>(members, OTHER));
+   }
+
+   /**
+    * Removes range from index from to index to.
+    *
+    * @param key, the name of the sorted set
+    * @param min, index from. Index can't be null and must be provided
+    * @param max, index to. Index can't be null and must be provided
+    * @return long representing the number of members removed
+    */
+   public CompletionStage<Long> removeAll(K key, Long min, Long max) {
+      requireNonNull(min, ERR_MIN_CAN_T_BE_NULL);
+      requireNonNull(max, ERR_MAX_CAN_T_BE_NULL);
+      return removeAll(key, min, false,  max, false, INDEX);
+   }
+
+   /**
+    * Removes elements from a range of scores.
+    *
+    * @param key, the sorted set name
+    * @param min, smallest score value to be removed. If null, removes from the head of the sorted set
+    * @param includeMin, indicates if the min score is included in the remove range
+    * @param max, greatest score value to be removed. If null, removes to the tail of the sorted set
+    * @param includeMax, indicates if the max score is included in the remove range
+    *
+    * @return the number of removed elements
+    */
+   public CompletionStage<Long> removeAll(K key, Double min, boolean includeMin, Double max, boolean includeMax) {
+      return removeAll(key, min, includeMin, max, includeMax, SCORE);
+   }
+
+   /**
+    * When the elements have the same score, removes elements from a range of elements ordered by elements
+    * natural ordering.
+    *
+    * @param key, the sorted set name
+    * @param min, smallest element to be removed. If null, removes from the head of the sorted set
+    * @param includeMin, indicates if the smallest element is included in the remove range
+    * @param max, greatest element to be removed. If null, removes to the tail of the sorted set
+    * @param includeMax, indicates if the greater element is included in the remove range
+    *
+    * @return the number of removed elements
+    */
+   public CompletionStage<Long> removeAll(K key, V min, boolean includeMin, V max, boolean includeMax) {
+      return removeAll(key, min, includeMin, max, includeMax, LEX);
+   }
+
+   private CompletionStage<Long> removeAll(K key, Object min, boolean includeMin, Object max, boolean includeMax, SubsetType subsetType) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      List<Object> list = new ArrayList<>(2);
+      list.add(min);
+      list.add(max);
+      return readWriteMap.eval(key, new RemoveManyFunction<>(list, includeMin, includeMax, subsetType));
    }
 }
