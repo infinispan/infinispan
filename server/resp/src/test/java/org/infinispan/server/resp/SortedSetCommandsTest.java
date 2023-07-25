@@ -2,7 +2,6 @@ package org.infinispan.server.resp;
 
 import io.lettuce.core.Limit;
 import io.lettuce.core.Range;
-import io.lettuce.core.ScoredValue;
 import io.lettuce.core.ZAddArgs;
 import io.lettuce.core.api.sync.RedisCommands;
 import org.testng.annotations.BeforeMethod;
@@ -853,13 +852,13 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
       assertThat(notExistingSortedSetCallResult.get(0)).isNull();
       // ZADD people -10 tristan 1 ryan 17 vittorio 18.9 fabio 18.9 jose 18.9 katia 21.9 marc
       redis.zadd("people", ZAddArgs.Builder.ch(),
-            ScoredValue.just(-10, "tristan"),
-            ScoredValue.just(1, "ryan"),
-            ScoredValue.just(17, "vittorio"),
-            ScoredValue.just(18.9, "fabio"),
-            ScoredValue.just(18.9, "jose"),
-            ScoredValue.just(18.9, "katia"),
-            ScoredValue.just(21.9, "marc"));
+            just(-10, "tristan"),
+            just(1, "ryan"),
+            just(17, "vittorio"),
+            just(18.9, "fabio"),
+            just(18.9, "jose"),
+            just(18.9, "katia"),
+            just(21.9, "marc"));
       // ZMSCORE people maria juana
       List<Double> notExistingMemberCallResult = redis.zmscore("people", "maria", "juana");
       assertThat(notExistingMemberCallResult).hasSize(2);
@@ -868,5 +867,65 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
       // ZMSCORE people jose marc juliette
       assertThat(redis.zmscore("people", "jose", "juliette", "marc")).containsExactly(18.9, null, 21.9);
       assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zmscore("another", "tristan"));
+   }
+
+   public void testZDIFF() {
+      assertThat(redis.zdiff("result", "not_existing1", "not_existing2")).isEmpty();
+      // ZADD s1 1 a 2 b 3 c
+      redis.zadd("s1", ZAddArgs.Builder.ch(),
+            just(1, "a"),
+            just(2, "b"),
+            just(3, "c"));
+      assertThat(redis.zdiff("s1")).containsExactly("a", "b", "c");
+      assertThat(redis.zdiffWithScores("s1")).containsExactly(
+            just(1, "a"),
+            just(2, "b"),
+            just(3, "c"));
+      // ZADD s3 3 a 3 b 7 g
+      redis.zadd("s2", ZAddArgs.Builder.ch(),
+            just(3, "a"),
+            just(3, "b"),
+            just(7, "g"));
+      assertThat(redis.zdiff("s1", "s2")).containsExactly("c");
+      assertThat(redis.zdiffWithScores("s1", "s2")).containsExactly(
+            just(3, "c"));
+      assertThat(redis.zdiffWithScores("s2", "s1")).containsExactly(
+            just(7, "g"));
+      // ZADD s3 3 a 3 b 7 g
+      redis.zadd("s2", ZAddArgs.Builder.ch(),
+            just(3, "a"),
+            just(3, "b"),
+            just(7, "g"));
+      assertThat(redis.zdiffWithScores("not_existing", "s2", "s1")).isEmpty();
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zdiff("another"));
+   }
+
+   public void testZDIFFSTORE() {
+      assertThat(redis.zdiffstore("result", "not_existing1", "not_existing2")).isZero();
+      // ZADD s1 1 a 2 b 3 c
+      redis.zadd("s1", ZAddArgs.Builder.ch(),
+            just(1, "a"),
+            just(2, "b"),
+            just(3, "c"));
+      // ZADD s2 1 a 2 b 3 c 4 d 5 e 6 f 7 g
+      redis.zadd("s2", ZAddArgs.Builder.ch(),
+            just(1, "a"),
+            just(2, "b"),
+            just(7, "g"));
+      // ZADD s3 1 a 2 b 7 g 8 h
+      redis.zadd("s3", ZAddArgs.Builder.ch(),
+            just(1, "a"),
+            just(2, "b"),
+            just(7, "g"),
+            just(8, "h"));
+
+      assertThat(redis.zdiffstore("result", "s1", "s2", "s3")).isEqualTo(1);
+      assertThat(redis.zrangeWithScores("result", 0, -1)).containsExactly(just(3, "c"));
+      assertThat(redis.zdiffstore("result", "s2", "s3")).isEqualTo(0);
+      assertThat(redis.zrangeWithScores("result", 0, -1)).isEmpty();
+      assertThat(redis.exists("result")).isEqualTo(0);
+
+      assertWrongType(() -> redis.set("another1", "tristan"), () ->  redis.zdiffstore("another1", "s1"));
+      assertWrongType(() -> redis.set("another2", "tristan"), () ->  redis.zdiffstore("people",  "another2"));
    }
 }

@@ -1,12 +1,25 @@
 package org.infinispan.server.resp.commands.sortedset;
 
+import org.infinispan.multimap.impl.SortedSetBucket;
+import org.infinispan.server.resp.Util;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
-final class SortedSetArgumentsUtils {
+public final class ZSetCommonUtils {
+   public static final byte[] WITHSCORES = "WITHSCORES".getBytes();
    public static byte EXCLUDE = ((byte)'(');
-   private SortedSetArgumentsUtils() {
+
+   private ZSetCommonUtils() {
+   }
+
+   public static boolean isWithScoresArg(byte[] arg) {
+      return Util.isAsciiBytesEquals(arg, WITHSCORES);
    }
 
    private static boolean isInf(byte[] arg, char sign) {
@@ -68,7 +81,7 @@ final class SortedSetArgumentsUtils {
             return score;
          }
 
-         if (arg[0] == SortedSetArgumentsUtils.EXCLUDE) {
+         if (arg[0] == ZSetCommonUtils.EXCLUDE) {
             score.value = ArgumentUtils.toDouble(arg, 1);
             score.include = false;
          } else {
@@ -81,4 +94,24 @@ final class SortedSetArgumentsUtils {
       return null;
    }
 
+   /**
+    * Transforms the resulting collection depending on the zrank options
+    * - return scores
+    * - limit results
+    * @param scoredValues, scoresValues retrieved
+    * @param withScores, return with scores
+    * @return byte[] list to be returned by the command
+    */
+   public static List<byte[]> mapResultsToArrayList(Collection<SortedSetBucket.ScoredValue<byte[]>> scoredValues, boolean withScores) {
+      List<byte[]> elements = new ArrayList<>();
+      Iterator<SortedSetBucket.ScoredValue<byte[]>> ite = scoredValues.iterator();
+      while (ite.hasNext()) {
+         SortedSetBucket.ScoredValue<byte[]> item = ite.next();
+         elements.add(item.getValue());
+         if (withScores) {
+            elements.add(Double.toString(item.score()).getBytes(StandardCharsets.US_ASCII));
+         }
+      }
+      return elements;
+   }
 }
