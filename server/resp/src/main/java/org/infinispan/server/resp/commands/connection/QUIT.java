@@ -1,21 +1,24 @@
 package org.infinispan.server.resp.commands.connection;
 
-import io.netty.channel.ChannelHandlerContext;
-import org.infinispan.server.resp.commands.AuthResp3Command;
-import org.infinispan.server.resp.commands.PubSubResp3Command;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.server.resp.Resp3AuthHandler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.SubscriberHandler;
+import org.infinispan.server.resp.commands.AuthResp3Command;
+import org.infinispan.server.resp.commands.PubSubResp3Command;
+import org.infinispan.server.resp.commands.TransactionResp3Command;
+import org.infinispan.server.resp.tx.RespTransactionHandler;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @link https://redis.io/commands/quit/
  * @since 14.0
  */
-public class QUIT extends RespCommand implements AuthResp3Command, PubSubResp3Command {
+public class QUIT extends RespCommand implements AuthResp3Command, PubSubResp3Command, TransactionResp3Command {
 
    public QUIT() {
       super(1, 0, 0, 0);
@@ -34,5 +37,11 @@ public class QUIT extends RespCommand implements AuthResp3Command, PubSubResp3Co
                                                                 List<byte[]> arguments) {
       handler.removeAllListeners();
       return handler.resp3Handler().handleRequest(ctx, this, arguments);
+   }
+
+   @Override
+   public CompletionStage<RespRequestHandler> perform(RespTransactionHandler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
+      handler.dropTransaction();
+      return handler.respServer().newHandler().handleRequest(ctx, this, arguments);
    }
 }

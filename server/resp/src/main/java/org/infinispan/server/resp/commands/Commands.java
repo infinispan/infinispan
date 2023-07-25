@@ -1,5 +1,9 @@
 package org.infinispan.server.resp.commands;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.commands.cluster.CLUSTER;
 import org.infinispan.server.resp.commands.connection.AUTH;
@@ -98,10 +102,7 @@ import org.infinispan.server.resp.commands.string.SET;
 import org.infinispan.server.resp.commands.string.SETRANGE;
 import org.infinispan.server.resp.commands.string.STRALGO;
 import org.infinispan.server.resp.commands.string.STRLEN;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import org.infinispan.server.resp.commands.tx.MULTI;
 
 /**
  * @since 15.0
@@ -125,7 +126,7 @@ public final class Commands {
       ALL_COMMANDS[7] = new RespCommand[]{new HELLO(), new HGET(), new HSET(), new HLEN(), new HEXISTS(), new HDEL(), new HMGET(), new HKEYS(), new HVALS(), new HSCAN(), new HGETALL(), new HMSET(), new HINCRBY(), new HINCRBYFLOAT(), new HRANDFIELD()};
       ALL_COMMANDS[8] = new RespCommand[]{new INCR(), new INCRBY(), new INCRBYFLOAT(), new INFO()};
       ALL_COMMANDS[11] = new RespCommand[]{new LINDEX(), new LINSERT(), new LPUSH(), new LPUSHX(), new LPOP(), new LRANGE(), new LLEN(), new LPOS(), new LREM(), new LSET(), new LTRIM(), new LMOVE(), new LMPOP() };
-      ALL_COMMANDS[12] = new RespCommand[]{new MGET(), new MSET(), new MODULE(), new MEMORY()};
+      ALL_COMMANDS[12] = new RespCommand[]{new MGET(), new MSET(), new MULTI(), new MODULE(), new MEMORY()};
       ALL_COMMANDS[15] = new RespCommand[]{new PUBLISH(), new PING(), new PSUBSCRIBE(), new PUNSUBSCRIBE(), new PTTL(), new PEXPIRETIME()};
       ALL_COMMANDS[16] = new RespCommand[]{new QUIT()};
       ALL_COMMANDS[17] = new RespCommand[]{new RPUSH(), new RPUSHX(), new RPOP(), new RESET(), new READWRITE(), new READONLY(), new RPOPLPUSH() };

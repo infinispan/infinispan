@@ -9,6 +9,7 @@ import java.util.function.BiConsumer;
 
 import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
 import static org.infinispan.server.resp.RespConstants.OK;
+import static org.infinispan.server.resp.RespConstants.QUEUED_REPLY;
 
 /**
  * Utility class with Consumers
@@ -23,6 +24,9 @@ public final class Consumers {
 
    public static final BiConsumer<Object, ByteBufPool> OK_BICONSUMER = (ignore, alloc) -> alloc.acquire(OK.length)
          .writeBytes(OK);
+
+   public static final BiConsumer<Object, ByteBufPool> QUEUED_BICONSUMER = (ignore, alloc) -> alloc.acquire(QUEUED_REPLY.length)
+         .writeBytes(QUEUED_REPLY);
 
    public static final BiConsumer<Long, ByteBufPool> LONG_BICONSUMER = Resp3Handler::handleLongResult;
 
