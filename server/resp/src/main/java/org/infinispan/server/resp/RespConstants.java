@@ -14,4 +14,5 @@ public interface RespConstants {
 
    byte[] OK = "+OK\r\n".getBytes(StandardCharsets.US_ASCII);
    byte[] NIL = "$-1\r\n".getBytes(StandardCharsets.US_ASCII);
+   byte[] QUEUED_REPLY = "+QUEUED\r\n".getBytes(StandardCharsets.US_ASCII);
 }
