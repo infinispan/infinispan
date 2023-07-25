@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -50,6 +51,14 @@ public class SortedSetBucket<V> {
     */
    public SortedSet<ScoredValue<V>> getScoredEntries() {
       return new TreeSet<>(scoredEntries);
+   }
+
+   /**
+    * Returns a copy of the entries;
+    * @return entries copy
+    */
+   public List<ScoredValue<V>> getScoredEntriesAsList() {
+      return new ArrayList<>(scoredEntries);
    }
 
    public SortedSetBucket() {
@@ -88,6 +97,10 @@ public class SortedSetBucket<V> {
       for (ScoredValue<V> scoredValue : scoredValues) {
          addScoredValue(scoredValue);
       }
+   }
+
+   public Set<MultimapObjectWrapper<V>> getScoredEntriesAsValuesSet() {
+      return entries.keySet().stream().collect(Collectors.toSet());
    }
 
    public static class AddOrUpdatesCounters {

@@ -13,6 +13,7 @@ import org.infinispan.multimap.impl.function.sortedset.IndexOfSortedSetFunction;
 import org.infinispan.multimap.impl.function.sortedset.PopFunction;
 import org.infinispan.multimap.impl.function.sortedset.ScoreFunction;
 import org.infinispan.multimap.impl.function.sortedset.SubsetFunction;
+import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -120,6 +121,38 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
       return cache.getAsync(key).thenApply(b -> {
          if (b != null) {
             return b.getScoredEntries();
+         }
+         return null;
+      });
+   }
+
+   /**
+    * Returns the sorted set value if such exists.
+    *
+    * @param key, the name of the sorted set
+    * @return the value of the Sorted Set
+    */
+   public CompletionStage<List<SortedSetBucket.ScoredValue<V>>> getValueAsList(K key) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      return cache.getAsync(key).thenApply(b -> {
+         if (b != null) {
+            return b.getScoredEntriesAsList();
+         }
+         return null;
+      });
+   }
+
+   /**
+    * Returns the set values if such exists.
+    *
+    * @param key, the name of the sorted set
+    * @return the values in the sorted set as a set
+    */
+   public CompletionStage<Set<MultimapObjectWrapper<V>>> getValuesSet(K key) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      return cache.getAsync(key).thenApply(b -> {
+         if (b != null) {
+            return b.getScoredEntriesAsValuesSet();
          }
          return null;
       });
@@ -248,4 +281,5 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
       requireNonNull(member, ERR_MEMBER_CAN_T_BE_NULL);
       return readWriteMap.eval(key, new IndexOfSortedSetFunction(member, isRev));
    }
+
 }
