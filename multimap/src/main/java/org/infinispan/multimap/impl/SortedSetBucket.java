@@ -192,10 +192,11 @@ public class SortedSetBucket<V> {
    }
 
    public static class AddOrUpdatesCounters {
+
       public long created = 0;
+
       public long updated = 0;
    }
-
    public AddOrUpdatesCounters addMany(Collection<ScoredValue<V>> scoredValues,
                                        boolean addOnly,
                                        boolean updateOnly,
@@ -295,6 +296,47 @@ public class SortedSetBucket<V> {
    private void addScoredValue(ScoredValue<V> scoredValue) {
       scoredEntries.add(scoredValue);
       entries.put(scoredValue.wrappedValue(), scoredValue.score());
+   }
+
+   public <V> long removeAll(Collection<V> values) {
+      long removeCount = 0;
+      for (V value: values) {
+         MultimapObjectWrapper<V> wrappedValue = new MultimapObjectWrapper(value);
+         Double score = entries.get(wrappedValue);
+         if (score != null) {
+            entries.remove(wrappedValue);
+            scoredEntries.remove(new ScoredValue<>(score, wrappedValue));
+            removeCount++;
+         }
+      }
+      return removeCount;
+   }
+
+   public long removeAll(V min, boolean includeMin, V max, boolean includeMax) {
+      List<ScoredValue<V>> subset = subset(min, includeMin, max, includeMax, false, null, null);
+      for (ScoredValue<V> value : subset) {
+         entries.remove(value.wrappedValue());
+         scoredEntries.remove(value);
+      }
+      return subset.size();
+   }
+
+   public long removeAll(Double min, boolean includeMin, Double max, boolean includeMax) {
+      List<ScoredValue<V>> subset = subset(min, includeMin, max, includeMax, false, null, null);
+      for (ScoredValue<V> value : subset) {
+         entries.remove(value.wrappedValue());
+         scoredEntries.remove(value);
+      }
+      return subset.size();
+   }
+
+   public long removeAll(Long min, Long max) {
+      List<ScoredValue<V>> subset = subsetByIndex(min, max, false);
+      for (ScoredValue<V> value : subset) {
+         entries.remove(value.wrappedValue());
+         scoredEntries.remove(value);
+      }
+      return subset.size();
    }
 
    public List<ScoredValue<V>> subsetByIndex(long from, long to, boolean rev) {

@@ -15,6 +15,7 @@ import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache.ERR_ARGS_CAN_T_BE_NULL;
 import static org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache.ERR_ARGS_INDEXES_CAN_T_BE_NULL;
 import static org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache.ERR_KEY_CAN_T_BE_NULL;
+import static org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache.ERR_MEMBERS_CAN_T_BE_NULL;
 import static org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache.ERR_MEMBER_CAN_T_BE_NULL;
 import static org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache.ERR_SCORES_CAN_T_BE_NULL;
 import static org.infinispan.multimap.impl.MultimapTestUtils.CHARY;
@@ -621,6 +622,60 @@ public class EmbeddedMultimapSortedSetCacheTest extends SingleCacheManagerTest {
             .containsExactly(of(7, JULIEN), of(14, KOLDO));
 
       assertThatThrownBy(() -> await(sortedSetCache.inter(null, null, 1, null)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
+   }
+
+   public void testRemoveAll() {
+      assertThat(await(sortedSetCache.removeAll(NAMES_KEY, list(OIHANA)))).isEqualTo(0L);
+      await(sortedSetCache.addMany(NAMES_KEY,
+            list(of(-5, OIHANA), of(1, ELAIA), of(12, FELIX), of(23, IGOR)),
+            SortedSetAddArgs.create().build()));
+      assertThat(await(sortedSetCache.removeAll(NAMES_KEY, list(OIHANA, FELIX, CHARY)))).isEqualTo(2L);
+      assertThat(await(sortedSetCache.size(NAMES_KEY))).isEqualTo(2L);
+      assertThat(await(sortedSetCache.removeAll(NAMES_KEY, list(IGOR, FELIX, ELAIA)))).isEqualTo(2L);
+      assertThat(await(sortedSetCache.size(NAMES_KEY))).isZero();
+      assertThat(await(sortedSetCache.getEntry(NAMES_KEY))).isNull();
+      assertThatThrownBy(() -> await(sortedSetCache.removeAll(null, list())))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
+      assertThatThrownBy(() -> await(sortedSetCache.removeAll(NAMES_KEY, null)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_MEMBERS_CAN_T_BE_NULL);
+      await(sortedSetCache.addMany(NAMES_KEY,
+            list(of(-5, OIHANA), of(1, ELAIA), of(12, FELIX), of(23, IGOR)),
+            SortedSetAddArgs.create().build()));
+      // by rank
+      assertThat(await(sortedSetCache.removeAll(NAMES_KEY, 0L, 2L))).isEqualTo(3L);
+      assertThat(await(sortedSetCache.removeAll(NAMES_KEY, -1L, -1L))).isEqualTo(1L);
+      assertThat(await(sortedSetCache.getValue(NAMES_KEY))).isNull();
+      // by score
+      await(sortedSetCache.addMany(NAMES_KEY,
+            list(of(-5, OIHANA), of(1, ELAIA), of(12, FELIX), of(23, IGOR)),
+            SortedSetAddArgs.create().build()));
+      assertThat(await(sortedSetCache.removeAll(NAMES_KEY, -6d, true, 10d, true))).isEqualTo(2L);
+      assertThat(await(sortedSetCache.removeAll(NAMES_KEY, 12d, true, 23d, false))).isEqualTo(1L);
+      assertThat(await(sortedSetCache.removeAll(NAMES_KEY, (Double) null, true, null, false))).isEqualTo(1L);
+      assertThat(await(sortedSetCache.getValue(NAMES_KEY))).isNull();
+      // by lex
+      await(sortedSetCache.addMany(NAMES_KEY,
+            list(of(0, ELAIA), of(0, FELIX), of(0, IGOR), of(0, OIHANA)),
+            SortedSetAddArgs.create().build()));
+      assertThat(await(sortedSetCache.removeAll(NAMES_KEY, ELA, true, FELIX, true))).isEqualTo(2L);
+      assertThat(await(sortedSetCache.removeAll(NAMES_KEY, IGOR, true, OIHANA, false))).isEqualTo(1L);
+      assertThat(await(sortedSetCache.removeAll(NAMES_KEY, OIHANA, true, OIHANA, true))).isEqualTo(1L);
+      assertThat(await(sortedSetCache.getValue(NAMES_KEY))).isNull();
+      // errors
+      assertThatThrownBy(() -> await(sortedSetCache.removeAll(null, null)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
+      assertThatThrownBy(() -> await(sortedSetCache.removeAll(null, 1L, 2L)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
+      assertThatThrownBy(() -> await(sortedSetCache.removeAll(null, 2d, false, 3d, true)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
+      assertThatThrownBy(() -> await(sortedSetCache.removeAll(null, PEPE, false, PEPE, true)))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
    }

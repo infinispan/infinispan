@@ -37,14 +37,6 @@ public class SubsetFunction<K, V, T> implements SortedSetBucketBaseFunction<K, V
    protected final Long count;
    protected final SubsetType subsetType;
 
-   public enum SubsetType {
-      INDEX, SCORE, LEX;
-      private static final SubsetType[] CACHED_VALUES = values();
-      public static SubsetType valueOf(int ordinal) {
-         return CACHED_VALUES[ordinal];
-      }
-   }
-
    public SubsetFunction(SortedSetSubsetArgs<T> args, SubsetType subsetType) {
       this.isRev = args.isRev();
       this.start = args.getStart();
