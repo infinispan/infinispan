@@ -14,14 +14,13 @@ import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.util.concurrent.CompletionStages;
 
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
+
+import static org.infinispan.server.resp.commands.sortedset.ZSetCommonUtils.mapResultsToArrayList;
 
 /**
  * Returns the specified range of elements in the sorted set stored at <key>.
@@ -150,8 +149,8 @@ public class ZRANGE extends RespCommand implements Resp3Command {
       CompletionStage<Collection<SortedSetBucket.ScoredValue<byte[]>>> getSortedSetCall;
       if (byScore) {
          // ZRANGE by score. Replaces ZRANGEBYSCORE and ZREVRANGEBYSCORE
-         SortedSetArgumentsUtils.Score startScore = SortedSetArgumentsUtils.parseScore(start);
-         SortedSetArgumentsUtils.Score stopScore = SortedSetArgumentsUtils.parseScore(stop);
+         ZSetCommonUtils.Score startScore = ZSetCommonUtils.parseScore(start);
+         ZSetCommonUtils.Score stopScore = ZSetCommonUtils.parseScore(stop);
          if (startScore == null || stopScore == null) {
             RespErrorUtil.minOrMaxNotAValidFloat(handler.allocator());
             return handler.myStage();
@@ -169,8 +168,8 @@ public class ZRANGE extends RespCommand implements Resp3Command {
 
       } else if (byLex) {
          // ZRANGE by lex. Replaces ZRANGEBYLEX and ZREVRANGEBYLEX
-         SortedSetArgumentsUtils.Lex startLex = SortedSetArgumentsUtils.parseLex(start);
-         SortedSetArgumentsUtils.Lex stopLex = SortedSetArgumentsUtils.parseLex(stop);
+         ZSetCommonUtils.Lex startLex = ZSetCommonUtils.parseLex(start);
+         ZSetCommonUtils.Lex stopLex = ZSetCommonUtils.parseLex(stop);
          if (startLex == null || stopLex == null) {
             RespErrorUtil.customError("min or max not valid string range item", handler.allocator());
             return handler.myStage();
@@ -224,29 +223,4 @@ public class ZRANGE extends RespCommand implements Resp3Command {
          return handler.stageToReturn(sortedSetSize, ctx, Consumers.LONG_BICONSUMER);
       });
    }
-
-   /**
-    * Transforms the resulting collection depending on the zrank options
-    * - return scores
-    * - limit results
-    * @param scoredValues, scoresValues retrieved
-    * @param withScores, add scores to the resulting list
-    * @return byte[] list to be returned by the command
-    */
-   private static List<byte[]> mapResultsToArrayList(Collection<SortedSetBucket.ScoredValue<byte[]>> scoredValues, boolean withScores) {
-      List<byte[]> elements = new ArrayList<>();
-      Iterator<SortedSetBucket.ScoredValue<byte[]>> ite = scoredValues.iterator();
-      while (ite.hasNext()) {
-         addScoredValue(elements, ite.next(), withScores);
-      }
-      return elements;
-   }
-
-   private static void addScoredValue(List<byte[]> elements, SortedSetBucket.ScoredValue<byte[]> item, boolean withScores) {
-      elements.add(item.getValue());
-      if (withScores) {
-         elements.add(Double.toString(item.score()).getBytes(StandardCharsets.US_ASCII));
-      }
-   }
-
 }

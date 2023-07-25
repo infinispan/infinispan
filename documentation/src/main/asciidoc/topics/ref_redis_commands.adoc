@@ -236,6 +236,12 @@ for concurrent operations or failures unless the resp cache is configured to use
 | link:https://redis.io/commands/zcard[ZCOUNT]
 |
 
+| link:https://redis.io/commands/zdiff[ZDIFF]
+|
+
+| link:https://redis.io/commands/zdiffstore[ZDIFFSTORE]
+|
+
 | link:https://redis.io/commands/zpopmax[ZPOPMAX]
 |
 
