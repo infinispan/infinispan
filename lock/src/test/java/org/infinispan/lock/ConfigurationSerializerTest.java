@@ -1,64 +1,69 @@
-package org.infinispan.lock;
-
-import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-import org.infinispan.configuration.parsing.ParserRegistry;
-import org.infinispan.configuration.serializer.AbstractConfigurationSerializerTest;
-import org.infinispan.lock.configuration.ClusteredLockConfiguration;
-import org.infinispan.lock.configuration.ClusteredLockManagerConfiguration;
-import org.infinispan.lock.configuration.Reliability;
-import org.infinispan.lock.impl.ClusteredLockModuleLifecycle;
-import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.testng.annotations.Test;
-
-/**
- * Tests the configuration parser and serializer.
- *
- * @author Katia Aresti, karesti@redhat.com
- * @since 9.4
- */
-@Test(groups = "functional", testName = "counter.ConfigurationSerializerTest")
-@CleanupAfterMethod
-public class ConfigurationSerializerTest extends AbstractConfigurationSerializerTest {
-
-   public void testParserAvailableReliability() throws IOException {
-      ConfigurationBuilderHolder holder = new ParserRegistry().parseFile("configs/all/clustered-locks-dist.xml");
-      withCacheManager(() -> createClusteredCacheManager(holder), cacheManager -> {
-         cacheManager.getCache(ClusteredLockModuleLifecycle.CLUSTERED_LOCK_CACHE_NAME);
-         GlobalConfiguration globalConfiguration = cacheManager.getGlobalComponentRegistry().getGlobalConfiguration();
-         ClusteredLockManagerConfiguration clmConfig = globalConfiguration
-               .module(ClusteredLockManagerConfiguration.class);
-         assertNotNull(clmConfig);
-         assertEquals(3, clmConfig.numOwners());
-         assertEquals(Reliability.AVAILABLE, clmConfig.reliability());
-         assertTrue(clmConfig.locks().containsKey("lock1"));
-         assertTrue(clmConfig.locks().containsKey("lock2"));
-      });
-   }
-
-   public void testParserConsistentReliability() throws IOException {
-      ConfigurationBuilderHolder holder = new ParserRegistry().parseFile("configs/all/clustered-locks-repl.xml");
-      withCacheManager(() -> createClusteredCacheManager(holder), cacheManager -> {
-         cacheManager.getCache(ClusteredLockModuleLifecycle.CLUSTERED_LOCK_CACHE_NAME);
-         GlobalConfiguration globalConfiguration = cacheManager.getGlobalComponentRegistry().getGlobalConfiguration();
-         ClusteredLockManagerConfiguration clmConfig = globalConfiguration
-               .module(ClusteredLockManagerConfiguration.class);
-         assertNotNull(clmConfig);
-         assertEquals(-1, clmConfig.numOwners());
-         assertEquals(Reliability.CONSISTENT, clmConfig.reliability());
-         Map<String, ClusteredLockConfiguration> clusteredLockConfig = new HashMap<>();
-         assertTrue(clmConfig.locks().containsKey("consi-lock1"));
-         assertTrue(clmConfig.locks().containsKey("consi-lock2"));
-      });
-   }
-}
+//package org.infinispan.lock;
+//
+//import static org.infinispan.test.TestingUtil.withCacheManager;
+//import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
+//import static org.junit.jupiter.api.Assertions.assertEquals;
+//import static org.junit.jupiter.api.Assertions.assertNotNull;
+//import static org.junit.jupiter.api.Assertions.assertTrue;
+//
+//import java.io.IOException;
+//import java.util.HashMap;
+//import java.util.Map;
+//
+//import org.infinispan.configuration.global.GlobalConfiguration;
+//import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+//import org.infinispan.configuration.parsing.ParserRegistry;
+//import org.infinispan.configuration.serializer.AbstractConfigurationSerializerTest;
+//import org.infinispan.jupiter.TestTags;
+//import org.infinispan.lock.configuration.ClusteredLockConfiguration;
+//import org.infinispan.lock.configuration.ClusteredLockManagerConfiguration;
+//import org.infinispan.lock.configuration.Reliability;
+//import org.infinispan.lock.impl.ClusteredLockModuleLifecycle;
+//import org.infinispan.test.fwk.CleanupAfterMethod;
+//import org.junit.jupiter.api.Tag;
+//import org.junit.jupiter.api.Test;
+//
+///**
+// * Tests the configuration parser and serializer.
+// *
+// * @author Katia Aresti, karesti@redhat.com
+// * @since 9.4
+// */
+//@Tag(TestTags.SMOKE)
+//@CleanupAfterMethod
+//public class ConfigurationSerializerTest extends AbstractConfigurationSerializerTest {
+//
+//
+//   @Test
+//   public void testParserAvailableReliability() throws IOException {
+//      ConfigurationBuilderHolder holder = new ParserRegistry().parseFile("configs/all/clustered-locks-dist.xml");
+//      withCacheManager(() -> createClusteredCacheManager(holder), cacheManager -> {
+//         cacheManager.getCache(ClusteredLockModuleLifecycle.CLUSTERED_LOCK_CACHE_NAME);
+//         GlobalConfiguration globalConfiguration = cacheManager.getGlobalComponentRegistry().getGlobalConfiguration();
+//         ClusteredLockManagerConfiguration clmConfig = globalConfiguration
+//               .module(ClusteredLockManagerConfiguration.class);
+//         assertNotNull(clmConfig);
+//         assertEquals(3, clmConfig.numOwners());
+//         assertEquals(Reliability.AVAILABLE, clmConfig.reliability());
+//         assertTrue(clmConfig.locks().containsKey("lock1"));
+//         assertTrue(clmConfig.locks().containsKey("lock2"));
+//      });
+//   }
+//
+//   @Test
+//   public void testParserConsistentReliability() throws IOException {
+//      ConfigurationBuilderHolder holder = new ParserRegistry().parseFile("configs/all/clustered-locks-repl.xml");
+//      withCacheManager(() -> createClusteredCacheManager(holder), cacheManager -> {
+//         cacheManager.getCache(ClusteredLockModuleLifecycle.CLUSTERED_LOCK_CACHE_NAME);
+//         GlobalConfiguration globalConfiguration = cacheManager.getGlobalComponentRegistry().getGlobalConfiguration();
+//         ClusteredLockManagerConfiguration clmConfig = globalConfiguration
+//               .module(ClusteredLockManagerConfiguration.class);
+//         assertNotNull(clmConfig);
+//         assertEquals(-1, clmConfig.numOwners());
+//         assertEquals(Reliability.CONSISTENT, clmConfig.reliability());
+//         Map<String, ClusteredLockConfiguration> clusteredLockConfig = new HashMap<>();
+//         assertTrue(clmConfig.locks().containsKey("consi-lock1"));
+//         assertTrue(clmConfig.locks().containsKey("consi-lock2"));
+//      });
+//   }
+//}

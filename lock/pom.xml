@@ -82,11 +82,21 @@
             <artifactId>blockhound</artifactId>
             <optional>true</optional>
         </dependency>
-
         <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-jupiter-tests</artifactId>
+            <version>${version.infinispan}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>${version.junit5}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${version.junit5}</version>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>

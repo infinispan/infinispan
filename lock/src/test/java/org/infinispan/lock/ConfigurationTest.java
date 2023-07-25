@@ -1,13 +1,16 @@
 package org.infinispan.lock;
 
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.jupiter.AbstractCacheTest;
+import org.infinispan.jupiter.TestTags;
 import org.infinispan.lock.configuration.ClusteredLockManagerConfiguration;
 import org.infinispan.lock.configuration.ClusteredLockManagerConfigurationBuilder;
 import org.infinispan.lock.configuration.Reliability;
@@ -16,11 +19,10 @@ import org.infinispan.lock.impl.ClusteredLockModuleLifecycle;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.PartitionHandling;
-import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionMode;
-import org.testng.AssertJUnit;
-import org.testng.annotations.Test;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 /**
  * Configuration test
@@ -28,9 +30,10 @@ import org.testng.annotations.Test;
  * @author Katia Aresti, karesti@redhat.com
  * @since 9.4
  */
-@Test(groups = "unit", testName = "clusteredLock.ConfigurationTest")
+@Tag(TestTags.SMOKE)
 public class ConfigurationTest extends AbstractCacheTest {
 
+   @Test
    public void testDefaultConfiguration() {
       TestingUtil.withCacheManager(() -> buildCacheManager(GlobalConfigurationBuilder.defaultClusteredBuilder()),
             cacheManager -> {
@@ -40,6 +43,7 @@ public class ConfigurationTest extends AbstractCacheTest {
             });
    }
 
+   @Test
    public void testReliabilityAvailable() {
       final GlobalConfigurationBuilder builder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       final ClusteredLockManagerConfiguration config = builder.addModule(ClusteredLockManagerConfigurationBuilder.class)
@@ -49,7 +53,7 @@ public class ConfigurationTest extends AbstractCacheTest {
          assertLockAndCacheConfiguration(config, cacheConfiguration);
       });
    }
-
+   @Test
    public void testReliabilityConsistent() {
       final GlobalConfigurationBuilder builder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       final ClusteredLockManagerConfiguration config = builder.addModule(ClusteredLockManagerConfigurationBuilder.class)
@@ -60,6 +64,7 @@ public class ConfigurationTest extends AbstractCacheTest {
       });
    }
 
+   @Test
    public void testNumOwner() {
       final GlobalConfigurationBuilder builder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       final ClusteredLockManagerConfiguration config = builder.addModule(ClusteredLockManagerConfigurationBuilder.class)
@@ -70,6 +75,7 @@ public class ConfigurationTest extends AbstractCacheTest {
       });
    }
 
+   @Test
    public void testMinusOneNumberOfOwner() {
       final GlobalConfigurationBuilder builder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       final ClusteredLockManagerConfiguration config = builder.addModule(ClusteredLockManagerConfigurationBuilder.class)
@@ -80,6 +86,7 @@ public class ConfigurationTest extends AbstractCacheTest {
       });
    }
 
+   @Test
    public void testInvalidReliability() {
       GlobalConfigurationBuilder builder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       ClusteredLockManagerConfigurationBuilder clBuilder = builder.addModule(ClusteredLockManagerConfigurationBuilder.class);
@@ -88,6 +95,7 @@ public class ConfigurationTest extends AbstractCacheTest {
       assertClusteredLockConfigurationException(builder);
    }
 
+   @Test
    public void testInvalidNumOwner() {
       GlobalConfigurationBuilder builder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       ClusteredLockManagerConfigurationBuilder clBuilder = builder.addModule(ClusteredLockManagerConfigurationBuilder.class);
@@ -119,7 +127,7 @@ public class ConfigurationTest extends AbstractCacheTest {
    private void assertClusteredLockConfigurationException(GlobalConfigurationBuilder builder) {
       try {
          builder.build();
-         AssertJUnit.fail("CacheConfigurationExpected");
+         fail("CacheConfigurationExpected");
       } catch (ClusteredLockException | CacheConfigurationException expected) {
          log.trace("Expected", expected);
       }
