@@ -416,11 +416,11 @@ public class Server extends BaseServerManagement implements AutoCloseable {
             initialContext.bind(dataSourceConfiguration.jndiName(), dataSource);
          }
 
-         // Start the cache manager
-         SecurityActions.startCacheManager(cacheManager);
          // Register ourselves with the global registry
          GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(cacheManager);
          gcr.registerComponent(this, ServerManagement.class);
+         // Start the cache manager
+         SecurityActions.startCacheManager(cacheManager);
          serverStateManager = new ServerStateManagerImpl(this, cacheManager, gcr.getComponent(GlobalConfigurationManager.class));
          gcr.registerComponent(serverStateManager, ServerStateManager.class);
          blockingManager = gcr.getComponent(BlockingManager.class);
