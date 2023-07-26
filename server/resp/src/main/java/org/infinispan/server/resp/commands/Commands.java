@@ -106,6 +106,7 @@ import org.infinispan.server.resp.commands.string.SET;
 import org.infinispan.server.resp.commands.string.SETRANGE;
 import org.infinispan.server.resp.commands.string.STRALGO;
 import org.infinispan.server.resp.commands.string.STRLEN;
+import org.infinispan.server.resp.commands.tx.EXEC;
 import org.infinispan.server.resp.commands.tx.MULTI;
 
 /**
@@ -123,7 +124,7 @@ public final class Commands {
       ALL_COMMANDS[2] = new RespCommand[]{new CONFIG(), new COMMAND(), new CLUSTER(), new CLIENT() };
       // DEL should always be first here
       ALL_COMMANDS[3] = new RespCommand[]{new DEL(), new DECR(), new DECRBY(), new DBSIZE()};
-      ALL_COMMANDS[4] = new RespCommand[]{new ECHO(), new EXISTS(), new EXPIRE(), new EXPIREAT(), new EXPIRETIME()};
+      ALL_COMMANDS[4] = new RespCommand[]{new ECHO(), new EXISTS(), new EXPIRE(), new EXPIREAT(), new EXPIRETIME(), new EXEC()};
       ALL_COMMANDS[5] = new RespCommand[]{new FLUSHDB(), new FLUSHALL()};
       // GET should always be first here
       ALL_COMMANDS[6] = new RespCommand[]{new GET(), new GETDEL(), new GETEX(), new GETRANGE()};

@@ -175,7 +175,7 @@ public class Resp3Handler extends Resp3AuthHandler {
       }
    }
 
-   protected static void handleArrayPrefix(int size, ByteBufPool alloc) {
+   public static void writeArrayPrefix(int size, ByteBufPool alloc) {
       allocAndWriteLengthPrefix('*', size, alloc, 0);
    }
 
