@@ -18,18 +18,19 @@ import io.netty.channel.ChannelHandlerContext;
 /**
  * `<code>MULTI</code>` command.
  * <p>
- * This command marks the start of a transaction block. Subsequent commands will be queued for execution, and always
- * replying with a {@link org.infinispan.server.resp.RespConstants#QUEUED_REPLY} response. The commands are verified
- * for errors, such as number of arguments, and an error is returned instead. Although, the transaction is not aborted.
+ * This command marks the start of a transaction block. Subsequent operations are queued for later execution and receive
+ * a {@link org.infinispan.server.resp.RespConstants#QUEUED_REPLY} response. Each operation is verified for errors,
+ * for example, the number of arguments. Flawed operations receive the corresponding error reply and are discarded.
+ * Although, these errors do not abort the transaction.
  * <p>
- * Sending "nested" MULTI commands is not accepted, that is, sending a MULTI command while inside a transaction. Again,
- * this does not abort the transaction, but returns an error.
+ * Sending "nested" MULTI commands is not accepted, i.e., sending a MULTI command when already in a MULTI context.
+ * Again, this does not abort the transaction but returns an error.
  * <p>
- * Redis also does not include a rollback command. Instead, the user can send a DISCARD command to abort the transaction.
- * This means the queued commands are discarded and the transaction context ends. Another commands with a similar
- * behavior are the {@link org.infinispan.server.resp.commands.connection.QUIT} and the subscription commands
- * {@link org.infinispan.server.resp.commands.pubsub.SUBSCRIBE} and {@link org.infinispan.server.resp.commands.pubsub.PSUBSCRIBE}.
- * The subscription commands drop the queued commands and enter into pub-sub mode.
+ * Redis also does not include a rollback command. Instead, the user can send a DISCARD command to abort the transaction,
+ * clearing the queued commands and exiting the transaction context. Other commands with similar behavior are
+ * {@link org.infinispan.server.resp.commands.connection.QUIT}, {@link org.infinispan.server.resp.commands.pubsub.SUBSCRIBE},
+ * and {@link org.infinispan.server.resp.commands.pubsub.PSUBSCRIBE}. The subscription commands drop the queued commands
+ * and enter pub-sub mode.
  *
  * @since 15.0
  * @see <a href="https://redis.io/commands/multi/">Redis documentation</a>

@@ -91,10 +91,10 @@ public final class Consumers {
    };
 
    public static final BiConsumer<List, ByteBufPool> LMPOP_BICONSUMER = (res, alloc) -> {
-      Resp3Handler.handleArrayPrefix(2, alloc);
+      Resp3Handler.writeArrayPrefix(2, alloc);
       Resp3Handler.handleBulkResult((byte[])res.get(0), alloc);
       Collection<byte[]> values = (Collection<byte[]>)res.get(1);
-      Resp3Handler.handleArrayPrefix(values.size(), alloc);
+      Resp3Handler.writeArrayPrefix(values.size(), alloc);
       for (byte[] val : values) {
          Resp3Handler.handleBulkResult(val, alloc);
       }
@@ -102,17 +102,17 @@ public final class Consumers {
 
    private static void handleIdxArray(LCSResponse res, ByteBufPool alloc) {
       // return idx. it's a 4 items array
-      Resp3Handler.handleArrayPrefix(4, alloc);
+      Resp3Handler.writeArrayPrefix(4, alloc);
       Resp3Handler.handleBulkResult("matches", alloc);
-      Resp3Handler.handleArrayPrefix(res.idx.size(), alloc);
+      Resp3Handler.writeArrayPrefix(res.idx.size(), alloc);
       for (var match : res.idx) {
          // 2 positions + optional length
          var size = match.length > 4 ? 3 : 2;
-         Resp3Handler.handleArrayPrefix(size, alloc);
-         Resp3Handler.handleArrayPrefix(2, alloc);
+         Resp3Handler.writeArrayPrefix(size, alloc);
+         Resp3Handler.writeArrayPrefix(2, alloc);
          Resp3Handler.handleLongResult(match[0], alloc);
          Resp3Handler.handleLongResult(match[1], alloc);
-         Resp3Handler.handleArrayPrefix(2, alloc);
+         Resp3Handler.writeArrayPrefix(2, alloc);
          Resp3Handler.handleLongResult(match[2], alloc);
          Resp3Handler.handleLongResult(match[3], alloc);
          if (size == 3) {

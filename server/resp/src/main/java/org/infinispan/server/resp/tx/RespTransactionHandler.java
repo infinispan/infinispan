@@ -1,11 +1,9 @@
 package org.infinispan.server.resp.tx;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.server.resp.CacheRespRequestHandler;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.RespCommand;
@@ -16,7 +14,6 @@ import org.infinispan.server.resp.SubscriberHandler;
 import org.infinispan.server.resp.commands.TransactionResp3Command;
 import org.infinispan.server.resp.commands.pubsub.PSUBSCRIBE;
 import org.infinispan.server.resp.commands.pubsub.SUBSCRIBE;
-import org.infinispan.server.resp.logging.Log;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -24,17 +21,23 @@ import io.netty.channel.ChannelHandlerContext;
  * Handles the commands while in the transaction state.
  * <p>
  * The transaction state is entered when the {@link org.infinispan.server.resp.commands.tx.MULTI} command is received
- * and exited when the EXEC or DISCARD command is received. Additional commands that change the handler include the
- * quit and subscribe commands.
+ * and exited when the {@link org.infinispan.server.resp.commands.tx.EXEC} or DISCARD command is received. Additional
+ * commands that change the handler include {@link org.infinispan.server.resp.commands.connection.QUIT} and the
+ * subscribe commands.
  * <p>
- * The handler will queue all commands and copy the arguments received.
+ * The handler will queue all commands and copy the arguments received. Observe that, this information is kept in-memory,
+ * so it will not survive restarts. If the node stops in some way and come back, the queued commands are lost. In the
+ * same way, it does not offer atomicity during execution. If the server stops mid-way applying operations, it does not
+ * recover, leaving a half-applied transaction.
+ * <p>
+ * Talking in isolation levels, this implementation is next to read-uncommitted. Another client could see the state of
+ * the transaction before it is finished, even on a single node.
  *
  * @see <a href="https://redis.io/docs/interact/transactions/">Redis transactions documentation</a>
  * @author José Bolina
  */
 public class RespTransactionHandler extends CacheRespRequestHandler {
 
-   private static final Log log = LogFactory.getLog(RespTransactionHandler.class, Log.class);
    private final List<TransactionCommand> queued;
 
    public RespTransactionHandler(RespServer respServer) {
@@ -64,7 +67,7 @@ public class RespTransactionHandler extends CacheRespRequestHandler {
       // This method already writes any error message to the socket.
       if (!isCommandValid(command, arguments)) return myStage();
 
-      queued.add(new TransactionCommand(command, Collections.unmodifiableList(arguments)));
+      queued.add(new TransactionCommand(command, List.copyOf(arguments)));
       return stageToReturn(myStage(), ctx, Consumers.QUEUED_BICONSUMER);
    }
 
@@ -83,6 +86,21 @@ public class RespTransactionHandler extends CacheRespRequestHandler {
    }
 
    public void dropTransaction() {
+      // TODO remove watchers.
       queued.clear();
+   }
+
+   /**
+    * Prepare for performing the queued operations.
+    * <p>
+    * This method verifies for possible watched keys to verify if the operation needs to be aborted. A <code>null</code>
+    * return means the transaction needs to be aborted. After this execution, all keys are un-watched, removing the
+    * listeners from the cache.
+    *
+    * @return The list of commands to be executed, or <code>null</code> if the transaction needs to be aborted.
+    */
+   public List<TransactionCommand> performingOperations() {
+      // TODO: verify WATCHed keys to rollback.
+      return queued;
    }
 }
