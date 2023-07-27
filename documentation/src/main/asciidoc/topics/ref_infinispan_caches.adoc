@@ -66,23 +66,22 @@ include::yaml/replicated_cache.yaml[]
 == Multiple caches
 
 .XML
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::xml/infinispan_caches.xml[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+]
-----
-include::yaml/infinispan_caches.yaml[]
-----
-
 .JSON
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
 ----
 include::json/infinispan_caches.json[]
 ----
 
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/infinispan_caches.yaml[]
+----
 
 [role="_additional-resources"]
 .Additional resources
