@@ -89,7 +89,7 @@ public class Resp3Handler extends Resp3AuthHandler {
       if (collection == null) {
          handleNullResult(alloc);
       } else {
-         handleArrayPrefix(collection.size(), alloc);
+         writeArrayPrefix(collection.size(), alloc);
          for(Double d: collection) {
             if (d == null) {
                handleNullResult(alloc);
