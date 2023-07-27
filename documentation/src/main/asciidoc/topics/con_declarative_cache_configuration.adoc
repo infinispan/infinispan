@@ -1,7 +1,7 @@
 [id='declarative-cache-configuration_{context}']
 = Declarative cache configuration
 
-You can configure caches declaratively, in XML or JSON format, according to the {brandname} schema.
+You can configure caches declaratively, in XML, JSON, and YAML format, according to the {brandname} schema.
 
 Declarative cache configuration has the following advantages over programmatic configuration:
 
