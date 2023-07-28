@@ -24,7 +24,7 @@
 //import org.infinispan.lock.impl.manager.EmbeddedClusteredLockManager;
 //import org.infinispan.test.TestingUtil;
 //import org.testng.annotations.AfterMethod;
-//import org.testng.annotations.Test;
+//import org.junit.jupiter.api.Test;
 //
 ///**
 // * JMX operations tests.

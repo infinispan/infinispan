@@ -1,7 +1,7 @@
 //package org.infinispan.lock;
 //
 //import org.infinispan.lock.configuration.Reliability;
-//import org.testng.annotations.Test;
+//import org.junit.jupiter.api.Test;
 //
 //@Test(groups = "functional", testName = "clusteredLock.ClusteredLockAvailableReliabilityTest")
 //public class ClusteredLockAvailableReliabilityTest extends ClusteredLockTest {

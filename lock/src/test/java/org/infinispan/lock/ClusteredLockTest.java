@@ -1,250 +1,256 @@
-//package org.infinispan.lock;
-//
-//import static org.infinispan.commons.test.Exceptions.assertException;
-//import static org.infinispan.functional.FunctionalTestUtils.await;
-//import static org.testng.AssertJUnit.assertEquals;
-//import static org.testng.AssertJUnit.assertFalse;
-//import static org.testng.AssertJUnit.assertNull;
-//import static org.testng.AssertJUnit.assertTrue;
-//
-//import java.util.concurrent.CompletableFuture;
-//import java.util.concurrent.Future;
-//import java.util.concurrent.TimeUnit;
-//import java.util.concurrent.atomic.AtomicInteger;
-//import java.util.stream.Stream;
-//
-//import org.infinispan.lock.api.ClusteredLock;
-//import org.infinispan.lock.api.ClusteredLockConfiguration;
-//import org.infinispan.lock.api.ClusteredLockManager;
-//import org.infinispan.lock.exception.ClusteredLockException;
-//import org.infinispan.lock.logging.Log;
-//import org.testng.annotations.AfterMethod;
-//import org.testng.annotations.BeforeMethod;
-//import org.testng.annotations.Test;
-//
-//@Test(groups = "functional", testName = "clusteredLock.ClusteredLockTest")
-//public class ClusteredLockTest extends BaseClusteredLockTest {
-//
-//   protected static final String LOCK_NAME = "ClusteredLockTest";
-//
-//   public ClusteredLockTest() {
-//      super();
-//   }
-//
-//   @BeforeMethod(alwaysRun = true)
-//   public void createLock() throws Throwable {
-//      ClusteredLockManager m1 = clusteredLockManager(0);
-//      m1.defineLock(LOCK_NAME, new ClusteredLockConfiguration());
-//   }
-//
-//   @AfterMethod(alwaysRun = true)
-//   protected void destroyLock() {
-//      ClusteredLockManager clusteredLockManager = clusteredLockManager(0);
-//      if (clusteredLockManager.isDefined(LOCK_NAME)) {
-//         // The test method must either unlock or remove the lock itself
-//         assertFalse(await(clusteredLockManager.get(LOCK_NAME).isLocked()));
-//         await(clusteredLockManager.remove(LOCK_NAME));
-//      }
-//   }
-//
-//   @Test
-//   public void testLockAndUnlockVisibility() throws Throwable {
-//      ClusteredLockManager cm0 = clusteredLockManager(0);
-//      ClusteredLockManager cm1 = clusteredLockManager(1);
-//      ClusteredLockManager cm2 = clusteredLockManager(2);
-//      ClusteredLock lock0 = cm0.get(LOCK_NAME);
-//      ClusteredLock lock1 = cm1.get(LOCK_NAME);
-//      ClusteredLock lock2 = cm2.get(LOCK_NAME);
-//
-//      // Is not locked
-//      assertFalse(await(lock0.isLocked()));
-//      assertFalse(await(lock1.isLocked()));
-//      assertFalse(await(lock2.isLocked()));
-//
-//      // lock0 from cm0 locks
-//      await(lock0.lock());
-//
-//      // Is locked by everybody
-//      assertTrue(await(lock0.isLocked()));
-//      assertTrue(await(lock1.isLocked()));
-//      assertTrue(await(lock2.isLocked()));
-//
-//      // lock1 from cm1 tries to unlock unsuccessfully
-//      await(lock1.unlock());
-//      assertTrue(await(lock0.isLocked()));
-//      assertTrue(await(lock1.isLocked()));
-//      assertTrue(await(lock2.isLocked()));
-//
-//      // lock2 from cm2 tries to unlock unsuccessfully
-//      await(lock2.unlock());
-//      assertTrue(await(lock0.isLocked()));
-//      assertTrue(await(lock1.isLocked()));
-//      assertTrue(await(lock2.isLocked()));
-//
-//      // lock0 from cm0 tries to unlock successfully
-//      await(lock0.unlock());
-//      assertFalse(await(lock0.isLocked()));
-//      assertFalse(await(lock1.isLocked()));
-//      assertFalse(await(lock2.isLocked()));
-//   }
-//
-//   @Test
-//   public void testLockOwnership() throws Throwable {
-//      ClusteredLockManager cm0 = clusteredLockManager(0);
-//      ClusteredLockManager cm1 = clusteredLockManager(1);
-//      ClusteredLockManager cm2 = clusteredLockManager(2);
-//      ClusteredLock lock0 = cm0.get(LOCK_NAME);
-//      ClusteredLock lock1 = cm1.get(LOCK_NAME);
-//      ClusteredLock lock2 = cm2.get(LOCK_NAME);
-//
-//      // nobody owns the lock
-//      assertFalse(await(lock0.isLockedByMe()));
-//      assertFalse(await(lock1.isLockedByMe()));
-//      assertFalse(await(lock2.isLockedByMe()));
-//
-//      // lock1 from cm1 acquires the lock
-//      await(lock1.lock());
-//      try {
-//         // lock1 from cm1 holds the lock
-//         assertFalse(await(lock0.isLockedByMe()));
-//         assertTrue(await(lock1.isLockedByMe()));
-//         assertFalse(await(lock2.isLockedByMe()));
-//      } finally {
-//         await(lock1.unlock());
-//      }
-//   }
-//
-//   @Test
-//   public void testLockWhenLockIsRemoved() throws Throwable {
-//      ClusteredLockManager cm0 = clusteredLockManager(0);
-//      ClusteredLockManager cm1 = clusteredLockManager(1);
-//      ClusteredLockManager cm2 = clusteredLockManager(2);
-//      ClusteredLock lock0 = cm0.get(LOCK_NAME);
-//      ClusteredLock lock1 = cm1.get(LOCK_NAME);
-//      ClusteredLock lock2 = cm2.get(LOCK_NAME);
-//
-//      // lock0 from cm0 acquires the lock
-//      await(lock0.lock());
-//      CompletableFuture<Void> lock1Request = lock1.lock();
-//      CompletableFuture<Void> lock2Request = lock2.lock();
-//      assertFalse(lock1Request.isDone());
-//      assertFalse(lock2Request.isDone());
-//
-//      assertTrue(await(cm0.remove(LOCK_NAME)));
-//      assertNull(await(lock1Request
-//            .exceptionally(e -> {
-//               assertException(ClusteredLockException.class, e);
-//               assertTrue(e.getMessage().contains(Log.LOCK_DELETE_MSG));
-//               return null;
-//            })));
-//      assertNull(await(lock2Request
-//            .exceptionally(e -> {
-//               assertException(ClusteredLockException.class, e);
-//               assertTrue(e.getMessage().contains(Log.LOCK_DELETE_MSG));
-//               return null;
-//            })));
-//   }
-//
-//   @Test
-//   public void testTryLockWithTimeoutWithCountersInParallelOnSingleLock() throws Throwable {
-//      AtomicInteger counter = new AtomicInteger();
-//
-//      ClusteredLock lock = clusteredLockManager(0).get(LOCK_NAME);
-//
-//      CompletableFuture<Void> lockRes0 = lock.tryLock(1000, TimeUnit.MILLISECONDS).thenAccept(r -> {
-//         if (r) {
-//            counter.incrementAndGet();
-//            await(lock.unlock());
-//         }
-//      });
-//
-//      CompletableFuture<Void> lockRes1 = lock.tryLock(1000, TimeUnit.MILLISECONDS).thenAccept(r -> {
-//         if (r) {
-//            counter.incrementAndGet();
-//            await(lock.unlock());
-//         }
-//      });
-//
-//      CompletableFuture<Void> lockRes2 = lock.tryLock(1000, TimeUnit.MILLISECONDS).thenAccept(r -> {
-//         if (r) {
-//            counter.incrementAndGet();
-//            await(lock.unlock());
-//         }
-//      });
-//
-//      await(lockRes0);
-//      await(lockRes1);
-//      await(lockRes2);
-//
-//      assertEquals(3, counter.get());
-//   }
-//
-//   @Test
-//   public void testTryLockWithTimeoutWithCountersInParallelOnMultiLocks() throws Throwable {
-//      AtomicInteger counter = new AtomicInteger();
-//
-//      ClusteredLock lock0 = clusteredLockManager(0).get(LOCK_NAME);
-//      ClusteredLock lock1 = clusteredLockManager(1).get(LOCK_NAME);
-//      ClusteredLock lock2 = clusteredLockManager(2).get(LOCK_NAME);
-//
-//      CompletableFuture<Void> lockRes0 = lock0.tryLock(1000, TimeUnit.MILLISECONDS).thenAccept(r -> {
-//         if (r) {
-//            counter.incrementAndGet();
-//            await(lock0.unlock());
-//         }
-//      });
-//
-//      CompletableFuture<Void> lockRes1 = lock1.tryLock(1000, TimeUnit.MILLISECONDS).thenAccept(r -> {
-//         if (r) {
-//            counter.incrementAndGet();
-//            await(lock1.unlock());
-//         }
-//      });
-//
-//      CompletableFuture<Void> lockRes2 = lock2.tryLock(1000, TimeUnit.MILLISECONDS).thenAccept(r -> {
-//         if (r) {
-//            counter.incrementAndGet();
-//            await(lock2.unlock());
-//         }
-//      });
-//
-//      await(lockRes0);
-//      await(lockRes1);
-//      await(lockRes2);
-//
-//      assertEquals(3, counter.get());
-//   }
-//
-//   @Test
-//   public void testTryLockWithCountersInParallel() throws Throwable {
-//      ClusteredLock lock0 = clusteredLockManager(0).get(LOCK_NAME);
-//      ClusteredLock lock1 = clusteredLockManager(1).get(LOCK_NAME);
-//      ClusteredLock lock2 = clusteredLockManager(2).get(LOCK_NAME);
-//
-//      long successTryLocks = Stream.of(lock0, lock1, lock2)
-//            .map(this::callTryLock)
-//            .map(ClusteredLockTest::awaitTryLock)
-//            .filter(Boolean::booleanValue)
-//            .count();
-//
-//      try {
-//         assertEquals(1, successTryLocks);
-//      } finally {
-//         await(lock0.unlock());
-//         await(lock1.unlock());
-//         await(lock2.unlock());
-//      }
-//   }
-//
-//   private Future<Boolean> callTryLock(ClusteredLock lock) {
-//      return fork(() -> await(lock.tryLock()));
-//   }
-//
-//   private static Boolean awaitTryLock(Future<Boolean> result) {
-//      try {
-//         return result.get();
-//      } catch (Exception e) {
-//         throw new AssertionError(e);
-//      }
-//   }
-//}
+package org.infinispan.lock;
+
+import static org.infinispan.commons.test.Exceptions.assertException;
+import static org.infinispan.functional.FunctionalTestUtils.await;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
+
+import org.infinispan.jupiter.TestTags;
+import org.infinispan.lock.api.ClusteredLock;
+import org.infinispan.lock.api.ClusteredLockConfiguration;
+import org.infinispan.lock.api.ClusteredLockManager;
+import org.infinispan.lock.exception.ClusteredLockException;
+import org.infinispan.lock.logging.Log;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
+@Tag(TestTags.SMOKE)
+public class ClusteredLockTest extends BaseClusteredLockTest {
+
+   protected static final String LOCK_NAME = "ClusteredLockTest";
+
+   public ClusteredLockTest() {
+      super(-1);
+   }
+
+   public ClusteredLockTest(int numOwner) {
+      super(numOwner);
+   }
+
+   @BeforeEach
+   public void createLock() throws Throwable {
+      ClusteredLockManager m1 = clusteredLockManager(0);
+      m1.defineLock(LOCK_NAME, new ClusteredLockConfiguration());
+   }
+
+   @AfterEach
+   protected void destroyLock() {
+      ClusteredLockManager clusteredLockManager = clusteredLockManager(0);
+      if (clusteredLockManager.isDefined(LOCK_NAME)) {
+         // The test method must either unlock or remove the lock itself
+         assertFalse(await(clusteredLockManager.get(LOCK_NAME).isLocked()));
+         await(clusteredLockManager.remove(LOCK_NAME));
+      }
+   }
+
+   @Test
+   public void testLockAndUnlockVisibility() throws Throwable {
+      ClusteredLockManager cm0 = clusteredLockManager(0);
+      ClusteredLockManager cm1 = clusteredLockManager(1);
+      ClusteredLockManager cm2 = clusteredLockManager(2);
+      ClusteredLock lock0 = cm0.get(LOCK_NAME);
+      ClusteredLock lock1 = cm1.get(LOCK_NAME);
+      ClusteredLock lock2 = cm2.get(LOCK_NAME);
+
+      // Is not locked
+      assertFalse(await(lock0.isLocked()));
+      assertFalse(await(lock1.isLocked()));
+      assertFalse(await(lock2.isLocked()));
+
+      // lock0 from cm0 locks
+      await(lock0.lock());
+
+      // Is locked by everybody
+      assertTrue(await(lock0.isLocked()));
+      assertTrue(await(lock1.isLocked()));
+      assertTrue(await(lock2.isLocked()));
+
+      // lock1 from cm1 tries to unlock unsuccessfully
+      await(lock1.unlock());
+      assertTrue(await(lock0.isLocked()));
+      assertTrue(await(lock1.isLocked()));
+      assertTrue(await(lock2.isLocked()));
+
+      // lock2 from cm2 tries to unlock unsuccessfully
+      await(lock2.unlock());
+      assertTrue(await(lock0.isLocked()));
+      assertTrue(await(lock1.isLocked()));
+      assertTrue(await(lock2.isLocked()));
+
+      // lock0 from cm0 tries to unlock successfully
+      await(lock0.unlock());
+      assertFalse(await(lock0.isLocked()));
+      assertFalse(await(lock1.isLocked()));
+      assertFalse(await(lock2.isLocked()));
+   }
+
+   @Test
+   public void testLockOwnership() throws Throwable {
+      ClusteredLockManager cm0 = clusteredLockManager(0);
+      ClusteredLockManager cm1 = clusteredLockManager(1);
+      ClusteredLockManager cm2 = clusteredLockManager(2);
+      ClusteredLock lock0 = cm0.get(LOCK_NAME);
+      ClusteredLock lock1 = cm1.get(LOCK_NAME);
+      ClusteredLock lock2 = cm2.get(LOCK_NAME);
+
+      // nobody owns the lock
+      assertFalse(await(lock0.isLockedByMe()));
+      assertFalse(await(lock1.isLockedByMe()));
+      assertFalse(await(lock2.isLockedByMe()));
+
+      // lock1 from cm1 acquires the lock
+      await(lock1.lock());
+      try {
+         // lock1 from cm1 holds the lock
+         assertFalse(await(lock0.isLockedByMe()));
+         assertTrue(await(lock1.isLockedByMe()));
+         assertFalse(await(lock2.isLockedByMe()));
+      } finally {
+         await(lock1.unlock());
+      }
+   }
+
+   @Test
+   public void testLockWhenLockIsRemoved() throws Throwable {
+      ClusteredLockManager cm0 = clusteredLockManager(0);
+      ClusteredLockManager cm1 = clusteredLockManager(1);
+      ClusteredLockManager cm2 = clusteredLockManager(2);
+      ClusteredLock lock0 = cm0.get(LOCK_NAME);
+      ClusteredLock lock1 = cm1.get(LOCK_NAME);
+      ClusteredLock lock2 = cm2.get(LOCK_NAME);
+
+      // lock0 from cm0 acquires the lock
+      await(lock0.lock());
+      CompletableFuture<Void> lock1Request = lock1.lock();
+      CompletableFuture<Void> lock2Request = lock2.lock();
+      assertFalse(lock1Request.isDone());
+      assertFalse(lock2Request.isDone());
+
+      assertTrue(await(cm0.remove(LOCK_NAME)));
+      assertNull(await(lock1Request
+            .exceptionally(e -> {
+               assertException(ClusteredLockException.class, e);
+               assertTrue(e.getMessage().contains(Log.LOCK_DELETE_MSG));
+               return null;
+            })));
+      assertNull(await(lock2Request
+            .exceptionally(e -> {
+               assertException(ClusteredLockException.class, e);
+               assertTrue(e.getMessage().contains(Log.LOCK_DELETE_MSG));
+               return null;
+            })));
+   }
+
+   @Test
+   public void testTryLockWithTimeoutWithCountersInParallelOnSingleLock() throws Throwable {
+      AtomicInteger counter = new AtomicInteger();
+
+      ClusteredLock lock = clusteredLockManager(0).get(LOCK_NAME);
+
+      CompletableFuture<Void> lockRes0 = lock.tryLock(1000, TimeUnit.MILLISECONDS).thenAccept(r -> {
+         if (r) {
+            counter.incrementAndGet();
+            await(lock.unlock());
+         }
+      });
+
+      CompletableFuture<Void> lockRes1 = lock.tryLock(1000, TimeUnit.MILLISECONDS).thenAccept(r -> {
+         if (r) {
+            counter.incrementAndGet();
+            await(lock.unlock());
+         }
+      });
+
+      CompletableFuture<Void> lockRes2 = lock.tryLock(1000, TimeUnit.MILLISECONDS).thenAccept(r -> {
+         if (r) {
+            counter.incrementAndGet();
+            await(lock.unlock());
+         }
+      });
+
+      await(lockRes0);
+      await(lockRes1);
+      await(lockRes2);
+
+      assertEquals(3, counter.get());
+   }
+
+   @Test
+   public void testTryLockWithTimeoutWithCountersInParallelOnMultiLocks() throws Throwable {
+      AtomicInteger counter = new AtomicInteger();
+
+      ClusteredLock lock0 = clusteredLockManager(0).get(LOCK_NAME);
+      ClusteredLock lock1 = clusteredLockManager(1).get(LOCK_NAME);
+      ClusteredLock lock2 = clusteredLockManager(2).get(LOCK_NAME);
+
+      CompletableFuture<Void> lockRes0 = lock0.tryLock(1000, TimeUnit.MILLISECONDS).thenAccept(r -> {
+         if (r) {
+            counter.incrementAndGet();
+            await(lock0.unlock());
+         }
+      });
+
+      CompletableFuture<Void> lockRes1 = lock1.tryLock(1000, TimeUnit.MILLISECONDS).thenAccept(r -> {
+         if (r) {
+            counter.incrementAndGet();
+            await(lock1.unlock());
+         }
+      });
+
+      CompletableFuture<Void> lockRes2 = lock2.tryLock(1000, TimeUnit.MILLISECONDS).thenAccept(r -> {
+         if (r) {
+            counter.incrementAndGet();
+            await(lock2.unlock());
+         }
+      });
+
+      await(lockRes0);
+      await(lockRes1);
+      await(lockRes2);
+
+      assertEquals(3, counter.get());
+   }
+
+   @Test
+   public void testTryLockWithCountersInParallel() throws Throwable {
+      ClusteredLock lock0 = clusteredLockManager(0).get(LOCK_NAME);
+      ClusteredLock lock1 = clusteredLockManager(1).get(LOCK_NAME);
+      ClusteredLock lock2 = clusteredLockManager(2).get(LOCK_NAME);
+
+      long successTryLocks = Stream.of(lock0, lock1, lock2)
+            .map(this::callTryLock)
+            .map(ClusteredLockTest::awaitTryLock)
+            .filter(Boolean::booleanValue)
+            .count();
+
+      try {
+         assertEquals(1, successTryLocks);
+      } finally {
+         await(lock0.unlock());
+         await(lock1.unlock());
+         await(lock2.unlock());
+      }
+   }
+
+   private Future<Boolean> callTryLock(ClusteredLock lock) {
+      return fork(() -> await(lock.tryLock()));
+   }
+
+   private static Boolean awaitTryLock(Future<Boolean> result) {
+      try {
+         return result.get();
+      } catch (Exception e) {
+         throw new AssertionError(e);
+      }
+   }
+}

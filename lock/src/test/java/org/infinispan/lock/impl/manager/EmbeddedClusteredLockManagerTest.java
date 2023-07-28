@@ -17,7 +17,7 @@
 //import org.infinispan.lock.impl.ClusteredLockModuleLifecycle;
 //import org.infinispan.lock.impl.lock.ClusteredLockImpl;
 //import org.testng.annotations.AfterMethod;
-//import org.testng.annotations.Test;
+//import org.junit.jupiter.api.Test;
 //
 //@Test(groups = "functional", testName = "clusteredLock.EmbeddedClusteredLockManagerTest")
 //public class EmbeddedClusteredLockManagerTest extends BaseClusteredLockTest {

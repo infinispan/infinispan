@@ -15,7 +15,7 @@
 //import org.infinispan.lock.exception.ClusteredLockException;
 //import org.infinispan.manager.EmbeddedCacheManager;
 //import org.infinispan.partitionhandling.AvailabilityException;
-//import org.testng.annotations.Test;
+//import org.junit.jupiter.api.Test;
 //
 //@Test(groups = "functional", testName = "clusteredLock.ConsistentReliabilitySplitBrainTest")
 //public class ConsistentReliabilitySplitBrainTest extends BaseClusteredLockSplitBrainTest {

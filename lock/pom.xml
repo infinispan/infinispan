@@ -37,12 +37,12 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
-            <configuration>
-               <dependenciesToScan>
-                  <!-- TestNGSuiteChecksTest -->
-                  <dependency>org.infinispan:infinispan-commons-test</dependency>
-               </dependenciesToScan>
-            </configuration>
+<!--            <configuration>-->
+<!--               <dependenciesToScan>-->
+<!--                  &lt;!&ndash; TestNGSuiteChecksTest &ndash;&gt;-->
+<!--                  <dependency>org.infinispan:infinispan-commons-test</dependency>-->
+<!--               </dependenciesToScan>-->
+<!--            </configuration>-->
          </plugin>
         </plugins>
     </build>
@@ -92,11 +92,19 @@
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
             <version>${version.junit5}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
             <version>${version.junit5}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <version>${version.junit5}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>

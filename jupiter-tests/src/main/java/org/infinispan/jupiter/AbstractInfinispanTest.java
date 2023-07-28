@@ -18,12 +18,17 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+// OrderByInstance.class is used to update method names based upon parameters to avoid duplicate test names
+// Shouldn't be required for @ParameterizedTest
+// TODO Is it better to use @ParameterizedTest everywhere, or is there a way to create a Factory of JUnit 5 tests with
+// contructor args?
 public abstract class AbstractInfinispanTest {
 
-   protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+   private static final Class<?> testClass = MethodHandles.lookup().lookupClass();
+   protected static final Log log = LogFactory.getLog(testClass);
 
    @RegisterExtension
-   protected static final TestThreadExtension threadExt = new TestThreadExtension(SampleTest.class);
+   protected static final TestThreadExtension threadExt = new TestThreadExtension(testClass);
    public static final TimeService TIME_SERVICE = new EmbeddedTimeService();
 
    protected interface Condition {
@@ -83,6 +88,10 @@ public abstract class AbstractInfinispanTest {
 
    protected static void eventually(Condition ec) {
       eventually(ec, 10000, TimeUnit.MILLISECONDS);
+   }
+
+   protected void eventually(String message, Condition ec) {
+      eventually(message, ec, 10000, TimeUnit.MILLISECONDS);
    }
 
    protected Future<Void> fork(ExceptionRunnable r) {

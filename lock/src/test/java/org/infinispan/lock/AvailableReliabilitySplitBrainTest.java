@@ -10,7 +10,7 @@
 //import org.infinispan.lock.api.ClusteredLockManager;
 //import org.infinispan.lock.configuration.Reliability;
 //import org.infinispan.manager.EmbeddedCacheManager;
-//import org.testng.annotations.Test;
+//import org.junit.jupiter.api.Test;
 //
 //@Test(groups = "functional", testName = "clusteredLock.AvailableReliabilitySplitBrainTest")
 //public class AvailableReliabilitySplitBrainTest extends BaseClusteredLockSplitBrainTest {

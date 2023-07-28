@@ -19,7 +19,7 @@
 //
 //import org.mockito.ArgumentCaptor;
 //import org.testng.annotations.BeforeMethod;
-//import org.testng.annotations.Test;
+//import org.junit.jupiter.api.Test;
 //
 //@Test(groups = "functional", testName = "clusteredLock.RequestExpirationSchedulerTest")
 //public class RequestExpirationSchedulerTest {

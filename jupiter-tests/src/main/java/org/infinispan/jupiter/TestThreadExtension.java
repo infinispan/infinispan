@@ -18,9 +18,6 @@ import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-// TODO add all thread tracking logic here
-// AbstractInfinispanTest etc can then call TestResourceTrackerExtension instance as required in fork() methods etc
-// ThreadFactory and ThreadPoolExecutor instance should all be encapsulated here
 public class TestThreadExtension implements AfterAllCallback, AfterEachCallback, BeforeAllCallback, BeforeEachCallback {
 
    static final Log log = LogFactory.getLog(TestThreadExtension.class);
@@ -28,7 +25,6 @@ public class TestThreadExtension implements AfterAllCallback, AfterEachCallback,
    private final String testName;
 
 
-   // TODO initialize in beforeALL using test name from context
    private final ThreadFactory defaultThreadFactory = getTestThreadFactory("ForkThread");
    private final ThreadPoolExecutor testExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
          60L, TimeUnit.SECONDS,
@@ -61,6 +57,10 @@ public class TestThreadExtension implements AfterAllCallback, AfterEachCallback,
    public void afterEach(ExtensionContext context) throws Exception {
       System.out.println("afterEach");
       checkThreads();
+   }
+
+   public void cleanUpResources() {
+      TestResourceTracker.cleanUpResources(testName);
    }
 
    public <T> Future<T> submit(Callable<T> task) {
