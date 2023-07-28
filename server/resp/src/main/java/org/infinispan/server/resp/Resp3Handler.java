@@ -1,13 +1,8 @@
 package org.infinispan.server.resp;
 
-import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.CompletionStage;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
+import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -20,9 +15,13 @@ import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.resp.commands.Resp3Command;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
-import io.netty.channel.ChannelHandlerContext;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+
+import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
 
 public class Resp3Handler extends Resp3AuthHandler {
    private static byte[] CRLF_BYTES = CRLF_STRING.getBytes();
@@ -80,9 +79,13 @@ public class Resp3Handler extends Resp3AuthHandler {
       ByteBufferUtils.writeLong(result, alloc);
    }
 
-   protected static void handleDoubleResult(double result, ByteBufPool alloc) {
+   protected static void handleDoubleResult(Double result, ByteBufPool alloc) {
       // TODO: this can be optimized to avoid the String allocation
-      handleBulkResult(Double.toString(result), alloc);
+      if (result == null) {
+         handleNullResult(alloc);
+      } else {
+         handleBulkResult(Double.toString(result), alloc);
+      }
    }
 
    protected static void handleCollectionDoubleResult(Collection<Double> collection, ByteBufPool alloc) {

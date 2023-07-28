@@ -38,9 +38,10 @@ import static org.infinispan.multimap.impl.SortedSetAddArgs.ADD_AND_UPDATE_ONLY_
  * <li>CH: Modify the return value from the number of new elements added, to the total number of elements changed.
  * Changed elements are new elements added and elements already existing for which the score was updated.
  * Normally the return value of ZADD only counts the number of new elements added.</li>
- * <li>INCR: When this option is specified ZADD acts like ZINCRBY. Only one score-element pair can be specified in this mode.</li>
- * Note: The GT, LT and NX options are mutually exclusive.
+ * <li>INCR: When this option is specified ZADD acts like {@link ZINCRBY}.
+ * Only one score-element pair can be specified in this mode.</li>
  * </ul>
+ * Note: The GT, LT and NX options are mutually exclusive.
  * The score values should be the string representation of a double precision floating
  * point number. +inf and -inf values are valid values as well.
  *
@@ -68,7 +69,6 @@ public class ZADD extends RespCommand implements Resp3Command {
                                                       List<byte[]> arguments) {
 
       //zadd key [NX|XX] [GT|LT] [CH] [INCR] score member [score member ...]
-      // TODO: INCR Option in ISPN-14612
       byte[] name = arguments.get(0);
       SortedSetAddArgs.Builder addManyArgs = SortedSetAddArgs.create();
       EmbeddedMultimapSortedSetCache<byte[], byte[]> sortedSetCache = handler.getSortedSeMultimap();
@@ -97,16 +97,20 @@ public class ZADD extends RespCommand implements Resp3Command {
          return handler.myStage();
       }
 
-      // Validate scores and values in pairs
-      if ((arguments.size() - pos) % 2 != 0) {
+      // Validate scores and values in pairs. We need at least 1 pair
+      if (((arguments.size() - pos) == 0) || (arguments.size() - pos) % 2 != 0) {
          // Scores and Values come in pairs
          RespErrorUtil.syntaxError(handler.allocator());
          return handler.myStage();
       }
 
       int count = (arguments.size() - pos) / 2;
-      List<SortedSetBucket.ScoredValue<byte[]>> scoredValues = new ArrayList<>(count);
+      if (sortedSetAddArgs.incr && count > 1) {
+         RespErrorUtil.customError("INCR option supports a single increment-element pair", handler.allocator());
+         return handler.myStage();
+      }
 
+      List<SortedSetBucket.ScoredValue<byte[]>> scoredValues = new ArrayList<>(count);
       while (pos < arguments.size()) {
          double score;
          try {
@@ -118,6 +122,11 @@ public class ZADD extends RespCommand implements Resp3Command {
          }
          byte[] value = arguments.get(pos++);
          scoredValues.add(SortedSetBucket.ScoredValue.of(score, value));
+      }
+
+      if (sortedSetAddArgs.incr) {
+         return handler.stageToReturn(sortedSetCache.incrementScore(name, scoredValues.get(0).score(), scoredValues.get(0).getValue(), sortedSetAddArgs),
+               ctx, Consumers.DOUBLE_BICONSUMER);
       }
 
       return handler.stageToReturn(sortedSetCache.addMany(name, scoredValues, sortedSetAddArgs),
@@ -140,6 +149,9 @@ public class ZADD extends RespCommand implements Resp3Command {
             break;
          case CH:
             addManyArgs.returnChangedCount();
+            break;
+         case INCR:
+            addManyArgs.incr();
             break;
          default:
       }

@@ -9,6 +9,7 @@ import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.multimap.impl.function.sortedset.AddManyFunction;
 import org.infinispan.multimap.impl.function.sortedset.CountFunction;
+import org.infinispan.multimap.impl.function.sortedset.IncrFunction;
 import org.infinispan.multimap.impl.function.sortedset.IndexOfSortedSetFunction;
 import org.infinispan.multimap.impl.function.sortedset.PopFunction;
 import org.infinispan.multimap.impl.function.sortedset.ScoreFunction;
@@ -63,14 +64,21 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
     *       returnChangedCount -> by default returns number of new added elements. If true, counts created and updated elements.
     * @return {@link CompletionStage} containing the number of entries added and/or updated depending on the provided arguments
     */
-   public CompletionStage<Long> addMany(K key, Collection<SortedSetBucket.ScoredValue<V>> scoreValues, SortedSetAddArgs args) {
+   public CompletionStage<Long> addMany(K key, Collection<SortedSetBucket.ScoredValue<V>> scoredValues, SortedSetAddArgs args) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
-      requireNonNull(scoreValues, ERR_SCORES_CAN_T_BE_NULL);
+      requireNonNull(scoredValues, ERR_SCORES_CAN_T_BE_NULL);
       requireNonNull(args, ERR_ARGS_CAN_T_BE_NULL);
-      if (scoreValues.size() == 0 && !args.replace) {
+      if (scoredValues.size() == 0 && !args.replace) {
          return CompletableFuture.completedFuture(0L);
       }
-      return readWriteMap.eval(key, new AddManyFunction<>(scoreValues, args));
+      return readWriteMap.eval(key, new AddManyFunction<>(scoredValues, args));
+   }
+
+   public CompletionStage<Double> incrementScore(K key, double score, V member, SortedSetAddArgs args) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      requireNonNull(member, ERR_MEMBER_CAN_T_BE_NULL);
+      requireNonNull(args, ERR_ARGS_CAN_T_BE_NULL);
+      return readWriteMap.eval(key, new IncrFunction<>(score, member, args));
    }
 
    /**
@@ -281,5 +289,4 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
       requireNonNull(member, ERR_MEMBER_CAN_T_BE_NULL);
       return readWriteMap.eval(key, new IndexOfSortedSetFunction(member, isRev));
    }
-
 }

@@ -160,6 +160,16 @@ public class DistributedMultimapSortedSetCacheTest extends BaseDistFunctionalTes
                   of(1, OIHANA));
    }
 
+   public void testIncrScore() {
+      initAndTest();
+      EmbeddedMultimapSortedSetCache<String, Person> sortedSet = getMultimapCacheMember();
+      SortedSetAddArgs args = SortedSetAddArgs.create().build();
+      await(sortedSet.addMany(NAMES_KEY,
+            list(of(1.1, OIHANA), of(9.1, ELAIA)), args));
+      assertThat(await(sortedSet.incrementScore(NAMES_KEY, 12, OIHANA, args))).isEqualTo(13.1);
+      assertThat(await(sortedSet.score(NAMES_KEY, ELAIA))).isEqualTo(9.1);
+   }
+
    protected void assertValuesAndOwnership(String key, SortedSetBucket.ScoredValue<Person> value) {
       assertOwnershipAndNonOwnership(key, l1CacheEnabled);
       assertOnAllCaches(key, value);

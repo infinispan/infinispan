@@ -38,4 +38,5 @@ public interface ExternalizerIds {
    Integer HASH_MAP_REPLACE_FUNCTION = 2076;
    Integer SORTED_SET_SUBSET_FUNCTION = 2077;
    Integer SORTED_SET_INDEX_OF_FUNCTION = 2078;
+   Integer SORTED_SET_INCR_SCORE_FUNCTION = 2079;
 }
