@@ -105,8 +105,63 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
                   just(1.0, "ryan"),  just(2, "katia"),
                   just(10.4, "william"), just(13, "fabio"), just(13.4, "jose"),
                   just(13.4, "tristan"), just(21.9, "marc"));
-
       assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zadd("another", 2.3, "tristan"));
+   }
+
+   public void testZADDINCR() {
+      //ZADD people INCR 30 tristan
+      assertThat(redis.zaddincr("people",  30, "tristan")).isEqualTo(30);
+      //ZRANGE people 0 -1 WITHSCORES
+      assertThat(redis.zrangeWithScores("people", 0, -1)).containsExactly(just(30, "tristan"));
+      //ZADD people INCR 2 tristan
+      assertThat(redis.zaddincr("people",  2, "tristan")).isEqualTo(32);
+      //ZRANGE people 0 -1 WITHSCORES
+      assertThat(redis.zrangeWithScores("people", 0, -1)).containsExactly(just(32, "tristan"));
+      //ZADD people INCR -4 tristan
+      assertThat(redis.zaddincr("people",  -4, "tristan")).isEqualTo(28);
+      //ZRANGE people 0 -1 WITHSCORES
+      assertThat(redis.zrangeWithScores("people", 0, -1)).containsExactly(just(28, "tristan"));
+      //ZADD people NX INCR -4 tristan
+      assertThat(redis.zaddincr("people", ZAddArgs.Builder.nx(), -4,"tristan")).isNull();
+      //ZADD people XX INCR -4 jose
+      assertThat(redis.zaddincr("people", ZAddArgs.Builder.xx(), -4,"jose")).isNull();
+      //ZRANGE people 0 -1 WITHSCORES
+      assertThat(redis.zrangeWithScores("people", 0, -1)).containsExactly(just(28, "tristan"));
+      //ZADD people NX INCR -4 jose
+      assertThat(redis.zaddincr("people", ZAddArgs.Builder.nx(), -4, "jose")).isEqualTo(-4);
+      //ZADD people XX INCR -4 tristan
+      assertThat(redis.zaddincr("people", ZAddArgs.Builder.xx(), -4, "tristan")).isEqualTo(24);
+      //ZRANGE people 0 -1 WITHSCORES
+      assertThat(redis.zrangeWithScores("people", 0, -1)).containsExactly(just(-4, "jose"), just(24, "tristan"));
+      //ZADD people LT INCR -4 tristan
+      assertThat(redis.zaddincr("people", ZAddArgs.Builder.lt(), -4, "tristan")).isEqualTo(20);
+      //ZRANGE people 0 -1 WITHSCORES
+      assertThat(redis.zrangeWithScores("people", 0, -1)).containsExactly(just(-4, "jose"), just(20, "tristan"));
+      //ZADD people GT INCR -4 tristan
+      assertThat(redis.zaddincr("people", ZAddArgs.Builder.gt(), -4, "tristan")).isNull();
+      //ZRANGE people 0 -1 WITHSCORES
+      assertThat(redis.zrangeWithScores("people", 0, -1)).containsExactly(just(-4, "jose"), just(20, "tristan"));
+      //ZADD people LT INCR -4 tristan
+      assertThat(redis.zaddincr("people", ZAddArgs.Builder.lt(), 4, "tristan")).isNull();
+      //ZRANGE people 0 -1 WITHSCORES
+      assertThat(redis.zrangeWithScores("people", 0, -1)).containsExactly(just(-4, "jose"), just(20, "tristan"));
+      //ZADD people GT INCR 4 tristan
+      assertThat(redis.zaddincr("people", ZAddArgs.Builder.gt(), 4, "tristan")).isEqualTo(24);
+      //ZRANGE people 0 -1 WITHSCORES
+      assertThat(redis.zrangeWithScores("people", 0, -1)).containsExactly(just(-4, "jose"), just(24, "tristan"));
+      //ZADD people LT INCR 2 vittorio
+      assertThat(redis.zaddincr("people", ZAddArgs.Builder.lt(), 2, "vittorio")).isEqualTo(2);
+      //ZRANGE people 0 -1 WITHSCORES
+      assertThat(redis.zrangeWithScores("people", 0, -1)).containsExactly(just(-4, "jose"), just(2, "vittorio"), just(24, "tristan"));
+      //ZADD people GT INCR -10 pedro
+      assertThat(redis.zaddincr("people", ZAddArgs.Builder.gt(), -10, "pedro")).isEqualTo(-10);
+      //ZRANGE people 0 -1 WITHSCORES
+      assertThat(redis.zrangeWithScores("people", 0, -1)).containsExactly(
+            just(-10, "pedro"),
+            just(-4, "jose"),
+            just(2, "vittorio"),
+            just(24, "tristan"));
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zaddincr("another", 2.3, "tristan"));
    }
 
    public void testZCARD() {
@@ -927,5 +982,15 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
 
       assertWrongType(() -> redis.set("another1", "tristan"), () ->  redis.zdiffstore("another1", "s1"));
       assertWrongType(() -> redis.set("another2", "tristan"), () ->  redis.zdiffstore("people",  "another2"));
+   }
+
+   public void testZINCRBY() {
+      assertThat(redis.zincrby("people",  30, "tristan")).isEqualTo(30);
+      assertThat(redis.zrangeWithScores("people", 0, -1)).containsExactly(just(30, "tristan"));
+      assertThat(redis.zincrby("people",  2, "tristan")).isEqualTo(32);
+      assertThat(redis.zrangeWithScores("people", 0, -1)).containsExactly(just(32, "tristan"));
+      assertThat(redis.zincrby("people",  -4, "tristan")).isEqualTo(28);
+      assertThat(redis.zrangeWithScores("people", 0, -1)).containsExactly(just(28, "tristan"));
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zincrby("another",  30, "tristan"));
    }
 }

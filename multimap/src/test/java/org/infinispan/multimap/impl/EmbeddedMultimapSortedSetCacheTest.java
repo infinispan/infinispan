@@ -515,4 +515,49 @@ public class EmbeddedMultimapSortedSetCacheTest extends SingleCacheManagerTest {
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining(ERR_MEMBER_CAN_T_BE_NULL);
    }
+
+   public void testIncrScore() {
+      await(sortedSetCache.addMany(NAMES_KEY,
+            list(of(1, CHARY), of(7, JULIEN), of(8, KOLDO)),
+            SortedSetAddArgs.create().build()));
+
+      assertThat(await(sortedSetCache.incrementScore(NAMES_KEY, 2, CHARY, SortedSetAddArgs.create().build()))).isEqualTo(3);
+      assertThat(await(sortedSetCache.score(NAMES_KEY, CHARY))).isEqualTo(3);
+      assertThat(await(sortedSetCache.incrementScore(NAMES_KEY, -2, JULIEN, SortedSetAddArgs.create().build()))).isEqualTo(5);
+      assertThat(await(sortedSetCache.score(NAMES_KEY, JULIEN))).isEqualTo(5);
+      // addOnly
+      assertThat(await(sortedSetCache.incrementScore(NAMES_KEY, -2, JULIEN, SortedSetAddArgs.create().addOnly().build()))).isNull();
+      assertThat(await(sortedSetCache.score(NAMES_KEY, JULIEN))).isEqualTo(5);
+      assertThat(await(sortedSetCache.incrementScore(NAMES_KEY, -2, OIHANA, SortedSetAddArgs.create().addOnly().build()))).isEqualTo(-2);
+      assertThat(await(sortedSetCache.score(NAMES_KEY, OIHANA))).isEqualTo(-2);
+      // updateOnly
+      assertThat(await(sortedSetCache.incrementScore(NAMES_KEY, -5, ELAIA, SortedSetAddArgs.create().updateOnly().build()))).isNull();
+      assertThat(await(sortedSetCache.score(NAMES_KEY, ELAIA))).isNull();
+      assertThat(await(sortedSetCache.incrementScore(NAMES_KEY, 20.8, OIHANA, SortedSetAddArgs.create().updateOnly().build()))).isEqualTo(18.8);
+      assertThat(await(sortedSetCache.score(NAMES_KEY, OIHANA))).isEqualTo(18.8);
+      //updateGreaterScoresOnly
+      assertThat(await(sortedSetCache.incrementScore(NAMES_KEY, 0, KOLDO, SortedSetAddArgs.create().updateGreaterScoresOnly().build()))).isNull();
+      assertThat(await(sortedSetCache.score(NAMES_KEY, KOLDO))).isEqualTo(8);
+      assertThat(await(sortedSetCache.incrementScore(NAMES_KEY, -1, KOLDO, SortedSetAddArgs.create().updateGreaterScoresOnly().build()))).isNull();
+      assertThat(await(sortedSetCache.score(NAMES_KEY, KOLDO))).isEqualTo(8);
+      assertThat(await(sortedSetCache.incrementScore(NAMES_KEY, 1, KOLDO, SortedSetAddArgs.create().updateGreaterScoresOnly().build()))).isEqualTo(9);
+      assertThat(await(sortedSetCache.score(NAMES_KEY, KOLDO))).isEqualTo(9);
+      //updateLessScoresOnly
+      assertThat(await(sortedSetCache.incrementScore(NAMES_KEY, 0, KOLDO, SortedSetAddArgs.create().updateLessScoresOnly().build()))).isNull();
+      assertThat(await(sortedSetCache.score(NAMES_KEY, KOLDO))).isEqualTo(9);
+      assertThat(await(sortedSetCache.incrementScore(NAMES_KEY, 1, KOLDO, SortedSetAddArgs.create().updateLessScoresOnly().build()))).isNull();
+      assertThat(await(sortedSetCache.score(NAMES_KEY, KOLDO))).isEqualTo(9);
+      assertThat(await(sortedSetCache.incrementScore(NAMES_KEY, -1, KOLDO, SortedSetAddArgs.create().updateLessScoresOnly().build()))).isEqualTo(8);
+      assertThat(await(sortedSetCache.score(NAMES_KEY, KOLDO))).isEqualTo(8);
+
+      assertThatThrownBy(() -> await(sortedSetCache.incrementScore(null, 1d, null, null)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
+      assertThatThrownBy(() -> await(sortedSetCache.incrementScore(NAMES_KEY, 1d, null, null)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_MEMBER_CAN_T_BE_NULL);
+      assertThatThrownBy(() -> await(sortedSetCache.incrementScore(NAMES_KEY, 1d, PEPE, null)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_ARGS_CAN_T_BE_NULL);
+   }
 }

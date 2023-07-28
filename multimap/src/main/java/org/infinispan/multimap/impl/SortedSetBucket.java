@@ -134,6 +134,23 @@ public class SortedSetBucket<V> {
       return addResult;
    }
 
+   public Double incrScore(double incr, V member, boolean addOnly, boolean updateOnly, boolean updateLessScoresOnly, boolean updateGreaterScoresOnly) {
+      MultimapObjectWrapper<V> wrappedValue = new MultimapObjectWrapper<>(member);
+      Double existingScore = entries.get(wrappedValue);
+      if ((existingScore != null && addOnly) || (existingScore == null && updateOnly)) {
+         // do nothing
+         return null;
+      }
+
+      Double newScore = existingScore == null ? incr : existingScore + incr;
+      if (existingScore != null && ((updateGreaterScoresOnly && newScore <= existingScore) || (updateLessScoresOnly && newScore >= existingScore))) {
+         // do nothing
+         return null;
+      }
+      addOrUpdate(new AddOrUpdatesCounters(), new ScoredValue<>(newScore, wrappedValue));
+      return newScore;
+   }
+
    private void addOnly(ScoredValue<V> scoredValue) {
       Double existingScore = entries.get(scoredValue.wrappedValue());
       if (existingScore == null){
@@ -144,7 +161,8 @@ public class SortedSetBucket<V> {
    private void updateOnly(AddOrUpdatesCounters addResult, ScoredValue<V> scoredValue) {
       Double existingScore = entries.get(scoredValue.wrappedValue());
       if (existingScore != null && !existingScore.equals(scoredValue.score())) {
-         updateScoredValue(addResult, scoredValue, existingScore);
+         updateScoredValue(scoredValue, existingScore);
+         addResult.updated++;
       }
    }
 
@@ -153,7 +171,8 @@ public class SortedSetBucket<V> {
       if (existingScore == null) {
          addScoredValue(scoredValue);
       } else if (scoredValue.score() > existingScore) {
-         updateScoredValue(addResult, scoredValue, existingScore);
+         updateScoredValue(scoredValue, existingScore);
+         addResult.updated++;
       }
    }
 
@@ -162,7 +181,8 @@ public class SortedSetBucket<V> {
       if (existingScore == null) {
          addScoredValue(scoredValue);
       } else if (scoredValue.score() < existingScore) {
-         updateScoredValue(addResult, scoredValue, existingScore);
+         updateScoredValue(scoredValue, existingScore);
+         addResult.updated++;
       }
    }
 
@@ -172,16 +192,16 @@ public class SortedSetBucket<V> {
          addScoredValue(scoredValue);
       } else if (!scoredValue.score().equals(existingScore)) {
          // entry exists, check score
-         updateScoredValue(addResult, scoredValue, existingScore);
+         updateScoredValue(scoredValue, existingScore);
+         addResult.updated++;
       }
    }
 
-   private void updateScoredValue(AddOrUpdatesCounters addResult, ScoredValue<V> newScoredValue, Double existingScore) {
+   private void updateScoredValue(ScoredValue<V> newScoredValue, Double existingScore) {
       ScoredValue<V> oldScoredValue = new ScoredValue<>(existingScore, newScoredValue.wrappedValue());
       scoredEntries.remove(oldScoredValue);
       scoredEntries.add(newScoredValue);
       entries.put(newScoredValue.wrappedValue(), newScoredValue.score());
-      addResult.updated++;
    }
 
    private void addScoredValue(ScoredValue<V> scoredValue) {
@@ -410,7 +430,7 @@ public class SortedSetBucket<V> {
       }
 
       @ProtoFactory
-      ScoredValue(Double score, MultimapObjectWrapper<V> wrappedValue) {
+      public ScoredValue(Double score, MultimapObjectWrapper<V> wrappedValue) {
          this.score = score;
          this.value = wrappedValue;
       }
