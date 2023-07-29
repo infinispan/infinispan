@@ -32,6 +32,94 @@ public class SortedSetBucket<V> {
    private final TreeSet<ScoredValue<V>> scoredEntries;
    private final Map<MultimapObjectWrapper<V>, Double> entries;
 
+   /**
+    *
+    */
+   public enum AggregateFunction {
+      /**
+       *
+       */
+      SUM {
+         @Override
+         public double apply(double first, double second) {
+            return first + second;
+         }
+      }, MIN {
+         @Override
+         public double apply(double first, double second) {
+            return first < second ? first : second;
+         }
+      }, MAX {
+         @Override
+         public double apply(double first, double second) {
+            return first > second ? first : second;
+         }
+      };
+
+      private static final SortedSetBucket.AggregateFunction[] CACHED_VALUES = values();
+      public static SortedSetBucket.AggregateFunction valueOf(int ordinal) {
+         return CACHED_VALUES[ordinal];
+      }
+
+      public abstract double apply(double first, double second);
+   }
+
+   public Collection<ScoredValue<V>> union(Collection<ScoredValue<V>> inputValues,
+                                     double weight,
+                                     AggregateFunction function) {
+      SortedSet<ScoredValue<V>> sortedMergeScoredValues = new TreeSet<>();
+      Map<MultimapObjectWrapper<V>, Double> mergedEntries = new HashMap<>();
+      Iterator<ScoredValue<V>> ite;
+
+      if (inputValues != null) {
+         ite = inputValues.iterator();
+         while (ite.hasNext()) {
+            ScoredValue<V> element = ite.next();
+            Double existingScore = entries.get(element.wrappedValue());
+            Double unionScore;
+            if (existingScore == null) {
+               unionScore = element.score;
+            } else {
+               unionScore = function.apply(element.score, existingScore * weight);
+            }
+            sortedMergeScoredValues.add(new ScoredValue<>(unionScore, element.wrappedValue()));
+            mergedEntries.put(element.wrappedValue(), unionScore);
+         }
+      }
+
+      ite = scoredEntries.iterator();
+      while (ite.hasNext()) {
+         ScoredValue<V> element = ite.next();
+         Double existingScore = mergedEntries.get(element.wrappedValue());
+         if (existingScore == null) {
+            sortedMergeScoredValues.add(new ScoredValue<>(element.score * weight, element.wrappedValue()));
+         }
+      }
+      return sortedMergeScoredValues;
+   }
+
+   public Collection<ScoredValue<V>> inter(Collection<ScoredValue<V>> inputValues,
+                                          double weight,
+                                          AggregateFunction function) {
+      if (inputValues == null) {
+         return scoredEntries.stream()
+               .map(s -> new ScoredValue<>(s.score * weight, s.wrappedValue()))
+               .collect(Collectors.toList());
+      }
+
+      SortedSet<ScoredValue<V>> sortedMergeScoredValues = new TreeSet<>();
+      Iterator<ScoredValue<V>> ite = inputValues.iterator();
+      while (ite.hasNext()) {
+         ScoredValue<V> element = ite.next();
+         Double existingScore = entries.get(element.wrappedValue());
+         if (existingScore != null) {
+            double score = function.apply(element.score, existingScore * weight);
+            sortedMergeScoredValues.add(new ScoredValue<>(score, element.wrappedValue()));
+         }
+      }
+      return sortedMergeScoredValues;
+   }
+
    @ProtoFactory
    SortedSetBucket(Collection<ScoredValue<V>> wrappedValues) {
       scoredEntries = new TreeSet<>();

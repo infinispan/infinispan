@@ -560,4 +560,68 @@ public class EmbeddedMultimapSortedSetCacheTest extends SingleCacheManagerTest {
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining(ERR_ARGS_CAN_T_BE_NULL);
    }
+
+   public void testUnion() {
+      await(sortedSetCache.addMany(NAMES_KEY,
+            list(of(1, CHARY), of(7, JULIEN), of(8, KOLDO)),
+            SortedSetAddArgs.create().build()));
+      assertThat(await(sortedSetCache.union(NAMES_KEY,
+            list(of(1, OIHANA), of(2, ELA), of(3, ELAIA), of(4, JULIEN), of(5, KOLDO)),
+            1,
+            SortedSetBucket.AggregateFunction.SUM)))
+            .containsExactly(of(1, CHARY), of(1, OIHANA), of(2, ELA), of(3, ELAIA),
+                  of(11, JULIEN), of(13, KOLDO));
+      assertThat(await(sortedSetCache.union(NAMES_KEY,
+            list(of(1, OIHANA), of(2, ELA), of(3, ELAIA), of(4, JULIEN), of(5, KOLDO)),
+            2,
+            SortedSetBucket.AggregateFunction.SUM)))
+            .containsExactly(of(1, OIHANA), of(2, CHARY), of(2, ELA), of(3, ELAIA),
+                  of(18, JULIEN), of(21, KOLDO));
+      assertThat(await(sortedSetCache.union(NAMES_KEY,
+            list(of(1, OIHANA), of(2, ELA), of(3, ELAIA), of(4, JULIEN), of(7, KOLDO)),
+            5,
+            SortedSetBucket.AggregateFunction.MIN)))
+            .containsExactly(of(1, OIHANA), of(2, ELA), of(3, ELAIA),
+                  of(4, JULIEN), of(5, CHARY), of(7, KOLDO));
+      assertThat(await(sortedSetCache.union(NAMES_KEY,
+            list(of(1, OIHANA), of(2, ELA), of(3, ELAIA), of(4, JULIEN), of(14, KOLDO)),
+            1,
+            SortedSetBucket.AggregateFunction.MAX)))
+            .containsExactly(of(1, CHARY), of(1, OIHANA), of(2, ELA), of(3, ELAIA),
+                  of(7, JULIEN), of(14, KOLDO));
+
+      assertThatThrownBy(() -> await(sortedSetCache.union(null, null, 1, null)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
+   }
+
+   public void testInter() {
+      await(sortedSetCache.addMany(NAMES_KEY,
+            list(of(1, CHARY), of(7, JULIEN), of(8, KOLDO)),
+            SortedSetAddArgs.create().build()));
+      assertThat(await(sortedSetCache.inter(NAMES_KEY,
+            list(of(1, OIHANA), of(2, ELA), of(3, ELAIA), of(4, JULIEN), of(5, KOLDO)),
+            1,
+            SortedSetBucket.AggregateFunction.SUM)))
+            .containsExactly(of(11, JULIEN), of(13, KOLDO));
+      assertThat(await(sortedSetCache.inter(NAMES_KEY,
+            list(of(1, OIHANA), of(2, ELA), of(3, ELAIA), of(4, JULIEN), of(5, KOLDO)),
+            2,
+            SortedSetBucket.AggregateFunction.SUM)))
+            .containsExactly(of(18, JULIEN), of(21, KOLDO));
+      assertThat(await(sortedSetCache.inter(NAMES_KEY,
+            list(of(1, OIHANA), of(2, ELA), of(3, ELAIA), of(4, JULIEN), of(7, KOLDO)),
+            1,
+            SortedSetBucket.AggregateFunction.MIN)))
+            .containsExactly(of(4, JULIEN), of(7, KOLDO));
+      assertThat(await(sortedSetCache.inter(NAMES_KEY,
+            list(of(1, OIHANA), of(2, ELA), of(3, ELAIA), of(4, JULIEN), of(14, KOLDO)),
+            1,
+            SortedSetBucket.AggregateFunction.MAX)))
+            .containsExactly(of(7, JULIEN), of(14, KOLDO));
+
+      assertThatThrownBy(() -> await(sortedSetCache.inter(null, null, 1, null)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
+   }
 }

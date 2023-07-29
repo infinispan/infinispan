@@ -13,6 +13,7 @@ import org.infinispan.multimap.impl.function.sortedset.IncrFunction;
 import org.infinispan.multimap.impl.function.sortedset.IndexOfSortedSetFunction;
 import org.infinispan.multimap.impl.function.sortedset.PopFunction;
 import org.infinispan.multimap.impl.function.sortedset.ScoreFunction;
+import org.infinispan.multimap.impl.function.sortedset.SortedSetAggregateFunction;
 import org.infinispan.multimap.impl.function.sortedset.SubsetFunction;
 import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
 
@@ -26,6 +27,8 @@ import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
+import static org.infinispan.multimap.impl.function.sortedset.SortedSetAggregateFunction.AggregateType.INTER;
+import static org.infinispan.multimap.impl.function.sortedset.SortedSetAggregateFunction.AggregateType.UNION;
 
 /**
  * Multimap with Sorted Map Implementation methods
@@ -288,5 +291,42 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       requireNonNull(member, ERR_MEMBER_CAN_T_BE_NULL);
       return readWriteMap.eval(key, new IndexOfSortedSetFunction(member, isRev));
+   }
+
+   /**
+    * Computes the union of the collection and the given sorted sets key, if such exist.
+    *
+    * @param key, the name of the sorted set
+    * @param scoredValues, collection of scored values
+    * @param weight, specify a multiplication factor for each input sorted set. Every element in the
+    *                sorted set is multiplied by this factor.
+    * @param aggFunction, how the results of the union are aggregated. Defaults to SUM.
+    * @return, union collection, sorted by score
+    */
+   public CompletionStage<Collection<SortedSetBucket.ScoredValue<V>>> union(K key, Collection<SortedSetBucket.ScoredValue<V>> scoredValues,
+                                                                      double weight,
+                                                                      SortedSetBucket.AggregateFunction aggFunction) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      SortedSetBucket.AggregateFunction agg = aggFunction == null ? SortedSetBucket.AggregateFunction.SUM : aggFunction;
+      return readWriteMap.eval(key, new SortedSetAggregateFunction(UNION, scoredValues, weight, agg));
+   }
+
+
+   /**
+    * Computes the intersection of the collection and the given sorted sets key, if such exist.
+    *
+    * @param key, the name of the sorted set
+    * @param scoredValues, collection of scored values
+    * @param weight, specify a multiplication factor for each input sorted set. Every element in the
+    *                sorted set is multiplied by this factor.
+    * @param aggFunction, how the results of the union are aggregated. Defaults to SUM.
+    * @return, intersected collection, sorted by score
+    */
+   public CompletionStage<Collection<SortedSetBucket.ScoredValue<V>>> inter(K key, Collection<SortedSetBucket.ScoredValue<V>> scoredValues,
+                                                                            double weight,
+                                                                            SortedSetBucket.AggregateFunction aggFunction) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      SortedSetBucket.AggregateFunction agg = aggFunction == null ? SortedSetBucket.AggregateFunction.SUM : aggFunction;
+      return readWriteMap.eval(key, new SortedSetAggregateFunction(INTER, scoredValues, weight, agg));
    }
 }

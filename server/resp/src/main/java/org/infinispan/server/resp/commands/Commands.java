@@ -79,6 +79,8 @@ import org.infinispan.server.resp.commands.sortedset.ZCOUNT;
 import org.infinispan.server.resp.commands.sortedset.ZDIFF;
 import org.infinispan.server.resp.commands.sortedset.ZDIFFSTORE;
 import org.infinispan.server.resp.commands.sortedset.ZINCRBY;
+import org.infinispan.server.resp.commands.sortedset.ZINTER;
+import org.infinispan.server.resp.commands.sortedset.ZINTERSTORE;
 import org.infinispan.server.resp.commands.sortedset.ZMSCORE;
 import org.infinispan.server.resp.commands.sortedset.ZPOPMAX;
 import org.infinispan.server.resp.commands.sortedset.ZPOPMIN;
@@ -92,6 +94,8 @@ import org.infinispan.server.resp.commands.sortedset.ZREVRANGEBYLEX;
 import org.infinispan.server.resp.commands.sortedset.ZREVRANGEBYSCORE;
 import org.infinispan.server.resp.commands.sortedset.ZREVRANK;
 import org.infinispan.server.resp.commands.sortedset.ZSCORE;
+import org.infinispan.server.resp.commands.sortedset.ZUNION;
+import org.infinispan.server.resp.commands.sortedset.ZUNIONSTORE;
 import org.infinispan.server.resp.commands.string.APPEND;
 import org.infinispan.server.resp.commands.string.DECR;
 import org.infinispan.server.resp.commands.string.DECRBY;
@@ -142,9 +146,9 @@ public final class Commands {
       ALL_COMMANDS[18] = new RespCommand[]{new SET(), new SMEMBERS(), new SADD(), new STRLEN(), new SCARD(), new SINTER(), new SINTERSTORE(), new SINTERCARD(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN(), new SETRANGE()};
       ALL_COMMANDS[19] = new RespCommand[]{new TTL(), new TYPE()};
       ALL_COMMANDS[20] = new RespCommand[]{new UNSUBSCRIBE()};
-      ALL_COMMANDS[25] = new RespCommand[]{new ZADD(), new ZCARD(), new ZCOUNT(), new ZDIFF(), new ZDIFFSTORE(), new ZINCRBY(), new ZPOPMAX(), new ZPOPMIN(),
-            new ZRANGE(), new ZRANGESTORE(), new ZREVRANGE(), new ZRANGEBYSCORE(), new ZRANK(), new ZREVRANGEBYSCORE(),
-            new ZRANGEBYLEX(), new ZREVRANGEBYLEX(), new ZREVRANK(), new ZSCORE(), new ZMSCORE()};
+      ALL_COMMANDS[25] = new RespCommand[]{new ZADD(), new ZCARD(), new ZCOUNT(), new ZDIFF(), new ZDIFFSTORE(), new ZINCRBY(), new ZINTER(), new ZINTERSTORE(),
+            new ZPOPMAX(), new ZPOPMIN(), new ZRANGE(), new ZRANGESTORE(), new ZREVRANGE(), new ZRANGEBYSCORE(), new ZRANK(), new ZREVRANGEBYSCORE(),
+            new ZRANGEBYLEX(), new ZREVRANGEBYLEX(), new ZREVRANK(), new ZSCORE(), new ZMSCORE(), new ZUNION(), new ZUNIONSTORE() };
    }
 
    public static List<RespCommand> all() {
