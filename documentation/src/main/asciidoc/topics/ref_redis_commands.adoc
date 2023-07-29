@@ -245,10 +245,22 @@ for concurrent operations or failures unless the resp cache is configured to use
 | link:https://redis.io/commands/zincrby[ZINCRBY]
 |
 
+| link:https://redis.io/commands/zinter[ZINTER]
+|
+
+| link:https://redis.io/commands/zinterstore[ZINTERSTORE]
+|
+
 | link:https://redis.io/commands/zpopmax[ZPOPMAX]
 |
 
 | link:https://redis.io/commands/zpopmin[ZPOPMIN]
+|
+
+| link:https://redis.io/commands/zunion[ZUNION]
+|
+
+| link:https://redis.io/commands/zunionstore[ZUNIONSTORE]
 |
 
 | link:https://redis.io/commands/zrange[ZRANGE]

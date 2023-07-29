@@ -27,6 +27,7 @@ import static org.infinispan.multimap.impl.MultimapTestUtils.NAMES_KEY;
 import static org.infinispan.multimap.impl.MultimapTestUtils.OIHANA;
 import static org.infinispan.multimap.impl.MultimapTestUtils.PEPE;
 import static org.infinispan.multimap.impl.MultimapTestUtils.RAMON;
+import static org.infinispan.multimap.impl.SortedSetBucket.AggregateFunction.SUM;
 import static org.infinispan.multimap.impl.SortedSetBucket.ScoredValue.of;
 import static org.infinispan.multimap.impl.SortedSetSubsetArgs.create;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -167,6 +168,28 @@ public class DistributedMultimapSortedSetCacheTest extends BaseDistFunctionalTes
       await(sortedSet.addMany(NAMES_KEY,
             list(of(1.1, OIHANA), of(9.1, ELAIA)), args));
       assertThat(await(sortedSet.incrementScore(NAMES_KEY, 12, OIHANA, args))).isEqualTo(13.1);
+      assertThat(await(sortedSet.score(NAMES_KEY, ELAIA))).isEqualTo(9.1);
+   }
+
+   public void testInter() {
+      initAndTest();
+      EmbeddedMultimapSortedSetCache<String, Person> sortedSet = getMultimapCacheMember();
+      SortedSetAddArgs args = SortedSetAddArgs.create().build();
+      await(sortedSet.addMany(NAMES_KEY,
+            list(of(1.1, OIHANA), of(9.1, ELAIA)), args));
+      assertThat(await(sortedSet.inter(NAMES_KEY, null, 1, SUM)))
+            .containsExactly(of(1.1, OIHANA), of(9.1, ELAIA));
+      assertThat(await(sortedSet.score(NAMES_KEY, ELAIA))).isEqualTo(9.1);
+   }
+
+   public void testUnion() {
+      initAndTest();
+      EmbeddedMultimapSortedSetCache<String, Person> sortedSet = getMultimapCacheMember();
+      SortedSetAddArgs args = SortedSetAddArgs.create().build();
+      await(sortedSet.addMany(NAMES_KEY,
+            list(of(1.1, OIHANA), of(9.1, ELAIA)), args));
+      assertThat(await(sortedSet.union(NAMES_KEY, null, 1, SUM)))
+            .containsExactly(of(1.1, OIHANA), of(9.1, ELAIA));
       assertThat(await(sortedSet.score(NAMES_KEY, ELAIA))).isEqualTo(9.1);
    }
 

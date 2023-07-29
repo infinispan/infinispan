@@ -34,6 +34,7 @@ import org.infinispan.multimap.impl.function.sortedset.IncrFunction;
 import org.infinispan.multimap.impl.function.sortedset.IndexOfSortedSetFunction;
 import org.infinispan.multimap.impl.function.sortedset.PopFunction;
 import org.infinispan.multimap.impl.function.sortedset.ScoreFunction;
+import org.infinispan.multimap.impl.function.sortedset.SortedSetAggregateFunction;
 import org.infinispan.multimap.impl.function.sortedset.SubsetFunction;
 
 import java.util.Map;
@@ -131,6 +132,7 @@ public class MultimapModuleLifecycle implements ModuleLifecycle {
       addAdvancedExternalizer(externalizerMap, SubsetFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, IndexOfSortedSetFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, IncrFunction.EXTERNALIZER);
+      addAdvancedExternalizer(externalizerMap, SortedSetAggregateFunction.EXTERNALIZER);
    }
 
    private static void addAdvancedExternalizer(Map<Integer, AdvancedExternalizer<?>> map, AdvancedExternalizer<?> ext) {

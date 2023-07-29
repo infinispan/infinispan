@@ -3,6 +3,8 @@ package org.infinispan.server.resp;
 import io.lettuce.core.Limit;
 import io.lettuce.core.Range;
 import io.lettuce.core.ZAddArgs;
+import io.lettuce.core.ZAggregateArgs;
+import io.lettuce.core.ZStoreArgs;
 import io.lettuce.core.api.sync.RedisCommands;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -14,6 +16,10 @@ import static io.lettuce.core.Range.Boundary.including;
 import static io.lettuce.core.Range.Boundary.unbounded;
 import static io.lettuce.core.Range.from;
 import static io.lettuce.core.ScoredValue.just;
+import static io.lettuce.core.ZAggregateArgs.Builder.max;
+import static io.lettuce.core.ZAggregateArgs.Builder.min;
+import static io.lettuce.core.ZAggregateArgs.Builder.sum;
+import static io.lettuce.core.ZAggregateArgs.Builder.weights;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 
@@ -992,5 +998,266 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.zincrby("people",  -4, "tristan")).isEqualTo(28);
       assertThat(redis.zrangeWithScores("people", 0, -1)).containsExactly(just(28, "tristan"));
       assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zincrby("another",  30, "tristan"));
+   }
+
+   public void testZUNION() {
+      // ZUNION 1 s1
+      assertThat(redis.zunion("s1")).isEmpty();
+      // ZADD s1 1 a 2 b 3 c
+      assertThat(redis.zadd("s1",
+            just(1, "a"),
+            just(2, "b"),
+            just(3, "c"))).isEqualTo(3);
+      // ZUNION 1 s1
+      assertThat(redis.zunion("s1")).containsExactly("a", "b", "c");
+      // ZUNION 1 s1 WITHSCORES
+      assertThat(redis.zunionWithScores("s1")).containsExactly(
+            just(1, "a"),
+            just(2, "b"),
+            just(3, "c"));
+      // ZUNION 1 s1 WEIGHTS 2 WITHSCORES
+      assertThat(redis.zunionWithScores(weights(2), "s1")).containsExactly(
+            just(2, "a"),
+            just(4, "b"),
+            just(6, "c"));
+      // ZADD s2 2 a 3 b 4 c 5 d
+      assertThat(redis.zadd("s2",
+            just(2, "a"),
+            just(3, "b"),
+            just(4, "c"),
+            just(5, "d"))).isEqualTo(4);
+      // ZUNION 2 s1 s2 WITHSCORES
+      assertThat(redis.zunionWithScores("s1", "s2")).containsExactly(
+            just(3, "a"),
+            just(5, "b"),
+            just(5, "d"),
+            just(7, "c"));
+      // ZUNION 2 s1 s2 WITHSCORES
+      assertThat(redis.zunionWithScores(sum(),"s1", "s2")).containsExactly(
+            just(3, "a"),
+            just(5, "b"),
+            just(5, "d"),
+            just(7, "c"));
+      // ZUNION 2 s1 s2 WEIGHTS 3 2 WITHSCORES
+      assertThat(redis.zunionWithScores(weights(3, 2), "s1", "s2")).containsExactly(
+            just(7, "a"),
+            just(10, "d"),
+            just(12, "b"),
+            just(17, "c"));
+      // ZUNION 2 s1 s2 WITHSCORES AGGREGATE MAX
+      assertThat(redis.zunionWithScores(max(), "s1", "s2")).containsExactly(
+            just(2, "a"),
+            just(3, "b"),
+            just(4, "c"),
+            just(5, "d"));
+      // ZUNION 2 s1 s2 WITHSCORES AGGREGATE MIN
+      assertThat(redis.zunionWithScores(min(), "s1", "s2")).containsExactly(
+            just(1, "a"),
+            just(2, "b"),
+            just(3, "c"),
+            just(5, "d"));
+      // ZUNION 2 s1 s2 WEIGHTS 3 2 WITHSCORES AGGREGATE MIN
+      assertThat(redis.zunionWithScores(weights(3, 2).min(), "s1", "s2")).containsExactly(
+            just(3, "a"),
+            just(6, "b"),
+            just(8, "c"),
+            just(10, "d"));
+      // ZUNION 2 s1 s2 WEIGHTS 3 2 WITHSCORES AGGREGATE MAX
+      assertThat(redis.zunionWithScores(weights(3, 2).max(), "s1", "s2")).containsExactly(
+            just(4, "a"),
+            just(6, "b"),
+            just(9, "c"),
+            just(10, "d"));
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zunion("another", "people"));
+   }
+
+   public void testZUNIONSTORE() {
+      // ZUNIONSTORE s1 1 s1
+      assertThat(redis.zunionstore("s1", "s1")).isZero();
+      // EXISTS s1
+      assertThat(redis.exists("s1")).isZero();
+      // ZADD s1 1 a 2 b 3 c
+      assertThat(redis.zadd("s1",
+            just(1, "a"),
+            just(2, "b"),
+            just(3, "c"))).isEqualTo(3);
+      assertThat(redis.zunionstore("s1", "s1")).isEqualTo(3);
+      // ZRANGE s1 0 -1 WITHSCORES
+      assertThat(redis.zrangeWithScores("s1", 0, -1)).containsExactly(
+            just(1, "a"),
+            just(2, "b"),
+            just(3, "c"));
+      // ZUNIONSTORE s2 1 s1
+      assertThat(redis.zunionstore("s2", "s1")).isEqualTo(3);
+      // ZRANGE s2 0 -1 WITHSCORES
+      assertThat(redis.zrangeWithScores("s2", 0, -1)).containsExactly(
+            just(1, "a"),
+            just(2, "b"),
+            just(3, "c"));
+      // ZUNIONSTORE s2 1 s1 WEIGHTS 3
+      assertThat(redis.zunionstore("s2", ZStoreArgs.Builder.weights(3), "s1")).isEqualTo(3);
+      // ZRANGE s2 0 -1 WITHSCORES
+      assertThat(redis.zrangeWithScores("s2", 0, -1)).containsExactly(
+            just(3, "a"),
+            just(6, "b"),
+            just(9, "c"));
+      // ZUNIONSTORE s3 2 s1 s2 AGGREGATE MIN
+      assertThat(redis.zunionstore("s3", ZStoreArgs.Builder.min(), "s1", "s2")).isEqualTo(3);
+      // ZRANGE s3 0 -1 WITHSCORES
+      assertThat(redis.zrangeWithScores("s3", 0, -1)).containsExactly(
+            just(1, "a"),
+            just(2, "b"),
+            just(3, "c"));
+      // ZUNIONSTORE s3 2 s1 s2 AGGREGATE MAX
+      assertThat(redis.zunionstore("s3", ZStoreArgs.Builder.max(), "s1", "s2")).isEqualTo(3);
+      // ZRANGE s3 0 -1 WITHSCORES
+      assertThat(redis.zrangeWithScores("s3", 0, -1)).containsExactly(
+            just(3, "a"),
+            just(6, "b"),
+            just(9, "c"));
+      // ZUNIONSTORE s3 2 s1 s2 AGGREGATE SUM
+      assertThat(redis.zunionstore("s3", ZStoreArgs.Builder.sum(), "s1", "s2")).isEqualTo(3);
+      // ZRANGE s3 0 -1 WITHSCORES
+      assertThat(redis.zrangeWithScores("s3", 0, -1)).containsExactly(
+            just(4, "a"),
+            just(8, "b"),
+            just(12, "c"));
+      // ZADD s3 2 d 7 f
+      assertThat(redis.zadd("s3",
+            just(2, "d"),
+            just(7, "f"))).isEqualTo(2);
+      // ZUNIONSTORE s4 3 s1 s2 s3
+      assertThat(redis.zunionstore("s4", "s1", "s2", "s3")).isEqualTo(5);
+      // ZRANGE s4 0 -1 WITHSCORES
+      assertThat(redis.zrangeWithScores("s4", 0, -1)).containsExactly(
+            just(2, "d"),
+            just(7, "f"),
+            just(8, "a"),
+            just(16, "b"),
+            just(24, "c")
+      );
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zunionstore("another", "people"));
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zunionstore("people", "another"));
+   }
+
+   public void testZINTER() {
+      // ZINTER 1 s1
+      assertThat(redis.zinter("s1")).isEmpty();
+      // ZADD s1 1 a 2 b 3 c
+      assertThat(redis.zadd("s1",
+            just(1, "a"),
+            just(2, "b"),
+            just(3, "c"))).isEqualTo(3);
+      // ZINTER 1 s1
+      assertThat(redis.zinter("s1")).containsExactly("a", "b", "c");
+      // ZINTER 1 s1 WITHSCORES
+      assertThat(redis.zinterWithScores("s1")).containsExactly(
+            just(1, "a"),
+            just(2, "b"),
+            just(3, "c"));
+      // ZINTER 2 s1 s1 WITHSCORES
+      assertThat(redis.zinterWithScores("s1", "s1")).containsExactly(
+            just(2, "a"),
+            just(4, "b"),
+            just(6, "c"));
+      // ZINTER 3 s1 s1 s1 WITHSCORES WEIGHTS 1 2 3
+      assertThat(redis.zinterWithScores(ZAggregateArgs.Builder.weights(1, 2, 3), "s1", "s1", "s1")).containsExactly(
+            just(6, "a"),
+            just(12, "b"),
+            just(18, "c"));
+      // ZINTER 2 s1 s2 WITHSCORES
+      assertThat(redis.zinterWithScores("s1", "s2")).isEmpty();
+      // ZADD s2 3 a 8 b 1 d
+      assertThat(redis.zadd("s2",
+            just(3, "a"),
+            just(8, "b"),
+            just(1, "d"))).isEqualTo(3);
+      // ZINTER 2 s1 s2 WITHSCORES
+      assertThat(redis.zinterWithScores( "s1", "s2")).containsExactly(
+            just(4, "a"),
+            just(10, "b"));
+      // ZINTER 2 s1 s2 WITHSCORES AGGREGATE MIN
+      assertThat(redis.zinterWithScores( ZAggregateArgs.Builder.min(), "s1", "s2")).containsExactly(
+            just(1, "a"),
+            just(2, "b"));
+      // ZINTER 2 s1 s2 WITHSCORES AGGREGATE MAX
+      assertThat(redis.zinterWithScores( ZAggregateArgs.Builder.max(), "s1", "s2")).containsExactly(
+            just(3, "a"),
+            just(8, "b"));
+      // ZINTER 2 s1 s2 WITHSCORES AGGREGATE MAX WEIGHTS 5 1
+      assertThat(redis.zinterWithScores(ZAggregateArgs.Builder.weights(5, 1).max(), "s1", "s2")).containsExactly(
+            just(5, "a"),
+            just(10, "b"));
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zinter("another", "people"));
+   }
+
+   public void testZINTERSTORE() {
+      // ZINTER 1 s1
+      assertThat(redis.zinterstore("s1", "s1")).isZero();
+      // EXISTS s1
+      assertThat(redis.exists("s1")).isZero();
+      // ZADD s1 1 a 2 b 3 c
+      assertThat(redis.zadd("s1",
+            just(1, "a"),
+            just(2, "b"),
+            just(3, "c"))).isEqualTo(3);
+      // ZINTERSTORE s1 1 s1
+      assertThat(redis.zinterstore("s1", "s1")).isEqualTo(3);
+      // ZRANGE s1 0 -1 WITHSCORES
+      assertThat(redis.zrangeWithScores("s1", 0, -1)).containsExactly(
+            just(1, "a"),
+            just(2, "b"),
+            just(3, "c"));
+      // ZINTERSTORE s2 1 s1
+      assertThat(redis.zinterstore("s2", "s1")).isEqualTo(3);
+      // ZRANGE s2 0 -1 WITHSCORES
+      assertThat(redis.zrangeWithScores("s2", 0, -1)).containsExactly(
+            just(1, "a"),
+            just(2, "b"),
+            just(3, "c"));
+      // ZINTERSTORE s2 1 s1 WEIGHTS 2
+      assertThat(redis.zinterstore("s2", ZStoreArgs.Builder.weights(2), "s1")).isEqualTo(3);
+      // ZRANGE s2 0 -1 WITHSCORES
+      assertThat(redis.zrangeWithScores("s2", 0, -1)).containsExactly(
+            just(2, "a"),
+            just(4, "b"),
+            just(6, "c"));
+      // ZINTERSTORE s2 1 s1 WEIGHTS 2
+      assertThat(redis.zinterstore("s2", ZStoreArgs.Builder.weights(2), "s1")).isEqualTo(3);
+      // ZINTERSTORE s2 2 s1 s3
+      assertThat(redis.zinterstore("s2", "s1", "s3")).isZero();
+      // EXISTS s2
+      assertThat(redis.exists("s2")).isZero();
+      // ZADD s3 3 a 8 b 1 d
+      assertThat(redis.zadd("s3",
+            just(3, "a"),
+            just(8, "b"),
+            just(1, "d"))).isEqualTo(3);
+      // ZINTERSTORE s2 2 s1 s3
+      assertThat(redis.zinterstore("s2", "s1", "s3")).isEqualTo(2);
+      // ZRANGE s2 0 -1 WITHSCORES
+      assertThat(redis.zrangeWithScores("s2", 0, -1)).containsExactly(
+            just(4, "a"),
+            just(10, "b"));
+      // ZINTERSTORE s2 2 s1 s3 AGGREGATE MIN
+      assertThat(redis.zinterstore("s2", ZStoreArgs.Builder.min(), "s1", "s3")).isEqualTo(2);
+      // ZRANGE s2 0 -1 WITHSCORES
+      assertThat(redis.zrangeWithScores("s2", 0, -1)).containsExactly(
+            just(1, "a"),
+            just(2, "b"));
+      // ZINTERSTORE s2 2 s1 s3 AGGREGATE MAX
+      assertThat(redis.zinterstore("s2", ZStoreArgs.Builder.max(), "s1", "s3")).isEqualTo(2);
+      // ZRANGE s2 0 -1 WITHSCORES
+      assertThat(redis.zrangeWithScores("s2", 0, -1)).containsExactly(
+            just(3, "a"),
+            just(8, "b"));
+      // ZINTERSTORE s2 2 s1 s3 WEIGHTS 5 1 AGGREGATE MAX
+      assertThat(redis.zinterstore("s2", ZStoreArgs.Builder.weights(5, 1).max(), "s1", "s3")).isEqualTo(2);
+      // ZRANGE s2 0 -1 WITHSCORES
+      assertThat(redis.zrangeWithScores("s2", 0, -1)).containsExactly(
+            just(5, "a"),
+            just(10, "b"));
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zinterstore("another", "people"));
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zinterstore("people", "another"));
    }
 }
