@@ -809,7 +809,7 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="names-as-tags" type="xs:boolean" default="${GlobalMetrics.namesAsTags}">
+    <xs:attribute name="names-as-tags" type="xs:boolean" default="${GlobalMetrics.names-as-tags}">
       <xs:annotation>
         <xs:documentation>
           Put the cache manager and cache name in tags rather than include them in the metric name.
