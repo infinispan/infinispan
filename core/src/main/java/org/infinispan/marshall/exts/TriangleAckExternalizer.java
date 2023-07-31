@@ -24,24 +24,24 @@ import org.infinispan.util.ByteString;
 public class TriangleAckExternalizer implements AdvancedExternalizer<CacheRpcCommand> {
 
    public Set<Class<? extends CacheRpcCommand>> getTypeClasses() {
-      //noinspection unchecked
       return Util.asSet(BackupAckCommand.class, ExceptionAckCommand.class, BackupMultiKeyAckCommand.class);
    }
 
+   @Override
    public Integer getId() {
       return TRIANGLE_ACK_EXTERNALIZER;
    }
 
+   @Override
    public void writeObject(ObjectOutput output, CacheRpcCommand object) throws IOException {
       output.writeByte(object.getCommandId());
       ByteString.writeObject(output, object.getCacheName());
       object.writeTo(output);
    }
 
+   @Override
    public CacheRpcCommand readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       switch (input.readByte()) {
-         case BackupAckCommand.COMMAND_ID:
-            return backupAckCommand(input);
          case ExceptionAckCommand.COMMAND_ID:
             return exceptionAckCommand(input);
          case BackupMultiKeyAckCommand.COMMAND_ID:
@@ -51,21 +51,15 @@ public class TriangleAckExternalizer implements AdvancedExternalizer<CacheRpcCom
       }
    }
 
-   private BackupMultiKeyAckCommand backupMultiKeyAckCommand(ObjectInput input)
+   private static BackupMultiKeyAckCommand backupMultiKeyAckCommand(ObjectInput input)
          throws IOException, ClassNotFoundException {
       BackupMultiKeyAckCommand command = new BackupMultiKeyAckCommand(ByteString.readObject(input));
       command.readFrom(input);
       return command;
    }
 
-   private ExceptionAckCommand exceptionAckCommand(ObjectInput input) throws IOException, ClassNotFoundException {
+   private static ExceptionAckCommand exceptionAckCommand(ObjectInput input) throws IOException, ClassNotFoundException {
       ExceptionAckCommand command = new ExceptionAckCommand(ByteString.readObject(input));
-      command.readFrom(input);
-      return command;
-   }
-
-   private BackupAckCommand backupAckCommand(ObjectInput input) throws IOException, ClassNotFoundException {
-      BackupAckCommand command = new BackupAckCommand(ByteString.readObject(input));
       command.readFrom(input);
       return command;
    }
