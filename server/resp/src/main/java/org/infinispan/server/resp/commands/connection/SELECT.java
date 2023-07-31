@@ -25,7 +25,7 @@ public class SELECT extends RespCommand implements Resp3Command {
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
       ByteBufferUtils
-            .stringToByteBuf("-ERR Select not supported in cluster mode\r\n", handler.allocator());
+            .stringToByteBufAscii("-ERR Select not supported in cluster mode\r\n", handler.allocator());
       return handler.myStage();
    }
 }

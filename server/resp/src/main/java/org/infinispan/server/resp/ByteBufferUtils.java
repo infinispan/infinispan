@@ -76,7 +76,7 @@ public final class ByteBufferUtils {
 
    public static ByteBuf bytesToResult(Collection<byte[]> results, ByteBufPool alloc) {
       if (results.isEmpty())
-         return stringToByteBuf("*0\r\n", alloc);
+         return stringToByteBufAscii("*0\r\n", alloc);
 
       int resultBytesSize = 0;
       for (byte[] result: results) {
@@ -86,7 +86,7 @@ public final class ByteBufferUtils {
             resultBytesSize += 3;
          } else if ((length = result.length) > 0) {
             // $ + digit length (log10 + 1) + \r\n + byte length
-            resultBytesSize += (1 + (int) Math.log10(length) + 1 + 2 + length);
+            resultBytesSize += (1 + stringSize(length) + 2 + length);
          } else {
             // $0 + \r\n
             resultBytesSize += (2 + 2);
@@ -99,16 +99,19 @@ public final class ByteBufferUtils {
 
    public static ByteBuf bytesToResult(int resultBytesSize, Collection<byte[]> results, ByteBufPool alloc) {
       int elements = results.size();
-      // * + digit length (log10 + 1) + \r\n + accumulated bytes
-      int byteAmount = 1 + (int) Math.log10(elements) + 1 + 2 + resultBytesSize;
+      int elementsSize = stringSize(elements);
+      // * + digit length + \r\n + accumulated bytes
+      int byteAmount = 1 + elementsSize + 2 + resultBytesSize;
       ByteBuf byteBuf = alloc.apply(byteAmount);
-      byteBuf.writeCharSequence("*" + results.size(), CharsetUtil.US_ASCII);
+      byteBuf.writeByte('*');
+      setIntChars(elements, elementsSize, byteBuf);
       byteBuf.writeBytes(CRLF);
       for (byte[] value : results) {
          if (value == null) {
             byteBuf.writeCharSequence("$-1", CharsetUtil.US_ASCII);
          } else {
-            byteBuf.writeCharSequence("$" + value.length, CharsetUtil.US_ASCII);
+            byteBuf.writeByte('$');
+            setIntChars(value.length, stringSize(value.length), byteBuf);
             byteBuf.writeBytes(CRLF);
             byteBuf.writeBytes(value);
          }
@@ -172,6 +175,25 @@ public final class ByteBufferUtils {
       return 10 + d;
    }
 
+   public static void writeInt(ByteBuf buf, long value) {
+      setIntChars(value, stringSize(value), buf);
+   }
+
+   public static ByteBuf stringToByteBufAscii(CharSequence string, ByteBufPool alloc) {
+      boolean release = true;
+      ByteBuf buffer = alloc.apply(string.length());
+
+      try {
+         ByteBufUtil.writeAscii(buffer, string);
+         release = false;
+      } finally {
+         if (release) {
+            buffer.release();
+         }
+      }
+
+      return buffer;
+   }
 
    public static ByteBuf stringToByteBuf(CharSequence string, ByteBufPool alloc) {
       return stringToByteBufWithExtra(string, alloc, 0);

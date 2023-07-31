@@ -44,7 +44,7 @@ public final class Consumers {
       if (innerValueBytes != null) {
          ByteBufferUtils.bytesToResult(innerValueBytes, alloc);
       } else {
-         ByteBufferUtils.stringToByteBuf("$-1\r\n", alloc);
+         ByteBufferUtils.stringToByteBufAscii("$-1\r\n", alloc);
       }
    };
 
@@ -52,12 +52,12 @@ public final class Consumers {
       if (innerValueBytes != null) {
          ByteBufferUtils.bytesToResult(innerValueBytes, alloc);
       } else {
-         ByteBufferUtils.stringToByteBuf("$-1\r\n", alloc);
+         ByteBufferUtils.stringToByteBufAscii("$-1\r\n", alloc);
       }
    };
 
    public static final BiConsumer<byte[], ByteBufPool> DELETE_BICONSUMER = (prev, alloc) ->
-         ByteBufferUtils.stringToByteBuf(":" + (prev == null ? "0" : "1") + CRLF_STRING, alloc);
+         ByteBufferUtils.stringToByteBufAscii(":" + (prev == null ? "0" : "1") + CRLF_STRING, alloc);
 
    public static final BiConsumer<SetResponse, ByteBufPool> SET_BICONSUMER = (res, alloc) -> {
       // The set operation has three return options, with a precedence:
@@ -105,7 +105,7 @@ public final class Consumers {
    private static void handleIdxArray(LCSResponse res, ByteBufPool alloc) {
       // return idx. it's a 4 items array
       Resp3Handler.writeArrayPrefix(4, alloc);
-      Resp3Handler.handleBulkResult("matches", alloc);
+      Resp3Handler.handleBulkAsciiResult("matches", alloc);
       Resp3Handler.writeArrayPrefix(res.idx.size(), alloc);
       for (var match : res.idx) {
          // 2 positions + optional length
@@ -121,7 +121,7 @@ public final class Consumers {
             Resp3Handler.handleLongResult(match[4], alloc);
          }
       }
-      Resp3Handler.handleBulkResult("len", alloc);
+      Resp3Handler.handleBulkAsciiResult("len", alloc);
       Resp3Handler.handleLongResult((long) res.len, alloc);
    }
 }

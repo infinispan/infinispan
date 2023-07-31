@@ -48,7 +48,7 @@ public class CLIENT extends RespCommand implements Resp3Command {
          case "GETREDIR":
          case "UNBLOCK":
          case "REPLY":
-            ByteBufferUtils.stringToByteBuf("-ERR unsupported command\r\n", handler.allocator());
+            ByteBufferUtils.stringToByteBufAscii("-ERR unsupported command\r\n", handler.allocator());
             break;
          case "SETINFO":
             for (int i = 1; i < arguments.size(); i++) {
@@ -71,6 +71,7 @@ public class CLIENT extends RespCommand implements Resp3Command {
             Consumers.OK_BICONSUMER.accept(null, handler.allocator());
             break;
          case "GETNAME":
+            // This could be UTF-8
             handleBulkResult(metadata.clientName(), handler.allocator());
             break;
          case "ID":
@@ -79,6 +80,7 @@ public class CLIENT extends RespCommand implements Resp3Command {
          case "INFO": {
             StringBuilder sb = new StringBuilder();
             addInfo(sb, metadata);
+            // This could be UTF-8
             handleBulkResult(sb, handler.allocator());
             break;
          }
@@ -100,10 +102,10 @@ public class CLIENT extends RespCommand implements Resp3Command {
             break;
          }
          case "TRACKING":
-            ByteBufferUtils.stringToByteBuf("-ERR client tracking not supported\r\n", handler.allocator());
+            ByteBufferUtils.stringToByteBufAscii("-ERR client tracking not supported\r\n", handler.allocator());
             break;
          case "TRACKINGINFO":
-            ByteBufferUtils.stringToByteBuf("*0\r\n", handler.allocator());
+            ByteBufferUtils.stringToByteBufAscii("*0\r\n", handler.allocator());
             break;
       }
       return handler.myStage();

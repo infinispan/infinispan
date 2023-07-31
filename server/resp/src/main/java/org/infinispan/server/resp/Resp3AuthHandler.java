@@ -75,7 +75,7 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
    private boolean handleAuthResponse(ChannelHandlerContext ctx, Subject subject) {
       assert ctx.channel().eventLoop().inEventLoop();
       if (subject == null) {
-         ByteBufferUtils.stringToByteBuf("-WRONGPASS invalid username-password pair or user is disabled.\r\n", allocatorToUse);
+         ByteBufferUtils.stringToByteBufAscii("-WRONGPASS invalid username-password pair or user is disabled.\r\n", allocatorToUse);
          return false;
       }
       ConnectionMetadata metadata = ConnectionMetadata.getInstance(ctx.channel());
@@ -87,7 +87,7 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
 
    private void handleUnauthorized(ChannelHandlerContext ctx) {
       assert ctx.channel().eventLoop().inEventLoop();
-      ByteBufferUtils.stringToByteBuf("-WRONGPASS invalid username-password pair or user is disabled.\r\n", allocatorToUse);
+      ByteBufferUtils.stringToByteBufAscii("-WRONGPASS invalid username-password pair or user is disabled.\r\n", allocatorToUse);
    }
 
    public boolean isAuthorized() {

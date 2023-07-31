@@ -31,7 +31,7 @@ public class COMMAND extends RespCommand implements Resp3Command {
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
       if (!arguments.isEmpty()) {
-         ByteBufferUtils.stringToByteBuf("-ERR COMMAND does not currently support arguments\r\n", handler.allocator());
+         ByteBufferUtils.stringToByteBufAscii("-ERR COMMAND does not currently support arguments\r\n", handler.allocator());
       } else {
          StringBuilder commandBuilder = new StringBuilder();
          List<RespCommand> commands = Commands.all();
@@ -41,7 +41,8 @@ public class COMMAND extends RespCommand implements Resp3Command {
          for (RespCommand command : commands){
             addCommand(commandBuilder, command);
          }
-         ByteBufferUtils.stringToByteBuf(commandBuilder.toString(), handler.allocator());
+         // If we ever support a command that isn't ASCII this will need to change
+         ByteBufferUtils.stringToByteBufAscii(commandBuilder.toString(), handler.allocator());
       }
       return handler.myStage();
    }

@@ -31,7 +31,7 @@ public class MGET extends RespCommand implements Resp3Command {
                                                       List<byte[]> arguments) {
       int keysToRetrieve = arguments.size();
       if (keysToRetrieve == 0) {
-         ByteBufferUtils.stringToByteBuf("*0\r\n", handler.allocator());
+         ByteBufferUtils.stringToByteBufAscii("*0\r\n", handler.allocator());
          return handler.myStage();
       }
       List<byte[]> results = Collections.synchronizedList(Arrays.asList(

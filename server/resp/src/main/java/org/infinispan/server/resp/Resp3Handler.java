@@ -1,8 +1,14 @@
 package org.infinispan.server.resp;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
-import io.netty.channel.ChannelHandlerContext;
+import static org.infinispan.server.resp.RespConstants.CRLF;
+import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -15,13 +21,9 @@ import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.resp.commands.Resp3Command;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.CompletionStage;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-
-import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
+import io.netty.channel.ChannelHandlerContext;
 
 public class Resp3Handler extends Resp3AuthHandler {
    private static byte[] CRLF_BYTES = CRLF_STRING.getBytes();
@@ -84,7 +86,7 @@ public class Resp3Handler extends Resp3AuthHandler {
       if (result == null) {
          handleNullResult(alloc);
       } else {
-         handleBulkResult(Double.toString(result), alloc);
+         handleBulkAsciiResult(Double.toString(result), alloc);
       }
    }
 
@@ -109,7 +111,7 @@ public class Resp3Handler extends Resp3AuthHandler {
       } else {
          String result = "*" + collection.size() + CRLF_STRING
                + collection.stream().map(value -> ":" + value + CRLF_STRING).collect(Collectors.joining());
-         ByteBufferUtils.stringToByteBuf(result, alloc);
+         ByteBufferUtils.stringToByteBufAscii(result, alloc);
       }
    }
 
@@ -117,8 +119,29 @@ public class Resp3Handler extends Resp3AuthHandler {
       if (result == null) {
          handleNullResult(alloc);
       } else {
-         ByteBufferUtils.stringToByteBuf("$" + ByteBufUtil.utf8Bytes(result) + CRLF_STRING + result + CRLF_STRING,
-               alloc);
+         int resultLength = ByteBufUtil.utf8Bytes(result);
+         int resultSizeLength = ByteBufferUtils.stringSize(resultLength);
+         ByteBuf buf = alloc.acquire(1 + resultSizeLength + 2 + resultLength + 2);
+         buf.writeByte('$');
+         ByteBufferUtils.setIntChars(resultLength, resultSizeLength, buf);
+         buf.writeBytes(CRLF);
+         ByteBufUtil.writeUtf8(buf, result);
+         buf.writeBytes(CRLF);
+      }
+   }
+
+   public static void handleBulkAsciiResult(CharSequence result, ByteBufPool alloc) {
+      if (result == null) {
+         handleNullResult(alloc);
+      } else {
+         int resultLength = result.length();
+         int resultSizeLength = ByteBufferUtils.stringSize(resultLength);
+         ByteBuf buf = alloc.acquire(1 + resultSizeLength + 2 + resultLength + 2);
+         buf.writeByte('$');
+         ByteBufferUtils.setIntChars(resultLength, resultSizeLength, buf);
+         buf.writeBytes(CRLF);
+         ByteBufUtil.writeAscii(buf, result);
+         buf.writeBytes(CRLF);
       }
    }
 
@@ -133,7 +156,7 @@ public class Resp3Handler extends Resp3AuthHandler {
    }
 
    private static void handleNullResult(ByteBufPool alloc) {
-      ByteBufferUtils.stringToByteBuf("$-1\r\n", alloc);
+      ByteBufferUtils.stringToByteBufAscii("$-1\r\n", alloc);
    }
 
    protected static void handleBulkResult(byte[] result, ByteBufPool alloc) {
