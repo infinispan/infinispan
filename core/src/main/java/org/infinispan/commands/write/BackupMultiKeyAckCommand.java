@@ -10,8 +10,7 @@ import org.infinispan.util.concurrent.CommandAckCollector;
 /**
  * A command that represents an acknowledge sent by a backup owner to the originator.
  * <p>
- * The acknowledge signals a successful execution of a multi-key command, like {@link PutMapCommand}. It contains the
- * segments ids of the updated keys.
+ * The acknowledge signals a successful execution of a backup write command.
  *
  * @author Pedro Ruivo
  * @since 9.0
@@ -37,7 +36,7 @@ public class BackupMultiKeyAckCommand extends BackupAckCommand {
 
    @Override
    public void ack(CommandAckCollector ackCollector) {
-      ackCollector.multiKeyBackupAck(id, getOrigin(), segment, topologyId);
+      ackCollector.backupAck(id, getOrigin(), segment, topologyId);
    }
 
    @Override
@@ -47,16 +46,15 @@ public class BackupMultiKeyAckCommand extends BackupAckCommand {
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      output.writeLong(id);
+      super.writeTo(output);
+      // todo write vint?
       output.writeInt(segment);
-      output.writeInt(topologyId);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      id = input.readLong();
+      super.readFrom(input);
       segment = input.readInt();
-      topologyId = input.readInt();
    }
 
    @Override

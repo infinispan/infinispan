@@ -36,7 +36,7 @@ public class ExceptionAckCommand extends BackupAckCommand {
 
    @Override
    public void ack(CommandAckCollector ackCollector) {
-      CacheException remoteException = ResponseCollectors.wrapRemoteException(getOrigin(), this.throwable);
+      CacheException remoteException = ResponseCollectors.wrapRemoteException(getOrigin(), throwable);
       ackCollector.completeExceptionally(id, remoteException, topologyId);
    }
 

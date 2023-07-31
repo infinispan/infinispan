@@ -10,43 +10,33 @@ import org.infinispan.util.concurrent.CommandAckCollector;
 
 /**
  * A command that represents an acknowledge sent by a backup owner to the originator.
- * <p>
- * The acknowledge signals a successful execution of the operation.
  *
  * @author Pedro Ruivo
  * @since 9.0
  */
-public class BackupAckCommand extends BaseRpcCommand {
+public abstract class BackupAckCommand extends BaseRpcCommand {
 
-   public static final byte COMMAND_ID = 2;
    protected long id;
    protected int topologyId;
 
-   public BackupAckCommand() {
+   protected BackupAckCommand() {
       super(null);
    }
 
-   public BackupAckCommand(ByteString cacheName) {
+   protected BackupAckCommand(ByteString cacheName) {
       super(cacheName);
    }
 
-   public BackupAckCommand(ByteString cacheName, long id, int topologyId) {
+   protected BackupAckCommand(ByteString cacheName, long id, int topologyId) {
       super(cacheName);
       this.id = id;
       this.topologyId = topologyId;
    }
 
-   public void ack(CommandAckCollector ackCollector) {
-      ackCollector.backupAck(id, getOrigin(), topologyId);
-   }
+   public abstract void ack(CommandAckCollector ackCollector);
 
    @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
-   }
-
-   @Override
-   public boolean isReturnValueExpected() {
+   public final boolean isReturnValueExpected() {
       return false;
    }
 

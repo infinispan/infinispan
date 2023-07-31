@@ -75,7 +75,6 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
-import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.ComputeCommand;
@@ -552,11 +551,6 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public <K, V, R> TxReadOnlyManyCommand<K, V, R> buildTxReadOnlyManyCommand(Collection<?> keys, List<List<Mutation<K, V, ?>>> mutations, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
       return actual.buildTxReadOnlyManyCommand(keys, mutations, params, keyDataConversion, valueDataConversion);
-   }
-
-   @Override
-   public BackupAckCommand buildBackupAckCommand(long id, int topologyId) {
-      return actual.buildBackupAckCommand(id, topologyId);
    }
 
    @Override

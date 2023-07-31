@@ -27,9 +27,7 @@ import org.infinispan.commands.write.BackupMultiKeyAckCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.distribution.TriangleOrderManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.remoting.inboundhandler.action.Action;
 import org.infinispan.remoting.inboundhandler.action.ActionState;
-import org.infinispan.remoting.inboundhandler.action.ActionStatus;
 import org.infinispan.remoting.inboundhandler.action.DefaultReadyAction;
 import org.infinispan.remoting.inboundhandler.action.ReadyAction;
 import org.infinispan.remoting.inboundhandler.action.TriangleOrderAction;
@@ -46,7 +44,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Pedro Ruivo
  * @since 9.0
  */
-public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboundInvocationHandler implements Action {
+public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboundInvocationHandler {
 
    private static final Log log = LogFactory.getLog(TrianglePerCacheInboundInvocationHandler.class);
 
@@ -74,14 +72,11 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
             case SingleKeyBackupWriteCommand.COMMAND_ID:
             case SingleKeyFunctionalBackupWriteCommand.COMMAND_ID:
             case BackupNoopCommand.COMMAND_ID:
-               handleSingleKeyBackupCommand((BackupWriteCommand) command);
-               break;
             case PutMapBackupWriteCommand.COMMAND_ID:
             case MultiEntriesFunctionalBackupWriteCommand.COMMAND_ID:
             case MultiKeyFunctionalBackupWriteCommand.COMMAND_ID:
-               handleMultiKeyBackupCommand((BackupWriteCommand) command);
+               handleBackupWriteCommand((BackupWriteCommand) command);
                return;
-            case BackupAckCommand.COMMAND_ID:
             case BackupMultiKeyAckCommand.COMMAND_ID:
             case ExceptionAckCommand.COMMAND_ID:
                handleBackupAckCommand((BackupAckCommand) command);
@@ -101,24 +96,8 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       }
    }
 
-   //action interface
-   @Override
-   public ActionStatus check(ActionState state) {
-      return isCommandSentBeforeFirstTopology(state.getCommandTopologyId()) ?
-            ActionStatus.CANCELED :
-            ActionStatus.READY;
-   }
-
    public TriangleOrderManager getTriangleOrderManager() {
       return triangleOrderManager;
-   }
-
-   @Override
-   public void onFinally(ActionState state) {
-      //no-op
-      //needed for ConditionalOperationPrimaryOwnerFailTest
-      //it mocks this class and when Action.onFinally is invoked, it doesn't behave well with the default implementation
-      //in the interface.
    }
 
    private void handleStateRequestCommand(CacheRpcCommand command, Reply reply, DeliverOrder order) {
@@ -145,18 +124,11 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       }
    }
 
-   private void handleMultiKeyBackupCommand(BackupWriteCommand command) {
+   private void handleBackupWriteCommand(BackupWriteCommand command) {
       final int topologyId = command.getTopologyId();
       ReadyAction readyAction = createTriangleOrderAction(command, topologyId, command.getSequence(),
             command.getSegmentId());
-      BlockingRunnable runnable = createMultiKeyBackupRunnable(command, topologyId, readyAction);
-      nonBlockingExecutor.execute(runnable);
-   }
-
-   private void handleSingleKeyBackupCommand(BackupWriteCommand command) {
-      final int topologyId = command.getTopologyId();
-      ReadyAction readyAction = createTriangleOrderAction(command, topologyId, command.getSequence(), command.getSegmentId());
-      BlockingRunnable runnable = createSingleKeyBackupRunnable(command, topologyId, readyAction);
+      BlockingRunnable runnable = createBackupWriteRunnable(command, topologyId, readyAction);
       nonBlockingExecutor.execute(runnable);
    }
 
@@ -195,58 +167,13 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       }
    }
 
-   private void sendBackupAck(CommandInvocationId id, int topologyId, long flagBitSet) {
-      final Address origin = id.getAddress();
-      if (skipBackupAck(flagBitSet)) {
-         if (log.isTraceEnabled()) {
-            log.tracef("Skipping ack for command %s.", id);
-         }
-         return;
-      }
-      boolean isLocal = localAddress.equals(origin);
-      if (log.isTraceEnabled()) {
-         log.tracef("Sending ack for command %s. isLocal? %s.", id, isLocal);
-      }
-      if (isLocal) {
-         commandAckCollector.backupAck(id.getId(), origin, topologyId);
-      } else {
-         rpcManager.sendTo(origin, commandsFactory.buildBackupAckCommand(id.getId(), topologyId), NONE_NO_FC);
-      }
-   }
-
    private void onBackupException(BackupWriteCommand command, Throwable throwable, ReadyAction readyAction) {
       readyAction.onException();
       readyAction.onFinally(); //notified TriangleOrderManager before sending the ack.
       sendExceptionAck(command.getCommandInvocationId(), throwable, command.getTopologyId(), command.getFlags());
    }
 
-   private BlockingRunnable createSingleKeyBackupRunnable(BackupWriteCommand command, int commandTopologyId,
-                                                         ReadyAction readyAction) {
-      readyAction.addListener(this::checkForReadyTasks);
-      return new DefaultTopologyRunnable(this, command, Reply.NO_OP, TopologyMode.READY_TX_DATA, commandTopologyId,
-            false) {
-         @Override
-         public boolean isReady() {
-            return super.isReady() && readyAction.isReady();
-         }
-
-         @Override
-         protected void onException(Throwable throwable) {
-            super.onException(throwable);
-            onBackupException((BackupWriteCommand) command, throwable, readyAction);
-         }
-
-         @Override
-         protected void afterInvoke() {
-            super.afterInvoke();
-            readyAction.onFinally();
-            BackupWriteCommand backupCommand = (BackupWriteCommand) command;
-            sendBackupAck(backupCommand.getCommandInvocationId(), commandTopologyId, backupCommand.getFlags());
-         }
-      };
-   }
-
-   private void sendMultiKeyAck(CommandInvocationId id, int topologyId, int segment, long flagBitSet) {
+   private void sendBackupAck(CommandInvocationId id, int topologyId, int segment, long flagBitSet) {
       final Address origin = id.getAddress();
       if (skipBackupAck(flagBitSet)) {
          if (log.isTraceEnabled()) {
@@ -258,7 +185,7 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
          log.tracef("Sending ack for command %s. Originator=%s.", id, origin);
       }
       if (id.getAddress().equals(localAddress)) {
-         commandAckCollector.multiKeyBackupAck(id.getId(), localAddress, segment, topologyId);
+         commandAckCollector.backupAck(id.getId(), localAddress, segment, topologyId);
       } else {
          BackupMultiKeyAckCommand command =
                commandsFactory.buildBackupMultiKeyAckCommand(id.getId(), segment, topologyId);
@@ -266,8 +193,8 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
       }
    }
 
-   private BlockingRunnable createMultiKeyBackupRunnable(BackupWriteCommand command, int commandTopologyId,
-                                                       ReadyAction readyAction) {
+   private BlockingRunnable createBackupWriteRunnable(BackupWriteCommand command, int commandTopologyId,
+                                                      ReadyAction readyAction) {
       readyAction.addListener(this::checkForReadyTasks);
       return new DefaultTopologyRunnable(this, command, Reply.NO_OP, TopologyMode.READY_TX_DATA, commandTopologyId,
             false) {
@@ -287,14 +214,14 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
             super.afterInvoke();
             readyAction.onFinally();
             BackupWriteCommand backupCommand = (BackupWriteCommand) command;
-            sendMultiKeyAck(backupCommand.getCommandInvocationId(), commandTopologyId, backupCommand.getSegmentId(),
+            sendBackupAck(backupCommand.getCommandInvocationId(), commandTopologyId, backupCommand.getSegmentId(),
                   backupCommand.getFlags());
          }
       };
    }
 
    private ReadyAction createTriangleOrderAction(ReplicableCommand command, int topologyId, long sequence, int segmentId) {
-      return new DefaultReadyAction(new ActionState(command, topologyId), this,
+      return new DefaultReadyAction(new ActionState(command, topologyId),
             new TriangleOrderAction(this, sequence, segmentId));
    }
 
