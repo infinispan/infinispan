@@ -42,7 +42,7 @@ public class DEL extends RespCommand implements Resp3Command {
 
       if (keysToRemove == 0) {
          // TODO: is this an error?
-         ByteBufferUtils.stringToByteBuf(":0\r\n", handler.allocator());
+         ByteBufferUtils.stringToByteBufAscii(":0\r\n", handler.allocator());
          return handler.myStage();
       }
       AtomicInteger removes = new AtomicInteger();

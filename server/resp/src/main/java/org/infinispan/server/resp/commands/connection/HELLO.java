@@ -34,7 +34,7 @@ public class HELLO extends RespCommand implements AuthResp3Command {
       byte[] respProtocolBytes = arguments.get(0);
       String version = new String(respProtocolBytes, CharsetUtil.UTF_8);
       if (!version.equals("3")) {
-         ByteBufferUtils.stringToByteBuf("-NOPROTO sorry this protocol version is not supported\r\n", handler.allocator());
+         ByteBufferUtils.stringToByteBufAscii("-NOPROTO sorry this protocol version is not supported\r\n", handler.allocator());
       } else {
          if (arguments.size() == 4) {
             successStage = handler.performAuth(ctx, arguments.get(2), arguments.get(3));
@@ -54,7 +54,7 @@ public class HELLO extends RespCommand implements AuthResp3Command {
 
    private static void helloResponse(ByteBufPool alloc) {
       String versionString = Version.getBrandVersion();
-      ByteBufferUtils.stringToByteBuf("%7\r\n" +
+      ByteBufferUtils.stringToByteBufAscii("%7\r\n" +
             "$6\r\nserver\r\n$15\r\nInfinispan RESP\r\n" +
             "$7\r\nversion\r\n$" + versionString.length() + CRLF_STRING + versionString + CRLF_STRING +
             "$5\r\nproto\r\n:3\r\n" +

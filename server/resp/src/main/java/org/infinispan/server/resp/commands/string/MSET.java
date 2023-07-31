@@ -35,7 +35,7 @@ public class MSET extends RespCommand implements Resp3Command {
       int keyValuePairCount = arguments.size();
       if ((keyValuePairCount & 1) == 1) {
          log.tracef("Received: %s count for keys and values combined, should be even for MSET", keyValuePairCount);
-         ByteBufferUtils.stringToByteBuf("-ERR Missing a value for a key\r\n", handler.allocator());
+         ByteBufferUtils.stringToByteBufAscii("-ERR Missing a value for a key\r\n", handler.allocator());
          return handler.myStage();
       }
       AggregateCompletionStage<Void> setStage = CompletionStages.aggregateCompletionStage();

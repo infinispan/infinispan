@@ -24,7 +24,7 @@ public class PSUBSCRIBE extends RespCommand implements PubSubResp3Command {
    public CompletionStage<RespRequestHandler> perform(SubscriberHandler handler,
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
-      ByteBufferUtils.stringToByteBuf("-ERR not implemented yet\r\n", handler.allocator());
+      ByteBufferUtils.stringToByteBufAscii("-ERR not implemented yet\r\n", handler.allocator());
       return handler.myStage();
    }
 }

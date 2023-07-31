@@ -30,9 +30,9 @@ public class CONFIG extends RespCommand implements Resp3Command {
 
       if ("GET".equalsIgnoreCase(getOrSet)) {
          if ("appendonly".equalsIgnoreCase(name)) {
-            ByteBufferUtils.stringToByteBuf("*2\r\n+" + name + "\r\n+no\r\n", handler.allocator());
+            ByteBufferUtils.stringToByteBufAscii("*2\r\n+appendonly\r\n+no\r\n", handler.allocator());
          } else if (name.indexOf('*') != -1 || name.indexOf('?') != -1) {
-            ByteBufferUtils.stringToByteBuf("-ERR CONFIG blob pattern matching not implemented\r\n", handler.allocator());
+            ByteBufferUtils.stringToByteBufAscii("-ERR CONFIG blob pattern matching not implemented\r\n", handler.allocator());
          } else {
             ByteBufferUtils.stringToByteBuf("*2\r\n+" + name + "\r\n+\r\n", handler.allocator());
          }

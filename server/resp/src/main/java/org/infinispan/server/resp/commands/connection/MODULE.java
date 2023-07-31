@@ -30,12 +30,12 @@ public class MODULE extends RespCommand implements Resp3Command {
       String subcommand = new String(arguments.get(0), StandardCharsets.UTF_8).toUpperCase();
       switch (subcommand) {
          case "LIST":
-            ByteBufferUtils.stringToByteBuf("*0\r\n", handler.allocator());
+            ByteBufferUtils.stringToByteBufAscii("*0\r\n", handler.allocator());
             break;
          case "LOAD":
          case "LOADEX":
          case "UNLOAD":
-            ByteBufferUtils.stringToByteBuf("-ERR module loading/unloading unsupported\r\n", handler.allocator());
+            ByteBufferUtils.stringToByteBufAscii("-ERR module loading/unloading unsupported\r\n", handler.allocator());
             break;
       }
       return handler.myStage();

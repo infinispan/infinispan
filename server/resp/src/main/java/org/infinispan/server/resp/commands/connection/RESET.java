@@ -28,7 +28,7 @@ public class RESET extends RespCommand implements Resp3Command, PubSubResp3Comma
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
-      ByteBufferUtils.stringToByteBuf("+RESET\r\n", handler.allocator());
+      ByteBufferUtils.stringToByteBufAscii("+RESET\r\n", handler.allocator());
       if (handler.respServer().getConfiguration().authentication().enabled()) {
          return CompletableFuture.completedFuture(new Resp3AuthHandler(handler.respServer()));
       }

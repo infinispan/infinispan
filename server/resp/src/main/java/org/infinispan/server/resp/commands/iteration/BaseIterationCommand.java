@@ -60,7 +60,7 @@ public abstract class BaseIterationCommand extends RespCommand implements Resp3C
    private CompletionStage<RespRequestHandler> iterate(Resp3Handler handler, IterationManager manager, String cursor,
                                                        IterationArguments arguments) {
       if (manager == null) {
-         ByteBufferUtils.stringToByteBuf("*2\r\n$1\r\n0\r\n*0\r\n", handler.allocator());
+         ByteBufferUtils.stringToByteBufAscii("*2\r\n$1\r\n0\r\n*0\r\n", handler.allocator());
          return handler.myStage();
       }
 
@@ -68,7 +68,7 @@ public abstract class BaseIterationCommand extends RespCommand implements Resp3C
       IterableIterationResult.Status status = result.getStatusCode();
       if (status == IterableIterationResult.Status.InvalidIteration) {
          // Let's just return 0
-         ByteBufferUtils.stringToByteBuf("*2\r\n$1\r\n0\r\n*0\r\n", handler.allocator());
+         ByteBufferUtils.stringToByteBufAscii("*2\r\n$1\r\n0\r\n*0\r\n", handler.allocator());
       } else {
          StringBuilder response = new StringBuilder();
          response.append("*2\r\n");
@@ -83,7 +83,7 @@ public abstract class BaseIterationCommand extends RespCommand implements Resp3C
             response.append(cursor);
             response.append(CRLF_STRING);
          }
-         ByteBufferUtils.stringToByteBuf(response, handler.allocator());
+         ByteBufferUtils.stringToByteBufAscii(response, handler.allocator());
          ByteBufferUtils.bytesToResult(writeResponse(result.getEntries()), handler.allocator());
       }
       return handler.myStage();

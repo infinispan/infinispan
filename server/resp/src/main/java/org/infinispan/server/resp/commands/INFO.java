@@ -1,6 +1,6 @@
 package org.infinispan.server.resp.commands;
 
-import static org.infinispan.server.resp.Resp3Handler.handleBulkResult;
+import static org.infinispan.server.resp.Resp3Handler.handleBulkAsciiResult;
 import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
 
 import java.net.InetSocketAddress;
@@ -316,7 +316,7 @@ public class INFO extends RespCommand implements Resp3Command {
          sb.append("# Keyspace\r\n");
          sb.append("db0:keys=0,expires=0,avg_ttl=0\r\n");
       }
-      handleBulkResult(sb, handler.allocator());
+      handleBulkAsciiResult(sb, handler.allocator());
       return handler.myStage();
    }
 

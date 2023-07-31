@@ -63,7 +63,7 @@ public class MEMORY extends RespCommand implements Resp3Command {
             addStat(sb, "rss-overhead.bytes", 0); //49
             addStat(sb, "fragmentation", "0.0"); //51
             addStat(sb, "fragmentation.bytes", 0); //53
-            ByteBufferUtils.stringToByteBuf(sb, handler.allocator());
+            ByteBufferUtils.stringToByteBufAscii(sb, handler.allocator());
             break;
          case "USAGE":
             if (arguments.size() < 2) {
@@ -78,7 +78,7 @@ public class MEMORY extends RespCommand implements Resp3Command {
          case "DOCTOR":
          case "MALLOC-STATS":
          case "PURGE":
-            ByteBufferUtils.stringToByteBuf("-ERR module loading/unloading unsupported\r\n", handler.allocator());
+            ByteBufferUtils.stringToByteBufAscii("-ERR module loading/unloading unsupported\r\n", handler.allocator());
             break;
       }
       return handler.myStage();

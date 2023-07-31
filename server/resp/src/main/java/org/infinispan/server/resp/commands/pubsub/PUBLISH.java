@@ -29,7 +29,7 @@ public class PUBLISH extends RespCommand implements Resp3Command {
       // updates
       return handler.stageToReturn(handler.ignorePreviousValuesCache()
             .putAsync(KeyChannelUtils.keyToChannel(arguments.get(0)), arguments.get(1), 3, TimeUnit.SECONDS), ctx,
-            (ignore, alloc) -> ByteBufferUtils.stringToByteBuf(":0\r\n", alloc)
+            (ignore, alloc) -> ByteBufferUtils.stringToByteBufAscii(":0\r\n", alloc)
       );
    }
 }
