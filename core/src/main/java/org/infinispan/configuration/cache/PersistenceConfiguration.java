@@ -13,7 +13,7 @@ import org.infinispan.configuration.parsing.Element;
  */
 public class PersistenceConfiguration extends ConfigurationElement<PersistenceConfiguration> {
    public static final AttributeDefinition<Boolean> PASSIVATION = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.PASSIVATION, false).immutable().build();
-   public static final AttributeDefinition<Integer> AVAILABILITY_INTERVAL = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.AVAILABILITY_INTERVAL, 1000).immutable().build();
+   public static final AttributeDefinition<Integer> AVAILABILITY_INTERVAL = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.AVAILABILITY_INTERVAL, 30000).immutable().build();
    public static final AttributeDefinition<Integer> CONNECTION_ATTEMPTS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CONNECTION_ATTEMPTS, 10).build();
    @Deprecated
    public static final AttributeDefinition<Integer> CONNECTION_INTERVAL = AttributeDefinition.builder(Attribute.CONNECTION_INTERVAL, 50).immutable().deprecatedSince(15, 0).build();
