@@ -14,6 +14,8 @@ import org.infinispan.server.resp.SubscriberHandler;
 import org.infinispan.server.resp.commands.TransactionResp3Command;
 import org.infinispan.server.resp.commands.pubsub.PSUBSCRIBE;
 import org.infinispan.server.resp.commands.pubsub.SUBSCRIBE;
+import org.infinispan.server.resp.commands.tx.UNWATCH;
+import org.infinispan.server.resp.commands.tx.WATCH;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -39,6 +41,7 @@ import io.netty.channel.ChannelHandlerContext;
 public class RespTransactionHandler extends CacheRespRequestHandler {
 
    private final List<TransactionCommand> queued;
+   private boolean failed;
 
    public RespTransactionHandler(RespServer respServer) {
       super(respServer);
@@ -51,9 +54,9 @@ public class RespTransactionHandler extends CacheRespRequestHandler {
       // Subscribe commands discard the queue and enter into pub-sub. See: https://github.com/redis/redis/pull/9928
       // Doing specific checks here instead of implementing on the commands, so we can update this later, if necessary.
       if (command instanceof SUBSCRIBE || command instanceof PSUBSCRIBE) {
-         dropTransaction();
+         CompletionStage<?> drop = dropTransaction(ctx);
          SubscriberHandler subscriberHandler = new SubscriberHandler(respServer(), respServer().newHandler());
-         return subscriberHandler.handleRequest(ctx, command, arguments);
+         return subscriberHandler.handleRequest(ctx, command, arguments).thenCombine(drop, (handler, ignore) -> handler);
       }
 
       // Transaction commands take precedence and are not queued.
@@ -67,13 +70,19 @@ public class RespTransactionHandler extends CacheRespRequestHandler {
       // This method already writes any error message to the socket.
       if (!isCommandValid(command, arguments)) return myStage();
 
-      queued.add(new TransactionCommand(command, List.copyOf(arguments)));
+      try {
+         queued.add(new TransactionCommand(command, List.copyOf(arguments)));
+      } catch (Throwable t) {
+         errorInTransactionContext();
+         return command.handleException(this, t);
+      }
+
       return stageToReturn(myStage(), ctx, Consumers.QUEUED_BICONSUMER);
    }
 
    @Override
    public void handleChannelDisconnect(ChannelHandlerContext ctx) {
-      dropTransaction();
+      dropTransaction(ctx);
    }
 
    private boolean isCommandValid(RespCommand command, List<byte[]> arguments) {
@@ -85,9 +94,17 @@ public class RespTransactionHandler extends CacheRespRequestHandler {
       return true;
    }
 
-   public void dropTransaction() {
-      // TODO remove watchers.
+   public void errorInTransactionContext() {
+      this.failed = true;
+   }
+
+   public boolean hasFailed() {
+      return failed;
+   }
+
+   public CompletionStage<?> dropTransaction(ChannelHandlerContext ctx) {
       queued.clear();
+      return unregisterListeners(ctx);
    }
 
    /**
@@ -99,8 +116,19 @@ public class RespTransactionHandler extends CacheRespRequestHandler {
     *
     * @return The list of commands to be executed, or <code>null</code> if the transaction needs to be aborted.
     */
-   public List<TransactionCommand> performingOperations() {
-      // TODO: verify WATCHed keys to rollback.
-      return queued;
+   public CompletionStage<List<TransactionCommand>> performingOperations(ChannelHandlerContext ctx) {
+      return unregisterListeners(ctx).thenApply(watchers -> {
+         if (watchers != null) {
+            for (WATCH.TxKeysListener watcher : watchers) {
+               if (watcher.hasSeenEvents()) return null;
+            }
+         }
+
+         return queued;
+      });
+   }
+
+   public CompletionStage<List<WATCH.TxKeysListener>> unregisterListeners(ChannelHandlerContext ctx) {
+      return UNWATCH.deregister(ctx, cache());
    }
 }

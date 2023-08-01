@@ -115,6 +115,8 @@ import org.infinispan.server.resp.commands.string.STRALGO;
 import org.infinispan.server.resp.commands.string.STRLEN;
 import org.infinispan.server.resp.commands.tx.EXEC;
 import org.infinispan.server.resp.commands.tx.MULTI;
+import org.infinispan.server.resp.commands.tx.UNWATCH;
+import org.infinispan.server.resp.commands.tx.WATCH;
 
 /**
  * @since 15.0
@@ -145,7 +147,8 @@ public final class Commands {
       // SET should always be first here
       ALL_COMMANDS[18] = new RespCommand[]{new SET(), new SMEMBERS(), new SADD(), new STRLEN(), new SCARD(), new SINTER(), new SINTERSTORE(), new SINTERCARD(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN(), new SETRANGE()};
       ALL_COMMANDS[19] = new RespCommand[]{new TTL(), new TYPE()};
-      ALL_COMMANDS[20] = new RespCommand[]{new UNSUBSCRIBE()};
+      ALL_COMMANDS[20] = new RespCommand[]{new UNSUBSCRIBE(), new UNWATCH()};
+      ALL_COMMANDS[22] = new RespCommand[]{new WATCH()};
       ALL_COMMANDS[25] = new RespCommand[]{new ZADD(), new ZCARD(), new ZCOUNT(), new ZDIFF(), new ZDIFFSTORE(), new ZINCRBY(), new ZINTER(), new ZINTERSTORE(),
             new ZPOPMAX(), new ZPOPMIN(), new ZRANGE(), new ZRANGESTORE(), new ZREVRANGE(), new ZRANGEBYSCORE(), new ZRANK(), new ZREVRANGEBYSCORE(),
             new ZRANGEBYLEX(), new ZREVRANGEBYLEX(), new ZREVRANK(), new ZSCORE(), new ZMSCORE(), new ZUNION(), new ZUNIONSTORE() };
