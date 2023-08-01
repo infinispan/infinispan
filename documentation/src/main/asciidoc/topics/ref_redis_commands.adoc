@@ -282,6 +282,9 @@ provides a read-uncommitted isolation.
 | link:https://redis.io/commands/zunionstore[ZUNIONSTORE]
 |
 
+| link:https://redis.io/commands/zrandmember[ZRANDMEMBER]
+|
+
 | link:https://redis.io/commands/zrange[ZRANGE]
 |
 

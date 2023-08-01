@@ -15,6 +15,7 @@ import org.infinispan.multimap.impl.function.sortedset.PopFunction;
 import org.infinispan.multimap.impl.function.sortedset.RemoveManyFunction;
 import org.infinispan.multimap.impl.function.sortedset.ScoreFunction;
 import org.infinispan.multimap.impl.function.sortedset.SortedSetAggregateFunction;
+import org.infinispan.multimap.impl.function.sortedset.SortedSetRandomFunction;
 import org.infinispan.multimap.impl.function.sortedset.SubsetFunction;
 import org.infinispan.multimap.impl.function.sortedset.SubsetType;
 import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
@@ -401,5 +402,18 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
       list.add(min);
       list.add(max);
       return readWriteMap.eval(key, new RemoveManyFunction<>(list, includeMin, includeMax, subsetType));
+   }
+
+   /**
+    * If the count argument is positive, return an array of distinct elements. The
+    * If the count argument is negative, it is allowed to return the same element multiple times.
+    * In this case, the number of returned elements is the absolute value of the specified count.
+    * @param key, the sorted set name
+    * @param count, number of random members to retrieve
+    * @return, collection of the random scored entries
+    */
+   public CompletionStage<List<SortedSetBucket.ScoredValue<V>>> randomMembers(K key, int count) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      return readWriteMap.eval(key, new SortedSetRandomFunction(count));
    }
 }
