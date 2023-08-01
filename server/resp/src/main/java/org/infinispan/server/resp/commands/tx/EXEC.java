@@ -3,6 +3,7 @@ package org.infinispan.server.resp.commands.tx;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
@@ -46,18 +47,39 @@ public class EXEC extends RespCommand implements Resp3Command, TransactionResp3C
    @Override
    public CompletionStage<RespRequestHandler> perform(RespTransactionHandler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
       Resp3Handler next = handler.respServer().newHandler();
-      List<TransactionCommand> commands = handler.performingOperations();
+      CompletionStage<?> cs = handler.performingOperations(ctx)
+            .thenCompose(commands -> perform(commands, handler, next, ctx));
+      return next.stageToReturn(cs, ctx, ignore -> next);
+   }
+
+   private CompletionStage<?> perform(List<TransactionCommand> commands, RespTransactionHandler curr, Resp3Handler next, ChannelHandlerContext ctx) {
+      // An error happened while in transaction context. This error means more of a setup error, failed enqueueing, etc.
+      // One such example, trying to WATCH while in transaction context. This is not a command failed to execute yet.
+      // See: https://redis.io/docs/interact/transactions/#errors-inside-a-transaction
+      if (curr.hasFailed()) {
+         RespErrorUtil.transactionAborted(curr.allocator());
+         return CompletableFutures.completedNull();
+      }
 
       // Using WATCH and keys changed. Abort transaction.
       if (commands == null) {
-         return handler.stageToReturn(CompletableFutures.completedNull(), ctx, ignore -> {
-            Consumers.GET_BICONSUMER.accept(null, handler.allocator());
-            return next;
-         });
+         // Should write `(nil)` since the transaction is aborted.
+         Consumers.GET_BICONSUMER.accept(null, curr.allocator());
+         return CompletableFutures.completedNull();
       }
 
-      Resp3Handler.writeArrayPrefix(commands.size(), handler.allocator());
-      return next.stageToReturn(orderlyExecution(next, ctx, commands, 0, CompletableFutures.completedNull()), ctx, ignore -> next);
+      AdvancedCache<byte[], byte[]> cache = curr.cache();
+
+      // Redis has a serializable isolation. Without batching we have read-uncomitted.
+      // Using the batching API we have a few more useful features.
+      if (!cache.getCacheConfiguration().invocationBatching().enabled()) {
+         log.multiKeyOperationUseBatching();
+      } else {
+         cache.startBatch();
+      }
+      Resp3Handler.writeArrayPrefix(commands.size(), curr.allocator());
+      return orderlyExecution(next, ctx, commands, 0, CompletableFutures.completedNull())
+            .whenComplete((ignore, t) -> cache.endBatch(true));
    }
 
    private CompletionStage<?> orderlyExecution(Resp3Handler handler, ChannelHandlerContext ctx,

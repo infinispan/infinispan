@@ -47,4 +47,9 @@ public interface Log extends BasicLogger {
    @Message(value = "LMOVE command can't guarantee atomicity and consistency when the source list and the destination list are different", id = 12006)
    @Once
    void lmoveConsistencyMessage();
+
+   @Once
+   @LogMessage(level = WARN)
+   @Message(value = "Multi-key operations without batching have a relaxed isolation level. Consider enabling batching.", id = 12007)
+   void multiKeyOperationUseBatching();
 }

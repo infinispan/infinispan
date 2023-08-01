@@ -6,7 +6,6 @@ import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
 import java.lang.invoke.MethodHandles;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -18,13 +17,10 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.encoding.DataConversion;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
-import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
-import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.server.resp.commands.PubSubResp3Command;
 import org.infinispan.server.resp.commands.pubsub.KeyChannelUtils;
 import org.infinispan.server.resp.logging.Log;
@@ -81,22 +77,6 @@ public class SubscriberHandler extends CacheRespRequestHandler {
             channel.writeAndFlush(byteBuf, channel.voidPromise());
          }
          return CompletableFutures.completedNull();
-      }
-   }
-
-   public static class ListenerKeyFilter implements CacheEventFilter<Object, Object> {
-      private final byte[] key;
-      private final DataConversion conversion;
-
-      public ListenerKeyFilter(byte[] key, DataConversion conversion) {
-         this.key = key;
-         this.conversion = conversion;
-      }
-
-      @Override
-      public boolean accept(Object eventKey, Object oldValue, Metadata oldMetadata, Object newValue,
-                            Metadata newMetadata, EventType eventType) {
-         return Arrays.equals(key, (byte[]) conversion.fromStorage(eventKey));
       }
    }
 
