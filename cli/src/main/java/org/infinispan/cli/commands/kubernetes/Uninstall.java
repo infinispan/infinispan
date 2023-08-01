@@ -50,10 +50,10 @@ public class Uninstall extends CliCommand {
       }
       Map<String, Object> status = (Map<String, Object>) sub.getAdditionalProperties().get("status");
       String csv = (String) status.get("installedCSV");
-      boolean deleted = subscription.delete();
+      boolean deleted = subscription.delete().size() > 0;
       if (deleted) {
          // Now delete the CSV
-         deleted = client.genericKubernetesResources(Kube.OPERATOR_CLUSTERSERVICEVERSION_CRD).inNamespace(namespace).withName(csv).delete();
+         deleted = client.genericKubernetesResources(Kube.OPERATOR_CLUSTERSERVICEVERSION_CRD).inNamespace(namespace).withName(csv).delete().size() > 0;
          return deleted ? CommandResult.SUCCESS : CommandResult.FAILURE;
       } else {
          return CommandResult.FAILURE;
