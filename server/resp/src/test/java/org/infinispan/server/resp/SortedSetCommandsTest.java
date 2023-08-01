@@ -890,6 +890,7 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
 
    public void testZREVRANK() {
       assertThat(redis.zrevrank("people", "tristan")).isNull();
+      // ZADD people 1 galder 2 dan 3 adrian 3.5 radim 4 tristan 4 vittorio 5 pedro 5 fabio 6 jose 6 ryan 6 anna
       redis.zadd("people", ZAddArgs.Builder.ch(),
             just(1, "galder"),
             just(2, "dan"),
@@ -1486,5 +1487,52 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
 
       // ZINTERCARD 1 another
       assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zintercard("another"));
+   }
+
+   public void testZRANDMEMBER() {
+      // ZRANDMEMBER people
+      assertThat(redis.zrandmember("people")).isNull();
+      // ZRANDMEMBER people 1
+      assertThat(redis.zrandmember("people", 1)).isEmpty();
+      // ZRANDMEMBER people 1 WITHSCORES
+      assertThat(redis.zrandmemberWithScores("people", 1)).isEmpty();
+      // ZADD people 1 galder 2 dan 3 adrian 3.5 radim 4 tristan 4 vittorio 5 pedro 5 fabio 6 jose 6 ryan 6 anna
+      redis.zadd("people", ZAddArgs.Builder.ch(),
+            just(1, "galder"),
+            just(2, "dan"),
+            just(3, "adrian"),
+            just(3.5, "radim"),
+            just(4, "tristan"),
+            just(4, "vittorio"),
+            just(5, "pedro"),
+            just(5, "fabio"),
+            just(6, "jose"),
+            just(6, "ryan"),
+            just(6, "anna"));
+      assertThat(redis.zrandmember("people")).containsAnyOf("galder", "dan", "adrian", "radim", "tristan",
+            "vittorio", "pedro", "fabio", "jose", "ryan", "anna");
+      assertThat(redis.zrandmember("people", 2))
+            .containsAnyOf("galder", "dan", "adrian", "radim", "tristan",
+            "vittorio", "pedro", "fabio", "jose", "ryan", "anna");
+      assertThat(redis.zrandmember("people", 11))
+            .containsExactlyInAnyOrder("galder", "dan", "adrian", "radim", "tristan",
+                  "vittorio", "pedro", "fabio", "jose", "ryan", "anna");
+      assertThat(redis.zrandmemberWithScores("people", 11))
+            .containsExactlyInAnyOrder(just(1, "galder"),
+                  just(2, "dan"),
+                  just(3, "adrian"),
+                  just(3.5, "radim"),
+                  just(4, "tristan"),
+                  just(4, "vittorio"),
+                  just(5, "pedro"),
+                  just(5, "fabio"),
+                  just(6, "jose"),
+                  just(6, "ryan"),
+                  just(6, "anna"));
+      assertThat(redis.zrandmember("people", 13))
+            .containsExactlyInAnyOrder("galder", "dan", "adrian", "radim", "tristan",
+                  "vittorio", "pedro", "fabio", "jose", "ryan", "anna");
+      assertThat(redis.zrandmember("people", -20)).hasSize(20);
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zrandmember("another"));
    }
 }

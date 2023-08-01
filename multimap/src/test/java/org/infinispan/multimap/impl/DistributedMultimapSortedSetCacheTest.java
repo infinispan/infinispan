@@ -230,6 +230,14 @@ public class DistributedMultimapSortedSetCacheTest extends BaseDistFunctionalTes
       assertThat(await(sortedSet.removeAll(NAMES_KEY, null, true, RAMON, true))).isEqualTo(8);
    }
 
+   public void testRandomMembers() {
+      initAndTest();
+      EmbeddedMultimapSortedSetCache<String, Person> sortedSet = getMultimapCacheMember();
+      SortedSetAddArgs args = SortedSetAddArgs.create().build();
+      await(sortedSet.addMany(NAMES_KEY, list(of(1.1, OIHANA)), args));
+      assertThat(await(sortedSet.randomMembers(NAMES_KEY, 1))).containsExactly(of(1.1, OIHANA));
+   }
+
    protected void assertValuesAndOwnership(String key, SortedSetBucket.ScoredValue<Person> value) {
       assertOwnershipAndNonOwnership(key, l1CacheEnabled);
       assertOnAllCaches(key, value);

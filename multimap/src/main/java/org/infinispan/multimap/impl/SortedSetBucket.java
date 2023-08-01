@@ -18,6 +18,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 /**
@@ -119,6 +120,39 @@ public class SortedSetBucket<V> {
       }
       return sortedMergeScoredValues;
    }
+
+   public List<ScoredValue<V>> randomMembers(int count) {
+      if (count == 1 || count == -1) {
+         int rank = ThreadLocalRandom.current().nextInt(scoredEntries.size());
+         return this.subsetByIndex(rank, rank, false);
+      }
+
+      if (count < 0) {
+         // we allow duplicates and returns count size random entries
+         int totalCount = Math.abs(count);
+         List<ScoredValue<V>> randomEntries = new ArrayList<>(totalCount);
+         ThreadLocalRandom.current().ints(totalCount, 0, entries.size())
+               .forEach(randomPos -> randomEntries.add(this.subsetByIndex(randomPos, randomPos, false).get(0)));
+         return randomEntries;
+      }
+
+      // duplicates are not allowed.
+      List<Integer> positions = new ArrayList<>(entries.size());
+      while (positions.size() < entries.size()) {
+         positions.add(positions.size());
+      }
+      Collections.shuffle(positions);
+
+      List<ScoredValue<V>> randomEntries = new ArrayList<>();
+      Iterator<Integer> ite = positions.iterator();
+      while (randomEntries.size() < count && randomEntries.size() < entries.size()) {
+         Integer pos = ite.next();
+         randomEntries.add(this.subsetByIndex(pos, pos, false).get(0));
+      }
+
+      return randomEntries;
+   }
+
 
    @ProtoFactory
    SortedSetBucket(Collection<ScoredValue<V>> wrappedValues) {

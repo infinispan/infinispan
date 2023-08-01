@@ -679,4 +679,31 @@ public class EmbeddedMultimapSortedSetCacheTest extends SingleCacheManagerTest {
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
    }
+
+   public void testRandomMembers() {
+      assertThat(await(sortedSetCache.randomMembers("notexisting", 1))).isEmpty();
+
+      await(sortedSetCache.addMany(NAMES_KEY,
+            list(of(1, CHARY), of(7, IGOR), of(8, IZARO), of(12, ELA)),
+            SortedSetAddArgs.create().build()));
+
+      assertThat(await(sortedSetCache.randomMembers(NAMES_KEY, 4)))
+            .containsExactlyInAnyOrder(of(1, CHARY), of(7, IGOR), of(8, IZARO), of(12, ELA));
+
+      assertThat(await(sortedSetCache.randomMembers(NAMES_KEY, 1)))
+            .containsAnyOf(of(1, CHARY), of(7, IGOR), of(8, IZARO), of(12, ELA));
+
+      assertThat(await(sortedSetCache.randomMembers(NAMES_KEY, 2)))
+            .containsAnyOf(of(1, CHARY), of(7, IGOR), of(8, IZARO), of(12, ELA));
+
+      assertThat(await(sortedSetCache.randomMembers(NAMES_KEY, 5))).hasSize(4);
+      assertThat(await(sortedSetCache.randomMembers(NAMES_KEY, 5)))
+            .containsExactlyInAnyOrder(of(1, CHARY), of(7, IGOR), of(8, IZARO), of(12, ELA));
+      assertThat(await(sortedSetCache.randomMembers(NAMES_KEY, -5))).hasSize(5);
+      assertThat(await(sortedSetCache.randomMembers(NAMES_KEY, 5)))
+            .containsExactlyInAnyOrder(of(1, CHARY), of(7, IGOR), of(8, IZARO), of(12, ELA));
+      assertThatThrownBy(() -> await(sortedSetCache.randomMembers(null, 1)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
+   }
 }
