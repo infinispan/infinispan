@@ -204,9 +204,8 @@ Secure your deployment by restricting user access to data.
 ----
 <distributed-cache>
 	<security>
-        <!--Specify one or more user roles -->
-		<authorization enabled="true"
-                  roles="observer application admin monitor"/>
+    <!--Specify one or more user roles -->
+		<authorization roles="observer application admin monitor"/>
 	</security>
 </distributed-cache>
 ----
