@@ -19,9 +19,11 @@ You can enable the RESP endpoint with:
 Cache configuration cannot enable capabilities that violate the RESP protocol.
 For example, specifying expiration values in a cache for the RESP endpoint results in a fatal error at startup.
 +
+If the cache is defined you must define the key encoding as `application/octet-stream`.
++
 [TIP]
 ====
-Configure your cache with Protobuf encoding if you want to view cache entries in the {brandname} Console (`encoding media-type="application/x-protostream"`).
+Configure your cache value encoding with Protobuf encoding if you want to view cache entries in the {brandname} Console (`value media-type="application/x-protostream"`).
 ====
 . Add an `endpoint` declaration to your configuration.
 . Add the `resp-connector` element and specify the name of the cache to use with the RESP connector with the `cache` attribute.

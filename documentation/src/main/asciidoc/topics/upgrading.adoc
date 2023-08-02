@@ -59,6 +59,11 @@ an unclean shutdown. The behavior can be changed by configuring the global state
 == Persistence
 The default `availability-interval` has been increased to 30 seconds. The previous default was 1 second.
 
+== RESP endpoint
+
+The RESP endpoint cache now requires the key storage media type to be
+application/octet-stream.
+
 = Upgrading from 13.0 to 14.0
 
 == Security authorization SPI

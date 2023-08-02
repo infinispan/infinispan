@@ -56,7 +56,9 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
       if (!cacheManager.getCacheManagerConfiguration().features().isAvailable(RESP_SERVER_FEATURE)) {
          throw CONFIG.featureDisabled(RESP_SERVER_FEATURE);
       }
-      if (cacheManager.getCacheConfiguration(configuration.defaultCacheName()) == null) {
+      String cacheName = configuration.defaultCacheName();
+      Configuration explicitConfiguration = cacheManager.getCacheConfiguration(cacheName);
+      if (explicitConfiguration == null) {
          ConfigurationBuilder builder = new ConfigurationBuilder();
          Configuration defaultCacheConfiguration = cacheManager.getDefaultCacheConfiguration();
          if (defaultCacheConfiguration != null) { // We have a default configuration, use that
@@ -66,16 +68,25 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
                   !(builder.clustering().hash().keyPartitioner() instanceof CRC16HashFunctionPartitioner)) {
                log.warn("Clustered RESP server should use CRC16HashFunctionPartitioner for key partitioning.");
             }
+            MediaType keyMediaType = builder.encoding().key().mediaType();
+            if (keyMediaType == null) {
+               log.debugf("Setting RESP cache key media type storage to OCTET stream to avoid key encodings");
+               builder.encoding().key().mediaType(MediaType.APPLICATION_OCTET_STREAM);
+            } else if (!keyMediaType.equals(MediaType.APPLICATION_OCTET_STREAM)) {
+               throw CONFIG.respCacheKeyMediaTypeSupplied(cacheName, keyMediaType);
+            }
          } else {
             if (cacheManager.getCacheManagerConfiguration().isClustered()) { // We are running in clustered mode
                builder.clustering().cacheMode(CacheMode.REPL_SYNC);
                // See: https://redis.io/docs/reference/cluster-spec/#key-distribution-model
                builder.clustering().hash().keyPartitioner(new CRC16HashFunctionPartitioner()).numSegments(16384);
             }
-            builder.encoding().key().mediaType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
+            builder.encoding().key().mediaType(MediaType.APPLICATION_OCTET_STREAM);
             builder.encoding().value().mediaType(configuredValueType);
          }
          cacheManager.defineConfiguration(configuration.defaultCacheName(), builder.build());
+      } else if (!explicitConfiguration.encoding().keyDataType().mediaType().equals(MediaType.APPLICATION_OCTET_STREAM)) {
+         throw CONFIG.respCacheKeyMediaTypeSupplied(cacheName, explicitConfiguration.encoding().keyDataType().mediaType());
       }
       super.startInternal();
    }
