@@ -8,7 +8,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.JGroupsConfiguration;
 import org.infinispan.xsite.XSiteNamedCache;
 import org.jgroups.ChannelListener;
@@ -17,10 +16,8 @@ import org.jgroups.conf.ProtocolConfiguration;
 import org.jgroups.conf.ProtocolStackConfigurator;
 import org.jgroups.protocols.relay.RELAY2;
 import org.jgroups.protocols.relay.config.RelayConfig;
-import org.jgroups.stack.Configurator;
 import org.jgroups.stack.Protocol;
 import org.jgroups.util.SocketFactory;
-import org.jgroups.util.StackType;
 
 /**
  * A JGroups {@link ProtocolStackConfigurator} which
@@ -29,8 +26,6 @@ import org.jgroups.util.StackType;
  * @since 10.0
  **/
 public class EmbeddedJGroupsChannelConfigurator extends AbstractJGroupsChannelConfigurator {
-
-   private static final String PROTOCOL_PREFIX = "org.jgroups.protocols.";
 
    private final String name;
    private final String parent;
@@ -73,67 +68,48 @@ public class EmbeddedJGroupsChannelConfigurator extends AbstractJGroupsChannelCo
 
    @Override
    public JChannel createChannel(String name) throws Exception {
-      StackType stackType = org.jgroups.util.Util.getIpStackType();
-      List<ProtocolConfiguration> actualStack = combineStack(jgroupsConfiguration.configurator(parent), stack);
-      List<Protocol> protocols = new ArrayList<>(actualStack.size());
-
-      boolean hasRelay2 = false;
-
-      for (ProtocolConfiguration c : actualStack) {
-         Protocol protocol;
-         try {
-            String className = PROTOCOL_PREFIX + c.getProtocolName();
-            protocol = Util.getInstanceStrict(className, getClass().getClassLoader());
-         } catch (ClassNotFoundException e) {
-            protocol = Util.getInstanceStrict(c.getProtocolName(), getClass().getClassLoader());
-         }
-         ProtocolConfiguration configuration = new ProtocolConfiguration(protocol.getName(), c.getProperties());
-         Configurator.initializeAttrs(protocol, configuration, stackType);
-         protocols.add(protocol);
-
-         if (protocol instanceof RELAY2) {
-            hasRelay2 = true;
-            // Process remote sites if any
-            RELAY2 relay2 = (RELAY2) protocol;
-            RemoteSites actualSites = getRemoteSites();
-            if (actualSites.remoteSites.size() == 0) {
-               throw CONFIG.jgroupsRelayWithoutRemoteSites(name);
-            }
-            for (Map.Entry<String, RemoteSite> remoteSite : actualSites.remoteSites.entrySet()) {
-               JGroupsChannelConfigurator configurator = jgroupsConfiguration.configurator(remoteSite.getValue().stack);
-               SocketFactory socketFactory = getSocketFactory();
-               String remoteCluster = remoteSite.getValue().cluster;
-               if (remoteCluster == null) {
-                  remoteCluster = actualSites.defaultCluster;
-               }
-               if (socketFactory instanceof NamedSocketFactory) {
-                  // Create a new NamedSocketFactory using the remote cluster name
-                  socketFactory = new NamedSocketFactory((NamedSocketFactory) socketFactory, remoteCluster);
-               }
-               configurator.setSocketFactory(socketFactory);
-               for(ChannelListener listener : channelListeners) {
-                  configurator.addChannelListener(listener);
-               }
-               RelayConfig.SiteConfig siteConfig = new RelayConfig.SiteConfig(remoteSite.getKey());
-               siteConfig.addBridge(new RelayConfig.BridgeConfig(remoteCluster) {
-                  @Override
-                  public JChannel createChannel() throws Exception {
-                     // TODO The bridge channel is created lazily, and Infinispan doesn't see any errors
-                     return configurator.createChannel(getClusterName());
-                  }
-               });
-               relay2.addSite(remoteSite.getKey(), siteConfig);
-            }
-
-         }
-      }
-
-
-      if (!hasRelay2 && hasSites()) {
+      if (hasSites() && getProtocolStack().stream().noneMatch(EmbeddedJGroupsChannelConfigurator::isRelay2)) {
          throw CONFIG.jgroupsRemoteSitesWithoutRelay(name);
       }
+      return amendChannel(new JChannel(this));
+   }
 
-      return amendChannel(new JChannel(protocols));
+   @Override
+   public void afterCreation(Protocol protocol) {
+      if (!(protocol instanceof RELAY2)) {
+         return;
+      }
+      // Process remote sites if any
+      RemoteSites actualSites = getRemoteSites();
+      if (actualSites.remoteSites.size() == 0) {
+         throw CONFIG.jgroupsRelayWithoutRemoteSites(name);
+      }
+      RELAY2 relay2 = (RELAY2) protocol;
+      for (Map.Entry<String, RemoteSite> remoteSite : actualSites.remoteSites.entrySet()) {
+         JGroupsChannelConfigurator configurator = jgroupsConfiguration.configurator(remoteSite.getValue().stack);
+         SocketFactory socketFactory = getSocketFactory();
+         String remoteCluster = remoteSite.getValue().cluster;
+         if (remoteCluster == null) {
+            remoteCluster = actualSites.defaultCluster;
+         }
+         if (socketFactory instanceof NamedSocketFactory) {
+            // Create a new NamedSocketFactory using the remote cluster name
+            socketFactory = new NamedSocketFactory((NamedSocketFactory) socketFactory, remoteCluster);
+         }
+         configurator.setSocketFactory(socketFactory);
+         for(ChannelListener listener : channelListeners) {
+            configurator.addChannelListener(listener);
+         }
+         RelayConfig.SiteConfig siteConfig = new RelayConfig.SiteConfig(remoteSite.getKey());
+         siteConfig.addBridge(new RelayConfig.BridgeConfig(remoteCluster) {
+            @Override
+            public JChannel createChannel() throws Exception {
+               // TODO The bridge channel is created lazily, and Infinispan doesn't see any errors
+               return configurator.createChannel(getClusterName());
+            }
+         });
+         relay2.addSite(remoteSite.getKey(), siteConfig);
+      }
    }
 
    private static List<ProtocolConfiguration> combineStack(JGroupsChannelConfigurator baseStack, List<ProtocolConfiguration> stack) {
@@ -269,6 +245,15 @@ public class EmbeddedJGroupsChannelConfigurator extends AbstractJGroupsChannelCo
             ", stack=" + stack +
             ", remoteSites=" + remoteSites +
             '}';
+   }
+
+   private static boolean isRelay2(ProtocolConfiguration configuration) {
+      try {
+         return configuration.isAssignableProtocol(RELAY2.class, EmbeddedJGroupsChannelConfigurator.class);
+      } catch (Exception e) {
+         // it is ok to return false, JChannel will throw the exception
+         return false;
+      }
    }
 
    public enum StackCombine {
