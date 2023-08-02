@@ -275,6 +275,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Invalid configuration in '%s'", id = 963)
    IllegalArgumentException invalidConfiguration(String name);
 
+   @Message(value = "RESP cache '%s' key media type must be configured as application/octet-stream but was %s", id = 964)
+   IllegalArgumentException respCacheKeyMediaTypeSupplied(String cacheName, MediaType mediaType);
 
    //----- counters exceptions // don't use the same id range ------
 

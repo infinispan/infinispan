@@ -5,6 +5,7 @@ import static org.infinispan.server.resp.test.RespTestingUtil.killClient;
 import static org.infinispan.server.resp.test.RespTestingUtil.killServer;
 import static org.infinispan.server.resp.test.RespTestingUtil.startServer;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
@@ -46,6 +47,7 @@ public abstract class SingleNodeRespBaseTest extends SingleCacheManagerTest {
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
       TestCacheManagerFactory.amendGlobalConfiguration(globalBuilder, new TransportFlags());
       ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.encoding().key().mediaType(MediaType.APPLICATION_OCTET_STREAM);
       builder.clustering().hash().keyPartitioner(new CRC16HashFunctionPartitioner()).numSegments(256);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.newDefaultCacheManager(true, globalBuilder, builder);
       TestingUtil.replaceComponent(cacheManager, TimeService.class, timeService, true);

@@ -1,5 +1,11 @@
 package org.infinispan.server.resp;
 
+import static org.infinispan.server.resp.test.RespTestingUtil.createClient;
+import static org.infinispan.server.resp.test.RespTestingUtil.startServer;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -8,16 +14,9 @@ import org.infinispan.server.resp.configuration.RespServerConfiguration;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.infinispan.server.resp.test.RespTestingUtil.createClient;
-import static org.infinispan.server.resp.test.RespTestingUtil.startServer;
-
 @Test(groups = "functional", testName = "server.resp.RespMediaTypesTest")
 public class RespMediaTypesTest extends RespSingleNodeTest {
 
-   private MediaType keyType;
    private MediaType valueType;
 
    @Override
@@ -25,7 +24,7 @@ public class RespMediaTypesTest extends RespSingleNodeTest {
       cacheManager = createTestCacheManager();
       Configuration configuration = new ConfigurationBuilder()
             .encoding()
-            .key().mediaType(keyType.toString())
+            .key().mediaType(MediaType.APPLICATION_OCTET_STREAM)
             .encoding()
             .value().mediaType(valueType.toString())
             .build();
@@ -36,11 +35,6 @@ public class RespMediaTypesTest extends RespSingleNodeTest {
       redisConnection = client.connect();
       cache = cacheManager.getCache(server.getConfiguration().defaultCacheName());
       return cacheManager;
-   }
-
-   private RespMediaTypesTest withKeyType(MediaType type) {
-      this.keyType = type;
-      return this;
    }
 
    private RespMediaTypesTest withValueType(MediaType type) {
@@ -56,16 +50,14 @@ public class RespMediaTypesTest extends RespSingleNodeTest {
             MediaType.APPLICATION_OBJECT,
             MediaType.TEXT_PLAIN,
       };
-      for (MediaType key : types) {
-         for (MediaType value : types) {
-            instances.add(new RespMediaTypesTest().withKeyType(key).withValueType(value));
-         }
+      for (MediaType value : types) {
+         instances.add(new RespMediaTypesTest().withValueType(value));
       }
       return instances.toArray();
    }
 
    @Override
    protected String parameters() {
-      return String.format("[key=%s, value=%s]", keyType, valueType);
+      return "[value=" + valueType + "]";
    }
 }

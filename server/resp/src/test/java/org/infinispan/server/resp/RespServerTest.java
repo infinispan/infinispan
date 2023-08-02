@@ -2,6 +2,7 @@ package org.infinispan.server.resp;
 
 import static org.testng.AssertJUnit.assertEquals;
 
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -33,6 +34,7 @@ public class RespServerTest extends AbstractInfinispanTest {
 
    public void testExpiration() {
       ConfigurationBuilder config = new ConfigurationBuilder();
+      config.encoding().key().mediaType(MediaType.APPLICATION_OCTET_STREAM);
       config.expiration().lifespan(10);
       Stoppable.useCacheManager(TestCacheManagerFactory.createCacheManager(config), cm ->
             Stoppable.useServer(new RespServer(), ms -> {
