@@ -33,7 +33,9 @@ public class PersistenceManagerAvailabilityTest extends SingleCacheManagerTest {
    private Cache<Object, Object> createManagerAndGetCache(int startFailures) {
       GlobalConfigurationBuilder globalConfiguration = new GlobalConfigurationBuilder();
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      config.persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class)
+      config.persistence()
+            .availabilityInterval(1)
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .startFailures(startFailures);
       cacheManager = TestCacheManagerFactory.createCacheManager(globalConfiguration, config);
       return cacheManager.getCache();
