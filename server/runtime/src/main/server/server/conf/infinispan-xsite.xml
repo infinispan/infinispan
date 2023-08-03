@@ -13,6 +13,7 @@
 
       To use this configuration, do the following:
       
+      * Open terminal in $ISPN_HOME.
       * Copy the server/ directory to server2/.
       * Open a terminal and run: ./bin/server.sh -c infinispan-xsite.xml
       * Open another terminal and run: ./bin/server.sh -c infinispan-xsite.xml -s server2 -Dinfinispan.site.name=site2 -o 100 -Djgroups.mcast_port=46656
