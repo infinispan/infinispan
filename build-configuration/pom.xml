@@ -192,7 +192,7 @@
       <version.reactivestreams>1.0.3</version.reactivestreams>
       <version.rocksdb>6.15.5</version.rocksdb>
       <version.rxjava>3.0.4</version.rxjava>
-      <version.sshd>2.9.2</version.sshd>
+      <version.sshd>2.10.0</version.sshd>
       <version.smallrye-config>1.6.2</version.smallrye-config>
       <version.smallrye-metrics>2.4.0</version.smallrye-metrics>
       <version.microprofile-config-api>1.4</version.microprofile-config-api>
