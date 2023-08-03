@@ -43,6 +43,17 @@ Server configuration extends ${infinispan.brand.name} configuration with the fol
 
 The default configuration file is `<SERVER_HOME>/server/conf/infinispan.xml`.
 
+`infinispan.xml`:: Provides configuration to run ${infinispan.brand.name} Server using default cache container with statistics and authorization enabled. Demonstrates how to set up authentication and authorization using security realms.
+
+${infinispan.brand.name} provides other ready-to-use configuration files that are primarily for development and testing purposes.
+
+`<SERVER_HOME>/server/conf/` provides the following configuration files:
+
+`infinispan-dev-mode.xml`:: Configures ${infinispan.brand.name} Server specifically for cross-site replication with IP multicast discovery. The configuration provides `BASIC` authentication to connect to the Hot Rod and REST endpoints. The configuration is designed for development mode and should not be used in production environments.
+`infinispan-local.xml`:: Configures ${infinispan.brand.name} Server without clustering capabilities.
+`infinispan-xsite.xml`:: Configures cross-site replication on a single host and uses IP multicast for discovery.
+`log4j2.xml`:: Configures ${infinispan.brand.name} Server logging.
+
 Use different configuration files with the `-c` argument, as in the following example that starts a server without clustering capabilities:
 
 .Unix / Linux
