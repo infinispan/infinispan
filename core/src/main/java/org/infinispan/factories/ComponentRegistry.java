@@ -98,7 +98,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private ComponentRef<InternalConflictManager> conflictManager;
    private ComponentRef<DistributionManager> distributionManager;
    private ComponentRef<InternalDataContainer> internalDataContainer;
-   private ComponentRef<InternalEntryFactory> internalEntryFactory;
+   protected ComponentRef<InternalEntryFactory> internalEntryFactory;
    private ComponentRef<InvocationContextFactory> invocationContextFactory;
    private ComponentRef<IracManager> iracManager;
    private ComponentRef<IracVersionGenerator> iracVersionGenerator;

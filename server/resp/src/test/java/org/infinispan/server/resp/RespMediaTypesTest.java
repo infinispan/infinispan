@@ -58,6 +58,6 @@ public class RespMediaTypesTest extends RespSingleNodeTest {
 
    @Override
    protected String parameters() {
-      return "[value=" + valueType + "]";
+      return super.parameters() + " + " + "[value=" + valueType + "]";
    }
 }

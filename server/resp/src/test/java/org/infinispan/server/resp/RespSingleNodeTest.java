@@ -30,10 +30,13 @@ import java.util.stream.Stream;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.server.resp.commands.Commands;
 import org.infinispan.server.resp.test.CommonRespTests;
 import org.testng.annotations.DataProvider;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import io.lettuce.core.ExpireArgs;
@@ -62,6 +65,37 @@ import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
  */
 @Test(groups = "functional", testName = "server.resp.RespSingleNodeTest")
 public class RespSingleNodeTest extends SingleNodeRespBaseTest {
+
+   private CacheMode cacheMode = CacheMode.LOCAL;
+   private boolean simpleCache;
+
+   @Factory
+   public Object[] factory() {
+      return new Object[]{
+            new RespSingleNodeTest(),
+            new RespSingleNodeTest().simpleCache()
+      };
+   }
+
+   RespSingleNodeTest simpleCache() {
+      this.cacheMode = CacheMode.LOCAL;
+      this.simpleCache = true;
+      return this;
+   }
+
+   @Override
+   protected String parameters() {
+      return "[simpleCache=" + simpleCache + ", cacheMode=" + cacheMode + "]";
+   }
+
+   @Override
+   protected void amendConfiguration(ConfigurationBuilder configurationBuilder) {
+      if (simpleCache) {
+         configurationBuilder.clustering().cacheMode(CacheMode.LOCAL).simpleCache(true);
+      } else {
+         configurationBuilder.clustering().cacheMode(cacheMode);
+      }
+   }
 
    @Test
    public void testSetMultipleOptions() {
@@ -566,6 +600,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       }
    }
 
+   @Test
    public void testClusterShardsSingleNode() {
       RedisCommands<String, String> redis = redisConnection.sync();
       assertThatThrownBy(redis::clusterShards)
@@ -631,7 +666,8 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       redis.set(key1, v1);
       redis.set(key2, v2);
       StrAlgoArgs args = StrAlgoArgs.Builder.keys(key1, key2).withIdx().minMatchLen(minLen);
-      int[][] idx = Arrays.stream(idxs).filter(pos -> pos.length == 1 || pos[1] - pos[0] >= minLen)
+      int[][] idx = Arrays
+            .stream(idxs).filter(pos -> pos.length == 1 || pos[1] - pos[0] >= minLen - 1)
             .toArray(int[][]::new);
       StringMatchResult res = redis.stralgoLcs(args);
       checkIdx(resp, idx, res, false);
@@ -652,15 +688,15 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
 
    @DataProvider
    public Object[][] lcsCasesWithMinLen() {
+      List<Object[]> testCases = new ArrayList<>();
       var minLengths = new Object[][]{{1}, {2}, {4}, {10}};
       var lcsCases = this.lcsCases();
-      var result = new Object[lcsCases.length][];
       for (Object[] len : minLengths) {
-         for (int i = 0; i < lcsCases.length; i++) {
-            result[i] = Stream.concat(Arrays.stream(lcsCases[i]), Arrays.stream(len)).toArray();
+         for (Object[] lcsCase : lcsCases) {
+            testCases.add(Stream.concat(Arrays.stream(lcsCase), Arrays.stream(len)).toArray());
          }
       }
-      return result;
+      return testCases.toArray(new Object[0][]);
    }
 
    private void checkIdx(String resp, int[][] idx, StringMatchResult res, boolean withLen) {
