@@ -28,10 +28,10 @@ import org.infinispan.util.logging.LogFactory;
  * @since 8.0
  */
 @Experimental
-public final class ReadWriteMapImpl<K, V> extends AbstractFunctionalMap<K, V> implements ReadWriteMap<K, V> {
+public class ReadWriteMapImpl<K, V> extends AbstractFunctionalMap<K, V> implements ReadWriteMap<K, V> {
    private static final Log log = LogFactory.getLog(ReadWriteMapImpl.class);
 
-   private ReadWriteMapImpl(Params params, FunctionalMapImpl<K, V> functionalMap) {
+   ReadWriteMapImpl(Params params, FunctionalMapImpl<K, V> functionalMap) {
       super(params, functionalMap);
    }
 
@@ -40,6 +40,9 @@ public final class ReadWriteMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    }
 
    private static <K, V> ReadWriteMap<K, V> create(Params params, FunctionalMapImpl<K, V> functionalMap) {
+      if (functionalMap.cache().getCacheConfiguration().simpleCache()) {
+         return new SimpleReadWriteMapImpl<>(params, functionalMap);
+      }
       return new ReadWriteMapImpl<>(params, functionalMap);
    }
 

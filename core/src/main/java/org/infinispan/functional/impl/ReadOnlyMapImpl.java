@@ -27,10 +27,10 @@ import org.infinispan.util.logging.LogFactory;
  * @since 8.0
  */
 @Experimental
-public final class ReadOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> implements ReadOnlyMap<K, V> {
+public class ReadOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> implements ReadOnlyMap<K, V> {
    private static final Log log = LogFactory.getLog(ReadOnlyMapImpl.class);
 
-   private ReadOnlyMapImpl(Params params, FunctionalMapImpl<K, V> functionalMap) {
+   ReadOnlyMapImpl(Params params, FunctionalMapImpl<K, V> functionalMap) {
       super(params, functionalMap);
    }
 
@@ -39,6 +39,9 @@ public final class ReadOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> imp
    }
 
    private static <K, V> ReadOnlyMap<K, V> create(Params params, FunctionalMapImpl<K, V> functionalMap) {
+      if (functionalMap.cache().getCacheConfiguration().simpleCache()) {
+         return new SimpleReadOnlyMapImpl<>(params, functionalMap);
+      }
       return new ReadOnlyMapImpl<>(params, functionalMap);
    }
 
