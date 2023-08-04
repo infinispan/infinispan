@@ -94,12 +94,12 @@ public class EvictInvalidatedNearCacheTest extends SingleHotRodServerTest {
       assertClient.expectNoNearEvents();
       for (int i = 0; i < entryCount; ++i) {
          assertClient.put(i, "v1").expectNearPreemptiveRemove(i);
-         assertClient.get(i, "v1").expectNearGetNull(i).expectNearPutIfAbsent(i, "v1");
+         assertClient.get(i, "v1").expectNearGetMissWithValue(i, "v1");
       }
 
       int extraKey = entryCount + 1;
       assertClient.put(extraKey, "v1").expectNearPreemptiveRemove(extraKey);
-      assertClient.get(extraKey, "v1").expectNearGetNull(extraKey).expectNearPutIfAbsent(extraKey, "v1");
+      assertClient.get(extraKey, "v1").expectNearGetMissWithValue(extraKey, "v1");
 
       // Caffeine is not deterministic as to which one it evicts - so we just verify size
       assertEquals(entryCount, assertClient.nearCacheSize());
