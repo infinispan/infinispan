@@ -75,11 +75,20 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
    @Override
    public CompletionStage<CacheEntry<K, V>> getEntry(K key, CacheOptions options) {
       CacheEntry<K, V> nearValue = nearcache.get(key);
-      if (nearValue == null) {
+      // We rely upon the fact that a CacheEntry will never be null from a remote lookup but our placeholder will be null
+      if (nearValue == null || nearValue.value() == null) {
          clientStatistics.incrementNearCacheMisses();
+         // Note we are using a fake Object to ensure equals of CacheEntryImpl isn't true for the same key
+         // We cannot cache this value as we could have 2 concurrent gets and an update and we could cache a previous one
+         CacheEntryImpl<K, V> calculatingPlaceholder = new CacheEntryImpl<>((K) new Object(), null, null);
+         boolean cache = nearcache.putIfAbsent(key, calculatingPlaceholder);
          int prevVersion = getCurrentVersion();
          RetryAwareCompletionStage<CacheEntry<K, V>> remoteValue = super.getEntry(key, options, listenerAddress);
+         if (!cache) {
+            return remoteValue.toCompletableFuture();
+         }
          return remoteValue.thenApply(e -> {
+            boolean shouldRemove = true;
             // We cannot cache the value if a retry was required - which means we did not talk to the listener node
             if (e != null) {
                // If previous version is odd we can't cache as that means it was started during
@@ -98,9 +107,13 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
                      log.tracef("Unable to cache returned value for key %s as operation was retried", key);
                   }
                } else {
-                  nearcache.putIfAbsent(e);
+                  nearcache.replace(key, calculatingPlaceholder, e);
                   e.metadata().expiration().maxIdle().ifPresent(m -> HOTROD.nearCacheMaxIdleUnsupported());
+                  shouldRemove = false;
                }
+            }
+            if (shouldRemove) {
+               nearcache.remove(key, calculatingPlaceholder);
             }
             return e;
          });

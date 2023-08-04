@@ -74,11 +74,20 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
    @Override
    public CompletableFuture<MetadataValue<V>> getWithMetadataAsync(K key) {
       MetadataValue<V> nearValue = nearcache.get(key);
-      if (nearValue == null) {
+      // We rely upon the fact that a MetadataValue will never be null from a remote lookup but our placeholder will be null
+      if (nearValue == null || nearValue.getValue() == null) {
          clientStatistics.incrementNearCacheMisses();
+         // Note that MetadataValueImpl does not implement equals method so we rely upon object identity in the replace below
+         // We cannot cache this value as we could have 2 concurrent gets and an update and we could cache a previous one
+         MetadataValue<V> calculatingPlaceholder = new MetadataValueImpl<>(-1, -1, -1, -1, -1, null);
+         boolean cache = nearcache.putIfAbsent(key, calculatingPlaceholder);
          int prevVersion = getCurrentVersion();
          RetryAwareCompletionStage<MetadataValue<V>> remoteValue = super.getWithMetadataAsync(key, listenerAddress);
+         if (!cache) {
+            return remoteValue.toCompletableFuture();
+         }
          return remoteValue.thenApply(v -> {
+            boolean shouldRemove = true;
             // We cannot cache the value if a retry was required - which means we did not talk to the listener node
             if (v != null) {
                // If previous version is odd we can't cache as that means it was started during
@@ -97,11 +106,15 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
                      log.tracef("Unable to cache returned value for key %s as operation was retried", key);
                   }
                } else {
-                  nearcache.putIfAbsent(key, v);
+                  nearcache.replace(key, calculatingPlaceholder, v);
                   if (v.getMaxIdle() > 0) {
                      HOTROD.nearCacheMaxIdleUnsupported();
                   }
+                  shouldRemove = false;
                }
+            }
+            if (shouldRemove) {
+               nearcache.remove(key, calculatingPlaceholder);
             }
             return v;
          }).toCompletableFuture();

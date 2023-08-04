@@ -3,7 +3,6 @@ package org.infinispan.client.hotrod.near;
 import static org.infinispan.client.hotrod.near.MockNearCacheService.MockClearEvent;
 import static org.infinispan.client.hotrod.near.MockNearCacheService.MockEvent;
 import static org.infinispan.client.hotrod.near.MockNearCacheService.MockGetEvent;
-import static org.infinispan.client.hotrod.near.MockNearCacheService.MockPutEvent;
 import static org.infinispan.client.hotrod.near.MockNearCacheService.MockPutIfAbsentEvent;
 import static org.infinispan.client.hotrod.near.MockNearCacheService.MockRemoveEvent;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.entryVersion;
@@ -35,10 +34,10 @@ class AssertsNearCache<K, V> {
    final NearCacheMode nearCacheMode;
    final AtomicReference<NearCacheService<K, V>> nearCacheService;
 
-   private AssertsNearCache(RemoteCacheManager manager, Cache<byte[], ?> server, BlockingQueue<MockEvent> events,
-                            AtomicReference<NearCacheService<K, V>> nearCacheService) {
+   private AssertsNearCache(RemoteCacheManager manager, String cacheName, Cache<byte[], ?> server,
+                            BlockingQueue<MockEvent> events, AtomicReference<NearCacheService<K, V>> nearCacheService) {
       this.manager = manager;
-      this.remote = (InternalRemoteCache<K, V>) manager.getCache();
+      this.remote = (InternalRemoteCache<K, V>) (cacheName == null ? manager.getCache() : manager.getCache(cacheName));
       this.server = server;
       this.events = events;
       this.nearCacheMode = manager.getConfiguration().nearCache().mode();
@@ -46,6 +45,10 @@ class AssertsNearCache<K, V> {
    }
 
    static <K, V> AssertsNearCache<K, V> create(Cache<byte[], ?> server, ConfigurationBuilder builder) {
+      return create(server, null, builder);
+   }
+
+   static <K, V> AssertsNearCache<K, V> create(Cache<byte[], ?> server, String cacheName, ConfigurationBuilder builder) {
       final BlockingQueue<MockEvent> events = new ArrayBlockingQueue<>(128);
       AtomicReference<NearCacheService<K, V>> nearCacheServiceRef = new AtomicReference<>();
       RemoteCacheManager manager = new RemoteCacheManager(builder.build()) {
@@ -57,7 +60,7 @@ class AssertsNearCache<K, V> {
          }
       };
 
-      return new AssertsNearCache<K, V>(manager, server, events, nearCacheServiceRef);
+      return new AssertsNearCache<K, V>(manager, cacheName, server, events, nearCacheServiceRef);
    }
 
    AssertsNearCache<K, V> get(K key, V expected) {
@@ -137,25 +140,27 @@ class AssertsNearCache<K, V> {
       return this;
    }
 
-   AssertsNearCache<K, V> expectNearGetNull(K key) {
+   AssertsNearCache<K, V> expectNearGetMiss(K key) {
       MockGetEvent get = assertGetKey(key);
       assertNull(get.value);
+      expectNearPutIfAbsent(key, null);
+      expectNearPreemptiveRemove(key);
       return this;
    }
 
-   @SafeVarargs
-   final AssertsNearCache<K, V> expectNearPut(K key, V value, AssertsNearCache<K, V>... affected) {
-      expectNearPutInClient(this, key, value);
-      for (AssertsNearCache<K, V> client : affected)
-         expectNearPutInClient(client, key, value);
-
+   AssertsNearCache<K, V> expectNearGetMissWithValue(K key, V value) {
+      MockGetEvent get = assertGetKey(key);
+      assertNull(get.value);
+      expectNearPutIfAbsent(key, null);
+      expectNearReplaceEvent(this, key, null, value);
       return this;
    }
 
-   private static <K, V> void expectNearPutInClient(AssertsNearCache<K, V> client, K key, V value) {
-      MockPutEvent put = pollEvent(client.events);
+   private static <K, V> void expectNearReplaceEvent(AssertsNearCache<K, V> client, K key, V prevValue, V newValue) {
+      MockNearCacheService.MockReplaceEvent<K, V> put = pollEvent(client.events);
       assertEquals(key, put.key);
-      assertEquals(value, put.value.getValue());
+      assertEquals(prevValue, put.prevValue.getValue());
+      assertEquals(newValue, put.value.getValue());
    }
 
    AssertsNearCache<K, V> expectNearPutIfAbsent(K key, V value) {
