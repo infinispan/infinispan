@@ -23,6 +23,7 @@ import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
+import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.Flag;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.ImmutableContext;
@@ -486,11 +487,13 @@ public class InternalCacheFactory<K, V> {
       protected void bootstrapComponents() {
          registerComponent(new ClusterEventManagerStub<K, V>(), ClusterEventManager.class);
          registerComponent(new PassivationManagerStub(), PassivationManager.class);
+         registerComponent(new InternalCacheFactory<>(), InternalCacheFactory.class);
       }
 
       @Override
       public void cacheComponents() {
          getOrCreateComponent(InternalExpirationManager.class);
+         internalEntryFactory = basicComponentRegistry.getComponent(InternalEntryFactory.class);
       }
    }
 }

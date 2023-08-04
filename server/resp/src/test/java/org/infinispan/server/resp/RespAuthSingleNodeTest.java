@@ -13,6 +13,7 @@ import org.infinispan.server.resp.authentication.RespAuthenticator;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import io.lettuce.core.RedisCommandExecutionException;
@@ -92,5 +93,20 @@ public class RespAuthSingleNodeTest extends RespSingleNodeTest {
       public boolean isClientCertAuthEnabled() {
          return false;
       }
+   }
+
+   @Factory
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new RespAuthSingleNodeTest(),
+            new RespAuthSingleNodeTest().simpleCache(),
+      };
+   }
+
+   @Override
+   RespSingleNodeTest simpleCache() {
+      super.simpleCache();
+      return this;
    }
 }

@@ -58,29 +58,21 @@ public class SimpleReadWriteMapImpl<K, V> extends ReadWriteMapImpl<K, V> {
    public <T, R> CompletableFuture<R> eval(K key, T argument, BiFunction<T, EntryView.ReadWriteEntryView<K, V>, R> f) {
       K storageKey = storageKey(key);
       InternalCacheEntry<K, V> ice = fmap.cache.getDataContainer().peek(storageKey);
-      if (ice == null || !ice.canExpire()) {
-         try {
-            R result = evalInternal(storageKey, argument, f);
-            return result == null
-                  ? CompletableFutures.completedNull()
-                  : CompletableFuture.completedFuture(result);
-         } catch (Throwable t) {
-            return CompletableFuture.failedFuture(t);
+      boolean expired = false;
+      if (ice != null && ice.canExpire()) {
+         int segment = fmap.keyPartitioner.getSegment(storageKey);
+         CompletionStage<Boolean> expiration = expirationManager.handlePossibleExpiration(ice, segment, true);
+         assert expiration.toCompletableFuture().isDone() : "Expiration CF is not done!";
+         expired = CompletionStages.join(expiration);
+
+         if (expired && notifier.hasListener(CacheEntryExpired.class)) {
+            CompletionStages.join(notifier.notifyCacheEntryExpired(ice.getKey(), ice.getValue(), ice.getMetadata(),   ImmutableContext.INSTANCE));
          }
-      }
-
-      int segment = fmap.keyPartitioner.getSegment(storageKey);
-      CompletionStage<Boolean> expiration = expirationManager.handlePossibleExpiration(ice, segment, true);
-      assert expiration.toCompletableFuture().isDone() : "Expiration should be done";
-      boolean expired = CompletionStages.join(expiration);
-
-      if (expired && notifier.hasListener(CacheEntryExpired.class)) {
-         CompletionStages.join(notifier.notifyCacheEntryExpired(ice.getKey(), ice.getValue(), ice.getMetadata(), ImmutableContext.INSTANCE));
       }
 
       try {
          InternalCacheEntry<K, V> entry = !expired ? ice : null;
-         R result = evalInternal(key, argument, f, entry);
+         R result = evalInternal(storageKey, argument, f, entry);
          return result == null
                ? CompletableFutures.completedNull()
                : CompletableFuture.completedFuture(result);
@@ -128,17 +120,6 @@ public class SimpleReadWriteMapImpl<K, V> extends ReadWriteMapImpl<K, V> {
 
    private boolean hasListeners() {
       return !notifier.getListeners().isEmpty();
-   }
-
-   private <R, T> R evalInternal(K key, T argument, BiFunction<T, EntryView.ReadWriteEntryView<K, V>, R> f) {
-      Objects.requireNonNull(key, KEY_CANNOT_BE_NULL);
-      Objects.requireNonNull(f, FUNCTION_CANNOT_BE_NULL);
-      ByRef<R> result = new ByRef<>(null);
-      ByRef<EntryHolder<K, V>> holder = new ByRef<>(null);
-      fmap.cache.getDataContainer().compute(key, (k, oldEntry, factory) ->
-            compute(key, argument, f, oldEntry, factory, result, holder));
-      handleNotifications(key, holder.get());
-      return result.get();
    }
 
    private <R, T> R evalInternal(K key, T argument, BiFunction<T, EntryView.ReadWriteEntryView<K, V>, R> f, InternalCacheEntry<K, V> override) {
