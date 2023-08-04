@@ -64,6 +64,14 @@ The default `availability-interval` has been increased to 30 seconds. The previo
 The RESP endpoint cache now requires the key storage media type to be
 application/octet-stream.
 
+= Upgrading to 14.0.14 or newer
+
+== NearCache SPI
+
+Due to incosistency issues with concurrent updates the NearCache SPI needed to be updated to have concurrent
+based methods to prevent an issue where a stale entry may have been saved in the near cache.
+For more information please see link:https://issues.jboss.org/browse/ISPN-13612[ISPN-13612]
+
 = Upgrading from 13.0 to 14.0
 
 == Security authorization SPI

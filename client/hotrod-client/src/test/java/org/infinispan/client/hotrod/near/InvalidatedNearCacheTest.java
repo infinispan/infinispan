@@ -111,8 +111,8 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
       try {
          assertEquals(2, newAssertClient.remote.size());
          newAssertClient.expectNoNearEvents();
-         newAssertClient.get(1, "one").expectNearGetValue(1, null).expectNearPutIfAbsent(1, "one");
-         newAssertClient.get(2, "two").expectNearGetValue(2, null).expectNearPutIfAbsent(2, "two");
+         newAssertClient.get(1, "one").expectNearGetMissWithValue(1, "one");
+         newAssertClient.get(2, "two").expectNearGetMissWithValue(2, "two");
          newAssertClient.remove(1).expectNearRemove(1, assertClient);
          newAssertClient.remove(2).expectNearRemove(2, assertClient);
       } finally {
@@ -123,49 +123,49 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
 
    public void testGetNearCache() {
       assertClient.expectNoNearEvents();
-      assertClient.get(1, null).expectNearGetNull(1);
+      assertClient.get(1, null).expectNearGetMiss(1);
       assertClient.put(1, "v1").expectNearPreemptiveRemove(1);
-      assertClient.get(1, "v1").expectNearGetNull(1).expectNearPutIfAbsent(1, "v1");
+      assertClient.get(1, "v1").expectNearGetMissWithValue(1, "v1");
       assertClient.get(1, "v1").expectNearGetValue(1, "v1");
       assertClient.remove(1).expectNearRemove(1);
-      assertClient.get(1, null).expectNearGetNull(1);
+      assertClient.get(1, null).expectNearGetMiss(1);
    }
 
    public void testGetAsyncNearCache() throws ExecutionException, InterruptedException {
       assertClient.expectNoNearEvents();
-      assertClient.getAsync(1, null).expectNearGetNull(1);
+      assertClient.getAsync(1, null).expectNearGetMiss(1);
       assertClient.putAsync(1, "v1").expectNearPreemptiveRemove(1);
-      assertClient.getAsync(1, "v1").expectNearGetNull(1).expectNearPutIfAbsent(1, "v1");
+      assertClient.getAsync(1, "v1").expectNearGetMissWithValue(1, "v1");
       assertClient.getAsync(1, "v1").expectNearGetValue(1, "v1");
       assertClient.removeAsync(1).expectNearRemove(1);
-      assertClient.getAsync(1, null).expectNearGetNull(1);
+      assertClient.getAsync(1, null).expectNearGetMiss(1);
    }
 
    public void testGetWithMetadataNearCache() {
       assertClient.expectNoNearEvents();
-      assertClient.getWithMetadata(1, null).expectNearGetNull(1);
+      assertClient.getWithMetadata(1, null).expectNearGetMiss(1);
       assertClient.put(1, "v1").expectNearPreemptiveRemove(1);
-      assertClient.getWithMetadata(1, "v1").expectNearGetNull(1).expectNearPutIfAbsent(1, "v1");
+      assertClient.getWithMetadata(1, "v1").expectNearGetMissWithValue(1, "v1");
       assertClient.getWithMetadata(1, "v1").expectNearGetValueVersion(1, "v1");
       assertClient.remove(1).expectNearRemove(1);
-      assertClient.getWithMetadata(1, null).expectNearGetNull(1);
+      assertClient.getWithMetadata(1, null).expectNearGetMiss(1);
    }
 
    public void testGetWithMetadataAsyncNearCache() throws ExecutionException, InterruptedException {
       assertClient.expectNoNearEvents();
-      assertClient.getWithMetadataAsync(1, null).expectNearGetNull(1);
+      assertClient.getWithMetadataAsync(1, null).expectNearGetMiss(1);
       assertClient.putAsync(1, "v1").expectNearPreemptiveRemove(1);
-      assertClient.getWithMetadataAsync(1, "v1").expectNearGetNull(1).expectNearPutIfAbsent(1, "v1");
+      assertClient.getWithMetadataAsync(1, "v1").expectNearGetMissWithValue(1, "v1");
       assertClient.getWithMetadataAsync(1, "v1").expectNearGetValueVersion(1, "v1");
       assertClient.removeAsync(1).expectNearRemove(1);
-      assertClient.getWithMetadataAsync(1, null).expectNearGetNull(1);
+      assertClient.getWithMetadataAsync(1, null).expectNearGetMiss(1);
    }
 
    public void testUpdateNearCache() {
       assertClient.expectNoNearEvents();
       assertClient.put(1, "v1").expectNearPreemptiveRemove(1);
       assertClient.put(1, "v2").expectNearRemove(1);
-      assertClient.get(1, "v2").expectNearGetNull(1).expectNearPutIfAbsent(1, "v2");
+      assertClient.get(1, "v2").expectNearGetMissWithValue(1, "v2");
       assertClient.get(1, "v2").expectNearGetValue(1, "v2");
       assertClient.put(1, "v3").expectNearRemove(1);
       assertClient.remove(1).expectNearRemove(1);
@@ -175,7 +175,7 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
       assertClient.expectNoNearEvents();
       assertClient.putAsync(1, "v1").expectNearPreemptiveRemove(1);
       assertClient.putAsync(1, "v2").expectNearRemove(1);
-      assertClient.getAsync(1, "v2").expectNearGetNull(1).expectNearPutIfAbsent(1, "v2");
+      assertClient.getAsync(1, "v2").expectNearGetMissWithValue(1, "v2");
       assertClient.getAsync(1, "v2").expectNearGetValue(1, "v2");
       assertClient.putAsync(1, "v3").expectNearRemove(1);
       assertClient.removeAsync(1).expectNearRemove(1);
@@ -192,7 +192,7 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
          @Override
          public void call() {
             newAsserts.expectNoNearEvents();
-            newAsserts.get(1, "v1").expectNearGetNull(1).expectNearPutIfAbsent(1, "v1");
+            newAsserts.get(1, "v1").expectNearGetMissWithValue(1, "v1");
          }
       });
    }
@@ -207,7 +207,7 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
          public void call() {
             newAsserts.expectNoNearEvents();
             try {
-               newAsserts.getAsync(1, "v1").expectNearGetNull(1).expectNearPutIfAbsent(1, "v1");
+               newAsserts.getAsync(1, "v1").expectNearGetMissWithValue(1, "v1");
             } catch (Exception e) {
                throw new RuntimeException(e);
             }
@@ -297,21 +297,26 @@ public class InvalidatedNearCacheTest extends SingleHotRodServerTest {
 
       @Override
       public <K, V> NearCache<K, V> createNearCache(NearCacheConfiguration config, BiConsumer<K, MetadataValue<V>> removedConsumer) {
-         return new NearCache<K, V>() {
+         return new NearCache<>() {
 
             @Override
-            public void put(K key, MetadataValue<V> value) {
-               cache.put(key, value);
+            public boolean putIfAbsent(K key, MetadataValue<V> value) {
+               return cache.putIfAbsent(key, value) == null;
             }
 
             @Override
-            public void putIfAbsent(K key, MetadataValue<V> value) {
-               cache.putIfAbsent(key, value);
+            public boolean replace(K key, MetadataValue<V> prevValue, MetadataValue<V> newValue) {
+               return cache.replace(key, prevValue, newValue);
             }
 
             @Override
             public boolean remove(K key) {
                return cache.remove(key) != null;
+            }
+
+            @Override
+            public boolean remove(K key, MetadataValue<V> value) {
+               return cache.remove(key, value);
             }
 
             @Override

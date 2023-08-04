@@ -47,21 +47,35 @@ public class MockNearCacheService<K, V> extends NearCacheService<K, V> {
       }
 
       @Override
-      public void put(K key, MetadataValue<V> value) {
-         delegate.put(key, value);
-         events.add(new MockPutEvent<>(key, value));
+      public boolean putIfAbsent(K key, MetadataValue<V> value) {
+         boolean put = delegate.putIfAbsent(key, value);
+         events.add(new MockPutIfAbsentEvent<>(key, value));
+         return put;
       }
 
       @Override
-      public void putIfAbsent(K key, MetadataValue<V> value) {
-         delegate.putIfAbsent(key, value);
-         events.add(new MockPutIfAbsentEvent<>(key, value));
+      public boolean replace(K key, MetadataValue<V> prevValue, MetadataValue<V> newValue) {
+         boolean put = delegate.replace(key, prevValue, newValue);
+         events.add(new MockReplaceEvent<>(key, prevValue, newValue));
+         return put;
       }
 
       @Override
       public boolean remove(K key) {
          boolean removed = delegate.remove(key);
          events.add(new MockRemoveEvent<>(key));
+         return removed;
+      }
+
+      @Override
+      public boolean remove(K key, MetadataValue<V> value) {
+         boolean removed = delegate.remove(key, value);
+         if (removed) {
+            // We only raise the event if the remove actually removed something. This is due to the fact that
+            // optional remove is only done locally so its cost is negligible for a miss unlike the other
+            // remove that is fired due to a remote event which is many orders of magnitude slower
+            events.add(new MockRemoveEvent<>(key));
+         }
          return removed;
       }
 
@@ -90,9 +104,16 @@ public class MockNearCacheService<K, V> extends NearCacheService<K, V> {
       }
    }
 
-   static class MockPutEvent<K, V> extends MockKeyValueEvent<K, V> {
-      MockPutEvent(K key, MetadataValue<V> value) {
-         super(key, value);
+   static class MockReplaceEvent<K, V> extends MockKeyValueEvent<K, V> {
+      final MetadataValue<V> prevValue;
+      MockReplaceEvent(K key, MetadataValue<V> prevValue, MetadataValue<V> newValue) {
+         super(key, newValue);
+         this.prevValue = prevValue;
+      }
+
+      @Override
+      public String toString() {
+         return this.getClass().getName() + "{" + "key=" + key + ", prevValue=" + prevValue + ", value=" + value +'}';
       }
    }
    static class MockPutIfAbsentEvent<K, V> extends MockKeyValueEvent<K, V> {

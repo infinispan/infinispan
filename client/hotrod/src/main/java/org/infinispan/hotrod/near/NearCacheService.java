@@ -111,19 +111,23 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
    }
 
    @Override
-   public void put(CacheEntry<K, V> entry) {
-       cache.put(entry);
+   public boolean putIfAbsent(K key, CacheEntry<K, V> entry) {
+      boolean inserted = cache.putIfAbsent(key, entry);
 
       if (log.isTraceEnabled())
-         log.tracef("Put %s in near cache (listenerId=%s)", entry, Util.printArray(listenerId));
+         log.tracef("Conditionally put %s if absent in near cache (listenerId=%s): %s", entry,
+               Util.printArray(listenerId), inserted);
+      return inserted;
    }
 
    @Override
-   public void putIfAbsent(CacheEntry<K, V> entry) {
-      cache.putIfAbsent(entry);
-
-      if (log.isTraceEnabled())
-         log.tracef("Conditionally put %s if absent in near cache (listenerId=%s)", entry, Util.printArray(listenerId));
+   public boolean replace(K key, CacheEntry<K, V> prevValue, CacheEntry<K, V> newValue) {
+      boolean replaced = cache.replace(key, prevValue, newValue);
+      if (log.isTraceEnabled()) {
+         log.tracef("Replaced key=%s and value=%s with new value=%s in near cache (listenerId=%s): %s",
+               key, prevValue, newValue, Util.printArray(listenerId), replaced);
+      }
+      return replaced;
    }
 
    @Override
@@ -141,6 +145,14 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
          entryRemovedFromNearCache(null);
       }
 
+      return removed;
+   }
+
+   @Override
+   public boolean remove(K key, CacheEntry<K, V> entry) {
+      boolean removed = cache.remove(key, entry);
+      if (log.isTraceEnabled())
+         log.tracef("Removed value=%s for key=%s from near cache (listenedId=%s): %s", entry, key, Util.printArray(listenerId), removed);
       return removed;
    }
 

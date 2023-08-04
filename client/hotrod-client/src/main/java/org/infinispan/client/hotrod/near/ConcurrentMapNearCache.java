@@ -18,18 +18,23 @@ final class ConcurrentMapNearCache<K, V> implements NearCache<K, V> {
    private final ConcurrentMap<K, MetadataValue<V>> cache = new ConcurrentHashMap<>();
 
    @Override
-   public void put(K key, MetadataValue<V> value) {
-      cache.put(key, value);
+   public boolean putIfAbsent(K key, MetadataValue<V> value) {
+      return cache.putIfAbsent(key, value) == null;
    }
 
    @Override
-   public void putIfAbsent(K key, MetadataValue<V> value) {
-      cache.putIfAbsent(key, value);
+   public boolean replace(K key, MetadataValue<V> prevValue, MetadataValue<V> newValue) {
+      return cache.replace(key, prevValue, newValue);
    }
 
    @Override
    public boolean remove(K key) {
       return cache.remove(key) != null;
+   }
+
+   @Override
+   public boolean remove(K key, MetadataValue<V> value) {
+      return cache.remove(key, value);
    }
 
    @Override

@@ -169,6 +169,9 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    private void getWithMetadataInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, int offset) {
+      // We have to set before retrieving the value in case of a concurrent write
+      // This can cause unneeded invalidations for a miss, but is required for consistency
+      addToFilter(header.cacheName, key);
       CompletableFuture<CacheEntry<byte[], byte[]>> get = cache.getCacheEntryAsync(key);
       if (get.isDone() && !get.isCompletedExceptionally()) {
          handleGetWithMetadata(header, offset, key, get.join(), null);
@@ -186,7 +189,6 @@ class CacheRequestProcessor extends BaseRequestProcessor {
          writeNotExist(header);
       } else if (header.op == HotRodOperation.GET_WITH_METADATA) {
          assert offset == 0;
-         addToFilter(header.cacheName, key);
          writeResponse(header, header.encoder().getWithMetadataResponse(header, server, channel, entry));
       } else {
          if (entry == null) {

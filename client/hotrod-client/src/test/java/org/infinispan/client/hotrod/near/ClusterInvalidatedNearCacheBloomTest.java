@@ -23,7 +23,9 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "client.hotrod.near.ClusterInvalidatedNearCacheBloomTest")
 public class ClusterInvalidatedNearCacheBloomTest extends MultiHotRodServersTest {
    private static final int CLUSTER_MEMBERS = 3;
-   private static final int NEAR_CACHE_SIZE = 4;
+   // This has to be 16 due to how NearCache bloom filter is calculated by dividing by 16 to require
+   // one update + 3 before it will send the updated bloom filter
+   private static final int NEAR_CACHE_SIZE = 16;
 
    List<AssertsNearCache<Integer, String>> assertClients = new ArrayList<>(CLUSTER_MEMBERS);
 
@@ -56,7 +58,7 @@ public class ClusterInvalidatedNearCacheBloomTest extends MultiHotRodServersTest
    protected void destroy() {
       for (AssertsNearCache<Integer, String> assertsNearCache : assertClients) {
          try {
-            assertsNearCache.expectNoNearEvents(50, TimeUnit.MILLISECONDS);
+            assertsNearCache.expectNoNearEvents(500, TimeUnit.MILLISECONDS);
          } catch (InterruptedException e) {
             throw new AssertionError(e);
          }
@@ -97,19 +99,18 @@ public class ClusterInvalidatedNearCacheBloomTest extends MultiHotRodServersTest
    public void testInvalidationFromOtherClientModification() {
       int key = 0;
 
-      client1.get(key, null).expectNearGetNull(key);
-      client2.get(key, null).expectNearGetNull(key);
+      client1.get(key, null).expectNearGetMiss(key);
+      client2.get(key, null).expectNearGetMiss(key);
 
       String value = "v1";
       client1.put(key, value).expectNearPreemptiveRemove(key);
-      client2.expectNoNearEvents();
 
-      client2.get(key, value).expectNearGetNull(key).expectNearPutIfAbsent(key, value);
+      client2.get(key, value).expectNearGetMissWithValue(key, value);
       client2.get(key, value).expectNearGetValue(key, value);
 
-      // Client 1 should only get a preemptive remove as it never cached the value locally
-      // However client 2 should get a remove as it had it cached
-      client1.remove(key).expectNearPreemptiveRemove(key, client2);
+      // Both client1 and client2 have remote removes due to having to add a null get to the bloom filter
+      // to guarantee consistency in ISPN-13612
+      client1.remove(key).expectNearRemove(key, client2);
    }
 
    public void testClientsBothCachedAndCanUpdate() {
@@ -118,8 +119,8 @@ public class ClusterInvalidatedNearCacheBloomTest extends MultiHotRodServersTest
 
       client1.put(key, value).expectNearPreemptiveRemove(key);
 
-      client1.get(key, value).expectNearGetNull(key).expectNearPutIfAbsent(key, value);
-      client2.get(key, value).expectNearGetNull(key).expectNearPutIfAbsent(key, value);
+      client1.get(key, value).expectNearGetMissWithValue(key, value);
+      client2.get(key, value).expectNearGetMissWithValue(key, value);
 
       String value2 = "v2";
       client1.put(key, value2).expectNearRemove(key, client2);

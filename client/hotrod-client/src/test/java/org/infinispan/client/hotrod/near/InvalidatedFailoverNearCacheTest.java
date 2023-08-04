@@ -67,11 +67,11 @@ public class InvalidatedFailoverNearCacheTest extends MultiHotRodServersTest {
       AssertsNearCache<Integer, String> stickyClient = createStickyAssertClient();
       try {
          stickyClient.put(1, "v1").expectNearPreemptiveRemove(1);
-         stickyClient.get(1, "v1").expectNearGetNull(1).expectNearPutIfAbsent(1, "v1");
+         stickyClient.get(1, "v1").expectNearGetMissWithValue(1, "v1");
          stickyClient.put(2, "v1").expectNearPreemptiveRemove(2);
-         stickyClient.get(2, "v1").expectNearGetNull(2).expectNearPutIfAbsent(2, "v1");
+         stickyClient.get(2, "v1").expectNearGetMissWithValue(2, "v1");
          stickyClient.put(3, "v1").expectNearPreemptiveRemove(3);
-         stickyClient.get(3, "v1").expectNearGetNull(3).expectNearPutIfAbsent(3, "v1");
+         stickyClient.get(3, "v1").expectNearGetMissWithValue(3, "v1");
          boolean headClientClear = isClientListenerAttachedToSameServer(headClient(), stickyClient);
          boolean tailClientClear = isClientListenerAttachedToSameServer(tailClient(), stickyClient);
          killServerForClient(stickyClient);
@@ -83,20 +83,19 @@ public class InvalidatedFailoverNearCacheTest extends MultiHotRodServersTest {
          eventually(stickyClient::isNearCacheConnected);
 
          stickyClient.get(1, "v1")
-               .expectNearGetNull(1)
-               .expectNearPutIfAbsent(1, "v1");
+               .expectNearGetMissWithValue(1, "v1");
          stickyClient.expectNoNearEvents();
          if (headClientClear) {
             headClient().expectNearClear();
          }
          eventually(() -> headClient().isNearCacheConnected());
-         headClient().get(2, "v1").expectNearGetNull(2).expectNearPutIfAbsent(2, "v1");
+         headClient().get(2, "v1").expectNearGetMissWithValue(2, "v1");
          headClient().expectNoNearEvents();
          if (tailClientClear) {
             tailClient().expectNearClear();
          }
          eventually(() -> tailClient().isNearCacheConnected());
-         tailClient().get(3, "v1").expectNearGetNull(3).expectNearPutIfAbsent(3, "v1");
+         tailClient().get(3, "v1").expectNearGetMissWithValue(3, "v1");
          tailClient().expectNoNearEvents();
       } finally {
          stickyClient.stop();

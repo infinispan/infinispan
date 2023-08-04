@@ -101,10 +101,10 @@ public class InvalidatedNearCacheBloomTest extends SingleHotRodServerTest {
    public void testSingleKeyFilter() {
       assertClient.put(1, "v1").expectNearPreemptiveRemove(1);
       assertClient.put(1, "v2").expectNearPreemptiveRemove(1);
-      assertClient.get(1, "v2").expectNearGetNull(1).expectNearPutIfAbsent(1, "v2");
+      assertClient.get(1, "v2").expectNearGetMissWithValue(1, "v2");
       assertClient.get(1, "v2").expectNearGetValue(1, "v2");
       assertClient.remove(1).expectNearRemove(1);
-      assertClient.get(1, null).expectNearGetNull(1);
+      assertClient.get(1, null).expectNearGetMiss(1);
    }
 
    public void testMultipleKeyFilterConflictButNoRead() {
@@ -117,7 +117,7 @@ public class InvalidatedNearCacheBloomTest extends SingleHotRodServerTest {
 
    public void testMultipleKeyFilterConflict() {
       assertClient.put(1, "v1").expectNearPreemptiveRemove(1);
-      assertClient.get(1, "v1").expectNearGetNull(1).expectNearPutIfAbsent(1, "v1");
+      assertClient.get(1, "v1").expectNearGetMissWithValue(1, "v1");
 
       int conflictKey = findNextKey(bloomFilter, 1, true);
       // This is a create thus no remove is sent
@@ -129,7 +129,7 @@ public class InvalidatedNearCacheBloomTest extends SingleHotRodServerTest {
 
    public void testMultipleKeyFilterNoConflict() {
       assertClient.put(1, "v1").expectNearPreemptiveRemove(1);
-      assertClient.get(1, "v1").expectNearGetNull(1).expectNearPutIfAbsent(1, "v1");
+      assertClient.get(1, "v1").expectNearGetMissWithValue(1, "v1");
 
       int nonConflictKey = findNextKey(bloomFilter, 1, false);
       // Both of the following never send a remove event back as the key wasn't present in bloom filter
@@ -139,13 +139,12 @@ public class InvalidatedNearCacheBloomTest extends SingleHotRodServerTest {
 
    public void testServerBloomFilterUpdate() throws InterruptedException {
       assertClient.put(1, "v1").expectNearPreemptiveRemove(1);
-      assertClient.get(1, "v1").expectNearGetNull(1).expectNearPutIfAbsent(1, "v1");
+      assertClient.get(1, "v1").expectNearGetMissWithValue(1, "v1");
 
       int nonConflictKey = findNextKey(bloomFilter, 1, false);
 
       assertClient.put(nonConflictKey, "v1").expectNearPreemptiveRemove(nonConflictKey);
-      assertClient.get(nonConflictKey, "v1").expectNearGetNull(nonConflictKey)
-            .expectNearPutIfAbsent(nonConflictKey, "v1");
+      assertClient.get(nonConflictKey, "v1").expectNearGetMissWithValue(nonConflictKey, "v1");
 
       boolean serverBloomFilterUpdated = false;
       for (int i = 0; i < 10; ++i) {
