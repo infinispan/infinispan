@@ -36,18 +36,23 @@ final class BoundedConcurrentMapNearCache<K, V> implements NearCache<K, V> {
    }
 
    @Override
-   public void put(CacheEntry<K, V> entry) {
-      cache.put(entry.key(), entry);
+   public boolean putIfAbsent(K key, CacheEntry<K, V> entry) {
+      return map.putIfAbsent(key, entry) == null;
    }
 
    @Override
-   public void putIfAbsent(CacheEntry<K, V> entry) {
-      map.putIfAbsent(entry.key(), entry);
+   public boolean replace(K key, CacheEntry<K, V> prevValue, CacheEntry<K, V> newValue) {
+      return map.replace(key, prevValue, newValue);
    }
 
    @Override
    public boolean remove(K key) {
       return map.remove(key) != null;
+   }
+
+   @Override
+   public boolean remove(K key, CacheEntry<K, V> entry) {
+      return map.remove(key, entry);
    }
 
    @Override
