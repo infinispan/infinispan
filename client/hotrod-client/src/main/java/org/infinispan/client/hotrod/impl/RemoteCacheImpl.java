@@ -55,6 +55,7 @@ import org.infinispan.client.hotrod.impl.operations.ReplaceOperation;
 import org.infinispan.client.hotrod.impl.operations.RetryAwareCompletionStage;
 import org.infinispan.client.hotrod.impl.operations.SizeOperation;
 import org.infinispan.client.hotrod.impl.operations.StatsOperation;
+import org.infinispan.client.hotrod.impl.query.RemoteQueryFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.near.NearCacheService;
@@ -86,6 +87,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    private DataFormat dataFormat;
    protected ClientStatistics clientStatistics;
    private ObjectName mbeanObjectName;
+   private RemoteQueryFactory queryFactory;
 
    public RemoteCacheImpl(RemoteCacheManager rcm, String name, TimeService timeService) {
       this(rcm, name, timeService, null);
@@ -129,6 +131,12 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    private void init(OperationsFactory operationsFactory, int batchSize) {
       this.operationsFactory = operationsFactory;
       this.batchSize = batchSize;
+      // try cautiously
+      try {
+         this.queryFactory = new RemoteQueryFactory(this);
+      } catch (Throwable e) {
+         log.queryDisabled();
+      }
    }
 
    private void registerMBean(ObjectName jmxParent) {
@@ -519,6 +527,15 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    @Override
    public String getVersion() {
       return RemoteCacheImpl.class.getPackage().getImplementationVersion();
+   }
+
+   @Override
+   public <T> Query<T> query(String query) {
+      if (queryFactory == null) {
+         throw log.queryNotSupported();
+      }
+
+      return queryFactory.create(query);
    }
 
    @Override

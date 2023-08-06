@@ -6,6 +6,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import org.infinispan.commons.api.query.Query;
+
 /**
  * BasicCache provides the common building block for the two different types of caches that Infinispan provides:
  * embedded and remote.
@@ -301,4 +303,7 @@ public interface BasicCache<K, V> extends AsyncCache<K, V>, ConcurrentMap<K, V>,
     */
    @Override
    V remove(Object key);
+
+   <T> Query<T> query(String query);
+
 }

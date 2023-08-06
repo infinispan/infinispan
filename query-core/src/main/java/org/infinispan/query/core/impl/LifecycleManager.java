@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.cache.impl.QueryProducer;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.AggregatedClassLoader;
 import org.infinispan.configuration.cache.Configuration;
@@ -18,6 +19,7 @@ import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
+import org.infinispan.query.core.QueryProducerImpl;
 import org.infinispan.query.core.impl.continuous.ContinuousQueryResult;
 import org.infinispan.query.core.impl.continuous.IckleContinuousQueryCacheEventFilterConverter;
 import org.infinispan.query.core.impl.eventfilter.IckleCacheEventFilterConverter;
@@ -47,7 +49,9 @@ public class LifecycleManager implements ModuleLifecycle {
          AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
          ClassLoader aggregatedClassLoader = makeAggregatedClassLoader(cr.getGlobalComponentRegistry().getGlobalConfiguration().classLoader());
          cr.registerComponent(new ReflectionMatcher(aggregatedClassLoader), ReflectionMatcher.class);
-         cr.registerComponent(new QueryEngine<>(cache), QueryEngine.class);
+         QueryEngine<Object> engine = new QueryEngine<>(cache);
+         cr.registerComponent(engine, QueryEngine.class);
+         cr.registerComponent(new QueryProducerImpl(engine), QueryProducer.class);
       }
    }
 

@@ -22,11 +22,11 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PingResponse;
 import org.infinispan.client.hotrod.impl.operations.RetryAwareCompletionStage;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollection;
 import org.infinispan.commons.util.CloseableIteratorSet;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.query.dsl.Query;
 import org.reactivestreams.Publisher;
 
 /**
@@ -235,12 +235,12 @@ public abstract class DelegatingRemoteCache<K, V> extends RemoteCacheSupport<K, 
    }
 
    @Override
-   public CloseableIterator<Entry<Object, Object>> retrieveEntriesByQuery(Query<?> filterQuery, Set<Integer> segments, int batchSize) {
+   public CloseableIterator<Entry<Object, Object>> retrieveEntriesByQuery(org.infinispan.query.dsl.Query<?> filterQuery, Set<Integer> segments, int batchSize) {
       return delegate.retrieveEntriesByQuery(filterQuery, segments, batchSize);
    }
 
    @Override
-   public <E> Publisher<Entry<K, E>> publishEntriesByQuery(Query<?> filterQuery, Set<Integer> segments, int batchSize) {
+   public <E> Publisher<Entry<K, E>> publishEntriesByQuery(org.infinispan.query.dsl.Query<?> filterQuery, Set<Integer> segments, int batchSize) {
       return delegate.publishEntriesByQuery(filterQuery, segments, batchSize);
    }
 
@@ -377,5 +377,10 @@ public abstract class DelegatingRemoteCache<K, V> extends RemoteCacheSupport<K, 
    @Override
    public CompletionStage<Void> updateBloomFilter() {
       return delegate.updateBloomFilter();
+   }
+
+   @Override
+   public <T> Query<T> query(String query) {
+      return delegate.query(query);
    }
 }

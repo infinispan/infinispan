@@ -19,6 +19,7 @@ import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
 import org.infinispan.LockedStream;
 import org.infinispan.batch.BatchContainer;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
@@ -868,6 +869,12 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    public V remove(Object key) {
       authzManager.checkPermission(subject, writePermission);
       return delegate.remove(key);
+   }
+
+   @Override
+   public <T> Query<T> query(String query) {
+      authzManager.checkPermission(subject, AuthorizationPermission.BULK_READ);
+      return delegate.query(query);
    }
 
    @Override

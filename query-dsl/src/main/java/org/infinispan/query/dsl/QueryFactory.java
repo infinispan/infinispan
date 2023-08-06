@@ -18,7 +18,9 @@ public interface QueryFactory {
     * Creates a Query based on an Ickle query string.
     *
     * @return a query
+    * @deprecated use {@link org.infinispan.commons.api.BasicCache#query(String)} instead
     */
+   @Deprecated
    <T> Query<T> create(String queryString);
 
    /**

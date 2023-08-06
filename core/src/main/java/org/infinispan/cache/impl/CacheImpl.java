@@ -57,6 +57,7 @@ import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
@@ -181,6 +182,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private boolean batchingEnabled;
    private final ContextBuilder nonTxContextBuilder = this::nonTxContextBuilder;
    private final ContextBuilder defaultBuilder = i -> invocationHelper.createInvocationContextWithImplicitTransaction(i, false);
+   private QueryProducer queryProducer;
 
    public CacheImpl(String name) {
       this.name = name;
@@ -683,6 +685,15 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       return remove(key, EnumUtil.EMPTY_BIT_SET, defaultContextBuilderForWrite());
    }
 
+   @Override
+   public <T> Query<T> query(String query) {
+      if (queryProducer == null) {
+         throw log.queryNotSupported();
+      }
+
+      return queryProducer.query(query);
+   }
+
    final V remove(Object key, long explicitFlags, ContextBuilder contextBuilder) {
       assertKeyNotNull(key);
       RemoveCommand command = createRemoveCommand(key, explicitFlags, false);
@@ -1006,6 +1017,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    )
    public void start() {
       componentRegistry.start();
+      queryProducer = componentRegistry.getComponent(QueryProducer.class);
 
       if (stateTransferManager != null) {
          try {

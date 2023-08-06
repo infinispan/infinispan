@@ -29,6 +29,7 @@ import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
 import org.infinispan.LockedStream;
 import org.infinispan.batch.BatchContainer;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
@@ -111,6 +112,11 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    @Override
    public V remove(Object key) {
       return map.remove(key);
+   }
+
+   @Override
+   public <T> Query<T> query(String query) {
+      return cache.query(query);
    }
 
    @Override

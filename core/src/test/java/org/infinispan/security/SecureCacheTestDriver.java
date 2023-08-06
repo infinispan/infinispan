@@ -11,6 +11,7 @@ import java.util.function.Function;
 import jakarta.transaction.NotSupportedException;
 import jakarta.transaction.SystemException;
 
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
 import org.infinispan.conflict.ConflictManagerFactory;
@@ -726,6 +727,16 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.BULK_READ)
    public void testGetAllCacheEntries_Set(SecureCache<String, String> cache) {
       cache.getAllCacheEntries(Collections.emptySet());
+   }
+
+   @TestCachePermission(AuthorizationPermission.BULK_READ)
+   public void testQuery_String(SecureCache<String, String> cache) {
+      try {
+         // we cannot invoke it without any query module linked to the core
+         cache.query("select e.name from org.Employee e where e.title = 'Developer'");
+      } catch (CacheException ex) {
+         // catch CacheException (raised because we don't have any query module) but not a SecurityException
+      }
    }
 
    @TestCachePermission(AuthorizationPermission.BULK_READ)
