@@ -28,7 +28,6 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import javax.security.auth.Subject;
-import jakarta.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.AdvancedCache;
@@ -37,6 +36,7 @@ import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
 import org.infinispan.LockedStream;
 import org.infinispan.batch.BatchContainer;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
@@ -49,6 +49,7 @@ import org.infinispan.commons.util.IteratorMapper;
 import org.infinispan.commons.util.SpliteratorMapper;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.format.PropertyFormatter;
 import org.infinispan.container.DataContainer;
@@ -97,11 +98,12 @@ import org.infinispan.stream.impl.local.KeyStreamSupplier;
 import org.infinispan.stream.impl.local.LocalCacheStream;
 import org.infinispan.util.DataContainerRemoveIterator;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import jakarta.transaction.TransactionManager;
 
 /**
  * Simple local cache without interceptor stack.
@@ -133,7 +135,6 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    @Inject KeyPartitioner keyPartitioner;
 
    private Metadata defaultMetadata;
-
    private boolean hasListeners = false;
 
    public SimpleCacheImpl(String cacheName) {
@@ -921,6 +922,11 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    public V remove(Object key) {
       CacheEntry<K, V> oldEntry = removeEntry(key);
       return oldEntry != null ? oldEntry.getValue() : null;
+   }
+
+   @Override
+   public <T> Query<T> query(String query) {
+      throw log.querySimpleCacheNotSupported();
    }
 
    private CacheEntry<K, V> removeEntry(Object key) {

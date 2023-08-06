@@ -2368,4 +2368,11 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cache '%s' has number of owners %d but is missing too many members (%d/%d) to reinstall topology", id = 694)
    MissingMembersException missingTooManyMembers(String cacheName, int owners, int missing, int total);
+
+   @Message(value = "Query module not found. Add infinispan-query or infinispan-query-core to the classpath.", id = 695)
+   CacheException queryNotSupported();
+
+   @Message(value = "Simple caches do not support queries. If you need queries, you should use standard caches.", id = 969)
+   CacheException querySimpleCacheNotSupported();
+
 }

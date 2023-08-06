@@ -14,7 +14,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "query.legac.RemoteDefaultMaxResultTest")
+@Test(groups = "functional", testName = "query.legacy.EmbeddedHS5LegacyAnnotationsTest")
 public class EmbeddedHS5LegacyAnnotationsTest extends SingleCacheManagerTest {
 
    @Override

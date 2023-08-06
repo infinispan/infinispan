@@ -21,6 +21,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.hibernate.search.backend.lucene.work.spi.LuceneWorkExecutorProvider;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.cache.impl.QueryProducer;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
@@ -54,6 +55,7 @@ import org.infinispan.query.backend.TxQueryInterceptor;
 import org.infinispan.query.clustered.ClusteredQueryOperation;
 import org.infinispan.query.clustered.NodeTopDocs;
 import org.infinispan.query.clustered.QueryResponse;
+import org.infinispan.query.core.QueryProducerImpl;
 import org.infinispan.query.core.impl.QueryCache;
 import org.infinispan.query.core.stats.IndexStatistics;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
@@ -148,7 +150,17 @@ public class LifecycleManager implements ModuleLifecycle {
          cr.registerComponent(ObjectReflectionMatcher.create(cache,
                new ReflectionEntityNamesResolver(aggregatedClassLoader), searchMapping),
                ObjectReflectionMatcher.class);
-         cr.registerComponent(new QueryEngine<>(cache, isIndexed), QueryEngine.class);
+         QueryEngine<Object> engine = new QueryEngine<>(cache, isIndexed);
+         cr.registerComponent(engine, QueryEngine.class);
+
+         // the cast ithis is the only implementation we have
+         @SuppressWarnings("unchecked")
+         QueryProducerImpl queryProducer = (QueryProducerImpl) cr.getComponent(QueryProducer.class);
+         if (queryProducer != null) {
+            queryProducer.upgrade(engine);
+         } else {
+            cr.registerComponent(new QueryProducerImpl(engine), QueryProducer.class);
+         }
       }
    }
 

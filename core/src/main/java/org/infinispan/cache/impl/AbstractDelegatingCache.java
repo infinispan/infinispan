@@ -15,6 +15,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.format.PropertyFormatter;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
@@ -591,6 +592,11 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    @Override
    public CompletableFuture<Map<K, V>> getAllAsync(Set<?> keys) {
       return cache.getAllAsync(keys);
+   }
+
+   @Override
+   public <T> Query<T> query(String query) {
+      return cache.query(query);
    }
 
    @ManagedAttribute(
