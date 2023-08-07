@@ -85,7 +85,7 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
             builder.encoding().value().mediaType(configuredValueType);
          }
          cacheManager.defineConfiguration(configuration.defaultCacheName(), builder.build());
-      } else if (!explicitConfiguration.encoding().keyDataType().mediaType().equals(MediaType.APPLICATION_OCTET_STREAM)) {
+      } else if (!MediaType.APPLICATION_OCTET_STREAM.equals(explicitConfiguration.encoding().keyDataType().mediaType())) {
          throw CONFIG.respCacheKeyMediaTypeSupplied(cacheName, explicitConfiguration.encoding().keyDataType().mediaType());
       }
       super.startInternal();
