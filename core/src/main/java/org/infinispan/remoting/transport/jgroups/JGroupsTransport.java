@@ -998,7 +998,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
       if (relay2 == null) {
          return null;
       }
-      List<String> sites = relay2.getCurrentSites();
+      Collection<String> sites = relay2.getCurrentSites();
       return sites == null ? Collections.emptySet() : new TreeSet<>(sites);
    }
 
@@ -1545,13 +1545,15 @@ public class JGroupsTransport implements Transport, ChannelListener {
                log.tracef("%s received command from %s: %s", getAddress(), src, command);
             reply = Reply.NO_OP;
          }
-         if (src instanceof SiteAddress) {
+         if (org.jgroups.util.Util.isFlagSet(flags, Message.Flag.NO_RELAY)) {
+            invocationHandler.handleFromCluster(fromJGroupsAddress(src), command, reply, deliverOrder);
+         } else {
+            assert src instanceof SiteAddress;
+            assert command instanceof XSiteReplicateCommand;
             String originSite = ((SiteAddress) src).getSite();
             XSiteReplicateCommand<?> xsiteCommand = (XSiteReplicateCommand<?>) command;
             xsiteCommand.setOriginSite(originSite);
             invocationHandler.handleFromRemoteSite(originSite, xsiteCommand, reply, deliverOrder);
-         } else {
-            invocationHandler.handleFromCluster(fromJGroupsAddress(src), command, reply, deliverOrder);
          }
       } catch (Throwable t) {
          CLUSTER.errorProcessingRequest(requestId, src, t);
