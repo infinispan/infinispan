@@ -3,7 +3,9 @@ package org.infinispan.factories.impl;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -93,9 +95,12 @@ public final class MBeanMetadata {
       private final boolean is;
       private final Function<?, ?> getterFunction;  // optional
       private final BiConsumer<?, ?> setterFunction; // optional
+      private final Map<String, String> tags; // optional
+      private final boolean clusterWide;
 
       public AttributeMetadata(String name, String description, boolean writable, boolean useSetter, String type,
-                               boolean is, Function<?, ?> getterFunction, BiConsumer<?, ?> setterFunction) {
+                               boolean is, Function<?, ?> getterFunction, BiConsumer<?, ?> setterFunction, boolean clusterWide,
+                               Map<String, String> tags) {
          this.name = name;
          this.description = description;
          this.writable = writable;
@@ -104,6 +109,18 @@ public final class MBeanMetadata {
          this.is = is;
          this.getterFunction = getterFunction;
          this.setterFunction = setterFunction;
+         this.clusterWide = clusterWide;
+         this.tags = tags == null ? Collections.emptyMap() : tags;
+      }
+
+      public AttributeMetadata(String name, String description, boolean writable, boolean useSetter, String type,
+                               boolean is, Function<?, ?> getterFunction, BiConsumer<?, ?> setterFunction, boolean clusterWide) {
+         this(name, description, writable, useSetter, type, is, getterFunction, setterFunction, clusterWide, null);
+      }
+
+      public AttributeMetadata(String name, String description, boolean writable, boolean useSetter, String type,
+                               boolean is, Function<?, ?> getterFunction, BiConsumer<?, ?> setterFunction) {
+         this(name, description, writable, useSetter, type, is, getterFunction, setterFunction, false, null);
       }
 
       public String getName() {
@@ -144,6 +161,14 @@ public final class MBeanMetadata {
          return (v) -> ((BiConsumer<Object, Object>) setterFunction).accept(instance, v);
       }
 
+      public boolean isClusterWide() {
+         return clusterWide;
+      }
+
+      public Map<String, String> tags() {
+         return tags;
+      }
+
       @Override
       public String toString() {
          return "AttributeMetadata{" +
@@ -152,8 +177,10 @@ public final class MBeanMetadata {
                ", writable=" + writable +
                ", type='" + type + '\'' +
                ", is=" + is +
+               ", clusterWide=" + clusterWide +
                ", getterFunction=" + getterFunction +
                ", setterFunction=" + setterFunction +
+               ", tags=" + tags +
                '}';
       }
    }

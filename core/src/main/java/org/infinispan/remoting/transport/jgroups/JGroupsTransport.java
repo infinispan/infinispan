@@ -155,7 +155,6 @@ public class JGroupsTransport implements Transport, ChannelListener {
    public static final String CHANNEL_LOOKUP = "channelLookup";
    public static final String CHANNEL_CONFIGURATOR = "channelConfigurator";
    public static final String SOCKET_FACTORY = "socketFactory";
-   private static final String METRICS_PREFIX = "jgroups_";
    public static final short REQUEST_FLAGS_UNORDERED =
          (short) (Message.Flag.OOB.value() | Message.Flag.NO_TOTAL_ORDER.value());
    public static final short REQUEST_FLAGS_PER_SENDER = Message.Flag.NO_TOTAL_ORDER.value();
@@ -1597,19 +1596,14 @@ public class JGroupsTransport implements Transport, ChannelListener {
       if (isMetricsEnabled()) {
          MetricsCollector mc = metricsCollector.wired();
          clusters.computeIfAbsent(channel, c -> {
-            String name = c.clusterName();
-            String nodeName;
             org.jgroups.Address addr = c.getAddress();
-            if (addr != null) {
-               nodeName = addr.toString();
-            } else {
-               nodeName = c.getName();
-            }
+            String clusterName = c.clusterName();
+            String nodeName= addr != null ? addr.toString() : c.getName();
             Set<Object> metrics = new HashSet<>();
             for (Protocol protocol : c.getProtocolStack().getProtocols()) {
                Collection<MBeanMetadata.AttributeMetadata> attributes = JGroupsMetricsMetadata.PROTOCOL_METADATA.get(protocol.getClass());
                if (attributes != null && !attributes.isEmpty()) {
-                  metrics.addAll(mc.registerMetrics(protocol, attributes, METRICS_PREFIX + name + '_' + protocol.getName().toLowerCase() + '_', null, nodeName));
+                  metrics.addAll(mc.registerJGroupsMetrics(protocol, attributes, protocol.getName(), clusterName, nodeName));
                }
             }
             return metrics;

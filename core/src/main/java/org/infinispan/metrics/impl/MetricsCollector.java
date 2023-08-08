@@ -5,12 +5,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.infinispan.commons.stat.TimerTracker;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -75,6 +77,10 @@ public class MetricsCollector implements Constants {
       new BaseAdditionalMetrics().bindTo(registry);
       new VendorAdditionalMetrics().bindTo(registry);
 
+      if (globalConfig.metrics().namesAsTags()) {
+         cacheManagerTag = Tag.of(CACHE_MANAGER_TAG_NAME, globalConfig.cacheManagerName());
+      }
+
       Transport transport = transportRef.running();
       String nodeName = transport != null ? transport.getAddress().toString() : globalConfig.transport().nodeName();
       if (nodeName == null) {
@@ -83,10 +89,6 @@ public class MetricsCollector implements Constants {
          //throw new CacheConfigurationException("Node name must always be specified in configuration if metrics are enabled.");
       }
       nodeTag = Tag.of(NODE_TAG_NAME, nodeName);
-
-      if (globalConfig.metrics().namesAsTags()) {
-         cacheManagerTag = Tag.of(CACHE_MANAGER_TAG_NAME, globalConfig.cacheManagerName());
-      }
    }
 
    @Stop
@@ -132,11 +134,17 @@ public class MetricsCollector implements Constants {
       return registerMetrics(instance, attributes, namePrefix, asTag(CACHE_TAG_NAME, cacheName), asTag(NODE_TAG_NAME, nodeName));
    }
 
+   public Set<Object> registerJGroupsMetrics(Object instance, Collection<MBeanMetadata.AttributeMetadata> attributes, String protocol, String clusterName, String nodeName) {
+      String prefix = globalConfig.metrics().namesAsTags() ?
+            JGROUPS_PREFIX + protocol.toLowerCase() + '_' :
+            JGROUPS_PREFIX + clusterName + '_' + protocol.toLowerCase() + '_';
+      return registerMetrics(instance, attributes, prefix,  asTag(NODE_TAG_NAME, nodeName), asTag(JGROUPS_CLUSTER_TAG_NAME, clusterName));
+   }
+
    private Set<Object> registerMetrics(Object instance, Collection<MBeanMetadata.AttributeMetadata> attributes, String namePrefix, Tag ...initialTags) {
       Set<Object> metricIds = new HashSet<>(attributes.size());
 
       GlobalMetricsConfiguration metricsCfg = globalConfig.metrics();
-      List<Tag> tags = prepareTags(initialTags);
 
       for (MBeanMetadata.AttributeMetadata attr : attributes) {
          Supplier<Number> getter = (Supplier<Number>) attr.getter(instance);
@@ -148,7 +156,7 @@ public class MetricsCollector implements Constants {
             if (getter != null) {
                if (metricsCfg.gauges()) {
                   Gauge gauge = Gauge.builder(metricName, getter)
-                        .tags(tags)
+                        .tags(prepareTags(attr, initialTags))
                         .strongReference(true)
                         .description(attr.getDescription())
                         .register(registry);
@@ -163,7 +171,7 @@ public class MetricsCollector implements Constants {
             } else {
                if (metricsCfg.histograms()) {
                   Timer timer = Timer.builder(metricName)
-                        .tags(tags)
+                        .tags(prepareTags(attr, initialTags))
                         .description(attr.getDescription())
                         .register(registry);
 
@@ -187,14 +195,21 @@ public class MetricsCollector implements Constants {
       return metricIds;
    }
 
-   private List<Tag> prepareTags(Tag ...tags) {
-      List<Tag> allTags = Arrays.stream(tags).filter(Objects::nonNull).collect(Collectors.toList());
+   private static Tag mapEntryToTag(Map.Entry<String, String> entry) {
+      return asTag(entry.getKey(), entry.getValue());
+   }
+
+   private List<Tag> prepareTags(MBeanMetadata.AttributeMetadata attr, Tag ...tags) {
+      Stream<Tag> tagStream = attr.tags().entrySet().stream().map(MetricsCollector::mapEntryToTag);
+      List<Tag> allTags = Stream.concat(Arrays.stream(tags), tagStream)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
       if (cacheManagerTag != null) allTags.add(cacheManagerTag);
 
       return allTags;
    }
 
-   private Tag asTag(String key, String value) {
+   private static Tag asTag(String key, String value) {
       return value != null
             ? Tag.of(key, value)
             : null;
