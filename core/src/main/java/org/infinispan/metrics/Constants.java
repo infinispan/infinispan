@@ -13,4 +13,10 @@ public interface Constants {
    String CACHE_MANAGER_TAG_NAME = "cache_manager";
 
    String CACHE_TAG_NAME = "cache";
+
+   String JGROUPS_PREFIX = "jgroups_";
+
+   String JGROUPS_CLUSTER_TAG_NAME = "cluster";
+
+   String SITE_TAG_NAME = "site";
 }
