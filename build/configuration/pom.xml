@@ -163,8 +163,8 @@
       <version.jboss.security>3.0.6.Final</version.jboss.security>
       <version.jboss.shrinkwrap>1.2.6</version.jboss.shrinkwrap>
       <version.jcip-annotations>1.0</version.jcip-annotations>
-      <version.jgroups>5.2.17.Final</version.jgroups>
-      <version.jgroups.raft>1.0.10.Final</version.jgroups.raft>
+      <version.jgroups>5.2.18.Final</version.jgroups>
+      <version.jgroups.raft>1.0.11.Final</version.jgroups.raft>
       <version.jsr107>1.1.0</version.jsr107>
       <version.junit>4.13.2</version.junit>
       <version.junit.platform>1.9.2</version.junit.platform>
