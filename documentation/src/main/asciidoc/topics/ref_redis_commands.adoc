@@ -34,8 +34,14 @@ The {brandname} RESP endpoint implements the following Redis commands:
 | link:https://redis.io/commands/del[DEL]
 |
 
+| link:https://redis.io/commands/discard[DISCARD]
+|
+
 | link:https://redis.io/commands/echo[ECHO]
 |
+
+| link:https://redis.io/commands/exec[EXEC]
+| See <<multi_command, *MULTI*>>.
 
 | link:https://redis.io/commands/exists[EXISTS]
 |
@@ -152,6 +158,10 @@ for concurrent operations or failures unless the resp cache is configured to use
 | link:https://redis.io/commands/ltrim[LTRIM]
 |
 
+| link:https://redis.io/commands/multi[MULTI] [[multi_command]]
+| The current implementation has a relaxed isolation level. Redis offers serializable transactions, but {{brandname}}
+provides a read-uncommitted isolation.
+
 | link:https://redis.io/commands/ping[PING]
 |
 
@@ -225,6 +235,12 @@ for concurrent operations or failures unless the resp cache is configured to use
 |
 
 | link:https://redis.io/commands/unsubscribe[UNSUBSCRIBE]
+|
+
+| link:https://redis.io/commands/unwatch[UNWATCH]
+|
+
+| link:https://redis.io/commands/watch[WATCH]
 |
 
 | link:https://redis.io/commands/zadd[ZADD]

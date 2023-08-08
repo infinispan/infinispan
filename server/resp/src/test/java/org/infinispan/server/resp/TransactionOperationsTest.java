@@ -183,4 +183,67 @@ public class TransactionOperationsTest extends SingleNodeRespBaseTest {
       assertThat(redis.get("tx-watcher-key")).isEqualTo(expected);
       assertThat(tx.get("tx-watcher-key")).isEqualTo(expected);
    }
+
+   @Test
+   public void testDiscardWithoutMulti() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThat(redisConnection.isMulti()).isFalse();
+      assertThatThrownBy(redis::discard)
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR DISCARD without MULTI");
+   }
+
+   @Test
+   public void testDiscardingTransaction() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      assertThat(redis.multi()).isEqualTo("OK");
+      assertThat(redisConnection.isMulti()).isTrue();
+
+      assertThat(redis.set("tx-discard-k1", "value")).isNull();
+      assertThat(redis.discard()).isEqualTo("OK");
+
+      assertThat(redisConnection.isMulti()).isFalse();
+      assertThatThrownBy(redis::exec)
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR EXEC without MULTI");
+      assertThat(redis.get("tx-discard-k1")).isNull();
+   }
+
+   @Test
+   public void testDiscardRemoveListeners() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // Install watch before multi.
+      assertThat(redis.watch("tx-discard-k2")).isEqualTo("OK");
+
+      assertThat(redis.multi()).isEqualTo("OK");
+      assertThat(redisConnection.isMulti()).isTrue();
+
+      assertThat(redis.set("tx-discard-k2", "value")).isNull();
+
+      // Discard and removes the listener.
+      assertThat(redis.discard()).isEqualTo("OK");
+
+      assertThat(redisConnection.isMulti()).isFalse();
+
+      // Enter into multi again.
+      assertThat(redis.multi()).isEqualTo("OK");
+      assertThat(redisConnection.isMulti()).isTrue();
+
+      assertThat(redis.set("tx-discard-k2", "value-inside")).isNull();
+
+      // Another client writes the key. Originally, this would notify the listener.
+      StatefulRedisConnection<String, String> outside = client.connect();
+      RedisCommands<String, String> outsideSync = outside.sync();
+      assertThat(outsideSync.set("tx-discard-k2", "value-outside")).isEqualTo("OK");
+      assertThat(outsideSync.get("tx-discard-k2")).isEqualTo("value-outside");
+      outside.close();
+
+      // Since the listener was removed with the discard. The operation will complete successfully.
+      TransactionResult result = redis.exec();
+      assertThat(result.wasDiscarded()).isFalse();
+      assertThat(redisConnection.isMulti()).isFalse();
+      assertThat(redis.get("tx-discard-k2")).isEqualTo("value-inside");
+   }
 }
