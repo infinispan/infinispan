@@ -1,12 +1,32 @@
-= Upgrading to 14.0.7 or newer
+= Upgrading to 14.0.15 or newer
 
-== RESP Endpoint
+== Metrics
 
-* Default expiration may be applied to the cache configuration used by the RESP endpoint
+The JGroups and cross-site metrics name changed when `names-as-tags` is set to `true`,
+where the cluster's name and the site's name are no longer present in the metrics name but as a tag.
 
-== RESP Endpoint
+As an example, when `names-as-tags` is set to `false`,
+we got 2 different metrics with the channel name distinguishing between them.
 
-* Default expiration may be applied to the cache configuration used by the RESP endpoint
+[source]
+----
+# TYPE vendor_jgroups_xsite_frag4_get_number_of_sent_fragments gauge
+# HELP vendor_jgroups_xsite_frag4_get_number_of_sent_fragments Number of sent fragments
+vendor_jgroups_xsite_frag4_get_number_of_sent_fragments{cluster="xsite",node="..."} 0.0
+# TYPE vendor_jgroups_cluster_frag4_get_number_of_sent_fragments gauge
+# HELP vendor_jgroups_cluster_frag4_get_number_of_sent_fragments Number of sent fragments
+vendor_jgroups_cluster_frag4_get_number_of_sent_fragments{cluster="cluster",node="..."} 2.0
+----
+
+When `names-as-tags` is set to `true`, we got a single metric:
+
+[source]
+----
+# TYPE vendor_jgroups_frag4_get_number_of_sent_fragments gauge
+# HELP vendor_jgroups_frag4_get_number_of_sent_fragments Number of sent fragments
+vendor_jgroups_frag4_get_number_of_sent_fragments{cache_manager="default",cluster="xsite",node="..."} 0.0
+vendor_jgroups_frag4_get_number_of_sent_fragments{cache_manager="default",cluster="cluster",node="..."} 2.0
+----
 
 
 = Upgrading to 14.0.14 or newer
@@ -16,6 +36,16 @@
 Due to incosistency issues with concurrent updates the NearCache SPI needed to be updated to have concurrent
 based methods to prevent an issue where a stale entry may have been saved in the near cache.
 For more information please see link:https://issues.jboss.org/browse/ISPN-13612[ISPN-13612]
+
+= Upgrading to 14.0.7 or newer
+
+== RESP Endpoint
+
+* Default expiration may be applied to the cache configuration used by the RESP endpoint
+
+== RESP Endpoint
+
+* Default expiration may be applied to the cache configuration used by the RESP endpoint
 
 = Upgrading from 13.0 to 14.0
 
