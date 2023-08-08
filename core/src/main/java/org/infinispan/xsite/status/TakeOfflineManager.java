@@ -93,7 +93,7 @@ public interface TakeOfflineManager extends CustomMetricsSupplier {
    TakeSiteOfflineResponse takeSiteOffline(String siteName);
 
    @Override
-   default Collection<MBeanMetadata.AttributeMetadata> getCustomMetrics() {
+   default Collection<MBeanMetadata.AttributeMetadata> getCustomMetrics(boolean nameAsTag) {
       return Collections.emptyList();
    }
 }

@@ -421,8 +421,8 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
    }
 
    @Override
-   public Collection<MBeanMetadata.AttributeMetadata> getCustomMetrics() {
-      return takeOfflineManager.getCustomMetrics();
+   public Collection<MBeanMetadata.AttributeMetadata> getCustomMetrics(boolean nameAsTag) {
+      return takeOfflineManager.getCustomMetrics(nameAsTag);
    }
 
    private interface Operation {

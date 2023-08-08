@@ -17,12 +17,14 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.MBeanMetadata;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.metrics.Constants;
 import org.infinispan.metrics.impl.MetricUtils;
 import org.infinispan.remoting.CacheUnreachableException;
 import org.infinispan.remoting.RemoteException;
@@ -57,6 +59,7 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
 
    @Inject TimeService timeService;
    @Inject Configuration config;
+   @Inject GlobalConfiguration globalConfig;
    @Inject EventLogManager eventLogManager;
    @Inject RpcManager rpcManager;
    @Inject InternalDataContainer<Object, Object> dataContainer;
@@ -161,15 +164,24 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
    }
 
    @Override
-   public Collection<MBeanMetadata.AttributeMetadata> getCustomMetrics() {
+   public Collection<MBeanMetadata.AttributeMetadata> getCustomMetrics(boolean nameAsTag) {
       List<MBeanMetadata.AttributeMetadata> attributes = new ArrayList<>(offlineStatus.size() * 3);
       for (Map.Entry<String, OfflineStatus> entry : offlineStatus.entrySet()) {
-         String lowerCaseSite = entry.getKey().toLowerCase();
          OfflineStatus status = entry.getValue();
+         Map<String, String> tags = Map.of(Constants.SITE_TAG_NAME, entry.getKey());
 
-         attributes.add(MetricUtils.createGauge(lowerCaseSite + "_status", entry.getKey() + " status. 1=online, 0=offline", o -> status.isOffline() ? 0 : 1));
-         attributes.add(MetricUtils.createGauge(lowerCaseSite + "_failures_count", "Number of consecutive failures to " + entry.getKey(), o -> status.getFailureCount()));
-         attributes.add(MetricUtils.createGauge(lowerCaseSite + "_millis_since_first_failure", "Milliseconds from first consecutive failure to " + entry.getKey(), o -> status.millisSinceFirstFailure()));
+         if (nameAsTag) {
+            attributes.add(MetricUtils.createGauge("status", entry.getKey() + " status. 1=online, 0=offline", o -> status.isOffline() ? 0 : 1, tags));
+            attributes.add(MetricUtils.createGauge("failures_count", "Number of consecutive failures to " + entry.getKey(), o -> status.getFailureCount(), tags));
+            attributes.add(MetricUtils.createGauge("millis_since_first_failure", "Milliseconds from first consecutive failure to " + entry.getKey(), o -> status.millisSinceFirstFailure(), tags));
+         } else {
+            String lowerCaseSite = entry.getKey().toLowerCase();
+            attributes.add(MetricUtils.createGauge(lowerCaseSite + "_status", entry.getKey() + " status. 1=online, 0=offline", o -> status.isOffline() ? 0 : 1, tags));
+            attributes.add(MetricUtils.createGauge(lowerCaseSite + "_failures_count", "Number of consecutive failures to " + entry.getKey(), o -> status.getFailureCount(), tags));
+            attributes.add(MetricUtils.createGauge(lowerCaseSite + "_millis_since_first_failure", "Milliseconds from first consecutive failure to " + entry.getKey(), o -> status.millisSinceFirstFailure(), tags));
+         }
+
+
       }
       return attributes;
    }
