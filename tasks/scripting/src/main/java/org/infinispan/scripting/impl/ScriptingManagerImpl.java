@@ -156,7 +156,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
       if (authorizer != null) {
          AuthorizationManager authorizationManager = context.getCache().isPresent() ?
                SecurityActions.getCacheAuthorizationManager(context.getCache().get().getAdvancedCache()) : null;
-         if (authorizationManager != null) {
+         if (authorizationManager != null && !authorizationManager.isPermissive()) {
             // when the cache is secured
             authorizationManager.checkPermission(AuthorizationPermission.EXEC, metadata.role().orElse(null));
          } else {

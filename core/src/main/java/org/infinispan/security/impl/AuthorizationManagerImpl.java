@@ -74,4 +74,16 @@ public class AuthorizationManagerImpl implements AuthorizationManager {
    public AuthorizationPermission getWritePermission() {
       return writePermission;
    }
+
+   @Override
+   public void doIf(Subject subject, AuthorizationPermission permission, Runnable runnable) {
+      if (authorizer.getPermissions(configuration, subject).contains(permission)) {
+         runnable.run();
+      }
+   }
+
+   @Override
+   public boolean isPermissive() {
+      return false;
+   }
 }
