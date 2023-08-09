@@ -15,10 +15,12 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.framework.RestRequest;
+import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.AddCacheManagerListenerAsyncAction;
 import org.infinispan.security.actions.AddLoggerListenerAsyncAction;
+import org.infinispan.security.actions.GetCacheAuthorizationManagerAction;
 import org.infinispan.security.actions.GetCacheComponentRegistryAction;
 import org.infinispan.security.actions.GetCacheConfigurationAction;
 import org.infinispan.security.actions.GetCacheConfigurationFromManagerAction;
@@ -93,5 +95,9 @@ final class SecurityActions {
 
    static ClusterExecutor getClusterExecutor(EmbeddedCacheManager cacheManager) {
       return doPrivileged(cacheManager::executor);
+   }
+
+   static AuthorizationManager getCacheAuthorizationManager(AdvancedCache<?,?> advancedCache) {
+      return doPrivileged(new GetCacheAuthorizationManagerAction(advancedCache));
    }
 }
