@@ -284,7 +284,10 @@ public abstract class AbstractAuthorization {
          throw new AssumptionViolatedException("Requires CONTAINER mode");
       }
       InfinispanServerTestMethodRule serverTest = getServerTest();
-      serverTest.hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.ADMIN)).create();
+      org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
+
+      builder.security().authorization().enable().clustering().cacheMode(CacheMode.DIST_SYNC);
+      serverTest.hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.ADMIN)).withServerConfiguration(builder.build()).create();
 
       for (TestUser user : EnumSet.of(TestUser.ADMIN, TestUser.APPLICATION, TestUser.DEPLOYER)) {
          RemoteCache<String, String> cache = serverTest.hotrod().withClientConfiguration(hotRodBuilders.get(user)).get();

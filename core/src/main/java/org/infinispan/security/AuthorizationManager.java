@@ -49,4 +49,11 @@ public interface AuthorizationManager {
     * Returns the permission required to write to the resource associated with this AuthorizationManager.
     */
    AuthorizationPermission getWritePermission();
+
+   /**
+    * Executes the runnable only if the current user has the specified permission
+    */
+   void doIf(Subject subject, AuthorizationPermission permission, Runnable runnable);
+
+   boolean isPermissive();
 }
