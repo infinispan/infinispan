@@ -15,6 +15,7 @@ import static org.infinispan.server.test.core.TestSystemPropertyNames.HOTROD_CLI
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.Closeable;
@@ -196,6 +197,26 @@ public abstract class AbstractAuthorization {
          Exceptions.expectException(SecurityException.class, "(?s).*403.*",
                () -> getServerTest().rest().withClientConfiguration(restBuilders.get(user)).withCacheMode(CacheMode.DIST_SYNC).create()
          );
+      }
+   }
+
+   @Test
+   public void testRestNonAdminsMustNotReadCacheConfig() {
+      restCreateAuthzCache();
+      String name = getServerTest().getMethodName();
+      for (TestUser user : EnumSet.of(TestUser.ADMIN)) {
+         RestClient client = getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get();
+         assertStatus(OK, client.cache(name).configuration());
+         String details = assertStatus(OK, client.cache(name).details());
+         Json json = Json.read(details);
+         assertNotNull(json.asJsonMap().get("configuration"));
+      }
+      for (TestUser user : EnumSet.of(TestUser.APPLICATION, TestUser.OBSERVER, TestUser.MONITOR)) {
+         RestClient client = getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get();
+         assertStatus(FORBIDDEN, client.cache(name).configuration());
+         String details = assertStatus(OK, client.cache(name).details());
+         Json json = Json.read(details);
+         assertNull(json.asJsonMap().get("configuration"));
       }
    }
 
