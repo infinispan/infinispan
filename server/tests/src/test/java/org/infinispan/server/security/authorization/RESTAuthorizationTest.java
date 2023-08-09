@@ -14,6 +14,8 @@ import static org.infinispan.server.test.core.Common.awaitStatus;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.Closeable;
@@ -186,6 +188,26 @@ abstract class RESTAuthorizationTest {
          Exceptions.expectException(SecurityException.class, "(?s).*403.*",
                () -> ext.rest().withClientConfiguration(restBuilders.get(user)).withCacheMode(CacheMode.DIST_SYNC).create()
          );
+      }
+   }
+
+   @Test
+   public void testRestNonAdminsMustNotReadCacheConfig() {
+      restCreateAuthzCache();
+      String name = ext.getMethodName();
+      for (TestUser user : EnumSet.of(TestUser.ADMIN)) {
+         RestClient client = ext.rest().withClientConfiguration(restBuilders.get(user)).get();
+         assertStatus(OK, client.cache(name).configuration());
+         String details = assertStatus(OK, client.cache(name).details());
+         Json json = Json.read(details);
+         assertNotNull(json.asJsonMap().get("configuration"));
+      }
+      for (TestUser user : EnumSet.of(TestUser.APPLICATION, TestUser.OBSERVER, TestUser.MONITOR)) {
+         RestClient client = ext.rest().withClientConfiguration(restBuilders.get(user)).get();
+         assertStatus(FORBIDDEN, client.cache(name).configuration());
+         String details = assertStatus(OK, client.cache(name).details());
+         Json json = Json.read(details);
+         assertNull(json.asJsonMap().get("configuration"));
       }
    }
 
