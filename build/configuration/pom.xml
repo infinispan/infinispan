@@ -339,6 +339,7 @@
                   <configuration>
                      <skip>${maven.javadoc.skip}</skip>
                      <detectOfflineLinks>false</detectOfflineLinks>
+                     <sourcepath>src/main/java:target/generated-sources</sourcepath>
                   </configuration>
                </plugin>
                <plugin>
