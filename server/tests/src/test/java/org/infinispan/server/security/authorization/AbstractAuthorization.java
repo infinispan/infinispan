@@ -359,6 +359,8 @@ public abstract class AbstractAuthorization {
       RestCacheClient writerCache = getServerTest().rest().withClientConfiguration(restBuilders.get(TestUser.WRITER)).get().cache(getServerTest().getMethodName());
       sync(writerCache.put("k1", "v1"));
       assertStatus(FORBIDDEN, writerCache.get("k1"));
+      assertStatus(FORBIDDEN, writerCache.keys());
+      assertStatus(FORBIDDEN, writerCache.entries());
       for (TestUser user : EnumSet.of(TestUser.OBSERVER, TestUser.DEPLOYER)) {
          RestCacheClient userCache = getServerTest().rest().withClientConfiguration(restBuilders.get(user)).get().cache(getServerTest().getMethodName());
          assertEquals("v1", sync(userCache.get("k1")).getBody());
