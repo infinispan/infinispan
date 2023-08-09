@@ -5,7 +5,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
-import java.util.concurrent.ExecutionException;
 
 import javax.security.auth.Subject;
 
@@ -41,18 +40,18 @@ public class SecureScriptingTest extends AbstractScriptingTest {
       AuthorizationConfigurationBuilder authConfig = config.security().authorization().enable();
 
       globalRoles
-         .role("achilles")
+            .role("achilles")
             .permission(AuthorizationPermission.READ)
             .permission(AuthorizationPermission.WRITE)
-         .role("runner")
+            .role("runner")
             .permission(AuthorizationPermission.EXEC)
             .permission(AuthorizationPermission.READ)
             .permission(AuthorizationPermission.WRITE)
-         .role("pheidippides")
+            .role("pheidippides")
             .permission(AuthorizationPermission.EXEC)
             .permission(AuthorizationPermission.READ)
             .permission(AuthorizationPermission.WRITE)
-         .role("admin")
+            .role("admin")
             .permission(AuthorizationPermission.ALL);
       authConfig.role("runner").role("pheidippides").role("admin");
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(global, config);
@@ -70,7 +69,7 @@ public class SecureScriptingTest extends AbstractScriptingTest {
 
    @Override
    protected String[] getScripts() {
-      return new String[] { "test.js", "testRole.js", "testRoleWithCache.js" };
+      return new String[]{"test.js", "testRole.js", "testRoleWithCache.js"};
    }
 
    @Override
@@ -172,7 +171,7 @@ public class SecureScriptingTest extends AbstractScriptingTest {
       });
    }
 
-   public void testScriptOnNonSecuredCache() throws ExecutionException, InterruptedException, PrivilegedActionException {
+   public void testScriptOnNonSecuredCache() throws PrivilegedActionException {
       Cache<String, String> nonSecCache = cache("nonSecuredCache");
       nonSecCache.put("a", "value");
       assertEquals("value", nonSecCache.get("a"));
@@ -183,8 +182,8 @@ public class SecureScriptingTest extends AbstractScriptingTest {
    }
 
    @Test(expectedExceptions = PrivilegedActionException.class)
-   public void testScriptOnNonSecuredCacheWrongRole() throws ExecutionException, InterruptedException, PrivilegedActionException {
-      Security.doAs(RUNNER, (PrivilegedExceptionAction<String>) () -> CompletionStages.join(scriptingManager.runScript("testRoleWithCache.js", new TaskContext().addParameter("a", "a").cache(cache("nonSecuredCache")))));
+   public void testScriptOnNonSecuredCacheWrongRole() throws PrivilegedActionException {
+      Cache<String, String> nonSecCache = cache("nonSecuredCache");
+      Security.doAs(RUNNER, (PrivilegedExceptionAction<String>) () -> CompletionStages.join(scriptingManager.runScript("testRoleWithCache.js", new TaskContext().addParameter("a", "a").cache(nonSecCache))));
    }
-
 }
