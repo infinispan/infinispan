@@ -115,6 +115,7 @@ import org.infinispan.rest.stream.CacheEntryStreamProcessor;
 import org.infinispan.rest.stream.CacheKeyStreamProcessor;
 import org.infinispan.rest.tracing.RestTelemetryService;
 import org.infinispan.security.AuditContext;
+import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.stats.Stats;
@@ -686,6 +687,8 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    }
 
    private RestResponse getDetailResponse(RestRequest request, Cache<?, ?> cache, boolean pretty) {
+      // We escalate privileges to obtain various items of the configuration, but we need to take care about
+      // the details included in the response
       Configuration configuration = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(cacheManager);
@@ -736,7 +739,16 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       try (ConfigurationWriter w = ConfigurationWriter.to(sw).withType(APPLICATION_JSON).prettyPrint(pretty).build()) {
          invocationHelper.getParserRegistry().serialize(w, cache.getName(), configuration);
       }
-      fullDetail.configuration = sw.toString();
+      // Only include the full configuration if ADMIN
+      AuthorizationManager authorizationManager = SecurityActions.getCacheAuthorizationManager(cache.getAdvancedCache());
+      if (authorizationManager == null || authorizationManager.isPermissive()) {
+         // Cache is not secured, use the global authz
+         if (invocationHelper.getRestCacheManager().getAuthorizer().getPermissions(null, request.getSubject()).contains(AuthorizationPermission.ADMIN)) {
+            fullDetail.configuration = sw.toString();
+         }
+      } else {
+         authorizationManager.doIf(request.getSubject(), AuthorizationPermission.ADMIN, () -> fullDetail.configuration = sw.toString());
+      }
       fullDetail.size = size;
       fullDetail.rehashInProgress = rehashInProgress;
       fullDetail.indexingInProgress = indexingInProgress;
@@ -779,7 +791,12 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       if (cache == null)
          return invocationHelper.newResponse(request, NOT_FOUND).toFuture();
 
-      Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
+      AuthorizationManager authorizationManager = SecurityActions.getCacheAuthorizationManager(cache.getAdvancedCache());
+      if (authorizationManager == null || authorizationManager.isPermissive()) {
+         // Cache is not secured, use the global authz
+         invocationHelper.getRestCacheManager().getAuthorizer().checkPermission(AuthorizationPermission.ADMIN);
+      }
+      Configuration cacheConfiguration = cache.getCacheConfiguration();
 
       ByteArrayOutputStream entity = new ByteArrayOutputStream();
       try (ConfigurationWriter writer = ConfigurationWriter.to(entity).withType(accept).prettyPrint(pretty).build()) {
@@ -1053,8 +1070,11 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             json.set("rebalancing_enabled", rebalancingEnabled);
          }
 
+         if (configuration != null) {
+            json.set("configuration", Json.factory().raw(configuration));
+         }
+
          return json
-               .set("configuration", Json.factory().raw(configuration))
                .set("bounded", bounded)
                .set("indexed", indexed)
                .set("persistent", persistent)

@@ -361,7 +361,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       response = cacheClient.updateWithConfiguration(RestEntity.create(APPLICATION_JSON, cacheConfigAlter));
       assertThat(response).isOk();
 
-      response = cacheClient.configuration();
+      response = adminClient.cache("mutable").configuration();
       assertThat(response).isOk();
       String configFromServer = join(response).getBody();
 
@@ -474,17 +474,17 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertPersistence("cache2", true);
 
       String mediaList = "application/json,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
-      response = client.cache("cache1").configuration(mediaList);
+      response = adminClient.cache("cache1").configuration(mediaList);
       assertThat(response).isOk();
       String cache1Cfg = join(response).getBody();
 
-      response = client.cache("cache2").configuration();
+      response = adminClient.cache("cache2").configuration();
       assertThat(response).isOk();
       String cache2Cfg = join(response).getBody();
 
       assertEquals(cache1Cfg, cache2Cfg.replace("cache2", "cache1"));
 
-      response = client.cache("cache1").configuration("application/xml");
+      response = adminClient.cache("cache1").configuration("application/xml");
       assertThat(response).isOk();
       String cache1Xml = join(response).getBody();
 
@@ -493,7 +493,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertEquals(1200000, xmlConfig.clustering().l1().lifespan());
       assertEquals(60500, xmlConfig.clustering().stateTransfer().timeout());
 
-      response = client.cache("cache1").configuration("application/xml; q=0.9");
+      response = adminClient.cache("cache1").configuration("application/xml; q=0.9");
       assertThat(response).isOk();
    }
 
@@ -680,7 +680,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
    @Test
    public void testCacheFullDetail() {
-      RestResponse response = join(client.cache("default").details());
+      RestResponse response = join(adminClient.cache("default").details());
       Json document = Json.read(response.getBody());
       assertThat(response).isOk();
       assertThat(document.at("stats")).isNotNull();
@@ -697,6 +697,14 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertThat(document.at("rebalancing_enabled")).isNotNull();
       assertThat(document.at("key_storage").asString()).isEqualTo("application/unknown");
       assertThat(document.at("value_storage").asString()).isEqualTo("application/unknown");
+
+      // non admins should have an empty config
+      if (security) {
+         response = join(client.cache("default").details());
+         document = Json.read(response.getBody());
+         assertThat(response).isOk();
+         assertThat(document.at("configuration")).isNull();
+      }
 
       response = join(client.cache("proto").details());
       document = Json.read(response.getBody());
@@ -1293,12 +1301,6 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    }
 
    @Test
-   public void testGetProtoCacheConfig() {
-      testGetProtoCacheConfig(APPLICATION_XML_TYPE);
-      testGetProtoCacheConfig(APPLICATION_JSON_TYPE);
-   }
-
-   @Test
    public void testRebalancingActions() {
       String cacheName = "default";
       assertRebalancingStatus(cacheName, true);
@@ -1326,12 +1328,8 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       }
    }
 
-   private void testGetProtoCacheConfig(String accept) {
-      getCacheConfig(accept, PROTOBUF_METADATA_CACHE_NAME);
-   }
-
    private String getCacheConfig(String accept, String name) {
-      RestResponse response = join(client.cache(name).configuration(accept));
+      RestResponse response = join(adminClient.cache(name).configuration(accept));
       assertThat(response).isOk();
       return response.getBody();
    }
