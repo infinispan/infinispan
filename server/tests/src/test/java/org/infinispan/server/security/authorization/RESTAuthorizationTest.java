@@ -205,6 +205,8 @@ abstract class RESTAuthorizationTest {
             .cache(ext.getMethodName());
       assertStatus(NO_CONTENT, writerCache.put("k1", "v1"));
       assertStatus(FORBIDDEN, writerCache.get("k1"));
+      assertStatus(FORBIDDEN, writerCache.keys());
+      assertStatus(FORBIDDEN, writerCache.entries());
       for (TestUser user : EnumSet.of(TestUser.OBSERVER, TestUser.DEPLOYER)) {
          RestCacheClient userCache = ext.rest().withClientConfiguration(restBuilders.get(user)).get()
                .cache(ext.getMethodName());
