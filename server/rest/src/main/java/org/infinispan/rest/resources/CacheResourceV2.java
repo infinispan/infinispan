@@ -429,6 +429,10 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       AdvancedCache<Object, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, TEXT_PLAIN, MATCH_ALL, request);
       if (cache == null)
          return invocationHelper.newResponse(request, NOT_FOUND).toFuture();
+      AuthorizationManager authorizationManager = SecurityActions.getCacheAuthorizationManager(cache);
+      if (authorizationManager != null) {
+         authorizationManager.checkPermission(AuthorizationPermission.BULK_READ);
+      }
 
       NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
 
@@ -463,6 +467,11 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
       AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request).getAdvancedCache();
       if (cache == null) return invocationHelper.newResponse(request, NOT_FOUND).toFuture();
+
+      AuthorizationManager authorizationManager = SecurityActions.getCacheAuthorizationManager(cache);
+      if (authorizationManager != null) {
+         authorizationManager.checkPermission(AuthorizationPermission.BULK_READ);
+      }
 
       final MediaType keyMediaType = getMediaType(negotiate, cache, true);
       final MediaType valueMediaType = getMediaType(negotiate, cache, false);
