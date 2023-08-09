@@ -595,6 +595,16 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
          public AuthorizationPermission getWritePermission() {
             return authzManager.getWritePermission();
          }
+
+         @Override
+         public void doIf(Subject subject, AuthorizationPermission permission, Runnable runnable) {
+            authzManager.doIf(subject, permission, runnable);
+         }
+
+         @Override
+         public boolean isPermissive() {
+            return authzManager.isPermissive();
+         }
       };
    }
 

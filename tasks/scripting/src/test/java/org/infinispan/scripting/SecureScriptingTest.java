@@ -36,18 +36,18 @@ public class SecureScriptingTest extends AbstractScriptingTest {
       AuthorizationConfigurationBuilder authConfig = config.security().authorization().enable();
 
       globalRoles
-         .role("achilles")
+            .role("achilles")
             .permission(AuthorizationPermission.READ)
             .permission(AuthorizationPermission.WRITE)
-         .role("runner")
+            .role("runner")
             .permission(AuthorizationPermission.EXEC)
             .permission(AuthorizationPermission.READ)
             .permission(AuthorizationPermission.WRITE)
-         .role("pheidippides")
+            .role("pheidippides")
             .permission(AuthorizationPermission.EXEC)
             .permission(AuthorizationPermission.READ)
             .permission(AuthorizationPermission.WRITE)
-         .role("admin")
+            .role("admin")
             .permission(AuthorizationPermission.ALL);
       authConfig.role("runner").role("pheidippides").role("admin");
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(global, config);
@@ -64,7 +64,7 @@ public class SecureScriptingTest extends AbstractScriptingTest {
 
    @Override
    protected String[] getScripts() {
-      return new String[] { "test.js", "testRole.js", "testRoleWithCache.js" };
+      return new String[]{"test.js", "testRole.js", "testRoleWithCache.js"};
    }
 
    @Override
@@ -157,7 +157,7 @@ public class SecureScriptingTest extends AbstractScriptingTest {
 
    @Test(expectedExceptions = SecurityException.class)
    public void testScriptOnNonSecuredCacheWrongRole() {
-      Security.doAs(RUNNER, () -> CompletionStages.join(scriptingManager.runScript("testRoleWithCache.js", new TaskContext().addParameter("a", "a").cache(cache("nonSecuredCache")))));
+         Cache<String, String> nonSecCache = cache("nonSecuredCache");
+      Security.doAs(RUNNER, () -> CompletionStages.join(scriptingManager.runScript("testRoleWithCache.js", new TaskContext().addParameter("a", "a").cache(nonSecCache))));
    }
-
 }

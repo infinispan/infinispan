@@ -218,7 +218,10 @@ abstract class HotRodAuthorizationTest {
    public void testServerTaskWithParameters() {
       ext.assumeContainerMode();
 
-      ext.hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.ADMIN)).create();
+      org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
+      builder.security().authorization().enable().clustering().cacheMode(CacheMode.DIST_SYNC);
+      ext.hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.ADMIN)).withServerConfiguration(builder).create();
+
       for (TestUser user : EnumSet.of(TestUser.ADMIN, TestUser.APPLICATION, TestUser.DEPLOYER)) {
          RemoteCache<String, String> cache = ext.hotrod().withClientConfiguration(hotRodBuilders.get(user)).get();
          ArrayList<String> messages = cache.execute("hello", Collections.singletonMap("greetee", new ArrayList<>(Arrays.asList("nurse", "kitty"))));
