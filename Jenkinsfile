@@ -115,6 +115,16 @@ pipeline {
                 sh 'find . -name "hs_err_*" -exec echo {} \\; -exec grep "^# " {} \\;'
             }
         }
+
+        stage('Deploy snapshot') {
+            steps {
+                script {
+                    if (!env.BRANCH_NAME.startsWith('PR-')) {
+                        sh "$MAVEN_HOME/bin/mvn deploy -B -V -e -Pdistribution -Pcommunity-release -DdeployServerZip=true -Dmaven.main.skip=true -Dmaven.test.skip=true -Dcheckstyle.skip=true"
+                    }
+                }
+            }
+        }
     }
 
     post {
