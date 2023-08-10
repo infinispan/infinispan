@@ -165,6 +165,12 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
       }
 
       @Override
+      public boolean isNormalized(String[] propertyPath) {
+         IndexValueFieldTypeDescriptor field = getField(propertyPath);
+         return field != null && field.normalizerName().isPresent();
+      }
+
+      @Override
       public boolean isProjectable(String[] propertyPath) {
          IndexValueFieldTypeDescriptor field = getField(propertyPath);
          return field != null && field.projectable();
