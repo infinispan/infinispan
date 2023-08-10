@@ -150,6 +150,7 @@
                         <configuration>
                            <buildArgs>
                               -J-Djava.util.logging.manager=org.jboss.logmanager.LogManager
+                              -H:+AllowDeprecatedBuilderClassesOnImageClasspath
                               -H:IncludeResources=embedded.xml
                               -H:IncludeResources=stacks/udp.xml
                               -H:IncludeResources=stacks/tcp.xml
