@@ -104,13 +104,13 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    private static final String PROTO_SCHEMA =
          " /* @Indexed */                     \n" +
                " message Entity {                   \n" +
-               "    /* @Field */                    \n" +
+               "    /* @Basic */                    \n" +
                "    required int32 value=1;         \n" +
                "    optional string description=2;  \n" +
                " }                                  \n" +
                " /* @Indexed */                     \n" +
                " message Another {                  \n" +
-               "    /* @Field */                    \n" +
+               "    /* @Basic */                    \n" +
                "    required int32 value=1;         \n" +
                "    optional string description=2;  \n" +
                " }";
@@ -1467,7 +1467,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       String value = Json.object().set("_type", "schemas.Entity").set("name", "Jun").toString();
       RestEntity restEntity = RestEntity.create(APPLICATION_JSON, value);
       restResponse = join(cacheClient.put("key", restEntity));
-      assertThat(restResponse).containsReturnedText("make sure at least one field has the @Field annotation");
+      assertThat(restResponse).containsReturnedText("make sure at least one field has some indexing annotation");
 
       // Cache should not have any data
       response = cacheClient.size();
@@ -1479,7 +1479,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       String proto = " package future;\n" +
             " /* @Indexed */\n" +
             " message Entity {\n" +
-            "    /* @Field */\n" +
+            "    /* @Basic */\n" +
             "    optional string name=1;\n" +
             " }";
 

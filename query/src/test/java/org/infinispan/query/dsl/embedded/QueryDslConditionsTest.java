@@ -912,7 +912,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .orderBy("surname", SortOrder.ASC)
             .orderBy("age", SortOrder.ASC)
             .having("age").isNull()
-            // if @Field#indexNullAs is defined null values for Search 6 are not null
+            // if #indexNullAs is defined null values for Search 6 are not null
             .or().having("age").equal(-1)
             .build();
 
@@ -932,7 +932,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .select("name", "age")
             .not().having("age").isNull()
-            // if @Field#indexNullAs is defined null values for Search 6 are not null
+            // if #indexNullAs is defined null values for Search 6 are not null
             .and().not().having("age").equal(-1)
             .build();
 
@@ -1458,7 +1458,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("age").isNull()
-            // if @Field#indexNullAs is defined null values for Search 6 are not null
+            // if #indexNullAs is defined null values for Search 6 are not null
             .or().having("age").equal(-1)
             .build();
 
@@ -1473,7 +1473,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .not().having("age").isNull()
-            // if @Field#indexNullAs is defined null values for Search 6 are not null
+            // if #indexNullAs is defined null values for Search 6 are not null
             .and().not().having("age").equal(-1)
             .build();
 

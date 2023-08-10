@@ -9,6 +9,8 @@ import static org.testng.AssertJUnit.assertFalse;
 
 import java.io.IOException;
 
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
@@ -18,7 +20,6 @@ import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoName;
@@ -57,11 +58,11 @@ public class IndexedCacheNonIndexedEntityTest extends SingleCacheManagerTest {
       }
    }
 
-   @ProtoDoc("@Indexed")
+   @Indexed
    @ProtoName("EvilTwin")
    static class EvilTwin {
 
-      @ProtoDoc("@Field(index=Index.YES, analyze=Analyze.NO)")
+      @Basic
       @ProtoField(1)
       public String name;
    }

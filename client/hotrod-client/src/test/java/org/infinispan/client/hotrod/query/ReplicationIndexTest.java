@@ -10,6 +10,8 @@ import static org.testng.AssertJUnit.assertFalse;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
@@ -21,7 +23,6 @@ import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -93,7 +94,7 @@ public class ReplicationIndexTest extends MultiHotRodServersTest {
       addNode();
    }
 
-   @ProtoDoc("@Indexed")
+   @Indexed
    static class Entity {
       private String name;
 
@@ -106,7 +107,7 @@ public class ReplicationIndexTest extends MultiHotRodServersTest {
          return entity;
       }
 
-      @ProtoDoc("@Field(index=Index.YES, analyze = Analyze.YES, store = Store.NO)")
+      @Text
       @ProtoField(number = 1, required = true)
       public String getName() {
          return name;

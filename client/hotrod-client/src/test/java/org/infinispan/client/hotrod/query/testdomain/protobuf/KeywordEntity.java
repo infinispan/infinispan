@@ -1,12 +1,13 @@
 package org.infinispan.client.hotrod.query.testdomain.protobuf;
 
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
-import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 
-@ProtoDoc("@Indexed")
+@Indexed
 public class KeywordEntity {
 
    private final String keyword;
@@ -17,7 +18,7 @@ public class KeywordEntity {
    }
 
    @ProtoField(value = 1, required = true)
-   @ProtoDoc("@Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = \"keyword\"))")
+   @Text(projectable = true, analyzer = "keyword")
    public String getKeyword() {
       return keyword;
    }
