@@ -102,13 +102,6 @@ If you use this annotation for:
 * Enums, an identically named enum value must exist in the target enum.
 
 [discrete]
-== ProtoDoc and ProtoDocs
-
-`@ProtoDoc` and `@ProtoDocs` are human-readable text that document message types, enums, or fields for the generated schema.
-
-You use these annotations to add comments.
-
-[discrete]
 == ProtoName
 
 `@ProtoName` is an optional annotation that specifies the Protobuf message or enum type name and replaces the `@ProtoMessage` annotation.
@@ -146,7 +139,7 @@ You should not add this annotation to classes because {brandname} uses it intern
 [discrete]
 == Other annotations
 {brandname} copies any other annotations on classes, fields, and methods as comments in the generated Protobuf schema.
-This includes indexing annotations such as `@Indexed` and `@Field`.
+This includes indexing annotations such as `@Indexed` and `@Basic`.
 
 [role="_additional-resources"]
 .Additional resources

@@ -10,7 +10,6 @@ import org.infinispan.client.hotrod.evolution.model.BaseModelIndexAttributesEnti
 import org.infinispan.client.hotrod.evolution.model.BaseModelWithNameAnalyzedAndNameNonAnalyzedFieldEntity;
 import org.infinispan.client.hotrod.evolution.model.BaseModelWithNameAnalyzedAndNameNonAnalyzedFieldEntity.BaseModelWithNameAnalyzedAndNameNonAnalyzedFieldEntitySchema;
 import org.infinispan.client.hotrod.evolution.model.BaseModelWithNameFieldAnalyzedEntity.BaseModelWithNameFieldAnalyzedEntitySchema;
-import org.infinispan.client.hotrod.evolution.model.BaseModelWithNameFieldAnalyzedEntityOldAnnotations.BaseModelWithNameFieldAnalyzedEntityOldAnnotationsSchema;
 import org.infinispan.client.hotrod.evolution.model.BaseModelWithNameFieldIndexedAndNameAnalyzedFieldEntity;
 import org.infinispan.client.hotrod.evolution.model.BaseModelWithNameFieldIndexedAndNameAnalyzedFieldEntity.BaseModelWithNameFieldIndexedAndNameAnalyzedFieldEntitySchema;
 import org.infinispan.client.hotrod.evolution.model.BaseModelWithNameFieldIndexedEntity.BaseModelWithNameFieldIndexedEntitySchema;
@@ -333,30 +332,6 @@ public class IndexSchemaNoDowntimeUpgradeTest extends SingleHotRodServerTest {
 
         ModelUtils.createModelEntities(cache, 5, ModelUtils.createBaseModelWithNameIndexedFieldEntity(3));
         doQuery("FROM evolution.Model WHERE nameAnalyzed : '*3*'", cache, 3);
-    }
-
-    @Test
-    void testMigrateOldAnnotationToNewOne() {
-        // VERSION 1
-        updateSchemaIndex(BaseModelWithNameFieldAnalyzedEntityOldAnnotationsSchema.INSTANCE);
-        RemoteCache<String, Model> cache = remoteCacheManager.getCache(CACHE_NAME);
-
-        // Create VERSION 1 entities
-        ModelUtils.createModelEntities(cache, 5, ModelUtils.createBaseModelWithNameFieldAnalyzedEntityOldAnnotations(1));
-
-        // VERSION 1 uses name in a query
-        doQuery("FROM evolution.Model WHERE nameAnalyzed : '*3*'", cache, 1);
-
-        // VERSION 2
-        updateSchemaIndex(BaseModelWithNameFieldAnalyzedEntitySchema.INSTANCE);
-
-        // No update/reindexing needed as ModelB and ModelJ should be equivalent
-
-        // Create entities without index
-        ModelUtils.createModelEntities(cache, 5, ModelUtils.createBaseModelWithNameFieldAnalyzedEntity(2));
-
-        // Try query with field that has the index in both versions
-        doQuery("FROM evolution.Model WHERE nameAnalyzed : '*3*'", cache, 2);
     }
 
     /**

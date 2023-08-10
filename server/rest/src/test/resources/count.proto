@@ -4,22 +4,22 @@
 message IndexedEntity {
 
   /**
-   * @Field(analyze = Analyze.YES, store = Store.YES)
+   * @Text(projectable = true)
    */
   required string indexedStoredField = 1;
 
   /**
-   * @Field(analyze = Analyze.YES, store = Store.NO)
+   * @Text
    */
   required string indexedNotStoredField = 2;
 
   /**
-  * @Field(analyze = Analyze.NO, store = Store.NO)
+  * @Basic
   */
   required string sortableNotStoredField = 3;
 
   /**
-  * @Field(analyze = Analyze.NO, store = Store.YES)
+  * @Basic(projectable = true)
   */
   required int64 sortableStoredField = 4;
 

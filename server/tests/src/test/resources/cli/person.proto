@@ -6,12 +6,12 @@ package org.infinispan.rest.search.entity;
 message Address {
 
     /**
-     * @Field(analyze = Analyze.YES, store = Store.YES)
+     * @Text(projectable = true)
      */
     required string street = 1;
 
     /**
-     * @Field(store = Store.YES)
+     * @Basic(projectable = true)
      */
     required string postCode = 2;
 }
@@ -22,7 +22,7 @@ message Address {
 message PhoneNumber {
 
     /**
-     * @Field(store = Store.YES)
+     * @Basic(projectable = true)
      */
     required string number = 1;
 }
@@ -33,18 +33,17 @@ message PhoneNumber {
 message Person {
 
     /**
-     * @Field(store = Store.YES)
+     * @Basic(projectable = true)
      */
     optional int32 id = 1;
 
     /**
-     * @Field(store = Store.YES)
-     * @SortableField
+     * @Basic(projectable = true, sortable = true)
      */
     required string name = 2;
 
     /**
-     * @Field(store = Store.YES)
+     * @Basic(projectable = true)
      */
     required string surname = 3;
 
@@ -54,22 +53,22 @@ message Person {
     }
 
     /**
-     * @Field(store = Store.YES)
+     * @Basic(projectable = true)
      */
     optional Gender gender = 4;
 
     /**
-     * @Field(analyze = Analyze.YES, store = Store.YES)
+     * @Embedded
      */
     optional Address address = 5;
 
     /**
-     * @Field(store = Store.YES)
+     * @Embedded
      */
     repeated PhoneNumber phoneNumbers = 6;
 
     /**
-     * @Field(store = Store.YES)
+     * @Basic(projectable = true)
      */
     optional uint32 age = 7;
 }

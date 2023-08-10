@@ -7,6 +7,8 @@ import static org.testng.AssertJUnit.assertNotNull;
 import java.io.IOException;
 import java.util.List;
 
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
@@ -17,7 +19,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
@@ -35,7 +36,7 @@ import org.testng.annotations.Test;
 @Test(testName = "client.hotrod.query.RemoteQueryWithProtostreamAnnotationsTest", groups = "functional")
 public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServerTest {
 
-   @ProtoDoc("@Indexed")
+   @Indexed
    @ProtoName("Memo")
    public static class Memo {
 
@@ -53,7 +54,6 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
       public Memo() {
       }
 
-      @ProtoDoc("@Field(index = Index.NO, store = Store.NO)")
       @ProtoField(number = 10, required = true)
       public int getId() {
          return id;
@@ -63,7 +63,7 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
          this.id = id;
       }
 
-      @ProtoDoc("@Field(store = Store.YES)")
+      @Basic(projectable = true)
       @ProtoField(20)
       public String getText() {
          return text;
@@ -73,7 +73,7 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
          this.text = text;
       }
 
-      @ProtoDoc("@Field(store = Store.YES)")
+      @Basic(projectable = true)
       @ProtoField(30)
       public Author getAuthor() {
          return author;
@@ -157,7 +157,7 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
       String authorSchemaFile = "/* @Indexed */\n" +
             "message Author {\n" +
             "   required int32 id = 1;\n" +
-            "   /* @Field(store = Store.YES) */\n" +
+            "   /* @Basic(projectable = true) */\n" +
             "   required string name = 2;\n" +
             "}";
       SerializationContext serializationContext = MarshallerUtil.getSerializationContext(remoteCacheManager);

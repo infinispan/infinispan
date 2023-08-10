@@ -1,10 +1,7 @@
 package org.infinispan.client.hotrod.query.testdomain.protobuf;
 
-import org.hibernate.search.annotations.Analyze;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Index;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.Store;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoField;
@@ -25,7 +22,7 @@ public class Reviewer {
    }
 
    @ProtoField(number = 1, required = true)
-   @Field(index= Index.NO, store= Store.NO, analyze= Analyze.NO)
+   @Basic(searchable = false)
    public String getFirstName() {
       return firstName;
    }
@@ -35,7 +32,7 @@ public class Reviewer {
    }
 
    @ProtoField(number = 2, required = true)
-   @Field(index=Index.NO, store=Store.NO, analyze=Analyze.NO)
+   @Basic(searchable = false)
    public String getLastName() {
       return lastName;
    }
