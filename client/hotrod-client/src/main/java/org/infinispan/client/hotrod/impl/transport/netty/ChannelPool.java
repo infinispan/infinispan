@@ -97,6 +97,9 @@ class ChannelPool {
             }
          }
       }
+
+      // The pool was terminated while the callback tried to acquire a channel. Let's complete it with an exception.
+      if (terminated) close();
    }
 
    boolean executeDirectlyIfPossible(ChannelOperation callback) {
@@ -230,6 +233,13 @@ class ChannelPool {
          return;
       }
 
+      if (terminated) {
+         if (log.isTraceEnabled()) log.tracef("[%s] Attempt to release channel %s after termination, active = %d",
+                                              address, channel, active.get());
+         channel.pipeline().fireUserEventTriggered(ChannelPoolCloseEvent.INSTANCE);
+         return;
+      }
+
       int currentActive = active.decrementAndGet();
       if (log.isTraceEnabled()) log.tracef("[%s] Released channel %s, active = %d", address, channel, currentActive);
       if (currentActive < 0) {
@@ -331,6 +341,7 @@ class ChannelPool {
       try {
          RejectedExecutionException cause = new RejectedExecutionException("Pool was terminated");
          callbacks.forEach(callback -> callback.cancel(address, cause));
+         callbacks.clear();
          channels.forEach(channel -> {
             // We don't want to fail all operations on given channel,
             // e.g. when moving from unresolved to resolved addresses
