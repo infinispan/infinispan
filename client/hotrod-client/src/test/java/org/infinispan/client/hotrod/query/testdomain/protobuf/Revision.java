@@ -3,10 +3,11 @@ package org.infinispan.client.hotrod.query.testdomain.protobuf;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.infinispan.protostream.annotations.ProtoDoc;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.protostream.annotations.ProtoField;
 
-@ProtoDoc("@org.hibernate.search.annotations.Indexed")
+@Indexed
 public class Revision {
 
    private String messageId;
@@ -22,7 +23,7 @@ public class Revision {
    }
 
    @ProtoField(number = 1, required = true)
-   @ProtoDoc("@org.hibernate.search.annotations.Field(index=Index.YES, store=Store.NO, analyze=Analyze.NO)")
+   @Basic
    public String getKey() {
       return messageId;
    }
@@ -32,7 +33,7 @@ public class Revision {
    }
 
    @ProtoField(number = 2, required = true)
-   @ProtoDoc("@org.hibernate.search.annotations.Field(index=Index.NO, store=Store.NO, analyze=Analyze.NO)")
+   @Basic(searchable = false)
    public String getMessage() {
       return message;
    }
@@ -42,7 +43,7 @@ public class Revision {
    }
 
    @ProtoField(number = 3, collectionImplementation = ArrayList.class)
-   @ProtoDoc("@org.hibernate.search.annotations.Field(index=Index.NO, store=Store.NO, analyze=Analyze.NO)")
+   @Basic(searchable = false)
    public List<Reviewer> getReviewers() {
       if (reviewers == null) {
          reviewers = new ArrayList<>();

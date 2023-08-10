@@ -51,12 +51,11 @@ public class RemoteQueryStringTest extends QueryStringTest {
       @Override
       public String getProtoFile() {
          return "package sample_bank_account;\n" +
-               "/* @Indexed \n" +
-               "   @Analyzer(definition = \"standard-with-stop\") */" +
+               "/* @Indexed */\n" +
                "message AnalyzerTestEntity {\n" +
-               "\t/* @Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = \"stemmer\")) */\n" +
+               "\t/* @Text(projectable = true, analyzer = \"stemmer\") */\n" +
                "\toptional string f1 = 1;\n" +
-               "\t/* @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = \"-1\") */\n" +
+               "\t/* @Basic(indexNullAs = \"-1\") */\n" +
                "\toptional int32 f2 = 2;\n" +
                "}\n";
       }

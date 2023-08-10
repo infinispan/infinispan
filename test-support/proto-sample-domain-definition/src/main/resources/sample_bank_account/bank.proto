@@ -1,0 +1,223 @@
+package sample_bank_account;
+
+
+/**
+ * @Indexed
+ * @TypeId(100042)
+ */
+message User {
+
+   /**
+    * @Basic(projectable = true, sortable = true)
+    */
+   required int32 id = 1;
+
+   /**
+    * @Basic(projectable = true)
+    */
+   repeated int32 accountIds = 2;
+
+   /**
+    * @Basic(projectable = true, sortable = true)
+    */
+   required string name = 3;
+
+   /**
+    * @Basic(projectable = true, sortable = true, indexNullAs = "_null_")
+    */
+   optional string surname = 4;
+
+   /**
+    * @Basic(projectable = true, indexNullAs = "_null_")
+    */   
+   optional string salutation = 5;
+
+   /**
+    * @Indexed
+    */
+   message Address {
+
+      /**
+       * @Basic(projectable = true)
+       */
+      required string street = 1;
+
+      /**
+       * @Basic(projectable = true)
+       */
+      required string postCode = 2;
+
+      /**
+       * @Basic(projectable = true)
+       */
+      required int32 number = 3;
+
+      required bool isCommercial = 4;
+   }
+
+   /**
+    * @Embedded
+    */
+   repeated Address addresses = 6;     //a repeated field cannot be marked required
+
+   /**
+    * @Basic(sortable = true, indexNullAs = "-1")
+    */
+   optional int32 age = 7;   // persisting age instead of birth date is not ideal but is ok for our sample code
+
+   /* @TypeId(100041) */
+   enum Gender {
+      MALE = 0;    //NOTE: It seems negative values are accepted too!
+      FEMALE = 1;
+   }
+
+   /**
+    * @Basic(projectable = true)
+    */
+   optional Gender gender = 8;
+
+   optional string notes = 9;
+
+   /**
+    * @Basic(projectable = true, sortable = true, indexNullAs = "-1")
+    */
+   optional fixed64 creationDate = 10;
+
+   optional fixed64 passwordExpirationDate = 11;
+
+   optional int64 qrCode = 12;
+}
+
+/**
+ * @Indexed
+ */
+message Account {
+
+   /**
+    * @Basic(projectable = true, sortable = true)
+    */
+   required int32 id = 1;
+
+   /**
+    * @Basic(projectable = true, sortable = true)
+    */
+   optional string description = 2 [default = "Checking account"];
+
+   /**
+    * @Basic(projectable = true, sortable = true)
+    */
+   required fixed64 creationDate = 3;
+
+   /**
+    * @Indexed
+    */
+   message Limits {
+
+       /**
+        * @Basic(projectable = true)
+        */
+       optional double maxDailyLimit = 1;
+
+       /**
+        * @Basic(projectable = true)
+        */
+       optional double maxTransactionLimit = 2;
+
+       /**
+        * @Basic(projectable = true)
+        */
+       repeated string payees = 3;
+   }
+
+   /**
+    * @Embedded
+    */
+   optional Limits limits = 4;
+
+   /**
+    * @Embedded
+    */
+   required Limits hardLimits = 5;
+
+   /**
+    * @Basic(projectable = true)
+    */
+   repeated bytes blurb = 6;
+
+   /** @TypeId(100043) */
+   enum Currency {
+      EUR = 0;
+      GBP = 1;
+      USD = 2;
+      BRL = 3;
+   }
+
+   repeated Currency currencies = 7;
+}
+
+/**
+ * @Indexed
+ */
+message Transaction {
+
+   /**
+    * @Basic(projectable = true, sortable = true)
+    */
+   required int32 id = 1;
+
+   /**
+    * @Basic(sortable = true)
+    */
+   optional string description = 2;
+
+   /**
+    * @Text(projectable = true)
+    */
+   optional string longDescription = 3;
+
+   /**
+    * @Text(projectable = true, analyzer = "ngram")
+    */
+   optional string notes = 4;
+
+   /**
+    * @Basic(projectable = true)
+    */
+   required int32 accountId = 5;
+
+   /**
+    * @Basic(projectable = true)
+    */
+   required fixed64 date = 6;  // there is no native Date type in protobuf so we have to store it as a long
+
+   /**
+    * @Basic(projectable = true, sortable = true)
+    */
+   required double amount = 7; // how do I store a BigDecimal? maybe as a byte array ..
+
+   /**
+    * @Basic(projectable = true)
+    */
+   required bool isDebit = 8;
+
+   /**
+    * No annotations here. This is left unindexed on purpose.
+    */
+   required bool isValid = 9;
+}
+
+/**
+ * An array of int.
+ */
+message int_array {
+   repeated int32 theArray = 1;
+}
+
+/**
+ * A list of User messages.
+ */
+message user_list {
+   repeated User theList = 1;
+}
+
+//todo demonstrate collection of 'any'

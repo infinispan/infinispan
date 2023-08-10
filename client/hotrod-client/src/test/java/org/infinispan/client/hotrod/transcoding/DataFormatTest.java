@@ -23,6 +23,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -44,7 +46,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
-import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -389,7 +390,7 @@ class ComplexKey {
    }
 }
 
-@ProtoDoc("@Indexed")
+@Indexed
 class ComplexValue {
 
    private UUID uuid;
@@ -404,7 +405,7 @@ class ComplexValue {
    }
 
    @ProtoField(1)
-   @ProtoDoc("@Field(store = Store.YES)")
+   @Basic(projectable = true)
    public String getUuid() {
       return uuid.toString();
    }

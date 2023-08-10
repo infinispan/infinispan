@@ -1,11 +1,13 @@
 package org.infinispan.client.hotrod.query.testdomain.protobuf;
 
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
-import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
 
-@ProtoDoc("@Indexed")
+@Indexed
 public class Color {
 
    private String name;
@@ -13,7 +15,7 @@ public class Color {
    private String description;
 
    @ProtoField(value = 1)
-   @ProtoDoc("@Field(store = Store.YES, analyze = Analyze.NO)")
+   @Basic(projectable = true)
    public String getName() {
       return name;
    }
@@ -23,7 +25,7 @@ public class Color {
    }
 
    @ProtoField(value = 2)
-   @ProtoDoc("@Field(store = Store.NO, analyze = Analyze.YES, analyzer = @Analyzer(definition = \"keyword\"))")
+   @Text(analyzer = "keyword")
    public String getDesc1() {
       return description;
    }
@@ -33,7 +35,7 @@ public class Color {
    }
 
    @ProtoField(value = 3)
-   @ProtoDoc("@Field(store = Store.NO, analyze = Analyze.YES, analyzer = @Analyzer(definition = \"keyword\"))")
+   @Text(analyzer = "keyword")
    public String getDesc2() {
       return description;
    }
@@ -43,7 +45,7 @@ public class Color {
    }
 
    @ProtoField(value = 4)
-   @ProtoDoc("@Field(store = Store.NO, analyze = Analyze.YES, analyzer = @Analyzer(definition = \"standard\"))")
+   @Text
    public String getDesc3() {
       return description;
    }
