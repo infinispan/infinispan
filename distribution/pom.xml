@@ -356,6 +356,11 @@
          <activation>
             <property><name>deployServerZip</name></property>
          </activation>
+         <properties>
+            <!-- Default repositoryId and url for maven-deploy-plugin. Can be overwritten using -DrepositoryId and -Durl (product) -->
+            <repositoryId>${maven.snapshots.repo.id}</repositoryId>
+            <url>${maven.snapshots.repo.url}</url>
+         </properties>
          <build>
             <plugins>
                <!-- Deploy the file we've explicitly installed.

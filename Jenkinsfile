@@ -22,7 +22,7 @@ pipeline {
                     // Show the agent name in the build list
                     echo env.NODE_NAME
                     env.MAVEN_HOME = tool('Maven')
-                    env.MAVEN_OPTS = "-Xmx1g -XX:+HeapDumpOnOutOfMemoryError"
+                    env.MAVEN_OPTS = "-Xmx1500m -XX:+HeapDumpOnOutOfMemoryError"
                     env.JAVA_HOME = tool('JDK 17')
                     if (params.TEST_JDK != 'Default') {
                         env.JAVA_ALT_HOME = tool(params.TEST_JDK)
@@ -140,15 +140,6 @@ pipeline {
                 pmdParser(pattern: '**/target/pmd.xml'),
                 cpd(pattern: '**/target/cpd.xml')
             ]
-        }
-
-        // Deploy snapshots of successful master builds
-        success {
-            script {
-                if (!env.BRANCH_NAME.startsWith('PR-')) {
-                    sh "$MAVEN_HOME/bin/mvn deploy -B -V -e -Pdistribution -DdeployServerZip=true -Dmaven.main.skip=true -Dmaven.test.skip=true"
-                }
-            }
         }
 
         // Send notification email when a build fails, has test failures, or is the first successful build
