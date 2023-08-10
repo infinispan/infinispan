@@ -28,6 +28,14 @@ public interface IndexedFieldProvider<TypeMetadata> {
       boolean isAnalyzed(String[] propertyPath);
 
       /**
+       * Checks if the property of the indexed entity is normalized.
+       *
+       * @param propertyPath the path of the property
+       * @return {@code true} if the property is normalized, {@code false} otherwise.
+       */
+      boolean isNormalized(String[] propertyPath);
+
+      /**
        * Checks if the property of the indexed entity is projectable.
        *
        * @param propertyPath the path of the property
@@ -54,6 +62,11 @@ public interface IndexedFieldProvider<TypeMetadata> {
 
       @Override
       public boolean isAnalyzed(String[] propertyPath) {
+         return false;
+      }
+
+      @Override
+      public boolean isNormalized(String[] propertyPath) {
          return false;
       }
 

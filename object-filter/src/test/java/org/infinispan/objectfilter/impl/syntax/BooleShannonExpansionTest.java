@@ -33,6 +33,11 @@ public class BooleShannonExpansionTest {
       }
 
       @Override
+      public boolean isNormalized(String[] propertyPath) {
+         return false;
+      }
+
+      @Override
       public boolean isProjectable(String[] propertyPath) {
          return isIndexed(propertyPath);
       }

@@ -103,6 +103,10 @@ public final class FieldMapping {
       return analyzer != null;
    }
 
+   public boolean normalized() {
+      return normalizer != null;
+   }
+
    public Object indexNullAs() {
       init();
       return indexNullAsObj;

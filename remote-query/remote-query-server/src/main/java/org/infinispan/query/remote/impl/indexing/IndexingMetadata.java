@@ -73,6 +73,14 @@ public final class IndexingMetadata {
       return fieldMapping != null && fieldMapping.analyzed();
    }
 
+   public boolean isFieldNormalized(String fieldName) {
+      if (fields == null) {
+         return false;
+      }
+      FieldMapping fieldMapping = fields.get(fieldName);
+      return fieldMapping != null && fieldMapping.normalized();
+   }
+
    public boolean isFieldProjectable(String fieldName) {
       if (fields == null) {
          return isIndexed;
