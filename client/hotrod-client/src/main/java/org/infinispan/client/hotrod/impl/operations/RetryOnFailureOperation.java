@@ -7,6 +7,7 @@ import java.net.SocketAddress;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.DataFormat;
@@ -61,8 +62,9 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
          }
          fetchChannelAndInvoke(retryCount, failedServers);
       } catch (Exception e) {
-         // if there's a bug before the operation is registered the operation wouldn't be completed
-         completeExceptionally(e);
+         Throwable cause = handleException(e, null, null);
+         if (cause != null)
+            completeExceptionally(cause);
       }
       return this;
    }
@@ -155,7 +157,11 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation<T> impl
       while (cause instanceof DecoderException && cause.getCause() != null) {
          cause = cause.getCause();
       }
-      if (cause instanceof RemoteIllegalLifecycleStateException || cause instanceof IOException || cause instanceof TransportException) {
+      if (cause instanceof RemoteIllegalLifecycleStateException
+            || cause instanceof IOException
+            || cause instanceof TransportException
+            || cause instanceof RejectedExecutionException) {
+
          if (Thread.interrupted()) {
             // Don't invalidate the transport if our thread was interrupted
             completeExceptionally(new InterruptedException());
