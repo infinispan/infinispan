@@ -1,25 +1,25 @@
 /* @Indexed */
 message TestEntity {
 
-    /* @Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = "standard")) */
+    /* @Text(projectable = true) */
     optional string name1 = 1;
 
-    /* @Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = "simple")) */
+    /* @Text(projectable = true, analyzer = "simple") */
     optional string name2 = 2;
 
-    /* @Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = "whitespace")) */
+    /* @Text(projectable = true, analyzer = "whitespace") */
     optional string name3 = 3;
 
-    /* @Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = "keyword")) */
+    /* @Text(projectable = true, analyzer = "keyword") */
     optional string name4 = 4;
 
-    /* @Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = "stemmer")) */
+    /* @Text(projectable = true, analyzer = "stemmer") */
     optional string name5 = 5;
 
-    /* @Field(store = Store.YES, analyze = Analyze.YES, analyzer = @Analyzer(definition = "ngram")) */
+    /* @Text(projectable = true, analyzer = "ngram") */
     optional string name6 = 6;
 
-    /* @Field(index = Index.YES,store = Store.YES, analyze = Analyze.YES) */
+    /* @Embedded */
     optional TestEntity child = 7;
 
 }

@@ -4,6 +4,8 @@ import static org.infinispan.configuration.cache.StorageType.HEAP;
 import static org.infinispan.eviction.EvictionStrategy.REMOVE;
 import static org.testng.Assert.assertEquals;
 
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
@@ -13,7 +15,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
-import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -73,21 +74,20 @@ public class EvictionProtobufTest extends MultiHotRodServersTest {
       EvictionProtobufTest.TestSCI INSTANCE = new TestSCIImpl();
    }
 
-   @ProtoDoc("@Indexed")
+   @Indexed
    public static class Book {
 
-      @ProtoDoc("@Field(index=Index.YES, analyze = Analyze.YES, store = Store.NO)")
+      @Text
       @ProtoField(number = 1)
       final String title;
 
-      @ProtoDoc("@Field(index=Index.YES, analyze = Analyze.YES, store = Store.NO)")
+      @Text
       @ProtoField(number = 2)
       final String author;
 
-      @ProtoDoc("@Field(index=Index.YES, analyze = Analyze.YES, store = Store.NO)")
+      @Text
       @ProtoField(number = 3, defaultValue = "0")
       final int publicationYear;
-
 
       @ProtoFactory
       public Book(String title, String author, int publicationYear) {

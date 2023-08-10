@@ -7,6 +7,8 @@ import static org.testng.AssertJUnit.assertFalse;
 
 import java.util.Objects;
 
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
@@ -18,7 +20,6 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.annotations.ProtoDoc;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
@@ -205,7 +206,7 @@ class NewsKey {
    }
 }
 
-@ProtoDoc("@Indexed")
+@Indexed
 class News {
    private String id;
    private long timestamp;
@@ -222,8 +223,7 @@ class News {
       this.id = id;
    }
 
-   @ProtoDoc("@Field(index=Index.YES, analyze = Analyze.NO, store = Store.NO)")
-   @ProtoDoc("@SortableField")
+   @Basic(sortable = true)
    @ProtoField(number = 2, required = true)
    public long getTimestamp() {
       return timestamp;

@@ -112,17 +112,6 @@ public class ModelUtils {
         };
     }
 
-    public static Function<Integer, Model> createBaseModelWithNameFieldAnalyzedEntityOldAnnotations(int version) {
-        return i -> {
-            BaseModelWithNameFieldAnalyzedEntityOldAnnotations m = new BaseModelWithNameFieldAnalyzedEntityOldAnnotations();
-            m.entityVersion = version;
-            m.id = String.valueOf(i);
-            m.nameAnalyzed = "modelJ # " + i;
-
-            return m;
-        };
-    }
-
     public static Function<Integer, Model> createBaseModelIndexAttributesEntity(int version) {
         return i -> {
             BaseModelIndexAttributesEntity m = new BaseModelIndexAttributesEntity();

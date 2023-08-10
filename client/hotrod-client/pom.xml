@@ -213,8 +213,8 @@
       </dependency>
 
       <dependency>
-         <groupId>org.infinispan.protostream</groupId>
-         <artifactId>sample-domain-definition</artifactId>
+         <groupId>org.infinispan</groupId>
+         <artifactId>proto-sample-domain-definition</artifactId>
          <scope>test</scope>
       </dependency>
 

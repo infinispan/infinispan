@@ -8,7 +8,7 @@ package org.infinispan;
 message author {
 
   /**
-   * @Field(index=Index.YES, analyze = Analyze.Yes, store = Store.NO)
+   * @Text(sortable = true)
    */
   required string name = 1;
 
