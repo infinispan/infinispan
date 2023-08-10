@@ -415,14 +415,16 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    }
 
    private void checkAnalyzed(PropertyPath<?> propertyPath, boolean expectAnalyzed) {
-      if (fieldIndexingMetadata.isAnalyzed(propertyPath.asArrayPath())) {
-         if (!expectAnalyzed) {
+      if (!expectAnalyzed) {
+         if (fieldIndexingMetadata.isAnalyzed(propertyPath.asArrayPath())) {
             throw log.getQueryOnAnalyzedPropertyNotSupportedException(targetTypeName, propertyPath.asStringPath());
          }
-      } else {
-         if (expectAnalyzed) {
-            throw log.getFullTextQueryOnNotAalyzedPropertyNotSupportedException(targetTypeName, propertyPath.asStringPath());
-         }
+         return;
+      }
+
+      if (!fieldIndexingMetadata.isAnalyzed(propertyPath.asArrayPath()) &&
+            !fieldIndexingMetadata.isNormalized(propertyPath.asArrayPath())) {
+         throw log.getFullTextQueryOnNotAalyzedPropertyNotSupportedException(targetTypeName, propertyPath.asStringPath());
       }
    }
 

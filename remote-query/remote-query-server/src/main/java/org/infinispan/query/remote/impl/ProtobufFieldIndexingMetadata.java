@@ -40,6 +40,11 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
    }
 
    @Override
+   public boolean isNormalized(String[] propertyPath) {
+      return getFlag(propertyPath, IndexingMetadata::isFieldNormalized);
+   }
+
+   @Override
    public boolean isProjectable(String[] propertyPath) {
       return getFlag(propertyPath, IndexingMetadata::isFieldProjectable);
    }
