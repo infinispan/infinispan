@@ -5,7 +5,7 @@ You can find our guidelines here regarding our policy and security disclosure.
 
 ## Reporting security issues
 
-Please report any security issues you find in Quarkus to:
+Please report any security issues you find in Infinispan to:
 
     security at infinispan.org
 
