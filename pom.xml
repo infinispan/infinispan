@@ -85,6 +85,7 @@
       <module>extended-statistics</module>
       <module>counter</module>
       <module>multimap</module>
+      <module>multimap-jakarta</module>
       <module>tools</module>
       <module>tools-jakarta</module>
       <module>query-dsl</module>

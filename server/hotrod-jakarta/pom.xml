@@ -110,13 +110,7 @@
         </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-multimap</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.infinispan</groupId>
-                    <artifactId>infinispan-core</artifactId>
-                </exclusion>
-            </exclusions>
+            <artifactId>infinispan-multimap-jakarta</artifactId>
         </dependency>
     </dependencies>
 </project>

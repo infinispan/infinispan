@@ -289,6 +289,11 @@
             </dependency>
             <dependency>
                 <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-multimap-jakarta</artifactId>
+                <version>${version.infinispan}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
                 <artifactId>infinispan-objectfilter</artifactId>
                 <version>${version.infinispan}</version>
             </dependency>
