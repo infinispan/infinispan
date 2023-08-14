@@ -264,6 +264,9 @@ provides a read-uncommitted isolation.
 | link:https://redis.io/commands/zinter[ZINTER]
 |
 
+| link:https://redis.io/commands/zintercard[ZINTERCARD]
+|
+
 | link:https://redis.io/commands/zinterstore[ZINTERSTORE]
 |
 
