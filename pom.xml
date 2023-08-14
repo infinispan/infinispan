@@ -1513,6 +1513,12 @@
             <groupId>org.jgroups</groupId>
             <artifactId>jgroups</artifactId>
             <version>${versionx.org.jgroups.jgroups}</version>
+            <exclusions>
+               <exclusion>
+                  <groupId>org.jboss.byteman</groupId>
+                  <artifactId>byteman-bmunit</artifactId>
+               </exclusion>
+            </exclusions>
          </dependency>
          <dependency>
             <groupId>org.jgroups</groupId>
