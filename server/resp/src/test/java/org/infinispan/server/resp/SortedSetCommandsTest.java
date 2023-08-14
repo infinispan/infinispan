@@ -1446,4 +1446,45 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
       // ZREMRANGEBYLEX another - +
       assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zremrangebylex("another", Range.unbounded()));
    }
+
+   public void testZINTERCARD() {
+      // ZINTERCARD 1 s1
+      assertThat(redis.zintercard("s1")).isZero();
+
+      // ZADD s1 1 a 2 b 3 c
+      assertThat(redis.zadd("s1",
+            just(1, "a"),
+            just(2, "b"),
+            just(3, "c"))).isEqualTo(3);
+
+      // ZINTERCARD 1 s1
+      assertThat(redis.zintercard("s1")).isEqualTo(3);
+
+      // ZINTERCARD 1 s1
+      assertThat(redis.zintercard("s1")).isEqualTo(3);
+
+      // ZINTERCARD 2 s1 s2
+      assertThat(redis.zintercard("s1", "s2")).isZero();
+
+      // ZADD s2 1 a 2 b 3 c
+      assertThat(redis.zadd("s2",
+            just(1, "a"),
+            just(2, "b"),
+            just(3, "c"))).isEqualTo(3);
+
+      // ZINTERCARD 2 s1 s2
+      assertThat(redis.zintercard("s1", "s2")).isEqualTo(3);
+
+      // ZINTERCARD 2 s1 s2 LIMIT 0
+      assertThat(redis.zintercard(0,"s1", "s2")).isEqualTo(3);
+
+      // ZINTERCARD 2 s1 s2 LIMIT 4
+      assertThat(redis.zintercard(4,"s1", "s2")).isEqualTo(3);
+
+      // ZINTERCARD 2 s1 s2 LIMIT 2
+      assertThat(redis.zintercard(2,"s1", "s2")).isEqualTo(2);
+
+      // ZINTERCARD 1 another
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zintercard("another"));
+   }
 }
