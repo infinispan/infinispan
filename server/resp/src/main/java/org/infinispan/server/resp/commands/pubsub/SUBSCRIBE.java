@@ -2,8 +2,14 @@ package org.infinispan.server.resp.commands.pubsub;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.CharsetUtil;
+
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.encoding.DataConversion;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
+import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.server.resp.commands.PubSubResp3Command;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.Resp3Handler;
@@ -50,10 +56,21 @@ public class SUBSCRIBE extends RespCommand implements Resp3Command, PubSubResp3C
          }
          WrappedByteArray wrappedByteArray = new WrappedByteArray(keyChannel);
          if (handler.specificChannelSubscribers().get(wrappedByteArray) == null) {
-            SubscriberHandler.PubSubListener pubSubListener = new SubscriberHandler.PubSubListener(ctx.channel(), handler.cache().getKeyDataConversion(), handler.cache().getValueDataConversion());
+            SubscriberHandler.PubSubListener pubSubListener = new SubscriberHandler.PubSubListener(ctx.channel());
             handler.specificChannelSubscribers().put(wrappedByteArray, pubSubListener);
             byte[] channel = KeyChannelUtils.keyToChannel(keyChannel);
-            CompletionStage<Void> stage = handler.cache().addListenerAsync(pubSubListener, new EventListenerKeysFilter(channel, handler.cache().getKeyDataConversion()), null);
+            DataConversion dc = handler.cache().getValueDataConversion();
+            CompletionStage<Void> stage = handler.cache().addListenerAsync(pubSubListener, new EventListenerKeysFilter(channel), new CacheEventConverter<Object, Object, byte[]>() {
+               @Override
+               public byte[] convert(Object key, Object oldValue, Metadata oldMetadata, Object newValue, Metadata newMetadata, EventType eventType) {
+                  return (byte[]) dc.fromStorage(newValue);
+               }
+
+               @Override
+               public MediaType format() {
+                  return MediaType.APPLICATION_OCTET_STREAM;
+               }
+            });
             aggregateCompletionStage.dependsOn(handler.handleStageListenerError(stage, keyChannel, true));
          }
       }

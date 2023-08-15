@@ -17,7 +17,6 @@ import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.NoStackTraceThrowable;
@@ -108,7 +107,7 @@ abstract class RESPAuthorizationTest {
 
    @Test
    public void testAllUsersConnectingAndOperating(Vertx vertx, VertxTestContext ctx) {
-      List<Future> futures = new ArrayList<>();
+      List<Future<?>> futures = new ArrayList<>();
       for (TestUser user: TestUser.values()) {
          if (user == TestUser.ANONYMOUS) {
             assertAnonymous(createClient(user, vertx), r -> r.ping(Collections.emptyList()), ctx);
@@ -122,7 +121,7 @@ abstract class RESPAuthorizationTest {
          futures.add(f);
       }
 
-      CompositeFuture.all(futures)
+      Future.all(futures)
             .onFailure(ctx::failNow)
             .onComplete(ignore -> ctx.completeNow());
    }
@@ -151,7 +150,7 @@ abstract class RESPAuthorizationTest {
 
    @Test
    public void testInfoCommand(Vertx vertx, VertxTestContext ctx) {
-      List<Future> futures = new ArrayList<>();
+      List<Future<?>> futures = new ArrayList<>();
 
       for (TestUser user: TestUser.values()) {
          if (user == TestUser.ANONYMOUS) {
@@ -166,14 +165,14 @@ abstract class RESPAuthorizationTest {
          futures.add(f);
       }
 
-      CompositeFuture.all(futures)
+      Future.all(futures)
             .onFailure(ctx::failNow)
             .onComplete(ignore -> ctx.completeNow());
    }
 
    @Test
    public void testClusterSHARDS(Vertx vertx, VertxTestContext ctx) {
-      List<Future> futures = new ArrayList<>();
+      List<Future<?>> futures = new ArrayList<>();
 
       for (TestUser user: TestUser.values()) {
          if (user == TestUser.ANONYMOUS) {
@@ -190,7 +189,7 @@ abstract class RESPAuthorizationTest {
          futures.add(f);
       }
 
-      CompositeFuture.all(futures)
+      Future.all(futures)
             .onFailure(ctx::failNow)
             .onComplete(ignore -> ctx.completeNow());
    }
@@ -225,7 +224,7 @@ abstract class RESPAuthorizationTest {
 
    @Test
    public void testClusterNodes(Vertx vertx, VertxTestContext ctx) {
-      List<Future> futures = new ArrayList<>();
+      List<Future<?>> futures = new ArrayList<>();
 
       for (TestUser user: TestUser.values()) {
          if (user == TestUser.ANONYMOUS) {
@@ -240,7 +239,7 @@ abstract class RESPAuthorizationTest {
          futures.add(f);
       }
 
-      CompositeFuture.all(futures)
+      Future.all(futures)
             .onFailure(ctx::failNow)
             .onComplete(ignore -> ctx.completeNow());
    }

@@ -17,8 +17,8 @@ import org.infinispan.distribution.ch.KeyPartitioner;
  * @since 8.2
  */
 public class HashFunctionPartitioner implements KeyPartitioner, Cloneable {
-   private Hash hashFunction;
-   private int numSegments;
+   protected Hash hashFunction;
+   protected int numSegments;
    private int segmentSize;
 
 
@@ -51,7 +51,7 @@ public class HashFunctionPartitioner implements KeyPartitioner, Cloneable {
       }
    }
 
-   private void init(int numSegments) {
+   protected void init(int numSegments) {
       if (numSegments <= 0) {
          throw new IllegalArgumentException("numSegments must be strictly positive");
       }
