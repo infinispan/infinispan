@@ -309,7 +309,11 @@ public class INFO extends RespCommand implements Resp3Command {
       }
       if (sections.contains(Section.CLUSTER)) {
          sb.append("# Cluster\r\n");
-         sb.append("cluster_enabled:0\r\n");
+         if (handler.cache().getCacheConfiguration().clustering().cacheMode().isDistributed()) {
+            sb.append("cluster_enabled:1\r\n");
+         } else {
+            sb.append("cluster_enabled:0\r\n");
+         }
          sb.append(CRLF_STRING);
       }
       if (sections.contains(Section.KEYSPACE)) {

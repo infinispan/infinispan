@@ -35,9 +35,9 @@ public class CRC16 implements Hash {
    public int hash(byte[] payload) {
       int crc = 0x0000;
       for (byte b : payload) {
-         crc = (crc >>> 8) ^ CRC16Table.table[(crc ^ b) & 0xff];
+         crc = ((crc << 8) ^ CRC16Table.table[((crc >>> 8) ^ (b & 0xFF)) & 0xFF]);
       }
-      return crc;
+      return crc & 0xFFFF;
    }
 
    @Override

@@ -46,6 +46,7 @@ public class RespMediaTypesTest extends RespSingleNodeTest {
    public Object[] factory() {
       List<RespMediaTypesTest> instances = new ArrayList<>();
       MediaType[] types = new MediaType[] {
+            MediaType.APPLICATION_PROTOSTREAM,
             MediaType.APPLICATION_OCTET_STREAM,
             MediaType.APPLICATION_OBJECT,
             MediaType.TEXT_PLAIN,

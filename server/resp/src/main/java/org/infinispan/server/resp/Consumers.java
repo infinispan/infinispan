@@ -30,6 +30,8 @@ public final class Consumers {
 
    public static final BiConsumer<Long, ByteBufPool> LONG_BICONSUMER = Resp3Handler::handleLongResult;
 
+   public static final BiConsumer<Integer, ByteBufPool> INT_BICONSUMER = (v, bp) -> LONG_BICONSUMER.accept((long) v, bp);
+
    public static final BiConsumer<Collection<Long>, ByteBufPool> COLLECTION_LONG_BICONSUMER = Resp3Handler::handleCollectionLongResult;
 
    public static final BiConsumer<Collection<Double>, ByteBufPool> COLLECTION_DOUBLE_BICONSUMER = Resp3Handler::handleCollectionDoubleResult;

@@ -34,6 +34,18 @@ import org.infinispan.topology.CacheTopology;
 import io.netty.channel.ChannelHandlerContext;
 import net.jcip.annotations.GuardedBy;
 
+/**
+ * `<code>CLUSTER SLOTS</code>` command.
+ * <p>
+ * As of Redis version 7.0.0, this command is regarded as deprecated, and {@link SHARDS} is the recommended alternative.
+ * This command retrieves information about the slot distribution in the cluster. Also including connection information
+ * of all members.
+ *
+ * @since 15.0
+ * @see SHARDS
+ * @see <a href="https://redis.io/commands/cluster-slots/">Redis Documentation</a>
+ * @author José Bolina
+ */
 public class SLOTS extends RespCommand implements Resp3Command {
 
    @GuardedBy("this")

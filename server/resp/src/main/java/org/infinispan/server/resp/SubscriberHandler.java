@@ -16,7 +16,6 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.encoding.DataConversion;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
@@ -45,20 +44,16 @@ public class SubscriberHandler extends CacheRespRequestHandler {
    @Listener(clustered = true)
    public static class PubSubListener {
       private final Channel channel;
-      private final DataConversion keyConversion;
-      private final DataConversion valueConversion;
 
-      public PubSubListener(Channel channel, DataConversion keyConversion, DataConversion valueConversion) {
+      public PubSubListener(Channel channel) {
          this.channel = channel;
-         this.keyConversion = keyConversion;
-         this.valueConversion = valueConversion;
       }
 
       @CacheEntryCreated
       @CacheEntryModified
-      public CompletionStage<Void> onEvent(CacheEntryEvent<Object, Object> entryEvent) {
-         byte[] key = KeyChannelUtils.channelToKey((byte[]) keyConversion.fromStorage(entryEvent.getKey()));
-         byte[] value = (byte[]) valueConversion.fromStorage(entryEvent.getValue());
+      public CompletionStage<Void> onEvent(CacheEntryEvent<Object, byte[]> entryEvent) {
+         byte[] key = KeyChannelUtils.channelToKey(unwrap(entryEvent.getKey()));
+         byte[] value = entryEvent.getValue();
          if (key.length > 0 && value != null && value.length > 0) {
             // *3 + \r\n + $7 + \r\n + message + \r\n + $ + keylength (log10 + 1) + \r\n + key + \r\n +
             // $ + valuelength (log 10 + 1) + \r\n + value + \r\n
@@ -77,6 +72,12 @@ public class SubscriberHandler extends CacheRespRequestHandler {
             channel.writeAndFlush(byteBuf, channel.voidPromise());
          }
          return CompletableFutures.completedNull();
+      }
+
+      private byte[] unwrap(Object key) {
+         return key instanceof WrappedByteArray
+               ? ((WrappedByteArray) key).getBytes()
+               : (byte[]) key;
       }
    }
 
