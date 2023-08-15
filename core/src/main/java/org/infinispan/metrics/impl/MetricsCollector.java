@@ -139,6 +139,10 @@ public class MetricsCollector implements Constants {
       List<Tag> tags = prepareTags(initialTags);
 
       for (MBeanMetadata.AttributeMetadata attr : attributes) {
+         // Only local statistics should be registered with Micrometer
+         if (attr.isClusterWide())
+            continue;
+
          Supplier<Number> getter = (Supplier<Number>) attr.getter(instance);
          Consumer<TimerTracker> setter = (Consumer<TimerTracker>) attr.setter(instance);
 

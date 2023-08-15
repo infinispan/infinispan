@@ -283,9 +283,9 @@ public class Generator {
 
    private void writeManagedAttribute(PrintWriter writer, CharSequence name, ManagedAttribute attribute,
                                       boolean useSetter, String type, boolean is, String getterFunction, String setterFunction, String comma) {
-      // AttributeMetadata(String name, String description, boolean writable, boolean useSetter, String type, boolean is, Function<?, ?> getterFunction, BiConsumer<?, ?> setterFunction)
-      writer.printf("            new AttributeMetadata(\"%s\", \"%s\", %b, %b, \"%s\", %s, %s, %s)%s%n",
-            name, attribute.description(), attribute.writable(), useSetter, type, is, getterFunction, setterFunction, comma);
+      // AttributeMetadata(String name, String description, boolean writable, boolean useSetter, String type, boolean is, Function<?, ?> getterFunction, BiConsumer<?, ?> setterFunction, boolean clusterWide)
+      writer.printf("            new AttributeMetadata(\"%s\", \"%s\", %b, %b, \"%s\", %s, %s, %s, %b)%s%n",
+            name, attribute.description(), attribute.writable(), useSetter, type, is, getterFunction, setterFunction, attribute.clusterWide(), comma);
    }
 
    public void writeModuleClass(TypeElement[] sourceElements) throws IOException {
