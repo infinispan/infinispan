@@ -46,4 +46,9 @@ public @interface ManagedAttribute {
    MeasurementType measurementType() default MeasurementType.DYNAMIC;
 
    Units units() default Units.NONE;
+
+   /**
+    * Indicates if the attribute relates to a cluster-wide attribute.
+    */
+   boolean clusterWide() default false;
 }
