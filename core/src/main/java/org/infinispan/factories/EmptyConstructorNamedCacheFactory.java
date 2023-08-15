@@ -60,6 +60,8 @@ import org.infinispan.scattered.impl.ScatteredVersionManagerImpl;
 import org.infinispan.statetransfer.CommitManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferLockImpl;
+import org.infinispan.stats.ClusterCacheStats;
+import org.infinispan.stats.impl.ClusterCacheStatsImpl;
 import org.infinispan.transaction.impl.ClusteredTransactionOriginatorChecker;
 import org.infinispan.transaction.impl.TransactionCoordinator;
 import org.infinispan.transaction.impl.TransactionOriginatorChecker;
@@ -109,7 +111,7 @@ import org.infinispan.xsite.status.TakeOfflineManager;
                               BiasManager.class, OffHeapEntryFactory.class, OffHeapMemoryAllocator.class, PublisherHandler.class,
                               InvocationHelper.class, TakeOfflineManager.class, IracManager.class, IracVersionGenerator.class,
                               BackupReceiver.class, StorageConfigurationManager.class, XSiteMetricsCollector.class,
-                              IracTombstoneManager.class
+                              IracTombstoneManager.class, ClusterCacheStats.class
 })
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
@@ -249,6 +251,8 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          return configuration.sites().hasAsyncEnabledBackups() ?
                new DefaultIracTombstoneManager(configuration) :
                NoOpIracTombstoneManager.getInstance();
+      } else if (componentName.equals(ClusterCacheStats.class.getName())) {
+         return new ClusterCacheStatsImpl();
       }
 
       throw CONTAINER.factoryCannotConstructComponent(componentName);

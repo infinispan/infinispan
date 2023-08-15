@@ -2,6 +2,7 @@ package org.infinispan.metrics;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
+import static org.testng.AssertJUnit.assertFalse;
 
 import java.util.Collection;
 import java.util.List;
@@ -18,6 +19,7 @@ import org.testng.annotations.Test;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 
 /**
@@ -57,14 +59,10 @@ public class ClusteredCacheManagerMetricsTest extends MultipleCacheManagersTest 
 
    public void testMetricsAreRegistered() {
       MetricsCollector mc0 = manager(0).getGlobalComponentRegistry().getComponent(MetricsCollector.class);
-      List<Meter> meters0 = mc0.registry().getMeters();
-      assertThat(meters0).isNotEmpty();
-      assertThat(meters0.get(0).getId().getName()).startsWith("vendor.ispn");
+      verifyMeters(mc0.registry());
 
       MetricsCollector mc1 = manager(1).getGlobalComponentRegistry().getComponent(MetricsCollector.class);
-      List<Meter> meters1 = mc1.registry().getMeters();
-      assertThat(meters1).isNotEmpty();
-      assertThat(meters1.get(0).getId().getName()).startsWith("vendor.ispn");
+      verifyMeters(mc1.registry());
 
       GlobalConfiguration gcfg0 = manager(0).getCacheManagerConfiguration();
       Tag nodeNameTag = Tag.of(Constants.NODE_TAG_NAME, gcfg0.transport().nodeName());
@@ -75,5 +73,16 @@ public class ClusteredCacheManagerMetricsTest extends MultipleCacheManagersTest 
       Gauge statsEviction = statsEvictions.iterator().next();
       statsEviction.getId().getTags().contains(nodeNameTag);
       statsEviction.getId().getTags().contains(cacheManagerTag);
+   }
+
+   private void verifyMeters(MeterRegistry registry) {
+      List<Meter> meters = registry.getMeters();
+      assertThat(meters).isNotEmpty();
+      assertThat(meters.get(0).getId().getName()).startsWith("vendor.ispn");
+
+      for (Meter m : meters) {
+         assertFalse(m.getId().getName(), m.getId().getName().startsWith("vendor.ispn_cluster_container"));
+         assertFalse(m.getId().getName(), m.getId().getName().startsWith("vendor.ispn_cluster_cache"));
+      }
    }
 }

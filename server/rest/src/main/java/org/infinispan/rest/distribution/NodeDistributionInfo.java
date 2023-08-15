@@ -1,12 +1,10 @@
 package org.infinispan.rest.distribution;
 
 import static org.infinispan.commons.marshall.ProtoStreamTypeIds.CLUSTER_DISTRIBUTION_INFO;
-import static org.infinispan.stats.impl.LocalContainerStatsImpl.LOCAL_CONTAINER_STATS;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import net.jcip.annotations.Immutable;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -15,6 +13,9 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.stats.ClusterContainerStats;
+import org.infinispan.stats.ContainerStats;
+
+import net.jcip.annotations.Immutable;
 
 /**
  * Collect node's information and statistics of the local JVM.
@@ -76,7 +77,7 @@ public class NodeDistributionInfo implements JsonSerialization, NodeDataDistribu
    public static NodeDistributionInfo resolve(CacheManagerInfo manager, GlobalComponentRegistry registry) {
       String name = manager.getNodeName();
       List<String> addresses = manager.getPhysicalAddressesRaw();
-      final ClusterContainerStats stats = registry.getComponent(ClusterContainerStats.class, LOCAL_CONTAINER_STATS);
+      final ContainerStats stats = registry.getComponent(ContainerStats.class);
       return new NodeDistributionInfo(name, addresses, stats.getMemoryAvailable(), stats.getMemoryUsed());
    }
 }
