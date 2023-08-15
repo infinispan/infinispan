@@ -1,6 +1,5 @@
 package org.infinispan.factories;
 
-import static org.infinispan.stats.impl.LocalContainerStatsImpl.LOCAL_CONTAINER_STATS;
 import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.util.ArrayList;
@@ -43,6 +42,7 @@ import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.registry.impl.InternalCacheRegistryImpl;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.stats.ClusterContainerStats;
+import org.infinispan.stats.ContainerStats;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.ByteString;
@@ -150,7 +150,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          basicComponentRegistry.getComponent(EventLogManager.class);
          basicComponentRegistry.getComponent(Transport.class);
          basicComponentRegistry.getComponent(ClusterContainerStats.class);
-         basicComponentRegistry.getComponent(LOCAL_CONTAINER_STATS, ClusterContainerStats.class);
+         basicComponentRegistry.getComponent(ContainerStats.class);
          basicComponentRegistry.getComponent(GlobalConfigurationManager.class);
          basicComponentRegistry.getComponent(CacheManagerJmxRegistration.class);
          basicComponentRegistry.getComponent(CacheManagerMetricsRegistration.class);
