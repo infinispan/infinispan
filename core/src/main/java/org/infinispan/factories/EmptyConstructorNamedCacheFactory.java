@@ -49,6 +49,8 @@ import org.infinispan.reactive.publisher.impl.PublisherHandler;
 import org.infinispan.statetransfer.CommitManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferLockImpl;
+import org.infinispan.stats.ClusterCacheStats;
+import org.infinispan.stats.impl.ClusterCacheStatsImpl;
 import org.infinispan.transaction.impl.ClusteredTransactionOriginatorChecker;
 import org.infinispan.transaction.impl.TransactionCoordinator;
 import org.infinispan.transaction.impl.TransactionOriginatorChecker;
@@ -94,7 +96,7 @@ import org.infinispan.xsite.status.TakeOfflineManager;
                               TransactionOriginatorChecker.class, OffHeapEntryFactory.class, OffHeapMemoryAllocator.class,
                               PublisherHandler.class, InvocationHelper.class, TakeOfflineManager.class,
                               IracVersionGenerator.class, BackupReceiver.class, StorageConfigurationManager.class,
-                              XSiteMetricsCollector.class
+                              XSiteMetricsCollector.class, ClusterCacheStats.class
 })
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
@@ -203,6 +205,8 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          return configuration.sites().hasBackups() ?
                 new DefaultXSiteMetricsCollector(configuration) :
                 NoOpXSiteMetricsCollector.getInstance();
+      } else if (componentName.equals(ClusterCacheStats.class.getName())) {
+         return new ClusterCacheStatsImpl();
       }
 
       throw CONTAINER.factoryCannotConstructComponent(componentName);

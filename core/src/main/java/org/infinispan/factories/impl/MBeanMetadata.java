@@ -94,8 +94,10 @@ public final class MBeanMetadata {
       private final Function<?, ?> getterFunction;  // optional
       private final BiConsumer<?, ?> setterFunction; // optional
 
+      private final boolean clusterWide;
+
       public AttributeMetadata(String name, String description, boolean writable, boolean useSetter, String type,
-                               boolean is, Function<?, ?> getterFunction, BiConsumer<?, ?> setterFunction) {
+                               boolean is, Function<?, ?> getterFunction, BiConsumer<?, ?> setterFunction, boolean clusterWide) {
          this.name = name;
          this.description = description;
          this.writable = writable;
@@ -104,6 +106,12 @@ public final class MBeanMetadata {
          this.is = is;
          this.getterFunction = getterFunction;
          this.setterFunction = setterFunction;
+         this.clusterWide = clusterWide;
+      }
+
+      public AttributeMetadata(String name, String description, boolean writable, boolean useSetter, String type,
+                               boolean is, Function<?, ?> getterFunction, BiConsumer<?, ?> setterFunction) {
+         this(name, description, writable, useSetter, type, is, getterFunction, setterFunction, false);
       }
 
       public String getName() {
@@ -142,6 +150,10 @@ public final class MBeanMetadata {
             return null;
          }
          return (v) -> ((BiConsumer<Object, Object>) setterFunction).accept(instance, v);
+      }
+
+      public boolean isClusterWide() {
+         return clusterWide;
       }
 
       @Override

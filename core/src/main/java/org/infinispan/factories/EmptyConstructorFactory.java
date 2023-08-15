@@ -18,6 +18,10 @@ import org.infinispan.remoting.inboundhandler.GlobalInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.RolePermissionMapper;
+import org.infinispan.stats.ClusterContainerStats;
+import org.infinispan.stats.ContainerStats;
+import org.infinispan.stats.impl.ClusterContainerStatsImpl;
+import org.infinispan.stats.impl.LocalContainerStatsImpl;
 import org.infinispan.topology.PersistentUUIDManager;
 import org.infinispan.topology.PersistentUUIDManagerImpl;
 import org.infinispan.util.EmbeddedTimeService;
@@ -39,6 +43,8 @@ import org.infinispan.util.logging.events.impl.EventLoggerNotifierImpl;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = {
+      ContainerStats.class,
+      ClusterContainerStats.class,
       EventLogManager.class,
       InboundInvocationHandler.class, PersistentUUIDManager.class,
       RemoteCommandsFactory.class, TimeService.class, DataOperationOrderer.class,
@@ -81,6 +87,10 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
          return globalConfiguration.security().authorization().principalRoleMapper();
       else if (componentName.equals(RolePermissionMapper.class.getName()))
          return globalConfiguration.security().authorization().rolePermissionMapper();
+      else if (componentName.equals(ContainerStats.class.getName()))
+         return new LocalContainerStatsImpl();
+      else if (componentName.equals(ClusterContainerStats.class.getName()))
+         return new ClusterContainerStatsImpl();
 
       throw CONTAINER.factoryCannotConstructComponent(componentName);
    }
