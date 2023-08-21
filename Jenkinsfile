@@ -120,7 +120,7 @@ pipeline {
             steps {
                 script {
                     if (!env.BRANCH_NAME.startsWith('PR-')) {
-                        sh "$MAVEN_HOME/bin/mvn deploy -B -V -e -Pdistribution -Pcommunity-release -DdeployServerZip=true -Dmaven.main.skip=true -Dmaven.test.skip=true -Dcheckstyle.skip=true"
+                        sh "$MAVEN_HOME/bin/mvn deploy -B -V -e -Pdistribution -Pcommunity-release -DdeployServerZip=true -DskipTests -Dcheckstyle.skip=true"
                     }
                 }
             }
