@@ -94,7 +94,7 @@ public class DistributedSetTest extends BaseDistFunctionalTest<String, Collectio
    public void testGet() {
       testAdd();
       EmbeddedSetCache<String, Person> set = getSetCacheMember();
-      set.get(NAMES_KEY).thenApply(v->v.values()).thenAccept(resultSet -> assertThat(resultSet).containsExactlyInAnyOrder(ELAIA, OIHANA));
+      set.get(NAMES_KEY).thenApply(v->v.toSet()).thenAccept(resultSet -> assertThat(resultSet).containsExactlyInAnyOrder(ELAIA, OIHANA));
    }
 
    @Test

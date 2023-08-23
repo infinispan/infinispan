@@ -57,7 +57,7 @@ public class EmbeddedSetCache<K, V> {
     * @return the set with values if such exist, or null if the key is not present
     */
    public CompletionStage<Set<V>> getAsSet(K key) {
-      return readWriteMap.eval(key, new SGetFunction<K, V>()).thenApply(v->v.values());
+      return readWriteMap.eval(key, new SGetFunction<K, V>()).thenApply(v->v.toSet());
    }
 
    /**

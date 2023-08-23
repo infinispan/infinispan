@@ -1,8 +1,8 @@
 package org.infinispan.server.resp.commands.set;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
@@ -52,26 +52,26 @@ public class SINTER extends RespCommand implements Resp3Command {
       return wrappedArgs.stream().map(WrappedByteArray::getBytes).collect(Collectors.toSet());
    }
 
-   public static Set<byte[]> checkTypesAndReturnEmpty(Collection<SetBucket<byte[]>> buckets) {
+   public static List<byte[]> checkTypesAndReturnEmpty(Collection<SetBucket<byte[]>> buckets) {
       var iter = buckets.iterator();
       // access all items to check for error
       while (iter.hasNext()) {
-      var minSet = iter.next();
+      var aSet = iter.next();
       }
-      return Collections.emptySet();
+      return Collections.emptyList();
    }
 
-   public static Set<byte[]> intersect(Collection<SetBucket<byte[]>> buckets,
+   public static List<byte[]> intersect(Collection<SetBucket<byte[]>> buckets,
          int limit) {
       var iter = buckets.iterator();
 
       // Return empty set if null or empty
       if (!iter.hasNext()) {
-         return Collections.emptySet();
+         return Collections.emptyList();
       }
       var minSet = iter.next();
       if (minSet.isEmpty()) {
-         return Collections.emptySet();
+         return Collections.emptyList();
       }
 
       // Find the smallest set in the sets list
@@ -82,8 +82,8 @@ public class SINTER extends RespCommand implements Resp3Command {
 
       // Build a set with all the elements in minSet and in all the rest of the sets
       // up to limit if non zero
-      var result = new HashSet<byte[]>();
-      for (var el : minSet.values()) {
+      var result = new ArrayList<byte[]>();
+      for (var el : minSet.toList()) {
          if (!buckets.stream().anyMatch(set -> !set.contains(el))) {
             result.add(el);
             if (limit > 0 && result.size() >= limit) {
