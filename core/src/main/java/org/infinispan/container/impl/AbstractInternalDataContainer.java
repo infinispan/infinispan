@@ -23,6 +23,7 @@ import org.infinispan.commons.util.AbstractIterator;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.FilterSpliterator;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
@@ -450,6 +451,9 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
          PassivationManager passivator, EvictionManager<K, V> evictionManager, DataContainer<K, V> dataContainer,
          CompletionStage<Void> selfDelay) {
       K key = entry.getKey();
+      if (log.isTraceEnabled()) {
+         log.tracef("Entry for key %s was evicted", Util.toStr(key));
+      }
       CompletableFuture<Operation> future = new CompletableFuture<>();
       CompletionStage<Operation> ordererStage = orderer != null ? orderer.orderOn(key, future) : null;
       if (ordererStage != null) {
