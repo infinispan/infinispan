@@ -291,6 +291,12 @@ provides a read-uncommitted isolation.
 | link:https://redis.io/commands/subscribe[SUBSCRIBE]
 |
 
+| link:https://redis.io/commands/sunion[SUNION]
+|
+
+| link:https://redis.io/commands/sunionstore[SUNIONSTORE]
+|
+
 | link:https://redis.io/commands/ttl[TTL]
 |
 

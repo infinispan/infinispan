@@ -3,6 +3,7 @@ package org.infinispan.multimap.impl;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -52,10 +53,6 @@ public class SetBucket<V> {
       return new ArrayList<>(values);
    }
 
-   public Set<V> values() {
-      return values.stream().map(MultimapObjectWrapper::get).collect(Collectors.toSet());
-   }
-
    public boolean contains(V value) {
       for (MultimapObjectWrapper<V> v : values) {
          if (Objects.deepEquals(v.get(), value)) {
@@ -77,8 +74,13 @@ public class SetBucket<V> {
     * @return a defensive copy of the {@link #values} collection.
     */
    public Set<V> toSet() {
-      return values();
+      return values.stream().map(MultimapObjectWrapper::get).collect(Collectors.toSet());
    }
+
+   public List<V> toList() {
+      return values.stream().map(mow -> mow.get()).collect(Collectors.toList());
+   }
+
 
    @Override
    public String toString() {

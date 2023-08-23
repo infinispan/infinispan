@@ -205,4 +205,63 @@ public class RespSetCommandsTest extends SingleNodeRespBaseTest {
       // Create a List
       assertWrongType(() -> redis.lpush("listleads", "tristan"), () -> redis.srem("listleads", "william"));
    }
+
+   @Test
+   public void testSunion() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "sunion";
+      String key1 = "sunion1";
+      String key2 = "sunion2";
+
+      redis.sadd(key, "e1");
+      // sunion with one set returns the set
+      assertThat(redis.sunion(key)).containsExactlyInAnyOrder("e1");
+
+      redis.sadd(key1, "e2", "e3", "e4");
+      redis.sadd(key2, "e5", "e6");
+
+      // check union between 2 sets
+      assertThat(redis.sunion(key, key1)).containsExactlyInAnyOrder("e1", "e2", "e3", "e4");
+
+      // check union between 3 sets
+      assertThat(redis.sunion(key, key1,key2)).containsExactlyInAnyOrder("e1", "e2", "e3", "e4", "e5", "e6");
+
+      // Union non existent sets returns the set
+      assertThat(redis.sunion(key1, "nonexistent1")).containsExactlyInAnyOrder("e2", "e3", "e4");
+      assertThat(redis.sunion("nonexistent", "nonexistent1")).isEmpty();
+
+      // Union of set with itself returns the set
+      assertThat(redis.sunion(key1, key1)).containsExactlyInAnyOrder("e2", "e3", "e4");
+
+      // SUNION on an existing key that contains a String, not a Set!
+      // Set a String Command
+      assertWrongType(() -> redis.set("leads", "tristan"), () -> redis.sunion("leads", key));
+      // SUNION on an existing key that contains a List, not a Set!
+      // Create a List
+      assertWrongType(() -> redis.rpush("listleads", "tristan"), () -> redis.sunion("listleads", "william"));
+   }
+
+   @Test
+   public void testSunionstore() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "sunionstore";
+      redis.sadd(key, "e1", "e2", "e3");
+      assertThat(redis.sunionstore("destination", key)).isEqualTo(3);
+
+      String key1 = "sunionstore1";
+      redis.sadd(key1, "e2", "e3", "e4");
+      assertThat(redis.sunionstore("destination", key, key1)).isEqualTo(4);
+      assertThat(redis.smembers("destination")).containsExactlyInAnyOrder("e1", "e2", "e3", "e4");
+      assertThat(redis.sunionstore("destination", "destination", "nonexistent1")).isEqualTo(4);
+      assertThat(redis.sunionstore("destination", "nonexistent", "nonexistent1")).isEqualTo(0);
+      assertThat(redis.smembers("destination")).isEmpty();
+
+      // SUNIONSTORE on an existing key that contains a String, not a Set!
+      // Set a String Command
+      assertWrongType(() -> redis.set("leads", "tristan"), () -> redis.sunionstore("destination", "leads", key));
+      // SUNIONSTORE on an existing key that contains a List, not a Set!
+      // Create a List
+      assertWrongType(() -> redis.rpush("listleads", "tristan"),
+            () -> redis.sunionstore("destination", "listleads", "william"));
+   }
 }
