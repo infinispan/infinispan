@@ -23,6 +23,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.expiration.impl.TouchCommand;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -222,6 +223,11 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
 
    @Override
    public Object visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
+      return handleReadCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitTouchCommand(InvocationContext ctx, TouchCommand command) throws Throwable {
       return handleReadCommand(ctx, command);
    }
 
