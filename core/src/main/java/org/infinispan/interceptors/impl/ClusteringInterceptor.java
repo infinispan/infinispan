@@ -33,7 +33,6 @@ import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ValidResponseCollector;
-import org.infinispan.remoting.transport.impl.SingleResponseCollector;
 import org.infinispan.statetransfer.AllOwnersLostException;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.CacheTopologyUtil;
@@ -145,8 +144,8 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
          return invokeNext(ctx, command);
       }
 
+      AbstractTouchResponseCollector collector = TouchResponseCollector.INSTANCE;
       if (info.isPrimary()) {
-         AbstractTouchResponseCollector collector = TouchResponseCollector.INSTANCE;
          CompletionStage<Boolean> remoteInvocation = rpcManager.invokeCommand(owners, command, collector,
                rpcManager.getSyncRpcOptions());
          return invokeNextThenApply(ctx, command, (rCtx, rCommand, rValue) -> {
@@ -159,10 +158,9 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
          });
       } else if (ctx.isOriginLocal()) {
          // Send to the primary owner
-         CompletionStage<ValidResponse> remoteInvocation = rpcManager.invokeCommand(info.primary(), command,
-               SingleResponseCollector.validOnly(), rpcManager.getSyncRpcOptions());
-         return asyncValue(remoteInvocation)
-               .thenApply(ctx, command, (rCtx, rCommand, rResponse) -> ((ValidResponse) rResponse).getResponseValue());
+         CompletionStage<Boolean> remoteInvocation = rpcManager.invokeCommand(info.primary(), command,
+               collector, rpcManager.getSyncRpcOptions());
+         return asyncValue(remoteInvocation);
       }
       return invokeNext(ctx, command);
    }
