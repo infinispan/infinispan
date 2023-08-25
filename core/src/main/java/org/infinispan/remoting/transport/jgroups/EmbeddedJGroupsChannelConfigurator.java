@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.jcip.annotations.GuardedBy;
 import org.infinispan.configuration.global.JGroupsConfiguration;
 import org.infinispan.xsite.XSiteNamedCache;
 import org.jgroups.ChannelListener;
@@ -32,6 +33,8 @@ public class EmbeddedJGroupsChannelConfigurator extends AbstractJGroupsChannelCo
    private JGroupsConfiguration jgroupsConfiguration;
    private final List<ProtocolConfiguration> stack;
    private final RemoteSites remoteSites;
+   @GuardedBy("this")
+   private List<ProtocolConfiguration> combinedStack;
 
    public EmbeddedJGroupsChannelConfigurator(String name, List<ProtocolConfiguration> stack, RemoteSites remoteSites) {
       this(name, stack, remoteSites, null);
@@ -54,8 +57,11 @@ public class EmbeddedJGroupsChannelConfigurator extends AbstractJGroupsChannelCo
    }
 
    @Override
-   public List<ProtocolConfiguration> getProtocolStack() {
-      return combineStack(jgroupsConfiguration.configurator(parent), stack);
+   public synchronized List<ProtocolConfiguration> getProtocolStack() {
+      if (combinedStack == null) {
+         combinedStack = combineStack(jgroupsConfiguration.configurator(parent), stack);
+      }
+      return combinedStack;
    }
 
    public List<ProtocolConfiguration> getUncombinedProtocolStack() {
@@ -81,7 +87,7 @@ public class EmbeddedJGroupsChannelConfigurator extends AbstractJGroupsChannelCo
       }
       // Process remote sites if any
       RemoteSites actualSites = getRemoteSites();
-      if (actualSites.remoteSites.size() == 0) {
+      if (actualSites.remoteSites.isEmpty()) {
          throw CONFIG.jgroupsRelayWithoutRemoteSites(name);
       }
       RELAY2 relay2 = (RELAY2) protocol;
@@ -113,13 +119,19 @@ public class EmbeddedJGroupsChannelConfigurator extends AbstractJGroupsChannelCo
    }
 
    private static List<ProtocolConfiguration> combineStack(JGroupsChannelConfigurator baseStack, List<ProtocolConfiguration> stack) {
-      List<ProtocolConfiguration> actualStack = new ArrayList<>(stack.size());
+      List<ProtocolConfiguration> actualStack = null;
       if (baseStack != null) {
          // We copy the protocols and properties from the base stack. This will recursively perform inheritance
-         for (ProtocolConfiguration originalProtocol : baseStack.getProtocolStack()) {
+         List<ProtocolConfiguration> combinedBaseStack = baseStack.getProtocolStack();
+         // worst case scenario, it appends all protocols to the base stack
+         actualStack = new ArrayList<>(combinedBaseStack.size() + stack.size());
+         for (ProtocolConfiguration originalProtocol : combinedBaseStack) {
             ProtocolConfiguration protocol = new ProtocolConfiguration(originalProtocol.getProtocolName(), new HashMap<>(originalProtocol.getProperties()));
             actualStack.add(protocol);
          }
+      }
+      if (actualStack == null) {
+         actualStack = new ArrayList<>(stack.size());
       }
       // We process this stack's rules
       for (ProtocolConfiguration protocol : stack) {
