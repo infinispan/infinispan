@@ -75,6 +75,16 @@
       </Policies>
       <PatternLayout pattern="${accessLogPattern}"/>
     </RollingFile>
+
+    <!-- Rolling RESP access log, disabled by default -->
+    <RollingFile name="RESP-ACCESS-FILE" createOnDemand="true"
+                 fileName="${path}/resp-access.log"
+                 filePattern="${path}/resp-access.log.%i">
+      <Policies>
+        <SizeBasedTriggeringPolicy size="100 MB" />
+      </Policies>
+      <PatternLayout pattern="${accessLogPattern}"/>
+    </RollingFile>
   </Appenders>
 
   <Loggers>
@@ -112,6 +122,11 @@
     <!-- Set to TRACE to enable access logging for Memcached requests -->
     <Logger name="org.infinispan.MEMCACHED_ACCESS_LOG" additivity="false" level="INFO">
       <AppenderRef ref="MEMCACHED-ACCESS-FILE"/>
+    </Logger>
+
+    <!-- Set to TRACE to enable access logging for RESP requests -->
+    <Logger name="org.infinispan.RESP_ACCESS_LOG" additivity="false" level="INFO">
+      <AppenderRef ref="RESP-ACCESS-FILE"/>
     </Logger>
   </Loggers>
 </Configuration>

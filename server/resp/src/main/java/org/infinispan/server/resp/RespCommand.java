@@ -1,8 +1,10 @@
 package org.infinispan.server.resp;
 
+import static org.infinispan.server.resp.RespConstants.CRLF;
 import static org.infinispan.server.resp.commands.Commands.ALL_COMMANDS;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
@@ -138,6 +140,24 @@ public abstract class RespCommand {
       return false;
    }
 
+   public int size(List<byte[]> arguments) {
+      // The command has a fixed prefix + the name itself.
+      // The type and the number of leading command/arguments.
+      int base = 1 + ByteBufferUtils.stringSize(arguments.size()) + CRLF.length;
+
+      int argSize = 0;
+      for (byte[] argument : arguments) {
+         // The argument type identifier + the actual argument contents + the line break.
+         argSize += 1 + argument.length + CRLF.length;
+      }
+
+      // The command name can be provided as a bulk string ($4\r\nHELLO\r\n) or simple string (+HELLO\r\n).
+      // At this points we cant differentiate, so lets go with the worst case.
+      int nameSize = 1 + ByteBufferUtils.stringSize(name.length()) + CRLF.length + name.length() + CRLF.length;
+
+      return base + nameSize + argSize;
+   }
+
    public int getArity() {
       return arity;
    }
@@ -153,6 +173,23 @@ public abstract class RespCommand {
    public int getSteps() {
       return steps;
    }
+
+   public byte[][] extractKeys(List<byte[]> arguments) {
+      // Position 0 is the command's name. This means no keys are present.
+      if (getFirstKeyPos() == 0) {
+         return new byte[0][];
+      }
+
+      List<byte[]> keys = new ArrayList<>();
+
+      // Last key pos negative means unbounded number of keys.
+      int end = getLastKeyPos() < 0 ? arguments.size() : getLastKeyPos();
+      for (int i = getFirstKeyPos() - 1; i < end; i += getSteps()) {
+         keys.add(arguments.get(i));
+      }
+      return keys.toArray(new byte[0][]);
+   }
+
 
    @Override
    public String toString() {
