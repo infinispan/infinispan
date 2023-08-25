@@ -16,10 +16,15 @@ import io.netty.util.AttributeKey;
 
 public abstract class RespRequestHandler {
    protected final CompletionStage<RespRequestHandler> myStage = CompletableFuture.completedFuture(this);
+   protected final RespServer respServer;
 
    public static final AttributeKey<ByteBufPool> BYTE_BUF_POOL_ATTRIBUTE_KEY = AttributeKey.newInstance("buffer-pool");
 
    ByteBufPool allocatorToUse;
+
+   protected RespRequestHandler(RespServer server) {
+      this.respServer = server;
+   }
 
    protected void initializeIfNecessary(ChannelHandlerContext ctx) {
       if (allocatorToUse == null) {
@@ -28,6 +33,10 @@ public abstract class RespRequestHandler {
          }
          allocatorToUse = ctx.channel().attr(BYTE_BUF_POOL_ATTRIBUTE_KEY).get();
       }
+   }
+
+   public RespServer respServer() {
+      return respServer;
    }
 
    public CompletionStage<RespRequestHandler> myStage() {

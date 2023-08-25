@@ -46,7 +46,7 @@ public class RespDecoderTest {
    @BeforeClass
    public void beforeClass() {
       queuedCommands = new ArrayDeque<>();
-      RespRequestHandler myRespRequestHandler = new RespRequestHandler() {
+      RespRequestHandler myRespRequestHandler = new RespRequestHandler(null) {
          @Override
          protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, RespCommand type, List<byte[]> arguments) {
             queuedCommands.add(new Request(type, arguments));

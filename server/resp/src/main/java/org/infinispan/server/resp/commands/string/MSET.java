@@ -25,7 +25,7 @@ public class MSET extends RespCommand implements Resp3Command {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
 
    public MSET() {
-      super(-3, 1, 1, 2);
+      super(-3, 1, -1, 2);
    }
 
    @Override

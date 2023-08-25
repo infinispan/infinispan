@@ -4,13 +4,16 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.util.Util;
+import org.infinispan.server.resp.logging.AccessLoggerManager;
 import org.infinispan.server.resp.logging.Log;
+import org.infinispan.server.resp.logging.RespAccessLogger;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelPromise;
 
 public class RespHandler extends ChannelInboundHandlerAdapter {
    protected final static Log log = LogFactory.getLog(RespHandler.class, Log.class);
@@ -24,6 +27,9 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
    // flush and may not want to also resume on writability changes
    protected boolean resumeAutoReadOnWritability;
 
+   private final boolean traceAccess = RespAccessLogger.isEnabled();
+   private AccessLoggerManager accessLogger;
+
    static {
       MINIMUM_BUFFER_SIZE = Integer.parseInt(System.getProperty("infinispan.resp.minimum-buffer-size", "4096"));
    }
@@ -34,6 +40,7 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
    }
 
    protected ByteBuf allocateBuffer(ChannelHandlerContext ctx, int size) {
+      if (traceAccess) accessLogger.accept(size);
       if (outboundBuffer != null) {
          if (outboundBuffer.writableBytes() > size) {
             return outboundBuffer;
@@ -46,25 +53,42 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
       return outboundBuffer;
    }
 
-   private void flushBufferIfNeeded(ChannelHandlerContext ctx, boolean runOnEventLoop) {
+   private void flushBufferIfNeeded(ChannelHandlerContext ctx, boolean runOnEventLoop, CompletionStage<?> res) {
       if (outboundBuffer != null) {
          log.tracef("Writing and flushing buffer %s", outboundBuffer);
          if (runOnEventLoop) {
             ctx.channel().eventLoop().execute(() -> {
-               ctx.writeAndFlush(outboundBuffer, ctx.voidPromise());
+               ChannelPromise p = newPromise(ctx);
+               ctx.writeAndFlush(outboundBuffer, p);
+               flushAccessLog(ctx, p, res);
                outboundBuffer = null;
             });
          } else {
-            ctx.writeAndFlush(outboundBuffer, ctx.voidPromise());
+            ChannelPromise p = newPromise(ctx);
+            ctx.writeAndFlush(outboundBuffer, p);
+            flushAccessLog(ctx, p, res);
             outboundBuffer = null;
          }
       }
+   }
+
+   private ChannelPromise newPromise(ChannelHandlerContext ctx) {
+      return traceAccess ? ctx.newPromise() : ctx.voidPromise();
+   }
+
+   private void flushAccessLog(ChannelHandlerContext ctx, ChannelPromise promise, CompletionStage<?> res) {
+      if (accessLogger == null) return;
+
+      accessLogger.flush(ctx, promise, res);
    }
 
    @Override
    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
       ctx.channel().attr(RespRequestHandler.BYTE_BUF_POOL_ATTRIBUTE_KEY)
             .set(size -> allocateBuffer(ctx, size));
+      this.accessLogger = traceAccess
+            ? new AccessLoggerManager(ctx, requestHandler.respServer().getTimeService())
+            : null;
       super.channelRegistered(ctx);
    }
 
@@ -72,13 +96,14 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
    public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
       super.channelUnregistered(ctx);
       requestHandler.handleChannelDisconnect(ctx);
+      if (traceAccess) accessLogger.close();
    }
 
    @Override
    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
       // If we disabled auto read in the middle of a read, that means we are waiting on a pending command to complete
       if (ctx.channel().config().isAutoRead()) {
-         flushBufferIfNeeded(ctx, false);
+         flushBufferIfNeeded(ctx, false, null);
       }
       super.channelReadComplete(ctx);
    }
@@ -117,17 +142,21 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
          log.tracef("Received command: %s with arguments %s for %s", command, Util.toStr(arguments), ctx.channel());
       }
 
+      if (traceAccess) accessLogger.track(command, arguments);
+
       CompletionStage<RespRequestHandler> stage = requestHandler.handleRequest(ctx, command, arguments);
       if (CompletionStages.isCompletedSuccessfully(stage)) {
          requestHandler = CompletionStages.join(stage);
          if (outboundBuffer != null && outboundBuffer.readableBytes() > ctx.channel().bytesBeforeUnwritable()) {
             log.tracef("Buffer will cause channel %s to be unwriteable - forcing flush", ctx.channel());
             // Note the flush is done later after this task completes, since we don't want to resume reading yet
-            flushBufferIfNeeded(ctx, true);
+            flushBufferIfNeeded(ctx, true, stage);
             ctx.channel().config().setAutoRead(false);
             resumeAutoReadOnWritability = true;
             return;
          }
+         if (traceAccess) accessLogger.register(stage);
+
          return;
       }
       log.tracef("Disabling auto read for channel %s until previous command is complete", ctx.channel());
@@ -141,7 +170,7 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
          }
          // Instate the new handler if there was no exception
          requestHandler = handler;
-         flushBufferIfNeeded(ctx, false);
+         flushBufferIfNeeded(ctx, false, stage);
          log.tracef("Re-enabling auto read for channel %s as previous command is complete", ctx.channel());
          resumeAutoRead(ctx);
       });
@@ -151,7 +180,7 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
       log.unexpectedException(cause);
       ByteBufferUtils.stringToByteBuf("-ERR Server Error Encountered: " + cause.getMessage() + "\\r\\n", requestHandler.allocatorToUse);
-      flushBufferIfNeeded(ctx, false);
+      flushBufferIfNeeded(ctx, false, null);
       ctx.close();
    }
 }
