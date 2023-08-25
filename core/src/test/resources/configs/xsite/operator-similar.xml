@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-config-${infinispan.core.schema.version}.xsd"
+        xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
+
+    <jgroups>
+        <stack name="image-tcp" extends="tcp">
+            <TCP port_range="0"
+                 diag.enabled="true"
+                 bind_addr="SITE_LOCAL"
+                 bind_port="7800"/>
+            <dns.DNS_PING dns_record_type="A"
+                          dns_query="localhost"
+                          stack.combine="REPLACE"
+                          stack.position="MPING"/>
+        </stack>
+        <stack name="relay-tunnel" extends="udp">
+            <TUNNEL port_range="0"
+                    diag.enabled="true"
+                    bind_addr="SITE_LOCAL"
+                    bind_port="0"
+                    gossip_router_hosts="127.0.0.1[7900]"
+                    stack.combine="REPLACE"
+                    stack.position="UDP"/>
+            <FD_SOCK2 stack.combine="REMOVE"/>
+        </stack>
+        <stack name="xsite" extends="image-tcp">
+            <relay.RELAY2 site="site1"
+                          max_site_masters="128"/>
+            <remote-sites default-stack="relay-tunnel" cluster="xsite">
+                <remote-site name="site1" cluster="xsite" stack="relay-tunnel"/>
+                <remote-site name="site2" cluster="xsite" stack="relay-tunnel"/>
+            </remote-sites>
+        </stack>
+    </jgroups>
+
+    <cache-container>
+        <transport stack="xsite"/>
+    </cache-container>
+
+</infinispan>
