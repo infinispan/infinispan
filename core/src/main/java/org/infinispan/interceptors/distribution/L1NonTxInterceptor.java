@@ -4,14 +4,17 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.DataCommand;
@@ -38,6 +41,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.EntryFactory;
@@ -52,7 +56,8 @@ import org.infinispan.interceptors.impl.BaseRpcInterceptor;
 import org.infinispan.interceptors.impl.MultiSubCommandInvoker;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.statetransfer.StateTransferLock;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -74,6 +79,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    @Inject protected InternalDataContainer dataContainer;
    @Inject protected StateTransferLock stateTransferLock;
    @Inject protected KeyPartitioner keyPartitioner;
+   @Inject protected BlockingManager blockingManager;
 
    private long l1Lifespan;
    private long replicationTimeout;
@@ -174,27 +180,42 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
          if (log.isTraceEnabled()) {
             log.tracef("Found current request for key %s, waiting for their invocation's response", key);
          }
-         Object returnValue;
-         try {
-            returnValue = presentSync.get(replicationTimeout, TimeUnit.MILLISECONDS);
-         } catch (TimeoutException e) {
-            // This should never be required since the status is always set in a try catch above - but IBM
-            // doesn't...
-            log.warnf("Synchronizer didn't return in %s milliseconds - running command normally!",
-                  replicationTimeout);
-            // Always run next interceptor if a timeout occurs
-            return invokeNext(ctx, command);
-         } catch (ExecutionException e) {
-            throw e.getCause();
-         }
+         CompletionStage<Object> stage = blockingManager.supplyBlocking(() -> {
+            try {
+               return presentSync.get(replicationTimeout, TimeUnit.MILLISECONDS);
+            } catch (ExecutionException e) {
+               throw new CompletionException(e.getCause());
+            } catch (InterruptedException | TimeoutException e) {
+               throw new CompletionException(e);
+            }
+         }, "l1-sync-retrieval");
+
          if (runInterceptorOnConflict) {
             // The command needs to write something. Execute the rest of the invocation chain.
-            return invokeNext(ctx, command);
-         } else if (!isEntry && returnValue instanceof InternalCacheEntry) {
-            // The command is read-only, and we found the value in the L1 cache. Return it.
-            returnValue = ((InternalCacheEntry) returnValue).getValue();
+            return asyncInvokeNext(ctx, command, stage.exceptionally(t -> {
+               if (t instanceof CompletionException && t.getCause() instanceof TimeoutException) {
+                  log.warnf("Synchronizer didn't return in %s milliseconds - running command normally!", replicationTimeout);
+                  return null;
+               }
+               throw CompletableFutures.asCompletionException(t);
+            }));
          }
-         return returnValue;
+
+         return asyncValue(stage).andHandle(ctx, command, (rCtx, rCommand, rv, rt) -> {
+            if (rt != null) {
+               if (rt instanceof CompletionException && rt.getCause() instanceof TimeoutException) {
+                  return invokeNext(ctx, command);
+               }
+               throw rt;
+            }
+            if (!isEntry) {
+               // The command is read-only, and we found the value in the L1 cache. Return it.
+               if (rv instanceof InternalCacheEntry) {
+                  return ((InternalCacheEntry) rv).getValue();
+               }
+            }
+            return rv;
+         });
       }
    }
 
@@ -288,36 +309,42 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
             !toInvalidate.isEmpty() ? l1Manager.flushCache(toInvalidate, ctx.getOrigin(), true) : null;
 
       //we also need to remove from L1 the keys that are not ours
-      Iterator<VisitableCommand> subCommands = keys.stream()
-            .filter(k -> !cdl.getCacheTopology().isWriteOwner(k))
-            // TODO: To be fixed in https://issues.redhat.com/browse/ISPN-11125
-            .map(k -> CompletionStages.join(removeFromL1Command(ctx, k, keyPartitioner.getSegment(k)))).iterator();
-      return invokeNextAndHandle(ctx, command, (InvocationContext rCtx, WriteCommand writeCommand, Object rv, Throwable ex) -> {
-         if (ex != null) {
-            if (mustSyncInvalidation(invalidationFuture, writeCommand)) {
-               return asyncValue(invalidationFuture).thenApply(rCtx, writeCommand, (rCtx1, rCommand1, rv1) -> {
+      Iterator<?> keyIterator = keys.stream()
+            .filter(k -> !cdl.getCacheTopology().isWriteOwner(k)).iterator();
+      CompletionStage<List<VisitableCommand>> stage = CompletionStages.performSequentially(keyIterator,
+            k -> removeFromL1Command(ctx, k, keyPartitioner.getSegment(k)), Collectors.toList());
+      return asyncValue(stage.thenApply(list ->
+            invokeNextAndHandle(ctx, command, (InvocationContext rCtx, WriteCommand writeCommand, Object rv, Throwable ex) -> {
+               if (ex != null) {
+                  if (mustSyncInvalidation(invalidationFuture, writeCommand)) {
+                     return asyncValue(invalidationFuture).thenApply(rCtx, writeCommand, (rCtx1, rCommand1, rv1) -> {
+                        throw ex;
+                     });
+                  }
                   throw ex;
-               });
-            }
-            throw ex;
-         } else {
-            if (mustSyncInvalidation(invalidationFuture, writeCommand)) {
-               return asyncValue(invalidationFuture).thenApply(null, null,
-                     (rCtx2, rCommand2, rv2) -> MultiSubCommandInvoker.invokeEach(rCtx, subCommands, this, rv));
-            } else {
-               return MultiSubCommandInvoker.invokeEach(rCtx, subCommands, this, rv);
-            }
-         }
-      });
+               } else {
+                  if (mustSyncInvalidation(invalidationFuture, writeCommand)) {
+                     return asyncValue(invalidationFuture).thenApply(null, null,
+                           (rCtx2, rCommand2, rv2) -> MultiSubCommandInvoker.invokeEach(rCtx, list.iterator(), this, rv));
+                  } else {
+                     return MultiSubCommandInvoker.invokeEach(rCtx, list.iterator(), this, rv);
+                  }
+               }
+            })
+      ));
    }
 
    @Override
    public Object visitInvalidateL1Command(InvocationContext ctx, InvalidateL1Command invalidateL1Command)
          throws Throwable {
+      AggregateCompletionStage<Void> l1Aborts = CompletionStages.aggregateCompletionStage();
       CompletableFuture<Void> initialStage = new CompletableFuture<>();
       CompletionStage<Void> currentStage = initialStage;
       for (Object key : invalidateL1Command.getKeys()) {
-         abortL1UpdateOrWait(key);
+         CompletionStage<Void> stage = abortL1UpdateOrWait(key);
+         if (stage != null) {
+            l1Aborts.dependsOn(stage);
+         }
          // If our invalidation was sent when the value wasn't yet cached but is still being requested the context
          // may not have the value - if so we need to add it then now that we know we waited for the get response
          // to complete
@@ -326,10 +353,11 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
                                                             true, false, currentStage);
          }
       }
-      return asyncInvokeNext(ctx, invalidateL1Command, EntryFactory.expirationCheckDelay(currentStage, initialStage));
+      l1Aborts.dependsOn(EntryFactory.expirationCheckDelay(currentStage, initialStage));
+      return asyncInvokeNext(ctx, invalidateL1Command, l1Aborts.freeze());
    }
 
-   private void abortL1UpdateOrWait(Object key) {
+   private CompletionStage<Void> abortL1UpdateOrWait(Object key) {
       L1WriteSynchronizer sync = concurrentWrites.remove(key);
       if (sync != null) {
          if (sync.trySkipL1Update()) {
@@ -340,26 +368,29 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
             if (log.isTraceEnabled()) {
                log.tracef("L1 invalidation found a pending update for key %s - need to block until finished", key);
             }
-            // We have to wait for the pending L1 update to complete before we can properly invalidate.  Any additional
-            // gets that come in after this invalidation we ignore for now.
-            boolean success;
-            try {
-               sync.get();
-               success = true;
-            } catch (InterruptedException e) {
-               success = false;
-               // Save the interruption status, but don't throw an explicit exception
-               Thread.currentThread().interrupt();
-            }
-            catch (ExecutionException e) {
-               // We don't care what the L1 update exception was
-               success = false;
-            }
-            if (log.isTraceEnabled()) {
-               log.tracef("Pending L1 update completed successfully: %b - L1 invalidation can occur for key %s", success, key);
-            }
+            return blockingManager.runBlocking(() -> {
+               // We have to wait for the pending L1 update to complete before we can properly invalidate.  Any additional
+               // gets that come in after this invalidation we ignore for now.
+               boolean success;
+               try {
+                  sync.get();
+                  success = true;
+               } catch (InterruptedException e) {
+                  success = false;
+                  // Save the interruption status, but don't throw an explicit exception
+                  Thread.currentThread().interrupt();
+               }
+               catch (ExecutionException e) {
+                  // We don't care what the L1 update exception was
+                  success = false;
+               }
+               if (log.isTraceEnabled()) {
+                  log.tracef("Pending L1 update completed successfully: %b - L1 invalidation can occur for key %s", success, key);
+               }
+            }, "l1-invalidation");
          }
       }
+      return CompletableFutures.completedNull();
    }
 
    private Object handleDataWriteCommand(InvocationContext ctx, DataWriteCommand command,
@@ -384,19 +415,18 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
                if (shouldRemoveFromLocalL1(rCtx, dataWriteCommand)) {
                   CompletionStage<VisitableCommand> removeFromL1CommandStage = removeFromL1Command(rCtx, dataWriteCommand.getKey(),
                         dataWriteCommand.getSegment());
-                  // TODO: To be fixed in https://issues.redhat.com/browse/ISPN-11125
-                  VisitableCommand removeFromL1Command = CompletionStages.join(removeFromL1CommandStage);
-                  return makeStage(asyncInvokeNext(rCtx, removeFromL1Command, l1InvalidationFuture))
-                        .thenApply(null, null, (rCtx2, rCommand2, rv2) -> rv);
+                  return delayedValue(l1InvalidationFuture.thenCombine(removeFromL1CommandStage,
+                        (___, vc) -> invokeNext(ctx, vc)), rv);
+
                } else {
                   return asyncValue(l1InvalidationFuture).thenApply(rCtx, dataWriteCommand, (rCtx1, rCommand1, rv1) -> rv);
                }
             } else if (shouldRemoveFromLocalL1(rCtx, dataWriteCommand)) {
                CompletionStage<VisitableCommand> removeFromL1CommandStage = removeFromL1Command(rCtx, dataWriteCommand.getKey(),
                      dataWriteCommand.getSegment());
-               // TODO: To be fixed in https://issues.redhat.com/browse/ISPN-11125
-               VisitableCommand removeFromL1Command = CompletionStages.join(removeFromL1CommandStage);
-               return invokeNextThenApply(rCtx, removeFromL1Command, (rCtx2, rCommand2, rv2) -> rv);
+               return delayedValue(removeFromL1CommandStage.thenApply(removeFromL1Command ->
+                     invokeNext(ctx, removeFromL1Command)), rv);
+
             } else if (log.isTraceEnabled()) {
                log.trace("Allowing entry to commit as local node is owner");
             }
@@ -417,12 +447,13 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       if (log.isTraceEnabled()) {
          log.tracef("Removing entry from L1 for key %s", key);
       }
-      abortL1UpdateOrWait(key);
+      CompletionStage<Void> l1Abort = abortL1UpdateOrWait(key);
       ctx.removeLookedUpEntry(key);
       CompletionStage<Void> stage = entryFactory.wrapEntryForWriting(ctx, key, segment, true, false, CompletableFutures.completedNull());
 
       return stage.thenApply(ignore -> commandsFactory.buildInvalidateFromL1Command(EnumUtil.EMPTY_BIT_SET,
-            Collections.singleton(key)));
+            Collections.singleton(key)))
+            .thenCombine(l1Abort, (c, ___) -> c);
    }
 
    private CompletableFuture<?> invalidateL1InCluster(InvocationContext ctx, DataWriteCommand command, boolean assumeOriginKeptEntryInL1) {
