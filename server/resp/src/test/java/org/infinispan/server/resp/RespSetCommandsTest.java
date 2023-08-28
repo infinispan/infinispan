@@ -3,6 +3,8 @@ package org.infinispan.server.resp;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 
+import java.util.HashSet;
+
 import org.testng.annotations.Test;
 
 import io.lettuce.core.ScanArgs;
@@ -167,7 +169,7 @@ public class RespSetCommandsTest extends SingleNodeRespBaseTest {
    @Test
    public void testSrem() {
       RedisCommands<String, String> redis = redisConnection.sync();
-      String key = "sadd";
+      String key = "srem";
       redis.sadd(key, "1", "2", "3", "4", "5");
 
       // Remove 1 element
@@ -263,5 +265,89 @@ public class RespSetCommandsTest extends SingleNodeRespBaseTest {
       // Create a List
       assertWrongType(() -> redis.rpush("listleads", "tristan"),
             () -> redis.sunionstore("destination", "listleads", "william"));
+   }
+
+   @Test
+   public void testSpop() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "spop";
+
+      // Test count > size
+      redis.sadd(key, "1", "2", "3");
+      var initialSet = redis.smembers(key);
+      var popSet = redis.spop(key, 4);
+      var finalSet = redis.smembers(key);
+
+      assertThat(popSet).containsExactlyInAnyOrderElementsOf(initialSet);
+      assertThat(finalSet).isEmpty();
+
+      // Test count = size
+      redis.sadd(key, "1", "2", "3", "4");
+      initialSet = redis.smembers(key);
+      popSet = redis.spop(key, 4);
+      finalSet = redis.smembers(key);
+
+      assertThat(popSet).containsExactlyInAnyOrderElementsOf(initialSet);
+      assertThat(finalSet).isEmpty();
+
+      // Test count < size
+      redis.sadd(key, "1", "2", "3", "4", "5");
+      initialSet = redis.smembers(key);
+      popSet = redis.spop(key, 3);
+      finalSet = redis.smembers(key);
+
+      // Check resulting sets are a partition of initial
+      assertThat(popSet.size() + finalSet.size()).isEqualTo(initialSet.size());
+      var copyOfPop = new HashSet<>(popSet);
+      popSet.addAll(finalSet);
+      assertThat(popSet).containsExactlyInAnyOrder(initialSet.toArray(String[]::new));
+      initialSet.removeAll(finalSet);
+      assertThat(initialSet).containsExactlyInAnyOrder(copyOfPop.toArray(String[]::new));
+
+      // SPOP on an existing key that contains a String, not a Set!
+      // Set a String Command
+      assertWrongType(() -> redis.set("leads", "tristan"), () -> redis.spop("leads", 1));
+      // SPOP on an existing key that contains a List, not a Set!
+      // Create a List
+      assertWrongType(() -> redis.lpush("listleads", "tristan"), () -> redis.spop("listleads", 1));
+   }
+
+   @Test
+   public void testRandmember() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "srandmember";
+      // Test count > size
+      redis.sadd(key, "1", "2", "3");
+      var initialSet = redis.smembers(key);
+      var popSet = redis.srandmember(key, 4);
+      var finalSet = redis.smembers(key);
+      assertThat(popSet).containsExactlyInAnyOrderElementsOf(initialSet);
+      assertThat(finalSet).containsExactlyInAnyOrderElementsOf(initialSet);
+      // Test count = size
+      popSet = redis.srandmember(key, 4);
+      finalSet = redis.smembers(key);
+      assertThat(popSet).containsExactlyInAnyOrderElementsOf(initialSet);
+      assertThat(finalSet).containsExactlyInAnyOrderElementsOf(initialSet);
+      // Test count < size
+      redis.sadd(key, "1", "2", "3", "4", "5");
+      initialSet = redis.smembers(key);
+      popSet = redis.srandmember(key, 3);
+      finalSet = redis.smembers(key);
+      assertThat(initialSet).containsAll(popSet);
+
+      // Test count < 0
+      redis.sadd(key, "1", "2", "3", "4", "5");
+      initialSet = redis.smembers(key);
+      popSet = redis.srandmember(key, -20);
+      assertThat(popSet.size()).isEqualTo(20);
+      // Check resulting collection contains only element from intial set
+      assertThat(initialSet).containsAll(popSet);
+
+      // SPOP on an existing key that contains a String, not a Set!
+      // Set a String Command
+      assertWrongType(() -> redis.set("leads", "tristan"), () -> redis.srandmember("leads", 1));
+      // SPOP on an existing key that contains a List, not a Set!
+      // Create a List
+      assertWrongType(() -> redis.lpush("listleads", "tristan"), () -> redis.srandmember("listleads", 1));
    }
 }

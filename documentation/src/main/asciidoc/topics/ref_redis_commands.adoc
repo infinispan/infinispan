@@ -285,6 +285,12 @@ provides a read-uncommitted isolation.
 | link:https://redis.io/commands/smove[SMOVE]
 |
 
+| link:https://redis.io/commands/spop[SPOP]
+|
+
+| link:https://redis.io/commands/srandmember[SRANDMEMBER]
+|
+
 | link:https://redis.io/commands/strlen[STRLEN]
 |
 
