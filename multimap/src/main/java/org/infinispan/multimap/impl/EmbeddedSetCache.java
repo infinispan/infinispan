@@ -17,6 +17,7 @@ import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.multimap.impl.function.set.SAddFunction;
 import org.infinispan.multimap.impl.function.set.SGetFunction;
+import org.infinispan.multimap.impl.function.set.SPopFunction;
 import org.infinispan.multimap.impl.function.set.SRemoveFunction;
 import org.infinispan.multimap.impl.function.set.SSetFunction;
 
@@ -115,7 +116,7 @@ public class EmbeddedSetCache<K, V> {
    /**
     * Get all the entries specified in the keys collection
     *
-    * @param keys,   collection of keys to be get
+    * @param keys, collection of keys to be get
     * @return {@link CompletionStage} containing a {@link }
     */
    public CompletableFuture<Map<K, SetBucket<V>>> getAll(Set<K> keys) {
@@ -147,4 +148,17 @@ public class EmbeddedSetCache<K, V> {
       requireNonNull(values, ERR_VALUE_CAN_T_BE_NULL);
       return readWriteMap.eval(key, new SSetFunction<>(values));
    }
+
+   /**
+    * Return a collection representign a subset of the set
+    *
+    * @param key,    the name of the set
+    * @param count, the number of elements to return
+    * @return {@link CompletionStage} the random subset elements
+    */
+   public CompletionStage<Collection<V>> pop(K key, Long count, boolean remove) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      return readWriteMap.eval(key, new SPopFunction<K,V>(count != null ? count : 1, remove));
+   }
+
 }
