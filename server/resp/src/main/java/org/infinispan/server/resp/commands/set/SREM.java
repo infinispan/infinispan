@@ -13,13 +13,12 @@ import org.infinispan.server.resp.commands.Resp3Command;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * SADD implementation, see:
- * @link https://redis.io/commands/sadd
- *
+ * SREM implementation, see:
+ * @link https://redis.io/commands/srem/
  * @since 15.0
  */
-public class SADD extends RespCommand implements Resp3Command {
-   public SADD() {
+public class SREM extends RespCommand implements Resp3Command {
+   public SREM() {
       super(-3, 1, 1, 1);
    }
 
@@ -30,7 +29,7 @@ public class SADD extends RespCommand implements Resp3Command {
 
       byte[] key = arguments.get(0);
       EmbeddedSetCache<byte[],byte[]> esc = handler.getEmbeddedSetCache();
-      CompletionStage<Long> result = esc.add(key, arguments.subList(1, arguments.size()));
+      CompletionStage<Long> result = esc.remove(key, arguments.subList(1, arguments.size()));
       return handler.stageToReturn(result, ctx, Consumers.LONG_BICONSUMER);
    }
 }

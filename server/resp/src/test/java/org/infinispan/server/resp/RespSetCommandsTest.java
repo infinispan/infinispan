@@ -5,6 +5,7 @@ import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 
 import org.testng.annotations.Test;
 
+import io.lettuce.core.ScanArgs;
 import io.lettuce.core.api.sync.RedisCommands;
 
 @Test(groups = "functional", testName = "server.resp.RespSetCommandsTest")
@@ -161,5 +162,47 @@ public class RespSetCommandsTest extends SingleNodeRespBaseTest {
       redis.sadd(samesrc, "1", "2", "3");
       assertThat(redis.smove(samesrc, samesrc, "2")).isTrue();
       assertThat(redis.smove(samesrc, samesrc, "4")).isFalse();
+   }
+
+   @Test
+   public void testSrem() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "sadd";
+      redis.sadd(key, "1", "2", "3", "4", "5");
+
+      // Remove 1 element
+      Long removed = redis.srem(key, "1");
+      assertThat(removed.longValue()).isEqualTo(1L);
+      // Remove more elements
+      removed = redis.srem(key, "4","2","5");
+      assertThat(removed.longValue()).isEqualTo(3L);
+      // Try removing 1 non present element
+      removed = redis.srem(key, "6");
+      assertThat(removed.longValue()).isEqualTo(0L);
+      // Try removing more non present elements
+      removed = redis.srem(key, "6","7");
+      assertThat(removed.longValue()).isEqualTo(0L);
+      // Some present some not
+      removed = redis.srem(key, "3","6");
+      assertThat(removed.longValue()).isEqualTo(1L);
+      // Set is empty now and has been removed
+      assertThat(redis.smembers(key)).isEmpty();
+      ScanArgs args = ScanArgs.Builder.matches("k1*");
+      var cursor = redis.scan(args);
+      assertThat(cursor.getKeys()).doesNotContain(key);
+
+      // Try remove on not existing
+      removed = redis.srem(key, "4","2");
+      assertThat(removed.longValue()).isEqualTo(0L);
+
+      // SREM removed the entry, since set is empty. Test that key is free
+      assertThat(redis.lpush(key, "vittorio")).isEqualTo(1L);
+
+      // SADD on an existing key that contains a String, not a Set!
+      // Set a String Command
+      assertWrongType(() -> redis.set("leads", "tristan"), () -> redis.srem("leads", "william"));
+      // SADD on an existing key that contains a List, not a Set!
+      // Create a List
+      assertWrongType(() -> redis.lpush("listleads", "tristan"), () -> redis.srem("listleads", "william"));
    }
 }

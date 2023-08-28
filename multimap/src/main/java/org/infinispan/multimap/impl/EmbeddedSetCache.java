@@ -74,7 +74,7 @@ public class EmbeddedSetCache<K, V> {
    }
 
    /**
-    * Add the specified element to the set, creates the set in case
+    * Add the specified elements to the set, creates the set in case
     *
     * @param key,   the name of the set
     * @param value, the element to be inserted
@@ -97,6 +97,19 @@ public class EmbeddedSetCache<K, V> {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       requireNonNull(value, ERR_VALUE_CAN_T_BE_NULL);
       return readWriteMap.eval(key, new SRemoveFunction<>(Arrays.asList(value)));
+   }
+
+   /**
+    * Remove the specified elements from the set, remove the set if empty
+    *
+    * @param key,   the name of the set
+    * @param value, the element to be inserted
+    * @return {@link CompletionStage} containing a {@link Void}
+    */
+   public CompletionStage<Long> remove(K key, Collection<V> values) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      requireNonNull(values, ERR_VALUE_CAN_T_BE_NULL);
+      return readWriteMap.eval(key, new SRemoveFunction<>(values));
    }
 
    /**
