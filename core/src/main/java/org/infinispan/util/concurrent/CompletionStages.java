@@ -1,5 +1,6 @@
 package org.infinispan.util.concurrent;
 
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -13,6 +14,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collector;
 
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
@@ -296,5 +298,26 @@ public class CompletionStages {
       }
 
       abstract R getValue();
+   }
+
+   public static <I, T, A, R> CompletionStage<R> performSequentially(Iterator<I> iterator, Function<? super I, CompletionStage<T>> function, Collector<T, A, R> collector) {
+      A supplier = collector.supplier().get();
+      CompletionStage<A> stage =  performSequentially(iterator, function, supplier, collector.accumulator());
+      return stage.thenApply(collector.finisher());
+   }
+
+   private static <I, T, A> CompletionStage<A> performSequentially(Iterator<I> iterator, Function<? super I,
+         CompletionStage<T>> function, A collected, BiConsumer<A, T> accumulator) {
+      CompletionStage<Void> stage = CompletableFutures.completedNull();
+      // Replace recursion with iteration if the state was applied synchronously
+      while (iterator.hasNext() && CompletionStages.isCompletedSuccessfully(stage)) {
+         I value = iterator.next();
+         stage = function.apply(value)
+               .thenAccept(t -> accumulator.accept(collected, t));
+      }
+      if (!iterator.hasNext())
+         return stage.thenApply(t -> collected);
+
+      return stage.thenCompose(v -> performSequentially(iterator, function, collected, accumulator));
    }
 }
