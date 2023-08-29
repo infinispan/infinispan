@@ -79,6 +79,11 @@ public interface RemoteStoreConfigurationChildBuilder<S> extends StoreConfigurat
    RemoteStoreConfigurationBuilder rawValues(boolean rawValues);
 
    /**
+    * Specifies the name of a shared remote cache container to use, instead of creating a dedicated instance.
+    */
+   RemoteStoreConfigurationBuilder remoteCacheContainer(String name);
+
+   /**
     * The name of the remote cache in the remote infinispan cluster, to which to connect to. If
     * unspecified, the default cache will be used
     */

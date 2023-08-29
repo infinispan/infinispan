@@ -45,6 +45,7 @@ import org.infinispan.persistence.remote.configuration.ConnectionPoolConfigurati
 import org.infinispan.persistence.remote.configuration.RemoteServerConfiguration;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
 import org.infinispan.persistence.remote.configuration.SslConfiguration;
+import org.infinispan.persistence.remote.global.GlobalRemoteContainers;
 import org.infinispan.persistence.remote.logging.Log;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntry;
@@ -122,19 +123,26 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
          iceFactory = ctx.getCache().getAdvancedCache().getComponentRegistry().getComponent(InternalEntryFactory.class);
       }
 
-      ConfigurationBuilder builder = buildRemoteConfiguration(configuration, marshaller);
+      CompletionStage<RemoteCacheManager> rcmStage;
 
-      return blockingManager.supplyBlocking(() -> {
-         remoteCacheManager = new RemoteCacheManager(builder.build());
+      if (isManagedRemoteCacheManager()) {
+         GlobalRemoteContainers containers = ctx.getCache().getAdvancedCache().getComponentRegistry().getGlobalComponentRegistry().getComponent(GlobalRemoteContainers.class);
+         rcmStage = containers.cacheContainer(configuration.remoteCacheContainer());
+      } else {
+         rcmStage = blockingManager.supplyBlocking(() -> {
+            ConfigurationBuilder builder = buildRemoteConfiguration(configuration, marshaller);
+            return new RemoteCacheManager(builder.build());
+         }, "RemoteCacheManager-create");
+      }
+      return rcmStage.thenApplyAsync(rcm -> {
+               remoteCacheManager = rcm;
+               if (configuration.remoteCacheName().isEmpty())
+                  remoteCache = (InternalRemoteCache<Object, Object>) remoteCacheManager.getCache();
+               else
+                  remoteCache = (InternalRemoteCache<Object, Object>) remoteCacheManager.getCache(configuration.remoteCacheName());
 
-         if (configuration.remoteCacheName().isEmpty())
-            remoteCache = (InternalRemoteCache<Object, Object>) remoteCacheManager.getCache();
-         else
-            remoteCache = (InternalRemoteCache<Object, Object>) remoteCacheManager.getCache(configuration.remoteCacheName());
-
-         return remoteCache.ping();
-      }, "RemoteStore-start")
-            .thenCompose(Function.identity())
+               return remoteCache.ping();
+            }, blockingManager.asExecutor("RemoteCacheManager-getCache")).thenCompose(Function.identity())
             .thenAccept(pingResponse -> {
                String cacheName = ctx.getCache().getName();
 
@@ -153,7 +161,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
                      log.debugf("Remote Store for cache %s can support segmentation as the number of segments matched the remote cache", cacheName);
                   } else {
                      log.debugf("Remote Store for cache %s cannot support segmentation as the number of segments %d do not match the remote cache %d",
-                                cacheName, this.segmentCount, numSegments);
+                           cacheName, this.segmentCount, numSegments);
                   }
                }
                if (!segmentsMatch && configuration.segmented()) {
@@ -195,6 +203,10 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
             });
    }
 
+   private boolean isManagedRemoteCacheManager() {
+      return configuration.servers().isEmpty() && configuration.uri() == null;
+   }
+
    @Override
    public Set<Characteristic> characteristics() {
       Set<Characteristic> characteristics = EnumSet.of(Characteristic.BULK_READ, Characteristic.EXPIRATION,
@@ -209,7 +221,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
    public CompletionStage<Void> stop() {
       return blockingManager.runBlocking(() -> {
          // when it failed to start
-         if (remoteCacheManager != null) {
+         if (remoteCacheManager != null && !isManagedRemoteCacheManager()) {
             remoteCacheManager.stop();
          }
       }, "RemoteStore-stop");
@@ -246,10 +258,10 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
          Object unwrappedKey = unwrap(key);
          return remoteCache.getAsync(unwrappedKey)
                .thenApplyAsync(value -> {
-                  if(value == null) {
+                  if (value == null) {
                      return null;
                   }
-                  if(value instanceof MarshalledValue) {
+                  if (value instanceof MarshalledValue) {
                      return entryFactory.create(key, (MarshalledValue) value);
                   }
                   return entryFactory.create(key, value);
@@ -269,7 +281,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
       // We assume our segments don't map to the remote node when segmentation is disabled
       IntSet segmentsToUse = configuration.segmented() ? segments : null;
       Flowable<K> keyFlowable = Flowable.fromPublisher(remoteCache.publishEntries(Codec27.EMPTY_VALUE_CONVERTER,
-            null, segmentsToUse, 512))
+                  null, segmentsToUse, 512))
             .observeOn(Schedulers.from(nonBlockingExecutor))
             .map(Map.Entry::getKey)
             .map(RemoteStore::wrap);
@@ -341,7 +353,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
       // and that makes the operation O(n) instead of O(1).
       // Ideally we should skip the stats operation in that case.
       return remoteCache.serverStatisticsAsync()
-                        .thenApplyAsync(stats -> getApproximateSizeStatistic(stats, segments.size()), nonBlockingExecutor);
+            .thenApplyAsync(stats -> getApproximateSizeStatistic(stats, segments.size()), nonBlockingExecutor);
    }
 
    private long getApproximateSizeStatistic(ServerStatistics serverStatistics, long segments) {
@@ -384,7 +396,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
 
    @Override
    public CompletionStage<Void> batch(int publisherCount, Publisher<SegmentedPublisher<Object>> removePublisher,
-         Publisher<SegmentedPublisher<MarshallableEntry<K, V>>> writePublisher) {
+                                      Publisher<SegmentedPublisher<MarshallableEntry<K, V>>> writePublisher) {
       Completable removeCompletable = Flowable.fromPublisher(removePublisher)
             .flatMap(Flowable::fromPublisher, publisherCount)
             .map(RemoteStore::unwrap)
@@ -452,14 +464,14 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
 
       ConfigurationBuilder builder = (configuration.uri() != null
             && !configuration.uri().isEmpty())
-                  ? HotRodURI.create(configuration.uri()).toConfigurationBuilder()
-                  : new ConfigurationBuilder();
+            ? HotRodURI.create(configuration.uri()).toConfigurationBuilder()
+            : new ConfigurationBuilder();
 
       List<RemoteServerConfiguration> servers = configuration.servers();
       for (RemoteServerConfiguration s : servers) {
-           builder.addServer()
-                 .host(s.host())
-                 .port(s.port());
+         builder.addServer()
+               .host(s.host())
+               .port(s.port());
       }
       ConnectionPoolConfiguration poolConfiguration = configuration.connectionPool();
       Long connectionTimeout = configuration.connectionTimeout();

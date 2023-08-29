@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-config-${infinispan.core.schema.version}.xsd
+                          urn:infinispan:config:store:remote:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-cachestore-remote-config-${infinispan.core.schema.version}.xsd"
+      xmlns="urn:infinispan:config:${infinispan.core.schema.version}"
+      xmlns:remote="urn:infinispan:config:store:remote:${infinispan.core.schema.version}" >
+
+   <remote-cache-containers xmlns="urn:infinispan:config:store:remote:${infinispan.core.schema.version}">
+      <remote-cache-container uri="hotrod://127.0.0.1:19811"/>
+      <remote-cache-container uri="hotrod://127.0.0.1:19811" name="alternative"/>
+   </remote-cache-containers>
+
+   <!-- Default cache named to preserve old default cache name -->
+   <cache-container default-cache="RemoteStoreWithDefaultContainer">
+      <local-cache name="RemoteStoreWithDefaultContainer">
+         <persistence>
+            <remote-store xmlns="urn:infinispan:config:store:remote:${infinispan.core.schema.version}"
+                          cache="RemoteStoreWithDefaultContainer"
+                          segmented="false"/>
+         </persistence>
+      </local-cache>
+
+      <local-cache name="RemoteStoreWithNamedContainer">
+         <persistence>
+            <remote-store xmlns="urn:infinispan:config:store:remote:${infinispan.core.schema.version}"
+                          cache="RemoteStoreWithDefaultContainer"
+                          remote-cache-container="alternative"
+                          segmented="false"/>
+         </persistence>
+      </local-cache>
+   </cache-container>
+
+</infinispan>

@@ -88,6 +88,11 @@ public abstract class AbstractRemoteStoreConfigurationChildBuilder<S> extends Ab
    }
 
    @Override
+   public RemoteStoreConfigurationBuilder remoteCacheContainer(String name) {
+      return builder.remoteCacheContainer(name);
+   }
+
+   @Override
    public RemoteStoreConfigurationBuilder remoteCacheName(String remoteCacheName) {
       return builder.remoteCacheName(remoteCacheName);
    }

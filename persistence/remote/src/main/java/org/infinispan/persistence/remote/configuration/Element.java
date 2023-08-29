@@ -29,7 +29,8 @@ public enum Element {
    SERVERS("servers"),
    REMOTE_SERVER("remote-server"),
    TRUSTSTORE("truststore"),
-   ;
+   REMOTE_CACHE_CONTAINER("remote-cache-container"),
+   REMOTE_CACHE_CONTAINERS("remote-cache-containers");
 
    private final String name;
 
