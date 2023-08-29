@@ -25,6 +25,6 @@ public class DECRBY extends RespCommand implements Resp3Command {
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
-      return handler.stageToReturn(CounterIncOrDec.counterIncOrDecBy(handler.cache(), arguments.get(0), ArgumentUtils.toLong(arguments.get(1)), false), ctx, Consumers.LONG_BICONSUMER);
+      return handler.stageToReturn(CounterIncOrDec.counterIncOrDecBy(handler.cache(), arguments.get(0), -ArgumentUtils.toLong(arguments.get(1))), ctx, Consumers.LONG_BICONSUMER);
    }
 }

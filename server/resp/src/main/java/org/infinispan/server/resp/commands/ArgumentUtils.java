@@ -1,5 +1,7 @@
 package org.infinispan.server.resp.commands;
 
+import java.nio.charset.StandardCharsets;
+
 import org.infinispan.server.resp.ByteBufferUtils;
 
 import io.netty.buffer.ByteBuf;
@@ -119,7 +121,7 @@ public final class ArgumentUtils {
    public static byte[] toByteArray(Number value) {
       double d = value.doubleValue();
       if (value instanceof Double && Math.rint(d) != d) {
-         return Double.toString(d).getBytes();
+         return Double.toString(d).getBytes(StandardCharsets.US_ASCII);
       }
       return toByteArray(value.longValue());
    }
