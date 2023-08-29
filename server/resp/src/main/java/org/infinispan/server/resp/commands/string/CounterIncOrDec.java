@@ -1,6 +1,5 @@
 package org.infinispan.server.resp.commands.string;
 
-import io.netty.util.CharsetUtil;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.server.resp.commands.ArgumentUtils;
@@ -13,38 +12,35 @@ final class CounterIncOrDec {
 
    }
    static CompletionStage<Long> counterIncOrDec(Cache<byte[], byte[]> cache, byte[] key, boolean increment) {
-      return counterIncOrDecBy(cache, key, 1, increment);
+      return counterIncOrDecBy(cache, key, increment ? 1 : -1);
    }
 
-   static CompletionStage<Long> counterIncOrDecBy(Cache<byte[], byte[]> cache, byte[] key, long by, boolean increment) {
+   static CompletionStage<Long> counterIncOrDecBy(Cache<byte[], byte[]> cache, byte[] key, long by) {
       return cache.getAsync(key)
             .thenCompose(currentValueBytes -> {
                if (currentValueBytes != null) {
-                  String prevValue = ArgumentUtils.toNumberString(currentValueBytes);
                   long prevIntValue;
                   try {
-                     prevIntValue = Long.parseLong(prevValue) + (increment ? by : -by);
+                     prevIntValue = ArgumentUtils.toLong(currentValueBytes) + by;
                   } catch (NumberFormatException e) {
                      throw new CacheException("value is not an integer or out of range");
                   }
-                  String newValueString = String.valueOf(prevIntValue);
-                  byte[] newValueBytes = newValueString.getBytes(CharsetUtil.US_ASCII);
+                  byte[] newValueBytes = ArgumentUtils.toByteArray(prevIntValue);
                   return cache.replaceAsync(key, currentValueBytes, newValueBytes)
                         .thenCompose(replaced -> {
                            if (replaced) {
                               return CompletableFuture.completedFuture(prevIntValue);
                            }
-                           return counterIncOrDecBy(cache, key, by, increment);
+                           return counterIncOrDecBy(cache, key, by);
                         });
                }
-               long longValue = increment ? by : -by;
-               byte[] valueToPut = String.valueOf(longValue).getBytes(CharsetUtil.US_ASCII);
+               byte[] valueToPut = ArgumentUtils.toByteArray(by);
                return cache.putIfAbsentAsync(key, valueToPut)
                      .thenCompose(prev -> {
                         if (prev != null) {
-                           return counterIncOrDecBy(cache, key, by, increment);
+                           return counterIncOrDecBy(cache, key, by);
                         }
-                        return CompletableFuture.completedFuture(longValue);
+                        return CompletableFuture.completedFuture(by);
                      });
             });
    }
@@ -57,15 +53,13 @@ final class CounterIncOrDec {
       return cache.getAsync(key)
             .thenCompose(currentValueBytes -> {
                if (currentValueBytes != null) {
-                  String prevValue = ArgumentUtils.toNumberString(currentValueBytes);
                   double prevDoubleValue;
                   try {
-                     prevDoubleValue = Double.parseDouble(prevValue) + by;
+                     prevDoubleValue = ArgumentUtils.toDouble(currentValueBytes) + by;
                   } catch (NumberFormatException e) {
                      throw new CacheException("value is not a valid float");
                   }
-                  String newValueString = String.valueOf(prevDoubleValue);
-                  byte[] newValueBytes = newValueString.getBytes(CharsetUtil.US_ASCII);
+                  byte[] newValueBytes = ArgumentUtils.toByteArray(prevDoubleValue);
                   return cache.replaceAsync(key, currentValueBytes, newValueBytes)
                         .thenCompose(replaced -> {
                            if (replaced) {
@@ -74,7 +68,7 @@ final class CounterIncOrDec {
                            return counterIncByDouble(cache, key, by);
                         });
                }
-               byte[] valueToPut = String.valueOf(by).getBytes(CharsetUtil.US_ASCII);
+               byte[] valueToPut = ArgumentUtils.toByteArray(by);
                return cache.putIfAbsentAsync(key, valueToPut)
                      .thenCompose(prev -> {
                         if (prev != null) {

@@ -26,7 +26,7 @@ public class INCRBY extends RespCommand implements Resp3Command {
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
       return handler
-            .stageToReturn(CounterIncOrDec.counterIncOrDecBy(handler.cache(), arguments.get(0), ArgumentUtils.toLong(arguments.get(1)), true),
+            .stageToReturn(CounterIncOrDec.counterIncOrDecBy(handler.cache(), arguments.get(0), ArgumentUtils.toLong(arguments.get(1))),
                   ctx, Consumers.LONG_BICONSUMER);
    }
 }
