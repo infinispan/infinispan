@@ -38,6 +38,7 @@ import io.netty.channel.group.ChannelMatcher;
 public class RespServer extends AbstractProtocolServer<RespServerConfiguration> {
    private static final Log log = LogFactory.getLog(RespServer.class);
    public static final String RESP_SERVER_FEATURE = "resp-server";
+   public static final MediaType RESP_KEY_MEDIA_TYPE = MediaType.APPLICATION_OCTET_STREAM;
    private MediaType configuredValueType = MediaType.APPLICATION_OCTET_STREAM;
    private DefaultIterationManager iterationManager;
    private ExternalSourceIterationManager dataStructureIterationManager;
@@ -75,8 +76,8 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
             MediaType keyMediaType = builder.encoding().key().mediaType();
             if (keyMediaType == null) {
                log.debugf("Setting RESP cache key media type storage to OCTET stream to avoid key encodings");
-               builder.encoding().key().mediaType(MediaType.APPLICATION_OCTET_STREAM);
-            } else if (!keyMediaType.equals(MediaType.APPLICATION_OCTET_STREAM)) {
+               builder.encoding().key().mediaType(RESP_KEY_MEDIA_TYPE);
+            } else if (!keyMediaType.equals(RESP_KEY_MEDIA_TYPE)) {
                throw CONFIG.respCacheKeyMediaTypeSupplied(cacheName, keyMediaType);
             }
          } else {
@@ -85,11 +86,11 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
                // See: https://redis.io/docs/reference/cluster-spec/#key-distribution-model
                builder.clustering().hash().keyPartitioner(new CRC16HashFunctionPartitioner()).numSegments(16384);
             }
-            builder.encoding().key().mediaType(MediaType.APPLICATION_OCTET_STREAM);
+            builder.encoding().key().mediaType(RESP_KEY_MEDIA_TYPE);
             builder.encoding().value().mediaType(configuredValueType);
          }
          cacheManager.defineConfiguration(configuration.defaultCacheName(), builder.build());
-      } else if (!MediaType.APPLICATION_OCTET_STREAM.equals(explicitConfiguration.encoding().keyDataType().mediaType())) {
+      } else if (!RESP_KEY_MEDIA_TYPE.equals(explicitConfiguration.encoding().keyDataType().mediaType())) {
          throw CONFIG.respCacheKeyMediaTypeSupplied(cacheName, explicitConfiguration.encoding().keyDataType().mediaType());
       }
       super.startInternal();

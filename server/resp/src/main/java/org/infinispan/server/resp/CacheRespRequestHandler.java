@@ -16,6 +16,16 @@ public class CacheRespRequestHandler extends RespRequestHandler {
       return cache;
    }
 
+   @SuppressWarnings("unchecked")
+   public <V> AdvancedCache<byte[], V> typedCache(MediaType valueMediaType) {
+      AdvancedCache<byte[], ?> c = cache;
+      if (cache.getValueDataConversion().getRequestMediaType().match(valueMediaType)) {
+         return (AdvancedCache<byte[], V>) c;
+      }
+
+      return cache.withMediaType(RespServer.RESP_KEY_MEDIA_TYPE, valueMediaType);
+   }
+
    protected void setCache(AdvancedCache<byte[], byte[]> cache) {
       this.cache = cache;
    }

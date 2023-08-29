@@ -145,6 +145,7 @@ class InfinispanServerProcessor {
             "proto/generated/persistence.query.core.proto",
             "proto/generated/persistence.remote_query.proto",
             "proto/generated/persistence.memcached.proto",
+            "proto/generated/persistence.resp.proto",
             "proto/generated/persistence.event_logger.proto",
             "proto/generated/persistence.multimap.proto",
             "proto/persistence.m.event_logger.proto",
