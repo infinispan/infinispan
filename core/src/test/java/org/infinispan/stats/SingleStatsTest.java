@@ -87,8 +87,9 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
          memoryConfigurationBuilder.maxCount(size);
       } else {
          if (storageType == StorageType.OFF_HEAP) {
-            // Off heap key/value size is 80 bytes
-            size = estimateSizeOverhead(size * OFF_HEAP_SIZE);
+            // When expiration eviction is used it stores the internal metadata which we will estimate as 24 bytes
+            long amountPerEntry = OFF_HEAP_SIZE + (evictionStrategy.isExceptionBased() ? 24 : 0);
+            size = estimateSizeOverhead(size * amountPerEntry);
             // Have to also include address count overhead
             size += estimateSizeOverhead(OffHeapConcurrentMap.INITIAL_SIZE << 3);
          } else {
