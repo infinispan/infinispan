@@ -7,7 +7,6 @@ import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
-import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
@@ -37,6 +36,7 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration<RemoteS
    static final AttributeDefinition<String> MARSHALLER = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.MARSHALLER, null, String.class).immutable().build();
    static final AttributeDefinition<ProtocolVersion> PROTOCOL_VERSION = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.PROTOCOL_VERSION, ProtocolVersion.DEFAULT_PROTOCOL_VERSION)
          .immutable().build();
+   static final AttributeDefinition<String> REMOTE_CACHE_CONTAINER = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.REMOTE_CACHE_CONTAINER, "").immutable().build();
    static final AttributeDefinition<String> REMOTE_CACHE_NAME = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.REMOTE_CACHE_NAME, "").immutable().build();
 
    static final AttributeDefinition<String> URI = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.URI, null, String.class).immutable()
@@ -47,44 +47,18 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration<RemoteS
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(RemoteStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), BALANCING_STRATEGY, CONNECTION_TIMEOUT, FORCE_RETURN_VALUES,
-            HOTROD_WRAPPING, RAW_VALUES, KEY_SIZE_ESTIMATE, MARSHALLER, PROTOCOL_VERSION, REMOTE_CACHE_NAME, SOCKET_TIMEOUT, TCP_NO_DELAY, VALUE_SIZE_ESTIMATE, URI);
+            HOTROD_WRAPPING, RAW_VALUES, KEY_SIZE_ESTIMATE, MARSHALLER, PROTOCOL_VERSION, REMOTE_CACHE_CONTAINER, REMOTE_CACHE_NAME, SOCKET_TIMEOUT, TCP_NO_DELAY, VALUE_SIZE_ESTIMATE, URI);
    }
 
-   private final Attribute<String> balancingStrategy;
-   private final Attribute<Long> connectionTimeout;
-   private final Attribute<Boolean> forceReturnValues;
-   private final Attribute<Boolean> hotRodWrapping;
-   private final Attribute<Boolean> rawValues;
-   private final Attribute<Integer> keySizeEstimate;
-   private final Attribute<Integer> valueSizeEstimate;
-   private final Attribute<String> marshaller;
-   private final Attribute<ProtocolVersion> protocolVersion;
-   private final Attribute<String> remoteCacheName;
-   private final Attribute<String> uri;
-   private final Attribute<Long> socketTimeout;
-   private final Attribute<Boolean> tcpNoDelay;
    private final ConnectionPoolConfiguration connectionPool;
    private final ExecutorFactoryConfiguration asyncExecutorFactory;
    private final SecurityConfiguration security;
-   private List<RemoteServerConfiguration> servers;
+   private final List<RemoteServerConfiguration> servers;
 
    public RemoteStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async,
                                    ExecutorFactoryConfiguration asyncExecutorFactory, ConnectionPoolConfiguration connectionPool,
                                    SecurityConfiguration security, List<RemoteServerConfiguration> servers) {
       super(Element.REMOTE_STORE, attributes, async);
-      balancingStrategy = attributes.attribute(BALANCING_STRATEGY);
-      connectionTimeout = attributes.attribute(CONNECTION_TIMEOUT);
-      forceReturnValues = attributes.attribute(FORCE_RETURN_VALUES);
-      hotRodWrapping = attributes.attribute(HOTROD_WRAPPING);
-      rawValues = attributes.attribute(RAW_VALUES);
-      keySizeEstimate = attributes.attribute(KEY_SIZE_ESTIMATE);
-      valueSizeEstimate = attributes.attribute(VALUE_SIZE_ESTIMATE);
-      marshaller = attributes.attribute(MARSHALLER);
-      protocolVersion = attributes.attribute(PROTOCOL_VERSION);
-      remoteCacheName = attributes.attribute(REMOTE_CACHE_NAME);
-      uri = attributes.attribute(URI);
-      socketTimeout = attributes.attribute(SOCKET_TIMEOUT);
-      tcpNoDelay = attributes.attribute(TCP_NO_DELAY);
       this.asyncExecutorFactory = asyncExecutorFactory;
       this.connectionPool = connectionPool;
       this.security = security;
@@ -92,7 +66,7 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration<RemoteS
    }
 
    public String uri() {
-      return uri.get();
+      return attributes.attribute(URI).get();
    }
 
    public ExecutorFactoryConfiguration asyncExecutorFactory() {
@@ -100,7 +74,7 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration<RemoteS
    }
 
    public String balancingStrategy() {
-      return balancingStrategy.get();
+      return attributes.attribute(BALANCING_STRATEGY).get();
    }
 
    public ConnectionPoolConfiguration connectionPool() {
@@ -108,11 +82,11 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration<RemoteS
    }
 
    public long connectionTimeout() {
-      return connectionTimeout.get();
+      return attributes.attribute(CONNECTION_TIMEOUT).get();
    }
 
    public boolean forceReturnValues() {
-      return forceReturnValues.get();
+      return attributes.attribute(FORCE_RETURN_VALUES).get();
    }
 
    /**
@@ -120,7 +94,7 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration<RemoteS
     */
    @Deprecated
    public boolean hotRodWrapping() {
-      return hotRodWrapping.get();
+      return attributes.attribute(RAW_VALUES).get();
    }
 
    /**
@@ -128,15 +102,15 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration<RemoteS
     */
    @Deprecated
    public int keySizeEstimate() {
-      return keySizeEstimate.get();
+      return attributes.attribute(KEY_SIZE_ESTIMATE).get();
    }
 
    public String marshaller() {
-      return marshaller.get();
+      return attributes.attribute(MARSHALLER).get();
    }
 
    public ProtocolVersion protocol() {
-      return protocolVersion.get();
+      return attributes.attribute(PROTOCOL_VERSION).get();
    }
 
    /**
@@ -144,11 +118,15 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration<RemoteS
     */
    @Deprecated
    public boolean rawValues() {
-      return rawValues.get();
+      return attributes.attribute(RAW_VALUES).get();
+   }
+
+   public String remoteCacheContainer() {
+      return attributes.attribute(REMOTE_CACHE_CONTAINER).get();
    }
 
    public String remoteCacheName() {
-      return remoteCacheName.get();
+      return attributes.attribute(REMOTE_CACHE_NAME).get();
    }
 
    public List<RemoteServerConfiguration> servers() {
@@ -156,11 +134,11 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration<RemoteS
    }
 
    public long socketTimeout() {
-      return socketTimeout.get();
+     return attributes.attribute(SOCKET_TIMEOUT).get();
    }
 
    public boolean tcpNoDelay() {
-      return tcpNoDelay.get();
+      return attributes.attribute(TCP_NO_DELAY).get();
    }
 
    /**
@@ -176,7 +154,7 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration<RemoteS
     */
    @Deprecated
    public int valueSizeEstimate() {
-      return valueSizeEstimate.get();
+      return attributes.attribute(VALUE_SIZE_ESTIMATE).get();
    }
 
    public SecurityConfiguration security() {

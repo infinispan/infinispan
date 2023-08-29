@@ -9,6 +9,18 @@ If you configure remote cache stores as shared you cannot preload data.
 In other words if `shared="true"` in your configuration then you must set `preload="false"`.
 ====
 
+.Shared remote cache containers
+
+Each remote cache store creates a dedicated remote cache manager. In case there are multiple remote stores connecting
+to the same server, this wastes resources. Use the `remote-cache-containers` configuration to create shared remote
+cache managers and reference them by name within your `remote-store` definitions.
+
+[TIP]
+====
+If there is only a single `remote-cache-container`, it will be used by default by all remote cache stores which
+don't specify one explicitly.
+====
+
 .Segmentation
 
 `RemoteStore` supports segmentation and can publish keys and entries by
@@ -26,7 +38,34 @@ case, you should disable segmentation for `RemoteStore`.
 ====
 
 [discrete]
-== Remote cache store configuration
+== Remote cache store configuration with shared remote containers
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/persistence_remote_store_shared.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/persistence_remote_store_shared.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/persistence_remote_store_shared.yaml[]
+----
+
+.ConfigurationBuilder
+[source,java,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::code_examples/ConfigRemoteStore.java[]
+----
+
+[discrete]
+== Remote cache store configuration with private remote container
 
 .XML
 [source,xml,options="nowrap",subs=attributes+,role="primary"]

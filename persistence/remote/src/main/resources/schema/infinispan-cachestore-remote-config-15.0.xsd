@@ -6,6 +6,8 @@
   <xs:import namespace="urn:infinispan:config:15.0"
              schemaLocation="https://infinispan.org/schemas/infinispan-config-15.0.xsd" />
 
+  <xs:element name="remote-cache-containers" type="tns:remote-cache-containers"/>
+
   <xs:element name="remote-store" type="tns:remote-store"/>
 
   <xs:complexType name="remote-store">
@@ -368,4 +370,30 @@
     </xs:complexContent>
   </xs:complexType>
 
+  <xs:complexType name="remote-cache-containers">
+    <xs:unique name="remote-cache-container-unique">
+      <xs:selector xpath="./tns:remote-cache-container" />
+      <xs:field xpath="@name" />
+    </xs:unique>
+    <xs:sequence>
+      <xs:element name="remote-cache-container" type="tns:remote-cache-container" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="remote-cache-container">
+    <xs:attribute name="name" default="">
+      <xs:annotation>
+        <xs:documentation>
+          The name of this remote cache container.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="uri" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          A Hot Rod URI.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
 </xs:schema>

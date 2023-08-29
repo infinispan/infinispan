@@ -25,7 +25,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       TestingUtil.killCacheManagers(cacheManager);
    }
 
-   public void testRemoteCacheStore() throws Exception {
+   public void testRemoteCacheStore() {
       String config = TestingUtil.wrapXMLWithSchema(
             "<cache-container default-cache=\"default\">" +
             "   <local-cache name=\"default\">\n" +

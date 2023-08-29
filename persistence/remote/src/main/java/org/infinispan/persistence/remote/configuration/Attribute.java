@@ -34,6 +34,7 @@ public enum Attribute {
    MAX_WAIT("max-wait"),
    MIN_EVICTABLE_IDLE_TIME("min-evictable-idle-time"),
    MIN_IDLE("min-idle"),
+   NAME("name"),
    /**
     * @deprecated Since 12.0, will be removed in 15.0
     */
@@ -47,6 +48,7 @@ public enum Attribute {
    PROTOCOL_VERSION("protocol-version"),
    RAW_VALUES("raw-values"),
    REALM("realm"),
+   REMOTE_CACHE_CONTAINER("remote-cache-container"),
    REMOTE_CACHE_NAME("cache"),
    SASL_MECHANISM("sasl-mechanism"),
    SERVER_NAME("server-name"),

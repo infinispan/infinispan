@@ -1,0 +1,17 @@
+<infinispan>
+
+    <remote-cache-containers>
+        <remote-cache-container uri="hotrod://one,two:12111?max-active=10&amp;exhausted-action=CREATE_NEW"/>
+    </remote-cache-containers>
+
+    <cache-container>
+        <distributed-cache>
+            <persistence>
+                <remote-store xmlns="urn:infinispan:config:store:remote:{schemaversion}"
+                              cache="mycache"
+                              raw-values="true"
+                />
+            </persistence>
+        </distributed-cache>
+    </cache-container>
+</infinispan>

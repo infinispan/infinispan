@@ -9,6 +9,7 @@ import static org.infinispan.persistence.remote.configuration.RemoteStoreConfigu
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.MARSHALLER;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.PROTOCOL_VERSION;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.RAW_VALUES;
+import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.REMOTE_CACHE_CONTAINER;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.REMOTE_CACHE_NAME;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.SOCKET_TIMEOUT;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.TCP_NO_DELAY;
@@ -23,10 +24,12 @@ import java.util.Properties;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.commons.configuration.Combine;
-import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.persistence.remote.configuration.global.RemoteContainersConfiguration;
+import org.infinispan.persistence.remote.logging.Log;
 
 /**
  * RemoteStoreConfigurationBuilder. Configures a
@@ -40,7 +43,7 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
    private final ExecutorFactoryConfigurationBuilder asyncExecutorFactory;
    private final ConnectionPoolConfigurationBuilder connectionPool;
    private final SecurityConfigurationBuilder security;
-   private List<RemoteServerConfigurationBuilder> servers = new ArrayList<RemoteServerConfigurationBuilder>();
+   private final List<RemoteServerConfigurationBuilder> servers = new ArrayList<>();
 
    public RemoteStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder, RemoteStoreConfiguration.attributeDefinitionSet());
@@ -52,11 +55,6 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
    @Override
    public RemoteStoreConfigurationBuilder self() {
       return this;
-   }
-
-   @Override
-   public AttributeSet attributes() {
-      return attributes;
    }
 
    public ExecutorFactoryConfigurationBuilder asyncExecutorFactory() {
@@ -126,6 +124,12 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
    @Override
    public RemoteStoreConfigurationBuilder rawValues(boolean rawValues) {
       attributes.attribute(RAW_VALUES).set(rawValues);
+      return this;
+   }
+
+   @Override
+   public RemoteStoreConfigurationBuilder remoteCacheContainer(String name) {
+      attributes.attribute(REMOTE_CACHE_CONTAINER).set(name);
       return this;
    }
 
@@ -215,6 +219,18 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
       }
 
       return super.withProperties(props);
+   }
+
+   @Override
+   public void validate(GlobalConfiguration globalConfig) {
+      // if no servers/uri has been specified, then there must be a remote cache container
+      if (attributes.attribute(URI).isNull() && servers.isEmpty()) {
+         String containerName = attributes.attribute(REMOTE_CACHE_CONTAINER).get();
+         if (!globalConfig.module(RemoteContainersConfiguration.class).configurations().containsKey(containerName)) {
+            throw Log.CONFIG.remoteStoreWithoutContainer();
+         }
+      }
+      super.validate(globalConfig);
    }
 
    @Override

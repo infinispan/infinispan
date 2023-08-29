@@ -60,4 +60,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "The RemoteCacheStore cannot be segmented when grouping is enabled", id = 10012)
    CacheConfigurationException segmentationNotSupportedWithGroups();
+
+   @Message(value = "The RemoteCacheStore must specify either an existing remote-cache-container or provide a URI/server list", id = 10013)
+   CacheConfigurationException remoteStoreWithoutContainer();
 }
