@@ -49,8 +49,13 @@ remote client access.
 
 [IMPORTANT]
 ====
-The Memcached endpoint is deprecated and planned for removal in a future
-release.
+The current implementation of the Memcached protocol is deprecated and planned for removal in future release. However, it will be replaced with new Memcached connector that offers the following improvements:
+
+* support for both the `TEXT` and `BINARY` protocols
+* authentication against the server security realms
+* encryption (TLS)
+* performance improvements
+* protocol auto-detection which allows the connector to be enabled on the default server port by default
 ====
 
 The {brandname} Memcached endpoint supports clustering with replicated and
