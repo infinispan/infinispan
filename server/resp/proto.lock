@@ -1,0 +1,68 @@
+{
+  "definitions": [
+    {
+      "protopath": "generated:/:persistence.resp.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "CompactSet",
+            "fields": [
+              {
+                "id": 1,
+                "name": "store",
+                "type": "int64",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "multiplicity",
+                "type": "uint32",
+                "is_repeated": true
+              },
+              {
+                "id": 3,
+                "name": "minimum",
+                "type": "uint32",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "0"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "HyperLogLog",
+            "fields": [
+              {
+                "id": 1,
+                "name": "explicit",
+                "type": "ExplicitSet"
+              },
+              {
+                "id": 2,
+                "name": "compact",
+                "type": "CompactSet"
+              }
+            ]
+          },
+          {
+            "name": "ExplicitSet",
+            "fields": [
+              {
+                "id": 1,
+                "name": "storage",
+                "type": "int64",
+                "is_repeated": true
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "org.infinispan.persistence.resp"
+        }
+      }
+    }
+  ]
+}

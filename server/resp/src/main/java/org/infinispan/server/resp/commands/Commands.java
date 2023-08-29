@@ -52,6 +52,7 @@ import org.infinispan.server.resp.commands.hash.HRANDFIELD;
 import org.infinispan.server.resp.commands.hash.HSCAN;
 import org.infinispan.server.resp.commands.hash.HSET;
 import org.infinispan.server.resp.commands.hash.HVALS;
+import org.infinispan.server.resp.commands.hll.PFADD;
 import org.infinispan.server.resp.commands.list.LINDEX;
 import org.infinispan.server.resp.commands.list.LINSERT;
 import org.infinispan.server.resp.commands.list.LLEN;
@@ -168,7 +169,7 @@ public final class Commands {
       ALL_COMMANDS[8] = new RespCommand[]{new INCR(), new INCRBY(), new INCRBYFLOAT(), new INFO()};
       ALL_COMMANDS[11] = new RespCommand[]{new LINDEX(), new LINSERT(), new LPUSH(), new LPUSHX(), new LPOP(), new LRANGE(), new LLEN(), new LPOS(), new LREM(), new LSET(), new LTRIM(), new LMOVE(), new LMPOP() };
       ALL_COMMANDS[12] = new RespCommand[]{new MGET(), new MSET(), new MSETNX(), new MULTI(), new MODULE(), new MEMORY()};
-      ALL_COMMANDS[15] = new RespCommand[]{new PUBLISH(), new PING(), new PSUBSCRIBE(), new PUNSUBSCRIBE(), new PTTL(), new PEXPIRETIME(), new PERSIST()};
+      ALL_COMMANDS[15] = new RespCommand[]{new PUBLISH(), new PING(), new PSUBSCRIBE(), new PUNSUBSCRIBE(), new PTTL(), new PEXPIRETIME(), new PERSIST(), new PFADD()};
       ALL_COMMANDS[16] = new RespCommand[]{new QUIT()};
       ALL_COMMANDS[17] = new RespCommand[]{new RPUSH(), new RPUSHX(), new RPOP(), new RESET(), new READWRITE(), new READONLY(), new RPOPLPUSH(), new RENAME(), new RENAMENX() };
       // SET should always be first here

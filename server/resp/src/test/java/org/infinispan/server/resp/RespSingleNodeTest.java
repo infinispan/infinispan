@@ -1,5 +1,48 @@
 package org.infinispan.server.resp;
 
+import static io.lettuce.core.ScoredValue.just;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
+import static org.infinispan.server.resp.test.RespTestingUtil.OK;
+import static org.infinispan.server.resp.test.RespTestingUtil.PONG;
+import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
+import org.assertj.core.api.SoftAssertions;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.time.ControlledTimeService;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.server.resp.commands.Commands;
+import org.infinispan.server.resp.test.CommonRespTests;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Factory;
+import org.testng.annotations.Test;
+
 import io.lettuce.core.ExpireArgs;
 import io.lettuce.core.FlushMode;
 import io.lettuce.core.KeyScanArgs;
@@ -20,47 +63,6 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.pubsub.RedisPubSubAdapter;
 import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
-import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.test.Exceptions;
-import org.infinispan.commons.time.ControlledTimeService;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.server.resp.commands.Commands;
-import org.infinispan.server.resp.test.CommonRespTests;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Factory;
-import org.testng.annotations.Test;
-
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-
-import static io.lettuce.core.ScoredValue.just;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.fail;
-import static org.infinispan.server.resp.test.RespTestingUtil.OK;
-import static org.infinispan.server.resp.test.RespTestingUtil.PONG;
-import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
-import static org.infinispan.test.TestingUtil.k;
-import static org.infinispan.test.TestingUtil.v;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Base class for single node tests.
@@ -1154,5 +1156,35 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       var now = timeService.instant();
       assertThat(Integer.parseInt(redisNow.get(0))).isEqualTo(now.getEpochSecond());
       assertThat(Integer.parseInt(redisNow.get(1))).isEqualTo(TimeUnit.NANOSECONDS.toMicros(now.getNano()));
+   }
+
+   @Test
+   public void testPFADD() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // Just creates the new structure. But Lettuce does not accept an empty argument.
+      // assertThat(redis.pfadd("my-hll")).isEqualTo(1L);
+
+      assertThat(redis.pfadd("my-hll", "el1", "el2", "el3"))
+            .isEqualTo(1L);
+
+      assertThat(redis.pfadd("my-hll", "el1", "el2", "el3")).isEqualTo(0L);
+
+      // Until 193 it is using the explicit representation. It could only return false in case of a hash conflict.
+      for (int i = 4; i < 193; i++) {
+         assertThat(redis.pfadd("my-hll", "el" + i)).isEqualTo(1L);
+      }
+
+      // From this point on, it is using the probabilistic estimation.
+      SoftAssertions sa = new SoftAssertions();
+      for (int i = 0; i < 831; i++) {
+         sa.assertThat(redis.pfadd("my-hll", "hello-" + i)).isEqualTo(1L);
+      }
+
+      assertThat(redis.pfadd("my-hll", "hello-0", "hello-1", "hello-2")).isEqualTo(0L);
+      assertThat(sa.errorsCollected()).hasSize(16);
+      // TODO: Verify cardinality ISPN-14676
+
+      assertWrongType(() -> redis.set("plain", "string"), () -> redis.pfadd("plain", "el1"));
    }
 }

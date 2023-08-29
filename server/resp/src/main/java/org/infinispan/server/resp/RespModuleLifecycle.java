@@ -7,6 +7,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.lifecycle.ModuleLifecycle;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.server.resp.commands.tx.WATCH;
 import org.infinispan.server.resp.filter.EventListenerKeysFilter;
 
@@ -20,5 +21,9 @@ public class RespModuleLifecycle implements ModuleLifecycle {
 
       externalizerMap.put(EventListenerKeysFilter.EXTERNALIZER.getId(), EventListenerKeysFilter.EXTERNALIZER);
       externalizerMap.put(WATCH.EXTERNALIZER.getId(), WATCH.EXTERNALIZER);
+
+      SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
+      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.GLOBAL, new PersistenceContextInitializerImpl());
+      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.PERSISTENCE, new PersistenceContextInitializerImpl());
    }
 }

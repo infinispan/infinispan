@@ -2,6 +2,7 @@ package org.infinispan.server.functional.resp;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -77,5 +78,34 @@ public class RespDistributedTest extends AbstractRespTest {
                            mt -> assertThat(mt.get(0).toString()).isEqualTo("dval")));
                ctx.completeNow();
             });
+   }
+
+   @Test
+   public void testHyperLogLogOperations(Vertx vertx, VertxTestContext ctx) {
+      RedisAPI server0 = createDirectConnection(0, vertx);
+      RedisAPI server1 = createDirectConnection(1, vertx);
+
+      server0.pfadd(List.of("my-hll", "el1", "el2", "el3"))
+            .onFailure(ctx::failNow)
+            .compose(v -> {
+               ctx.verify(() -> assertThat(v.toBoolean()).isTrue());
+
+               List<String> exceed = new ArrayList<>(256);
+               exceed.add("my-hll");
+
+               for (int i = 0; i < 256; i++) {
+                  exceed.add("el-" + i);
+               }
+               return server1.pfadd(exceed);
+            })
+            .compose(v -> {
+               ctx.verify(() -> assertThat(v.toBoolean()).isTrue());
+
+               return server0.pfadd(List.of("my-hll", "val1", "val2", "val3"));
+            })
+            .andThen(ctx.succeeding(h -> {
+               ctx.verify(() -> assertThat(h.toBoolean()).isTrue());
+               ctx.completeNow();
+            }));
    }
 }
