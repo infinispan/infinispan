@@ -365,6 +365,7 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
       assertWrongType(() -> redis.set("another", "tristan"), () -> redis.rpoplpush("another", "another"));
    }
 
+   @Test
    public void testLMPOP() {
       assertThat(redis.lmpop(left(), "unk1")).isNull();
       assertThat(redis.lmpop(right(), "unk1")).isNull();

@@ -41,11 +41,14 @@ public class RespTwoNodeTest extends BaseMultipleRespTest {
       checkPoint.triggerForever(Mocks.AFTER_RELEASE);
 
       String blockedKey = "foo";
-      // We block the non owner, so we know the primary owner of the data's netty thread isn't blocked on accident
-      Cache<String, String> nonOwner = DistributionTestHelper.getFirstBackupOwner(blockedKey, caches(server1.getConfiguration().defaultCacheName()));
+      // We block the non owner, so we know the primary owner of the data's netty
+      // thread isn't blocked on accident
+      Cache<String, String> nonOwner = DistributionTestHelper.getFirstBackupOwner(blockedKey,
+            caches(server1.getConfiguration().defaultCacheName()));
 
-      var original = Mocks.blockingMock(checkPoint, ClusteringDependentLogic.class, nonOwner, (stubber, clusteringDependentLogic) ->
-            stubber.when(clusteringDependentLogic).commitEntry(any(), any(), any(), any(), anyBoolean()));
+      var original = Mocks.blockingMock(checkPoint, ClusteringDependentLogic.class, nonOwner,
+            (stubber, clusteringDependentLogic) -> stubber.when(clusteringDependentLogic).commitEntry(any(), any(),
+                  any(), any(), anyBoolean()));
       RedisAsyncCommands<String, String> redis = redisConnection1.async();
       try {
          RedisFuture<String> futureSet = redis.set(blockedKey, "bar");
@@ -111,6 +114,7 @@ public class RespTwoNodeTest extends BaseMultipleRespTest {
       assertThat(sa.errorsCollected()).hasSize(16);
       // TODO: Verify cardinality ISPN-14676
    }
+
    @Test
    public void testPubSub() throws InterruptedException {
       RedisPubSubCommands<String, String> connection = createPubSubConnection();
@@ -173,4 +177,56 @@ public class RespTwoNodeTest extends BaseMultipleRespTest {
 
       return handOffQueue;
    }
+
+   @Test
+   public void testBlpopTwoPushTwoListeners() throws InterruptedException, ExecutionException {
+      var redisCommmand1 = client1.connect().async();
+      var redisCommmand2 = client2.connect().async();
+      redisConnection1.sync().rpush("keyA", "val1");
+      redisConnection2.sync().rpush("keyA", "val2");
+      var cf1 = redisCommmand1.blpop(0, "keyA");
+      var cf2 = redisCommmand2.blpop(0, "keyA");
+      assertThat(Arrays.asList(cf1.get().getValue(), cf2.get().getValue())).containsExactlyInAnyOrder("val1","val2");
+   }
+
+
+
+   @Test
+   public void testBlpopTwoListenersTwoPush() throws InterruptedException, ExecutionException {
+      var redisCommmand1 = client1.connect().async();
+      var redisCommmand2 = client2.connect().async();
+      var cf1 = redisCommmand1.blpop(0, "keyA");
+      var cf2 = redisCommmand2.blpop(0, "keyA");
+      redisConnection1.sync().rpush("keyA", "val1");
+      redisConnection2.sync().rpush("keyA", "val2");
+      assertThat(Arrays.asList(cf1.get().getValue(), cf2.get().getValue())).containsExactlyInAnyOrder("val1","val2");
+   }
+
+   @Test
+   public void testBlpopListenerOn1PushOn2() throws InterruptedException, ExecutionException {
+      var redisCommmand1 = client1.connect().async();
+      var cf1 = redisCommmand1.blpop(0, "keyA");
+      redisConnection2.sync().rpush("keyA", "val1","val2");
+      assertThat(cf1.get().getValue()).isEqualTo("val1");
+   }
+
+   @Test
+   public void testBlpopPushOn2ListenerOn1() throws InterruptedException, ExecutionException {
+      var redisCommmand1 = client1.connect().async();
+      redisConnection2.sync().rpush("keyA", "val1","val2");
+      var cf1 = redisCommmand1.blpop(0, "keyA");
+      assertThat(cf1.get().getValue()).isEqualTo("val1");
+   }
+
+   @Test
+   public void testBlpopMixedCase() throws InterruptedException, ExecutionException {
+      var redisCommmand1 = client1.connect().async();
+      var redisCommmand2 = client2.connect().async();
+      var cf1 = redisCommmand1.blpop(0, "keyA");
+      redisConnection1.sync().rpush("keyA", "val1");
+      redisConnection2.sync().rpush("keyA", "val2");
+      var cf2 = redisCommmand2.blpop(0, "keyA");
+      assertThat(Arrays.asList(cf1.get().getValue(), cf2.get().getValue())).containsExactlyInAnyOrder("val1","val2");
+   }
+
 }

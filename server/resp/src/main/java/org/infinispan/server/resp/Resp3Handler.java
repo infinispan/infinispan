@@ -6,6 +6,7 @@ import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -13,12 +14,14 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.context.Flag;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.multimap.impl.EmbeddedMultimapPairCache;
 import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
 import org.infinispan.multimap.impl.EmbeddedSetCache;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.resp.commands.Resp3Command;
 
 import io.netty.buffer.ByteBuf;
@@ -32,13 +35,16 @@ public class Resp3Handler extends Resp3AuthHandler {
    protected EmbeddedMultimapPairCache<byte[], byte[], byte[]> mapMultimap;
    protected EmbeddedSetCache<byte[], byte[]> embeddedSetCache;
    protected EmbeddedMultimapSortedSetCache<byte[], byte[]> sortedSetMultimap;
+   protected final ScheduledExecutorService scheduler;
 
    private final MediaType valueMediaType;
 
    Resp3Handler(RespServer respServer, MediaType valueMediaType) {
       super(respServer);
       this.valueMediaType = valueMediaType;
-   }
+      this.scheduler = SecurityActions.getGlobalComponentRegistry(cache.getCacheManager()).getComponent(
+            ScheduledExecutorService.class, KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR);
+         }
 
    @Override
    public void setCache(AdvancedCache<byte[], byte[]> cache) {
@@ -65,6 +71,10 @@ public class Resp3Handler extends Resp3AuthHandler {
 
    public EmbeddedMultimapSortedSetCache<byte[], byte[]> getSortedSeMultimap() {
       return sortedSetMultimap;
+   }
+
+   public ScheduledExecutorService getScheduler() {
+      return scheduler;
    }
 
    @Override
