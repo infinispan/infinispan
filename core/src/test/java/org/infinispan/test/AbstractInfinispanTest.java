@@ -119,6 +119,7 @@ public abstract class AbstractInfinispanTest {
                }
                String parameters = ((AbstractInfinispanTest) instance).parameters();
                if (parameters != null) {
+                  parameters = parameters.replaceAll("[-.\\+*?\\[^\\]$(){}=!<>|:\\\\]", "\\\\$0");
                   for (IMethodInstance method : instanceAndMethods.getValue()) {
                      // TestNG calls intercept twice (bug?) so this prevents adding the parameters two times
                      if (method.getMethod() instanceof NamedTestMethod) {

@@ -204,6 +204,7 @@
       <version.rocksdb>7.1.2</version.rocksdb>
       <version.rxjava>3.1.4</version.rxjava>
       <version.sshd>2.10.0</version.sshd>
+      <version.testng.engine>1.0.4</version.testng.engine>
 
       <!-- these versions must be kept in sync with ${version.micrometer}: -->
       <version.io.prometheus>0.15.0</version.io.prometheus>

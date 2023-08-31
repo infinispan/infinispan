@@ -1,5 +1,11 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
+import static org.infinispan.client.hotrod.impl.iteration.Util.assertForAll;
+import static org.infinispan.client.hotrod.impl.iteration.Util.extractKeys;
+import static org.infinispan.client.hotrod.impl.iteration.Util.extractValues;
+import static org.infinispan.client.hotrod.impl.iteration.Util.populateCache;
+import static org.infinispan.client.hotrod.impl.iteration.Util.rangeAsSet;
+import static org.infinispan.client.hotrod.impl.iteration.Util.setOf;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.Assert.assertFalse;
 import static org.testng.AssertJUnit.assertEquals;
@@ -31,7 +37,7 @@ import org.testng.annotations.Test;
  * @since 8.0
  */
 @Test(groups = "functional", testName = "client.hotrod.iteration.SingleServerRemoteIteratorTest")
-public class SingleServerRemoteIteratorTest extends SingleHotRodServerTest implements AbstractRemoteIteratorTest {
+public class SingleServerRemoteIteratorTest extends SingleHotRodServerTest {
 
    public static final String FILTER_CONVERTER_FACTORY_NAME = "even-accounts-descriptions";
 
@@ -132,7 +138,7 @@ public class SingleServerRemoteIteratorTest extends SingleHotRodServerTest imple
       RemoteCache<Integer, AccountHS> cache = remoteCacheManager.getCache();
 
       int cacheSize = 50;
-      populateCache(cacheSize, this::newAccount, cache);
+      populateCache(cacheSize, Util::newAccount, cache);
 
       Set<Entry<Object, Object>> entries = new HashSet<>();
 
@@ -165,7 +171,7 @@ public class SingleServerRemoteIteratorTest extends SingleHotRodServerTest imple
       RemoteCache<Integer, AccountHS> cache = remoteCacheManager.getCache();
 
       int cacheSize = 50;
-      populateCache(cacheSize, this::newAccount, cache);
+      populateCache(cacheSize, Util::newAccount, cache);
 
       Set<Entry<Object, Object>> entries = new HashSet<>();
 

@@ -1,5 +1,12 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
+import static org.infinispan.client.hotrod.impl.iteration.Util.assertForAll;
+import static org.infinispan.client.hotrod.impl.iteration.Util.assertKeysInSegment;
+import static org.infinispan.client.hotrod.impl.iteration.Util.extractEntries;
+import static org.infinispan.client.hotrod.impl.iteration.Util.extractKeys;
+import static org.infinispan.client.hotrod.impl.iteration.Util.extractValues;
+import static org.infinispan.client.hotrod.impl.iteration.Util.populateCache;
+import static org.infinispan.client.hotrod.impl.iteration.Util.rangeAsSet;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.Assert.assertEquals;
 
@@ -35,7 +42,7 @@ import org.testng.annotations.Test;
  * @since 8.0
  */
 @Test(groups = "functional", testName = "client.hotrod.iteration.ProtobufRemoteIteratorTest")
-public class ProtobufRemoteIteratorTest extends MultiHotRodServersTest implements AbstractRemoteIteratorTest {
+public class ProtobufRemoteIteratorTest extends MultiHotRodServersTest {
 
    private static final int NUM_NODES = 2;
    private static final int CACHE_SIZE = 10;
@@ -57,7 +64,7 @@ public class ProtobufRemoteIteratorTest extends MultiHotRodServersTest implement
    public void testSimpleIteration() {
       RemoteCache<Integer, AccountPB> cache = clients.get(0).getCache();
 
-      populateCache(CACHE_SIZE, this::newAccountPB, cache);
+      populateCache(CACHE_SIZE, Util::newAccountPB, cache);
 
       List<AccountPB> results = new ArrayList<>();
       cache.retrieveEntries(null, null, CACHE_SIZE).forEachRemaining(e -> results.add((AccountPB) e.getValue()));
@@ -84,7 +91,7 @@ public class ProtobufRemoteIteratorTest extends MultiHotRodServersTest implement
 
       RemoteCache<Integer, AccountPB> cache = clients.get(0).getCache();
 
-      populateCache(CACHE_SIZE, this::newAccountPB, cache);
+      populateCache(CACHE_SIZE, Util::newAccountPB, cache);
 
       Set<Integer> segments = rangeAsSet(1, 30);
       Set<Entry<Object, Object>> results = new HashSet<>();
@@ -101,7 +108,7 @@ public class ProtobufRemoteIteratorTest extends MultiHotRodServersTest implement
 
    public void testFilteredIterationWithQuery() {
       RemoteCache<Integer, AccountPB> remoteCache = clients.get(0).getCache();
-      populateCache(CACHE_SIZE, this::newAccountPB, remoteCache);
+      populateCache(CACHE_SIZE, Util::newAccountPB, remoteCache);
       QueryFactory queryFactory = Search.getQueryFactory(remoteCache);
 
       int lowerId = 5;

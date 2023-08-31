@@ -2,12 +2,11 @@ package org.infinispan.util;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 
 import org.apache.logging.log4j.spi.AbstractLogger;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.internal.CommonsBlockHoundIntegration;
+import org.infinispan.commons.test.PolarionJUnitTest;
 import org.infinispan.commons.test.PolarionJUnitXMLWriter;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.test.TestSuiteProgress;
@@ -134,12 +133,7 @@ public class CoreTestBlockHoundIntegration implements BlockHoundIntegration {
          String property = System.getProperty("infinispan.modulesuffix");
          String moduleName = property != null ? property.substring(1) : "";
          writer.start(moduleName, 1, 0, 1, 0, false);
-
-         StringWriter exceptionWriter = new StringWriter();
-         throwable.printStackTrace(new PrintWriter(exceptionWriter));
-         writer.writeTestCase(type, testName, 0, PolarionJUnitXMLWriter.Status.FAILURE,
-               exceptionWriter.toString(), throwable.getClass().getName(), throwable.getMessage());
-
+         writer.writeTestCase(new PolarionJUnitTest(type, testName, throwable));
          writer.close();
       } catch (Exception e) {
          throw new RuntimeException("Error reporting " + type, e);

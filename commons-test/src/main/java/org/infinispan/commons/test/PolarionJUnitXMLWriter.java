@@ -4,9 +4,13 @@ package org.infinispan.commons.test;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Collection;
+
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
+
+import org.testng.internal.Utils;
 
 /**
  * A JUnit XML report generator for Polarion based on the JUnitXMLReporter
@@ -33,12 +37,15 @@ public class PolarionJUnitXMLWriter implements AutoCloseable {
 
    private static final String TESTCASE = "testcase";
    private static final String FAILURE = "failure";
+   private static final String RERUN_FAILURE = "rerunFailure";
+   private static final String FLAKY_FAILURE = "flakyFailure";
    private static final String ERROR = "error";
    private static final String SKIPPED = "skipped";
    private static final String ATTR_CLASSNAME = "classname";
    private static final String ATTR_MESSAGE = "message";
    private static final String ATTR_TYPE = "type";
    private static final String ATTR_VALUE = "value";
+   private static final String STACKTRACE = "stackTrace";
 
    private static final String PROPERTIES = "properties";
    private static final String PROPERTY = "property";
@@ -59,7 +66,7 @@ public class PolarionJUnitXMLWriter implements AutoCloseable {
       fileWriter = new FileWriter(outputFile);
    }
 
-   public void start(String moduleName, long testCount, long skippedCount, long failedCount, long elapsedTime,
+   public void start(String testsuiteName, long testCount, long skippedCount, long failedCount, long elapsedTime,
                      boolean includeProperties) throws XMLStreamException {
       xmlWriter = new PrettyXMLStreamWriter(xmlOutputFactory.createXMLStreamWriter(fileWriter));
 
@@ -70,7 +77,7 @@ public class PolarionJUnitXMLWriter implements AutoCloseable {
       xmlWriter.writeStartElement(TESTSUITE);
       xmlWriter.writeAttribute(ATTR_TESTS, "" + testCount);
       xmlWriter.writeAttribute(ATTR_TIME, "" + elapsedTime / 1000.0);
-      xmlWriter.writeAttribute(ATTR_NAME, moduleName);
+      xmlWriter.writeAttribute(ATTR_NAME, testsuiteName);
       xmlWriter.writeAttribute(ATTR_SKIPPED, "" + skippedCount);
       xmlWriter.writeAttribute(ATTR_ERRORS, "0");
       xmlWriter.writeAttribute(ATTR_FAILURES, "" + failedCount);
@@ -90,49 +97,57 @@ public class PolarionJUnitXMLWriter implements AutoCloseable {
       fileWriter.close();
    }
 
-   public void writeTestCase(String testName, String className, long elapsedTimeMillis, Status status,
-                             String stackTrace, String throwableClass, String throwableMessage)
-      throws XMLStreamException {
-
-      String elapsedTime = "" + (((double) elapsedTimeMillis) / 1000);
-      if (Status.SUCCESS == status) {
+   public void writeTestCase(PolarionJUnitTest test) throws XMLStreamException {
+      PolarionJUnitTest.Status status = test.status;
+      if (status == PolarionJUnitTest.Status.SUCCESS) {
          xmlWriter.writeEmptyElement(TESTCASE);
-      } else {
-         xmlWriter.writeStartElement(TESTCASE);
+         writeTestAttributes(test);
+         return;
       }
-
-      xmlWriter.writeAttribute(ATTR_NAME, testName);
-      xmlWriter.writeAttribute(ATTR_CLASSNAME, className);
-      xmlWriter.writeAttribute(ATTR_TIME, elapsedTime);
-
-      if (Status.SUCCESS != status) {
-         switch (status) {
-            case FAILURE:
-               writeCauseElement(FAILURE, throwableClass, throwableMessage, stackTrace);
-               break;
-            case ERROR:
-               writeCauseElement(ERROR, throwableClass, throwableMessage, stackTrace);
-               break;
-            case SKIPPED:
-               writeSkipElement();
-         }
-         xmlWriter.writeEndElement();
+      xmlWriter.writeStartElement(TESTCASE);
+      writeTestAttributes(test);
+      switch (test.status) {
+         case FLAKY:
+            writeCauseElements(FLAKY_FAILURE, test.failures);
+            break;
+         case ERROR:
+            writeCauseElements(ERROR, test.failures);
+            break;
+         case FAILURE:
+            writeCauseElement(FAILURE, test.failures.get(0));
+            writeCauseElements(RERUN_FAILURE, test.failures.subList(1, test.failures.size()));
+            break;
+         case SKIPPED:
+            xmlWriter.writeEmptyElement(SKIPPED);
       }
-   }
-
-   private void writeCauseElement(String tag, String throwableClass, String message, String stackTrace)
-      throws XMLStreamException {
-      xmlWriter.writeStartElement(tag);
-      xmlWriter.writeAttribute(ATTR_TYPE, throwableClass);
-      if ((message != null) && (message.length() > 0)) {
-         xmlWriter.writeAttribute(ATTR_MESSAGE, escapeInvalidChars(message));
-      }
-      xmlWriter.writeCData(stackTrace);
       xmlWriter.writeEndElement();
    }
 
-   private void writeSkipElement() throws XMLStreamException {
-      xmlWriter.writeEmptyElement(SKIPPED);
+   public void writeTestAttributes(PolarionJUnitTest test) throws XMLStreamException {
+      xmlWriter.writeAttribute(ATTR_NAME, test.name);
+      xmlWriter.writeAttribute(ATTR_CLASSNAME, test.clazz);
+      xmlWriter.writeAttribute(ATTR_TIME, Double.toString(test.elapsedTime() / 1000.0));
+   }
+
+   private void writeCauseElements(String tag, Collection<Throwable> throwables) throws XMLStreamException {
+      for (Throwable t : throwables)
+         writeCauseElement(tag, t);
+   }
+
+   private void writeCauseElement(String tag, Throwable throwable) throws XMLStreamException {
+      String throwableClass = throwable.getClass().getName();
+      String message = throwable.getMessage();
+      String stackTrace = Utils.shortStackTrace(throwable, true);
+
+      xmlWriter.writeStartElement(tag);
+      xmlWriter.writeAttribute(ATTR_TYPE, throwableClass);
+      if ((message != null) && !message.isEmpty()) {
+         xmlWriter.writeAttribute(ATTR_MESSAGE, escapeInvalidChars(message));
+      }
+      xmlWriter.writeStartElement(STACKTRACE);
+      xmlWriter.writeCData(stackTrace);
+      xmlWriter.writeEndElement();
+      xmlWriter.writeEndElement();
    }
 
    private String escapeInvalidChars(String chars) {
