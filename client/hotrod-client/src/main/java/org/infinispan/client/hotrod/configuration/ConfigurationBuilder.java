@@ -706,4 +706,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.clientIntelligence = template.clientIntelligence();
       return this;
    }
+
+   @Override
+   public ConfigurationBuilder read(Configuration template) {
+      return read(template, Combine.DEFAULT);
+   }
 }
