@@ -151,6 +151,7 @@
       <dir.jacoco>${session.executionRootDirectory}/jacoco/</dir.jacoco>
       <dir.jacoco.merged>../jacoco/merged/</dir.jacoco.merged>
       <dir.jacoco.report>../jacoco/report/</dir.jacoco.report>
+      <rerunFailingTestsCount>0</rerunFailingTestsCount>
       <testjvm.commonArgs>-XX:+UseG1GC -XX:-TieredCompilation -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${user.dir} -Djboss.modules.settings.xml.url=${jboss.modules.settings.xml.url}</testjvm.commonArgs>
       <!--
         java.lang, java.util, java.io, java.lang.invoke, java.lang, reflect, java.util.concurrent, java.time:
@@ -819,6 +820,12 @@
             <groupId>org.junit.vintage</groupId>
             <artifactId>junit-vintage-engine</artifactId>
             <version>${versionx.junit.junit5}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.junit.support</groupId>
+            <artifactId>testng-engine</artifactId>
+            <version>${version.testng.engine}</version>
+            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>com.mysql</groupId>
@@ -2120,6 +2127,7 @@
                      <ansi.strip>${ansi.strip}</ansi.strip>
                      <com.arjuna.ats.arjuna.common.propertiesFile>test-jbossts-properties.xml</com.arjuna.ats.arjuna.common.propertiesFile>
                   </systemPropertyVariables>
+                  <rerunFailingTestsCount>${rerunFailingTestsCount}</rerunFailingTestsCount>
                   <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs}</argLine>
                   <!-- Use TCP for plugin <-> fork JVM communication -->
                   <forkNode implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory"/>
@@ -2466,6 +2474,16 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
+               <properties>
+                  <configurationParameters>
+                     testng.excludedGroups = ${defaultExcludedTestNGGroups}
+                     testng.groups = ${defaultTestNGGroups}
+                     testng.listeners = ${testNGListeners}
+                     testng.useDefaultListeners = false
+                     testng.parallel = tests
+                     testng.threadCount = ${infinispan.test.parallel.threads}
+                  </configurationParameters>
+               </properties>
                <parallel>tests</parallel>
                <threadCount>${infinispan.test.parallel.threads}</threadCount>
                <forkCount>1</forkCount>
@@ -2473,6 +2491,7 @@
                <groups>${defaultTestNGGroups}</groups>
                <excludedGroups>${defaultExcludedTestNGGroups}</excludedGroups>
                <useFile>false</useFile>
+               <rerunFailingTestsCount>${rerunFailingTestsCount}</rerunFailingTestsCount>
                <systemPropertyVariables>
                   <infinispan.cluster.stack>${infinispan.cluster.stack}</infinispan.cluster.stack>
                   <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>
@@ -2494,17 +2513,30 @@
                   <ansi.strip>${ansi.strip}</ansi.strip>
                </systemPropertyVariables>
                <trimStackTrace>false</trimStackTrace>
-               <properties>
-                  <!-- Deactivate the default listeners which may cause OOME. Jenkins uses the surefire generated XML file. -->
-                  <usedefaultlisteners>false</usedefaultlisteners>
-                  <listener>${testNGListeners}</listener>
-               </properties>
                <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Djdk.attach.allowAttachSelf=true</argLine>
                <!-- Use TCP for plugin <-> fork JVM communication -->
                <forkNode implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory"/>
                <!-- Disable modular classpath -->
                <useModulePath>false</useModulePath>
             </configuration>
+         </plugin>
+         <!-- Maven plugin that scans the test output of Surefire for flaky tests and writes test output files for just the flaky tests.
+         Allows flaky tests to be highlighted in Jenkins test failure summary -->
+         <plugin>
+            <groupId>io.zeebe</groupId>
+            <artifactId>flaky-test-extractor-maven-plugin</artifactId>
+            <version>2.1.1</version>
+            <executions>
+               <execution>
+                  <phase>post-integration-test</phase>
+                  <goals>
+                     <goal>extract-flaky-tests</goal>
+                  </goals>
+                  <configuration>
+                     <failBuild>false</failBuild>
+                  </configuration>
+               </execution>
+            </executions>
          </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>

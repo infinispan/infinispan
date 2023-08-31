@@ -8,7 +8,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.lang.management.LockInfo;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MonitorInfo;
@@ -80,12 +79,7 @@ class RunningTestsRegistry {
          String property = System.getProperty("infinispan.modulesuffix");
          String moduleName = property != null ? property.substring(1) : "";
          writer.start(moduleName, 1, 0, 1, 0, false);
-
-         StringWriter exceptionWriter = new StringWriter();
-         exception.printStackTrace(new PrintWriter(exceptionWriter));
-         writer.writeTestCase("Timeout", testName, 0, PolarionJUnitXMLWriter.Status.FAILURE,
-                              exceptionWriter.toString(), exception.getClass().getName(), exception.getMessage());
-
+         writer.writeTestCase(new PolarionJUnitTest("Timeout", testName, exception));
          writer.close();
       } catch (Exception e) {
          throw new RuntimeException("Error reporting thread leaks", e);
