@@ -133,13 +133,14 @@ pipeline {
 
         stage('Tests') {
             steps {
-                sh "$MAVEN_HOME/bin/mvn verify -B -V -e -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative $ALT_TEST_BUILD"
-
+                sh "$MAVEN_HOME/bin/mvn verify -B -V -e -DrerunFailingTestsCount=2 -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative $ALT_TEST_BUILD"
+                // Remove any default TestNG report files as this will result in tests being counted twice by Jenkins statistics
+                sh "rm -rf **/target/*-reports*/**/TEST-TestSuite.xml"
                 // TODO Add StabilityTestDataPublisher after https://issues.jenkins-ci.org/browse/JENKINS-42610 is fixed
                 // Capture target/surefire-reports/*.xml, target/failsafe-reports/*.xml,
                 // target/failsafe-reports-embedded/*.xml, target/failsafe-reports-remote/*.xml
                 junit testResults: '**/target/*-reports*/**/TEST-*.xml',
-                    testDataPublishers: [[$class: 'ClaimTestDataPublisher']],
+                    testDataPublishers: [[$class: 'ClaimTestDataPublisher'],[$class: 'JUnitFlakyTestDataPublisher']],
                     healthScaleFactor: 100, allowEmptyResults: true
 
                 // Workaround for SUREFIRE-1426: Fail the build if there a fork crashed

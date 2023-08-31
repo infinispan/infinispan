@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
+import static org.infinispan.client.hotrod.impl.iteration.Util.extractEntries;
+import static org.infinispan.client.hotrod.impl.iteration.Util.populateCache;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -14,7 +16,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "client.hotrod.iteration.MultiServerObjectStoreTest")
-public class MultiServerObjectStoreTest extends MultiHotRodServersTest implements AbstractRemoteIteratorTest {
+public class MultiServerObjectStoreTest extends MultiHotRodServersTest {
 
    private static final int NUM_SERVERS = 2;
    private static final int CACHE_SIZE = 10;

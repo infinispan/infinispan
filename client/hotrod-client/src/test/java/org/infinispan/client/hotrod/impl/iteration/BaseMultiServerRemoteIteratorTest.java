@@ -1,5 +1,15 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
+import static org.infinispan.client.hotrod.impl.iteration.Util.assertForAll;
+import static org.infinispan.client.hotrod.impl.iteration.Util.assertKeysInSegment;
+import static org.infinispan.client.hotrod.impl.iteration.Util.extractEntries;
+import static org.infinispan.client.hotrod.impl.iteration.Util.extractKeys;
+import static org.infinispan.client.hotrod.impl.iteration.Util.extractValues;
+import static org.infinispan.client.hotrod.impl.iteration.Util.newAccount;
+import static org.infinispan.client.hotrod.impl.iteration.Util.populateCache;
+import static org.infinispan.client.hotrod.impl.iteration.Util.rangeAsSet;
+import static org.infinispan.client.hotrod.impl.iteration.Util.setOf;
+import static org.infinispan.client.hotrod.impl.iteration.Util.toByteBuffer;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -45,7 +55,7 @@ import org.testng.annotations.Test;
  * @since 8.0
  */
 @Test(groups = "functional")
-public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServersTest implements AbstractRemoteIteratorTest {
+public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServersTest {
 
    public static final int CACHE_SIZE = 20;
 
@@ -70,7 +80,7 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
       int maximumBatchSize = 120;
       RemoteCache<Integer, AccountHS> cache = clients.get(0).getCache();
 
-      populateCache(CACHE_SIZE, this::newAccount, cache);
+      populateCache(CACHE_SIZE, org.infinispan.client.hotrod.impl.iteration.Util::newAccount, cache);
       Set<Integer> expectedKeys = rangeAsSet(0, CACHE_SIZE);
 
       for (int batch = 1; batch < maximumBatchSize; batch += 10) {
@@ -134,7 +144,7 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
    @Test
    public void testFilterBySegment() {
       RemoteCache<Integer, AccountHS> cache = clients.get(0).getCache();
-      populateCache(CACHE_SIZE, this::newAccount, cache);
+      populateCache(CACHE_SIZE, org.infinispan.client.hotrod.impl.iteration.Util::newAccount, cache);
 
       CacheTopologyInfo cacheTopologyInfo = cache.getCacheTopologyInfo();
 

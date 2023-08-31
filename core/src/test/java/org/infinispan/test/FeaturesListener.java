@@ -16,6 +16,9 @@ public class FeaturesListener implements IMethodInterceptor {
 
    @Override
    public List<IMethodInstance> intercept(List<IMethodInstance> methods, ITestContext context) {
+      if (methods.isEmpty())
+         return methods;
+
       Object instance = methods.get(0).getMethod().getInstance();
       Features features = new Features(instance.getClass().getClassLoader());
       AbstractInfinispanTest.FeatureCondition featureCondition = instance.getClass().getAnnotation(AbstractInfinispanTest.FeatureCondition.class);
