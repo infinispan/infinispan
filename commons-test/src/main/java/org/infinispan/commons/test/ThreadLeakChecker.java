@@ -2,8 +2,6 @@ package org.infinispan.commons.test;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -237,14 +235,8 @@ public class ThreadLeakChecker {
                LeakException exception = new LeakException("Leaked thread: " + leakInfo.thread.getName(),
                                                            leakInfo.stacktrace);
                exception.setStackTrace(leakInfo.thread.getStackTrace());
-
                TestSuiteProgress.fakeTestFailure(testName + ".ThreadLeakChecker", exception);
-
-               StringWriter exceptionWriter = new StringWriter();
-               exception.printStackTrace(new PrintWriter(exceptionWriter));
-               writer.writeTestCase("ThreadLeakChecker", testName, 0, PolarionJUnitXMLWriter.Status.FAILURE,
-                                    exceptionWriter.toString(), exception.getClass().getName(), exception.getMessage());
-
+               writer.writeTestCase(new PolarionJUnitTest("ThreadLeakChecker", testName, exception));
                leakInfo.markReported();
             }
 

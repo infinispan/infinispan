@@ -30,6 +30,9 @@ public class OpenTelemetryClient {
             .addSpanProcessor(spanProcessor);
 
       tracerProvider = builder.build();
+      // JUnit5 TestNG engine creates two instances of test class, so we must explicitly reset GlobalOpenTelemetry to
+      // prevent an IllegalStateException on the second invocation.
+      GlobalOpenTelemetry.resetForTest();
       openTelemetry = OpenTelemetrySdk.builder()
             .setTracerProvider(tracerProvider)
             .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))

@@ -94,6 +94,10 @@
                   <!-- TestNGSuiteChecksTest -->
                   <dependency>org.infinispan:infinispan-commons-test</dependency>
                </dependenciesToScan>
+               <properties combine.self="override">
+                  <usedefaultlisteners>false</usedefaultlisteners>
+                  <listener>org.infinispan.commons.test.TestNGTestListener,org.infinispan.commons.test.PolarionJUnitXMLReporter</listener>
+               </properties>
             </configuration>
          </plugin>
       </plugins>

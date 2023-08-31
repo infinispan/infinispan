@@ -2,9 +2,7 @@ package org.infinispan.commons.test;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -12,19 +10,14 @@ import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.xml.stream.XMLStreamException;
+import java.util.stream.Collectors;
 
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
-import org.testng.ISuiteResult;
 import org.testng.ITestContext;
-import org.testng.ITestNGMethod;
 import org.testng.ITestResult;
 import org.testng.annotations.Test;
-import org.testng.collections.Maps;
 import org.testng.internal.IResultListener2;
-import org.testng.internal.Utils;
 
 /**
  * A JUnit XML report generator for Polarion based on the JUnitXMLReporter
@@ -33,12 +26,15 @@ import org.testng.internal.Utils;
  */
 public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListener {
    public static final Pattern DUPLICATE_TESTS_MODULE_PATTERN = Pattern.compile(".*-(embedded|remote|v\\d+)");
+
    /**
     * keep lists of all the results
     */
-   private AtomicInteger m_numFailed = new AtomicInteger(0);
-   private AtomicInteger m_numSkipped = new AtomicInteger(0);
-   private Map<String, List<ITestResult>> m_allTests = Collections.synchronizedMap(new TreeMap<>());
+   private static final AtomicInteger m_numFailed = new AtomicInteger(0);
+   private static final AtomicInteger m_numSkipped = new AtomicInteger(0);
+   private static final Map<String, PolarionJUnitTest> m_allTests = Collections.synchronizedMap(new TreeMap<>());
+
+   private static int rerunFailingTestsCount = Integer.parseInt(System.getProperty("rerunFailingTestsCount", "0"));
 
    /**
     * @see org.testng.IConfigurationListener2#beforeConfiguration(ITestResult)
@@ -108,7 +104,6 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
     */
    @Override
    public void onStart(ISuite suite) {
-      resetAll();
    }
 
    /**
@@ -116,7 +111,7 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
     */
    @Override
    public void onFinish(ISuite suite) {
-      generateReport(suite);
+      generateReport();
    }
 
    /**
@@ -145,139 +140,26 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
    /**
     * generate the XML report given what we know from all the test results
     */
-   private void generateReport(ISuite suite) {
-      // Get elapsed time for testsuite element
-      long elapsedTime = 0;
-      long testCount = 0;
-      for (List<ITestResult> testResults : m_allTests.values()) {
-         for (ITestResult tr : testResults) {
-            elapsedTime += (tr.getEndMillis() - tr.getStartMillis());
-            //            if (tr.getMethod().getConstructorOrMethod().getMethod().getAnnotation(Test.class) != null) {
-            //               testCount += tr.getMethod().getConstructorOrMethod().getMethod().getAnnotation(Test.class)
-            //                     .invocationCount();
-            //            } else {
-            testCount++;
-            //            }
-         }
-      }
+   private void generateReport() {
+      synchronized (m_allTests) {
+         // Get elapsed time for testsuite element
+         long elapsedTime = m_allTests.values().stream().mapToLong(PolarionJUnitTest::elapsedTime).sum();
+         long testCount = m_allTests.values().size();
 
-      PolarionJUnitXMLWriter writer = null;
-      try {
-         String outputDir = suite.getOutputDirectory().replaceAll(".Surefire suite", "");
-         String baseName = String.format("TEST-%s.xml", getSuiteName(suite));
-         File outputFile = new File(outputDir, baseName);
-         writer = new PolarionJUnitXMLWriter(outputFile);
-         writer.start(getModuleSuffix(), testCount, m_numSkipped.get(), m_numFailed.get(), elapsedTime, true);
-
-         // TODO Also write a report based on suite.getAllInvokedMethod() and check for differences
-         writeTestResults(writer, m_allTests.values());
-      } catch (Exception e) {
-         System.err.println("Error writing test report");
-         e.printStackTrace(System.err);
-      } finally {
-         try {
-            if (writer != null) {
-               writer.close();
-            }
-         } catch (Exception e) {
-            System.err.println("Error writing test report");
-            e.printStackTrace(System.err);
-         }
-      }
-   }
-
-   private void writeTestResults(PolarionJUnitXMLWriter document, Collection<List<ITestResult>> results)
-      throws XMLStreamException {
-      synchronized (results) {
-         for (List<ITestResult> testResults : results) {
-            boolean hasFailures = false;
-            // A single test method might have multiple invocations
-            for (ITestResult tr : testResults) {
-               if (!tr.isSuccess()) {
-                  hasFailures = true;
-                  // Report all failures
-                  writeTestCase(document, tr);
-               }
-            }
-            if (!hasFailures) {
-               // If there were no failures, report a single success
-               writeTestCase(document, testResults.get(0));
+         String outputDir = String.format("%s/surefire-reports", System.getProperty("build.directory"));
+         Map<String, List<PolarionJUnitTest>> testsByClass = m_allTests.values().stream().collect(Collectors.groupingBy(p -> p.clazz));
+         for (Map.Entry<String, List<PolarionJUnitTest>> entry : testsByClass.entrySet()) {
+            File outputFile = new File(outputDir, String.format("TEST-%s.xml", entry.getKey()));
+            try (PolarionJUnitXMLWriter writer = new PolarionJUnitXMLWriter(outputFile)){
+               writer.start(entry.getKey(), testCount, m_numSkipped.get(), m_numFailed.get(), elapsedTime, true);
+               for (PolarionJUnitTest testCase : entry.getValue())
+                  writer.writeTestCase(testCase);
+            } catch (Exception e) {
+               System.err.printf("Error writing test report '%s'\n", outputFile.getName());
+               e.printStackTrace(System.err);
             }
          }
       }
-   }
-
-   private void writeTestCase(PolarionJUnitXMLWriter writer, ITestResult tr) throws XMLStreamException {
-      String className = tr.getTestClass().getRealClass().getName();
-      String testName = testName(tr);
-      long elapsedTimeMillis = tr.getEndMillis() - tr.getStartMillis();
-      PolarionJUnitXMLWriter.Status status = translateStatus(tr);
-      Throwable throwable = tr.getThrowable();
-      if (throwable != null) {
-         writer.writeTestCase(testName, className, elapsedTimeMillis, status, Utils.shortStackTrace(throwable, true),
-                              throwable.getClass().getName(), throwable.getMessage());
-      } else {
-         writer.writeTestCase(testName, className, elapsedTimeMillis, status, null, null, null);
-      }
-   }
-
-   private PolarionJUnitXMLWriter.Status translateStatus(ITestResult tr) {
-      switch (tr.getStatus()) {
-         case ITestResult.FAILURE:
-            return PolarionJUnitXMLWriter.Status.FAILURE;
-         case ITestResult.SUCCESS:
-            return PolarionJUnitXMLWriter.Status.SUCCESS;
-         case ITestResult.SUCCESS_PERCENTAGE_FAILURE:
-         case ITestResult.SKIP:
-            return PolarionJUnitXMLWriter.Status.SKIPPED;
-         default:
-            return PolarionJUnitXMLWriter.Status.ERROR;
-      }
-   }
-
-   /**
-    * Reset all member variables for next test.
-    */
-   private void resetAll() {
-      m_allTests = Collections.synchronizedMap(Maps.newHashMap());
-      m_numFailed.set(0);
-      m_numSkipped.set(0);
-   }
-
-   private String getSuiteName(ISuite suite) {
-      String name = getModuleSuffix();
-      Collection<ISuiteResult> suiteResults = suite.getResults().values();
-      if (suiteResults.size() == 1) {
-         ITestNGMethod[] testMethods = suiteResults.iterator().next().getTestContext().getAllTestMethods();
-         if (testMethods.length > 0) {
-            Class<?> testClass = testMethods[0].getConstructorOrMethod().getDeclaringClass();
-            // If only one test class executed, then use that as the filename
-            String className = testClass.getName();
-            // If only one test package executed, then use that as the filename
-            String packageName = testClass.getPackage().getName();
-            boolean oneTestClass = true;
-            boolean oneTestPackage = true;
-            for (ITestNGMethod method : testMethods) {
-               if (!method.getConstructorOrMethod().getDeclaringClass().getName().equals(className)) {
-                  oneTestClass = false;
-               }
-               if (!method.getConstructorOrMethod().getDeclaringClass().getPackage().getName().equals(packageName)) {
-                  oneTestPackage = false;
-               }
-            }
-            if (oneTestClass) {
-               name = className;
-            } else {
-               if (oneTestPackage) {
-                  name = packageName;
-               }
-            }
-         } else {
-            System.err.println(
-                  "[" + this.getClass().getSimpleName() + "] Test suite '" + name + "' results have no test methods");
-         }
-      }
-      return name;
    }
 
    private String testName(ITestResult res) {
@@ -348,21 +230,35 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
       // Need fully qualified name to guarantee uniqueness in the results map
       String instanceName = tr.getInstanceName();
       String key = instanceName + "." + testName(tr);
+      PolarionJUnitTest meta;
       if (m_allTests.containsKey(key)) {
-         if (tr.getMethod().getCurrentInvocationCount() == 1 && tr.isSuccess()) {
+         meta = m_allTests.get(key);
+         if (duplicateTest(tr, meta)) {
             System.err.println("[" + this.getClass().getSimpleName() + "] Test case '" + key
                   + "' already exists in the results");
             tr.setStatus(ITestResult.FAILURE);
             tr.setThrowable(new IllegalStateException("Duplicate test: " + key));
          }
-
-         List<ITestResult> itrList = m_allTests.get(key);
-         itrList.add(tr);
-         m_allTests.put(key, itrList);
       } else {
-         ArrayList<ITestResult> itrList = new ArrayList<>();
-         itrList.add(tr);
-         m_allTests.put(key, itrList);
+         String testName = testName(tr);
+         String className = tr.getTestClass().getRealClass().getName();
+         meta = new PolarionJUnitTest(testName, className);
       }
+      meta.add(tr);
+      m_allTests.put(key, meta);
+   }
+
+   // Guard against duplicate test names across test instances whilst supporting TestNG invocationCount
+   private boolean duplicateTest(ITestResult tr, PolarionJUnitTest meta) {
+      int invocationCount;
+      if (tr.getMethod().getConstructorOrMethod().getMethod().isAnnotationPresent(Test.class)) {
+         Test test = tr.getMethod().getConstructorOrMethod().getMethod().getAnnotation(Test.class);
+         invocationCount = test.invocationCount();
+      } else {
+         invocationCount = 1;
+      }
+
+      int numberOfExecutions = meta.numberOfExecutions();
+      return numberOfExecutions > rerunFailingTestsCount && numberOfExecutions > invocationCount;
    }
 }

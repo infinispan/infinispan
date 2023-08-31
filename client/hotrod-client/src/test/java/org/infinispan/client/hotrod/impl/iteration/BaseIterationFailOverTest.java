@@ -1,5 +1,8 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
+import static org.infinispan.client.hotrod.impl.iteration.Util.extractKeys;
+import static org.infinispan.client.hotrod.impl.iteration.Util.populateCache;
+import static org.infinispan.client.hotrod.impl.iteration.Util.rangeAsSet;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.ArrayList;
@@ -21,7 +24,7 @@ import org.testng.annotations.Test;
  * @author gustavonalle
  * @since 8.0
  */
-public abstract class BaseIterationFailOverTest extends MultiHotRodServersTest implements AbstractRemoteIteratorTest {
+public abstract class BaseIterationFailOverTest extends MultiHotRodServersTest {
 
    protected final int SERVERS = 3;
 
@@ -48,7 +51,7 @@ public abstract class BaseIterationFailOverTest extends MultiHotRodServersTest i
       int cacheSize = 1_000;
       int batch = 17;
       RemoteCache<Integer, AccountHS> cache = clients.get(0).getCache();
-      populateCache(cacheSize, this::newAccount, cache);
+      populateCache(cacheSize, Util::newAccount, cache);
 
       List<Map.Entry<Object, Object>> entries = new ArrayList<>();
       CloseableIterator<Map.Entry<Object, Object>> iterator = cache.retrieveEntries(null, null, batch);

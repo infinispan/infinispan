@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
+import static org.infinispan.client.hotrod.impl.iteration.Util.populateCache;
 import static org.testng.Assert.assertEquals;
 
 import java.util.Map.Entry;
@@ -25,7 +26,7 @@ public class SegmentFilteredFailOverTest extends DistFailOverRemoteIteratorTest 
    @Override
    public void testFailOver() throws InterruptedException {
       RemoteCache<Integer, AccountHS> remoteCache = clients.get(0).getCache();
-      populateCache(ENTRIES, this::newAccount, remoteCache);
+      populateCache(ENTRIES, Util::newAccount, remoteCache);
 
       Cache<Object, Object> cache = caches().get(0);
       int totalSegments = cache.getCacheConfiguration().clustering().hash().numSegments();

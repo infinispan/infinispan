@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
+import static org.infinispan.client.hotrod.impl.iteration.Util.populateCache;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -69,7 +70,7 @@ public class MultiServerDistRemoteIteratorTest extends BaseMultiServerRemoteIter
 
    public void testSegmentFinishedCallback() {
       RemoteCache<Integer, AccountHS> cache = clients.get(0).getCache();
-      populateCache(CACHE_SIZE, this::newAccount, cache);
+      populateCache(CACHE_SIZE, Util::newAccount, cache);
       TestSegmentKeyTracker testSegmentKeyTracker = new TestSegmentKeyTracker();
 
       Publisher<Map.Entry<Integer, AccountHS>> publisher = cache.publishEntries(null, null, null, 3);
