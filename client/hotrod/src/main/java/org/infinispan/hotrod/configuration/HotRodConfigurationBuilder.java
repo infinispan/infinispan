@@ -439,4 +439,9 @@ public class HotRodConfigurationBuilder implements ConfigurationChildBuilder, Bu
       this.contextInitializers.addAll(template.getContextInitializers());
       return this;
    }
+
+   @Override
+   public HotRodConfigurationBuilder read(HotRodConfiguration template) {
+      return read(template, Combine.DEFAULT);
+   }
 }
