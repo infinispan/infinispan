@@ -37,6 +37,13 @@
             </xs:annotation>
           </xs:element>
         </xs:sequence>
+        <xs:attribute name="remote-cache-container" type="remote-cache-container" default="">
+          <xs:annotation>
+            <xs:documentation>
+              The name of the remote cache container to use.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
         <xs:attribute name="socket-timeout" type="xs:long" default="${RemoteStore.socketTimeout}">
           <xs:annotation>
             <xs:documentation>
@@ -388,12 +395,21 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="uri" use="required">
+    <xs:attribute name="uri" type="xs:anyURI" use="required">
       <xs:annotation>
         <xs:documentation>
           A Hot Rod URI.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:sequence>
+      <xs:element name="property" type="config:property" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>
+            Add key/value property pair to this remote cache configuration. The configuration are applied during the Hot Rod client creation.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
   </xs:complexType>
 </xs:schema>

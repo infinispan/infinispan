@@ -6,7 +6,6 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
-import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.persistence.remote.global.GlobalRemoteContainers;
 import org.infinispan.persistence.remote.upgrade.AddSourceRemoteStoreTask;
@@ -24,8 +23,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
 
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
-      BasicComponentRegistry bcr = gcr.getComponent(BasicComponentRegistry.class);
-      bcr.getComponent(GlobalRemoteContainers.class).running();
+      gcr.getComponent(GlobalRemoteContainers.class);
       Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
       externalizerMap.put(ExternalizerIds.MIGRATION_TASK, new MigrationTask.Externalizer());
       externalizerMap.put(ExternalizerIds.REMOVED_FILTER, new RemovedFilter.Externalizer());

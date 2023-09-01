@@ -52,4 +52,15 @@ public class AuthenticationConfiguration {
       return clientSubject;
    }
 
+   @Override
+   public String toString() {
+      return "AuthenticationConfiguration{" +
+            "enabled=" + enabled +
+            ", callbackHandler=" + callbackHandler +
+            ", clientSubject=" + clientSubject +
+            ", saslMechanism='" + saslMechanism + '\'' +
+            ", saslProperties=" + saslProperties +
+            ", serverName='" + serverName + '\'' +
+            '}';
+   }
 }

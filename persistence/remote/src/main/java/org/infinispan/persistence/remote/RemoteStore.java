@@ -38,6 +38,7 @@ import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.encoding.impl.StorageConfigurationManager;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.remote.configuration.AuthenticationConfiguration;
@@ -126,15 +127,18 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
       CompletionStage<RemoteCacheManager> rcmStage;
 
       if (isManagedRemoteCacheManager()) {
-         GlobalRemoteContainers containers = ctx.getCache().getAdvancedCache().getComponentRegistry().getGlobalComponentRegistry().getComponent(GlobalRemoteContainers.class);
-         rcmStage = containers.cacheContainer(configuration.remoteCacheContainer());
+         BasicComponentRegistry bcr = ctx.getCache().getAdvancedCache().getComponentRegistry()
+               .getGlobalComponentRegistry()
+               .getComponent(BasicComponentRegistry.class);
+         GlobalRemoteContainers containers = bcr.getComponent(GlobalRemoteContainers.class).running();
+         rcmStage = containers.cacheContainer(configuration.remoteCacheContainer(), marshaller);
       } else {
          rcmStage = blockingManager.supplyBlocking(() -> {
             ConfigurationBuilder builder = buildRemoteConfiguration(configuration, marshaller);
             return new RemoteCacheManager(builder.build());
          }, "RemoteCacheManager-create");
       }
-      return rcmStage.thenApplyAsync(rcm -> {
+      return blockingManager.thenApplyBlocking(rcmStage, rcm -> {
                remoteCacheManager = rcm;
                if (configuration.remoteCacheName().isEmpty())
                   remoteCache = (InternalRemoteCache<Object, Object>) remoteCacheManager.getCache();
@@ -142,7 +146,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
                   remoteCache = (InternalRemoteCache<Object, Object>) remoteCacheManager.getCache(configuration.remoteCacheName());
 
                return remoteCache.ping();
-            }, blockingManager.asExecutor("RemoteCacheManager-getCache")).thenCompose(Function.identity())
+            }, "RemoteCacheManager-getCache").thenCompose(Function.identity())
             .thenAccept(pingResponse -> {
                String cacheName = ctx.getCache().getName();
 
@@ -221,7 +225,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
    public CompletionStage<Void> stop() {
       return blockingManager.runBlocking(() -> {
          // when it failed to start
-         if (remoteCacheManager != null && !isManagedRemoteCacheManager()) {
+         if (remoteCacheManager != null) {
             remoteCacheManager.stop();
          }
       }, "RemoteStore-stop");
