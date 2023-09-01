@@ -23,7 +23,7 @@ public class RemoteContainersConfigurationBuilder implements Builder<RemoteConta
    }
 
    public RemoteContainerConfigurationBuilder addRemoteContainer(String name) {
-      return builders.computeIfAbsent(name, __ -> new RemoteContainerConfigurationBuilder(global));
+      return builders.computeIfAbsent(name, __ -> new RemoteContainerConfigurationBuilder(global, name));
    }
 
    public RemoteContainersConfigurationBuilder transportFactory(TransportFactory transportFactory) {

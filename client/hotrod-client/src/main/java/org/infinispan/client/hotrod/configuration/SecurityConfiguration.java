@@ -24,4 +24,11 @@ public class SecurityConfiguration {
       return ssl;
    }
 
+   @Override
+   public String toString() {
+      return "SecurityConfiguration{" +
+            "authentication=" + authentication +
+            ", ssl=" + ssl +
+            '}';
+   }
 }

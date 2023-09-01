@@ -8,6 +8,7 @@ import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.marshall.Marshaller;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
@@ -63,4 +64,10 @@ public interface Log extends BasicLogger {
 
    @Message(value = "The RemoteCacheStore must specify either an existing remote-cache-container or provide a URI/server list", id = 10013)
    CacheConfigurationException remoteStoreWithoutContainer();
+
+   @Message(value = "All stores referencing the same manager must use the same marshaller, actual is %s but provided was %s", id = 10014)
+   CacheConfigurationException shouldUseSameMarshallerWithContainer(Marshaller inUse, Marshaller provided);
+
+   @Message(value = "The remote cache container with name '%s' was not found", id = 10015)
+   CacheConfigurationException unknownRemoteCacheManagerContainer(String name);
 }

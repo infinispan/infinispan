@@ -11,26 +11,24 @@
       <local-cache name="RemoteStoreWithDefaultContainer">
          <persistence>
             <remote-store xmlns="urn:infinispan:config:store:remote:${infinispan.core.schema.version}"
-                          cache="RemoteStoreWithDefaultContainer"
+                          cache="remote-cache-name"
                           segmented="false"/>
          </persistence>
       </local-cache>
 
-      <local-cache name="RemoteStoreWithNamedContainer">
+      <local-cache name="AnotherRemoteStore">
          <persistence>
             <remote-store xmlns="urn:infinispan:config:store:remote:${infinispan.core.schema.version}"
-                          cache="RemoteStoreWithNamedContainer"
-                          remote-cache-container="alternative"
+                          cache="remote-cache-name"
                           segmented="false"/>
          </persistence>
       </local-cache>
    </cache-container>
 
    <remote-cache-containers xmlns="urn:infinispan:config:store:remote:${infinispan.core.schema.version}">
-      <remote-cache-container uri="hotrod://127.0.0.1:19811"/>
-      <remote-cache-container uri="hotrod://127.0.0.1:19811" name="alternative">
-         <property name="socket-timeout">20000</property>
-         <property name="connect-timeout">20000</property>
+      <remote-cache-container uri="hotrod://127.0.0.1:19721">
+         <property name="connect-timeout">10000</property>
+         <property name="socket-timeout">10000</property>
       </remote-cache-container>
    </remote-cache-containers>
 

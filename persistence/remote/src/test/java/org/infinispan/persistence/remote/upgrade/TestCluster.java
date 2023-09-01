@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
@@ -193,6 +195,7 @@ class TestCluster {
          private String name;
          private ProtocolVersion protocolVersion = DEFAULT_PROTOCOL_VERSION;
          private Integer remotePort;
+         private String remoteContainerName;
          private boolean wrapping = true;
          private boolean rawValues = true;
          private Class<? extends Marshaller> marshaller;
@@ -240,9 +243,19 @@ class TestCluster {
             return addNewCache();
          }
 
+         CacheDefinitionBuilder useRemoteContainer(String remoteContainerName) {
+            this.remoteContainerName = remoteContainerName;
+            return this;
+         }
+
          TestCluster build() {
             addNewCache();
             return builder.build();
+         }
+
+         TestCluster build(Supplier<GlobalConfigurationBuilder> constructor, Properties properties) {
+            addNewCache();
+            return builder.build(constructor, properties);
          }
 
          private CacheDefinitionBuilder addNewCache() {
@@ -251,8 +264,14 @@ class TestCluster {
             if (remotePort != null) {
                RemoteStoreConfigurationBuilder store = configurationBuilder.persistence().addStore(RemoteStoreConfigurationBuilder.class);
                store.hotRodWrapping(wrapping).rawValues(rawValues)
-                     .remoteCacheName(name).protocolVersion(protocolVersion).shared(true)
-                     .addServer().host("localhost").port(remotePort);
+                     .remoteCacheName(name).protocolVersion(protocolVersion).shared(true);
+
+               if (remoteContainerName != null) {
+                  store.remoteCacheContainer(remoteContainerName);
+               } else {
+                  store.addServer().host("localhost").port(remotePort);
+               }
+
                if (builder.trustStoreFileName != null) {
                   store.remoteSecurity().ssl().enable().trustStoreFileName(builder.trustStoreFileName).trustStorePassword(builder.trustStorePassword)
                         .sniHostName("server");
@@ -305,11 +324,15 @@ class TestCluster {
       }
 
       public TestCluster build() {
+         return build(GlobalConfigurationBuilder::new, new Properties());
+      }
+
+      public TestCluster build(Supplier<GlobalConfigurationBuilder> constructor, Properties hrClientProps) {
          List<HotRodServer> hotRodServers = new ArrayList<>();
          List<EmbeddedCacheManager> embeddedCacheManagers = new ArrayList<>();
 
          for (int i = 0; i < numMembers; i++) {
-            GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
+            GlobalConfigurationBuilder gcb = constructor.get();
             gcb.serialization().allowList().addClasses(CustomObject.class);
             if (ctx != null) {
                gcb.serialization().addContextInitializer(ctx);
@@ -340,6 +363,7 @@ class TestCluster {
          }
          clientBuilder.marshaller(Objects.requireNonNullElse(marshaller, GenericJBossMarshaller.class));
          clientBuilder.addJavaSerialAllowList(".*");
+         clientBuilder.withProperties(hrClientProps);
          return new TestCluster(hotRodServers, embeddedCacheManagers, new RemoteCacheManager(clientBuilder.build()));
       }
 

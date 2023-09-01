@@ -29,10 +29,10 @@ public class RemoteStoreConfigTest extends AbstractInfinispanTest {
    private static final int PORT = 19711;
    public static final String CACHE_LOADER_CONFIG = "remote-cl-config.xml";
    public static final String STORE_CACHE_NAME = "RemoteStoreConfigTest";
-   private EmbeddedCacheManager cacheManager;
+   protected EmbeddedCacheManager cacheManager;
    private HotRodServer hotRodServer;
    private final String cacheLoaderConfig;
-   private final String storeCacheName;
+   protected final String storeCacheName;
    private final int port;
 
    public RemoteStoreConfigTest(String cacheLoaderConfig, String storeCacheName, int port) {

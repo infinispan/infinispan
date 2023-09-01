@@ -14,7 +14,6 @@ import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser;
-import org.infinispan.configuration.parsing.ParserScope;
 import org.infinispan.persistence.remote.configuration.global.RemoteContainerConfigurationBuilder;
 import org.infinispan.persistence.remote.configuration.global.RemoteContainersConfigurationBuilder;
 import org.kohsuke.MetaInfServices;
@@ -41,18 +40,13 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
 
    @Override
    public void readElement(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {
-      if (holder.inScope(ParserScope.GLOBAL)) {
-         parseGlobalScope(reader, holder);
-      } else if (holder.inScope(ParserScope.CACHE)) {
-         parseCacheScope(reader, holder);
-      } else {
-         throw coreLog.invalidScope(ParserScope.GLOBAL.name(), holder.getScope());
-      }
-   }
-
-   private void parseGlobalScope(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
+      ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
       Element element = Element.forName(reader.getLocalName());
       switch (element) {
+         case REMOTE_STORE: {
+            parseRemoteStore(reader, builder.persistence(), holder.getClassLoader());
+            break;
+         }
          case REMOTE_CACHE_CONTAINERS: {
             parseRemoteContainers(reader, holder);
             break;
@@ -82,23 +76,27 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
       RemoteContainersConfigurationBuilder containersBuilder = holder.getGlobalConfigurationBuilder().addModule(RemoteContainersConfigurationBuilder.class);
       String name = reader.getAttributeValue(Attribute.NAME);
       RemoteContainerConfigurationBuilder builder = containersBuilder.addRemoteContainer(name != null ? name : "");
-      ParseUtils.parseAttributes(reader, builder);
-      ParseUtils.requireNoContent(reader);
-   }
 
-   private void parseCacheScope(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
-      ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
-
-      Element element = Element.forName(reader.getLocalName());
-      switch (element) {
-         case REMOTE_STORE: {
-            parseRemoteStore(reader, builder.persistence(), holder.getClassLoader());
-            break;
-         }
-         default: {
-            throw ParseUtils.unexpectedElement(reader);
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         ParseUtils.requireNoNamespaceAttribute(reader, i);
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+         switch (attribute) {
+            case NAME: {
+               // Set during creation of the builder.
+               continue;
+            }
+            case URI:
+               builder.uri(value);
+               break;
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
          }
       }
+
+      ParseUtils.parseAttributes(reader, builder);
+      builder.properties(Parser.parseProperties(reader, Element.REMOTE_CACHE_CONTAINER));
    }
 
    private void parseRemoteStore(final ConfigurationReader reader, PersistenceConfigurationBuilder persistenceBuilder,
