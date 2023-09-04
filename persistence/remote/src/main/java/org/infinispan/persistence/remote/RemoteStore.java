@@ -515,16 +515,9 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
          ;
       }
 
-      Properties propertiesToUse;
-      Properties actualProperties = configuration.properties();
-      if (!actualProperties.contains("blocking")) {
-         // Need to make a copy to not change the actual configuration properties
-         propertiesToUse = new Properties(actualProperties);
-         // Make sure threads are marked as non blocking if user didn't specify
-         propertiesToUse.put("blocking", "false");
-      } else {
-         propertiesToUse = actualProperties;
-      }
+      Properties propertiesToUse = new Properties();
+      propertiesToUse.putAll(configuration.properties());
+      propertiesToUse.putIfAbsent("blocking", "false");
 
       builder.withProperties(propertiesToUse);
       return builder;
