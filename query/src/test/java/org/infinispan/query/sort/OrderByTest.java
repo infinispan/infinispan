@@ -3,12 +3,10 @@ package org.infinispan.query.sort;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
+import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.model.Book;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -47,8 +45,7 @@ public class OrderByTest extends SingleCacheManagerTest {
    }
 
    public void useDifferentIndexFieldNamesTests() {
-      QueryFactory factory = Search.getQueryFactory(cache);
-      Query<Book> query = factory.create("from org.infinispan.query.model.Book where naming : 'place' order by label");
+      Query<Book> query = cache.query("from org.infinispan.query.model.Book where naming : 'place' order by label");
       QueryResult<Book> result = query.execute();
 
       assertThat(result.count().isExact()).isTrue();

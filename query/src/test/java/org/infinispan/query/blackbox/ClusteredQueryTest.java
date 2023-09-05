@@ -17,15 +17,13 @@ import java.util.stream.StreamSupport;
 
 import org.apache.lucene.index.IndexReader;
 import org.infinispan.Cache;
+import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.configuration.cache.StorageType;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.helper.IndexAccessor;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.Person;
@@ -48,8 +46,6 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    private Query<Person> cacheQuery;
    protected String queryString = String.format("FROM %s where blurb:'blurb1?'", Person.class.getName());
    private final String allPersonsQuery = "FROM " + Person.class.getName();
-   protected QueryFactory queryFactory1;
-   protected QueryFactory queryFactory2;
 
    @Override
    public Object[] factory() {
@@ -81,8 +77,6 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       createClusteredCaches(2, QueryTestSCI.INSTANCE, cacheCfg);
       cacheAMachine1 = cache(0);
       cacheAMachine2 = cache(1);
-      queryFactory1 = Search.getQueryFactory(cacheAMachine1);
-      queryFactory2 = Search.getQueryFactory(cacheAMachine2);
       populateCache();
    }
 
@@ -135,10 +129,10 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    }
 
    public void testLocalQuery() {
-      final Query<Person> localQuery1 = queryFactory1.create(queryString);
+      final Query<Person> localQuery1 = cacheAMachine1.query(queryString);
       List<Person> results1 = localQuery1.execute().list();
 
-      final Query<Person> localQuery2 = queryFactory1.create(queryString);
+      final Query<Person> localQuery2 = cacheAMachine1.query(queryString);
       List<Person> results2 = localQuery2.execute().list();
 
       assertEquals(10, results1.size());
@@ -255,14 +249,14 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
 
    private Query<Person> buildPaginationQuery(int offset, int pageSize, String sortField) {
       String sortedQuery = sortField != null ? allPersonsQuery + " ORDER BY " + sortField : allPersonsQuery;
-      Query<Person> clusteredQuery = queryFactory1.create(sortedQuery);
+      Query<Person> clusteredQuery = cacheAMachine1.query(sortedQuery);
       clusteredQuery.startOffset(offset);
       clusteredQuery.maxResults(pageSize);
       return clusteredQuery;
    }
 
    public void testQueryAll() {
-      Query<Person> clusteredQuery = queryFactory1.create(allPersonsQuery);
+      Query<Person> clusteredQuery = cacheAMachine1.query(allPersonsQuery);
 
       assertEquals(NUM_ENTRIES, clusteredQuery.execute().list().size());
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
@@ -273,14 +267,14 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
 
       String q = String.format("FROM %s WHERE name:'name1'~2", Person.class.getName());
 
-      Query<Person> clusteredQuery = queryFactory1.create(q);
+      Query<Person> clusteredQuery = cacheAMachine1.query(q);
 
       assertEquals(NUM_ENTRIES, clusteredQuery.execute().list().size());
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
    }
 
    public void testBroadcastIckleMatchAllQuery() {
-      Query<Person> everybody = queryFactory1.create(String.format("FROM %s", Person.class.getName()));
+      Query<Person> everybody = cacheAMachine1.query(String.format("FROM %s", Person.class.getName()));
 
       assertEquals(NUM_ENTRIES, everybody.execute().list().size());
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
@@ -288,7 +282,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
 
    public void testBroadcastIckleTermQuery() {
       String targetName = "name2";
-      Query<Person> singlePerson = queryFactory1.create(String.format("FROM %s p where p.name:'%s'", Person.class.getName(), targetName));
+      Query<Person> singlePerson = cacheAMachine1.query(String.format("FROM %s p where p.name:'%s'", Person.class.getName(), targetName));
 
       assertEquals(1, singlePerson.execute().list().size());
       assertEquals(targetName, singlePerson.iterator().next().getName());
@@ -296,7 +290,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    }
 
    public void testBroadcastFuzzyIckle() {
-      Query<Person> persons0to10 = queryFactory1.create(String.format("FROM %s p where p.name:'nome'~2", Person.class.getName()));
+      Query<Person> persons0to10 = cacheAMachine1.query(String.format("FROM %s p where p.name:'nome'~2", Person.class.getName()));
 
       assertEquals(10, persons0to10.execute().list().size());
 
@@ -304,8 +298,8 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    }
 
    public void testBroadcastNumericRangeQuery() {
-      Query<Person> infants = queryFactory1
-            .create(String.format("FROM %s p where p.age between 0 and 5", Person.class.getName()));
+      Query<Person> infants = cacheAMachine1
+            .query(String.format("FROM %s p where p.age between 0 and 5", Person.class.getName()));
 
       assertEquals(6, infants.execute().list().size());
 
@@ -313,7 +307,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    }
 
    public void testBroadcastProjectionIckleQuery() {
-      Query<Object[]> onlyNames = queryFactory2.create(
+      Query<Object[]> onlyNames = cacheAMachine2.query(
             String.format("Select p.name FROM %s p", Person.class.getName()));
 
       List<Object[]> results = onlyNames.execute().list();
@@ -328,7 +322,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    }
 
    public void testBroadcastSortedIckleQuery() {
-      Query<Person> theLastWillBeFirst = queryFactory2.create(
+      Query<Person> theLastWillBeFirst = cacheAMachine2.query(
             String.format("FROM %s p order by p.age desc", Person.class.getName()));
 
       List<Person> results = theLastWillBeFirst.execute().list();
@@ -338,7 +332,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    }
 
    public void testPaginatedIckleQuery() {
-      Query<Person> q = queryFactory1.create(String.format("FROM %s p order by p.age", Person.class.getName()));
+      Query<Person> q = cacheAMachine1.query(String.format("FROM %s p order by p.age", Person.class.getName()));
 
       q.startOffset(5);
       q.maxResults(10);
@@ -357,16 +351,16 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
 
    @Test
    public void testHybridQueryWorks() {
-      Query<Person> hybridQuery = queryFactory1
-            .create(String.format("FROM %s p where p.nonIndexedField = 'nothing'", Person.class.getName()));
+      Query<Person> hybridQuery = cacheAMachine1
+            .query(String.format("FROM %s p where p.nonIndexedField = 'nothing'", Person.class.getName()));
 
       hybridQuery.execute();
    }
 
    @Test
    public void testAggregationQueriesWork() {
-      Query<Person> aggregationQuery = queryFactory1
-            .create(String.format("SELECT p.name FROM %s p where p.name:'name3' group by p.name", Person.class.getName()));
+      Query<Person> aggregationQuery = cacheAMachine1
+            .query(String.format("SELECT p.name FROM %s p where p.name:'name3' group by p.name", Person.class.getName()));
 
       aggregationQuery.execute().list();
    }
@@ -374,7 +368,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    @Test
    public void testBroadcastNativeInfinispanHybridQuery() {
       String q = "FROM " + Person.class.getName() + " where age >= 40 and nonIndexedField = 'na'";
-      Query<?> query = queryFactory1.create(q);
+      Query<?> query = cacheAMachine1.query(q);
 
       assertEquals(10, query.execute().list().size());
    }
@@ -382,16 +376,14 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    @Test
    public void testBroadcastNativeInfinispanFuzzyQuery() {
       String q = String.format("FROM %s p where p.name:'nome'~2", Person.class.getName());
-
-      Query<?> query = Search.getQueryFactory(cacheAMachine1).create(q);
+      Query<?> query = cacheAMachine1.query(q);
 
       assertEquals(10, query.execute().list().size());
    }
 
    @Test
    public void testBroadcastSortedInfinispanQuery() {
-      QueryFactory queryFactory = Search.getQueryFactory(cacheAMachine1);
-      Query<Person> sortedQuery = queryFactory.create("FROM " + Person.class.getName() + " p order by p.age desc");
+      Query<Person> sortedQuery = cacheAMachine1.query("FROM " + Person.class.getName() + " p order by p.age desc");
 
       List<Person> results = sortedQuery.execute().list();
       assertEquals(NUM_ENTRIES, results.size());
@@ -404,7 +396,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    public void testIckleProjectionsLazyRetrieval() {
       String query = String.format("SELECT name, blurb FROM %s p ORDER BY age", Person.class.getName());
 
-      Query<Object[]> cacheQuery = queryFactory1.create(query);
+      Query<Object[]> cacheQuery = cacheAMachine1.query(query);
       CloseableIterator<Object[]> iterator = cacheQuery.iterator();
 
       List<Object[]> values = toList(iterator);
@@ -423,16 +415,14 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
 
    @Test
    public void testBroadcastAggregatedInfinispanQuery() {
-      QueryFactory queryFactory = Search.getQueryFactory(cacheAMachine2);
-      Query<Person> hybridQuery = queryFactory.create("select name FROM " + Person.class.getName() + " WHERE name : 'na*' group by name");
+      Query<Person> hybridQuery = cacheAMachine2.query("select name FROM " + Person.class.getName() + " WHERE name : 'na*' group by name");
 
       assertEquals(NUM_ENTRIES, hybridQuery.execute().list().size());
    }
 
    @Test
    public void testNonIndexedBroadcastInfinispanQuery() {
-      QueryFactory queryFactory = Search.getQueryFactory(cacheAMachine2);
-      Query<Person> slowQuery = queryFactory.create("FROM " + Person.class.getName() + " WHERE nonIndexedField LIKE 'na%'");
+      Query<Person> slowQuery = cacheAMachine2.query("FROM " + Person.class.getName() + " WHERE nonIndexedField LIKE 'na%'");
 
       assertEquals(NUM_ENTRIES, slowQuery.execute().list().size());
    }
@@ -440,12 +430,12 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    protected void populateCache() {
       prepareTestData();
 
-      cacheQuery = Search.getQueryFactory(cacheAMachine1).create(queryString);
+      cacheQuery = cacheAMachine1.query(queryString);
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
    }
 
    protected Query<Person> createSortedQuery() {
       String q = String.format("FROM %s p where p.blurb:'blurb1?' order by p.age'", Person.class.getName());
-      return Search.getQueryFactory(cacheAMachine1).create(q);
+      return cacheAMachine1.query(q);
    }
 }

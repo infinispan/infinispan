@@ -11,11 +11,11 @@ import java.util.Collections;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.testng.annotations.Test;
 
@@ -67,7 +67,7 @@ public class ProtobufJsonScriptTest extends MultiHotRodServersTest {
       cache.put(1, user1);
       cache.put(2, user2);
 
-      Query<User> q = Search.getQueryFactory(cache).create("FROM sample_bank_account.User WHERE name = 'Jane'");
+      Query<User> q = cache.query("FROM sample_bank_account.User WHERE name = 'Jane'");
       User user = q.execute().list().iterator().next();
       assertEquals("Jane", user.getName());
 

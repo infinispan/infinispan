@@ -5,11 +5,10 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import jakarta.transaction.TransactionManager;
 
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -62,7 +61,7 @@ public class IndexManagerLocalTest extends SingleCacheManagerTest {
    }
 
    protected void assertIndexSize(int expectedIndexSize) {
-      Query<Person> query = Search.getQueryFactory(cache).create("FROM " + Person.class.getName());
+      Query<Person> query = cache.query("FROM " + Person.class.getName());
       assertEquals(expectedIndexSize, query.execute().list().size());
       StaticTestingErrorHandler.assertAllGood(cache);
    }

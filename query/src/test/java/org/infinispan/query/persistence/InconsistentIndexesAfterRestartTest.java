@@ -12,6 +12,7 @@ import org.infinispan.Cache;
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.api.annotations.indexing.Text;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -21,9 +22,6 @@ import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -97,8 +95,7 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
    }
 
    private List searchByName(String name, Cache c) {
-      QueryFactory queryFactory = Search.getQueryFactory(c);
-      Query<?> q = queryFactory.create(SEntity.searchByName(name));
+      Query<?> q = c.query(SEntity.searchByName(name));
       int resultSize = q.execute().count().value();
       List<?> l = q.list();
       assert l.size() == resultSize;

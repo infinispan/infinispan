@@ -6,16 +6,13 @@ import static org.testng.AssertJUnit.assertSame;
 
 import java.util.List;
 
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
@@ -23,8 +20,6 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "query.indexedembedded.CollectionsIndexingTest")
 public class CollectionsIndexingTest extends SingleCacheManagerTest {
-
-   private QueryFactory queryFactory;
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
@@ -34,11 +29,6 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
             .storage(LOCAL_HEAP)
             .addIndexedEntity(Country.class);
       return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);
-   }
-
-   @BeforeClass
-   public void prepareSearchManager() {
-      queryFactory = Search.getQueryFactory(cache);
    }
 
    @AfterMethod
@@ -54,12 +44,12 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
 
    private Query getCountryQuery() {
       String q = String.format("FROM %s where countryName:'Italy'", Country.class.getName());
-      return queryFactory.create(q);
+      return cache.query(q);
    }
 
    private Query getMatchAllQuery() {
       String q = String.format("FROM %s", Country.class.getName());
-      return queryFactory.create(q);
+      return cache.query(q);
    }
 
    @Test
@@ -100,7 +90,7 @@ public class CollectionsIndexingTest extends SingleCacheManagerTest {
       cache.put("UK", uk);
       cache.put("UK", uk);
       String q = String.format("FROM %s c where c.cities.name:'Newcastle'", Country.class.getName());
-      List<?> list = queryFactory.create(q).list();
+      List<?> list = cache.query(q).list();
       assertEquals(1, list.size());
       assertSame(uk, list.get(0));
    }

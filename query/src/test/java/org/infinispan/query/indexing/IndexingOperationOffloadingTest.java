@@ -8,13 +8,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.logging.Log;
 import org.infinispan.query.model.TypeA;
 import org.infinispan.query.model.TypeB;
@@ -68,8 +66,7 @@ public class IndexingOperationOffloadingTest extends SingleCacheManagerTest {
       types.putAllAsync(entries).get();
       assertThat(entries).hasSize(SIZE);
 
-      QueryFactory factory = Search.getQueryFactory(types);
-      Query<TypeA> queryAll = factory.create("from org.infinispan.query.model.TypeA");
+      Query<TypeA> queryAll = types.query("from org.infinispan.query.model.TypeA");
       QueryResult<TypeA> result = queryAll.execute();
       assertThat(result.count().value()).isEqualTo(SIZE);
    }
@@ -108,8 +105,7 @@ public class IndexingOperationOffloadingTest extends SingleCacheManagerTest {
       CompletableFuture.allOf(chunksExecutions).get();
       assertThat(completedExecutions.get()).isEqualTo(CHUNKS_NUMBER);
 
-      QueryFactory factory = Search.getQueryFactory(types);
-      Query<TypeB> queryAll = factory.create("from org.infinispan.query.model.TypeB");
+      Query<TypeB> queryAll = types.query("from org.infinispan.query.model.TypeB");
       QueryResult<TypeB> result = queryAll.execute();
       assertThat(result.count().value()).isEqualTo(CHUNKS_NUMBER * CHUNK_SIZE);
    }

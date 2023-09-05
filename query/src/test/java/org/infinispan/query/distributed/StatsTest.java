@@ -291,7 +291,7 @@ public class StatsTest extends MultipleCacheManagersTest {
    }
 
    private void executeQuery(String q, Cache<String, Object> fromCache) {
-      List<Person> list = Search.getQueryFactory(fromCache).<Person>create(q).execute().list();
+      List<Person> list = fromCache.<Person>query(q).execute().list();
       assertFalse(list.isEmpty());
    }
 

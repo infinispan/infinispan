@@ -3,11 +3,9 @@ package org.infinispan.query.api;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.AssertJUnit.assertEquals;
 
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -36,9 +34,8 @@ public class NonIndexedValuesTest extends SingleCacheManagerTest {
    }
 
    private Query createQuery(Class<?> entity, String issueValue) {
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
       String queryStr = "FROM %s WHERE name = '%s'";
-      return queryFactory.create(String.format(queryStr, entity.getName(), issueValue));
+      return cache.query(String.format(queryStr, entity.getName(), issueValue));
    }
 
    @Test

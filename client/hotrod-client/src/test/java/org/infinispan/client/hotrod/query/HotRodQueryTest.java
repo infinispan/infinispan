@@ -12,20 +12,18 @@ import java.util.List;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AddressPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -136,8 +134,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       assertUser1(fromCache);
 
       // get user back from remote cache via query and check its attributes
-      QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query<User> query = qf.create("FROM sample_bank_account.User u WHERE u.name = 'Tom'");
+      Query<User> query = remoteCache.query("FROM sample_bank_account.User u WHERE u.name = 'Tom'");
       List<User> list = query.execute().list();
       assertNotNull(list);
       assertEquals(1, list.size());
@@ -147,8 +144,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
 
    public void testEmbeddedAttributeQuery() {
       // get user back from remote cache via query and check its attributes
-      QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query<User> query = qf.create("FROM sample_bank_account.User u WHERE u.addresses.postCode = '1234'");
+      Query<User> query = remoteCache.query("FROM sample_bank_account.User u WHERE u.addresses.postCode = '1234'");
       List<User> list = query.execute().list();
       assertNotNull(list);
       assertEquals(1, list.size());
@@ -158,8 +154,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN028503: Property addresses can not be selected from type sample_bank_account.User since it is an embedded entity.")
    public void testInvalidEmbeddedAttributeQuery() {
-      QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query<Object[]> q = qf.create("SELECT addresses FROM sample_bank_account.User");
+      Query<Object[]> q = remoteCache.query("SELECT addresses FROM sample_bank_account.User");
 
       q.execute();  // exception expected
    }
@@ -170,8 +165,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       assertUser1(fromCache);
 
       // get user back from remote cache via query and check its attributes
-      QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query<Object[]> query = qf.create("SELECT name, surname FROM sample_bank_account.User WHERE name = 'Tom'");
+      Query<Object[]> query = remoteCache.query("SELECT name, surname FROM sample_bank_account.User WHERE name = 'Tom'");
 
       List<Object[]> list = query.execute().list();
       assertNotNull(list);

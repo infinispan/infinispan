@@ -4,15 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.commons.test.annotation.TestForIssue;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.model.Game;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -54,14 +52,13 @@ public class RemoteHitCountAccuracyTest extends SingleHotRodServerTest {
          games.put(i, new Game("Game " + i, "This is the game " + i + "# of a series"));
       }
 
-      QueryFactory factory = Search.getQueryFactory(games);
-      Query<Game> query = factory.create("from Game where description : 'game'");
+      Query<Game> query = games.query("from Game where description : 'game'");
       QueryResult<Game> result = query.execute();
 
       // the hit count accuracy does not allow to compute **an exact** hit count
       assertThat(result.count().isExact()).isFalse();
 
-      query = factory.create("from Game where description : 'game'");
+      query = games.query("from Game where description : 'game'");
       // raise the default accuracy
       query.hitCountAccuracy(5_000);
       result = query.execute();

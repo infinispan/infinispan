@@ -7,11 +7,12 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.Programmer;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.ProgrammerSchemaImpl;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.commons.test.annotation.TestForIssue;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -24,9 +25,6 @@ import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.impl.ResourceUtils;
 import org.infinispan.query.core.impl.QueryCache;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.model.Developer;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
@@ -75,11 +73,10 @@ public class SchemaUpdateMetadataTest extends SingleHotRodServerTest {
 
       cache.put(1, new Programmer("fax4ever", 300));
 
-      QueryFactory queryFactory = Search.getQueryFactory(remoteCache);
       Query<Developer> kQuery;
       QueryResult<Developer> kResult;
 
-      kQuery = queryFactory.create(QUERY_SORT);
+      kQuery = remoteCache.query(QUERY_SORT);
       kResult = kQuery.execute();
       assertThat(kResult.count().value()).isEqualTo(1);
 
@@ -91,7 +88,7 @@ public class SchemaUpdateMetadataTest extends SingleHotRodServerTest {
       verifySortable(true);
       queryIsOnTheCache(false);
 
-      kQuery = queryFactory.create(QUERY_SORT);
+      kQuery = remoteCache.query(QUERY_SORT);
       kResult = kQuery.execute();
       assertThat(kResult.count().value()).isEqualTo(1);
 

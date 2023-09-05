@@ -8,7 +8,6 @@ import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import java.util.List;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.annotation.model.Image;
 import org.infinispan.client.hotrod.annotation.model.Model;
 import org.infinispan.client.hotrod.annotation.model.ModelA;
@@ -21,11 +20,11 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.GeneratedSchema;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -100,7 +99,7 @@ public class SchemaIndexUpdateTest extends SingleHotRodServerTest {
 
       cache.put(1, new ModelA("Fabio"));
 
-      Query<Model> query = Search.getQueryFactory(cache).create("from model.Model where original is not null");
+      Query<Model> query = cache.query("from model.Model where original is not null");
       List<Model> models = query.execute().list();
 
       assertThat(models).extracting("original").containsExactly("Fabio");
@@ -110,19 +109,19 @@ public class SchemaIndexUpdateTest extends SingleHotRodServerTest {
 
       cache.put(2, new ModelB("Silvia", "Silvia"));
 
-      query = Search.getQueryFactory(cache).create("from model.Model where original is not null");
+      query = cache.query("from model.Model where original is not null");
       models = query.execute().list();
 
       assertThat(models).extracting("original").containsExactly("Fabio", "Silvia");
       assertThat(models).hasOnlyElementsOfType(ModelB.class);
 
-      query = Search.getQueryFactory(cache).create("from model.Model where different is not null");
+      query = cache.query("from model.Model where different is not null");
       models = query.execute().list();
 
       assertThat(models).extracting("different").containsExactly("Silvia");
       assertThat(models).hasOnlyElementsOfType(ModelB.class);
 
-      Query<Image> imageQuery = Search.getQueryFactory(cache).create("from model.Image where name is not null");
+      Query<Image> imageQuery = cache.query("from model.Image where name is not null");
 
       // model.Image is not present on the indexedEntities
       assertThatThrownBy(() -> imageQuery.execute().list())
@@ -133,19 +132,19 @@ public class SchemaIndexUpdateTest extends SingleHotRodServerTest {
 
       cache.put(3, new ModelC("Elena", "Elena", "Elena"));
 
-      query = Search.getQueryFactory(cache).create("from model.Model where original is not null");
+      query = cache.query("from model.Model where original is not null");
       models = query.execute().list();
 
       assertThat(models).extracting("original").containsExactly("Fabio", "Silvia", "Elena");
       assertThat(models).hasOnlyElementsOfType(ModelC.class);
 
-      query = Search.getQueryFactory(cache).create("from model.Model where different is not null");
+      query = cache.query("from model.Model where different is not null");
       models = query.execute().list();
 
       assertThat(models).extracting("different").containsExactly("Silvia", "Elena");
       assertThat(models).hasOnlyElementsOfType(ModelC.class);
 
-      query = Search.getQueryFactory(cache).create("from model.Model where divergent is not null");
+      query = cache.query("from model.Model where divergent is not null");
       models = query.execute().list();
 
       assertThat(models).extracting("divergent").containsExactly("Elena");

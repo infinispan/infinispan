@@ -13,7 +13,6 @@ import java.util.List;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.marshall.NotIndexedSCI;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AnalyzerTestEntity;
@@ -21,14 +20,13 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.ModelFactoryPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.AnalyzerTestEntityMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.marshall.AbstractSerializationContextInitializer;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.dsl.embedded.QueryStringTest;
 import org.infinispan.query.dsl.embedded.testdomain.ModelFactory;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
@@ -80,11 +78,6 @@ public class RemoteQueryStringTest extends QueryStringTest {
       getCacheForWrite().put("analyzed1", new AnalyzerTestEntity("tested 123", 3));
       getCacheForWrite().put("analyzed2", new AnalyzerTestEntity("testing 1234", 3));
       getCacheForWrite().put("analyzed3", new AnalyzerTestEntity("xyz", null));
-   }
-
-   @Override
-   protected QueryFactory getQueryFactory() {
-      return Search.getQueryFactory(remoteCache);
    }
 
    @Override

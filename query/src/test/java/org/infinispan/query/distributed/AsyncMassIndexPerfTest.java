@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -20,7 +21,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Indexer;
 import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.massindex.IndexUpdater;
 import org.infinispan.query.test.QueryTestSCI;
@@ -163,7 +163,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
    }
 
    protected long countIndex() {
-      Query<?> q = Search.getQueryFactory(cache1).create("FROM " + Transaction.class.getName());
+      Query<?> q = cache1.query("FROM " + Transaction.class.getName());
       return q.execute().count().value();
    }
 

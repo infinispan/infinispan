@@ -3,16 +3,14 @@ package org.infinispan.client.hotrod.query;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.Color;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -60,8 +58,7 @@ public class MultipleIndexFieldAnnotationsTest extends SingleHotRodServerTest {
       color3.setDescription(BLUE_DESCRIPTION);
       remoteCache.put(3, color3);
 
-      QueryFactory queryFactory = Search.getQueryFactory(remoteCache);
-      Query<Color> query = queryFactory.create("from Color where name = 'red'");
+      Query<Color> query = remoteCache.query("from Color where name = 'red'");
       QueryResult<Color> result = query.execute();
 
       assertThat(result.count().value()).isEqualTo(1L);

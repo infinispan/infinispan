@@ -15,18 +15,17 @@ import java.util.List;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.server.core.DummyServerManagement;
@@ -134,7 +133,7 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
       assertEquals(remoteCache.get("CAT").getDescription(), "Catcoin");
       assertEquals(remoteCache.size(), 4);
 
-      Query<CryptoCurrency> query = Search.getQueryFactory(remoteCache).create("FROM " + getEntityName() + " c where c.rank < 10");
+      Query<CryptoCurrency> query = remoteCache.query("FROM " + getEntityName() + " c where c.rank < 10");
       List<CryptoCurrency> highRankCoins = query.execute().list();
       assertEquals(highRankCoins.size(), 3);
 
@@ -147,7 +146,7 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
       writeCurrencyViaJson("LTC", "Litecoin", 4);
 
       // Assert inserted entity is searchable
-      query = Search.getQueryFactory(remoteCache).create("FROM " + getEntityName() + " c  where c.description = 'Litecoin'");
+      query = remoteCache.query("FROM " + getEntityName() + " c  where c.description = 'Litecoin'");
 
       CryptoCurrency litecoin = query.execute().list().iterator().next();
       assertEquals(litecoin.getDescription(), "Litecoin");

@@ -4,15 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.KeywordEntity;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -43,8 +41,7 @@ public class QueryLimitTest extends SingleHotRodServerTest {
          remoteCache.put(i, new KeywordEntity(i + ""));
       }
 
-      QueryFactory queryFactory = Search.getQueryFactory(remoteCache);
-      Query<KeywordEntity> query = queryFactory.create("from KeywordEntity");
+      Query<KeywordEntity> query = remoteCache.query("from KeywordEntity");
       query.startOffset(10);
       query.maxResults(-1);
 

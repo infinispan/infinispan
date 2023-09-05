@@ -35,6 +35,7 @@ public class EmbeddedHS5LegacyAnnotationsTest extends SingleCacheManagerTest {
 
       QueryFactory factory = Search.getQueryFactory(cache);
       Query<String[]> queryNames =
+            // keep using the old API:
             factory.create("select g.name from org.infinispan.query.model.LegacyGame g where g.name : 'Game B'");
       QueryResult<String[]> resultNames = queryNames.execute();
 
@@ -43,6 +44,7 @@ public class EmbeddedHS5LegacyAnnotationsTest extends SingleCacheManagerTest {
       assertThat(resultNames.list()).containsExactly(new String[]{"Game B"});
 
       Query<LegacyGame> queryGames =
+            // keep using the old API:
             factory.create("from org.infinispan.query.model.LegacyGame g where g.description : 'bli' order by g.releaseYear desc");
       QueryResult<LegacyGame> resultGames = queryGames.execute();
 

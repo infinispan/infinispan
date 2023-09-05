@@ -3,12 +3,10 @@ package org.infinispan.query.parameter;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
+import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.model.Book;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -37,8 +35,7 @@ public class FullTextParameterTest extends SingleCacheManagerTest {
    }
 
    public void fulltext() {
-      QueryFactory factory = Search.getQueryFactory(cache);
-      Query<Book> query = factory.create("from org.infinispan.query.model.Book where naming : :description");
+      Query<Book> query = cache.query("from org.infinispan.query.model.Book where naming : :description");
       query.setParameter("description", "place");
       QueryResult<Book> result = query.execute();
 
@@ -47,8 +44,7 @@ public class FullTextParameterTest extends SingleCacheManagerTest {
    }
 
    public void generic() {
-      QueryFactory factory = Search.getQueryFactory(cache);
-      Query<Book> query = factory.create("from org.infinispan.query.model.Book where title = :title");
+      Query<Book> query = cache.query("from org.infinispan.query.model.Book where title = :title");
       query.setParameter("title", "island");
       QueryResult<Book> result = query.execute();
 

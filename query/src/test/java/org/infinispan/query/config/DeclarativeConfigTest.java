@@ -9,8 +9,8 @@ import java.util.List;
 
 import org.apache.lucene.store.ByteBuffersDirectory;
 import org.hibernate.search.engine.backend.index.IndexManager;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.query.helper.IndexAccessor;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.Person;

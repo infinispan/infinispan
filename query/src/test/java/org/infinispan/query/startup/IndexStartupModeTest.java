@@ -3,6 +3,7 @@ package org.infinispan.query.startup;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.api.query.HitCount;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -10,8 +11,6 @@ import org.infinispan.configuration.cache.IndexStartupMode;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
-import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.TotalHitCount;
 import org.infinispan.query.model.Developer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -29,7 +28,6 @@ public class IndexStartupModeTest extends AbstractInfinispanTest {
 
    private EmbeddedCacheManager cacheManager;
    private Cache<String, Developer> cache;
-   private QueryFactory queryFactory;
 
    public void volatileDataNonVolatileIndexes_purgeAtStartup() {
       execute(IndexStorage.FILESYSTEM, false, IndexStartupMode.PURGE, () -> {
@@ -173,17 +171,16 @@ public class IndexStartupModeTest extends AbstractInfinispanTest {
 
       cacheManager = TestCacheManagerFactory.createCacheManager(cfg);
       cache = cacheManager.getCache();
-      queryFactory = Search.getQueryFactory(cache);
    }
 
    private void verifyMatches(int i, String nick) {
       String query = String.format("from %s where nick = '%s'", Developer.class.getName(), nick);
-      assertThat(queryFactory.create(query).execute().count().value()).isEqualTo(i);
+      assertThat(cache.query(query).execute().count().value()).isEqualTo(i);
    }
 
    private boolean matches(int i, String nick) {
       String query = String.format("from %s where nick = '%s'", Developer.class.getName(), nick);
-      TotalHitCount hitCount = queryFactory.create(query).execute().count();
+      HitCount hitCount = cache.query(query).execute().count();
       assertThat(hitCount.isExact()).isTrue();
       return hitCount.value() == i;
    }

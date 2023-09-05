@@ -10,12 +10,10 @@ import org.infinispan.Cache;
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.api.annotations.indexing.Text;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.search.mapper.common.impl.EntityReferenceImpl;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -23,8 +21,6 @@ import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "query.projection.ProjectionTest")
 public class ProjectionTest extends SingleCacheManagerTest {
-
-   private QueryFactory queryFactory;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -34,7 +30,6 @@ public class ProjectionTest extends SingleCacheManagerTest {
             .addIndexedEntity(Foo.class);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(cfg);
       Cache<Object, Object> cache = cacheManager.getCache();
-      queryFactory = Search.getQueryFactory(cache);
       return cacheManager;
    }
 
@@ -66,7 +61,7 @@ public class ProjectionTest extends SingleCacheManagerTest {
    private <T> Query<T> createProjectionQuery(String... projection) {
       String selectClause = String.join(",", projection);
       String q = String.format("SELECT %s FROM %s WHERE bar:'bar1'", selectClause, Foo.class.getName());
-      return queryFactory.create(q);
+      return cache.query(q);
    }
 
    private void assertQueryReturns(Query<?> cacheQuery, Object expected) {

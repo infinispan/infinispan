@@ -12,15 +12,13 @@ import java.util.List;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.marshall.NotIndexedSCI;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.ModelFactoryPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.AbstractQueryDslTest;
 import org.infinispan.query.dsl.embedded.testdomain.ModelFactory;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
@@ -49,11 +47,6 @@ public class RemoteQueryDisableIndexingTest extends AbstractQueryDslTest {
    protected void populateCache() {
       getCacheForWrite().put("notIndexed1", new NotIndexed("testing 123"));
       getCacheForWrite().put("notIndexed2", new NotIndexed("xyz"));
-   }
-
-   @Override
-   protected QueryFactory getQueryFactory() {
-      return Search.getQueryFactory(remoteCache);
    }
 
    @Override
@@ -122,7 +115,7 @@ public class RemoteQueryDisableIndexingTest extends AbstractQueryDslTest {
    }
 
    public void testEqNonIndexedType() {
-      Query<NotIndexed> q = getQueryFactory().create("from sample_bank_account.NotIndexed where notIndexedField = 'testing 123'");
+      Query<NotIndexed> q = getCacheForQuery().query("from sample_bank_account.NotIndexed where notIndexedField = 'testing 123'");
 
       List<NotIndexed> list = q.execute().list();
       assertEquals(1, list.size());

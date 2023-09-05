@@ -10,18 +10,16 @@ import java.util.Date;
 
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AccountPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.Indexer;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
@@ -113,7 +111,7 @@ public class MultipleIndexedCacheTest extends MultiHotRodServersTest {
 
    @Test
    public void testLocalQueries() {
-      Query<?> matchAll = Search.getQueryFactory(userCache).create("FROM  sample_bank_account.User");
+      Query<?> matchAll = userCache.query("FROM  sample_bank_account.User");
       long totalUsers = matchAll.execute().count().value();
       assertEquals(totalUsers, NUM_ENTRIES);
 
@@ -128,8 +126,7 @@ public class MultipleIndexedCacheTest extends MultiHotRodServersTest {
    }
 
    private <T> long query(String entity, RemoteCache<?, ?> cache, String fieldName, String fieldValue) {
-      QueryFactory qf = Search.getQueryFactory(cache);
-      Query<T> q = qf.create("FROM " + entity + " WHERE " + fieldName + " = " + fieldValue);
+      Query<T> q = cache.query("FROM " + entity + " WHERE " + fieldName + " = " + fieldValue);
       return q.execute().count().value();
    }
 }

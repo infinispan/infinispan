@@ -8,13 +8,11 @@ import java.time.Instant;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.client.hotrod.Search;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.Product;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -61,20 +59,19 @@ public class BigIntegerAdapterTest extends SingleHotRodServerTest {
       assertThat(product.getMoment().getEpochSecond()).isEqualTo(1675769531);
       assertThat(product.getMoment().getNano()).isEqualTo(123000000); // this is the max precision we have at the moment
 
-      QueryFactory queryFactory = Search.getQueryFactory(remoteCache);
-      Query<Product> query = queryFactory.create("from store.product.Product p where p.name = 'pilsner urquell'");
+      Query<Product> query = remoteCache.query("from store.product.Product p where p.name = 'pilsner urquell'");
       QueryResult<Product> result = query.execute();
       assertThat(result.list()).extracting("name").containsExactly("Pilsner Urquell");
 
-      query = queryFactory.create("from store.product.Product p where p.code = 178128739123");
+      query = remoteCache.query("from store.product.Product p where p.code = 178128739123");
       result = query.execute();
       assertThat(result.list()).extracting("name").containsExactly("Lavazza Coffee");
 
-      query = queryFactory.create("from store.product.Product p where p.price < 30 order by p.price desc");
+      query = remoteCache.query("from store.product.Product p where p.price < 30 order by p.price desc");
       result = query.execute();
       assertThat(result.list()).extracting("name").containsExactly("Pilsner Urquell", "Lavazza Coffee");
 
-      query = queryFactory.create("from store.product.Product p where p.description : 'gym'");
+      query = remoteCache.query("from store.product.Product p where p.description : 'gym'");
       result = query.execute();
       assertThat(result.list()).extracting("name").containsExactly("Puma Backpack");
    }

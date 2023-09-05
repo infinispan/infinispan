@@ -45,6 +45,7 @@ public class RemoteHS5LegacyAnnotationsTest extends SingleHotRodServerTest {
 
       QueryFactory factory = Search.getQueryFactory(remoteCache);
       Query<String[]> queryNames =
+            // keep using the old API:
             factory.create("select g.name from LegacyGame g where g.name : 'Game B'");
       QueryResult<String[]> resultNames = queryNames.execute();
 
@@ -53,6 +54,7 @@ public class RemoteHS5LegacyAnnotationsTest extends SingleHotRodServerTest {
       assertThat(resultNames.list()).containsExactly(new String[]{"Game B"});
 
       Query<LegacyGame> queryGames =
+            // keep using the old API:
             factory.create("from LegacyGame g where g.description : 'bli' order by g.releaseYear desc");
       QueryResult<LegacyGame> resultGames = queryGames.execute();
 

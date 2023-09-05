@@ -23,9 +23,9 @@ import java.util.stream.Stream;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.test.Exceptions;
@@ -36,8 +36,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.functional.hotrod.HotRodCacheQueries;
 import org.infinispan.server.test.api.TestUser;
@@ -306,8 +304,7 @@ abstract class HotRodAuthorizationTest {
          RemoteCache<Integer, User> userCache = ext.hotrod().withClientConfiguration(clientConfigurationWithProtostreamMarshaller(user)).withServerConfiguration(builder).get();
          User fromCache = userCache.get(1);
          HotRodCacheQueries.assertUser1(fromCache);
-         QueryFactory qf = Search.getQueryFactory(userCache);
-         Query<User> query = qf.create("FROM sample_bank_account.User WHERE name = 'Tom'");
+         Query<User> query = userCache.query("FROM sample_bank_account.User WHERE name = 'Tom'");
          List<User> list = query.execute().list();
          assertNotNull(list);
          assertEquals(1, list.size());
@@ -321,8 +318,7 @@ abstract class HotRodAuthorizationTest {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = prepareIndexedCache();
       for (TestUser user : EnumSet.of(TestUser.READER, TestUser.WRITER)) {
          RemoteCache<Integer, User> userCache = ext.hotrod().withClientConfiguration(clientConfigurationWithProtostreamMarshaller(user)).withServerConfiguration(builder).get();
-         QueryFactory qf = Search.getQueryFactory(userCache);
-         Query<User> query = qf.create("FROM sample_bank_account.User WHERE name = 'Tom'");
+         Query<User> query = userCache.query("FROM sample_bank_account.User WHERE name = 'Tom'");
          Exceptions.expectException(HotRodClientException.class, UNAUTHORIZED_EXCEPTION, () -> query.execute().list());
       }
    }

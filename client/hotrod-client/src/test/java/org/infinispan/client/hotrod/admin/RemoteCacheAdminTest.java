@@ -18,7 +18,6 @@ import org.infinispan.client.hotrod.DefaultTemplate;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManagerAdmin;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.TransactionPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
@@ -309,9 +308,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
    }
 
    private void verifyQuery(RemoteCache<String, Transaction> cache, int count) {
-      List<User> users = Search.getQueryFactory(cache)
-                               .<User>create("from sample_bank_account.Transaction where longDescription:'RENT'")
-                               .execute().list();
+      List<User> users = cache.<User>query("from sample_bank_account.Transaction where longDescription:'RENT'").list();
       assertEquals(count, users.size());
    }
 
