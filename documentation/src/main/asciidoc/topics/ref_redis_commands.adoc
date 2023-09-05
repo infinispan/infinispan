@@ -267,6 +267,12 @@ provides a read-uncommitted isolation.
 | link:https://redis.io/commands/scan[SCAN]
 | Cursors are reaped in case they have not been used within a timeout (5 minutes)
 
+| link:https://redis.io/commands/sdiff[SDIFF]
+|
+
+| link:https://redis.io/commands/sdiffstore[SDIFFSTORE]
+|
+
 | link:https://redis.io/commands/select[SELECT]
 | Always returns `-ERR Select not supported in cluster mode`
 
