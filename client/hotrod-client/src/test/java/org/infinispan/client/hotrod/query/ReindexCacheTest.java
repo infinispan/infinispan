@@ -7,17 +7,15 @@ import static org.testng.Assert.assertEquals;
 
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.Indexer;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.Factory;
@@ -112,8 +110,7 @@ public class ReindexCacheTest extends SingleHotRodServerTest {
    }
 
    private long query(RemoteCache<?, ?> cache) {
-      QueryFactory qf = Search.getQueryFactory(cache);
-      Query<User> q = qf.create("FROM sample_bank_account.User");
+      Query<User> q = cache.query("FROM sample_bank_account.User");
       return q.execute().count().value();
    }
 }

@@ -12,7 +12,6 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.WaitNonBlockingStore;
-import org.infinispan.query.Search;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.indexedembedded.City;
 import org.infinispan.query.indexedembedded.Country;
@@ -102,13 +101,12 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
       cm = TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);
       cache = cm.getCache();
       store = TestingUtil.getFirstStore(cache);
-      queryFactory = Search.getQueryFactory(cache);
       searchMapping = TestingUtil.extractComponent(cache, SearchMapping.class);
    }
 
    private void verifyFullTextHasMatches(int i) {
       String query = String.format("FROM %s WHERE countryName:'Italy'", Country.class.getName());
-      List<Object> list = queryFactory.create(query).list();
+      List<Object> list = cache.query(query).list();
       assertEquals(i, list.size());
    }
 

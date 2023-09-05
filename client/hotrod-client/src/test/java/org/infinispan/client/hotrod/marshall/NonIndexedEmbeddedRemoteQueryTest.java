@@ -6,12 +6,10 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.util.Date;
 import java.util.List;
 
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -49,9 +47,7 @@ public class NonIndexedEmbeddedRemoteQueryTest extends EmbeddedRemoteInteropQuer
       transaction.setValid(true);
       cache.put(transaction.getId(), transaction);
 
-      QueryFactory qf = Search.getQueryFactory(remoteCache);
-
-      Query<Transaction> q = qf.create("from sample_bank_account.Transaction where longDescription:'Expenses for Infinispan F2F meeting'");
+      Query<Transaction> q = remoteCache.query("from sample_bank_account.Transaction where longDescription:'Expenses for Infinispan F2F meeting'");
 
       List<Transaction> list = q.execute().list();
       assertEquals(1, list.size());

@@ -11,10 +11,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
+import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.objectfilter.ParsingException;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
@@ -503,6 +503,6 @@ public class QueryStringTest extends AbstractQueryDslTest {
    }
 
    protected final <T> Query<T> createQueryFromString(String queryString) {
-      return getQueryFactory().create(queryString);
+      return getCacheForQuery().query(queryString);
    }
 }

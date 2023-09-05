@@ -18,10 +18,8 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -114,12 +112,11 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
    }
 
    public void testRemoteQueryDslExecution() {
-      QueryFactory qf = org.infinispan.client.hotrod.Search.getQueryFactory(remoteCache);
       String queryString = "FROM sample_bank_account.User WHERE name = 'John1'";
 
       final long startTs = System.nanoTime();
       for (int i = 0; i < QUERY_LOOPS; i++) {
-         Query<User> q = qf.create(queryString);
+         Query<User> q = remoteCache.query(queryString);
          List<User> list = q.execute().list();
          assertEquals(1, list.size());
          assertEquals("John1", list.get(0).getName());
@@ -131,12 +128,11 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
    }
 
    public void testEmbeddedQueryDslExecution() {
-      QueryFactory qf = Search.getQueryFactory(cache);
       String queryString = String.format("FROM %s WHERE name = 'John1'", UserHS.class.getName());
 
       final long startTs = System.nanoTime();
       for (int i = 0; i < QUERY_LOOPS; i++) {
-         Query<User> q = qf.create(queryString);
+         Query<User> q = cache.query(queryString);
          List<User> list = q.execute().list();
          assertEquals(1, list.size());
          assertEquals("John1", list.get(0).getName());

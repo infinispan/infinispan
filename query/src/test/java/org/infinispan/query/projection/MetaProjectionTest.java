@@ -6,14 +6,12 @@ import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import java.util.List;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.test.annotation.TestForIssue;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.EmbeddedMetadata;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.model.Developer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -35,7 +33,6 @@ public class MetaProjectionTest extends SingleCacheManagerTest {
    @Test
    public void testVersionProjection() {
       Cache<Object, Developer> cache = cacheManager.getCache();
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
 
       cache.getAdvancedCache()
             .put("open-contributor", new Developer("iamopen", "iamopen@redmail.io", "Infinispan developer", 2000),
@@ -47,7 +44,7 @@ public class MetaProjectionTest extends SingleCacheManagerTest {
       String ickle = String.format(
             "select d.nick, version(d), d.email, d.biography, d.contributions from %s d where d.biography : 'Infinispan' order by d.email",
             Developer.class.getName());
-      Query<Object[]> query = queryFactory.create(ickle);
+      Query<Object[]> query = cache.query(ickle);
       List<Object[]> list = query.execute().list();
 
       assertThat(list).hasSize(2);
@@ -59,7 +56,7 @@ public class MetaProjectionTest extends SingleCacheManagerTest {
       ickle = String.format(
             "select d.nick, version(d), d.email, d.biography, d.contributions from %s d where d.biography : 'developer'",
             Developer.class.getName());
-      query = queryFactory.create(ickle);
+      query = cache.query(ickle);
       list = query.execute().list();
 
       assertThat(list).hasSize(1);
@@ -69,7 +66,7 @@ public class MetaProjectionTest extends SingleCacheManagerTest {
       ickle = String.format(
             "select version(d) from %s d where d.biography : 'developer'",
             Developer.class.getName());
-      query = queryFactory.create(ickle);
+      query = cache.query(ickle);
       list = query.execute().list();
 
       assertThat(list).hasSize(1);
@@ -78,7 +75,7 @@ public class MetaProjectionTest extends SingleCacheManagerTest {
       ickle = String.format(
             "select d, version(d) from %s d where d.biography : 'Infinispan' order by d.email",
             Developer.class.getName());
-      query = queryFactory.create(ickle);
+      query = cache.query(ickle);
       list = query.execute().list();
 
       assertThat(list).hasSize(2);

@@ -69,7 +69,7 @@ public class MassIndexerAsyncBackendTest extends MultipleCacheManagersTest {
 
    private void assertAllIndexed(final Cache cache) {
       eventually(() -> {
-         int size = Search.getQueryFactory(cache).create("FROM " + Transaction.class.getName()).list().size();
+         int size = cache.query("FROM " + Transaction.class.getName()).list().size();
          return size == NUM_ENTRIES;
       });
    }

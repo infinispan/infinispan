@@ -6,10 +6,9 @@ import static org.infinispan.test.TestingUtil.withTx;
 import java.util.concurrent.Callable;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
@@ -67,7 +66,7 @@ public class NonLocalIndexingTest extends MultipleCacheManagersTest {
 
    private static void assertFind(Cache cache, String keyword, int expectedCount) {
       String q = String.format("FROM %s WHERE blurb:'%s'", Person.class.getName(), keyword);
-      Query<Object> cacheQuery = Search.getQueryFactory(cache).create(q);
+      Query<Object> cacheQuery = cache.query(q);
       long resultSize = cacheQuery.execute().count().value();
       Assert.assertEquals(resultSize, expectedCount);
    }

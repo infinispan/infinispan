@@ -3,9 +3,7 @@ package org.infinispan.query.distributed;
 import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.Cache;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.query.queries.faceting.Car;
 import org.testng.annotations.Test;
 
@@ -25,9 +23,8 @@ public class UnsharedDistMassIndexTest extends DistributedMassIndexingTest {
 
    @Override
    protected void verifyFindsCar(Cache cache, int expectedCount, String carMake) {
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
       String q = String.format("FROM %s WHERE make:'%s'", Car.class.getName(), carMake);
-      Query cacheQuery = queryFactory.create(q);
+      Query cacheQuery = cache.query(q);
       assertEquals(expectedCount, cacheQuery.execute().list().size());
    }
 }

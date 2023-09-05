@@ -6,11 +6,10 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.List;
 
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.ParsingException;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.query.queries.NumericType;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
@@ -58,7 +57,7 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
 
    private <T> Query<T> createCacheQuery(Class<T> clazz, String predicate) {
       String queryStr = String.format("FROM %s WHERE %s", clazz.getName(), predicate);
-      return Search.getQueryFactory(cache).create(queryStr);
+      return cache.query(queryStr);
    }
 
    public void testBooleanQueriesMustNot() {

@@ -4,13 +4,13 @@ import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.testng.Assert.assertEquals;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.core.stats.IndexInfo;
 import org.infinispan.query.core.stats.IndexStatisticsSnapshot;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -98,7 +98,7 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
 
    protected void verifyFindsCar(Cache<?, Car> cache, int expectedCount, String carMake) {
       String q = String.format("FROM %s where make:'%s'", Car.class.getName(), carMake);
-      Query<Car> cacheQuery = Search.getQueryFactory(cache).create(q);
+      Query<Car> cacheQuery = cache.query(q);
       assertEquals(cacheQuery.list().size(), expectedCount);
    }
 

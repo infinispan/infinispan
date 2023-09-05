@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.LongAdder;
 
 import org.apache.lucene.index.SegmentInfos;
 import org.infinispan.Cache;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
@@ -24,7 +25,6 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent
 import org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent;
 import org.infinispan.query.Indexer;
 import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.Person;
@@ -177,7 +177,7 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
    }
 
    private long countIndex(Class<?> entityType, Cache<?, ?> cache) {
-      Query<?> query = Search.getQueryFactory(cache).create("FROM " + entityType.getName());
+      Query<?> query = cache.query("FROM " + entityType.getName());
       return query.execute().count().value();
    }
 

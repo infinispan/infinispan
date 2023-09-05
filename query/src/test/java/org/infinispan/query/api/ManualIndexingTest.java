@@ -7,11 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -51,8 +50,7 @@ public class ManualIndexingTest extends MultipleCacheManagersTest {
 
    private void assertNumberOfCars(int expectedCount, String carMake) {
       for (Cache<?, ?> cache : caches) {
-         QueryFactory queryFactory = Search.getQueryFactory(cache);
-         Query<Car> query = queryFactory.create(String.format("FROM %s where make:'%s'", Car.class.getName(), carMake));
+         Query<Car> query = cache.query(String.format("FROM %s where make:'%s'", Car.class.getName(), carMake));
          QueryResult<Car> queryResult = query.execute();
          assertEquals("Expected count not met on cache " + cache, expectedCount, queryResult.count().value());
          assertEquals("Expected count not met on cache " + cache, expectedCount, queryResult.list().size());

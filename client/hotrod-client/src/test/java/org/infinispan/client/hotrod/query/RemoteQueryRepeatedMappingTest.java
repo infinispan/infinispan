@@ -11,14 +11,13 @@ import static org.testng.AssertJUnit.assertEquals;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -59,10 +58,10 @@ public class RemoteQueryRepeatedMappingTest extends SingleHotRodServerTest {
 
       jsonCache.put(keyAsJson(), valueAsJson());
 
-      Query<Object> querySlowChildren = Search.getQueryFactory(cache).create("SELECT COUNT(*) FROM Parent p WHERE p.slowChildren.id = 0");
-      Query<Object> queryFastChildren = Search.getQueryFactory(cache).create("SELECT COUNT(*) FROM Parent p WHERE p.fastChildren.id = 10");
-      Query<Object> queryFieldChildren = Search.getQueryFactory(cache).create("SELECT COUNT(*) FROM Parent p WHERE p.fieldLessChildren.id = 0");
-      Query<Object> queryNotIndexedWithFieldChildren = Search.getQueryFactory(cache).create("SELECT COUNT(*) FROM Parent p WHERE p.notIndexedWithFieldChild.id = 37");
+      Query<Object> querySlowChildren = cache.query("SELECT COUNT(*) FROM Parent p WHERE p.slowChildren.id = 0");
+      Query<Object> queryFastChildren = cache.query("SELECT COUNT(*) FROM Parent p WHERE p.fastChildren.id = 10");
+      Query<Object> queryFieldChildren = cache.query("SELECT COUNT(*) FROM Parent p WHERE p.fieldLessChildren.id = 0");
+      Query<Object> queryNotIndexedWithFieldChildren = cache.query("SELECT COUNT(*) FROM Parent p WHERE p.notIndexedWithFieldChild.id = 37");
 
       assertEquals(1, querySlowChildren.execute().count().value());
       assertEquals(1, queryFastChildren.execute().count().value());

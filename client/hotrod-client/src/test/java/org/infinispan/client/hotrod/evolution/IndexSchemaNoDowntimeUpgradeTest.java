@@ -1,7 +1,6 @@
 package org.infinispan.client.hotrod.evolution;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.annotation.model.Model;
 import org.infinispan.client.hotrod.evolution.model.BaseEntityWithNonAnalyzedNameFieldEntity.BaseEntityWithNonAnalyzedNameFieldEntitySchema;
 import org.infinispan.client.hotrod.evolution.model.BaseModelEntity.BaseModelEntitySchema;
@@ -20,12 +19,11 @@ import org.infinispan.client.hotrod.evolution.model.BaseModelWithNewIndexedField
 import org.infinispan.client.hotrod.evolution.model.ModelUtils;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.GeneratedSchema;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -504,8 +502,7 @@ public class IndexSchemaNoDowntimeUpgradeTest extends SingleHotRodServerTest {
     }
 
     private <T> void doQuery(String query, RemoteCache<String, T> messageCache, int expectedResults) {
-        QueryFactory queryFactory = Search.getQueryFactory(messageCache);
-        Query<T> infinispanObjectEntities = queryFactory.create(query);
+        Query<T> infinispanObjectEntities = messageCache.query(query);
         List<T> result = StreamSupport.stream(infinispanObjectEntities.spliterator(), false)
                 .collect(Collectors.toList());
 
@@ -513,8 +510,7 @@ public class IndexSchemaNoDowntimeUpgradeTest extends SingleHotRodServerTest {
     }
 
     private Stream doQuery(String query, RemoteCache<String, Model> messageCache) {
-        QueryFactory queryFactory = Search.getQueryFactory(messageCache);
-        Query<Object[]> infinispanObjectEntities = queryFactory.create(query);
+        Query<Object[]> infinispanObjectEntities = messageCache.query(query);
         return StreamSupport.stream(infinispanObjectEntities.spliterator(), false);
     }
 

@@ -10,11 +10,10 @@ import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.query.helper.IndexAccessor;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.QueryTestSCI;
@@ -130,7 +129,7 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
    }
 
    private long countIndexedDocuments(Class<?> clazz) {
-      Query<?> query = Search.getQueryFactory(cache).create("FROM " + clazz.getName());
+      Query<?> query = cache.query("FROM " + clazz.getName());
       return query.execute().count().value();
    }
 

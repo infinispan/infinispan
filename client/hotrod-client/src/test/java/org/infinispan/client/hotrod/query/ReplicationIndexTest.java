@@ -14,7 +14,6 @@ import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.client.hotrod.test.FixedServerBalancing;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
@@ -119,7 +118,7 @@ public class ReplicationIndexTest extends MultiHotRodServersTest {
    }
 
    private long queryCount(String query, RemoteCache<?, ?> remoteCache) {
-      return Search.getQueryFactory(remoteCache).create(query).execute().count().value();
+      return remoteCache.query(query).execute().count().value();
    }
 
    @Test

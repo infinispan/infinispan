@@ -7,14 +7,12 @@ import java.util.List;
 
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.test.annotation.TestForIssue;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.model.Developer;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -51,8 +49,7 @@ public class MetaProjectionTest extends SingleHotRodServerTest {
       metadata = remoteCache.getWithMetadata("another-contributor");
       assertThat(metadata.getVersion()).isEqualTo(3L); // version is global to the cache - not to the entry
 
-      QueryFactory queryFactory = Search.getQueryFactory(remoteCache);
-      Query<Object[]> query = queryFactory.create(
+      Query<Object[]> query = remoteCache.query(
             "select d.nick, version(d), d.email, d.biography, d.contributions from io.dev.Developer d where d.biography : 'Infinispan' order by d.email");
       List<Object[]> list = query.execute().list();
 
@@ -62,7 +59,7 @@ public class MetaProjectionTest extends SingleHotRodServerTest {
       assertThat(list.get(1)).containsExactly("mycodeisopen", 3L, "mycodeisopen@redmail.io",
             "Infinispan engineer", 799);
 
-      query = queryFactory.create(
+      query = remoteCache.query(
             "select d, version(d) from io.dev.Developer d where d.biography : 'Infinispan' order by d.email");
       list = query.execute().list();
 

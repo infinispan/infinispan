@@ -5,12 +5,11 @@ import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
@@ -40,11 +39,9 @@ public class DegeneratedClusterMassIndexingTest extends MultipleCacheManagersTes
       cache.put("car2", new Car("ford", "blue", 300));
       cache.put("car3", new Car("ford", "red", 300));
 
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
-
       // ensure these were not indexed
       String q = String.format("FROM %s where make:'ford'", Car.class.getName());
-      Query<Car> query = queryFactory.create(q);
+      Query<Car> query = cache.query(q);
       assertEquals(0, query.execute().count().value());
 
       //reindex

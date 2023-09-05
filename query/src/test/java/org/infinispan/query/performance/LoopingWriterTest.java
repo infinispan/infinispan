@@ -8,8 +8,6 @@ import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -71,8 +69,7 @@ public class LoopingWriterTest extends AbstractInfinispanTest {
    }
 
    private void countElementsViaQuery(Cache<Object, Object> cache, int expectedElements) {
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
-      long resultSize = queryFactory.create("FROM " + Person.class.getName()).execute().count().value();
+      long resultSize = cache.query("FROM " + Person.class.getName()).execute().count().value();
       Assert.assertEquals(resultSize, expectedElements);
       System.out.println("Query OK! found (as expected) " + resultSize + " elements");
    }

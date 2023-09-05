@@ -5,10 +5,9 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.List;
 
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.query.test.CustomKey;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -71,7 +70,7 @@ public class KeyTypeTest extends SingleCacheManagerTest {
       cache.put(key9, person1);
 
       // Going to search the 'blurb' field for 'owns'
-      Query cacheQuery = Search.getQueryFactory(cache).create(getQuery());
+      Query cacheQuery = cache.query(getQuery());
       assertEquals(9, cacheQuery.execute().count().value());
 
       List<Person> found = cacheQuery.list();
@@ -93,7 +92,7 @@ public class KeyTypeTest extends SingleCacheManagerTest {
       cache.put(key2, person1);
       cache.put(key3, person1);
 
-      Query cacheQuery = Search.getQueryFactory(cache).create(getQuery());
+      Query cacheQuery = cache.query(getQuery());
       assertEquals(3, cacheQuery.execute().count().value());
    }
 }

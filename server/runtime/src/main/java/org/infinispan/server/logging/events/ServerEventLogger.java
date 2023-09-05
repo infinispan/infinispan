@@ -13,12 +13,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.core.Search;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.util.concurrent.BlockingManager;
@@ -133,8 +131,7 @@ public class ServerEventLogger implements EventLogger {
                queryStr += " AND level = :level";
             }
             queryStr += " ORDER BY when DESC";
-            QueryFactory queryFactory = Search.getQueryFactory(cache);
-            Query<EventLog> query = queryFactory.create(queryStr);
+            Query<EventLog> query = cache.query(queryStr);
             query.maxResults(count);
             query.setParameter("when", start);
             category.ifPresent(c -> query.setParameter("category", c));

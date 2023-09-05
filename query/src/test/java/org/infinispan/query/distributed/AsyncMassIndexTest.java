@@ -7,10 +7,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.query.test.Transaction;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -66,7 +66,7 @@ public class AsyncMassIndexTest extends MultipleCacheManagersTest {
 
    protected void checkIndex(int expectedNumber) {
       Cache<Integer, Transaction> c = cache(0);
-      Query<Transaction> q = Search.getQueryFactory(c).create("FROM " + Transaction.class.getName());
+      Query<Transaction> q = c.query("FROM " + Transaction.class.getName());
       long resultSize = q.execute().count().value();
       assertEquals(expectedNumber, resultSize);
    }

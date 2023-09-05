@@ -7,7 +7,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.TestEntity;
@@ -18,7 +17,6 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeClass;
@@ -75,10 +73,8 @@ public class BuiltInAnalyzersTest extends SingleHotRodServerTest {
 
       remoteCache.put(1, parent);
 
-      QueryFactory queryFactory = Search.getQueryFactory(remoteCache);
-
-      assertEquals(1, queryFactory.create("From TestEntity where name4:'name-with-dashes'").execute().count().value());
-      assertEquals(1, queryFactory.create("From TestEntity p where p.child.name4:'name-with-dashes'").execute().count().value());
+      assertEquals(1, remoteCache.query("From TestEntity where name4:'name-with-dashes'").execute().count().value());
+      assertEquals(1, remoteCache.query("From TestEntity p where p.child.name4:'name-with-dashes'").execute().count().value());
    }
 
    @Test
@@ -88,20 +84,18 @@ public class BuiltInAnalyzersTest extends SingleHotRodServerTest {
             "Oswald Lee", "Jason Hawkings", "Gyorgy Constantinides");
       remoteCache.put(1, testEntity);
 
-      QueryFactory queryFactory = Search.getQueryFactory(remoteCache);
+      assertEquals(1, remoteCache.query("From TestEntity where name1:'jane'").execute().count().value());
+      assertEquals(1, remoteCache.query("From TestEntity where name2:'McDougall'").execute().count().value());
+      assertEquals(1, remoteCache.query("From TestEntity where name3:'Connor'").execute().count().value());
+      assertEquals(1, remoteCache.query("From TestEntity where name4:'Oswald Lee'").execute().count().value());
+      assertEquals(1, remoteCache.query("From TestEntity where name5:'hawk'").execute().count().value());
+      assertEquals(1, remoteCache.query("From TestEntity where name6:'constan'").execute().count().value());
 
-      assertEquals(1, queryFactory.create("From TestEntity where name1:'jane'").execute().count().value());
-      assertEquals(1, queryFactory.create("From TestEntity where name2:'McDougall'").execute().count().value());
-      assertEquals(1, queryFactory.create("From TestEntity where name3:'Connor'").execute().count().value());
-      assertEquals(1, queryFactory.create("From TestEntity where name4:'Oswald Lee'").execute().count().value());
-      assertEquals(1, queryFactory.create("From TestEntity where name5:'hawk'").execute().count().value());
-      assertEquals(1, queryFactory.create("From TestEntity where name6:'constan'").execute().count().value());
-
-      assertEquals(0, queryFactory.create("From TestEntity where name1:'sara'").execute().count().value());
-      assertEquals(0, queryFactory.create("From TestEntity where name2:'John McDougal'").execute().count().value());
-      assertEquals(0, queryFactory.create("From TestEntity where name3:'James-Connor'").execute().count().value());
-      assertEquals(0, queryFactory.create("From TestEntity where name4:'Oswald lee'").execute().count().value());
-      assertEquals(0, queryFactory.create("From TestEntity where name5:'json'").execute().count().value());
-      assertEquals(0, queryFactory.create("From TestEntity where name6:'Georje'").execute().count().value());
+      assertEquals(0, remoteCache.query("From TestEntity where name1:'sara'").execute().count().value());
+      assertEquals(0, remoteCache.query("From TestEntity where name2:'John McDougal'").execute().count().value());
+      assertEquals(0, remoteCache.query("From TestEntity where name3:'James-Connor'").execute().count().value());
+      assertEquals(0, remoteCache.query("From TestEntity where name4:'Oswald lee'").execute().count().value());
+      assertEquals(0, remoteCache.query("From TestEntity where name5:'json'").execute().count().value());
+      assertEquals(0, remoteCache.query("From TestEntity where name6:'Georje'").execute().count().value());
    }
 }

@@ -26,13 +26,13 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.User;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.functional.extensions.entities.Entities;
@@ -65,8 +65,7 @@ public class HotRodCacheQueries {
       assertUser1(fromCache);
 
       // get user back from remote cache via query and check its attributes
-      QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query<User> query = qf.create("FROM sample_bank_account.User WHERE name = 'Tom'");
+      Query<User> query = remoteCache.query("FROM sample_bank_account.User WHERE name = 'Tom'");
       List<User> list = query.execute().list();
       assertNotNull(list);
       assertEquals(1, list.size());
@@ -82,8 +81,7 @@ public class HotRodCacheQueries {
       remoteCache.put(2, createUser2());
 
       // get user back from remote cache via query and check its attributes
-      QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query<User> query = qf.create("FROM sample_bank_account.User u WHERE u.addresses.postCode = '1234'");
+      Query<User> query = remoteCache.query("FROM sample_bank_account.User u WHERE u.addresses.postCode = '1234'");
       List<User> list = query.execute().list();
       assertNotNull(list);
       assertEquals(1, list.size());
@@ -103,8 +101,7 @@ public class HotRodCacheQueries {
       assertUser1(fromCache);
 
       // get user back from remote cache via query and check its attributes
-      QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query<Object[]> query = qf.create("SELECT name, surname FROM sample_bank_account.User WHERE name = 'Tom'");
+      Query<Object[]> query = remoteCache.query("SELECT name, surname FROM sample_bank_account.User WHERE name = 'Tom'");
       List<Object[]> list = query.execute().list();
       assertNotNull(list);
       assertEquals(1, list.size());
@@ -125,8 +122,7 @@ public class HotRodCacheQueries {
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
-      QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query<User> query = qf.create("FROM sample_bank_account.User WHERE name = 'John' ORDER BY id ASC");
+      Query<User> query = remoteCache.query("FROM sample_bank_account.User WHERE name = 'John' ORDER BY id ASC");
       assertEquals(0, query.execute().list().size());
    }
 
@@ -138,7 +134,7 @@ public class HotRodCacheQueries {
       remoteCache.put(2, createUser2());
 
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query<User> simpleQuery = qf.create("FROM sample_bank_account.User WHERE name = 'Tom'");
+      org.infinispan.query.dsl.Query<User> simpleQuery = qf.create("FROM sample_bank_account.User WHERE name = 'Tom'");
 
       List<Map.Entry<Object, Object>> entries = new ArrayList<>(1);
       try (CloseableIterator<Map.Entry<Object, Object>> iter = remoteCache.retrieveEntriesByQuery(simpleQuery, null, 3)) {
@@ -158,7 +154,7 @@ public class HotRodCacheQueries {
       remoteCache.put(2, createUser2());
 
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query<Object[]> simpleQuery = qf.create("SELECT surname, name FROM sample_bank_account.User WHERE name = 'Tom'");
+      org.infinispan.query.dsl.Query<Object[]> simpleQuery = qf.create("SELECT surname, name FROM sample_bank_account.User WHERE name = 'Tom'");
 
       List<Map.Entry<Object, Object>> entries = new ArrayList<>(1);
       try (CloseableIterator<Map.Entry<Object, Object>> iter = remoteCache.retrieveEntriesByQuery(simpleQuery, null, 3)) {
@@ -261,8 +257,7 @@ public class HotRodCacheQueries {
       people.put("4", new Entities.Person("Alberto", "Steiner", 2016, "Paris"));
       peopleCache.putAll(people);
 
-      QueryFactory queryFactory = Search.getQueryFactory(peopleCache);
-      Query<Entities.Person> query = queryFactory.create("FROM Person p where p.lastName = :lastName");
+      Query<Entities.Person> query = peopleCache.query("FROM Person p where p.lastName = :lastName");
       query.setParameter("lastName", "Rossignol");
       List<Entities.Person> rossignols = query.execute().list();
       assertThat(rossignols).extracting("firstName").containsExactlyInAnyOrder("Oihana", "Elaia");

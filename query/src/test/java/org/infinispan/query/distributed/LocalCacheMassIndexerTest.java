@@ -6,13 +6,12 @@ import static org.junit.Assert.assertFalse;
 import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Indexer;
 import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -41,10 +40,7 @@ public class LocalCacheMassIndexerTest extends SingleCacheManagerTest {
    }
 
    private long indexSize(Cache<?, ?> cache) {
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
-      // queryFactory.refresh(Object.class);
-
-      Query<?> query = queryFactory.create("FROM " + Person.class.getName());
+      Query<?> query = cache.query("FROM " + Person.class.getName());
       return query.execute().count().value();
    }
 
@@ -94,10 +90,9 @@ public class LocalCacheMassIndexerTest extends SingleCacheManagerTest {
       verifyFindsPerson(0, "name" + 0);
    }
 
-   protected void verifyFindsPerson(int expectedCount, String name) throws Exception {
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
+   protected void verifyFindsPerson(int expectedCount, String name) {
       String q = String.format("FROM %s where name:'%s'", Person.class.getName(), name);
-      Query cacheQuery = queryFactory.create(q);
+      Query cacheQuery = cache.query(q);
       assertEquals(expectedCount, cacheQuery.execute().count().value());
    }
 }

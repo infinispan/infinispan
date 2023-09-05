@@ -7,14 +7,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.hibernate.search.util.common.SearchException;
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -69,9 +67,8 @@ public class TwoPhaseCommitIndexingTest extends SingleCacheManagerTest {
    }
 
    private static void assertFind(Cache cache, String keyword, int expectedCount) {
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
       String q = String.format("FROM %s WHERE blurb:'%s'", Person.class.getName(), keyword);
-      Query<?> cacheQuery = queryFactory.create(q);
+      Query<?> cacheQuery = cache.query(q);
       int resultSize = cacheQuery.execute().count().value();
       Assert.assertEquals(resultSize, expectedCount);
    }

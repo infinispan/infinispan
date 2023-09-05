@@ -8,13 +8,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
 
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.test.annotation.TestForIssue;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -176,7 +174,6 @@ public class PutAllTest extends SingleCacheManagerTest {
    }
 
    private <T> Query<T> queryByNameField(String name, Class<T> entity) {
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
-      return queryFactory.create(String.format("FROM %s WHERE name = '%s'", entity.getName(), name));
+      return cache.query(String.format("FROM %s WHERE name = '%s'", entity.getName(), name));
    }
 }

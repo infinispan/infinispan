@@ -7,11 +7,9 @@ import java.util.List;
 
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -57,8 +55,7 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
     * Test querying for entities defined as inner classes.
     */
    public void testQueryInnerClass() {
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
-      Query<Person> query = queryFactory.create("FROM " + Person.class.getName());
+      Query<Person> query = cache.query("FROM " + Person.class.getName());
 
       List<Person> matches = query.execute().list();
       assertEquals(1, matches.size());
@@ -68,8 +65,7 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
     * Test querying for a field - direct access to field.
     */
    public void testField() {
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
-      Query<Person> query = queryFactory.create("FROM " + Person.class.getName() + " WHERE driverLicenseId = 'ZZ3141592'");
+      Query<Person> query = cache.query("FROM " + Person.class.getName() + " WHERE driverLicenseId = 'ZZ3141592'");
 
       List<Person> matches = query.execute().list();
       assertEquals(1, matches.size());
@@ -79,8 +75,7 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
     * Test querying for an inherited indexed field - direct inherited field access.
     */
    public void testInheritedField() {
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
-      Query<Person> query = queryFactory.create("FROM " + Person.class.getName() + " WHERE age <= 52");
+      Query<Person> query = cache.query("FROM " + Person.class.getName() + " WHERE age <= 52");
 
       List<Person> matches = query.execute().list();
       assertEquals(1, matches.size());
@@ -90,8 +85,7 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
     * Test querying for an inherited indexed field - interface method with inherited implementation.
     */
    public void testInheritedField2() {
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
-      Query<Person> query = queryFactory.create("FROM " + Person.class.getName() + " WHERE name <= 'William'");
+      Query<Person> query = cache.query("FROM " + Person.class.getName() + " WHERE name <= 'William'");
 
       List<Person> matches = query.execute().list();
       assertEquals(1, matches.size());
@@ -101,8 +95,7 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
     * Test querying for an inherited indexed field - interface method implemented in class.
     */
    public void testInheritedField3() {
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
-      Query<Person> query = queryFactory.create("FROM " + Person.class.getName() + " WHERE gender = 'M'");
+      Query<Person> query = cache.query("FROM " + Person.class.getName() + " WHERE gender = 'M'");
 
       List<Person> matches = query.execute().list();
       assertEquals(1, matches.size());
@@ -112,8 +105,7 @@ public class SingleClassDSLQueryTest extends SingleCacheManagerTest {
     * Test querying for an inherited indexed field - method inherited from superclass.
     */
    public void testInheritedField4() {
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
-      Query<Person> query = queryFactory.create("FROM " + Person.class.getName() + " WHERE surname = 'Shakespeare'");
+      Query<Person> query = cache.query("FROM " + Person.class.getName() + " WHERE surname = 'Shakespeare'");
 
       List<Person> matches = query.execute().list();
       assertEquals(1, matches.size());

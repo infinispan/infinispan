@@ -13,13 +13,12 @@ import java.util.NoSuchElementException;
 
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.CacheImpl;
+import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.CustomKey3;
@@ -47,8 +46,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    }
 
    private <T> Query<T> createQuery(String predicate, Class<T> entity) {
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
-      return queryFactory.create(String.format("FROM %s WHERE %s", entity.getName(), predicate));
+      return cache.query(String.format("FROM %s WHERE %s", entity.getName(), predicate));
    }
 
    public void testSimple() {
@@ -67,8 +65,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
    public void testSimpleLocal() {
       loadTestingData();
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
-      Query<Person> cacheQuery = queryFactory.create("FROM " + Person.class.getName());
+      Query<Person> cacheQuery = cache.query("FROM " + Person.class.getName());
 
       List<Person> found = cacheQuery.local(true).execute().list();
 
@@ -91,9 +88,8 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    public void testIteratorWithProjections() {
       loadTestingData();
 
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
       String q = String.format("SELECT name, blurb from %s p where name:'navin'", Person.class.getName());
-      Query<Object[]> query = queryFactory.create(q);
+      Query<Object[]> query = cache.query(q);
 
       try (CloseableIterator<Object[]> found = query.iterator()) {
          assertTrue(found.hasNext());
@@ -241,7 +237,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    public void testSetSort() {
       loadTestingData();
       String queryString = String.format("FROM %s p WHERE p.name:'Goat' ORDER BY p.age", Person.class.getName());
-      Query<Person> cacheQuery = Search.<Person>getQueryFactory(cache).create(queryString);
+      Query<Person> cacheQuery = cache.query(queryString);
       QueryResult<Person> result = cacheQuery.execute();
       List<Person> found = result.list();
 

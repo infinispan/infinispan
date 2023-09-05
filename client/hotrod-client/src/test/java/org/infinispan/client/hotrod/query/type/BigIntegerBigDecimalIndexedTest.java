@@ -7,17 +7,15 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.CalculusIndexed;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.CalculusIndexedSchemaImpl;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.Product;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -47,34 +45,32 @@ public class BigIntegerBigDecimalIndexedTest extends SingleHotRodServerTest {
       assertThat(calculus.getPurchases()).isEqualTo(10);
       assertThat(calculus.getProspect()).isEqualTo(BigDecimal.valueOf(2.2));
 
-      QueryFactory queryFactory = Search.getQueryFactory(remoteCache);
       Query<Product> query;
       QueryResult<Product> result;
 
-      query = queryFactory.create("from lab.indexed.CalculusIndexed c where c.purchases > 9");
+      query = remoteCache.query("from lab.indexed.CalculusIndexed c where c.purchases > 9");
       result = query.execute();
       assertThat(result.list()).extracting("name").containsExactly("blablabla");
 
-      query = queryFactory.create("from lab.indexed.CalculusIndexed c where c.prospect = 2.2");
+      query = remoteCache.query("from lab.indexed.CalculusIndexed c where c.prospect = 2.2");
       result = query.execute();
       assertThat(result.list()).extracting("name").containsExactly("blablabla");
 
       // also 2.0 match since the field prospect is annotated with @Basic and not with @Decimal
-      query = queryFactory.create("from lab.indexed.CalculusIndexed c where c.prospect = 2.0");
+      query = remoteCache.query("from lab.indexed.CalculusIndexed c where c.prospect = 2.0");
       result = query.execute();
       assertThat(result.list()).extracting("name").containsExactly("blablabla");
 
-      query = queryFactory.create("from lab.indexed.CalculusIndexed c where c.prospect = 3.0");
+      query = remoteCache.query("from lab.indexed.CalculusIndexed c where c.prospect = 3.0");
       result = query.execute();
       assertThat(result.list()).isEmpty();
 
-      query = queryFactory.create("from lab.indexed.CalculusIndexed c where c.decimal = 2.2");
+      query = remoteCache.query("from lab.indexed.CalculusIndexed c where c.decimal = 2.2");
       result = query.execute();
       assertThat(result.list()).extracting("name").containsExactly("blablabla");
 
-      query = queryFactory.create("from lab.indexed.CalculusIndexed c where c.decimal = 2.0");
+      query = remoteCache.query("from lab.indexed.CalculusIndexed c where c.decimal = 2.0");
       result = query.execute();
       assertThat(result.list()).extracting("name").isEmpty();
    }
-
 }

@@ -7,11 +7,9 @@ import java.util.Date;
 
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -38,22 +36,20 @@ public class MultipleEntitiesTest extends SingleCacheManagerTest {
 
    @Test
    public void testIndexAndQuery() {
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
-
       cache.put(123405, new Bond(new Date(System.currentTimeMillis()), 450L));
 
       cache.put(123502, new Debenture("GB", 116d));
 
       cache.put(223456, new Bond(new Date(System.currentTimeMillis()), 550L));
 
-      Query<?> query = queryFactory.create("FROM " + Bond.class.getName());
-      Query<?> query2 = queryFactory.create("FROM " + Debenture.class.getName());
+      Query<?> query = cache.query("FROM " + Bond.class.getName());
+      Query<?> query2 = cache.query("FROM " + Debenture.class.getName());
       assertEquals(query.list().size() + query2.list().size(), 3);
 
-      Query<?> queryBond = queryFactory.create("FROM " + Bond.class.getName());
+      Query<?> queryBond = cache.query("FROM " + Bond.class.getName());
       assertEquals(queryBond.execute().count().value(), 2);
 
-      Query<?> queryDeb = queryFactory.create("FROM " + Debenture.class.getName());
+      Query<?> queryDeb = cache.query("FROM " + Debenture.class.getName());
       assertEquals(queryDeb.execute().count().value(), 1);
    }
 }

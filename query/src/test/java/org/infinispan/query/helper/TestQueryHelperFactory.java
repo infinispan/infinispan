@@ -8,15 +8,13 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.test.CustomKey3;
 import org.infinispan.query.test.CustomKey3Transformer;
 import org.infinispan.query.test.QueryTestSCI;
@@ -34,13 +32,12 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 public class TestQueryHelperFactory {
 
    public static <E> Query<E> createCacheQuery(Class<?> entity, Cache<?, ?> cache, String fieldName, String searchString) {
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
       String q = String.format("FROM %s WHERE %s:'%s'", entity.getName(), fieldName, searchString);
-      return queryFactory.create(q);
+      return cache.query(q);
    }
 
    public static <T> List<T> queryAll(Cache<?, ?> cache, Class<T> entityType) {
-      Query<T> query = Search.getQueryFactory(cache).create("FROM " + entityType.getName());
+      Query<T> query = cache.query("FROM " + entityType.getName());
       return query.execute().list();
    }
 

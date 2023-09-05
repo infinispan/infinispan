@@ -5,13 +5,11 @@ import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.Assert.assertNull;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.Person;
@@ -97,8 +95,7 @@ public class MultipleEntitiesMassIndexTest extends DistributedMassIndexingTest {
    private void checkIndex(int expectedCount, String q) {
       for (Cache<?, ?> cache : caches()) {
          StaticTestingErrorHandler.assertAllGood(cache);
-         QueryFactory searchManager = Search.getQueryFactory(cache);
-         Query cacheQuery = searchManager.create(q);
+         Query cacheQuery = cache.query(q);
          QueryResult result = cacheQuery.execute();
 
          assertThat(result.count().isExact()).isTrue();

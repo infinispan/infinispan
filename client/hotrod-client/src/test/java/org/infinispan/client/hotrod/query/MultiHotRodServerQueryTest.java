@@ -10,18 +10,16 @@ import java.util.Collections;
 import java.util.List;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AddressPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.testng.annotations.BeforeClass;
@@ -112,8 +110,7 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
       assertUser1(fromCache);
 
       // get user back from remote cache via query and check its attributes
-      QueryFactory qf = Search.getQueryFactory(remoteCache1);
-      Query<User> query = qf.create("FROM sample_bank_account.User WHERE name = 'Tom'");
+      Query<User> query = remoteCache1.query("FROM sample_bank_account.User WHERE name = 'Tom'");
       List<User> list = query.execute().list();
       assertNotNull(list);
       assertEquals(1, list.size());
@@ -128,8 +125,7 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
       assertUser1(fromCache);
 
       // get user back from remote cache via query and check its attributes
-      QueryFactory qf = Search.getQueryFactory(remoteCache0);
-      Query<Object[]> query = qf.create("SELECT name, COUNT(age) FROM sample_bank_account.User WHERE age >= 5 GROUP BY name ORDER BY name ASC");
+      Query<Object[]> query = remoteCache0.query("SELECT name, COUNT(age) FROM sample_bank_account.User WHERE age >= 5 GROUP BY name ORDER BY name ASC");
       List<Object[]> list = query.execute().list();
       assertNotNull(list);
       assertEquals(2, list.size());
@@ -141,8 +137,7 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
 
    public void testEmbeddedAttributeQuery() {
       // get user back from remote cache via query and check its attributes
-      QueryFactory qf = Search.getQueryFactory(remoteCache1);
-      Query<User> query = qf.create("FROM sample_bank_account.User u WHERE u.addresses.postCode = '1234'");
+      Query<User> query = remoteCache1.query("FROM sample_bank_account.User u WHERE u.addresses.postCode = '1234'");
       List<User> list = query.execute().list();
       assertNotNull(list);
       assertEquals(1, list.size());
@@ -152,8 +147,7 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN028503: Property addresses can not be selected from type sample_bank_account.User since it is an embedded entity.")
    public void testInvalidEmbeddedAttributeQuery() {
-      QueryFactory qf = Search.getQueryFactory(remoteCache1);
-      Query<Object[]> q = qf.create("SELECT addresses FROM sample_bank_account.User");
+      Query<Object[]> q = remoteCache1.query("SELECT addresses FROM sample_bank_account.User");
       q.execute();  // exception expected
    }
 
@@ -163,8 +157,7 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
       assertUser1(fromCache);
 
       // get user back from remote cache via query and check its attributes
-      QueryFactory qf = Search.getQueryFactory(remoteCache1);
-      Query<Object[]> query = qf.create("SELECT name, surname FROM sample_bank_account.User WHERE name = 'Tom'");
+      Query<Object[]> query = remoteCache1.query("SELECT name, surname FROM sample_bank_account.User WHERE name = 'Tom'");
 
       List<Object[]> list = query.execute().list();
       assertNotNull(list);

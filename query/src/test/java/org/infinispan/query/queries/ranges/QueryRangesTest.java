@@ -10,11 +10,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -45,9 +43,8 @@ public class QueryRangesTest extends SingleCacheManagerTest {
    }
 
    protected Query<Person> createQuery(String predicate) {
-      QueryFactory searchManager = Search.getQueryFactory(cache);
       String query = String.format("FROM %s WHERE %s", Person.class.getName(), predicate);
-      return searchManager.create(query);
+      return cache.query(query);
    }
 
    @Override

@@ -11,14 +11,12 @@ import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.KeywordEntity;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -56,8 +54,7 @@ public class LargeTermTest extends SingleHotRodServerTest {
       KeywordEntity entity = new KeywordEntity(createLargeDescription(1));
       remoteCache.put(1, entity);
 
-      QueryFactory queryFactory = Search.getQueryFactory(remoteCache);
-      assertEquals(1, queryFactory.create("from KeywordEntity where keyword : 'foo bar0 baz'").execute().count().value());
+      assertEquals(1, remoteCache.query("from KeywordEntity where keyword : 'foo bar0 baz'").execute().count().value());
    }
 
    public String createLargeDescription(int times) {

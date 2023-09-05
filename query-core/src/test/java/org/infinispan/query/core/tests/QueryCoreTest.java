@@ -8,14 +8,13 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.util.List;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.core.Search;
 import org.infinispan.query.core.stats.IndexStatistics;
 import org.infinispan.query.core.stats.QueryStatistics;
 import org.infinispan.query.core.stats.SearchStatistics;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -79,9 +78,7 @@ public class QueryCoreTest extends SingleCacheManagerTest {
 
       assertEquals(2, cache.size());
 
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
-
-      Query<Person> query = queryFactory.create("from " + Person.class.getName() + " where name='Hombre'");
+      Query<Person> query = cache.query("from " + Person.class.getName() + " where name='Hombre'");
       List<Person> results = query.execute().list();
 
       assertEquals("Araña", results.get(0).getSurname());
@@ -92,8 +89,7 @@ public class QueryCoreTest extends SingleCacheManagerTest {
       String q = String.format("FROM %s", Person.class.getName());
 
       // Cache without stats enabled
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
-      Query<Person> query = queryFactory.create(q);
+      Query<Person> query = cache.query(q);
       query.execute().list();
 
       SearchStatistics searchStatistics = Search.getSearchStatistics(cache);
@@ -106,8 +102,7 @@ public class QueryCoreTest extends SingleCacheManagerTest {
       assertEquals(0, queryStatistics.getNonIndexedQueryCount());
 
       // Cache with stats enabled
-      queryFactory = Search.getQueryFactory(cacheWithStats);
-      query = queryFactory.create(String.format("FROM %s", Person.class.getName()));
+      query = cacheWithStats.query(String.format("FROM %s", Person.class.getName()));
       query.execute().list();
 
       searchStatistics = Search.getSearchStatistics(cacheWithStats);

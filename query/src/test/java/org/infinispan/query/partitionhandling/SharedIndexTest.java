@@ -7,13 +7,12 @@ import static org.testng.Assert.assertTrue;
 import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.partitionhandling.AvailabilityException;
 import org.infinispan.partitionhandling.BasePartitionHandlingTest;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.testng.annotations.Test;
@@ -72,10 +71,10 @@ public class SharedIndexTest extends BasePartitionHandlingTest {
    private void executeQueries() {
       String q = getQuery();
       caches().forEach(c -> {
-         Query allNodesQuery = Search.getQueryFactory(c).create(q);
-         assertAllNodesQueryResults(allNodesQuery.getResultSize());
+         Query allNodesQuery = c.query(q);
+         assertAllNodesQueryResults(allNodesQuery.execute().count().value());
       });
-      Query singleNodeQuery = Search.getQueryFactory(cache(0)).create(q);
+      Query singleNodeQuery = cache(0).query(q);
       assertSingleNodeQueryResults(singleNodeQuery.list().size());
    }
 

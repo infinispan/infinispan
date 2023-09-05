@@ -3,12 +3,10 @@ package org.infinispan.query.field;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
+import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.Search;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.model.Book;
 import org.infinispan.query.model.Color;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -43,26 +41,25 @@ public class MultipleIndexFieldAnnotationsTest extends SingleCacheManagerTest {
 
    @Test
    public void testTargetingDifferentIndexFields() {
-      QueryFactory factory = Search.getQueryFactory(cache);
-      Query<Book> query = factory.create("from org.infinispan.query.model.Color where name = 'red'");
+      Query<Book> query = cache.query("from org.infinispan.query.model.Color where name = 'red'");
       QueryResult<Book> result = query.execute();
 
       assertThat(result.count().value()).isEqualTo(1L);
       assertThat(result.list()).extracting("name").contains("red");
 
-      query = factory.create(String.format("from %s where desc1 = '%s'", Color.class.getName(), RED_DESCRIPTION));
+      query = cache.query(String.format("from %s where desc1 = '%s'", Color.class.getName(), RED_DESCRIPTION));
       result = query.execute();
 
       assertThat(result.count().value()).isEqualTo(1L);
       assertThat(result.list()).extracting("name").contains("red");
 
-      query = factory.create(String.format("from %s where desc2 = '%s'", Color.class.getName(), BLUE_DESCRIPTION));
+      query = cache.query(String.format("from %s where desc2 = '%s'", Color.class.getName(), BLUE_DESCRIPTION));
       result = query.execute();
 
       assertThat(result.count().value()).isEqualTo(1L);
       assertThat(result.list()).extracting("name").contains("blue");
 
-      query = factory.create(String.format("from %s where desc3 : 'cyan'", Color.class.getName()));
+      query = cache.query(String.format("from %s where desc3 : 'cyan'", Color.class.getName()));
       result = query.execute();
 
       assertThat(result.count().value()).isEqualTo(1L);

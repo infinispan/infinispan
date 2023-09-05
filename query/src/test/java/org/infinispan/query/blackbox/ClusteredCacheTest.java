@@ -21,6 +21,8 @@ import java.util.function.Predicate;
 import jakarta.transaction.TransactionManager;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -28,11 +30,7 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.Ownership;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.query.Search;
 import org.infinispan.query.backend.QueryInterceptor;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.CustomKey3;
 import org.infinispan.query.test.CustomKey3Transformer;
@@ -119,14 +117,12 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    }
 
    protected Query<Person> createQuery(Cache<?, ?> cache, String predicate) {
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
       String query = String.format("FROM %s WHERE %s", Person.class.getName(), predicate);
-      return queryFactory.create(query);
+      return cache.query(query);
    }
 
    protected Query<Person> createSelectAllQuery(Cache<?, ?> cache) {
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
-      return queryFactory.create("FROM " + Person.class.getName());
+      return cache.query("FROM " + Person.class.getName());
    }
 
    protected void prepareTestData() throws Exception {
@@ -250,7 +246,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    }
 
    protected int countIndex(Cache<?, ?> cache) {
-      Query<?> query = Search.getQueryFactory(cache).create("FROM " + Person.class.getName());
+      Query<?> query = cache.query("FROM " + Person.class.getName());
       return query.execute().count().value();
    }
 

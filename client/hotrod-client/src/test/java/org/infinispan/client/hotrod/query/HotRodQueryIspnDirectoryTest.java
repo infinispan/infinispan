@@ -8,11 +8,10 @@ import java.util.List;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.Search;
+import org.infinispan.commons.api.query.Query;
+import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryResult;
 import org.testng.annotations.Test;
 
 
@@ -34,20 +33,19 @@ public class HotRodQueryIspnDirectoryTest extends HotRodQueryTest {
       assertEquals("Tom", user1.at("name").asString());
       assertEquals("Cat", user1.at("surname").asString());
 
-      Query<String> query = Search.getQueryFactory(jsonCache).create("FROM sample_bank_account.User WHERE name = :name");
+      Query<String> query = jsonCache.query("FROM sample_bank_account.User WHERE name = :name");
       query.maxResults(10).startOffset(0).setParameter("name", "Tom");
 
       QueryResult<String> result = query.execute();
       List<String> results = result.list();
 
-      assertEquals(1, query.getResultSize());
+      assertEquals(1, query.execute().count().value());
       assertFalse(query.hasProjections());
 
       Json jsonNode = Json.read(results.iterator().next());
       assertEquals("Tom", jsonNode.at("name").asString());
       assertEquals("Cat", jsonNode.at("surname").asString());
 
-      query = Search.getQueryFactory(jsonCache).create("FROM sample_bank_account.User WHERE name = \"Tom\"");
       results = query.execute().list();
       assertEquals(1, results.size());
    }

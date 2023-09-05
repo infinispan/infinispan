@@ -13,6 +13,7 @@ import javax.management.ObjectName;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -21,8 +22,6 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.core.stats.SearchStatistics;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -81,7 +80,6 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
       assertTrue(mBeanServer.isRegistered(name));
 
       // check that our settings are not ignored
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
       SearchStatistics searchStatistics = Search.getSearchStatistics(cache);
       assertTrue(searchStatistics.getQueryStatistics().isEnabled());
 
@@ -99,7 +97,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
       assertEquals(0L, mBeanServer.getAttribute(name, "SearchQueryExecutionCount"));
 
       String q = String.format("FROM %s WHERE blurb:'value'", Person.class.getName());
-      Query<?> cacheQuery = queryFactory.create(q);
+      Query<?> cacheQuery = cache.query(q);
       List<?> found = cacheQuery.execute().list(); //Executing first query
 
       assertEquals(1L, mBeanServer.getAttribute(name, "SearchQueryExecutionCount"));
