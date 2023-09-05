@@ -155,7 +155,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
                .thenCompose(r -> {
                   if (r instanceof CacheState) {
                      Configuration remoteConf = buildConfiguration(name, ((CacheState) r).getConfiguration(), false);
-                     ensurePersistenceCompatibility(name, remoteConf);
+                     ensurePersistenceCompatibility(name, configuration, remoteConf);
                      return createCacheLocally(name, (CacheState) r);
                   }
                   return CompletableFutures.completedNull();
@@ -175,8 +175,12 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
 
    private void ensurePersistenceCompatibility(String name, Configuration configuration) {
       Configuration staticConfiguration = cacheManager.getCacheConfiguration(name);
-      if (staticConfiguration != null && !staticConfiguration.matches(configuration))
-         throw CONFIG.incompatiblePersistedConfiguration(name, configuration, staticConfiguration);
+      ensurePersistenceCompatibility(name, staticConfiguration, configuration);
+   }
+
+   private void ensurePersistenceCompatibility(String name, Configuration existing, Configuration other) {
+      if (existing != null && !existing.matches(other))
+         throw CONFIG.incompatiblePersistedConfiguration(name, other, existing);
    }
 
    private void assertNameLength(String name) {
