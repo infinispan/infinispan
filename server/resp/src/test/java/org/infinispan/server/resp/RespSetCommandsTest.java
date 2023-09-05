@@ -178,16 +178,16 @@ public class RespSetCommandsTest extends SingleNodeRespBaseTest {
       Long removed = redis.srem(key, "1");
       assertThat(removed.longValue()).isEqualTo(1L);
       // Remove more elements
-      removed = redis.srem(key, "4","2","5");
+      removed = redis.srem(key, "4", "2", "5");
       assertThat(removed.longValue()).isEqualTo(3L);
       // Try removing 1 non present element
       removed = redis.srem(key, "6");
       assertThat(removed.longValue()).isEqualTo(0L);
       // Try removing more non present elements
-      removed = redis.srem(key, "6","7");
+      removed = redis.srem(key, "6", "7");
       assertThat(removed.longValue()).isEqualTo(0L);
       // Some present some not
-      removed = redis.srem(key, "3","6");
+      removed = redis.srem(key, "3", "6");
       assertThat(removed.longValue()).isEqualTo(1L);
       // Set is empty now and has been removed
       assertThat(redis.smembers(key)).isEmpty();
@@ -196,7 +196,7 @@ public class RespSetCommandsTest extends SingleNodeRespBaseTest {
       assertThat(cursor.getKeys()).doesNotContain(key);
 
       // Try remove on not existing
-      removed = redis.srem(key, "4","2");
+      removed = redis.srem(key, "4", "2");
       assertThat(removed.longValue()).isEqualTo(0L);
 
       // SREM removed the entry, since set is empty. Test that key is free
@@ -228,7 +228,7 @@ public class RespSetCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.sunion(key, key1)).containsExactlyInAnyOrder("e1", "e2", "e3", "e4");
 
       // check union between 3 sets
-      assertThat(redis.sunion(key, key1,key2)).containsExactlyInAnyOrder("e1", "e2", "e3", "e4", "e5", "e6");
+      assertThat(redis.sunion(key, key1, key2)).containsExactlyInAnyOrder("e1", "e2", "e3", "e4", "e5", "e6");
 
       // Union non existent sets returns the set
       assertThat(redis.sunion(key1, "nonexistent1")).containsExactlyInAnyOrder("e2", "e3", "e4");
@@ -435,5 +435,83 @@ public class RespSetCommandsTest extends SingleNodeRespBaseTest {
       assertThat(scanned)
             .hasSize(dataSize)
             .containsExactlyInAnyOrderElementsOf(content);
+   }
+
+   @Test
+   public void testSdiff() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "sdiff";
+      redis.sadd(key, "e1", "e2", "e3");
+
+      // check sdiff 2 sets
+      String key1 = "sdiff1";
+      redis.sadd(key1, "e2", "e3", "e4");
+      assertThat(redis.sdiff(key, key1)).containsExactlyInAnyOrder("e1");
+
+      // sdiff 3 sets
+      String key2 = "sdiff2";
+      redis.sadd(key2, "e1", "e3", "e4");
+      assertThat(redis.sdiff(key, key1, key2)).isEmpty();
+
+      // sdiff with itself return empty set
+      assertThat(redis.sdiff(key, key)).isEmpty();
+
+      // sdiff with empty return the set
+      assertThat(redis.sdiff(key, "nonexistent1"))
+            .containsExactlyInAnyOrderElementsOf(redis.smembers(key));
+
+      // sdiff non existent sets returns empty set
+      assertThat(redis.sdiff("nonexistent", "nonexistent1")).isEmpty();
+
+      // SDIFF on an existing key that contains a String, not a Set!
+      // Set a String Command
+      assertWrongType(() -> redis.set("leads", "tristan"), () -> redis.sdiff("leads", key));
+      assertWrongType(() -> redis.set("leads", "tristan"), () -> redis.sdiff(key, "leads"));
+      // SDIFF on an existing key that contains a List, not a Set!
+      // Create a List
+      assertWrongType(() -> redis.rpush("listleads", "tristan"), () -> redis.sdiff("listleads", "william"));
+   }
+
+   @Test
+   public void testSdiffstore() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String dest = "dest";
+      String key = "sdiffStore";
+      redis.sadd(key, "e1", "e2", "e3");
+
+      // check sdiff 2 sets
+      String key1 = "sdiff1Store";
+      redis.sadd(key1, "e2", "e3", "e4");
+      assertThat(redis.sdiffstore(dest, key, key1)).isEqualTo(1);
+      assertThat(redis.smembers(dest)).containsExactlyInAnyOrder("e1");
+
+      // sdiff 3 sets
+      String key2 = "sdiff2Store";
+      redis.sadd(key2, "e1", "e3", "e4");
+      assertThat(redis.sdiffstore(dest, key, key1, key2)).isEqualTo(0);
+      assertThat(redis.smembers(dest)).isEmpty();
+
+      // sdiff with itself return empty set
+      assertThat(redis.sdiffstore(dest, key, key)).isEqualTo(0);
+      assertThat(redis.smembers(dest)).isEmpty();
+
+      // sdiff with empty return the set
+      assertThat(redis.sdiffstore(dest, key, "nonexistent1"))
+            .isEqualTo(redis.smembers(key).size());
+      assertThat(redis.smembers(dest))
+            .containsExactlyInAnyOrderElementsOf(redis.smembers(key));
+
+      // sdiff non existent sets returns empty set
+      assertThat(redis.sdiffstore("dest", "nonexistent", "nonexistent1")).isEqualTo(0);
+      assertThat(redis.smembers(dest)).isEmpty();
+
+      // SDIFF on an existing key that contains a String, not a Set!
+      // Set a String Command
+      assertWrongType(() -> redis.set("leads", "tristan"), () -> redis.sdiffstore("dest", "leads", key));
+      assertWrongType(() -> redis.set("leads", "tristan"), () -> redis.sdiffstore("dest", key, "leads"));
+      // SDIFF on an existing key that contains a List, not a Set!
+      // Create a List
+      assertWrongType(() -> redis.rpush("listleads", "tristan"),
+            () -> redis.sdiffstore("dest", "listleads", "william"));
    }
 }
