@@ -40,8 +40,8 @@ public class DefaultExecutorFactory implements ExecutorFactory {
       if (blocking == null) {
          threadGroup = Thread.currentThread().getThreadGroup();
       } else {
-         threadGroup = Boolean.parseBoolean(blocking) ? new BlockingThreadFactory.ISPNBlockingThreadGroup(threadNamePrefix + "-group") :
-               new NonBlockingThreadFactory.ISPNNonBlockingThreadGroup(threadNamePrefix + "-group");
+         threadGroup = Boolean.parseBoolean(blocking) ? BlockingThreadGroupHolder.GROUP :
+               NonBlockingThreadGroupHolder.GROUP;
       }
       BlockingQueue<Runnable> queue = queueSize == 0 ? new SynchronousQueue<>()
             : new LinkedBlockingQueue<>(queueSize);
@@ -63,5 +63,14 @@ public class DefaultExecutorFactory implements ExecutorFactory {
 
       return new ThreadPoolExecutor(coreThreads, maxThreads, keepAliveTime, TimeUnit.MILLISECONDS, queue, tf,
             new ThreadPoolExecutor.CallerRunsPolicy());
+   }
+
+   // We use holder classes to not create groups that are not needed
+   static class BlockingThreadGroupHolder {
+      private static final ThreadGroup GROUP = new BlockingThreadFactory.ISPNBlockingThreadGroup("ISPN-blocking-group");
+   }
+
+   static class NonBlockingThreadGroupHolder {
+      private static final ThreadGroup GROUP = new NonBlockingThreadFactory.ISPNNonBlockingThreadGroup("ISPN-non-blocking-group");
    }
 }
