@@ -70,12 +70,16 @@ import org.kohsuke.MetaInfServices;
 @Namespace(root = "distributed-cache-configuration")
 @Namespace(root = "replicated-cache")
 @Namespace(root = "replicated-cache-configuration")
+@Namespace(root = "scattered-cache")
+@Namespace(root = "scattered-cache-configuration")
 @Namespace(uri = NAMESPACE + "*", root = "local-cache")
 @Namespace(uri = NAMESPACE + "*", root = "local-cache-configuration")
 @Namespace(uri = NAMESPACE + "*", root = "distributed-cache")
 @Namespace(uri = NAMESPACE + "*", root = "distributed-cache-configuration")
 @Namespace(uri = NAMESPACE + "*", root = "replicated-cache")
 @Namespace(uri = NAMESPACE + "*", root = "replicated-cache-configuration")
+@Namespace(uri = NAMESPACE + "*", root = "scattered-cache")
+@Namespace(uri = NAMESPACE + "*", root = "scattered-cache-configuration")
 public class CacheParser implements ConfigurationParser {
    public static final String NAMESPACE = "urn:infinispan:config:";
    public static final String IGNORE_DUPLICATES = "org.infinispan.parser.ignoreDuplicates";
@@ -121,8 +125,17 @@ public class CacheParser implements ConfigurationParser {
             parseDistributedCache(reader, holder, name, true);
             break;
          }
-         default:
+         case SCATTERED_CACHE:
+         case SCATTERED_CACHE_CONFIGURATION: {
+            if (reader.getSchema().since(15, 0)) {
                throw ParseUtils.unexpectedElement(reader);
+            } else {
+               parseScatteredCache(reader, holder, element);
+            }
+            break;
+         }
+         default:
+            throw ParseUtils.unexpectedElement(reader);
       }
    }
 
@@ -872,7 +885,7 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             default: {
-               this.parseClusteredCacheAttribute(reader, i, attribute, value, builder, CacheType.INVALIDATION);
+               this.parseClusteredCacheAttribute(reader, i, attribute, value, builder);
             }
          }
       }
@@ -888,8 +901,8 @@ public class CacheParser implements ConfigurationParser {
       holder.popScope();
    }
 
-   private void parseSegmentedCacheAttribute(ConfigurationReader reader,
-                                             int index, Attribute attribute, String value, ConfigurationBuilder builder, ClassLoader classLoader, CacheType type)
+   private void parseSegmentedCacheAttribute(ConfigurationReader reader, int index, Attribute attribute, String value,
+                                             ConfigurationBuilder builder, ClassLoader classLoader)
       {
       switch (attribute) {
          case SEGMENTS: {
@@ -912,14 +925,13 @@ public class CacheParser implements ConfigurationParser {
             break;
          }
          default: {
-            this.parseClusteredCacheAttribute(reader, index, attribute, value, builder, type);
+            this.parseClusteredCacheAttribute(reader, index, attribute, value, builder);
          }
       }
    }
 
-   private void parseClusteredCacheAttribute(ConfigurationReader reader,
-         int index, Attribute attribute, String value, ConfigurationBuilder builder, CacheType type)
-         {
+   private void parseClusteredCacheAttribute(ConfigurationReader reader, int index, Attribute attribute, String value,
+                                             ConfigurationBuilder builder) {
       switch (attribute) {
          case ASYNC_MARSHALLING: {
             if (reader.getSchema().since(9, 0)) {
@@ -963,7 +975,7 @@ public class CacheParser implements ConfigurationParser {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         parseSegmentedCacheAttribute(reader, i, attribute, value, builder, holder.getClassLoader(), CacheType.REPLICATION);
+         parseSegmentedCacheAttribute(reader, i, attribute, value, builder, holder.getClassLoader());
       }
 
       while (reader.inTag()) {
@@ -1043,7 +1055,7 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             default: {
-               this.parseSegmentedCacheAttribute(reader, i, attribute, value, builder, holder.getClassLoader(), CacheType.DISTRIBUTION);
+               this.parseSegmentedCacheAttribute(reader, i, attribute, value, builder, holder.getClassLoader());
             }
          }
       }
@@ -1795,6 +1807,31 @@ public class CacheParser implements ConfigurationParser {
       ParseUtils.requireNoAttributes(reader);
       String[] entities = reader.readArray(Element.INDEXED_ENTITIES, Element.INDEXED_ENTITY);
       builder.indexing().addIndexedEntities(entities);
+   }
+
+   protected void parseScatteredCache(ConfigurationReader reader, ConfigurationBuilderHolder holder, Element element) {
+      ignoreElement(reader, element);
+      // Throwaway ConfigurationBuilder instance as we ignore the provided config
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+         switch (attribute) {
+            case INVALIDATION_BATCH_SIZE:
+            case BIAS_ACQUISITION:
+            case BIAS_LIFESPAN:
+               ignoreAttribute(reader, i);
+               break;
+            default: {
+               this.parseSegmentedCacheAttribute(reader, i, attribute, value, builder, holder.getClassLoader());
+            }
+         }
+      }
+
+      while (reader.inTag()) {
+         Element e = Element.forName(reader.getLocalName());
+         this.parseSharedStateCacheElement(reader, e, holder);
+      }
    }
 
    private static void parseProperty(ConfigurationReader reader, Properties properties) {
