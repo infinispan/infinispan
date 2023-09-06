@@ -86,6 +86,7 @@ import org.kohsuke.MetaInfServices;
 public class CacheParser implements ConfigurationParser {
    public static final String NAMESPACE = "urn:infinispan:config:";
    public static final String IGNORE_DUPLICATES = "org.infinispan.parser.ignoreDuplicates";
+   public static final String ALLOWED_DUPLICATES = "org.infinispan.parser.allowedDuplicates";
 
    public CacheParser() {
    }
@@ -1166,12 +1167,23 @@ public class CacheParser implements ConfigurationParser {
    }
 
    private ConfigurationBuilder getConfigurationBuilder(ConfigurationReader reader, ConfigurationBuilderHolder holder, String name, boolean template, String baseConfigurationName) {
-      if (!reader.getProperties().containsKey(IGNORE_DUPLICATES) && holder.getNamedConfigurationBuilders().containsKey(name)) {
-         throw CONFIG.duplicateCacheName(name);
-      }
+      checkDuplicateCacheName(reader, holder, name);
       ConfigurationBuilder builder = holder.newConfigurationBuilder(name);
       builder.configuration(baseConfigurationName).template(template);
       return builder;
+   }
+
+   private void checkDuplicateCacheName(ConfigurationReader reader, ConfigurationBuilderHolder holder, String name) {
+      Properties props = reader.getProperties();
+      if (props.containsKey(IGNORE_DUPLICATES) || !holder.getNamedConfigurationBuilders().containsKey(name))
+         return;
+
+      if (props.containsKey(ALLOWED_DUPLICATES)) {
+         for (String allowedDuplicate : props.getProperty(ALLOWED_DUPLICATES).split(","))
+            if (allowedDuplicate.equals(name))
+               return;
+      }
+      throw CONFIG.duplicateCacheName(name);
    }
 
    private void parsePersistence(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {

@@ -51,6 +51,7 @@ public class EmbeddedInfinispanServerDriver extends AbstractInfinispanServerDriv
       serverFutures = new ArrayList<>();
       for (int i = 0; i < configuration.numServers(); i++) {
          File serverRoot = createServerHierarchy(rootDir, Integer.toString(i));
+         copyArtifactsToDataDir();
          Server server = createServerInstance(name, rootDir, configurationFile, i, serverRoot);
          serverFutures.add(server.run());
          servers.add(server);
