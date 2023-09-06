@@ -46,6 +46,7 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.parsing.CacheParser;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.factories.KnownComponentNames;
@@ -307,9 +308,12 @@ public class Server implements ServerManagement, AutoCloseable {
          global.read(defaultsHolder.getGlobalConfigurationBuilder().build());
 
          // Copy all default templates
+         StringBuilder defaultTemplateNames = new StringBuilder();
          for (Map.Entry<String, ConfigurationBuilder> entry : defaultsHolder.getNamedConfigurationBuilders().entrySet()) {
             configurationBuilderHolder.newConfigurationBuilder(entry.getKey()).read(entry.getValue().build());
+            defaultTemplateNames.append(entry.getKey()).append(",");
          }
+         properties.put(CacheParser.ALLOWED_DUPLICATES, defaultTemplateNames.toString());
 
          // then load the user configurations
          for (Path configurationFile : configurationFiles) {

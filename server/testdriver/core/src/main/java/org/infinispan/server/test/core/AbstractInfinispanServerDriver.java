@@ -184,17 +184,21 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    }
 
    private void copyProvidedServerConfigurationFile() {
+      copyResource(configuration.configurationFile(), confDir.toPath());
+   }
+
+   private void copyResource(String resource, Path dst) {
       ClassLoader classLoader = getClass().getClassLoader();
-      File configFile = new File(configuration.configurationFile());
+      File configFile = new File(resource);
       if (configFile.isAbsolute()) {
          Path source = Paths.get(configFile.getParentFile().getAbsolutePath());
-         Exceptions.unchecked(() -> Util.recursiveDirectoryCopy(source, confDir.toPath()));
+         Exceptions.unchecked(() -> Util.recursiveDirectoryCopy(source, dst));
          return;
       }
 
-      URL resourceUrl = classLoader.getResource(configuration.configurationFile());
+      URL resourceUrl = classLoader.getResource(resource);
       if (resourceUrl == null) {
-         throw new RuntimeException("Cannot find test configuration file: " + configuration.configurationFile());
+         throw new RuntimeException("Cannot find test file: " + resource);
       }
       Exceptions.unchecked(() -> {
          if (resourceUrl.getProtocol().equals("jar")) {
@@ -206,11 +210,11 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
             try (FileSystem fs = FileSystems.newFileSystem(jarUri, env)) {
                String configJarPath = new File(parts[1]).getParentFile().toString();
                Path source = fs.getPath(configJarPath);
-               Util.recursiveDirectoryCopy(source, confDir.toPath());
+               Util.recursiveDirectoryCopy(source, dst);
             }
          } else {
             Path source = Paths.get(resourceUrl.toURI().resolve("."));
-            Util.recursiveDirectoryCopy(source, confDir.toPath());
+            Util.recursiveDirectoryCopy(source, dst);
          }
       });
    }
@@ -253,6 +257,16 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
             userTool.createUser(user.getUser(), user.getPassword(), realm, UserTool.Encryption.DEFAULT, user.getRoles(), null);
          }
       }
+   }
+
+   protected void copyArtifactsToDataDir() {
+      if (configuration.getDataFiles() == null)
+         return;
+
+      File dataDir = new File(rootDir, DEFAULT_SERVER_DATA);
+      dataDir.mkdirs();
+      for (String file : configuration.getDataFiles())
+         copyResource(file, dataDir.toPath());
    }
 
    protected void copyArtifactsToUserLibDir(File libDir) {

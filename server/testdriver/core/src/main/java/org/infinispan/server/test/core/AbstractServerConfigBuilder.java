@@ -27,6 +27,7 @@ public abstract class AbstractServerConfigBuilder<T extends AbstractServerConfig
    private final List<InfinispanServerListener> listeners = new ArrayList<>();
    private String siteName;
    private int portOffset = 0;
+   private String[] dataFiles;
 
    protected AbstractServerConfigBuilder(String configurationFile, boolean defaultFile) {
       this.configurationFile = configurationFile;
@@ -43,7 +44,7 @@ public abstract class AbstractServerConfigBuilder<T extends AbstractServerConfig
 
    public InfinispanServerTestConfiguration createServerTestConfiguration() {
       return new InfinispanServerTestConfiguration(configurationFile, numServers, runMode, this.properties, mavenArtifacts,
-                  archives, jmx, parallelStartup, defaultFile, listeners, siteName, portOffset, features);
+                  archives, jmx, parallelStartup, defaultFile, listeners, siteName, portOffset, features, dataFiles);
    }
 
    public T mavenArtifacts(String... mavenArtifacts) {
@@ -110,6 +111,11 @@ public abstract class AbstractServerConfigBuilder<T extends AbstractServerConfig
 
    public T portOffset(int port) {
       this.portOffset = port;
+      return (T) this;
+   }
+
+   public T dataFiles(String... dataFiles) {
+      this.dataFiles = dataFiles;
       return (T) this;
    }
 }
