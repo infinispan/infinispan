@@ -30,7 +30,7 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
 
    private static final int OFF_HEAP_KEY_SIZE = 6;
    private static final int OFF_HEAP_VALUE_SIZE = 8;
-   private static final long OFF_HEAP_SIZE = estimateSizeOverhead(offHeapEntrySize(true, false /*immortal entries*/, OFF_HEAP_KEY_SIZE, OFF_HEAP_VALUE_SIZE));
+   private static final long OFF_HEAP_SIZE = offHeapEntrySize(true, false /*immortal entries*/, OFF_HEAP_KEY_SIZE, OFF_HEAP_VALUE_SIZE);
 
    protected final int EVICTION_MAX_ENTRIES = 3;
    protected final int TOTAL_ENTRIES = 5;
@@ -83,9 +83,9 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
          memoryConfigurationBuilder.maxCount(size);
       } else {
          if (storageType == StorageType.OFF_HEAP) {
-            // When expiration eviction is used it stores the internal metadata which we will estimate as 24 bytes
-            long amountPerEntry = OFF_HEAP_SIZE + (evictionStrategy.isExceptionBased() ? 24 : 0);
-            size = estimateSizeOverhead(size * amountPerEntry);
+            // When expiration eviction is used it stores the internal metadata which we will estimate as 19 bytes (4 size and 15 for actual bytes)
+            long amountPerEntry = estimateSizeOverhead(OFF_HEAP_SIZE + (evictionStrategy.isExceptionBased() ? 19 : 0));
+            size = size * amountPerEntry;
             // Have to also include address count overhead
             size += estimateSizeOverhead(OffHeapConcurrentMap.INITIAL_SIZE << 3);
          } else {
