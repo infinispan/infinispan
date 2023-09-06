@@ -174,6 +174,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
 
       File libDir = new File(rootDir, "lib");
       libDir.mkdirs();
+      copyArtifactsToDataDir();
       copyArtifactsToUserLibDir(libDir);
       // Copy the resources to a location from where they can be added to the image
       try {

@@ -99,7 +99,7 @@ abstract class AbstractMultiClusterIT {
    protected static class ClusterConfiguration extends InfinispanServerTestConfiguration {
       public ClusterConfiguration(String configurationFile, int numServers, int portOffset, String[] mavenArtifacts) {
          super(configurationFile, numServers, mavenArtifacts != null ? ServerRunMode.CONTAINER : ServerRunMode.EMBEDDED, new Properties(), mavenArtifacts, null,
-               false, false, false, Collections.emptyList(), null, portOffset, new String[]{});
+               false, false, false, Collections.emptyList(), null, portOffset, new String[]{}, new String[]{});
       }
    }
 
