@@ -52,6 +52,17 @@ Code away...
 
 The Infinispan family projects share the same style conventions. Please refer to our [Contributing Guide](https://infinispan.org/docs/dev/titles/contributing/contributing.html) for more details.
 
+## Debugging
+
+If you need to debug a test running inside a container, such as the tests in `server/tests`, you will need to start a 
+debugger in listening/server mode on port 5005. Set any breakpoints you need and then launch the test with the 
+`org.infinispan.test.server.container.debug` system property set to the index of the container you want to debug 
+(usually `0` for the first container):
+
+```
+mvn verify -pl server/tests -Dit.test=RequestTracingIT -Dorg.infinispan.test.server.container.debug=0
+```
+
 
 ## Commit
 
