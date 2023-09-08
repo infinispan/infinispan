@@ -171,23 +171,23 @@ Each of the annotations supports a set of attributes that you can use to further
 These new annotations replaced Hibernate Search annotations which means that you are no longer required to annotate your Java classes with the `@ProtoDoc` annotation for remote caches.
 Any annotations will be copied as comments to the generated `.proto` files.
 
-The following table summarizes the mapping of fields between Hibernate Search 5 annotations and {brandname} native annotations:
+The following table summarizes the mapping of fields between Hibernate Search 5 (HS5) annotations and {brandname} native annotations:
 
-[%header,cols=3*]
+[%header,cols=4*]
 |===
-| HS5 annotations | {brandname} native annotations| Description
+| HS5 annotations | Indexing attributes| {brandname} native annotations| Description
 
-| @Field(index=Index.YES) | searchable | Fields previously marked as indexed are now searchable.
+| @Field(index=Index.YES) | searchable | @Basic, @Decimal, @Keyword, @Text |Fields previously marked as indexed are now searchable.
 
-| @Field(store = Store.YES) | projectable = true | Fields previously marked as stored are now projectable.
+| @Field(store = Store.YES) | projectable = true | @Basic, @Decimal, @Keyword, @Text| Fields previously marked as stored are now projectable.
 
-| type String && @Field(analyze = Analyze.YES) | analyzer = "<definition>"| String fields that were marked with analyzer definitions remain being analyzed during indexing.
+| type String && @Field(analyze = Analyze.YES) | analyzer = "<definition>"| @Text| String fields that were marked with analyzer definitions remain being analyzed during indexing.
 
-| @Field(analyze = Analyze.NO) && (@Field(store = Store.YES) OR @Field(sortable = Sortable.YES)) | sortable = true| Fields that were not analyzed but were either stored in the index or marked as sortable are now considered sortable.
+| @Field(analyze = Analyze.NO) && (@Field(store = Store.YES) OR @Field(sortable = Sortable.YES)) | sortable = true| @Basic, @Decimal, @Keyword| Fields that were not analyzed but were either stored in the index or marked as sortable are now considered sortable.
 
-| N/A | aggregable = true| Performing aggregation operations using the Hibernate 5 Search annotations was not possible.
+| N/A | aggregable = true| @Basic, @Decimal, @Keyword| Performing aggregation operations using the Hibernate 5 Search annotations was not possible.
 
-| N/A | normalizer = "lowercase"| Mapping fields that were analyzed or normalized is not possible due to the potential data loss in the process.
+| N/A | normalizer = "lowercase"| @Keyword| Mapping fields that were analyzed or normalized is not possible due to the potential data loss in the process.
 |===
 
 == Query efficiency
