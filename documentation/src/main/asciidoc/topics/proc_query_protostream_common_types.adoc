@@ -38,11 +38,11 @@ public interface CalculusIndexedSchema extends GeneratedSchema {
 +
 [source]
 ----
-Query<Product> query = queryFactory.create("from lab.indexed.CalculusIndexed c where c.purchases > 9");
+Query<Product> query = cache.query("from lab.indexed.CalculusIndexed c where c.purchases > 9");
 QueryResult<Product> result = query.execute();
 // play with the result
 
-query = queryFactory.create("from lab.indexed.CalculusIndexed c where c.prospect = 2.2");
+query = cache.query("from lab.indexed.CalculusIndexed c where c.prospect = 2.2");
 result = query.execute();
 // play with the result
 ----

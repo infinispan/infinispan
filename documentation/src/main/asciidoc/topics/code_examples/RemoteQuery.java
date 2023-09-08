@@ -41,8 +41,7 @@ public class RemoteQuery {
       remoteCache.put(2, book2);
 
       // Execute a full-text query
-      QueryFactory queryFactory = Search.getQueryFactory(remoteCache);
-      Query<Book> query = queryFactory.create("FROM book_sample.Book WHERE title:'java'");
+      Query<Book> query = remoteCache.query("FROM book_sample.Book WHERE title:'java'");
 
       List<Book> list = query.execute().list(); // Voila! We have our book back from the cache!
    }
