@@ -17,8 +17,7 @@ ContinuousQuery<Integer, Person> continuousQuery = Search.getContinuousQuery(cac
 
 // Define a query.
 // In this example, we search for Person instances under 21 years of age.
-QueryFactory queryFactory = Search.getQueryFactory(cache);
-Query query = queryFactory.create("FROM Person p WHERE p.age < 21");
+Query query = cache.create("FROM Person p WHERE p.age < 21");
 
 final Map<Integer, Person> matches = new ConcurrentHashMap<Integer, Person>();
 

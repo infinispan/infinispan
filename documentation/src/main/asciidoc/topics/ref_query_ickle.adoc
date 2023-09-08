@@ -1,20 +1,17 @@
 [id='ickle-queries_{context}']
 = Ickle queries
 
-To use the API, first obtain a QueryFactory to the cache and then call the `.create()` method, passing in the string to use in the query.
-Each `QueryFactory` instance is bound to the same `Cache` instance as the `Search`, but it is otherwise a stateless and thread-safe object that can be used for creating multiple queries in parallel.
+To use the API, call the cache `.query()` method, passing in the string to use in the query.
 
 For instance:
 
 [source,java,tile="Using Ickle"]
 ----
 // Remote Query, using protobuf
-QueryFactory qf = org.infinispan.client.hotrod.Search.getQueryFactory(remoteCache);
-Query<Transaction> q = qf.create("from sample_bank_account.Transaction where amount > 20");
+Query<Transaction> q = remoteCache.create("from sample_bank_account.Transaction where amount > 20");
 
 // Embedded Query using Java Objects
-QueryFactory qf = org.infinispan.query.Search.getQueryFactory(cache);
-Query<Transaction> q = qf.create("from org.infinispan.sample.Book where price > 20");
+Query<Transaction> q = cache.create("from org.infinispan.sample.Book where price > 20");
 
 // Execute the query
 QueryResult<Book> queryResult = q.execute();
@@ -37,7 +34,7 @@ conjunction with `Query.startOffset(long startOffset)` to achieve pagination of 
 ----
 // sorted by year and match all books that have "clustering" in their title
 // and return the third page of 10 results
-Query<Book> query = queryFactory.create("FROM org.infinispan.sample.Book WHERE title like '%clustering%' ORDER BY year").startOffset(20).maxResults(10)
+Query<Book> query = cache.query("FROM org.infinispan.sample.Book WHERE title like '%clustering%' ORDER BY year").startOffset(20).maxResults(10)
 ----
 
 [NOTE]
@@ -90,9 +87,8 @@ the operator instead of the usual constant value. Once the parameters have been 
 ⁠
 [source,java,tile="Using Named Parameters"]
 ----
-QueryFactory queryFactory = Search.getQueryFactory(cache);
 // Defining a query to search for various authors and publication years
-Query<Book> query = queryFactory.create("SELECT title FROM org.infinispan.sample.Book WHERE author = :authorName AND publicationYear = :publicationYear").build();
+Query<Book> query = cache.query("SELECT title FROM org.infinispan.sample.Book WHERE author = :authorName AND publicationYear = :publicationYear").build();
 
 // Set actual parameter values
 query.setParameter("authorName", "Doe");
