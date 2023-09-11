@@ -236,4 +236,20 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
       // Other tests need a cache manager still
       createCacheManagers();
    }
+
+   @Test(dataProvider = "booleans")
+   public void testRestartSameKey(boolean deleteIndex) throws Throwable {
+      int size = 20;
+      for (int i = 0; i < size; i++) {
+         cache(0, cacheName).put("same-key", "value-" + i);
+      }
+
+      killMember(0, cacheName);
+
+      if (deleteIndex) {
+         // Delete the index which should force it to rebuild
+         Util.recursiveFileRemove(Paths.get(tmpDirectory, "index"));
+      }
+      createCacheManagers();
+   }
 }
