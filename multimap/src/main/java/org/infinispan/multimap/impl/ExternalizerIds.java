@@ -44,4 +44,5 @@ public interface ExternalizerIds {
    Integer SORTED_SET_RANDOM_FUNCTION = 2082;
    Integer SET_REMOVE_FUNCTION = 2083;
    Integer SET_POP_FUNCTION = 2084;
+   Integer REPLACE_LIST_FUNCTION = 2085;
 }

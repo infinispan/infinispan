@@ -1,6 +1,6 @@
 package org.infinispan.server.resp.commands.sortedset;
 
-import org.infinispan.multimap.impl.SortedSetBucket;
+import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.server.resp.Util;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 
@@ -102,11 +102,11 @@ public final class ZSetCommonUtils {
     * @param withScores, return with scores
     * @return byte[] list to be returned by the command
     */
-   public static List<byte[]> mapResultsToArrayList(Collection<SortedSetBucket.ScoredValue<byte[]>> scoredValues, boolean withScores) {
+   public static List<byte[]> mapResultsToArrayList(Collection<ScoredValue<byte[]>> scoredValues, boolean withScores) {
       List<byte[]> elements = new ArrayList<>();
-      Iterator<SortedSetBucket.ScoredValue<byte[]>> ite = scoredValues.iterator();
+      Iterator<ScoredValue<byte[]>> ite = scoredValues.iterator();
       while (ite.hasNext()) {
-         SortedSetBucket.ScoredValue<byte[]> item = ite.next();
+         ScoredValue<byte[]> item = ite.next();
          elements.add(item.getValue());
          if (withScores) {
             elements.add(Double.toString(item.score()).getBytes(StandardCharsets.US_ASCII));

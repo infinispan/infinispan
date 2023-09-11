@@ -1,14 +1,36 @@
 package org.infinispan.server.resp;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.fail;
-import static org.infinispan.server.resp.test.RespTestingUtil.OK;
-import static org.infinispan.server.resp.test.RespTestingUtil.PONG;
-import static org.infinispan.test.TestingUtil.k;
-import static org.infinispan.test.TestingUtil.v;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import io.lettuce.core.ExpireArgs;
+import io.lettuce.core.FlushMode;
+import io.lettuce.core.KeyScanArgs;
+import io.lettuce.core.KeyScanCursor;
+import io.lettuce.core.KeyValue;
+import io.lettuce.core.RedisCommandExecutionException;
+import io.lettuce.core.ScanArgs;
+import io.lettuce.core.SetArgs;
+import io.lettuce.core.SortArgs;
+import io.lettuce.core.StrAlgoArgs;
+import io.lettuce.core.StringMatchResult;
+import io.lettuce.core.ZAddArgs;
+import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.output.ArrayOutput;
+import io.lettuce.core.output.StatusOutput;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.ProtocolKeyword;
+import io.lettuce.core.pubsub.RedisPubSubAdapter;
+import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.time.ControlledTimeService;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.server.resp.commands.Commands;
+import org.infinispan.server.resp.test.CommonRespTests;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Factory;
+import org.testng.annotations.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -28,36 +50,17 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.test.Exceptions;
-import org.infinispan.commons.time.ControlledTimeService;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.server.resp.commands.Commands;
-import org.infinispan.server.resp.test.CommonRespTests;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Factory;
-import org.testng.annotations.Test;
-
-import io.lettuce.core.ExpireArgs;
-import io.lettuce.core.FlushMode;
-import io.lettuce.core.KeyScanArgs;
-import io.lettuce.core.KeyScanCursor;
-import io.lettuce.core.KeyValue;
-import io.lettuce.core.RedisCommandExecutionException;
-import io.lettuce.core.ScanArgs;
-import io.lettuce.core.SetArgs;
-import io.lettuce.core.StrAlgoArgs;
-import io.lettuce.core.StringMatchResult;
-import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.output.ArrayOutput;
-import io.lettuce.core.output.StatusOutput;
-import io.lettuce.core.protocol.CommandArgs;
-import io.lettuce.core.protocol.ProtocolKeyword;
-import io.lettuce.core.pubsub.RedisPubSubAdapter;
-import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
+import static io.lettuce.core.ScoredValue.just;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
+import static org.infinispan.server.resp.test.RespTestingUtil.OK;
+import static org.infinispan.server.resp.test.RespTestingUtil.PONG;
+import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Base class for single node tests.
@@ -927,6 +930,148 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       redis.rpush("list", "one", "two", "three");
 
       assertThat(redis.touch("hello", "list", "unexisting")).isEqualTo(2);
+   }
+
+   @Test
+   public void testSort() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThat(redis.sort("not_existing")).isEmpty();
+      // sort ro is like sort but with store disabled. we only test here the command is available.
+      assertThat(redis.sortReadOnly("not_existing")).isEmpty();
+
+      // ******--
+      // Lists
+      // ******
+      // RPUSH numbers 1 3 4 8 1 0 -1 19 -22 3
+      redis.rpush("numbers", "1", "3", "4", "8", "1", "0", "-1", "19", "-22", "3");
+      // LRANGE numbers 0 -1
+      assertThat(redis.lrange("numbers", 0, -1))
+            .containsExactly("1", "3", "4", "8", "1", "0", "-1", "19", "-22", "3");
+      // SORT numbers
+      assertThat(redis.sort("numbers"))
+            .containsExactly("-22", "-1", "0", "1", "1", "3", "3", "4", "8", "19");
+      // SORT numbers ALPHA
+      assertThat(redis.sort("numbers", SortArgs.Builder.alpha()))
+            .containsExactly("-1", "-22", "0", "1", "1", "19", "3", "3", "4", "8");
+      // SORT numbers ALPHA DESC
+      assertThat(redis.sort("numbers", SortArgs.Builder.alpha().desc()))
+            .containsExactly("8", "4", "3", "3", "19", "1", "1", "0", "-22", "-1");
+      // SORT numbers ALPHA DESC LIMIT 2 6
+      assertThat(redis.sort("numbers", SortArgs.Builder.alpha().desc().limit(2, 6)))
+            .containsExactly("3", "3", "19", "1", "1", "0");
+      // SORT numbers ALPHA DESC LIMIT 2 0
+      assertThat(redis.sort("numbers", SortArgs.Builder.alpha().desc().limit(2, 0)))
+            .isEmpty();
+      // SORT numbers ALPHA DESC STORE result_sset
+      assertThat(redis.sortStore("numbers", SortArgs.Builder.alpha().desc(), "result_list"))
+            .isEqualTo(10);
+      // LRANGE result_list 0 -1
+      assertThat(redis.lrange("result_list", 0, -1))
+            .containsExactly("8", "4", "3", "3", "19", "1", "1", "0", "-22", "-1");
+      // SORT numbers BY nosort
+      assertThat(redis.sort("numbers", SortArgs.Builder.by("nosort")))
+            .containsExactly("1", "3", "4", "8", "1", "0", "-1", "19", "-22", "3");
+      // SORT numbers BY nosort LIMIT 0 1
+      assertThat(redis.sort("numbers", SortArgs.Builder.by("nosort").limit(0, 1)))
+            .containsExactly( "1");
+      // SORT numbers DESC BY nosort
+      assertThat(redis.sort("numbers", SortArgs.Builder.by("nosort").desc()))
+            .containsExactly( "3", "-22", "19", "-1", "0", "1", "8", "4", "3", "1");
+      // SORT numbers DESC BY nosort LIMIT 0 1
+      assertThat(redis.sort("numbers", SortArgs.Builder.by("nosort").limit(0, 1).desc()))
+            .containsExactly( "3");
+      // SORT numbers BY something
+      assertThat(redis.sort("numbers", SortArgs.Builder.by("something")))
+            .containsExactly( "1", "3", "4", "8", "1", "0", "-1", "19", "-22", "3");
+      // SORT numbers BY w_*
+      assertThat(redis.sort("numbers", SortArgs.Builder.by("w_*")))
+            .containsExactly( "-1", "-22", "0", "1", "1", "19", "3", "3", "4", "8");
+      // RPUSH people ryan tristan pedro
+      redis.rpush("people", "ryan", "tristan", "pedro", "michael");
+      // SORT people BY w_*
+      assertThat(redis.sort("people", SortArgs.Builder.by("w_*")))
+            .containsExactly( "michael", "pedro", "ryan", "tristan");
+      // SET w_ryan 1
+      redis.set("w_ryan", "1");
+      // SET w_pedro 2
+      redis.set("w_pedro", "2");
+      // SET w_tristan 3
+      redis.set("w_tristan", "3");
+      // SET w_michael 4
+      redis.set("w_michael", "4");
+      // SORT people BY w_*
+      assertThat(redis.sort("people", SortArgs.Builder.by("w_*")))
+            .containsExactly( "ryan", "pedro", "tristan", "michael");
+      // SET o_ryan 1
+      redis.set("o_ryan", "persistence");
+      // SET o_pedro 2
+      redis.set("o_pedro", "cross-site");
+      // SET o_tristan 3
+      redis.set("o_tristan", "security");
+      // SORT people BY w_* GET o_*
+      assertThat(redis.sort("people", SortArgs.Builder.by("w_*").get("o_*")))
+            .containsExactly( "persistence", "cross-site", "security", null);
+      // SORT people BY w_* GET o_* GET #
+      assertThat(redis.sort("people", SortArgs.Builder.by("w_*").get("o_*").get("#")))
+            .containsExactly( "persistence", "ryan", "cross-site", "pedro",
+                  "security", "tristan", null, "michael");
+      // SORT people BY w_* GET o GET #
+      assertThat(redis.sort("people", SortArgs.Builder.by("w_*").get("o").get("#")))
+            .containsExactly( null, "ryan", null, "pedro",
+                  null, "tristan", null, "michael");
+
+      // *****
+      // Sets
+      // *****
+      // SADD set_numbers 1 3 4 8 1 0 -1 19 -22 3
+      redis.sadd("set_numbers", "1", "3", "4", "8", "1", "0", "-1", "19", "-22", "3");
+      // SORT numbers
+      assertThat(redis.sort("set_numbers"))
+            .containsExactly("-22", "-1", "0", "1", "3", "4", "8", "19");
+      // SORT set_numbers ALPHA
+      assertThat(redis.sort("set_numbers", SortArgs.Builder.alpha()))
+            .containsExactly("-1", "-22", "0", "1", "19", "3", "4", "8");
+      // SORT set_numbers ALPHA DESC
+      assertThat(redis.sort("set_numbers", SortArgs.Builder.alpha().desc()))
+            .containsExactly("8", "4", "3", "19", "1", "0", "-22", "-1");
+      // SORT set_numbers ALPHA DESC STORE result_sset
+      assertThat(redis.sortStore("set_numbers", SortArgs.Builder.alpha().desc(), "result_sset"))
+            .isEqualTo(8);
+      // LRANGE result_zset 0 -1
+      assertThat(redis.lrange("result_sset", 0, -1))
+            .containsExactly("8", "4", "3", "19", "1", "0", "-22", "-1");
+
+      // ************
+      // Sorted Sets
+      // ************
+      // ZADD zset_numbers 1 9 2 8 3 15 4 -4 5 2 6 7 6 -3 6 1
+      redis.zadd("zset_numbers", ZAddArgs.Builder.ch(),
+            just(1, "9"),
+            just(2, "8"),
+            just(3, "15"),
+            just(4, "-4"),
+            just(5, "2"),
+            just(5, "6"),
+            just(6, "7"),
+            just(6, "-3"),
+            just(6, "1"));
+      // SORT zset_numbers
+      assertThat(redis.sort("zset_numbers"))
+            .containsExactly("-4", "-3", "1", "2", "6", "7", "8", "9", "15");
+      // SORT zset_numbers ALPHA
+      assertThat(redis.sort("zset_numbers", SortArgs.Builder.alpha()))
+            .containsExactly("-3", "-4", "1", "15", "2", "6", "7", "8", "9");
+      // SORT zset_numbers ALPHA DESC
+      assertThat(redis.sort("zset_numbers", SortArgs.Builder.alpha().desc()))
+            .containsExactly("9", "8", "7", "6", "2", "15", "1", "-4", "-3");
+      // SORT zset_numbers ALPHA DESC STORE result_zset
+      assertThat(redis.sortStore("zset_numbers", SortArgs.Builder.alpha().desc(), "result_zset"))
+            .isEqualTo(9);
+      // LRANGE result_zset 0 -1
+      assertThat(redis.lrange("result_zset", 0, -1))
+            .containsExactly("9", "8", "7", "6", "2", "15", "1", "-4", "-3");
+
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.sort("another"));
    }
 
    @Test

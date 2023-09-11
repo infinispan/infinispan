@@ -2,8 +2,8 @@ package org.infinispan.server.resp.commands.sortedset.internal;
 
 import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
+import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.multimap.impl.SortedSetAddArgs;
-import org.infinispan.multimap.impl.SortedSetBucket;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
@@ -68,7 +68,7 @@ public abstract class DIFF extends RespCommand implements Resp3Command {
       }
 
       EmbeddedMultimapSortedSetCache<byte[], byte[]> sortedSetCache = handler.getSortedSeMultimap();
-      CompletionStage<List<SortedSetBucket.ScoredValue<byte[]>>> diffScoreValues = sortedSetCache.getValueAsList(arguments.get(pos++));
+      CompletionStage<List<ScoredValue<byte[]>>> diffScoreValues = sortedSetCache.getValueAsList(arguments.get(pos++));
       for (int i = 1; i < numberOfKeysArg; i++) {
          final byte[] setName = arguments.get(pos++);
          diffScoreValues = CompletionStages.handleAndCompose(

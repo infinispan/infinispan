@@ -77,7 +77,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
     *       returnChangedCount -> by default returns number of new added elements. If true, counts created and updated elements.
     * @return {@link CompletionStage} containing the number of entries added and/or updated depending on the provided arguments
     */
-   public CompletionStage<Long> addMany(K key, Collection<SortedSetBucket.ScoredValue<V>> scoredValues, SortedSetAddArgs args) {
+   public CompletionStage<Long> addMany(K key, Collection<ScoredValue<V>> scoredValues, SortedSetAddArgs args) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       requireNonNull(scoredValues, ERR_SCORES_CAN_T_BE_NULL);
       requireNonNull(args, ERR_ARGS_CAN_T_BE_NULL);
@@ -110,7 +110,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
     * @param key, the name of the list
     * @return the collection with values if such exist, or an empty collection if the key is not present
     */
-   public CompletionStage<Collection<SortedSetBucket.ScoredValue<V>>> get(K key) {
+   public CompletionStage<Collection<ScoredValue<V>>> get(K key) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       return getEntry(key).thenApply(entry -> {
          if (entry != null) {
@@ -120,7 +120,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
       });
    }
 
-   public CompletionStage<CacheEntry<K, Collection<SortedSetBucket.ScoredValue<V>>>> getEntry(K key) {
+   public CompletionStage<CacheEntry<K, Collection<ScoredValue<V>>>> getEntry(K key) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       return cache.getAdvancedCache().getCacheEntryAsync(key)
             .thenApply(entry -> {
@@ -137,7 +137,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
     * @param key, the name of the sorted set
     * @return the value of the Sorted Set
     */
-   public CompletionStage<SortedSet<SortedSetBucket.ScoredValue<V>>> getValue(K key) {
+   public CompletionStage<SortedSet<ScoredValue<V>>> getValue(K key) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       return cache.getAsync(key).thenApply(b -> {
          if (b != null) {
@@ -153,7 +153,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
     * @param key, the name of the sorted set
     * @return the value of the Sorted Set
     */
-   public CompletionStage<List<SortedSetBucket.ScoredValue<V>>> getValueAsList(K key) {
+   public CompletionStage<List<ScoredValue<V>>> getValueAsList(K key) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       return cache.getAsync(key).thenApply(b -> {
          if (b != null) {
@@ -219,7 +219,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
     * @param count, number of values
     * @return, empty if the sorted set does not exist
     */
-   public CompletionStage<Collection<SortedSetBucket.ScoredValue<V>>> pop(K key, boolean min, long count) {
+   public CompletionStage<Collection<ScoredValue<V>>> pop(K key, boolean min, long count) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       return readWriteMap.eval(key, new PopFunction<>(min, count));
    }
@@ -268,7 +268,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
     * @param args, options for the operation
     * @return resulting collection
     */
-   public CompletionStage<Collection<SortedSetBucket.ScoredValue<V>>> subsetByIndex(K key, SortedSetSubsetArgs<Long> args) {
+   public CompletionStage<Collection<ScoredValue<V>>> subsetByIndex(K key, SortedSetSubsetArgs<Long> args) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       requireNonNull(args, ERR_ARGS_CAN_T_BE_NULL);
       requireNonNull(args.getStart(), ERR_ARGS_INDEXES_CAN_T_BE_NULL);
@@ -283,7 +283,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
     * @param args, options for the operation
     * @return resulting collection
     */
-   public CompletionStage<Collection<SortedSetBucket.ScoredValue<V>>> subsetByScore(K key, SortedSetSubsetArgs<Double> args) {
+   public CompletionStage<Collection<ScoredValue<V>>> subsetByScore(K key, SortedSetSubsetArgs<Double> args) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       requireNonNull(args, ERR_ARGS_CAN_T_BE_NULL);
       return readWriteMap.eval(key, new SubsetFunction<>(args, SCORE));
@@ -297,7 +297,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
     * @param args, options for the operation
     * @return resulting collection
     */
-   public CompletionStage<Collection<SortedSetBucket.ScoredValue<V>>> subsetByLex(K key, SortedSetSubsetArgs<V> args) {
+   public CompletionStage<Collection<ScoredValue<V>>> subsetByLex(K key, SortedSetSubsetArgs<V> args) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       requireNonNull(args, ERR_ARGS_CAN_T_BE_NULL);
       return readWriteMap.eval(key, new SubsetFunction<>(args, LEX));
@@ -329,7 +329,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
     * @param aggFunction, how the results of the union are aggregated. Defaults to SUM.
     * @return, union collection, sorted by score
     */
-   public CompletionStage<Collection<SortedSetBucket.ScoredValue<V>>> union(K key, Collection<SortedSetBucket.ScoredValue<V>> scoredValues,
+   public CompletionStage<Collection<ScoredValue<V>>> union(K key, Collection<ScoredValue<V>> scoredValues,
                                                                       double weight,
                                                                       SortedSetBucket.AggregateFunction aggFunction) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
@@ -348,7 +348,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
     * @param aggFunction, how the results of the union are aggregated. Defaults to SUM.
     * @return, intersected collection, sorted by score
     */
-   public CompletionStage<Collection<SortedSetBucket.ScoredValue<V>>> inter(K key, Collection<SortedSetBucket.ScoredValue<V>> scoredValues,
+   public CompletionStage<Collection<ScoredValue<V>>> inter(K key, Collection<ScoredValue<V>> scoredValues,
                                                                             double weight,
                                                                             SortedSetBucket.AggregateFunction aggFunction) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
@@ -428,7 +428,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
     * @param count, number of random members to retrieve
     * @return, collection of the random scored entries
     */
-   public CompletionStage<List<SortedSetBucket.ScoredValue<V>>> randomMembers(K key, int count) {
+   public CompletionStage<List<ScoredValue<V>>> randomMembers(K key, int count) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       return readWriteMap.eval(key, new SortedSetRandomFunction(count));
    }

@@ -1,5 +1,12 @@
 package org.infinispan.multimap.impl;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.commons.util.Util;
+import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -7,13 +14,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.commons.util.Util;
-import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
-import org.infinispan.protostream.annotations.ProtoFactory;
-import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.annotations.ProtoTypeId;
+import java.util.stream.Stream;
 
 /**
  * Bucket used to store Set data type.
@@ -22,7 +23,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  * @since 15.0
  */
 @ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_SET_BUCKET)
-public class SetBucket<V> {
+public class SetBucket<V> implements SortableBucket<V> {
    final Set<MultimapObjectWrapper<V>> values;
 
    public SetBucket() {
@@ -103,4 +104,21 @@ public class SetBucket<V> {
       return this.values.removeAll(values.stream().map(MultimapObjectWrapper::new).collect(Collectors.toSet()));
    }
 
+   @Override
+   public Stream<MultimapObjectWrapper<V>> stream() {
+      return values.stream();
+   }
+
+   @Override
+   public List<ScoredValue<V>> sort(SortOptions sortOptions) {
+      Stream<ScoredValue<V>> scoredValueStream;
+      if (sortOptions.alpha) {
+         scoredValueStream = values.stream()
+               .map(v -> new ScoredValue<>(1d, v));
+      } else {
+         scoredValueStream = values.stream()
+               .map(v -> new ScoredValue<>(v.asDouble(), v));
+      }
+      return sort(scoredValueStream, sortOptions);
+   }
 }

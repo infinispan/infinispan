@@ -2,7 +2,7 @@ package org.infinispan.server.resp.commands.sortedset;
 
 import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
-import org.infinispan.multimap.impl.SortedSetBucket;
+import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
@@ -102,7 +102,7 @@ public class ZINTERCARD extends RespCommand implements Resp3Command {
       }
 
       EmbeddedMultimapSortedSetCache<byte[], byte[]> sortedSetCache = handler.getSortedSeMultimap();
-      CompletionStage<Collection<SortedSetBucket.ScoredValue<byte[]>>> aggValues = sortedSetCache
+      CompletionStage<Collection<ScoredValue<byte[]>>> aggValues = sortedSetCache
             .inter(keys.get(0), null, 1,  SUM);
       final int finalLimit = limit;
       for (int i = 1; i < keys.size(); i++) {

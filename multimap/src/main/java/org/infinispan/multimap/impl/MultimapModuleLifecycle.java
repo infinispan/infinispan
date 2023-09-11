@@ -17,6 +17,7 @@ import org.infinispan.multimap.impl.function.list.InsertFunction;
 import org.infinispan.multimap.impl.function.list.OfferFunction;
 import org.infinispan.multimap.impl.function.list.PollFunction;
 import org.infinispan.multimap.impl.function.list.RemoveCountFunction;
+import org.infinispan.multimap.impl.function.list.ReplaceListFunction;
 import org.infinispan.multimap.impl.function.list.RotateFunction;
 import org.infinispan.multimap.impl.function.list.SetFunction;
 import org.infinispan.multimap.impl.function.list.SubListFunction;
@@ -96,6 +97,7 @@ public class MultimapModuleLifecycle implements ModuleLifecycle {
       addAdvancedExternalizer(externalizerMap, RemoveCountFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, TrimFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, RotateFunction.EXTERNALIZER);
+      addAdvancedExternalizer(externalizerMap, ReplaceListFunction.EXTERNALIZER);
    }
 
    /**

@@ -6,6 +6,7 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -53,6 +54,16 @@ public class MultimapObjectWrapper<T> implements Comparable<MultimapObjectWrappe
          return Arrays.equals((byte[]) object, (byte[]) other.object);
 
       return Objects.equals(object, other.object);
+   }
+
+   public Double asDouble() {
+      if (object instanceof byte[]) {
+         return Double.valueOf(new String((byte[]) object, Charset.forName("US-ASCII")));
+      }
+      if (object instanceof Double)
+         return (Double) object;
+
+      throw new NumberFormatException("Can't convert to Double from class " + object.getClass());
    }
 
    @Override

@@ -2,7 +2,7 @@ package org.infinispan.server.resp.commands.sortedset;
 
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
-import org.infinispan.multimap.impl.SortedSetBucket;
+import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.server.iteration.IterationInitializationContext;
 import org.infinispan.server.iteration.IterationManager;
 import org.infinispan.server.iteration.list.ListIterationInitializationContext;
@@ -44,12 +44,12 @@ public class ZSCAN extends BaseIterationCommand {
       });
    }
 
-   private static List<Map.Entry<Object, Object>> map(Collection<SortedSetBucket.ScoredValue<byte[]>> scoredValues) {
+   private static List<Map.Entry<Object, Object>> map(Collection<ScoredValue<byte[]>> scoredValues) {
 
       List<Map.Entry<Object, Object>> elements = new ArrayList<>();
-      Iterator<SortedSetBucket.ScoredValue<byte[]>> ite = scoredValues.iterator();
+      Iterator<ScoredValue<byte[]>> ite = scoredValues.iterator();
       while (ite.hasNext()) {
-         SortedSetBucket.ScoredValue<byte[]> item = ite.next();
+        ScoredValue<byte[]> item = ite.next();
          Map.Entry<Object, Object> entry = Map.entry(item.getValue(),
                Double.toString(item.score()).getBytes(StandardCharsets.US_ASCII));
          elements.add(entry);

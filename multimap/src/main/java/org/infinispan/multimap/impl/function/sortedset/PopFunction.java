@@ -3,6 +3,7 @@ package org.infinispan.multimap.impl.function.sortedset;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.functional.EntryView;
 import org.infinispan.multimap.impl.ExternalizerIds;
+import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.multimap.impl.SortedSetBucket;
 
 import java.io.IOException;
@@ -15,13 +16,13 @@ import java.util.Set;
 
 /**
  * Serializable function used by
- * {@link org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache#pop(Object, double, long)}
+ * {@link org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache#pop(Object, boolean, long)}
  *
  * @author Katia Aresti
  * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
-public final class PopFunction<K, V> implements SortedSetBucketBaseFunction<K, V, Collection<SortedSetBucket.ScoredValue<V>>> {
+public final class PopFunction<K, V> implements SortedSetBucketBaseFunction<K, V, Collection<ScoredValue<V>>> {
    public static final AdvancedExternalizer<PopFunction> EXTERNALIZER = new Externalizer();
    private final boolean min;
    private final long count;
@@ -32,11 +33,11 @@ public final class PopFunction<K, V> implements SortedSetBucketBaseFunction<K, V
    }
 
    @Override
-   public Collection<SortedSetBucket.ScoredValue<V>> apply(EntryView.ReadWriteEntryView<K, SortedSetBucket<V>> entryView) {
+   public Collection<ScoredValue<V>> apply(EntryView.ReadWriteEntryView<K, SortedSetBucket<V>> entryView) {
       Optional<SortedSetBucket<V>> existing = entryView.peek();
       if (existing.isPresent()) {
          SortedSetBucket<V> sortedSetBucket = existing.get();
-         Collection<SortedSetBucket.ScoredValue<V>> poppedValues = sortedSetBucket.pop(min, count);
+         Collection<ScoredValue<V>> poppedValues = sortedSetBucket.pop(min, count);
          if (sortedSetBucket.size() == 0) {
             entryView.remove();
          }

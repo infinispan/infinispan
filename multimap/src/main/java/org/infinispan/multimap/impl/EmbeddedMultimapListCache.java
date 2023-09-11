@@ -7,6 +7,7 @@ import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
+import org.infinispan.multimap.impl.function.list.ReplaceListFunction;
 import org.infinispan.multimap.impl.function.list.RotateFunction;
 import org.infinispan.multimap.impl.function.list.IndexFunction;
 import org.infinispan.multimap.impl.function.list.IndexOfFunction;
@@ -299,6 +300,18 @@ public class EmbeddedMultimapListCache<K, V> {
       return readWriteMap.eval(key, new TrimFunction<>(from, to));
    }
 
+   /**
+    * Adds a collection to a key. The collection replaces the current list content if such exist.
+    *
+    * @param key, the name of the list
+    * @param list, content. If the list is null or empty, and the list exists, will be removed
+    *
+    * @return how many elements have actually been replaced
+    */
+   public CompletionStage<Long> replace(K key, List<V> list) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      return readWriteMap.eval(key, new ReplaceListFunction<>(list));
+   }
    /**
     * Rotates an element in the list from head to tail or tail to head, depending on the rotateRight parameter.
     * @param key, the name of the list

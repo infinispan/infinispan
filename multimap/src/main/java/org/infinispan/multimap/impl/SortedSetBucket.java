@@ -14,12 +14,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
-import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Bucket used to store Sorted Set data type.
@@ -28,8 +28,7 @@ import java.util.stream.Collectors;
  * @since 15.0
  */
 @ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_SORTED_SET_BUCKET)
-public class SortedSetBucket<V> {
-   private final static Object NO_VALUE = new Object();
+public class SortedSetBucket<V> implements SortableBucket<V> {
    private final TreeSet<ScoredValue<V>> scoredEntries;
    private final Map<MultimapObjectWrapper<V>, Double> entries;
 
@@ -79,9 +78,9 @@ public class SortedSetBucket<V> {
             Double existingScore = entries.get(element.wrappedValue());
             Double unionScore;
             if (existingScore == null) {
-               unionScore = element.score;
+               unionScore = element.score();
             } else {
-               unionScore = function.apply(element.score, existingScore * weight);
+               unionScore = function.apply(element.score(), existingScore * weight);
             }
             sortedMergeScoredValues.add(new ScoredValue<>(unionScore, element.wrappedValue()));
             mergedEntries.put(element.wrappedValue(), unionScore);
@@ -93,7 +92,7 @@ public class SortedSetBucket<V> {
          ScoredValue<V> element = ite.next();
          Double existingScore = mergedEntries.get(element.wrappedValue());
          if (existingScore == null) {
-            sortedMergeScoredValues.add(new ScoredValue<>(element.score * weight, element.wrappedValue()));
+            sortedMergeScoredValues.add(new ScoredValue<>(element.score() * weight, element.wrappedValue()));
          }
       }
       return sortedMergeScoredValues;
@@ -104,7 +103,7 @@ public class SortedSetBucket<V> {
                                           AggregateFunction function) {
       if (inputValues == null) {
          return scoredEntries.stream()
-               .map(s -> new ScoredValue<>(s.score * weight, s.wrappedValue()))
+               .map(s -> new ScoredValue<>(s.score() * weight, s.wrappedValue()))
                .collect(Collectors.toList());
       }
 
@@ -114,7 +113,7 @@ public class SortedSetBucket<V> {
          ScoredValue<V> element = ite.next();
          Double existingScore = entries.get(element.wrappedValue());
          if (existingScore != null) {
-            double score = function.apply(element.score, existingScore * weight);
+            double score = function.apply(element.score(), existingScore * weight);
             sortedMergeScoredValues.add(new ScoredValue<>(score, element.wrappedValue()));
          }
       }
@@ -434,9 +433,9 @@ public class SortedSetBucket<V> {
          startSv = scoredEntries.first();
       } else {
          if (includeMin) {
-            startSv = scoredEntries.lower(new ScoredValue(min, NO_VALUE));
+            startSv = scoredEntries.lower(ScoredValue.of(min));
          } else {
-            startSv = scoredEntries.higher(new ScoredValue(min, NO_VALUE));
+            startSv = scoredEntries.higher(ScoredValue.of(min));
          }
 
          if (startSv == null) {
@@ -448,9 +447,9 @@ public class SortedSetBucket<V> {
          stopSv = scoredEntries.last();
       } else {
          if (includeMax) {
-            stopSv = scoredEntries.higher(new ScoredValue(max, NO_VALUE));
+            stopSv = scoredEntries.higher(ScoredValue.of(max));
          } else {
-            stopSv = scoredEntries.lower(new ScoredValue(max, NO_VALUE));
+            stopSv = scoredEntries.lower(ScoredValue.of(max));
          }
 
          if (stopSv == null) {
@@ -488,10 +487,10 @@ public class SortedSetBucket<V> {
       }
       // if all the scoredEntries have the same score, then we can pick up first score for lex
       // when all the entries don't have the same score, this method can't work. This is the expected behaviour.
-      double score = scoredEntries.first().score;
+      double score = scoredEntries.first().score();
 
-      ScoredValue<V> minScoredValue = new ScoredValue<>(score, minValue);
-      ScoredValue<V> maxScoredValue = new ScoredValue<>(score, maxValue);
+      ScoredValue<V> minScoredValue = ScoredValue.of(score, minValue);
+      ScoredValue<V> maxScoredValue = ScoredValue.of(score, maxValue);
 
       if (unboundedMin) {
          NavigableSet<ScoredValue<V>> entries = scoredEntries.headSet(maxScoredValue, includeMax);
@@ -579,71 +578,22 @@ public class SortedSetBucket<V> {
       }
    }
 
-   @ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_SORTED_SET_SCORED_ENTRY)
-   public static class ScoredValue<V> implements Comparable<ScoredValue<V>> {
-      private final Double score;
-      private final MultimapObjectWrapper<V> value;
-
-      private ScoredValue(Double score, V value) {
-         this.score = score;
-         this.value = new MultimapObjectWrapper<>(value);
-      }
-
-      public static <V> ScoredValue<V> of(double score, V value) {
-         return new ScoredValue<>(score, value);
-      }
-
-      @ProtoFactory
-      public ScoredValue(Double score, MultimapObjectWrapper<V> wrappedValue) {
-         this.score = score;
-         this.value = wrappedValue;
-      }
-
-      @ProtoField(1)
-      public Double score() {
-         return score;
-      }
-
-      @ProtoField(2)
-      public MultimapObjectWrapper<V> wrappedValue() {
-         return value;
-      }
-
-      public V getValue() {
-         return value.get();
-      }
-
-      @Override
-      public int hashCode() {
-         return Objects.hash(value, score);
-      }
-
-      @Override
-      public boolean equals(Object entry) {
-         if (this == entry) return true;
-         if (entry == null || getClass() != entry.getClass()) return false;
-         @SuppressWarnings("unchecked")
-         ScoredValue<V> other = (ScoredValue<V>) entry;
-
-         return this.value.equals(other.value) && this.score.equals(other.score);
-      }
-
-      @Override
-      public String toString() {
-         return "ScoredValue{" + "score=" + score + ", value=" + value.toString() + '}';
-      }
-
-      @Override
-      public int compareTo(ScoredValue<V> other) {
-         if (this == other) return 0;
-         int compare = Double.compare(this.score, other.score);
-         if (compare == 0) {
-            if (other.getValue() == NO_VALUE || this.getValue() == NO_VALUE) {
-               return 0;
-            }
-            return value.compareTo(other.wrappedValue());
-         }
-         return compare;
-      }
+   @Override
+   public Stream<MultimapObjectWrapper<V>> stream() {
+      return scoredEntries.stream().map(v -> v.wrappedValue());
    }
+
+   @Override
+   public List<ScoredValue<V>> sort(SortOptions sortOptions) {
+      Stream<ScoredValue<V>> scoredValueStream;
+      if (sortOptions.alpha) {
+         scoredValueStream = scoredEntries.stream()
+               .map(v -> new ScoredValue<>(1d, v.wrappedValue()));
+      } else {
+         scoredValueStream = scoredEntries.stream()
+               .map(v -> new ScoredValue<>(v.wrappedValue().asDouble(), v.wrappedValue()));
+      }
+      return sort(scoredValueStream, sortOptions);
+   }
+
 }

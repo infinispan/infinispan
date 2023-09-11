@@ -2,6 +2,7 @@ package org.infinispan.server.resp.commands.sortedset.internal;
 
 import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
+import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.multimap.impl.SortedSetAddArgs;
 import org.infinispan.multimap.impl.SortedSetBucket;
 import org.infinispan.server.resp.Consumers;
@@ -122,7 +123,7 @@ public abstract class AGGCommand extends RespCommand implements Resp3Command {
 
       EmbeddedMultimapSortedSetCache<byte[], byte[]> sortedSetCache = handler.getSortedSeMultimap();
       final SortedSetBucket.AggregateFunction finalAggFunction = aggOption;
-      CompletionStage<Collection<SortedSetBucket.ScoredValue<byte[]>>> aggValues;
+      CompletionStage<Collection<ScoredValue<byte[]>>> aggValues;
       if (aggCommandType == AGGCommandType.UNION) {
          aggValues = sortedSetCache.union(keys.get(0), null, computeWeight(weights, 0), finalAggFunction);
       } else {

@@ -4,6 +4,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.functional.EntryView;
 import org.infinispan.multimap.impl.ExternalizerIds;
+import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.multimap.impl.SortedSetBucket;
 import org.infinispan.multimap.impl.SortedSetSubsetArgs;
 
@@ -26,7 +27,7 @@ import java.util.Set;
  * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
-public class SubsetFunction<K, V, T> implements SortedSetBucketBaseFunction<K, V, Collection<SortedSetBucket.ScoredValue<V>>> {
+public class SubsetFunction<K, V, T> implements SortedSetBucketBaseFunction<K, V, Collection<ScoredValue<V>>> {
    public static final AdvancedExternalizer<SubsetFunction> EXTERNALIZER = new Externalizer();
    protected final boolean isRev;
    protected final T start;
@@ -61,7 +62,7 @@ public class SubsetFunction<K, V, T> implements SortedSetBucketBaseFunction<K, V
    }
 
    @Override
-   public Collection<SortedSetBucket.ScoredValue<V>> apply(EntryView.ReadWriteEntryView<K, SortedSetBucket<V>> entryView) {
+   public Collection<ScoredValue<V>> apply(EntryView.ReadWriteEntryView<K, SortedSetBucket<V>> entryView) {
       Optional<SortedSetBucket<V>> existing = entryView.peek();
       if (existing.isPresent()) {
          SortedSetBucket<V> sortedSetBucket = existing.get();
