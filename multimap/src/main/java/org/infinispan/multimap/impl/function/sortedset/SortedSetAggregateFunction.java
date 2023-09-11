@@ -4,6 +4,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.functional.EntryView;
 import org.infinispan.multimap.impl.ExternalizerIds;
+import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.multimap.impl.SortedSetBucket;
 
 import java.io.IOException;
@@ -25,9 +26,9 @@ import static org.infinispan.commons.marshall.MarshallUtil.unmarshallCollection;
  * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
-public final class SortedSetAggregateFunction<K, V> implements SortedSetBucketBaseFunction<K, V, Collection<SortedSetBucket.ScoredValue<V>>> {
+public final class SortedSetAggregateFunction<K, V> implements SortedSetBucketBaseFunction<K, V, Collection<ScoredValue<V>>> {
    public static final AdvancedExternalizer<SortedSetAggregateFunction> EXTERNALIZER = new Externalizer();
-   private final Collection<SortedSetBucket.ScoredValue<V>> scoredValues;
+   private final Collection<ScoredValue<V>> scoredValues;
    private final double weight;
    private final SortedSetBucket.AggregateFunction function;
    private final AggregateType type;
@@ -42,7 +43,7 @@ public final class SortedSetAggregateFunction<K, V> implements SortedSetBucketBa
    }
 
    public SortedSetAggregateFunction(AggregateType type,
-                                     Collection<SortedSetBucket.ScoredValue<V>> scoredValues,
+                                     Collection<ScoredValue<V>> scoredValues,
                                      double weight,
                                      SortedSetBucket.AggregateFunction function) {
       this.type = type;
@@ -52,7 +53,7 @@ public final class SortedSetAggregateFunction<K, V> implements SortedSetBucketBa
    }
 
    @Override
-   public Collection<SortedSetBucket.ScoredValue<V>> apply(EntryView.ReadWriteEntryView<K, SortedSetBucket<V>> entryView) {
+   public Collection<ScoredValue<V>> apply(EntryView.ReadWriteEntryView<K, SortedSetBucket<V>> entryView) {
       Optional<SortedSetBucket<V>> existing = entryView.peek();
       if (scoredValues != null && scoredValues.isEmpty() && existing.isEmpty()) {
          return Collections.emptyList();
@@ -84,7 +85,7 @@ public final class SortedSetAggregateFunction<K, V> implements SortedSetBucketBa
       @Override
       public SortedSetAggregateFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          AggregateType aggregateType = MarshallUtil.unmarshallEnum(input, AggregateType::valueOf);
-         Collection<SortedSetBucket.ScoredValue> scoredValues = unmarshallCollection(input, ArrayList::new);
+         Collection<ScoredValue> scoredValues = unmarshallCollection(input, ArrayList::new);
          double weight = input.readDouble();
          SortedSetBucket.AggregateFunction aggregateFunction = MarshallUtil.unmarshallEnum(input, SortedSetBucket.AggregateFunction::valueOf);
          return new SortedSetAggregateFunction(aggregateType, scoredValues, weight, aggregateFunction);

@@ -4,6 +4,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.functional.EntryView;
 import org.infinispan.multimap.impl.ExternalizerIds;
+import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.multimap.impl.SortedSetAddArgs;
 import org.infinispan.multimap.impl.SortedSetBucket;
 
@@ -28,7 +29,7 @@ import static org.infinispan.commons.marshall.MarshallUtil.unmarshallCollection;
  */
 public final class AddManyFunction<K, V> implements SortedSetBucketBaseFunction<K, V, Long> {
    public static final AdvancedExternalizer<AddManyFunction> EXTERNALIZER = new Externalizer();
-   private final Collection<SortedSetBucket.ScoredValue<V>> scoredValues;
+   private final Collection<ScoredValue<V>> scoredValues;
    private final boolean addOnly;
    private final boolean updateOnly;
    private final boolean updateLessScoresOnly;
@@ -36,7 +37,7 @@ public final class AddManyFunction<K, V> implements SortedSetBucketBaseFunction<
    private final boolean returnChangedCount;
    private final boolean replace;
 
-   public AddManyFunction(Collection<SortedSetBucket.ScoredValue<V>> scoredValues, SortedSetAddArgs args) {
+   public AddManyFunction(Collection<ScoredValue<V>> scoredValues, SortedSetAddArgs args) {
       this.scoredValues = scoredValues;
       this.addOnly = args.addOnly;
       this.updateOnly = args.updateOnly;
@@ -46,7 +47,7 @@ public final class AddManyFunction<K, V> implements SortedSetBucketBaseFunction<
       this.replace = args.replace;
    }
 
-   public AddManyFunction(Collection<SortedSetBucket.ScoredValue<V>> scoredValues,
+   public AddManyFunction(Collection<ScoredValue<V>> scoredValues,
                           boolean addOnly, boolean updateOnly,
                           boolean updateLessScoresOnly,
                           boolean updateGreaterScoresOnly,
@@ -121,7 +122,7 @@ public final class AddManyFunction<K, V> implements SortedSetBucketBaseFunction<
 
       @Override
       public AddManyFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Collection<SortedSetBucket.ScoredValue> scoredValues = unmarshallCollection(input, ArrayList::new);
+         Collection<ScoredValue> scoredValues = unmarshallCollection(input, ArrayList::new);
          return new AddManyFunction(scoredValues, input.readBoolean(), input.readBoolean(),
                input.readBoolean(), input.readBoolean(), input.readBoolean(), input.readBoolean());
       }

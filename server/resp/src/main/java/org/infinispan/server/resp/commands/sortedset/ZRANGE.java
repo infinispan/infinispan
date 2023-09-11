@@ -2,8 +2,8 @@ package org.infinispan.server.resp.commands.sortedset;
 
 import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
+import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.multimap.impl.SortedSetAddArgs;
-import org.infinispan.multimap.impl.SortedSetBucket;
 import org.infinispan.multimap.impl.SortedSetSubsetArgs;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
@@ -11,6 +11,7 @@ import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
+import org.infinispan.server.resp.commands.LimitArgument;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.util.concurrent.CompletionStages;
 
@@ -93,18 +94,15 @@ public class ZRANGE extends RespCommand implements Resp3Command {
       boolean byScore = this.initialByScore;
 
       while (pos < arguments.size()) {
-         switch (Arg.valueOf(new String(arguments.get(pos++)))) {
+         switch (Arg.valueOf(new String(arguments.get(pos++)).toUpperCase())) {
             case LIMIT:
-               try {
-                  resultOpt.offset = ArgumentUtils.toLong(arguments.get(pos++));
-                  resultOpt.count = ArgumentUtils.toLong(arguments.get(pos++));
-               } catch (NumberFormatException ex) {
-                  RespErrorUtil.valueNotInteger(handler.allocator());
-                  return handler.myStage();
-               } catch (IndexOutOfBoundsException ex) {
-                  RespErrorUtil.syntaxError(handler.allocator());
+               LimitArgument limitArgument = LimitArgument.parse(handler, arguments, pos);
+               if (limitArgument.error) {
                   return handler.myStage();
                }
+               resultOpt.offset = limitArgument.offset;
+               resultOpt.count = limitArgument.count;
+               pos = limitArgument.nextArgPos;
                break;
             case BYSCORE:
                byScore = true;
@@ -146,7 +144,7 @@ public class ZRANGE extends RespCommand implements Resp3Command {
          return handler.myStage();
       }
 
-      CompletionStage<Collection<SortedSetBucket.ScoredValue<byte[]>>> getSortedSetCall;
+      CompletionStage<Collection<ScoredValue<byte[]>>> getSortedSetCall;
       if (byScore) {
          // ZRANGE by score. Replaces ZRANGEBYSCORE and ZREVRANGEBYSCORE
          ZSetCommonUtils.Score startScore = ZSetCommonUtils.parseScore(start);
@@ -213,7 +211,7 @@ public class ZRANGE extends RespCommand implements Resp3Command {
                                                             ChannelHandlerContext ctx,
                                                             byte[] destination,
                                                             EmbeddedMultimapSortedSetCache<byte[], byte[]> sortedSetCache,
-                                                            CompletionStage<Collection<SortedSetBucket.ScoredValue<byte[]>>> getSortedSetCall) {
+                                                            CompletionStage<Collection<ScoredValue<byte[]>>> getSortedSetCall) {
       return CompletionStages.handleAndCompose(getSortedSetCall, (scoredValues, t1) -> {
          if (t1 != null) {
             return handleException(handler, t1);

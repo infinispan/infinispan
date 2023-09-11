@@ -29,7 +29,7 @@ import static org.infinispan.multimap.impl.MultimapTestUtils.OIHANA;
 import static org.infinispan.multimap.impl.MultimapTestUtils.PEPE;
 import static org.infinispan.multimap.impl.MultimapTestUtils.RAMON;
 import static org.infinispan.multimap.impl.SortedSetBucket.AggregateFunction.SUM;
-import static org.infinispan.multimap.impl.SortedSetBucket.ScoredValue.of;
+import static org.infinispan.multimap.impl.ScoredValue.of;
 import static org.infinispan.multimap.impl.SortedSetSubsetArgs.create;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
@@ -247,12 +247,12 @@ public class DistributedMultimapSortedSetCacheTest extends BaseDistFunctionalTes
       assertThat(await(sortedSet.randomMembers(NAMES_KEY, 1))).containsExactly(of(1.1, OIHANA));
    }
 
-   protected void assertValuesAndOwnership(String key, SortedSetBucket.ScoredValue<Person> value) {
+   protected void assertValuesAndOwnership(String key, ScoredValue<Person> value) {
       assertOwnershipAndNonOwnership(key, l1CacheEnabled);
       assertOnAllCaches(key, value);
    }
 
-   protected void assertOnAllCaches(Object key, SortedSetBucket.ScoredValue<Person> value) {
+   protected void assertOnAllCaches(Object key, ScoredValue<Person> value) {
       for (Map.Entry<Address, EmbeddedMultimapSortedSetCache<String, Person>> entry : sortedSetCluster.entrySet()) {
          FunctionalTestUtils.await(entry.getValue().get((String) key).thenAccept(v -> {
                   assertNotNull(format("values on the key %s must be not null", key), v);

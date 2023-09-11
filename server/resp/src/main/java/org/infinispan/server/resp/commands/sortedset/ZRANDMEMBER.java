@@ -2,7 +2,7 @@ package org.infinispan.server.resp.commands.sortedset;
 
 import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
-import org.infinispan.multimap.impl.SortedSetBucket;
+import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
@@ -75,7 +75,7 @@ public class ZRANDMEMBER extends RespCommand implements Resp3Command {
 
       EmbeddedMultimapSortedSetCache<byte[], byte[]> sortedSetCache = handler.getSortedSeMultimap();
 
-      CompletionStage<List<SortedSetBucket.ScoredValue<byte[]>>> randomMembers =
+      CompletionStage<List<ScoredValue<byte[]>>> randomMembers =
             sortedSetCache.randomMembers(
             name, count == null ? 1 : count);
       if (count == null) {

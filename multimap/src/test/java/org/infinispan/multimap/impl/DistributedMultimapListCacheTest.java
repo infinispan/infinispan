@@ -9,6 +9,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.data.Person;
 import org.testng.annotations.Test;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,6 +18,7 @@ import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.multimap.impl.MultimapTestUtils.ELAIA;
+import static org.infinispan.multimap.impl.MultimapTestUtils.FELIX;
 import static org.infinispan.multimap.impl.MultimapTestUtils.NAMES_KEY;
 import static org.infinispan.multimap.impl.MultimapTestUtils.OIHANA;
 import static org.infinispan.multimap.impl.MultimapTestUtils.RAMON;
@@ -249,6 +251,33 @@ public class DistributedMultimapListCacheTest extends BaseDistFunctionalTest<Str
       await(
             list.subList(NAMES_KEY, 0, -1)
                   .thenAccept(v -> assertThat(v).containsExactly(RAMON, OIHANA, ELAIA))
+
+      );
+   }
+
+   public void testReplace() {
+      initAndTest();
+      EmbeddedMultimapListCache<String, Person> list = getMultimapCacheMember();
+      await(
+            list.offerLast(NAMES_KEY, OIHANA)
+                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, ELAIA))
+                  .thenCompose(r1 -> list.offerLast(NAMES_KEY, RAMON))
+      );
+
+      await(
+            list.subList(NAMES_KEY, 0, -1)
+                  .thenAccept(v -> assertThat(v).containsExactly(OIHANA, ELAIA, RAMON))
+
+      );
+
+      await(
+            list.replace(NAMES_KEY, Arrays.asList(FELIX))
+                  .thenAccept(s -> assertThat(s).isEqualTo(1))
+      );
+
+      await(
+            list.subList(NAMES_KEY, 0, -1)
+                  .thenAccept(v -> assertThat(v).containsExactly(FELIX))
 
       );
    }

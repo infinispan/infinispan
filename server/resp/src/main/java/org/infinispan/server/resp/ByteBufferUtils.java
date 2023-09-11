@@ -1,13 +1,14 @@
 package org.infinispan.server.resp;
 
-import static org.infinispan.server.resp.RespConstants.CRLF;
-import static org.infinispan.server.resp.RespConstants.NIL;
-
-import java.util.Collection;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.util.CharsetUtil;
+import org.infinispan.multimap.impl.ScoredValue;
+
+import java.util.Collection;
+
+import static org.infinispan.server.resp.RespConstants.CRLF;
+import static org.infinispan.server.resp.RespConstants.NIL;
 
 /**
  * Utility class with ByteBuffer Utils
@@ -74,6 +75,29 @@ public final class ByteBufferUtils {
       return buffer.writeBytes(CRLF);
    }
 
+   public static ByteBuf bytesToResultWrapped(Collection<ScoredValue<byte[]>> results, ByteBufPool alloc) {
+      if (results.isEmpty())
+         return stringToByteBufAscii("*0\r\n", alloc);
+
+      int resultBytesSize = 0;
+      for (ScoredValue<byte[]> result: results) {
+         int length;
+         if (result == null) {
+            // $-1
+            resultBytesSize += 3;
+         } else if ((length = result.getValue().length) > 0) {
+            // $ + digit length (log10 + 1) + \r\n + byte length
+            resultBytesSize += (1 + stringSize(length) + 2 + length);
+         } else {
+            // $0 + \r\n
+            resultBytesSize += (2 + 2);
+         }
+         // /r/n
+         resultBytesSize += 2;
+      }
+      return bytesToResultWrapped(resultBytesSize, results, alloc);
+   }
+
    public static ByteBuf bytesToResult(Collection<byte[]> results, ByteBufPool alloc) {
       if (results.isEmpty())
          return stringToByteBufAscii("*0\r\n", alloc);
@@ -114,6 +138,29 @@ public final class ByteBufferUtils {
             setIntChars(value.length, stringSize(value.length), byteBuf);
             byteBuf.writeBytes(CRLF);
             byteBuf.writeBytes(value);
+         }
+         byteBuf.writeBytes(CRLF);
+      }
+      return byteBuf;
+   }
+
+   public static ByteBuf bytesToResultWrapped(int resultBytesSize, Collection<ScoredValue<byte[]>> results, ByteBufPool alloc) {
+      int elements = results.size();
+      int elementsSize = stringSize(elements);
+      // * + digit length + \r\n + accumulated bytes
+      int byteAmount = 1 + elementsSize + 2 + resultBytesSize;
+      ByteBuf byteBuf = alloc.apply(byteAmount);
+      byteBuf.writeByte('*');
+      setIntChars(elements, elementsSize, byteBuf);
+      byteBuf.writeBytes(CRLF);
+      for (ScoredValue<byte[]> scoredValue : results) {
+         if (scoredValue == null) {
+            byteBuf.writeCharSequence("$-1", CharsetUtil.US_ASCII);
+         } else {
+            byteBuf.writeByte('$');
+            setIntChars(scoredValue.getValue().length, stringSize(scoredValue.getValue().length), byteBuf);
+            byteBuf.writeBytes(CRLF);
+            byteBuf.writeBytes(scoredValue.getValue());
          }
          byteBuf.writeBytes(CRLF);
       }

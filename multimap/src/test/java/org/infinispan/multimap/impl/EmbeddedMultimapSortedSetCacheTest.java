@@ -30,7 +30,7 @@ import static org.infinispan.multimap.impl.MultimapTestUtils.NAMES_KEY;
 import static org.infinispan.multimap.impl.MultimapTestUtils.OIHANA;
 import static org.infinispan.multimap.impl.MultimapTestUtils.PEPE;
 import static org.infinispan.multimap.impl.MultimapTestUtils.RAMON;
-import static org.infinispan.multimap.impl.SortedSetBucket.ScoredValue.of;
+import static org.infinispan.multimap.impl.ScoredValue.of;
 import static org.infinispan.multimap.impl.SortedSetSubsetArgs.create;
 
 /**

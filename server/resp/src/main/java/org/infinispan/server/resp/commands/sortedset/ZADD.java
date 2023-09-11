@@ -2,8 +2,8 @@ package org.infinispan.server.resp.commands.sortedset;
 
 import io.netty.channel.ChannelHandlerContext;
 import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
+import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.multimap.impl.SortedSetAddArgs;
-import org.infinispan.multimap.impl.SortedSetBucket;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
@@ -110,7 +110,7 @@ public class ZADD extends RespCommand implements Resp3Command {
          return handler.myStage();
       }
 
-      List<SortedSetBucket.ScoredValue<byte[]>> scoredValues = new ArrayList<>(count);
+      List<ScoredValue<byte[]>> scoredValues = new ArrayList<>(count);
       while (pos < arguments.size()) {
          double score;
          try {
@@ -121,7 +121,7 @@ public class ZADD extends RespCommand implements Resp3Command {
             return handler.myStage();
          }
          byte[] value = arguments.get(pos++);
-         scoredValues.add(SortedSetBucket.ScoredValue.of(score, value));
+         scoredValues.add(ScoredValue.of(score, value));
       }
 
       if (sortedSetAddArgs.incr) {

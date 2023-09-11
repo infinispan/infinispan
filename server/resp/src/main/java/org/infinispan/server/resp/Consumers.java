@@ -1,5 +1,6 @@
 package org.infinispan.server.resp;
 
+import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.server.resp.response.LCSResponse;
 import org.infinispan.server.resp.response.SetResponse;
 
@@ -53,6 +54,14 @@ public final class Consumers {
    public static final BiConsumer<Collection<byte[]>, ByteBufPool> GET_ARRAY_BICONSUMER = (innerValueBytes, alloc) -> {
       if (innerValueBytes != null) {
          ByteBufferUtils.bytesToResult(innerValueBytes, alloc);
+      } else {
+         ByteBufferUtils.stringToByteBufAscii("$-1\r\n", alloc);
+      }
+   };
+
+   public static final BiConsumer<Collection<ScoredValue<byte[]>>, ByteBufPool> GET_OBJ_WRAPPER_ARRAY_BICONSUMER = (innerValueBytes, alloc) -> {
+      if (innerValueBytes != null) {
+         ByteBufferUtils.bytesToResultWrapped(innerValueBytes, alloc);
       } else {
          ByteBufferUtils.stringToByteBufAscii("$-1\r\n", alloc);
       }

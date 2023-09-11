@@ -81,7 +81,7 @@
               {
                 "id": 1,
                 "name": "wrappedValues",
-                "type": "SortedSetBucket.ScoredValue",
+                "type": "ScoredValue",
                 "is_repeated": true
               }
             ],

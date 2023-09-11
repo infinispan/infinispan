@@ -3,6 +3,7 @@ package org.infinispan.multimap.impl;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.protostream.impl.MarshallableUserObject;
+import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
@@ -16,6 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Bucket used to store ListMultimap values.
@@ -24,7 +26,7 @@ import java.util.stream.Collectors;
  * @since 15.0
  */
 @ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_LIST_BUCKET)
-public class ListBucket<V> {
+public class ListBucket<V> implements SortableBucket<V> {
 
    final Deque<V> values;
 
@@ -70,7 +72,7 @@ public class ListBucket<V> {
       return values.isEmpty();
    }
 
-   public int size() {
+   public long size() {
       return values.size();
    }
 
@@ -330,6 +332,36 @@ public class ListBucket<V> {
          values.offerFirst(element);
       }
       return element;
+   }
+
+   @Override
+   public Stream<MultimapObjectWrapper<V>> stream() {
+      return values.stream()
+            .map(MultimapObjectWrapper::new);
+   }
+
+   @Override
+   public List<ScoredValue<V>> sort(SortOptions sortOptions) {
+      Stream<ScoredValue<V>> scoredValueStream;
+      if (sortOptions.alpha) {
+         scoredValueStream = values.stream().map(v -> {
+                  MultimapObjectWrapper<V> wrapped = new MultimapObjectWrapper<>(v);
+                  return new ScoredValue<>(1d, wrapped);
+               });
+      } else {
+         scoredValueStream = values.stream().map(v -> {
+            MultimapObjectWrapper<V> wrapped = new MultimapObjectWrapper<>(v);
+            return new ScoredValue<>(wrapped.asDouble(), wrapped);
+         });
+      }
+      return sort(scoredValueStream, sortOptions);
+   }
+
+   public void replace(List<V> list) {
+      this.values.clear();
+      if (list != null && !list.isEmpty()) {
+         this.values.addAll(list);
+      }
    }
 
    public class ListBucketResult {

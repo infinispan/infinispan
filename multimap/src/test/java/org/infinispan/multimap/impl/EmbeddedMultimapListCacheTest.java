@@ -8,6 +8,8 @@ import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
+import java.util.Collections;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.functional.FunctionalTestUtils.await;
@@ -598,6 +600,31 @@ public class EmbeddedMultimapListCacheTest extends SingleCacheManagerTest {
       assertThat(await(listCache.subList(NAMES_KEY, 0, -1))).containsExactly(OIHANA, ELAIA, KOLDO, RAMON, JULIEN);
 
       assertThatThrownBy(() -> await(listCache.rotate(null, true)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
+   }
+
+   public void testReplace() {
+      assertThat(await(listCache.replace("not_existing", null))).isZero();
+      assertThat(await(listCache.containsKey("not_existing"))).isFalse();
+      assertThat(await(listCache.replace("not_existing", Collections.emptyList()))).isZero();
+      assertThat(await(listCache.containsKey("not_existing"))).isFalse();
+      assertThat(await(listCache.replace("not_existing", Collections.singletonList(OIHANA)))).isEqualTo(1);
+      assertThat(await(listCache.containsKey("not_existing"))).isTrue();
+
+      await(listCache.offerLast(NAMES_KEY, OIHANA));
+      assertThat(await(listCache.containsKey(NAMES_KEY))).isTrue();
+      assertThat(await(listCache.replace(NAMES_KEY, null))).isZero();
+      assertThat(await(listCache.containsKey(NAMES_KEY))).isFalse();
+      await(listCache.offerLast(NAMES_KEY, OIHANA));
+      assertThat(await(listCache.containsKey(NAMES_KEY))).isTrue();
+      assertThat(await(listCache.replace(NAMES_KEY, Collections.emptyList()))).isZero();
+      assertThat(await(listCache.containsKey(NAMES_KEY))).isFalse();
+      await(listCache.offerLast(NAMES_KEY, OIHANA));
+      assertThat(await(listCache.replace(NAMES_KEY, Collections.singletonList(ELAIA)))).isEqualTo(1);
+      assertThat(await(listCache.subList(NAMES_KEY, 0, -1))).containsExactly(ELAIA);
+
+      assertThatThrownBy(() -> await(listCache.replace(null, null)))
             .isInstanceOf(NullPointerException.class)
             .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
    }
