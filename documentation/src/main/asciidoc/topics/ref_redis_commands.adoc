@@ -297,6 +297,9 @@ provides a read-uncommitted isolation.
 | link:https://redis.io/commands/srandmember[SRANDMEMBER]
 |
 
+| link:https://redis.io/commands/sscan[SSCAN]
+|
+
 | link:https://redis.io/commands/strlen[STRLEN]
 |
 

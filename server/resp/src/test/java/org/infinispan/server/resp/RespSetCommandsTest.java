@@ -4,10 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 
 import java.util.HashSet;
+import java.util.Set;
 
 import org.testng.annotations.Test;
 
 import io.lettuce.core.ScanArgs;
+import io.lettuce.core.ValueScanCursor;
 import io.lettuce.core.api.sync.RedisCommands;
 
 @Test(groups = "functional", testName = "server.resp.RespSetCommandsTest")
@@ -349,5 +351,89 @@ public class RespSetCommandsTest extends SingleNodeRespBaseTest {
       // SPOP on an existing key that contains a List, not a Set!
       // Create a List
       assertWrongType(() -> redis.lpush("listleads", "tristan"), () -> redis.srandmember("listleads", 1));
+   }
+
+   @Test
+   public void testSscanMatch() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      Set<String> content = new HashSet<>();
+
+      int dataSize = 15;
+      for (int i = 0; i < dataSize; i++) {
+         content.add("v" + i);
+      }
+
+      assertThat(redis.sadd("sscan-match-test", content.toArray(String[]::new))).isEqualTo(dataSize);
+
+      Set<String> scanned = new HashSet<>();
+      ScanArgs args = ScanArgs.Builder.matches("v1*");
+      for (ValueScanCursor<String> cursor = redis.sscan("sscan-match-test", args); ; cursor = redis.sscan("sscan-match-test", cursor, args)) {
+         scanned.addAll(cursor.getValues());
+         for (String key : cursor.getValues()) {
+            assertThat(key).startsWith("v1");
+         }
+
+         if (cursor.isFinished()) break;
+      }
+
+      assertThat(scanned)
+            .hasSize(6)
+            .containsExactlyInAnyOrder("v1", "v10", "v11", "v12", "v13", "v14");
+   }
+
+   @Test
+   public void testHScanOperation() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      Set<String> content = new HashSet<>();
+
+      int dataSize = 15;
+      redis.flushdb();
+      for (int i = 0; i < dataSize; i++) {
+         content.add("value" + i);
+      }
+
+      assertThat(redis.sadd("sscan-test", content.toArray(String[]::new))).isEqualTo(dataSize);
+
+      Set<String> scanned = new HashSet<>();
+      for (ValueScanCursor<String> cursor = redis.sscan("sscan-test"); ; cursor = redis.sscan("sscan-test", cursor)) {
+         scanned.addAll(cursor.getValues());
+         if (cursor.isFinished()) break;
+      }
+
+      assertThat(scanned)
+            .hasSize(dataSize)
+            .containsExactlyInAnyOrderElementsOf(content);
+
+      ValueScanCursor<String> empty = redis.sscan("unknown");
+      assertThat(empty)
+            .satisfies(v -> assertThat(v.isFinished()).isTrue())
+            .satisfies(v -> assertThat(v.getValues()).isEmpty());
+   }
+
+   @Test
+   public void testSscanCount() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      Set<String> content = new HashSet<>();
+
+      int dataSize = 15;
+      for (int i = 0; i < dataSize; i++) {
+         content.add("value" + i);
+      }
+
+      assertThat(redis.sadd("sscan-count-test", content.toArray(String[]::new))).isEqualTo(dataSize);
+
+      int count = 5;
+      Set<String> scanned = new HashSet<>();
+      ScanArgs args = ScanArgs.Builder.limit(count);
+      for (ValueScanCursor<String> cursor = redis.sscan("sscan-count-test", args); ; cursor = redis.sscan("sscan-count-test", cursor, args)) {
+         scanned.addAll(cursor.getValues());
+         if (cursor.isFinished()) break;
+
+         assertThat(cursor.getValues()).hasSize(count);
+      }
+
+      assertThat(scanned)
+            .hasSize(dataSize)
+            .containsExactlyInAnyOrderElementsOf(content);
    }
 }
