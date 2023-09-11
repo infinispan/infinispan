@@ -58,7 +58,8 @@ class Compactor implements Consumer<Object> {
    private final double compactionThreshold;
    private final Executor blockingExecutor;
 
-   private FlowableProcessor<Object> processor;
+   // Initialize so we can enqueue operations until start begins
+   private FlowableProcessor<Object> processor = UnicastProcessor.create().toSerialized();
 
    private Index index;
    // as processing single scheduled compaction takes a lot of time, we don't use the queue to signalize
@@ -154,7 +155,6 @@ class Compactor implements Consumer<Object> {
    public void start() {
       stopped = new CompletableFuture<>();
 
-      processor = UnicastProcessor.create().toSerialized();
       Scheduler scheduler = Schedulers.from(blockingExecutor);
       processor.observeOn(scheduler)
             .delay(obj -> {
@@ -304,6 +304,9 @@ class Compactor implements Consumer<Object> {
          completeFile(logFile.fileId, currentOffset, nextExpirationTime, false);
          logFile = null;
       }
+
+      // Reinitialize processor so it can be started again possibly
+      processor = UnicastProcessor.create().toSerialized();
    }
 
    private static class CompactionRequest extends CompletableFuture<Void> {
