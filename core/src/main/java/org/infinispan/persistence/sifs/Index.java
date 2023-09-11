@@ -413,7 +413,10 @@ class Index {
          Segment segment = segments[i];
          flowableProcessors[i]
                .observeOn(Schedulers.from(executor))
-               .subscribe(segment, segment::completeExceptionally, segment);
+               .subscribe(segment, t -> {
+                  log.error("Error encountered with index, SIFS may not operate properly.", t);
+                  segment.completeExceptionally(t);
+               }, segment);
       }
    }
 
