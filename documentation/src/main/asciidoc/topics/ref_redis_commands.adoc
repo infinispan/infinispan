@@ -210,6 +210,9 @@ for concurrent operations or failures unless the resp cache is configured to use
 | The current implementation has a relaxed isolation level. Redis offers serializable transactions, but {{brandname}}
 provides a read-uncommitted isolation.
 
+| link:https://redis.io/commands/persist[PERSIST]
+|
+
 | link:https://redis.io/commands/pexpiretime[PEXPIRETIME]
 |
 

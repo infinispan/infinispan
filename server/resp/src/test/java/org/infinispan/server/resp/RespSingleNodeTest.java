@@ -756,6 +756,16 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
    }
 
    @Test
+   public void testPersist() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v(), SetArgs.Builder.ex(10_000));
+      assertThat(redis.persist(k())).isTrue();
+      redis.set(k(1), v(1));
+      assertThat(redis.persist(k(1))).isFalse();
+      assertThat(redis.persist(k(2))).isFalse();
+   }
+
+   @Test
    public void testMemoryUsage() {
       RedisCommands<String, String> redis = redisConnection.sync();
       redis.set(k(), "1");

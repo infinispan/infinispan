@@ -26,8 +26,8 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class EXPIRE extends RespCommand implements Resp3Command {
 
-   private static final CompletableFuture<Long> NOT_APPLIED = CompletableFuture.completedFuture(0L);
-   private static final CompletableFuture<Long> APPLIED = CompletableFuture.completedFuture(1L);
+   public static final CompletableFuture<Long> NOT_APPLIED = CompletableFuture.completedFuture(0L);
+   public static final CompletableFuture<Long> APPLIED = CompletableFuture.completedFuture(1L);
 
    enum Mode {
       NONE, NX, XX, GT, LT
