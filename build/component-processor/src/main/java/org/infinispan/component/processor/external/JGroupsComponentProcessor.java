@@ -65,15 +65,16 @@ public class JGroupsComponentProcessor extends AbstractProcessor {
       w.println("import java.util.Map;");
       w.println("import java.util.function.Function;");
       w.println("import javax.annotation.processing.Generated;");
-      w.println("import static org.infinispan.factories.impl.MBeanMetadata.AttributeMetadata;");
+      w.println("import org.infinispan.commons.stat.GaugeMetricInfo;");
+      w.println("import org.infinispan.commons.stat.MetricInfo;");
       w.println("import org.jgroups.stack.Protocol;");
       w.println();
       w.printf("@Generated(value = \"%s\", date = \"%s\")%n", getClass().getName(), Instant.now().toString());
       w.printf("public class %s {%n", className);
-      w.println("   public static final Map<Class<? extends Protocol>, Collection<AttributeMetadata>> PROTOCOL_METADATA = new HashMap<>();");
+      w.println("   public static final Map<Class<? extends Protocol>, Collection<MetricInfo>> PROTOCOL_METADATA = new HashMap<>();");
       w.printf("   private %s() {}%n", className);
       w.println("   static {");
-      w.println("      List<AttributeMetadata> attributes;");
+      w.println("      List<MetricInfo> attributes;");
       for (short id = 0; id < 256; id++) {
          Class<?> protocol = ClassConfigurator.getProtocol(id);
          addProtocol(protocol, w);
@@ -105,9 +106,8 @@ public class JGroupsComponentProcessor extends AbstractProcessor {
             if (hasAttributes.compareAndSet(false, true)) {
                w.println("      attributes = new ArrayList<>();");
             }
-            w.printf("      attributes.add(new AttributeMetadata(\"%s\", \"%s\", false, false, \"%s\",\n" +
-                        "                               false, (Function<%s, ?>) %s::%s, null));%n",
-                  method.getName(), annotation.description().replace('"', '\''), method.getReturnType().getName(), protocol.getName(), protocol.getName(), method.getName());
+            w.printf("      attributes.add(new GaugeMetricInfo<>(\"%s\", \"%s\", null, %s::%s));%n",
+                  method.getName(), annotation.description().replace('"', '\''), protocol.getName(), method.getName());
          }
       }
 
@@ -133,9 +133,8 @@ public class JGroupsComponentProcessor extends AbstractProcessor {
             if (hasAttributes.compareAndSet(false, true)) {
                w.println("      attributes = new ArrayList<>();");
             }
-            w.printf("      attributes.add(new AttributeMetadata(\"%s\", \"%s\", false, false, \"%s\",\n" +
-                        "                               false, (Function<%s, ?>) p -> p.%s().%s(), null));%n",
-                  method.getName(), annotation.description().replace('"', '\''), method.getReturnType().getName(), protocol.getName(), getterMethodName, method.getName());
+            w.printf("      attributes.add(new GaugeMetricInfo<>(\"%s\", \"%s\", null, ((Function<%s, Number>) p -> p.%s().%s())));%n",
+                  method.getName(), annotation.description().replace('"', '\''), protocol.getName(), getterMethodName, method.getName());
          }
       }
    }

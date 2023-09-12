@@ -2372,4 +2372,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Simple caches do not support queries. Use standard caches for querying.", id = 969)
    CacheException querySimpleCacheNotSupported();
 
+   @LogMessage(level = WARN)
+   @Message(value = "Failed to register metrics with id %s. Reason: %s", id = 970)
+   void metricRegistrationFailed(String id, String reason);
 }

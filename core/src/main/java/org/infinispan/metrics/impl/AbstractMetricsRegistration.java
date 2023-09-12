@@ -1,13 +1,14 @@
 package org.infinispan.metrics.impl;
 
-import static org.infinispan.factories.impl.MBeanMetadata.AttributeMetadata;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.stat.MetricInfo;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -82,7 +83,7 @@ abstract class AbstractMetricsRegistration {
             if (instance != null) {
                MBeanMetadata beanMetadata = basicComponentRegistry.getMBeanMetadata(instance.getClass().getName());
                if (beanMetadata != null) {
-                  Set<Object> ids = registerMetrics(instance, beanMetadata.getJmxObjectName(), beanMetadata.getAttributes(), null, component.getName(), null);
+                  Set<Object> ids = registerAttributes(instance, beanMetadata.getJmxObjectName(), beanMetadata.getAttributes(), null, component.getName(), null);
                   metricIds.addAll(ids);
                   if (instance instanceof CustomMetricsSupplier) {
                      metricIds.addAll(registerMetrics(instance, beanMetadata.getJmxObjectName(), ((CustomMetricsSupplier) instance).getCustomMetrics(globalConfig.metrics().namesAsTags()), null, component.getName(), null));
@@ -93,7 +94,16 @@ abstract class AbstractMetricsRegistration {
       }
    }
 
-   private Set<Object> registerMetrics(Object instance, String jmxObjectName, Collection<AttributeMetadata> attributes,  String type, String componentName, String prefix) {
+   private Set<Object> registerAttributes(Object instance, String jmxObjectName, Collection<MBeanMetadata.AttributeMetadata> attributes,  String type, String componentName, String prefix) {
+      var metrics = attributes.stream()
+            .map(MBeanMetadata.AttributeMetadata::toMetricInfo)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.toList());
+      return registerMetrics(instance, jmxObjectName, metrics, type, componentName, prefix);
+   }
+
+   private Set<Object> registerMetrics(Object instance, String jmxObjectName, Collection<MetricInfo> metrics,  String type, String componentName, String prefix) {
       if (jmxObjectName == null) {
          jmxObjectName = componentName;
       }
@@ -110,10 +120,10 @@ abstract class AbstractMetricsRegistration {
          }
          metricPrefix += NameUtils.decamelize(jmxObjectName) + '_';
       }
-      return internalRegisterMetrics(instance, attributes, metricPrefix);
+      return internalRegisterMetrics(instance, metrics, metricPrefix);
    }
 
-   protected abstract Set<Object> internalRegisterMetrics(Object instance, Collection<AttributeMetadata> attributes, String metricPrefix);
+   protected abstract Set<Object> internalRegisterMetrics(Object instance, Collection<MetricInfo> metrics, String metricPrefix);
 
    /**
     * Register metrics for a component that was manually registered later, after component registry startup. The metric
@@ -127,7 +137,7 @@ abstract class AbstractMetricsRegistration {
       if (beanMetadata == null) {
          throw new IllegalArgumentException("No MBean metadata available for " + instance.getClass().getName());
       }
-      Set<Object> ids = registerMetrics(instance, beanMetadata.getJmxObjectName(), beanMetadata.getAttributes(), type, componentName, null);
+      Set<Object> ids = registerAttributes(instance, beanMetadata.getJmxObjectName(), beanMetadata.getAttributes(), type, componentName, null);
       metricIds.addAll(ids);
    }
 
@@ -143,7 +153,7 @@ abstract class AbstractMetricsRegistration {
       if (beanMetadata == null) {
          throw new IllegalArgumentException("No MBean metadata available for " + instance.getClass().getName());
       }
-      return registerMetrics(instance, beanMetadata.getJmxObjectName(), beanMetadata.getAttributes(), null, null, prefix);
+      return registerAttributes(instance, beanMetadata.getJmxObjectName(), beanMetadata.getAttributes(), null, null, prefix);
    }
 
    public void unregisterMetrics(Set<Object> metricIds) {

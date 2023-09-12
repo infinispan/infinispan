@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+import org.infinispan.commons.stat.MetricInfo;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 
 /**
@@ -34,6 +35,6 @@ public interface CustomMetricsSupplier {
     * @param nameAsTag True if the cache name or any other identifier must be set as Tags instead of metric name.
     * @return A list of {@link AttributeMetadata} to be registered.
     */
-   Collection<AttributeMetadata> getCustomMetrics(boolean nameAsTag);
+   Collection<MetricInfo> getCustomMetrics(boolean nameAsTag);
 
 }

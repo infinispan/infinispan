@@ -14,6 +14,8 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.AbstractRequest;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
+import org.infinispan.remoting.transport.jgroups.JGroupsMetricsManager;
+import org.infinispan.remoting.transport.jgroups.RequestTracker;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -29,34 +31,36 @@ public class MultiTargetRequest<T> extends AbstractRequest<T> {
    private static final Log log = LogFactory.getLog(MultiTargetRequest.class);
 
    @GuardedBy("responseCollector")
-   private final Address[] targets;
+   private final RequestTracker[] trackers;
    @GuardedBy("responseCollector")
    private int missingResponses;
 
    public MultiTargetRequest(ResponseCollector<T> responseCollector, long requestId, RequestRepository repository,
-                             Collection<Address> targets, Address excluded) {
+                             Collection<Address> targets, Address excluded, JGroupsMetricsManager metricsCollector) {
       super(requestId, responseCollector, repository);
-      this.targets = new Address[targets.size()];
+      trackers = new RequestTracker[targets.size()];
       int i = 0;
       for (Address target : targets) {
          if (excluded == null || !excluded.equals(target)) {
-            this.targets[i++] = target;
+            trackers[i++] = metricsCollector.trackRequest(target);
          }
       }
-      this.missingResponses = i;
+      missingResponses = i;
       if (missingResponses == 0)
          complete(responseCollector.finish());
    }
 
+   @GuardedBy("responseCollector")
    protected int getTargetsSize() {
-      return targets.length;
+      return trackers.length;
    }
 
    /**
     * @return target {@code i}, or {@code null} if a response was already added for target {@code i}.
     */
-   protected Address getTarget(int i) {
-      return targets[i];
+   @GuardedBy("responseCollector")
+   protected RequestTracker getTarget(int i) {
+      return trackers[i];
    }
 
    @Override
@@ -71,18 +75,19 @@ public class MultiTargetRequest<T> extends AbstractRequest<T> {
                return;
             }
 
-            boolean validSender = false;
-            for (int i = 0; i < targets.length; i++) {
-               Address target = targets[i];
-               if (target != null && target.equals(sender)) {
-                  validSender = true;
-                  targets[i] = null;
+            boolean invalidSender = true;
+            for (int i = 0; i < trackers.length; i++) {
+               RequestTracker target = trackers[i];
+               if (target != null && target.destination().equals(sender)) {
+                  target.onComplete();
+                  invalidSender = false;
+                  trackers[i] = null;
                   missingResponses--;
                   break;
                }
             }
 
-            if (!validSender) {
+            if (invalidSender) {
                // A broadcast may be sent to nodes added to the cluster view after the request was created,
                // so we should just ignore responses from unexpected senders.
                if (log.isTraceEnabled())
@@ -121,14 +126,15 @@ public class MultiTargetRequest<T> extends AbstractRequest<T> {
                // The request is completed, must not modify ResponseObject.
                return false;
             }
-            for (int i = 0; i < targets.length; i++) {
-               Address target = targets[i];
-               if (target != null && !members.contains(target)) {
-                  targets[i] = null;
+            for (int i = 0; i < trackers.length; i++) {
+               RequestTracker target = trackers[i];
+               if (target != null && !members.contains(target.destination())) {
+                  trackers[i] = null;
                   missingResponses--;
                   targetRemoved = true;
-                  if (log.isTraceEnabled()) log.tracef("Target %s of request %d left the cluster view", target, requestId);
-                  result = responseCollector.addResponse(target, CacheNotFoundResponse.INSTANCE);
+                  if (log.isTraceEnabled())
+                     log.tracef("Target %s of request %d left the cluster view", target, requestId);
+                  result = responseCollector.addResponse(target.destination(), CacheNotFoundResponse.INSTANCE);
                   if (result != null) {
                      isDone = true;
                      break;
@@ -155,19 +161,21 @@ public class MultiTargetRequest<T> extends AbstractRequest<T> {
 
    @Override
    protected void onTimeout() {
+      String targetsWithoutResponses;
       synchronized (responseCollector) {
          if (missingResponses <= 0) {
             // The request is already completed.
             return;
          }
          // Don't add more responses to the collector after this
-         this.missingResponses = 0;
+         missingResponses = 0;
+         targetsWithoutResponses = Arrays.stream(trackers)
+               .filter(Objects::nonNull)
+               .peek(RequestTracker::onTimeout)
+               .map(RequestTracker::destination)
+               .map(Object::toString)
+               .collect(Collectors.joining(","));
       }
-
-      String targetsWithoutResponses = Arrays.stream(targets)
-                                             .filter(Objects::nonNull)
-                                             .map(Object::toString)
-                                             .collect(Collectors.joining(","));
       completeExceptionally(CLUSTER.requestTimedOut(requestId, targetsWithoutResponses, Util.prettyPrintTime(getTimeoutMs())));
    }
 }
