@@ -3,12 +3,12 @@ package org.infinispan.metrics.impl;
 import java.util.Collection;
 import java.util.Set;
 
+import org.infinispan.commons.stat.MetricInfo;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
-import org.infinispan.factories.impl.MBeanMetadata;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
@@ -44,7 +44,7 @@ public final class CacheMetricsRegistration extends AbstractMetricsRegistration 
    }
 
    @Override
-   protected Set<Object> internalRegisterMetrics(Object instance, Collection<MBeanMetadata.AttributeMetadata> attributes, String metricPrefix) {
-      return metricsCollector.registerMetrics(instance, attributes, metricPrefix, cacheName);
+   protected Set<Object> internalRegisterMetrics(Object instance, Collection<MetricInfo> metrics, String metricPrefix) {
+      return metricsCollector.registerMetrics(instance, metrics, metricPrefix, cacheName);
    }
 }

@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.stat.MetricInfo;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
@@ -21,7 +22,6 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.impl.MBeanMetadata;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metrics.Constants;
@@ -164,8 +164,8 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
    }
 
    @Override
-   public Collection<MBeanMetadata.AttributeMetadata> getCustomMetrics(boolean nameAsTag) {
-      List<MBeanMetadata.AttributeMetadata> attributes = new ArrayList<>(offlineStatus.size() * 3);
+   public Collection<MetricInfo> getCustomMetrics(boolean nameAsTag) {
+      List<MetricInfo> attributes = new ArrayList<>(offlineStatus.size() * 3);
       for (Map.Entry<String, OfflineStatus> entry : offlineStatus.entrySet()) {
          OfflineStatus status = entry.getValue();
          Map<String, String> tags = Map.of(Constants.SITE_TAG_NAME, entry.getKey());

@@ -17,11 +17,11 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.stat.MetricInfo;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
-import org.infinispan.factories.impl.MBeanMetadata;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
@@ -421,7 +421,7 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
    }
 
    @Override
-   public Collection<MBeanMetadata.AttributeMetadata> getCustomMetrics(boolean nameAsTag) {
+   public Collection<MetricInfo> getCustomMetrics(boolean nameAsTag) {
       return takeOfflineManager.getCustomMetrics(nameAsTag);
    }
 
