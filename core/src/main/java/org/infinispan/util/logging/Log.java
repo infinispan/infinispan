@@ -2372,7 +2372,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Query module not found. Add infinispan-query or infinispan-query-core to the classpath.", id = 695)
    CacheException queryNotSupported();
 
-   @Message(value = "Simple caches do not support queries. If you need queries, you should use standard caches.", id = 969)
+   @Message(value = "Simple caches do not support queries. Use standard caches for querying.", id = 969)
    CacheException querySimpleCacheNotSupported();
 
 }
