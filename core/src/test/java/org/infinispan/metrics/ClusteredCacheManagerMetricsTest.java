@@ -12,7 +12,8 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.metrics.impl.MetricsCollector;
+import org.infinispan.metrics.impl.MetricsRegistry;
+import org.infinispan.metrics.impl.MetricsRegistryImpl;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.Test;
@@ -58,10 +59,10 @@ public class ClusteredCacheManagerMetricsTest extends MultipleCacheManagersTest 
    }
 
    public void testMetricsAreRegistered() {
-      MetricsCollector mc0 = manager(0).getGlobalComponentRegistry().getComponent(MetricsCollector.class);
+      MetricsRegistryImpl mc0 = (MetricsRegistryImpl) manager(0).getGlobalComponentRegistry().getComponent(MetricsRegistry.class);
       verifyMeters(mc0.registry());
 
-      MetricsCollector mc1 = manager(1).getGlobalComponentRegistry().getComponent(MetricsCollector.class);
+      MetricsRegistryImpl mc1 = (MetricsRegistryImpl) manager(1).getGlobalComponentRegistry().getComponent(MetricsRegistry.class);
       verifyMeters(mc1.registry());
 
       GlobalConfiguration gcfg0 = manager(0).getCacheManagerConfiguration();

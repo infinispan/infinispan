@@ -2381,4 +2381,24 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Indexed entity name must not be null or empty", id = 691)
    CacheConfigurationException indexedEntityNameMissing();
+
+   @LogMessage(level = INFO)
+   @Message(value = "Flushed ACL Cache", id = 692)
+   void flushedACLCache();
+
+   @Message(value = "Dangling lock file '%s' in persistent global state, probably left behind by an unclean shutdown. ", id = 693)
+   CacheConfigurationException globalStateLockFilePresent(File lockFile);
+
+   @Message(value = "Cache '%s' has number of owners %d but is missing too many members (%d/%d) to reinstall topology", id = 694)
+   MissingMembersException missingTooManyMembers(String cacheName, int owners, int missing, int total);
+
+   @Message(value = "Query module not found. Add infinispan-query or infinispan-query-core to the classpath.", id = 695)
+   CacheException queryNotSupported();
+
+   @Message(value = "Simple caches do not support queries. Use standard caches for querying.", id = 969)
+   CacheException querySimpleCacheNotSupported();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Failed to register metrics with id %s. Reason: %s", id = 970)
+   void metricRegistrationFailed(String id, String reason);
 }

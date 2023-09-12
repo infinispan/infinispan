@@ -9,7 +9,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 
 import org.infinispan.commons.util.Util;
-import org.infinispan.metrics.impl.MetricsCollector;
+import org.infinispan.metrics.impl.MetricsRegistry;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
 import org.infinispan.rest.framework.ResourceHandler;
@@ -18,7 +18,6 @@ import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.framework.impl.RestResponseBuilder;
 
-import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.prometheus.client.exporter.common.TextFormat;
 
 /**
@@ -33,13 +32,13 @@ public final class MetricsResource implements ResourceHandler {
 
    private final boolean auth;
    private final Executor blockingExecutor;
-   private final MetricsCollector metricsCollector;
+   private final MetricsRegistry metricsRegistry;
    private final InvocationHelper invocationHelper;
 
    public MetricsResource(boolean auth, InvocationHelper invocationHelper) {
       this.auth = auth;
       this.blockingExecutor = invocationHelper.getExecutor();
-      this.metricsCollector = invocationHelper.getMetricsCollector();
+      this.metricsRegistry = invocationHelper.getMetricsRegistry();
       this.invocationHelper = invocationHelper;
    }
 
@@ -56,13 +55,13 @@ public final class MetricsResource implements ResourceHandler {
          RestResponseBuilder<NettyRestResponse.Builder> builder = invocationHelper.newResponse(request);
 
          try {
-            PrometheusMeterRegistry registry = metricsCollector.registry();
-            if (registry == null) {
-               return builder.status(NOT_FOUND.code()).build();
+            if (metricsRegistry.supportScrape()) {
+               String contentType = TextFormat.chooseContentType(request.getAcceptHeader());
+               builder.header("Content-Type", contentType);
+               builder.entity(metricsRegistry.scrape(contentType));
+            } else {
+               builder.status(NOT_FOUND.code());
             }
-            String contentType = TextFormat.chooseContentType(request.getAcceptHeader());
-            builder.header("Content-Type", contentType);
-            builder.entity(registry.scrape(contentType));
 
             return builder.build();
          } catch (Exception e) {

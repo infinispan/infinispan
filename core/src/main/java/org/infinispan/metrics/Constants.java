@@ -19,4 +19,6 @@ public interface Constants {
    String JGROUPS_CLUSTER_TAG_NAME = "cluster";
 
    String SITE_TAG_NAME = "site";
+
+   String TARGET_NODE = "target_node";
 }

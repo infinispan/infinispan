@@ -3,14 +3,15 @@ package org.infinispan.factories.impl;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
+import org.infinispan.commons.stat.GaugeMetricInfo;
+import org.infinispan.commons.stat.MetricInfo;
+import org.infinispan.commons.stat.TimerMetricInfo;
+import org.infinispan.commons.stat.TimerTracker;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
@@ -47,7 +48,7 @@ public final class MBeanMetadata {
 
    public MBeanMetadata(String jmxObjectName, String description, String superMBeanClassName,
                         Collection<AttributeMetadata> attributes, Collection<OperationMetadata> operations) {
-      this.jmxObjectName = jmxObjectName != null ? (jmxObjectName.trim().length() == 0 ? null : jmxObjectName) : jmxObjectName;
+      this.jmxObjectName = jmxObjectName == null  || jmxObjectName.trim().isEmpty() ? null : jmxObjectName;
       this.description = description;
       this.superMBeanClassName = superMBeanClassName;
       this.attributes = attributes;
@@ -95,12 +96,10 @@ public final class MBeanMetadata {
       private final boolean is;
       private final Function<?, ?> getterFunction;  // optional
       private final BiConsumer<?, ?> setterFunction; // optional
-      private final Map<String, String> tags; // optional
       private final boolean clusterWide;
 
       public AttributeMetadata(String name, String description, boolean writable, boolean useSetter, String type,
-                               boolean is, Function<?, ?> getterFunction, BiConsumer<?, ?> setterFunction, boolean clusterWide,
-                               Map<String, String> tags) {
+                               boolean is, Function<?, ?> getterFunction, BiConsumer<?, ?> setterFunction, boolean clusterWide) {
          this.name = name;
          this.description = description;
          this.writable = writable;
@@ -110,17 +109,11 @@ public final class MBeanMetadata {
          this.getterFunction = getterFunction;
          this.setterFunction = setterFunction;
          this.clusterWide = clusterWide;
-         this.tags = tags == null ? Collections.emptyMap() : tags;
-      }
-
-      public AttributeMetadata(String name, String description, boolean writable, boolean useSetter, String type,
-                               boolean is, Function<?, ?> getterFunction, BiConsumer<?, ?> setterFunction, boolean clusterWide) {
-         this(name, description, writable, useSetter, type, is, getterFunction, setterFunction, clusterWide, null);
       }
 
       public AttributeMetadata(String name, String description, boolean writable, boolean useSetter, String type,
                                boolean is, Function<?, ?> getterFunction, BiConsumer<?, ?> setterFunction) {
-         this(name, description, writable, useSetter, type, is, getterFunction, setterFunction, false, null);
+         this(name, description, writable, useSetter, type, is, getterFunction, setterFunction, false);
       }
 
       public String getName() {
@@ -147,26 +140,21 @@ public final class MBeanMetadata {
          return is;
       }
 
-      public Supplier<?> getter(Object instance) {
-         if (getterFunction == null) {
-            return null;
-         }
-         return () -> ((Function<Object, Object>) getterFunction).apply(instance);
-      }
-
-      public Consumer<?> setter(Object instance) {
-         if (setterFunction == null) {
-            return null;
-         }
-         return (v) -> ((BiConsumer<Object, Object>) setterFunction).accept(instance, v);
-      }
-
       public boolean isClusterWide() {
          return clusterWide;
       }
 
-      public Map<String, String> tags() {
-         return tags;
+      @SuppressWarnings("unchecked")
+      public Optional<MetricInfo> toMetricInfo() {
+         if (isClusterWide()) {
+            return Optional.empty();
+         }
+         if (getterFunction != null) {
+            return Optional.of(new GaugeMetricInfo<>(name, description, null, (Function<Object, Number>) getterFunction));
+         } else if (setterFunction != null) {
+            return Optional.of(new TimerMetricInfo<>(name, description, null, (BiConsumer<Object, TimerTracker>) setterFunction));
+         }
+         return Optional.empty();
       }
 
       @Override
@@ -180,7 +168,6 @@ public final class MBeanMetadata {
                ", clusterWide=" + clusterWide +
                ", getterFunction=" + getterFunction +
                ", setterFunction=" + setterFunction +
-               ", tags=" + tags +
                '}';
       }
    }

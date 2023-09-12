@@ -1,20 +1,16 @@
 package org.infinispan.server.functional.rest;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.server.functional.XSiteIT.LON;
 import static org.infinispan.server.functional.XSiteIT.NYC;
+import static org.infinispan.server.functional.rest.RestMetricsResource.Metric;
+import static org.infinispan.server.functional.rest.RestMetricsResource.getMetrics;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.infinispan.client.rest.RestClient;
@@ -54,8 +50,7 @@ public class XSiteRestMetricsOperations {
    @RegisterExtension
    public static final InfinispanXSiteServerExtension SERVERS = XSiteIT.SERVERS;
 
-   // copied from regex101.com
-   private static final Pattern PROMETHEUS_PATTERN = Pattern.compile("^(?<metric>[a-zA-Z_:][a-zA-Z0-9_:]*]*)(?<tags>\\{.*})?[\\t ]*(?<value>-?[0-9E.]*)[\\t ]*(?<timestamp>[0-9]+)?$");
+
    private static final String[] TAGGED_METRICS = {
          // TakeOfflineManager metrics
          "x_site_admin_status",
@@ -89,7 +84,7 @@ public class XSiteRestMetricsOperations {
    };
 
    @Test
-   public void testSiteStatus() throws Exception {
+   public void testSiteStatus() {
       String lonXML = String.format(LON_CACHE_XML_CONFIG, SERVERS.getMethodName());
       String nycXML = String.format(NYC_CACHE_XML_CONFIG, SERVERS.getMethodName());
 
@@ -101,11 +96,7 @@ public class XSiteRestMetricsOperations {
 
       String statusMetricName = "x_site_admin_status";
 
-      try (RestResponse response = sync(metricsClient.metrics(true))) {
-         assertEquals(200, response.getStatus());
-         RestMetricsResource.checkIsOpenmetrics(response.contentType());
-         assertTrue(response.getBody().contains("# TYPE vendor_" + statusMetricName + " gauge\n"));
-      }
+       assertTrue(getMetrics(metricsClient).stream().anyMatch(m -> m.matches("vendor_" + statusMetricName)));
 
       assertSiteStatusMetrics(metricsClient, statusMetricName, 1);
 
@@ -136,47 +127,31 @@ public class XSiteRestMetricsOperations {
       //noinspection resource
       SERVERS.rest(NYC).withServerConfiguration(new StringConfiguration(nycXML)).create();
 
-      Map<String, String> metricsAndTags = getMetrics(metricsClient);
+       List<Metric> metrics = getMetrics(metricsClient);
 
       for (String metric : TAGGED_METRICS) {
-         expectNycSiteTag(true, metric, metricsAndTags);
+          expectNycSiteTag(true, metric, metrics);
       }
 
       for (String metric : UNTAGGED_METRICS) {
-         expectNycSiteTag(false, metric, metricsAndTags);
+          expectNycSiteTag(false, metric, metrics);
       }
    }
 
-   private static Map<String, String> getMetrics(RestMetricsClient client) {
-      Map<String, String> metricsToTags = new HashMap<>();
-      try (RestResponse response = sync(client.metrics(true))) {
-         assertEquals(200, response.getStatus());
-         RestMetricsResource.checkIsOpenmetrics(response.contentType());
-         for (Iterator<String> it = response.getBody().lines().iterator() ; it.hasNext() ; ) {
-            Matcher matcher = PROMETHEUS_PATTERN.matcher(it.next());
-            if (matcher.matches()) {
-               metricsToTags.put(matcher.group("metric"), matcher.group("tags"));
-            }
-         }
-      }
-      return metricsToTags;
-   }
+    private static void expectNycSiteTag(boolean containsTag, String name, List<Metric> metrics) {
+        Optional<Metric> optMetric = metrics.stream().filter(metric -> metric.matches("vendor_" + name)).findAny();
+        assertTrue(optMetric.isPresent(), "Missing tag. metric: " + name);
+        if (containsTag) {
+            optMetric.get().assertTagPresent("site", "NYC");
+        } else {
+            optMetric.get().assertTagMissing("site", "NYC");
+        }
+    }
 
-   private void expectNycSiteTag(boolean containsTag, String metric, Map<String, String> metricsAndTags) {
-      String tags = metricsAndTags.get("vendor_" + metric);
-      assertNotNull(tags, "Missing tag. metric: " + metric);
-      assertEquals(containsTag, tags.contains("site=\"NYC\""), "Unexpected tag. metric: " + metric + ", tags=" + tags);
-   }
-
-   private static void assertSiteStatusMetrics(RestMetricsClient client, String metric, int expected) throws Exception {
-      try (RestResponse response = sync(client.metrics())) {
-         assertEquals(OK, response.getStatus());
-         RestMetricsResource.checkIsPrometheus(response.contentType());
-         RestMetricsResource.checkRule(response.getBody(), "vendor_" + metric, (stringValue) -> {
-            int parsed = (int) Double.parseDouble(stringValue);
-            assertThat(parsed).isEqualTo(expected);
-         });
-      }
-   }
+    private static void assertSiteStatusMetrics(RestMetricsClient client, String metric, int expected) {
+        var m = getMetrics(client).stream().filter(m1 -> m1.matches("vendor_" + metric)).findFirst();
+        assertTrue(m.isPresent());
+        m.get().value().isEqualTo(expected);
+    }
 
 }
