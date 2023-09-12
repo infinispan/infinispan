@@ -161,14 +161,34 @@ If Hibernate 5.3 support is needed, you must use an older version of Infinispan.
 The JPAStore has been removed in Infinispan 14.0.
 It is suggested instead to use the new SQL Table or Query Stores that were added in Infinispan 13.0.
 
-== ProtoDoc annotations are no longer necessary
+== Query API
 
-It is no longer necessary to wrap annotations, such as those required for indexing, within `@ProtoDoc` annotations.
-Any annotations will simply be copied as comments to the generated `.proto` files.
+=== {brandname} native annotations
 
-== The (undocumented) server filesystem-realm has been removed
+This release introduces new indexing annotations: `@Indexed`, `@Basic`, `@Decimal`, `@Keyword`, `@Text`, and `@Embedded`.
+Each of the annotations supports a set of attributes that you can use to further describe how the entity is indexed.
 
-The `filesystem-realm`, an experimental feature which has never been documented, has been removed.
+These new annotations replaced Hibernate Search annotations which means that you are no longer required to annotate your Java classes with the `@ProtoDoc` annotation for remote caches.
+Any annotations will be copied as comments to the generated `.proto` files.
+
+The following table summarizes the mapping of fields between Hibernate Search 5 (HS5) annotations and {brandname} native annotations:
+
+[%header,cols=4*]
+|===
+| HS5 annotations | Indexing attributes| {brandname} native annotations| Description
+
+| @Field(index=Index.YES) | searchable | @Basic, @Decimal, @Keyword, @Text |Fields previously marked as indexed are now searchable.
+
+| @Field(store = Store.YES) | projectable = true | @Basic, @Decimal, @Keyword, @Text| Fields previously marked as stored are now projectable.
+
+| type String && @Field(analyze = Analyze.YES) | analyzer = "<definition>"| @Text| String fields that were marked with analyzer definitions remain being analyzed during indexing.
+
+| @Field(analyze = Analyze.NO) && (@Field(store = Store.YES) OR @Field(sortable = Sortable.YES)) | sortable = true| @Basic, @Decimal, @Keyword| Fields that were not analyzed but were either stored in the index or marked as sortable are now considered sortable.
+
+| N/A | aggregable = true| @Basic, @Decimal, @Keyword| Performing aggregation operations using the Hibernate 5 Search annotations was not possible.
+
+| N/A | normalizer = "lowercase"| @Keyword| Mapping fields that were analyzed or normalized is not possible due to the potential data loss in the process.
+|===
 
 == Query efficiency
 
@@ -176,6 +196,10 @@ The default for maximum results returned by a query that was present in Infinisp
 You can now change the default limit by setting the default-max-results cache property.
 The default value of default-max-results is 100.
 Limiting the number of results returned by a query significantly improves performance of queries that don't have an explicit limit set.
+
+== The (undocumented) server filesystem-realm has been removed
+
+The `filesystem-realm`, an experimental feature which has never been documented, has been removed.
 
 = Upgrading from 12.1 to 13.0
 
