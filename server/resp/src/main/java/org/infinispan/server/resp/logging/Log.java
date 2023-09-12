@@ -58,5 +58,9 @@ public interface Log extends BasicLogger {
    @Once
    void smoveConsistencyMessage();
 
+   @LogMessage(level = WARN)
+   @Message(value = "MSETNX command can't guarantee atomicity and consistency against concurrent set", id = 12009)
+   @Once
+   void msetnxConsistencyMessage();
 
 }
