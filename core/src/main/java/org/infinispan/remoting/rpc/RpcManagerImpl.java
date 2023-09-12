@@ -1,6 +1,5 @@
 package org.infinispan.remoting.rpc;
 
-import static org.infinispan.factories.impl.MBeanMetadata.AttributeMetadata;
 import static org.infinispan.remoting.rpc.RpcManagerImpl.OBJECT_NAME;
 import static org.infinispan.util.logging.Log.CLUSTER;
 
@@ -26,6 +25,7 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeListener;
+import org.infinispan.commons.stat.MetricInfo;
 import org.infinispan.commons.stat.TimerTracker;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.logging.TraceException;
@@ -102,8 +102,8 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    private volatile RpcOptions syncRpcOptions;
 
    @Override
-   public Collection<AttributeMetadata> getCustomMetrics(boolean nameAsTag) {
-      List<AttributeMetadata> attributes = new LinkedList<>();
+   public Collection<MetricInfo> getCustomMetrics(boolean nameAsTag) {
+      List<MetricInfo> attributes = new LinkedList<>();
       for (String site : xSiteMetricsCollector.sites()) {
          Map<String, String> tags = Map.of(Constants.SITE_TAG_NAME, site);
          if (nameAsTag) {

@@ -8,9 +8,9 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.impl.MultiTargetRequest;
 import org.infinispan.remoting.transport.impl.RequestRepository;
-import org.infinispan.remoting.transport.ResponseCollector;
 
 import net.jcip.annotations.GuardedBy;
 
@@ -31,12 +31,11 @@ public class StaggeredRequest<T> extends MultiTargetRequest<T> {
    StaggeredRequest(ResponseCollector<T> responseCollector, long requestId, RequestRepository repository,
                     Collection<Address> targets, Address excludedTarget, ReplicableCommand command,
                     DeliverOrder deliverOrder, long timeout, TimeUnit unit, JGroupsTransport transport) {
-      super(responseCollector, requestId, repository, targets, excludedTarget);
+      super(responseCollector, requestId, repository, targets, excludedTarget, transport.metricsManager);
 
       this.command = command;
       this.deliverOrder = deliverOrder;
       this.transport = transport;
-
       this.deadline = transport.timeService.expectedEndTime(timeout, unit);
    }
 
@@ -48,7 +47,6 @@ public class StaggeredRequest<T> extends MultiTargetRequest<T> {
    @Override
    public synchronized void onResponse(Address sender, Response response) {
       super.onResponse(sender, response);
-
       sendNextMessage();
    }
 
@@ -69,7 +67,7 @@ public class StaggeredRequest<T> extends MultiTargetRequest<T> {
 
    void sendNextMessage() {
       try {
-         Address target = null;
+         RequestTracker target = null;
          boolean isFinalTarget;
          // Need synchronization because sendNextMessage can be called both directly and from addResponse()
          synchronized (responseCollector) {
@@ -96,7 +94,8 @@ public class StaggeredRequest<T> extends MultiTargetRequest<T> {
          }
 
          // Sending may block in flow-control or even in TCP, so we must do it outside the critical section
-         transport.sendCommand(target, command, requestId, deliverOrder, true, false);
+         target.resetSendTime();
+         transport.sendCommand(target.destination(), command, requestId, deliverOrder, true, false);
 
          // Scheduling the timeout task may also block
          // If this is the last target, set the request timeout at the deadline

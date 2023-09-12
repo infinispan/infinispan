@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -58,13 +57,10 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.factories.impl.ComponentRef;
-import org.infinispan.factories.impl.MBeanMetadata;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.jmx.ObjectNameKeys;
-import org.infinispan.metrics.impl.MetricsCollector;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
@@ -181,13 +177,12 @@ public class JGroupsTransport implements Transport, ChannelListener {
    @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
    protected ExecutorService nonBlockingExecutor;
    @Inject protected CacheManagerJmxRegistration jmxRegistration;
-   @Inject protected ComponentRef<MetricsCollector> metricsCollector;
+   @Inject protected JGroupsMetricsManager metricsManager;
 
    private final Lock viewUpdateLock = new ReentrantLock();
    private final Condition viewUpdateCondition = viewUpdateLock.newCondition();
    private final ThreadPoolProbeHandler probeHandler;
    private final ChannelCallbacks channelCallbacks = new ChannelCallbacks();
-   private final Map<JChannel, Set<Object>> clusters = new ConcurrentHashMap<>();
    protected boolean connectChannel = true, disconnectChannel = true, closeChannel = true;
    protected TypedProperties props;
    protected JChannel channel;
@@ -624,6 +619,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
       if (!connectChannel) {
          // the channel was already started externally, we need to initialize our member list
          receiveClusterView(channel.getView());
+         metricsManager.onChannelConnected(channel, true);
       }
       if (!(channel instanceof ForkChannel)) {
          CLUSTER.localAndPhysicalAddress(clusterName, getAddress(), getPhysicalAddresses());
@@ -1025,10 +1021,9 @@ public class JGroupsTransport implements Transport, ChannelListener {
       }
       long requestId = requests.newRequestId();
       logRequest(requestId, command, target, "single");
-      SingleTargetRequest<T> request = new SingleTargetRequest<>(collector, requestId, requests, target);
+      SingleTargetRequest<T> request = new SingleTargetRequest<>(collector, requestId, requests, metricsManager.trackRequest(target));
       addRequest(request);
-      boolean invalidTarget = request.onNewView(clusterView.getMembersSet());
-      if (!invalidTarget) {
+      if (!request.onNewView(clusterView.getMembersSet())) {
          sendCommand(target, command, requestId, deliverOrder, true, false);
       }
       if (timeout > 0) {
@@ -1048,7 +1043,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
       }
       Address excludedTarget = getAddress();
       MultiTargetRequest<T> request =
-            new MultiTargetRequest<>(collector, requestId, requests, targets, excludedTarget);
+            new MultiTargetRequest<>(collector, requestId, requests, targets, excludedTarget, metricsManager);
       // Request may be completed due to exclusion of target nodes, so only send it if it isn't complete
       if (request.isDone()) {
          return request;
@@ -1074,7 +1069,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
       logRequest(requestId, command, null, "broadcast");
       Address excludedTarget = getAddress();
       MultiTargetRequest<T> request =
-            new MultiTargetRequest<>(collector, requestId, requests, clusterView.getMembers(), excludedTarget);
+            new MultiTargetRequest<>(collector, requestId, requests, clusterView.getMembers(), excludedTarget, metricsManager);
       // Request may be completed due to exclusion of target nodes, so only send it if it isn't complete
       if (request.isDone()) {
          return request;
@@ -1101,7 +1096,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
       logRequest(requestId, command, requiredTargets, "broadcast");
       Address excludedTarget = getAddress();
       MultiTargetRequest<T> request =
-            new MultiTargetRequest<>(collector, requestId, requests, requiredTargets, excludedTarget);
+            new MultiTargetRequest<>(collector, requestId, requests, requiredTargets, excludedTarget, metricsManager);
       // Request may be completed due to exclusion of target nodes, so only send it if it isn't complete
       if (request.isDone()) {
          return request;
@@ -1149,7 +1144,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
       requestId = requests.newRequestId();
       Address excludedTarget = getAddress();
       MultiTargetRequest<T> request =
-            new MultiTargetRequest<>(collector, requestId, requests, targets, excludedTarget);
+            new MultiTargetRequest<>(collector, requestId, requests, targets, excludedTarget, metricsManager);
       // Request may be completed due to exclusion of target nodes, so only send it if it isn't complete
       if (request.isDone()) {
          return request;
@@ -1204,6 +1199,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
       setMessageFlags(message, deliverOrder, noRelay);
 
       send(message);
+      metricsManager.recordMessageSent(target, message.size(), requestId == Request.NO_REQUEST_ID);
    }
 
    private static org.jgroups.Address toJGroupsAddress(Address address) {
@@ -1247,7 +1243,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
       }
    }
 
-   private void addRequestHeader(Message message, long requestId) {
+   private static void addRequestHeader(Message message, long requestId) {
       // TODO Remove the header and store the request id in the buffer
       if (requestId != Request.NO_REQUEST_ID) {
          Header header = new RequestCorrelator.Header(REQUEST, requestId, CORRELATOR_ID);
@@ -1355,6 +1351,9 @@ public class JGroupsTransport implements Transport, ChannelListener {
       marshallRequest(message, command, requestId);
       setMessageFlags(message, deliverOrder, true);
       send(message);
+      clusterView.getMembersSet().stream()
+            .filter(t -> !t.equals(address))
+            .forEach(t -> metricsManager.recordMessageSent(t, message.size(), requestId == Request.NO_REQUEST_ID));
    }
 
    private void logRequest(long requestId, Object command, Object targets, String type) {
@@ -1419,11 +1418,13 @@ public class JGroupsTransport implements Transport, ChannelListener {
          if (checkView && !clusterView.contains(address))
             continue;
 
-         if (address.equals(getAddress()))
+         if (address.equals(this.address))
             continue;
 
          copy.dest(toJGroupsAddress(address));
          send(copy);
+
+         metricsManager.recordMessageSent(address, copy.size(), requestId == Request.NO_REQUEST_ID);
 
          // Send a different Message instance to each target
          if (it.hasNext()) {
@@ -1586,44 +1587,17 @@ public class JGroupsTransport implements Transport, ChannelListener {
 
    @Override
    public void channelConnected(JChannel channel) {
-      if (isMetricsEnabled()) {
-         MetricsCollector mc = metricsCollector.wired();
-         clusters.computeIfAbsent(channel, c -> {
-            org.jgroups.Address addr = c.getAddress();
-            String clusterName = c.clusterName();
-            String nodeName= addr != null ? addr.toString() : c.getName();
-            Set<Object> metrics = new HashSet<>();
-            for (Protocol protocol : c.getProtocolStack().getProtocols()) {
-               Collection<MBeanMetadata.AttributeMetadata> attributes = JGroupsMetricsMetadata.PROTOCOL_METADATA.get(protocol.getClass());
-               if (attributes != null && !attributes.isEmpty()) {
-                  metrics.addAll(mc.registerJGroupsMetrics(protocol, attributes, protocol.getName(), clusterName, nodeName));
-               }
-            }
-            return metrics;
-         });
-      }
+      metricsManager.onChannelConnected(channel, channel == this.channel);
    }
 
    @Override
    public void channelDisconnected(JChannel channel) {
-      if (isMetricsEnabled()) {
-         MetricsCollector mc = metricsCollector.wired();
-         Set<Object> metrics = clusters.remove(channel);
-         if (metrics != null) {
-            for (Object metric : metrics) {
-               mc.unregisterMetric(metric);
-            }
-         }
-      }
+      metricsManager.onChannelDisconnected(channel);
    }
 
    @Override
    public void channelClosed(JChannel channel) {
       // NO-OP
-   }
-
-   private boolean isMetricsEnabled() {
-      return configuration.metrics().enabled() && metricsCollector.wired() != null;
    }
 
    private class ChannelCallbacks implements RouteStatusListener, UpHandler {

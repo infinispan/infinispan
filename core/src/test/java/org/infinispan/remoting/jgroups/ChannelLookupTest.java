@@ -40,6 +40,8 @@ public class ChannelLookupTest extends AbstractInfinispanTest {
    public void channelLookupTest() {
 
       when(mockChannel.getAddress()).thenReturn(a);
+      when(mockChannel.address()).thenReturn(a);
+      when(mockChannel.clusterName()).thenReturn("channel-lookup-test");
       when(mockChannel.down(isA(Event.class))).thenReturn(a);
       when(mockChannel.getView()).thenReturn(v);
       when(mockChannel.getProtocolStack()).thenReturn(ps);

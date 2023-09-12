@@ -7,7 +7,7 @@ import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.core.EncoderRegistry;
-import org.infinispan.metrics.impl.MetricsCollector;
+import org.infinispan.metrics.impl.MetricsRegistry;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.configuration.RestServerConfiguration;
@@ -30,7 +30,7 @@ public class InvocationHelper {
    private final Executor executor;
    private final RestServer protocolServer;
    private final EncoderRegistry encoderRegistry;
-   private final MetricsCollector metricsCollector;
+   private final MetricsRegistry metricsRegistry;
    private final ProtobufMetadataManager protobufMetadataManager;
 
    InvocationHelper(RestServer protocolServer, RestCacheManager<Object> restCacheManager, EmbeddedCounterManager counterManager,
@@ -44,7 +44,7 @@ public class InvocationHelper {
 
       GlobalComponentRegistry globalComponentRegistry = restCacheManager.getInstance().getGlobalComponentRegistry();
       this.encoderRegistry = globalComponentRegistry.getComponent(EncoderRegistry.class);
-      this.metricsCollector = globalComponentRegistry.getComponent(MetricsCollector.class);
+      this.metricsRegistry = globalComponentRegistry.getComponent(MetricsRegistry.class);
       this.protobufMetadataManager = globalComponentRegistry.getComponent(ProtobufMetadataManager.class);
    }
 
@@ -86,8 +86,8 @@ public class InvocationHelper {
       return encoderRegistry;
    }
 
-   public MetricsCollector getMetricsCollector() {
-      return metricsCollector;
+   public MetricsRegistry getMetricsRegistry() {
+      return metricsRegistry;
    }
 
    public ProtobufMetadataManager protobufMetadataManager() {
