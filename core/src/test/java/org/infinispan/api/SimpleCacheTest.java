@@ -44,7 +44,7 @@ public class SimpleCacheTest extends APINonTxTest {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cb);
 
       cache = AbstractDelegatingCache.unwrapCache(cm.getCache());
-      assertTrue(cache instanceof SimpleCacheImpl);
+      assertTrue(cache.getClass().getName(), cache instanceof SimpleCacheImpl);
       return cm;
    }
 

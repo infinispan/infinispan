@@ -6,6 +6,12 @@ import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertNotNull;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -15,16 +21,10 @@ import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.testng.annotations.Test;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-@Test(groups = "functional", testName = "scattered.APIScatteredTest")
+@Test(groups = "unstable", testName = "scattered.APIScatteredTest")
 public class APIScatteredTest extends BaseScatteredTest {
    private static final String VALUE1 = "VALUE1";
    private static final String VALUE2 = "VALUE2";

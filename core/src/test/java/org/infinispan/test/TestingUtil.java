@@ -365,10 +365,9 @@ public class TestingUtil {
             field = type.getDeclaredField(fieldName);
             field.setAccessible(true);
             return (T) field.get(target);
-         }
-         catch (Exception e) {
+         } catch (Exception e) {
             if (type.equals(Object.class)) {
-               throw new RuntimeException(e);
+               throw new RuntimeException("Cannot extract field " + fieldName + " from " + target.getClass().getName(), e);
             } else {
                // try with superclass!!
                type = type.getSuperclass();
@@ -1173,7 +1172,7 @@ public class TestingUtil {
          // Need to unwrap to the base cache
          return extractCommandsFactory(extractField(cache, "cache"));
       }
-      return (CommandsFactory) extractField(cache, "commandsFactory");
+      return extractField(cache, "commandsFactory");
    }
 
    public static void dumpCacheContents(List<Cache<?, ?>> caches) {
