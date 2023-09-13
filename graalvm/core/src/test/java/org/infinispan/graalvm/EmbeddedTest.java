@@ -1,4 +1,4 @@
-package org.infinispan.integrationtests.graalvm.core;
+package org.infinispan.graalvm;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
