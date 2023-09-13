@@ -101,19 +101,19 @@
  *          <td><b>infinispan.client.hotrod.dns_resolver_min_ttl</b></td>
  *          <td>Integer</td>
  *          <td>0</td>
- *          <td>The minimum TTL of the cached DNS resource records (in seconds). If the TTL of the DNS resource record returned by the DNS server is less than the minimum TTL, the resolver will ignore the TTL from the DNS server and use the minimum TTL instead. The defaults respect the DNS server TTL.</td>
+ *          <td>The minimum TTL of the cached DNS resource records in seconds. If the TTL of the DNS resource record returned by the DNS server is shorter than the minimum TTL, the resolver ignores the TTL provided by the DNS server and uses the minimum TTL instead. The defaults respect the DNS server TTL.</td>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.dns_resolver_max_ttl</b></td>
  *          <td>Integer</td>
  *          <td>Integer.MAX_VALUE</td>
- *          <td>The maximum TTL of the cached DNS resource records (in seconds). If the TTL of the DNS resource record returned by the DNS server is greater than the maximum TTL, the resolver will ignore the TTL from the DNS server and use the maximum TTL instead. The defaults respect the DNS server TTL.</td>
+ *          <td>The maximum TTL of the cached DNS resource records in seconds. If the TTL of the DNS resource record returned by the DNS server is longer than the maximum TTL, the resolver ignores the TTL provided by the DNS server and uses the maximum TTL instead. The defaults respect the DNS server TTL.</td>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.dns_resolver_negative_ttl</b></td>
  *          <td>Integer</td>
  *          <td>0</td>
- *          <td>Sets the TTL of the cache for the failed DNS queries (in seconds).</td>
+ *          <td>Sets the TTL of the cache for the failed DNS queries in seconds.</td>
  *       </tr>
  *       <tr>
  *          <td><b>infinispan.client.hotrod.transport_factory</b></td>
