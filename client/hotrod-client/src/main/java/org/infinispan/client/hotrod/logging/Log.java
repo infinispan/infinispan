@@ -387,18 +387,22 @@ public interface Log extends BasicLogger {
    @Message(value = "Native IOUring transport not available, using NIO instead: %s", id = 4108)
    void ioUringNotAvailable(String cause);
 
-   @LogMessage(level = DEBUG)
+   @LogMessage(level = TRACE)
    @Message(value = "OpenTelemetry API is not present in the classpath. Client context tracing will not be propagated.", id = 4109)
-   void noOpenTelemetryAPI(@Cause Throwable throwable);
+   void noOpenTelemetryAPI();
 
-   @LogMessage(level = DEBUG)
+   @LogMessage(level = TRACE)
    @Message(value = "OpenTelemetry API is present in the classpath and the tracing propagation is enabled. Client context tracing will be propagated.", id = 4110)
    void openTelemetryPropagationEnabled();
 
-   @LogMessage(level = DEBUG)
+   @LogMessage(level = TRACE)
    @Message(value = "OpenTelemetry API is present in the classpath, but the tracing propagation is not enabled. Client context tracing will not be propagated.", id = 4111)
    void openTelemetryPropagationDisabled();
 
    @Message(value = "The SNI hostname is required when hostname validation is enabled", id = 4112)
    CacheConfigurationException missingSniHostName();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Unexpected error while creating the tracing propagation context. Client context tracing will not be propagated.", id = 4115)
+   void errorCreatingPropagationContext(@Cause Throwable throwable);
 }
