@@ -388,8 +388,13 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = DEBUG)
    @Message(value = "OpenTelemetry API is not present in the classpath. Client context tracing will not be propagated.", id = 4109)
-   void noOpenTelemetryAPI(@Cause Throwable throwable);
+   void noOpenTelemetryAPI();
 
    @Message(value = "The SNI hostname is required when hostname validation is enabled", id = 4112)
    CacheConfigurationException missingSniHostName();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Unexpected error while creating the tracing propagation context. Client context tracing will not be propagated.", id = 4115)
+   void errorCreatingPropagationContext(@Cause Throwable throwable);
+
 }
