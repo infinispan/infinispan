@@ -52,6 +52,8 @@ public class FileProvider {
    private final String prefix;
    private final int maxFileSize;
 
+   private boolean canTryPmem = true;
+
    private int nextFileId = 0;
 
    static {
@@ -210,9 +212,10 @@ public class FileProvider {
    protected FileChannel openChannel(File file, boolean create, boolean readSharedMeadata) throws FileNotFoundException {
       log.debugf("openChannel(%s)", file.getAbsolutePath());
 
-      FileChannel fileChannel = ATTEMPT_PMEM ? PmemUtilWrapper.pmemChannelFor(file, maxFileSize, create, readSharedMeadata) : null;
+      FileChannel fileChannel = ATTEMPT_PMEM && canTryPmem ? PmemUtilWrapper.pmemChannelFor(file, maxFileSize, create, readSharedMeadata) : null;
 
       if (fileChannel == null) {
+         canTryPmem = false;
          if (create) {
             fileChannel = new FileOutputStream(file).getChannel();
          } else {
