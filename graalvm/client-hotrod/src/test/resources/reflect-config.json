@@ -1,0 +1,14 @@
+[
+  {
+    "name": "org.testcontainers.shaded.com.github.dockerjava.core.DockerConfigFile",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "com.fasterxml.jackson.annotation.JsonProperty",
+    "allDeclaredConstructors" : true
+  },
+  {
+    "name": "org.infinispan.server.functional.extensions.entities.Entities$Person",
+    "allDeclaredFields": true
+  }
+]

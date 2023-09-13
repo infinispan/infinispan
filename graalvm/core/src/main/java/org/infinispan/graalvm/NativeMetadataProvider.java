@@ -58,7 +58,9 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
          Version.VERSION_FILE
    );
 
-   static final Collection<Resource> resourceRegexps = Resource.of();
+   static final Collection<Resource> resourceRegexps = Resource.of(
+         "protostream/google/protobuf/.*.proto"
+   );
 
    static final Collection<Bundle> bundles = Bundle.of(
          "jg-messages",

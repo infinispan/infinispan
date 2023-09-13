@@ -155,6 +155,7 @@
                               -H:IncludeResources=stacks/udp.xml
                               -H:IncludeResources=stacks/tcp.xml
                               -H:IncludeResources=stacks/tcp_mping/tcp1.xml
+                              -H:ServiceLoaderFeatureExcludeServiceProviders=org.infinispan.marshall.ServiceLoadedSciImpl
                               --enable-url-protocols=http
                               --no-fallback
                            </buildArgs>

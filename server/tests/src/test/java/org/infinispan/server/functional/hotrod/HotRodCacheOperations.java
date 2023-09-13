@@ -53,9 +53,9 @@ public class HotRodCacheOperations<K, V> {
          return Arrays.stream(ProtocolVersion.values())
                .flatMap(version ->
                      Stream.of(
-                           Arguments.of(version, KeyValueGenerator.STRING_GENERATOR),
-                           Arguments.of(version, KeyValueGenerator.BYTE_ARRAY_GENERATOR),
-                           Arguments.of(version, KeyValueGenerator.GENERIC_ARRAY_GENERATOR)
+                           Arguments.of(version, KeyValueGenerators.STRING_GENERATOR),
+                           Arguments.of(version, KeyValueGenerators.BYTE_ARRAY_GENERATOR),
+                           Arguments.of(version, KeyValueGenerators.GENERIC_ARRAY_GENERATOR)
                      )
                );
       }
