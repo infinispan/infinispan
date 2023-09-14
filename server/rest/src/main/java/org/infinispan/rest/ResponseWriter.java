@@ -23,6 +23,7 @@ import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpChunkedInput;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.stream.ChunkedFile;
@@ -115,8 +116,8 @@ public enum ResponseWriter {
 
    abstract void writeResponse(ChannelHandlerContext ctx, FullHttpRequest request, NettyRestResponse response);
 
-   static ResponseWriter forContent(Object content) {
-      if (content == null) return EMPTY;
+   static ResponseWriter forContent(FullHttpRequest request, Object content) {
+      if (content == null || HttpMethod.HEAD.equals(request.method())) return EMPTY;
       if (content instanceof File) return CHUNKED_FILE;
       if (content instanceof CacheChunkedStream) return CHUNKED_STREAM;
       if (content instanceof EventStream) return EVENT_STREAM;

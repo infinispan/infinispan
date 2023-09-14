@@ -43,6 +43,7 @@ import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpUtil;
 
 /**
@@ -92,6 +93,10 @@ public class RestRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
          getLogger().errorWhileResponding(throwable);
          errorResponse.status(INTERNAL_SERVER_ERROR).entity(unwrapExceptionMessage(cause));
       }
+
+      if (HttpMethod.HEAD.equals(request.method()))
+         errorResponse.entity(null);
+
       sendResponse(ctx, request, errorResponse.build());
    }
 
@@ -106,7 +111,7 @@ public class RestRequestHandler extends SimpleChannelInboundHandler<FullHttpRequ
    }
 
    void sendResponse(ChannelHandlerContext ctx, FullHttpRequest request, NettyRestResponse response) {
-      ctx.executor().execute(() -> ResponseWriter.forContent(response.getEntity()).writeResponse(ctx, request, response));
+      ctx.executor().execute(() -> ResponseWriter.forContent(request, response.getEntity()).writeResponse(ctx, request, response));
    }
 
    @Override
