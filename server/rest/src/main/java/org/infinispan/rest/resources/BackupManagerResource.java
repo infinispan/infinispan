@@ -107,11 +107,12 @@ class BackupManagerResource {
             File zip = backupManager.getBackupLocation(name).toFile();
             NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request)
                   .contentType(MediaType.APPLICATION_ZIP)
-                  .header("Content-Disposition", String.format("attachment; filename=%s", zip.getName()))
-                  .contentLength(zip.length());
+                  .header("Content-Disposition", String.format("attachment; filename=%s", zip.getName()));
 
-            if (method == Method.GET)
-               responseBuilder.entity(zip);
+            if (method == Method.GET) {
+               responseBuilder.entity(zip)
+                     .contentLength(zip.length());
+            }
             return CompletableFuture.completedFuture(responseBuilder.build());
       }
    }
