@@ -23,7 +23,6 @@ import org.infinispan.util.BlockingLocalTopologyManager;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.BackupReceiverDelegator;
 import org.infinispan.xsite.statetransfer.XSiteState;
-import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.testng.annotations.Test;
 
 /**
@@ -148,9 +147,9 @@ public class SiteConsumerTopologyChangeTest extends AbstractTopologyChangeTest {
       }
 
       @Override
-      public CompletionStage<Void> handleStateTransferState(XSiteStatePushCommand cmd) {
+      public CompletionStage<Void> handleStateTransferState(XSiteState[] chunk, long timeoutMs) {
          checkPoint.trigger("before-chunk");
-         return delegate.handleStateTransferState(cmd);
+         return delegate.handleStateTransferState(chunk, timeoutMs);
       }
    }
 
@@ -169,9 +168,9 @@ public class SiteConsumerTopologyChangeTest extends AbstractTopologyChangeTest {
       }
 
       @Override
-      public CompletionStage<Void> handleStateTransferState(XSiteStatePushCommand cmd) {
+      public CompletionStage<Void> handleStateTransferState(XSiteState[] chunk, long timeoutMs) {
          if (!discard.get()) {
-            return delegate.handleStateTransferState(cmd);
+            return delegate.handleStateTransferState(chunk, timeoutMs);
          }
          synchronized (addressSet) {
             //discard the state message when all member has received at least one chunk!
@@ -182,13 +181,13 @@ public class SiteConsumerTopologyChangeTest extends AbstractTopologyChangeTest {
                } catch (InterruptedException | TimeoutException e) {
                   return CompletableFuture.failedFuture(e);
                }
-               return delegate.handleStateTransferState(cmd);
+               return delegate.handleStateTransferState(chunk, timeoutMs);
             }
-            for (XSiteState state : cmd.getChunk()) {
+            for (XSiteState state : chunk) {
                addressSet.add(manager.getCacheTopology().getDistribution(state.key()).primary());
             }
          }
-         return delegate.handleStateTransferState(cmd);
+         return delegate.handleStateTransferState(chunk, timeoutMs);
       }
    }
 

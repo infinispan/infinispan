@@ -33,16 +33,17 @@ import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.irac.IracCleanupKeysCommand;
-import org.infinispan.commands.irac.IracClearKeysCommand;
+import org.infinispan.xsite.commands.remote.IracClearKeysRequest;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
-import org.infinispan.commands.irac.IracPutManyCommand;
+import org.infinispan.xsite.commands.remote.IracPutManyRequest;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
 import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneRemoteSiteCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
-import org.infinispan.commands.irac.IracTouchKeyCommand;
+import org.infinispan.xsite.commands.remote.IracTombstoneCheckRequest;
+import org.infinispan.xsite.commands.remote.IracTouchKeyRequest;
 import org.infinispan.commands.irac.IracUpdateVersionCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
@@ -132,6 +133,8 @@ import org.infinispan.xsite.commands.XSiteStateTransferStartSendCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferStatusRequestCommand;
 import org.infinispan.xsite.commands.XSiteStatusCommand;
 import org.infinispan.xsite.commands.XSiteTakeOfflineCommand;
+import org.infinispan.xsite.commands.remote.XSiteStatePushRequest;
+import org.infinispan.xsite.commands.remote.XSiteStateTransferControlRequest;
 import org.infinispan.xsite.irac.IracManagerKeyInfo;
 import org.infinispan.xsite.statetransfer.XSiteState;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
@@ -433,8 +436,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public XSiteStateTransferStartReceiveCommand buildXSiteStateTransferStartReceiveCommand() {
-      return actual.buildXSiteStateTransferStartReceiveCommand();
+   public XSiteStateTransferStartReceiveCommand buildXSiteStateTransferStartReceiveCommand(String siteName) {
+      return actual.buildXSiteStateTransferStartReceiveCommand(siteName);
    }
 
    @Override
@@ -473,8 +476,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public XSiteStatePushCommand buildXSiteStatePushCommand(XSiteState[] chunk, long timeoutMillis) {
-      return actual.buildXSiteStatePushCommand(chunk, timeoutMillis);
+   public XSiteStatePushCommand buildXSiteStatePushCommand(XSiteState[] chunk) {
+      return actual.buildXSiteStatePushCommand(chunk);
    }
 
    @Override
@@ -639,7 +642,7 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public IracClearKeysCommand buildIracClearKeysCommand() {
+   public IracClearKeysRequest buildIracClearKeysCommand() {
       return actual.buildIracClearKeysCommand();
    }
 
@@ -675,7 +678,7 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public IracTouchKeyCommand buildIracTouchCommand(Object key) {
+   public IracTouchKeyRequest buildIracTouchCommand(Object key) {
       return actual.buildIracTouchCommand(key);
    }
 
@@ -710,7 +713,22 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public IracPutManyCommand buildIracPutManyCommand(int capacity) {
+   public IracPutManyRequest buildIracPutManyCommand(int capacity) {
       return actual.buildIracPutManyCommand(capacity);
+   }
+
+   @Override
+   public XSiteStateTransferControlRequest buildXSiteStateTransferControlRequest(boolean startReceiving) {
+      return actual.buildXSiteStateTransferControlRequest(startReceiving);
+   }
+
+   @Override
+   public XSiteStatePushRequest buildXSiteStatePushRequest(XSiteState[] chunk, long timeoutMillis) {
+      return actual.buildXSiteStatePushRequest(chunk, timeoutMillis);
+   }
+
+   @Override
+   public IracTombstoneCheckRequest buildIracTombstoneCheckRequest(List<Object> keys) {
+      return actual.buildIracTombstoneCheckRequest(keys);
    }
 }

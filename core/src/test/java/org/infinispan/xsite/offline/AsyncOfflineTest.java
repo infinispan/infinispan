@@ -27,7 +27,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ExponentialBackOff;
 import org.infinispan.xsite.AbstractXSiteTest;
 import org.infinispan.xsite.OfflineStatus;
-import org.infinispan.xsite.XSiteReplicateCommand;
+import org.infinispan.xsite.commands.remote.XSiteRequest;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -276,7 +276,7 @@ public class AsyncOfflineTest extends AbstractXSiteTest {
       }
 
       @Override
-      public void handleFromRemoteSite(String origin, XSiteReplicateCommand<?> command, Reply reply, DeliverOrder order) {
+      public void handleFromRemoteSite(String origin, XSiteRequest<?> command, Reply reply, DeliverOrder order) {
          if (discard) {
             return;
          }

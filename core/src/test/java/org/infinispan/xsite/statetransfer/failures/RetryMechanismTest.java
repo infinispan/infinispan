@@ -351,9 +351,9 @@ public class RetryMechanismTest extends AbstractTopologyChangeTest {
       }
 
       @Override
-      public CompletionStage<Void> handleStateTransferState(XSiteStatePushCommand cmd) {
+      public CompletionStage<Void> handleStateTransferState(XSiteState[] chunk, long timeoutMs) {
          counter.getAndIncrement();
-         return super.handleStateTransferState(cmd);
+         return super.handleStateTransferState(chunk, timeoutMs);
       }
    }
 

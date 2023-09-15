@@ -7,6 +7,7 @@ import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.TRACE;
 import static org.jboss.logging.Logger.Level.WARN;
 
+import javax.transaction.xa.XAResource;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -20,9 +21,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import javax.transaction.xa.XAResource;
-
-import org.infinispan.commands.ReplicableCommand;
+import jakarta.transaction.Synchronization;
+import jakarta.transaction.TransactionManager;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.CacheListenerException;
@@ -70,9 +70,6 @@ import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.Once;
 import org.jboss.logging.annotations.Param;
 import org.jgroups.View;
-
-import jakarta.transaction.Synchronization;
-import jakarta.transaction.TransactionManager;
 
 /**
  * Infinispan's log abstraction layer on top of JBoss Logging.
@@ -328,7 +325,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Caught exception when handling command %s", id = 71)
-   void exceptionHandlingCommand(ReplicableCommand cmd, @Cause Throwable t);
+   void exceptionHandlingCommand(Object cmd, @Cause Throwable t);
 
    @LogMessage(level = ERROR)
    @Message(value = "Unexpected error while replicating", id = 73)
@@ -1539,7 +1536,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = ERROR)
    @Message(value = "Error sending response for request %d@%s, command %s", id = 440)
-   void errorSendingResponse(long requestId, org.jgroups.Address origin, ReplicableCommand command);
+   void errorSendingResponse(long requestId, org.jgroups.Address origin, Object command);
 
    @Message(value = "Unsupported async cache mode '%s' for transactional caches", id = 441)
    CacheConfigurationException unsupportedAsyncCacheMode(CacheMode cacheMode);

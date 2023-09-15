@@ -33,6 +33,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import net.jcip.annotations.GuardedBy;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -70,9 +71,7 @@ import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
-import org.infinispan.xsite.XSiteReplicateCommand;
-
-import net.jcip.annotations.GuardedBy;
+import org.infinispan.xsite.commands.remote.XSiteRequest;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -93,7 +92,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
 
    private volatile boolean stopped = false;
    private volatile boolean excludeAllCacheCommands;
-   private final Set<Class<? extends ReplicableCommand>> excludedCommands =
+   private final Set<Class<?>> excludedCommands =
          Collections.synchronizedSet(new HashSet<>());
    private final BlockingQueue<CompletableFuture<ControlledRequest<?>>> waiters = new LinkedBlockingDeque<>();
    private RuntimeException globalError;
@@ -117,7 +116,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
    }
 
    @SafeVarargs
-   public final void excludeCommands(Class<? extends ReplicableCommand>... excluded) {
+   public final void excludeCommands(Class<?>... excluded) {
       if (stopped) {
          throw new IllegalStateException("Trying to exclude commands but we already stopped intercepting");
       }
@@ -144,7 +143,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
    /**
     * Expect a command to be invoked remotely and send replies using the {@link BlockedRequest} methods.
     */
-   public <T extends ReplicableCommand> BlockedRequest<T> expectCommand(Class<T> expectedCommandClass) {
+   public <T> BlockedRequest<T> expectCommand(Class<T> expectedCommandClass) {
       return uncheckedGet(expectCommandAsync(expectedCommandClass), expectedCommandClass);
    }
 
@@ -178,8 +177,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
    /**
     * Expect a command to be invoked remotely and send replies using the {@link BlockedRequest} methods.
     */
-   public <T extends ReplicableCommand>
-   CompletableFuture<BlockedRequest<T>> expectCommandAsync(Class<T> expectedCommandClass) {
+   public <T> CompletableFuture<BlockedRequest<T>> expectCommandAsync(Class<T> expectedCommandClass) {
       throwGlobalError();
       log.tracef("Waiting for command %s", expectedCommandClass);
       CompletableFuture<ControlledRequest<?>> future = new CompletableFuture<>();
@@ -275,13 +273,13 @@ public class ControlledTransport extends AbstractDelegatingTransport {
    }
 
    @Override
-   public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteReplicateCommand rpcCommand)
+   public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteRequest<?> rpcCommand)
          throws Exception {
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteReplicateCommand<O> rpcCommand) {
+   public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteRequest<O> rpcCommand) {
       XSiteResponseImpl<O> xSiteResponse = new XSiteResponseImpl<>(timeService, backup);
       SiteAddress address = new SiteAddress(backup.getSiteName());
       CompletionStage<ValidResponse> request =
@@ -363,7 +361,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
       return action.resultFuture;
    }
 
-   protected <T> CompletionStage<T> performRequest(Collection<Address> targets, ReplicableCommand command,
+   protected <T> CompletionStage<T> performRequest(Collection<Address> targets, Object command,
                                                    ResponseCollector<T> collector,
                                                    Function<ResponseCollector<T>, CompletionStage<T>> invoker) {
       if (stopped || isCommandExcluded(command)) {
@@ -428,15 +426,10 @@ public class ControlledTransport extends AbstractDelegatingTransport {
       super.stop();
    }
 
-   private boolean isCommandExcluded(ReplicableCommand command) {
+   private boolean isCommandExcluded(Object command) {
       if (excludeAllCacheCommands && command instanceof CacheRpcCommand)
          return true;
-
-      for (Class<? extends ReplicableCommand> excludedCommand : excludedCommands) {
-         if (excludedCommand.isInstance(command))
-            return true;
-      }
-      return false;
+      return excludedCommands.stream().anyMatch(c -> c.isInstance(command));
    }
 
    private void throwGlobalError() {
@@ -464,7 +457,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
     * {@link #collectResponse(Address, Response)}, and {@link #collectFinish()} finishes the collector.
     */
    static class ControlledRequest<T> {
-      private final ReplicableCommand command;
+      private final Object command;
       private final Collection<Address> targets;
       private final Function<ResponseCollector<T>, CompletionStage<T>> invoker;
       private final ExecutorService executor;
@@ -483,7 +476,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
       private boolean collectedFinish;
 
 
-      ControlledRequest(ReplicableCommand command, Collection<Address> targets, ResponseCollector<T> collector,
+      ControlledRequest(Object command, Collection<Address> targets, ResponseCollector<T> collector,
                         Function<ResponseCollector<T>, CompletionStage<T>> invoker,
                         ExecutorService executor, Address excluded) {
          this.command = command;
@@ -626,7 +619,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
          return resultFuture.isDone();
       }
 
-      ReplicableCommand getCommand() {
+      Object getCommand() {
          return command;
       }
 
@@ -660,7 +653,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
     * <p>
     * For example, {@code request.send().expectResponse(a1, r1).replace(r2).receiveAll()}.
     */
-   public static class BlockedRequest<C extends ReplicableCommand> {
+   public static class BlockedRequest<C> {
       private final ControlledRequest<?> request;
 
       public BlockedRequest(ControlledRequest<?> request) {
@@ -1094,7 +1087,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
 
       @Override
       public String toString() {
-         Map<Address, ReplicableCommand> commandMap =
+         var commandMap =
                requests.entrySet().stream()
                        .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().request.command));
          return "BlockedRequests{" +

@@ -228,6 +228,8 @@ public interface Ids {
 
    Integer CRC16_HASH = 156;
 
+   Integer XSITE_COMMANDS_EXTERNALIZER = 157;
+
    Integer COUNTER_CONFIGURATION = 2000; //from counter
    Integer COUNTER_STATE = 2001; //from counter
 }

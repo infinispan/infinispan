@@ -11,7 +11,7 @@ import org.infinispan.remoting.transport.AbstractDelegatingTransport;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.xsite.XSiteBackup;
-import org.infinispan.xsite.XSiteReplicateCommand;
+import org.infinispan.xsite.commands.remote.XSiteRequest;
 
 public class ControlledTransport extends AbstractDelegatingTransport {
 
@@ -40,7 +40,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
    }
 
    @Override
-   public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteReplicateCommand<O> rpcCommand) {
+   public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteRequest<O> rpcCommand) {
       Throwable t = null;
       if (disconnectedSites.contains(backup.getSiteName())) t = throwableSupplier.get();
       ControlledXSiteResponse<O> response = new ControlledXSiteResponse<>(backup, t);

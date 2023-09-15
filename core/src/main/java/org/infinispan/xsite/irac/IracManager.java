@@ -3,7 +3,7 @@ package org.infinispan.xsite.irac;
 import java.util.Collection;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.irac.IracClearKeysCommand;
+import org.infinispan.xsite.commands.remote.IracClearKeysRequest;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -60,7 +60,7 @@ public interface IracManager {
    /**
     * Sets all keys as removed.
     *
-    * @param sendClear if {@code true}, an {@link IracClearKeysCommand} is sent to the backup sites.
+    * @param sendClear if {@code true}, an {@link IracClearKeysRequest} is sent to the backup sites.
     */
    void trackClear(boolean sendClear);
 

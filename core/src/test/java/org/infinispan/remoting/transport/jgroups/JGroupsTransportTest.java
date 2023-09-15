@@ -24,7 +24,7 @@ import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ByteString;
-import org.infinispan.xsite.XSiteReplicateCommand;
+import org.infinispan.xsite.commands.remote.XSiteRequest;
 import org.jgroups.util.UUID;
 import org.testng.annotations.Test;
 
@@ -115,7 +115,7 @@ public class JGroupsTransportTest extends MultipleCacheManagersTest {
          }
 
          @Override
-         public void handleFromRemoteSite(String origin, XSiteReplicateCommand command, Reply reply,
+         public void handleFromRemoteSite(String origin, XSiteRequest<?> command, Reply reply,
                                           DeliverOrder order) {
             oldInvocationHandler.handleFromRemoteSite(origin, command, reply, order);
          }

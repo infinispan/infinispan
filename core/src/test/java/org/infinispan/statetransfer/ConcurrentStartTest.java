@@ -31,7 +31,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.xsite.XSiteReplicateCommand;
+import org.infinispan.xsite.commands.remote.XSiteRequest;
 import org.testng.annotations.Test;
 
 /**
@@ -167,7 +167,7 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public void handleFromRemoteSite(String origin, XSiteReplicateCommand command, Reply reply, DeliverOrder order) {
+      public void handleFromRemoteSite(String origin, XSiteRequest<?> command, Reply reply, DeliverOrder order) {
          delegate.handleFromRemoteSite(origin, command, reply, order);
       }
    }

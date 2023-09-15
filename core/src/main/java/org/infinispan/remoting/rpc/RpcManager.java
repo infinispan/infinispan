@@ -16,7 +16,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.xsite.XSiteBackup;
-import org.infinispan.xsite.XSiteReplicateCommand;
+import org.infinispan.xsite.commands.remote.XSiteCacheRequest;
 
 /**
  * Provides a mechanism for communicating with other caches in the cluster, by formatting and passing requests down to
@@ -137,7 +137,7 @@ public interface RpcManager {
    void sendToAll(ReplicableCommand command, DeliverOrder deliverOrder);
 
    /**
-    * Sends the {@link XSiteReplicateCommand} to a remote site.
+    * Sends the {@link XSiteCacheRequest} to a remote site.
     * <p>
     * If {@link XSiteBackup#isSync()} returns {@code false}, the {@link XSiteResponse} is only completed when the an
     * ACK from the remote site is received. The invoker needs to make sure not to wait for the {@link XSiteResponse}.
@@ -146,7 +146,7 @@ public interface RpcManager {
     * @param command The command to send.
     * @return A {@link XSiteResponse} that is completed when the request is completed.
     */
-   <O> XSiteResponse<O> invokeXSite(XSiteBackup backup, XSiteReplicateCommand<O> command);
+   <O> XSiteResponse<O> invokeXSite(XSiteBackup backup, XSiteCacheRequest<O> command);
 
    /**
     * @return a reference to the underlying transport.
