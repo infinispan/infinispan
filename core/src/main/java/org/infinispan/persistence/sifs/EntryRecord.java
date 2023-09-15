@@ -135,15 +135,15 @@ public class EntryRecord {
       assert metaLength > 0;
       byte[] metadata = new byte[metaLength];
       if (read(handle, ByteBuffer.wrap(metadata), offset, metaLength) < 0) {
-         throw new IllegalStateException("End of file reached when reading metadata on "
-               + handle.getFileId() + ":" + offset + ": " + header);
+         throw new IllegalStateException("Concurrent update to compacting file when reading metadata on "
+               + handle.getFileId() + ": " + offset + ": " + header + "| " + handle.getFileSize());
       }
 
       offset += metaLength;
       ByteBuffer buffer = ByteBuffer.allocate(EntryMetadata.TIMESTAMP_BYTES);
       if (read(handle, buffer, offset, EntryMetadata.TIMESTAMP_BYTES) < 0) {
-         throw new IllegalStateException("End of file reached when reading timestamps on "
-               + handle.getFileId() + ":" + offset + ": " + header);
+         throw new IllegalStateException("Concurrent update to compacting file when reading timestamps on "
+               + handle.getFileId() + ": " + offset + ": " + header + "| " + handle.getFileSize());
       }
       buffer.flip();
       return new EntryMetadata(metadata, buffer.getLong(), buffer.getLong());
@@ -155,8 +155,8 @@ public class EntryRecord {
       offset += header.getHeaderLength() + header.keyLength() + header.metadataLength() + header.valueLength();
       byte[] metadata = new byte[length];
       if (read(handle, ByteBuffer.wrap(metadata), offset, length) < 0) {
-         throw new IllegalStateException("End of file reached when reading internal metadata on "
-               + handle.getFileId() + ":" + offset + ": " + header);
+         throw new IllegalStateException("Concurrent update to compacting file when reading internal metadata on "
+               + handle.getFileId() + ": " + offset + ": " + header + "| " + handle.getFileSize());
       }
       return metadata;
    }
@@ -165,8 +165,8 @@ public class EntryRecord {
       assert header.valueLength() > 0;
       byte[] value = new byte[header.valueLength()];
       if (read(handle, ByteBuffer.wrap(value), offset + header.getHeaderLength() + header.keyLength() + header.metadataLength(), header.valueLength()) < 0) {
-         throw new IllegalStateException("End of file reached when reading metadata on "
-               + handle.getFileId() + ":" + offset + ": " + header);
+         throw new IllegalStateException("Concurrent update to compacting file when reading metadata on "
+               + handle.getFileId() + ": " + offset + ": " + header + "|" + handle.getFileSize());
       }
       return value;
    }

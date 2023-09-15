@@ -88,4 +88,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = Logger.Level.ERROR)
    @Message(value = "File id %s encountered an exception while compacting, file may be orphaned", id = 29021)
    void compactorEncounteredException(@Cause Throwable t, int fileId);
+
+   @LogMessage(level = Logger.Level.WARN)
+   @Message(value = "Compaction skipping a corrupted entry for key %s, at %s:%s|%s that doesn't have enough bytes for header %s", id = 29022)
+   void compactedFileNotLongEnough(byte[] key, int file, long offset, long fileSize, EntryHeader record);
 }
