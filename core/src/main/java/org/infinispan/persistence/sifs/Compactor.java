@@ -2,6 +2,7 @@ package org.infinispan.persistence.sifs;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -193,7 +194,9 @@ class Compactor implements Consumer<Object> {
    // Present for testing only - note is still asynchronous if underlying executor is
    CompletionStage<Void> forceCompactionForAllNonLogFiles() {
       AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
-      for (Map.Entry<Integer, Stats> stats : fileStats.entrySet()) {
+      // Use a copy so that if there are concurrent files being created we don't keep compacting forever
+      Map<Integer, Stats> copy = new HashMap<>(fileStats);
+      for (Map.Entry<Integer, Stats> stats : copy.entrySet()) {
          int fileId = stats.getKey();
          if (!fileProvider.isLogFile(fileId) && !stats.getValue().markedForDeletion && stats.getValue().setScheduled()) {
             CompactionRequest compactionRequest = new CompactionRequest(fileId);
@@ -292,6 +295,7 @@ class Compactor implements Consumer<Object> {
    }
 
    public void stopOperations() {
+      log.tracef("Stopping compactor");
       // This will short circuit any compactor call, so it can only process the entry it may be on currently
       terminateSignal = true;
       processor.onComplete();
@@ -474,18 +478,30 @@ class Compactor implements Consumer<Object> {
       if (handle == null) {
          throw new IllegalStateException("Compactor should not get deleted file for compaction!");
       }
-      try {
+      try (handle) {
+         long fileSize = handle.getFileSize();
          AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
          while (!clearSignal.get() && !terminateSignal) {
             EntryHeader header = EntryRecord.readEntryHeader(handle, scheduledOffset);
             if (header == null) {
                break;
             }
+            long remainingBytes = fileSize - scheduledOffset;
+            if (header.totalLength() > remainingBytes) {
+               byte[] serializedKey = null;
+               // Attempt to read the key to give a better warning
+               if (header.keyLength() < remainingBytes) {
+                  serializedKey = EntryRecord.readKey(handle, header, scheduledOffset);
+               }
+               log.compactedFileNotLongEnough(serializedKey, scheduledFile, scheduledOffset, fileSize, header);
+               break;
+            }
             byte[] serializedKey = EntryRecord.readKey(handle, header, scheduledOffset);
             if (serializedKey == null) {
-               throw new IllegalStateException("End of file reached when reading key on "
-                     + handle.getFileId() + ":" + scheduledOffset);
+               throw new IllegalStateException("Concurrent update to compacting file when reading key on "
+                     + handle.getFileId() + ": " + scheduledOffset + ": " + header + "|" + handle.getFileSize());
             }
+
             Object key = marshaller.objectFromByteBuffer(serializedKey);
             int segment = keyPartitioner.getSegment(key);
 
@@ -692,8 +708,6 @@ class Compactor implements Consumer<Object> {
                });
             }
          }
-      } finally {
-         handle.close();
       }
       if (subscriber != null) {
          for (EntryPosition entryPosition : expiredTemp) {
