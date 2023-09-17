@@ -60,6 +60,10 @@ public final class RespErrorUtil {
       ByteBufferUtils.stringToByteBufAscii("-ERR min or max is not a float\r\n", allocator);
    }
 
+   public static void minOrMaxNotAValidStringRange(ByteBufPool allocator) {
+      ByteBufferUtils.stringToByteBufAscii("-ERR min or max not valid string range item\r\n", allocator);
+   }
+
    public static void transactionAborted(ByteBufPool allocatorToUse) {
       ByteBufferUtils.stringToByteBufAscii(
             "-EXECABORT Transaction discarded because of previous errors.\r\n", allocatorToUse);

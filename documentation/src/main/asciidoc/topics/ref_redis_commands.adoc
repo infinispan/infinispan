@@ -330,7 +330,7 @@ provides a read-uncommitted isolation.
 | link:https://redis.io/commands/zcard[ZCARD]
 |
 
-| link:https://redis.io/commands/zcard[ZCOUNT]
+| link:https://redis.io/commands/zcount[ZCOUNT]
 |
 
 | link:https://redis.io/commands/zdiff[ZDIFF]
@@ -349,6 +349,9 @@ provides a read-uncommitted isolation.
 |
 
 | link:https://redis.io/commands/zinterstore[ZINTERSTORE]
+|
+
+| link:https://redis.io/commands/zlexcount[ZLEXCOUNT]
 |
 
 | link:https://redis.io/commands/zpopmax[ZPOPMAX]

@@ -110,6 +110,15 @@ public class DistributedMultimapSortedSetCacheTest extends BaseDistFunctionalTes
       assertThat(await(sortedSet.count(NAMES_KEY, 1, true, 3, true))).isEqualTo(8);
    }
 
+   public void testCountByLex() {
+      initAndTest();
+      EmbeddedMultimapSortedSetCache<String, Person> sortedSet = getMultimapCacheMember();
+      await(sortedSet.addMany(NAMES_KEY,
+            list(of(1, ELAIA), of(1, FELIX), of(1, OIHANA)), SortedSetAddArgs.create().build()));
+      assertThat(await(sortedSet.size(NAMES_KEY))).isEqualTo(3);
+      assertThat(await(sortedSet.count(NAMES_KEY, ELAIA, true, OIHANA, true))).isEqualTo(3);
+   }
+
    public void testPop() {
       initAndTest();
       EmbeddedMultimapSortedSetCache<String, Person> sortedSet = getMultimapCacheMember();

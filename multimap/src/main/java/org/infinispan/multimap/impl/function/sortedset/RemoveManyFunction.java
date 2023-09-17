@@ -30,16 +30,16 @@ public final class RemoveManyFunction<K, V, T> implements SortedSetBucketBaseFun
    private final List<T> values;
    private final boolean includeMin;
    private final boolean includeMax;
-   private final SubsetType type;
+   private final SortedSetOperationType type;
 
-   public RemoveManyFunction(List<T> values, SubsetType type) {
+   public RemoveManyFunction(List<T> values, SortedSetOperationType type) {
       this.values = values;
       this.includeMin = false;
       this.includeMax = false;
       this.type = type;
    }
 
-   public RemoveManyFunction(List<T> values, boolean includeMin, boolean includeMax, SubsetType type) {
+   public RemoveManyFunction(List<T> values, boolean includeMin, boolean includeMax, SortedSetOperationType type) {
       this.values = values;
       this.includeMin = includeMin;
       this.includeMax = includeMax;
@@ -101,7 +101,7 @@ public final class RemoveManyFunction<K, V, T> implements SortedSetBucketBaseFun
       public RemoveManyFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          return new RemoveManyFunction(unmarshallCollection(input, ArrayList::new),
                input.readBoolean(), input.readBoolean(),
-               MarshallUtil.unmarshallEnum(input, SubsetType::valueOf));
+               MarshallUtil.unmarshallEnum(input, SortedSetOperationType::valueOf));
       }
    }
 }

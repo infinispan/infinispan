@@ -15,9 +15,9 @@ import org.infinispan.multimap.impl.function.sortedset.PopFunction;
 import org.infinispan.multimap.impl.function.sortedset.RemoveManyFunction;
 import org.infinispan.multimap.impl.function.sortedset.ScoreFunction;
 import org.infinispan.multimap.impl.function.sortedset.SortedSetAggregateFunction;
+import org.infinispan.multimap.impl.function.sortedset.SortedSetOperationType;
 import org.infinispan.multimap.impl.function.sortedset.SortedSetRandomFunction;
 import org.infinispan.multimap.impl.function.sortedset.SubsetFunction;
-import org.infinispan.multimap.impl.function.sortedset.SubsetType;
 import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
 
 import java.util.ArrayList;
@@ -33,10 +33,10 @@ import java.util.stream.Collectors;
 import static java.util.Objects.requireNonNull;
 import static org.infinispan.multimap.impl.function.sortedset.SortedSetAggregateFunction.AggregateType.INTER;
 import static org.infinispan.multimap.impl.function.sortedset.SortedSetAggregateFunction.AggregateType.UNION;
-import static org.infinispan.multimap.impl.function.sortedset.SubsetType.INDEX;
-import static org.infinispan.multimap.impl.function.sortedset.SubsetType.LEX;
-import static org.infinispan.multimap.impl.function.sortedset.SubsetType.OTHER;
-import static org.infinispan.multimap.impl.function.sortedset.SubsetType.SCORE;
+import static org.infinispan.multimap.impl.function.sortedset.SortedSetOperationType.INDEX;
+import static org.infinispan.multimap.impl.function.sortedset.SortedSetOperationType.LEX;
+import static org.infinispan.multimap.impl.function.sortedset.SortedSetOperationType.OTHER;
+import static org.infinispan.multimap.impl.function.sortedset.SortedSetOperationType.SCORE;
 
 /**
  * Multimap with Sorted Map Implementation methods
@@ -192,7 +192,23 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
    public CompletionStage<Long> count(K key, double min, boolean includeMin, double max, boolean includeMax) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       return readWriteMap.eval(key,
-            new CountFunction<>(min, includeMin, max, includeMax));
+            new CountFunction<>(min, includeMin, max, includeMax, SCORE));
+   }
+
+   /**
+    * Counts the number of elements between the given min and max scores.
+    *
+    * @param key, the name of the sorted set
+    * @param min, the min value
+    * @param max, the max value
+    * @param includeMin, include elements with the min value in the count
+    * @param includeMax, include elements with the max value in the count
+    * @return the number of elements in between min and max values
+    */
+   public CompletionStage<Long> count(K key, V min, boolean includeMin, V max, boolean includeMax) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      return readWriteMap.eval(key,
+            new CountFunction<>(min, includeMin, max, includeMax, LEX));
    }
 
    /**
@@ -396,7 +412,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
       return removeAll(key, min, includeMin, max, includeMax, LEX);
    }
 
-   private CompletionStage<Long> removeAll(K key, Object min, boolean includeMin, Object max, boolean includeMax, SubsetType subsetType) {
+   private CompletionStage<Long> removeAll(K key, Object min, boolean includeMin, Object max, boolean includeMax, SortedSetOperationType subsetType) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       List<Object> list = new ArrayList<>(2);
       list.add(min);
