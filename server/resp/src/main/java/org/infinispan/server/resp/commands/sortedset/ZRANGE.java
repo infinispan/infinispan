@@ -171,7 +171,7 @@ public class ZRANGE extends RespCommand implements Resp3Command {
          ZSetCommonUtils.Lex startLex = ZSetCommonUtils.parseLex(start);
          ZSetCommonUtils.Lex stopLex = ZSetCommonUtils.parseLex(stop);
          if (startLex == null || stopLex == null) {
-            RespErrorUtil.customError("min or max not valid string range item", handler.allocator());
+            RespErrorUtil.minOrMaxNotAValidStringRange(handler.allocator());
             return handler.myStage();
          }
          SortedSetSubsetArgs.Builder<byte[]> builder = SortedSetSubsetArgs.create();

@@ -157,6 +157,31 @@ public class EmbeddedMultimapSortedSetCacheTest extends SingleCacheManagerTest {
             .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
    }
 
+   public void testCountByLex() {
+      assertThat(await(sortedSetCache.count(NAMES_KEY, 0, false, 0, false))).isEqualTo(0);
+      await(sortedSetCache.addMany(NAMES_KEY,
+            list(of(0, CHARY), of(0, ELA), of(0, ELAIA),of(0, FELIX), of(0, IGOR),
+                  of(0, IZARO), of(0, JULIEN), of(0, KOLDO), of(0, OIHANA), of(0, RAMON)),
+            SortedSetAddArgs.create().build()));
+
+      assertThat(await(sortedSetCache.count(NAMES_KEY, null, true, null, true))).isEqualTo(10);
+      assertThat(await(sortedSetCache.count(NAMES_KEY, null, false, null, false))).isEqualTo(10);
+      assertThat(await(sortedSetCache.count(NAMES_KEY, CHARY, true, RAMON, true))).isEqualTo(10);
+      assertThat(await(sortedSetCache.count(NAMES_KEY, CHARY, false, RAMON, true))).isEqualTo(9);
+      assertThat(await(sortedSetCache.count(NAMES_KEY, CHARY, false, RAMON, false))).isEqualTo(8);
+      assertThat(await(sortedSetCache.count(NAMES_KEY, OIHANA, false, null, false))).isEqualTo(1);
+      assertThat(await(sortedSetCache.count(NAMES_KEY, OIHANA, true, null, false))).isEqualTo(2);
+      assertThat(await(sortedSetCache.count(NAMES_KEY, null, false, OIHANA, true))).isEqualTo(9);
+      assertThat(await(sortedSetCache.count(NAMES_KEY, null, true, OIHANA, false))).isEqualTo(8);
+      assertThat(await(sortedSetCache.count(NAMES_KEY, ELA, true, FELIX, true))).isEqualTo(3);
+      assertThat(await(sortedSetCache.count(NAMES_KEY, new Person("Folix"), true, new Person("Igur"), true))).isEqualTo(1);
+      assertThat(await(sortedSetCache.count(NAMES_KEY, new Person("Igur"), true, new Person("Folix"), true))).isZero();
+
+      assertThatThrownBy(() -> await(sortedSetCache.count(null, null, false, null,false)))
+            .isInstanceOf(NullPointerException.class)
+            .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
+   }
+
    public void testPop() {
       assertThat(await(sortedSetCache.pop(NAMES_KEY, false, 10))).isEmpty();
       await(sortedSetCache.addMany(NAMES_KEY,list(of(-5, OIHANA), of(1, ELAIA)), SortedSetAddArgs.create().build()));

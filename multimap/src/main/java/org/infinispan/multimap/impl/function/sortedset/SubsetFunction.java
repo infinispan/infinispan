@@ -35,9 +35,9 @@ public class SubsetFunction<K, V, T> implements SortedSetBucketBaseFunction<K, V
    protected final boolean includeStop;
    protected final Long offset;
    protected final Long count;
-   protected final SubsetType subsetType;
+   protected final SortedSetOperationType subsetType;
 
-   public SubsetFunction(SortedSetSubsetArgs<T> args, SubsetType subsetType) {
+   public SubsetFunction(SortedSetSubsetArgs<T> args, SortedSetOperationType subsetType) {
       this.isRev = args.isRev();
       this.start = args.getStart();
       this.stop = args.getStop();
@@ -49,7 +49,7 @@ public class SubsetFunction<K, V, T> implements SortedSetBucketBaseFunction<K, V
    }
 
    public SubsetFunction(boolean isRev, T start, T stop, boolean includeStart, boolean includeStop,
-                         Long offset, Long count, SubsetType subsetType) {
+                         Long offset, Long count, SortedSetOperationType subsetType) {
       this.isRev = isRev;
       this.start = start;
       this.stop = stop;
@@ -105,7 +105,7 @@ public class SubsetFunction<K, V, T> implements SortedSetBucketBaseFunction<K, V
       @Override
       public SubsetFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          return new SubsetFunction(input.readBoolean(), input.readObject(), input.readObject(), input.readBoolean(),
-               input.readBoolean(), (Long) input.readObject(), (Long) input.readObject(), MarshallUtil.unmarshallEnum(input, SubsetType::valueOf));
+               input.readBoolean(), (Long) input.readObject(), (Long) input.readObject(), MarshallUtil.unmarshallEnum(input, SortedSetOperationType::valueOf));
       }
    }
 }
