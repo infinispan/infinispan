@@ -1,15 +1,16 @@
 package org.infinispan.notifications.cachemanagerlistener.event.impl;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.ConfigurationChangedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.MergeEvent;
+import org.infinispan.notifications.cachemanagerlistener.event.SitesViewChangedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.transport.Address;
 
@@ -19,7 +20,7 @@ import org.infinispan.remoting.transport.Address;
  * @author Manik Surtani
  * @since 4.0
  */
-public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChangedEvent, MergeEvent, ConfigurationChangedEvent {
+public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChangedEvent, MergeEvent, ConfigurationChangedEvent, SitesViewChangedEvent {
 
    private String cacheName;
    private EmbeddedCacheManager cacheManager;
@@ -32,6 +33,9 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
    private String configurationEntityType;
    private String configurationEntityName;
    private EventType configurationEventType;
+   private Collection<String> sitesView;
+   private Collection<String> sitesUp;
+   private Collection<String> sitesDown;
 
    public EventImpl() {
    }
@@ -122,20 +126,27 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
 
       EventImpl event = (EventImpl) o;
 
-      if (viewId != event.viewId) return false;
-      if (!Objects.equals(cacheName, event.cacheName)) return false;
-      if (!Objects.equals(localAddress, event.localAddress)) return false;
-      if (!Objects.equals(newMembers, event.newMembers)) return false;
-      if (!Objects.equals(oldMembers, event.oldMembers)) return false;
-      if (!Util.safeEquals(subgroupsMerged, event.subgroupsMerged)) return false;
-      if (type != event.type) return false;
-
-      return true;
+      return viewId == event.viewId &&
+            mergeView == event.mergeView &&
+            type == event.type &&
+            configurationEventType == event.configurationEventType &&
+            Objects.equals(cacheName, event.cacheName) &&
+            Objects.equals(cacheManager, event.cacheManager) &&
+            Objects.equals(newMembers, event.newMembers) &&
+            Objects.equals(oldMembers, event.oldMembers) &&
+            Objects.equals(localAddress, event.localAddress) &&
+            Objects.equals(subgroupsMerged, event.subgroupsMerged) &&
+            Objects.equals(configurationEntityType, event.configurationEntityType) &&
+            Objects.equals(configurationEntityName, event.configurationEntityName) &&
+            Objects.equals(sitesView, event.sitesView) &&
+            Objects.equals(sitesUp, event.sitesUp) &&
+            Objects.equals(sitesDown, event.sitesDown);
    }
 
    @Override
    public int hashCode() {
       int result = cacheName != null ? cacheName.hashCode() : 0;
+      result = 31 * result + (cacheManager != null ? cacheManager.hashCode() : 0);
       result = 31 * result + (type != null ? type.hashCode() : 0);
       result = 31 * result + (newMembers != null ? newMembers.hashCode() : 0);
       result = 31 * result + (oldMembers != null ? oldMembers.hashCode() : 0);
@@ -143,19 +154,33 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
       result = 31 * result + viewId;
       result = 31 * result + (subgroupsMerged == null ? 0 : subgroupsMerged.hashCode());
       result = 31 * result + (mergeView ? 1 : 0);
+      result = 31 * result + (configurationEntityType != null ? configurationEntityType.hashCode() : 0);
+      result = 31 * result + (configurationEntityName != null ? configurationEntityName.hashCode() : 0);
+      result = 31 * result + (configurationEventType != null ? configurationEventType.hashCode() : 0);
+      result = 31 * result + (sitesView != null ? sitesView.hashCode() : 0);
+      result = 31 * result + (sitesUp != null ? sitesUp.hashCode() : 0);
+      result = 31 * result + (sitesDown != null ? sitesDown.hashCode() : 0);
       return result;
    }
 
    @Override
    public String toString() {
       return "EventImpl{" +
-            "type=" + type +
+            "cacheName='" + cacheName + '\'' +
+            ", cacheManager=" + cacheManager +
+            ", type=" + type +
             ", newMembers=" + newMembers +
             ", oldMembers=" + oldMembers +
             ", localAddress=" + localAddress +
             ", viewId=" + viewId +
             ", subgroupsMerged=" + subgroupsMerged +
             ", mergeView=" + mergeView +
+            ", configurationEntityType='" + configurationEntityType + '\'' +
+            ", configurationEntityName='" + configurationEntityName + '\'' +
+            ", configurationEventType=" + configurationEventType +
+            ", sitesView=" + sitesView +
+            ", sitesUp=" + sitesUp +
+            ", sitesDown=" + sitesDown +
             '}';
    }
 
@@ -202,5 +227,32 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
    @Override
    public String getConfigurationEntityName() {
       return configurationEntityName;
+   }
+
+   @Override
+   public Collection<String> getSites() {
+      return sitesView;
+   }
+
+   @Override
+   public Collection<String> getJoiners() {
+      return sitesUp;
+   }
+
+   @Override
+   public Collection<String> getLeavers() {
+      return sitesDown;
+   }
+
+   public void setSitesView(Collection<String> sitesView) {
+      this.sitesView = sitesView;
+   }
+
+   public void setSitesUp(Collection<String> sitesUp) {
+      this.sitesUp = sitesUp;
+   }
+
+   public void setSitesDown(Collection<String> sitesDown) {
+      this.sitesDown = sitesDown;
    }
 }

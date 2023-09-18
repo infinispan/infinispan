@@ -1,6 +1,7 @@
 package org.infinispan.notifications.cachemanagerlistener;
 
 import java.lang.annotation.Annotation;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,12 +20,14 @@ import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ConfigurationChanged;
 import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
+import org.infinispan.notifications.cachemanagerlistener.annotation.SiteViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.ConfigurationChangedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.Event;
 import org.infinispan.notifications.cachemanagerlistener.event.MergeEvent;
+import org.infinispan.notifications.cachemanagerlistener.event.SitesViewChangedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.impl.EventImpl;
 import org.infinispan.notifications.impl.AbstractListenerImpl;
@@ -55,6 +58,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
       allowedListeners.put(ViewChanged.class, ViewChangedEvent.class);
       allowedListeners.put(Merged.class, MergeEvent.class);
       allowedListeners.put(ConfigurationChanged.class, ConfigurationChangedEvent.class);
+      allowedListeners.put(SiteViewChanged.class, SitesViewChangedEvent.class);
    }
 
    final List<ListenerInvocation<Event>> cacheStartedListeners = new CopyOnWriteArrayList<>();
@@ -62,6 +66,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
    final List<ListenerInvocation<Event>> viewChangedListeners = new CopyOnWriteArrayList<>();
    final List<ListenerInvocation<Event>> mergeListeners = new CopyOnWriteArrayList<>();
    final List<ListenerInvocation<Event>> configurationChangedListeners = new CopyOnWriteArrayList<>();
+   final List<ListenerInvocation<Event>> sitesViewChangedListeners = new CopyOnWriteArrayList<>();
 
    @Inject EmbeddedCacheManager cacheManager;
 
@@ -71,6 +76,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
       listenersMap.put(ViewChanged.class, viewChangedListeners);
       listenersMap.put(Merged.class, mergeListeners);
       listenersMap.put(ConfigurationChanged.class, configurationChangedListeners);
+      listenersMap.put(SiteViewChanged.class, sitesViewChangedListeners);
    }
 
    protected class DefaultBuilder extends AbstractInvocationBuilder {
@@ -149,6 +155,20 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
          return invokeListeners(e, configurationChangedListeners);
       }
       return CompletableFutures.completedNull();
+   }
+
+   @Override
+   public CompletionStage<Void> notifyCrossSiteViewChanged(Collection<String> siteView, Collection<String> sitesUp, Collection<String> sitesDown) {
+      if (sitesViewChangedListeners.isEmpty()) {
+         return CompletableFutures.completedNull();
+      }
+      EventImpl e = new EventImpl();
+      e.setType(Event.Type.SITES_VIEW_CHANGED);
+      e.setCacheManager(cacheManager);
+      e.setSitesView(siteView);
+      e.setSitesUp(sitesUp);
+      e.setSitesDown(sitesDown);
+      return invokeListeners(e, sitesViewChangedListeners);
    }
 
    @Override

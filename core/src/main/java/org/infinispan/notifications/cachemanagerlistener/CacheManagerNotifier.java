@@ -1,6 +1,7 @@
 package org.infinispan.notifications.cachemanagerlistener;
 
 import java.lang.annotation.Annotation;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
@@ -29,7 +30,8 @@ public interface CacheManagerNotifier extends Listenable {
 
    /**
     * Notifies all registered listeners of a configurationChange event.
-    * @param eventType the type of event (CREATE or REMOVE)
+    *
+    * @param eventType  the type of event (CREATE or REMOVE)
     * @param entityType the type of configuration that has changed (e.g. cache, counter, ...)
     * @param entityName the name of the configuration item that has been changed
     * @return a {@link CompletionStage} which completes when the notification has been sent.
@@ -38,8 +40,14 @@ public interface CacheManagerNotifier extends Listenable {
 
    /**
     * Returns whether there is at least one listener registered for the given annotation
+    *
     * @param annotationClass annotation to test for
     * @return true if there is a listener mapped to the annotation, otherwise false
     */
    boolean hasListener(Class<? extends Annotation> annotationClass);
+
+   /**
+    * Notifies all registered listeners of a sites view change event
+    */
+   CompletionStage<Void> notifyCrossSiteViewChanged(Collection<String> siteView, Collection<String> sitesUp, Collection<String> sitesDown);
 }
