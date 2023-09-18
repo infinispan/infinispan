@@ -18,6 +18,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
@@ -143,7 +144,9 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
    @Override
    public synchronized void queueRebalance(List<Address> newMembers) {
-      if (newMembers != null && !newMembers.isEmpty() && totalCapacityFactors() != 0f) {
+      float cf = totalCapacityFactors();
+      log.tracef("queueRebalance. newMembers=%s, totalCapacityFactors=%f", newMembers, cf);
+      if (newMembers != null && !newMembers.isEmpty() && cf != 0f) {
          log.debugf("Queueing rebalance for cache %s with members %s", cacheName, newMembers);
          queuedRebalanceMembers = newMembers;
 
@@ -703,6 +706,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    }
 
    public synchronized CacheStatusResponse doJoin(Address joiner, CacheJoinInfo joinInfo) {
+      log.tracef("doJoin. joiner=%s\n%s", joiner, joinInfo);
       validateJoiner(joiner, joinInfo);
 
       boolean isFirstMember = getCurrentTopology() == null;
@@ -713,6 +717,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          return new CacheStatusResponse(null, currentTopology, stableTopology, availabilityMode, expectedMembers);
       }
       final List<Address> current = Collections.unmodifiableList(expectedMembers);
+      log.tracef("STATUS=%s", status);
       if (status == ComponentStatus.INSTANTIATED) {
          if (persistentState.isPresent()) {
             if (log.isTraceEnabled()) log.tracef("Node %s joining. Attempting to reform previous cluster", joiner);
@@ -729,6 +734,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                return new CacheStatusResponse(null, currentTopology, stableTopology, availabilityMode, current);
             }
          } else {
+            log.tracef("isFirstMember=%s", isFirstMember);
             if (isFirstMember) {
                // This node was the first to join. We need to install the initial CH
                CacheTopology initialTopology = createInitialCacheTopology();
@@ -748,19 +754,30 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       }
 
       CacheTopology topologyBeforeRebalance = getCurrentTopology();
+      log.tracef("topologyBeforeRebalance=%s", topologyBeforeRebalance);
       // Only trigger availability strategy if we have a topology installed
-      if (topologyBeforeRebalance != null)
+      if (topologyBeforeRebalance != null) {
          availabilityStrategy.onJoin(this, joiner);
+      }
 
       return new CacheStatusResponse(null, topologyBeforeRebalance, stableTopology, availabilityMode, current);
    }
 
    CompletionStage<Void> nodeCanJoinFuture(CacheJoinInfo joinInfo) {
-      if (joinInfo.getCapacityFactor() != 0f || getCurrentTopology() != null)
+      if (joinInfo.getCapacityFactor() != 0f || getCurrentTopology() != null) {
+         if (log.isTraceEnabled()) {
+            log.tracef("nodeCanJoinFuture capacityFactor '%f', topology=%s", joinInfo.getCapacityFactor(), getCurrentTopology());
+         }
          return CompletableFutures.completedNull();
+      }
+      Predicate<ClusterCacheStatus> test = ccs -> {
+         CacheTopology topology = ccs.getCurrentTopology();
+         log.tracef("hasInitialTopologyFuture. topology=%s", topology);
+         return topology != null;
+      };
 
       // Creating the initial topology requires at least one node with a non-zero capacity factor
-      return hasInitialTopologyFuture.newConditionStage(ccs -> ccs.getCurrentTopology() != null,
+      return hasInitialTopologyFuture.newConditionStage(test,
                                                         () -> new TimeoutException("Timed out waiting for initial cache topology"),
                                                         joinInfo.getTimeout(), TimeUnit.MILLISECONDS);
    }

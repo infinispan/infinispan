@@ -38,6 +38,8 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.distribution.DistributionInfo;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.DDAsyncInterceptor;
@@ -279,7 +281,14 @@ public abstract class AbstractLockingInterceptor extends DDAsyncInterceptor {
    }
 
    final boolean isLockOwner(int keySegment) {
-      return cdl.getCacheTopology().getSegmentDistribution(keySegment).isPrimary();
+      LocalizedCacheTopology topology = cdl.getCacheTopology();
+      DistributionInfo di = topology.getSegmentDistribution(keySegment);
+      boolean primary = di.isPrimary();
+      getLog().tracef("cdl=%s", cdl.getClass().getName());
+      getLog().tracef("topology=%s", topology);
+      getLog().tracef("di=%s", di);
+      getLog().tracef("primary=%s", primary);
+      return primary;
    }
 
    protected final InvocationStage lockAndRecord(InvocationContext context, VisitableCommand command, Object key,

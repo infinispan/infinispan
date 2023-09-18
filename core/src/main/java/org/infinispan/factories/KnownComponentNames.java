@@ -52,6 +52,8 @@ public class KnownComponentNames {
       DEFAULT_THREAD_PRIORITY.put(TIMEOUT_SCHEDULE_EXECUTOR, Thread.NORM_PRIORITY);
       DEFAULT_THREAD_PRIORITY.put(NON_BLOCKING_EXECUTOR, Thread.NORM_PRIORITY);
       DEFAULT_THREAD_PRIORITY.put(BLOCKING_EXECUTOR, Thread.NORM_PRIORITY);
+
+      DEFAULT_THREAD_COUNT.forEach((k, v) -> System.out.printf(">>>>>> %s=%s\n", k, v));
    }
 
    public static int getDefaultThreads(String componentName) {

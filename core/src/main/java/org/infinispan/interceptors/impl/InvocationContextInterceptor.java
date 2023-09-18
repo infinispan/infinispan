@@ -17,6 +17,7 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.tx.TransactionBoundaryCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.Util;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -128,6 +129,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
          } else if (command.logThrowable(th)) {
             Collection<?> affectedKeys = extractWrittenKeys(ctx, command);
             log.executionError(command.getClass().getSimpleName(), getCacheNamePrefix(), toStr(affectedKeys), th);
+            log.error(Util.threadDump());
          } else {
             log.trace("Unexpected exception encountered", th);
          }
