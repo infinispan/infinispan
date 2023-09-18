@@ -281,12 +281,10 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
                                                     IracRequestStateCommand.class, IracStateResponseCommand.class,
                                                     IracUpdateVersionCommand.class, IracCleanupKeysCommand.class,
                                                     IracTombstoneStateResponseCommand.class);
-      //the JGroups events triggers this command where NodeB checks if it needs to starts the transfer
+      //the JGroups events triggers this command where NodeB checks if it needs to start the transfer
       CompletableFuture<ControlledRpcManager.BlockedRequest<XSiteAutoTransferStatusCommand>> req1 = newSiteMaster
             .getRpcManager().expectCommandAsync(XSiteAutoTransferStatusCommand.class);
-      //and we have a second command coming from NodeC. NodeB broadcast the RELAY2 events to all nodes
-      CompletableFuture<ControlledRpcManager.BlockedRequest<XSiteAutoTransferStatusCommand>> req2 = newSiteMaster
-            .getRpcManager().expectCommandAsync(XSiteAutoTransferStatusCommand.class);
+      // req2 no longer triggered since only site-master trigger the SiteViewChanged event
       CompletableFuture<ControlledRpcManager.BlockedRequest<XSiteBringOnlineCommand>> req3 = newSiteMaster
             .getRpcManager().expectCommandAsync(XSiteBringOnlineCommand.class);
       CompletableFuture<ControlledRpcManager.BlockedRequest<XSiteStateTransferStartSendCommand>> req4 = newSiteMaster
@@ -310,8 +308,7 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
       event.continueRunnable();
 
       //make sure the commands are blocked
-      req1.get(10, TimeUnit.SECONDS).fail(); //we only need req1 or req2 to succeed,it does not matter which one
-      req2.get(10, TimeUnit.SECONDS).send().receiveAll();
+      req1.get(10, TimeUnit.SECONDS).send().receiveAll();
       req3.get(10, TimeUnit.SECONDS).send().receiveAll();
       req4.get(10, TimeUnit.SECONDS).send().receiveAll();
       newSiteMaster.getRpcManager().stopBlocking();
