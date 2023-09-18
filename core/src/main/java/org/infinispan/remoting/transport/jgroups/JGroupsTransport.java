@@ -97,10 +97,8 @@ import org.infinispan.remoting.transport.raft.RaftManager;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.xsite.GlobalXSiteAdminOperations;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteNamedCache;
-import org.infinispan.xsite.commands.XSiteViewNotificationCommand;
 import org.infinispan.xsite.commands.remote.XSiteRequest;
 import org.jgroups.BytesMessage;
 import org.jgroups.ChannelListener;
@@ -183,7 +181,6 @@ public class JGroupsTransport implements Transport, ChannelListener {
    @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
    protected ExecutorService nonBlockingExecutor;
    @Inject protected CacheManagerJmxRegistration jmxRegistration;
-   @Inject protected GlobalXSiteAdminOperations globalXSiteAdminOperations;
    @Inject protected ComponentRef<MetricsCollector> metricsCollector;
 
    private final Lock viewUpdateLock = new ReentrantLock();
@@ -1375,20 +1372,12 @@ public class JGroupsTransport implements Transport, ChannelListener {
    }
 
    private void updateSitesView(Collection<String> sitesUp, Collection<String> sitesDown) {
+      // TODO code will be changed by ISPN-12989
       if (isSiteCoordinator()) {
          Set<String> reachableSites = getSitesView();
          log.tracef("Sites view changed: up %s, down %s, new view is %s", sitesUp, sitesDown, reachableSites);
          XSITE.receivedXSiteClusterView(reachableSites);
-      }
-      if (sitesUp.isEmpty()) {
-         return;
-      }
-      if (isCoordinator()) {
-         globalXSiteAdminOperations.onSitesUp(sitesUp);
-      } else {
-         //for the case where the coordinator isn't the site master.
-         //TODO improve this by checking if the coordinator is a site master or not.
-         sendTo(getCoordinator(), new XSiteViewNotificationCommand(sitesUp), DeliverOrder.NONE);
+         CompletionStages.join(notifier.notifyCrossSiteViewChanged(reachableSites, sitesUp, sitesDown));
       }
    }
 

@@ -3,6 +3,7 @@ package org.infinispan.notifications.cachemanagerlistener;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
+import org.infinispan.notifications.cachemanagerlistener.annotation.SiteViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.Event;
 
@@ -28,6 +29,7 @@ public class CacheManagerListener {
    @CacheStarted
    @CacheStopped
    @ViewChanged
+   @SiteViewChanged
    public void handle(Event e) {
       event = e;
       invocationCount++;
