@@ -27,16 +27,13 @@ import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.irac.IracCleanupKeysCommand;
-import org.infinispan.commands.irac.IracClearKeysCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
-import org.infinispan.commands.irac.IracPutManyCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
 import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneRemoteSiteCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
-import org.infinispan.commands.irac.IracTouchKeyCommand;
 import org.infinispan.commands.irac.IracUpdateVersionCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
@@ -146,6 +143,12 @@ import org.infinispan.xsite.commands.XSiteStateTransferStartSendCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferStatusRequestCommand;
 import org.infinispan.xsite.commands.XSiteStatusCommand;
 import org.infinispan.xsite.commands.XSiteTakeOfflineCommand;
+import org.infinispan.xsite.commands.remote.IracClearKeysRequest;
+import org.infinispan.xsite.commands.remote.IracPutManyRequest;
+import org.infinispan.xsite.commands.remote.IracTombstoneCheckRequest;
+import org.infinispan.xsite.commands.remote.IracTouchKeyRequest;
+import org.infinispan.xsite.commands.remote.XSiteStatePushRequest;
+import org.infinispan.xsite.commands.remote.XSiteStateTransferControlRequest;
 import org.infinispan.xsite.irac.IracManagerKeyInfo;
 import org.infinispan.xsite.statetransfer.XSiteState;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
@@ -431,8 +434,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public XSiteStateTransferStartReceiveCommand buildXSiteStateTransferStartReceiveCommand() {
-      return new XSiteStateTransferStartReceiveCommand(cacheName);
+   public XSiteStateTransferStartReceiveCommand buildXSiteStateTransferStartReceiveCommand(String siteName) {
+      return new XSiteStateTransferStartReceiveCommand(cacheName, siteName);
    }
 
    @Override
@@ -443,6 +446,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public XSiteStateTransferStatusRequestCommand buildXSiteStateTransferStatusRequestCommand() {
       return new XSiteStateTransferStatusRequestCommand(cacheName);
+   }
+
+   @Override
+   public XSiteStateTransferControlRequest buildXSiteStateTransferControlRequest(boolean startReceiving) {
+      return new XSiteStateTransferControlRequest(cacheName, startReceiving);
    }
 
    @Override
@@ -471,8 +479,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public XSiteStatePushCommand buildXSiteStatePushCommand(XSiteState[] chunk, long timeoutMillis) {
-      return new XSiteStatePushCommand(cacheName, chunk, timeoutMillis);
+   public XSiteStatePushCommand buildXSiteStatePushCommand(XSiteState[] chunk) {
+      return new XSiteStatePushCommand(cacheName, chunk);
    }
 
    @Override
@@ -672,8 +680,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public IracClearKeysCommand buildIracClearKeysCommand() {
-      return new IracClearKeysCommand(cacheName);
+   public IracClearKeysRequest buildIracClearKeysCommand() {
+      return new IracClearKeysRequest(cacheName);
    }
 
    @Override
@@ -708,8 +716,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public IracTouchKeyCommand buildIracTouchCommand(Object key) {
-      return new IracTouchKeyCommand(cacheName, key);
+   public IracTouchKeyRequest buildIracTouchCommand(Object key) {
+      return new IracTouchKeyRequest(cacheName, key);
    }
 
    @Override
@@ -743,7 +751,17 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public IracPutManyCommand buildIracPutManyCommand(int capacity) {
-      return new IracPutManyCommand(cacheName, capacity);
+   public IracPutManyRequest buildIracPutManyCommand(int capacity) {
+      return new IracPutManyRequest(cacheName, capacity);
+   }
+
+   @Override
+   public XSiteStatePushRequest buildXSiteStatePushRequest(XSiteState[] chunk, long timeoutMillis) {
+      return new XSiteStatePushRequest(cacheName, chunk, timeoutMillis);
+   }
+
+   @Override
+   public IracTombstoneCheckRequest buildIracTombstoneCheckRequest(List<Object> keys) {
+      return new IracTombstoneCheckRequest(cacheName, keys);
    }
 }

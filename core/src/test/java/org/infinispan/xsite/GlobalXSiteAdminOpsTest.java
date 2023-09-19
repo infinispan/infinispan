@@ -24,7 +24,8 @@ import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.util.NotifierLatch;
-import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
+import org.infinispan.xsite.commands.remote.XSiteRequest;
+import org.infinispan.xsite.commands.remote.XSiteStatePushRequest;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -283,7 +284,7 @@ public class GlobalXSiteAdminOpsTest extends AbstractMultipleSitesTest {
    }
 
    private void assertCacheEmpty(int siteIndex, String cacheName) {
-      assertTrue(format("Cache '%s' is not empty in site '%d'", cacheName, siteIndex),
+      assertTrue(format("Cache '%s' is not empty in site '%d'", cache(siteIndex, 0, cacheName).getName(), siteIndex),
                  cache(siteIndex, 0, cacheName).isEmpty());
    }
 
@@ -355,17 +356,17 @@ public class GlobalXSiteAdminOpsTest extends AbstractMultipleSitesTest {
       }
 
       @Override
-      public XSiteResponse backupRemotely(XSiteBackup backup, XSiteReplicateCommand rpcCommand) {
-         if (rpcCommand instanceof XSiteStatePushCommand) {
+      public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteRequest<O> rpcCommand) {
+         if (rpcCommand instanceof XSiteStatePushRequest) {
             notifierLatch.blockIfNeeded();
          }
          return super.backupRemotely(backup, rpcCommand);
       }
 
       @Override
-      public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteReplicateCommand rpcCommand)
+      public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteRequest<?> rpcCommand)
             throws Exception {
-         if (rpcCommand instanceof XSiteStatePushCommand) {
+         if (rpcCommand instanceof XSiteStatePushRequest) {
             notifierLatch.blockIfNeeded();
          }
          return super.backupRemotely(backups, rpcCommand);

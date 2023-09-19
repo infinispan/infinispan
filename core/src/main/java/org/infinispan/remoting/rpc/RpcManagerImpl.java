@@ -61,7 +61,7 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
-import org.infinispan.xsite.XSiteReplicateCommand;
+import org.infinispan.xsite.commands.remote.XSiteCacheRequest;
 import org.infinispan.xsite.metrics.XSiteMetricsCollector;
 
 /**
@@ -428,7 +428,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    }
 
    @Override
-   public <O> XSiteResponse<O> invokeXSite(XSiteBackup backup, XSiteReplicateCommand<O> command) {
+   public <O> XSiteResponse<O> invokeXSite(XSiteBackup backup, XSiteCacheRequest<O> command) {
       if (!statisticsEnabled) {
          return t.backupRemotely(backup, command);
       }

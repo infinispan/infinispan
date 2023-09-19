@@ -1,18 +1,17 @@
 package org.infinispan.xsite.commands;
 
+import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.util.ByteString;
+import org.infinispan.xsite.statetransfer.XSiteStateConsumer;
+import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletionStage;
-
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.xsite.BackupReceiver;
-import org.infinispan.xsite.XSiteReplicateCommand;
-import org.infinispan.xsite.statetransfer.XSiteStateConsumer;
-import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 
 /**
  * Start receiving XSite state.
@@ -20,7 +19,7 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
  * @author Ryan Emerson
  * @since 11.0
  */
-public class XSiteStateTransferStartReceiveCommand extends XSiteReplicateCommand<Void> {
+public class XSiteStateTransferStartReceiveCommand extends BaseRpcCommand {
 
    public static final byte COMMAND_ID = 106;
 
@@ -29,15 +28,15 @@ public class XSiteStateTransferStartReceiveCommand extends XSiteReplicateCommand
    // For CommandIdUniquenessTest only
    @SuppressWarnings("unused")
    public XSiteStateTransferStartReceiveCommand() {
-      super(COMMAND_ID, null);
+      this(null, null);
    }
 
    public XSiteStateTransferStartReceiveCommand(ByteString cacheName) {
       this(cacheName, null);
    }
 
-   private XSiteStateTransferStartReceiveCommand(ByteString cacheName, String siteName) {
-      super(COMMAND_ID, cacheName);
+   public XSiteStateTransferStartReceiveCommand(ByteString cacheName, String siteName) {
+      super(cacheName);
       this.siteName = siteName;
    }
 
@@ -49,14 +48,18 @@ public class XSiteStateTransferStartReceiveCommand extends XSiteReplicateCommand
       return CompletableFutures.completedNull();
    }
 
-   @Override
-   public CompletionStage<Void> performInLocalSite(BackupReceiver receiver, boolean preserveOrder) {
-      assert !preserveOrder;
-      return receiver.handleStartReceivingStateTransfer(this);
-   }
-
    public void setSiteName(String siteName) {
       this.siteName = siteName;
+   }
+
+   @Override
+   public byte getCommandId() {
+      return COMMAND_ID;
+   }
+
+   @Override
+   public boolean isReturnValueExpected() {
+      return false;
    }
 
    @Override
@@ -67,14 +70,6 @@ public class XSiteStateTransferStartReceiveCommand extends XSiteReplicateCommand
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       siteName = MarshallUtil.unmarshallString(input);
-   }
-
-   public static XSiteStateTransferStartReceiveCommand copyForCache(XSiteStateTransferStartReceiveCommand command, ByteString cacheName) {
-      if (!command.cacheName.equals(cacheName))
-         return new XSiteStateTransferStartReceiveCommand(cacheName, command.originSite);
-
-      command.siteName = command.originSite;
-      return command;
    }
 
    @Override

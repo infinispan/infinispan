@@ -34,6 +34,7 @@ import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.util.logging.events.EventLoggerNotifier;
 import org.infinispan.util.logging.events.impl.EventLogManagerImpl;
 import org.infinispan.util.logging.events.impl.EventLoggerNotifierImpl;
+import org.infinispan.xsite.XSiteCacheMapper;
 
 /**
  * Factory for building global-scope components which have default empty constructors
@@ -50,7 +51,8 @@ import org.infinispan.util.logging.events.impl.EventLoggerNotifierImpl;
       RemoteCommandsFactory.class, TimeService.class, DataOperationOrderer.class,
       GlobalStateManager.class, GlobalConfigurationManager.class,
       SerializationContextRegistry.class, BlockingManager.class, NonBlockingManager.class,
-      RankCalculator.class, EventLoggerNotifier.class, PrincipalRoleMapper.class, RolePermissionMapper.class
+      RankCalculator.class, EventLoggerNotifier.class, PrincipalRoleMapper.class, RolePermissionMapper.class,
+      XSiteCacheMapper.class
 })
 @Scope(Scopes.GLOBAL)
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
@@ -91,6 +93,9 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
          return new LocalContainerStatsImpl();
       else if (componentName.equals(ClusterContainerStats.class.getName()))
          return new ClusterContainerStatsImpl();
+      else if (componentName.equals(XSiteCacheMapper.class.getName())) {
+         return new XSiteCacheMapper();
+      }
 
       throw CONTAINER.factoryCannotConstructComponent(componentName);
    }

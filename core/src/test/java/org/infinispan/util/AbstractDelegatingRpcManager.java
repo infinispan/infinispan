@@ -21,7 +21,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
 import org.infinispan.xsite.XSiteBackup;
-import org.infinispan.xsite.XSiteReplicateCommand;
+import org.infinispan.xsite.commands.remote.XSiteCacheRequest;
 
 /**
  * Common rpc manager controls
@@ -125,7 +125,7 @@ public abstract class AbstractDelegatingRpcManager implements RpcManager {
    }
 
    @Override
-   public <O> XSiteResponse<O> invokeXSite(XSiteBackup backup, XSiteReplicateCommand<O> command) {
+   public <O> XSiteResponse<O> invokeXSite(XSiteBackup backup, XSiteCacheRequest<O> command) {
       return realOne.invokeXSite(backup, command);
    }
 

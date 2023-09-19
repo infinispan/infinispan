@@ -18,7 +18,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
 import jakarta.transaction.TransactionManager;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.InvocationHelper;
@@ -78,8 +77,6 @@ import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.xsite.commands.XSiteStateTransferFinishReceiveCommand;
-import org.infinispan.xsite.commands.XSiteStateTransferStartReceiveCommand;
 import org.infinispan.xsite.irac.DiscardUpdateException;
 import org.infinispan.xsite.statetransfer.XSiteState;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
@@ -130,13 +127,11 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
    }
 
    @Override
-   public CompletionStage<Void> handleStartReceivingStateTransfer(XSiteStateTransferStartReceiveCommand command) {
-      return invokeRemotelyInLocalSite(XSiteStateTransferStartReceiveCommand.copyForCache(command, cacheName));
-   }
-
-   @Override
-   public CompletionStage<Void> handleEndReceivingStateTransfer(XSiteStateTransferFinishReceiveCommand command) {
-      return invokeRemotelyInLocalSite(XSiteStateTransferFinishReceiveCommand.copyForCache(command, cacheName));
+   public CompletionStage<Void> handleStateTransferControl(String originSite, boolean startReceiving) {
+      CacheRpcCommand cmd = startReceiving ?
+              commandsFactory.buildXSiteStateTransferStartReceiveCommand(originSite) :
+              commandsFactory.buildXSiteStateTransferFinishReceiveCommand(originSite);
+      return invokeRemotelyInLocalSite(cmd);
    }
 
    private static PrivateMetadata internalMetadata(IracMetadata metadata) {
@@ -146,22 +141,22 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
    }
 
    @Override
-   public CompletionStage<Void> handleStateTransferState(XSiteStatePushCommand cmd) {
+   public CompletionStage<Void> handleStateTransferState(XSiteState[] chunk, long timeoutMs) {
       //split the state and forward it to the primary owners...
       CompletableFuture<Void> allowInvocation = checkInvocationAllowedFuture();
       if (allowInvocation != null) {
          return allowInvocation;
       }
 
-      final long endTime = timeService.expectedEndTime(cmd.getTimeout(), TimeUnit.MILLISECONDS);
+      final long endTime = timeService.expectedEndTime(timeoutMs, TimeUnit.MILLISECONDS);
       final Map<Address, List<XSiteState>> primaryOwnersChunks = new HashMap<>();
       final Address localAddress = rpcManager.getAddress();
 
       if (log.isTraceEnabled()) {
-         log.tracef("Received X-Site state transfer '%s'. Splitting by primary owner.", cmd);
+         log.tracef("Received X-Site state transfer %s keys. Splitting by primary owner.", chunk.length);
       }
 
-      for (XSiteState state : cmd.getChunk()) {
+      for (XSiteState state : chunk) {
          Address primaryOwner = clusteringDependentLogic.getCacheTopology().getDistribution(state.key()).primary();
          List<XSiteState> primaryOwnerList = primaryOwnersChunks.computeIfAbsent(primaryOwner, k -> new LinkedList<>());
          primaryOwnerList.add(state);
@@ -199,11 +194,8 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
    }
 
    @Override
-   public final <O> CompletionStage<O> handleRemoteCommand(VisitableCommand command, boolean preserveOrder) {
+   public final <O> CompletionStage<O> handleRemoteCommand(VisitableCommand command) {
       try {
-         //currently, it only handles sync xsite requests.
-         //async xsite requests are handle by the other methods.
-         assert !preserveOrder;
          //noinspection unchecked
          return (CompletionStage<O>) command.acceptVisitor(null, defaultHandler);
       } catch (Throwable throwable) {
@@ -248,7 +240,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
    }
 
    private XSiteStatePushCommand newStatePushCommand(List<XSiteState> stateList) {
-      return commandsFactory.buildXSiteStatePushCommand(stateList.toArray(new XSiteState[0]), 0);
+      return commandsFactory.buildXSiteStatePushCommand(stateList.toArray(new XSiteState[0]));
    }
 
    @Override

@@ -18,6 +18,7 @@ import org.infinispan.xsite.XSiteBackup;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.CompletableSource;
 import net.jcip.annotations.GuardedBy;
+import org.infinispan.xsite.commands.remote.XSiteStatePushRequest;
 
 /**
  * A {@link XSiteStateProviderState} for synchronous cross-site replication state transfer.
@@ -65,7 +66,7 @@ public class SyncProviderState extends BaseXSiteStateProviderState<SyncProviderS
             log.debugf("Sending chunk to site '%s'. Chunk has %s keys.", backup.getSiteName(), privateBuffer.length);
          }
 
-         XSiteStatePushCommand command = provider.getCommandsFactory().buildXSiteStatePushCommand(privateBuffer, backup.getTimeout());
+         XSiteStatePushRequest command = provider.getCommandsFactory().buildXSiteStatePushRequest(privateBuffer, backup.getTimeout());
          return Completable.fromCompletionStage(new CommandRetry(backup, command, provider, state.getWaitTimeMillis(), state.getMaxRetries()).send());
       }
    }
@@ -73,13 +74,13 @@ public class SyncProviderState extends BaseXSiteStateProviderState<SyncProviderS
    private static class CommandRetry extends CompletableFuture<Void> implements java.util.function.BiConsumer<Void, Throwable> {
 
       private final XSiteBackup backup;
-      private final XSiteStatePushCommand cmd;
+      private final XSiteStatePushRequest cmd;
       private final XSiteStateProvider provider;
       private final long waitTimeMillis;
       @GuardedBy("this")
       private int maxRetries;
 
-      private CommandRetry(XSiteBackup backup, XSiteStatePushCommand cmd, XSiteStateProvider provider, long waitTimeMillis, int maxRetries) {
+      private CommandRetry(XSiteBackup backup, XSiteStatePushRequest cmd, XSiteStateProvider provider, long waitTimeMillis, int maxRetries) {
          this.backup = backup;
          this.cmd = cmd;
          this.provider = provider;

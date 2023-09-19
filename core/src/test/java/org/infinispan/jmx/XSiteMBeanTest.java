@@ -39,7 +39,7 @@ import org.infinispan.test.TestDataSCI;
 import org.infinispan.util.AbstractDelegatingRpcManager;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
 import org.infinispan.xsite.XSiteBackup;
-import org.infinispan.xsite.XSiteReplicateCommand;
+import org.infinispan.xsite.commands.remote.XSiteCacheRequest;
 import org.infinispan.xsite.irac.ManualIracManager;
 import org.infinispan.xsite.spi.AlwaysRemoveXSiteEntryMergePolicy;
 import org.infinispan.xsite.spi.DefaultXSiteEntryMergePolicy;
@@ -519,7 +519,7 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
       }
 
       @Override
-      public <O> XSiteResponse<O> invokeXSite(XSiteBackup backup, XSiteReplicateCommand<O> command) {
+      public <O> XSiteResponse<O> invokeXSite(XSiteBackup backup, XSiteCacheRequest<O> command) {
          BlockedRequest req = blockedRequest;
          if (req != null) {
             DummyXsiteResponse<O> rsp = new DummyXsiteResponse<>();

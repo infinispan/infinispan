@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
-import org.infinispan.commons.configuration.attributes.Attribute;
+import java.util.Objects;
+
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
@@ -19,32 +20,25 @@ public class BackupForConfiguration extends ConfigurationElement<BackupForConfig
       return new AttributeSet(BackupForConfiguration.class, REMOTE_CACHE, REMOTE_SITE);
    }
 
-   private final Attribute<String> remoteCache;
-   private final Attribute<String> remoteSite;
-
    public BackupForConfiguration(AttributeSet attributes) {
       super(Element.BACKUP_FOR, attributes);
-      this.remoteCache = attributes.attribute(REMOTE_CACHE);
-      this.remoteSite = attributes.attribute(REMOTE_SITE);
    }
 
    /**
     * @return the name of the remote site that backups data into this cache.
     */
    public String remoteCache() {
-      return remoteCache.get();
+      return attributes.attribute(REMOTE_CACHE).get();
    }
 
    /**
     * @return the name of the remote cache that backups data into this cache.
     */
    public String remoteSite() {
-      return remoteSite.get();
+      return attributes.attribute(REMOTE_SITE).get();
    }
 
    public boolean isBackupFor(String remoteSite, String remoteCache) {
-      boolean remoteSiteMatches = remoteSite() != null && remoteSite().equals(remoteSite);
-      boolean remoteCacheMatches = remoteCache() != null && this.remoteCache().equals(remoteCache);
-      return remoteSiteMatches && remoteCacheMatches;
+      return Objects.equals(remoteSite(), remoteSite) && Objects.equals(remoteCache(), remoteCache);
    }
 }

@@ -50,8 +50,8 @@ import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
 import org.infinispan.xsite.XSiteBackup;
-import org.infinispan.xsite.XSiteReplicateCommand;
-import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
+import org.infinispan.xsite.commands.remote.XSiteRequest;
+import org.infinispan.xsite.commands.remote.XSiteStatePushRequest;
 import org.infinispan.xsite.status.TakeOfflineManager;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -602,9 +602,9 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
       }
 
       @Override
-      public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteReplicateCommand<O> rpcCommand) {
+      public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteRequest<O> rpcCommand) {
          synchronized (this) {
-            if (enabled && rpcCommand instanceof XSiteStatePushCommand) {
+            if (enabled && rpcCommand instanceof XSiteStatePushRequest) {
                XSiteResponseImpl<O> toReturn = new XSiteResponseImpl<>(TIME_SERVICE, backup);
                pendingCommands.add(() -> {
                   XSiteResponse<O> real = super.backupRemotely(backup, rpcCommand);

@@ -22,10 +22,17 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import io.reactivex.rxjava3.annotations.NonNull;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.CompletableObserver;
+import io.reactivex.rxjava3.core.CompletableSource;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.functions.Predicate;
+import net.jcip.annotations.GuardedBy;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
-import org.infinispan.commands.irac.IracTombstoneRemoteSiteCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
@@ -60,15 +67,6 @@ import org.infinispan.xsite.irac.IracManager;
 import org.infinispan.xsite.irac.IracXSiteBackup;
 import org.infinispan.xsite.status.SiteState;
 import org.infinispan.xsite.status.TakeOfflineManager;
-
-import io.reactivex.rxjava3.annotations.NonNull;
-import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.CompletableObserver;
-import io.reactivex.rxjava3.core.CompletableSource;
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.disposables.Disposable;
-import io.reactivex.rxjava3.functions.Predicate;
-import net.jcip.annotations.GuardedBy;
 
 /**
  * A default implementation for {@link IracTombstoneManager}.
@@ -377,7 +375,7 @@ public class DefaultIracTombstoneManager implements IracTombstoneManager {
          List<Object> keys = tombstoneToCheck.stream()
                .map(IracTombstoneInfo::getKey)
                .collect(Collectors.toList());
-         IracTombstoneRemoteSiteCheckCommand cmd = commandsFactory.buildIracTombstoneRemoteSiteCheckCommand(keys);
+         var cmd = commandsFactory.buildIracTombstoneCheckRequest(keys);
          // if one of the site return true (i.e. the key is in updateKeys map, then do not remove it)
          AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
          for (IracXSiteBackup backup : asyncBackups) {

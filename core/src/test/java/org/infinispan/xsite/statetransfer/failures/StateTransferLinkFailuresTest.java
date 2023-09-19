@@ -30,8 +30,8 @@ import org.infinispan.statetransfer.CommitManager;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.xsite.XSiteAdminOperations;
 import org.infinispan.xsite.XSiteBackup;
-import org.infinispan.xsite.XSiteReplicateCommand;
-import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
+import org.infinispan.xsite.commands.remote.XSiteRequest;
+import org.infinispan.xsite.commands.remote.XSiteStatePushRequest;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 import org.testng.annotations.Test;
 
@@ -150,19 +150,19 @@ public class StateTransferLinkFailuresTest extends AbstractTopologyChangeTest {
       }
 
       @Override
-      public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteReplicateCommand rpcCommand) {
+      public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteRequest<?> rpcCommand) {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteReplicateCommand<O> rpcCommand) {
+      public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteRequest<O> rpcCommand) {
          if (fail) {
             getLog().debugf("Inducing timeout for %s", rpcCommand);
             XSiteResponseImpl<O> rsp = new XSiteResponseImpl<>(TIME_SERVICE, backup);
             //completeExceptionally is ok since we don't care about the stats.
             rsp.completeExceptionally(new TimeoutException("induced timeout!"));
             return rsp;
-         } else if (failAfterFirstChunk && rpcCommand instanceof XSiteStatePushCommand) {
+         } else if (failAfterFirstChunk && rpcCommand instanceof XSiteStatePushRequest) {
             fail = true;
          }
          return super.backupRemotely(backup, rpcCommand);

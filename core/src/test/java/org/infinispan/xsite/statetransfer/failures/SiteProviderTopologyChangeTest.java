@@ -23,7 +23,7 @@ import org.infinispan.remoting.transport.impl.XSiteResponseImpl;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.BlockingLocalTopologyManager;
 import org.infinispan.xsite.XSiteBackup;
-import org.infinispan.xsite.XSiteReplicateCommand;
+import org.infinispan.xsite.commands.remote.XSiteRequest;
 import org.infinispan.xsite.statetransfer.XSiteProviderDelegator;
 import org.infinispan.xsite.statetransfer.XSiteStateProvider;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
@@ -179,14 +179,14 @@ public class SiteProviderTopologyChangeTest extends AbstractTopologyChangeTest {
                                    }
 
                                    @Override
-                                   public XSiteResponse backupRemotely(XSiteBackup backup, XSiteReplicateCommand rpcCommand) {
+                                   public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteRequest<O> rpcCommand) {
                                       if (rpcCommand instanceof XSiteStatePushCommand) {
                                          if (firstChunk.compareAndSet(false, true)) {
                                             checkPoint.trigger("before-second-chunk");
                                             try {
                                                checkPoint.awaitStrict("second-chunk", 30, TimeUnit.SECONDS);
                                             } catch (InterruptedException | TimeoutException e) {
-                                               XSiteResponseImpl rsp = new XSiteResponseImpl(TIME_SERVICE, backup);
+                                               var rsp = new XSiteResponseImpl<O>(TIME_SERVICE, backup);
                                                rsp.completeExceptionally(e);
                                                return rsp;
                                             }

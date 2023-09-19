@@ -22,7 +22,7 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.raft.RaftManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.xsite.XSiteBackup;
-import org.infinispan.xsite.XSiteReplicateCommand;
+import org.infinispan.xsite.commands.remote.XSiteRequest;
 
 /**
  * Designed to be overwrite.
@@ -83,12 +83,12 @@ public abstract class AbstractDelegatingTransport implements Transport {
    }
 
    @Override
-   public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteReplicateCommand rpcCommand) throws Exception {
+   public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteRequest<?> rpcCommand) throws Exception {
       return actual.backupRemotely(backups, rpcCommand);
    }
 
    @Override
-   public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteReplicateCommand<O> rpcCommand) {
+   public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteRequest<O> rpcCommand) {
       return actual.backupRemotely(backup, rpcCommand);
    }
 
