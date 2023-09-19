@@ -1,14 +1,8 @@
 package org.infinispan.remoting.inboundhandler;
 
-import static org.infinispan.factories.KnownComponentNames.BLOCKING_EXECUTOR;
 import static org.infinispan.util.logging.Log.CLUSTER;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
 import java.util.function.BiConsumer;
 
 import org.infinispan.commands.CommandsFactory;
@@ -17,20 +11,12 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
-import org.infinispan.configuration.ConfigurationManager;
-import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
-import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
-import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
@@ -38,12 +24,11 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.HeartBeatCommand;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.xsite.XSiteReplicateCommand;
-import org.infinispan.xsite.metrics.XSiteMetricsCollector;
+import org.infinispan.xsite.commands.remote.XSiteRequest;
 
 /**
  * {@link org.infinispan.remoting.inboundhandler.InboundInvocationHandler} implementation that handles all the {@link
@@ -60,19 +45,14 @@ import org.infinispan.xsite.metrics.XSiteMetricsCollector;
  * @author Pedro Ruivo
  * @since 7.1
  */
-@Listener
 @Scope(Scopes.GLOBAL)
 public class GlobalInboundInvocationHandler implements InboundInvocationHandler {
 
    private static final Log log = LogFactory.getLog(GlobalInboundInvocationHandler.class);
 
    // TODO: To be removed with https://issues.redhat.com/browse/ISPN-11483
-   @Inject @ComponentName(BLOCKING_EXECUTOR)
-   ExecutorService blockingExecutor;
+   @Inject BlockingManager blockingManager;
    @Inject GlobalComponentRegistry globalComponentRegistry;
-   @Inject CacheManagerNotifier managerNotifier;
-
-   private final Map<RemoteSiteCache, LocalSiteCache> localCachesMap = new ConcurrentHashMap<>();
 
    private static Response shuttingDownResponse() {
       return CacheNotFoundResponse.INSTANCE;
@@ -84,22 +64,6 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
       } else {
          return new ExceptionResponse(new CacheException("Problems invoking command.", throwable));
       }
-   }
-
-   @Start
-   public void start() {
-      managerNotifier.addListener(this);
-   }
-
-   @Stop
-   public void stop() {
-      managerNotifier.removeListener(this);
-   }
-
-   @CacheStopped
-   public void cacheStopped(CacheStoppedEvent event) {
-      ByteString cacheName = ByteString.fromString(event.getCacheName());
-      localCachesMap.entrySet().removeIf(entry -> entry.getValue().cacheName.equals(cacheName));
    }
 
    @Override
@@ -122,26 +86,11 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
    }
 
    @Override
-   public void handleFromRemoteSite(String origin, XSiteReplicateCommand<?> command, Reply reply, DeliverOrder order) {
+   public void handleFromRemoteSite(String origin, XSiteRequest<?> command, Reply reply, DeliverOrder order) {
       if (log.isTraceEnabled()) {
          log.tracef("Handling command %s from remote site %s", command, origin);
       }
-
-      LocalSiteCache localCache = findLocalCacheForRemoteSite(origin, command.getCacheName());
-      if (localCache == null) {
-         reply.reply(new ExceptionResponse(log.xsiteCacheNotFound(origin, command.getCacheName())));
-         return;
-      } else if (localCache.local) {
-         reply.reply(new ExceptionResponse(log.xsiteInLocalCache(origin, localCache.cacheName)));
-         return;
-      }
-      ComponentRegistry cr = globalComponentRegistry.getNamedComponentRegistry(localCache.cacheName);
-      if (cr == null) {
-         reply.reply(new ExceptionResponse(log.xsiteCacheNotStarted(origin, localCache.cacheName)));
-         return;
-      }
-      cr.getComponent(XSiteMetricsCollector.class).recordRequestsReceived(origin);
-      command.performInLocalSite(cr, order.preserveOrder()).whenComplete(new ResponseConsumer(command, reply));
+      command.invokeInLocalSite(origin, globalComponentRegistry).whenComplete(new XSiteResponseConsumer(reply, command));
    }
 
    private void handleCacheRpcCommand(Address origin, CacheRpcCommand command, Reply reply, DeliverOrder mode) {
@@ -174,63 +123,8 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
          //we must/can run in this thread
          runnable.run();
       } else {
-         blockingExecutor.execute(runnable);
+         blockingManager.runBlocking(runnable, "[blocking] " + command);
       }
-   }
-
-   /**
-    * test only! See BackupCacheStoppedTest
-    */
-   public ByteString getLocalCacheForRemoteSite(String remoteSite, ByteString remoteCache) {
-      LocalSiteCache cache = localCachesMap.get(new RemoteSiteCache(remoteSite, remoteCache));
-      return cache == null ? null : cache.cacheName;
-   }
-
-   private LocalSiteCache findLocalCacheForRemoteSite(String remoteSite, ByteString remoteCache) {
-      RemoteSiteCache key = new RemoteSiteCache(remoteSite, remoteCache);
-      return localCachesMap.computeIfAbsent(key, this::lookupLocalCaches);
-   }
-
-   private LocalSiteCache lookupLocalCaches(RemoteSiteCache remoteSiteCache) {
-      for (String name : getCacheNames()) {
-         Configuration configuration = getCacheConfiguration(name);
-         if (configuration != null && isBackupForRemoteCache(configuration, remoteSiteCache, name)) {
-            return new LocalSiteCache(ByteString.fromString(name), isLocal(configuration));
-         }
-      }
-
-      String name = remoteSiteCache.originCache.toString();
-      log.debugf("Did not find any backup explicitly configured backup cache for remote cache/site: %s/%s. Using %s",
-            remoteSiteCache.originSite, name, name);
-      Configuration configuration = getCacheConfiguration(name);
-      if (configuration == null) {
-         return null;
-      }
-
-      return new LocalSiteCache(remoteSiteCache.originCache, isLocal(configuration));
-   }
-
-   private Collection<String> getCacheNames() {
-      return globalComponentRegistry.getCacheManager().getCacheNames();
-   }
-
-   private Configuration getCacheConfiguration(String cacheName) {
-      return globalComponentRegistry.getComponent(ConfigurationManager.class).getConfiguration(cacheName, false);
-   }
-
-   private static boolean isLocal(Configuration configuration) {
-      return !configuration.clustering().cacheMode().isClustered();
-   }
-
-   private boolean isBackupForRemoteCache(Configuration cacheConfiguration, RemoteSiteCache remoteSite, String localCacheName) {
-      String remoteSiteName = remoteSite.originSite;
-      String remoteCacheName = remoteSite.originCache.toString();
-      boolean found = cacheConfiguration.sites().backupFor().isBackupFor(remoteSiteName, remoteCacheName);
-      if (log.isTraceEnabled() && found) {
-         log.tracef("Found local cache '%s' is backup for cache '%s' from site '%s'", localCacheName, remoteCacheName,
-               remoteSiteName);
-      }
-      return found;
    }
 
    private static class ReplicableCommandRunner extends ResponseConsumer implements Runnable {
@@ -264,13 +158,51 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
       }
    }
 
-   private static class ResponseConsumer implements BiConsumer<Object, Throwable> {
+   private static class ResponseConsumer extends BaseResponseConsumer<ReplicableCommand> {
 
       final ReplicableCommand command;
-      private final Reply reply;
 
       private ResponseConsumer(ReplicableCommand command, Reply reply) {
+         super(reply);
          this.command = command;
+      }
+
+      @Override
+      ReplicableCommand getCommand() {
+         return command;
+      }
+
+      @Override
+      boolean logThrowable(Throwable throwable) {
+         return command.logThrowable(throwable);
+      }
+   }
+
+   private static class XSiteResponseConsumer extends BaseResponseConsumer<XSiteRequest<?>> {
+
+      private final XSiteRequest<?> command;
+
+      private XSiteResponseConsumer(Reply reply, XSiteRequest<?> command) {
+         super(reply);
+         this.command = command;
+      }
+
+      @Override
+      XSiteRequest<?> getCommand() {
+         return command;
+      }
+
+      @Override
+      boolean logThrowable(Throwable throwable) {
+         return true;
+      }
+   }
+
+   private static abstract class BaseResponseConsumer<T> implements BiConsumer<Object, Throwable> {
+
+      private final Reply reply;
+
+      private BaseResponseConsumer(Reply reply) {
          this.reply = reply;
       }
 
@@ -279,15 +211,19 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
          reply.reply(convertToResponse(retVal, throwable));
       }
 
+      abstract T getCommand();
+
+      abstract boolean logThrowable(Throwable throwable);
+
       private Response convertToResponse(Object retVal, Throwable throwable) {
          if (throwable != null) {
             throwable = CompletableFutures.extractException(throwable);
             if (throwable instanceof InterruptedException || throwable instanceof IllegalLifecycleStateException) {
-               CLUSTER.debugf("Shutdown while handling command %s", command);
+               CLUSTER.debugf("Shutdown while handling command %s", getCommand());
                return shuttingDownResponse();
             } else {
-               if (command.logThrowable(throwable)) {
-                  CLUSTER.exceptionHandlingCommand(command, throwable);
+               if (logThrowable(throwable)) {
+                  CLUSTER.exceptionHandlingCommand(getCommand(), throwable);
                }
                return exceptionHandlingCommand(throwable);
             }
@@ -300,61 +236,4 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
          }
       }
    }
-
-   private static class RemoteSiteCache {
-      private final String originSite;
-      private final ByteString originCache;
-
-      private RemoteSiteCache(String originSite, ByteString originCache) {
-         this.originSite = originSite;
-         this.originCache = originCache;
-      }
-
-      @Override
-      public boolean equals(Object o) {
-         if (this == o) {
-            return true;
-         }
-         if (o == null || getClass() != o.getClass()) {
-            return false;
-         }
-         RemoteSiteCache remoteSiteCache = (RemoteSiteCache) o;
-         return Objects.equals(originSite, remoteSiteCache.originSite) &&
-               Objects.equals(originCache, remoteSiteCache.originCache);
-      }
-
-      @Override
-      public int hashCode() {
-         return Objects.hash(originSite, originCache);
-      }
-   }
-
-   private static class LocalSiteCache {
-      private final ByteString cacheName;
-      private final boolean local;
-
-      private LocalSiteCache(ByteString cacheName, boolean local) {
-         this.cacheName = cacheName;
-         this.local = local;
-      }
-
-      @Override
-      public boolean equals(Object o) {
-         if (this == o) {
-            return true;
-         }
-         if (o == null || getClass() != o.getClass()) {
-            return false;
-         }
-         LocalSiteCache that = (LocalSiteCache) o;
-         return local == that.local &&
-               Objects.equals(cacheName, that.cacheName);
-      }
-
-      @Override
-      public int hashCode() {
-         return Objects.hash(cacheName, local);
-      }
-   }
-
 }

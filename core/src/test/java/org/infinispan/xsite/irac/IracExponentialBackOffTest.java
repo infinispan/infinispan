@@ -28,7 +28,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.ExponentialBackOff;
 import org.infinispan.xsite.XSiteBackup;
-import org.infinispan.xsite.XSiteReplicateCommand;
+import org.infinispan.xsite.commands.remote.XSiteRequest;
 import org.jgroups.UnreachableException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -194,7 +194,7 @@ public class IracExponentialBackOffTest extends SingleCacheManagerTest {
       }
 
       @Override
-      public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteReplicateCommand<O> rpcCommand) {
+      public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteRequest<O> rpcCommand) {
          ControlledXSiteResponse<O> response = new ControlledXSiteResponse<>(backup, throwableSupplier.get());
          response.complete();
          return response;

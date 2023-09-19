@@ -24,10 +24,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.irac.IracCleanupKeysCommand;
-import org.infinispan.commands.irac.IracClearKeysCommand;
-import org.infinispan.commands.irac.IracPutManyCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
-import org.infinispan.commands.irac.IracTouchKeyCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
@@ -67,7 +64,10 @@ import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
-import org.infinispan.xsite.XSiteReplicateCommand;
+import org.infinispan.xsite.commands.remote.IracClearKeysRequest;
+import org.infinispan.xsite.commands.remote.IracPutManyRequest;
+import org.infinispan.xsite.commands.remote.IracTouchKeyRequest;
+import org.infinispan.xsite.commands.remote.XSiteCacheRequest;
 import org.infinispan.xsite.statetransfer.XSiteState;
 import org.infinispan.xsite.status.SiteState;
 import org.infinispan.xsite.status.TakeOfflineManager;
@@ -263,7 +263,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       if (log.isTraceEnabled()) {
          log.tracef("Checking remote backup sites to see if key %s has been touched recently", key);
       }
-      IracTouchKeyCommand command = commandsFactory.buildIracTouchCommand(key);
+      IracTouchKeyRequest command = commandsFactory.buildIracTouchCommand(key);
       AtomicBoolean expired = new AtomicBoolean(true);
       // TODO: technically this waits for all backups to respond - we can optimize so
       // we return early
@@ -416,7 +416,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
          }
          return Completable.complete();
       }
-      IracPutManyCommand cmd = commandsFactory.buildIracPutManyCommand(size);
+      IracPutManyRequest cmd = commandsFactory.buildIracPutManyCommand(size);
       Collection<IracManagerKeyState> invalidState = new ArrayList<>(size);
       Collection<IracManagerKeyState> validState = new ArrayList<>(size);
       for (IracStateData data : batch) {
@@ -470,7 +470,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
 
    private CompletionStage<Void> sendClearUpdate() {
       // make sure the clear is replicated everywhere before sending the updates!
-      IracClearKeysCommand cmd = commandsFactory.buildIracClearKeysCommand();
+      IracClearKeysRequest cmd = commandsFactory.buildIracClearKeysCommand();
       IracClearResponseCollector collector = new IracClearResponseCollector(commandsFactory.getCacheName());
       for (IracXSiteBackup backup : asyncBackups) {
          if (takeOfflineManager.getSiteState(backup.getSiteName()) == SiteState.OFFLINE) {
@@ -516,7 +516,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       rpcManager.sendTo(primary, cmd, DeliverOrder.NONE);
    }
 
-   private <O> XSiteResponse<O> sendToRemoteSite(XSiteBackup backup, XSiteReplicateCommand<O> cmd) {
+   private <O> XSiteResponse<O> sendToRemoteSite(XSiteBackup backup, XSiteCacheRequest<O> cmd) {
       XSiteResponse<O> rsp = rpcManager.invokeXSite(backup, cmd);
       takeOfflineManager.registerRequest(rsp);
       return rsp;

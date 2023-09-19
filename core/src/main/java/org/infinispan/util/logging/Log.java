@@ -24,7 +24,6 @@ import javax.transaction.Synchronization;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.CacheListenerException;
@@ -327,7 +326,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Caught exception when handling command %s", id = 71)
-   void exceptionHandlingCommand(ReplicableCommand cmd, @Cause Throwable t);
+   void exceptionHandlingCommand(Object cmd, @Cause Throwable t);
 
    @LogMessage(level = ERROR)
    @Message(value = "Unexpected error while replicating", id = 73)
@@ -1538,7 +1537,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = ERROR)
    @Message(value = "Error sending response for request %d@%s, command %s", id = 440)
-   void errorSendingResponse(long requestId, org.jgroups.Address origin, ReplicableCommand command);
+   void errorSendingResponse(long requestId, org.jgroups.Address origin, Object command);
 
    @Message(value = "Unsupported async cache mode '%s' for transactional caches", id = 441)
    CacheConfigurationException unsupportedAsyncCacheMode(CacheMode cacheMode);

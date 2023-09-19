@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.XSiteStateTransferMode;
@@ -32,11 +33,9 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.xsite.XSiteReplicateCommand;
 import org.infinispan.xsite.commands.XSiteAutoTransferStatusCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferCancelSendCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferClearStatusCommand;
@@ -182,7 +181,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    public void cancelReceive(String siteName) {
       XSiteStateTransferFinishReceiveCommand cmd = commandsFactory.buildXSiteStateTransferFinishReceiveCommand(siteName);
       CompletionStage<Void> rsp = sendToLocalSite(cmd);
-      cmd.invokeLocal(consumer);
+      consumer.endStateTransfer(siteName);
       rpcManager.blocking(rsp);
    }
 
@@ -331,8 +330,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
       if (status.isSync()) {
          //with async cross-site, the remote site doesn't have the concept of state transfer.
          //the remote site receives normal updates and apply conflict resolution if required.
-         XSiteReplicateCommand<Void> remoteSiteCommand = commandsFactory.buildXSiteStateTransferStartReceiveCommand();
-         rsp = rpcManager.invokeXSite(status.getBackup(), remoteSiteCommand);
+         rsp = rpcManager.invokeXSite(status.getBackup(), commandsFactory.buildXSiteStateTransferControlRequest(true));
       }
 
       if (isStateTransferInProgress) {
@@ -450,7 +448,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    }
 
    private CompletionStage<Void> sendStateTransferFinishToRemoteSite(RemoteSiteStatus status) {
-      return rpcManager.invokeXSite(status.getBackup(), commandsFactory.buildXSiteStateTransferFinishReceiveCommand(null));
+      return rpcManager.invokeXSite(status.getBackup(), commandsFactory.buildXSiteStateTransferControlRequest(false));
    }
 
    private RpcOptions fifoSyncRpcOptions() {

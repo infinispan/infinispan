@@ -53,6 +53,7 @@ import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.xsite.GlobalXSiteAdminOperations;
 
 import net.jcip.annotations.ThreadSafe;
+import org.infinispan.xsite.XSiteCacheMapper;
 
 /**
  * A global component registry where shared components are stored.
@@ -398,5 +399,9 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
 
    public LocalTopologyManager getLocalTopologyManager() {
       return localTopologyManager.running();
+   }
+
+   public XSiteCacheMapper getXSiteCacheMapper() {
+      return basicComponentRegistry.getComponent(XSiteCacheMapper.class).running();
    }
 }

@@ -9,8 +9,6 @@ import static org.testng.AssertJUnit.assertTrue;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.remoting.inboundhandler.GlobalInboundInvocationHandler;
-import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.testng.annotations.Test;
 
 /**
@@ -26,15 +24,22 @@ public class BackupCacheStoppedTest extends AbstractTwoSitesTest {
       String val = val(site);
 
       cache(site, 0).put(key, val);
+      var lonCacheName = fromString(cache(site, 0).getName());
+
       Cache<Object,Object> backup = backup(site);
+      var nycCacheName = fromString(backup.getName());
 
       assertEquals(backup.get(key), val);
       assertTrue(backup.getStatus().allowInvocations());
 
-      GlobalInboundInvocationHandler handler = (GlobalInboundInvocationHandler) extractGlobalComponent(backup.getCacheManager(), InboundInvocationHandler.class);
+      XSiteCacheMapper mapper = extractGlobalComponent(backup.getCacheManager(), XSiteCacheMapper.class);
+      // mapping should exist
+      assertEquals(nycCacheName, mapper.peekLocalCacheForRemoteSite(site, lonCacheName)
+            .map(XSiteCacheMapper.LocalCacheInfo::cacheName)
+            .orElse(null));
 
       backup.stop();
-      eventually(() -> handler.getLocalCacheForRemoteSite(site, fromString(getDefaultCacheName())) == null);
+      eventually(() -> mapper.peekLocalCacheForRemoteSite(site, lonCacheName).isEmpty());
 
       assertFalse(backup.getStatus().allowInvocations());
 

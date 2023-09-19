@@ -1,17 +1,15 @@
 package org.infinispan.xsite.commands;
 
+import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.util.ByteString;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletionStage;
-
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.xsite.BackupReceiver;
-import org.infinispan.xsite.XSiteReplicateCommand;
-import org.infinispan.xsite.statetransfer.XSiteStateConsumer;
 
 /**
  * Finish receiving XSite state.
@@ -19,7 +17,7 @@ import org.infinispan.xsite.statetransfer.XSiteStateConsumer;
  * @author Ryan Emerson
  * @since 11.0
  */
-public class XSiteStateTransferFinishReceiveCommand extends XSiteReplicateCommand<Void> {
+public class XSiteStateTransferFinishReceiveCommand extends BaseRpcCommand {
 
    public static final byte COMMAND_ID = 107;
 
@@ -27,7 +25,7 @@ public class XSiteStateTransferFinishReceiveCommand extends XSiteReplicateComman
 
    // For CommandIdUniquenessTest only
    public XSiteStateTransferFinishReceiveCommand() {
-      super(COMMAND_ID, null);
+      this(null, null);
    }
 
    public XSiteStateTransferFinishReceiveCommand(ByteString cacheName) {
@@ -35,24 +33,28 @@ public class XSiteStateTransferFinishReceiveCommand extends XSiteReplicateComman
    }
 
    public XSiteStateTransferFinishReceiveCommand(ByteString cacheName, String siteName) {
-      super(COMMAND_ID, cacheName);
+      super(cacheName);
       this.siteName = siteName;
    }
 
    @Override
    public CompletionStage<?> invokeAsync(ComponentRegistry registry) {
-      invokeLocal(registry.getXSiteStateTransferManager().running().getStateConsumer());
+      registry.getXSiteStateTransferManager().running().getStateConsumer().endStateTransfer(siteName);
       return CompletableFutures.completedNull();
-   }
-
-   @Override
-   public CompletionStage<Void> performInLocalSite(BackupReceiver receiver, boolean preserveOrder) {
-      assert !preserveOrder;
-      return receiver.handleEndReceivingStateTransfer(this);
    }
 
    public void setSiteName(String siteName) {
       this.siteName = siteName;
+   }
+
+   @Override
+   public byte getCommandId() {
+      return COMMAND_ID;
+   }
+
+   @Override
+   public boolean isReturnValueExpected() {
+      return false;
    }
 
    @Override
@@ -65,23 +67,11 @@ public class XSiteStateTransferFinishReceiveCommand extends XSiteReplicateComman
       siteName = MarshallUtil.unmarshallString(input);
    }
 
-   public static XSiteStateTransferFinishReceiveCommand copyForCache(XSiteStateTransferFinishReceiveCommand command, ByteString cacheName) {
-      if (!command.cacheName.equals(cacheName))
-         return new XSiteStateTransferFinishReceiveCommand(cacheName, command.originSite);
-
-      command.siteName = command.originSite;
-      return command;
-   }
-
    @Override
    public String toString() {
       return "XSiteStateTransferFinishReceiveCommand{" +
             "siteName='" + siteName + '\'' +
             ", cacheName=" + cacheName +
             '}';
-   }
-
-   public void invokeLocal(XSiteStateConsumer consumer) {
-      consumer.endStateTransfer(siteName);
    }
 }

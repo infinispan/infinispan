@@ -1,16 +1,17 @@
 package org.infinispan.xsite;
 
+import org.infinispan.commands.VisitableCommand;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.util.ByteString;
+import org.infinispan.xsite.commands.remote.XSiteCacheRequest;
+import org.infinispan.xsite.commands.remote.XSiteRequest;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
+import static org.infinispan.xsite.commands.remote.Ids.VISITABLE_COMMAND;
 
 /**
  * RPC command to replicate cache operations (such as put, remove, replace, etc.) to the backup site.
@@ -18,62 +19,39 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
  * @author Pedro Ruivo
  * @since 7.0
  */
-public class SingleXSiteRpcCommand extends XSiteReplicateCommand<Object> {
+public class SingleXSiteRpcCommand extends XSiteCacheRequest<Object> {
 
-   public static final byte COMMAND_ID = 40;
-   private ReplicableCommand command;
+   private VisitableCommand command;
 
-   public SingleXSiteRpcCommand(ByteString cacheName, ReplicableCommand command) {
-      super(COMMAND_ID, cacheName);
+   public SingleXSiteRpcCommand(ByteString cacheName, VisitableCommand command) {
+      super(cacheName);
       this.command = command;
    }
 
-   public SingleXSiteRpcCommand(ByteString cacheName) {
-      this(cacheName, null);
-   }
-
    public SingleXSiteRpcCommand() {
-      this(null);
+      this(null, null);
    }
 
    @Override
-   public CompletionStage<Object> performInLocalSite(ComponentRegistry registry, boolean preserveOrder) {
-      // Need to check VisitableCommand before CacheRpcCommand as PrepareCommand implements both but need to visit
-      if (command instanceof VisitableCommand) {
-         return super.performInLocalSite(registry, preserveOrder);
-      } else {
-         try {
-            //noinspection unchecked
-            return (CompletionStage<Object>) ((CacheRpcCommand) command).invokeAsync(registry);
-         } catch (Throwable throwable) {
-            return CompletableFutures.completedExceptionFuture(throwable);
-         }
-      }
+   protected CompletionStage<Object> invokeInLocalCache(String origin, ComponentRegistry registry) {
+      return registry.getBackupReceiver().running().handleRemoteCommand(command);
    }
 
    @Override
-   public CompletionStage<Object> performInLocalSite(BackupReceiver receiver, boolean preserveOrder) {
-      return receiver.handleRemoteCommand((VisitableCommand) command, preserveOrder);
-   }
-
-   @Override
-   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
-      throw new UnsupportedOperationException();
+   public byte getCommandId() {
+      return VISITABLE_COMMAND;
    }
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       output.writeObject(command);
+      super.writeTo(output);
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      command = (ReplicableCommand) input.readObject();
-   }
-
-   @Override
-   public boolean isReturnValueExpected() {
-      return command.isReturnValueExpected();
+   public XSiteRequest<Object> readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      command = (VisitableCommand) input.readObject();
+      return super.readFrom(input);
    }
 
    @Override

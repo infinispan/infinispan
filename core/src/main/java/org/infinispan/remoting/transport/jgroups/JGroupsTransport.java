@@ -5,6 +5,7 @@ import static org.infinispan.util.logging.Log.CLUSTER;
 import static org.infinispan.util.logging.Log.CONTAINER;
 import static org.infinispan.util.logging.Log.XSITE;
 
+import javax.management.ObjectName;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,8 +35,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import javax.management.ObjectName;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheConfigurationException;
@@ -101,8 +100,8 @@ import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.GlobalXSiteAdminOperations;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteNamedCache;
-import org.infinispan.xsite.XSiteReplicateCommand;
 import org.infinispan.xsite.commands.XSiteViewNotificationCommand;
+import org.infinispan.xsite.commands.remote.XSiteRequest;
 import org.jgroups.BytesMessage;
 import org.jgroups.ChannelListener;
 import org.jgroups.Event;
@@ -338,7 +337,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
    }
 
    @Override
-   public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteReplicateCommand command) {
+   public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteRequest<?> command) {
       if (log.isTraceEnabled())
          log.tracef("About to send to backups %s, command %s", backups, command);
       Map<XSiteBackup, CompletableFuture<ValidResponse>> backupCalls = new HashMap<>(backups.size());
@@ -368,7 +367,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
    }
 
    @Override
-   public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteReplicateCommand<O> rpcCommand) {
+   public <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteRequest<O> rpcCommand) {
       assert !localSite.equals(backup.getSiteName()) : "sending to local site";
       if (unreachableSites.containsKey(backup.getSiteName())) {
          // fail fast if we have thread handling a SITE_UNREACHABLE event.
@@ -1196,7 +1195,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
       }
    }
 
-   void sendCommand(Address target, ReplicableCommand command, long requestId, DeliverOrder deliverOrder,
+   void sendCommand(Address target, Object command, long requestId, DeliverOrder deliverOrder,
                     boolean noRelay, boolean checkView) {
       if (checkView && !clusterView.contains(target))
          return;
@@ -1212,7 +1211,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
       return ((JGroupsAddress) address).getJGroupsAddress();
    }
 
-   private void marshallRequest(Message message, ReplicableCommand command, long requestId) {
+   private void marshallRequest(Message message, Object command, long requestId) {
       try {
          ByteBuffer bytes = marshaller.objectToBuffer(command);
          message.setArray(bytes.getBuf(), bytes.getOffset(), bytes.getLength());
@@ -1355,12 +1354,12 @@ public class JGroupsTransport implements Transport, ChannelListener {
       send(message);
    }
 
-   private void logRequest(long requestId, ReplicableCommand command, Object targets, String type) {
+   private void logRequest(long requestId, Object command, Object targets, String type) {
       if (log.isTraceEnabled())
          log.tracef("%s sending %s request %d to %s: %s", address, type, requestId, targets, command);
    }
 
-   private void logCommand(ReplicableCommand command, Object targets) {
+   private void logCommand(Object command, Object targets) {
       if (log.isTraceEnabled())
          log.tracef("%s sending command to %s: %s", address, targets, command);
    }
@@ -1483,7 +1482,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
       }
    }
 
-   private void sendResponse(org.jgroups.Address target, Response response, long requestId, ReplicableCommand command) {
+   private void sendResponse(org.jgroups.Address target, Response response, long requestId, Object command) {
       if (log.isTraceEnabled())
          log.tracef("%s sending response for request %d to %s: %s", getAddress(), requestId, target, response);
       ByteBuffer bytes;
@@ -1533,7 +1532,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
             return;
          }
 
-         ReplicableCommand command = (ReplicableCommand) marshaller.objectFromByteBuffer(buffer, offset, length);
+         Object command = marshaller.objectFromByteBuffer(buffer, offset, length);
          Reply reply;
          if (requestId != Request.NO_REQUEST_ID) {
             if (log.isTraceEnabled())
@@ -1545,14 +1544,13 @@ public class JGroupsTransport implements Transport, ChannelListener {
             reply = Reply.NO_OP;
          }
          if (org.jgroups.util.Util.isFlagSet(flags, Message.Flag.NO_RELAY)) {
-            invocationHandler.handleFromCluster(fromJGroupsAddress(src), command, reply, deliverOrder);
+            assert command instanceof ReplicableCommand;
+            invocationHandler.handleFromCluster(fromJGroupsAddress(src), (ReplicableCommand) command, reply, deliverOrder);
          } else {
             assert src instanceof SiteAddress;
-            assert command instanceof XSiteReplicateCommand;
+            assert command instanceof XSiteRequest;
             String originSite = ((SiteAddress) src).getSite();
-            XSiteReplicateCommand<?> xsiteCommand = (XSiteReplicateCommand<?>) command;
-            xsiteCommand.setOriginSite(originSite);
-            invocationHandler.handleFromRemoteSite(originSite, xsiteCommand, reply, deliverOrder);
+            invocationHandler.handleFromRemoteSite(originSite, (XSiteRequest<?>) command, reply, deliverOrder);
          }
       } catch (Throwable t) {
          CLUSTER.errorProcessingRequest(requestId, src, t);

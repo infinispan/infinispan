@@ -32,7 +32,7 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.xsite.XSiteBackup;
-import org.infinispan.xsite.XSiteReplicateCommand;
+import org.infinispan.xsite.commands.remote.XSiteRequest;
 
 /**
  * An interface that provides a communication link with remote caches.  Also allows remote caches to invoke commands on
@@ -178,10 +178,10 @@ public interface Transport extends Lifecycle {
 
 
    /**
-    * @deprecated since 10.0. Use {@link #backupRemotely(XSiteBackup, XSiteReplicateCommand)} instead.
+    * @deprecated since 10.0. Use {@link #backupRemotely(XSiteBackup, XSiteRequest)} instead.
     */
    @Deprecated
-   BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteReplicateCommand rpcCommand) throws Exception;
+   BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteRequest<?> rpcCommand) throws Exception;
 
    /**
     * Sends a cross-site request to a remote site.
@@ -196,7 +196,7 @@ public interface Transport extends Lifecycle {
     * @param rpcCommand The command to send.
     * @return A {@link XSiteResponse} that is completed when the request is completed.
     */
-   <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteReplicateCommand<O> rpcCommand);
+   <O> XSiteResponse<O> backupRemotely(XSiteBackup backup, XSiteRequest<O> rpcCommand);
 
    /**
     * @return true if the current Channel is the coordinator of the cluster.

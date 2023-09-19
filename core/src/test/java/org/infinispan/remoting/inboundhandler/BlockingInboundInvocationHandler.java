@@ -12,7 +12,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.NotifierLatch;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.xsite.XSiteReplicateCommand;
+import org.infinispan.xsite.commands.remote.XSiteRequest;
 
 @Scope(Scopes.GLOBAL)
 public class BlockingInboundInvocationHandler implements InboundInvocationHandler {
@@ -48,7 +48,7 @@ public class BlockingInboundInvocationHandler implements InboundInvocationHandle
    }
 
    @Override
-   public void handleFromRemoteSite(String origin, XSiteReplicateCommand<?> command,
+   public void handleFromRemoteSite(String origin, XSiteRequest<?> command,
                                     Reply reply, DeliverOrder order) {
       delegate.handleFromRemoteSite(origin, command, reply, order);
    }

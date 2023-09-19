@@ -7,21 +7,19 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.IracMetadata;
-import org.infinispan.xsite.commands.XSiteStateTransferFinishReceiveCommand;
-import org.infinispan.xsite.commands.XSiteStateTransferStartReceiveCommand;
-import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
+import org.infinispan.xsite.statetransfer.XSiteState;
 
 /**
  * Component present on a backup site that manages the backup information and logic.
  *
- * @see ClusteredCacheBackupReceiver
  * @author Mircea Markus
+ * @see ClusteredCacheBackupReceiver
  * @since 5.2
  */
 @Scope(Scopes.NAMED_CACHE)
 public interface BackupReceiver {
 
-   <O> CompletionStage<O> handleRemoteCommand(VisitableCommand command, boolean preserveOrder);
+   <O> CompletionStage<O> handleRemoteCommand(VisitableCommand command);
 
    /**
     * Updates the key with the value from a remote site.
@@ -59,26 +57,25 @@ public interface BackupReceiver {
 
    /**
     * Touches an entry and returns if it was able to or not.
+    *
     * @param key the key of the entry to touch
     * @return if the entry was touched
     */
    CompletionStage<Boolean> touchEntry(Object key);
 
    /**
-    * It handles starting the state transfer from a remote site. The command must be broadcast to the entire cluster in
-    * which the cache exists.
-    */
-   CompletionStage<Void> handleStartReceivingStateTransfer(XSiteStateTransferStartReceiveCommand command);
-
-   /**
-    * It handles finishing the state transfer from a remote site. The command must be broadcast to the entire cluster in
-    * which the cache exists.
-    */
-   CompletionStage<Void> handleEndReceivingStateTransfer(XSiteStateTransferFinishReceiveCommand command);
-
-   /**
     * It handles the state transfer state from a remote site. It is possible to have a single node applying the state or
     * forward the state to respective primary owners.
     */
-   CompletionStage<Void> handleStateTransferState(XSiteStatePushCommand cmd);
+   CompletionStage<Void> handleStateTransferState(XSiteState[] chunk, long timeoutMs);
+
+   /**
+    * It handles starting or finishing, base on {@code startReceiving}, of the state transfer from a remote site.
+    * <p>
+    * The command must be broadcast to the entire cluster in which the cache exists.
+    *
+    * @param originSite     The remote site which is starting or finishing sending the state transfer.
+    * @param startReceiving {@code true} if the {@code originSite} wants to start sending state.
+    */
+   CompletionStage<Void> handleStateTransferControl(String originSite, boolean startReceiving);
 }
