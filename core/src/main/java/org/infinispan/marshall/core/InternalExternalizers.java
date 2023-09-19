@@ -117,6 +117,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.InDoubtTxInfo;
 import org.infinispan.util.IntSetExternalizer;
 import org.infinispan.util.KeyValuePair;
+import org.infinispan.xsite.commands.remote.XSiteRequestExternalizer;
 import org.infinispan.xsite.response.AutoStateTransferResponse;
 import org.infinispan.xsite.statetransfer.XSiteState;
 
@@ -254,6 +255,7 @@ final class InternalExternalizers {
       addInternalExternalizer(AutoStateTransferResponse.EXTERNALIZER, exts);
       addInternalExternalizer(CommandInvocationId.EXTERNALIZER, exts);
       addInternalExternalizer(CacheEntryGroupPredicate.EXTERNALIZER, exts);
+      addInternalExternalizer(XSiteRequestExternalizer.INSTANCE, exts);
 
       return exts;
    }

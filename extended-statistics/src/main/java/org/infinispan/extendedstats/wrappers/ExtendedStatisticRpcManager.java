@@ -34,7 +34,7 @@ import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
-import org.infinispan.xsite.XSiteReplicateCommand;
+import org.infinispan.xsite.commands.remote.XSiteCacheRequest;
 
 /**
  * Takes statistics about the RPC invocations.
@@ -157,7 +157,7 @@ public class ExtendedStatisticRpcManager implements RpcManager {
    }
 
    @Override
-   public <O> XSiteResponse<O> invokeXSite(XSiteBackup backup, XSiteReplicateCommand<O> command) {
+   public <O> XSiteResponse<O> invokeXSite(XSiteBackup backup, XSiteCacheRequest<O> command) {
       return actual.invokeXSite(backup, command);
    }
 

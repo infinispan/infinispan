@@ -1,8 +1,8 @@
 package org.infinispan.container.versioning.irac;
 
+import static org.infinispan.commons.util.concurrent.CompletableFutures.completedNull;
 import static org.infinispan.remoting.transport.impl.VoidResponseCollector.ignoreLeavers;
 import static org.infinispan.remoting.transport.impl.VoidResponseCollector.validOnly;
-import static org.infinispan.commons.util.concurrent.CompletableFutures.completedNull;
 
 import java.lang.invoke.MethodHandles;
 import java.util.Collection;
@@ -25,10 +25,10 @@ import java.util.stream.Collectors;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
-import org.infinispan.commands.irac.IracTombstoneRemoteSiteCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.XSiteStateTransferConfiguration;
@@ -53,7 +53,6 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.ExponentialBackOff;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -386,7 +385,7 @@ public class DefaultIracTombstoneManager implements IracTombstoneManager {
          List<Object> keys = tombstoneToCheck.stream()
                .map(IracTombstoneInfo::getKey)
                .collect(Collectors.toList());
-         IracTombstoneRemoteSiteCheckCommand cmd = commandsFactory.buildIracTombstoneRemoteSiteCheckCommand(keys);
+         var cmd = commandsFactory.buildIracTombstoneCheckRequest(keys);
          // if one of the site return true (i.e. the key is in updateKeys map, then do not remove it)
          AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
          for (XSiteBackup backup : asyncBackups) {

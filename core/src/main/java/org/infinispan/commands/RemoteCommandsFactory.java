@@ -16,16 +16,13 @@ import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.irac.IracCleanupKeysCommand;
-import org.infinispan.commands.irac.IracClearKeysCommand;
-import org.infinispan.commands.irac.IracPutManyCommand;
-import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
+import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneRemoteSiteCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
-import org.infinispan.commands.irac.IracTouchKeyCommand;
 import org.infinispan.commands.irac.IracUpdateVersionCommand;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.read.GetCacheEntryCommand;
@@ -103,7 +100,6 @@ import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherComman
 import org.infinispan.reactive.publisher.impl.commands.reduction.ReductionPublisherRequestCommand;
 import org.infinispan.topology.HeartBeatCommand;
 import org.infinispan.util.ByteString;
-import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
 import org.infinispan.xsite.commands.XSiteAutoTransferStatusCommand;
 import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
@@ -403,9 +399,6 @@ public class RemoteCommandsFactory {
             case XSiteStatePushCommand.COMMAND_ID:
                command = new XSiteStatePushCommand(cacheName);
                break;
-            case SingleXSiteRpcCommand.COMMAND_ID:
-               command = new SingleXSiteRpcCommand(cacheName);
-               break;
             case ClusteredGetAllCommand.COMMAND_ID:
                command = new ClusteredGetAllCommand(cacheName);
                break;
@@ -466,12 +459,6 @@ public class RemoteCommandsFactory {
             case IracStateResponseCommand.COMMAND_ID:
                command = new IracStateResponseCommand(cacheName);
                break;
-            case IracClearKeysCommand.COMMAND_ID:
-               command = new IracClearKeysCommand(cacheName);
-               break;
-            case IracTouchKeyCommand.COMMAND_ID:
-               command = new IracTouchKeyCommand(cacheName);
-               break;
             case IracUpdateVersionCommand.COMMAND_ID:
                command = new IracUpdateVersionCommand(cacheName);
                break;
@@ -492,9 +479,6 @@ public class RemoteCommandsFactory {
                break;
             case IracTombstonePrimaryCheckCommand.COMMAND_ID:
                command = new IracTombstonePrimaryCheckCommand(cacheName);
-               break;
-            case IracPutManyCommand.COMMAND_ID:
-               command = new IracPutManyCommand(cacheName);
                break;
             case SizeCommand.COMMAND_ID:
                command = new SizeCommand(cacheName);

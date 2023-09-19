@@ -7,16 +7,13 @@ import java.util.Set;
 
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.irac.IracCleanupKeysCommand;
-import org.infinispan.commands.irac.IracPutManyCommand;
-import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
-import org.infinispan.commands.irac.IracClearKeysCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
+import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneRemoteSiteCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
-import org.infinispan.commands.irac.IracTouchKeyCommand;
 import org.infinispan.commands.irac.IracUpdateVersionCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -60,7 +57,6 @@ import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCom
 import org.infinispan.reactive.publisher.impl.commands.batch.NextPublisherCommand;
 import org.infinispan.reactive.publisher.impl.commands.reduction.ReductionPublisherRequestCommand;
 import org.infinispan.util.ByteString;
-import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
 import org.infinispan.xsite.commands.XSiteAutoTransferStatusCommand;
 import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
@@ -105,7 +101,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
             GetInDoubtTxInfoCommand.class, CompleteTransactionCommand.class,
             VersionedPrepareCommand.class,
             VersionedCommitCommand.class,
-            XSiteStatePushCommand.class, SingleXSiteRpcCommand.class,
+            XSiteStatePushCommand.class,
             ClusteredGetAllCommand.class,
             SingleKeyBackupWriteCommand.class,
             SingleKeyFunctionalBackupWriteCommand.class,
@@ -127,17 +123,15 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
             ScatteredStateGetKeysCommand.class, ScatteredStateConfirmRevokedCommand.class,
             StateTransferCancelCommand.class, StateTransferGetListenersCommand.class,
             StateTransferGetTransactionsCommand.class, StateTransferStartCommand.class,
-            IracClearKeysCommand.class,
             IracCleanupKeysCommand.class, IracMetadataRequestCommand.class,
-            IracRequestStateCommand.class, IracStateResponseCommand.class, IracTouchKeyCommand.class,
+            IracRequestStateCommand.class, IracStateResponseCommand.class,
             IracUpdateVersionCommand.class,
             XSiteAutoTransferStatusCommand.class,
             XSiteSetStateTransferModeCommand.class,
             IracTombstoneCleanupCommand.class,
             IracTombstoneStateResponseCommand.class,
             IracTombstonePrimaryCheckCommand.class,
-            IracTombstoneRemoteSiteCheckCommand.class,
-            IracPutManyCommand.class);
+            IracTombstoneRemoteSiteCheckCommand.class);
       // Only interested in cache specific replicable commands
       coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());
       return coreCommands;

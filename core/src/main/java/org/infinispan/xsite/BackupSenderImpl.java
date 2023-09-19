@@ -1,7 +1,6 @@
 package org.infinispan.xsite;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -69,6 +68,7 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogManager;
+import org.infinispan.xsite.commands.remote.XSiteCacheRequest;
 import org.infinispan.xsite.status.SiteState;
 import org.infinispan.xsite.status.TakeOfflineManager;
 
@@ -171,14 +171,14 @@ public class BackupSenderImpl implements BackupSender {
 
    private InvocationStage backupCommand(VisitableCommand command, VisitableCommand originalCommand,
          List<XSiteBackup> xSiteBackups, Transaction transaction) {
-      XSiteReplicateCommand<Object> xsiteCommand = commandsFactory.buildSingleXSiteRpcCommand(command);
+      XSiteCacheRequest<Object> xsiteCommand = commandsFactory.buildSingleXSiteRpcCommand(command);
       ResponseAggregator aggregator = new ResponseAggregator(originalCommand, transaction);
       sendTo(xsiteCommand, xSiteBackups, aggregator);
       return aggregator.freeze();
    }
 
-   private void sendTo(XSiteReplicateCommand<Object> command, Collection<XSiteBackup> xSiteBackups,
-         ResponseAggregator aggregator) {
+   private void sendTo(XSiteCacheRequest<Object> command, Collection<XSiteBackup> xSiteBackups,
+                       ResponseAggregator aggregator) {
       for (XSiteBackup backup : xSiteBackups) {
          XSiteResponse<Object> cs = rpcManager.invokeXSite(backup, command);
          takeOfflineManager.registerRequest(cs);
@@ -198,7 +198,7 @@ public class BackupSenderImpl implements BackupSender {
       }
       PrepareCommand prepare = commandsFactory.buildPrepareCommand(command.getGlobalTransaction(),
                                                                    modifications, true);
-      XSiteReplicateCommand<Object> xsiteCommand = commandsFactory.buildSingleXSiteRpcCommand(prepare);
+      XSiteCacheRequest<Object> xsiteCommand = commandsFactory.buildSingleXSiteRpcCommand(prepare);
       sendTo(xsiteCommand, xSiteBackups, aggregator);
    }
 
@@ -207,7 +207,7 @@ public class BackupSenderImpl implements BackupSender {
       if (xSiteBackups.isEmpty()) {
          return; //avoid creating garbage
       }
-      XSiteReplicateCommand<Object> xsiteCommand = commandsFactory.buildSingleXSiteRpcCommand(command);
+      XSiteCacheRequest<Object> xsiteCommand = commandsFactory.buildSingleXSiteRpcCommand(command);
       sendTo(xsiteCommand, xSiteBackups, aggregator);
    }
 
@@ -236,13 +236,6 @@ public class BackupSenderImpl implements BackupSender {
          backupInfo.add(bi);
       }
       return backupInfo;
-   }
-
-   private List<WriteCommand> filterModifications(WriteCommand[] modifications, Map<Object, CacheEntry> lookedUpEntries) {
-      if (modifications == null || modifications.length == 0) {
-         return Collections.emptyList();
-      }
-      return filterModifications(Arrays.asList(modifications), lookedUpEntries);
    }
 
    private List<WriteCommand> filterModifications(List<WriteCommand> modifications, Map<Object, CacheEntry> lookedUpEntries) {
@@ -319,7 +312,7 @@ public class BackupSenderImpl implements BackupSender {
          }
       }
 
-      void addResponse(XSiteBackup backup, XSiteResponse response) {
+      void addResponse(XSiteBackup backup, XSiteResponse<Object> response) {
          assert !frozen;
          response.whenCompleted(this);
          if (backup.isSync()) {

@@ -26,16 +26,13 @@ import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.irac.IracCleanupKeysCommand;
-import org.infinispan.commands.irac.IracPutManyCommand;
-import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
-import org.infinispan.commands.irac.IracClearKeysCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
+import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneRemoteSiteCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
-import org.infinispan.commands.irac.IracTouchKeyCommand;
 import org.infinispan.commands.irac.IracUpdateVersionCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
@@ -132,6 +129,12 @@ import org.infinispan.xsite.commands.XSiteStateTransferStartSendCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferStatusRequestCommand;
 import org.infinispan.xsite.commands.XSiteStatusCommand;
 import org.infinispan.xsite.commands.XSiteTakeOfflineCommand;
+import org.infinispan.xsite.commands.remote.IracClearKeysRequest;
+import org.infinispan.xsite.commands.remote.IracPutManyRequest;
+import org.infinispan.xsite.commands.remote.IracTombstoneCheckRequest;
+import org.infinispan.xsite.commands.remote.IracTouchKeyRequest;
+import org.infinispan.xsite.commands.remote.XSiteStatePushRequest;
+import org.infinispan.xsite.commands.remote.XSiteStateTransferControlRequest;
 import org.infinispan.xsite.irac.IracManagerKeyInfo;
 import org.infinispan.xsite.statetransfer.XSiteState;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
@@ -536,11 +539,13 @@ public interface CommandsFactory {
 
    XSiteStateTransferRestartSendingCommand buildXSiteStateTransferRestartSendingCommand(String siteName, int topologyId);
 
-   XSiteStateTransferStartReceiveCommand buildXSiteStateTransferStartReceiveCommand();
+   XSiteStateTransferStartReceiveCommand buildXSiteStateTransferStartReceiveCommand(String siteName);
 
    XSiteStateTransferStartSendCommand buildXSiteStateTransferStartSendCommand(String siteName, int topologyId);
 
    XSiteStateTransferStatusRequestCommand buildXSiteStateTransferStatusRequestCommand();
+
+   XSiteStateTransferControlRequest buildXSiteStateTransferControlRequest(boolean startReceiving);
 
    XSiteAmendOfflineStatusCommand buildXSiteAmendOfflineStatusCommand(String siteName, Integer afterFailures, Long minTimeToWait);
 
@@ -556,10 +561,9 @@ public interface CommandsFactory {
     * Builds XSiteStatePushCommand used to transfer a single chunk of data between sites.
     *
     * @param chunk         the data chunk
-    * @param timeoutMillis timeout in milliseconds, for the retries in the receiver site.
     * @return the XSiteStatePushCommand created
     */
-   XSiteStatePushCommand buildXSiteStatePushCommand(XSiteState[] chunk, long timeoutMillis);
+   XSiteStatePushCommand buildXSiteStatePushCommand(XSiteState[] chunk);
 
    /**
     * Builds SingleRpcCommand used to perform {@link org.infinispan.commands.VisitableCommand} on the backup site,
@@ -653,7 +657,7 @@ public interface CommandsFactory {
 
    TouchCommand buildTouchCommand(Object key, int segment, boolean touchEvenIfExpired, long flagBitSet);
 
-   IracClearKeysCommand buildIracClearKeysCommand();
+   IracClearKeysRequest buildIracClearKeysCommand();
 
    IracCleanupKeysCommand buildIracCleanupKeyCommand(Collection<? extends IracManagerKeyInfo> state);
 
@@ -668,7 +672,7 @@ public interface CommandsFactory {
    IracPutKeyValueCommand buildIracPutKeyValueCommand(Object key, int segment, Object value, Metadata metadata,
          PrivateMetadata privateMetadata);
 
-   IracTouchKeyCommand buildIracTouchCommand(Object key);
+   IracTouchKeyRequest buildIracTouchCommand(Object key);
 
    IracUpdateVersionCommand buildIracUpdateVersionCommand(Map<Integer, IracEntryVersion> segmentsVersion);
 
@@ -682,5 +686,9 @@ public interface CommandsFactory {
 
    IracTombstonePrimaryCheckCommand buildIracTombstonePrimaryCheckCommand(Collection<IracTombstoneInfo> tombstones);
 
-   IracPutManyCommand buildIracPutManyCommand(int capacity);
+   IracPutManyRequest buildIracPutManyCommand(int capacity);
+
+   XSiteStatePushRequest buildXSiteStatePushRequest(XSiteState[] chunk, long timeoutMillis);
+
+   IracTombstoneCheckRequest buildIracTombstoneCheckRequest(List<Object> keys);
 }

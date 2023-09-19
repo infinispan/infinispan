@@ -93,7 +93,6 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
          parameter.registry.serialize(writer, holderBefore.getGlobalConfigurationBuilder().build(), configurations);
       }
       log.debug(baos);
-      System.out.println(baos);
       ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
       ConfigurationBuilderHolder holderAfter = parameter.registry.parse(bais, ConfigurationResourceResolvers.DEFAULT, parameter.mediaType);
       GlobalConfiguration globalConfigurationBefore = holderBefore.getGlobalConfigurationBuilder().build();

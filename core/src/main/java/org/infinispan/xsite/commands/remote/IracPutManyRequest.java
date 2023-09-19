@@ -1,4 +1,4 @@
-package org.infinispan.commands.irac;
+package org.infinispan.xsite.commands.remote;
 
 import static org.infinispan.commons.marshall.MarshallUtil.marshallCollection;
 import static org.infinispan.commons.marshall.MarshallUtil.unmarshallCollection;
@@ -31,13 +31,11 @@ import org.infinispan.xsite.BackupReceiver;
  * The element order in {@code updateList} is important because the reply will be a {@link IntSet} with the position of
  * the failed keys.
  *
- * @since 14.0
+ * @since 15.0
  */
-public class IracPutManyCommand extends IracUpdateKeyCommand<IntSet> {
+public class IracPutManyRequest extends IracUpdateKeyRequest<IntSet> {
 
-   private static final Log log = LogFactory.getLog(IracPutManyCommand.class);
-
-   public static final byte COMMAND_ID = 48;
+   private static final Log log = LogFactory.getLog(IracPutManyRequest.class);
 
    private static final byte WRITE = 0;
    private static final byte REMOVE = 1;
@@ -45,17 +43,12 @@ public class IracPutManyCommand extends IracUpdateKeyCommand<IntSet> {
 
    private List<Update> updateList;
 
-   @SuppressWarnings("unused")
-   public IracPutManyCommand() {
-      super(COMMAND_ID, null);
+   public IracPutManyRequest() {
+      super(null);
    }
 
-   public IracPutManyCommand(ByteString cacheName) {
-      super(COMMAND_ID, cacheName);
-   }
-
-   public IracPutManyCommand(ByteString cacheName, int maxCapacity) {
-      super(COMMAND_ID, cacheName);
+   public IracPutManyRequest(ByteString cacheName, int maxCapacity) {
+      super(cacheName);
       updateList = new ArrayList<>(maxCapacity);
    }
 
@@ -78,24 +71,25 @@ public class IracPutManyCommand extends IracUpdateKeyCommand<IntSet> {
 
    @Override
    public byte getCommandId() {
-      return COMMAND_ID;
+      return Ids.IRAC_UPDATE;
    }
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      marshallCollection(updateList, output, IracPutManyCommand::writeUpdateTo);
+      marshallCollection(updateList, output, IracPutManyRequest::writeUpdateTo);
+      super.writeTo(output);
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      updateList = unmarshallCollection(input, ArrayList::new, IracPutManyCommand::readUpdateFrom);
+   public XSiteRequest<IntSet> readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
+      updateList = unmarshallCollection(input, ArrayList::new, IracPutManyRequest::readUpdateFrom);
+      return super.readFrom(input);
    }
 
    @Override
    public String toString() {
       return "IracPutManyCommand{" +
             "cacheName=" + cacheName +
-            ", originSite='" + originSite + '\'' +
             ", updateList=" + Util.toStr(updateList) +
             '}';
    }

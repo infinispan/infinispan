@@ -5,9 +5,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.IracMetadata;
-import org.infinispan.xsite.commands.XSiteStateTransferFinishReceiveCommand;
-import org.infinispan.xsite.commands.XSiteStateTransferStartReceiveCommand;
-import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
+import org.infinispan.xsite.statetransfer.XSiteState;
 
 /**
  * {@link org.infinispan.xsite.BackupReceiver} delegator. Mean to be overridden. For test purpose only!
@@ -27,8 +25,8 @@ public abstract class BackupReceiverDelegator implements BackupReceiver {
    }
 
    @Override
-   public <O> CompletionStage<O> handleRemoteCommand(VisitableCommand command, boolean preserveOrder) {
-      return delegate.handleRemoteCommand(command, preserveOrder);
+   public <O> CompletionStage<O> handleRemoteCommand(VisitableCommand command) {
+      return delegate.handleRemoteCommand(command);
    }
 
    @Override
@@ -48,18 +46,13 @@ public abstract class BackupReceiverDelegator implements BackupReceiver {
    }
 
    @Override
-   public CompletionStage<Void> handleStartReceivingStateTransfer(XSiteStateTransferStartReceiveCommand command) {
-      return delegate.handleStartReceivingStateTransfer(command);
+   public CompletionStage<Void> handleStateTransferControl(String originSite, boolean startReceiving) {
+      return delegate.handleStateTransferControl(originSite, startReceiving);
    }
 
    @Override
-   public CompletionStage<Void> handleEndReceivingStateTransfer(XSiteStateTransferFinishReceiveCommand command) {
-      return delegate.handleEndReceivingStateTransfer(command);
-   }
-
-   @Override
-   public CompletionStage<Void> handleStateTransferState(XSiteStatePushCommand cmd) {
-      return delegate.handleStateTransferState(cmd);
+   public CompletionStage<Void> handleStateTransferState(XSiteState[] chunk, long timeoutMs) {
+      return delegate.handleStateTransferState(chunk, timeoutMs);
    }
 
    @Override

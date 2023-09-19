@@ -51,6 +51,8 @@ import org.infinispan.xsite.commands.XSiteStateTransferFinishReceiveCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferStartReceiveCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferStartSendCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferStatusRequestCommand;
+import org.infinispan.xsite.commands.remote.XSiteStatePushRequest;
+import org.infinispan.xsite.commands.remote.XSiteStateTransferControlRequest;
 import org.testng.annotations.Test;
 
 /**
@@ -105,17 +107,19 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       assertInSite(NYC, cache -> assertTrue(cache.isEmpty()));
 
       ControlledTransport controlledTransport = ControlledTransport.replace(cache(LON, 0));
-      controlledTransport.excludeCommands(XSiteBringOnlineCommand.class, XSiteStateTransferStartReceiveCommand.class,
-                                          XSiteStateTransferStartSendCommand.class,
-                                          XSiteStateTransferCancelSendCommand.class,
-                                          XSiteStateTransferFinishReceiveCommand.class,
-                                          XSiteStateTransferStatusRequestCommand.class);
+      controlledTransport.excludeCommands(XSiteBringOnlineCommand.class,
+            XSiteStateTransferStartReceiveCommand.class,
+            XSiteStateTransferControlRequest.class,
+            XSiteStateTransferStartSendCommand.class,
+            XSiteStateTransferCancelSendCommand.class,
+            XSiteStateTransferFinishReceiveCommand.class,
+            XSiteStateTransferStatusRequestCommand.class);
 
       startStateTransfer();
 
       // Wait for a push command and block it
-      ControlledTransport.BlockedRequest<XSiteStatePushCommand> pushRequest =
-            controlledTransport.expectCommand(XSiteStatePushCommand.class);
+      ControlledTransport.BlockedRequest<XSiteStatePushRequest> pushRequest =
+            controlledTransport.expectCommand(XSiteStatePushRequest.class);
 
       assertEquals(SUCCESS, adminOperations().cancelPushState(NYC));
 
@@ -133,8 +137,8 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       startStateTransfer();
 
       // Wait for a push command and block it
-      ControlledTransport.BlockedRequest<XSiteStatePushCommand> pushRequest2 =
-            controlledTransport.expectCommand(XSiteStatePushCommand.class);
+      ControlledTransport.BlockedRequest<XSiteStatePushRequest> pushRequest2 =
+            controlledTransport.expectCommand(XSiteStatePushRequest.class);
 
       assertEquals(STATUS_SENDING, adminOperations().getPushStateStatus().get(NYC));
 
@@ -325,20 +329,20 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
          }
 
          @Override
-         public void beforeState(XSiteStatePushCommand command) throws Exception {
+         public void beforeState(XSiteState[] chunk) throws Exception {
             checkPoint.trigger("before-state");
             //wait until the command is received with the new value. so we make sure that the command saw the old value
             //and will commit a new value
             checkPoint.awaitStrict("before-update", 30, TimeUnit.SECONDS);
-            if (performBeforeState && containsKey(command.getChunk(), key)) {
+            if (performBeforeState && containsKey(chunk, key)) {
                //command before state... we need to wait
                checkPoint.awaitStrict("apply-state", 30, TimeUnit.SECONDS);
             }
          }
 
          @Override
-         public void afterState(XSiteStatePushCommand command) {
-            if (!performBeforeState && containsKey(command.getChunk(), key)) {
+         public void afterState(XSiteState[] chunk) {
+            if (!performBeforeState && containsKey(chunk, key)) {
                //state before command... let the command go...
                checkPoint.trigger("update-key");
             }
@@ -436,7 +440,7 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
          }
 
          @Override
-         public void beforeState(XSiteStatePushCommand command) throws Exception {
+         public void beforeState(XSiteState[] chunk) throws Exception {
             checkPoint.trigger("before-state");
             checkPoint.awaitStrict("before-update", 30, TimeUnit.SECONDS);
          }
@@ -791,11 +795,11 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
          //no-op by default
       }
 
-      void beforeState(XSiteStatePushCommand command) throws Exception {
+      void beforeState(XSiteState[] chunk) throws Exception {
          //no-op by default
       }
 
-      void afterState(XSiteStatePushCommand command) {
+      void afterState(XSiteState[] chunk) {
          //no-op by default
       }
    }
@@ -810,23 +814,23 @@ public abstract class BaseStateTransferTest extends AbstractStateTransferTest {
       }
 
       @Override
-      public <O> CompletionStage<O> handleRemoteCommand(VisitableCommand command, boolean preserveOrder) {
+      public <O> CompletionStage<O> handleRemoteCommand(VisitableCommand command) {
          try {
             listener.beforeCommand(command);
          } catch (Exception e) {
             return CompletableFutures.completedExceptionFuture(e);
          }
-         return super.<O>handleRemoteCommand(command, preserveOrder).whenComplete((v, t) -> listener.afterCommand(command));
+         return super.<O>handleRemoteCommand(command).whenComplete((v, t) -> listener.afterCommand(command));
       }
 
       @Override
-      public CompletionStage<Void> handleStateTransferState(XSiteStatePushCommand cmd) {
+      public CompletionStage<Void> handleStateTransferState(XSiteState[] chunk, long timeoutMs) {
          try {
-            listener.beforeState(cmd);
+            listener.beforeState(chunk);
          } catch (Exception e) {
             return CompletableFutures.completedExceptionFuture(e);
          }
-         return super.handleStateTransferState(cmd).whenComplete((v, t) -> listener.afterState(cmd));
+         return super.handleStateTransferState(chunk, timeoutMs).whenComplete((v, t) -> listener.afterState(chunk));
       }
    }
 }
