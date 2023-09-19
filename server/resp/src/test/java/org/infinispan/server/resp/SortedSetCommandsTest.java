@@ -2,6 +2,7 @@ package org.infinispan.server.resp;
 
 import io.lettuce.core.Limit;
 import io.lettuce.core.Range;
+import io.lettuce.core.ScanArgs;
 import io.lettuce.core.ZAddArgs;
 import io.lettuce.core.ZAggregateArgs;
 import io.lettuce.core.ZStoreArgs;
@@ -1534,5 +1535,32 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
                   "vittorio", "pedro", "fabio", "jose", "ryan", "anna");
       assertThat(redis.zrandmember("people", -20)).hasSize(20);
       assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zrandmember("another"));
+   }
+
+   public void testZSCAN() {
+      // ZADD people 1 tristan 2 vittorio 3 pedro 4 fabio 5 anna
+      redis.zadd("people", ZAddArgs.Builder.ch(),
+            just(1, "tristan"),
+            just(2, "vittorio"),
+            just(2, "pedro"),
+            just(5, "fabio"),
+            just(5, "anna"));
+      // ZSCAN people 0
+      assertThat(redis.zscan("people").getValues())
+            .containsExactly(
+                  just(1, "tristan"),
+                  just(2, "pedro"),
+                  just(2, "vittorio"),
+                  just(5, "anna"),
+                  just(5, "fabio"));
+
+      // ZSCAN people 0 MATCH tris*
+      assertThat(redis.zscan("people", ScanArgs.Builder.matches("tris*")).getValues())
+            .containsExactly(
+                  just(1, "tristan"));
+
+      // ZSCAN people 0 MATCH nonsense
+      assertThat(redis.zscan("people", ScanArgs.Builder.matches("nonsense")).getValues())
+            .isEmpty();
    }
 }
