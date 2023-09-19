@@ -399,5 +399,8 @@ provides a read-uncommitted isolation.
 | link:https://redis.io/commands/zremrangebyscore[ZREMRANGEBYSCORE]
 |
 
+| link:https://redis.io/commands/zscore[ZSCAN]
+|
+
 | link:https://redis.io/commands/zscore[ZSCORE]
 |
