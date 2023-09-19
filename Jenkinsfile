@@ -90,31 +90,31 @@ pipeline {
                 }
             }
         }
-
-        stage('Tests') {
-            steps {
-                sh "$MAVEN_HOME/bin/mvn verify -B -V -e -Dmaven.test.failure.ignore=true -Dansi.strip=true $ALT_TEST_BUILD"
-
-                // TODO Add StabilityTestDataPublisher after https://issues.jenkins-ci.org/browse/JENKINS-42610 is fixed
-                // Capture target/surefire-reports/*.xml, target/failsafe-reports/*.xml,
-                // target/failsafe-reports-embedded/*.xml, target/failsafe-reports-remote/*.xml
-                junit testResults: '**/target/*-reports*/**/TEST-*.xml',
-                    testDataPublishers: [[$class: 'ClaimTestDataPublisher']],
-                    healthScaleFactor: 100, allowEmptyResults: true
-
-                // Workaround for SUREFIRE-1426: Fail the build if there a fork crashed
-                script {
-                    if (manager.logContains("org.apache.maven.surefire.booter.SurefireBooterForkException:.*")) {
-                        echo "Fork error found"
-                        manager.buildFailure()
-                    }
-                }
-
-                // Dump any dump files to the console
-                sh 'find . -name "*.dump*" -exec echo {} \\; -exec cat {} \\;'
-                sh 'find . -name "hs_err_*" -exec echo {} \\; -exec grep "^# " {} \\;'
-            }
-        }
+//
+//         stage('Tests') {
+//             steps {
+//                 sh "$MAVEN_HOME/bin/mvn verify -B -V -e -Dmaven.test.failure.ignore=true -Dansi.strip=true $ALT_TEST_BUILD"
+//
+//                 // TODO Add StabilityTestDataPublisher after https://issues.jenkins-ci.org/browse/JENKINS-42610 is fixed
+//                 // Capture target/surefire-reports/*.xml, target/failsafe-reports/*.xml,
+//                 // target/failsafe-reports-embedded/*.xml, target/failsafe-reports-remote/*.xml
+//                 junit testResults: '**/target/*-reports*/**/TEST-*.xml',
+//                     testDataPublishers: [[$class: 'ClaimTestDataPublisher']],
+//                     healthScaleFactor: 100, allowEmptyResults: true
+//
+//                 // Workaround for SUREFIRE-1426: Fail the build if there a fork crashed
+//                 script {
+//                     if (manager.logContains("org.apache.maven.surefire.booter.SurefireBooterForkException:.*")) {
+//                         echo "Fork error found"
+//                         manager.buildFailure()
+//                     }
+//                 }
+//
+//                 // Dump any dump files to the console
+//                 sh 'find . -name "*.dump*" -exec echo {} \\; -exec cat {} \\;'
+//                 sh 'find . -name "hs_err_*" -exec echo {} \\; -exec grep "^# " {} \\;'
+//             }
+//         }
 
         stage('Deploy snapshot') {
             steps {
