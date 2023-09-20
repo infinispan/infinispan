@@ -141,6 +141,7 @@ public class CacheJoinInfo {
             ", cacheMode=" + cacheMode +
             ", persistentUUID=" + persistentUUID +
             ", persistentStateChecksum=" + persistentStateChecksum +
+            ", capacityFactor=" + getCapacityFactor() +
             '}';
    }
 

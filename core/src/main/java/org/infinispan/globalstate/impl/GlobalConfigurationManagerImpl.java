@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin;
@@ -75,6 +76,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    private Cache<ScopedState, Object> stateCache;
    private ParserRegistry parserRegistry;
    private LocalConfigurationStorage localConfigurationManager;
+   private final Map<String, CompletionStage<Void>> outstandingCreate = new ConcurrentHashMap<>(4);
 
    static boolean isKnownScope(String scope) {
       return CACHE_SCOPE.equals(scope) || TEMPLATE_SCOPE.equals(scope);
@@ -269,7 +271,20 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    }
 
    CompletionStage<Configuration> createCache(String cacheName, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
-      return createCacheInternal(cacheName, template, configuration, flags).thenApply((v) -> configuration);
+      CompletionStage<Configuration> cs = createCacheInternal(cacheName, template, configuration, flags)
+            .thenApply((v) -> configuration);
+      if (!CompletionStages.isCompletedSuccessfully(cs)) {
+         outstandingCreate.compute(cacheName, (ignore, existing) -> {
+            if (existing == null) return cs.thenRun(() -> outstandingCreate.remove(cacheName));
+
+            CompletableFuture<Void> o = existing.toCompletableFuture();
+            return cs.whenComplete((res, t) -> {
+               if (t != null) o.completeExceptionally(t);
+               else o.complete(null);
+            }).thenRun(() -> outstandingCreate.remove(cacheName));
+         });
+      }
+      return cs;
    }
 
    private CompletionStage<Object> createCacheInternal(String cacheName, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
@@ -306,10 +321,19 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
 
    CompletionStage<Void> createCacheLocally(String name, CacheState state) {
       Configuration configuration = buildConfiguration(name, state.getConfiguration(), false);
+      CompletionStage<Void> outstanding = outstandingCreate.get(name);
+      if (outstanding != null && !CompletionStages.isCompletedSuccessfully(outstanding)) {
+         log.debugf("Cache %s local creation is delayed until remote finishes", name);
+         outstandingCreate.compute(name, (ignore, existing) -> {
+            if (existing == null) return null;
+            return existing.thenCompose(v -> createCacheLocally(name, state.getTemplate(), configuration, state.getFlags()));
+         });
+         return CompletableFutures.completedNull();
+      }
       return createCacheLocally(name, state.getTemplate(), configuration, state.getFlags());
    }
 
-   CompletionStage<Void> createCacheLocally(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   private CompletionStage<Void> createCacheLocally(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       log.debugf("Creating cache %s from global state", name);
       return localConfigurationManager.createCache(name, template, configuration, flags)
             .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.CREATE, "cache", name))

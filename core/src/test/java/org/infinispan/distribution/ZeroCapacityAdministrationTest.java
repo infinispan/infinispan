@@ -1,17 +1,25 @@
 package org.infinispan.distribution;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Fail.fail;
 import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
+import static org.infinispan.globalstate.GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME;
+import static org.infinispan.globalstate.impl.GlobalConfigurationManagerImpl.CACHE_SCOPE;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import java.nio.file.Paths;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.globalstate.ConfigurationStorage;
+import org.infinispan.globalstate.ScopedState;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.util.logging.Log;
 import org.testng.annotations.Test;
 
 /**
@@ -45,6 +53,30 @@ public class ZeroCapacityAdministrationTest extends MultipleCacheManagersTest {
       zeroCapacityNode.administration().createTemplate("zero-template", config);
       assertNotNull(node1.getCache("zero-cache"));
       assertNotNull(node1.getCacheConfiguration("zero-template"));
+   }
+
+   public void testCreateNewClusteredCacheFromZeroToRemote() {
+      Configuration config = new ConfigurationBuilder()
+            .clustering().cacheMode(CacheMode.DIST_SYNC)
+            .build();
+
+      // The join command is sent to the coordinator.
+      assertThat(node1.isCoordinator()).isTrue();
+
+      // Make sure this will trigger a remote call to create the cache.
+      int tries = 0;
+      String cacheName = "another-cache";
+      ScopedState ss = new ScopedState(CACHE_SCOPE, cacheName);
+      while (!DistributionTestHelper.isFirstOwner(node1.getCache(CONFIG_STATE_CACHE_NAME), ss)) {
+         if (tries > 50) fail("Exceeded attempts to find configuration mapping to remote");
+
+         cacheName = "another-cache-" + tries++;
+         ss = new ScopedState(CACHE_SCOPE, cacheName);
+      }
+
+      Log.CONFIG.infof("Registering the '%s' cache, lets go!", cacheName);
+      Cache<?, ?> cache = zeroCapacityNode.administration().getOrCreateCache(cacheName, config);
+      assertNotNull(cache);
    }
 
    private GlobalConfigurationBuilder statefulGlobalBuilder(String stateDirectory) {
