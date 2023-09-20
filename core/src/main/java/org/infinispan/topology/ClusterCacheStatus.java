@@ -745,6 +745,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       if (joinInfo.getCapacityFactor() != 0f || getCurrentTopology() != null)
          return CompletableFutures.completedNull();
 
+      log.tracef("Waiting on initial topology for %s with %s", joinInfo, getCurrentTopology());
       // Creating the initial topology requires at least one node with a non-zero capacity factor
       return hasInitialTopologyFuture.newConditionStage(ccs -> ccs.getCurrentTopology() != null,
                                                         () -> new TimeoutException("Timed out waiting for initial cache topology"),
