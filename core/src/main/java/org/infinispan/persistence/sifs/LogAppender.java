@@ -109,9 +109,9 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
 
    void handleRequestCompletion(LogRequest request) {
       int offset = request.getSerializedValue() == null ? ~request.getFileOffset() : request.getFileOffset();
-      temporaryTable.set(request.getSement(), request.getKey(), request.getFile(), offset);
-      IndexRequest indexRequest = IndexRequest.update(request.getSement(), request.getKey(), request.getSerializedKey(),
-            request.getFile(), offset, request.length());
+      temporaryTable.set(request.getSegment(), request.getKey(), request.getFile(), offset);
+      IndexRequest indexRequest = IndexRequest.update(request.getSegment(), request.getKey(), request.getSerializedKey(),
+            request.getSerializedValue() == null, request.getFile(), offset, request.length());
       request.setIndexRequest(indexRequest);
       index.handleRequest(indexRequest);
 
