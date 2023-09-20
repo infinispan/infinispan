@@ -99,6 +99,19 @@ class Index {
       }
    };
 
+   private final IndexNode.OverwriteHook updateRemovalHook = new IndexNode.OverwriteHook() {
+      @Override
+      public boolean check(IndexRequest request, int oldFile, int oldOffset) {
+         // Only use removal in index if previous file existed
+         return oldFile != -1;
+      }
+
+      @Override
+      public void setOverwritten(IndexRequest request, int cacheSegment, boolean overwritten, int prevFile, int prevOffset) {
+         updateHook.setOverwritten(request, cacheSegment, overwritten, prevFile, prevOffset);
+      }
+   };
+
    private final IndexNode.OverwriteHook droppedHook = new IndexNode.OverwriteHook() {
       @Override
       public void setOverwritten(IndexRequest request, int cacheSegment, boolean overwritten, int prevFile, int prevOffset) {
@@ -529,6 +542,10 @@ class Index {
             case UPDATE:
                recordChange = IndexNode.RecordChange.INCREASE;
                overwriteHook = index.updateHook;
+               break;
+            case UPDATE_REMOVAL:
+               recordChange = IndexNode.RecordChange.INCREASE;
+               overwriteHook = index.updateRemovalHook;
                break;
             case DROPPED:
                recordChange = IndexNode.RecordChange.DECREASE;
