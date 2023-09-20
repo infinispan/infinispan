@@ -41,10 +41,16 @@ public class GlobalConfigurationStateListener {
 
       String name = event.getKey().getName();
       CacheState state = event.getValue();
+      if (CACHE_SCOPE.equals(scope)) {
+         CompletionStage<Void> cs = gcm.createCacheLocally(name, state);
+         // zero capacity nodes have to wait for a non-zero capacity node to start the cache.
+         // prevent the cache creating to blocking the listener invocation
+         return isZeroCapacityNode()
+               ? CompletableFutures.completedNull()
+               : cs;
+      }
 
-      return CACHE_SCOPE.equals(scope) ?
-            gcm.createCacheLocally(name, state) :
-            gcm.createTemplateLocally(name, state);
+      return gcm.createTemplateLocally(name, state);
    }
 
    @CacheEntryModified
@@ -79,5 +85,9 @@ public class GlobalConfigurationStateListener {
          CONTAINER.debugf("Removing template %s because it was removed from global state", name);
          return gcm.removeTemplateLocally(name);
       }
+   }
+
+   private boolean isZeroCapacityNode() {
+      return SecurityActions.getGlobalComponentRegistry(gcm.cacheManager).getGlobalConfiguration().isZeroCapacityNode();
    }
 }
