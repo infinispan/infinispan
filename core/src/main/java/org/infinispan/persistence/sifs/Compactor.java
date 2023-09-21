@@ -346,6 +346,11 @@ class Compactor implements Consumer<Object> {
                   }
                   // Make sure we don't start another compaction for this file while performing expiration
                   stats.setScheduled();
+                        // It is possible the log appender completed while we were compacting the file, if
+                        // so we may need to resubmit the file to be compacted
+                        if (stats.isCompleted() && stats.readyToBeScheduled(compactionThreshold, stats.free.get())) {
+                           schedule(fileId, stats);
+                        }
                }
                compactSingleFile(fileId, isLogFile, subscriber, currentTimeMilliseconds);
             }
