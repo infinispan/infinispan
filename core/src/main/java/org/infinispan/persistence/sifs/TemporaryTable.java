@@ -40,6 +40,7 @@ public class TemporaryTable {
    public boolean set(int segment, Object key, int file, int offset) {
       ConcurrentMap<Object, Entry> map = table.get(segment);
       if (map == null) {
+         log.tracef("Table did not have segment %s", segment);
          return false;
       }
       for (; ; ) {
@@ -60,10 +61,12 @@ public class TemporaryTable {
                      throw new IllegalStateException("Unexpected interruption!", e);
                   }
                }
+               log.tracef("Updated key to %s:%s", file, offset);
                entry.update(file, offset);
                break;
             }
          } else {
+            log.tracef("Set key to %s:%s", file, offset);
             break;
          }
       }
@@ -73,6 +76,7 @@ public class TemporaryTable {
    public LockedEntry replaceOrLock(int segment, Object key, int file, int offset, int prevFile, int prevOffset) {
       ConcurrentMap<Object, Entry> map = table.get(segment);
       if (map == null) {
+         log.tracef("Table did not have segment %s", segment);
          return null;
       }
       for (;;) {
@@ -87,11 +91,15 @@ public class TemporaryTable {
                   throw new IllegalStateException("Unexpected double locking");
                }
                if (entry.getFile() == prevFile && entry.getOffset() == prevOffset) {
+                  log.tracef("Updated entry for key %s to %s:%s from %s:%s", key, file, offset, prevFile, prevOffset);
                   entry.update(file, offset);
+               } else {
+                  log.tracef("Did not update entry for key %s as %s:%s does not match %s:%s", key, prevFile, prevOffset, entry.getFile(), entry.getOffset());
                }
                return null;
             }
          } else {
+            log.tracef("Locked entry for key %s", key);
             return lockedEntry;
          }
       }
@@ -100,6 +108,7 @@ public class TemporaryTable {
    public void updateAndUnlock(LockedEntry lockedEntry, int file, int offset) {
       Entry entry = (Entry) lockedEntry;
       synchronized (entry) {
+         log.tracef("Updating entry to %s:%s from %s:%s", file, offset, entry.file, entry.offset);
          entry.file = file;
          entry.offset = offset;
          entry.locked = false;
@@ -112,7 +121,11 @@ public class TemporaryTable {
       synchronized (entry) {
          ConcurrentMap<Object, Entry> map = table.get(segment);
          if (map != null) {
-            map.remove(key);
+            Entry removedEntry = map.remove(key);
+            assert removedEntry == entry : "Removed entry " + removedEntry + " for key which didn't match " + lockedEntry;
+            log.tracef("Removed and unlocking entry %s", entry);
+         } else {
+            log.tracef("Table did not have segment %s", segment);
          }
          entry.setRemoved(true);
          entry.notifyAll();
@@ -122,23 +135,29 @@ public class TemporaryTable {
    public EntryPosition get(int segment, Object key) {
       ConcurrentMap<Object, Entry> map = table.get(segment);
       if (map == null) {
+         log.tracef("Table did not have segment %s", segment);
          return null;
       }
       Entry entry = map.get(key);
       if (entry == null) {
+         log.tracef("Key %s not present in temporary table", key);
          return null;
       }
       synchronized (entry) {
          // when the entry is locked, it means that it was not in the table before
          // and it's protected against writes, but its value is not up-to-date
          if (entry.isLocked()) {
+            log.tracef("Key %s was present in temporary table with %s:%s, but locked", key, entry.getFile(),
+                  entry.getOffset());
             return null;
          }
+         log.tracef("Key %s was present in temporary table with %s:%s", key, entry.getFile(), entry.getOffset());
          return new EntryPosition(entry.getFile(), entry.getOffset());
       }
    }
 
    public void clear() {
+      log.tracef("Clearing TemporaryTable");
       for (int i = 0; i < table.length(); ++i) {
          ConcurrentMap<Object, Entry> map = table.get(i);
          if (map != null) {
@@ -150,19 +169,28 @@ public class TemporaryTable {
    public void removeConditionally(int segment, Object key, int file, int offset) {
       ConcurrentMap<Object, Entry> map = table.get(segment);
       if (map == null) {
+         log.tracef("Table did not have segment %s", segment);
          return;
       }
       Entry tempEntry = map.get(key);
       if (tempEntry != null) {
          synchronized (tempEntry) {
             if (tempEntry.isLocked()) {
+               log.tracef("Key %s was present in temporary table with %s:%s, but locked", key, tempEntry.getFile(),
+                     tempEntry.getOffset());
                return;
             }
             if (tempEntry.getFile() == file && tempEntry.getOffset() == offset) {
+               log.tracef("Removed Key %s was present in temporary table with %s:%s", key, file, offset);
                map.remove(key, tempEntry);
                tempEntry.setRemoved(true);
+            } else {
+               log.tracef("Key %s was present in temporary table with %s:%s, which doesn't match %s:%s", key, tempEntry.getFile(),
+                     tempEntry.getOffset(), file, offset);
             }
          }
+      } else {
+         log.tracef("Table did contain key %s", key);
       }
    }
 

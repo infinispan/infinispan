@@ -27,6 +27,9 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import io.reactivex.rxjava3.internal.subscriptions.AsyncSubscription;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
+
 @Test(groups = "stress", testName = "persistence.sifs.SoftIndexFileStoreStressTest")
 public class SoftIndexFileStoreStressTest extends SingleCacheManagerTest {
    private static final String CACHE_NAME = "stress-test-cache";
@@ -111,17 +114,34 @@ public class SoftIndexFileStoreStressTest extends SingleCacheManagerTest {
 
       Future<Void> compactionFork = fork(() -> {
          while (continueRunning.get()) {
-            try {
-               compactor.forceCompactionForAllNonLogFiles()
-                     .toCompletableFuture().get(5, TimeUnit.SECONDS);
-            } catch (TimeoutException e) {
-               throw e;
-            }
+            TestSubscriber<Object> testSubscriber = TestSubscriber.create();
+            testSubscriber.onSubscribe(new AsyncSubscription());
+            Compactor.CompactionExpirationSubscriber expSub = new Compactor.CompactionExpirationSubscriber() {
+               @Override
+               public void onEntryPosition(EntryPosition entryPosition) { }
+
+               @Override
+               public void onEntryEntryRecord(EntryRecord entryRecord) { }
+
+               @Override
+               public void onComplete() {
+                  testSubscriber.onComplete();
+               }
+
+               @Override
+               public void onError(Throwable t) {
+                  testSubscriber.onError(t);
+               }
+            };
+
+            compactor.performExpirationCompaction(expSub);
+            testSubscriber.awaitDone(5, TimeUnit.SECONDS)
+                  .assertComplete().assertNoErrors();
          }
       });
 
       long startTime = System.nanoTime();
-      long secondsToRun = TimeUnit.MINUTES.toSeconds(2);
+      long secondsToRun = TimeUnit.MINUTES.toSeconds(10);
 
       while (TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - startTime) < secondsToRun) {
          if (retrievalFork.isDone() || compactionFork.isDone() || writeFork.isDone() || removeFork.isDone()) {
