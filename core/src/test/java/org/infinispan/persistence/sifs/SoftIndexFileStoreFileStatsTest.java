@@ -2,6 +2,7 @@ package org.infinispan.persistence.sifs;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
@@ -14,6 +15,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
@@ -265,6 +267,50 @@ public class SoftIndexFileStoreFileStatsTest extends SingleCacheManagerTest {
          }
 
          assertNull("File " + entry.getKey() + " was still not removed... stats were: " + statsMap, completedStats);
+      } finally {
+         TestingUtil.replaceComponent(cacheManager, TimeService.class, controlledTimeService.getActualTimeService(), true);
+      }
+   }
+
+   public void testExpirationCompactionOnLogFile(Method m) throws InterruptedException {
+      String cacheName = m.getName();
+
+      ControlledTimeService controlledTimeService = defineCacheConfigurationAndInjectTimeService(cacheName);
+      try {
+         Cache<String, Object> cache = cacheManager.getCache(cacheName);
+         cache.start();
+
+         cache.put("expired", "bar", 10, TimeUnit.SECONDS);
+
+         // This value will be overwritten in a loop later to cause log file to roll over
+         cache.put("replace-me", "1");
+
+         controlledTimeService.advance(TimeUnit.SECONDS.toMillis(11));
+
+         NonBlockingSoftIndexFileStore store = TestingUtil.getFirstStore(cache);
+
+         Compactor compactor = TestingUtil.extractField(store, "compactor");
+
+         // We use a sync queue so we can block the compaction and insert values
+         SynchronousQueue<Object> queue = new SynchronousQueue<>();
+
+         MyCompactionObserver myCompactionObserver = new MyCompactionObserver(queue);
+         // This will be blocked by the expired entry above
+         compactor.performExpirationCompaction(myCompactionObserver);
+
+         int increment = 2;
+         ConcurrentMap<Integer, Compactor.Stats> fileStats = compactor.getFileStats();
+         while (extractCompletedStat(fileStats) == null) {
+            cache.put("replace-me", String.valueOf(increment++));
+         }
+
+         // Let compaction expiration complete now
+         assertNotNull(queue.poll(10, TimeUnit.SECONDS));
+
+         // Compactor should clean up the old file and it should just be a single entry for the removed entry
+         eventually(() -> "File stats are: " + fileStats + " and data directory size is: " +
+                     SoftIndexFileStoreTestUtils.dataDirectorySize(tmpDirectory, cacheName)
+               , () -> SoftIndexFileStoreTestUtils.dataDirectorySize(tmpDirectory, cacheName) < 1000L);
       } finally {
          TestingUtil.replaceComponent(cacheManager, TimeService.class, controlledTimeService.getActualTimeService(), true);
       }
