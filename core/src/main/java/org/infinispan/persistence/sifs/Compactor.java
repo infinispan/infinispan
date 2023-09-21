@@ -25,15 +25,13 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.NonBlockingManager;
 import org.infinispan.util.logging.LogFactory;
 
-import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Scheduler;
-import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.processors.FlowableProcessor;
 import io.reactivex.rxjava3.processors.UnicastProcessor;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -45,7 +43,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-class Compactor implements Consumer<Object> {
+class Compactor {
    private static final Log log = LogFactory.getLog(Compactor.class, Log.class);
 
    private final NonBlockingManager nonBlockingManager;
@@ -60,7 +58,7 @@ class Compactor implements Consumer<Object> {
    private final Executor blockingExecutor;
 
    // Initialize so we can enqueue operations until start begins
-   private FlowableProcessor<Object> processor = UnicastProcessor.create().toSerialized();
+   private FlowableProcessor<CompletableFuture<Void>> processor = UnicastProcessor.<CompletableFuture<Void>>create().toSerialized();
 
    private Index index;
    // as processing single scheduled compaction takes a lot of time, we don't use the queue to signalize
@@ -69,12 +67,6 @@ class Compactor implements Consumer<Object> {
    // variable used to denote running (not null but not complete) and stopped (not null but complete)
    // This variable is never to be null
    private volatile CompletableFuture<?> stopped = CompletableFutures.completedNull();
-
-   private CompletableFuture<Void> paused = CompletableFutures.completedNull();
-
-   // Special object used solely for the purpose of resuming the compactor after compacting a file and waiting for
-   // all indices to be updated
-   private static final Object RESUME_PILL = new Object();
 
    // This buffer is used by the compactor thread to avoid allocating buffers per entry written that are smaller
    // than the header size
@@ -158,17 +150,20 @@ class Compactor implements Consumer<Object> {
 
       Scheduler scheduler = Schedulers.from(blockingExecutor);
       processor.observeOn(scheduler)
-            .delay(obj -> {
-               // These types are special and should allow processing always
-               if (obj == RESUME_PILL || obj instanceof CompletableFuture) {
-                  return Flowable.empty();
+            .concatMapCompletable(stage -> {
+               processRequest(stage);
+               Completable completable = Completable.fromCompletionStage(stage);
+               // If stage is completed asynchronously it could be on a non blocking thread, make sure to resume
+               // on our blocking executor
+               if (!stage.isDone()) {
+                  completable = completable.observeOn(scheduler);
                }
-               return RxJavaInterop.voidCompletionStageToFlowable(paused);
+               return completable;
             })
-            .subscribe(this, error -> {
+            .subscribe(() -> stopped.complete(null), error -> {
                log.compactorEncounteredException(error, -1);
                stopped.completeExceptionally(error);
-            }, () -> stopped.complete(null));
+            });
 
       fileStats.forEach((file, stats) -> {
          if (stats.readyToBeScheduled(compactionThreshold, stats.getFree())) {
@@ -187,8 +182,67 @@ class Compactor implements Consumer<Object> {
       void onError(Throwable t);
    }
 
+   /**
+    * Performs an expiration compaction run. That is that it will compact any files that have been completed that have
+    * an expiration time less than the current time. It will also process logFiles by reading through the contents
+    * and updating entries that have been expired, leaving all other entries in that file and the file itself alone.
+    * <p>
+    * This method must only be invoked from a blocking thread as it does I/O operations.
+    * <p>
+    * The provided subscriber will be notified for every expired entry and finally when it is complete either due to
+    * normal operation or expiration.
+    * @param subscriber Subscriber to callback for each expired entry and completion
+    */
    public void performExpirationCompaction(CompactionExpirationSubscriber subscriber) {
-      processor.onNext(subscriber);
+      // We have to copy the file ids into its own collection because it can pickup the compactor files sometimes
+      // causing extra unneeded churn in some cases
+      Set<Integer> currentFiles = new HashSet<>();
+      try (CloseableIterator<Integer> iter = fileProvider.getFileIterator()) {
+         while (iter.hasNext()) {
+            currentFiles.add(iter.next());
+         }
+      }
+      long currentTimeMilliseconds = timeService.wallClockTime();
+
+      log.tracef("Performing expiration compaction, found possible files %s", currentFiles);
+
+      CompletionStages.performSequentially(currentFiles.iterator(), fileId -> {
+         boolean isLogFile = fileProvider.isLogFile(fileId);
+         Stats stats;
+         if (isLogFile) {
+            // Force log file to be in the stats
+            free(fileId, 0);
+            stats = fileStats.get(fileId);
+         } else {
+            stats = fileStats.get(fileId);
+            if (stats == null) {
+               log.tracef("Skipping expiration compaction for file %d as it is not included in fileStats", fileId);
+               return CompletableFutures.completedNull();
+            }
+            if (stats.markedForDeletion() || stats.nextExpirationTime == -1 || stats.nextExpirationTime > currentTimeMilliseconds) {
+               log.tracef("Skipping expiration compaction for file %d since it is marked for deletion: %s or already scheduled %s or its expiration time %s is not yet",
+                     (Object) fileId, stats.markedForDeletion(), stats.isScheduled(), stats.nextExpirationTime);
+               return CompletableFutures.completedNull();
+            }
+         }
+         if (stats.setScheduled()) {
+            log.tracef("Submitting expiration compaction for file %d with stats %s", fileId, stats);
+            CompletableFuture<Void> request = new CompactionRequest(fileId, isLogFile, subscriber);
+            processor.onNext(request);
+            // We need to make sure we resume on a blocking thread - Compactor will resume on non blocking for
+            // CompactionRequest completions
+            return request.thenRunAsync(() -> {}, blockingExecutor);
+         } else {
+            log.tracef("Skipping expiration compaction for file %d as already scheduled for compaction", fileId);
+         }
+         return CompletableFutures.completedNull();
+      }).whenComplete((ignore, t) -> {
+         if (t != null) {
+            subscriber.onError(t);
+         } else {
+            subscriber.onComplete();
+         }
+      });
    }
 
    // Present for testing only - note is still asynchronous if underlying executor is
@@ -258,7 +312,7 @@ class Compactor implements Consumer<Object> {
    }
 
    /**
-    * Immediately sends a request to pause the compactor. The returned stage will complete when the
+    * Immediately sends a request to clear the compactor. The returned stage will complete when the
     * compactor is actually paused. To resume the compactor the {@link #resumeAfterClear()} method
     * must be invoked or else the compactor will not process new requests.
     *
@@ -284,14 +338,10 @@ class Compactor implements Consumer<Object> {
    }
 
    public void resumeAfterClear() {
-      // This completion will push all the other tasks that have been delayed in this method call
       if (!clearSignal.getAndSet(false)) {
          throw new IllegalStateException("Resume of compactor invoked without first clear and pausing!");
       }
-   }
-
-   private void resumeAfterPause() {
-      processor.onNext(RESUME_PILL);
+      log.tracef("Resuming compactor after clear");
    }
 
    public void stopOperations() {
@@ -310,54 +360,51 @@ class Compactor implements Consumer<Object> {
       }
 
       // Reinitialize processor so it can be started again possibly
-      processor = UnicastProcessor.create().toSerialized();
+      processor = UnicastProcessor.<CompletableFuture<Void>>create().toSerialized();
    }
 
    private static class CompactionRequest extends CompletableFuture<Void> {
       private final int fileId;
+      private final boolean isLogFile;
+      private final CompactionExpirationSubscriber subscriber;
 
       private CompactionRequest(int fileId) {
+         this(fileId, false, null);
+      }
+
+      private CompactionRequest(int fileId, boolean isLogFile, CompactionExpirationSubscriber subscriber) {
          this.fileId = fileId;
+         this.isLogFile = isLogFile;
+         this.subscriber = subscriber;
       }
 
       @Override
       public String toString() {
          return "CompactionRequest{" +
                "fileId=" + fileId +
+               "isLogFile=" + isLogFile +
+               "isExpiration=" + (subscriber != null) +
                '}';
       }
    }
 
-   void handleIgnoredElement(Object o) {
-      if (o instanceof CompactionExpirationSubscriber) {
-         // We assume the subscriber handles blocking properly
-         ((CompactionExpirationSubscriber) o).onComplete();
-      } else if (o instanceof CompletableFuture) {
-         nonBlockingManager.complete((CompletableFuture<?>) o, null);
-      }
+   void completeFuture(CompletableFuture<Void> future) {
+      nonBlockingManager.complete(future, null);
    }
 
-   @Override
-   public void accept(Object o) throws Throwable {
+   public void processRequest(CompletableFuture<Void> stageRequest) throws Throwable {
       if (terminateSignal) {
-         log.tracef("Compactor already terminated, ignoring request " + o);
+         log.tracef("Compactor already terminated, ignoring request " + stageRequest);
          // Just ignore if terminated
-         handleIgnoredElement(o);
-         return;
-      }
-      if (o == RESUME_PILL) {
-         log.tracef("Resuming compactor");
-         // This completion will push all the other tasks that have been delayed in this method call
-         // Note this must be completed in the context of the compactor thread
-         paused.complete(null);
+         completeFuture(stageRequest);
          return;
       }
       // Note that this accept is only invoked from a single thread at a time so we don't have to worry about
       // any other threads decrementing clear signal. However, another thread can increment, that is okay for us
       if (clearSignal.get()) {
          // We ignore any entries since it was last cleared
-         if (o instanceof ClearFuture) {
-            log.tracef("Compactor ignoring all future compactions until resumed");
+         if (stageRequest instanceof ClearFuture) {
+            log.tracef("Compactor ignoring all future compactions until clear completes");
 
             if (logFile != null) {
                logFile.close();
@@ -365,73 +412,15 @@ class Compactor implements Consumer<Object> {
                nextExpirationTime = -1;
             }
 
-            nonBlockingManager.complete((CompletableFuture<?>) o, null);
+            nonBlockingManager.complete(stageRequest, null);
          } else {
-            log.tracef("Ignoring compaction request for %s as compactor is being cleared", o);
-            handleIgnoredElement(o);
+            log.tracef("Ignoring compaction request for %s as compactor is being cleared", stageRequest);
+            completeFuture(stageRequest);
          }
          return;
       }
 
-      if (o instanceof CompactionExpirationSubscriber) {
-         CompactionExpirationSubscriber subscriber = (CompactionExpirationSubscriber) o;
-         try {
-            // We have to copy the file ids into its own collection because it can pickup the compactor files sometimes
-            // causing extra unneeded churn in some cases
-            Set<Integer> currentFiles = new HashSet<>();
-            try (CloseableIterator<Integer> iter = fileProvider.getFileIterator()) {
-               while (iter.hasNext()) {
-                  currentFiles.add(iter.next());
-               }
-            }
-            for (int fileId : currentFiles) {
-               boolean isLogFile = fileProvider.isLogFile(fileId);
-               if (isLogFile) {
-                  // Force log file to be in the stats
-                  free(fileId, 0);
-               }
-               Stats stats = fileStats.get(fileId);
-               long currentTimeMilliseconds = timeService.wallClockTime();
-               if (stats != null) {
-                  // Don't check for expired entries in any files that are marked for deletion or don't have entries
-                  // that can expire yet
-                  // Note that log files do not set the expiration time, so it is always -1 in that case, but we still
-                  // want to check just in case some files are expired there.
-                  // Note that we when compacting an expired entry from the log file we first write to the compacted
-                  // file and then notify the subscriber. Assuming the subscriber then invokes remove expired it
-                  // will actually cause two writes for the same expired entry. This is required though in case if
-                  // the entry is not removed from the listener as we don't want to keep returning the same entry
-                  // to the listener that it has expired.
-                  if (stats.markedForDeletion() || (!isLogFile && stats.nextExpirationTime == -1) || stats.nextExpirationTime > currentTimeMilliseconds) {
-                     log.tracef("Skipping expiration for file %d since it is marked for deletion: %s or its expiration time %s is not yet",
-                           (Object) fileId, stats.markedForDeletion(), stats.nextExpirationTime);
-                     continue;
-                  }
-                  // Make sure we don't start another compaction for this file while performing expiration
-                  if (stats.setScheduled()) {
-                     compactSingleFile(fileId, isLogFile, subscriber, currentTimeMilliseconds);
-                     if (isLogFile) {
-                        // Unschedule the compaction for log file as we can't remove it
-                        stats.scheduled.set(false);
-                        // It is possible the log appender completed while we were compacting the file, if
-                        // so we may need to resubmit the file to be compacted
-                        if (stats.isCompleted() && stats.readyToBeScheduled(compactionThreshold, stats.free.get())) {
-                           schedule(fileId, stats);
-                        }
-                     }
-                  }
-               } else {
-                  log.tracef("Skipping expiration for file %d as it is not included in fileStats", fileId);
-               }
-            }
-            subscriber.onComplete();
-         } catch (Throwable t) {
-            subscriber.onError(t);
-         }
-         return;
-      }
-
-      CompactionRequest request = (CompactionRequest) o;
+      CompactionRequest request = (CompactionRequest) stageRequest;
       try {
          // Any other type submitted has to be a positive integer
          Stats stats = fileStats.get(request.fileId);
@@ -439,9 +428,20 @@ class Compactor implements Consumer<Object> {
          // Double check that the file wasn't removed. If stats are null that means the file was previously removed
          // and also make sure the file wasn't marked for deletion, but hasn't yet
          if (stats != null && !stats.markedForDeletion()) {
-            compactSingleFile(request.fileId, false, null, timeService.wallClockTime());
+            compactSingleFile(request, timeService.wallClockTime());
+            if (request.isLogFile) {
+               // Unschedule the compaction for log file as we can't remove it
+               stats.scheduled.set(false);
+               // It is possible the log appender completed while we were compacting the file, if
+               // so we may need to resubmit the file to be compacted
+               if (stats.isCompleted() && stats.readyToBeScheduled(compactionThreshold, stats.free.get())) {
+                  schedule(request.fileId, stats);
+               }
+            }
+         } else {
+            log.tracef("Ignoring compaction request for a file %s that isn't present in stats or was marked for deletion %s", request.fileId, stats);
+            completeFuture(request);
          }
-         request.complete(null);
       } catch (Throwable t) {
          log.trace("Completing compaction for file: " + request.fileId + " due to exception!", t);
          request.completeExceptionally(t);
@@ -455,16 +455,16 @@ class Compactor implements Consumer<Object> {
     * moved to the new log file and the current file is deleted afterwards. If an expired entry is found during compaction
     * of a non log file the expiration listener is notified and the entry is not moved, however if no expiration listener
     * is provided the expired entry is moved to the new file as is still expired.
-    * @param scheduledFile the file identifier to compact
-    * @param isLogFile     whether the provided file as a log file, which means we only notify and compact expired
-    *                      entries (ignore others)
-    * @param subscriber    the subscriber that is notified of various entries being expired
+    * @param compactionRequest the request containing the fileId and if it is a log file and optional subscriber
     * @throws IOException            thrown if there was an issue with reading or writing to a file
     * @throws ClassNotFoundException thrown if there is an issue deserializing the key for an entry
     */
-   private void compactSingleFile(int scheduledFile, boolean isLogFile, CompactionExpirationSubscriber subscriber,
+   private void compactSingleFile(CompactionRequest compactionRequest,
          long currentTimeMilliseconds) throws IOException, ClassNotFoundException {
+      int scheduledFile = compactionRequest.fileId;
       assert scheduledFile >= 0;
+      CompactionExpirationSubscriber subscriber = compactionRequest.subscriber;
+      boolean isLogFile = compactionRequest.isLogFile;
       if (subscriber == null) {
          log.tracef("Compacting file %d isLogFile %b", scheduledFile, Boolean.valueOf(isLogFile));
       } else {
@@ -554,9 +554,9 @@ class Compactor implements Consumer<Object> {
                // we could remove the entry and delete would not find it
                drop = false;
             } else {
-               log.tracef("Loading from index for key %s", key);
+               log.tracef("Loading from index for key %s when processing file %s", key, scheduledFile);
                EntryInfo info = index.getInfo(key, segment, serializedKey);
-               Objects.requireNonNull(info, "No index info found for key: " + key);
+               Objects.requireNonNull(info, "No index info found for key: " + key + " when processing file " + scheduledFile);
                if (info.numRecords <= 0) {
                   throw new IllegalArgumentException("Number of records " + info.numRecords + " for index of key " + key + " should be more than zero!");
                }
@@ -697,16 +697,25 @@ class Compactor implements Consumer<Object> {
             // until all entries have been moved for this file
             CompletionStage<Void> aggregate = aggregateCompletionStage.freeze();
             if (!CompletionStages.isCompletedSuccessfully(aggregate)) {
-               paused = new CompletableFuture<>();
+               log.tracef("Compactor paused, waiting for previous index updates to complete");
                // We resume after completed, Note that we must complete the {@code paused} variable inside the compactor
                // execution pipeline otherwise we can invoke compactor operations in the wrong thread
                aggregate.whenComplete((ignore, t) -> {
-                  resumeAfterPause();
                   if (t != null) {
                      log.error("There was a problem moving indexes for compactor with file " + logFile.fileId, t);
+                     compactionRequest.completeExceptionally(t);
+                  } else {
+                     log.tracef("Compaction ended after index was updated for %s", scheduledFile);
+                     completeFuture(compactionRequest);
                   }
                });
+            } else {
+               log.tracef("Compaction ended synchronously for %s", scheduledFile);
+               completeFuture(compactionRequest);
             }
+         } else {
+            log.tracef("Compaction ended early for %s due to pending clear signalled", scheduledFile);
+            completeFuture(compactionRequest);
          }
       }
       if (subscriber != null) {
@@ -788,7 +797,8 @@ class Compactor implements Consumer<Object> {
       }
 
       public boolean setScheduled() {
-         return !scheduled.getAndSet(true);
+         boolean scheduled = !this.scheduled.getAndSet(true);
+         return scheduled;
       }
 
       public boolean isCompleted() {

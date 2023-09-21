@@ -169,12 +169,14 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
    }
 
    public CompletionStage<Void> pause() {
+      log.tracef("Pausing LogAppender");
       LogRequest pauseRequest = LogRequest.pauseRequest();
       requestProcessor.onNext(pauseRequest);
       return pauseRequest;
    }
 
    public CompletionStage<Void> resume() {
+      log.tracef("Resuming LogAppender");
       LogRequest resumeRequest = LogRequest.resumeRequest();
       requestProcessor.onNext(resumeRequest);
       return resumeRequest;
