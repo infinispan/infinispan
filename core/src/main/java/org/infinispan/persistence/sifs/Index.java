@@ -293,6 +293,7 @@ class Index {
    }
 
    public CompletionStage<Void> clear() {
+      log.tracef("Clearing index");
       lock.writeLock().lock();
       try {
          AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();

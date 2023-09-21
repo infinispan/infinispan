@@ -300,6 +300,10 @@ public class CompletionStages {
       abstract R getValue();
    }
 
+   public static <I> CompletionStage<Void> performSequentially(Iterator<I> iterator, Function<? super I, CompletionStage<Void>> function) {
+      return performSequentially(iterator, function, null, (ignore1, ignore2) -> {});
+   }
+
    public static <I, T, A, R> CompletionStage<R> performSequentially(Iterator<I> iterator, Function<? super I, CompletionStage<T>> function, Collector<T, A, R> collector) {
       A supplier = collector.supplier().get();
       CompletionStage<A> stage =  performSequentially(iterator, function, supplier, collector.accumulator());
