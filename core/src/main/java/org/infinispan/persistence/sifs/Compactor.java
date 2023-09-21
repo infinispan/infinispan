@@ -409,6 +409,11 @@ class Compactor implements Consumer<Object> {
                      if (isLogFile) {
                         // Unschedule the compaction for log file as we can't remove it
                         stats.scheduled.set(false);
+                        // It is possible the log appender completed while we were compacting the file, if
+                        // so we may need to resubmit the file to be compacted
+                        if (stats.isCompleted() && stats.readyToBeScheduled(compactionThreshold, stats.free.get())) {
+                           schedule(fileId, stats);
+                        }
                      }
                   }
                } else {
