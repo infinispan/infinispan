@@ -130,7 +130,7 @@
       <version.byteman>4.0.21</version.byteman>
       <version.caffeine>3.1.1</version.caffeine>
       <version.commons.compress>1.22</version.commons.compress>
-      <version.console>15.0.0.Dev02</version.console>
+      <version.console>15.0.0.Dev03</version.console>
       <version.fabric8.kubernetes-client>6.7.2</version.fabric8.kubernetes-client>
       <version.glassfish.jaxb>2.3.1</version.glassfish.jaxb>
       <version.glassfish.json>1.1.4</version.glassfish.json>
