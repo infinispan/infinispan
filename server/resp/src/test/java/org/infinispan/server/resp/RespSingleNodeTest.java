@@ -41,6 +41,7 @@ import org.testng.annotations.Test;
 
 import io.lettuce.core.ExpireArgs;
 import io.lettuce.core.FlushMode;
+import io.lettuce.core.KeyScanArgs;
 import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.RedisCommandExecutionException;
@@ -598,6 +599,75 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
          if (cursor.isFinished())
             break;
       }
+   }
+
+   @Test
+   public void testScanFilters() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      Set<String> all = new HashSet<>();
+      for (int i = 0; i < 15; i++) {
+         String k = k(i);
+         redis.set(k, v(i));
+         all.add(k);
+      }
+
+      for (int i = 15; i < 30; i++) {
+         String k = k(i);
+         if (i < 20) {
+            redis.sadd(k, v(i));
+            continue;
+         }
+
+         if (i < 25) {
+            redis.zadd(k, 1.2, v(i));
+            continue;
+         }
+
+         redis.hset(k, Map.of(k, v(i)));
+      }
+
+      // First scan everything. We have different types mixed here.
+      Set<String> keys = new HashSet<>();
+      for (KeyScanCursor<String> cursor = redis.scan(); ; cursor = redis.scan(cursor)) {
+         keys.addAll(cursor.getKeys());
+         if (cursor.isFinished())
+            break;
+      }
+
+      assertThat(keys)
+            .hasSize(30)
+            .containsAll(all);
+
+      keys.clear();
+
+      // Now we scan only the strings.
+      ScanArgs args = KeyScanArgs.Builder.type(RespTypes.string.name());
+      for (KeyScanCursor<String> cursor = redis.scan(args); ; cursor = redis.scan(cursor, args)) {
+         keys.addAll(cursor.getKeys());
+         if (cursor.isFinished())
+            break;
+      }
+
+      assertThat(keys)
+            .hasSize(all.size())
+            .containsExactlyInAnyOrderElementsOf(all);
+
+      keys.clear();
+
+      // Now we mix glob and type filter!
+      args = KeyScanArgs.Builder
+            .type(RespTypes.string.name())
+            .match("k1*");
+      for (KeyScanCursor<String> cursor = redis.scan(args); ; cursor = redis.scan(cursor, args)) {
+         for (String key : cursor.getKeys()) {
+            assertThat(key).startsWith("k1");
+            keys.add(key);
+         }
+         if (cursor.isFinished())
+            break;
+      }
+
+      assertThat(keys).hasSize(6);
    }
 
    @Test
