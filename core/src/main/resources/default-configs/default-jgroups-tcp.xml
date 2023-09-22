@@ -16,6 +16,7 @@
         thread_pool.keep_alive_time="60000"
 
         thread_pool.thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
+        use_virtual_threads="${jgroups.thread.virtual,org.infinispan.threads.virtual:false}"
    />
    <RED/>
    <MPING mcast_addr="${jgroups.mcast_addr:239.6.7.8}"
