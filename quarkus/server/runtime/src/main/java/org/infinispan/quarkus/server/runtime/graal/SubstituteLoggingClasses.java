@@ -50,7 +50,7 @@ final class Target_Bootstrap {
    }
    @Substitute
    protected void configureLogging() {
-      // Do nothing
+      Server.log.warn("The native server is currently in an Alpha state. For production workloads we strongly recommend utilising Infinispan's JVM server");
    }
 }
 
