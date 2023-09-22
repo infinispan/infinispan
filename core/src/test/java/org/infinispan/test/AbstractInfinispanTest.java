@@ -38,6 +38,7 @@ import jakarta.transaction.TransactionManager;
 
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.api.BasicCacheContainer;
+import org.infinispan.commons.jdkspecific.ThreadCreator;
 import org.infinispan.commons.test.ExceptionRunnable;
 import org.infinispan.commons.test.TestNGLongTestsHook;
 import org.infinispan.commons.test.TestResourceTracker;
@@ -89,10 +90,11 @@ public abstract class AbstractInfinispanTest {
    protected static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    private final ThreadFactory defaultThreadFactory = getTestThreadFactory("ForkThread");
-   private final ThreadPoolExecutor testExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
-                                                                          60L, TimeUnit.SECONDS,
-                                                                          new SynchronousQueue<>(),
-                                                                          defaultThreadFactory);
+   private final ExecutorService testExecutor = ThreadCreator.createBlockingExecutorService()
+         .orElseGet(() -> new ThreadPoolExecutor(0, Integer.MAX_VALUE,
+               60L, TimeUnit.SECONDS,
+               new SynchronousQueue<>(),
+               defaultThreadFactory));
    public static final TimeService TIME_SERVICE = new EmbeddedTimeService();
 
    public static class OrderByInstance implements IMethodInterceptor {
@@ -196,10 +198,12 @@ public abstract class AbstractInfinispanTest {
 
    @AfterMethod
    protected final void checkThreads() {
-      int activeTasks = testExecutor.getActiveCount();
-      if (activeTasks != 0) {
-         log.errorf("There were %d active tasks found in the test executor service for class %s", activeTasks,
-                    getClass().getSimpleName());
+      if (testExecutor instanceof ThreadPoolExecutor) {
+         int activeTasks = ((ThreadPoolExecutor) testExecutor).getActiveCount();
+         if (activeTasks != 0) {
+            log.errorf("There were %d active tasks found in the test executor service for class %s", activeTasks,
+                  getClass().getSimpleName());
+         }
       }
    }
 

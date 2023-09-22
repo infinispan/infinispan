@@ -2,19 +2,21 @@ package org.infinispan.factories.threads;
 
 import static org.infinispan.commons.logging.Log.CONFIG;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.executors.NonBlockingResource;
+import org.infinispan.commons.jdkspecific.ThreadCreator;
 import org.infinispan.commons.util.concurrent.BlockingRejectedExecutionHandler;
 import org.jboss.threads.EnhancedQueueExecutor;
-import org.jboss.threads.management.ManageableThreadPoolExecutorService;
 
 /**
  * Executor Factory used for blocking executors which utilizes {@link EnhancedQueueExecutor} internally.
  * @author wburns
  */
-public class EnhancedQueueExecutorFactory extends AbstractThreadPoolExecutorFactory<ManageableThreadPoolExecutorService> {
+public class EnhancedQueueExecutorFactory extends AbstractThreadPoolExecutorFactory<ExecutorService> {
    protected EnhancedQueueExecutorFactory(int maxThreads, int coreThreads, int queueLength, long keepAlive) {
       super(maxThreads, coreThreads, queueLength, keepAlive);
    }
@@ -26,23 +28,25 @@ public class EnhancedQueueExecutorFactory extends AbstractThreadPoolExecutorFact
    }
 
    @Override
-   public ManageableThreadPoolExecutorService createExecutor(ThreadFactory factory) {
+   public ExecutorService createExecutor(ThreadFactory factory) {
       if (factory instanceof NonBlockingResource) {
          throw new IllegalStateException("Executor factory configured to be blocking and received a thread" +
                " factory that creates non-blocking threads!");
       }
-      EnhancedQueueExecutor.Builder builder = new EnhancedQueueExecutor.Builder();
-      builder.setThreadFactory(factory);
-      builder.setCorePoolSize(coreThreads);
-      builder.setMaximumPoolSize(maxThreads);
-      builder.setGrowthResistance(0.0f);
-      builder.setMaximumQueueSize(queueLength);
-      builder.setKeepAliveTime(keepAlive, TimeUnit.MILLISECONDS);
+      return ThreadCreator.createBlockingExecutorService().orElseGet(() -> {
+         EnhancedQueueExecutor.Builder builder = new EnhancedQueueExecutor.Builder();
+         builder.setThreadFactory(factory);
+         builder.setCorePoolSize(coreThreads);
+         builder.setMaximumPoolSize(maxThreads);
+         builder.setGrowthResistance(0.0f);
+         builder.setMaximumQueueSize(queueLength);
+         builder.setKeepAliveTime(Duration.of(keepAlive, ChronoUnit.MILLIS));
 
-      EnhancedQueueExecutor enhancedQueueExecutor = builder.build();
-      enhancedQueueExecutor.setHandoffExecutor(task ->
-         BlockingRejectedExecutionHandler.getInstance().rejectedExecution(task, enhancedQueueExecutor));
-      return enhancedQueueExecutor;
+         EnhancedQueueExecutor enhancedQueueExecutor = builder.build();
+         enhancedQueueExecutor.setHandoffExecutor(task ->
+               BlockingRejectedExecutionHandler.getInstance().rejectedExecution(task, enhancedQueueExecutor));
+         return enhancedQueueExecutor;
+      });
    }
 
    @Override
