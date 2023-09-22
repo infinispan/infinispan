@@ -29,6 +29,7 @@ public class DefaultThreadFactory implements ThreadFactory {
    private String node;
    private String component;
    private ClassLoader classLoader;
+   private boolean useVirtualThreads = ThreadCreator.useVirtualThreads();
 
    /**
     * Construct a new instance.  The access control context of the calling thread will be the one used to create
@@ -94,6 +95,10 @@ public class DefaultThreadFactory implements ThreadFactory {
       return initialPriority;
    }
 
+   public void useVirtualThread(boolean useVirtualThreads) {
+      this.useVirtualThreads = useVirtualThreads;
+   }
+
    @Override
    public Thread newThread(final Runnable target) {
       return createThread(target);
@@ -110,7 +115,7 @@ public class DefaultThreadFactory implements ThreadFactory {
       return thread;
    }
 
-   private final Thread actualThreadCreate(ThreadGroup threadGroup, Runnable target) {
-      return ThreadCreator.createThread(threadGroup, target, true);
+   private Thread actualThreadCreate(ThreadGroup threadGroup, Runnable target) {
+      return ThreadCreator.createThread(threadGroup, target, useVirtualThreads);
    }
 }

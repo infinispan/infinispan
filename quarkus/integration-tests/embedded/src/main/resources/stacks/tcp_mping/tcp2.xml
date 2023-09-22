@@ -14,6 +14,7 @@
         thread_pool.keep_alive_time="5000"
 
         thread_pool.thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
+        use_virtual_threads="${jgroups.thread.virtual,org.infinispan.threads.virtual:false}"
    />
    <RED/>
 

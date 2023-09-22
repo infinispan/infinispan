@@ -15,6 +15,7 @@
               sock_conn_timeout="300" bundler_type="transfer-queue"
               thread_pool.min_threads="0" thread_pool.max_threads="25" thread_pool.keep_alive_time="5000"
               thread_pool.thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
+              use_virtual_threads="${jgroups.thread.virtual,org.infinispan.threads.virtual:false}"
               xmlns="urn:org:jgroups"/>
          <RED/>
          <MPING bind_addr="127.0.0.1" break_on_coord_rsp="true"
