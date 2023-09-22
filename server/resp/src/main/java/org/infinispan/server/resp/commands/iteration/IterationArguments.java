@@ -2,14 +2,18 @@ package org.infinispan.server.resp.commands.iteration;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespTypes;
 import org.infinispan.server.resp.Util;
 import org.infinispan.server.resp.commands.ArgumentUtils;
+import org.infinispan.server.resp.filter.ComposedFilterConverterFactory;
 import org.infinispan.server.resp.filter.GlobMatchFilterConverterFactory;
+import org.infinispan.server.resp.filter.RespTypeFilterConverterFactory;
 
 public class IterationArguments {
    private static final int DEFAULT_COUNT = 10;
@@ -47,8 +51,7 @@ public class IterationArguments {
 
    public static IterationArguments parse(Resp3Handler handler, List<byte[]> arguments) {
       int argc = arguments.size();
-      String filterConverterFactory = null;
-      List<byte[]> filterConverterParams = null;
+      Map<Class<?>, List<byte[]>> filters = null;
       int count = DEFAULT_COUNT;
       RespTypes type = null;
       if (argc > 1) {
@@ -59,8 +62,8 @@ public class IterationArguments {
                   RespErrorUtil.syntaxError(handler.allocator());
                   return null;
                } else {
-                  filterConverterFactory = GlobMatchFilterConverterFactory.class.getName();
-                  filterConverterParams = Collections.singletonList(arguments.get(i));
+                  if (filters == null) filters = new HashMap<>(2);
+                  filters.put(GlobMatchFilterConverterFactory.class, Collections.singletonList(arguments.get(i)));
                }
             } else if (Util.isAsciiBytesEquals(COUNT, arg)) {
                if (++i >= argc) {
@@ -81,6 +84,8 @@ public class IterationArguments {
                } else {
                   try {
                      type = RespTypes.valueOf(new String(arguments.get(i), StandardCharsets.US_ASCII));
+                     if (filters == null) filters = new HashMap<>(2);
+                     filters.put(RespTypeFilterConverterFactory.class, Collections.singletonList(new byte[] { (byte) type.ordinal() }));
                   } catch (IllegalArgumentException e) {
                      type = RespTypes.unknown;
                   }
@@ -88,6 +93,12 @@ public class IterationArguments {
             }
          }
       }
-      return new IterationArguments(count, filterConverterFactory, filterConverterParams, type);
+
+      if (filters != null) {
+         Map.Entry<Class<?>, List<byte[]>> e = ComposedFilterConverterFactory.convertFiltersFormat(filters);
+         return new IterationArguments(count, e.getKey().getName(), e.getValue(), type);
+      }
+
+      return new IterationArguments(count, null, null, type);
    }
 }

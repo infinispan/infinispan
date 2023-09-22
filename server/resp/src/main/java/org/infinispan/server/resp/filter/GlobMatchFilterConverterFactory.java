@@ -22,6 +22,15 @@ public class GlobMatchFilterConverterFactory implements ParamKeyValueFilterConve
 
    @Override
    public KeyValueFilterConverter<byte[], byte[], byte[]> getFilterConverter(Object[] params) {
-      return new GlobMatchFilterConverter(new String((byte[]) params[0], StandardCharsets.UTF_8), returnValue);
+      return create((byte[]) params[0], returnValue);
+   }
+
+   @Override
+   public boolean binaryParam() {
+      return true;
+   }
+
+   static KeyValueFilterConverter<byte[], byte[], byte[]> create(byte[] params, boolean returnValue) {
+      return new GlobMatchFilterConverter(new String(params, StandardCharsets.UTF_8), returnValue);
    }
 }
