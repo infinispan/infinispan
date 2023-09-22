@@ -34,6 +34,8 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
    private static final AtomicInteger m_numSkipped = new AtomicInteger(0);
    private static final Map<String, PolarionJUnitTest> m_allTests = Collections.synchronizedMap(new TreeMap<>());
 
+   private static int rerunFailingTestsCount = Integer.parseInt(System.getProperty("rerunFailingTestsCount", "0"));
+
    /**
     * @see org.testng.IConfigurationListener2#beforeConfiguration(ITestResult)
     */
@@ -230,8 +232,7 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
       PolarionJUnitTest meta;
       if (m_allTests.containsKey(key)) {
          meta = m_allTests.get(key);
-         // Guard against duplicate test names across test instances whilst supporting TestNG invocationCount
-         if (meta.successes.get() > tr.getMethod().getCurrentInvocationCount()) {
+         if (duplicateTest(tr, meta)) {
             System.err.println("[" + this.getClass().getSimpleName() + "] Test case '" + key
                   + "' already exists in the results");
             tr.setStatus(ITestResult.FAILURE);
@@ -244,5 +245,19 @@ public class PolarionJUnitXMLReporter implements IResultListener2, ISuiteListene
       }
       meta.add(tr);
       m_allTests.put(key, meta);
+   }
+
+   // Guard against duplicate test names across test instances whilst supporting TestNG invocationCount
+   private boolean duplicateTest(ITestResult tr, PolarionJUnitTest meta) {
+      int invocationCount;
+      if (tr.getMethod().getConstructorOrMethod().getMethod().isAnnotationPresent(Test.class)) {
+         Test test = tr.getMethod().getConstructorOrMethod().getMethod().getAnnotation(Test.class);
+         invocationCount = test.invocationCount();
+      } else {
+         invocationCount = 1;
+      }
+
+      int numberOfExecutions = meta.numberOfExecutions();
+      return numberOfExecutions > rerunFailingTestsCount && numberOfExecutions > invocationCount;
    }
 }
