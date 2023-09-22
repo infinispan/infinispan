@@ -56,4 +56,8 @@ public class PolarionJUnitTest {
    long elapsedTime() {
       return elapsedTime.get();
    }
+
+   int numberOfExecutions() {
+      return successes.get() + failures.size();
+   }
 }
