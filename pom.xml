@@ -172,6 +172,7 @@
       <!-- unstable and stress because we can have them inside a functional class, for example -->
       <defaultExcludedTestNGGroups>unstable,stress</defaultExcludedTestNGGroups>
       <defaultTestNGGroups>functional,unit,xsite,arquillian</defaultTestNGGroups>
+      <org.infinispan.tests.threads.virtual>false</org.infinispan.tests.threads.virtual>
       <dir.ispn>../</dir.ispn>
       <dir.jacoco>${session.executionRootDirectory}/jacoco/</dir.jacoco>
       <dir.jacoco.merged>../jacoco/merged/</dir.jacoco.merged>
@@ -2289,6 +2290,7 @@
                      <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
                      <ansi.strip>${ansi.strip}</ansi.strip>
                      <com.arjuna.ats.arjuna.common.propertiesFile>test-jbossts-properties.xml</com.arjuna.ats.arjuna.common.propertiesFile>
+                     <org.infinispan.threads.virtual>${org.infinispan.tests.threads.virtual}</org.infinispan.threads.virtual>
                   </systemPropertyVariables>
                   <rerunFailingTestsCount>${rerunFailingTestsCount}</rerunFailingTestsCount>
                   <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs}</argLine>
@@ -2515,6 +2517,15 @@
                      <failIfNoMatch>false</failIfNoMatch>
                   </configuration>
                </execution>
+               <execution>
+                  <id>get-cpu-count</id>
+                  <goals>
+                     <goal>cpu-count</goal>
+                  </goals>
+                  <configuration>
+                     <cpuCount>system.numCores</cpuCount>
+                  </configuration>
+               </execution>
             </executions>
          </plugin>
          <plugin>
@@ -2689,6 +2700,7 @@
                   <!-- this is picked up in log4j2.xml, which adds it to each module's log file name-->
                   <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
                   <ansi.strip>${ansi.strip}</ansi.strip>
+                  <org.infinispan.threads.virtual>${org.infinispan.tests.threads.virtual}</org.infinispan.threads.virtual>
                </systemPropertyVariables>
                <trimStackTrace>false</trimStackTrace>
                <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Djdk.attach.allowAttachSelf=true</argLine>
@@ -3445,6 +3457,16 @@
          <modules>
             <module>server/insights</module>
          </modules>
+      </profile>
+      <profile>
+         <id>vthreads-tests</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <properties>
+            <org.infinispan.tests.threads.virtual>true</org.infinispan.tests.threads.virtual>
+            <infinispan.test.parallel.threads>${system.numCores}</infinispan.test.parallel.threads>
+         </properties>
       </profile>
    </profiles>
 </project>
