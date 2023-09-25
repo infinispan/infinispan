@@ -5,17 +5,19 @@ import org.infinispan.commons.executors.BlockingResource;
 public class BlockingThreadFactory extends DefaultThreadFactory implements BlockingResource {
    public BlockingThreadFactory(String threadGroupName, int initialPriority, String threadNamePattern,
          String node, String component) {
-      super(new ISPNBlockingThreadGroup(threadGroupName), initialPriority, threadNamePattern, node, component);
+      super(ISPNBlockingThreadGroup.GROUP, initialPriority, threadNamePattern, node, component);
    }
 
    public BlockingThreadFactory(String name, String threadGroupName, int initialPriority,
          String threadNamePattern, String node, String component) {
-      super(name, new ISPNBlockingThreadGroup(threadGroupName), initialPriority, threadNamePattern, node, component);
+      super(name, ISPNBlockingThreadGroup.GROUP, initialPriority, threadNamePattern, node, component);
    }
 
    static final class ISPNBlockingThreadGroup extends ThreadGroup implements BlockingResource {
       ISPNBlockingThreadGroup(String name) {
          super(name);
       }
+
+      private static final ThreadGroup GROUP = new BlockingThreadFactory.ISPNBlockingThreadGroup("ISPN-blocking-group");
    }
 }
