@@ -1,6 +1,5 @@
 package org.infinispan.xsite.statetransfer;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -12,6 +11,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.ByteString;
 
 /**
  * Decorator for {@link XSiteStateTransferManager}.
@@ -116,8 +116,8 @@ public class AbstractDelegatingXSiteStateTransferManager implements XSiteStateTr
    }
 
    @Override
-   public void startAutomaticStateTransfer(Collection<String> sites) {
-      delegate.startAutomaticStateTransfer(sites);
+   public void startAutomaticStateTransferTo(ByteString remoteSite) {
+      delegate.startAutomaticStateTransferTo(remoteSite);
    }
 
    @Override

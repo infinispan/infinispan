@@ -2,7 +2,6 @@ package org.infinispan.xsite;
 
 import static java.util.stream.Collectors.toMap;
 
-import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -10,34 +9,18 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.annotations.Stop;
-import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
-import org.infinispan.notifications.cachemanagerlistener.annotation.SiteViewChanged;
-import org.infinispan.notifications.cachemanagerlistener.event.SitesViewChangedEvent;
-import org.infinispan.remoting.inboundhandler.DeliverOrder;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.security.AuthorizationPermission;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.infinispan.xsite.commands.XSiteViewNotificationCommand;
-import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 import org.infinispan.xsite.status.ContainerSiteStatusBuilder;
 import org.infinispan.xsite.status.SiteStatus;
 
@@ -51,25 +34,11 @@ import org.infinispan.xsite.status.SiteStatus;
  */
 @Scope(Scopes.GLOBAL)
 @MBean(objectName = "GlobalXSiteAdminOperations", description = "Exposes tooling for handling backing up data to remote sites.")
-@Listener
 public class GlobalXSiteAdminOperations {
 
    public static final String CACHE_DELIMITER = ",";
-   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    @Inject EmbeddedCacheManager cacheManager;
-   @Inject CacheManagerNotifier notifier;
-   @Inject ComponentRef<Transport> transportRef;
-
-   @Start
-   public void start() {
-      notifier.addListener(this);
-   }
-
-   @Stop
-   public void stop() {
-      notifier.removeListener(this);
-   }
 
    private static void addCacheAdmin(Cache<?, ?> cache, List<CacheXSiteAdminOperation> list) {
       if (cache != null) {
@@ -155,46 +124,6 @@ public class GlobalXSiteAdminOperations {
       Map<String, SiteStatus> result = new HashMap<>();
       siteStatusBuilderMap.forEach((site, builder) -> result.put(site, builder.build()));
       return result;
-   }
-
-   /**
-    * Invoked when a remote site is connected.
-    * <p>
-    * This method is used to trigger the cross-site replication state transfer if it is enabled. It checks all the
-    * caches.
-    *
-    * @param sitesUp The {@link Collection} of remote sites online.
-    */
-   public void onSitesUp(Collection<String> sitesUp) {
-      for (ComponentRegistry registry : SecurityActions.getGlobalComponentRegistry(cacheManager).getNamedComponentRegistries()) {
-         ComponentRef<XSiteStateTransferManager> st = registry.getXSiteStateTransferManager();
-         if (st != null) { //XSiteStateTransferManager not cached yet, meaning this node is starting up.
-            st.running().startAutomaticStateTransfer(sitesUp);
-         }
-      }
-   }
-
-   @SiteViewChanged
-   public CompletionStage<Void> onSitesChangedEvent(SitesViewChangedEvent event) {
-      //TODO most likely to be removed by ISPN-12989
-      var sitesUp = event.getJoiners();
-      if (sitesUp.isEmpty() || !transportRef.isWired()) {
-         return CompletableFutures.completedNull();
-      }
-      var transport = transportRef.wired();
-      Address coord;
-      if (transport.isCoordinator()) {
-         onSitesUp(event.getJoiners());
-      } else if ((coord = transport.getCoordinator()) != null) {
-         //for the case where the coordinator isn't the site master.
-         //TODO improve this by checking if the coordinator is a site master or not.
-         try {
-            transport.sendTo(coord, new XSiteViewNotificationCommand(sitesUp), DeliverOrder.NONE);
-         } catch (Exception e) {
-            log.debugf(e, "Failed to send event to coordinator. Sites: %s", sitesUp);
-         }
-      }
-      return CompletableFutures.completedNull();
    }
 
    private String toJMXResponse(Map<String, String> results) {
