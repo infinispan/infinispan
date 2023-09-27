@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
@@ -98,7 +99,6 @@ import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
-import org.infinispan.xsite.XSiteNamedCache;
 import org.infinispan.xsite.commands.remote.XSiteRequest;
 import org.jgroups.BytesMessage;
 import org.jgroups.ChannelListener;
@@ -115,6 +115,7 @@ import org.jgroups.conf.ClassConfigurator;
 import org.jgroups.fork.ForkChannel;
 import org.jgroups.jmx.JmxConfigurator;
 import org.jgroups.protocols.FORK;
+import org.jgroups.protocols.relay.RELAY;
 import org.jgroups.protocols.relay.RELAY2;
 import org.jgroups.protocols.relay.RouteStatusListener;
 import org.jgroups.protocols.relay.SiteAddress;
@@ -486,10 +487,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
 
       waitForInitialNodes();
       channel.getProtocolStack().getTransport().registerProbeHandler(probeHandler);
-      RELAY2 relay2 = findRelay2();
-      if (relay2 != null) {
-         localSite = XSiteNamedCache.cachedString(relay2.site());
-      }
+      localSite = findRelay2().map(RELAY::site).orElse(null);
       running = true;
    }
 
@@ -573,17 +571,16 @@ public class JGroupsTransport implements Transport, ChannelListener {
          return;
       }
       ProtocolStack protocolStack = channel.getProtocolStack();
-      RELAY2 relay2 = findRelay2();
-      if (relay2 != null) {
-         protocolStack.insertProtocolInStack(new FORK(), relay2, ProtocolStack.Position.BELOW);
+      var relay2 = findRelay2();
+      if (relay2.isPresent()) {
+         protocolStack.insertProtocolInStack(new FORK(), relay2.get(), ProtocolStack.Position.BELOW);
       } else {
          protocolStack.addProtocol(new FORK());
       }
    }
 
    private void setXSiteViewListener(RouteStatusListener listener) {
-      RELAY2 relay2 = findRelay2();
-      if (relay2 != null) {
+      findRelay2().ifPresent(relay2 -> {
          relay2.setRouteStatusListener(listener);
          // if a node join, and is a site master, to a running cluster, it does not get any site up/down event.
          // there is a chance to get a duplicated log entry but it does not matter.
@@ -591,7 +588,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
          if (view != null && !view.isEmpty()) {
             XSITE.receivedXSiteClusterView(view);
          }
-      }
+      });
    }
 
    /**
@@ -868,9 +865,9 @@ public class JGroupsTransport implements Transport, ChannelListener {
    }
 
    private static List<Address> fromJGroupsAddressList(List<org.jgroups.Address> list) {
-      return Collections.unmodifiableList(list.stream()
+      return list.stream()
             .map(JGroupsAddressCache::fromJGroupsAddress)
-            .collect(Collectors.toList()));
+            .collect(Collectors.toUnmodifiableList());
    }
 
    @Stop
@@ -989,29 +986,32 @@ public class JGroupsTransport implements Transport, ChannelListener {
 
    @Override
    public Set<String> getSitesView() {
-      RELAY2 relay2 = findRelay2();
-      if (relay2 == null) {
-         return null;
-      }
-      Collection<String> sites = relay2.getCurrentSites();
-      return sites == null ? Collections.emptySet() : new TreeSet<>(sites);
+      var sites = findRelay2().map(RELAY::getCurrentSites);
+      return sites.isEmpty() ? Collections.emptySet() : new TreeSet<>(sites.get());
    }
 
    @Override
    public boolean isSiteCoordinator() {
-      RELAY2 relay2 = findRelay2();
-      return relay2 != null && relay2.isSiteMaster();
+      return findRelay2().map(RELAY2::isSiteMaster).orElse(false);
    }
 
    @Override
    public Collection<Address> getRelayNodesAddress() {
-      RELAY2 relay2 = findRelay2();
-      if (relay2 == null) {
-         return Collections.emptyList();
-      }
-      return relay2.siteMasters().stream()
-            .map(JGroupsAddressCache::fromJGroupsAddress)
-            .collect(Collectors.toList());
+      return findRelay2()
+            .map(RELAY2::siteMasters)
+            .map(addresses -> addresses.stream()
+                  .map(JGroupsAddressCache::fromJGroupsAddress)
+                  .collect(Collectors.toList()))
+            .orElse(Collections.emptyList());
+   }
+
+   @Override
+   public boolean isPrimaryRelayNode() {
+      return findRelay2()
+            .map(RELAY2::siteMasters)
+            .flatMap(c -> c.stream().findFirst())
+            .map(a -> Objects.equals(a, channel.getAddress()))
+            .orElse(false);
    }
 
    @Override
@@ -1574,8 +1574,8 @@ public class JGroupsTransport implements Transport, ChannelListener {
       return oob ? DeliverOrder.NONE : DeliverOrder.PER_SENDER;
    }
 
-   private RELAY2 findRelay2() {
-      return channel.getProtocolStack().findProtocol(RELAY2.class);
+   private Optional<RELAY2> findRelay2() {
+      return Optional.ofNullable(channel.getProtocolStack().findProtocol(RELAY2.class));
    }
 
    @Override

@@ -16,7 +16,8 @@ public final class Ids {
    public static final byte IRAC_CLEAR = IRAC_UPDATE + 1;
    public static final byte IRAC_TOUCH = IRAC_CLEAR + 1;
    public static final byte IRAC_TOMBSTONE_CHECK = IRAC_TOUCH + 1;
-   private static final byte END_ID = IRAC_TOMBSTONE_CHECK + 1;
+   public static final byte SITE_EVENT = IRAC_TOMBSTONE_CHECK + 1;
+   private static final byte END_ID = SITE_EVENT + 1;
 
    private static final Builder[] ID_TO_COMMAND;
    @SuppressWarnings("rawtypes")
@@ -31,6 +32,7 @@ public final class Ids {
       ID_TO_COMMAND[IRAC_CLEAR] = IracClearKeysRequest::new;
       ID_TO_COMMAND[IRAC_TOUCH] = IracTouchKeyRequest::new;
       ID_TO_COMMAND[IRAC_TOMBSTONE_CHECK] = IracTombstoneCheckRequest::new;
+      ID_TO_COMMAND[SITE_EVENT] = XSiteRemoteEventCommand::new;
 
       CLASSES = Collections.unmodifiableSet(checkMappingAndCreateClassSet());
    }

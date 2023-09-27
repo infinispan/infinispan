@@ -103,6 +103,7 @@ import org.infinispan.util.ByteString;
 import org.infinispan.xsite.commands.XSiteAmendOfflineStatusCommand;
 import org.infinispan.xsite.commands.XSiteAutoTransferStatusCommand;
 import org.infinispan.xsite.commands.XSiteBringOnlineCommand;
+import org.infinispan.xsite.commands.XSiteLocalEventCommand;
 import org.infinispan.xsite.commands.XSiteOfflineStatusCommand;
 import org.infinispan.xsite.commands.XSiteSetStateTransferModeCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferCancelSendCommand;
@@ -115,7 +116,6 @@ import org.infinispan.xsite.commands.XSiteStateTransferStartSendCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferStatusRequestCommand;
 import org.infinispan.xsite.commands.XSiteStatusCommand;
 import org.infinispan.xsite.commands.XSiteTakeOfflineCommand;
-import org.infinispan.xsite.commands.XSiteViewNotificationCommand;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 
 /**
@@ -269,8 +269,8 @@ public class RemoteCommandsFactory {
             case TouchCommand.COMMAND_ID:
                command = new TouchCommand();
                break;
-            case XSiteViewNotificationCommand.COMMAND_ID:
-               command = new XSiteViewNotificationCommand();
+            case XSiteLocalEventCommand.COMMAND_ID:
+               command = new XSiteLocalEventCommand();
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

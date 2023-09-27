@@ -32,6 +32,7 @@ import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
@@ -215,10 +216,8 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    }
 
    @Override
-   public void startAutomaticStateTransfer(Collection<String> sites) {
-      for (String site : sites) {
-         doAutomaticStateTransfer(site);
-      }
+   public void startAutomaticStateTransferTo(ByteString remoteSite) {
+      doAutomaticStateTransfer(remoteSite.toString());
    }
 
    @Override

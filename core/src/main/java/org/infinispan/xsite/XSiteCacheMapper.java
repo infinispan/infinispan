@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
@@ -68,6 +69,15 @@ public class XSiteCacheMapper {
       localCachesMap.entrySet().removeIf(entry -> entry.getValue().cacheName.equals(cacheName));
    }
 
+   public Stream<ByteString> remoteCachesFromSite(ByteString site) {
+      return getCacheNames().stream()
+            .map(this::getConfiguration)
+            .filter(Objects::nonNull)
+            .filter(NamedConfiguration::isClustered)
+            .filter(c -> c.isAsyncBackupTo(site))
+            .map(c -> c.cacheNameInSite(site));
+   }
+
    private LocalCacheInfoImpl lookupLocalCaches(RemoteCacheInfo remoteCache) {
       var optConf = getCacheNames().stream()
             .map(this::getConfiguration)
@@ -84,10 +94,6 @@ public class XSiteCacheMapper {
       }
       log.debugf("No local cache found for cache '%s' from site '%s'", remoteCache.originCache, remoteCache.originSite);
       return null;
-   }
-
-   private static boolean isLocal(Configuration configuration) {
-      return !configuration.clustering().cacheMode().isClustered();
    }
 
    private Optional<NamedConfiguration> findConfiguration(String cacheName) {
@@ -201,7 +207,22 @@ public class XSiteCacheMapper {
       }
 
       LocalCacheInfoImpl toLocalCacheInfo() {
-         return new LocalCacheInfoImpl(name, isLocal(configuration));
+         return new LocalCacheInfoImpl(name, !isClustered());
+      }
+
+      boolean isClustered() {
+         return configuration.clustering().cacheMode().isClustered();
+      }
+
+      boolean isAsyncBackupTo(ByteString remoteSite) {
+         return configuration.sites().asyncBackupsStream().anyMatch(c -> Objects.equals(remoteSite.toString(), c.site()));
+      }
+
+      ByteString cacheNameInSite(ByteString remoteSite) {
+         var backupFor = configuration.sites().backupFor();
+         return Objects.equals(remoteSite.toString(), backupFor.remoteSite()) ?
+               ByteString.fromString(backupFor.remoteCache()) :
+               name;
       }
 
       @Override
