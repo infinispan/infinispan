@@ -19,6 +19,7 @@ import java.util.function.Predicate;
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.util.ByRef;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.reactive.publisher.impl.Notifications;
 import org.infinispan.reactive.publisher.impl.SegmentAwarePublisherSupplier;
@@ -27,7 +28,6 @@ import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.test.fwk.CheckPoint;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.mockito.AdditionalAnswers;
 import org.mockito.MockSettings;
 import org.mockito.invocation.InvocationOnMock;
@@ -148,6 +148,22 @@ public class Mocks {
       return interceptComponent(componentClass, cache, (realObject, mock) -> {
          mockStubConsumer.accept(doAnswer(blockingAnswer(AdditionalAnswers.delegatesTo(realObject), checkPoint)), mock);
       }, extraInterfaces);
+   }
+
+   public static <Mock, OwnerClass> Mock blockingFieldMock(final CheckPoint checkPoint, Class<? extends Mock> mockClass,
+                                               OwnerClass obj, Class<? super OwnerClass> objClass, String mockFieldName,
+                                               BiConsumer<? super Stubber, ? super Mock> mockStubConsumer,
+                                               Class<?>... extraInterfaces) {
+      Mock realObject = TestingUtil.extractField(obj, mockFieldName);
+      Answer<?> forwardingAnswer = AdditionalAnswers.delegatesTo(realObject);
+      MockSettings mockSettings = withSettings().defaultAnswer(forwardingAnswer);
+      if (extraInterfaces != null && extraInterfaces.length > 0) {
+         mockSettings.extraInterfaces(extraInterfaces);
+      }
+      Mock mock = mock(mockClass, mockSettings);
+      mockStubConsumer.accept(doAnswer(blockingAnswer(forwardingAnswer, checkPoint)), mock);
+      TestingUtil.replaceField(mock, mockFieldName, obj, objClass);
+      return realObject;
    }
 
    public static <Mock> Mock interceptComponent(Class<? extends Mock> componentClass, Cache<?, ?> cache,
