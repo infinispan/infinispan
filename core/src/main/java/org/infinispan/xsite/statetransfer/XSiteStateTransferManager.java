@@ -1,12 +1,12 @@
 package org.infinispan.xsite.statetransfer;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.ByteString;
 
 /**
  * It manages the state transfer between sites.
@@ -116,11 +116,11 @@ public interface XSiteStateTransferManager {
    XSiteStateConsumer getStateConsumer();
 
    /**
-    * Starts cross-site state transfer for the remote sites, if required.
+    * Starts the automatic cross-site state transfer if available and if required.
     *
-    * @param sites The remote sites.
+    * @param remoteSite The remote site to send state to.
     */
-   void startAutomaticStateTransfer(Collection<String> sites);
+   void startAutomaticStateTransferTo(ByteString remoteSite);
 
    /**
     * @param site The remote site.

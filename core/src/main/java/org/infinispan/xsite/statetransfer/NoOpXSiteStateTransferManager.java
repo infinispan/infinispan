@@ -1,6 +1,5 @@
 package org.infinispan.xsite.statetransfer;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -11,10 +10,11 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.ByteString;
 
 /**
  * A no-op implementation of {@link XSiteStateTransferManager}.
- *
+ * <p>
  * This instance is used when cross-site replication is disabled.
  *
  * @author Pedro Ruivo
@@ -100,7 +100,7 @@ public class NoOpXSiteStateTransferManager implements XSiteStateTransferManager 
    }
 
    @Override
-   public void startAutomaticStateTransfer(Collection<String> sites) {
+   public void startAutomaticStateTransferTo(ByteString remoteSite) {
       //no-op
    }
 

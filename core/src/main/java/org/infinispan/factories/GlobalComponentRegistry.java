@@ -54,6 +54,7 @@ import org.infinispan.xsite.GlobalXSiteAdminOperations;
 
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.xsite.XSiteCacheMapper;
+import org.infinispan.xsite.events.XSiteEventsManager;
 
 /**
  * A global component registry where shared components are stored.
@@ -155,6 +156,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          basicComponentRegistry.getComponent(GlobalConfigurationManager.class);
          basicComponentRegistry.getComponent(CacheManagerJmxRegistration.class);
          basicComponentRegistry.getComponent(CacheManagerMetricsRegistration.class);
+         basicComponentRegistry.getComponent(XSiteEventsManager.class);
 
          basicComponentRegistry.getComponent(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR, ScheduledExecutorService.class);
 

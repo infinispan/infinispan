@@ -324,6 +324,11 @@ public interface Transport extends Lifecycle {
     */
    Collection<Address> getRelayNodesAddress();
 
+   default boolean isPrimaryRelayNode() {
+      var relayNodeList = getRelayNodesAddress();
+      return !relayNodeList.isEmpty() && relayNodeList.iterator().next().equals(getAddress());
+   }
+
    /**
     * Invoke a command on a single node and pass the response to a {@link ResponseCollector}.
     * <p>
