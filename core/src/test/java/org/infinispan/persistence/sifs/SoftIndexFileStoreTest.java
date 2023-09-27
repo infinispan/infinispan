@@ -1,5 +1,7 @@
 package org.infinispan.persistence.sifs;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.anyInt;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
@@ -11,23 +13,30 @@ import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.infinispan.commons.test.CommonsTestingUtil;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.BaseNonBlockingStoreTest;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
+import org.infinispan.test.Mocks;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.CheckPoint;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import io.reactivex.rxjava3.internal.subscriptions.AsyncSubscription;
 import io.reactivex.rxjava3.processors.FlowableProcessor;
 import io.reactivex.rxjava3.processors.UnicastProcessor;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 
 @Test(groups = "unit", testName = "persistence.sifs.SoftIndexFileStoreTest")
 public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
@@ -148,5 +157,53 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
 
       // Restart to prevent other test failures
       startStore(store);
+   }
+
+   public void testCompactLogFileNotInTemporaryTable() throws InterruptedException, TimeoutException, ExecutionException {
+      Compactor compactor = TestingUtil.extractField(store.delegate(), "compactor");
+      LogAppender logAppender = TestingUtil.extractField(store.delegate(), "logAppender");
+
+      CheckPoint checkPoint = new CheckPoint();
+      checkPoint.triggerForever(Mocks.AFTER_RELEASE);
+      TemporaryTable original = Mocks.blockingFieldMock(checkPoint, TemporaryTable.class, logAppender, LogAppender.class, "temporaryTable",
+            (stubber, temporaryTable) -> stubber.when(temporaryTable).set(anyInt(), any(), anyInt(), anyInt()));
+
+      // Use fork as the index update in the table is blocked
+      Future<Void> future = fork(() -> store.write(marshalledEntry(internalCacheEntry("foo", "bar", -1))));
+
+      checkPoint.awaitStrict(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS);
+
+      Exceptions.expectException(TimeoutException.class, () -> future.get(10, TimeUnit.MILLISECONDS));
+
+      // Put the original table back so our compaction request can work
+      TestingUtil.replaceField(original, "temporaryTable", logAppender, LogAppender.class);
+
+      TestSubscriber<Object> testSubscriber = TestSubscriber.create();
+      testSubscriber.onSubscribe(new AsyncSubscription());
+
+      // We don't care about the actual expiration sub info
+      Compactor.CompactionExpirationSubscriber expSub = new Compactor.CompactionExpirationSubscriber() {
+         @Override
+         public void onEntryPosition(EntryPosition entryPosition) { }
+         @Override
+         public void onEntryEntryRecord(EntryRecord entryRecord) { }
+         @Override
+         public void onComplete() {
+            testSubscriber.onComplete();
+         }
+         @Override
+         public void onError(Throwable t) {
+            testSubscriber.onError(t);
+         }
+      };
+
+      compactor.performExpirationCompaction(expSub);
+
+      testSubscriber.awaitDone(10, TimeUnit.SECONDS)
+            .assertComplete().assertNoErrors();
+
+      checkPoint.triggerForever(Mocks.BEFORE_RELEASE);
+
+      future.get(10, TimeUnit.SECONDS);
    }
 }

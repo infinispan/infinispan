@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -556,7 +555,14 @@ class Compactor {
             } else {
                log.tracef("Loading from index for key %s when processing file %s", key, scheduledFile);
                EntryInfo info = index.getInfo(key, segment, serializedKey);
-               Objects.requireNonNull(info, "No index info found for key: " + key + " when processing file " + scheduledFile);
+               if (info == null) {
+                  if (isLogFile) {
+                     // LogFile may have written the data but not updated temporary table yet
+                     log.tracef("No index found for key %s, but it is a logFile, ignoring rest of the file", key);
+                     break;
+                  }
+                  throw new NullPointerException("No index info found for key: " + key + " when processing file " + scheduledFile);
+               }
                if (info.numRecords <= 0) {
                   throw new IllegalArgumentException("Number of records " + info.numRecords + " for index of key " + key + " should be more than zero!");
                }
