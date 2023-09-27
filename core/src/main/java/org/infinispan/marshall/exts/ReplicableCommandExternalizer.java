@@ -56,7 +56,7 @@ import org.infinispan.manager.impl.ReplicableRunnableCommand;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.topology.HeartBeatCommand;
 import org.infinispan.util.ByteString;
-import org.infinispan.xsite.commands.XSiteViewNotificationCommand;
+import org.infinispan.xsite.commands.XSiteLocalEventCommand;
 
 /**
  * ReplicableCommandExternalizer.
@@ -151,7 +151,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
             CacheShutdownCommand.class, CacheShutdownRequestCommand.class, TopologyUpdateStableCommand.class,
             CacheJoinCommand.class, CacheLeaveCommand.class, CacheAvailabilityUpdateCommand.class,
             IracPutKeyValueCommand.class, TouchCommand.class,
-            XSiteViewNotificationCommand.class);
+            XSiteLocalEventCommand.class);
       // Search only those commands that replicable and not cache specific replicable commands
       Collection<Class<? extends ReplicableCommand>> moduleCommands = globalComponentRegistry.getModuleProperties().moduleOnlyReplicableCommands();
       if (!moduleCommands.isEmpty()) coreCommands.addAll(moduleCommands);

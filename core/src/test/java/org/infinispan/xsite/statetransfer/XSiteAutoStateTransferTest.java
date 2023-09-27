@@ -7,7 +7,6 @@ import static org.testng.AssertJUnit.assertSame;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
-import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -64,19 +63,13 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
       SiteMasterController controller = findSiteMaster();
 
       //block sites up event and wait until received
-      SiteUpEvent event = controller.getStateTransferManager().blockSiteUpEvent();
+      controller.getStateTransferManager().startBlockSiteUpEvent();
       triggerSiteUpEvent(controller, remoteSite);
-      Collection<String> sitesUp = event.waitForEvent();
+      // check the correct event and let it proceed
+      controller.getStateTransferManager().awaitAndStopBlockingAndAssert(remoteSite).run();
 
-      //check if it is the correct event
-      assertEquals(1, sitesUp.size());
-      assertEquals(remoteSite, sitesUp.iterator().next());
-
-      //let the event continue, it will be handled in this thread, which is fine
-      event.continueRunnable();
-
-      //coordinator don't even query other nodes state
-      controller.getRpcManager().expectNoCommand(10, TimeUnit.SECONDS);
+      //coordinator don't even query other nodes state (run on the same thread)
+      controller.getRpcManager().expectNoCommand();
 
       //site status must not change
       for (int i = 0; i < defaultNumberOfNodes(); ++i) {
@@ -99,19 +92,13 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
       SiteMasterController controller = findSiteMaster();
 
       //block sites up event and wait until received
-      SiteUpEvent event = controller.getStateTransferManager().blockSiteUpEvent();
+      controller.getStateTransferManager().startBlockSiteUpEvent();
       triggerSiteUpEvent(controller, remoteSite);
-      Collection<String> sitesUp = event.waitForEvent();
+      // check the correct event and let it proceed
+      controller.getStateTransferManager().awaitAndStopBlockingAndAssert(remoteSite).run();
 
-      //check if it is the correct event
-      assertEquals(1, sitesUp.size());
-      assertEquals(remoteSite, sitesUp.iterator().next());
-
-      //let the event continue, it will be handled in this thread, which is fine
-      event.continueRunnable();
-
-      //coordinator don't even query other nodes state
-      controller.getRpcManager().expectNoCommand(10, TimeUnit.SECONDS);
+      //coordinator don't even query other nodes state (run on the same thread)
+      controller.getRpcManager().expectNoCommand();
 
       //site status must not change
       for (int i = 0; i < defaultNumberOfNodes(); ++i) {
@@ -145,19 +132,16 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
       }
 
       //block sites up event and wait until received
-      SiteUpEvent event = controller.getStateTransferManager().blockSiteUpEvent();
+      controller.getStateTransferManager().startBlockSiteUpEvent();
       triggerSiteUpEvent(controller, remoteSite);
-      Collection<String> sitesUp = event.waitForEvent();
-
       //check if it is the correct event
-      assertEquals(1, sitesUp.size());
-      assertEquals(remoteSite, sitesUp.iterator().next());
+      var continueEvent = controller.getStateTransferManager().awaitAndStopBlockingAndAssert(remoteSite);
 
       CompletableFuture<ControlledRpcManager.BlockedRequest<XSiteAutoTransferStatusCommand>> req = controller
             .getRpcManager().expectCommandAsync(XSiteAutoTransferStatusCommand.class);
 
       //let the event continue, it will be handled in this thread, which is fine
-      event.continueRunnable();
+      continueEvent.run();
 
       //we expect the coordinator to send a command
       ControlledRpcManager.BlockedRequest<XSiteAutoTransferStatusCommand> cmd = req.get(30, TimeUnit.SECONDS);
@@ -207,15 +191,10 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
             controller.getRpcManager().expectCommandAsync(XSiteStateTransferStartSendCommand.class);
 
       //block sites up event and wait until received
-      SiteUpEvent event = controller.getStateTransferManager().blockSiteUpEvent();
+      controller.getStateTransferManager().startBlockSiteUpEvent();
       triggerSiteUpEvent(controller, remoteSite);
-      Collection<String> sitesUp = event.waitForEvent();
-
-      //check if it is the correct event
-      assertEquals(1, sitesUp.size());
-      assertEquals(remoteSite, sitesUp.iterator().next());
-      //let the event continue
-      event.continueRunnable();
+      // check the correct event and let it proceed
+      controller.getStateTransferManager().awaitAndStopBlockingAndAssert(remoteSite).run();
 
       //make sure the commands are blocked
       req1.get(10, TimeUnit.SECONDS).send().receiveAll();
@@ -291,21 +270,15 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
             .getRpcManager().expectCommandAsync(XSiteStateTransferStartSendCommand.class);
 
       //block sites up event and wait until received
-      SiteUpEvent event = newSiteMaster.getStateTransferManager().blockSiteUpEvent();
+      newSiteMaster.getStateTransferManager().startBlockSiteUpEvent();
 
       site(0).kill(0);
       site(0).waitForClusterToForm(null);
 
       //new view should be installed
-      Collection<String> sitesUp = event.waitForEvent();
-
       //check if it is the correct event, it creates a new connection so the event contains the 3 sites
-      assertEquals(3, sitesUp.size());
-      assertTrue(sitesUp.contains(siteName(0)));
-      assertTrue(sitesUp.contains(siteName(1)));
-      assertTrue(sitesUp.contains(siteName(2)));
-      //let the event continue
-      event.continueRunnable();
+      //updated: the new code filters out the local site, so the event only has 2 sites
+      newSiteMaster.getStateTransferManager().awaitAndStopBlockingAndAssert(siteName(1), siteName(2)).run();
 
       //make sure the commands are blocked
       req1.get(10, TimeUnit.SECONDS).send().receiveAll();
@@ -347,10 +320,16 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
    protected ConfigurationBuilder defaultConfigurationForSite(int siteIndex) {
       ConfigurationBuilder builder = super.defaultConfigurationForSite(siteIndex);
       builder.clustering().hash().numSegments(21);
+      // code changed, the receiver site is the one that notifies the sender site
       if (siteIndex == 0) {
-         //for testing purpose, we only need site0 to backup to site1 & site2
          builder.sites().addBackup().site(siteName(1)).strategy(BackupConfiguration.BackupStrategy.ASYNC)
                 .sites().addBackup().site(siteName(2)).strategy(BackupConfiguration.BackupStrategy.SYNC);
+      } else if (siteIndex == 1) {
+         builder.sites().addBackup().site(siteName(0)).strategy(BackupConfiguration.BackupStrategy.ASYNC)
+               .sites().addBackup().site(siteName(2)).strategy(BackupConfiguration.BackupStrategy.SYNC);
+      } else {
+         builder.sites().addBackup().site(siteName(0)).strategy(BackupConfiguration.BackupStrategy.ASYNC)
+               .sites().addBackup().site(siteName(1)).strategy(BackupConfiguration.BackupStrategy.SYNC);
       }
       return builder;
    }
