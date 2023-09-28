@@ -126,8 +126,8 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
 
    protected void addSecurity(GlobalConfigurationBuilder globalBuilder) {
       globalBuilder.security().authorization().enable().groupOnlyMapping(false).principalRoleMapper(new IdentityRoleMapper())
-            .role("ADMIN").permission(AuthorizationPermission.ALL)
-            .role("USER").permission(AuthorizationPermission.WRITE, AuthorizationPermission.READ, AuthorizationPermission.EXEC, AuthorizationPermission.BULK_READ);
+            .role("ADMIN").description("admin role").permission(AuthorizationPermission.ALL)
+            .role("USER").description("user role").permission(AuthorizationPermission.WRITE, AuthorizationPermission.READ, AuthorizationPermission.EXEC, AuthorizationPermission.BULK_READ);
    }
 
    @Override

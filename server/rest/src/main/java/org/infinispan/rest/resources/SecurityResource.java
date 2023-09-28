@@ -1,27 +1,8 @@
 package org.infinispan.rest.resources;
 
-import static io.netty.handler.codec.http.HttpResponseStatus.CONFLICT;
-import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
-import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.infinispan.rest.framework.Method.DELETE;
-import static org.infinispan.rest.framework.Method.GET;
-import static org.infinispan.rest.framework.Method.POST;
-import static org.infinispan.rest.framework.Method.PUT;
-import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
-import static org.infinispan.rest.resources.ResourceUtil.isPretty;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.stream.Collectors;
-
-import javax.security.auth.Subject;
-
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalAuthorizationConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -46,7 +27,26 @@ import org.infinispan.security.impl.CacheRoleImpl;
 import org.infinispan.security.impl.SubjectACL;
 import org.infinispan.server.core.ServerManagement;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
+import javax.security.auth.Subject;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static io.netty.handler.codec.http.HttpResponseStatus.CONFLICT;
+import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
+import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.infinispan.rest.framework.Method.DELETE;
+import static org.infinispan.rest.framework.Method.GET;
+import static org.infinispan.rest.framework.Method.POST;
+import static org.infinispan.rest.framework.Method.PUT;
+import static org.infinispan.rest.resources.ResourceUtil.asJsonResponseFuture;
+import static org.infinispan.rest.resources.ResourceUtil.isPretty;
 
 /**
  * @since 10.1
@@ -82,7 +82,10 @@ public class SecurityResource implements ResourceHandler {
                .handleWith(this::acl)
             .invocation().method(GET).path("/v2/security/roles")
                .permission(AuthorizationPermission.ADMIN).name("ROLES").auditContext(AuditContext.SERVER)
-               .handleWith(this::listAllRoles)
+               .handleWith(r -> listAllRoles(r, false))
+            .invocation().method(GET).path("/v2/security/roles-detail")
+               .permission(AuthorizationPermission.ADMIN).name("ROLES DESCRIBE").auditContext(AuditContext.SERVER)
+               .handleWith(r -> listAllRoles(r, true))
             .invocation().method(GET).path("/v2/security/roles/{principal}")
                .permission(AuthorizationPermission.ADMIN).name("ROLES PRINCIPAL").auditContext(AuditContext.SERVER)
                .handleWith(this::listPrincipalRoles)
@@ -143,17 +146,10 @@ public class SecurityResource implements ResourceHandler {
       if (role == null) {
          return completedFuture(builder.status(NOT_FOUND).build());
       }
-      Json roleDetail = Json.object();
-      roleDetail.set("name", name);
-      Json permissions = Json.array();
-      for (AuthorizationPermission p : role.getPermissions()) {
-         permissions.add(p.toString());
-      }
-      roleDetail.set("permissions", permissions);
-      roleDetail.set("isImplicit", role.isImplicit());
-      roleDetail.set("isInheritable", role.isInheritable());
-      roleDetail.set("description", role.getDescription());
-      return asJsonResponseFuture(invocationHelper.newResponse(request), roleDetail, isPretty(request));
+
+      Json json = new RoleJson(role).toJson();
+      json.set("name", name);
+      return asJsonResponseFuture(invocationHelper.newResponse(request), json , isPretty(request));
    }
 
    private CompletionStage<RestResponse> deleteRole(RestRequest request) {
@@ -198,14 +194,43 @@ public class SecurityResource implements ResourceHandler {
       return aclCacheFlush(request);
    }
 
-   private CompletionStage<RestResponse> listAllRoles(RestRequest request) {
+   private CompletionStage<RestResponse> listAllRoles(RestRequest request, boolean detailed) {
       GlobalAuthorizationConfiguration authorization = invocationHelper.getRestCacheManager().getInstance().getCacheManagerConfiguration().security().authorization();
       if (!authorization.enabled()) {
          throw Log.REST.authorizationNotEnabled();
       }
-      Json roles = Json.array();
-      authorization.roles().entrySet().stream().filter(e -> e.getValue().isInheritable()).forEach(e -> roles.add(e.getKey()));
+
+      Stream<Map.Entry<String, Role>> rolesStream = authorization.roles().entrySet().stream()
+            .filter(e -> e.getValue().isInheritable());
+      Json roles;
+      if (detailed) {
+         roles = Json.object();
+         rolesStream.forEach(e -> roles.set(e.getKey(), new RoleJson(e.getValue()).toJson()));
+      } else {
+         roles = Json.array();
+         rolesStream.forEach(e -> roles.add(e.getKey()));
+      }
+
       return asJsonResponseFuture(invocationHelper.newResponse(request), roles, isPretty(request));
+   }
+
+   private static class RoleJson implements JsonSerialization {
+      private final Role role;
+      public RoleJson(Role role) {
+         this.role = role;
+      }
+
+      @Override
+      public Json toJson() {
+         Json json = Json.object();
+         Json permissions = Json.array();
+         json.set("inheritable", role.isInheritable());
+         role.getPermissions().forEach(p -> permissions.add(p.getSecurityPermission().getName()));
+         json.set("permissions", permissions);
+         json.set("implicit", role.isImplicit());
+         json.set("description", role.getDescription());
+         return json;
+      }
    }
 
    private CompletionStage<RestResponse> listPrincipalRoles(RestRequest request) {

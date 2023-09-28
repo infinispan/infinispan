@@ -95,6 +95,19 @@ public class ResponseAssertion {
       return this;
    }
 
+   public ResponseAssertion containsInAnyOrderReturnedText(String... text) {
+      String body = response.getBody();
+      Assertions.assertThat(body).matches(s -> {
+         for (String possible : text) {
+            if (s != null && !s.contains(possible)) {
+               return false;
+            }
+         }
+         return true;
+      }, "Content: " + body + " doesn't contain all of " + Arrays.toString(text));
+      return this;
+   }
+
    public ResponseAssertion hasReturnedText(String... textPossibilities) {
       String body = response.getBody();
       Assertions.assertThat(body).matches(s -> {

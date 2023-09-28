@@ -41,6 +41,23 @@ If authorization is enabled, only a user with the `ADMIN` permission can call th
 include::json/rest_security_roles.json[]
 ----
 
+[id='rest_v2_get_roles_detailed']
+= Retrieving the available roles detailed
+View all the available roles defined in the server with their full detail.
+
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/get_v2_security_roles_detailed.adoc[]
+----
+
+{brandname} responds with a list of available roles and their detail.
+If authorization is enabled, only a user with the `ADMIN` permission can call this API.
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/rest_security_roles_detailed.json[]
+----
+
 [id='rest_v2_get_principal_roles']
 = Retrieving the roles for a principal
 View all the roles which map to a principal.

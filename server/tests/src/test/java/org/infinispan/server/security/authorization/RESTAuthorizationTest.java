@@ -56,6 +56,7 @@ import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
+import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.resources.WeakSSEListener;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
@@ -589,7 +590,7 @@ abstract class RESTAuthorizationTest {
          Json json = Json.read(assertStatus(OK, security.describeRole("myrole")));
          assertEquals("myrole", json.at("name").asString());
          assertEquals("my-role description", json.at("description").asString());
-         assertFalse(json.at("isImplicit").asBoolean());
+         assertFalse(json.at("implicit").asBoolean());
          List<Json> permissions = json.at("permissions").asJsonList();
          assertEquals(2, permissions.size());
          assertTrue(permissions.stream().map(Json::asString).collect(Collectors.toSet()).containsAll(List.of("ALL_READ", "ALL_WRITE")), permissions.toString());
@@ -598,6 +599,12 @@ abstract class RESTAuthorizationTest {
          try (RestResponse response = sync(security.grant("myuser", List.of("myrole")))) {
             if (response.getStatus() == NO_CONTENT) {
                assertStatusAndBodyEquals(OK, "[\"myrole\"]", security.listRoles("myuser"));
+               CompletionStage<RestResponse> listRoles = security.listRoles();
+               ResponseAssertion.assertThat(listRoles).isOk();
+               ResponseAssertion.assertThat(listRoles).hasReturnedText("[\"observer\",\"application\",\"reader\",\"admin\",\"monitor\",\"deployer\",\"writer\",\"myrole\"]");
+               CompletionStage<RestResponse> listRolesDetailed = security.listRoles(true);
+               ResponseAssertion.assertThat(listRolesDetailed).isOk();
+               ResponseAssertion.assertThat(listRolesDetailed).containsInAnyOrderReturnedText("admin", "permissions", "inheritable", "implicit", "description");
                assertStatus(NO_CONTENT, security.deny("myuser", List.of("myrole")));
             }
          }
@@ -610,6 +617,8 @@ abstract class RESTAuthorizationTest {
          assertStatus(FORBIDDEN, security.grant("myuser", List.of("myrole")));
          assertStatus(FORBIDDEN, security.listRoles("myuser"));
          assertStatus(FORBIDDEN, security.deny("myuser", List.of("myrole")));
+         assertStatus(FORBIDDEN, security.listRoles());
+         assertStatus(FORBIDDEN, security.listRoles(true));
       }
    }
 

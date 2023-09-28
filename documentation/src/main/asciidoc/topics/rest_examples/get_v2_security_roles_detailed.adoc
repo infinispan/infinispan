@@ -1,0 +1,1 @@
+GET /rest/v2/security/roles-detail

@@ -22,6 +22,7 @@ public class GlobalRoleConfigurationBuilder extends AbstractGlobalConfigurationB
    private final String name;
    private boolean inheritable = true;
    private String description;
+   private boolean implicit;
 
    public GlobalRoleConfigurationBuilder(String name, GlobalAuthorizationConfigurationBuilder builder) {
       super(builder.getGlobalConfig());
@@ -108,7 +109,7 @@ public class GlobalRoleConfigurationBuilder extends AbstractGlobalConfigurationB
 
    @Override
    public Role create() {
-      return new CacheRoleImpl(name, description, false, inheritable, permissions);
+      return new CacheRoleImpl(name, description, implicit, inheritable, permissions);
    }
 
    @Override
@@ -117,6 +118,7 @@ public class GlobalRoleConfigurationBuilder extends AbstractGlobalConfigurationB
       permissions.addAll(template.getPermissions());
       inheritable = template.isInheritable();
       description = template.getDescription();
+      implicit = template.isImplicit();
       return this;
    }
 }
