@@ -31,6 +31,7 @@ public class Containers {
 
    public static String imageArchitecture() {
       switch (System.getProperty("os.arch")) {
+         case "x86_64":
          case "amd64":
             return "amd64";
          case "aarch64":
