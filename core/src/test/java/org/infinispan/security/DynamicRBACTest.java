@@ -47,8 +47,8 @@ public class DynamicRBACTest extends MultipleCacheManagersTest {
          crm = (ClusterRoleMapper) cacheManagers.get(0).getCacheManagerConfiguration().security().authorization().principalRoleMapper();
          crm.grant("admin", "admin");
          cpm = (ClusterPermissionMapper) cacheManagers.get(0).getCacheManagerConfiguration().security().authorization().rolePermissionMapper();
-         await(cpm.addRole(Role.newRole("wizard", "", false, true, AuthorizationPermission.ALL_WRITE)));
-         await(cpm.addRole(Role.newRole("cleric", "", false, true, AuthorizationPermission.ALL_READ)));
+         await(cpm.addRole(Role.newRole("wizard", "wizard role", true, true, AuthorizationPermission.ALL_WRITE)));
+         await(cpm.addRole(Role.newRole("cleric", "cleric role", false, true, AuthorizationPermission.ALL_READ)));
          return null;
       });
    }
@@ -92,7 +92,11 @@ public class DynamicRBACTest extends MultipleCacheManagersTest {
       Map<String, Role> roles = cpm.getAllRoles();
       assertEquals(2, roles.size());
       assertTrue(roles.containsKey("wizard"));
+      Role wizard = roles.get("wizard");
+      assertTrue(wizard.isImplicit());
       assertTrue(roles.containsKey("cleric"));
+      Role cleric = roles.get("cleric");
+      assertFalse(cleric.isImplicit());
       Cache<String, String> cpmCache = Security.doAs(ADMIN, () -> {
          ConfigurationBuilder builder = new ConfigurationBuilder();
          builder.security().authorization().enable().roles("admin", "wizard", "cleric");

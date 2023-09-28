@@ -1,4 +1,7 @@
 {
   "name" : "application",
-  "permissions" : [ "LISTEN","ALL_READ","MONITOR","ALL_WRITE","EXEC" ]
+  "permissions" : [ "LISTEN","ALL_READ","MONITOR","ALL_WRITE","EXEC" ],
+  "inheritable": true,
+  "implicit": true,
+  "description": "..."
 }

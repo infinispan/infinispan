@@ -1,0 +1,52 @@
+{
+  "observer": {
+    "inheritable": true,
+    "permissions": [
+      "MONITOR",
+      "ALL_READ"
+    ],
+    "implicit": true,
+    "description": "..."
+  },
+  "application": {
+    "inheritable": true,
+    "permissions": [
+      "MONITOR",
+      "ALL_WRITE",
+      "EXEC",
+      "LISTEN",
+      "ALL_READ"
+    ],
+    "implicit": true,
+    "description": "..."
+  },
+  "admin": {
+    "inheritable": true,
+    "permissions": [
+      "ALL"
+    ],
+    "implicit": true,
+    "description": "..."
+  },
+  "monitor": {
+    "inheritable": true,
+    "permissions": [
+      "MONITOR"
+    ],
+    "implicit": true,
+    "description": "..."
+  },
+  "deployer": {
+    "inheritable": true,
+    "permissions": [
+      "CREATE",
+      "MONITOR",
+      "ALL_WRITE",
+      "EXEC",
+      "LISTEN",
+      "ALL_READ"
+    ],
+    "implicit": true,
+    "description": "..."
+  }
+}

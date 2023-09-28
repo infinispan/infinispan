@@ -32,18 +32,18 @@ public class CacheRoleImpl implements Role {
    private final int mask;
    @ProtoField(number = 4)
    final String description;
-   @ProtoField(number = 5, defaultValue = "false")
-   final boolean isImplicit;
+   @ProtoField(number = 5, required = true)
+   final boolean implicit;
 
    public CacheRoleImpl(String name, String description, boolean isImplicit, boolean inheritable, AuthorizationPermission... authorizationPermissions) {
       this(name, description, isImplicit, inheritable, EnumSet.copyOf(Arrays.asList(authorizationPermissions)));
    }
 
    @ProtoFactory
-   public CacheRoleImpl(String name, String description, boolean isImplicit, boolean inheritable, Set<AuthorizationPermission> permissions) {
+   public CacheRoleImpl(String name, String description, boolean implicit, boolean inheritable, Set<AuthorizationPermission> permissions) {
       this.name = name;
       this.description = description;
-      this.isImplicit = isImplicit;
+      this.implicit = implicit;
       this.permissions = Collections.unmodifiableSet(permissions);
       int permMask = 0;
       for (AuthorizationPermission permission : permissions) {
@@ -80,7 +80,7 @@ public class CacheRoleImpl implements Role {
 
    @Override
    public boolean isImplicit() {
-      return isImplicit;
+      return implicit;
    }
 
    @Override
@@ -88,7 +88,7 @@ public class CacheRoleImpl implements Role {
       return "CacheRoleImpl{" + "name='" + name + '\'' + ", "
             + "inheritable=" + inheritable + ", permissions=" + permissions
             + ", mask=" + mask + ", description='" + description + '\'' + ", "
-            + "isImplicit=" + isImplicit + '}';
+            + "implicit=" + implicit + '}';
    }
 
    @Override
@@ -98,13 +98,13 @@ public class CacheRoleImpl implements Role {
       if (o == null || getClass() != o.getClass())
          return false;
       CacheRoleImpl cacheRole = (CacheRoleImpl) o;
-      return inheritable == cacheRole.inheritable && mask == cacheRole.mask && isImplicit == cacheRole.isImplicit
+      return inheritable == cacheRole.inheritable && mask == cacheRole.mask && implicit == cacheRole.implicit
             && Objects.equals(name, cacheRole.name) && Objects.equals(permissions, cacheRole.permissions)
             && Objects.equals(description, cacheRole.description);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(name, description, isImplicit, inheritable, mask);
+      return Objects.hash(name, description, implicit, inheritable, mask);
    }
 }

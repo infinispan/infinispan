@@ -32,6 +32,19 @@ public class RestSecurityClientOkHttp implements RestSecurityClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> listRoles() {
+      return listRoles(null) ;
+   }
+
+   @Override
+   public CompletionStage<RestResponse> listRoles(boolean detailed) {
+      if (detailed) {
+         return client.execute(baseSecurityURL, "roles-detail", null);
+      }
+      return listRoles();
+   }
+
+   @Override
    public CompletionStage<RestResponse> listRoles(String principal) {
       return client.execute(baseSecurityURL, "roles", principal);
    }
