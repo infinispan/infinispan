@@ -286,6 +286,12 @@
          <artifactId>bcpkix-jdk15to18</artifactId>
          <scope>test</scope>
       </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-jboss-marshalling</artifactId>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
 
    <build>
