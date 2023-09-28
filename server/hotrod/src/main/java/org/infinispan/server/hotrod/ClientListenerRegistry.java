@@ -131,7 +131,7 @@ class ClientListenerRegistry {
          assert !includeState;
          eventType = ClientEventType.createType(false, useRawData, h.version);
          filter = null;
-         converter = new KeyValueFilterConverterAsCacheEventFilterConverter<>(HotRodServer.ToEmptyBytesKeyValueFilterConverter.INSTANCE);
+         converter = new KeyValueFilterConverterAsCacheEventFilterConverter<>(HotRodServer.ToEmptyBytesKeyValueFilterConverter.INSTANCE, cache.getKeyDataConversion().getRequestMediaType());
       } else {
          boolean hasFilter = filterFactory != null && !filterFactory.isEmpty();
          boolean hasConverter = converterFactory != null && !converterFactory.isEmpty();
