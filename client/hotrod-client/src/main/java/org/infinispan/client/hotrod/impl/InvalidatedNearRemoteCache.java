@@ -194,6 +194,14 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
    @Override
    public void start() {
       super.start();
+   }
+
+   @Override
+   public void resolveStorage(boolean objectStorage) {
+      super.resolveStorage(objectStorage);
+
+      // Only register the listener *after* resolving the data format to use.
+      // This is necessary for the listener to correctly marshall the data.
       listenerAddress = nearcache.start(this);
    }
 
