@@ -88,6 +88,11 @@ public interface AvailabilityStrategyContext {
    void updateAvailabilityMode(List<Address> actualMembers, AvailabilityMode mode, boolean cancelRebalance);
 
    /**
+    * Enter a new availability mode manually.
+    */
+   void manuallyUpdateAvailabilityMode(List<Address> actualMembers, AvailabilityMode mode, boolean cancelRebalance);
+
+   /**
     * Updates both the stable and the current topologies.
     *
     * Does not install the current topology on the cache members.
@@ -125,4 +130,6 @@ public interface AvailabilityStrategyContext {
     * @return true if conflict resolution was restarted due to the newMembers
     */
    boolean restartConflictResolution(List<Address> newMembers);
+
+   boolean isManuallyDegraded();
 }

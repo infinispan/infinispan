@@ -92,6 +92,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    private volatile List<Address> queuedRebalanceMembers;
    private volatile boolean rebalancingEnabled = true;
    private volatile boolean rebalanceInProgress = false;
+   private boolean manuallyPutDegraded = false;
    private volatile ConflictResolution conflictResolution;
 
    private RebalanceConfirmationCollector rebalanceConfirmationCollector;
@@ -177,6 +178,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                                                    boolean cancelRebalance) {
       AvailabilityMode oldAvailabilityMode = this.availabilityMode;
       boolean modeChanged = setAvailabilityMode(newAvailabilityMode);
+      manuallyPutDegraded = false;
 
       if (modeChanged || !actualMembers.equals(currentTopology.getActualMembers())) {
          ConsistentHash newPendingCH = currentTopology.getPendingCH();
@@ -195,6 +197,17 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
             newAvailabilityMode, newTopology.getTopologyId()));
          clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, newAvailabilityMode);
       }
+   }
+
+   @Override
+   public synchronized void manuallyUpdateAvailabilityMode(List<Address> actualMembers, AvailabilityMode mode, boolean cancelRebalance) {
+      updateAvailabilityMode(actualMembers, mode, cancelRebalance);
+      this.manuallyPutDegraded = mode == AvailabilityMode.DEGRADED_MODE;
+   }
+
+   @Override
+   public synchronized boolean isManuallyDegraded() {
+      return manuallyPutDegraded;
    }
 
    @Override
