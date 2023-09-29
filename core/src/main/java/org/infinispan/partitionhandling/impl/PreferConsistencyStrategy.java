@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -36,8 +37,52 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
    @Override
    public void onJoin(AvailabilityStrategyContext context, Address joiner) {
       if (context.getAvailabilityMode() != AvailabilityMode.AVAILABLE) {
-         log.debugf("Cache %s not available (%s), postponing rebalance for joiner %s", context.getCacheName(),
-               context.getAvailabilityMode(), joiner);
+         // If the cluster was manually put into degraded mode, we don't do anything.
+         // The node is able to join, but without rebalance and state transfer, everything remains degraded.
+         if (context.isManuallyDegraded()) {
+            log.debugf("Cache %s not available (%s), postponing rebalance for joiner %s", context.getCacheName(),
+                  context.getAvailabilityMode(), joiner);
+            return;
+         }
+
+         CacheTopology stableTopology = context.getStableTopology();
+         List<Address> currentMembers = new ArrayList<>(context.getExpectedMembers());
+
+         // Ignore members without any segments (e.g. zero-capacity nodes)
+         currentMembers.removeIf(a -> {
+            Float cf = context.getCapacityFactors().get(a);
+            return cf == null || cf == 0f;
+         });
+
+         // Nodes might be joining back with different addresses, we utilize the persistent UUID to verify.
+         ConsistentHash ch = stableTopology.getCurrentCH().remapAddresses(persistentUUIDManager.addressToPersistentUUID());
+         List<Address> membersUuid = currentMembers.stream()
+               .map(persistentUUIDManager::getPersistentUuid)
+               .collect(Collectors.toList());
+
+         // Not losing any data with the members. We utilize the persistent UUID to verify.
+         if (!lostDataCheck.test(ch, membersUuid)) {
+            List<Address> lost = new ArrayList<>(stableTopology.getMembers()).stream()
+                  .map(persistentUUIDManager::getPersistentUuid)
+                  .filter(m -> !membersUuid.contains(m))
+                  .collect(Collectors.toList());
+
+            // We know we are not losing data, but doing the inverse check from the partition.
+            // We check if there is still a partition taking place and only recover if it is safe.
+            if (!isMinorityPartition(currentMembers, lost)) {
+               if (log.isDebugEnabled())
+                  log.debugf("Cache %s was unavailable (%s), members joined back %s", context.getCacheName(),
+                        context.getAvailabilityMode(), currentMembers);
+
+               updateMembersAndRebalance(context, context.getCurrentTopology().getMembers(), context.getExpectedMembers());
+               return;
+            }
+         }
+
+         if (log.isDebugEnabled())
+            log.debugf("Cache %s not available (%s), still pending member %s current %s", context.getCacheName(),
+                  context.getAvailabilityMode(), stableTopology.getMembers(), currentMembers);
+
          return;
       }
 
@@ -286,7 +331,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
          // Then queue a rebalance to include the joiners as well
          context.queueRebalance(newMembers);
       } else {
-         context.updateAvailabilityMode(actualMembers, newAvailabilityMode, true);
+         context.manuallyUpdateAvailabilityMode(actualMembers, newAvailabilityMode, true);
       }
    }
 
