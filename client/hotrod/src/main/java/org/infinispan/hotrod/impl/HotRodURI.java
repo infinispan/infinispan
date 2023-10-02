@@ -5,6 +5,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.infinispan.hotrod.configuration.HotRodConfigurationBuilder;
@@ -116,12 +117,43 @@ public class HotRodURI {
 
    @Override
    public String toString() {
-      return "HotRodURI{" +
-            "addresses=" + addresses +
-            ", ssl=" + ssl +
-            ", username='" + username + '\'' +
-            ", password='" + password + '\'' +
-            ", properties=" + properties +
-            '}';
+      return toString(false);
+   }
+
+   public String toString(boolean withCredentials) {
+      StringBuilder sb = new StringBuilder();
+      if (ssl) sb.append("hotrods://"); else sb.append("hotrod://");
+      if (withCredentials) {
+         sb.append(username);
+         sb.append(':');
+         sb.append(password);
+         sb.append('@');
+      }
+      for(int i = 0; i < addresses.size(); i++) {
+         if (i > 0) {
+            sb.append(',');
+         }
+         InetSocketAddress address = addresses.get(i);
+         sb.append(address.getHostString());
+         if (address.getPort() != ConfigurationProperties.DEFAULT_HOTROD_PORT) {
+            sb.append(':');
+            sb.append(address.getPort());
+         }
+      }
+      if (!properties.isEmpty()) {
+         sb.append('?');
+         for(Map.Entry<Object, Object> property : properties.entrySet()) {
+            String key = property.getKey().toString();
+            if (key.startsWith(ConfigurationProperties.ICH)) {
+               sb.append(key.substring(ConfigurationProperties.ICH.length()));
+            } else {
+               sb.append(key);
+            }
+            sb.append('=');
+            sb.append(property.getValue());
+
+         }
+      }
+      return sb.toString();
    }
 }

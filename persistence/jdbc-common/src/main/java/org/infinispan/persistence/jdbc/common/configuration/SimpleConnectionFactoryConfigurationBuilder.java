@@ -1,7 +1,7 @@
 package org.infinispan.persistence.jdbc.common.configuration;
 
 import static org.infinispan.persistence.jdbc.common.configuration.SimpleConnectionFactoryConfiguration.CONNECTION_URL;
-import static org.infinispan.persistence.jdbc.common.configuration.SimpleConnectionFactoryConfiguration.DRIVER_CLASS;
+import static org.infinispan.persistence.jdbc.common.configuration.SimpleConnectionFactoryConfiguration.DRIVER;
 import static org.infinispan.persistence.jdbc.common.configuration.SimpleConnectionFactoryConfiguration.PASSWORD;
 import static org.infinispan.persistence.jdbc.common.configuration.SimpleConnectionFactoryConfiguration.USERNAME;
 
@@ -39,12 +39,12 @@ public class SimpleConnectionFactoryConfigurationBuilder<S extends AbstractJdbcS
    }
 
    public SimpleConnectionFactoryConfigurationBuilder<S> driverClass(Class<? extends Driver> driverClass) {
-      attributes.attribute(DRIVER_CLASS).set(driverClass.getName());
+      attributes.attribute(DRIVER).set(driverClass.getName());
       return this;
    }
 
    public SimpleConnectionFactoryConfigurationBuilder<S> driverClass(String driverClass) {
-      attributes.attribute(DRIVER_CLASS).set(driverClass);
+      attributes.attribute(DRIVER).set(driverClass);
       return this;
    }
 

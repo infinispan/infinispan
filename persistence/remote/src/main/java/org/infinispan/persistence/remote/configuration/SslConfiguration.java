@@ -13,12 +13,11 @@ import org.infinispan.commons.configuration.attributes.ConfigurationElement;
  * @since 9.1
  */
 public class SslConfiguration extends ConfigurationElement<SslConfiguration> {
-   static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false, Boolean.class).immutable().autoPersist(false).build();
+   static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder(Attribute.ENABLED, false, Boolean.class).immutable().autoPersist(false).build();
    static final AttributeDefinition<SSLContext> SSL_CONTEXT = AttributeDefinition.builder("sslContext", null, SSLContext.class).immutable().autoPersist(false).build();
-   static final AttributeDefinition<String> SNI_HOSTNAME = AttributeDefinition.builder("sniHostname", null, String.class).immutable().build();
+   static final AttributeDefinition<String> SNI_HOSTNAME = AttributeDefinition.builder(Attribute.SNI_HOSTNAME, null, String.class).immutable().build();
    static final AttributeDefinition<Boolean> HOSTNAME_VALIDATION = AttributeDefinition.builder("ssl-hostname-validation", true).immutable().build();
-   static final AttributeDefinition<String> PROTOCOL = AttributeDefinition.builder("protocol", null, String.class).immutable().build();
-
+   static final AttributeDefinition<String> PROTOCOL = AttributeDefinition.builder(Attribute.PROTOCOL, null, String.class).immutable().build();
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(SslConfiguration.class, ENABLED, SNI_HOSTNAME,HOSTNAME_VALIDATION, PROTOCOL);
    }

@@ -7,9 +7,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 import org.infinispan.commons.configuration.io.ConfigurationResourceResolvers;
-import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.internal.Json;
-import org.infinispan.commons.io.StringBuilderWriter;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -33,11 +31,8 @@ public final class SerializationUtils {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       RemoteStoreConfigurationBuilder storeBuilder = builder.persistence().addStore(RemoteStoreConfigurationBuilder.class);
       storeBuilder.read(configuration);
-      StringBuilderWriter sw = new StringBuilderWriter();
-      try (ConfigurationWriter w = ConfigurationWriter.to(sw).withType(APPLICATION_JSON).build()) {
-         parserRegistry.serialize(w, null, builder.build());
-      }
-      return Json.read(sw.toString()).at("local-cache").at("persistence").toString();
+      String stringConfiguration = builder.build().toStringConfiguration(null, APPLICATION_JSON, true);
+      return Json.read(stringConfiguration).at("local-cache").at("persistence").toString();
    }
 
    public static RemoteStoreConfiguration fromJson(String json) throws IOException {
