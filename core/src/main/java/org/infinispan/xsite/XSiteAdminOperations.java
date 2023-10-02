@@ -335,7 +335,7 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
          return CompletableFuture.completedFuture(XSiteStateTransferMode.MANUAL.toString());
       }
       ReplicableCommand cmd = commandsFactory.buildXSiteAutoTransferStatusCommand(site);
-      AutoStateTransferResponseCollector collector = new AutoStateTransferResponseCollector(true, XSiteStateTransferMode.AUTO);
+      AutoStateTransferResponseCollector collector = new AutoStateTransferResponseCollector(true, XSiteStateTransferMode.AUTO, false);
       return rpcManager.invokeCommandOnAll(cmd, collector, rpcManager.getSyncRpcOptions())
             .thenApply(AutoStateTransferResponse::stateTransferMode)
             .thenApply(Enum::toString);

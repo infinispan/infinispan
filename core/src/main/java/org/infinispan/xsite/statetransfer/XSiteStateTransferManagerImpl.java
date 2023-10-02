@@ -37,7 +37,6 @@ import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.infinispan.xsite.commands.XSiteAutoTransferStatusCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferCancelSendCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferClearStatusCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferFinishReceiveCommand;
@@ -133,7 +132,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    }
 
    @Override
-   public void cancelPushState(String siteName) throws Throwable {
+   public void cancelPushState(String siteName) {
       RemoteSiteStatus status = validateSite(siteName);
       status.cancelStateTransfer();
       AggregateCompletionStage<Void> rsp = CompletionStages.aggregateCompletionStage();
@@ -216,8 +215,22 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    }
 
    @Override
-   public void startAutomaticStateTransferTo(ByteString remoteSite) {
-      doAutomaticStateTransfer(remoteSite.toString());
+   public void startAutomaticStateTransferTo(ByteString remoteSite, boolean ignoreStatus) {
+      log.debugf("startAutomaticStateTransferTo(%s, %s)", remoteSite, ignoreStatus);
+      var site = remoteSite.toString();
+      var status = sites.get(site);
+      if (skipAutomaticStateTransferEnabled(site, status)) {
+         return;
+      }
+      isStateTransferRequired(status, ignoreStatus).whenComplete((proceed, throwable) -> {
+         if (throwable != null) {
+            Log.XSITE.unableToStartXSiteAutStateTransfer(cacheName, site, throwable);
+         } else if (proceed) {
+            bringSiteOnline(site).thenRun(() -> asyncStartPushState(status));
+         } else {
+            Log.XSITE.debugf("[%s] Cross-Site state transfer not required for site '%s'", cacheName, site);
+         }
+      });
    }
 
    @Override
@@ -230,22 +243,6 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    public boolean setAutomaticStateTransfer(String site, XSiteStateTransferMode mode) {
       RemoteSiteStatus status = sites.get(site);
       return status != null && status.setStateTransferMode(mode);
-   }
-
-   private void doAutomaticStateTransfer(String site) {
-      RemoteSiteStatus status = sites.get(site);
-      if (skipAutomaticStateTransferEnabled(site, status)) {
-         return;
-      }
-      isStateTransferRequired(status).whenComplete((proceed, throwable) -> {
-         if (throwable != null) {
-            Log.XSITE.unableToStartXSiteAutStateTransfer(cacheName, site, throwable);
-         } else if (proceed) {
-            bringSiteOnline(site).thenRun(() -> asyncStartPushState(status));
-         } else {
-            Log.XSITE.debugf("[%s] Cross-Site state transfer not required for site '%s'", cacheName, site);
-         }
-      });
    }
 
    private boolean skipAutomaticStateTransferEnabled(String site, RemoteSiteStatus status) {
@@ -264,10 +261,10 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
       return false;
    }
 
-   private CompletionStage<Boolean> isStateTransferRequired(RemoteSiteStatus status) {
+   private CompletionStage<Boolean> isStateTransferRequired(RemoteSiteStatus status, boolean ignoreStatus) {
       final String site = status.getSiteName();
-      AutoStateTransferResponseCollector collector = new AutoStateTransferResponseCollector(takeOfflineManager.getSiteState(site) == SiteState.OFFLINE, status.stateTransferMode());
-      XSiteAutoTransferStatusCommand cmd = commandsFactory.buildXSiteAutoTransferStatusCommand(site);
+      var collector = new AutoStateTransferResponseCollector(takeOfflineManager.getSiteState(site) == SiteState.OFFLINE, status.stateTransferMode(), ignoreStatus);
+      var cmd = commandsFactory.buildXSiteAutoTransferStatusCommand(site);
       return rpcManager.invokeCommandOnAll(cmd, collector, rpcManager.getSyncRpcOptions())
             .thenApply(AutoStateTransferResponse::canDoAutomaticStateTransfer);
    }

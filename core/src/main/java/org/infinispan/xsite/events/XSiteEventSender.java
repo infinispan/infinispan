@@ -38,8 +38,8 @@ public class XSiteEventSender implements AutoCloseable {
    }
 
    @Override
-   public void close() throws Exception {
-      log.debug("Flushing events");
+   public void close() {
+      log.debugf("Flushing events: %s", eventsToRemoteSites.values());
       for (var eventList : eventsToRemoteSites.values()) {
          var cmd = new XSiteRemoteEventCommand(eventList.events);
          var backup = new XSiteBackup(eventList.site.toString(), false, 10000);
@@ -59,6 +59,14 @@ public class XSiteEventSender implements AutoCloseable {
 
       void add(XSiteEvent event) {
          events.add(event);
+      }
+
+      @Override
+      public String toString() {
+         return "EventList{" +
+               "site=" + site +
+               ", events=" + events +
+               '}';
       }
    }
 }

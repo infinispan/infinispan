@@ -37,8 +37,12 @@ public final class XSiteEvent {
       return new XSiteEvent(XSiteEventType.SITE_CONNECTED, Objects.requireNonNull(localSite), null);
    }
 
-   public static XSiteEvent createRequestState(ByteString localSize, ByteString cacheName) {
-      return new XSiteEvent(XSiteEventType.STATE_REQUEST, Objects.requireNonNull(localSize), Objects.requireNonNull(cacheName));
+   public static XSiteEvent createRequestState(ByteString localSite, ByteString cacheName) {
+      return new XSiteEvent(XSiteEventType.STATE_REQUEST, Objects.requireNonNull(localSite), Objects.requireNonNull(cacheName));
+   }
+
+   public static XSiteEvent createInitialStateRequest(ByteString localSite, ByteString cacheName) {
+      return new XSiteEvent(XSiteEventType.INITIAL_STATE_REQUEST, Objects.requireNonNull(localSite), Objects.requireNonNull(cacheName));
    }
 
    public XSiteEventType getType() {
@@ -89,6 +93,7 @@ public final class XSiteEvent {
             ByteString.writeObject(output, event.siteName);
             return;
          case STATE_REQUEST:
+         case INITIAL_STATE_REQUEST:
             ByteString.writeObject(output, event.siteName);
             ByteString.writeObject(output, event.cacheName);
       }
@@ -102,6 +107,8 @@ public final class XSiteEvent {
             return createConnectEvent(ByteString.readObject(input));
          case STATE_REQUEST:
             return createRequestState(ByteString.readObject(input), ByteString.readObject(input));
+         case INITIAL_STATE_REQUEST:
+            return createInitialStateRequest(ByteString.readObject(input), ByteString.readObject(input));
          default:
             throw new IllegalStateException();
       }
