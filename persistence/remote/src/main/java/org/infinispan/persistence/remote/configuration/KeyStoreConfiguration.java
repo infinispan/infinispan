@@ -1,5 +1,7 @@
 package org.infinispan.persistence.remote.configuration;
 
+import static org.infinispan.commons.configuration.attributes.AttributeSerializer.SECRET;
+
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.Util;
@@ -11,8 +13,8 @@ public class KeyStoreConfiguration {
 
    static final AttributeDefinition<String> KEYSTORE_FILENAME = AttributeDefinition.builder(Attribute.FILENAME, null, String.class).immutable().autoPersist(false).build();
    static final AttributeDefinition<String> KEYSTORE_TYPE = AttributeDefinition.builder(Attribute.TYPE, "JKS", String.class).immutable().autoPersist(false).build();
-   static final AttributeDefinition<String> KEYSTORE_PASSWORD = AttributeDefinition.builder(Attribute.PASSWORD, null, String.class).immutable().autoPersist(false).build();
-   static final AttributeDefinition<String> KEYSTORE_CERTIFICATE_PASSWORD = AttributeDefinition.builder(Attribute.CERTIFICATE_PASSWORD, null, String.class).immutable().autoPersist(false).build();
+   static final AttributeDefinition<String> KEYSTORE_PASSWORD = AttributeDefinition.builder(Attribute.PASSWORD, null, String.class).serializer(SECRET).immutable().autoPersist(false).build();
+   static final AttributeDefinition<String> KEYSTORE_CERTIFICATE_PASSWORD = AttributeDefinition.builder(Attribute.CERTIFICATE_PASSWORD, null, String.class).serializer(SECRET).immutable().autoPersist(false).build();
    static final AttributeDefinition<String> KEY_ALIAS = AttributeDefinition.builder(Attribute.KEY_ALIAS, null, String.class).immutable().autoPersist(false).build();
 
    private final AttributeSet attributes;

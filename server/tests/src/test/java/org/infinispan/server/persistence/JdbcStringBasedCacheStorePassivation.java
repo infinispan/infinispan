@@ -96,7 +96,7 @@ public class JdbcStringBasedCacheStorePassivation {
      */
     @ParameterizedTest
     @ArgumentsSource(Common.DatabaseProvider.class)
-    public void testDefaultTwoWayKey2StringMapper(Database database) throws Exception {
+    public void testDefaultTwoWayKey2StringMapper(Database database) {
         JdbcConfigurationUtil jdbcUtil = new JdbcConfigurationUtil(CacheMode.REPL_SYNC, database, false, true)
                 .setLockingConfigurations();
         RemoteCache<Object, Object> cache = SERVERS.hotrod().withServerConfiguration(jdbcUtil.getConfigurationBuilder()).create();

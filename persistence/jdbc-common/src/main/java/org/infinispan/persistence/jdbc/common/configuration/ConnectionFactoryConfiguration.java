@@ -1,5 +1,6 @@
 package org.infinispan.persistence.jdbc.common.configuration;
 
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
 
 /**
@@ -10,4 +11,6 @@ import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactor
  */
 public interface ConnectionFactoryConfiguration {
    Class<? extends ConnectionFactory> connectionFactoryClass();
+
+   AttributeSet attributes();
 }

@@ -53,6 +53,7 @@ import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.server.network.NetworkAddress;
 import org.infinispan.server.test.api.TestUser;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
@@ -117,7 +118,7 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
    protected String debugJvmOption() {
       String nonLoopbackAddress;
       try {
-         nonLoopbackAddress = findAddress(InetAddress::isLoopbackAddress).getAddress().getHostAddress();
+         nonLoopbackAddress = NetworkAddress.nonLoopback("").getAddress().getHostAddress();
       } catch (IOException e) {
          throw new IllegalStateException("Could not find a non-loopback address");
       }
