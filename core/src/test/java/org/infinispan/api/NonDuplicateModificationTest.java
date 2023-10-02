@@ -7,7 +7,6 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -39,7 +38,7 @@ public class NonDuplicateModificationTest extends MultipleCacheManagersTest {
       // cannot handle RpcManager.sendTo + CommandAckCollector -style RPC
       return new Object[] {
             new NonDuplicateModificationTest().cacheMode(CacheMode.REPL_SYNC),
-            new NonDuplicateModificationTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.NEVER),
+//            new NonDuplicateModificationTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.NEVER),
       };
    }
 

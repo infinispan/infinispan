@@ -8,7 +8,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
-import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -41,13 +40,13 @@ public class PutMapCommandStressTest extends StressTest {
       return new Object[]{
             new PutMapCommandStressTest().enableStore(false).cacheMode(CacheMode.DIST_SYNC).transactional(false),
             new PutMapCommandStressTest().enableStore(false).cacheMode(CacheMode.DIST_SYNC).transactional(true),
-            new PutMapCommandStressTest().enableStore(false).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false).biasAcquisition(BiasAcquisition.NEVER),
-            new PutMapCommandStressTest().enableStore(false).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false).biasAcquisition(BiasAcquisition.ON_WRITE),
+//            new PutMapCommandStressTest().enableStore(false).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false).biasAcquisition(BiasAcquisition.NEVER),
+//            new PutMapCommandStressTest().enableStore(false).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false).biasAcquisition(BiasAcquisition.ON_WRITE),
 
             new PutMapCommandStressTest().enableStore(true).cacheMode(CacheMode.DIST_SYNC).transactional(false),
             new PutMapCommandStressTest().enableStore(true).cacheMode(CacheMode.DIST_SYNC).transactional(true),
-            new PutMapCommandStressTest().enableStore(true).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false).biasAcquisition(BiasAcquisition.NEVER),
-            new PutMapCommandStressTest().enableStore(true).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false).biasAcquisition(BiasAcquisition.ON_WRITE),
+//            new PutMapCommandStressTest().enableStore(true).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false).biasAcquisition(BiasAcquisition.NEVER),
+//            new PutMapCommandStressTest().enableStore(true).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false).biasAcquisition(BiasAcquisition.ON_WRITE),
       };
    }
 

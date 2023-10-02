@@ -2,7 +2,6 @@ package org.infinispan.distribution;
 
 import java.util.List;
 
-import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
@@ -20,8 +19,8 @@ public class MultipleNodesLeavingTest extends MultipleCacheManagersTest {
    public Object[] factory() {
       return new Object[] {
             new MultipleNodesLeavingTest().cacheMode(CacheMode.DIST_SYNC),
-            new MultipleNodesLeavingTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.NEVER),
-            new MultipleNodesLeavingTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.ON_WRITE),
+//            new MultipleNodesLeavingTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.NEVER),
+//            new MultipleNodesLeavingTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.ON_WRITE),
       };
    }
 

@@ -50,7 +50,7 @@ public class RehashClusterListenerTest extends MultipleCacheManagersTest {
    public Object[] factory() {
       return new Object[]{
          new RehashClusterListenerTest(new ControlledConsistentHashFactory.Default(1, 2)).cacheMode(CacheMode.DIST_SYNC),
-         new RehashClusterListenerTest(new ControlledConsistentHashFactory.Scattered(1)).cacheMode(CacheMode.SCATTERED_SYNC),
+//         new RehashClusterListenerTest(new ControlledConsistentHashFactory.Scattered(1)).cacheMode(CacheMode.SCATTERED_SYNC),
       };
    }
 

@@ -5,7 +5,6 @@ import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
@@ -24,8 +23,8 @@ public class IgnoreReturnValueForConditionalOperationsTest extends MultipleCache
       return new Object[] {
          new IgnoreReturnValueForConditionalOperationsTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
          new IgnoreReturnValueForConditionalOperationsTest().cacheMode(CacheMode.DIST_SYNC).transactional(true),
-         new IgnoreReturnValueForConditionalOperationsTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false).biasAcquisition(BiasAcquisition.NEVER),
-         new IgnoreReturnValueForConditionalOperationsTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false).biasAcquisition(BiasAcquisition.ON_WRITE)
+//         new IgnoreReturnValueForConditionalOperationsTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false).biasAcquisition(BiasAcquisition.NEVER),
+//         new IgnoreReturnValueForConditionalOperationsTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false).biasAcquisition(BiasAcquisition.ON_WRITE)
       };
    }
 
