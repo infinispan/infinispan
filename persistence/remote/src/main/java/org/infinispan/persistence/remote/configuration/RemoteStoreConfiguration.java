@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+import org.infinispan.client.hotrod.impl.HotRodURI;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
@@ -39,8 +40,7 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration<RemoteS
    static final AttributeDefinition<String> REMOTE_CACHE_CONTAINER = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.REMOTE_CACHE_CONTAINER, "").immutable().build();
    static final AttributeDefinition<String> REMOTE_CACHE_NAME = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.REMOTE_CACHE_NAME, "").immutable().build();
 
-   static final AttributeDefinition<String> URI = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.URI, null, String.class).immutable()
-         .build();
+   static final AttributeDefinition<String> URI = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.URI, null, String.class).immutable().serializer((writer, name, value) -> writer.writeAttribute(name, HotRodURI.create(value).toString(writer.clearTextSecrets()))).build();
 
    static final AttributeDefinition<Long> SOCKET_TIMEOUT = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.SOCKET_TIMEOUT, (long) ConfigurationProperties.DEFAULT_SO_TIMEOUT).build();
    static final AttributeDefinition<Boolean> TCP_NO_DELAY = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.TCP_NO_DELAY, true).build();

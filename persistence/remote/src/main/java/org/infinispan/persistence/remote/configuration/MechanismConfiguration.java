@@ -1,5 +1,6 @@
 package org.infinispan.persistence.remote.configuration;
 
+import static org.infinispan.commons.configuration.attributes.AttributeSerializer.SECRET;
 import static org.infinispan.persistence.remote.configuration.Element.AUTH_DIGEST;
 import static org.infinispan.persistence.remote.configuration.Element.AUTH_EXTERNAL;
 import static org.infinispan.persistence.remote.configuration.Element.AUTH_PLAIN;
@@ -11,10 +12,10 @@ import org.infinispan.commons.util.Util;
 
 public class MechanismConfiguration {
 
-   static final AttributeDefinition<String> USERNAME = AttributeDefinition.builder("username", null, String.class).immutable().autoPersist(false).build();
-   static final AttributeDefinition<String> PASSWORD = AttributeDefinition.builder("password", null, String.class).immutable().autoPersist(false).build();
-   static final AttributeDefinition<String> REALM = AttributeDefinition.builder("realm", null, String.class).immutable().autoPersist(false).build();
-   static final AttributeDefinition<String> SASL_MECHANISM = AttributeDefinition.builder("sasl-mechanism", null, String.class)
+   static final AttributeDefinition<String> USERNAME = AttributeDefinition.builder(Attribute.USERNAME, null, String.class).serializer(SECRET).immutable().autoPersist(false).build();
+   static final AttributeDefinition<String> PASSWORD = AttributeDefinition.builder(Attribute.PASSWORD, null, String.class).serializer(SECRET).immutable().autoPersist(false).build();
+   static final AttributeDefinition<String> REALM = AttributeDefinition.builder(Attribute.REALM, null, String.class).immutable().autoPersist(false).build();
+   static final AttributeDefinition<String> SASL_MECHANISM = AttributeDefinition.builder(Attribute.SASL_MECHANISM, null, String.class)
          .immutable().autoPersist(false).build();
    private final AttributeSet attributes;
 

@@ -12,6 +12,9 @@ import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.commons.configuration.io.ConfigurationWriter;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.io.StringBuilderWriter;
 import org.infinispan.configuration.parsing.ParserRegistry;
 
 public class Configuration extends ConfigurationElement<Configuration> implements BasicConfiguration {
@@ -293,8 +296,12 @@ public class Configuration extends ConfigurationElement<Configuration> implement
    }
 
    @Override
-   public String toStringConfiguration(String name) {
-      ParserRegistry reg = new ParserRegistry();
-      return reg.serialize(name, this);
+   public String toStringConfiguration(String name, MediaType mediaType, boolean clearTextSecrets) {
+      StringBuilderWriter sw = new StringBuilderWriter();
+      try (ConfigurationWriter writer = ConfigurationWriter.to(sw).withType(mediaType).clearTextSecrets(clearTextSecrets).prettyPrint(false).build()) {
+         ParserRegistry reg = new ParserRegistry();
+         reg.serialize(writer, name, this);
+      }
+      return sw.toString();
    }
 }

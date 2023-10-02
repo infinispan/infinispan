@@ -1,7 +1,7 @@
 package org.infinispan.persistence.jdbc.common.configuration;
 
 import static org.infinispan.persistence.jdbc.common.configuration.AbstractUnmanagedConnectionFactoryConfiguration.CONNECTION_URL;
-import static org.infinispan.persistence.jdbc.common.configuration.AbstractUnmanagedConnectionFactoryConfiguration.DRIVER_CLASS;
+import static org.infinispan.persistence.jdbc.common.configuration.AbstractUnmanagedConnectionFactoryConfiguration.DRIVER;
 import static org.infinispan.persistence.jdbc.common.configuration.AbstractUnmanagedConnectionFactoryConfiguration.PASSWORD;
 import static org.infinispan.persistence.jdbc.common.configuration.AbstractUnmanagedConnectionFactoryConfiguration.USERNAME;
 import static org.infinispan.persistence.jdbc.common.configuration.PooledConnectionFactoryConfiguration.PROPERTY_FILE;
@@ -45,12 +45,12 @@ public class PooledConnectionFactoryConfigurationBuilder<S extends AbstractJdbcS
    }
 
    public PooledConnectionFactoryConfigurationBuilder<S> driverClass(Class<? extends Driver> driverClass) {
-      attributes.attribute(DRIVER_CLASS).set(driverClass.getName());
+      attributes.attribute(DRIVER).set(driverClass.getName());
       return this;
    }
 
    public PooledConnectionFactoryConfigurationBuilder<S> driverClass(String driverClass) {
-      attributes.attribute(DRIVER_CLASS).set(driverClass);
+      attributes.attribute(DRIVER).set(driverClass);
       return this;
    }
 

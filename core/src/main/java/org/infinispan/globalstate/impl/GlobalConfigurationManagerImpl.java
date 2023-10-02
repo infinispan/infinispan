@@ -206,7 +206,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       return cache.containsKeyAsync(key).thenCompose(exists -> {
          if (exists)
             throw CONFIG.configAlreadyDefined(name);
-         return cache.putAsync(key, new CacheState(null, parserRegistry.serialize(name, configuration), flags));
+         return cache.putAsync(key, new CacheState(null, configuration.toStringConfiguration(name), flags));
       }).thenApply(v -> null);
    }
 
@@ -215,7 +215,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       assertNameLength(name);
       localConfigurationManager.validateFlags(flags);
       try {
-         final CacheState state = new CacheState(null, parserRegistry.serialize(name, configuration), flags);
+         final CacheState state = new CacheState(null, configuration.toStringConfiguration(name), flags);
          return getStateCache().putIfAbsentAsync(new ScopedState(TEMPLATE_SCOPE, name), state).thenApply((v) -> configuration);
       } catch (Exception e) {
          throw CONFIG.configurationSerializationFailed(name, configuration, e);
@@ -279,7 +279,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       localConfigurationManager.validateFlags(flags);
       final CacheState state;
       try {
-         state = new CacheState(template, parserRegistry.serialize(cacheName, configuration), flags);
+         state = new CacheState(template, configuration.toStringConfiguration(cacheName), flags);
       } catch (Exception e) {
          throw CONFIG.configurationSerializationFailed(cacheName, configuration, e);
       }

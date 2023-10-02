@@ -18,13 +18,13 @@ public abstract class  AbstractJdbcStoreConfigurationSerializer extends Abstract
    protected void writeJDBCStoreConnection(ConfigurationWriter writer, AbstractJdbcStoreConfiguration<?> configuration) {
       ConnectionFactoryConfiguration cfc = configuration.connectionFactory();
       if (cfc instanceof SimpleConnectionFactoryConfiguration) {
-         writeAttributes(writer, Element.SIMPLE_CONNECTION, ((SimpleConnectionFactoryConfiguration) cfc).attributes());
+         writeAttributes(writer, Element.SIMPLE_CONNECTION, cfc.attributes());
       } else if (cfc instanceof PooledConnectionFactoryConfiguration) {
-         writeAttributes(writer, Element.CONNECTION_POOL, ((PooledConnectionFactoryConfiguration) cfc).attributes());
+         writeAttributes(writer, Element.CONNECTION_POOL, cfc.attributes());
       } else if (cfc instanceof ManagedConnectionFactoryConfiguration) {
-         writeAttributes(writer, Element.DATA_SOURCE, ((ManagedConnectionFactoryConfiguration) cfc).attributes());
+         writeAttributes(writer, Element.DATA_SOURCE, cfc.attributes());
       } else if (cfc instanceof CDIConnectionFactoryConfiguration) {
-         writeAttributes(writer, Element.CDI_DATA_SOURCE, ((CDIConnectionFactoryConfiguration) cfc).attributes());
+         writeAttributes(writer, Element.CDI_DATA_SOURCE, cfc.attributes());
       }
    }
 

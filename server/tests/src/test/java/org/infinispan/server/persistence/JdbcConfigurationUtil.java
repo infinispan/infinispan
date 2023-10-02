@@ -9,7 +9,7 @@ import org.infinispan.util.concurrent.IsolationLevel;
 
 public class JdbcConfigurationUtil {
 
-    private PooledConnectionFactoryConfigurationBuilder persistenceConfiguration;
+    private PooledConnectionFactoryConfigurationBuilder<?> persistenceConfiguration;
     private final ConfigurationBuilder configurationBuilder;
     private final CacheMode cacheMode;
 
@@ -53,7 +53,7 @@ public class JdbcConfigurationUtil {
         return this;
     }
 
-    public PooledConnectionFactoryConfigurationBuilder getPersistenceConfiguration() {
+    public PooledConnectionFactoryConfigurationBuilder<?> getPersistenceConfiguration() {
         return this.persistenceConfiguration;
     }
 

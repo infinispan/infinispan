@@ -1,5 +1,7 @@
 package org.infinispan.persistence.remote.configuration;
 
+import static org.infinispan.commons.configuration.attributes.AttributeSerializer.SECRET;
+
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
@@ -9,7 +11,7 @@ public class TrustStoreConfiguration extends ConfigurationElement<TrustStoreConf
 
    static final AttributeDefinition<String> TRUSTSTORE_FILENAME = AttributeDefinition.builder(Attribute.FILENAME, null, String.class).immutable().autoPersist(false).build();
    static final AttributeDefinition<String> TRUSTSTORE_TYPE = AttributeDefinition.builder(Attribute.TYPE, "JKS", String.class).immutable().autoPersist(false).build();
-   static final AttributeDefinition<String> TRUSTSTORE_PASSWORD = AttributeDefinition.builder(Attribute.PASSWORD, null, String.class).immutable().autoPersist(false).build();
+   static final AttributeDefinition<String> TRUSTSTORE_PASSWORD = AttributeDefinition.builder(Attribute.PASSWORD, null, String.class).serializer(SECRET).immutable().autoPersist(false).build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(TrustStoreConfiguration.class, TRUSTSTORE_FILENAME, TRUSTSTORE_TYPE, TRUSTSTORE_PASSWORD);
