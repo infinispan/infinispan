@@ -1,13 +1,17 @@
 package org.infinispan.persistence.jdbc.common.configuration;
 
+import static org.infinispan.commons.configuration.attributes.AttributeSerializer.SECRET;
+
+import java.util.Objects;
+
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 public abstract class AbstractUnmanagedConnectionFactoryConfiguration implements ConnectionFactoryConfiguration {
 
-   public static final AttributeDefinition<String> USERNAME = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.USERNAME, null, String.class).immutable().build();
-   public static final AttributeDefinition<String> PASSWORD = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.PASSWORD, null, String.class).immutable().build();
+   public static final AttributeDefinition<String> USERNAME = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.USERNAME, null, String.class).serializer(SECRET).immutable().build();
+   public static final AttributeDefinition<String> PASSWORD = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.PASSWORD, null, String.class).serializer(SECRET).immutable().build();
    public static final AttributeDefinition<String> DRIVER_CLASS = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.DRIVER_CLASS, null, String.class).immutable().build();
    public static final AttributeDefinition<String> CONNECTION_URL = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.CONNECTION_URL, null, String.class).immutable().build();
 
@@ -53,11 +57,18 @@ public abstract class AbstractUnmanagedConnectionFactoryConfiguration implements
 
       AbstractUnmanagedConnectionFactoryConfiguration that = (AbstractUnmanagedConnectionFactoryConfiguration) o;
 
-      return attributes != null ? attributes.equals(that.attributes) : that.attributes == null;
+      return Objects.equals(attributes, that.attributes);
    }
 
    @Override
    public int hashCode() {
       return attributes != null ? attributes.hashCode() : 0;
+   }
+
+   @Override
+   public String toString() {
+      return this.getClass().getName() +
+            "attributes=" + attributes +
+            '}';
    }
 }

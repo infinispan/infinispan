@@ -775,4 +775,11 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       assertEquals(JavaSerializationMarshaller.class.getName(), props.getProperty("infinispan.client.hotrod.cache.mycache.marshaller"));
       assertEquals(UTF8StringMarshaller.class.getName(), props.getProperty("infinispan.client.hotrod.cache.org.infinispan.yourcache.marshaller"));
    }
+
+   @Test
+   public void testHotRodURItoString() {
+      HotRodURI uri = HotRodURI.create("hotrod://user:secret@host1?client_intelligence=BASIC");
+      assertEquals("hotrod://host1?client_intelligence=BASIC", uri.toString());
+      assertEquals("hotrod://user:secret@host1?client_intelligence=BASIC", uri.toString(true));
+   }
 }

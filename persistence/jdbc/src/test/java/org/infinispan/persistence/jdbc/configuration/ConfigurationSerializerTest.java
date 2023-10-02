@@ -1,7 +1,5 @@
 package org.infinispan.persistence.jdbc.configuration;
 
-import static org.testng.AssertJUnit.assertEquals;
-
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.serializer.AbstractConfigurationSerializerTest;
 import org.infinispan.persistence.jdbc.common.configuration.AbstractJdbcStoreConfiguration;
@@ -14,7 +12,7 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
       if (beforeStore instanceof AbstractJdbcStoreConfiguration) {
          AbstractJdbcStoreConfiguration before = (AbstractJdbcStoreConfiguration) beforeStore;
          AbstractJdbcStoreConfiguration after = (AbstractJdbcStoreConfiguration) afterStore;
-         assertEquals("Configuration " + name + " JDBC connection factory", before.connectionFactory(), after.connectionFactory());
+         compareAttributeSets("Configuration " + name + " JDBC connection factory", before.connectionFactory().attributes(), after.connectionFactory().attributes(), "username", "password");
       }
       if (beforeStore instanceof JdbcStringBasedStoreConfiguration) {
          JdbcStringBasedStoreConfiguration before = (JdbcStringBasedStoreConfiguration) beforeStore;
