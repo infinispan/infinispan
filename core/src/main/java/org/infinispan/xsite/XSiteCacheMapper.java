@@ -9,6 +9,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import org.infinispan.configuration.ConfigurationManager;
+import org.infinispan.configuration.cache.BackupConfiguration;
+import org.infinispan.configuration.cache.BackupForConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -39,16 +41,16 @@ public class XSiteCacheMapper {
    @Inject ConfigurationManager configurationManager;
    @Inject CacheManagerNotifier notifier;
 
-   private final Map<RemoteCacheInfo, LocalCacheInfoImpl> localCachesMap = new ConcurrentHashMap<>();
+   private final Map<RemoteCacheInfoImpl, LocalCacheInfoImpl> localCachesMap = new ConcurrentHashMap<>();
 
    public LocalCacheInfo findLocalCache(String remoteSite, ByteString remoteCacheName) {
-      var key = new RemoteCacheInfo(remoteSite, remoteCacheName);
+      var key = new RemoteCacheInfoImpl(remoteSite, remoteCacheName);
       return localCachesMap.computeIfAbsent(key, this::lookupLocalCaches);
    }
 
    // for testing only
    Optional<LocalCacheInfo> peekLocalCacheForRemoteSite(String remoteSite, ByteString remoteCache) {
-      return Optional.ofNullable(localCachesMap.get(new RemoteCacheInfo(remoteSite, remoteCache)));
+      return Optional.ofNullable(localCachesMap.get(new RemoteCacheInfoImpl(remoteSite, remoteCache)));
    }
 
    @Start
@@ -78,7 +80,7 @@ public class XSiteCacheMapper {
             .map(c -> c.cacheNameInSite(site));
    }
 
-   private LocalCacheInfoImpl lookupLocalCaches(RemoteCacheInfo remoteCache) {
+   private LocalCacheInfoImpl lookupLocalCaches(RemoteCacheInfoImpl remoteCache) {
       var optConf = getCacheNames().stream()
             .map(this::getConfiguration)
             .filter(Objects::nonNull)
@@ -107,6 +109,17 @@ public class XSiteCacheMapper {
 
    private Collection<String> getCacheNames() {
       return registry.getCacheManager().getCacheNames();
+   }
+
+   public Stream<RemoteCacheInfo> findRemoteCachesWithAsyncBackup(String cacheName) {
+      return findConfiguration(cacheName)
+            .map(NamedConfiguration::remoteAsyncSiteAndCaches)
+            .orElse(Stream.empty());
+   }
+
+   public interface RemoteCacheInfo {
+      ByteString cacheName();
+      ByteString siteName();
    }
 
    public interface LocalCacheInfo {
@@ -156,11 +169,11 @@ public class XSiteCacheMapper {
       }
    }
 
-   private static class RemoteCacheInfo {
+   private static class RemoteCacheInfoImpl implements RemoteCacheInfo {
       private final ByteString originSite;
       private final ByteString originCache;
 
-      RemoteCacheInfo(String originSite, ByteString originCache) {
+      RemoteCacheInfoImpl(String originSite, ByteString originCache) {
          this.originSite = XSiteNamedCache.cachedByteString(Objects.requireNonNull(originSite));
          this.originCache = Objects.requireNonNull(originCache);
       }
@@ -178,7 +191,7 @@ public class XSiteCacheMapper {
          if (o == null || getClass() != o.getClass()) {
             return false;
          }
-         var remoteSiteCache = (RemoteCacheInfo) o;
+         var remoteSiteCache = (RemoteCacheInfoImpl) o;
          return Objects.equals(originSite, remoteSiteCache.originSite) &&
                Objects.equals(originCache, remoteSiteCache.originCache);
       }
@@ -194,6 +207,16 @@ public class XSiteCacheMapper {
                "originSite=" + originSite +
                ", originCache=" + originCache +
                '}';
+      }
+
+      @Override
+      public ByteString cacheName() {
+         return originCache;
+      }
+
+      @Override
+      public ByteString siteName() {
+         return originSite;
       }
    }
 
@@ -215,14 +238,32 @@ public class XSiteCacheMapper {
       }
 
       boolean isAsyncBackupTo(ByteString remoteSite) {
-         return configuration.sites().asyncBackupsStream().anyMatch(c -> Objects.equals(remoteSite.toString(), c.site()));
+         return asyncBackups().anyMatch(c -> Objects.equals(remoteSite.toString(), c.site()));
+      }
+
+      Stream<BackupConfiguration> asyncBackups() {
+         return configuration.sites().asyncBackupsStream();
+      }
+
+      BackupForConfiguration backupForConfiguration() {
+         return configuration.sites().backupFor();
       }
 
       ByteString cacheNameInSite(ByteString remoteSite) {
-         var backupFor = configuration.sites().backupFor();
+         var backupFor = backupForConfiguration();
          return Objects.equals(remoteSite.toString(), backupFor.remoteSite()) ?
                ByteString.fromString(backupFor.remoteCache()) :
                name;
+      }
+
+      Stream<RemoteCacheInfo> remoteAsyncSiteAndCaches() {
+         return asyncBackups().map(c -> {
+            if (Objects.equals(backupForConfiguration().remoteSite(), c.site())) {
+               return new RemoteCacheInfoImpl(c.site(), ByteString.fromString(backupForConfiguration().remoteCache()));
+            } else {
+               return new RemoteCacheInfoImpl(c.site(), name);
+            }
+         });
       }
 
       @Override

@@ -116,8 +116,8 @@ public class AbstractDelegatingXSiteStateTransferManager implements XSiteStateTr
    }
 
    @Override
-   public void startAutomaticStateTransferTo(ByteString remoteSite) {
-      delegate.startAutomaticStateTransferTo(remoteSite);
+   public void startAutomaticStateTransferTo(ByteString remoteSite, boolean ignoreStatus) {
+      delegate.startAutomaticStateTransferTo(remoteSite, ignoreStatus);
    }
 
    @Override
