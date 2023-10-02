@@ -100,7 +100,7 @@ public class NoOpXSiteStateTransferManager implements XSiteStateTransferManager 
    }
 
    @Override
-   public void startAutomaticStateTransferTo(ByteString remoteSite) {
+   public void startAutomaticStateTransferTo(ByteString remoteSite, boolean ignoreStatus) {
       //no-op
    }
 
