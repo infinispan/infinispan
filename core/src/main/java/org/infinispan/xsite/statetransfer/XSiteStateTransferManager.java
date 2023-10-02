@@ -118,9 +118,10 @@ public interface XSiteStateTransferManager {
    /**
     * Starts the automatic cross-site state transfer if available and if required.
     *
-    * @param remoteSite The remote site to send state to.
+    * @param remoteSite   The remote site to send state to.
+    * @param ignoreStatus If {@code true}, it starts the state transfer based only on {@link XSiteStateTransferMode}.
     */
-   void startAutomaticStateTransferTo(ByteString remoteSite);
+   void startAutomaticStateTransferTo(ByteString remoteSite, boolean ignoreStatus);
 
    /**
     * @param site The remote site.
@@ -131,8 +132,8 @@ public interface XSiteStateTransferManager {
    /**
     * Sets the {@link XSiteStateTransferMode} to the remote site.
     * <p>
-    * If the configuration for the remote site does not support the {@link XSiteStateTransferMode}, then this method returns
-    * {@code false}.
+    * If the configuration for the remote site does not support the {@link XSiteStateTransferMode}, then this method
+    * returns {@code false}.
     *
     * @param site The remote site.
     * @param mode The new {@link XSiteStateTransferMode}.

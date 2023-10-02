@@ -20,8 +20,8 @@ public class AutoStateTransferResponseCollector implements ResponseCollector<Aut
    private boolean isOffline;
    private XSiteStateTransferMode stateTransferMode;
 
-   public AutoStateTransferResponseCollector(boolean isOffline, XSiteStateTransferMode stateTransferMode) {
-      this.isOffline = isOffline;
+   public AutoStateTransferResponseCollector(boolean isOffline, XSiteStateTransferMode stateTransferMode, boolean ignoreStatus) {
+      this.isOffline = ignoreStatus || isOffline;
       this.stateTransferMode = stateTransferMode;
    }
 

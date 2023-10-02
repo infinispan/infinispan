@@ -15,7 +15,9 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
+import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted;
 import org.infinispan.notifications.cachemanagerlistener.annotation.SiteViewChanged;
+import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.SitesViewChangedEvent;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.transport.Transport;
@@ -61,9 +63,12 @@ public class XSiteEventsManagerImpl implements XSiteEventsManager {
          for (var e : events) {
             switch (e.getType()) {
                case SITE_CONNECTED:
-                  return onRemoteSiteConnected(e.getSiteName(), holder);
+                  onRemoteSiteConnected(e.getSiteName(), holder);
+                  break;
                case STATE_REQUEST:
-                  return onRemoteSiteStateRequest(e.getSiteName(), e.getCacheName());
+               case INITIAL_STATE_REQUEST:
+                  onRemoteSiteStateRequest(e.getSiteName(), e.getCacheName(), e.getType() == XSiteEventType.INITIAL_STATE_REQUEST);
+                  break;
                default:
                   log.debugf("Unknown event received: %s", e);
             }
@@ -100,11 +105,24 @@ public class XSiteEventsManagerImpl implements XSiteEventsManager {
             .forEach(this::sendNewConnectionEvent);
    }
 
-   private CompletionStage<Void> onRemoteSiteConnected(ByteString site, XSiteEventSender sender) {
-      for (var it = xSiteCacheMapper.remoteCachesFromSite(site).iterator(); it.hasNext() ; ) {
+   @CacheStarted
+   public void onCacheStarted(CacheStartedEvent event) {
+      log.debugf("On cache started (is coordinator? %s): %s", transport.isCoordinator(), event.getCacheName());
+      if (!transport.isCoordinator()) {
+         return;
+      }
+      try (var sender = new XSiteEventSender(transport)) {
+         xSiteCacheMapper.findRemoteCachesWithAsyncBackup(event.getCacheName())
+               .forEach(i -> sender.addEventToSite(i.siteName(), XSiteEvent.createInitialStateRequest(localSite(), i.cacheName())));
+      } catch (Exception e) {
+         log.debugf(e, "Unable to send state request for cache %s", event.getCacheName());
+      }
+   }
+
+   private void onRemoteSiteConnected(ByteString site, XSiteEventSender sender) {
+      for (var it = xSiteCacheMapper.remoteCachesFromSite(site).iterator(); it.hasNext(); ) {
          sender.addEventToSite(site, XSiteEvent.createRequestState(localSite(), it.next()));
       }
-      return CompletableFutures.completedNull();
    }
 
    private void sendNewConnectionEvent(String remoteSite) {
@@ -114,19 +132,18 @@ public class XSiteEventsManagerImpl implements XSiteEventsManager {
       transport.backupRemotely(backup, cmd);
    }
 
-   private CompletionStage<Void> onRemoteSiteStateRequest(ByteString remoteSite, ByteString localCacheName) {
+   private void onRemoteSiteStateRequest(ByteString remoteSite, ByteString localCacheName, boolean initialState) {
       var cacheRegistry = globalRegistry.getNamedComponentRegistry(localCacheName);
       if (cacheRegistry == null) {
          log.debugf("State Transfer request from site '%s' and cache '%s' failed. Cache does no exist.", remoteSite, localCacheName);
-         return CompletableFutures.completedNull();
+         return;
       }
       var xsiteStateManagerRef = cacheRegistry.getXSiteStateTransferManager();
       if (!xsiteStateManagerRef.isRunning()) {
          log.debugf("State Transfer request from site '%s' and cache '%s' failed. Cache is not started.", remoteSite, localCacheName);
-         return CompletableFutures.completedNull();
+         return;
       }
-      xsiteStateManagerRef.running().startAutomaticStateTransferTo(remoteSite);
-      return CompletableFutures.completedNull();
+      xsiteStateManagerRef.running().startAutomaticStateTransferTo(remoteSite, initialState);
    }
 
    private ByteString localSite() {

@@ -1,21 +1,25 @@
 package org.infinispan.xsite.statetransfer;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.testng.AssertJUnit;
 
 import net.jcip.annotations.GuardedBy;
 
 /**
  * A {@link XSiteStateTransferManager} implementation that intercepts and controls the {@link
- * #startAutomaticStateTransferTo(ByteString)} method.
+ * XSiteStateTransferManager#startAutomaticStateTransferTo(ByteString, boolean)} method.
  *
  * @author Pedro Ruivo
  * @since 12.1
@@ -25,7 +29,7 @@ class ControlledXSiteStateTransferManager extends AbstractDelegatingXSiteStateTr
    private static final long TIMEOUT_MILLIS = 20000;
 
    @GuardedBy("this")
-   private List<ByteString> sitesUp;
+   private List<RemoteSiteRequest> sitesUp;
 
    private ControlledXSiteStateTransferManager(XSiteStateTransferManager delegate) {
       super(delegate);
@@ -37,21 +41,21 @@ class ControlledXSiteStateTransferManager extends AbstractDelegatingXSiteStateTr
    }
 
    @Override
-   public void startAutomaticStateTransferTo(ByteString remoteSite) {
+   public void startAutomaticStateTransferTo(ByteString remoteSite, boolean ignoreStatus) {
       synchronized (this) {
          if (sitesUp != null) {
             log.tracef("Blocking automatic state transfer with sites %s", remoteSite);
-            sitesUp.add(remoteSite);
+            sitesUp.add(new RemoteSiteRequest(remoteSite, ignoreStatus));
             sitesUp.sort(null);
             notifyAll();
             return;
          }
       }
-      super.startAutomaticStateTransferTo(remoteSite);
+      super.startAutomaticStateTransferTo(remoteSite, ignoreStatus);
    }
 
    public synchronized void startBlockSiteUpEvent() {
-      AssertJUnit.assertNull(sitesUp);
+      assertNull(sitesUp);
       sitesUp = new ArrayList<>(2);
    }
 
@@ -66,9 +70,9 @@ class ControlledXSiteStateTransferManager extends AbstractDelegatingXSiteStateTr
    }
 
    private Runnable awaitAndStopBlockingAndAssert(List<ByteString> expectedSites) throws InterruptedException {
-      List<ByteString> siteUpCopy;
+      List<RemoteSiteRequest> siteUpCopy;
       synchronized (this) {
-         AssertJUnit.assertNotNull(sitesUp);
+         assertNotNull(sitesUp);
          var endTime = System.currentTimeMillis() + TIMEOUT_MILLIS;
          var waitTime = TIMEOUT_MILLIS;
          while (sitesUp.size() < expectedSites.size() && waitTime > 0) {
@@ -78,7 +82,26 @@ class ControlledXSiteStateTransferManager extends AbstractDelegatingXSiteStateTr
          siteUpCopy = List.copyOf(sitesUp);
          sitesUp = null;
       }
-      AssertJUnit.assertEquals(expectedSites, siteUpCopy);
-      return () -> siteUpCopy.forEach(super::startAutomaticStateTransferTo);
+      assertEquals(expectedSites, siteUpCopy.stream().map(r -> r.remoteSite).collect(Collectors.toList()));
+      return () -> siteUpCopy.forEach(RemoteSiteRequest::run);
+   }
+
+   private class RemoteSiteRequest implements Comparable<RemoteSiteRequest> {
+      final ByteString remoteSite;
+      final boolean force;
+
+      private RemoteSiteRequest(ByteString remoteSite, boolean force) {
+         this.remoteSite = remoteSite;
+         this.force = force;
+      }
+
+      void run() {
+         ControlledXSiteStateTransferManager.super.startAutomaticStateTransferTo(remoteSite, force);
+      }
+
+      @Override
+      public int compareTo(RemoteSiteRequest o) {
+         return remoteSite.compareTo(o.remoteSite);
+      }
    }
 }
