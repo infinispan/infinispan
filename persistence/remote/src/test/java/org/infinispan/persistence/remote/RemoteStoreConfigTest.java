@@ -33,7 +33,7 @@ public class RemoteStoreConfigTest extends AbstractInfinispanTest {
    private HotRodServer hotRodServer;
    private final String cacheLoaderConfig;
    protected final String storeCacheName;
-   private final int port;
+   protected final int port;
 
    public RemoteStoreConfigTest(String cacheLoaderConfig, String storeCacheName, int port) {
       super();
