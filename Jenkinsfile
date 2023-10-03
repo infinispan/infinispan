@@ -100,7 +100,7 @@ pipeline {
                 // Capture target/surefire-reports/*.xml, target/failsafe-reports/*.xml,
                 // target/failsafe-reports-embedded/*.xml, target/failsafe-reports-remote/*.xml
                 junit testResults: '**/target/*-reports*/**/TEST-*.xml',
-                    testDataPublishers: [[$class: 'ClaimTestDataPublisher'],[$class: 'JUnitFlakyTestDataPublisher']],
+                    testDataPublishers: [[$class: 'ClaimTestDataPublisher']],
                     healthScaleFactor: 100, allowEmptyResults: true
 
                 // Workaround for SUREFIRE-1426: Fail the build if there a fork crashed
