@@ -83,18 +83,17 @@ public abstract class AbstractClusterListenerNonTxTest extends AbstractClusterLi
    }
 
    protected void checkEvent(CacheEntryEvent<Object, String> event, MagicKey key, boolean isCreated, boolean isRetried) {
-      CacheEntryCreatedEvent<Object, String> createEvent;
       if (isCreated) {
-         assertEquals(event.getType(), Event.Type.CACHE_ENTRY_CREATED);
-         createEvent = (CacheEntryCreatedEvent<Object, String>)event;
+         assertEquals(Event.Type.CACHE_ENTRY_CREATED, event.getType());
+         CacheEntryCreatedEvent<Object, String> createEvent = (CacheEntryCreatedEvent<Object, String>)event;
          assertEquals(createEvent.isCommandRetried(), isRetried);
       } else {
-         assertEquals(event.getType(), Event.Type.CACHE_ENTRY_MODIFIED);
+         assertEquals(Event.Type.CACHE_ENTRY_MODIFIED, event.getType());
          CacheEntryModifiedEvent<Object, String> modEvent = (CacheEntryModifiedEvent<Object, String>) event;
          assertTrue(modEvent.isCommandRetried());
       }
-      assertEquals(event.getKey(), key);
-      assertEquals(event.getValue(), FIRST_VALUE);
+      assertEquals(key, event.getKey());
+      assertEquals(FIRST_VALUE, event.getValue());
    }
 
    protected void awaitForBackups(Cache<?, ?> cache) {
