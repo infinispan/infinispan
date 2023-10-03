@@ -27,8 +27,8 @@
    </cache-container>
 
    <remote-cache-containers xmlns="urn:infinispan:config:store:remote:${infinispan.core.schema.version}">
-      <remote-cache-container uri="hotrod://127.0.0.1:19811"/>
-      <remote-cache-container uri="hotrod://127.0.0.1:19811" name="alternative">
+      <remote-cache-container uri="hotrod://127.0.0.1:${infinispan.server.port}"/>
+      <remote-cache-container uri="hotrod://127.0.0.1:${infinispan.server.port}" name="alternative">
          <property name="socket-timeout">20000</property>
          <property name="connect-timeout">20000</property>
       </remote-cache-container>
