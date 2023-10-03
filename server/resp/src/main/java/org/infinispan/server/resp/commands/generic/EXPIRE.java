@@ -9,6 +9,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.AdvancedCache;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
@@ -60,7 +62,9 @@ public class EXPIRE extends RespCommand implements Resp3Command {
    }
 
    private static CompletionStage<Long> expire(Resp3Handler handler, byte[] key, long expiration, Mode mode, boolean unixTime) {
-      return handler.cache().getCacheEntryAsync(key).thenCompose(e -> {
+      MediaType vmt = handler.cache().getValueDataConversion().getStorageMediaType();
+      final AdvancedCache<byte[], Object> acm = handler.cache().<byte[],Object>withMediaType(MediaType.APPLICATION_OCTET_STREAM, vmt);
+      return acm.getCacheEntryAsync(key).thenCompose(e -> {
          if (e == null) {
             return NOT_APPLIED;
          } else {
@@ -94,9 +98,9 @@ public class EXPIRE extends RespCommand implements Resp3Command {
             }
             CompletableFuture<Boolean> replace;
             if (unixTime) {
-               replace = handler.cache().replaceAsync(e.getKey(), e.getValue(), e.getValue(), fromUnixTime(expiration, handler.respServer().getTimeService()), TimeUnit.MILLISECONDS);
+               replace = acm.replaceAsync(e.getKey(), e.getValue(), e.getValue(), fromUnixTime(expiration, handler.respServer().getTimeService()), TimeUnit.MILLISECONDS);
             } else {
-               replace = handler.cache().replaceAsync(e.getKey(), e.getValue(), e.getValue(), expiration, TimeUnit.SECONDS);
+               replace = acm.replaceAsync(e.getKey(), e.getValue(), e.getValue(), expiration, TimeUnit.SECONDS);
             }
             return replace.thenCompose(b -> {
                if (b) {

@@ -17,6 +17,7 @@ import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.commons.marshall.MarshallUtil.CollectionBuilder;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
@@ -85,7 +86,7 @@ public class EventListenerKeysFilter implements CacheEventFilter<Object, Object>
 
       @Override
       public EventListenerKeysFilter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         List<byte[]> keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
+         List<byte[]> keys = (List<byte[]>)MarshallUtil.unmarshallCollection(input, (CollectionBuilder<byte[], List<byte[]>>)ArrayList::new);
          return new EventListenerKeysFilter(keys);
       }
 

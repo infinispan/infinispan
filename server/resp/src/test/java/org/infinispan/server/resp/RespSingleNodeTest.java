@@ -30,6 +30,7 @@ import java.util.stream.Stream;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
@@ -806,6 +807,17 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
    }
 
    @Test
+   public void testPTTLTypes() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.hset(k(), v(),v());
+      assertThat(redis.pttl(k())).isEqualTo(-1);
+      assertThat(redis.pttl(k(1))).isEqualTo(-2);
+      redis.hset(k(2), v(2),v(2));
+      redis.expire(k(2), 10);
+      assertThat(redis.pttl(k(2))).isEqualTo(10_000L);
+   }
+
+   @Test
    public void testExpireTime() {
       RedisCommands<String, String> redis = redisConnection.sync();
       redis.set(k(), v());
@@ -915,5 +927,78 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       redis.rpush("list", "one", "two", "three");
 
       assertThat(redis.touch("hello", "list", "unexisting")).isEqualTo(2);
+   }
+
+   @Test
+   public void testRename() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      var srcKey = k(0);
+      var dstKey = k(1);
+      var val = v();
+      redis.set(srcKey, val);
+      redis.rename(srcKey, dstKey);
+      assertThat(redis.get(dstKey)).isEqualTo(val);
+      Exceptions.expectException(RedisCommandExecutionException.class,
+            "ERR no such key",
+            () -> redis.rename("not-existent", dstKey));
+   }
+
+   @Test
+   public void testRenameList() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      var srcKey = k(0);
+      var dstKey = k(1);
+      var val = v();
+      redis.rpush(srcKey, val);
+      redis.rename(srcKey, dstKey);
+      assertThat(redis.lrange(dstKey,0,-1)).containsExactly(val);
+   }
+
+
+   @Test
+   public void testRenameWithEx() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      var srcKey = k(0);
+      var dstKey = k(1);
+      var val = v();
+      var setArg = new SetArgs();
+      setArg.ex(60);
+      redis.set(srcKey, val, setArg);
+      ((ControlledTimeService)timeService).advance(30, TimeUnit.SECONDS);
+      redis.rename(srcKey, dstKey);
+      assertThat(redis.get(dstKey)).isEqualTo(val);
+      var nowTs = timeService.wallClockTime();
+      assertThat(redis.expiretime(dstKey)-nowTs/1000).isLessThanOrEqualTo(30);
+      ((ControlledTimeService)timeService).advance(35, TimeUnit.SECONDS);
+      assertThat(redis.get(dstKey)).isNull();
+   }
+
+   @Test
+   public void testRenamenx() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      var srcKey = k(0);
+      var dstKey = k(1);
+      var val = v();
+      var val1 = v(1);
+      redis.set(srcKey, val);
+      assertThat(redis.renamenx(srcKey, dstKey)).isEqualTo(true);
+      assertThat(redis.get(dstKey)).isEqualTo(val);
+      redis.set(srcKey, val1);
+      assertThat(redis.renamenx(srcKey, dstKey)).isEqualTo(false);
+      assertThat(redis.get(dstKey)).isEqualTo(val);
+      Exceptions.expectException(RedisCommandExecutionException.class,
+            "ERR no such key",
+            () -> redis.renamenx("not-existent", "not-existent-1"));
+   }
+
+   @Test
+   public void testRenameTypes() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      var srcKey = k(0);
+      var dstKey = k(1);
+      var val = v();
+      redis.rpush(srcKey, val);
+      redis.rename(srcKey, dstKey);
+      assertThat(redis.lrange(dstKey,0,-1)).containsExactly(val);
    }
 }

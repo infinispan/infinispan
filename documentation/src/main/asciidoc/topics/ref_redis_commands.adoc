@@ -255,6 +255,12 @@ provides a read-uncommitted isolation.
 | https://redis.io/commands/readwrite[READWRITE]
 |
 
+| https://redis.io/commands/rename[RENAME]
+|
+
+| https://redis.io/commands/renamenx[RENAMENX]
+|
+
 | link:https://redis.io/commands/reset[RESET]
 |
 
