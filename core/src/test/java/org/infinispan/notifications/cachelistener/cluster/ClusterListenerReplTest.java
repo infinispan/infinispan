@@ -18,6 +18,7 @@ import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
+import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ControlledRpcManager;
 import org.testng.annotations.Test;
@@ -65,8 +66,11 @@ public class ClusterListenerReplTest extends AbstractClusterListenerNonTxTest {
       assertTrue(clusterListener.events.size() >= 1);
       // Because a rebalance has 4 phases, the command may be retried 4 times
       assertTrue(clusterListener.events.size() <= 4);
+      CacheEntryEvent firstEvent = clusterListener.events.remove(0);
+      // First always has to be CREATE
+      checkEvent(firstEvent, key, true, true);
       for (CacheEntryEvent<Object, String> event : clusterListener.events) {
-         checkEvent(event, key, true, true);
+         checkEvent(event, key, event.getType() == Event.Type.CACHE_ENTRY_CREATED, true);
       }
    }
 
