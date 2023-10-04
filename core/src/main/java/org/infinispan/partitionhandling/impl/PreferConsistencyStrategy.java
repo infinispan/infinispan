@@ -88,7 +88,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       // But the information about graceful leavers would be lost when the coordinator changes anyway, making
       // the results of the strategy harder to reason about.
       CacheTopology stableTopology = context.getStableTopology();
-      List<Address> stableMembers = stableTopology.getMembers();
+      List<Address> stableMembers = new ArrayList<>(stableTopology.getMembers());
       // Ignore members without any segments (e.g. zero-capacity nodes)
       stableMembers.removeIf(a -> stableTopology.getCurrentCH().getSegmentsForOwner(a).isEmpty());
       List<Address> lostMembers = new ArrayList<>(stableMembers);
