@@ -181,10 +181,9 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       for (XSiteState state : stateList) {
          int segment = topology.getSegment(state.key());
          IracManagerStateTransferState iracState = new IracManagerStateTransferState(segment, state.key());
-         // if an update is in progress, we don't need to send the same value again.
-         if (updatedKeys.putIfAbsent(iracState.getKey(), iracState) == null) {
-            cf.dependsOn(iracState.getCompletionStage());
-         }
+         // better be safe to avoid losing data
+         updatedKeys.put(iracState.getKey(), iracState);
+         cf.dependsOn(iracState.getCompletionStage());
       }
       iracExecutor.run();
       return cf.freeze();
