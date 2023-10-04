@@ -37,7 +37,7 @@ public class IracResponseCollector extends CompletableFuture<Void> implements Bi
    private final Collection<IracManagerKeyState> batch;
    private final IracResponseCompleted listener;
 
-   public IracResponseCollector(String cacheName, IracXSiteBackup backup, Collection<IracManagerKeyState> batch, IracResponseCompleted listener) {
+   IracResponseCollector(String cacheName, IracXSiteBackup backup, Collection<IracManagerKeyState> batch, IracResponseCompleted listener) {
       this.cacheName = cacheName;
       this.backup = backup;
       this.batch = batch;
@@ -98,13 +98,26 @@ public class IracResponseCollector extends CompletableFuture<Void> implements Bi
       notifyAndComplete(IracBatchSendResult.RETRY, successfulSent);
    }
 
+   void onSiteOffline() {
+      if (log.isTraceEnabled()) {
+         log.tracef("[IRAC] Site %s is offline for cache %s", backup.getSiteName(), cacheName);
+      }
+
+      // reset back-off since nothing will be sent.
+      backup.resetBackOff();
+      for (IracManagerKeyState state : batch) {
+         state.successFor(backup);
+      }
+      notifyAndComplete(IracBatchSendResult.OK, batch);
+   }
+
    private void notifyAndComplete(IracBatchSendResult result, Collection<IracManagerKeyState> successfulSent) {
       listener.onResponseCompleted(result, successfulSent);
       complete(null);
    }
 
    @FunctionalInterface
-   public interface IracResponseCompleted {
+   interface IracResponseCompleted {
       void onResponseCompleted(IracBatchSendResult result, Collection<IracManagerKeyState> successfulSent);
    }
 }
