@@ -65,6 +65,7 @@ import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
@@ -745,10 +746,19 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
          // Cache is not secured, use the global authz
          if (invocationHelper.getRestCacheManager().getAuthorizer().getPermissions(null, request.getSubject()).contains(AuthorizationPermission.ADMIN)) {
             fullDetail.configuration = sw.toString();
+            fullDetail.storageType = configuration.memory().storage();
+            fullDetail.maxSize = configuration.memory().maxSize();
+            fullDetail.maxSizeBytes = configuration.memory().maxSizeBytes();
          }
       } else {
-         authorizationManager.doIf(request.getSubject(), AuthorizationPermission.ADMIN, () -> fullDetail.configuration = sw.toString());
+         authorizationManager.doIf(request.getSubject(), AuthorizationPermission.ADMIN, () -> {
+            fullDetail.configuration = sw.toString();
+            fullDetail.storageType = configuration.memory().storage();
+            fullDetail.maxSize = configuration.memory().maxSize();
+            fullDetail.maxSizeBytes = configuration.memory().maxSizeBytes();
+         });
       }
+
       fullDetail.size = size;
       fullDetail.rehashInProgress = rehashInProgress;
       fullDetail.indexingInProgress = indexingInProgress;
@@ -763,6 +773,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       fullDetail.rebalancingEnabled = rebalancingEnabled;
       fullDetail.keyStorage = cache.getAdvancedCache().getKeyDataConversion().getStorageMediaType();
       fullDetail.valueStorage = cache.getAdvancedCache().getValueDataConversion().getStorageMediaType();
+      fullDetail.mode = configuration.clustering().cacheModeString();
 
       return addEntityAsJson(fullDetail.toJson(), invocationHelper.newResponse(request), pretty).build();
    }
@@ -1041,6 +1052,10 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       public Boolean rebalancingEnabled;
       public MediaType keyStorage;
       public MediaType valueStorage;
+      public String mode;
+      public StorageType storageType;
+      public String maxSize;
+      public long maxSizeBytes;
 
       @Override
       public Json toJson() {
@@ -1074,6 +1089,12 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             json.set("configuration", Json.factory().raw(configuration));
          }
 
+         if (storageType != null) {
+            json.set("storage_type", storageType)
+                  .set("max_size", maxSize == null ? "" : maxSize)
+                  .set("max_size_bytes", maxSizeBytes);
+         }
+
          return json
                .set("bounded", bounded)
                .set("indexed", indexed)
@@ -1083,7 +1104,8 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
                .set("has_remote_backup", hasRemoteBackup)
                .set("statistics", statistics)
                .set("key_storage", keyStorage)
-               .set("value_storage", valueStorage);
+               .set("value_storage", valueStorage)
+               .set("mode", mode);
       }
    }
 

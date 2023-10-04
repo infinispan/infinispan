@@ -40,5 +40,9 @@
   "secured": false,
   "has_remote_backup": false,
   "indexing_in_progress": false,
-  "statistics": false
+  "statistics": false,
+  "mode" : "DIST_SYNC",
+  "storage_type": "HEAP",
+  "max_size": "",
+  "max_size_bytes" : -1
 }
