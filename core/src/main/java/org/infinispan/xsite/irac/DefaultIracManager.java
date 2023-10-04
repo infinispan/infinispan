@@ -23,14 +23,10 @@ import java.util.function.Predicate;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.irac.IracCleanupKeysCommand;
-import org.infinispan.xsite.commands.remote.IracClearKeysRequest;
-import org.infinispan.xsite.commands.remote.IracPutManyRequest;
 import org.infinispan.commands.irac.IracStateResponseCommand;
-import org.infinispan.xsite.commands.remote.IracTouchKeyRequest;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.XSiteStateTransferConfiguration;
@@ -66,6 +62,9 @@ import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
+import org.infinispan.xsite.commands.remote.IracClearKeysRequest;
+import org.infinispan.xsite.commands.remote.IracPutManyRequest;
+import org.infinispan.xsite.commands.remote.IracTouchKeyRequest;
 import org.infinispan.xsite.commands.remote.XSiteCacheRequest;
 import org.infinispan.xsite.statetransfer.XSiteState;
 import org.infinispan.xsite.status.SiteState;
@@ -167,10 +166,9 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       for (XSiteState state : stateList) {
          int segment = topology.getSegment(state.key());
          IracManagerStateTransferState iracState = new IracManagerStateTransferState(segment, state.key(), asyncBackups.size());
-         // if an update is in progress, we don't need to send the same value again.
-         if (updatedKeys.putIfAbsent(iracState.getKey(), iracState) == null) {
-            cf.dependsOn(iracState.getCompletionStage());
-         }
+         // better be safe to avoid losing data
+         updatedKeys.put(iracState.getKey(), iracState);
+         cf.dependsOn(iracState.getCompletionStage());
       }
       iracExecutor.run();
       return cf.freeze();
@@ -440,15 +438,14 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
          if (!cmd.isEmpty()) {
             IracResponseCollector rspCollector = new IracResponseCollector(commandsFactory.getCacheName(), backup, validState, this::onBatchResponse);
             try {
-               CompletionStage<IntSet> cs;
                if (takeOfflineManager.getSiteState(backup.getSiteName()) != SiteState.OFFLINE) {
-                  cs = sendToRemoteSite(backup, cmd);
+                  // The result of this current Completable is not necessary, only the collector's result is.
+                  sendToRemoteSite(backup, cmd).whenCompleteAsync(rspCollector, iracExecutor.executor());
+                  aggregation.dependsOn(rspCollector);
                } else {
-                  cs = CompletableFutures.completedNull();
+                  // rspCollector is completed, and it is not required to add it to "aggregation"
+                  rspCollector.onSiteOffline();
                }
-               // The result of this current Completable is not necessary, only the collector's result is.
-               cs.whenCompleteAsync(rspCollector, iracExecutor.executor());
-               aggregation.dependsOn(rspCollector);
             } catch (Throwable throwable) {
                // safety net; should never happen
                // onUnexpectedThrowable() log the exception!
