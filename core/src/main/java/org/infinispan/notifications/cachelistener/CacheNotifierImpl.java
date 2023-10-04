@@ -1959,7 +1959,8 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
          }
          Object convertedKey = convertToRequestFormat(eventImpl.getKey(), keyFromFormat, keyDataConversion);
          Object convertedValue = convertToRequestFormat(newValue, valueFromFormat, valueDataConversion);
-         Object convertedOldValue = convertToRequestFormat(eventImpl.getOldValue(), valueFromFormat, valueDataConversion);
+         Object convertedOldValue = converter == null || converter.includeOldValue() ?
+               convertToRequestFormat(eventImpl.getOldValue(), valueFromFormat, valueDataConversion) : null;
          EventImpl<K, V> clone = eventImpl.clone();
          clone.setKey((K) convertedKey);
          clone.setValue((V) convertedValue);

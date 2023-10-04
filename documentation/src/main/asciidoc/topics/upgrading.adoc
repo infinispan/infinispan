@@ -99,6 +99,12 @@ The default `availability-interval` has been increased to 30 seconds. The previo
 The RESP endpoint cache now requires the key storage media type to be
 application/octet-stream.
 
+== Client listeners remove events
+
+Client listeners remove events will now be propagated even if the remove did not remove a value.
+This is required to properly support new changes around the new `includeOldValue` method on `CacheEventConverter`.
+NOTE: Remote events do not include any values by default
+
 = Upgrading to 14.0.14 or newer
 
 == NearCache SPI

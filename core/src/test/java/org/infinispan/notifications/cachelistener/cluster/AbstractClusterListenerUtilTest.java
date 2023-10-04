@@ -11,6 +11,7 @@ import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -259,6 +260,11 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
       public String convert(Object key, String oldValue, Metadata oldMetadata, String newValue, Metadata newMetadata, EventType eventType) {
          return oldValue + (oldMetadata != null ? oldMetadata.lifespan() : "null") + newValue + (newMetadata != null ? newMetadata.lifespan() : "null");
       }
+
+      @Override
+      public boolean includeOldValue() {
+         return false;
+      }
    }
 
    public static class FilterConverter implements CacheEventFilterConverter<Object, Object, Object> {
@@ -308,6 +314,11 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
       verifySimpleInsertionEvents(listener, key, expectedValue);
    }
 
+   protected void verifySimpleRemove(Cache<Object, String> cache, Object key, ClusterListener listener, Object expectedValue) {
+      cache.remove(key);
+      verifySimpleRemovalEvents(listener, key, expectedValue);
+   }
+
    protected void verifySimpleModification(Cache<Object, String> cache, Object key, String value, Long lifespan,
                                         ClusterListener listener, Object expectedValue) {
       if (lifespan != null) {
@@ -334,6 +345,20 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
       assertEquals(Event.Type.CACHE_ENTRY_MODIFIED, event.getType());
       assertEquals(key, event.getKey());
       assertEquals(expectedValue, event.getValue());
+   }
+
+   protected void verifySimpleRemovalEvents(ClusterListener listener, Object key, Object oldValue) {
+      assertEquals(listener.hasIncludeState() ? 2 : 1, listener.events.size());
+      CacheEntryEvent event = listener.events.get(listener.hasIncludeState() ? 1 :0);
+
+      assertEquals(Event.Type.CACHE_ENTRY_REMOVED, event.getType());
+      assertEquals(key, event.getKey());
+      Object eventOldValue = ((CacheEntryRemovedEvent) event).getOldValue();
+      if (oldValue != null) {
+         assertEquals(oldValue, eventOldValue);
+      } else {
+         assertNull(eventOldValue);
+      }
    }
 
    protected void verifySimpleExpirationEvents(ClusterListener listener, int expectedNumEvents, Object key, Object expectedValue) {

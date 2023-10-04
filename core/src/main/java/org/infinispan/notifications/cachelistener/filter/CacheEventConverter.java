@@ -38,4 +38,17 @@ public interface CacheEventConverter<K, V, C> {
       return false;
    }
 
+   /**
+    * Whether the old value should be returned in the event with the converted value. This is useful when you only
+    * care about the converted value and do not want to send around the old value payload.
+    * When this is false a <b>null</b> value will be present for any event that has an oldValue.
+    * <p>
+    * Note the oldValue is only present in {@link org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent}
+    * and {@link org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent} for local events and
+    * only {@link org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent} for cluster listeners.
+    * @return whether the old value is included in any raised event.
+    */
+   default boolean includeOldValue() {
+      return true;
+   }
 }

@@ -19,7 +19,7 @@ import org.infinispan.metadata.Metadata;
 /**
  * {@link CacheEventFilterConverter} that uses an underlying {@link KeyValueFilterConverter} to do the conversion and
  * filtering. The new value and metadata are used as arguments to the underlying filter converter as it doesn't take
- * both new and old.
+ * both new and old. The old value is not returned in any event.
  * @author wburns
  * @since 9.4
  */
@@ -56,6 +56,12 @@ public class KeyValueFilterConverterAsCacheEventFilterConverter<K, V, C> impleme
    @Override
    public MediaType format() {
       return format;
+   }
+
+   @Override
+   public boolean includeOldValue() {
+      // No reason to include old if new value is only ever used for conversions
+      return false;
    }
 
    @Inject

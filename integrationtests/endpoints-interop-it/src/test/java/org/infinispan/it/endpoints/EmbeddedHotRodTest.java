@@ -195,7 +195,7 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
       withClientListener(l, remote -> {
          l.expectNoEvents();
          remote.remove(1);
-         l.expectNoEvents();
+         l.expectOnlyRemovedEvent(1);
          remote.put(1, "one");
          assertEquals("one", getEmbeddedCache().get(1));
          l.expectOnlyCreatedEvent(1);

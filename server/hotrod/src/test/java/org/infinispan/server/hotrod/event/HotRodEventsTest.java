@@ -49,7 +49,7 @@ public class HotRodEventsTest extends HotRodSingleNodeTest {
          eventListener.expectNoEvents(Optional.empty());
          byte[] key = k(m);
          client().remove(key);
-         eventListener.expectNoEvents(Optional.empty());
+         eventListener.expectOnlyRemovedEvent(cache, key);
          client().put(key, 0, 0, v(m));
          eventListener.expectOnlyCreatedEvent(cache, key);
          client().remove(key);
