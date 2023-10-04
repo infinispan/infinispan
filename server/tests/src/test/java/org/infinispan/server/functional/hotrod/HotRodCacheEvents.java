@@ -89,7 +89,7 @@ public class HotRodCacheEvents {
       new EventLogListener<>(remoteCache(protocolVersion)).accept((l, remote) -> {
          l.expectNoEvents();
          remote.remove(1);
-         l.expectNoEvents();
+         l.expectOnlyRemovedEvent(1);
          remote.put(1, "one");
          l.expectOnlyCreatedEvent(1);
          remote.remove(1);

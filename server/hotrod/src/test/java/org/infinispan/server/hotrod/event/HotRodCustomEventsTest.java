@@ -40,7 +40,7 @@ public class HotRodCustomEventsTest extends HotRodSingleNodeTest {
                eventListener.expectNoEvents(Optional.empty());
                byte[] key = k(m);
                client().remove(key);
-               eventListener.expectNoEvents(Optional.empty());
+               eventListener.expectSingleCustomEvent(cache, addLengthPrefix(key));
                byte[] value = v(m);
                client().put(key, 0, 0, value);
                eventListener.expectSingleCustomEvent(cache, addLengthPrefix(key, value));

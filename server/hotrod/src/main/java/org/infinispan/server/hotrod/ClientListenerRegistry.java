@@ -409,10 +409,8 @@ class ClientListenerRegistry {
             switch (event.getType()) {
                case CACHE_ENTRY_CREATED:
                case CACHE_ENTRY_MODIFIED:
-                  return !event.isPre();
                case CACHE_ENTRY_REMOVED:
-                  CacheEntryRemovedEvent removedEvent = (CacheEntryRemovedEvent) event;
-                  return !event.isPre() && removedEvent.getOldValue() != null;
+                  return !event.isPre();
                case CACHE_ENTRY_EXPIRED:
                   return true;
                default:

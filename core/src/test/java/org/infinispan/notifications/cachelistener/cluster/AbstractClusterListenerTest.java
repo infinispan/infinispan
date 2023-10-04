@@ -503,6 +503,55 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       verifySimpleModification(cache0, key, newValue, newExpiration, clusterListener, newValue);
    }
 
+   public void testRemoveConverterEventRaisedBackupOwner() {
+      Cache<Object, String> cache0 = cache(0, CACHE_NAME);
+      Cache<Object, String> cache1 = cache(1, CACHE_NAME);
+
+      String previousValue = "myOldValue";
+      MagicKey key = new MagicKey(cache0, cache1);
+      // This event is ignored because no previous lifespan
+      cache0.put(key, previousValue);
+
+      ClusterListener clusterListener = listener();
+      cache1.addListener(clusterListener, null, new StringAppender());
+
+      // StringAppender doesn't include old value
+      verifySimpleRemove(cache0, key, clusterListener, null);
+   }
+
+   public void testRemoveConverterEventRaisedNonOwner() {
+      Cache<Object, String> cache0 = cache(0, CACHE_NAME);
+      Cache<Object, String> cache1 = cache(1, CACHE_NAME);
+      Cache<Object, String> cache2 = cache(2, CACHE_NAME);
+
+      String previousValue = "myOldValue";
+      MagicKey key = new MagicKey(cache0, cache1);
+      // This event is ignored because no previous lifespan
+      cache0.put(key, previousValue);
+
+      ClusterListener clusterListener = listener();
+      cache2.addListener(clusterListener, null, new StringAppender());
+
+      // StringAppender doesn't include old value
+      verifySimpleRemove(cache0, key, clusterListener, null);
+   }
+
+   public void testRemoveConverterEventRaisedLocalNode() {
+      Cache<Object, String> cache0 = cache(0, CACHE_NAME);
+      Cache<Object, String> cache1 = cache(1, CACHE_NAME);
+
+      String previousValue = "myOldValue";
+      MagicKey key = new MagicKey(cache0, cache1);
+      // This event is ignored because no previous lifespan
+      cache0.put(key, previousValue);
+
+      ClusterListener clusterListener = listener();
+      cache0.addListener(clusterListener, null, new StringAppender());
+
+      // StringAppender doesn't include old value
+      verifySimpleRemove(cache0, key, clusterListener, null);
+   }
+
    @Test
    public void testCacheEventFilterConverter() {
       Cache<Object, String> cache0 = cache(0, CACHE_NAME);
