@@ -50,7 +50,7 @@ public class IracResponseCollector implements Runnable {
    private final CountDownRunnable countDownRunnable;
    private final CompletableFuture<Void> completableFuture = new CompletableFuture<>();
 
-   public IracResponseCollector(String cacheName, Collection<IracManagerKeyState> batch, IracResponseCompleted listener) {
+   IracResponseCollector(String cacheName, IracXSiteBackup backup, Collection<IracManagerKeyState> batch, IracResponseCompleted listener) {
       this.cacheName = cacheName;
       this.batch = batch;
       this.listener = listener;
@@ -121,20 +121,26 @@ public class IracResponseCollector implements Runnable {
       completableFuture.complete(null);
    }
 
-   private void mergeIntSetResult(IntSet rsp) {
-      synchronized (failedKeys) {
-         failedKeys.addAll(rsp);
+   void onSiteOffline() {
+      if (log.isTraceEnabled()) {
+         log.tracef("[IRAC] Site %s is offline for cache %s", backup.getSiteName(), cacheName);
       }
+
+      // reset back-off since nothing will be sent.
+      backup.resetBackOff();
+      for (IracManagerKeyState state : batch) {
+         state.successFor(backup);
+      }
+      notifyAndComplete(IracBatchSendResult.OK, batch);
    }
 
-   private boolean hasKeyFailed(int index) {
-      synchronized (failedKeys) {
-         return failedKeys.contains(index);
-      }
+   private void notifyAndComplete(IracBatchSendResult result, Collection<IracManagerKeyState> successfulSent) {
+      listener.onResponseCompleted(result, successfulSent);
+      complete(null);
    }
 
    @FunctionalInterface
-   public interface IracResponseCompleted {
+   interface IracResponseCompleted {
       void onResponseCompleted(IracBatchSendResult result, Collection<IracManagerKeyState> successfulSent);
    }
 }
