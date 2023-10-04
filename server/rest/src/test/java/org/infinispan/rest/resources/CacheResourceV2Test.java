@@ -612,7 +612,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
    @Test
    public void testCacheFullDetail() {
-      RestResponse response = join(adminClient.cache("default").details());
+      RestResponse response = join(adminClient.cache("proto").details());
       Json document = Json.read(response.getBody());
       assertThat(response).isOk();
       assertThat(document.at("stats")).isNotNull();
@@ -627,8 +627,13 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertThat(document.at("indexing_in_progress")).isNotNull();
       assertThat(document.at("queryable")).isNotNull();
       assertThat(document.at("rebalancing_enabled")).isNotNull();
-      assertThat(document.at("key_storage").asString()).isEqualTo("application/unknown");
-      assertThat(document.at("value_storage").asString()).isEqualTo("application/unknown");
+      assertThat(document.at("key_storage").asString()).isEqualTo("application/x-protostream");
+      assertThat(document.at("value_storage").asString()).isEqualTo("application/x-protostream");
+      assertThat(document.at("mode").asString()).isEqualTo("DIST_SYNC");
+      assertThat(document.at("storage_type").asString()).isEqualTo("HEAP");
+      assertThat(document.at("max_size").asString()).isEmpty();
+      assertThat(document.at("max_size_bytes").asLong()).isEqualTo(-1);
+
 
       // non admins should have an empty config
       if (security) {
@@ -636,6 +641,9 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
          document = Json.read(response.getBody());
          assertThat(response).isOk();
          assertThat(document.at("configuration")).isNull();
+         assertThat(document.at("storage_type")).isNull();
+         assertThat(document.at("max_size")).isNull();
+         assertThat(document.at("max_size_bytes")).isNull();
       }
 
       response = join(client.cache("proto").details());
