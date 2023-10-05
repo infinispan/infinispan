@@ -2,6 +2,8 @@ package org.infinispan.util.concurrent;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -252,6 +254,8 @@ public interface BlockingManager {
     * @return a blocking executor limited in the amount of concurrent invocations.
     */
    BlockingExecutor limitedBlockingExecutor(String name, int concurrency);
+
+   ScheduledFuture<?> scheduleRunBlockingAtFixedRate(Runnable runnable, long initialDelay, long period, TimeUnit unit, Object traceId);
 
    /**
     * Executor interface that submits task to a blocking pool that returns a stage that is guaranteed
