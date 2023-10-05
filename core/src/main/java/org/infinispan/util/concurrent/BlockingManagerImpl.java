@@ -4,6 +4,9 @@ import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -40,6 +43,8 @@ public class BlockingManagerImpl implements BlockingManager {
    // This should eventually be the only reference to blocking executor
    @Inject @ComponentName(KnownComponentNames.BLOCKING_EXECUTOR)
    Executor blockingExecutor;
+   @Inject @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
+   ScheduledExecutorService scheduledExecutorService;
 
    private Scheduler blockingScheduler;
    private Scheduler nonBlockingScheduler;
@@ -351,6 +356,17 @@ public class BlockingManagerImpl implements BlockingManager {
       public <V> CompletionStage<V> supply(Supplier<V> supplier, Object traceId) {
          return supplyBlockingOperation(supplier, traceId, limitedExecutor);
       }
+   }
+
+   @Override
+   public ScheduledFuture<?> scheduleRunBlockingAtFixedRate(Runnable runnable, long initialDelay, long period, TimeUnit unit, Object traceId) {
+      Supplier supplier = () -> {
+         runnable.run();
+         return null;
+      };
+
+      log.tracef("Scheduling supply operation %s for %s to run in %s %s", supplier, traceId, initialDelay, period, unit);
+      return scheduledExecutorService.scheduleAtFixedRate(runnable, initialDelay, period, unit);
    }
 
    // This method is designed to be overridden for testing purposes
