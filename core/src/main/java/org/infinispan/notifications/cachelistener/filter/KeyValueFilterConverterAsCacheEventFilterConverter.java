@@ -67,11 +67,12 @@ public class KeyValueFilterConverterAsCacheEventFilterConverter<K, V, C> impleme
       @Override
       public void writeObject(ObjectOutput output, KeyValueFilterConverterAsCacheEventFilterConverter object) throws IOException {
          output.writeObject(object.keyValueFilterConverter);
+         output.writeObject(object.format);
       }
 
       @Override
       public KeyValueFilterConverterAsCacheEventFilterConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new KeyValueFilterConverterAsCacheEventFilterConverter((KeyValueFilterConverter)input.readObject());
+         return new KeyValueFilterConverterAsCacheEventFilterConverter((KeyValueFilterConverter)input.readObject(), (MediaType) input.readObject());
       }
 
       @Override
