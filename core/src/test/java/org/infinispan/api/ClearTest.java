@@ -6,7 +6,6 @@ import static org.testng.AssertJUnit.assertTrue;
 import java.lang.invoke.MethodHandles;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
@@ -41,8 +40,8 @@ public class ClearTest extends MultipleCacheManagersTest {
          new ClearTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
          new ClearTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC),
          new ClearTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC),
-         new ClearTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.NEVER).transactional(false),
-         new ClearTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.ON_WRITE).transactional(false),
+//         new ClearTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.NEVER).transactional(false),
+//         new ClearTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.ON_WRITE).transactional(false),
       };
    }
 

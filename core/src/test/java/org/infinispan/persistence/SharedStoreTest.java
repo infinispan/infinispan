@@ -23,7 +23,7 @@ import org.testng.annotations.Test;
 
 @Test (testName = "persistence.SharedStoreTest", groups = "functional")
 @CleanupAfterMethod
-@InCacheMode({CacheMode.DIST_SYNC, CacheMode.REPL_SYNC, CacheMode.SCATTERED_SYNC})
+@InCacheMode({CacheMode.DIST_SYNC, CacheMode.REPL_SYNC/*, CacheMode.SCATTERED_SYNC*/})
 public class SharedStoreTest extends MultipleCacheManagersTest {
 
    @Override

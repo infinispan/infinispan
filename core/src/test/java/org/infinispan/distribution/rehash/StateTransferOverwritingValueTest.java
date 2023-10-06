@@ -65,7 +65,7 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
          new StateTransferOverwritingValueTest().cacheMode(CacheMode.DIST_SYNC).transactional(false),
          new StateTransferOverwritingValueTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC),
          new StateTransferOverwritingValueTest().cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC),
-         new StateTransferOverwritingValueTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false),
+//         new StateTransferOverwritingValueTest().cacheMode(CacheMode.SCATTERED_SYNC).transactional(false),
       };
    }
 

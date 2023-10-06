@@ -54,7 +54,7 @@ import org.testng.annotations.Test;
  * @since 6.0
  */
 // TODO HSEARCH-3129 Restore support for statistics
-@Test(testName = "client.hotrod.query.RemoteQueryJmxTest", groups = "functional", enabled = false)
+@Test(testName = "client.hotrod.query.RemoteQueryJmxTest",  groups = "functional", enabled = false)
 public class RemoteQueryJmxTest extends SingleCacheManagerTest {
 
    private static final String TEST_CACHE_NAME = "userCache";

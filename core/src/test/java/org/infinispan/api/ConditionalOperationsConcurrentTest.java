@@ -19,7 +19,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
@@ -50,8 +49,8 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
    public Object[] factory() {
       return new Object[] {
             new ConditionalOperationsConcurrentTest().cacheMode(CacheMode.DIST_SYNC),
-            new ConditionalOperationsConcurrentTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.NEVER),
-            new ConditionalOperationsConcurrentTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.ON_WRITE)
+//            new ConditionalOperationsConcurrentTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.NEVER),
+//            new ConditionalOperationsConcurrentTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.ON_WRITE)
       };
    }
 

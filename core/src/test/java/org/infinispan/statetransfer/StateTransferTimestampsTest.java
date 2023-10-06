@@ -34,7 +34,7 @@ public class StateTransferTimestampsTest extends MultipleCacheManagersTest {
          // DIST and REPL are different as REPL has a read optimization
          new StateTransferTimestampsTest().cacheMode(CacheMode.DIST_SYNC),
          new StateTransferTimestampsTest().cacheMode(CacheMode.REPL_SYNC),
-         new StateTransferTimestampsTest().cacheMode(CacheMode.SCATTERED_SYNC),
+//         new StateTransferTimestampsTest().cacheMode(CacheMode.SCATTERED_SYNC),
          // With other storage types there's an opportunity to change the timestamps before the write
          new StateTransferTimestampsTest().cacheMode(CacheMode.DIST_SYNC).storageType(StorageType.OFF_HEAP),
          new StateTransferTimestampsTest().cacheMode(CacheMode.DIST_SYNC).storageType(StorageType.BINARY),

@@ -27,7 +27,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "statetransfer.DataRehashedEventTest")
 @CleanupAfterMethod
-@InCacheMode({ CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
+@InCacheMode({ CacheMode.DIST_SYNC/*, CacheMode.SCATTERED_SYNC*/ })
 public class DataRehashedEventTest extends MultipleCacheManagersTest {
 
    private DataRehashedListener rehashListener;

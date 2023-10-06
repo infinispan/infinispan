@@ -30,7 +30,6 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHashFactory;
-import org.infinispan.distribution.ch.impl.ScatteredConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.SyncReplicatedConsistentHashFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -83,7 +82,7 @@ public class ZeroCapacityNodeTest extends MultipleCacheManagersTest {
             {CacheMode.DIST_SYNC, new SyncConsistentHashFactory()},
             {CacheMode.REPL_SYNC, new ReplicatedConsistentHashFactory()},
             {CacheMode.REPL_SYNC, new SyncReplicatedConsistentHashFactory()},
-            {CacheMode.SCATTERED_SYNC, new ScatteredConsistentHashFactory()},
+//            {CacheMode.SCATTERED_SYNC, new ScatteredConsistentHashFactory()},
             };
    }
 

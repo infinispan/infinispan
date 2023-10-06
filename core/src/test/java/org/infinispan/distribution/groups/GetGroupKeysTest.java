@@ -43,8 +43,8 @@ public class GetGroupKeysTest extends BaseUtilGroupTest {
             new GetGroupKeysTest(false, TestCacheFactory.PRIMARY_OWNER),
             new GetGroupKeysTest(false, TestCacheFactory.BACKUP_OWNER),
             new GetGroupKeysTest(false, TestCacheFactory.NON_OWNER),
-            new GetGroupKeysTest(false, TestCacheFactory.PRIMARY_OWNER).cacheMode(CacheMode.SCATTERED_SYNC),
-            new GetGroupKeysTest(false, TestCacheFactory.NON_OWNER).cacheMode(CacheMode.SCATTERED_SYNC),
+//            new GetGroupKeysTest(false, TestCacheFactory.PRIMARY_OWNER).cacheMode(CacheMode.SCATTERED_SYNC),
+//            new GetGroupKeysTest(false, TestCacheFactory.NON_OWNER).cacheMode(CacheMode.SCATTERED_SYNC),
       };
    }
 

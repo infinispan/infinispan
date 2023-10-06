@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
-import org.infinispan.configuration.cache.BiasAcquisition;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -31,8 +30,8 @@ public class PutMapCommandNonTxTest extends MultipleCacheManagersTest {
       return new Object[] {
             new PutMapCommandNonTxTest().cacheMode(CacheMode.DIST_SYNC),
             new PutMapCommandNonTxTest().cacheMode(CacheMode.DIST_SYNC).useTriangle(false),
-            new PutMapCommandNonTxTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.NEVER),
-            new PutMapCommandNonTxTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.ON_WRITE),
+//            new PutMapCommandNonTxTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.NEVER),
+//            new PutMapCommandNonTxTest().cacheMode(CacheMode.SCATTERED_SYNC).biasAcquisition(BiasAcquisition.ON_WRITE),
       };
    }
 

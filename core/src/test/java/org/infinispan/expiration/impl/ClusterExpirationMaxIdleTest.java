@@ -72,12 +72,12 @@ public class ClusterExpirationMaxIdleTest extends MultipleCacheManagersTest {
                      .add(new ClusterExpirationMaxIdleTest().storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC))
                      .add(new ClusterExpirationMaxIdleTest().storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC))
                      .add(new ClusterExpirationMaxIdleTest().storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(false))
-                     .add(new ClusterExpirationMaxIdleTest().storageType(type).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false))
+//                     .add(new ClusterExpirationMaxIdleTest().storageType(type).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false))
                      .add(new ClusterExpirationMaxIdleTest().touch(TouchMode.ASYNC).storageType(type).cacheMode(CacheMode.DIST_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC))
                      .add(new ClusterExpirationMaxIdleTest().touch(TouchMode.ASYNC).storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC))
                      .add(new ClusterExpirationMaxIdleTest().touch(TouchMode.ASYNC).storageType(type).cacheMode(CacheMode.DIST_SYNC).transactional(false))
                      .add(new ClusterExpirationMaxIdleTest().touch(TouchMode.ASYNC).storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(false))
-                     .add(new ClusterExpirationMaxIdleTest().touch(TouchMode.ASYNC).storageType(type).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false))
+//                     .add(new ClusterExpirationMaxIdleTest().touch(TouchMode.ASYNC).storageType(type).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false))
                      .build()
             ).toArray();
    }

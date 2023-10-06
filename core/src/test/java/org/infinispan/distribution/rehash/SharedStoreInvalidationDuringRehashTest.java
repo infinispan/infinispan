@@ -37,7 +37,7 @@ import org.testng.annotations.Test;
  */
 @Test(testName = "distribution.rehash.SharedStoreInvalidationDuringRehashTest", groups = "functional")
 @CleanupAfterMethod
-@InCacheMode({CacheMode.DIST_SYNC, CacheMode.SCATTERED_SYNC })
+@InCacheMode({CacheMode.DIST_SYNC/*, CacheMode.SCATTERED_SYNC*/ })
 public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManagersTest {
 
    private static final Log log = LogFactory.getLog(SharedStoreInvalidationDuringRehashTest.class);

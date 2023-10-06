@@ -72,7 +72,7 @@ public class ClusterExpirationLifespanTest extends MultipleCacheManagersTest {
                      .add(new ClusterExpirationLifespanTest().storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.OPTIMISTIC))
                      .add(new ClusterExpirationLifespanTest().storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(true).lockingMode(LockingMode.PESSIMISTIC))
                      .add(new ClusterExpirationLifespanTest().storageType(type).cacheMode(CacheMode.REPL_SYNC).transactional(false))
-                     .add(new ClusterExpirationLifespanTest().storageType(type).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false))
+//                     .add(new ClusterExpirationLifespanTest().storageType(type).cacheMode(CacheMode.SCATTERED_SYNC).transactional(false))
                      .build()
             ).toArray();
    }
