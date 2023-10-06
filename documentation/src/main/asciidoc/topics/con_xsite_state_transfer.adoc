@@ -44,7 +44,8 @@ that modification happened after you initiated the push.
 By default, you must manually perform cross-site state transfer operations with the CLI or via JMX or REST.
 
 However, when using the asynchronous backup strategy, {brandname} can automatically perform cross-site state transfer operations.
-When it detects that a backup location has come back online, and the network connection is stable, {brandname} initiates bidirectional state transfer between backup locations.
+
+When a backup location comes back online, and the network connection is stable, {brandname} initiates bidirectional state transfer between backup locations.
 For example, {brandname} simultaneously transfers state from **LON** to **NYC** and **NYC** to **LON**.
 
 [NOTE]
@@ -53,9 +54,10 @@ To avoid temporary network disconnects triggering state transfer operations, the
 The status of a backup location must be offline and it must not be included in the cross-site view with JGroups RELAY2.
 ====
 
-The automatic state transfer is not only triggered when the network is broken, but also when a cache starts.
-In the scenario where **LON** is starting up, after a cache starts it sends a notification to **NYC**.
-**NYC** starts a unidirectional state transfer to **LON**.
+The automatic state transfer is also triggered when a cache starts.
+
+In the scenario where **LON** is starting up, after a cache starts, it sends a notification to **NYC**.
+Following this, **NYC** starts a unidirectional state transfer to **LON**.
 
 [role="_additional-resources"]
 .Additional resources
