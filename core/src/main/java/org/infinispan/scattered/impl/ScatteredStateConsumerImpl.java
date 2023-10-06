@@ -26,6 +26,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.entries.RemoteMetadata;
@@ -50,7 +51,6 @@ import org.infinispan.scattered.ScatteredVersionManager;
 import org.infinispan.statetransfer.InboundTransferTask;
 import org.infinispan.statetransfer.StateConsumerImpl;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
@@ -133,8 +133,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
    }
 
    @Override
-   protected CompletionStage<Void> handleSegments(boolean isRebalance, IntSet addedSegments, IntSet removedSegments,
-                                                  IntSet transactionOnlySegments) {
+   protected CompletionStage<Void> handleSegments(boolean isRebalance, IntSet addedSegments, IntSet transactionOnlySegments) {
       if (!isRebalance) {
          log.trace("This is not a rebalance, not doing anything...");
          return CompletableFutures.completedNull();
@@ -364,7 +363,7 @@ public class ScatteredStateConsumerImpl extends StateConsumerImpl {
 
    // This should be fixed in https://issues.redhat.com/browse/ISPN-10864
    @SuppressWarnings("checkstyle:ForbiddenMethod")
-   private void blockingSubscribe(Flowable<?> flowable) {
+   private static void blockingSubscribe(Flowable<?> flowable) {
       flowable.blockingSubscribe();
    }
 
