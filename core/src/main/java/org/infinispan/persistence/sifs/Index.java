@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.PrimitiveIterator;
@@ -71,6 +72,41 @@ class Index {
    public final AtomicLongArray sizePerSegment;
 
    private final FlowableProcessor<IndexRequest>[] flowableProcessors;
+
+   private final IndexNode.OverwriteHook movedHook = new IndexNode.OverwriteHook() {
+      @Override
+      public boolean check(IndexRequest request, int oldFile, int oldOffset) {
+         return oldFile == request.getPrevFile() && oldOffset == request.getPrevOffset();
+      }
+
+      @Override
+      public void setOverwritten(IndexRequest request, int cacheSegment, boolean overwritten, int prevFile, int prevOffset) {
+         if (overwritten && request.getOffset() < 0 && request.getPrevOffset() >= 0) {
+            sizePerSegment.decrementAndGet(cacheSegment);
+         }
+      }
+   };
+
+   private final IndexNode.OverwriteHook updateHook = new IndexNode.OverwriteHook() {
+      @Override
+      public void setOverwritten(IndexRequest request, int cacheSegment, boolean overwritten, int prevFile, int prevOffset) {
+         nonBlockingManager.complete(request, overwritten);
+         if (request.getOffset() >= 0 && prevOffset < 0) {
+            sizePerSegment.incrementAndGet(cacheSegment);
+         } else if (request.getOffset() < 0 && prevOffset >= 0) {
+            sizePerSegment.decrementAndGet(cacheSegment);
+         }
+      }
+   };
+
+   private final IndexNode.OverwriteHook droppedHook = new IndexNode.OverwriteHook() {
+      @Override
+      public void setOverwritten(IndexRequest request, int cacheSegment, boolean overwritten, int prevFile, int prevOffset) {
+         if (request.getPrevFile() == prevFile && request.getPrevOffset() == prevOffset) {
+            sizePerSegment.decrementAndGet(cacheSegment);
+         }
+      }
+   };
 
    public Index(NonBlockingManager nonBlockingManager, FileProvider fileProvider, Path indexDir, int segments,
                 int cacheSegments, int minNodeSize, int maxNodeSize, TemporaryTable temporaryTable, Compactor compactor,
@@ -485,38 +521,15 @@ class Index {
                return;
             case MOVED:
                recordChange = IndexNode.RecordChange.MOVE;
-               overwriteHook = new IndexNode.OverwriteHook() {
-                  @Override
-                  public boolean check(int oldFile, int oldOffset) {
-                     return oldFile == request.getPrevFile() && oldOffset == request.getPrevOffset();
-                  }
-
-                  @Override
-                  public void setOverwritten(int cacheSegment, boolean overwritten, int prevFile, int prevOffset) {
-                     if (overwritten && request.getOffset() < 0 && request.getPrevOffset() >= 0) {
-                        index.sizePerSegment.decrementAndGet(cacheSegment);
-                     }
-                  }
-               };
+               overwriteHook = index.movedHook;
                break;
             case UPDATE:
                recordChange = IndexNode.RecordChange.INCREASE;
-               overwriteHook = (cacheSegment, overwritten, prevFile, prevOffset) -> {
-                  index.nonBlockingManager.complete(request, overwritten);
-                  if (request.getOffset() >= 0 && prevOffset < 0) {
-                     index.sizePerSegment.incrementAndGet(cacheSegment);
-                  } else if (request.getOffset() < 0 && prevOffset >= 0) {
-                     index.sizePerSegment.decrementAndGet(cacheSegment);
-                  }
-               };
+               overwriteHook = index.updateHook;
                break;
             case DROPPED:
                recordChange = IndexNode.RecordChange.DECREASE;
-               overwriteHook = (cacheSegment, overwritten, prevFile, prevOffset) -> {
-                  if (request.getPrevFile() == prevFile && request.getPrevOffset() == prevOffset) {
-                     index.sizePerSegment.decrementAndGet(cacheSegment);
-                  }
-               };
+               overwriteHook = index.droppedHook;
                break;
             case FOUND_OLD:
                recordChange = IndexNode.RecordChange.INCREASE_FOR_OLD;
@@ -526,8 +539,7 @@ class Index {
                throw new IllegalArgumentException(request.toString());
          }
          try {
-            IndexNode.setPosition(root, request.getSegment(), request.getKey(), request.getSerializedKey(), request.getFile(), request.getOffset(),
-                  request.getSize(), overwriteHook, recordChange);
+            IndexNode.setPosition(root, request, overwriteHook, recordChange);
          } catch (IllegalStateException e) {
             request.completeExceptionally(e);
          }
@@ -605,19 +617,22 @@ class Index {
             int blockLength = buffer.getInt(0);
             assert blockLength <= Short.MAX_VALUE;
             int listSize = buffer.getInt(4);
-            int requiredSize = 10 * listSize;
-            buffer = buffer.capacity() < requiredSize ? ByteBuffer.allocate(requiredSize) : buffer;
-            buffer.position(0);
-            buffer.limit(requiredSize);
-            if (!read(indexFile, buffer)) {
-               throw new IOException("Cannot read free blocks lists!");
+            // Ignore any free block that had no entries as it adds time complexity to our lookup
+            if (listSize > 0) {
+               int requiredSize = 10 * listSize;
+               buffer = buffer.capacity() < requiredSize ? ByteBuffer.allocate(requiredSize) : buffer;
+               buffer.position(0);
+               buffer.limit(requiredSize);
+               if (!read(indexFile, buffer)) {
+                  throw new IOException("Cannot read free blocks lists!");
+               }
+               buffer.flip();
+               ArrayList<IndexSpace> list = new ArrayList<>(listSize);
+               for (int j = 0; j < listSize; ++j) {
+                  list.add(new IndexSpace(buffer.getLong(), buffer.getShort()));
+               }
+               freeBlocks.put((short) blockLength, list);
             }
-            buffer.flip();
-            ArrayList<IndexSpace> list = new ArrayList<>(listSize);
-            for (int j = 0; j < listSize; ++j) {
-               list.add(new IndexSpace(buffer.getLong(), buffer.getShort()));
-            }
-            freeBlocks.put((short) blockLength, list);
          }
       }
 
@@ -654,14 +669,29 @@ class Index {
 
       // this should be accessed only from the updater thread
       IndexSpace allocateIndexSpace(short length) {
-         Map.Entry<Short, List<IndexSpace>> entry = freeBlocks.ceilingEntry(length);
-         if (entry == null || entry.getValue().isEmpty()) {
-            long oldSize = indexFileSize;
-            indexFileSize += length;
-            return new IndexSpace(oldSize, length);
-         } else {
-            return entry.getValue().remove(entry.getValue().size() - 1);
+         // Use tailMap so that we only require O(logN) to find the iterator
+         // This avoids an additional O(logN) to do an entry removal
+         Iterator<Map.Entry<Short, List<IndexSpace>>> iter = freeBlocks.tailMap(length).entrySet().iterator();
+         while (iter.hasNext()) {
+            Map.Entry<Short, List<IndexSpace>> entry = iter.next();
+            short spaceLength = entry.getKey();
+            // Only use the space if it is only 25% larger to avoid too much fragmentation
+            if ((length + (length >> 2)) < spaceLength) {
+               break;
+            }
+            List<IndexSpace> list = entry.getValue();
+            if (!list.isEmpty()) {
+               IndexSpace spaceToReturn = list.remove(list.size() - 1);
+               if (list.isEmpty()) {
+                  iter.remove();
+               }
+               return spaceToReturn;
+            }
+            iter.remove();
          }
+         long oldSize = indexFileSize;
+         indexFileSize += length;
+         return new IndexSpace(oldSize, length);
       }
 
       // this should be accessed only from the updater thread

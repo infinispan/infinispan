@@ -8,6 +8,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
@@ -52,6 +53,7 @@ class IndexNode {
 
    private static final byte HAS_LEAVES = 1;
    private static final byte HAS_NODES = 2;
+   // Prefix length (short) + keyNode length (short) + flag (byte)
    private static final int INNER_NODE_HEADER_SIZE = 5;
    private static final int INNER_NODE_REFERENCE_SIZE = 10;
    private static final int LEAF_NODE_REFERENCE_SIZE = 14;
@@ -66,6 +68,7 @@ class IndexNode {
    private LeafNode[] leafNodes = LeafNode.EMPTY_ARRAY;
    private final ReadWriteLock lock = new ReentrantReadWriteLock();
    private long offset = -1;
+   private short keyPartsLength = -1;
    private short contentLength = -1;
    private short totalLength = -1;
    private short occupiedSpace;
@@ -90,23 +93,28 @@ class IndexNode {
       byte flags = buffer.get();
       int numKeyParts = buffer.getShort();
 
+      int afterHeaderPos = buffer.position();
       keyParts = new byte[numKeyParts][];
       for (int i = 0; i < numKeyParts; ++i) {
          keyParts[i] = new byte[buffer.getShort()];
          buffer.get(keyParts[i]);
       }
+      assert (buffer.position() - afterHeaderPos) < Short.MAX_VALUE;
+      keyPartsLength = (short) (buffer.position() - afterHeaderPos);
 
       if ((flags & HAS_LEAVES) != 0) {
          leafNodes = new LeafNode[numKeyParts + 1];
          for (int i = 0; i < numKeyParts + 1; ++i) {
             leafNodes[i] = new LeafNode(buffer.getInt(), buffer.getInt(), buffer.getShort(), buffer.getInt());
          }
-      } else if ((flags & HAS_NODES) != 0){
+      } else if ((flags & HAS_NODES) != 0) {
          innerNodes = new InnerNode[numKeyParts + 1];
          for (int i = 0; i < numKeyParts + 1; ++i) {
             innerNodes[i] = new InnerNode(buffer.getLong(), buffer.getShort());
          }
       }
+      assert (buffer.position() - afterHeaderPos) < Short.MAX_VALUE;
+      contentLength = (short) (buffer.position() - afterHeaderPos);
 
       if (log.isTraceEnabled()) {
          log.tracef("Loaded %08x from %d:%d (length %d)", System.identityHashCode(this), offset, occupiedSpace, length());
@@ -168,6 +176,7 @@ class IndexNode {
          this.innerNodes = other.innerNodes;
          this.leafNodes = other.leafNodes;
          this.contentLength = -1;
+         this.keyPartsLength = -1;
          this.totalLength = -1;
       } finally {
          lock.writeLock().unlock();
@@ -372,9 +381,7 @@ class IndexNode {
       // Root is -1, so that means the beginning of the file
       long offset = this.offset >= 0 ? this.offset : 0;
       offset += headerLength();
-      for (byte[] keyPart : this.keyParts) {
-         offset += 2 + keyPart.length;
-      }
+      offset += keyPartsLength();
       offset += (long) leafOffset * LEAF_NODE_REFERENCE_SIZE;
 
       ByteBuffer buffer = ByteBuffer.allocate(10);
@@ -400,14 +407,15 @@ class IndexNode {
       return node;
    }
 
-   public static void setPosition(IndexNode root, int cacheSegment, Object objectKey, org.infinispan.commons.io.ByteBuffer key, int file, int offset, int size, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
-      setPosition(root, cacheSegment, objectKey, Index.toIndexKey(cacheSegment, key), file, offset, size, overwriteHook, recordChange);
-   }
+   public static void setPosition(IndexNode root, IndexRequest request, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
+      int cacheSegment = request.getSegment();
 
-   private static void setPosition(IndexNode root, int cacheSegment, Object objectKey, byte[] indexKey, int file, int offset, int size, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
+      // TODO: maybe we can optimize not copying this?
+      byte[] indexKey = Index.toIndexKey(cacheSegment, request.getSerializedKey());
+
       Deque<Path> stack = new ArrayDeque<>();
       IndexNode node = findParentNode(root, indexKey, stack);
-      IndexNode copy = node.copyWith(cacheSegment, objectKey, indexKey, file, offset, size, overwriteHook, recordChange);
+      IndexNode copy = node.copyWith(request, cacheSegment, indexKey, overwriteHook, recordChange);
       if (copy == node) {
          // no change was executed
          return;
@@ -658,12 +666,15 @@ class IndexNode {
    /**
     * Called on the most bottom node
     */
-   private IndexNode copyWith(int cacheSegment, Object objectKey, byte[] indexKey, int file, int offset, int size, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
+   private IndexNode copyWith(IndexRequest request, int cacheSegment, byte[] indexKey, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
       if (leafNodes == null) throw new IllegalArgumentException();
       byte[] newPrefix;
+      int file = request.getFile();
+      int offset = request.getOffset();
+      int size = request.getSize();
       if (leafNodes.length == 0) {
-         overwriteHook.setOverwritten(cacheSegment, false, -1, -1);
-         if (overwriteHook.check(-1, -1)) {
+         overwriteHook.setOverwritten(request, cacheSegment, false, -1, -1);
+         if (overwriteHook.check(request, -1, -1)) {
             return new IndexNode(segment, prefix, keyParts, new LeafNode[]{new LeafNode(file, offset, (short) 1, cacheSegment)});
          } else {
             segment.getCompactor().free(file, size);
@@ -700,9 +711,10 @@ class IndexNode {
       }
       byte[] oldIndexKey = Index.toIndexKey(oldLeafNode.cacheSegment, hak.getKey());
       int keyComp = compare(oldIndexKey, indexKey);
+      Object objectKey = request.getKey();
       if (keyComp == 0) {
          if (numRecords > 0) {
-            if (overwriteHook.check(oldLeafNode.file, oldLeafNode.offset)) {
+            if (overwriteHook.check(request, oldLeafNode.file, oldLeafNode.offset)) {
                if (recordChange == RecordChange.INCREASE || recordChange == RecordChange.MOVE) {
                   if (log.isTraceEnabled()) {
                      log.trace(String.format("Overwriting %s %d:%d with %d:%d (%d)", objectKey,
@@ -732,15 +744,15 @@ class IndexNode {
                   lock.writeLock().unlock();
                }
 
-               overwriteHook.setOverwritten(cacheSegment, true, oldLeafNode.file, oldLeafNode.offset);
+               overwriteHook.setOverwritten(request, cacheSegment, true, oldLeafNode.file, oldLeafNode.offset);
                return this;
             } else {
-               overwriteHook.setOverwritten(cacheSegment, false, -1, -1);
+               overwriteHook.setOverwritten(request, cacheSegment, false, -1, -1);
                segment.getCompactor().free(file, size);
                return this;
             }
          } else {
-            overwriteHook.setOverwritten(cacheSegment, true, oldLeafNode.file, oldLeafNode.offset);
+            overwriteHook.setOverwritten(request, cacheSegment, true, oldLeafNode.file, oldLeafNode.offset);
             if (keyParts.length <= 1) {
                newPrefix = Util.EMPTY_BYTE_ARRAY;
                newKeyParts = Util.EMPTY_BYTE_ARRAY_ARRAY;
@@ -766,7 +778,7 @@ class IndexNode {
       } else {
          // IndexRequest cannot be MOVED or DROPPED when the key is not in the index
          assert recordChange == RecordChange.INCREASE;
-         overwriteHook.setOverwritten(cacheSegment, false, -1, -1);
+         overwriteHook.setOverwritten(request, cacheSegment, false, -1, -1);
 
          // We have to insert the record even if this is a delete request and the key was not found
          // because otherwise we would have incorrect numRecord count. Eventually, Compactor will
@@ -807,7 +819,7 @@ class IndexNode {
          insertionPoint = keyParts.length;
       } else {
          byte[] keyPostfix = substring(key, prefix.length, key.length);
-         insertionPoint = Arrays.binarySearch(keyParts, keyPostfix, (o1, o2) -> IndexNode.compare(o2, o1));
+         insertionPoint = Arrays.binarySearch(keyParts, keyPostfix, REVERSED_COMPARE_TO);
          if (insertionPoint < 0) {
             insertionPoint = -insertionPoint - 1;
          } else {
@@ -843,7 +855,7 @@ class IndexNode {
          insertionPoint = keyParts.length;
       } else {
          byte[] keyPostfix = substring(key, prefix.length, key.length);
-         insertionPoint = Arrays.binarySearch(keyParts, keyPostfix, (o1, o2) -> IndexNode.compare(o2, o1));
+         insertionPoint = Arrays.binarySearch(keyParts, keyPostfix, REVERSED_COMPARE_TO);
          if (insertionPoint < 0) {
             insertionPoint = -insertionPoint - 1;
          } else {
@@ -964,42 +976,49 @@ class IndexNode {
    }
 
    private static byte[] commonPrefix(byte[] oldPrefix, byte[] newKey) {
-      int i;
-      for (i = 0; i < oldPrefix.length && i < newKey.length; ++i) {
-         if (newKey[i] != oldPrefix[i]) break;
-      }
+      int i = Arrays.mismatch(oldPrefix, newKey);
       if (i == oldPrefix.length) {
          return oldPrefix;
       }
       if (i == newKey.length) {
          return newKey;
       }
-      byte[] prefix = new byte[i];
-      for (--i; i >= 0; --i) {
-         prefix[i] = oldPrefix[i];
+      if (i == 0) {
+         return Util.EMPTY_BYTE_ARRAY;
       }
+      byte[] prefix = new byte[i];
+      System.arraycopy(oldPrefix, 0, prefix, 0, i);
       return prefix;
    }
 
    // Compares the two arrays. This is different from a regular compare that if the second array has more bytes than
    // the first but contains all the same bytes it is treated equal
    private static int compare(byte[] first, byte[] second, int secondLength) {
-      for (int i = 0; i < secondLength; ++i) {
-         if (i >= first.length) {
-            return 1;
-         }
-         if (second[i] == first[i]) continue;
-         return second[i] > first[i] ? 1 : -1;
+      if (secondLength == 0) {
+         return 0;
       }
-      return 0;
+      int mismatchPos = Arrays.mismatch(first, 0, first.length, second, 0, secondLength);
+      if (mismatchPos == -1 || mismatchPos == secondLength) {
+         return 0;
+      } else if (mismatchPos >= first.length) {
+         return first.length + 1;
+      }
+      return second[mismatchPos] > first[mismatchPos] ? mismatchPos + 1 : -mismatchPos - 1;
    }
+   public static final Comparator<byte[]> REVERSED_COMPARE_TO = ((Comparator<byte[]>) IndexNode::compare).reversed();
 
    private static int compare(byte[] first, byte[] second) {
-      for (int i = 0; i < first.length && i < second.length; ++i) {
-         if (second[i] == first[i]) continue;
-         return second[i] > first[i] ? i + 1 : -i - 1;
+      // Use Arrays.mismatch as it doesn't do boundary check for every byte and uses vectorized comparison for arrays
+      // larger than 7
+      int mismatchPos = Arrays.mismatch(first, second);
+      if (mismatchPos == -1) {
+         return 0;
+      } else if (mismatchPos >= first.length) {
+         return first.length + 1;
+      } else if (mismatchPos >= second.length) {
+         return -second.length - 1;
       }
-      return second.length > first.length ? first.length + 1 : (second.length < first.length ? -second.length - 1 : 0);
+      return second[mismatchPos] > first[mismatchPos] ? mismatchPos + 1 : -mismatchPos - 1;
    }
 
    private short headerLength() {
@@ -1008,14 +1027,24 @@ class IndexNode {
       return (short) headerLength;
    }
 
-   private int contentLength() {
-      if (contentLength >= 0) {
-         return contentLength;
+   private short keyPartsLength() {
+      if (keyPartsLength >= 0) {
+         return keyPartsLength;
       }
       int sum = 0;
       for (byte[] keyPart : keyParts) {
          sum += 2 + keyPart.length;
       }
+
+      assert sum <= Short.MAX_VALUE;
+      return keyPartsLength = (short) sum;
+   }
+
+   private short contentLength() {
+      if (contentLength >= 0) {
+         return contentLength;
+      }
+      int sum = keyPartsLength();
       if (innerNodes != null) {
          sum += INNER_NODE_REFERENCE_SIZE * innerNodes.length;
       } else if (leafNodes != null) {
@@ -1042,14 +1071,14 @@ class IndexNode {
       return new IndexNode(segment, Util.EMPTY_BYTE_ARRAY, Util.EMPTY_BYTE_ARRAY_ARRAY, new InnerNode[]{new InnerNode(-1L, (short) -1)});
    }
 
-   static final OverwriteHook NOOP_HOOK = (int cacheSegment, boolean overwritten, int prevFile, int prevOffset) -> { };
+   static final OverwriteHook NOOP_HOOK = (IndexRequest request, int cacheSegment, boolean overwritten, int prevFile, int prevOffset) -> { };
 
    public interface OverwriteHook {
-      default boolean check(int oldFile, int oldOffset) {
+      default boolean check(IndexRequest request, int oldFile, int oldOffset) {
          return true;
       }
 
-      void setOverwritten(int cacheSegment, boolean overwritten, int prevFile, int prevOffset);
+      void setOverwritten(IndexRequest request, int cacheSegment, boolean overwritten, int prevFile, int prevOffset);
    }
 
    static class InnerNode extends Index.IndexSpace {
@@ -1212,7 +1241,7 @@ class IndexNode {
                   byte[] segmentPrefix = new byte[UnsignedNumeric.sizeUnsignedInt(cacheSegment)];
                   UnsignedNumeric.writeUnsignedInt(segmentPrefix, 0, cacheSegment);
                   return segmentPrefix;
-               }).sorted((o1, o2) -> IndexNode.compare(o2, o1))
+               }).sorted(REVERSED_COMPARE_TO)
                .collect(Collectors.toCollection(ArrayDeque::new));
          if (sortedSegmentPrefixes.isEmpty()) {
             return Flowable.empty();
