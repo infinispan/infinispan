@@ -30,6 +30,7 @@ import org.infinispan.server.resp.commands.generic.PERSIST;
 import org.infinispan.server.resp.commands.generic.PEXPIRETIME;
 import org.infinispan.server.resp.commands.generic.PTTL;
 import org.infinispan.server.resp.commands.generic.SCAN;
+import org.infinispan.server.resp.commands.generic.TOUCH;
 import org.infinispan.server.resp.commands.generic.TTL;
 import org.infinispan.server.resp.commands.generic.TYPE;
 import org.infinispan.server.resp.commands.hash.HDEL;
@@ -166,7 +167,7 @@ public final class Commands {
       ALL_COMMANDS[17] = new RespCommand[]{new RPUSH(), new RPUSHX(), new RPOP(), new RESET(), new READWRITE(), new READONLY(), new RPOPLPUSH() };
       // SET should always be first here
       ALL_COMMANDS[18] = new RespCommand[]{new SET(), new SMEMBERS(), new SADD(), new STRLEN(), new SMOVE(), new SCARD(), new SINTER(), new SINTERSTORE(), new SINTERCARD(), new SUNION(), new SUNIONSTORE(), new SPOP(), new SRANDMEMBER(), new SREM(), new SDIFF(), new SDIFFSTORE(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN(), new SSCAN(), new SETRANGE()};
-      ALL_COMMANDS[19] = new RespCommand[]{new TTL(), new TYPE()};
+      ALL_COMMANDS[19] = new RespCommand[]{new TTL(), new TYPE(), new TOUCH() };
       ALL_COMMANDS[20] = new RespCommand[]{new UNSUBSCRIBE(), new UNWATCH()};
       ALL_COMMANDS[22] = new RespCommand[]{new WATCH()};
       ALL_COMMANDS[25] = new RespCommand[]{new ZADD(), new ZCARD(), new ZCOUNT(), new ZLEXCOUNT(), new ZDIFF(), new ZDIFFSTORE(), new ZINCRBY(), new ZINTER(), new ZINTERCARD(), new ZINTERSTORE(),

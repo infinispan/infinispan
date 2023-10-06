@@ -905,4 +905,15 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       assertThat(redis.expireat(k(1), timeService.wallClockTime() + 1000, ExpireArgs.Builder.xx())).isFalse();
       assertThat(redis.expireat(k(1), timeService.wallClockTime() + 1000, ExpireArgs.Builder.nx())).isTrue();
    }
+
+   @Test
+   public void testTouch() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThat(redis.touch("unexisting")).isZero();
+
+      redis.set("hello", "world");
+      redis.rpush("list", "one", "two", "three");
+
+      assertThat(redis.touch("hello", "list", "unexisting")).isEqualTo(2);
+   }
 }
