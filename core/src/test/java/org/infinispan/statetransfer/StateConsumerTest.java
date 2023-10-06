@@ -31,7 +31,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import io.reactivex.rxjava3.core.Flowable;
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.CommandsFactory;
@@ -51,7 +50,6 @@ import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.SingleKeyNonTxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.TestAddress;
-import org.infinispan.distribution.TriangleOrderManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
@@ -73,7 +71,6 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.topology.PersistentUUID;
 import org.infinispan.topology.PersistentUUIDManager;
 import org.infinispan.topology.PersistentUUIDManagerImpl;
@@ -88,6 +85,8 @@ import org.mockito.stubbing.Answer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Tests StateConsumerImpl.
@@ -286,7 +285,6 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       TestingUtil.inject(stateConsumer,
             mockCache(),
             TestingUtil.named(NON_BLOCKING_EXECUTOR, pooledExecutorService),
-            mock(LocalTopologyManager.class),
             interceptorChain,
             mockInvocationContextFactory(),
             createConfiguration(),
@@ -299,7 +297,6 @@ public class StateConsumerTest extends AbstractInfinispanTest {
             mock(CacheNotifier.class),
             new CommitManager(),
             new CommandAckCollector(),
-            new TriangleOrderManager(0),
             new HashFunctionPartitioner(),
             mock(InternalConflictManager.class),
             mock(DistributionManager.class),
