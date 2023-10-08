@@ -1,39 +1,47 @@
 package org.infinispan.query.clustered;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.BitSet;
-import java.util.Collections;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.query.clustered.commandworkers.CQCommandType;
 import org.infinispan.query.impl.QueryDefinition;
-import org.infinispan.query.impl.externalizers.ExternalizerIds;
 
 /**
  * @since 10.1
  */
+@ProtoTypeId(ProtoStreamTypeIds.CLUSTERED_QUERY_OPERATION)
 public final class ClusteredQueryOperation {
 
-   private final CQCommandType commandType;
+   @ProtoField(1)
+   final CQCommandType commandType;
 
-   private final QueryDefinition queryDefinition;
+   @ProtoField(2)
+   final QueryDefinition queryDefinition;
 
    // identifies the query
-   private UUID queryId;
+   @ProtoField(3)
+   final UUID queryId;
 
    // for retrieve keys on a lazy query
-   private int docIndex = 0;
+   @ProtoField(value = 4, defaultValue = "0")
+   final int docIndex;
 
-   private ClusteredQueryOperation(CQCommandType commandType, QueryDefinition queryDefinition) {
+   @ProtoFactory
+   public ClusteredQueryOperation(CQCommandType commandType, QueryDefinition queryDefinition, UUID queryId, int docIndex) {
       this.commandType = commandType;
       this.queryDefinition = queryDefinition;
+      this.queryId = queryId;
+      this.docIndex = docIndex;
+   }
+
+   private ClusteredQueryOperation(CQCommandType commandType, QueryDefinition queryDefinition) {
+      this(commandType, queryDefinition, null, 0);
    }
 
    public QueryDefinition getQueryDefinition() {
@@ -54,38 +62,5 @@ public final class ClusteredQueryOperation {
 
    public CompletionStage<QueryResponse> perform(Cache<?, ?> cache, BitSet segments) {
       return commandType.perform(cache.getAdvancedCache(), queryDefinition, queryId, docIndex, segments);
-   }
-
-   public static final class Externalizer implements AdvancedExternalizer<ClusteredQueryOperation> {
-
-      @Override
-      public Set<Class<? extends ClusteredQueryOperation>> getTypeClasses() {
-         return Collections.singleton(ClusteredQueryOperation.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.CLUSTERED_QUERY_OPERATION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, ClusteredQueryOperation object) throws IOException {
-         MarshallUtil.marshallEnum(object.commandType, output);
-         output.writeObject(object.queryDefinition);
-         MarshallUtil.marshallUUID(object.queryId, output, true);
-         output.writeInt(object.docIndex);
-      }
-
-      @Override
-      public ClusteredQueryOperation readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         CQCommandType commandType = MarshallUtil.unmarshallEnum(input, CQCommandType::valueOf);
-         QueryDefinition queryDefinition = (QueryDefinition) input.readObject();
-         UUID queryId = MarshallUtil.unmarshallUUID(input, true);
-         int docIndex = input.readInt();
-         ClusteredQueryOperation clusteredQueryOperation = new ClusteredQueryOperation(commandType, queryDefinition);
-         clusteredQueryOperation.queryId = queryId;
-         clusteredQueryOperation.docIndex = docIndex;
-         return clusteredQueryOperation;
-      }
    }
 }

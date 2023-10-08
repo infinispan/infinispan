@@ -1,21 +1,21 @@
 package org.infinispan.server.hotrod;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Set;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.MarshallingException;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A Hot Rod server address which encapsulates a multi-homed server. This class enumerates all available addresses on
@@ -25,9 +25,14 @@ import org.infinispan.commons.marshall.AbstractExternalizer;
  * @author Galder Zamarreño
  * @since 10.1
  */
+@ProtoTypeId(ProtoStreamTypeIds.SERVER_HR_MULTI_HOMED_SERVER_ADDRESS)
 public class MultiHomedServerAddress implements ServerAddress {
-   private final int port;
-   private final List<InetAddressWithNetMask> addresses;
+
+   @ProtoField(value = 1, defaultValue = "-1")
+   final int port;
+
+   @ProtoField(2)
+   final List<InetAddressWithNetMask> addresses;
 
    /**
     * @param port
@@ -47,7 +52,8 @@ public class MultiHomedServerAddress implements ServerAddress {
       }
    }
 
-   private MultiHomedServerAddress(List<InetAddressWithNetMask> addresses, int port) {
+   @ProtoFactory
+   MultiHomedServerAddress(List<InetAddressWithNetMask> addresses, int port) {
       this.addresses = addresses;
       this.port = port;
    }
@@ -140,6 +146,7 @@ public class MultiHomedServerAddress implements ServerAddress {
       return true;
    }
 
+   @ProtoTypeId(ProtoStreamTypeIds.SERVER_HR_MULTI_HOMED_SERVER_ADDRESS_INET)
    public static class InetAddressWithNetMask {
       // RFC 1918 10.0.0.0/8
       public static final InetAddressWithNetMask RFC1918_CIDR_10 = new InetAddressWithNetMask(new byte[]{10, 0, 0, 0}, (short) 8);
@@ -199,39 +206,28 @@ public class MultiHomedServerAddress implements ServerAddress {
          this.prefixLength = prefixLength;
       }
 
+      @ProtoFactory
+      static InetAddressWithNetMask protoFactory(String hostAddress, short prefixLength) {
+         try {
+            return new InetAddressWithNetMask(InetAddress.getByName(hostAddress), prefixLength);
+         } catch (UnknownHostException e) {
+            throw new MarshallingException(String.format("Unable to resolve InetAddress by name '%s'", hostAddress), e);
+         }
+      }
+
+      @ProtoField(1)
+      String getHostAddress() {
+         return address.getHostAddress();
+      }
+
+      @ProtoField(value = 2, defaultValue = "-1")
+      short getPrefixLength() {
+         return prefixLength;
+      }
+
       @Override
       public String toString() {
          return address + "/" + prefixLength;
-      }
-   }
-
-   static class Externalizer extends AbstractExternalizer<MultiHomedServerAddress> {
-      @Override
-      public Set<Class<? extends MultiHomedServerAddress>> getTypeClasses() {
-         return Collections.singleton(MultiHomedServerAddress.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, MultiHomedServerAddress object) throws IOException {
-         output.writeInt(object.addresses.size());
-         for (InetAddressWithNetMask address : object.addresses) {
-            output.writeObject(address.address.getHostAddress());
-            output.writeShort(address.prefixLength);
-         }
-         output.writeShort(object.port);
-      }
-
-      @Override
-      public MultiHomedServerAddress readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         int size = input.readInt();
-         List<InetAddressWithNetMask> addresses = new ArrayList<>(size);
-         for (int i = 0; i < size; i++) {
-            String address = (String) input.readObject();
-            short prefixLength = input.readShort();
-            addresses.add(new InetAddressWithNetMask(InetAddress.getByName(address), prefixLength));
-         }
-         int port = input.readUnsignedShort();
-         return new MultiHomedServerAddress(addresses, port);
       }
    }
 }

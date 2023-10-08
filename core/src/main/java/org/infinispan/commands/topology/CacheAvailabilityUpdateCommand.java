@@ -1,13 +1,13 @@
 package org.infinispan.commands.topology;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.partitionhandling.AvailabilityMode;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Change the availability of a cache.
@@ -15,18 +15,18 @@ import org.infinispan.partitionhandling.AvailabilityMode;
  * @author Ryan Emerson
  * @since 11.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.CACHE_AVAILABILITY_UPDATE_COMMAND)
 public class CacheAvailabilityUpdateCommand extends AbstractCacheControlCommand {
 
    public static final byte COMMAND_ID = 98;
 
-   private String cacheName;
-   private AvailabilityMode availabilityMode;
+   @ProtoField(number = 1)
+   final String cacheName;
 
-   // For CommandIdUniquenessTest only
-   public CacheAvailabilityUpdateCommand() {
-      super(COMMAND_ID);
-   }
+   @ProtoField(number = 2)
+   final AvailabilityMode availabilityMode;
 
+   @ProtoFactory
    public CacheAvailabilityUpdateCommand(String cacheName, AvailabilityMode availabilityMode) {
       super(COMMAND_ID);
       this.cacheName = cacheName;
@@ -37,18 +37,6 @@ public class CacheAvailabilityUpdateCommand extends AbstractCacheControlCommand 
    public CompletionStage<?> invokeAsync(GlobalComponentRegistry gcr) throws Throwable {
       return gcr.getClusterTopologyManager()
             .forceAvailabilityMode(cacheName, availabilityMode);
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      MarshallUtil.marshallString(cacheName, output);
-      MarshallUtil.marshallEnum(availabilityMode, output);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      cacheName = MarshallUtil.unmarshallString(input);
-      availabilityMode = MarshallUtil.unmarshallEnum(input, AvailabilityMode::valueOf);
    }
 
    @Override

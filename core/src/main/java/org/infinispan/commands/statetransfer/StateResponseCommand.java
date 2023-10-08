@@ -1,18 +1,18 @@
 package org.infinispan.commands.statetransfer;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.conflict.impl.StateReceiver;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.util.ByteString;
@@ -25,6 +25,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author anistor@redhat.com
  * @since 5.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.STATE_RESPONSE_COMMAND)
 public class StateResponseCommand extends BaseRpcCommand implements TopologyAffectedCommand {
 
    private static final Log log = LogFactory.getLog(StateResponseCommand.class);
@@ -34,26 +35,22 @@ public class StateResponseCommand extends BaseRpcCommand implements TopologyAffe
    /**
     * The topology id of the sender at send time.
     */
-   private int topologyId;
+   @ProtoField(number = 2, defaultValue = "-1")
+   int topologyId;
 
    /**
     * A collections of state chunks to be transferred.
     */
-   private Collection<StateChunk> stateChunks;
+   @ProtoField(number = 3, collectionImplementation = ArrayList.class)
+   Collection<StateChunk> stateChunks;
 
    /**
     * Whether the returned state should be applied to the underlying cache upon delivery
     */
-   private boolean applyState;
+   @ProtoField(number = 4, defaultValue = "false")
+   boolean applyState;
 
-   private StateResponseCommand() {
-      super(null);  // for command id uniqueness test
-   }
-
-   public StateResponseCommand(ByteString cacheName) {
-      super(cacheName);
-   }
-
+   @ProtoFactory
    public StateResponseCommand(ByteString cacheName, int topologyId, Collection<StateChunk> stateChunks,
                                boolean applyState) {
       super(cacheName);
@@ -102,18 +99,6 @@ public class StateResponseCommand extends BaseRpcCommand implements TopologyAffe
 
    public Collection<StateChunk> getStateChunks() {
       return stateChunks;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      MarshallUtil.marshallCollection(stateChunks, output);
-      output.writeBoolean(applyState);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      stateChunks = MarshallUtil.unmarshallCollection(input, ArrayList::new);
-      applyState = input.readBoolean();
    }
 
    @Override

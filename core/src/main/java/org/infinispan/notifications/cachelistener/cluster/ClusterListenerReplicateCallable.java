@@ -1,10 +1,6 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.lang.annotation.Annotation;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -12,19 +8,21 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.ListenerHolder;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
-import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -37,20 +35,37 @@ import org.infinispan.util.logging.LogFactory;
  * @author wburns
  * @since 7.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.CLUSTER_LISTENER_REPLICATE_CALLABLE)
 public class ClusterListenerReplicateCallable<K, V> implements Function<EmbeddedCacheManager, Void>,
       BiConsumer<EmbeddedCacheManager, Cache<K, V>> {
    private static final Log log = LogFactory.getLog(ClusterListenerReplicateCallable.class);
 
-   private final String cacheName;
-   private final UUID identifier;
    private final CacheEventFilter<K, V> filter;
    private final CacheEventConverter<K, V, ?> converter;
-   private final Address origin;
-   private final boolean sync;
-   private final Set<Class<? extends Annotation>> filterAnnotations;
-   private final DataConversion keyDataConversion;
-   private final DataConversion valueDataConversion;
-   private final boolean useStorageFormat;
+
+   @ProtoField(1)
+   final UUID identifier;
+
+   @ProtoField(2)
+   final String cacheName;
+
+   @ProtoField(number = 3, javaType = JGroupsAddress.class)
+   final Address origin;
+
+   @ProtoField(number = 4, defaultValue = "false")
+   final boolean sync;
+
+   @ProtoField(number = 5, collectionImplementation = HashSet.class)
+   final Set<Class<? extends Annotation>> filterAnnotations;
+
+   @ProtoField(number = 6)
+   final DataConversion keyDataConversion;
+
+   @ProtoField(number = 7)
+   final DataConversion valueDataConversion;
+
+   @ProtoField(number = 8, defaultValue = "false")
+   final boolean useStorageFormat;
 
    public ClusterListenerReplicateCallable(String cacheName, UUID identifier, Address origin, CacheEventFilter<K, V> filter,
                                            CacheEventConverter<K, V, ?> converter, boolean sync,
@@ -69,6 +84,26 @@ public class ClusterListenerReplicateCallable<K, V> implements Function<Embedded
 
       if (log.isTraceEnabled())
          log.tracef("Created clustered listener replicate callable for: %s", filterAnnotations);
+   }
+
+   @ProtoFactory
+   ClusterListenerReplicateCallable(UUID identifier, String cacheName, JGroupsAddress origin, boolean sync,
+                                    Set<Class<? extends Annotation>> filterAnnotations, DataConversion keyDataConversion,
+                                    DataConversion valueDataConversion, boolean useStorageFormat,
+                                    MarshallableObject<CacheEventFilter<K, V>> filter,
+                                    MarshallableObject<CacheEventConverter<K, V, ?>> converter) {
+      this(cacheName, identifier, origin, MarshallableObject.unwrap(filter), MarshallableObject.unwrap(converter), sync,
+            filterAnnotations, keyDataConversion, valueDataConversion, useStorageFormat);
+   }
+
+   @ProtoField(number = 9)
+   MarshallableObject<CacheEventFilter<K, V>> getFilter() {
+      return MarshallableObject.create(filter);
+   }
+
+   @ProtoField(number = 10)
+   MarshallableObject<CacheEventConverter<K, V, ?>> getConverter() {
+      return MarshallableObject.create(converter);
    }
 
    @Override
@@ -137,60 +172,6 @@ public class ClusterListenerReplicateCallable<K, V> implements Function<Embedded
          }
       } else if (log.isTraceEnabled()) {
          log.trace("Not registering local cluster listener as we are the node who registered the cluster listener");
-      }
-
-   }
-
-   public static class Externalizer extends AbstractExternalizer<ClusterListenerReplicateCallable> {
-      @Override
-      public Set<Class<? extends ClusterListenerReplicateCallable>> getTypeClasses() {
-         return Collections.singleton(ClusterListenerReplicateCallable.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, ClusterListenerReplicateCallable object) throws IOException {
-         output.writeObject(object.cacheName);
-         output.writeObject(object.identifier);
-         output.writeObject(object.origin);
-         output.writeObject(object.filter);
-         if (object.filter == object.converter && object.filter instanceof CacheEventFilterConverter) {
-            output.writeBoolean(true);
-         } else {
-            output.writeBoolean(false);
-            output.writeObject(object.converter);
-         }
-         output.writeBoolean(object.sync);
-         MarshallUtil.marshallCollection(object.filterAnnotations, output);
-         DataConversion.writeTo(output, object.keyDataConversion);
-         DataConversion.writeTo(output, object.valueDataConversion);
-         output.writeBoolean(object.useStorageFormat);
-      }
-
-      @Override
-      public ClusterListenerReplicateCallable readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         String cacheName = (String) input.readObject();
-         UUID id = (UUID) input.readObject();
-         Address address = (Address) input.readObject();
-         CacheEventFilter filter = (CacheEventFilter) input.readObject();
-         boolean sameConverter = input.readBoolean();
-         CacheEventConverter converter;
-         if (sameConverter) {
-            converter = (CacheEventFilterConverter) filter;
-         } else {
-            converter = (CacheEventConverter) input.readObject();
-         }
-         boolean sync = input.readBoolean();
-         Set<Class<? extends Annotation>> filterAnnotations = MarshallUtil.unmarshallCollection(input, HashSet::new);
-         DataConversion keyDataConversion = DataConversion.readFrom(input);
-         DataConversion valueDataConversion = DataConversion.readFrom(input);
-         boolean raw = input.readBoolean();
-         return new ClusterListenerReplicateCallable(cacheName, id, address, filter, converter, sync, filterAnnotations,
-               keyDataConversion, valueDataConversion, raw);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.CLUSTER_LISTENER_REPLICATE_CALLABLE;
       }
    }
 

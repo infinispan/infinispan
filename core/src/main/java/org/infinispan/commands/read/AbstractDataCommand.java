@@ -8,6 +8,9 @@ import java.util.Objects;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.context.Flag;
+import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoField;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -18,8 +21,14 @@ public abstract class AbstractDataCommand implements DataCommand, SegmentSpecifi
    protected Object key;
    private long flags;
    // These 2 ints have to stay next to each other to ensure they are aligned together
-   private int topologyId = -1;
+   protected int topologyId = -1;
    protected int segment;
+
+   // For ProtoFactory implementations
+   protected AbstractDataCommand(MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment) {
+      this(MarshallableObject.unwrap(wrappedKey), segment, flagsWithoutRemote);
+      this.topologyId = topologyId;
+   }
 
    protected AbstractDataCommand(Object key, int segment, long flagsBitSet) {
       this.key = key;
@@ -30,16 +39,19 @@ public abstract class AbstractDataCommand implements DataCommand, SegmentSpecifi
       this.flags = flagsBitSet;
    }
 
-   protected AbstractDataCommand() {
-      this.segment = -1;
+   @ProtoField(number = 1, name = "key")
+   public MarshallableObject<?> getWrappedKey() {
+      return MarshallableObject.create(key);
    }
 
    @Override
+   @ProtoField(number = 2, defaultValue = "-1")
    public int getSegment() {
       return segment;
    }
 
    @Override
+   @ProtoField(number = 3, defaultValue = "-1")
    public int getTopologyId() {
       return topologyId;
    }
@@ -47,6 +59,11 @@ public abstract class AbstractDataCommand implements DataCommand, SegmentSpecifi
    @Override
    public void setTopologyId(int topologyId) {
       this.topologyId = topologyId;
+   }
+
+   @ProtoField(number = 4,defaultValue = "0")
+   public long getFlagsWithoutRemote() {
+      return FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet());
    }
 
    @Override

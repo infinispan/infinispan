@@ -3,10 +3,13 @@ package org.infinispan.objectfilter.impl.syntax.parser;
 import java.util.Arrays;
 import java.util.Set;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.ql.PropertyPath;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 import org.infinispan.objectfilter.impl.syntax.parser.projection.ScorePropertyPath;
+import org.infinispan.protostream.annotations.Proto;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * @param <TypeMetadata> is either {@link java.lang.Class} or {@link org.infinispan.protostream.descriptors.Descriptor}
@@ -15,6 +18,8 @@ import org.infinispan.objectfilter.impl.syntax.parser.projection.ScorePropertyPa
  */
 public final class IckleParsingResult<TypeMetadata> {
 
+   @Proto
+   @ProtoTypeId(ProtoStreamTypeIds.ICKLE_PARSING_RESULT_STATEMENT_TYPE)
    public enum StatementType {
       SELECT,
       DELETE;

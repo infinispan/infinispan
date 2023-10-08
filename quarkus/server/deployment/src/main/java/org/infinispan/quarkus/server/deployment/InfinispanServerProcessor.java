@@ -2,14 +2,10 @@ package org.infinispan.quarkus.server.deployment;
 
 import java.lang.management.MemoryType;
 import java.lang.management.MemoryUsage;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
-import java.util.ServiceLoader;
 
 import org.infinispan.anchored.configuration.AnchoredKeysConfigurationBuilder;
-import org.infinispan.commands.module.ModuleCommandExtensions;
 import org.infinispan.commons.util.JVMMemoryInfoInfo;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.counter.configuration.CounterManagerConfigurationBuilder;
@@ -47,7 +43,6 @@ import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageSystemPropertyBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
-import io.quarkus.deployment.builditem.nativeimage.ServiceProviderBuildItem;
 
 class InfinispanServerProcessor {
    private static final String FEATURE_NAME = "infinispan-server";
@@ -80,17 +75,6 @@ class InfinispanServerProcessor {
             "infinispan-clustered-counter"
       )) {
          indexedDependencies.produce(new IndexDependencyBuildItem("org.infinispan", infinispanArtifact));
-      }
-   }
-
-   @BuildStep
-   void loadServices(BuildProducer<ServiceProviderBuildItem> serviceProvider) {
-      // Need to register all the module command extensions as service providers so they can be picked up at runtime
-      ServiceLoader<?> serviceLoader = ServiceLoader.load(ModuleCommandExtensions.class);
-      List<String> interfaceImplementations = new ArrayList<>();
-      serviceLoader.forEach(mmb -> interfaceImplementations.add(mmb.getClass().getName()));
-      if (!interfaceImplementations.isEmpty()) {
-         serviceProvider.produce(new ServiceProviderBuildItem(ModuleCommandExtensions.class.getName(), interfaceImplementations));
       }
    }
 
@@ -136,6 +120,21 @@ class InfinispanServerProcessor {
       reflectionClass.produce(ReflectiveClassBuildItem.builder(NoTypePermission.class.getName()).build());
 
       resources.produce(new NativeImageResourceBuildItem("infinispan-server-templates.xml",
+            "proto/generated/global.core.proto",
+            "proto/generated/global.counters.proto",
+            "proto/generated/global.multimap.proto",
+            "proto/generated/global.objectfilter.proto",
+            "proto/generated/global.query.proto",
+            "proto/generated/global.query.core.proto",
+            "proto/generated/global.remote.query.server.proto",
+            "proto/generated/global.remote.store.proto",
+            "proto/generated/global.resp.proto",
+            "proto/generated/global.scripting.proto",
+            "proto/generated/global.server.core.proto",
+            "proto/generated/global.server.hotrod.proto",
+            "proto/generated/global.server.runtime.proto",
+            "proto/generated/global.tasks.manager.proto",
+
             "proto/generated/persistence.counters.proto",
             "proto/generated/persistence.query.proto",
             "proto/generated/persistence.query.core.proto",

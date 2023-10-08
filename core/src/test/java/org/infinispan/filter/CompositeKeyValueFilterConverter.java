@@ -1,11 +1,9 @@
 package org.infinispan.filter;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
-import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 
 /**
  * Allows to composite a KeyValueFilter and a Converter together to form a KeyValueFilterConverter.  There are no
@@ -17,7 +15,6 @@ import org.infinispan.metadata.Metadata;
  * @author wburns
  * @since 7.0
  */
-@SerializeWith(CompositeKeyValueFilterConverter.Externalizer.class)
 public class CompositeKeyValueFilterConverter<K, V, C> implements KeyValueFilterConverter<K, V, C> {
    private final KeyValueFilter<? super K, ? super V> filter;
    private final Converter<? super K, ? super V, ? extends C> converter;
@@ -26,6 +23,23 @@ public class CompositeKeyValueFilterConverter<K, V, C> implements KeyValueFilter
                                            Converter<? super K, ? super V, ? extends C> converter) {
       this.filter = filter;
       this.converter = converter;
+   }
+
+   @ProtoFactory
+   CompositeKeyValueFilterConverter(MarshallableObject<KeyValueFilter<? super K, ? super V>> filter,
+                                    MarshallableObject<Converter<? super K, ? super V, ? extends C>> converter) {
+      this.filter = MarshallableObject.unwrap(filter);
+      this.converter = MarshallableObject.unwrap(converter);
+   }
+
+   @ProtoField(number = 1)
+   MarshallableObject<KeyValueFilter<? super K, ? super V>> getFilter() {
+      return MarshallableObject.create(filter);
+   }
+
+   @ProtoField(number = 2)
+   MarshallableObject<Converter<? super K, ? super V, ? extends C>> getConverter() {
+      return MarshallableObject.create(converter);
    }
 
    @Override
@@ -46,20 +60,5 @@ public class CompositeKeyValueFilterConverter<K, V, C> implements KeyValueFilter
    @Override
    public boolean accept(K key, V value, Metadata metadata) {
       return filter.accept(key, value, metadata);
-   }
-
-   public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<CompositeKeyValueFilterConverter> {
-      @Override
-      public void writeObject(ObjectOutput output, CompositeKeyValueFilterConverter object) throws IOException {
-         output.writeObject(object.filter);
-         output.writeObject(object.converter);
-      }
-
-      @Override
-      public CompositeKeyValueFilterConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         KeyValueFilter kvf = (KeyValueFilter) input.readObject();
-         Converter converter = (Converter) input.readObject();
-         return new CompositeKeyValueFilterConverter<>(kvf, converter);
-      }
    }
 }

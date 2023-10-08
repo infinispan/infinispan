@@ -1,27 +1,22 @@
 package org.infinispan.query.core.impl.eventfilter;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
+import org.infinispan.marshall.protostream.impl.MarshallableMap;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
-import org.infinispan.objectfilter.impl.FilterResultImpl;
-import org.infinispan.query.core.impl.ExternalizerIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.query.core.impl.QueryCache;
 
 /**
@@ -31,6 +26,7 @@ import org.infinispan.query.core.impl.QueryCache;
  * @author anistor@redhat.com
  * @since 7.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.ICKE_FILTER_AND_CONVERTER)
 @Scope(Scopes.NONE)
 public class IckleFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter<K, V, ObjectFilter.FilterResult> implements Function<Map.Entry<K, V>, ObjectFilter.FilterResult> {
 
@@ -72,6 +68,26 @@ public class IckleFilterAndConverter<K, V> extends AbstractKeyValueFilterConvert
       this.matcherImplClass = matcherImplClass;
    }
 
+   @ProtoFactory
+   protected IckleFilterAndConverter(String queryString, MarshallableMap<String, Object> wrappedNamedParameters, Class<? extends Matcher> matcherImplClass) {
+      this(queryString, MarshallableMap.unwrap(wrappedNamedParameters), matcherImplClass);
+   }
+
+   @ProtoField(1)
+   public String getQueryString() {
+      return queryString;
+   }
+
+   @ProtoField(2)
+   public MarshallableMap<String, Object> getWrappedNamedParameters() {
+      return MarshallableMap.create(namedParameters);
+   }
+
+   @ProtoField(3)
+   public Class<? extends Matcher> getMatcherImplClass() {
+      return matcherImplClass;
+   }
+
    /**
     * Acquires a Matcher instance from the ComponentRegistry of the given Cache object.
     */
@@ -94,9 +110,6 @@ public class IckleFilterAndConverter<K, V> extends AbstractKeyValueFilterConvert
       return namedParameters != null ? objectFilter.withParameters(namedParameters) : objectFilter;
    }
 
-   public String getQueryString() {
-      return queryString;
-   }
 
    public Map<String, Object> getNamedParameters() {
       return namedParameters;
@@ -122,86 +135,5 @@ public class IckleFilterAndConverter<K, V> extends AbstractKeyValueFilterConvert
    @Override
    public String toString() {
       return getClass().getSimpleName() + "{queryString='" + queryString + "'}";
-   }
-
-   public static final class IckleFilterAndConverterExternalizer extends AbstractExternalizer<IckleFilterAndConverter> {
-
-      @Override
-      public void writeObject(ObjectOutput output, IckleFilterAndConverter filterAndConverter) throws IOException {
-         output.writeUTF(filterAndConverter.queryString);
-         Map<String, Object> namedParameters = filterAndConverter.namedParameters;
-         if (namedParameters != null) {
-            UnsignedNumeric.writeUnsignedInt(output, namedParameters.size());
-            for (Map.Entry<String, Object> e : namedParameters.entrySet()) {
-               output.writeUTF(e.getKey());
-               output.writeObject(e.getValue());
-            }
-         } else {
-            UnsignedNumeric.writeUnsignedInt(output, 0);
-         }
-         output.writeObject(filterAndConverter.matcherImplClass);
-      }
-
-      @Override
-      public IckleFilterAndConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         String queryString = input.readUTF();
-         int paramsSize = UnsignedNumeric.readUnsignedInt(input);
-         Map<String, Object> namedParameters = null;
-         if (paramsSize != 0) {
-            namedParameters = new HashMap<>(paramsSize);
-            for (int i = 0; i < paramsSize; i++) {
-               String paramName = input.readUTF();
-               Object paramValue = input.readObject();
-               namedParameters.put(paramName, paramValue);
-            }
-         }
-         Class<? extends Matcher> matcherImplClass = (Class<? extends Matcher>) input.readObject();
-         return new IckleFilterAndConverter(queryString, namedParameters, matcherImplClass);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.ICKLE_FILTER_AND_CONVERTER;
-      }
-
-      @Override
-      public Set<Class<? extends IckleFilterAndConverter>> getTypeClasses() {
-         return Collections.singleton(IckleFilterAndConverter.class);
-      }
-   }
-
-   public static final class FilterResultExternalizer extends AbstractExternalizer<FilterResultImpl> {
-
-      @Override
-      public void writeObject(ObjectOutput output, FilterResultImpl filterResult) throws IOException {
-         if (filterResult.getProjection() != null) {
-            // skip serializing the key and instance if there is a projection
-            output.writeObject(null);
-            output.writeObject(filterResult.getProjection());
-         } else {
-            output.writeObject(filterResult.getInstance());
-            output.writeObject(filterResult.getKey());
-         }
-         output.writeObject(filterResult.getSortProjection());
-      }
-
-      @Override
-      public FilterResultImpl readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Object instance = input.readObject();
-         Object key = instance == null ? null : input.readObject();
-         Object[] projection = instance == null ? (Object[]) input.readObject() : null;
-         Comparable[] sortProjection = (Comparable[]) input.readObject();
-         return new FilterResultImpl(key, instance, projection, sortProjection);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.ICKLE_FILTER_RESULT;
-      }
-
-      @Override
-      public Set<Class<? extends FilterResultImpl>> getTypeClasses() {
-         return Collections.singleton(FilterResultImpl.class);
-      }
    }
 }

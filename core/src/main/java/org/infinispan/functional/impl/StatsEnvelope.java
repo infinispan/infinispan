@@ -1,23 +1,22 @@
 package org.infinispan.functional.impl;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.util.Util;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Responses for functional commands that allow to record statistics.
  */
+@ProtoTypeId(ProtoStreamTypeIds.FUNCTIONAL_STATS_ENVELOPE)
 public class StatsEnvelope<T> {
    // hit and miss are exclusive flags since the command might not read the entry at all
    public static final byte HIT = 1;
@@ -69,10 +68,21 @@ public class StatsEnvelope<T> {
       this.flags = flags;
    }
 
+   @ProtoFactory
+   StatsEnvelope(MarshallableObject<T> wrappedValue, byte flags) {
+      this(MarshallableObject.unwrap(wrappedValue), flags);
+   }
+
+   @ProtoField(number = 1, name = "value")
+   MarshallableObject<T> getWrappedValue() {
+      return MarshallableObject.create(value);
+   }
+
    public T value() {
       return value;
    }
 
+   @ProtoField(number = 2, defaultValue = "0")
    public byte flags() {
       return flags;
    }
@@ -97,28 +107,5 @@ public class StatsEnvelope<T> {
 
    public boolean isDelete() {
       return (flags & DELETE) != 0;
-   }
-
-   public static class Externalizer implements AdvancedExternalizer<StatsEnvelope> {
-      @Override
-      public Set<Class<? extends StatsEnvelope>> getTypeClasses() {
-         return Util.asSet(StatsEnvelope.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.STATS_ENVELOPE;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, StatsEnvelope object) throws IOException {
-         output.writeObject(object.value);
-         output.writeByte(object.flags);
-      }
-
-      @Override
-      public StatsEnvelope readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new StatsEnvelope(input.readObject(), input.readByte());
-      }
    }
 }

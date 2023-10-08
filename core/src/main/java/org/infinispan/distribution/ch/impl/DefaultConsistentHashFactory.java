@@ -2,21 +2,17 @@ package org.infinispan.distribution.ch.impl;
 
 import static org.infinispan.util.logging.Log.CONTAINER;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.globalstate.ScopedPersistentState;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -29,6 +25,7 @@ import org.infinispan.remoting.transport.Address;
  * @author anistor@redhat.com
  * @since 5.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.DEFAULT_CONSISTENT_HASH_FACTORY)
 public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<DefaultConsistentHash> {
 
    @Override
@@ -504,28 +501,5 @@ public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<
    @Override
    public int hashCode() {
       return 3853;
-   }
-
-   public static class Externalizer extends AbstractExternalizer<DefaultConsistentHashFactory> {
-
-      @Override
-      public void writeObject(ObjectOutput output, DefaultConsistentHashFactory chf) throws IOException {
-      }
-
-      @Override
-      @SuppressWarnings("unchecked")
-      public DefaultConsistentHashFactory readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
-         return new DefaultConsistentHashFactory();
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.DEFAULT_CONSISTENT_HASH_FACTORY;
-      }
-
-      @Override
-      public Set<Class<? extends DefaultConsistentHashFactory>> getTypeClasses() {
-         return Collections.singleton(DefaultConsistentHashFactory.class);
-      }
    }
 }

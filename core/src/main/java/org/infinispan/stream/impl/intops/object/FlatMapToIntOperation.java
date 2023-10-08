@@ -4,6 +4,9 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.stream.impl.intops.FlatMappingOperation;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -19,13 +22,19 @@ public class FlatMapToIntOperation<I> implements FlatMappingOperation<I, Stream<
       this.function = function;
    }
 
+   @ProtoFactory
+   FlatMapToIntOperation(MarshallableObject<Function<? super I, ? extends IntStream>> function) {
+      this.function = MarshallableObject.unwrap(function);
+   }
+
+   @ProtoField(number = 1)
+   MarshallableObject<Function<? super I, ? extends IntStream>> getFunction() {
+      return MarshallableObject.create(function);
+   }
+
    @Override
    public IntStream perform(Stream<I> stream) {
       return stream.flatMapToInt(function);
-   }
-
-   public Function<? super I, ? extends IntStream> getFunction() {
-      return function;
    }
 
    @Override

@@ -1,6 +1,9 @@
 package org.infinispan.notifications.cachelistener.event;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoEnumValue;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * An interface that defines common characteristics of events
@@ -9,17 +12,56 @@ import org.infinispan.Cache;
  * @since 4.0
  */
 public interface Event<K, V> {
+
+   @ProtoTypeId(ProtoStreamTypeIds.CLUSTER_EVENT_TYPE)
    enum Type {
-      CACHE_ENTRY_ACTIVATED, CACHE_ENTRY_PASSIVATED, CACHE_ENTRY_VISITED,
-      CACHE_ENTRY_LOADED, CACHE_ENTRY_EVICTED, CACHE_ENTRY_CREATED, CACHE_ENTRY_REMOVED, CACHE_ENTRY_MODIFIED,
-      TRANSACTION_COMPLETED, TRANSACTION_REGISTERED, CACHE_ENTRY_INVALIDATED, CACHE_ENTRY_EXPIRED, DATA_REHASHED,
-      TOPOLOGY_CHANGED, PARTITION_STATUS_CHANGED, PERSISTENCE_AVAILABILITY_CHANGED;
+      @ProtoEnumValue(number = 1)
+      CACHE_ENTRY_ACTIVATED,
 
-      private static final Type[] CACHED_VALUES = values();
+      @ProtoEnumValue(number = 2)
+      CACHE_ENTRY_PASSIVATED,
 
-      public static Type valueOf(int ordinal) {
-         return CACHED_VALUES[ordinal];
-      }
+      @ProtoEnumValue(number = 3)
+      CACHE_ENTRY_VISITED,
+
+      @ProtoEnumValue(number = 4)
+      CACHE_ENTRY_LOADED,
+
+      @ProtoEnumValue(number = 5)
+      CACHE_ENTRY_EVICTED,
+
+      @ProtoEnumValue(number = 6)
+      CACHE_ENTRY_CREATED,
+
+      @ProtoEnumValue(number = 7)
+      CACHE_ENTRY_REMOVED,
+
+      @ProtoEnumValue(number = 8)
+      CACHE_ENTRY_MODIFIED,
+
+      @ProtoEnumValue(number = 9)
+      TRANSACTION_COMPLETED,
+
+      @ProtoEnumValue(number = 10)
+      TRANSACTION_REGISTERED,
+
+      @ProtoEnumValue(number = 11)
+      CACHE_ENTRY_INVALIDATED,
+
+      @ProtoEnumValue(number = 12)
+      CACHE_ENTRY_EXPIRED,
+
+      @ProtoEnumValue(number = 13)
+      DATA_REHASHED,
+
+      @ProtoEnumValue(number = 14)
+      TOPOLOGY_CHANGED,
+
+      @ProtoEnumValue(number = 15)
+      PARTITION_STATUS_CHANGED,
+
+      @ProtoEnumValue(number = 16)
+      PERSISTENCE_AVAILABILITY_CHANGED;
    }
 
    /**

@@ -1,8 +1,5 @@
 package org.infinispan.server.core.transport;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -10,14 +7,15 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.ProtocolServer;
 
 import io.netty.channel.group.ChannelGroup;
 
-class NettyTransportConnectionStats {
+public class NettyTransportConnectionStats {
 
    private final EmbeddedCacheManager cacheManager;
    private final boolean isGlobalStatsEnabled;
@@ -26,7 +24,7 @@ class NettyTransportConnectionStats {
    private final AtomicLong totalBytesWritten = new AtomicLong();
    private final AtomicLong totalBytesRead = new AtomicLong();
 
-   public NettyTransportConnectionStats(EmbeddedCacheManager cacheManager, ChannelGroup acceptedChannels, String threadNamePrefix) {
+   NettyTransportConnectionStats(EmbeddedCacheManager cacheManager, ChannelGroup acceptedChannels, String threadNamePrefix) {
       this.cacheManager = cacheManager;
       this.acceptedChannels = acceptedChannels;
       this.threadNamePrefix = threadNamePrefix;
@@ -80,10 +78,11 @@ class NettyTransportConnectionStats {
       return connectionCount.get();
    }
 
-   @SerializeWith(NettyTransportConnectionStats.ConnectionAdderTask.Externalizer.class)
-   static class ConnectionAdderTask implements Function<EmbeddedCacheManager, Integer> {
-      private final String serverName;
+   public static class ConnectionAdderTask implements Function<EmbeddedCacheManager, Integer> {
+      @ProtoField(1)
+      final String serverName;
 
+      @ProtoFactory
       ConnectionAdderTask(String serverName) {
          this.serverName = serverName;
       }
@@ -99,18 +98,6 @@ class NettyTransportConnectionStats {
          Transport transport = protocolServer.getTransport();
          // check if the transport is up; otherwise no connections are open
          return transport == null ? 0 : transport.getNumberOfLocalConnections();
-      }
-
-      public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<ConnectionAdderTask> {
-         @Override
-         public void writeObject(ObjectOutput output, ConnectionAdderTask task) throws IOException {
-            output.writeUTF(task.serverName);
-         }
-
-         @Override
-         public ConnectionAdderTask readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-            return new ConnectionAdderTask(input.readUTF());
-         }
       }
    }
 

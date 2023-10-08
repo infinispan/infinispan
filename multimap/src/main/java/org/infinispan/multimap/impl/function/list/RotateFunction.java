@@ -1,16 +1,13 @@
 package org.infinispan.multimap.impl.function.list;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.Optional;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
-import org.infinispan.multimap.impl.ExternalizerIds;
 import org.infinispan.multimap.impl.ListBucket;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Serializable function used by
@@ -21,10 +18,13 @@ import org.infinispan.multimap.impl.ListBucket;
  * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_ROTATE_FUNCTION)
 public final class RotateFunction<K, V> implements ListBucketBaseFunction<K, V, V> {
-   public static final AdvancedExternalizer<RotateFunction> EXTERNALIZER = new RotateFunction.Externalizer();
-   private final boolean rotateRight;
 
+   @ProtoField(value = 1, defaultValue = "-1")
+   final boolean rotateRight;
+
+   @ProtoFactory
    public RotateFunction(boolean rotateRight) {
       this.rotateRight = rotateRight;
    }
@@ -39,28 +39,5 @@ public final class RotateFunction<K, V> implements ListBucketBaseFunction<K, V, 
       }
       // key does not exist
       return null;
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<RotateFunction> {
-
-      @Override
-      public Set<Class<? extends RotateFunction>> getTypeClasses() {
-         return Collections.singleton(RotateFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.ROTATE_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, RotateFunction object) throws IOException {
-         output.writeBoolean(object.rotateRight);
-      }
-
-      @Override
-      public RotateFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException{
-         return new RotateFunction(input.readBoolean());
-      }
    }
 }

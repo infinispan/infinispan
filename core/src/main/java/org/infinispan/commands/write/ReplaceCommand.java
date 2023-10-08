@@ -2,43 +2,38 @@ package org.infinispan.commands.write;
 
 import static org.infinispan.commons.util.Util.toStr;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Objects;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
  * @since 4.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.REPLACE_COMMAND)
 public class ReplaceCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
    public static final byte COMMAND_ID = 11;
 
    private Object oldValue;
    private Object newValue;
    private Metadata metadata;
-   private boolean successful = true;
-   private boolean returnEntry = false;
-   private PrivateMetadata internalMetadata;
-
    private ValueMatcher valueMatcher;
+   private boolean returnEntry;
+   private PrivateMetadata internalMetadata;
+   private transient boolean successful = true;
 
-   public ReplaceCommand() {
-   }
-
-   public ReplaceCommand(Object key, Object oldValue, Object newValue, boolean returnEntry,
-                         Metadata metadata, int segment, long flagsBitSet,
+   public ReplaceCommand(Object key, Object oldValue, Object newValue,  boolean returnEntry, Metadata metadata, int segment, long flagsBitSet,
                          CommandInvocationId commandInvocationId) {
       super(key, segment, flagsBitSet, commandInvocationId);
       this.oldValue = oldValue;
@@ -46,6 +41,57 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       this.returnEntry = returnEntry;
       this.metadata = metadata;
       this.valueMatcher = oldValue != null ? ValueMatcher.MATCH_EXPECTED : ValueMatcher.MATCH_NON_NULL;
+   }
+
+   @ProtoFactory
+   ReplaceCommand(MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment,
+                  CommandInvocationId commandInvocationId, MarshallableObject<?> wrappedOldValue,
+                  MarshallableObject<?> wrappedNewValue, MarshallableObject<Metadata> wrappedMetadata, ValueMatcher valueMatcher,
+                  PrivateMetadata internalMetadata, boolean returnEntry) {
+      super(wrappedKey, flagsWithoutRemote, topologyId, segment, commandInvocationId);
+      this.oldValue = MarshallableObject.unwrap(wrappedOldValue);
+      this.newValue = MarshallableObject.unwrap(wrappedNewValue);
+      this.metadata = MarshallableObject.unwrap(wrappedMetadata);
+      this.valueMatcher = valueMatcher;
+      this.internalMetadata = internalMetadata;
+      this.returnEntry = returnEntry;
+   }
+
+   @ProtoField(number = 6, name = "oldValue")
+   MarshallableObject<?> getWrappedOldValue() {
+      return MarshallableObject.create(oldValue);
+   }
+
+   @ProtoField(number = 7, name = "newValue")
+   MarshallableObject<?> getWrappedNewValue() {
+      return MarshallableObject.create(newValue);
+   }
+
+   @ProtoField(number = 8, name = "metadata")
+   MarshallableObject<Metadata> getWrappedMetadata() {
+      return MarshallableObject.create(metadata);
+   }
+
+   @Override
+   @ProtoField(number = 9)
+   public ValueMatcher getValueMatcher() {
+      return valueMatcher;
+   }
+
+   @Override
+   @ProtoField(number = 10)
+   public PrivateMetadata getInternalMetadata() {
+      return internalMetadata;
+   }
+
+   @Override
+   public void setInternalMetadata(PrivateMetadata internalMetadata) {
+      this.internalMetadata = internalMetadata;
+   }
+
+   @ProtoField(number = 11, defaultValue = "false")
+   public final boolean isReturnEntry() {
+      return returnEntry;
    }
 
    @Override
@@ -61,34 +107,6 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    @Override
    public byte getCommandId() {
       return COMMAND_ID;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(key);
-      output.writeObject(oldValue);
-      output.writeObject(newValue);
-      output.writeBoolean(returnEntry);
-      UnsignedNumeric.writeUnsignedInt(output, segment);
-      output.writeObject(metadata);
-      MarshallUtil.marshallEnum(valueMatcher, output);
-      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
-      CommandInvocationId.writeTo(output, commandInvocationId);
-      output.writeObject(internalMetadata);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      key = input.readObject();
-      oldValue = input.readObject();
-      newValue = input.readObject();
-      returnEntry = input.readBoolean();
-      segment = UnsignedNumeric.readUnsignedInt(input);
-      metadata = (Metadata) input.readObject();
-      valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
-      setFlagsBitSet(input.readLong());
-      commandInvocationId = CommandInvocationId.readFrom(input);
-      internalMetadata = (PrivateMetadata) input.readObject();
    }
 
    @Override
@@ -151,11 +169,6 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    }
 
    @Override
-   public ValueMatcher getValueMatcher() {
-      return valueMatcher;
-   }
-
-   @Override
    public void setValueMatcher(ValueMatcher valueMatcher) {
       this.valueMatcher = valueMatcher;
    }
@@ -170,10 +183,6 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
      return true;
    }
 
-   public final boolean isReturnEntry() {
-      return returnEntry;
-   }
-
    @Override
    public String toString() {
       return "ReplaceCommand{" +
@@ -185,17 +194,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
             ", commandInvocationId=" + CommandInvocationId.show(commandInvocationId) +
             ", successful=" + successful +
             ", valueMatcher=" + valueMatcher +
-            ", topologyId=" + getTopologyId() +
+            ", topologyId=" + topologyId +
             '}';
-   }
-
-   @Override
-   public PrivateMetadata getInternalMetadata() {
-      return internalMetadata;
-   }
-
-   @Override
-   public void setInternalMetadata(PrivateMetadata internalMetadata) {
-      this.internalMetadata = internalMetadata;
    }
 }

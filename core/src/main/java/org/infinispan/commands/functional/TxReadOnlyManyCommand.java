@@ -1,25 +1,29 @@
 package org.infinispan.commands.functional;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.functional.EntryView;
 import org.infinispan.functional.impl.Params;
+import org.infinispan.marshall.protostream.impl.MarshallableCollection;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
+@ProtoTypeId(ProtoStreamTypeIds.TX_READ_ONLY_MANY_COMMAND)
 public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R> {
    public static final byte COMMAND_ID = 65;
+
    // These mutations must have the same order of iteration as keys. We can guarantee that because the mutations
    // are set only when replicating the command to other nodes where we have already narrowed the key set
    private List<List<Mutation<K, V, ?>>> mutations;
-
-   public TxReadOnlyManyCommand() {
-   }
 
    public TxReadOnlyManyCommand(Collection<?> keys, List<List<Mutation<K, V, ?>>> mutations,
                                 Params params, DataConversion keyDataConversion,
@@ -31,6 +35,27 @@ public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R>
    public TxReadOnlyManyCommand(ReadOnlyManyCommand c, List<List<Mutation<K, V, ?>>> mutations) {
       super(c);
       this.mutations = mutations;
+   }
+
+   @ProtoFactory
+   TxReadOnlyManyCommand(long flagsWithoutRemote, int topologyId, MarshallableCollection<?> wrappedKeys,
+                         MarshallableObject<Function<EntryView.ReadEntryView<K, V>, R>> wrappedFunction,
+                         Params params, DataConversion keyDataConversion, DataConversion valueDataConversion,
+                         MarshallableCollection<MarshallableCollection<Mutation<K, V, ?>>> wrappedMutations) {
+      super(flagsWithoutRemote, topologyId, wrappedKeys, wrappedFunction, params, keyDataConversion, valueDataConversion);
+      this.mutations = wrappedMutations == null ? null :
+            wrappedMutations.get().stream()
+                  .map(mc -> MarshallableCollection.unwrap(mc, ArrayList::new))
+                  .collect(Collectors.toList());
+   }
+
+   // TODO is there a better way todo this?
+   @ProtoField(number = 8)
+   MarshallableCollection<MarshallableCollection<Mutation<K, V, ?>>> getWrappedMutations() {
+      return mutations == null ? null :
+            MarshallableCollection.create(mutations.stream()
+                  .map(MarshallableCollection::create)
+                  .collect(Collectors.toList()));
    }
 
    @Override
@@ -51,63 +76,13 @@ public class TxReadOnlyManyCommand<K, V, R> extends ReadOnlyManyCommand<K, V, R>
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      super.writeTo(output);
-      // TODO: if the marshaller does not support object counting we could marshall the same functions many times
-      // This encoding is optimized for mostly-empty inner lists but is as efficient as regular collection
-      // encoding from MarshallUtil if all the inner lists are non-empty
-      int emptyLists = 0;
-      for (List<Mutation<K, V, ?>> list : mutations) {
-         if (list.isEmpty()) {
-            emptyLists++;
-         } else {
-            if (emptyLists > 0) output.writeInt(-emptyLists);
-            output.writeInt(list.size());
-            for (Mutation<K, V, ?> mut : list) {
-               Mutations.writeTo(output, mut);
-            }
-            emptyLists = 0;
-         }
-      }
-      if (emptyLists > 0) output.writeInt(-emptyLists);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      super.readFrom(input);
-      int numMutations = keys.size();
-      mutations = new ArrayList<>(numMutations);
-      for (int i = 0; i < numMutations; ++i) {
-         int length = input.readInt();
-         if (length < 0) {
-            i -= length;
-            while (length < 0) {
-               mutations.add(Collections.emptyList());
-               ++length;
-            }
-            if (i >= numMutations) {
-               break;
-            }
-            length = input.readInt();
-         }
-         List<Mutation<K, V, ?>> list = new ArrayList<>(length);
-         for (int j = 0; j < length; ++j) {
-            list.add(Mutations.readFrom(input));
-         }
-         mutations.add(list);
-      }
-   }
-
-   @Override
    public String toString() {
-      final StringBuilder sb = new StringBuilder("TxReadOnlyManyCommand{");
-      sb.append("keys=").append(keys);
-      sb.append(", f=").append(f);
-      sb.append(", mutations=").append(mutations);
-      sb.append(", keyDataConversion=").append(keyDataConversion);
-      sb.append(", valueDataConversion=").append(valueDataConversion);
-      sb.append('}');
-      return sb.toString();
+      return "TxReadOnlyManyCommand{" + "keys=" + keys +
+            ", f=" + f +
+            ", mutations=" + mutations +
+            ", keyDataConversion=" + keyDataConversion +
+            ", valueDataConversion=" + valueDataConversion +
+            '}';
    }
 
    public List<List<Mutation<K, V, ?>>> getMutations() {

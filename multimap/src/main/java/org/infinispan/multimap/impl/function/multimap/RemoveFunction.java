@@ -1,15 +1,12 @@
 package org.infinispan.multimap.impl.function.multimap;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.multimap.impl.Bucket;
-import org.infinispan.multimap.impl.ExternalizerIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Serializable function used by {@link org.infinispan.multimap.impl.EmbeddedMultimapCache#remove(Object)} and {@link
@@ -23,9 +20,9 @@ import org.infinispan.multimap.impl.ExternalizerIds;
  * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 9.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_REMOVE_FUNCTION)
 public final class RemoveFunction<K, V> implements BaseFunction<K, V, Boolean> {
 
-   public static final AdvancedExternalizer<RemoveFunction> EXTERNALIZER = new Externalizer();
    private final V value;
    private final boolean supportsDuplicates;
 
@@ -45,6 +42,21 @@ public final class RemoveFunction<K, V> implements BaseFunction<K, V, Boolean> {
    public RemoveFunction(V value, boolean supportsDuplicates) {
       this.value = value;
       this.supportsDuplicates = supportsDuplicates;
+   }
+
+   @ProtoFactory
+   RemoveFunction(MarshallableObject<V> value, boolean supportsDuplicates) {
+      this(MarshallableObject.unwrap(value), supportsDuplicates);
+   }
+
+   @ProtoField(1)
+   MarshallableObject<V> getValue() {
+      return MarshallableObject.create(value);
+   }
+
+   @ProtoField(value = 2, defaultValue = "false")
+   boolean isSupportsDuplicates() {
+      return supportsDuplicates;
    }
 
    @Override
@@ -79,29 +91,5 @@ public final class RemoveFunction<K, V> implements BaseFunction<K, V, Boolean> {
          entryView.remove();
          return Boolean.TRUE;
       }).orElse(Boolean.FALSE);
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<RemoveFunction> {
-
-      @Override
-      public Set<Class<? extends RemoveFunction>> getTypeClasses() {
-         return Collections.singleton(RemoveFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.REMOVE_KEY_VALUE_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, RemoveFunction object) throws IOException {
-         output.writeObject(object.value);
-         output.writeBoolean(object.supportsDuplicates);
-      }
-
-      @Override
-      public RemoveFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new RemoveFunction(input.readObject(), input.readBoolean());
-      }
    }
 }

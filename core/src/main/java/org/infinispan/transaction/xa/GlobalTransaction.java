@@ -1,16 +1,17 @@
 package org.infinispan.transaction.xa;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import javax.transaction.xa.Xid;
+
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.tx.XidImpl;
-import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.marshall.protostream.impl.WrappedMessages;
+import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 
 
@@ -25,6 +26,7 @@ import org.infinispan.remoting.transport.Address;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.GLOBAL_TRANSACTION)
 public class GlobalTransaction implements Cloneable {
 
    private static final AtomicLong sid = new AtomicLong(0);
@@ -42,9 +44,10 @@ public class GlobalTransaction implements Cloneable {
       this.remote = remote;
    }
 
-   private GlobalTransaction(long id, Address addr, XidImpl xid, long internalId) {
+   @ProtoFactory
+   GlobalTransaction(long id, WrappedMessage wrappedAddress, XidImpl xid, long internalId) {
       this.id = id;
-      this.addr = addr;
+      this.addr = WrappedMessages.unwrap(wrappedAddress);
       this.xid = xid;
       this.internalId = internalId;
    }
@@ -53,8 +56,24 @@ public class GlobalTransaction implements Cloneable {
       return addr;
    }
 
+   @ProtoField(value = 1, name = "address")
+   WrappedMessage getWrappedAddress() {
+      return WrappedMessages.orElseNull(addr);
+   }
+
+   @ProtoField(number = 2, defaultValue = "-1")
    public long getId() {
       return id;
+   }
+
+   @ProtoField(number = 3)
+   public XidImpl getXid() {
+      return xid;
+   }
+
+   @ProtoField(number = 4, defaultValue = "-1")
+   public long getInternalId() {
+      return internalId;
    }
 
    public boolean isRemote() {
@@ -100,16 +119,8 @@ public class GlobalTransaction implements Cloneable {
       this.addr = address;
    }
 
-   public XidImpl getXid() {
-      return xid;
-   }
-
-   public void setXid(XidImpl xid) {
-      this.xid = xid;
-   }
-
-   public long getInternalId() {
-      return internalId;
+   public void setXid(Xid xid) {
+      this.xid = XidImpl.copy(xid);
    }
 
    public void setInternalId(long internalId) {
@@ -134,34 +145,5 @@ public class GlobalTransaction implements Cloneable {
             ", xid=" + xid +
             ", internalId=" + internalId +
             '}';
-   }
-
-   public static class Externalizer implements AdvancedExternalizer<GlobalTransaction> {
-      @Override
-      public Set<Class<? extends GlobalTransaction>> getTypeClasses() {
-         return Util.asSet(GlobalTransaction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.GLOBAL_TRANSACTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, GlobalTransaction gtx) throws IOException {
-         output.writeLong(gtx.id);
-         output.writeObject(gtx.addr);
-         output.writeObject(gtx.xid);
-         output.writeLong(gtx.internalId);
-      }
-
-      @Override
-      public GlobalTransaction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         long id = input.readLong();
-         Address addr = (Address) input.readObject();
-         XidImpl xid = (XidImpl) input.readObject();
-         long internalId = input.readLong();
-         return new GlobalTransaction(id, addr, xid, internalId);
-      }
    }
 }

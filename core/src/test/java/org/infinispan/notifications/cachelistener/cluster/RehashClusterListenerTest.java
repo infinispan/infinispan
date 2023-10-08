@@ -64,7 +64,7 @@ public class RehashClusterListenerTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       builderUsed = new ConfigurationBuilder();
       builderUsed.clustering().cacheMode(cacheMode).hash().consistentHashFactory(factory).numSegments(1);
-      createClusteredCaches(3, CACHE_NAME, builderUsed);
+      createClusteredCaches(3, ControlledConsistentHashFactory.SCI.INSTANCE, CACHE_NAME, builderUsed);
    }
 
    public void testClusterListenerNodeBecomingPrimaryFromNotAnOwner() throws Exception {

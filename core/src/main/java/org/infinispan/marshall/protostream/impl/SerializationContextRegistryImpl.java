@@ -1,5 +1,6 @@
 package org.infinispan.marshall.protostream.impl;
 
+import static org.infinispan.marshall.protostream.impl.GlobalContextInitializer.getFqTypeName;
 import static org.infinispan.marshall.protostream.impl.SerializationContextRegistry.MarshallerType.GLOBAL;
 import static org.infinispan.marshall.protostream.impl.SerializationContextRegistry.MarshallerType.PERSISTENCE;
 
@@ -21,7 +22,6 @@ import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.persistence.impl.PersistenceContextInitializer;
-import org.infinispan.marshall.persistence.impl.PersistenceContextInitializerImpl;
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.ImmutableSerializationContext;
@@ -34,6 +34,8 @@ import org.infinispan.protostream.types.java.CommonTypesSchema;
 public class SerializationContextRegistryImpl implements SerializationContextRegistry {
 
    @Inject GlobalConfiguration globalConfig;
+   @Inject @ComponentName(KnownComponentNames.INTERNAL_MARSHALLER)
+   ComponentRef<Marshaller> globalMarshaller;
    @Inject @ComponentName(KnownComponentNames.USER_MARSHALLER)
    ComponentRef<Marshaller> userMarshaller;
 
@@ -57,15 +59,23 @@ public class SerializationContextRegistryImpl implements SerializationContextReg
          initializers = ServiceFinder.load(SerializationContextInitializer.class, globalConfig.classLoader());
       }
       initializers.forEach(user::addContextInitializer);
+      initializers.forEach(global::addContextInitializer);
 
       String messageName = PersistenceContextInitializer.getFqTypeName(MarshallableUserObject.class);
       BaseMarshaller userObjectMarshaller = new MarshallableUserObject.Marshaller(messageName, userMarshaller.wired());
-      update(GLOBAL, ctx -> ctx.addContextInitializer(new PersistenceContextInitializerImpl())
-            .addContextInitializer(new org.infinispan.commons.GlobalContextInitializerImpl())
-            .addMarshaller(userObjectMarshaller)
+      update(GLOBAL, ctx ->
+         ctx.addContextInitializer(GlobalContextInitializer.INSTANCE)
+               .addContextInitializer(new CommonTypesSchema())
+               .addContextInitializer(new CommonContainerTypesSchema())
+               .addContextInitializer(new UserContextInitializerImpl())
+               .addMarshaller(userObjectMarshaller)
+               .addMarshaller(new MarshallableArray.Marshaller(getFqTypeName(MarshallableArray.class), globalMarshaller.wired()))
+               .addMarshaller(new MarshallableCollection.Marshaller(getFqTypeName(MarshallableCollection.class), globalMarshaller.wired()))
+               .addMarshaller(new MarshallableMap.Marshaller(getFqTypeName(MarshallableMap.class)))
+               .addMarshaller(new MarshallableObject.Marshaller(getFqTypeName(MarshallableObject.class), globalMarshaller.wired()))
       );
 
-      update(PERSISTENCE, ctx -> ctx.addContextInitializer(new PersistenceContextInitializerImpl())
+      update(PERSISTENCE, ctx -> ctx.addContextInitializer(PersistenceContextInitializer.INSTANCE)
             .addMarshaller(userObjectMarshaller)
       );
    }
@@ -129,6 +139,7 @@ public class SerializationContextRegistryImpl implements SerializationContextReg
    private static final class MarshallerContext {
       private final List<BaseMarshaller<?>> marshallers = new ArrayList<>();
       private final SerializationContext ctx = ProtoStreamMarshaller.newSerializationContext();
+
 
       MarshallerContext addContextInitializer(SerializationContextInitializer sci) {
          register(sci, ctx);

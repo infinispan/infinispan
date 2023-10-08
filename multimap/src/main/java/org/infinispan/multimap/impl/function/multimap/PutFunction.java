@@ -1,16 +1,14 @@
 package org.infinispan.multimap.impl.function.multimap;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.Optional;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.multimap.impl.Bucket;
-import org.infinispan.multimap.impl.ExternalizerIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Serializable function used by {@link org.infinispan.multimap.impl.EmbeddedMultimapCache#put(Object, Object)} to add a
@@ -20,15 +18,30 @@ import org.infinispan.multimap.impl.ExternalizerIds;
  * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 9.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_PUT_FUNCTION)
 public final class PutFunction<K, V> implements BaseFunction<K, V, Void> {
 
-   public static final AdvancedExternalizer<PutFunction> EXTERNALIZER = new Externalizer();
    private final V value;
    private final boolean supportsDuplicates;
 
    public PutFunction(V value, boolean supportsDuplicates) {
       this.value = value;
       this.supportsDuplicates = supportsDuplicates;
+   }
+
+   @ProtoFactory
+   PutFunction(MarshallableObject<V> value, boolean supportsDuplicates) {
+      this(MarshallableObject.unwrap(value), supportsDuplicates);
+   }
+
+   @ProtoField(1)
+   MarshallableObject<V> getValue() {
+      return MarshallableObject.create(value);
+   }
+
+   @ProtoField(value = 2, defaultValue = "false")
+   boolean isSupportsDuplicates() {
+      return supportsDuplicates;
    }
 
    @Override
@@ -45,29 +58,5 @@ public final class PutFunction<K, V> implements BaseFunction<K, V, Void> {
       }
 
       return null;
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<PutFunction> {
-
-      @Override
-      public Set<Class<? extends PutFunction>> getTypeClasses() {
-         return Collections.singleton(PutFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.PUT_KEY_VALUE_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, PutFunction object) throws IOException {
-         output.writeObject(object.value);
-         output.writeBoolean(object.supportsDuplicates);
-      }
-
-      @Override
-      public PutFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new PutFunction(input.readObject(), input.readBoolean());
-      }
    }
 }

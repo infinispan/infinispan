@@ -1,13 +1,12 @@
 package org.infinispan.remoting.responses;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
-
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.marshall.protostream.impl.MarshallableArray;
+import org.infinispan.marshall.protostream.impl.MarshallableCollection;
+import org.infinispan.marshall.protostream.impl.MarshallableMap;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * An unsure response - used with Dist - essentially asks the caller to check the next response from the next node since
@@ -16,36 +15,23 @@ import org.infinispan.marshall.core.Ids;
  * @author Manik Surtani
  * @since 4.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.UNSURE_RESPONSE)
 public class UnsureResponse extends ValidResponse {
    public static final UnsureResponse INSTANCE = new UnsureResponse();
+
+   @ProtoFactory
+   static UnsureResponse protoFactory(MarshallableObject<?> object, MarshallableCollection<?> collection,
+                                      MarshallableMap<?, ?> map, MarshallableArray<?> array) {
+      return INSTANCE;
+   }
+
    @Override
    public boolean isSuccessful() {
       return false;
    }
 
    @Override
-   public Object getResponseValue() {
-      throw new UnsupportedOperationException();
-   }
-
-   public static class Externalizer extends AbstractExternalizer<UnsureResponse> {
-      @Override
-      public void writeObject(ObjectOutput output, UnsureResponse subject) throws IOException {
-      }
-
-      @Override
-      public UnsureResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return INSTANCE;
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.UNSURE_RESPONSE;
-      }
-
-      @Override
-      public Set<Class<? extends UnsureResponse>> getTypeClasses() {
-         return Util.<Class<? extends UnsureResponse>>asSet(UnsureResponse.class);
-      }
+   protected boolean isReturnValueDisabled() {
+      return true;
    }
 }

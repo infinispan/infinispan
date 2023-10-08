@@ -501,10 +501,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             CompletionStage<SuccessfulResponse> remoteGet =
                   rpcManager.invokeCommandStaggered(distributionInfo.readOwners(), remoteRead,
                                                     new RemoteGetSingleKeyCollector(), rpcManager.getSyncRpcOptions());
-            return asyncValue(remoteGet).thenApply(ctx, command, (rCtx, rCommand, response) -> {
-               Object responseValue = ((SuccessfulResponse) response).getResponseValue();
-               return unwrapFunctionalResultOnOrigin(rCtx, rCommand.getKey(), responseValue);
-            });
+            return asyncValue(remoteGet).thenApply(ctx, command, (rCtx, rCommand, response) ->
+                  unwrapFunctionalResultOnOrigin(rCtx, rCommand.getKey(), ((SuccessfulResponse) response).getResponseObject()));
          }
          // It's possible that this is not an owner, but the entry was loaded from L1 - let the command run
          return invokeNext(ctx, command);

@@ -1,17 +1,15 @@
 package org.infinispan.multimap.impl.function.sortedset;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import java.util.Optional;
+
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
-import org.infinispan.multimap.impl.ExternalizerIds;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.multimap.impl.SortedSetAddArgs;
 import org.infinispan.multimap.impl.SortedSetBucket;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Serializable function used by
@@ -21,14 +19,25 @@ import java.util.Set;
  * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_INCR_FUNCTION)
 public final class IncrFunction<K, V> implements SortedSetBucketBaseFunction<K, V, Double> {
-   public static final AdvancedExternalizer<IncrFunction> EXTERNALIZER = new Externalizer();
-   private final Double score;
+
+   @ProtoField(1)
+   final Double score;
+
+   @ProtoField(value = 2, defaultValue = "false")
+   final boolean addOnly;
+
+   @ProtoField(value = 3, defaultValue = "false")
+   final boolean updateOnly;
+
+   @ProtoField(value = 4, defaultValue = "false")
+   final boolean updateLessScoresOnly;
+
+   @ProtoField(value = 5, defaultValue = "false")
+   final boolean updateGreaterScoresOnly;
+
    private final V member;
-   private final boolean addOnly;
-   private final boolean updateOnly;
-   private final boolean updateLessScoresOnly;
-   private final boolean updateGreaterScoresOnly;
 
    public IncrFunction(double score, V member, SortedSetAddArgs args) {
       this.score = score;
@@ -39,17 +48,20 @@ public final class IncrFunction<K, V> implements SortedSetBucketBaseFunction<K, 
       this.updateGreaterScoresOnly = args.updateGreaterScoresOnly;
    }
 
-   public IncrFunction(double score, V value,
-                       boolean addOnly,
-                       boolean updateOnly,
-                       boolean updateLessScoresOnly,
-                       boolean updateGreaterScoresOnly) {
+   @ProtoFactory
+   public IncrFunction(Double score, boolean addOnly, boolean updateOnly, boolean updateLessScoresOnly,
+                       boolean updateGreaterScoresOnly, MarshallableObject<V> member) {
       this.score = score;
-      this.member = value;
       this.addOnly = addOnly;
       this.updateOnly = updateOnly;
       this.updateLessScoresOnly = updateLessScoresOnly;
       this.updateGreaterScoresOnly = updateGreaterScoresOnly;
+      this.member = MarshallableObject.unwrap(member);
+   }
+
+   @ProtoField(6)
+   MarshallableObject<V> getMember() {
+      return MarshallableObject.create(member);
    }
 
    @Override
@@ -73,34 +85,5 @@ public final class IncrFunction<K, V> implements SortedSetBucketBaseFunction<K, 
 
       // Return member score or null of the incr function returns a null score
       return result;
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<IncrFunction> {
-
-      @Override
-      public Set<Class<? extends IncrFunction>> getTypeClasses() {
-         return Collections.singleton(IncrFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.SORTED_SET_INCR_SCORE_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, IncrFunction object) throws IOException {
-         output.writeDouble(object.score);
-         output.writeObject(object.member);
-         output.writeBoolean(object.addOnly);
-         output.writeBoolean(object.updateOnly);
-         output.writeBoolean(object.updateLessScoresOnly);
-         output.writeBoolean(object.updateGreaterScoresOnly);
-      }
-
-      @Override
-      public IncrFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new IncrFunction(input.readDouble(), input.readObject(), input.readBoolean(), input.readBoolean(),
-               input.readBoolean(), input.readBoolean());
-      }
    }
 }

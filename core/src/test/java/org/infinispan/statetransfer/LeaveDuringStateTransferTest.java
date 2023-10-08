@@ -28,7 +28,7 @@ public class LeaveDuringStateTransferTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cb = configuration();
-      createClusteredCaches(3, cb, new TransportFlags().withFD(true));
+      createClusteredCaches(3, ControlledConsistentHashFactory.SCI.INSTANCE, cb, new TransportFlags().withFD(true));
    }
 
    private ConfigurationBuilder configuration() {
@@ -52,7 +52,7 @@ public class LeaveDuringStateTransferTest extends MultipleCacheManagersTest {
 
       try {
          factory.setOwnerIndexes(1, 2);
-         addClusterEnabledCacheManager(configuration(), new TransportFlags().withFD(true));
+         addClusterEnabledCacheManager(ControlledConsistentHashFactory.SCI.INSTANCE, configuration(), new TransportFlags().withFD(true));
          Future<Cache<Object, Object>> joiner = fork(() -> cacheManagers.get(3).getCache());
 
          // Install READ_OLD, READ_ALL and READ_NEW topologies, but do not confirm READ_NEW (+3)

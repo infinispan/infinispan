@@ -6,6 +6,7 @@ import org.infinispan.server.core.backup.resources.CacheResource;
 import org.infinispan.server.core.backup.resources.CounterResource;
 
 @ProtoSchema(
+      allowNullFields = true,
       dependsOn = {
             org.infinispan.commons.marshall.PersistenceContextInitializer.class,
             org.infinispan.counter.api._private.PersistenceContextInitializer.class,
