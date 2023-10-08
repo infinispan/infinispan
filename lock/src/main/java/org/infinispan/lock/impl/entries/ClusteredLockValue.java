@@ -1,15 +1,13 @@
 package org.infinispan.lock.impl.entries;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.Objects;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.lock.impl.externalizers.ExternalizerIds;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.marshall.protostream.impl.WrappedMessages;
+import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Lock object inside the cache. Holds the lock owner, the lock request id and the status of the lock.
@@ -17,10 +15,10 @@ import org.infinispan.lock.impl.externalizers.ExternalizerIds;
  * @author Katia Aresti, karesti@redhat.com
  * @since 9.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.CLUSTERED_LOCK_VALUE)
 public class ClusteredLockValue {
 
-   public static final ClusteredLockValue INITIAL_STATE = new ClusteredLockValue();
-   public static final AdvancedExternalizer<ClusteredLockValue> EXTERNALIZER = new Externalizer();
+   public static final ClusteredLockValue INITIAL_STATE = new ClusteredLockValue(null, null, ClusteredLockState.RELEASED);
    private final String requestId;
    private final Object owner;
    private final ClusteredLockState state;
@@ -31,12 +29,22 @@ public class ClusteredLockValue {
       this.state = state;
    }
 
-   private ClusteredLockValue() {
-      this.requestId = null;
-      this.owner = null;
-      this.state = ClusteredLockState.RELEASED;
+   @ProtoFactory
+   static ClusteredLockValue protoFactory(String requestId, WrappedMessage wrappedOwner, ClusteredLockState state) {
+      return new ClusteredLockValue(requestId, WrappedMessages.unwrap(wrappedOwner), state);
    }
 
+   @ProtoField(1)
+   public String getRequestId() {
+      return requestId;
+   }
+
+   @ProtoField(2)
+   WrappedMessage getWrappedOwner() {
+      return WrappedMessages.orElseNull(owner);
+   }
+
+   @ProtoField(3)
    public ClusteredLockState getState() {
       return state;
    }
@@ -67,39 +75,7 @@ public class ClusteredLockValue {
             '}';
    }
 
-   public String getRequestId() {
-      return requestId;
-   }
-
    public Object getOwner() {
       return owner;
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<ClusteredLockValue> {
-
-      @Override
-      public Set<Class<? extends ClusteredLockValue>> getTypeClasses() {
-         return Collections.singleton(ClusteredLockValue.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.CLUSTERED_LOCK_VALUE;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, ClusteredLockValue object) throws IOException {
-         MarshallUtil.marshallString(object.requestId, output);
-         output.writeObject(object.owner);
-         MarshallUtil.marshallEnum(object.state, output);
-      }
-
-      @Override
-      public ClusteredLockValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         String requestId = MarshallUtil.unmarshallString(input);
-         Object owner = input.readObject();
-         ClusteredLockState state = MarshallUtil.unmarshallEnum(input, ClusteredLockState::valueOf);
-         return new ClusteredLockValue(requestId, owner, state);
-      }
    }
 }

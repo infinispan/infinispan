@@ -7,9 +7,9 @@ import java.util.List;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
+import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.Test;
 
 /**
@@ -28,7 +28,7 @@ public class OriginatorAndOwnerFailureTest extends AbstractRecoveryTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder configuration = defaultRecoveryConfig();
       assert configuration.build().transaction().transactionMode().isTransactional();
-      createCluster(TestDataSCI.INSTANCE, configuration, 3);
+      createCluster(ControlledConsistentHashFactory.SCI.INSTANCE, configuration, 3);
       waitForClusterToForm();
 
       key = getKey();

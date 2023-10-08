@@ -1,14 +1,12 @@
 package org.infinispan.xsite.commands.remote;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -29,6 +27,11 @@ public abstract class XSiteCacheRequest<T> implements XSiteRequest<T> {
 
    protected XSiteCacheRequest(ByteString cacheName) {
       this.cacheName = cacheName;
+   }
+
+   @ProtoField(1)
+   public ByteString getCacheName() {
+      return cacheName;
    }
 
    @Override
@@ -56,15 +59,4 @@ public abstract class XSiteCacheRequest<T> implements XSiteRequest<T> {
    }
 
    protected abstract CompletionStage<T> invokeInLocalCache(String origin, ComponentRegistry registry);
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      ByteString.writeObject(output, cacheName);
-   }
-
-   @Override
-   public XSiteRequest<T> readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      cacheName = ByteString.readObject(input);
-      return this;
-   }
 }

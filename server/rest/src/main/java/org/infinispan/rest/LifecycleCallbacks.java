@@ -1,13 +1,12 @@
 package org.infinispan.rest;
 
-import static org.infinispan.marshall.protostream.impl.SerializationContextRegistry.MarshallerType.PERSISTENCE;
+import static org.infinispan.marshall.protostream.impl.SerializationContextRegistry.MarshallerType.GLOBAL;
 
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
-import org.infinispan.rest.distribution.DataDistributionContextInitializerImpl;
 
 /**
  * Lifecycle callbacks for the REST module. Register the externalizers to serialize the objects in package
@@ -21,6 +20,6 @@ public class LifecycleCallbacks implements ModuleLifecycle {
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration) {
       SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
-      ctxRegistry.addContextInitializer(PERSISTENCE, new DataDistributionContextInitializerImpl());
+      ctxRegistry.addContextInitializer(GLOBAL, new GlobalContextInitializerImpl());
    }
 }

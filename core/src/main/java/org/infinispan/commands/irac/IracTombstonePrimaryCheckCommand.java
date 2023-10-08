@@ -1,19 +1,17 @@
 package org.infinispan.commands.irac;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.versioning.irac.IracTombstoneInfo;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.remoting.transport.Address;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.irac.IracManager;
 
 /**
@@ -24,23 +22,17 @@ import org.infinispan.xsite.irac.IracManager;
  *
  * @since 14.0
  */
-public class IracTombstonePrimaryCheckCommand implements CacheRpcCommand {
+@ProtoTypeId(ProtoStreamTypeIds.IRAC_TOMBSTONE_PRIMARY_CHECK_COMMAND)
+public class IracTombstonePrimaryCheckCommand extends BaseIracCommand {
 
    public static final byte COMMAND_ID = 47;
 
-   private ByteString cacheName;
-   private Collection<IracTombstoneInfo> tombstoneToCheck;
+   @ProtoField(2)
+   final Collection<IracTombstoneInfo> tombstoneToCheck;
 
-   @SuppressWarnings("unused")
-   public IracTombstonePrimaryCheckCommand() {
-   }
-
-   public IracTombstonePrimaryCheckCommand(ByteString cacheName) {
-      this.cacheName = cacheName;
-   }
-
+   @ProtoFactory
    public IracTombstonePrimaryCheckCommand(ByteString cacheName, Collection<IracTombstoneInfo> tombstoneToCheck) {
-      this.cacheName = cacheName;
+      super(cacheName);
       this.tombstoneToCheck = tombstoneToCheck;
    }
 
@@ -53,37 +45,6 @@ public class IracTombstonePrimaryCheckCommand implements CacheRpcCommand {
    @Override
    public byte getCommandId() {
       return COMMAND_ID;
-   }
-
-   @Override
-   public boolean isReturnValueExpected() {
-      return false;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      MarshallUtil.marshallCollection(tombstoneToCheck, output, IracTombstoneInfo::writeTo);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      tombstoneToCheck = MarshallUtil.unmarshallCollection(input, ArrayList::new, IracTombstoneInfo::readFrom);
-   }
-
-   @Override
-   public ByteString getCacheName() {
-      return cacheName;
-   }
-
-   @Override
-   public Address getOrigin() {
-      //no-op
-      return null;
-   }
-
-   @Override
-   public void setOrigin(Address origin) {
-      //no-op
    }
 
    @Override

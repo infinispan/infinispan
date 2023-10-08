@@ -4,10 +4,9 @@ import java.io.IOException;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 
 /**
- * Encoder that uses a {@link StreamingMarshaller} to convert objects to byte[] and back.
+ * Encoder that uses a {@link Marshaller} to convert objects to byte[] and back.
  *
  * @since 9.1
  * @deprecated Since 12.1, to be removed in a future version.

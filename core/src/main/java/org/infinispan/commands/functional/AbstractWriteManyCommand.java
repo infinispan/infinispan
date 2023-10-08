@@ -10,45 +10,74 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.impl.Params;
+import org.infinispan.marshall.protostream.impl.MarshallableMap;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
 public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, FunctionalCommand<K, V>, RemoteLockCommand {
 
-   CommandInvocationId commandInvocationId;
-   boolean isForwarded = false;
+   @ProtoField(1)
+   final CommandInvocationId commandInvocationId;
+
+   @ProtoField(2)
+   boolean forwarded = false;
+
+   @ProtoField(3)
    int topologyId = -1;
+
+   @ProtoField(4)
    Params params;
    // TODO: this is used for the non-modifying read-write commands. Move required flags to Params
    // and make sure that ClusteringDependentLogic checks them.
+   @ProtoField(5)
    long flags;
+
+   @ProtoField(6)
    DataConversion keyDataConversion;
+
+   @ProtoField(7)
    DataConversion valueDataConversion;
+
+   @ProtoField(8)
+   MarshallableMap<Object, PrivateMetadata> getInternalMetadata() {
+      return MarshallableMap.create(internalMetadataMap);
+   }
+
    Map<Object, PrivateMetadata> internalMetadataMap;
+
+   private AbstractWriteManyCommand(CommandInvocationId commandInvocationId, boolean forwarded, int topologyId,
+                                      Params params, long flags, DataConversion keyDataConversion,
+                                      DataConversion valueDataConversion, Map<Object, PrivateMetadata> internalMetadataMap) {
+      this.commandInvocationId = commandInvocationId;
+      this.forwarded = forwarded;
+      this.topologyId = topologyId;
+      this.params = params;
+      this.flags = flags;
+      this.keyDataConversion = keyDataConversion;
+      this.valueDataConversion = valueDataConversion;
+      this.internalMetadataMap = internalMetadataMap;
+   }
+
+   // ProtoFactory constructor
+   protected AbstractWriteManyCommand(CommandInvocationId commandInvocationId, boolean forwarded, int topologyId,
+                                      Params params, long flags, DataConversion keyDataConversion,
+                                      DataConversion valueDataConversion, MarshallableMap<Object, PrivateMetadata> internalMetadataMap) {
+      this(commandInvocationId, forwarded, topologyId, params, flags, keyDataConversion, valueDataConversion,
+            MarshallableMap.unwrap(internalMetadataMap));
+   }
 
    protected AbstractWriteManyCommand(CommandInvocationId commandInvocationId,
                                       Params params,
                                       DataConversion keyDataConversion,
                                       DataConversion valueDataConversion) {
-      this.commandInvocationId = commandInvocationId;
-      this.params = params;
-      this.flags = params.toFlagsBitSet();
-      this.keyDataConversion = keyDataConversion;
-      this.valueDataConversion = valueDataConversion;
-      this.internalMetadataMap = new ConcurrentHashMap<>();
+      this(commandInvocationId, false, -1, params, params.toFlagsBitSet(), keyDataConversion ,
+            valueDataConversion, new ConcurrentHashMap<>());
    }
 
-   protected AbstractWriteManyCommand(AbstractWriteManyCommand<K, V> command) {
-      this.commandInvocationId = command.commandInvocationId;
-      this.topologyId = command.topologyId;
-      this.params = command.params;
-      this.flags = command.flags;
-      this.internalMetadataMap = new ConcurrentHashMap<>(command.internalMetadataMap);
-      this.keyDataConversion = command.keyDataConversion;
-      this.valueDataConversion = command.valueDataConversion;
-   }
-
-   protected AbstractWriteManyCommand() {
+   protected AbstractWriteManyCommand(AbstractWriteManyCommand<K, V> c) {
+      this(c.commandInvocationId, false, c.topologyId, c.params, c.flags, c.keyDataConversion, c.valueDataConversion,
+            new ConcurrentHashMap<>(c.internalMetadataMap));
    }
 
    @Override
@@ -68,11 +97,11 @@ public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, Fu
    }
 
    public boolean isForwarded() {
-      return isForwarded;
+      return forwarded;
    }
 
    public void setForwarded(boolean forwarded) {
-      isForwarded = forwarded;
+      this.forwarded = forwarded;
    }
 
    @Override
@@ -83,6 +112,11 @@ public abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, Fu
    @Override
    public void setValueMatcher(ValueMatcher valueMatcher) {
       // No-op
+   }
+
+   @Override
+   public boolean isReturnValueExpected() {
+      return true;
    }
 
    @Override

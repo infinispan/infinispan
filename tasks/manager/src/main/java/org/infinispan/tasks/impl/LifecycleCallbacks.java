@@ -4,6 +4,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.lifecycle.ModuleLifecycle;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.tasks.TaskManager;
 
 /**
@@ -19,5 +20,8 @@ public class LifecycleCallbacks implements ModuleLifecycle {
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration gc) {
       if (gcr.getComponent(TaskManager.class) == null)
          gcr.registerComponent(new TaskManagerImpl(), TaskManager.class);
+
+      SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
+      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.GLOBAL, new GlobalContextInitializerImpl());
    }
 }

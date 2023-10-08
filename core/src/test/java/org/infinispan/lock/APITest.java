@@ -44,7 +44,7 @@ public class APITest extends MultipleCacheManagersTest {
       cfg.transaction().lockingMode(LockingMode.PESSIMISTIC)
             .cacheStopTimeout(0)
             .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
-      createCluster(cfg, 2);
+      createCluster(ReplicatedControlledConsistentHashFactory.SCI.INSTANCE, cfg, 2);
    }
 
    public void testProperties() {

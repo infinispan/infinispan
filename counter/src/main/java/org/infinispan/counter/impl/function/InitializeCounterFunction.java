@@ -2,21 +2,18 @@ package org.infinispan.counter.impl.function;
 
 import static org.infinispan.counter.impl.entries.CounterValue.newCounterValue;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
 
-import org.infinispan.functional.EntryView;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
-import org.infinispan.counter.impl.externalizers.ExternalizerIds;
+import org.infinispan.functional.EntryView;
 import org.infinispan.functional.impl.CounterConfigurationMetaParam;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Function that initializes the {@link CounterValue} and {@link CounterConfigurationMetaParam} if they don't exists.
@@ -24,12 +21,14 @@ import org.infinispan.functional.impl.CounterConfigurationMetaParam;
  * @author Pedro Ruivo
  * @since 9.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.COUNTER_FUNCTION_INITIALIZE_COUNTER)
 public class InitializeCounterFunction<K extends CounterKey> implements
       Function<EntryView.ReadWriteEntryView<K, CounterValue>, CounterValue> {
 
-   public static final AdvancedExternalizer<InitializeCounterFunction> EXTERNALIZER = new Externalizer();
-   private final CounterConfiguration counterConfiguration;
+   @ProtoField(1)
+   final CounterConfiguration counterConfiguration;
 
+   @ProtoFactory
    public InitializeCounterFunction(CounterConfiguration counterConfiguration) {
       this.counterConfiguration = counterConfiguration;
    }
@@ -50,28 +49,5 @@ public class InitializeCounterFunction<K extends CounterKey> implements
       return "InitializeCounterFunction{" +
             "counterConfiguration=" + counterConfiguration +
             '}';
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<InitializeCounterFunction> {
-
-      @Override
-      public void writeObject(ObjectOutput output, InitializeCounterFunction object) throws IOException {
-         output.writeObject(object.counterConfiguration);
-      }
-
-      @Override
-      public InitializeCounterFunction<?> readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new InitializeCounterFunction<>((CounterConfiguration) input.readObject());
-      }
-
-      @Override
-      public Set<Class<? extends InitializeCounterFunction>> getTypeClasses() {
-         return Collections.singleton(InitializeCounterFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.INITIALIZE_FUNCTION;
-      }
    }
 }

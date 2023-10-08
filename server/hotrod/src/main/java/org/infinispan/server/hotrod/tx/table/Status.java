@@ -1,12 +1,11 @@
 package org.infinispan.server.hotrod.tx.table;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.Proto;
+import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.server.hotrod.tx.table.functions.TxFunction;
 
 import jakarta.transaction.TransactionManager;
-
-import org.infinispan.server.hotrod.tx.table.functions.TxFunction;
 
 /**
  * Internal server status for the client's transactions.
@@ -16,6 +15,8 @@ import org.infinispan.server.hotrod.tx.table.functions.TxFunction;
  * @author Pedro Ruivo
  * @since 9.4
  */
+@Proto
+@ProtoTypeId(ProtoStreamTypeIds.SERVER_HR_TX_STATUS)
 public enum Status {
    //used as return values
    OK(0),
@@ -68,14 +69,6 @@ public enum Status {
 
    Status(int value) {
       this.value = (byte) value;
-   }
-
-   public static void writeTo(ObjectOutput output, Status status) throws IOException {
-      output.writeByte(status.value);
-   }
-
-   public static Status readFrom(ObjectInput input) throws IOException {
-      return valueOf(input.readByte());
    }
 
    public static Status valueOf(byte b) {

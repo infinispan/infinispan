@@ -2,7 +2,6 @@ package org.infinispan.factories;
 
 import static org.infinispan.util.logging.Log.CONTAINER;
 
-import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.container.versioning.RankCalculator;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
@@ -51,7 +50,7 @@ import org.infinispan.xsite.events.XSiteEventsManagerImpl;
       ClusterContainerStats.class,
       EventLogManager.class,
       InboundInvocationHandler.class, PersistentUUIDManager.class,
-      RemoteCommandsFactory.class, TimeService.class, DataOperationOrderer.class,
+      TimeService.class, DataOperationOrderer.class,
       GlobalStateManager.class, GlobalConfigurationManager.class,
       SerializationContextRegistry.class, BlockingManager.class, NonBlockingManager.class,
       RankCalculator.class, EventLoggerNotifier.class, PrincipalRoleMapper.class, RolePermissionMapper.class,
@@ -64,8 +63,6 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
    public Object construct(String componentName) {
       if (componentName.equals(InboundInvocationHandler.class.getName()))
          return new GlobalInboundInvocationHandler();
-      else if (componentName.equals(RemoteCommandsFactory.class.getName()))
-         return new RemoteCommandsFactory();
       else if (componentName.equals(TimeService.class.getName()))
          return new EmbeddedTimeService();
       else if (componentName.equals(EventLogManager.class.getName()))

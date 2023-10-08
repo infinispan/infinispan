@@ -17,6 +17,11 @@ import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 import java.util.stream.IntStream;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
+
 /**
  * Represent a set of integers (e.g. segments) as a {@code BitSet}.
  * Memory usage depends on the highest element, as in {@link BitSet} and unlike in other collections such as
@@ -25,8 +30,11 @@ import java.util.stream.IntStream;
  * @author Dan Berindei
  * @since 9.0
  */
-class SmallIntSet implements IntSet {
-   private final BitSet bitSet;
+@ProtoTypeId(ProtoStreamTypeIds.INTSET_SMALL)
+public class SmallIntSet implements IntSet {
+
+   @ProtoField(1)
+   final BitSet bitSet;
 
    static SmallIntSet of(int i1) {
       SmallIntSet set = new SmallIntSet(i1 + 1);
@@ -106,7 +114,8 @@ class SmallIntSet implements IntSet {
       }
    }
 
-   private SmallIntSet(BitSet bitSet) {
+   @ProtoFactory
+   SmallIntSet(BitSet bitSet) {
       this.bitSet = bitSet;
    }
 

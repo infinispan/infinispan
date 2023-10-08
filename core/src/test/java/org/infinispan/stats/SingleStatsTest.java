@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "stats.SingleStatsTest")
 public class SingleStatsTest extends MultipleCacheManagersTest {
 
-   private static final int OFF_HEAP_KEY_SIZE = 6;
+   private static final int OFF_HEAP_KEY_SIZE = 8 ;
    private static final int OFF_HEAP_VALUE_SIZE = 8;
    private long OFF_HEAP_SIZE = -1;
 

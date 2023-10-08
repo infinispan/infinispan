@@ -2,17 +2,16 @@ package org.infinispan.commands.irac;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.TopologyAffectedCommand;
-import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.container.versioning.irac.IracEntryVersion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.metadata.impl.IracMetadata;
-import org.infinispan.remoting.transport.Address;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
 
 /**
@@ -21,31 +20,28 @@ import org.infinispan.util.ByteString;
  * @author Pedro Ruivo
  * @since 11.0
  */
-public class IracMetadataRequestCommand implements CacheRpcCommand, TopologyAffectedCommand {
+@ProtoTypeId(ProtoStreamTypeIds.IRAC_METADATA_REQUEST_COMMAND)
+public class IracMetadataRequestCommand extends BaseIracCommand implements TopologyAffectedCommand {
 
    public static final byte COMMAND_ID = 124;
 
-   private ByteString cacheName;
-   private int segment;
-   private int topologyId = -1;
-   private IracEntryVersion versionSeen;
-
-   public IracMetadataRequestCommand() {
-   }
-
-   public IracMetadataRequestCommand(ByteString cacheName) {
-      this.cacheName = cacheName;
-   }
+   @ProtoField(2)
+   int segment;
+   @ProtoField(3)
+   int topologyId;
+   @ProtoField(4)
+   final IracEntryVersion versionSeen;
 
    public IracMetadataRequestCommand(ByteString cacheName, int segment, IracEntryVersion versionSeen) {
-      this.cacheName = cacheName;
-      this.segment = segment;
-      this.versionSeen = versionSeen;
+      this(cacheName, segment, -1, versionSeen);
    }
 
-   @Override
-   public ByteString getCacheName() {
-      return cacheName;
+   @ProtoFactory
+   IracMetadataRequestCommand(ByteString cacheName, int segment, int topologyId, IracEntryVersion versionSeen) {
+      super(cacheName);
+      this.segment = segment;
+      this.topologyId = topologyId;
+      this.versionSeen = versionSeen;
    }
 
    @Override
@@ -61,29 +57,6 @@ public class IracMetadataRequestCommand implements CacheRpcCommand, TopologyAffe
    @Override
    public boolean isReturnValueExpected() {
       return true;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeInt(segment);
-      output.writeObject(versionSeen);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      this.segment = input.readInt();
-      this.versionSeen = (IracEntryVersion) input.readObject();
-   }
-
-   @Override
-   public Address getOrigin() {
-      //not needed
-      return null;
-   }
-
-   @Override
-   public void setOrigin(Address origin) {
-      //no-op
    }
 
    @Override

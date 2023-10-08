@@ -38,6 +38,10 @@
          <artifactId>infinispan-tasks-api</artifactId>
       </dependency>
       <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream-processor</artifactId>
+      </dependency>
+      <dependency>
          <groupId>org.kohsuke.metainf-services</groupId>
          <artifactId>metainf-services</artifactId>
       </dependency>

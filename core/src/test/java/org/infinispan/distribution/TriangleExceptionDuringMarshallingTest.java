@@ -50,7 +50,7 @@ public class TriangleExceptionDuringMarshallingTest extends MultipleCacheManager
       GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       globalBuilder.serialization().marshaller(new JavaSerializationMarshaller());
       globalBuilder.serialization().allowList()
-                   .addClasses(MagicKey.class, MarshallingExceptionGenerator.class);
+                   .addClasses(ControlledConsistentHashFactory.Default.class, MagicKey.class, MarshallingExceptionGenerator.class);
 
       ConfigurationBuilder cacheBuilder = new ConfigurationBuilder();
       ControlledConsistentHashFactory<?> chf =

@@ -1,17 +1,20 @@
 package org.infinispan.commands.triangle;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.marshall.protostream.impl.MarshallableMap;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.TriangleFunctionsUtil;
 
@@ -21,6 +24,7 @@ import org.infinispan.util.TriangleFunctionsUtil;
  * @author Pedro Ruivo
  * @since 9.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.PUT_MAP_BACKUP_WRITE_COMMAND)
 public class PutMapBackupWriteCommand extends BackupWriteCommand {
 
    public static final byte COMMAND_ID = 78;
@@ -29,45 +33,45 @@ public class PutMapBackupWriteCommand extends BackupWriteCommand {
    private Metadata metadata;
    private Map<Object, PrivateMetadata> internalMetadataMap;
 
-   //for testing
-   @SuppressWarnings("unused")
-   public PutMapBackupWriteCommand() {
-      super(null);
-   }
-
-   public PutMapBackupWriteCommand(ByteString cacheName) {
-      super(cacheName);
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      writeBase(output);
-      MarshallUtil.marshallMap(map, output);
-      output.writeObject(metadata);
-      MarshallUtil.marshallMap(internalMetadataMap, output);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      readBase(input);
-      map = MarshallUtil.unmarshallMap(input, HashMap::new);
-      metadata = (Metadata) input.readObject();
-      internalMetadataMap = MarshallUtil.unmarshallMap(input, HashMap::new);
-   }
-
-   public void setPutMapCommand(PutMapCommand command, Collection<Object> keys) {
-      setCommonAttributesFromCommand(command);
+   public PutMapBackupWriteCommand(ByteString cacheName, PutMapCommand command, long sequence, int segmentId,
+                                   Collection<Object> keys) {
+      super(cacheName, command, sequence, segmentId);
       this.map = TriangleFunctionsUtil.filterEntries(command.getMap(), keys);
       this.metadata = command.getMetadata();
       this.internalMetadataMap = new HashMap<>();
       for (Object key : map.keySet()) {
          internalMetadataMap.put(key, command.getInternalMetadata(key));
       }
+   }
+
+   @ProtoFactory
+   PutMapBackupWriteCommand(ByteString cacheName, CommandInvocationId commandInvocationId, int topologyId,
+                            long flags, long sequence, int segmentId, MarshallableMap<Object, Object> map,
+                            MarshallableObject<Metadata> metadata, MarshallableMap<Object, PrivateMetadata> internalMetadata) {
+      super(cacheName, commandInvocationId, topologyId, flags, sequence, segmentId);
+      this.map = MarshallableMap.unwrap(map);
+      this.metadata = MarshallableObject.unwrap(metadata);
+      this.internalMetadataMap = MarshallableMap.unwrap(internalMetadata);
+   }
+
+   @ProtoField(7)
+   MarshallableMap<Object, Object> getMap() {
+      return MarshallableMap.create(map);
+   }
+
+   @ProtoField(8)
+   MarshallableObject<Metadata> getMetadata() {
+      return MarshallableObject.create(metadata);
+   }
+
+   @ProtoField(9)
+   MarshallableMap<Object, PrivateMetadata> getInternalMetadata() {
+      return MarshallableMap.create(internalMetadataMap);
+   }
+
+   @Override
+   public byte getCommandId() {
+      return COMMAND_ID;
    }
 
    @Override

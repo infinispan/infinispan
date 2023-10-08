@@ -12,6 +12,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -39,6 +40,7 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.remote.client.FilterResult;
+import org.infinispan.query.remote.impl.GlobalContextInitializer;
 import org.infinispan.query.remote.impl.filter.IckleCacheEventFilterConverterFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -73,8 +75,8 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
    }
 
    @Override
-   protected SerializationContextInitializer contextInitializer() {
-      return TestDomainSCI.INSTANCE;
+   protected List<SerializationContextInitializer> contextInitializers() {
+      return List.of(GlobalContextInitializer.INSTANCE, TestDomainSCI.INSTANCE);
    }
 
    protected ConfigurationBuilder getConfigurationBuilder() {

@@ -1,11 +1,6 @@
 package org.infinispan.xsite.status;
 
 import static org.infinispan.util.logging.events.Messages.MESSAGES;
-import static org.infinispan.xsite.status.BringSiteOnlineResponse.ALREADY_ONLINE;
-import static org.infinispan.xsite.status.BringSiteOnlineResponse.BROUGHT_ONLINE;
-import static org.infinispan.xsite.status.BringSiteOnlineResponse.NO_SUCH_SITE;
-import static org.infinispan.xsite.status.TakeSiteOfflineResponse.ALREADY_OFFLINE;
-import static org.infinispan.xsite.status.TakeSiteOfflineResponse.TAKEN_OFFLINE;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -178,9 +173,9 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
       var status = offlineStatus.get(siteName);
       if (status == null) {
          log.tryingToBringOnlineNonexistentSite(siteName);
-         return NO_SUCH_SITE;
+         return BringSiteOnlineResponse.BSOR_NO_SUCH_SITE;
       } else {
-         return CompletionStages.join(status.bringOnline()) ? BROUGHT_ONLINE : ALREADY_ONLINE;
+         return CompletionStages.join(status.bringOnline()) ? BringSiteOnlineResponse.BSOR_BROUGHT_ONLINE : BringSiteOnlineResponse.BSOR_ALREADY_ONLINE;
       }
    }
 
@@ -188,9 +183,10 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
    public TakeSiteOfflineResponse takeSiteOffline(String siteName) {
       var status = offlineStatus.get(siteName);
       if (status == null) {
-         return TakeSiteOfflineResponse.NO_SUCH_SITE;
+         return TakeSiteOfflineResponse.TSOR_NO_SUCH_SITE;
       } else {
-         return CompletionStages.join(status.forceOffline()) ? TAKEN_OFFLINE : ALREADY_OFFLINE;
+         return CompletionStages.join(status.forceOffline()) ? TakeSiteOfflineResponse.TSOR_TAKEN_OFFLINE
+               : TakeSiteOfflineResponse.TSOR_ALREADY_OFFLINE;
       }
    }
 

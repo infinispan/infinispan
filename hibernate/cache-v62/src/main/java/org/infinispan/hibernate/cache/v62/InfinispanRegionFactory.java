@@ -38,17 +38,15 @@ import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.internal.util.config.ConfigurationHelper;
 import org.hibernate.service.ServiceRegistry;
 import org.infinispan.AdvancedCache;
-import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.hibernate.cache.commons.DataType;
 import org.infinispan.hibernate.cache.commons.DefaultCacheManagerProvider;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.hibernate.cache.commons.TimeSource;
-import org.infinispan.hibernate.cache.commons.util.CacheCommandFactory;
 import org.infinispan.hibernate.cache.commons.util.Caches;
+import org.infinispan.hibernate.cache.commons.util.EvictAllCommand;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.hibernate.cache.spi.EmbeddedCacheManagerProvider;
 import org.infinispan.hibernate.cache.spi.InfinispanProperties;
@@ -283,7 +281,7 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
 
    protected void stopCacheRegions() {
       log.debug("Clear region references");
-      getCacheCommandFactory().clearRegions(regions);
+      EvictAllCommand.clearRegions(regions);
       // Ensure we cleanup any caches we created
       regions.forEach(region -> {
          region.destroy();
@@ -299,7 +297,7 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
 
    private void startRegion(InfinispanBaseRegion region) {
       regions.add(region);
-      getCacheCommandFactory().addRegion(region);
+      EvictAllCommand.addRegion(region);
    }
 
    private void parseProperty(int prefixLoc, String key, String value) {
@@ -457,21 +455,5 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
          log.transactionalConfigurationIgnored();
          builder.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL).transactionManagerLookup(null);
       }
-   }
-
-
-   private CacheCommandFactory getCacheCommandFactory() {
-      final GlobalComponentRegistry globalCr = GlobalComponentRegistry.of(manager);
-
-      final Map<Byte, ModuleCommandFactory> factories =
-            globalCr.getComponent("org.infinispan.modules.command.factories");
-
-      for (ModuleCommandFactory factory : factories.values()) {
-         if (factory instanceof CacheCommandFactory) {
-            return (CacheCommandFactory) factory;
-         }
-      }
-
-      throw log.cannotInstallCommandFactory();
    }
 }

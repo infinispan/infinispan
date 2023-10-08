@@ -18,7 +18,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  * @author anistor@redhat.com
  * @since 7.2
  */
-@ProtoTypeId(ProtoStreamTypeIds.ICKLE_FILTER_RESULT)
+@ProtoTypeId(ProtoStreamTypeIds.REMOTE_QUERY_ICKLE_FILTER_RESULT)
 public final class FilterResult {
 
    private final Object instance;

@@ -32,6 +32,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
+import org.infinispan.query.remote.impl.GlobalContextInitializer;
 import org.infinispan.query.remote.impl.filter.IckleContinuousQueryProtobufCacheEventFilterConverterFactory;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.commons.time.ControlledTimeService;
@@ -72,7 +73,7 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
 
    @Override
    protected List<SerializationContextInitializer> contextInitializers() {
-      return Arrays.asList(TestDomainSCI.INSTANCE, ClientEventSCI.INSTANCE);
+      return Arrays.asList(GlobalContextInitializer.INSTANCE, TestDomainSCI.INSTANCE, ClientEventSCI.INSTANCE);
    }
 
    protected ConfigurationBuilder getConfigurationBuilder() {

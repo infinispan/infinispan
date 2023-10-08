@@ -1,14 +1,10 @@
 package org.infinispan.server.hotrod.tx.table.functions;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
-import org.infinispan.server.core.ExternalizerIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.server.hotrod.tx.table.CacheXid;
 import org.infinispan.server.hotrod.tx.table.Status;
 import org.infinispan.server.hotrod.tx.table.TxState;
@@ -22,14 +18,19 @@ import org.infinispan.transaction.xa.GlobalTransaction;
  * @author Pedro Ruivo
  * @since 9.4
  */
+@ProtoTypeId(ProtoStreamTypeIds.SERVER_HR_FUNCTION_CREATE_STATE)
 public class CreateStateFunction extends TxFunction {
 
-   public static final AdvancedExternalizer<CreateStateFunction> EXTERNALIZER = new Externalizer();
+   @ProtoField((1))
+   final GlobalTransaction globalTransaction;
 
-   private final GlobalTransaction globalTransaction;
-   private final long timeout;
-   private final boolean recoverable;
+   @ProtoField(2)
+   final long timeout;
 
+   @ProtoField(3)
+   final boolean recoverable;
+
+   @ProtoFactory
    public CreateStateFunction(GlobalTransaction globalTransaction, boolean recoverable, long timeout) {
       this.globalTransaction = globalTransaction;
       this.recoverable = recoverable;
@@ -60,30 +61,5 @@ public class CreateStateFunction extends TxFunction {
             ", timeout=" + timeout +
             ", recoverable=" + recoverable +
             '}';
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<CreateStateFunction> {
-
-      @Override
-      public Set<Class<? extends CreateStateFunction>> getTypeClasses() {
-         return Collections.singleton(CreateStateFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.CREATE_STATE_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, CreateStateFunction object) throws IOException {
-         output.writeObject(object.globalTransaction);
-         output.writeBoolean(object.recoverable);
-         output.writeLong(object.timeout);
-      }
-
-      @Override
-      public CreateStateFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new CreateStateFunction((GlobalTransaction) input.readObject(), input.readBoolean(), input.readLong());
-      }
    }
 }

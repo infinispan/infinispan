@@ -408,9 +408,7 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
     * {@link java.util.stream.Collectors} static factory methods.
     *
     * In this particular case, the function that instantiates the
-    * {@link Collector} will be marshalled using Infinispan
-    * {@link org.infinispan.commons.marshall.Externalizer} class or one of its
-    * subtypes.
+    * {@link Collector} will be marshalled using the Infinispan marshaller.
     *
     * <p>Note: The collector is applied on each node until all the local stream's values
     * are reduced into a single object.

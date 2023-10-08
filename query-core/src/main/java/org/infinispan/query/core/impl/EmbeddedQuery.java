@@ -1,22 +1,19 @@
 package org.infinispan.query.core.impl;
 
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import static org.infinispan.query.core.impl.Log.CONTAINER;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-
-import static org.infinispan.query.core.impl.Log.CONTAINER;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.api.query.ClosableIteratorWithCount;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -26,6 +23,8 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.CacheFilters;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.QueryFactory;
@@ -145,39 +144,21 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
       return count.orElse(0);
    }
 
+   @ProtoTypeId(ProtoStreamTypeIds.ICKLE_DELETE_FUNCTION)
    @Scope(Scopes.NONE)
    static final class DeleteFunction implements Function<Object, Integer> {
 
       @Inject
       AdvancedCache<?,?> cache;
 
+      @ProtoFactory
+      DeleteFunction() {}
+
       @Override
       public Integer apply(Object key) {
          return cache.withStorageMediaType().remove(key) == null ? 0 : 1;
       }
    }
-
-   public static final class DeleteFunctionExternalizer implements  AdvancedExternalizer<DeleteFunction> {
-
-      @Override
-      public void writeObject(ObjectOutput output, DeleteFunction object) {
-      }
-
-      @Override
-      public DeleteFunction readObject(ObjectInput input) {
-         return new DeleteFunction();
-      }
-
-      @Override
-      public Set<Class<? extends DeleteFunction>> getTypeClasses() {
-         return Collections.singleton(DeleteFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.ICKLE_DELETE_FUNCTION;
-      }
-   };
 
    @Override
    public String toString() {

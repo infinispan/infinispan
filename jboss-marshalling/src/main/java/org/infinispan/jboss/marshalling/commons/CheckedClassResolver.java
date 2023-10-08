@@ -15,7 +15,6 @@ public final class CheckedClassResolver extends DefaultContextClassResolver {
    public CheckedClassResolver(ClassAllowList classAllowList, ClassLoader defaultClassLoader) {
       super(defaultClassLoader);
       this.classAllowList = classAllowList;
-      classAllowList.addClasses(JBossExternalizerAdapter.class);
    }
 
    @Override

@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.factories.KnownComponentNames;
@@ -25,6 +26,9 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.reactive.publisher.impl.commands.batch.InitialPublisherCommand;
 import org.infinispan.reactive.publisher.impl.commands.batch.KeyPublisherResponse;
@@ -174,10 +178,15 @@ public class PublisherHandler {
       }
    }
 
+   @ProtoTypeId(ProtoStreamTypeIds.PUBLISHER_HANDLER_SEGMENT_RESPONSE)
    public static class SegmentResult {
-      private final int segment;
-      private final int entryCount;
+      @ProtoField(1)
+      final int segment;
 
+      @ProtoField(2)
+      final int entryCount;
+
+      @ProtoFactory
       public SegmentResult(int segment, int entryCount) {
          this.segment = segment;
          this.entryCount = entryCount;

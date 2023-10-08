@@ -6,7 +6,7 @@ import java.io.InputStream;
 import java.io.ObjectInput;
 import java.util.Map;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.tools.store.migrator.marshaller.common.AdvancedExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.LegacyJBossMarshaller;
 import org.infinispan.tools.store.migrator.marshaller.common.AbstractUnsupportedStreamingMarshaller;
 

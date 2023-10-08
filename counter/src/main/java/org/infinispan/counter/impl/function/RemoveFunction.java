@@ -1,17 +1,13 @@
 package org.infinispan.counter.impl.function;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.util.Collections;
-import java.util.Set;
 import java.util.function.Function;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.exts.NoStateExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
-import org.infinispan.counter.impl.externalizers.ExternalizerIds;
 import org.infinispan.functional.EntryView;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * It removes the {@link CounterValue} from the cache.
@@ -19,21 +15,20 @@ import org.infinispan.functional.EntryView;
  * @author Pedro Ruivo
  * @since 9.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.COUNTER_FUNCTION_REMOVE)
 public class RemoveFunction<K extends CounterKey> implements
       Function<EntryView.ReadWriteEntryView<K, CounterValue>, Void> {
-
-   public static final AdvancedExternalizer<RemoveFunction> EXTERNALIZER = new Externalizer();
 
    private static final RemoveFunction INSTANCE = new RemoveFunction();
 
    private RemoveFunction() {
    }
 
+   @ProtoFactory
    public static <K extends CounterKey> RemoveFunction<K> getInstance() {
       //noinspection unchecked
       return INSTANCE;
    }
-
 
    @Override
    public String toString() {
@@ -46,23 +41,5 @@ public class RemoveFunction<K extends CounterKey> implements
          entry.remove();
       }
       return null;
-   }
-
-   private static class Externalizer extends NoStateExternalizer<RemoveFunction> {
-
-      @Override
-      public RemoveFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return RemoveFunction.getInstance();
-      }
-
-      @Override
-      public Set<Class<? extends RemoveFunction>> getTypeClasses() {
-         return Collections.singleton(RemoveFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.REMOVE_FUNCTION;
-      }
    }
 }

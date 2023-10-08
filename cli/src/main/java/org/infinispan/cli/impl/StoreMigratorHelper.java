@@ -9,6 +9,6 @@ import org.infinispan.tools.store.migrator.StoreMigrator;
  **/
 public class StoreMigratorHelper {
    public static void run(Properties props, boolean verbose) throws Exception {
-      new StoreMigrator(props).run(verbose);
+      new StoreMigrator(props).run();
    }
 }

@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.commons.spi.OffHeapMemory;
@@ -39,7 +39,7 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
    private static final OffHeapMemory MEMORY = org.infinispan.commons.jdkspecific.OffHeapMemory.getInstance();
 
    @Inject @ComponentName(KnownComponentNames.INTERNAL_MARSHALLER)
-   StreamingMarshaller marshaller;
+   Marshaller marshaller;
    @Inject OffHeapMemoryAllocator allocator;
    @Inject TimeService timeService;
    @Inject InternalEntryFactory internalEntryFactory;
@@ -587,6 +587,8 @@ public class OffHeapEntryFactoryImpl implements OffHeapEntryFactory {
          metadataSize += 4;
          metadataSize += marshall(metadata).length;
       }
+
+      // Can we benefit from the smaller payload by adjusting other things and using the old estimate?
       long internalMetadataSize = shouldWriteInternalMetadata(internalMetadata) ?
                                   marshall(internalMetadata).length + 4:
                                   0;
