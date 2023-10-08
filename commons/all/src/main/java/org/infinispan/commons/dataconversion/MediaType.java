@@ -6,9 +6,6 @@ import static java.util.Collections.emptyMap;
 import static org.infinispan.commons.dataconversion.JavaStringCodec.BYTE_ARRAY;
 import static org.infinispan.commons.logging.Log.CONTAINER;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,9 +20,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
@@ -37,7 +32,6 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  * @since 9.2
  */
 @ProtoTypeId(ProtoStreamTypeIds.MEDIA_TYPE)
-@SerializeWith(value = MediaType.MediaTypeExternalizer.class)
 public final class MediaType {
    private static final Pattern TREE_PATTERN;
    private static final Pattern LIST_SEPARATOR_PATTERN;
@@ -470,36 +464,4 @@ public final class MediaType {
 
       return builder.append("; ").append(strParams).toString();
    }
-
-   public static final class MediaTypeExternalizer implements Externalizer<MediaType> {
-      @Override
-      public void writeObject(ObjectOutput output, MediaType mediaType) throws IOException {
-         Short id = MediaTypeIds.getId(mediaType);
-         if (id == null) {
-            output.writeBoolean(false);
-            output.writeUTF(mediaType.typeSubtype);
-            output.writeObject(mediaType.params);
-         } else {
-            output.writeBoolean(true);
-            output.writeShort(id);
-            output.writeObject(mediaType.params);
-         }
-      }
-
-      @Override
-      @SuppressWarnings("unchecked")
-      public MediaType readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         boolean isInternal = input.readBoolean();
-         if (isInternal) {
-            short id = input.readShort();
-            Map<String, String> params = (Map<String, String>) input.readObject();
-            return MediaTypeIds.getMediaType(id).withParameters(params);
-         } else {
-            String typeSubType = input.readUTF();
-            Map<String, String> params = (Map<String, String>) input.readObject();
-            return new MediaType(typeSubType, params);
-         }
-      }
-   }
-
 }

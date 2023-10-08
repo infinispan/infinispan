@@ -1,17 +1,15 @@
 package org.infinispan.multimap.impl.function.multimap;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
 import org.infinispan.multimap.impl.Bucket;
-import org.infinispan.multimap.impl.ExternalizerIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Serializable function used by {@link org.infinispan.multimap.impl.EmbeddedMultimapCache#get(Object)}
@@ -21,12 +19,14 @@ import org.infinispan.multimap.impl.ExternalizerIds;
  * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 9.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_GET_FUNCTION)
 public final class GetFunction<K, V> implements BaseFunction<K, V, Collection<V>> {
 
-   public static final AdvancedExternalizer<GetFunction> EXTERNALIZER = new Externalizer();
-   private final boolean supportsDuplicates;
+   @ProtoField(number = 1, defaultValue = "false")
+   final boolean supportsDuplicates;
 
-   public GetFunction(Boolean supportsDuplicates) {
+   @ProtoFactory
+   public GetFunction(boolean supportsDuplicates) {
       this.supportsDuplicates = supportsDuplicates;
    }
 
@@ -37,29 +37,6 @@ public final class GetFunction<K, V> implements BaseFunction<K, V, Collection<V>
          return supportsDuplicates ? entryView.find().get().toList() : entryView.find().get().toSet();
       } else {
          return Collections.emptySet();
-      }
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<GetFunction> {
-
-      @Override
-      public Set<Class<? extends GetFunction>> getTypeClasses() {
-         return Collections.singleton(GetFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.GET_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, GetFunction object) throws IOException {
-         output.writeBoolean(object.supportsDuplicates);
-      }
-
-      @Override
-      public GetFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new GetFunction(input.readBoolean());
       }
    }
 }

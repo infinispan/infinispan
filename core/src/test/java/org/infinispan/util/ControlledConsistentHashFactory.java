@@ -3,25 +3,25 @@ package org.infinispan.util;
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.marshall.SerializeWith;
-import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.ch.impl.AbstractConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.protostream.impl.GlobalContextInitializer;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.topology.ClusterTopologyManager;
 
 /**
@@ -31,9 +31,9 @@ import org.infinispan.topology.ClusterTopologyManager;
 * @since 7.0
 */
 public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash> extends BaseControlledConsistentHashFactory<CH> {
-   private volatile int[][] ownerIndexes;
+   protected volatile int[][] ownerIndexes;
 
-   private volatile List<Address> membersToUse;
+   protected volatile List<Address> membersToUse;
 
    /**
     * Create a consistent hash factory with a single segment.
@@ -51,6 +51,16 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
       if (segmentOwners.length == 0)
          throw new IllegalArgumentException("Need at least one set of owners");
       setOwnerIndexes(segmentOwners);
+   }
+
+   @ProtoField(number = 2)
+   AbstractConsistentHash.SegmentOwnership[] getSegmentOwners() {
+      return Arrays.stream(ownerIndexes).map(AbstractConsistentHash.SegmentOwnership::new).toArray(AbstractConsistentHash.SegmentOwnership[]::new);
+   }
+
+   @ProtoField(number = 3)
+   List<JGroupsAddress> getJGroupsMembers() {
+      return (List<JGroupsAddress>)(List<?>) membersToUse;
    }
 
    public void setOwnerIndexes(int primaryOwnerIndex, int... backupOwnerIndexes) {
@@ -121,8 +131,17 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
       this.membersToUse = membersToUse;
    }
 
-   @SerializeWith(Externalizer.class)
    public static class Default extends ControlledConsistentHashFactory<DefaultConsistentHash> {
+
+      @ProtoFactory
+      Default(int numSegments, AbstractConsistentHash.SegmentOwnership[] segmentOwners, List<JGroupsAddress> jGroupsMembers) {
+         super(new DefaultTrait(),
+               Arrays.stream(segmentOwners)
+                     .map(AbstractConsistentHash.SegmentOwnership::getIndexes)
+                     .toArray(int[][]::new));
+         this.membersToUse = (List<Address>) (List<?>) jGroupsMembers;
+      }
+
       public Default(int primaryOwnerIndex, int... backupOwnerIndexes) {
          super(new DefaultTrait(), primaryOwnerIndex, backupOwnerIndexes);
       }
@@ -135,8 +154,14 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
    /**
     * Ignores backup-owner part of the calls
     */
-   @SerializeWith(Externalizer.class)
    public static class Replicated extends ControlledConsistentHashFactory<ReplicatedConsistentHash> {
+
+      @ProtoFactory
+      Replicated(int numSegments, AbstractConsistentHash.SegmentOwnership[] segmentOwners, List<JGroupsAddress> jGroupsMembers) {
+         this(segmentOwners[0].getIndexes());
+         this.membersToUse = (List<Address>) (List<?>) jGroupsMembers;
+      }
+
       public Replicated(int primaryOwnerIndex) {
          super(new ReplicatedTrait(), primaryOwnerIndex);
       }
@@ -156,55 +181,22 @@ public abstract class ControlledConsistentHashFactory<CH extends ConsistentHash>
       }
    }
 
-   public static class Externalizer extends AbstractExternalizer<ControlledConsistentHashFactory<?>> {
-
-      @Override
-      public Set<Class<? extends ControlledConsistentHashFactory<?>>> getTypeClasses() {
-         return Util.asSet(Default.class, Replicated.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, ControlledConsistentHashFactory<?> object) throws IOException {
-         output.writeByte(object instanceof Default ? 0 : 1);
-         int numOwners = object.ownerIndexes.length;
-         MarshallUtil.marshallSize(output, numOwners);
-         for (int i = 0; i < numOwners; i++) {
-            int[] ownerSegments = object.ownerIndexes[i];
-            MarshallUtil.marshallSize(output, ownerSegments.length);
-            for (int segment : ownerSegments)
-               output.writeInt(segment);
-         }
-         output.writeObject(object.membersToUse);
-      }
-
-      @Override
-      public ControlledConsistentHashFactory<?> readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         byte type = input.readByte();
-
-         int numOwners = MarshallUtil.unmarshallSize(input);
-         int[][] indexes = new int[numOwners][];
-         for (int i = 0; i < numOwners; i++) {
-            int numSegments = MarshallUtil.unmarshallSize(input);
-            int[] segments = new int[numSegments];
-            for (int j = 0; j < numSegments; j++) {
-               segments[j] = input.readInt();
-            }
-            indexes[i] = segments;
-         }
-         ControlledConsistentHashFactory<?> chf;
-         switch (type) {
-            case 0:
-               chf = new Default(indexes);
-               break;
-            case 1:
-               chf = new Replicated(indexes[0]);
-               break;
-            default:
-               throw new IllegalStateException();
-         }
-         List<Address> membersToUse = (List<Address>) input.readObject();
-         chf.setMembersToUse(membersToUse);
-         return chf;
-      }
+   @ProtoSchema(
+         dependsOn = {
+               org.infinispan.marshall.persistence.impl.PersistenceContextInitializer.class,
+               GlobalContextInitializer.class,
+               TestDataSCI.class
+         },
+         includeClasses = {
+               Default.class,
+               Replicated.class
+         },
+         schemaFileName = "test.core.ControlledConsistentHashFactory.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.core.ControlledConsistentHashFactory",
+         service = false
+   )
+   public interface SCI extends SerializationContextInitializer {
+      ControlledConsistentHashFactory.SCI INSTANCE = new SCIImpl();
    }
 }

@@ -1,15 +1,13 @@
 package org.infinispan.interceptors.distribution;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
-
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.Ids;
-import org.infinispan.commons.util.Util;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.marshall.protostream.impl.MarshallableArray;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
+@ProtoTypeId(ProtoStreamTypeIds.VERSIONED_RESULTS)
 public class VersionedResults {
    public final Object[] values;
    public final EntryVersion[] versions;
@@ -17,6 +15,24 @@ public class VersionedResults {
    public VersionedResults(Object[] values, EntryVersion[] versions) {
       this.values = values;
       this.versions = versions;
+   }
+
+   @ProtoFactory
+   VersionedResults(MarshallableArray<Object> values, MarshallableArray<EntryVersion> versions) {
+      this.values = MarshallableArray.unwrap(values, new Object[0]);
+      this.versions = MarshallableArray.unwrap(versions, new EntryVersion[0]);
+   }
+
+   @ProtoField(number = 1)
+   MarshallableArray<Object> getValues() {
+      return MarshallableArray.create(values);
+   }
+
+   // We have to marshall as MarshallableArray, instead of two fields for SimpleClusteredVersion and NumericVersion
+   // as index of version corresponds to values collection.
+   @ProtoField(number = 2)
+   MarshallableArray<EntryVersion> getVersions() {
+      return MarshallableArray.create(versions);
    }
 
    @Override
@@ -28,40 +44,5 @@ public class VersionedResults {
       }
       sb.append('}');
       return sb.toString();
-   }
-
-   public static class Externalizer implements AdvancedExternalizer<VersionedResults> {
-
-      @Override
-      public Set<Class<? extends VersionedResults>> getTypeClasses() {
-         return Util.asSet(VersionedResults.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.VERSIONED_RESULTS;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, VersionedResults object) throws IOException {
-         output.writeInt(object.values.length);
-         // TODO: we could optimize this if all objects are of the same type
-         for (Object value : object.values) output.writeObject(value);
-         for (EntryVersion version : object.versions) output.writeObject(version);
-      }
-
-      @Override
-      public VersionedResults readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         int length = input.readInt();
-         Object[] values = new Object[length];
-         for (int i = 0; i < length; ++i) {
-            values[i] = input.readObject();
-         }
-         EntryVersion[] versions = new EntryVersion[length];
-         for (int i = 0; i < length; ++i) {
-            versions[i] = (EntryVersion) input.readObject();
-         }
-         return new VersionedResults(values, versions);
-      }
    }
 }

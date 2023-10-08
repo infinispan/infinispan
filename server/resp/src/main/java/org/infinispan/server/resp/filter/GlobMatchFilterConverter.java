@@ -3,13 +3,14 @@ package org.infinispan.server.resp.filter;
 import java.nio.charset.StandardCharsets;
 
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.GlobMatcher;
 import org.infinispan.commons.util.Util;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.annotations.ProtoName;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A {@link org.infinispan.filter.KeyValueFilterConverter} which matches the key against a glob pattern. Since the
@@ -17,7 +18,7 @@ import org.infinispan.protostream.annotations.ProtoName;
  *
  * @since 15.0
  **/
-@ProtoName("GlobMatchFilterConverter")
+@ProtoTypeId(ProtoStreamTypeIds.RESP_GLOB_MATCH_FILTER_CONVERTER)
 public class GlobMatchFilterConverter<K, V> extends AbstractKeyValueFilterConverter<byte[], V, byte[]> {
    @ProtoField(number = 1)
    final String glob;

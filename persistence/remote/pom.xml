@@ -57,7 +57,6 @@
       <dependency>
          <groupId>org.infinispan.protostream</groupId>
          <artifactId>protostream-processor</artifactId>
-         <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
@@ -69,6 +68,11 @@
            <groupId>org.infinispan</groupId>
            <artifactId>infinispan-multimap</artifactId>
        </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-remote-query-server</artifactId>
+         <scope>test</scope>
+      </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-hotrod</artifactId>

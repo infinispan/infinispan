@@ -4,6 +4,9 @@ import java.util.function.LongConsumer;
 import java.util.stream.LongStream;
 
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.stream.CacheAware;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.util.concurrent.BlockingManager;
@@ -22,13 +25,19 @@ public class PeekLongOperation implements IntermediateOperation<Long, LongStream
       this.consumer = consumer;
    }
 
+   @ProtoFactory
+   PeekLongOperation(MarshallableObject<LongConsumer> consumer) {
+      this.consumer = MarshallableObject.unwrap(consumer);
+   }
+
+   @ProtoField(number = 1)
+   MarshallableObject<LongConsumer> getConsumer() {
+      return MarshallableObject.create(consumer);
+   }
+
    @Override
    public LongStream perform(LongStream stream) {
       return stream.peek(consumer);
-   }
-
-   public LongConsumer getConsumer() {
-      return consumer;
    }
 
    @Override

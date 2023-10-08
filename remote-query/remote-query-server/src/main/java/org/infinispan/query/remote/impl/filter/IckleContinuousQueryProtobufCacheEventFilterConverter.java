@@ -2,38 +2,40 @@ package org.infinispan.query.remote.impl.filter;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.marshall.protostream.impl.MarshallableMap;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.query.core.impl.continuous.IckleContinuousQueryCacheEventFilterConverter;
 import org.infinispan.query.remote.client.impl.ContinuousQueryResult;
-import org.infinispan.query.remote.impl.ExternalizerIds;
 import org.infinispan.query.remote.impl.RemoteQueryManager;
 
 /**
  * @author anistor@redhat.com
  * @since 8.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.REMOTE_QUERY_ICKLE_CONTINOUS_QUERY_PROTOBUF_CACHE_EVENT_FILTER_CONVERTER)
 public final class IckleContinuousQueryProtobufCacheEventFilterConverter extends IckleContinuousQueryCacheEventFilterConverter<Object, Object, Object> {
 
    private RemoteQueryManager remoteQueryManager;
 
    IckleContinuousQueryProtobufCacheEventFilterConverter(String queryString, Map<String, Object> namedParameters, Class<? extends Matcher> matcherImplClass) {
       super(queryString, namedParameters, matcherImplClass);
+   }
+
+   @ProtoFactory
+   IckleContinuousQueryProtobufCacheEventFilterConverter(String queryString, MarshallableMap<String, Object> wrappedNamedParameters,
+                                                           Class<? extends Matcher> matcherImplClass) {
+      super(queryString, wrappedNamedParameters, matcherImplClass);
    }
 
    @Override
@@ -76,52 +78,5 @@ public final class IckleContinuousQueryProtobufCacheEventFilterConverter extends
    @Override
    public String toString() {
       return "IckleContinuousQueryProtobufCacheEventFilterConverter{queryString='" + queryString + "'}";
-   }
-
-   public static final class Externalizer extends AbstractExternalizer<IckleContinuousQueryProtobufCacheEventFilterConverter> {
-
-      @Override
-      public void writeObject(ObjectOutput output, IckleContinuousQueryProtobufCacheEventFilterConverter filterAndConverter) throws IOException {
-         output.writeUTF(filterAndConverter.queryString);
-         Map<String, Object> namedParameters = filterAndConverter.namedParameters;
-         if (namedParameters != null) {
-            UnsignedNumeric.writeUnsignedInt(output, namedParameters.size());
-            for (Map.Entry<String, Object> e : namedParameters.entrySet()) {
-               output.writeUTF(e.getKey());
-               output.writeObject(e.getValue());
-            }
-         } else {
-            UnsignedNumeric.writeUnsignedInt(output, 0);
-         }
-         output.writeObject(filterAndConverter.matcherImplClass);
-      }
-
-      @Override
-      @SuppressWarnings("unchecked")
-      public IckleContinuousQueryProtobufCacheEventFilterConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         String queryString = input.readUTF();
-         int paramsSize = UnsignedNumeric.readUnsignedInt(input);
-         Map<String, Object> namedParameters = null;
-         if (paramsSize != 0) {
-            namedParameters = new HashMap<>(paramsSize);
-            for (int i = 0; i < paramsSize; i++) {
-               String paramName = input.readUTF();
-               Object paramValue = input.readObject();
-               namedParameters.put(paramName, paramValue);
-            }
-         }
-         Class<? extends Matcher> matcherImplClass = (Class<? extends Matcher>) input.readObject();
-         return new IckleContinuousQueryProtobufCacheEventFilterConverter(queryString, namedParameters, matcherImplClass);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.ICKLE_CONTINUOUS_QUERY_CACHE_EVENT_FILTER_CONVERTER;
-      }
-
-      @Override
-      public Set<Class<? extends IckleContinuousQueryProtobufCacheEventFilterConverter>> getTypeClasses() {
-         return Collections.singleton(IckleContinuousQueryProtobufCacheEventFilterConverter.class);
-      }
    }
 }

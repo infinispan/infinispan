@@ -6,19 +6,18 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.util.Immutables;
-import org.infinispan.container.versioning.NumericVersion;
-import org.infinispan.container.versioning.SimpleClusteredVersion;
-import org.infinispan.marshall.exts.EnumSetExternalizer;
-import org.infinispan.marshall.exts.MapExternalizer;
-import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.tools.store.migrator.marshaller.common.AdvancedExternalizer;
+import org.infinispan.jboss.marshalling.commons.StreamingMarshaller;
+import org.infinispan.tools.store.migrator.marshaller.common.ByteBufferImplExternalizer;
+import org.infinispan.tools.store.migrator.marshaller.common.EmbeddedMetadataExternalizer;
+import org.infinispan.tools.store.migrator.marshaller.common.EnumSetExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.ImmortalCacheEntryExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.ImmortalCacheValueExternalizer;
+import org.infinispan.tools.store.migrator.marshaller.common.ImmutableMapWrapperExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.InternalMetadataImplExternalizer;
+import org.infinispan.tools.store.migrator.marshaller.common.KeyValuePairExternalizer;
+import org.infinispan.tools.store.migrator.marshaller.common.MapExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.MarshalledEntryImpl;
 import org.infinispan.tools.store.migrator.marshaller.common.MetadataImmortalCacheEntryExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.MetadataImmortalCacheValueExternalizer;
@@ -30,11 +29,12 @@ import org.infinispan.tools.store.migrator.marshaller.common.MetadataTransientMo
 import org.infinispan.tools.store.migrator.marshaller.common.MetadataTransientMortalCacheValueExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.MortalCacheEntryExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.MortalCacheValueExternalizer;
+import org.infinispan.tools.store.migrator.marshaller.common.NumericVersionExternalizer;
+import org.infinispan.tools.store.migrator.marshaller.common.SimpleClusteredVersionExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.TransientCacheEntryExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.TransientCacheValueExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.TransientMortalCacheEntryExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.TransientMortalCacheValueExternalizer;
-import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.marshalling.ObjectTable;
@@ -42,9 +42,9 @@ import org.jboss.marshalling.Unmarshaller;
 
 /**
  * The externalizer table maintains information necessary to be able to map a particular type with the corresponding
- * {@link org.infinispan.commons.marshall.AdvancedExternalizer} implementation that it marshall, and it also keeps
- * information of which {@link org.infinispan.commons.marshall.AdvancedExternalizer} should be used to read data from a
- * buffer given a particular {@link org.infinispan.commons.marshall.AdvancedExternalizer} identifier.
+ * {@link AdvancedExternalizer} implementation that it marshall, and it also keeps
+ * information of which {@link AdvancedExternalizer} should be used to read data from a
+ * buffer given a particular {@link AdvancedExternalizer} identifier.
  * <p>
  * These tables govern how either internal Infinispan classes, or user defined classes, are marshalled to a given
  * output, or how these are unmarshalled from a given input.
@@ -141,12 +141,11 @@ class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new SingletonListExternalizer());
 
       addInternalExternalizer(new ImmutableListCopyExternalizer());
-      addInternalExternalizer(new Immutables.ImmutableMapWrapperExternalizer());
-      addInternalExternalizer(new ByteBufferImpl.Externalizer());
+      addInternalExternalizer(new ImmutableMapWrapperExternalizer());
+      addInternalExternalizer(new ByteBufferImplExternalizer());
 
-      addInternalExternalizer(new NumericVersion.Externalizer());
-      addInternalExternalizer(new ByteBufferImpl.Externalizer());
-      addInternalExternalizer(new KeyValuePair.Externalizer());
+      addInternalExternalizer(new NumericVersionExternalizer());
+      addInternalExternalizer(new KeyValuePairExternalizer());
       addInternalExternalizer(new InternalMetadataImplExternalizer(INTERNAL_METADATA));
       addInternalExternalizer(new MarshalledEntryImpl.Externalizer(marshaller));
 
@@ -159,7 +158,7 @@ class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new TransientCacheValueExternalizer());
       addInternalExternalizer(new TransientMortalCacheValueExternalizer());
 
-      addInternalExternalizer(new SimpleClusteredVersion.Externalizer());
+      addInternalExternalizer(new SimpleClusteredVersionExternalizer());
       addInternalExternalizer(new MetadataImmortalCacheEntryExternalizer());
       addInternalExternalizer(new MetadataMortalCacheEntryExternalizer());
       addInternalExternalizer(new MetadataTransientCacheEntryExternalizer());
@@ -169,7 +168,7 @@ class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new MetadataTransientCacheValueExternalizer());
       addInternalExternalizer(new MetadataTransientMortalCacheValueExternalizer());
 
-      addInternalExternalizer(new EmbeddedMetadata.Externalizer());
+      addInternalExternalizer(new EmbeddedMetadataExternalizer());
    }
 
    private void addInternalExternalizer(AdvancedExternalizer ext) {
@@ -217,14 +216,18 @@ class ExternalizerTable implements ObjectTable {
    }
 
    private int checkInternalIdLimit(int id, AdvancedExternalizer ext) {
-      if (id >= MAX_ID)
-         throw log.internalExternalizerIdLimitExceeded(ext, id, MAX_ID);
+      if (id >= MAX_ID) {
+         String msg = String.format("Internal %s externalizer is using an id(%d) that exceeded the limit. It needs to be smaller than %d", ext.getClass().getSimpleName(), id, MAX_ID);
+         throw new CacheConfigurationException(msg);
+      }
       return id;
    }
 
    private int checkForeignIdLimit(int id, AdvancedExternalizer ext) {
-      if (id < 0)
-         throw log.foreignExternalizerUsingNegativeId(ext, id);
+      if (id < 0) {
+         String msg = String.format("Foreign %s externalizer is using a negative id(%d). Only positive id values are allowed.", ext.getClass().getSimpleName(), id);
+         throw new CacheConfigurationException(msg);
+      }
       return id;
    }
 

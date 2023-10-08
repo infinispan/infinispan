@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.ClassAllowList;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.tools.store.migrator.marshaller.common.AdvancedExternalizer;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.marshall.Marshaller;

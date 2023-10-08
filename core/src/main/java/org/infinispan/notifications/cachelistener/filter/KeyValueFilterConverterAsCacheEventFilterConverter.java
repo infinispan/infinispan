@@ -1,20 +1,17 @@
 package org.infinispan.notifications.cachelistener.filter;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.KeyValueFilterConverter;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * {@link CacheEventFilterConverter} that uses an underlying {@link KeyValueFilterConverter} to do the conversion and
@@ -23,6 +20,7 @@ import org.infinispan.metadata.Metadata;
  * @author wburns
  * @since 9.4
  */
+@ProtoTypeId(ProtoStreamTypeIds.KEY_VALUE_FILTER_CONVERTER_AS_CACHE_KEY_VALUE_CONVERTER)
 @Scope(Scopes.NONE)
 public class KeyValueFilterConverterAsCacheEventFilterConverter<K, V, C> implements CacheEventFilterConverter<K, V, C> {
    private final KeyValueFilterConverter<K, V, C> keyValueFilterConverter;
@@ -36,6 +34,23 @@ public class KeyValueFilterConverterAsCacheEventFilterConverter<K, V, C> impleme
       this.keyValueFilterConverter = keyValueFilterConverter;
       // If the format is unknown, defaults to use the storage type.
       this.format = format == MediaType.APPLICATION_UNKNOWN ? null : format;
+   }
+
+
+   @ProtoFactory
+   KeyValueFilterConverterAsCacheEventFilterConverter(MarshallableObject<KeyValueFilterConverter<K, V, C>> converter, MediaType format) {
+      this.keyValueFilterConverter = MarshallableObject.unwrap(converter);
+      this.format = format;
+   }
+
+   @ProtoField(1)
+   MarshallableObject<KeyValueFilterConverter<K, V, C>> getConverter() {
+      return MarshallableObject.create(keyValueFilterConverter);
+   }
+
+   @ProtoField(number = 2, name = "format")
+   public MediaType format() {
+      return format;
    }
 
    @Override
@@ -54,11 +69,6 @@ public class KeyValueFilterConverterAsCacheEventFilterConverter<K, V, C> impleme
    }
 
    @Override
-   public MediaType format() {
-      return format;
-   }
-
-   @Override
    public boolean includeOldValue() {
       // No reason to include old if new value is only ever used for conversions
       return false;
@@ -67,28 +77,5 @@ public class KeyValueFilterConverterAsCacheEventFilterConverter<K, V, C> impleme
    @Inject
    protected void injectDependencies(ComponentRegistry cr) {
       cr.wireDependencies(keyValueFilterConverter);
-   }
-
-   public static class Externalizer implements AdvancedExternalizer<KeyValueFilterConverterAsCacheEventFilterConverter> {
-      @Override
-      public void writeObject(ObjectOutput output, KeyValueFilterConverterAsCacheEventFilterConverter object) throws IOException {
-         output.writeObject(object.keyValueFilterConverter);
-         output.writeObject(object.format);
-      }
-
-      @Override
-      public KeyValueFilterConverterAsCacheEventFilterConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new KeyValueFilterConverterAsCacheEventFilterConverter((KeyValueFilterConverter)input.readObject(), (MediaType) input.readObject());
-      }
-
-      @Override
-      public Set<Class<? extends KeyValueFilterConverterAsCacheEventFilterConverter>> getTypeClasses() {
-         return Collections.singleton(KeyValueFilterConverterAsCacheEventFilterConverter.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.KEY_VALUE_FILTER_CONVERTER_AS_CACHE_EVENT_FILTER_CONVERTER;
-      }
    }
 }

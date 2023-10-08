@@ -1,14 +1,12 @@
 package org.infinispan.server.hotrod;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.net.InetAddress;
-import java.util.Collections;
 import java.util.Objects;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A Hot Rod server address
@@ -16,10 +14,16 @@ import org.infinispan.commons.marshall.AbstractExternalizer;
  * @author Galder Zamarreño
  * @since 5.1
  */
+@ProtoTypeId(ProtoStreamTypeIds.SERVER_HR_SINGLE_HOMED_SERVER_ADDRESS)
 public class SingleHomedServerAddress implements ServerAddress {
-   private final String host;
-   private final int port;
 
+   @ProtoField(1)
+   final String host;
+
+   @ProtoField(value = 2, defaultValue = "-1")
+   final int port;
+
+   @ProtoFactory
    public SingleHomedServerAddress(String host, int port) {
       this.host = Objects.requireNonNull(host);
       this.port = port;
@@ -56,25 +60,5 @@ public class SingleHomedServerAddress implements ServerAddress {
 
    public int getPort() {
       return port;
-   }
-
-   static class Externalizer extends AbstractExternalizer<SingleHomedServerAddress> {
-      @Override
-      public Set<Class<? extends SingleHomedServerAddress>> getTypeClasses() {
-         return Collections.singleton(SingleHomedServerAddress.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, SingleHomedServerAddress object) throws IOException {
-         output.writeObject(object.host);
-         output.writeShort(object.port);
-      }
-
-      @Override
-      public SingleHomedServerAddress readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         String host = (String) input.readObject();
-         int port = input.readUnsignedShort();
-         return new SingleHomedServerAddress(host, port);
-      }
    }
 }

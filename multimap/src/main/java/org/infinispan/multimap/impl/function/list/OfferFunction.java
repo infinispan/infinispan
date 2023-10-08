@@ -1,19 +1,18 @@
 package org.infinispan.multimap.impl.function.list;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
-import org.infinispan.multimap.impl.ExternalizerIds;
+import org.infinispan.marshall.protostream.impl.MarshallableCollection;
 import org.infinispan.multimap.impl.ListBucket;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Serializable function used by
@@ -29,8 +28,9 @@ import org.infinispan.multimap.impl.ListBucket;
  *      Functions</a>
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_OFFER_FUNCTION)
 public final class OfferFunction<K, V> implements ListBucketBaseFunction<K, V, Void> {
-   public static final AdvancedExternalizer<OfferFunction> EXTERNALIZER = new Externalizer();
+
    private final Collection<V> value;
    private final boolean first;
 
@@ -42,6 +42,21 @@ public final class OfferFunction<K, V> implements ListBucketBaseFunction<K, V, V
    public OfferFunction(Collection<V> value, boolean first) {
       this.value = value;
       this.first = first;
+   }
+
+   @ProtoFactory
+   OfferFunction(MarshallableCollection<V> value, boolean first) {
+      this(MarshallableCollection.unwrap(value), first);
+   }
+
+   @ProtoField(1)
+   MarshallableCollection<V> getValue() {
+      return MarshallableCollection.create(value);
+   }
+
+   @ProtoField(value = 2, defaultValue = "false")
+   boolean isFirst() {
+      return first;
    }
 
    @Override
@@ -66,37 +81,5 @@ public final class OfferFunction<K, V> implements ListBucketBaseFunction<K, V, V
       }
 
       return null;
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<OfferFunction> {
-
-      @Override
-      public Set<Class<? extends OfferFunction>> getTypeClasses() {
-         return Collections.singleton(OfferFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.OFFER_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, OfferFunction object) throws IOException {
-         output.writeInt(object.value.size());
-         for (var e : object.value) {
-            output.writeObject(e);
-         }
-         output.writeBoolean(object.first);
-      }
-
-      @Override
-      public OfferFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         var size = input.readInt();
-         var array = new ArrayList<>(size);
-         for (int i = 0; i < size; i++) {
-            array.add(input.readObject());
-         }
-         return new OfferFunction(array, input.readBoolean());
-      }
    }
 }

@@ -1,28 +1,35 @@
 package org.infinispan.server.hotrod;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
 import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
+@ProtoTypeId(ProtoStreamTypeIds.SERVER_HR_KEY_VALUE_VERSION_CONVERTER)
 class KeyValueVersionConverter implements CacheEventConverter<byte[], byte[], byte[]> {
-   private final boolean returnOldValue;
+
+   @ProtoField(value = 1, defaultValue = "false")
+   final boolean returnOldValue;
+
+   @ProtoFactory
+   static KeyValueVersionConverter protoFactory(boolean returnOldValue) {
+      return returnOldValue ?
+            KeyValueVersionConverter.INCLUDING_OLD_VALUE_CONVERTER :
+            KeyValueVersionConverter.EXCLUDING_OLD_VALUE_CONVERTER;
+   }
 
    private KeyValueVersionConverter(boolean returnOldValue) {
       this.returnOldValue = returnOldValue;
    }
 
-   public static KeyValueVersionConverter EXCLUDING_OLD_VALUE_CONVERTER = new KeyValueVersionConverter(false);
-   public static KeyValueVersionConverter INCLUDING_OLD_VALUE_CONVERTER = new KeyValueVersionConverter(true);
+   public static final KeyValueVersionConverter EXCLUDING_OLD_VALUE_CONVERTER = new KeyValueVersionConverter(false);
+   public static final KeyValueVersionConverter INCLUDING_OLD_VALUE_CONVERTER = new KeyValueVersionConverter(true);
 
    @Override
    public byte[] convert(byte[] key, byte[] oldValue, Metadata oldMetadata, byte[] newValue, Metadata newMetadata, EventType eventType) {
@@ -79,24 +86,5 @@ class KeyValueVersionConverter implements CacheEventConverter<byte[], byte[], by
    @Override
    public boolean useRequestFormat() {
       return true;
-   }
-
-   static class Externalizer extends AbstractExternalizer<KeyValueVersionConverter> {
-      @Override
-      public Set<Class<? extends KeyValueVersionConverter>> getTypeClasses() {
-         return Collections.singleton(KeyValueVersionConverter.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, KeyValueVersionConverter object) throws IOException {
-         output.writeBoolean(object.returnOldValue);
-      }
-
-      @Override
-      public KeyValueVersionConverter readObject(ObjectInput input) throws IOException {
-         boolean returnOldValue = input.readBoolean();
-         return returnOldValue ? KeyValueVersionConverter.INCLUDING_OLD_VALUE_CONVERTER
-               : KeyValueVersionConverter.EXCLUDING_OLD_VALUE_CONVERTER;
-      }
    }
 }

@@ -4,6 +4,9 @@ import java.util.function.Function;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.stream.impl.intops.FlatMappingOperation;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -19,13 +22,19 @@ public class FlatMapToLongOperation<I> implements FlatMappingOperation<I, Stream
       this.function = function;
    }
 
+   @ProtoFactory
+   FlatMapToLongOperation(MarshallableObject<Function<? super I, ? extends LongStream>> function) {
+      this.function = MarshallableObject.unwrap(function);
+   }
+
+   @ProtoField(number = 1)
+   MarshallableObject<Function<? super I, ? extends LongStream>> getFunction() {
+      return MarshallableObject.create(function);
+   }
+
    @Override
    public LongStream perform(Stream<I> stream) {
       return stream.flatMapToLong(function);
-   }
-
-   public Function<? super I, ? extends LongStream> getFunction() {
-      return function;
    }
 
    @Override

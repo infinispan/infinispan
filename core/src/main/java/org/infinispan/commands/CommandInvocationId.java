@@ -1,16 +1,16 @@
 package org.infinispan.commands;
 
-import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 
 /**
  * Represents an unique identified for non-transaction write commands.
@@ -24,9 +24,9 @@ import org.infinispan.remoting.transport.Address;
  * @author Pedro Ruivo
  * @since 8.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.COMMAND_INVOCATION_ID)
 public final class CommandInvocationId {
    public static final CommandInvocationId DUMMY_INVOCATION_ID = new CommandInvocationId(null, 0);
-   public static final AbstractExternalizer<CommandInvocationId> EXTERNALIZER = new Externalizer();
 
    private static final AtomicLong nextId = new AtomicLong(0);
 
@@ -38,27 +38,27 @@ public final class CommandInvocationId {
       this.id = id;
    }
 
+   @ProtoFactory
+   CommandInvocationId(JGroupsAddress address, long id) {
+      this((Address) address, id);
+   }
+
+   @ProtoField(number = 1, defaultValue = "-1")
+   public long getId() {
+      return id;
+   }
+
+   @ProtoField(number = 2, name = "address", javaType = JGroupsAddress.class)
+   public Address getAddress() {
+      return address;
+   }
+
    public static CommandInvocationId generateId(Address address) {
       return new CommandInvocationId(address, nextId.getAndIncrement());
    }
 
    public static CommandInvocationId generateIdFrom(CommandInvocationId commandInvocationId) {
       return new CommandInvocationId(commandInvocationId.address, nextId.getAndIncrement());
-   }
-
-   public static void writeTo(ObjectOutput output, CommandInvocationId commandInvocationId) throws IOException {
-      output.writeObject(commandInvocationId.address);
-      output.writeLong(commandInvocationId.id);
-   }
-
-   public static CommandInvocationId readFrom(ObjectInput input) throws ClassNotFoundException, IOException {
-      Address address = (Address) input.readObject();
-      long id = input.readLong();
-      return new CommandInvocationId(address, id);
-   }
-
-   public long getId() {
-      return id;
    }
 
    @Override
@@ -76,10 +76,6 @@ public final class CommandInvocationId {
 
    }
 
-   public Address getAddress() {
-      return address;
-   }
-
    @Override
    public int hashCode() {
       int result = address != null ? address.hashCode() : 0;
@@ -94,28 +90,5 @@ public final class CommandInvocationId {
 
    public static String show(CommandInvocationId id) {
       return id == DUMMY_INVOCATION_ID ? "" : id.toString();
-   }
-
-   private static class Externalizer extends AbstractExternalizer<CommandInvocationId> {
-
-      @Override
-      public Set<Class<? extends CommandInvocationId>> getTypeClasses() {
-         return Collections.singleton(CommandInvocationId.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.COMMAND_INVOCATION_ID;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, CommandInvocationId object) throws IOException {
-         writeTo(output, object);
-      }
-
-      @Override
-      public CommandInvocationId readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return readFrom(input);
-      }
    }
 }

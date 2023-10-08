@@ -1,11 +1,17 @@
 package org.infinispan.xsite.statetransfer;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.Proto;
+import org.infinispan.protostream.annotations.ProtoTypeId;
+
 /**
  * Cross-site state transfer status.
  *
  * @author Pedro Ruivo
  * @since 12
  */
+@ProtoTypeId(ProtoStreamTypeIds.XSITE_STATE_TRANSFER_STATUS)
+@Proto
 public enum StateTransferStatus {
    IDLE,
    SENDING,

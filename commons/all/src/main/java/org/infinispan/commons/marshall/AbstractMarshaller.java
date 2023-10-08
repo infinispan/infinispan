@@ -84,9 +84,12 @@ public abstract class AbstractMarshaller implements Marshaller {
    }
 
    /**
-    * This method implements {@link StreamingMarshaller#objectFromInputStream(java.io.InputStream)}, but its
-    * implementation has been moved here rather that keeping under a class that implements StreamingMarshaller
-    * in order to avoid code duplication.
+    * Unmarshall an object from an {@link InputStream}
+    *
+    * @param inputStream stream to unmarshall from
+    * @return the unmarshalled object instance
+    * @throws IOException if unmarshalling cannot complete due to some I/O error
+    * @throws ClassNotFoundException if the class of the object trying to unmarshall is unknown
     */
    public Object objectFromInputStream(InputStream inputStream) throws IOException, ClassNotFoundException {
       int len = inputStream.available();

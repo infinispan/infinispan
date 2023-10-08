@@ -1,20 +1,16 @@
 package org.infinispan.statetransfer;
 
-import static org.infinispan.commons.marshall.MarshallUtil.marshallCollection;
-import static org.infinispan.commons.marshall.MarshallUtil.unmarshallCollection;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.marshall.protostream.impl.MarshallableCollection;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 /**
@@ -24,6 +20,7 @@ import org.infinispan.transaction.xa.GlobalTransaction;
  * @author anistor@redhat.com
  * @since 5.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.TRANSACTION_INFO)
 public class TransactionInfo {
 
    private final GlobalTransaction globalTransaction;
@@ -34,6 +31,17 @@ public class TransactionInfo {
 
    private final int topologyId;
 
+   @ProtoFactory
+   TransactionInfo(GlobalTransaction globalTransaction, int topologyId, MarshallableCollection<WriteCommand> wrappedModifications,
+                   MarshallableCollection<Object> wrappedKeys) {
+      this(
+            globalTransaction,
+            topologyId,
+            MarshallableCollection.unwrap(wrappedModifications, ArrayList::new),
+            (Set<Object>) MarshallableCollection.unwrap(wrappedKeys, HashSet::new)
+      );
+   }
+
    public TransactionInfo(GlobalTransaction globalTransaction, int topologyId, List<WriteCommand> modifications, Set<Object> lockedKeys) {
       this.globalTransaction = globalTransaction;
       this.topologyId = topologyId;
@@ -41,6 +49,7 @@ public class TransactionInfo {
       this.lockedKeys = lockedKeys;
    }
 
+   @ProtoField(1)
    public GlobalTransaction getGlobalTransaction() {
       return globalTransaction;
    }
@@ -49,10 +58,21 @@ public class TransactionInfo {
       return modifications;
    }
 
+   @ProtoField(2)
+   MarshallableCollection<WriteCommand> getWrappedModifications() {
+      return MarshallableCollection.create(modifications);
+   }
+
    public Set<Object> getLockedKeys() {
       return lockedKeys;
    }
 
+   @ProtoField(3)
+   MarshallableCollection<Object> getWrappedKeys() {
+      return MarshallableCollection.create(lockedKeys);
+   }
+
+   @ProtoField(number = 4, defaultValue = "-1")
    public int getTopologyId() {
       return topologyId;
    }
@@ -65,35 +85,5 @@ public class TransactionInfo {
             ", modifications=" + modifications +
             ", lockedKeys=" + lockedKeys +
             '}';
-   }
-
-   public static class Externalizer extends AbstractExternalizer<TransactionInfo> {
-
-      @Override
-      public Integer getId() {
-         return Ids.TRANSACTION_INFO;
-      }
-
-      @Override
-      public Set<Class<? extends TransactionInfo>> getTypeClasses() {
-         return Collections.singleton(TransactionInfo.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, TransactionInfo object) throws IOException {
-         output.writeObject(object.globalTransaction);
-         output.writeInt(object.topologyId);
-         marshallCollection(object.modifications, output);
-         marshallCollection(object.lockedKeys, output);
-      }
-
-      @Override
-      public TransactionInfo readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         GlobalTransaction globalTransaction = (GlobalTransaction) input.readObject();
-         int topologyId = input.readInt();
-         List<WriteCommand> modifications = unmarshallCollection(input, ArrayList::new);
-         Set<Object> lockedKeys = unmarshallCollection(input, HashSet::new);
-         return new TransactionInfo(globalTransaction, topologyId, modifications, lockedKeys);
-      }
    }
 }

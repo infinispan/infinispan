@@ -23,12 +23,6 @@ import org.infinispan.commons.graalvm.Jandex;
 import org.infinispan.commons.graalvm.ReflectionProcessor;
 import org.infinispan.commons.graalvm.ReflectiveClass;
 import org.infinispan.commons.graalvm.Resource;
-import org.infinispan.commons.marshall.SerializeWith;
-import org.infinispan.configuration.serializing.SerializedWith;
-import org.infinispan.marshall.exts.CollectionExternalizer;
-import org.infinispan.marshall.exts.EnumExternalizer;
-import org.infinispan.marshall.exts.EnumSetExternalizer;
-import org.infinispan.marshall.exts.MapExternalizer;
 import org.infinispan.notifications.Listener;
 import org.jboss.jandex.IndexView;
 import org.jgroups.Version;
@@ -48,6 +42,7 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
          "proto/generated/persistence\\.core\\.proto",
          "proto/generated/persistence\\.counters-api\\.proto",
          "proto/generated/global\\.commons\\.proto",
+         "proto/generated/global\\.core\\.proto",
          "default-configs/default-jgroups-udp\\.xml",
          "default-configs/default-jgroups-tcp\\.xml",
          "default-configs/default-jgroups-kubernetes\\.xml",
@@ -226,10 +221,6 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
             )
             .addImplementations(false, false,
                   org.jboss.logging.BasicLogger.class,
-
-                  org.infinispan.commons.marshall.AbstractExternalizer.class,
-                  org.infinispan.commons.marshall.AdvancedExternalizer.class,
-
                   org.infinispan.configuration.parsing.ConfigurationParser.class,
                   org.infinispan.configuration.cache.AbstractModuleConfigurationBuilder.class,
                   org.infinispan.configuration.cache.StoreConfigurationBuilder.class,
@@ -248,21 +239,21 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
                   org.infinispan.configuration.cache.StoreConfiguration.class
             )
             .addClassesWithAnnotation(false, true, Listener.class)
-            .addClassFromAnnotationValue(false, false, SerializeWith.class)
-            .addClassFromAnnotationValue(false, false, SerializedWith.class)
             .addClasses("org.infinispan.remoting.transport.jgroups.JGroupsTransport$ChannelCallbacks")
             .addClasses(
                   // XML parsing
                   "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl",
                   "com.sun.org.apache.xerces.internal.jaxp.datatype.DatatypeFactoryImpl",
                   "com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl",
-                  "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl"
-            );
+                  "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl",
 
-      CollectionExternalizer.getSupportedPrivateClasses().forEach(processor::addClasses);
-      MapExternalizer.getSupportedPrivateClasses().forEach(processor::addClasses);
-      EnumExternalizer.INSTANCE.getTypeClasses().forEach(processor::addClasses);
-      new EnumSetExternalizer().getTypeClasses().forEach(processor::addClasses);
+                  // Internal Collection Implementations
+                  "java.util.Collections$EmptyList",
+                  "java.util.Collections$EmptySet",
+                  "java.util.Collections$SingletonList",
+                  "java.util.ImmutableCollections$ListN",
+                  "java.util.ImmutableCollections$List12"
+            );
    }
 
    private void protostream(ReflectionProcessor processor) {

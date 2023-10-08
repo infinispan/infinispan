@@ -1,8 +1,5 @@
 package org.infinispan.metadata.impl;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Objects;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
@@ -33,20 +30,6 @@ public class IracMetadata {
    public IracMetadata(ByteString site, IracEntryVersion version) {
       this.site = Objects.requireNonNull(site);
       this.version = Objects.requireNonNull(version);
-   }
-
-   public static void writeTo(ObjectOutput output, IracMetadata metadata) throws IOException {
-      if (metadata == null) {
-         output.writeObject(null);
-         return;
-      }
-      output.writeObject(metadata.version);
-      ByteString.writeObject(output, metadata.site);
-   }
-
-   public static IracMetadata readFrom(ObjectInput in) throws IOException, ClassNotFoundException {
-      IracEntryVersion version = (IracEntryVersion) in.readObject();
-      return version == null ? null : new IracMetadata(XSiteNamedCache.cachedByteString(ByteString.readObject(in)), version);
    }
 
    @ProtoField(1)

@@ -1,19 +1,14 @@
 package org.infinispan.lock.impl.lock;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.lock.impl.entries.ClusteredLockKey;
 import org.infinispan.lock.impl.entries.ClusteredLockValue;
-import org.infinispan.lock.impl.externalizers.ExternalizerIds;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * This listener is used to monitor lock state changes.
@@ -22,12 +17,13 @@ import org.infinispan.notifications.cachelistener.filter.EventType;
  * @author Katia Aresti, karesti@redhat.com
  * @since 9.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.CLUSTERED_LOCK_FILTER)
 public class ClusteredLockFilter implements CacheEventFilter<ClusteredLockKey, ClusteredLockValue> {
 
-   public static final AdvancedExternalizer<ClusteredLockFilter> EXTERNALIZER = new ClusteredLockFilter.Externalizer();
+   @ProtoField(1)
+   final ClusteredLockKey name;
 
-   private final ClusteredLockKey name;
-
+   @ProtoFactory
    public ClusteredLockFilter(ClusteredLockKey name) {
       this.name = name;
    }
@@ -35,27 +31,5 @@ public class ClusteredLockFilter implements CacheEventFilter<ClusteredLockKey, C
    @Override
    public boolean accept(ClusteredLockKey key, ClusteredLockValue oldValue, Metadata oldMetadata, ClusteredLockValue newValue, Metadata newMetadata, EventType eventType) {
       return name.equals(key);
-   }
-
-   public static class Externalizer extends AbstractExternalizer<ClusteredLockFilter> {
-      @Override
-      public Set<Class<? extends ClusteredLockFilter>> getTypeClasses() {
-         return Collections.singleton(ClusteredLockFilter.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, ClusteredLockFilter object) throws IOException {
-         output.writeObject(object.name);
-      }
-
-      @Override
-      public ClusteredLockFilter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new ClusteredLockFilter((ClusteredLockKey) input.readObject());
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.CLUSTERED_LOCK_FILTER;
-      }
    }
 }

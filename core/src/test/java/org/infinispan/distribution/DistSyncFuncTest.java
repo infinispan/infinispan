@@ -171,7 +171,10 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       c1.clear();
       asyncWait(null, ClearCommand.class);
 
-      retval = getFirstNonOwner("k1").replace("k1", "value2");
+      Cache nonOwner = getFirstNonOwner("k1");
+      System.out.println("-------------------------------------");
+      retval = nonOwner.replace("k1", "value2");
+
       if (testRetVals) assertNull(retval);
 
       assertRemovedOnAllCaches("k1");
@@ -409,9 +412,12 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       assertOnAllCachesAndOwnership("k1", "value");
 
       // merge function applied
-      Object retval = getFirstNonOwner("k1").merge("k1", "value2", (v1, v2) -> "merged_" + v1 + "_" + v2);
+      Cache nonOwner = getFirstNonOwner("k1");
+      System.out.println("-------------------------------------");
+      Object retval = nonOwner.merge("k1", "value2", (v1, v2) -> "merged_" + v1 + "_" + v2);
       asyncWait("k1", ReadWriteKeyCommand.class);
-      if (testRetVals) assertEquals("merged_value_value2", retval);
+      if (testRetVals)
+         assertEquals("merged_value_value2", retval);
       assertOnAllCachesAndOwnership("k1", "merged_value_value2");
 
       // remove when null

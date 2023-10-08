@@ -1,16 +1,12 @@
 package org.infinispan.query.remote.impl.filter;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
@@ -21,7 +17,9 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.remote.impl.ExternalizerIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Adapter for {@link IckleProtobufFilterAndConverter} that produces binary values as a result of filter/conversion.
@@ -29,12 +27,14 @@ import org.infinispan.query.remote.impl.ExternalizerIds;
  * @author gustavonalle
  * @since 8.1
  */
+@ProtoTypeId(ProtoStreamTypeIds.REMOTE_QUERY_ICKLE_BINARY_PROTOBUF_FILTER_AND_CONVERTER)
 @Scope(Scopes.NONE)
 public final class IckleBinaryProtobufFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter<K, V, Object> {
 
    private SerializationContext serCtx;
 
-   private final IckleProtobufFilterAndConverter delegate;
+   @ProtoField(1)
+   final IckleProtobufFilterAndConverter delegate;
 
    @Inject
    void injectDependencies(ComponentRegistry componentRegistry, EmbeddedCacheManager cacheManager) {
@@ -46,7 +46,8 @@ public final class IckleBinaryProtobufFilterAndConverter<K, V> extends AbstractK
       this.delegate = new IckleProtobufFilterAndConverter(queryString, namedParameters);
    }
 
-   private IckleBinaryProtobufFilterAndConverter(IckleProtobufFilterAndConverter delegate) {
+   @ProtoFactory
+   IckleBinaryProtobufFilterAndConverter(IckleProtobufFilterAndConverter delegate) {
       this.delegate = delegate;
    }
 
@@ -73,29 +74,4 @@ public final class IckleBinaryProtobufFilterAndConverter<K, V> extends AbstractK
    public MediaType format() {
       return MediaType.APPLICATION_PROTOSTREAM;
    }
-
-   public static final class Externalizer extends AbstractExternalizer<IckleBinaryProtobufFilterAndConverter> {
-
-      @Override
-      public void writeObject(ObjectOutput output, IckleBinaryProtobufFilterAndConverter object) throws IOException {
-         output.writeObject(object.delegate);
-      }
-
-      @Override
-      public IckleBinaryProtobufFilterAndConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         IckleProtobufFilterAndConverter delegate = (IckleProtobufFilterAndConverter) input.readObject();
-         return new IckleBinaryProtobufFilterAndConverter(delegate);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.ICKLE_BINARY_PROTOBUF_FILTER_AND_CONVERTER;
-      }
-
-      @Override
-      public Set<Class<? extends IckleBinaryProtobufFilterAndConverter>> getTypeClasses() {
-         return Collections.singleton(IckleBinaryProtobufFilterAndConverter.class);
-      }
-   }
-
 }

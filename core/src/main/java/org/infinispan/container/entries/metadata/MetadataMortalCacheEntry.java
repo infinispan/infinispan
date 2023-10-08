@@ -1,19 +1,15 @@
 package org.infinispan.container.entries.metadata;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.container.entries.AbstractInternalCacheEntry;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A cache entry that is mortal and is {@link MetadataAware}
@@ -21,6 +17,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
  * @author Galder Zamarreño
  * @since 5.3
  */
+@ProtoTypeId(ProtoStreamTypeIds.METADATA_MORTAL_ENTRY)
 public class MetadataMortalCacheEntry extends AbstractInternalCacheEntry implements MetadataAware {
 
    protected Metadata metadata;
@@ -37,6 +34,26 @@ public class MetadataMortalCacheEntry extends AbstractInternalCacheEntry impleme
       this.created = created;
    }
 
+   @ProtoFactory
+   MetadataMortalCacheEntry(MarshallableObject<?> wrappedKey, MarshallableObject<?> wrappedValue,
+                            PrivateMetadata internalMetadata, MarshallableObject<Metadata> wrappedMetadata,
+                            long created) {
+      super(wrappedKey, wrappedValue, internalMetadata);
+      this.metadata = MarshallableObject.unwrap(wrappedMetadata);
+      this.created = created;
+   }
+
+   @ProtoField(number = 4, name ="metadata")
+   public MarshallableObject<Metadata> getWrappedMetadata() {
+      return MarshallableObject.create(metadata);
+   }
+
+   @Override
+   @ProtoField(number = 5, defaultValue = "-1")
+   public final long getCreated() {
+      return created;
+   }
+
    @Override
    public final boolean isExpired(long now) {
       return ExpiryHelper.isExpiredMortal(metadata.lifespan(), created, now);
@@ -45,11 +62,6 @@ public class MetadataMortalCacheEntry extends AbstractInternalCacheEntry impleme
    @Override
    public final boolean canExpire() {
       return true;
-   }
-
-   @Override
-   public final long getCreated() {
-      return created;
    }
 
    @Override
@@ -103,36 +115,5 @@ public class MetadataMortalCacheEntry extends AbstractInternalCacheEntry impleme
       super.appendFieldsToString(builder);
       builder.append(", metadata=").append(metadata);
       builder.append(", created=").append(created);
-   }
-
-   public static class Externalizer extends AbstractExternalizer<MetadataMortalCacheEntry> {
-      @Override
-      public void writeObject(ObjectOutput output, MetadataMortalCacheEntry ice) throws IOException {
-         output.writeObject(ice.key);
-         output.writeObject(ice.value);
-         output.writeObject(ice.internalMetadata);
-         output.writeObject(ice.metadata);
-         UnsignedNumeric.writeUnsignedLong(output, ice.created);
-      }
-
-      @Override
-      public MetadataMortalCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Object key = input.readObject();
-         Object value = input.readObject();
-         PrivateMetadata internalMetadata = (PrivateMetadata) input.readObject();
-         Metadata metadata = (Metadata) input.readObject();
-         long created = UnsignedNumeric.readUnsignedLong(input);
-         return new MetadataMortalCacheEntry(key, value, internalMetadata, metadata, created);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.METADATA_MORTAL_ENTRY;
-      }
-
-      @Override
-      public Set<Class<? extends MetadataMortalCacheEntry>> getTypeClasses() {
-         return Collections.singleton(MetadataMortalCacheEntry.class);
-      }
    }
 }

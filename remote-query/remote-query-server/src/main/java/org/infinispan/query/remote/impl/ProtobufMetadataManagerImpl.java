@@ -93,7 +93,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
 
    @Start
    void start() {
-      GlobalConfiguration globalConfiguration = cacheManager.getCacheManagerConfiguration();
+      GlobalConfiguration globalConfiguration = SecurityActions.getCacheManagerConfiguration(cacheManager);
 
       Configuration.Builder configuration = Configuration.builder();
       configuration.schemaValidation(globalConfiguration.serialization().schemaCompatibilityValidation())
