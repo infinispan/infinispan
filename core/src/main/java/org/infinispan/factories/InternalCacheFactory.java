@@ -15,7 +15,7 @@ import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.cache.impl.EncoderCache;
 import org.infinispan.cache.impl.StatsCollectingCache;
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.concurrent.CompletionStages;
@@ -92,7 +92,7 @@ public class InternalCacheFactory<K, V> {
    private AdvancedCache<K, V> createAndWire(Configuration configuration,
                                              GlobalComponentRegistry globalComponentRegistry,
                                              String cacheName) {
-      StreamingMarshaller marshaller = globalComponentRegistry.getOrCreateComponent(StreamingMarshaller.class,
+      Marshaller marshaller = globalComponentRegistry.getOrCreateComponent(Marshaller.class,
                                                                                     KnownComponentNames.INTERNAL_MARSHALLER);
 
       AdvancedCache<K, V> cache = new CacheImpl<>(cacheName);
@@ -112,7 +112,7 @@ public class InternalCacheFactory<K, V> {
       AdvancedCache<K, V> encodedCache = buildEncodingCache(cache);
 
       // TODO Register the cache without encoding in the component registry
-      bootstrap(cacheName, encodedCache, configuration, globalComponentRegistry, marshaller);
+      bootstrap(cacheName, encodedCache, configuration, globalComponentRegistry);
       if (marshaller != null) {
          componentRegistry.wireDependencies(marshaller, false);
       }
@@ -148,7 +148,7 @@ public class InternalCacheFactory<K, V> {
     * Bootstraps this factory with a Configuration and a ComponentRegistry.
     */
    private void bootstrap(String cacheName, AdvancedCache<?, ?> cache, Configuration configuration,
-                          GlobalComponentRegistry globalComponentRegistry, StreamingMarshaller globalMarshaller) {
+                          GlobalComponentRegistry globalComponentRegistry) {
       // injection bootstrap stuff
       componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, globalComponentRegistry.getClassLoader());
 

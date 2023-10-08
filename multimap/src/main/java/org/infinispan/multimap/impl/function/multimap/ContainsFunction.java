@@ -1,15 +1,12 @@
 package org.infinispan.multimap.impl.function.multimap;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.multimap.impl.Bucket;
-import org.infinispan.multimap.impl.ExternalizerIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Serializable function used by {@link org.infinispan.multimap.impl.EmbeddedMultimapCache#containsKey(Object)} and
@@ -19,13 +16,23 @@ import org.infinispan.multimap.impl.ExternalizerIds;
  * @see <a href="https://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 9.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_CONTAINS_FUNCTION)
 public final class ContainsFunction<K, V> implements BaseFunction<K, V, Boolean> {
 
-   public static final AdvancedExternalizer<ContainsFunction> EXTERNALIZER = new Externalizer();
    private final V value;
 
    public ContainsFunction() {
       this.value = null;
+   }
+
+   @ProtoFactory
+   ContainsFunction(MarshallableObject<V> value) {
+      this.value = MarshallableObject.unwrap(value);
+   }
+
+   @ProtoField(1)
+   public MarshallableObject<V> getValue() {
+      return MarshallableObject.create(value);
    }
 
    /**
@@ -48,28 +55,5 @@ public final class ContainsFunction<K, V> implements BaseFunction<K, V, Boolean>
       return value == null ?
             entryView.find().isPresent() :
             entryView.find().map(values -> values.contains(value)).orElse(Boolean.FALSE);
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<ContainsFunction> {
-
-      @Override
-      public Set<Class<? extends ContainsFunction>> getTypeClasses() {
-         return Collections.singleton(ContainsFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.CONTAINS_KEY_VALUE_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, ContainsFunction object) throws IOException {
-         output.writeObject(object.value);
-      }
-
-      @Override
-      public ContainsFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new ContainsFunction(input.readObject());
-      }
    }
 }

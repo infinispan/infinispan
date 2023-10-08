@@ -2,9 +2,6 @@ package org.infinispan.commands.write;
 
 import static org.infinispan.commons.util.Util.toStr;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -12,11 +9,15 @@ import java.util.HashSet;
 import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Util;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.marshall.protostream.impl.MarshallableArray;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
 
@@ -26,22 +27,39 @@ import org.infinispan.util.concurrent.locks.RemoteLockCommand;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.INVALIDATE_COMMAND)
 public class InvalidateCommand extends AbstractTopologyAffectedCommand implements WriteCommand, RemoteLockCommand {
    public static final int COMMAND_ID = 6;
    protected Object[] keys;
    protected CommandInvocationId commandInvocationId;
 
-   public InvalidateCommand() {
-   }
-
    public InvalidateCommand(long flagsBitSet, CommandInvocationId commandInvocationId, Object... keys) {
+      super(flagsBitSet, -1);
       this.keys = keys;
       this.commandInvocationId = commandInvocationId;
-      setFlagsBitSet(flagsBitSet);
    }
 
    public InvalidateCommand(long flagsBitSet, Collection<Object> keys, CommandInvocationId commandInvocationId) {
       this(flagsBitSet, commandInvocationId, keys == null || keys.isEmpty() ? Util.EMPTY_OBJECT_ARRAY : keys.toArray());
+   }
+
+   @ProtoFactory
+   protected InvalidateCommand(long flagsWithoutRemote, int topologyId, CommandInvocationId commandInvocationId,
+                     MarshallableArray<Object> wrappedKeys) {
+      super(flagsWithoutRemote, topologyId);
+      this.keys = MarshallableArray.unwrap(wrappedKeys);
+      this.commandInvocationId = commandInvocationId;
+   }
+
+   @ProtoField(number = 3, name = "keys")
+   public MarshallableArray<Object> getWrappedKeys() {
+      return MarshallableArray.create(keys);
+   }
+
+   @Override
+   @ProtoField(4)
+   public CommandInvocationId getCommandInvocationId() {
+      return commandInvocationId;
    }
 
    @Override
@@ -52,27 +70,6 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
    @Override
    public boolean isReturnValueExpected() {
       return false;
-   }
-
-   @Override
-   public String toString() {
-      return "InvalidateCommand{keys=" +
-            toStr(Arrays.asList(keys)) +
-            '}';
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      CommandInvocationId.writeTo(output, commandInvocationId);
-      MarshallUtil.marshallArray(keys, output);
-      output.writeLong(getFlagsBitSet());
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      commandInvocationId = CommandInvocationId.readFrom(input);
-      keys = MarshallUtil.unmarshallArray(input, Util::objectArray);
-      setFlagsBitSet(input.readLong());
    }
 
    @Override
@@ -111,11 +108,6 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
    @Override
    public void fail() {
       throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public CommandInvocationId getCommandInvocationId() {
-      return commandInvocationId;
    }
 
    @Override
@@ -171,5 +163,12 @@ public class InvalidateCommand extends AbstractTopologyAffectedCommand implement
    @Override
    public int hashCode() {
       return keys != null ? Arrays.hashCode(keys) : 0;
+   }
+
+   @Override
+   public String toString() {
+      return "InvalidateCommand{keys=" +
+            toStr(Arrays.asList(keys)) +
+            '}';
    }
 }

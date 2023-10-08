@@ -1,16 +1,12 @@
 package org.infinispan.distribution.ch.impl;
 
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.distribution.topologyaware.TopologyInfo;
 import org.infinispan.distribution.topologyaware.TopologyLevel;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -26,6 +22,7 @@ import org.infinispan.remoting.transport.Address;
  * @author Dan Berindei
  * @since 5.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.TOPOLOGY_AWARE_SYNC_CONSISTENT_HASH)
 public class TopologyAwareSyncConsistentHashFactory extends SyncConsistentHashFactory {
    @Override
    protected Builder createBuilder(int numOwners, int numSegments, List<Address> members, Map<Address, Float> capacityFactors) {
@@ -114,28 +111,6 @@ public class TopologyAwareSyncConsistentHashFactory extends SyncConsistentHashFa
          ownerSiteIndices[segment][ownerPosition] = siteLookup[nodeIndex];
          ownerRackIndices[segment][ownerPosition] = rackLookup[nodeIndex];
          ownerMachineIndices[segment][ownerPosition] = machineLookup[nodeIndex];
-      }
-   }
-
-   public static class Externalizer extends AbstractExternalizer<TopologyAwareSyncConsistentHashFactory> {
-
-      @Override
-      public void writeObject(ObjectOutput output, TopologyAwareSyncConsistentHashFactory chf) {
-      }
-
-      @Override
-      public TopologyAwareSyncConsistentHashFactory readObject(ObjectInput unmarshaller) {
-         return new TopologyAwareSyncConsistentHashFactory();
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.TOPOLOGY_AWARE_SYNC_CONSISTENT_HASH_FACTORY;
-      }
-
-      @Override
-      public Set<Class<? extends TopologyAwareSyncConsistentHashFactory>> getTypeClasses() {
-         return Collections.singleton(TopologyAwareSyncConsistentHashFactory.class);
       }
    }
 }

@@ -1,18 +1,15 @@
 package org.infinispan.multimap.impl.function.list;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
-import org.infinispan.multimap.impl.ExternalizerIds;
 import org.infinispan.multimap.impl.ListBucket;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Serializable function used by
@@ -24,11 +21,16 @@ import org.infinispan.multimap.impl.ListBucket;
  * @see <a href="https://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_POLL_FUNCTION)
 public final class PollFunction<K, V> implements ListBucketBaseFunction<K, V, Collection<V>> {
-   public static final AdvancedExternalizer<PollFunction> EXTERNALIZER = new PollFunction.Externalizer();
-   private final boolean first;
-   private final long count;
 
+   @ProtoField(1)
+   final boolean first;
+
+   @ProtoField(2)
+   final long count;
+
+   @ProtoFactory
    public PollFunction(boolean first, long count) {
       this.first = first;
       this.count = count;
@@ -53,29 +55,5 @@ public final class PollFunction<K, V> implements ListBucketBaseFunction<K, V, Co
       }
       // key does not exist
       return null;
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<PollFunction> {
-
-      @Override
-      public Set<Class<? extends PollFunction>> getTypeClasses() {
-         return Collections.singleton(PollFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.POLL_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, PollFunction object) throws IOException {
-         output.writeBoolean(object.first);
-         output.writeLong(object.count);
-      }
-
-      @Override
-      public PollFunction readObject(ObjectInput input) throws IOException {
-         return new PollFunction(input.readBoolean(), input.readLong());
-      }
    }
 }

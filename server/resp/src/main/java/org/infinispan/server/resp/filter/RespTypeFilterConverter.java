@@ -1,11 +1,12 @@
 package org.infinispan.server.resp.filter;
 
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.annotations.ProtoName;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.server.resp.RespTypes;
 
 /**
@@ -16,19 +17,16 @@ import org.infinispan.server.resp.RespTypes;
  * @param <V>: The type of the value.
  * @since 15.0
  */
-@ProtoName("RespTypeFilterConverter")
+@ProtoTypeId(ProtoStreamTypeIds.RESP_TYPE_FILTER_CONVERTER)
 public class RespTypeFilterConverter<V> extends AbstractKeyValueFilterConverter<byte[], V, V> {
 
-   private final RespTypes type;
+
+   @ProtoField(1)
+   final RespTypes type;
 
    @ProtoFactory
-   public RespTypeFilterConverter(byte ordinal) {
-      this.type = RespTypes.fromOrdinal(ordinal);
-   }
-
-   @ProtoField(number = 1, defaultValue = "0")
-   byte ordinal() {
-      return (byte) type.ordinal();
+   public RespTypeFilterConverter(RespTypes type) {
+      this.type = type;
    }
 
    @Override

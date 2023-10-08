@@ -2,14 +2,10 @@ package org.infinispan.commands.write;
 
 import static org.infinispan.commons.util.Util.toStr;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -18,11 +14,16 @@ import org.infinispan.commands.AbstractTopologyAffectedCommand;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.marshall.protostream.impl.MarshallableMap;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
 /**
@@ -31,39 +32,73 @@ import org.infinispan.util.concurrent.locks.RemoteLockCommand;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.PUT_MAP_COMMAND)
 public class PutMapCommand extends AbstractTopologyAffectedCommand implements WriteCommand, MetadataAwareCommand, RemoteLockCommand {
    public static final byte COMMAND_ID = 9;
 
    private Map<Object, Object> map;
    private Metadata metadata;
    private boolean isForwarded = false;
+   private CommandInvocationId commandInvocationId;
    private Map<Object, PrivateMetadata> internalMetadataMap;
 
+
+   @SuppressWarnings("unchecked")
+   public PutMapCommand(Map<?, ?> map, Metadata metadata, long flagsBitSet, CommandInvocationId commandInvocationId) {
+      super(flagsBitSet, -1);
+      this.map = (Map<Object, Object>) map;
+      this.metadata = metadata;
+      this.commandInvocationId = commandInvocationId;
+      this.internalMetadataMap = new HashMap<>();
+   }
+
+   public PutMapCommand(PutMapCommand c) {
+      this(c.map, c.metadata, c.flags, c.commandInvocationId);
+      this.isForwarded = c.isForwarded;
+      this.internalMetadataMap = new HashMap<>(c.internalMetadataMap);
+   }
+
+   @ProtoFactory
+   PutMapCommand(long flagsWithoutRemote, int topologyId, MarshallableMap<Object, Object> wrappedMap,
+                 MarshallableObject<Metadata> wrappedMetadata, boolean forwarded, CommandInvocationId commandInvocationId,
+                 MarshallableMap<Object, PrivateMetadata> internalMetadata) {
+      super(flagsWithoutRemote, topologyId);
+      this.map = MarshallableMap.unwrap(wrappedMap);
+      this.metadata = MarshallableObject.unwrap(wrappedMetadata);
+      this.isForwarded = forwarded;
+      this.commandInvocationId = commandInvocationId;
+      this.internalMetadataMap = MarshallableMap.unwrap(internalMetadata);
+   }
+
+   @ProtoField(number = 3, name = "map")
+   MarshallableMap<Object, Object> getWrappedMap() {
+      return MarshallableMap.create(map);
+   }
+
+   @ProtoField(number = 4, name = "metadata")
+   MarshallableObject<Metadata> getWrappedMetadata() {
+      return MarshallableObject.create(metadata);
+   }
+
+   @ProtoField(5)
    public CommandInvocationId getCommandInvocationId() {
       return commandInvocationId;
    }
 
-   private CommandInvocationId commandInvocationId;
-
-   public PutMapCommand() {
+   /**
+    * For non transactional caches that support concurrent writes (default), the commands are forwarded between nodes,
+    * e.g.: - commands is executed on node A, but some of the keys should be locked on node B - the command is send to
+    * the main owner (B) - B tries to acquire lock on the keys it owns, then forwards the commands to the other owners
+    * as well - at this last stage, the command has the "isForwarded" flag set to true.
+    */
+   @ProtoField(6)
+   public boolean isForwarded() {
+      return isForwarded;
    }
 
-   @SuppressWarnings("unchecked")
-   public PutMapCommand(Map<?, ?> map, Metadata metadata, long flagsBitSet, CommandInvocationId commandInvocationId) {
-      this.map = (Map<Object, Object>) map;
-      this.metadata = metadata;
-      this.commandInvocationId = commandInvocationId;
-      setFlagsBitSet(flagsBitSet);
-      this.internalMetadataMap = new HashMap<>();
-   }
-
-   public PutMapCommand(PutMapCommand command) {
-      this.map = command.map;
-      this.metadata = command.metadata;
-      this.isForwarded = command.isForwarded;
-      this.commandInvocationId = command.commandInvocationId;
-      setFlagsBitSet(command.getFlagsBitSet());
-      this.internalMetadataMap = new HashMap<>(command.internalMetadataMap);
+   @ProtoField(7)
+   MarshallableMap<Object, PrivateMetadata> getInternalMetadata() {
+      return MarshallableMap.create(internalMetadataMap);
    }
 
    @Override
@@ -111,42 +146,18 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      MarshallUtil.marshallMap(map, output);
-      output.writeObject(metadata);
-      output.writeBoolean(isForwarded);
-      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
-      CommandInvocationId.writeTo(output, commandInvocationId);
-      MarshallUtil.marshallMap(internalMetadataMap, output);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      map = MarshallUtil.unmarshallMap(input, LinkedHashMap::new);
-      metadata = (Metadata) input.readObject();
-      isForwarded = input.readBoolean();
-      setFlagsBitSet(input.readLong());
-      commandInvocationId = CommandInvocationId.readFrom(input);
-      internalMetadataMap = MarshallUtil.unmarshallMap(input, HashMap::new);
-   }
-
-   @Override
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
       PutMapCommand that = (PutMapCommand) o;
-
       return Objects.equals(metadata, that.metadata) &&
             Objects.equals(map, that.map);
-
    }
 
    @Override
    public int hashCode() {
-      int result = map != null ? map.hashCode() : 0;
-      result = 31 * result + (metadata != null ? metadata.hashCode() : 0);
-      return result;
+      return Objects.hash(map, metadata);
    }
 
    @Override
@@ -230,18 +241,6 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
    }
 
    /**
-    * For non transactional caches that support concurrent writes (default), the commands are forwarded between nodes,
-    * e.g.:
-    * - commands is executed on node A, but some of the keys should be locked on node B
-    * - the command is send to the main owner (B)
-    * - B tries to acquire lock on the keys it owns, then forwards the commands to the other owners as well
-    * - at this last stage, the command has the "isForwarded" flag set to true.
-    */
-   public boolean isForwarded() {
-      return isForwarded;
-   }
-
-   /**
     * @see #isForwarded()
     */
    public void setForwarded(boolean forwarded) {
@@ -257,5 +256,4 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
    public void setInternalMetadata(Object key, PrivateMetadata internalMetadata) {
       this.internalMetadataMap.put(key, internalMetadata);
    }
-
 }

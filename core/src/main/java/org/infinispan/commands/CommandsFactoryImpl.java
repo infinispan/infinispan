@@ -83,10 +83,7 @@ import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.marshall.Externalizer;
-import org.infinispan.commons.marshall.LambdaExternalizer;
-import org.infinispan.commons.marshall.SerializeFunctionWith;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
@@ -112,7 +109,6 @@ import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.impl.Params;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.GlobalMarshaller;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
@@ -167,7 +163,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Inject ComponentRegistry componentRegistry;
    @Inject EmbeddedCacheManager cacheManager;
    @Inject @ComponentName(KnownComponentNames.INTERNAL_MARSHALLER)
-   StreamingMarshaller marshaller;
+   Marshaller marshaller;
 
    private ByteString cacheName;
    private boolean transactional;
@@ -497,7 +493,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public <K, V, T, R> ReadWriteKeyValueCommand<K, V, T, R> buildReadWriteKeyValueCommand(Object key, Object argument,
          BiFunction<T, ReadWriteEntryView<K, V>, R> f, int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return init(new ReadWriteKeyValueCommand<>(key, argument, f, segment, generateUUID(transactional), getValueMatcher(f),
+      return init(new ReadWriteKeyValueCommand<>(key, argument, f, segment, generateUUID(transactional), ValueMatcher.MATCH_ALWAYS,
             params, keyDataConversion, valueDataConversion));
    }
 
@@ -505,7 +501,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    public <K, V, R> ReadWriteKeyCommand<K, V, R> buildReadWriteKeyCommand(Object key,
          Function<ReadWriteEntryView<K, V>, R> f, int segment, Params params, DataConversion keyDataConversion,
          DataConversion valueDataConversion) {
-      return init(new ReadWriteKeyCommand<>(key, f, segment, generateUUID(transactional), getValueMatcher(f), params, keyDataConversion, valueDataConversion));
+      return init(new ReadWriteKeyCommand<>(key, f, segment, generateUUID(transactional), ValueMatcher.MATCH_ALWAYS, params, keyDataConversion, valueDataConversion));
    }
 
    @Override
@@ -521,13 +517,13 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(
          Object key, Consumer<WriteEntryView<K, V>> f, int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return init(new WriteOnlyKeyCommand<>(key, f, segment, generateUUID(transactional), getValueMatcher(f), params, keyDataConversion, valueDataConversion));
+      return init(new WriteOnlyKeyCommand<>(key, f, segment, generateUUID(transactional), ValueMatcher.MATCH_ALWAYS, params, keyDataConversion, valueDataConversion));
    }
 
    @Override
    public <K, V, T> WriteOnlyKeyValueCommand<K, V, T> buildWriteOnlyKeyValueCommand(Object key, Object argument, BiConsumer<T, WriteEntryView<K, V>> f,
          int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
-      return init(new WriteOnlyKeyValueCommand<>(key, argument, f, segment, generateUUID(transactional), getValueMatcher(f), params, keyDataConversion, valueDataConversion));
+      return init(new WriteOnlyKeyValueCommand<>(key, argument, f, segment, generateUUID(transactional), ValueMatcher.MATCH_ALWAYS, params, keyDataConversion, valueDataConversion));
    }
 
    @Override
@@ -563,46 +559,84 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new ExceptionAckCommand(cacheName, id, throwable, topologyId);
    }
 
-   private ValueMatcher getValueMatcher(Object o) {
-      SerializeFunctionWith ann = o.getClass().getAnnotation(SerializeFunctionWith.class);
-      if (ann != null)
-         return ValueMatcher.valueOf(ann.valueMatcher().toString());
-
-      Externalizer ext = ((GlobalMarshaller) marshaller).findExternalizerFor(o);
-      if (ext instanceof LambdaExternalizer)
-         return ValueMatcher.valueOf(((LambdaExternalizer) ext).valueMatcher(o).toString());
-
-      return ValueMatcher.MATCH_ALWAYS;
+   @Override
+   public SingleKeyBackupWriteCommand buildSingleKeyBackupWriteCommand(IracPutKeyValueCommand command, long sequence, int segmentId) {
+      return SingleKeyBackupWriteCommand.create(cacheName, command, sequence, segmentId);
    }
 
    @Override
-   public SingleKeyBackupWriteCommand buildSingleKeyBackupWriteCommand() {
-      return new SingleKeyBackupWriteCommand(cacheName);
+   public SingleKeyBackupWriteCommand buildSingleKeyBackupWriteCommand(PutKeyValueCommand command, long sequence, int segmentId) {
+      return SingleKeyBackupWriteCommand.create(cacheName, command, sequence, segmentId);
    }
 
    @Override
-   public SingleKeyFunctionalBackupWriteCommand buildSingleKeyFunctionalBackupWriteCommand() {
-      return new SingleKeyFunctionalBackupWriteCommand(cacheName);
+   public SingleKeyBackupWriteCommand buildSingleKeyBackupWriteCommand(RemoveCommand command, long sequence, int segmentId) {
+      return SingleKeyBackupWriteCommand.create(cacheName, command, sequence, segmentId);
    }
 
    @Override
-   public PutMapBackupWriteCommand buildPutMapBackupWriteCommand() {
-      return new PutMapBackupWriteCommand(cacheName);
+   public SingleKeyBackupWriteCommand buildSingleKeyBackupWriteCommand(ReplaceCommand command, long sequence, int segmentId) {
+      return SingleKeyBackupWriteCommand.create(cacheName, command, sequence, segmentId);
    }
 
    @Override
-   public MultiEntriesFunctionalBackupWriteCommand buildMultiEntriesFunctionalBackupWriteCommand() {
-      return new MultiEntriesFunctionalBackupWriteCommand(cacheName);
+   public SingleKeyBackupWriteCommand buildSingleKeyBackupWriteCommand(ComputeIfAbsentCommand command, long sequence, int segmentId) {
+      return SingleKeyBackupWriteCommand.create(cacheName, command, sequence, segmentId);
    }
 
    @Override
-   public MultiKeyFunctionalBackupWriteCommand buildMultiKeyFunctionalBackupWriteCommand() {
-      return new MultiKeyFunctionalBackupWriteCommand(cacheName);
+   public SingleKeyBackupWriteCommand buildSingleKeyBackupWriteCommand(ComputeCommand command, long sequence, int segmentId) {
+      return SingleKeyBackupWriteCommand.create(cacheName, command, sequence, segmentId);
    }
 
    @Override
-   public BackupNoopCommand buildBackupNoopCommand() {
-         return new BackupNoopCommand(cacheName);
+   public <K, V, T, R> SingleKeyFunctionalBackupWriteCommand buildSingleKeyBackupWriteCommand(ReadWriteKeyValueCommand<K, V, T, R> command, long sequence, int segmentId) {
+      return SingleKeyFunctionalBackupWriteCommand.create(cacheName, command, sequence, segmentId);
+   }
+
+   @Override
+   public <K, V, R> SingleKeyFunctionalBackupWriteCommand buildSingleKeyBackupWriteCommand(ReadWriteKeyCommand<K, V, R> command, long sequence, int segmentId) {
+      return SingleKeyFunctionalBackupWriteCommand.create(cacheName, command, sequence, segmentId);
+   }
+
+   @Override
+   public <K, V> SingleKeyFunctionalBackupWriteCommand buildSingleKeyBackupWriteCommand(WriteOnlyKeyCommand<K, V> command, long sequence, int segmentId) {
+      return SingleKeyFunctionalBackupWriteCommand.create(cacheName, command, sequence, segmentId);
+   }
+
+   @Override
+   public <K, V, T> SingleKeyFunctionalBackupWriteCommand buildSingleKeyBackupWriteCommand(WriteOnlyKeyValueCommand<K, V, T> command, long sequence, int segmentId) {
+      return SingleKeyFunctionalBackupWriteCommand.create(cacheName, command, sequence, segmentId);
+   }
+
+   @Override
+   public PutMapBackupWriteCommand buildPutMapBackupWriteCommand(PutMapCommand command, Collection<Object> keys, long sequence, int segmentId) {
+      return new PutMapBackupWriteCommand(cacheName, command, sequence, segmentId, keys);
+   }
+
+   @Override
+   public <K, V, T> MultiEntriesFunctionalBackupWriteCommand buildMultiEntriesFunctionalBackupWriteCommand(WriteOnlyManyEntriesCommand<K, V, T> command, Collection<Object> keys, long sequence, int segmentId) {
+      return MultiEntriesFunctionalBackupWriteCommand.create(cacheName, command, keys, sequence, segmentId);
+   }
+
+   @Override
+   public <K, V, T, R> MultiEntriesFunctionalBackupWriteCommand buildMultiEntriesFunctionalBackupWriteCommand(ReadWriteManyEntriesCommand<K, V, T, R> command, Collection<Object> keys, long sequence, int segmentId) {
+      return MultiEntriesFunctionalBackupWriteCommand.create(cacheName, command, keys, sequence, segmentId);
+   }
+
+   @Override
+   public <K, V> MultiKeyFunctionalBackupWriteCommand buildMultiKeyFunctionalBackupWriteCommand(WriteOnlyManyCommand<K, V> command, Collection<Object> keys, long sequence, int segmentId) {
+      return MultiKeyFunctionalBackupWriteCommand.create(cacheName, command, keys, sequence, segmentId);
+   }
+
+   @Override
+   public <K, V, R> MultiKeyFunctionalBackupWriteCommand buildMultiKeyFunctionalBackupWriteCommand(ReadWriteManyCommand<K, V, R> command, Collection<Object> keys, long sequence, int segmentId) {
+      return MultiKeyFunctionalBackupWriteCommand.create(cacheName, command, keys, sequence, segmentId);
+   }
+
+   @Override
+   public BackupNoopCommand buildBackupNoopCommand(WriteCommand command, long sequence, int segmentId) {
+      return new BackupNoopCommand(cacheName, command, sequence, segmentId);
    }
 
    @Override

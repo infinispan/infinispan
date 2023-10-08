@@ -27,6 +27,10 @@ import org.infinispan.functional.Listeners.ReadWriteListeners.ReadWriteListener;
 import org.infinispan.functional.Listeners.WriteListeners.WriteListener;
 import org.infinispan.functional.TestFunctionalInterfaces.SetConstantOnReadWrite;
 import org.infinispan.functional.TestFunctionalInterfaces.SetConstantOnWriteOnly;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.ProtoSchema;
+import org.infinispan.protostream.annotations.ProtoSyntax;
+import org.infinispan.test.TestDataSCI;
 import org.testng.annotations.Test;
 
 /**
@@ -34,6 +38,10 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "functional.FunctionalListenersTest")
 public class FunctionalListenersTest extends AbstractFunctionalTest {
+
+   public FunctionalListenersTest() {
+      this.serializationContextInitializer = new FunctionalListenersSCIImpl();
+   }
 
    public void testSimpleLambdaReadWriteListeners() throws Exception {
       doLambdaReadWriteListeners(supplyIntKey(), wo(fmapS1), rw(fmapS2), true);
@@ -304,4 +312,18 @@ public class FunctionalListenersTest extends AbstractFunctionalTest {
       }
    }
 
+   @ProtoSchema(
+         dependsOn = TestDataSCI.class,
+         includeClasses = {
+               TestFunctionalInterfaces.SetConstantOnReadWrite.class,
+               TestFunctionalInterfaces.SetConstantOnWriteOnly.class
+         },
+         schemaFileName = "test.core.functional.listeners.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.core.functional.listeners",
+         service = false,
+         syntax = ProtoSyntax.PROTO3
+   )
+   public interface FunctionalListenersSCI extends SerializationContextInitializer {
+   }
 }

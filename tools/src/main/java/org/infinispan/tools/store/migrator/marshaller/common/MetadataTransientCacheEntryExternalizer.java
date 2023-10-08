@@ -2,14 +2,9 @@ package org.infinispan.tools.store.migrator.marshaller.common;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.container.entries.metadata.MetadataTransientCacheEntry;
-import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
 
 /**
@@ -18,24 +13,10 @@ import org.infinispan.metadata.Metadata;
  * @author Pedro Ruivo
  * @since 11.0
  */
-public class MetadataTransientCacheEntryExternalizer implements AdvancedExternalizer<MetadataTransientCacheEntry> {
+public class MetadataTransientCacheEntryExternalizer extends AbstractMigratorExternalizer<MetadataTransientCacheEntry> {
 
-   @Override
-   public Set<Class<? extends MetadataTransientCacheEntry>> getTypeClasses() {
-      return Collections.singleton(MetadataTransientCacheEntry.class);
-   }
-
-   @Override
-   public Integer getId() {
-      return Ids.METADATA_TRANSIENT_ENTRY;
-   }
-
-   @Override
-   public void writeObject(ObjectOutput output, MetadataTransientCacheEntry ice) throws IOException {
-      output.writeObject(ice.getKey());
-      output.writeObject(ice.getValue());
-      output.writeObject(ice.getMetadata());
-      UnsignedNumeric.writeUnsignedLong(output, ice.getLastUsed());
+   public MetadataTransientCacheEntryExternalizer() {
+      super(MetadataTransientCacheEntry.class, Ids.METADATA_TRANSIENT_ENTRY);
    }
 
    @Override
@@ -46,5 +27,4 @@ public class MetadataTransientCacheEntryExternalizer implements AdvancedExternal
       long lastUsed = UnsignedNumeric.readUnsignedLong(input);
       return new MetadataTransientCacheEntry(key, value, metadata, lastUsed);
    }
-
 }

@@ -1,17 +1,17 @@
 package org.infinispan.topology;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.Proto;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -26,6 +26,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Dan Berindei
  * @since 5.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.CACHE_TOPOLOGY)
 public class CacheTopology {
 
    private static final Log log = LogFactory.getLog(CacheTopology.class);
@@ -76,8 +77,67 @@ public class CacheTopology {
       this.restoredFromState = restoredTopology;
    }
 
+   @ProtoFactory
+   CacheTopology(int topologyId, int rebalanceId, boolean restoredFromState, Phase phase, List<PersistentUUID> membersPersistentUUIDs,
+                 MarshallableObject<ConsistentHash> wrappedCurrentCH, MarshallableObject<ConsistentHash> wrappedPendingCH,
+                 MarshallableObject<ConsistentHash> wrappedUnionCH, List<JGroupsAddress> jGroupsMembers) {
+      this.topologyId = topologyId;
+      this.rebalanceId = rebalanceId;
+      this.restoredFromState = restoredFromState;
+      this.currentCH = MarshallableObject.unwrap(wrappedCurrentCH);
+      this.pendingCH = MarshallableObject.unwrap(wrappedPendingCH);
+      this.unionCH = MarshallableObject.unwrap(wrappedUnionCH);
+      this.phase = phase;
+      this.persistentUUIDs = membersPersistentUUIDs;
+      this.actualMembers = (List<Address>)(List<?>) jGroupsMembers;
+   }
+
+   @ProtoField(1)
    public int getTopologyId() {
       return topologyId;
+   }
+
+   /**
+    * The id of the latest started rebalance.
+    */
+   @ProtoField(2)
+   public int getRebalanceId() {
+      return rebalanceId;
+   }
+
+   @ProtoField(3)
+   boolean getRestoredFromState() {
+      return restoredFromState;
+   }
+
+   @ProtoField(4)
+   public Phase getPhase() {
+      return phase;
+   }
+
+   @ProtoField(5)
+   public List<PersistentUUID> getMembersPersistentUUIDs() {
+      return persistentUUIDs;
+   }
+
+   @ProtoField(number = 6, name = "currentCH")
+   MarshallableObject<ConsistentHash> getWrappedCurrentCH() {
+      return MarshallableObject.create(currentCH);
+   }
+
+   @ProtoField(number = 7, name = "pendingCH")
+   MarshallableObject<ConsistentHash> getWrappedPendingCH() {
+      return MarshallableObject.create(pendingCH);
+   }
+
+   @ProtoField(number = 8, name = "unionCH")
+   MarshallableObject<ConsistentHash> getWrappedUnionCH() {
+      return MarshallableObject.create(unionCH);
+   }
+
+   @ProtoField(9)
+   List<JGroupsAddress> getJGroupsMembers() {
+      return (List<JGroupsAddress>)(List<?>) actualMembers;
    }
 
    /**
@@ -101,12 +161,6 @@ public class CacheTopology {
       return unionCH;
    }
 
-   /**
-    * The id of the latest started rebalance.
-    */
-   public int getRebalanceId() {
-      return rebalanceId;
-   }
 
    /**
     * @return The nodes that are members in both consistent hashes (if {@code pendingCH != null},
@@ -129,10 +183,6 @@ public class CacheTopology {
     */
    public List<Address> getActualMembers() {
       return actualMembers;
-   }
-
-   public List<PersistentUUID> getMembersPersistentUUIDs() {
-      return persistentUUIDs;
    }
 
    public boolean wasTopologyRestoredFromState() {
@@ -236,50 +286,6 @@ public class CacheTopology {
       }
    }
 
-   public Phase getPhase() {
-      return phase;
-   }
-
-
-   public static class Externalizer extends InstanceReusingAdvancedExternalizer<CacheTopology> {
-      @Override
-      public void doWriteObject(ObjectOutput output, CacheTopology cacheTopology) throws IOException {
-         output.writeInt(cacheTopology.topologyId);
-         output.writeInt(cacheTopology.rebalanceId);
-         output.writeBoolean(cacheTopology.restoredFromState);
-         output.writeObject(cacheTopology.currentCH);
-         output.writeObject(cacheTopology.pendingCH);
-         output.writeObject(cacheTopology.unionCH);
-         output.writeObject(cacheTopology.actualMembers);
-         output.writeObject(cacheTopology.persistentUUIDs);
-         MarshallUtil.marshallEnum(cacheTopology.phase, output);
-      }
-
-      @Override
-      public CacheTopology doReadObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
-         int topologyId = unmarshaller.readInt();
-         int rebalanceId = unmarshaller.readInt();
-         boolean possibleDataLoss = unmarshaller.readBoolean();
-         ConsistentHash currentCH = (ConsistentHash) unmarshaller.readObject();
-         ConsistentHash pendingCH = (ConsistentHash) unmarshaller.readObject();
-         ConsistentHash unionCH = (ConsistentHash) unmarshaller.readObject();
-         List<Address> actualMembers = (List<Address>) unmarshaller.readObject();
-         List<PersistentUUID> persistentUUIDs = (List<PersistentUUID>) unmarshaller.readObject();
-         Phase phase = MarshallUtil.unmarshallEnum(unmarshaller, Phase::valueOf);
-         return new CacheTopology(topologyId, rebalanceId, possibleDataLoss, currentCH, pendingCH, unionCH, phase, actualMembers, persistentUUIDs);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.CACHE_TOPOLOGY;
-      }
-
-      @Override
-      public Set<Class<? extends CacheTopology>> getTypeClasses() {
-         return Collections.singleton(CacheTopology.class);
-      }
-   }
-
    /**
     * Phase of the rebalance process. Using four phases guarantees these properties:
     *
@@ -289,24 +295,30 @@ public class CacheTopology {
     *
     * Old entries should be wiped out only after coming to the {@link #NO_REBALANCE} phase.
     */
+   @Proto
+   @ProtoTypeId(ProtoStreamTypeIds.CACHE_TOPOLOGY_PHASE)
    public enum Phase {
       /**
        * Only currentCH should be set, this works as both readCH and writeCH
        */
       NO_REBALANCE(false),
+
       /**
        * Interim state between NO_REBALANCE &rarr; READ_OLD_WRITE_ALL
        * readCh is set locally using previous Topology (of said node) readCH, whilst writeCH contains all members after merge
        */
       CONFLICT_RESOLUTION(false),
+
       /**
        * Used during state transfer: readCH == currentCH, writeCH = unionCH
        */
       READ_OLD_WRITE_ALL(true),
+
       /**
        * Used after state transfer completes: readCH == writeCH = unionCH
        */
       READ_ALL_WRITE_ALL(false),
+
       /**
        * Intermediate state that prevents ISPN-5021: readCH == pendingCH, writeCH = unionCH
        */

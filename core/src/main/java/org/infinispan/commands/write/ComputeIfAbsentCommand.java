@@ -2,43 +2,68 @@ package org.infinispan.commands.write;
 
 import static org.infinispan.commons.util.Util.toStr;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Objects;
 import java.util.function.Function;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
+@ProtoTypeId(ProtoStreamTypeIds.COMPUTE_IF_ABSENT_COMMAND)
 public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
 
    public static final int COMMAND_ID = 69;
 
-   private Function mappingFunction;
+   private Function<?, ?> mappingFunction;
    private Metadata metadata;
-   private boolean successful = true;
    private PrivateMetadata internalMetadata;
+   private transient boolean successful = true;
 
-   public ComputeIfAbsentCommand() {
-   }
-
-   public ComputeIfAbsentCommand(Object key,
-                                 Function mappingFunction,
-                                 int segment, long flagsBitSet,
-                                 CommandInvocationId commandInvocationId,
-                                 Metadata metadata) {
-
+   public ComputeIfAbsentCommand(Object key, Function<?, ?> mappingFunction, int segment, long flagsBitSet,
+                                 CommandInvocationId commandInvocationId, Metadata metadata) {
       super(key, segment, flagsBitSet, commandInvocationId);
       this.mappingFunction = mappingFunction;
-      this.metadata = metadata;
+      this.setMetadata(metadata);
+   }
+
+   @ProtoFactory
+   ComputeIfAbsentCommand(MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment,
+                          CommandInvocationId commandInvocationId, MarshallableObject<Function<?, ?>> wrappedMappingFunction,
+                          MarshallableObject<Metadata> wrappedMetadata, PrivateMetadata internalMetadata) {
+      super(wrappedKey, flagsWithoutRemote, topologyId, segment, commandInvocationId);
+      this.mappingFunction = MarshallableObject.unwrap(wrappedMappingFunction);
+      this.metadata = MarshallableObject.unwrap(wrappedMetadata);
+      this.internalMetadata = internalMetadata;
+   }
+
+   @ProtoField(number = 6, name = "mappingFunction")
+   MarshallableObject<Function<?, ?>> getWrappedMappingFunction() {
+      return MarshallableObject.create(mappingFunction);
+   }
+
+   @ProtoField(number = 7, name = "metadata")
+   MarshallableObject<Metadata> getWrappedMetadata() {
+      return MarshallableObject.create(metadata);
+   }
+
+   @Override
+   @ProtoField(8)
+   public PrivateMetadata getInternalMetadata() {
+      return internalMetadata;
+   }
+
+   @Override
+   public void setInternalMetadata(PrivateMetadata internalMetadata) {
+      this.internalMetadata = internalMetadata;
    }
 
    @Override
@@ -81,6 +106,11 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
       successful = false;
    }
 
+   @Override
+   public final boolean isReturnValueExpected() {
+      return true;
+   }
+
    public Function getMappingFunction() {
       return mappingFunction;
    }
@@ -88,28 +118,6 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
    @Override
    public byte getCommandId() {
       return COMMAND_ID;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(key);
-      output.writeObject(mappingFunction);
-      UnsignedNumeric.writeUnsignedInt(output, segment);
-      output.writeObject(metadata);
-      CommandInvocationId.writeTo(output, commandInvocationId);
-      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
-      output.writeObject(internalMetadata);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      key = input.readObject();
-      mappingFunction = (Function) input.readObject();
-      segment = UnsignedNumeric.readUnsignedInt(input);
-      metadata = (Metadata) input.readObject();
-      commandInvocationId = CommandInvocationId.readFrom(input);
-      setFlagsBitSet(input.readLong());
-      internalMetadata = (PrivateMetadata) input.readObject();
    }
 
    @Override
@@ -150,20 +158,5 @@ public class ComputeIfAbsentCommand extends AbstractDataWriteCommand implements 
             ", valueMatcher=" + getValueMatcher() +
             ", topologyId=" + getTopologyId() +
             '}';
-   }
-
-   @Override
-   public final boolean isReturnValueExpected() {
-      return true;
-   }
-
-   @Override
-   public PrivateMetadata getInternalMetadata() {
-      return internalMetadata;
-   }
-
-   @Override
-   public void setInternalMetadata(PrivateMetadata internalMetadata) {
-      this.internalMetadata = internalMetadata;
    }
 }

@@ -48,17 +48,17 @@ class IracManagerKeyChangedState implements IracManagerKeyState {
 
    @Override
    public Object getKey() {
-      return keyInfo.key();
+      return keyInfo.getKey();
    }
 
    @Override
    public Object getOwner() {
-      return keyInfo.owner();
+      return keyInfo.getOwner();
    }
 
    @Override
    public int getSegment() {
-      return keyInfo.segment();
+      return keyInfo.getSegment();
    }
 
    @Override
@@ -123,9 +123,9 @@ class IracManagerKeyChangedState implements IracManagerKeyState {
    @Override
    public String toString() {
       return getClass().getSimpleName() + "{" +
-            "segment=" + keyInfo.segment() +
-            ", key=" + toStr(keyInfo.key()) +
-            ", owner=" + keyInfo.owner() +
+            "segment=" + keyInfo.getSegment() +
+            ", key=" + toStr(keyInfo.getKey()) +
+            ", owner=" + keyInfo.getOwner() +
             ", expiration=" + expiration +
             ", isStateTransfer=" + isStateTransfer() +
             ", status=" + status +

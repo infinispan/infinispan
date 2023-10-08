@@ -1,16 +1,13 @@
 package org.infinispan.multimap.impl.function.list;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.functional.EntryView;
-import org.infinispan.multimap.impl.ExternalizerIds;
-import org.infinispan.multimap.impl.ListBucket;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.Optional;
-import java.util.Set;
+
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.functional.EntryView;
+import org.infinispan.multimap.impl.ListBucket;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Serializable function used by
@@ -21,10 +18,13 @@ import java.util.Set;
  * @see <a href="https://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_INDEX_FUNCTION)
 public final class IndexFunction<K, V> implements ListBucketBaseFunction<K, V, V> {
-   public static final AdvancedExternalizer<IndexFunction> EXTERNALIZER = new IndexFunction.Externalizer();
-   private final long index;
 
+   @ProtoField(1)
+   final long index;
+
+   @ProtoFactory
    public IndexFunction(long index) {
       this.index = index;
    }
@@ -37,28 +37,5 @@ public final class IndexFunction<K, V> implements ListBucketBaseFunction<K, V, V
       }
       // key does not exist
       return null;
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<IndexFunction> {
-
-      @Override
-      public Set<Class<? extends IndexFunction>> getTypeClasses() {
-         return Collections.singleton(IndexFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.INDEX_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, IndexFunction object) throws IOException {
-         output.writeLong(object.index);
-      }
-
-      @Override
-      public IndexFunction readObject(ObjectInput input) throws IOException {
-         return new IndexFunction(input.readLong());
-      }
    }
 }

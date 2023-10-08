@@ -19,6 +19,7 @@ import static org.infinispan.notifications.cachelistener.event.Event.Type.TRANSA
 import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.lang.annotation.Annotation;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -26,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
@@ -1088,7 +1090,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
          if (log.isTraceEnabled()) {
             log.tracef("Listener %s requests initial state for cache", generatedId);
          }
-         Collection<IntermediateOperation<?, ?, ?, ?>> intermediateOperations = new ArrayList<>();
+         Queue<IntermediateOperation<?, ?, ?, ?>> intermediateOperations = new ArrayDeque<>();
 
          if (keyDataConversion != DataConversion.IDENTITY_KEY && valueDataConversion != DataConversion.IDENTITY_VALUE) {
             intermediateOperations.add(new MapOperation<>(EncoderEntryMapper.newCacheEntryMapper(
@@ -1116,8 +1118,8 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
    }
 
    private CompletionStage<Void> handlePublisher(CompletionStage<Void> currentStage,
-         Collection<IntermediateOperation<?, ?, ?, ?>> intermediateOperations, QueueingSegmentListener<K, V, ? extends Event<K, V>> handler,
-         UUID generatedId, Listener l, Function<Object, Object> kc, Function<Object, Object> kv) {
+                                                 Queue<IntermediateOperation<?, ?, ?, ?>> intermediateOperations, QueueingSegmentListener<K, V, ? extends Event<K, V>> handler,
+                                                 UUID generatedId, Listener l, Function<Object, Object> kc, Function<Object, Object> kv) {
       SegmentPublisherSupplier<CacheEntry<K, V>> publisher = publisherManager.running().entryPublisher(
             null, null, null, EnumUtil.EMPTY_BIT_SET,
             // TODO: do we really need EXACTLY_ONCE? AT_LEAST_ONCE should be fine I think
@@ -1339,7 +1341,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
             log.tracef("Listener %s requests initial state for cache", generatedId);
          }
 
-         Collection<IntermediateOperation<?, ?, ?, ?>> intermediateOperations = new ArrayList<>();
+         Queue<IntermediateOperation<?, ?, ?, ?>> intermediateOperations = new ArrayDeque<>();
 
          MediaType storage = valueConversion.getStorageMediaType();
          MediaType keyReq = keyConversion.getRequestMediaType();

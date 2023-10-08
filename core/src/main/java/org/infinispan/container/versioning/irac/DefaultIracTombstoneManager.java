@@ -304,7 +304,7 @@ public class DefaultIracTombstoneManager implements IracTombstoneManager {
 
    public CompletionStage<Void> checkStaleKeys() {
       return Flowable.fromStream(iracManager.running().pendingKeys())
-            .groupBy(IracManagerKeyInfo::segment)
+            .groupBy(IracManagerKeyInfo::getSegment)
             .flatMap(group -> {
                if (isPrimaryOfSegment(group.getKey())) {
                   return Flowable.fromCompletable(group.ignoreElements());
@@ -320,7 +320,7 @@ public class DefaultIracTombstoneManager implements IracTombstoneManager {
       if (infos.isEmpty()) {
          return Flowable.empty();
       }
-      var primary = getSegmentDistribution(infos.get(0).segment()).primary();
+      var primary = getSegmentDistribution(infos.get(0).getSegment()).primary();
       var rpcOptions = rpcManager.getSyncRpcOptions();
       var cmd = commandsFactory.buildIracPrimaryPendingKeyCheckCommand(infos);
       var stage = rpcManager.invokeCommand(primary, cmd, ignoreLeavers(), rpcOptions);

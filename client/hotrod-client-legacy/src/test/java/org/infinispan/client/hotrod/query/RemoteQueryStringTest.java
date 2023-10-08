@@ -32,6 +32,7 @@ import org.infinispan.query.dsl.embedded.testdomain.ModelFactory;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 import org.infinispan.query.dsl.embedded.testdomain.User;
+import org.infinispan.query.remote.impl.GlobalContextInitializer;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -97,7 +98,7 @@ public class RemoteQueryStringTest extends QueryStringTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().clusteredDefault();
-      globalBuilder.serialization().addContextInitializers(TestDomainSCI.INSTANCE, NotIndexedSchema.INSTANCE, SpatialSchema.INSTANCE, CUSTOM_ANALYZER_SCI);
+      globalBuilder.serialization().addContextInitializers(GlobalContextInitializer.INSTANCE, TestDomainSCI.INSTANCE, NotIndexedSchema.INSTANCE, SpatialSchema.INSTANCE, CUSTOM_ANALYZER_SCI);
       createClusteredCaches(getNodesCount(), globalBuilder, getConfigurationBuilder(), true);
 
       cache = manager(0).getCache();

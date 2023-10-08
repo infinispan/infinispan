@@ -1,39 +1,80 @@
 package org.infinispan.xsite.irac;
 
-import static org.infinispan.commons.io.UnsignedNumeric.readUnsignedInt;
-import static org.infinispan.commons.io.UnsignedNumeric.writeUnsignedInt;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Objects;
+
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * @author Pedro Ruivo
  * @since 14
  */
-public record IracManagerKeyInfo(int segment, Object key, Object owner) {
+@ProtoTypeId(ProtoStreamTypeIds.IRAC_MANAGER_KEY_INFO)
+public class IracManagerKeyInfo {
 
-   public IracManagerKeyInfo {
-      Objects.requireNonNull(key);
-      Objects.requireNonNull(owner);
+   final int segment;
+   final Object key;
+   final Object owner;
+
+   public IracManagerKeyInfo(int segment, Object key, Object owner) {
+      this.segment = segment;
+      this.key = Objects.requireNonNull(key);
+      this.owner = Objects.requireNonNull(owner);
    }
 
-   public static void writeTo(ObjectOutput output, IracManagerKeyInfo keyInfo) throws IOException {
-      if (keyInfo == null) {
-         output.writeObject(null);
-         return;
-      }
-      output.writeObject(keyInfo.key());
-      writeUnsignedInt(output, keyInfo.segment());
-      output.writeObject(keyInfo.owner());
+   @ProtoFactory
+   IracManagerKeyInfo(int segment, MarshallableObject<Object> wrappedKey, MarshallableObject<Object> wrappedOwner) {
+      this(segment, MarshallableObject.unwrap(wrappedKey), MarshallableObject.unwrap(wrappedOwner));
    }
 
-   public static IracManagerKeyInfo readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      Object key = input.readObject();
-      if (key == null) {
-         return null;
-      }
-      return new IracManagerKeyInfo(readUnsignedInt(input), key, input.readObject());
+   public Object getKey() {
+      return key;
+   }
+
+   public Object getOwner() {
+      return owner;
+   }
+
+   @ProtoField(1)
+   public int getSegment() {
+      return segment;
+   }
+
+   @ProtoField(2)
+   MarshallableObject<Object> getWrappedKey() {
+      return MarshallableObject.create(key);
+   }
+
+   @ProtoField(3)
+   MarshallableObject<Object> getWrappedOwner() {
+      return MarshallableObject.create(owner);
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof IracManagerKeyInfo)) return false;
+
+      IracManagerKeyInfo that = (IracManagerKeyInfo) o;
+
+      if (segment != that.getSegment()) return false;
+      if (!key.equals(that.getKey())) return false;
+      return owner.equals(that.getOwner());
+   }
+
+   @Override
+   public int hashCode() {
+      int result = segment;
+      result = 31 * result + key.hashCode();
+      result = 31 * result + owner.hashCode();
+      return result;
+   }
+
+   @Override
+   public String toString() {
+      return "IracManagerKeyInfoImpl{" + "segment=" + segment + ", key=" + key + ", owner=" + owner + '}';
    }
 }

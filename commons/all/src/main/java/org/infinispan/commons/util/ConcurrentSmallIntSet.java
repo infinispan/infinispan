@@ -1,12 +1,11 @@
 package org.infinispan.commons.util;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.PrimitiveIterator;
 import java.util.Set;
@@ -20,7 +19,10 @@ import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
-import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Concurrent implementation of an {@link IntSet}. This implementation is limited in that it can only inserts ints up
@@ -31,8 +33,10 @@ import org.infinispan.commons.io.UnsignedNumeric;
  * @author wburns
  * @since 9.3
  */
-class ConcurrentSmallIntSet implements IntSet {
-   private final AtomicIntegerArray array;
+@ProtoTypeId(ProtoStreamTypeIds.INTSET_CONCURRENT_SMALL)
+public class ConcurrentSmallIntSet implements IntSet {
+
+   final AtomicIntegerArray array;
 
    // Note per Java Language Specification 15.19 Shift Operators
    // If the promoted type of the left-hand operand is int, only the five lowest-order bits of the right-hand operand
@@ -56,6 +60,42 @@ class ConcurrentSmallIntSet implements IntSet {
       // We add 31 as that is 2^5 -1 so we round up
       int intLength = intIndex(maxCapacityExclusive + 31);
       array = new AtomicIntegerArray(intLength);
+   }
+
+   @ProtoFactory
+   static ConcurrentSmallIntSet protoFactory(List<Integer> entries) {
+      int arrayLength = entries.size();
+      ConcurrentSmallIntSet intSet = new ConcurrentSmallIntSet(arrayLength << ADDRESS_BITS_PER_INT);
+
+      int size = 0;
+      for (int i = 0; i < arrayLength - 1; ++i) {
+         int value = entries.get(i);
+         // Use lazy set - we use set below on the last
+         intSet.array.lazySet(i, value);
+         size += Integer.bitCount(value);
+      }
+      int lastValue = entries.get(arrayLength - 1);
+      intSet.array.set(arrayLength - 1, lastValue);
+      size += Integer.bitCount(lastValue);
+      intSet.currentSize.addAndGet(size);
+
+      return intSet;
+   }
+
+   @ProtoField(1)
+   Iterable<Integer> entries() {
+      return () -> new Iterator<>() {
+         int i = 0;
+         @Override
+         public boolean hasNext() {
+            return i < array.length();
+         }
+
+         @Override
+         public Integer next() {
+            return array.get(i++);
+         }
+      };
    }
 
    private void valueNonZero(int value) {
@@ -518,33 +558,5 @@ class ConcurrentSmallIntSet implements IntSet {
       }
       sb.append('}');
       return sb.toString();
-   }
-
-   static void writeTo(ObjectOutput output, ConcurrentSmallIntSet intSet) throws IOException {
-      int arrayLength = intSet.array.length();
-      UnsignedNumeric.writeUnsignedInt(output, arrayLength);
-
-      for (int i = 0; i < arrayLength; ++i) {
-         output.writeInt(intSet.array.get(i));
-      }
-   }
-
-   static IntSet readFrom(ObjectInput input) throws IOException {
-      int arrayLength = UnsignedNumeric.readUnsignedInt(input);
-      ConcurrentSmallIntSet intSet = new ConcurrentSmallIntSet(arrayLength << ADDRESS_BITS_PER_INT);
-
-      int size = 0;
-      for (int i = 0; i < arrayLength - 1; ++i) {
-         int value = input.readInt();
-         // Use lazy set - we use set below on the last
-         intSet.array.lazySet(i, value);
-         size += Integer.bitCount(value);
-      }
-      int lastValue = input.readInt();
-      intSet.array.set(arrayLength - 1, lastValue);
-      size += Integer.bitCount(lastValue);
-      intSet.currentSize.addAndGet(size);
-
-      return intSet;
    }
 }

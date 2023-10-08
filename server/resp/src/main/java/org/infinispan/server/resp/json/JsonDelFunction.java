@@ -2,31 +2,30 @@ package org.infinispan.server.resp.json;
 
 import static java.util.Objects.requireNonNull;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.Set;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.server.resp.ExternalizerIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.function.SerializableFunction;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.jayway.jsonpath.JsonPath;
 
+@ProtoTypeId(ProtoStreamTypeIds.RESP_JSON_DEL_FUNCTION)
 public class JsonDelFunction
       implements SerializableFunction<EntryView.ReadWriteEntryView<byte[], JsonBucket>, Long> {
    public static final String ERR_PATH_CAN_T_BE_NULL = "path can't be null";
-   public static final AdvancedExternalizer<JsonDelFunction> EXTERNALIZER = new JsonDelFunction.Externalizer();
 
-   byte[] path;
+   @ProtoField(1)
+   final byte[] path;
 
+   @ProtoFactory
    public JsonDelFunction(byte[] path) {
       requireNonNull(path, ERR_PATH_CAN_T_BE_NULL);
       this.path = path;
@@ -64,29 +63,4 @@ public class JsonDelFunction
          throw new CacheException(e);
       }
    }
-
-   private static class Externalizer implements AdvancedExternalizer<JsonDelFunction> {
-
-      @Override
-      public void writeObject(ObjectOutput output, JsonDelFunction object) throws IOException {
-         JSONUtil.writeBytes(output, object.path);
-      }
-
-      @Override
-      public JsonDelFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         byte[] path = JSONUtil.readBytes(input);
-         return new JsonDelFunction(path);
-      }
-
-      @Override
-      public Set<Class<? extends JsonDelFunction>> getTypeClasses() {
-         return Collections.singleton(JsonDelFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.JSON_DEL_FUNCTION;
-      }
-   }
-
 }

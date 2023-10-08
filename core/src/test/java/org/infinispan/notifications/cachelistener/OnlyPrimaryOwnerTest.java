@@ -14,7 +14,8 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commons.dataconversion.Encoder;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -49,7 +50,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -76,7 +76,7 @@ public class OnlyPrimaryOwnerTest {
       MockBasicComponentRegistry mockRegistry = new MockBasicComponentRegistry();
       when(componentRegistry.getComponent(BasicComponentRegistry.class)).thenReturn(mockRegistry);
       mockRegistry.registerMocks(RpcManager.class, CommandsFactory.class, Encoder.class);
-      mockRegistry.registerMock(KnownComponentNames.INTERNAL_MARSHALLER, StreamingMarshaller.class);
+      mockRegistry.registerMock(KnownComponentNames.INTERNAL_MARSHALLER, Marshaller.class);
       Configuration config = new ConfigurationBuilder().memory().storageType(StorageType.OBJECT).build();
       ClusterEventManager cem = mock(ClusterEventManager.class);
       when(cem.sendEvents(any())).thenReturn(CompletableFutures.completedNull());

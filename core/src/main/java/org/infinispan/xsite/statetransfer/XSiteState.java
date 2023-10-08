@@ -1,18 +1,15 @@
 package org.infinispan.xsite.statetransfer;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Represents the state of a single key to be sent to a backup site. It contains the only needed information, i.e., the
@@ -21,6 +18,7 @@ import org.infinispan.persistence.spi.MarshallableEntry;
  * @author Pedro Ruivo
  * @since 7.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.XSITE_STATE)
 public class XSiteState {
 
    private final Object key;
@@ -35,6 +33,33 @@ public class XSiteState {
       this.internalMetadata = internalMetadata;
    }
 
+   @ProtoFactory
+   XSiteState(MarshallableObject<?> key, MarshallableObject<?> value, MarshallableObject<Metadata> metadata,
+              PrivateMetadata internalMetadata) {
+      this(MarshallableObject.unwrap(key), MarshallableObject.unwrap(value),
+            MarshallableObject.unwrap(metadata), internalMetadata);
+   }
+
+   @ProtoField(1)
+   MarshallableObject<?> getKey() {
+      return new MarshallableObject<>(key);
+   }
+
+   @ProtoField(2)
+   MarshallableObject<?> getValue() {
+      return new MarshallableObject<>(value);
+   }
+
+   @ProtoField(3)
+   MarshallableObject<Metadata> getMetadata() {
+      return new MarshallableObject<>(metadata);
+   }
+
+   @ProtoField(4)
+   public PrivateMetadata internalMetadata() {
+      return internalMetadata;
+   }
+
    public final Object key() {
       return key;
    }
@@ -45,10 +70,6 @@ public class XSiteState {
 
    public final Metadata metadata() {
       return metadata;
-   }
-
-   public PrivateMetadata internalMetadata() {
-      return internalMetadata;
    }
 
    public static XSiteState fromDataContainer(InternalCacheEntry<?, ?> entry) {
@@ -68,32 +89,5 @@ public class XSiteState {
             ", metadata=" + metadata +
             ", internalMetadata=" + internalMetadata +
             '}';
-   }
-
-   public static class XSiteStateExternalizer extends AbstractExternalizer<XSiteState> {
-
-      @Override
-      public Integer getId() {
-         return Ids.X_SITE_STATE;
-      }
-
-      @Override
-      public Set<Class<? extends XSiteState>> getTypeClasses() {
-         return Collections.singleton(XSiteState.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, XSiteState object) throws IOException {
-         output.writeObject(object.key);
-         output.writeObject(object.value);
-         output.writeObject(object.metadata);
-         output.writeObject(object.internalMetadata);
-      }
-
-      @Override
-      public XSiteState readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new XSiteState(input.readObject(), input.readObject(), (Metadata) input.readObject(),
-               (PrivateMetadata) input.readObject());
-      }
    }
 }
