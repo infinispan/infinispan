@@ -1,20 +1,22 @@
 package org.infinispan.reactive.publisher.impl.commands.reduction;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.Set;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.marshall.protostream.impl.WrappedMessages;
+import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A PublisherResult that was performed due to segments only
  * @author wburns
  * @since 10.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.SEGMENT_PUBLISHER_RESULT)
 public class SegmentPublisherResult<R> implements PublisherResult<R> {
    private final IntSet suspectedSegments;
    private final R result;
@@ -22,6 +24,22 @@ public class SegmentPublisherResult<R> implements PublisherResult<R> {
    public SegmentPublisherResult(IntSet suspectedSegments, R result) {
       this.suspectedSegments = suspectedSegments;
       this.result = result;
+   }
+
+   @ProtoFactory
+   SegmentPublisherResult(WrappedMessage wrappedSuspectedSegments, MarshallableObject<R> wrappedObject) {
+      this.suspectedSegments = WrappedMessages.unwrap(wrappedSuspectedSegments);
+      this.result = MarshallableObject.unwrap(wrappedObject);
+   }
+
+   @ProtoField(1)
+   WrappedMessage getWrappedSuspectedSegments() {
+      return WrappedMessages.orElseNull(suspectedSegments);
+   }
+
+   @ProtoField(2)
+   MarshallableObject<R> getWrappedObject() {
+      return MarshallableObject.create(result);
    }
 
    @Override
@@ -45,29 +63,5 @@ public class SegmentPublisherResult<R> implements PublisherResult<R> {
             "result=" + result +
             ", suspectedSegments=" + suspectedSegments +
             '}';
-   }
-
-   public static class Externalizer implements AdvancedExternalizer<SegmentPublisherResult> {
-
-      @Override
-      public Set<Class<? extends SegmentPublisherResult>> getTypeClasses() {
-         return Collections.singleton(SegmentPublisherResult.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.SIMPLE_PUBLISHER_RESULT;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, SegmentPublisherResult object) throws IOException {
-         output.writeObject(object.suspectedSegments);
-         output.writeObject(object.result);
-      }
-
-      @Override
-      public SegmentPublisherResult readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new SegmentPublisherResult<>((IntSet) input.readObject(), input.readObject());
-      }
    }
 }

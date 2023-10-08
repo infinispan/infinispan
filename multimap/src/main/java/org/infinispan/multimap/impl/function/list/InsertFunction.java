@@ -1,16 +1,14 @@
 package org.infinispan.multimap.impl.function.list;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.functional.EntryView;
-import org.infinispan.multimap.impl.ExternalizerIds;
-import org.infinispan.multimap.impl.ListBucket;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.Optional;
-import java.util.Set;
+
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.functional.EntryView;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.multimap.impl.ListBucket;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Serializable function used by
@@ -21,8 +19,9 @@ import java.util.Set;
  * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_INSERT_FUNCTION)
 public final class InsertFunction<K, V> implements ListBucketBaseFunction<K, V, Long> {
-   public static final AdvancedExternalizer<InsertFunction> EXTERNALIZER = new InsertFunction.Externalizer();
+
    private final boolean before;
    private final V pivot;
    private final V element;
@@ -31,6 +30,26 @@ public final class InsertFunction<K, V> implements ListBucketBaseFunction<K, V, 
       this.before = before;
       this.pivot = pivot;
       this.element = element;
+   }
+
+   @ProtoFactory
+   InsertFunction(boolean before, MarshallableObject<V> pivot, MarshallableObject<V> element) {
+      this(before, MarshallableObject.unwrap(pivot), MarshallableObject.unwrap(element));
+   }
+
+   @ProtoField(value = 1, defaultValue = "false")
+   boolean isBefore() {
+      return before;
+   }
+
+   @ProtoField(2)
+   MarshallableObject<V> getPivot() {
+      return MarshallableObject.create(pivot);
+   }
+
+   @ProtoField(3)
+   MarshallableObject<V> getElement() {
+      return MarshallableObject.create(element);
    }
 
    @Override
@@ -49,30 +68,5 @@ public final class InsertFunction<K, V> implements ListBucketBaseFunction<K, V, 
       }
       // key does not exist
       return 0L;
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<InsertFunction> {
-
-      @Override
-      public Set<Class<? extends InsertFunction>> getTypeClasses() {
-         return Collections.singleton(InsertFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.INSERT_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, InsertFunction object) throws IOException {
-         output.writeBoolean(object.before);
-         output.writeObject(object.pivot);
-         output.writeObject(object.element);
-      }
-
-      @Override
-      public InsertFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException{
-         return new InsertFunction(input.readBoolean(), input.readObject(), input.readObject());
-      }
    }
 }

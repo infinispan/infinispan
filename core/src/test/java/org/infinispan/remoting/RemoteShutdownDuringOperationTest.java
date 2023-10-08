@@ -20,7 +20,7 @@ import org.infinispan.expiration.impl.TouchCommand;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestDataSCIImpl;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.CheckPoint;
 import org.testng.annotations.Test;
 
@@ -46,7 +46,7 @@ public class RemoteShutdownDuringOperationTest extends MultipleCacheManagersTest
       if (operation == TolerateSuspectOperation.GET) numOwners = 1;
 
       cb.clustering().hash().numOwners(numOwners);
-      createClusteredCaches(2, CACHE_NAME, TestDataSCIImpl.INSTANCE, cb);
+      createClusteredCaches(2, CACHE_NAME, TestDataSCI.INSTANCE, cb);
    }
 
    @Test

@@ -3,17 +3,16 @@ package org.infinispan.commons.tx;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.util.Random;
 
 import javax.transaction.xa.Xid;
 
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.GlobalContextInitializer;
 import org.infinispan.commons.util.Util;
+import org.infinispan.protostream.ProtobufUtil;
+import org.infinispan.protostream.SerializationContext;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -24,6 +23,13 @@ import org.junit.Test;
 public class XidUnitTest {
 
    private static final Log log = LogFactory.getLog(XidUnitTest.class);
+   private final SerializationContext ctx;
+
+   public XidUnitTest() {
+      this.ctx = ProtobufUtil.newSerializationContext();
+      GlobalContextInitializer.INSTANCE.registerSchema(ctx);
+      GlobalContextInitializer.INSTANCE.registerMarshallers(ctx);
+   }
 
    @Test(expected = IllegalArgumentException.class)
    public void testInvalidGlobalTransaction() {
@@ -112,76 +118,41 @@ public class XidUnitTest {
    }
 
    @Test
-   public void testMarshalling() throws IOException, ClassNotFoundException {
+   public void testMarshalling() throws IOException {
       long seed = System.currentTimeMillis();
       log.infof("[testMarshalling] seed: %s", seed);
       Random random = new Random(seed);
-
-      int formatId = random.nextInt();
-      byte[] tx = new byte[random.nextInt(64) + 1];
-      byte[] branch = new byte[random.nextInt(64) + 1];
-      random.nextBytes(tx);
-      random.nextBytes(branch);
-      XidImpl xid = XidImpl.create(formatId, tx, branch);
-
-      log.debugf("XID: %s", xid);
-
-      ByteArrayOutputStream bos = new ByteArrayOutputStream(256);
-      ObjectOutput oo = new ObjectOutputStream(bos);
-      XidImpl.writeTo(oo, xid);
-      oo.flush();
-      oo.close();
-      bos.close();
-
-      byte[] marshalled = bos.toByteArray();
-      log.debugf("Size: %s", marshalled.length);
-
-      ByteArrayInputStream bis = new ByteArrayInputStream(marshalled);
-      ObjectInput oi = new ObjectInputStream(bis);
-      XidImpl otherXid = XidImpl.readFrom(oi);
-      oi.close();
-      bis.close();
-
-      log.debugf("other XID: %s", xid);
-
-      Assert.assertEquals(xid, otherXid);
+      assertIsCorrectlyMarshalled(random, random.nextInt(64) + 1, random.nextInt(64) + 1);
    }
 
    @Test
-   public void testMarshallingMaxSize() throws IOException, ClassNotFoundException {
+   public void testMarshallingMaxSize() throws IOException {
       long seed = System.currentTimeMillis();
       log.infof("[testMarshallingMaxSize] seed: %s", seed);
       Random random = new Random(seed);
+      assertIsCorrectlyMarshalled(random, Xid.MAXGTRIDSIZE, Xid.MAXBQUALSIZE);
+   }
 
+   private void assertIsCorrectlyMarshalled(Random random, int txSize, int branchSize) throws IOException {
       int formatId = random.nextInt();
-      byte[] tx = new byte[Xid.MAXGTRIDSIZE];
-      byte[] branch = new byte[Xid.MAXBQUALSIZE];
+      byte[] tx = new byte[txSize];
+      byte[] branch = new byte[branchSize];
       random.nextBytes(tx);
       random.nextBytes(branch);
       XidImpl xid = XidImpl.create(formatId, tx, branch);
-
       log.debugf("XID: %s", xid);
 
       ByteArrayOutputStream bos = new ByteArrayOutputStream(256);
-      ObjectOutput oo = new ObjectOutputStream(bos);
-      XidImpl.writeTo(oo, xid);
-      oo.flush();
-      oo.close();
+      ProtobufUtil.toWrappedStream(ctx, bos, xid);
       bos.close();
 
       byte[] marshalled = bos.toByteArray();
       log.debugf("Size: %s", marshalled.length);
 
-      ByteArrayInputStream bis = new ByteArrayInputStream(marshalled);
-      ObjectInput oi = new ObjectInputStream(bis);
-      XidImpl otherXid = XidImpl.readFrom(oi);
-      oi.close();
-      bis.close();
-
-      log.debugf("other XID: %s", xid);
-
-      Assert.assertEquals(xid, otherXid);
+      try (ByteArrayInputStream bis = new ByteArrayInputStream(marshalled)) {
+         XidImpl otherXid = ProtobufUtil.fromWrappedStream(ctx, bis);
+         log.debugf("other XID: %s", xid);
+         Assert.assertEquals(xid, otherXid);
+      }
    }
-
-
 }

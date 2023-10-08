@@ -2,9 +2,6 @@ package org.infinispan.reactive.publisher.impl;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -13,20 +10,29 @@ import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.GetAllCommandStressTest;
-import org.infinispan.commons.marshall.Externalizer;
-import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.test.fwk.InCacheMode;
 import org.reactivestreams.Publisher;
 import org.testng.annotations.Test;
 
 import io.reactivex.rxjava3.core.Flowable;
 
-@Test(groups = "stress", testName = "PublisherManagerGetKeyStressTest", timeOut = 15*60*1000)
+@Test(groups = "stress", testName = "PublisherManagerGetKeyStressTest", timeOut = 15 * 60 * 1000)
 @InCacheMode(CacheMode.DIST_SYNC)
 public class PublisherManagerGetKeyStressTest extends GetAllCommandStressTest {
+
+   @Override
+   protected void createCacheManagers() throws Throwable {
+      builderUsed = new ConfigurationBuilder();
+      builderUsed.clustering().cacheMode(cacheMode).remoteTimeout(30000).stateTransfer().chunkSize(25000);
+      createClusteredCaches(CACHE_COUNT, CACHE_NAME, PublisherManagerGetKeyStressTestSCI.INSTANCE, builderUsed);
+   }
 
    @Override
    protected void workerLogic(Cache<Integer, Integer> cache, Set<Integer> threadKeys, int iteration) {
@@ -47,9 +53,13 @@ public class PublisherManagerGetKeyStressTest extends GetAllCommandStressTest {
                   return map1;
                }).toCompletionStage();
 
-   @SerializeWith(value = MapReducer.MapReducerExternalizer.class)
-   private static class MapReducer<K, V> implements Function<Publisher<Map.Entry<K, V>>, CompletionStage<Map<K, V>>> {
+   public static class MapReducer<K, V> implements Function<Publisher<Map.Entry<K, V>>, CompletionStage<Map<K, V>>> {
       private static final MapReducer INSTANCE = new MapReducer();
+
+      @ProtoFactory
+      public static MapReducer protoFactory() {
+         return INSTANCE;
+      }
 
       public static <K, V> Function<Publisher<? extends Map.Entry<K, V>>, CompletionStage<Map<K, V>>> getInstance() {
          return INSTANCE;
@@ -62,15 +72,16 @@ public class PublisherManagerGetKeyStressTest extends GetAllCommandStressTest {
                .collectInto(startingMap, (map, e) ->
                      map.put(e.getKey(), e.getValue())).toCompletionStage();
       }
+   }
 
-      static final class MapReducerExternalizer implements Externalizer<MapReducer> {
-         @Override
-         public void writeObject(ObjectOutput output, MapReducer object) throws IOException { }
-
-         @Override
-         public MapReducer readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-            return MapReducer.INSTANCE;
-         }
-      }
+   @ProtoSchema(
+         includeClasses = MapReducer.class,
+         schemaFileName = "test.core.PublisherManagerGetKeyStressTest.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.core.PublisherManagerGetKeyStressTest",
+         service = false
+   )
+   interface PublisherManagerGetKeyStressTestSCI extends SerializationContextInitializer {
+      SerializationContextInitializer INSTANCE = new PublisherManagerGetKeyStressTestSCIImpl();
    }
 }

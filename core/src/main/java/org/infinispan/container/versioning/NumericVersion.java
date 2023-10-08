@@ -1,14 +1,6 @@
 package org.infinispan.container.versioning;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.marshall.core.Ids;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
@@ -69,29 +61,5 @@ public class NumericVersion implements IncrementableEntryVersion {
       return "NumericVersion{" +
             "version=" + version +
             '}';
-   }
-
-   public static class Externalizer extends AbstractExternalizer<NumericVersion> {
-
-      @Override
-      public Set<Class<? extends NumericVersion>> getTypeClasses() {
-         return Collections.singleton(NumericVersion.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, NumericVersion object) throws IOException {
-         output.writeLong(object.version);
-      }
-
-      @Override
-      public NumericVersion readObject(ObjectInput input) throws IOException {
-         return new NumericVersion(input.readLong());
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.NUMERIC_VERSION;
-      }
-
    }
 }

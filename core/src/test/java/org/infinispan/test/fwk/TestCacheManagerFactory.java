@@ -266,6 +266,18 @@ public class TestCacheManagerFactory {
       return newDefaultCacheManager(start, gcb, defaultCacheConfig);
    }
 
+   public static EmbeddedCacheManager createClusteredCacheManager(boolean start, SerializationContextInitializer sci,
+                                                                  ConfigurationBuilder defaultCacheConfig,
+                                                                  TransportFlags flags) {
+      GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      if (sci != null) gcb.serialization().addContextInitializer(sci);
+      amendGlobalConfiguration(gcb, flags);
+      if (defaultCacheConfig != null) {
+         amendJTA(defaultCacheConfig);
+      }
+      return newDefaultCacheManager(start, gcb, defaultCacheConfig);
+   }
+
    public static void amendGlobalConfiguration(GlobalConfigurationBuilder gcb, TransportFlags flags) {
       amendMarshaller(gcb);
       minimizeThreads(gcb);

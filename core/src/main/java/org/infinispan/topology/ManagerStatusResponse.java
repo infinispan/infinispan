@@ -1,31 +1,38 @@
 package org.infinispan.topology;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.io.Serializable;
-import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.marshall.protostream.impl.MarshallableMap;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
 * @author Dan Berindei
 * @since 7.1
 */
-public class ManagerStatusResponse implements Serializable {
-   private final Map<String, CacheStatusResponse> caches;
-   private final boolean rebalancingEnabled;
+@ProtoTypeId(ProtoStreamTypeIds.MANAGER_STATUS_RESPONSE)
+public class ManagerStatusResponse {
+
+   @ProtoField(number = 1)
+   final MarshallableMap<String, CacheStatusResponse> caches;
+
+   @ProtoField(number = 2, defaultValue = "false")
+   final boolean rebalancingEnabled;
+
+   @ProtoFactory
+   ManagerStatusResponse(MarshallableMap<String, CacheStatusResponse> caches, boolean rebalancingEnabled) {
+      this.caches = caches;
+      this.rebalancingEnabled = rebalancingEnabled;
+   }
 
    public ManagerStatusResponse(Map<String, CacheStatusResponse> caches, boolean rebalancingEnabled) {
-      this.rebalancingEnabled = rebalancingEnabled;
-      this.caches = caches;
+      this(MarshallableMap.create(caches), rebalancingEnabled);
    }
 
    public Map<String, CacheStatusResponse> getCaches() {
-      return caches;
+      return MarshallableMap.unwrap(caches);
    }
 
    public boolean isRebalancingEnabled() {
@@ -35,33 +42,8 @@ public class ManagerStatusResponse implements Serializable {
    @Override
    public String toString() {
       return "ManagerStatusResponse{" +
-            "caches=" + caches +
+            "caches=" + getCaches() +
             ", rebalancingEnabled=" + rebalancingEnabled +
             '}';
-   }
-
-   public static class Externalizer extends InstanceReusingAdvancedExternalizer<ManagerStatusResponse> {
-      @Override
-      public void doWriteObject(ObjectOutput output, ManagerStatusResponse cacheStatusResponse) throws IOException {
-         output.writeObject(cacheStatusResponse.caches);
-         output.writeBoolean(cacheStatusResponse.rebalancingEnabled);
-      }
-
-      @Override
-      public ManagerStatusResponse doReadObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
-         Map<String, CacheStatusResponse> caches = (Map<String, CacheStatusResponse>) unmarshaller.readObject();
-         boolean rebalancingEnabled = unmarshaller.readBoolean();
-         return new ManagerStatusResponse(caches, rebalancingEnabled);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.MANAGER_STATUS_RESPONSE;
-      }
-
-      @Override
-      public Set<Class<? extends ManagerStatusResponse>> getTypeClasses() {
-         return Collections.<Class<? extends ManagerStatusResponse>>singleton(ManagerStatusResponse.class);
-      }
    }
 }

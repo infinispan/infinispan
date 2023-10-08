@@ -1,12 +1,12 @@
 package org.infinispan.commands.topology;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheJoinInfo;
 
@@ -16,17 +16,23 @@ import org.infinispan.topology.CacheJoinInfo;
  * @author Ryan Emerson
  * @since 11.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.CACHE_JOIN_COMMAND)
 public class CacheJoinCommand extends AbstractCacheControlCommand {
 
    public static final byte COMMAND_ID = 85;
 
-   private String cacheName;
-   private CacheJoinInfo joinInfo;
-   private int viewId;
+   @ProtoField(number = 1)
+   final String cacheName;
 
-   // For CommandIdUniquenessTest only
-   public CacheJoinCommand() {
-      super(COMMAND_ID);
+   @ProtoField(number = 2)
+   final CacheJoinInfo joinInfo;
+
+   @ProtoField(number = 3, defaultValue = "-1")
+   final int viewId;
+
+   @ProtoFactory
+   CacheJoinCommand(String cacheName, CacheJoinInfo joinInfo, int viewId) {
+      this(cacheName, null, joinInfo, viewId);
    }
 
    public CacheJoinCommand(String cacheName, Address origin, CacheJoinInfo joinInfo, int viewId) {
@@ -44,20 +50,6 @@ public class CacheJoinCommand extends AbstractCacheControlCommand {
    public CompletionStage<?> invokeAsync(GlobalComponentRegistry gcr) throws Throwable {
       return gcr.getClusterTopologyManager()
             .handleJoin(cacheName, origin, joinInfo, viewId);
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      MarshallUtil.marshallString(cacheName, output);
-      output.writeObject(joinInfo);
-      output.writeInt(viewId);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      cacheName = MarshallUtil.unmarshallString(input);
-      joinInfo = (CacheJoinInfo) input.readObject();
-      viewId = input.readInt();
    }
 
    @Override

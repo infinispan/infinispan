@@ -1,18 +1,20 @@
 package org.infinispan.manager.impl;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import javax.security.auth.Subject;
 
 import org.infinispan.commands.GlobalRpcCommand;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.security.Security;
 import org.infinispan.util.concurrent.BlockingManager;
 
@@ -22,21 +24,34 @@ import org.infinispan.util.concurrent.BlockingManager;
  * @author wburns
  * @since 8.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.REPLICABLE_MANAGER_FUNCTION_COMMAND)
 @Scope(Scopes.NONE)
 public class ReplicableManagerFunctionCommand implements GlobalRpcCommand {
 
    public static final byte COMMAND_ID = 60;
 
-   private Function<? super EmbeddedCacheManager, ?> function;
-   private Subject subject;
-
-   public ReplicableManagerFunctionCommand() {
-
-   }
+   final Function<? super EmbeddedCacheManager, ?> function;
+   final Subject subject;
 
    public ReplicableManagerFunctionCommand(Function<? super EmbeddedCacheManager, ?> function, Subject subject) {
       this.function = function;
       this.subject = subject;
+   }
+
+   @ProtoFactory
+   ReplicableManagerFunctionCommand(MarshallableObject<Function<? super EmbeddedCacheManager, ?>> function, MarshallableObject<Subject> subject) {
+      this.function = MarshallableObject.unwrap(function);
+      this.subject = MarshallableObject.unwrap(subject);
+   }
+
+   @ProtoField(1)
+   MarshallableObject<Function<? super EmbeddedCacheManager, ?>> getFunction() {
+      return MarshallableObject.create(function);
+   }
+
+   @ProtoField(2)
+   MarshallableObject<Subject> getSubject() {
+      return MarshallableObject.create(subject);
    }
 
    @Override
@@ -57,26 +72,7 @@ public class ReplicableManagerFunctionCommand implements GlobalRpcCommand {
    }
 
    @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      function = (Function<? super EmbeddedCacheManager, ?>) input.readObject();
-      subject = (Subject) input.readObject();
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(function);
-      output.writeObject(subject);
-   }
-
-   @Override
    public boolean isReturnValueExpected() {
       return true;
-   }
-
-   @Override
-   public boolean canBlock() {
-      // Note that it is highly possible that a user command could block, and some internal Infinispan ones already do
-      // This should be remedied with https://issues.redhat.com/browse/ISPN-11482
-      return false;
    }
 }

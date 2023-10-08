@@ -1,11 +1,20 @@
 package org.infinispan.reactive.publisher.impl.commands.batch;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.ObjIntConsumer;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.protostream.impl.MarshallableArray;
+import org.infinispan.marshall.protostream.impl.MarshallableCollection;
+import org.infinispan.marshall.protostream.impl.WrappedMessages;
+import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.reactive.publisher.impl.PublisherHandler;
 
 /**
@@ -14,18 +23,20 @@ import org.infinispan.reactive.publisher.impl.PublisherHandler;
  * also an offset into the results array of which elements don't map to any of the completed segments. Note that
  * the results will never contain values for a segment that was lost in the same response.
  */
+@ProtoTypeId(ProtoStreamTypeIds.PUBLISHER_RESPONSE)
 public class PublisherResponse {
    final Object[] results;
    // The completed segments after this request - This may be null
    final IntSet completedSegments;
    // The segments that were lost mid processing - This may be null
    final IntSet lostSegments;
+   final boolean complete;
+   final List<PublisherHandler.SegmentResult> segmentResults;
+
    // How many elements are in the results
    // Note that after being deserialized this is always equal to results.length - local this will be how many entries
    // are in the array
-   final int size;
-   final boolean complete;
-   final List<PublisherHandler.SegmentResult> segmentResults;
+   transient final int size;
 
    public PublisherResponse(Object[] results, IntSet completedSegments, IntSet lostSegments, int size, boolean complete,
          List<PublisherHandler.SegmentResult> segmentResults) {
@@ -37,6 +48,19 @@ public class PublisherResponse {
       this.segmentResults = segmentResults;
    }
 
+   @ProtoFactory
+   PublisherResponse(MarshallableArray<Object> wrappedResults, WrappedMessage completedSegmentsWrapped,
+                     WrappedMessage lostSegmentsWrapped, boolean complete,
+                     MarshallableCollection<PublisherHandler.SegmentResult> wrappedSegmentResults) {
+      this.results = MarshallableArray.unwrap(wrappedResults, new Object[0]);
+      this.completedSegments = WrappedMessages.unwrap(completedSegmentsWrapped);
+      this.lostSegments = WrappedMessages.unwrap(lostSegmentsWrapped);
+      this.complete = complete;
+      this.size = results.length;
+      this.segmentResults = MarshallableCollection.unwrap(wrappedSegmentResults, ArrayList::new);
+   }
+
+
    public static PublisherResponse emptyResponse(IntSet completedSegments, IntSet lostSegments) {
       return new PublisherResponse(Util.EMPTY_OBJECT_ARRAY, completedSegments, lostSegments, 0, true, Collections.emptyList());
    }
@@ -45,20 +69,41 @@ public class PublisherResponse {
       return results;
    }
 
+   @ProtoField(value = 1, name = "results")
+   MarshallableArray<Object> wrappedResults() {
+      return MarshallableArray.create(results);
+   }
+
    public IntSet getCompletedSegments() {
       return completedSegments;
+   }
+
+   @ProtoField(value = 2, name = "completedSegments")
+   WrappedMessage getCompletedSegmentsWrapped() {
+      return WrappedMessages.orElseNull(completedSegments);
    }
 
    public IntSet getLostSegments() {
       return lostSegments;
    }
 
+   @ProtoField(value = 3, name = "lostSegments")
+   WrappedMessage getLostSegmentsWrapped() {
+      return WrappedMessages.orElseNull(lostSegments);
+   }
+
    public int getSize() {
       return size;
    }
 
+   @ProtoField(value = 4, defaultValue = "false")
    public boolean isComplete() {
       return complete;
+   }
+
+   @ProtoField(value = 5, name = "segmentResults")
+   MarshallableCollection<PublisherHandler.SegmentResult> getWrappedSegmentResults() {
+      return MarshallableCollection.create(segmentResults);
    }
 
    public List<PublisherHandler.SegmentResult> getSegmentResults() {

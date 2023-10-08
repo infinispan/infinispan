@@ -1,14 +1,14 @@
 package org.infinispan.xsite.commands.remote;
 
-import org.infinispan.commons.marshall.MarshallUtil;
+import java.util.concurrent.CompletionStage;
+
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.statetransfer.XSiteState;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.concurrent.CompletionStage;
 
 /**
  * Wraps the state to be sent to another site.
@@ -17,15 +17,15 @@ import java.util.concurrent.CompletionStage;
  *
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.XSITE_STATE_PUSH_REQUEST)
 public class XSiteStatePushRequest extends XSiteCacheRequest<Void> {
 
-   private XSiteState[] chunk;
-   private long timeoutMillis;
+   @ProtoField(number = 2)
+   final XSiteState[] chunk;
+   @ProtoField(number = 3, defaultValue = "-1")
+   long timeoutMillis;
 
-   public XSiteStatePushRequest() {
-      super(null);
-   }
-
+   @ProtoFactory
    public XSiteStatePushRequest(ByteString cacheName, XSiteState[] chunk, long timeoutMillis) {
       super(cacheName);
       this.chunk = chunk;
@@ -40,19 +40,5 @@ public class XSiteStatePushRequest extends XSiteCacheRequest<Void> {
    @Override
    public byte getCommandId() {
       return Ids.STATE_TRANSFER_STATE;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeLong(timeoutMillis);
-      MarshallUtil.marshallArray(chunk, output);
-      super.writeTo(output);
-   }
-
-   @Override
-   public XSiteRequest<Void> readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      timeoutMillis = input.readLong();
-      chunk = MarshallUtil.unmarshallArray(input, XSiteState[]::new);
-      return super.readFrom(input);
    }
 }

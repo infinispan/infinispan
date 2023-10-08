@@ -1,14 +1,12 @@
 package org.infinispan.commands.tx;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -28,16 +26,27 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
 
    private static final Log log = LogFactory.getLog(AbstractTransactionBoundaryCommand.class);
 
-   protected GlobalTransaction globalTx;
    protected final ByteString cacheName;
+   protected GlobalTransaction globalTx;
    private Address origin;
    private int topologyId = -1;
 
-   public AbstractTransactionBoundaryCommand(ByteString cacheName) {
+   protected AbstractTransactionBoundaryCommand(ByteString cacheName) {
+      this(-1, cacheName, null);
+   }
+
+   protected AbstractTransactionBoundaryCommand(ByteString cacheName, GlobalTransaction globalTx) {
+      this(-1, cacheName, globalTx);
+   }
+
+   protected AbstractTransactionBoundaryCommand(int topologyId, ByteString cacheName, GlobalTransaction globalTx) {
+      this.topologyId = topologyId;
       this.cacheName = cacheName;
+      this.globalTx = globalTx;
    }
 
    @Override
+   @ProtoField(value = 1, defaultValue = "-1")
    public int getTopologyId() {
       return topologyId;
    }
@@ -48,11 +57,13 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
    }
 
    @Override
+   @ProtoField(2)
    public ByteString getCacheName() {
       return cacheName;
    }
 
    @Override
+   @ProtoField(3)
    public GlobalTransaction getGlobalTransaction() {
       return globalTx;
    }
@@ -93,16 +104,6 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
 
    protected void visitRemoteTransaction(RemoteTransaction tx) {
       // to be overridden
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(globalTx);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      globalTx = (GlobalTransaction) input.readObject();
    }
 
    @Override

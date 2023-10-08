@@ -4,7 +4,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.ByteString;
 
@@ -14,14 +17,12 @@ import org.infinispan.util.ByteString;
  * @author Mircea Markus
  * @since 5.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.GET_IN_DOUBT_TX_INFO_COMMAND)
 public class GetInDoubtTxInfoCommand extends BaseRpcCommand {
 
    public static final int COMMAND_ID = 23;
 
-   private GetInDoubtTxInfoCommand() {
-      super(null); // For command id uniqueness test
-   }
-
+   @ProtoFactory
    public GetInDoubtTxInfoCommand(ByteString cacheName) {
       super(cacheName);
    }
@@ -46,5 +47,4 @@ public class GetInDoubtTxInfoCommand extends BaseRpcCommand {
    public String toString() {
       return getClass().getSimpleName() + " { cacheName = " + cacheName + "}";
    }
-
 }

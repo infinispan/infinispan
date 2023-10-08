@@ -1,30 +1,44 @@
 package org.infinispan.commands.functional;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.impl.Params;
+import org.infinispan.marshall.protostream.impl.MarshallableCollection;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
+@ProtoTypeId(ProtoStreamTypeIds.TX_READ_ONLY_KEY_COMMAND)
 public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
    public static final byte COMMAND_ID = 64;
 
    private List<Mutation<K, V, ?>> mutations;
 
-   public TxReadOnlyKeyCommand() {
-   }
-
    public TxReadOnlyKeyCommand(Object key, Function<EntryView.ReadEntryView<K, V>, R> f, List<Mutation<K, V, ?>> mutations,
                                int segment, Params params, DataConversion keyDataConversion, DataConversion valueDataConversion) {
       super(key, f, segment, params, keyDataConversion, valueDataConversion);
       this.mutations = mutations;
+   }
+
+   @ProtoFactory
+   TxReadOnlyKeyCommand(MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment,
+                        MarshallableObject<Function<EntryView.ReadEntryView<K, V>, R>> wrappedFunction, Params params,
+                        DataConversion keyDataConversion, DataConversion valueDataConversion,
+                        MarshallableCollection<Mutation<K, V, ?>> wrappedMutations) {
+      super(wrappedKey, flagsWithoutRemote, topologyId, segment, wrappedFunction, params, keyDataConversion, valueDataConversion);
+      this.mutations = MarshallableCollection.unwrap(wrappedMutations, ArrayList::new);
+   }
+
+   @ProtoField(number = 9, name = "mutations")
+   MarshallableCollection<Mutation<K, V, ?>> getWrappedMutations() {
+      return MarshallableCollection.create(mutations);
    }
 
    @Override
@@ -33,21 +47,10 @@ public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      super.writeTo(output);
-      MarshallUtil.marshallCollection(mutations, output, Mutations::writeTo);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      super.readFrom(input);
-      mutations = MarshallUtil.unmarshallCollection(input, ArrayList::new, Mutations::readFrom);
-   }
-
-   @Override
    public void init(ComponentRegistry componentRegistry) {
       super.init(componentRegistry);
       // This may be called from parent's constructor when mutations are not initialized yet
+      List<Mutation<K, V, ?>> mutations = getMutations();
       if (mutations != null) {
          for (Mutation<?, ?, ?> m : mutations) {
             m.inject(componentRegistry);
@@ -57,15 +60,13 @@ public class TxReadOnlyKeyCommand<K, V, R> extends ReadOnlyKeyCommand<K, V, R> {
 
    @Override
    public String toString() {
-      final StringBuilder sb = new StringBuilder("TxReadOnlyKeyCommand{");
-      sb.append("key=").append(key);
-      sb.append(", f=").append(f);
-      sb.append(", mutations=").append(mutations);
-      sb.append(", params=").append(params);
-      sb.append(", keyDataConversion=").append(keyDataConversion);
-      sb.append(", valueDataConversion=").append(valueDataConversion);
-      sb.append('}');
-      return sb.toString();
+      return "TxReadOnlyKeyCommand{" + "key=" + key +
+            ", f=" + f +
+            ", mutations=" + mutations +
+            ", params=" + params +
+            ", keyDataConversion=" + keyDataConversion +
+            ", valueDataConversion=" + valueDataConversion +
+            '}';
    }
 
    public List<Mutation<K, V, ?>> getMutations() {

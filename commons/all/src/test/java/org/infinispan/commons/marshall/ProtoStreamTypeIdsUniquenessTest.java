@@ -24,9 +24,9 @@ public class ProtoStreamTypeIdsUniquenessTest {
       Set<Integer> lowerBounds = new HashSet<>();
       for (Field f : fields) {
          if (f.getName().endsWith("_LOWER_BOUND"))
-            assertTrue(lowerBounds.add(f.getInt(clazz)));
+            assertTrue(f.getName(), lowerBounds.add(f.getInt(clazz)));
          else
-            assertTrue(messageIds.add(f.getInt(clazz)));
+            assertTrue(f.getName(), messageIds.add(f.getInt(clazz)));
       }
       assertTrue(!messageIds.isEmpty());
       assertTrue(!lowerBounds.isEmpty());

@@ -3,6 +3,9 @@ package org.infinispan.commons.api;
 import java.util.EnumSet;
 
 import org.infinispan.commons.configuration.BasicConfiguration;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoEnumValue;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Administrative cache container operations.
@@ -19,6 +22,7 @@ public interface CacheContainerAdmin<C extends CacheContainerAdmin, A extends Ba
     * @author Tristan Tarrant
     * @since 9.2
     */
+   @ProtoTypeId(ProtoStreamTypeIds.CACHE_CONTAINER_ADMIN_FLAG)
    enum AdminFlag {
       /**
        * If the operation affects configuration, make it permanent, which means it will survive restarts.
@@ -26,14 +30,17 @@ public interface CacheContainerAdmin<C extends CacheContainerAdmin, A extends Ba
        * @deprecated configurations are now always permanent by default. Use the {@link #VOLATILE} flag to obtain the opposite behaviour.
        */
       @Deprecated(forRemoval=true, since = "11.0")
+      @ProtoEnumValue(number = 1)
       PERMANENT,
       /**
        * Configuration changes will not be persisted to the global state.
        */
+      @ProtoEnumValue(number = 2)
       VOLATILE,
       /**
        * If a configuration already exists, and is compatible with the supplied configuration, update it.
        */
+      @ProtoEnumValue(number = 3)
       UPDATE;
 
       private static final AdminFlag[] CACHED_VALUES = AdminFlag.values();

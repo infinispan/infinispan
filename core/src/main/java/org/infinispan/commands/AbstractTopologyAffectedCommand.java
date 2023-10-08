@@ -1,5 +1,7 @@
 package org.infinispan.commands;
 
+import org.infinispan.protostream.annotations.ProtoField;
+
 /**
  * Base class for commands that carry topology id.
  *
@@ -8,9 +10,15 @@ package org.infinispan.commands;
  */
 public abstract class AbstractTopologyAffectedCommand extends AbstractFlagAffectedCommand implements TopologyAffectedCommand {
 
-   private int topologyId = -1;
+   protected int topologyId;
+
+   protected AbstractTopologyAffectedCommand(long flags, int topologyId) {
+      super(flags);
+      this.topologyId = topologyId;
+   }
 
    @Override
+   @ProtoField(number = 2, defaultValue = "-1")
    public int getTopologyId() {
       return topologyId;
    }
@@ -19,5 +27,4 @@ public abstract class AbstractTopologyAffectedCommand extends AbstractFlagAffect
    public void setTopologyId(int topologyId) {
       this.topologyId = topologyId;
    }
-
 }

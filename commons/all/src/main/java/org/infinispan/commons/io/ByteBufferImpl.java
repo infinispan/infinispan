@@ -1,15 +1,8 @@
 package org.infinispan.commons.io;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.util.Util;
 
 /**
@@ -122,40 +115,4 @@ public class ByteBufferImpl implements ByteBuffer {
    public java.nio.ByteBuffer toJDKByteBuffer() {
       return java.nio.ByteBuffer.wrap(buf, offset, length);
    }
-
-   public static class Externalizer extends AbstractExternalizer<ByteBufferImpl> {
-
-      private static final long serialVersionUID = -5291318076267612501L;
-
-      @Override
-      public void writeObject(ObjectOutput output, ByteBufferImpl b) throws IOException {
-         UnsignedNumeric.writeUnsignedInt(output, b.length);
-         if (b.length > 0) {
-            output.write(b.buf, b.offset, b.length);
-         }
-      }
-
-      @Override
-      public ByteBufferImpl readObject(ObjectInput input) throws IOException {
-         int length = UnsignedNumeric.readUnsignedInt(input);
-         if (length == 0) { //no need to allocate new objects
-            return EMPTY_INSTANCE;
-         }
-         byte[] data = new byte[length];
-         input.readFully(data, 0, length);
-         return new ByteBufferImpl(data, 0, length);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.BYTE_BUFFER;
-      }
-
-      @Override
-      public Set<Class<? extends ByteBufferImpl>> getTypeClasses() {
-         return Collections.singleton(ByteBufferImpl.class);
-      }
-   }
-
-
 }

@@ -3,7 +3,10 @@ package org.infinispan.xsite.commands;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
@@ -14,15 +17,12 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
  * @author Ryan Emerson
  * @since 11.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.XSITE_STATE_TRANSFER_CLEAR_STATUS_COMMAND)
 public class XSiteStateTransferClearStatusCommand extends BaseRpcCommand {
 
    public static final byte COMMAND_ID = 111;
 
-   // For CommandIdUniquenessTest only
-   public XSiteStateTransferClearStatusCommand() {
-      super(null);
-   }
-
+   @ProtoFactory
    public XSiteStateTransferClearStatusCommand(ByteString cacheName) {
       super(cacheName);
    }

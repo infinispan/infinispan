@@ -34,11 +34,7 @@
             <role name="king" permissions="ALL"/>
          </authorization>
       </security>
-      <serialization marshaller="org.infinispan.marshall.TestObjectStreamMarshaller">
-         <advanced-externalizer id="1234" class="org.infinispan.marshall.AdvancedExternalizerTest$IdViaConfigObj$Externalizer"/>
-         <advanced-externalizer class="org.infinispan.marshall.AdvancedExternalizerTest$IdViaAnnotationObj$Externalizer"/>
-         <advanced-externalizer id="3456" class="org.infinispan.marshall.AdvancedExternalizerTest$IdViaBothObj$Externalizer"/>
-      </serialization>
+      <serialization marshaller="org.infinispan.marshall.TestObjectStreamMarshaller" />
       <jmx enabled="true" domain="funky_domain" mbean-server-lookup="org.infinispan.commons.jmx.TestMBeanServerLookup"/>
       <local-cache name="default" statistics="false">
          <locking concurrency-level="100" acquire-timeout="1000"/>

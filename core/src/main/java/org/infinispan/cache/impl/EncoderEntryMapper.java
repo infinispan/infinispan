@@ -1,14 +1,8 @@
 package org.infinispan.cache.impl;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.encoding.DataConversion;
@@ -17,18 +11,25 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * {@link java.util.function.Function} that uses an encoder to converter entries from the configured storage format to
  * the requested format.
  */
+@ProtoTypeId(ProtoStreamTypeIds.ENCODER_ENTRY_MAPPER)
 @Scope(Scopes.NAMED_CACHE)
 public class EncoderEntryMapper<K, V, T extends Map.Entry<K, V>> implements EncodingFunction<T> {
    @Inject
    transient InternalEntryFactory entryFactory;
 
-   private final DataConversion keyDataConversion;
-   private final DataConversion valueDataConversion;
+   @ProtoField(number = 1)
+   final DataConversion keyDataConversion;
+
+   @ProtoField(number = 2)
+   final DataConversion valueDataConversion;
 
    public static <K, V> EncoderEntryMapper<K, V, Map.Entry<K, V>> newEntryMapper(DataConversion keyDataConversion,
                                                                                  DataConversion valueDataConversion, InternalEntryFactory entryFactory) {
@@ -44,7 +45,8 @@ public class EncoderEntryMapper<K, V, T extends Map.Entry<K, V>> implements Enco
       return mapper;
    }
 
-   private EncoderEntryMapper(DataConversion keyDataConversion, DataConversion valueDataConversion) {
+   @ProtoFactory
+   EncoderEntryMapper(DataConversion keyDataConversion, DataConversion valueDataConversion) {
       this.keyDataConversion = keyDataConversion;
       this.valueDataConversion = valueDataConversion;
    }
@@ -71,30 +73,5 @@ public class EncoderEntryMapper<K, V, T extends Map.Entry<K, V>> implements Enco
          }
       }
       return e;
-   }
-
-   public static class Externalizer implements AdvancedExternalizer<EncoderEntryMapper> {
-
-      @Override
-      public Set<Class<? extends EncoderEntryMapper>> getTypeClasses() {
-         return Collections.singleton(EncoderEntryMapper.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.ENCODER_ENTRY_MAPPER;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, EncoderEntryMapper object) throws IOException {
-         DataConversion.writeTo(output, object.keyDataConversion);
-         DataConversion.writeTo(output, object.valueDataConversion);
-      }
-
-      @Override
-      @SuppressWarnings("unchecked")
-      public EncoderEntryMapper readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new EncoderEntryMapper(DataConversion.readFrom(input), DataConversion.readFrom(input));
-      }
    }
 }
