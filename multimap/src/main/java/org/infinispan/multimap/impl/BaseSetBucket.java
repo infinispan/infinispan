@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
 
@@ -84,10 +85,10 @@ public interface BaseSetBucket<E> {
     * @return Collection with the elements in the intersection of the two sets.
     */
    default Collection<ScoredValue<E>> inter(Collection<ScoredValue<E>> input, double weight, SortedSetBucket.AggregateFunction function) {
-      if (input == null) {
+      if (input == null || input.isEmpty()) {
          return getAsSet().stream()
                .map(s -> new ScoredValue<>(SetUtil.calculate(s.score(), weight), s.wrappedValue()))
-               .toList();
+               .collect(Collectors.toList());
       }
 
       SortedSet<ScoredValue<E>> output = new TreeSet<>();

@@ -6,12 +6,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOS
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
 import static org.infinispan.counter.EmbeddedCounterManagerFactory.asCounterManager;
 import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
-import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 
-import javax.security.auth.Subject;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -23,16 +18,17 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
+
+import javax.security.auth.Subject;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
@@ -71,6 +67,8 @@ import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped
 import org.infinispan.notifications.cachemanagerlistener.annotation.ConfigurationChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.ConfigurationChangedEvent;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.actions.SecurityActions;
@@ -204,14 +202,16 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    /**
     * Class used to allow for remote clients to essentially ignore the value by returning an empty byte[].
     */
-   @SerializeWith(value = ToEmptyBytesKeyValueFilterConverter.ToEmptyBytesKeyValueFilterConverterExternalizer.class)
+   @ProtoTypeId(ProtoStreamTypeIds.SERVER_HR_TO_EMPTY_BYTES_KEY_VALUE_FILTER_CONVERTER)
    static class ToEmptyBytesKeyValueFilterConverter extends AbstractKeyValueFilterConverter {
-      private ToEmptyBytesKeyValueFilterConverter() {
-      }
-
-      public static ToEmptyBytesKeyValueFilterConverter INSTANCE = new ToEmptyBytesKeyValueFilterConverter();
+      static ToEmptyBytesKeyValueFilterConverter INSTANCE = new ToEmptyBytesKeyValueFilterConverter();
 
       static final byte[] bytes = Util.EMPTY_BYTE_ARRAY;
+
+      @ProtoFactory
+      static ToEmptyBytesKeyValueFilterConverter protoFactory() {
+         return INSTANCE;
+      }
 
       @Override
       public Object filterAndConvert(Object key, Object value, Metadata metadata) {
@@ -221,19 +221,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       @Override
       public MediaType format() {
          return null;
-      }
-
-      public static final class ToEmptyBytesKeyValueFilterConverterExternalizer implements
-                                                                                Externalizer<ToEmptyBytesKeyValueFilterConverter> {
-
-         @Override
-         public void writeObject(ObjectOutput output, ToEmptyBytesKeyValueFilterConverter object) {
-         }
-
-         @Override
-         public ToEmptyBytesKeyValueFilterConverter readObject(ObjectInput input) {
-            return INSTANCE;
-         }
       }
    }
 
@@ -517,7 +504,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
       MediaType valueRequestType = header == null ? APPLICATION_UNKNOWN : header.getValueMediaType();
       if (header != null && HotRodVersion.HOTROD_28.isOlder(header.version)) {
          // Pre-2.8 clients always send protobuf payload to the metadata cache
-         if (header.cacheName.equals(PROTOBUF_METADATA_CACHE_NAME)) {
+         if (header.cacheName.equals(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME)) {
             keyRequestType = APPLICATION_PROTOSTREAM;
             valueRequestType = APPLICATION_PROTOSTREAM;
          } else {
@@ -721,41 +708,6 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
          for (ExtendedCacheInfo cacheInfo : knownCaches.values()) {
             updateCacheInfo(cacheInfo);
          }
-      }
-   }
-}
-
-@SerializeWith(value = CheckAddressTask.CheckAddressTaskExternalizer.class)
-class CheckAddressTask implements Function<EmbeddedCacheManager, Boolean> {
-   private final String cacheName;
-   private final Address clusterAddress;
-
-   CheckAddressTask(String cacheName, Address clusterAddress) {
-      this.cacheName = cacheName;
-      this.clusterAddress = clusterAddress;
-   }
-
-   @Override
-   public Boolean apply(EmbeddedCacheManager embeddedCacheManager) {
-      if (embeddedCacheManager.isRunning(cacheName)) {
-         Cache<Address, ServerAddress> cache = embeddedCacheManager.getCache(cacheName);
-         return cache.containsKey(clusterAddress);
-      }
-      // If the cache isn't started just play like this node has the address in the cache - it will be added as it
-      // joins, so no worries
-      return true;
-   }
-
-   public static final class CheckAddressTaskExternalizer implements Externalizer<CheckAddressTask> {
-      @Override
-      public void writeObject(ObjectOutput output, CheckAddressTask object) throws IOException {
-         output.writeUTF(object.cacheName);
-         output.writeObject(object.clusterAddress);
-      }
-
-      @Override
-      public CheckAddressTask readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new CheckAddressTask(input.readUTF(), (Address) input.readObject());
       }
    }
 }

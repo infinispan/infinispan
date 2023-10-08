@@ -18,10 +18,13 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
+import org.infinispan.filter.CompositeKeyValueFilterConverter;
 import org.infinispan.filter.Converter;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.protostream.impl.GlobalContextInitializer;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.ProtoAdapter;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoName;
@@ -32,6 +35,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
+import org.infinispan.util.KeyValuePair;
 import org.testng.annotations.Test;
 
 /**
@@ -93,6 +97,25 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
       return stream.collect(() -> Collectors.toMap(CacheEntry::getKey, CacheEntry::getValue));
    }
 
+   @ProtoAdapter(HashMap.class)
+   public static class HashMapAdapter<K, V> {
+      @ProtoFactory
+      static <K, V> HashMap<K, V> create(List<KeyValuePair<K, V>> pairs) {
+         HashMap<K, V> map = new HashMap<>(pairs.size());
+         for (var kvp : pairs)
+            map.put(kvp.getKey(), kvp.getValue());
+         return map;
+      }
+
+      @ProtoField(1)
+      List<KeyValuePair<K, V>> getPairs(HashMap<K, V> map) {
+         return map.entrySet()
+               .stream()
+               .map(e -> new KeyValuePair<>(e.getKey(), e.getValue()))
+               .collect(Collectors.toList());
+      }
+   }
+
    @ProtoName("BaseSetupStreamStringTrunctator")
    public static class StringTruncator implements Converter<Object, String, String> {
       @ProtoField(number = 1, defaultValue = "0")
@@ -151,9 +174,12 @@ public abstract class BaseSetupStreamIteratorTest extends MultipleCacheManagersT
    }
 
    @ProtoSchema(
+         dependsOn = GlobalContextInitializer.class,
          includeClasses = {
+               BaseSetupStreamIteratorTest.HashMapAdapter.class,
                BaseSetupStreamIteratorTest.StringTruncator.class,
                BaseSetupStreamIteratorTest.TestDefaultConsistentHashFactory.class,
+               CompositeKeyValueFilterConverter.class,
                MagicKey.class
          },
          schemaFileName = "core.stream.proto",

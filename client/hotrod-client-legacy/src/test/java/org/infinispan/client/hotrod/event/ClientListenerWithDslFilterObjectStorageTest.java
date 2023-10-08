@@ -40,6 +40,7 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
 import org.infinispan.query.remote.client.FilterResult;
+import org.infinispan.query.remote.impl.GlobalContextInitializer;
 import org.infinispan.query.remote.impl.filter.IckleCacheEventFilterConverterFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -75,7 +76,7 @@ public class ClientListenerWithDslFilterObjectStorageTest extends MultiHotRodSer
 
    @Override
    protected List<SerializationContextInitializer> contextInitializers() {
-      return Arrays.asList(TestDomainSCI.INSTANCE, ClientEventSCI.INSTANCE);
+      return Arrays.asList(GlobalContextInitializer.INSTANCE, TestDomainSCI.INSTANCE, ClientEventSCI.INSTANCE);
    }
 
    protected ConfigurationBuilder getConfigurationBuilder() {

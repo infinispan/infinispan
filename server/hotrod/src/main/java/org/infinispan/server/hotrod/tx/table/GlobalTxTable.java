@@ -178,7 +178,7 @@ public class GlobalTxTable implements Runnable, Lifecycle {
       for (Map.Entry<CacheXid, TxState> entry : storage.entrySet()) {
          TxState state = entry.getValue();
          CacheXid cacheXid = entry.getKey();
-         if (!state.hasTimedOut(currentTimestamp) || skipReaper(state.getOriginator(), cacheXid.getCacheName())) {
+         if (!state.hasTimedOut(currentTimestamp) || skipReaper(state.getOriginator(), cacheXid.cacheName())) {
             continue;
          }
          switch (state.getStatus()) {
@@ -210,7 +210,7 @@ public class GlobalTxTable implements Runnable, Lifecycle {
       long currentTimestamp = timeService.time();
       Collection<XidImpl> preparedTx = new HashSet<>(); //remove duplicates!
       for (Map.Entry<CacheXid, TxState> entry : storage.entrySet()) {
-         XidImpl xid = entry.getKey().getXid();
+         XidImpl xid = entry.getKey().xid();
          TxState state = entry.getValue();
          if (log.isTraceEnabled()) {
             log.tracef("Checking transaction xid=%s for recovery. TimedOut?=%s, Recoverable?=%s, Status=%s",
@@ -231,7 +231,7 @@ public class GlobalTxTable implements Runnable, Lifecycle {
       if (state.getStatus() == Status.PREPARED && state.isRecoverable()) {
          return; //recovery will handle prepared transactions
       }
-      ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheXid.getCacheName());
+      ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheXid.cacheName());
       if (cr == null) {
          //we don't have the cache locally
          return;
@@ -247,7 +247,7 @@ public class GlobalTxTable implements Runnable, Lifecycle {
       } else {
          //local transaction prepared.
          PerCacheTxTable txTable = cr.getComponent(PerCacheTxTable.class);
-         EmbeddedTransaction tx = txTable.getLocalTx(cacheXid.getXid());
+         EmbeddedTransaction tx = txTable.getLocalTx(cacheXid.xid());
          if (tx == null) {
             //local transaction doesn't exists.
             onTransactionCompleted(cacheXid);
@@ -282,7 +282,7 @@ public class GlobalTxTable implements Runnable, Lifecycle {
    }
 
    private void onTransactionDecision(CacheXid cacheXid, TxState state, boolean commit) {
-      ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheXid.getCacheName());
+      ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheXid.cacheName());
       if (cr == null) {
          //we don't have the cache locally
          return;
@@ -291,7 +291,7 @@ public class GlobalTxTable implements Runnable, Lifecycle {
       if (rpcManager == null || state.getOriginator().equals(rpcManager.getAddress())) {
          //local
          PerCacheTxTable txTable = cr.getComponent(PerCacheTxTable.class);
-         EmbeddedTransaction tx = txTable.getLocalTx(cacheXid.getXid());
+         EmbeddedTransaction tx = txTable.getLocalTx(cacheXid.xid());
          if (tx == null) {
             //transaction completed
             onTransactionCompleted(cacheXid);
@@ -329,7 +329,7 @@ public class GlobalTxTable implements Runnable, Lifecycle {
          //embedded tx cleanups everything
          //TODO log
       } finally {
-         txTable.removeLocalTx(cacheXid.getXid());
+         txTable.removeLocalTx(cacheXid.xid());
       }
       onTransactionCompleted(cacheXid);
    }
@@ -383,7 +383,7 @@ public class GlobalTxTable implements Runnable, Lifecycle {
             } else {
                status = Status.ERROR;
             }
-            collector.addCache(cacheXid.getCacheName(), status);
+            collector.addCache(cacheXid.cacheName(), status);
             return null;
          });
       }

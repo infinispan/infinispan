@@ -2,11 +2,6 @@ package org.infinispan.persistence.remote.upgrade;
 
 import static java.util.Spliterators.spliteratorUnknownSize;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.BitSet;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -18,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.infinispan.AdvancedCache;
@@ -29,8 +23,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.Util;
@@ -43,33 +36,45 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.threads.BlockingThreadFactory;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.remote.ExternalizerIds;
 import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.persistence.remote.logging.Log;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.logging.LogFactory;
 
+@ProtoTypeId(ProtoStreamTypeIds.REMOTE_STORE_MIGRATION_TASK)
 public class MigrationTask implements Function<EmbeddedCacheManager, Integer> {
 
    private static final Log log = LogFactory.getLog(MigrationTask.class, Log.class);
 
    private static final String THREAD_NAME = "RollingUpgrade-MigrationTask";
 
-   private final String cacheName;
-   private final Set<Integer> segments;
-   private final int readBatch;
-   private final int threads;
-   private final Set<Object> deletedKeys = ConcurrentHashMap.newKeySet();
+   @ProtoField(1)
+   final String cacheName;
 
+   @ProtoField(2)
+   final Set<Integer> segments;
+
+   @ProtoField(3)
+   final int readBatch;
+
+   @ProtoField(4)
+   final int threads;
+
+   private final Set<Object> deletedKeys = ConcurrentHashMap.newKeySet();
    private InvocationHelper invocationHelper;
    private CommandsFactory commandsFactory;
    private KeyPartitioner keyPartitioner;
 
+   @ProtoFactory
    public MigrationTask(String cacheName, Set<Integer> segments, int readBatch, int threads) {
       this.cacheName = cacheName;
       this.segments = segments;
@@ -164,42 +169,7 @@ public class MigrationTask implements Function<EmbeddedCacheManager, Integer> {
       return invocationHelper.invoke(context, computeCommand);
    }
 
-   public static class Externalizer extends AbstractExternalizer<MigrationTask> {
-
-      @Override
-      public Set<Class<? extends MigrationTask>> getTypeClasses() {
-         return Collections.singleton(MigrationTask.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, MigrationTask task) throws IOException {
-         output.writeObject(task.cacheName);
-         UnsignedNumeric.writeUnsignedInt(output, task.readBatch);
-         UnsignedNumeric.writeUnsignedInt(output, task.threads);
-         BitSet bs = new BitSet();
-         for (Integer segment : task.segments) {
-            bs.set(segment);
-         }
-         byte[] bytes = bs.toByteArray();
-         UnsignedNumeric.writeUnsignedInt(output, bytes.length);
-         output.write(bs.toByteArray());
-      }
-
-      @Override
-      public MigrationTask readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         String cacheName = (String) input.readObject();
-         int readBatch = UnsignedNumeric.readUnsignedInt(input);
-         int threads = UnsignedNumeric.readUnsignedInt(input);
-         int segmentsSize = UnsignedNumeric.readUnsignedInt(input);
-         byte[] bytes = new byte[segmentsSize];
-         input.read(bytes);
-         BitSet bitSet = BitSet.valueOf(bytes);
-         Set<Integer> segments = bitSet.stream().boxed().collect(Collectors.toSet());
-         return new MigrationTask(cacheName, segments, readBatch, threads);
-      }
-   }
-
-
+   @ProtoTypeId(ProtoStreamTypeIds.REMOTE_STORE_MIGRATION_TASK_ENTRY_WRITER)
    public static class EntryWriter<K, V> implements BiFunction<K, V, V> {
       private final V newEntry;
 
@@ -207,33 +177,19 @@ public class MigrationTask implements Function<EmbeddedCacheManager, Integer> {
          this.newEntry = newEntry;
       }
 
+      @ProtoFactory
+      EntryWriter(MarshallableObject<V> wrappedNewEntry) {
+         this.newEntry = MarshallableObject.unwrap(wrappedNewEntry);
+      }
+
+      @ProtoField(1)
+      MarshallableObject<V> getWrappedNewEntry() {
+         return MarshallableObject.create(newEntry);
+      }
+
       @Override
       public V apply(K k, V v) {
          return v == null ? newEntry : v;
-      }
-   }
-
-   public static class EntryWriterExternalizer extends AbstractExternalizer<EntryWriter> {
-
-      @Override
-      public Set<Class<? extends EntryWriter>> getTypeClasses() {
-         return Collections.singleton(EntryWriter.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.ENTRY_WRITER;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, EntryWriter object) throws IOException {
-         output.writeObject(object.newEntry);
-      }
-
-      @Override
-      public EntryWriter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Object newEntry = input.readObject();
-         return new EntryWriter(newEntry);
       }
    }
 }

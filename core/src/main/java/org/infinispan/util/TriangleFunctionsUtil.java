@@ -6,29 +6,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.functional.ReadWriteKeyCommand;
-import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.functional.ReadWriteManyCommand;
 import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
-import org.infinispan.commands.functional.WriteOnlyKeyCommand;
-import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
-import org.infinispan.commands.triangle.BackupWriteCommand;
-import org.infinispan.commands.triangle.MultiEntriesFunctionalBackupWriteCommand;
-import org.infinispan.commands.triangle.MultiKeyFunctionalBackupWriteCommand;
-import org.infinispan.commands.triangle.PutMapBackupWriteCommand;
-import org.infinispan.commands.triangle.SingleKeyBackupWriteCommand;
-import org.infinispan.commands.triangle.SingleKeyFunctionalBackupWriteCommand;
-import org.infinispan.commands.write.ComputeCommand;
-import org.infinispan.commands.write.ComputeIfAbsentCommand;
-import org.infinispan.commands.write.IracPutKeyValueCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.RemoveExpiredCommand;
-import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.remoting.responses.ValidResponse;
@@ -106,100 +88,5 @@ public final class TriangleFunctionsUtil {
       return map.entrySet().stream()
             .filter(entry -> keys.contains(entry.getKey()))
             .collect(HashMap::new, (rMap, entry) -> rMap.put(entry.getKey(), entry.getValue()), HashMap::putAll);
-   }
-
-   public static BackupWriteCommand backupFrom(CommandsFactory factory, PutKeyValueCommand command) {
-      SingleKeyBackupWriteCommand cmd = factory.buildSingleKeyBackupWriteCommand();
-      cmd.setPutKeyValueCommand(command);
-      return cmd;
-   }
-
-   public static BackupWriteCommand backupFrom(CommandsFactory factory, IracPutKeyValueCommand command) {
-      SingleKeyBackupWriteCommand cmd = factory.buildSingleKeyBackupWriteCommand();
-      cmd.setIracPutKeyValueCommand(command);
-      return cmd;
-   }
-
-   public static BackupWriteCommand backupFrom(CommandsFactory factory, RemoveCommand command) {
-      SingleKeyBackupWriteCommand cmd = factory.buildSingleKeyBackupWriteCommand();
-      cmd.setRemoveCommand(command, command.getCommandId() == RemoveExpiredCommand.COMMAND_ID);
-      return cmd;
-   }
-
-   public static BackupWriteCommand backupFrom(CommandsFactory factory, ReplaceCommand command) {
-      SingleKeyBackupWriteCommand cmd = factory.buildSingleKeyBackupWriteCommand();
-      cmd.setReplaceCommand(command);
-      return cmd;
-   }
-
-   public static BackupWriteCommand backupFrom(CommandsFactory factory, ComputeIfAbsentCommand command) {
-      SingleKeyBackupWriteCommand cmd = factory.buildSingleKeyBackupWriteCommand();
-      cmd.setComputeIfAbsentCommand(command);
-      return cmd;
-   }
-
-   public static BackupWriteCommand backupFrom(CommandsFactory factory, ComputeCommand command) {
-      SingleKeyBackupWriteCommand cmd = factory.buildSingleKeyBackupWriteCommand();
-      cmd.setComputeCommand(command);
-      return cmd;
-   }
-
-   public static BackupWriteCommand backupFrom(CommandsFactory factory, ReadWriteKeyValueCommand command) {
-      SingleKeyFunctionalBackupWriteCommand cmd = factory.buildSingleKeyFunctionalBackupWriteCommand();
-      cmd.setReadWriteKeyValueCommand(command);
-      return cmd;
-   }
-
-   public static BackupWriteCommand backupFrom(CommandsFactory factory, ReadWriteKeyCommand command) {
-      SingleKeyFunctionalBackupWriteCommand cmd = factory.buildSingleKeyFunctionalBackupWriteCommand();
-      cmd.setReadWriteKeyCommand(command);
-      return cmd;
-   }
-
-   public static BackupWriteCommand backupFrom(CommandsFactory factory, WriteOnlyKeyValueCommand command) {
-      SingleKeyFunctionalBackupWriteCommand cmd = factory.buildSingleKeyFunctionalBackupWriteCommand();
-      cmd.setWriteOnlyKeyValueCommand(command);
-      return cmd;
-   }
-
-   public static BackupWriteCommand backupFrom(CommandsFactory factory, WriteOnlyKeyCommand command) {
-      SingleKeyFunctionalBackupWriteCommand cmd = factory.buildSingleKeyFunctionalBackupWriteCommand();
-      cmd.setWriteOnlyKeyCommand(command);
-      return cmd;
-   }
-
-   public static BackupWriteCommand backupFrom(CommandsFactory factory, PutMapCommand command,
-         Collection<Object> keys) {
-      PutMapBackupWriteCommand cmd = factory.buildPutMapBackupWriteCommand();
-      cmd.setPutMapCommand(command, keys);
-      return cmd;
-   }
-
-   public static <K, V, T> BackupWriteCommand backupFrom(CommandsFactory factory,
-         WriteOnlyManyEntriesCommand<K, V, T> command, Collection<Object> keys) {
-      MultiEntriesFunctionalBackupWriteCommand cmd = factory.buildMultiEntriesFunctionalBackupWriteCommand();
-      cmd.setWriteOnly(command, keys);
-      return cmd;
-   }
-
-   public static <K, V, T, R> BackupWriteCommand backupFrom(CommandsFactory factory,
-         ReadWriteManyEntriesCommand<K, V, T, R> command, Collection<Object> keys) {
-      MultiEntriesFunctionalBackupWriteCommand cmd = factory.buildMultiEntriesFunctionalBackupWriteCommand();
-      cmd.setReadWrite(command, keys);
-      return cmd;
-   }
-
-   public static <K, V> BackupWriteCommand backupFrom(CommandsFactory factory,
-         WriteOnlyManyCommand<K, V> command, Collection<Object> keys) {
-      MultiKeyFunctionalBackupWriteCommand cmd = factory.buildMultiKeyFunctionalBackupWriteCommand();
-      cmd.setWriteOnly(command, keys);
-      return cmd;
-   }
-
-   public static <K, V, R> BackupWriteCommand backupFrom(CommandsFactory factory,
-         ReadWriteManyCommand<K, V, R> command, Collection<Object> keys) {
-      MultiKeyFunctionalBackupWriteCommand cmd = factory.buildMultiKeyFunctionalBackupWriteCommand();
-      cmd.setReadWrite(command, keys);
-      return cmd;
    }
 }

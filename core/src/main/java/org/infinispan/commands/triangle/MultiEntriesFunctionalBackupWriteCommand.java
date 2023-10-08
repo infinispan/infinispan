@@ -1,80 +1,79 @@
 package org.infinispan.commands.triangle;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.functional.AbstractWriteManyCommand;
 import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.encoding.DataConversion;
+import org.infinispan.functional.impl.Params;
+import org.infinispan.marshall.protostream.impl.MarshallableMap;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.TriangleFunctionsUtil;
 
 /**
- * A multi-key {@link BackupWriteCommand} for {@link WriteOnlyManyEntriesCommand} and {@link ReadWriteManyEntriesCommand}.
+ * A multi-key {@link BackupWriteCommand} for {@link WriteOnlyManyEntriesCommand} and {@link
+ * ReadWriteManyEntriesCommand}.
  *
  * @author Pedro Ruivo
  * @since 9.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTI_ENTRIES_FUNCTIONAL_BACKUP_WRITE_COMMAND)
 public class MultiEntriesFunctionalBackupWriteCommand extends FunctionalBackupWriteCommand {
 
    public static final byte COMMAND_ID = 79;
 
-   private boolean writeOnly;
-   private Map<?, ?> entries;
+   @ProtoField(11)
+   final boolean writeOnly;
+   final Map<?, ?> entries;
 
-   //for testing
-   @SuppressWarnings("unused")
-   public MultiEntriesFunctionalBackupWriteCommand() {
-      super(null);
+   public static <K, V, T> MultiEntriesFunctionalBackupWriteCommand create(ByteString cacheName, WriteOnlyManyEntriesCommand<K, V, T> command,
+                                                                           Collection<Object> keys, long sequence, int segmentId) {
+      Map<?, ?> entries = TriangleFunctionsUtil.filterEntries(command.getArguments(), keys);
+      return new MultiEntriesFunctionalBackupWriteCommand(cacheName, command, sequence, segmentId, command.getBiConsumer(), true, entries);
    }
 
-   public MultiEntriesFunctionalBackupWriteCommand(ByteString cacheName) {
-      super(cacheName);
+   public static <K, V, T, R> MultiEntriesFunctionalBackupWriteCommand create(ByteString cacheName, ReadWriteManyEntriesCommand<K, V, T, R> command,
+                                                                              Collection<Object> keys, long sequence, int segmentId) {
+      Map<?, ?> entries = TriangleFunctionsUtil.filterEntries(command.getArguments(), keys);
+      return new MultiEntriesFunctionalBackupWriteCommand(cacheName, command, sequence, segmentId, command.getBiFunction(), false, entries);
    }
 
-   public <K, V, T> void setWriteOnly(WriteOnlyManyEntriesCommand<K, V, T> command, Collection<Object> keys) {
-      setCommonAttributesFromCommand(command);
-      setFunctionalCommand(command);
-      writeOnly = true;
-      this.entries = TriangleFunctionsUtil.filterEntries(command.getArguments(), keys);
-      this.function = command.getBiConsumer();
+   @ProtoFactory
+   MultiEntriesFunctionalBackupWriteCommand(ByteString cacheName, CommandInvocationId commandInvocationId, int topologyId,
+                                            long flags, long sequence, int segmentId, MarshallableObject<?> function,
+                                            Params params, DataConversion keyDataConversion, DataConversion valueDataConversion,
+                                            boolean writeOnly, MarshallableMap<?, ?> wrappedEntries) {
+      super(cacheName, commandInvocationId, topologyId, flags, sequence, segmentId, function, params, keyDataConversion, valueDataConversion);
+      this.writeOnly = writeOnly;
+      this.entries = MarshallableMap.unwrap(wrappedEntries);
    }
 
-   public <K, V, T, R> void setReadWrite(ReadWriteManyEntriesCommand<K, V, T, R> command, Collection<Object> keys) {
-      setCommonAttributesFromCommand(command);
-      setFunctionalCommand(command);
-      writeOnly = false;
-      this.entries = TriangleFunctionsUtil.filterEntries(command.getArguments(), keys);
-      this.function = command.getBiFunction();
+   private MultiEntriesFunctionalBackupWriteCommand(ByteString cacheName, AbstractWriteManyCommand<?, ?> command, long sequence,
+                                                    int segmentId, Object function, boolean writeOnly, Map<?, ?> entries) {
+      super(cacheName, command, sequence, segmentId, function);
+      this.writeOnly = writeOnly;
+      this.entries = entries;
+   }
+
+   @ProtoField(12)
+   MarshallableMap<?, ?> getWrappedEntries() {
+      return MarshallableMap.create(entries);
    }
 
    @Override
    public byte getCommandId() {
       return COMMAND_ID;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      writeBase(output);
-      writeFunctionAndParams(output);
-      output.writeBoolean(writeOnly);
-      MarshallUtil.marshallMap(entries, output);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      readBase(input);
-      readFunctionAndParams(input);
-      writeOnly = input.readBoolean();
-      entries = MarshallUtil.unmarshallMap(input, HashMap::new);
    }
 
    @Override
@@ -88,5 +87,4 @@ public class MultiEntriesFunctionalBackupWriteCommand extends FunctionalBackupWr
       cmd.setForwarded(true);
       return cmd;
    }
-
 }

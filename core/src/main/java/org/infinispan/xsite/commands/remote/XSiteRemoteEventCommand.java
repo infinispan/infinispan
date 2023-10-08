@@ -1,14 +1,13 @@
 package org.infinispan.xsite.commands.remote;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.xsite.events.XSiteEvent;
 import org.infinispan.xsite.events.XSiteEventsManager;
 
@@ -17,13 +16,13 @@ import org.infinispan.xsite.events.XSiteEventsManager;
  *
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.XSITE_REMOTE_EVENT_COMMAND)
 public class XSiteRemoteEventCommand implements XSiteRequest<Void> {
 
-   private List<XSiteEvent> events;
+   @ProtoField(1)
+   List<XSiteEvent> events;
 
-   public XSiteRemoteEventCommand() {
-   }
-
+   @ProtoFactory
    public XSiteRemoteEventCommand(List<XSiteEvent> events) {
       this.events = events;
    }
@@ -36,17 +35,6 @@ public class XSiteRemoteEventCommand implements XSiteRequest<Void> {
    @Override
    public byte getCommandId() {
       return Ids.SITE_EVENT;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      MarshallUtil.marshallCollection(events, output, XSiteEvent::writeTo);
-   }
-
-   @Override
-   public XSiteRequest<Void> readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      events = MarshallUtil.unmarshallCollection(input, ArrayList::new, XSiteEvent::readFrom);
-      return this;
    }
 
    @Override

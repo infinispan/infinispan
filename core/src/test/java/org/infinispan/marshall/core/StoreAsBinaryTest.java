@@ -18,8 +18,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.EncoderCache;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.MarshallingException;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.commons.test.Exceptions;
@@ -478,7 +478,7 @@ public class StoreAsBinaryTest extends MultipleCacheManagersTest {
    }
 
    public void testEqualsAndHashCode() throws Exception {
-      StreamingMarshaller marshaller = extractGlobalMarshaller(manager(0));
+      Marshaller marshaller = extractGlobalMarshaller(manager(0));
       CountMarshallingPojo pojo = new CountMarshallingPojo(POJO_NAME, 1);
       WrappedBytes wb = new WrappedByteArray(marshaller.objectToByteBuffer(pojo));
       WrappedBytes wb2 = new WrappedByteArray(marshaller.objectToByteBuffer(pojo));

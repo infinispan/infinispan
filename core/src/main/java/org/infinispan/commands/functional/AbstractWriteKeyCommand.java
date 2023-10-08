@@ -8,7 +8,9 @@ import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.impl.Params;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.protostream.annotations.ProtoField;
 
 public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCommand implements FunctionalCommand<K, V> {
 
@@ -19,19 +21,27 @@ public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCom
    DataConversion valueDataConversion;
    PrivateMetadata internalMetadata;
 
-   public AbstractWriteKeyCommand(Object key, ValueMatcher valueMatcher, int segment,
-                                  CommandInvocationId id, Params params,
-                                  DataConversion keyDataConversion,
-                                  DataConversion valueDataConversion) {
+   // For child ProtoFactory constructors
+   protected AbstractWriteKeyCommand(MarshallableObject<?> wrappedKey, long flags, int topologyId, int segment,
+                                     CommandInvocationId commandInvocationId, Params params, ValueMatcher valueMatcher,
+                                     DataConversion keyDataConversion, DataConversion valueDataConversion, PrivateMetadata internalMetadata) {
+      super(wrappedKey, flags, topologyId, segment, commandInvocationId);
+      this.params = params;
+      this.valueMatcher = valueMatcher;
+      this.keyDataConversion = keyDataConversion;
+      this.valueDataConversion = valueDataConversion;
+      this.internalMetadata = internalMetadata;
+   }
+
+   protected AbstractWriteKeyCommand(Object key, ValueMatcher valueMatcher, int segment,
+                                     CommandInvocationId id, Params params,
+                                     DataConversion keyDataConversion,
+                                     DataConversion valueDataConversion) {
       super(key, segment, params.toFlagsBitSet(), id);
       this.valueMatcher = valueMatcher;
       this.params = params;
       this.keyDataConversion = keyDataConversion;
       this.valueDataConversion = valueDataConversion;
-   }
-
-   public AbstractWriteKeyCommand() {
-      // No-op
    }
 
    @Override
@@ -41,8 +51,38 @@ public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCom
    }
 
    @Override
+   @ProtoField(6)
+   public Params getParams() {
+      return params;
+   }
+
+   @Override
+   @ProtoField(7)
    public ValueMatcher getValueMatcher() {
       return valueMatcher;
+   }
+
+   @Override
+   @ProtoField(8)
+   public DataConversion getKeyDataConversion() {
+      return keyDataConversion;
+   }
+
+   @Override
+   @ProtoField(9)
+   public DataConversion getValueDataConversion() {
+      return valueDataConversion;
+   }
+
+   @Override
+   @ProtoField(10)
+   public PrivateMetadata getInternalMetadata() {
+      return internalMetadata;
+   }
+
+   @Override
+   public void setInternalMetadata(PrivateMetadata internalMetadata) {
+      this.internalMetadata = internalMetadata;
    }
 
    @Override
@@ -53,11 +93,6 @@ public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCom
    @Override
    public boolean isSuccessful() {
       return successful;
-   }
-
-   @Override
-   public Params getParams() {
-      return params;
    }
 
    @Override
@@ -75,25 +110,5 @@ public abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCom
             ", valueMatcher=" + valueMatcher +
             ", successful=" + successful +
             "}";
-   }
-
-   @Override
-   public DataConversion getKeyDataConversion() {
-      return keyDataConversion;
-   }
-
-   @Override
-   public DataConversion getValueDataConversion() {
-      return valueDataConversion;
-   }
-
-   @Override
-   public PrivateMetadata getInternalMetadata() {
-      return internalMetadata;
-   }
-
-   @Override
-   public void setInternalMetadata(PrivateMetadata internalMetadata) {
-      this.internalMetadata = internalMetadata;
    }
 }

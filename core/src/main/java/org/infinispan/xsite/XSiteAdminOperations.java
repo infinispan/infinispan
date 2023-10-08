@@ -138,7 +138,7 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
    public String takeSiteOffline(@Parameter(name = "site", description = "The name of the backup site") String site) {
       authorizer.checkPermission(AuthorizationPermission.ADMIN);
       TakeSiteOfflineResponse rsp = takeOfflineManager.takeSiteOffline(site);
-      if (rsp == TakeSiteOfflineResponse.NO_SUCH_SITE) {
+      if (rsp == TakeSiteOfflineResponse.TSOR_NO_SUCH_SITE) {
          return incorrectSiteName(site);
       }
       return SUCCESS;
@@ -193,7 +193,7 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
    public String bringSiteOnline(@Parameter(name = "site", description = "The name of the backup site") String site) {
       authorizer.checkPermission(AuthorizationPermission.ADMIN);
       BringSiteOnlineResponse rsp = takeOfflineManager.bringSiteOnline(site);
-      if (rsp == BringSiteOnlineResponse.NO_SUCH_SITE) {
+      if (rsp == BringSiteOnlineResponse.BSOR_NO_SUCH_SITE) {
          return incorrectSiteName(site);
       }
       return SUCCESS;
@@ -251,8 +251,7 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
    @ManagedOperation(displayName = "Cancel Push State",
          description = "Cancels the push state to remote site.",
          name = "CancelPushState")
-   public final String cancelPushState(@Parameter(description = "The destination site name", name = "SiteName")
-                                          final String siteName) {
+   public final String cancelPushState(@Parameter(description = "The destination site name", name = "SiteName") String siteName) {
       authorizer.checkPermission(AuthorizationPermission.ADMIN);
       return performOperation("cancelPushState", siteName, () -> stateTransferManager.cancelPushState(siteName));
    }
@@ -261,8 +260,7 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
          description = "Cancels the push state to this site. All the state received from state transfer " +
                        "will be ignored.",
          name = "CancelReceiveState")
-   public final String cancelReceiveState(@Parameter(description = "The sending site name", name = "SiteName")
-                                             final String siteName) {
+   public final String cancelReceiveState(@Parameter(description = "The sending site name", name = "SiteName") String siteName) {
       authorizer.checkPermission(AuthorizationPermission.ADMIN);
       return performOperation("cancelReceiveState", siteName, () -> stateTransferManager.cancelReceive(siteName));
    }
@@ -347,7 +345,7 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
       return String.format("Could not amend for nodes: %s", response.errors);
    }
 
-   private String incorrectSiteName(String site) {
+   private static String incorrectSiteName(String site) {
       return "Incorrect site name: " + site;
    }
 

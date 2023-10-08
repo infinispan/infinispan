@@ -4,8 +4,11 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Util;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskExecution;
 
@@ -15,16 +18,27 @@ import org.infinispan.tasks.TaskExecution;
  * @author Tristan Tarrant
  * @since 8.1
  */
-@SerializeWith(TaskExecutionImplExternalizer.class)
+@ProtoTypeId(ProtoStreamTypeIds.TASK_EXECUTION_IMPL)
 public class TaskExecutionImpl implements TaskExecution {
+   @ProtoField(1)
    final UUID uuid;
+
+   @ProtoField(2)
    final String name;
-   final Optional<String> what;
+
+   @ProtoField(3)
+   final String what;
+
+   @ProtoField(4)
    final String where;
-   final Optional<String> who;
+
+   @ProtoField(5)
+   final String who;
+
    Instant start;
 
-   TaskExecutionImpl(UUID uuid, String name, Optional<String> what, String where, Optional<String> who) {
+   @ProtoFactory
+   TaskExecutionImpl(UUID uuid, String name, String what, String where, String who) {
       this.uuid = uuid;
       this.name = name;
       this.what = what;
@@ -32,16 +46,12 @@ public class TaskExecutionImpl implements TaskExecution {
       this.who = who;
    }
 
-   TaskExecutionImpl(String name, Optional<String> what, String where, Optional<String> who) {
-      this(Util.threadLocalRandomUUID(), name, what, where, who);
-   }
-
-   public TaskExecutionImpl(String name, String where, Optional<String> who, TaskContext context) {
+   public TaskExecutionImpl(String name, String where, String who, TaskContext context) {
       this.uuid = Util.threadLocalRandomUUID();
       this.name = name;
-      this.what = context.getCache().map(cache -> cache.getName());
       this.where = where;
       this.who = who;
+      this.what = context.getCache().isPresent() ? context.getCache().get().getName() : null;
    }
 
    public UUID getUUID() {
@@ -60,7 +70,7 @@ public class TaskExecutionImpl implements TaskExecution {
 
    @Override
    public Optional<String> getWhat() {
-      return what;
+      return Optional.ofNullable(what);
    }
 
    @Override
@@ -70,7 +80,7 @@ public class TaskExecutionImpl implements TaskExecution {
 
    @Override
    public Optional<String> getWho() {
-      return who;
+      return Optional.ofNullable(who);
    }
 
    public void setStart(Instant start) {

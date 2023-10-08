@@ -1,11 +1,12 @@
 package org.infinispan.xsite.commands.remote;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
 
 /**
@@ -15,17 +16,16 @@ import org.infinispan.util.ByteString;
  *
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.XSITE_STATE_TRANSFER_CONTROLLER_REQUEST)
 public class XSiteStateTransferControlRequest extends XSiteCacheRequest<Void> {
 
-   private boolean startReceive;
+   @ProtoField(2)
+   final boolean startReceive;
 
+   @ProtoFactory
    public XSiteStateTransferControlRequest(ByteString cacheName, boolean startReceive) {
       super(cacheName);
       this.startReceive = startReceive;
-   }
-
-   public XSiteStateTransferControlRequest() {
-      super(null);
    }
 
    @Override
@@ -36,17 +36,5 @@ public class XSiteStateTransferControlRequest extends XSiteCacheRequest<Void> {
    @Override
    public byte getCommandId() {
       return Ids.STATE_TRANSFER_CONTROL;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeBoolean(startReceive);
-      super.writeTo(output);
-   }
-
-   @Override
-   public XSiteRequest<Void> readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      startReceive = input.readBoolean();
-      return super.readFrom(input);
    }
 }

@@ -7,9 +7,6 @@ import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 
 /**
- * Module lifecycle callbacks implementation that enables module specific
- * {@link org.infinispan.commons.marshall.AdvancedExternalizer} implementations to be registered.
- *
  * @author Galder Zamarreño
  * @since 5.0
  */

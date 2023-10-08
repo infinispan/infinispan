@@ -1,19 +1,20 @@
 package org.infinispan.functional.impl;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.List;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.commons.util.Experimental;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.functional.Param;
 import org.infinispan.functional.Param.ExecutionMode;
 import org.infinispan.functional.Param.LockingMode;
 import org.infinispan.functional.Param.PersistenceMode;
 import org.infinispan.functional.Param.ReplicationMode;
 import org.infinispan.functional.Param.StatisticsMode;
-import org.infinispan.commons.util.Experimental;
-import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Internal class that encapsulates collection of parameters used to tweak
@@ -29,6 +30,7 @@ import org.infinispan.context.impl.FlagBitSets;
  * @since 8.0
  */
 @Experimental
+@ProtoTypeId(ProtoStreamTypeIds.FUNCTIONAL_PARAMS)
 public final class Params {
 
    private static final Param<?>[] DEFAULTS = new Param<?>[]{
@@ -44,6 +46,45 @@ public final class Params {
 
    private Params(Param<?>[] params) {
       this.params = params;
+   }
+
+   @ProtoFactory
+   static Params protoFactory (byte bits) {
+      PersistenceMode persistenceMode = PersistenceMode.valueOf(bits & 3);
+      LockingMode lockingMode = LockingMode.valueOf((bits >>> 2) & 3);
+      ExecutionMode executionMode = ExecutionMode.valueOf((bits >>> 4) & 3);
+      StatisticsMode statisticsMode = StatisticsMode.valueOf((bits >>> 6) & 1);
+      ReplicationMode replicationMode = ReplicationMode.valueOf((bits >>> 7) & 1);
+      if (persistenceMode == PersistenceMode.defaultValue()
+            && lockingMode == LockingMode.defaultValue()
+            && executionMode == ExecutionMode.defaultValue()
+            && statisticsMode == StatisticsMode.defaultValue()
+            && replicationMode == ReplicationMode.defaultValue()) {
+         return DEFAULT_INSTANCE;
+      } else {
+         Param[] params = Arrays.copyOf(DEFAULTS, DEFAULTS.length);
+         params[PersistenceMode.ID] = persistenceMode;
+         params[LockingMode.ID] = lockingMode;
+         params[ExecutionMode.ID] = executionMode;
+         params[StatisticsMode.ID] = statisticsMode;
+         params[ReplicationMode.ID] = replicationMode;
+         return new Params(params);
+      }
+   }
+
+   // TODO should we hardcode the bits for the DEFAULT_INSTANCE?
+   @ProtoField(1)
+   byte getBits() {
+      PersistenceMode persistenceMode = (PersistenceMode) get(PersistenceMode.ID).get();
+      LockingMode lockingMode = (LockingMode) get(LockingMode.ID).get();
+      ExecutionMode executionMode = (ExecutionMode) get(ExecutionMode.ID).get();
+      StatisticsMode statisticsMode = (StatisticsMode) get(StatisticsMode.ID).get();
+      ReplicationMode replicationMode = (ReplicationMode) get(ReplicationMode.ID).get();
+      return (byte) (persistenceMode.ordinal()
+            | (lockingMode.ordinal() << 2)
+            | (executionMode.ordinal() << 4)
+            | (statisticsMode.ordinal() << 6)
+            | (replicationMode.ordinal() << 7));
    }
 
    /**
@@ -209,43 +250,5 @@ public final class Params {
       if (ExecutionMode.values().length > 4) throw new IllegalStateException();
       if (StatisticsMode.values().length > 2) throw new IllegalStateException();
       if (ReplicationMode.values().length > 2) throw new IllegalStateException();
-   }
-
-   public static void writeObject(ObjectOutput output, Params params) throws IOException {
-      PersistenceMode persistenceMode = (PersistenceMode) params.get(PersistenceMode.ID).get();
-      LockingMode lockingMode = (LockingMode) params.get(LockingMode.ID).get();
-      ExecutionMode executionMode = (ExecutionMode) params.get(ExecutionMode.ID).get();
-      StatisticsMode statisticsMode = (StatisticsMode) params.get(StatisticsMode.ID).get();
-      ReplicationMode replicationMode = (ReplicationMode) params.get(ReplicationMode.ID).get();
-      int paramBits = persistenceMode.ordinal()
-            | (lockingMode.ordinal() << 2)
-            | (executionMode.ordinal() << 4)
-            | (statisticsMode.ordinal() << 6)
-            | (replicationMode.ordinal() << 7);
-      output.writeByte(paramBits);
-   }
-
-   public static Params readObject(ObjectInput input) throws IOException {
-      int paramBits = input.readByte();
-      PersistenceMode persistenceMode = PersistenceMode.valueOf(paramBits & 3);
-      LockingMode lockingMode = LockingMode.valueOf((paramBits >>> 2) & 3);
-      ExecutionMode executionMode = ExecutionMode.valueOf((paramBits >>> 4) & 3);
-      StatisticsMode statisticsMode = StatisticsMode.valueOf((paramBits >>> 6) & 1);
-      ReplicationMode replicationMode = ReplicationMode.valueOf((paramBits >>> 7) & 1);
-      if (persistenceMode == PersistenceMode.defaultValue()
-            && lockingMode == LockingMode.defaultValue()
-            && executionMode == ExecutionMode.defaultValue()
-            && statisticsMode == StatisticsMode.defaultValue()
-            && replicationMode == ReplicationMode.defaultValue()) {
-         return DEFAULT_INSTANCE;
-      } else {
-         Param[] params = Arrays.copyOf(DEFAULTS, DEFAULTS.length);
-         params[PersistenceMode.ID] = persistenceMode;
-         params[LockingMode.ID] = lockingMode;
-         params[ExecutionMode.ID] = executionMode;
-         params[StatisticsMode.ID] = statisticsMode;
-         params[ReplicationMode.ID] = replicationMode;
-         return new Params(params);
-      }
    }
 }

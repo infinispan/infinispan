@@ -9,7 +9,7 @@ import java.io.OutputStream;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.AbstractMarshaller;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.jboss.marshalling.commons.StreamingMarshaller;
 
 /**
  * An implementation of {@link AbstractMarshaller} that throws {@link UnsupportedOperationException} for all methods.

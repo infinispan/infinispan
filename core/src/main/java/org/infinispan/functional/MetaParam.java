@@ -2,8 +2,14 @@ package org.infinispan.functional;
 
 import java.util.Optional;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.container.versioning.NumericVersion;
+import org.infinispan.container.versioning.SimpleClusteredVersion;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * An easily extensible metadata parameter that's stored along with the value
@@ -88,11 +94,18 @@ public interface MetaParam<T> {
     * @since 8.0
     */
    @Experimental
+   @ProtoTypeId(ProtoStreamTypeIds.META_PARAMS_LIFESPAN)
    final class MetaLifespan extends MetaLong implements Writable<Long> {
       private static final MetaLifespan DEFAULT = new MetaLifespan(-1);
 
+      @ProtoFactory
       public MetaLifespan(long lifespan) {
          super(lifespan);
+      }
+
+      @ProtoField(1)
+      long getLifespan() {
+         return value;
       }
 
       @Override
@@ -130,11 +143,18 @@ public interface MetaParam<T> {
     * @since 8.0
     */
    @Experimental
+   @ProtoTypeId(ProtoStreamTypeIds.META_PARAMS_MAX_IDLE)
    final class MetaMaxIdle extends MetaLong implements Writable<Long> {
       private static final MetaMaxIdle DEFAULT = new MetaMaxIdle(-1);
 
+      @ProtoFactory
       public MetaMaxIdle(long maxIdle) {
          super(maxIdle);
+      }
+
+      @ProtoField(1)
+      long getMaxIdle() {
+         return value;
       }
 
       @Override
@@ -171,11 +191,27 @@ public interface MetaParam<T> {
     * @since 8.0
     */
    @Experimental
+   @ProtoTypeId(ProtoStreamTypeIds.META_PARAMS_ENTRY_VERSION)
    class MetaEntryVersion implements Writable<EntryVersion> {
       private final EntryVersion entryVersion;
 
       public MetaEntryVersion(EntryVersion entryVersion) {
          this.entryVersion = entryVersion;
+      }
+
+      @ProtoFactory
+      MetaEntryVersion(NumericVersion numericVersion, SimpleClusteredVersion clusteredVersion) {
+         this.entryVersion = numericVersion != null ? numericVersion : clusteredVersion;
+      }
+
+      @ProtoField(1)
+      NumericVersion getNumericVersion() {
+         return entryVersion instanceof NumericVersion ? (NumericVersion) entryVersion : null;
+      }
+
+      @ProtoField(2)
+      SimpleClusteredVersion getClusteredVersion() {
+         return entryVersion instanceof SimpleClusteredVersion ? (SimpleClusteredVersion) entryVersion : null;
       }
 
       @Override
@@ -189,9 +225,7 @@ public interface MetaParam<T> {
          if (o == null || getClass() != o.getClass()) return false;
 
          MetaEntryVersion that = (MetaEntryVersion) o;
-
          return entryVersion.equals(that.entryVersion);
-
       }
 
       @Override

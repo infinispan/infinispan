@@ -1,17 +1,15 @@
 package org.infinispan.jcache.embedded.functions;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
-
 import javax.cache.processor.MutableEntry;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.ReflectionUtil;
-import org.infinispan.commons.util.Util;
-import org.infinispan.jcache.embedded.ExternalizerIds;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
+@ProtoTypeId(ProtoStreamTypeIds.JCACHE_MUTABLE_ENTRY_SNAPSHOT)
 public class MutableEntrySnapshot<K, V> implements MutableEntry<K, V> {
    private final K key;
    private final V value;
@@ -19,6 +17,21 @@ public class MutableEntrySnapshot<K, V> implements MutableEntry<K, V> {
    public MutableEntrySnapshot(K key, V value) {
       this.key = key;
       this.value = value;
+   }
+
+   @ProtoFactory
+   MutableEntrySnapshot(MarshallableObject<K> wrappedKey, MarshallableObject<V> wrappedValue) {
+      this(MarshallableObject.unwrap(wrappedKey), MarshallableObject.unwrap(wrappedValue));
+   }
+
+   @ProtoField(1)
+   MarshallableObject<K> getWrappedKey() {
+      return MarshallableObject.create(key);
+   }
+
+   @ProtoField(2)
+   MarshallableObject<V> getWrappedValue() {
+      return MarshallableObject.create(value);
    }
 
    @Override
@@ -49,29 +62,5 @@ public class MutableEntrySnapshot<K, V> implements MutableEntry<K, V> {
    @Override
    public void setValue(V value) {
       throw new UnsupportedOperationException();
-   }
-
-   // This externalizer may not be registered if JCache is not on the classpath!
-   public static class Externalizer implements AdvancedExternalizer<MutableEntrySnapshot> {
-      @Override
-      public Set<Class<? extends MutableEntrySnapshot>> getTypeClasses() {
-         return Util.asSet(MutableEntrySnapshot.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.MUTABLE_ENTRY_SNAPSHOT;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, MutableEntrySnapshot object) throws IOException {
-         output.writeObject(object.key);
-         output.writeObject(object.value);
-      }
-
-      @Override
-      public MutableEntrySnapshot readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new MutableEntrySnapshot(input.readObject(), input.readObject());
-      }
    }
 }

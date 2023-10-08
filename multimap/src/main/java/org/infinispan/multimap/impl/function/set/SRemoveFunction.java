@@ -1,18 +1,15 @@
 package org.infinispan.multimap.impl.function.set;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Optional;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
-import org.infinispan.multimap.impl.ExternalizerIds;
+import org.infinispan.marshall.protostream.impl.MarshallableCollection;
 import org.infinispan.multimap.impl.SetBucket;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Serializable function used by
@@ -24,12 +21,23 @@ import org.infinispan.multimap.impl.SetBucket;
  *      Functions</a>
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_S_REMOVE_FUNCTION)
 public final class SRemoveFunction<K, V> implements SetBucketBaseFunction<K, V, Long> {
-   public static final AdvancedExternalizer<SRemoveFunction> EXTERNALIZER = new Externalizer();
+
    private final Collection<V> values;
 
    public SRemoveFunction(Collection<V> values) {
       this.values = values;
+   }
+
+   @ProtoFactory
+   SRemoveFunction(MarshallableCollection<V> values) {
+      this.values = MarshallableCollection.unwrap(values);
+   }
+
+   @ProtoField(1)
+   MarshallableCollection<V> getValues() {
+      return MarshallableCollection.create(values);
    }
 
    @Override
@@ -56,40 +64,5 @@ public final class SRemoveFunction<K, V> implements SetBucketBaseFunction<K, V, 
          }
       }
       return removed;
-   }
-
-   public Collection<V> values() {
-      return values;
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<SRemoveFunction> {
-
-      @Override
-      public Set<Class<? extends SRemoveFunction>> getTypeClasses() {
-         return Collections.singleton(SRemoveFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.SET_REMOVE_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, SRemoveFunction object) throws IOException {
-         output.writeInt(object.values().size());
-         for (Object v : object.values()) {
-            output.writeObject(v);
-         }
-      }
-
-      @Override
-      public SRemoveFunction<?, ?> readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         var size = input.readInt();
-         var list = new ArrayList<>(size);
-         for (int i = 0; i < size; i++) {
-            list.add(input.readObject());
-         }
-         return new SRemoveFunction<>(list);
-      }
    }
 }

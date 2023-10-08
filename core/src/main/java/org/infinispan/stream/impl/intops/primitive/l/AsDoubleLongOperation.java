@@ -3,6 +3,7 @@ package org.infinispan.stream.impl.intops.primitive.l;
 import java.util.stream.DoubleStream;
 import java.util.stream.LongStream;
 
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.stream.impl.intops.MappingOperation;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -14,6 +15,7 @@ public class AsDoubleLongOperation implements MappingOperation<Long, LongStream,
    private static final AsDoubleLongOperation OPERATION = new AsDoubleLongOperation();
    private AsDoubleLongOperation() { }
 
+   @ProtoFactory
    public static AsDoubleLongOperation getInstance() {
       return OPERATION;
    }

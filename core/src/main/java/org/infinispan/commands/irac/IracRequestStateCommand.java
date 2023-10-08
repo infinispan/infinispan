@@ -1,16 +1,18 @@
 package org.infinispan.commands.irac;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.IntSetsExternalization;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.util.ByteString;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.marshall.protostream.impl.WrappedMessages;
+import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.ByteString;
 
 /**
  * Requests the state for a given segments.
@@ -18,24 +20,27 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
  * @author Pedro Ruivo
  * @since 11.0
  */
-public class IracRequestStateCommand extends BaseRpcCommand {
+@ProtoTypeId(ProtoStreamTypeIds.IRAC_REQUEST_STATE_COMMAND)
+public class IracRequestStateCommand extends BaseIracCommand {
 
    public static final byte COMMAND_ID = 121;
 
-   private IntSet segments;
-
-   @SuppressWarnings("unused")
-   public IracRequestStateCommand() {
-      super(null);
-   }
-
-   public IracRequestStateCommand(ByteString cacheName) {
-      super(cacheName);
-   }
+   private final IntSet segments;
+   private Address origin;
 
    public IracRequestStateCommand(ByteString cacheName, IntSet segments) {
       super(cacheName);
       this.segments = segments;
+   }
+
+   @ProtoFactory
+   IracRequestStateCommand(ByteString cacheName, WrappedMessage segments) {
+      this(cacheName, WrappedMessages.<IntSet>unwrap(segments));
+   }
+
+   @ProtoField(2)
+   WrappedMessage getSegments() {
+      return WrappedMessages.orElseNull(segments);
    }
 
    @Override
@@ -50,25 +55,21 @@ public class IracRequestStateCommand extends BaseRpcCommand {
    }
 
    @Override
-   public boolean isReturnValueExpected() {
-      return false;
+   public Address getOrigin() {
+      return origin;
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      IntSetsExternalization.writeTo(output, segments);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      this.segments = IntSetsExternalization.readFrom(input);
+   public void setOrigin(Address origin) {
+      this.origin = origin;
    }
 
    @Override
    public String toString() {
       return "IracRequestStateCommand{" +
-            "segments=" + segments +
-            ", cacheName=" + cacheName +
+            "cacheName=" + cacheName +
+            ", origin=" + origin +
+            ", segments=" + segments +
             '}';
    }
 }

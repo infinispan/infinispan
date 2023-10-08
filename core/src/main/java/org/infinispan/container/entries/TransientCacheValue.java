@@ -1,15 +1,11 @@
 package org.infinispan.container.entries;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A transient cache value, to correspond with {@link TransientCacheEntry}
@@ -17,6 +13,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
  * @author Manik Surtani
  * @since 4.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.TRANSIENT_CACHE_VALUE)
 public class TransientCacheValue extends ImmortalCacheValue {
    protected long maxIdle;
    protected long lastUsed;
@@ -31,7 +28,16 @@ public class TransientCacheValue extends ImmortalCacheValue {
       this.lastUsed = lastUsed;
    }
 
+   @ProtoFactory
+   TransientCacheValue(MarshallableObject<?> wrappedValue, PrivateMetadata internalMetadata,
+                       long maxIdle, long lastUsed) {
+      super(wrappedValue, internalMetadata);
+      this.maxIdle = maxIdle;
+      this.lastUsed = lastUsed;
+   }
+
    @Override
+   @ProtoField(3)
    public long getMaxIdle() {
       return maxIdle;
    }
@@ -41,6 +47,7 @@ public class TransientCacheValue extends ImmortalCacheValue {
    }
 
    @Override
+   @ProtoField(4)
    public long getLastUsed() {
       return lastUsed;
    }
@@ -109,34 +116,5 @@ public class TransientCacheValue extends ImmortalCacheValue {
       super.appendFieldsToString(builder);
       builder.append(", maxIdle=").append(maxIdle);
       builder.append(", lastUsed=").append(lastUsed);
-   }
-
-   public static class Externalizer extends AbstractExternalizer<TransientCacheValue> {
-      @Override
-      public void writeObject(ObjectOutput output, TransientCacheValue tcv) throws IOException {
-         output.writeObject(tcv.value);
-         output.writeObject(tcv.internalMetadata);
-         UnsignedNumeric.writeUnsignedLong(output, tcv.lastUsed);
-         output.writeLong(tcv.maxIdle); // could be negative so should not use unsigned longs
-      }
-
-      @Override
-      public TransientCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Object value = input.readObject();
-         PrivateMetadata internalMetadata = (PrivateMetadata) input.readObject();
-         long lastUsed = UnsignedNumeric.readUnsignedLong(input);
-         long maxIdle = input.readLong();
-         return new TransientCacheValue(value, internalMetadata, maxIdle, lastUsed);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.TRANSIENT_VALUE;
-      }
-
-      @Override
-      public Set<Class<? extends TransientCacheValue>> getTypeClasses() {
-         return Collections.singleton(TransientCacheValue.class);
-      }
    }
 }
