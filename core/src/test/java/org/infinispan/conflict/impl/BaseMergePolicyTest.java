@@ -172,7 +172,7 @@ public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
       LocalTopologyManager localTopologyManager = ComponentRegistry.componentOf(cache, LocalTopologyManager.class);
       int viewId = cache.getRpcManager().getTransport().getViewId();
       ManagerStatusResponse statusResponse = CompletionStages.join(localTopologyManager.handleStatusRequest(viewId));
-      return statusResponse.getCaches().get(cache.getName());
+      return statusResponse.caches().get(cache.getName());
    }
 
    protected void assertCacheGet(Object key, Object value, int... caches) {

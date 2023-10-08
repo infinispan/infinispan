@@ -1,8 +1,5 @@
 package org.infinispan.stream.impl;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -22,12 +19,16 @@ import org.infinispan.CacheStream;
 import org.infinispan.LockedStream;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.TimeoutException;
-import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.EntryWrapper;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.concurrent.locks.KeyAwareLockPromise;
@@ -199,10 +200,20 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
    @Scope(Scopes.NONE)
    static abstract class LockHelper<K, V, R> {
       protected final Predicate<? super CacheEntry<K, V>> predicate;
-      @Inject protected transient LockManager lockManager;
+      protected volatile transient LockManager lockManager;
+
+      @Inject
+      void init(LockManager lockManager) {
+         this.lockManager = lockManager;
+      }
 
       protected LockHelper(Predicate<? super CacheEntry<K, V>> predicate) {
          this.predicate = predicate;
+      }
+
+      @ProtoField(1)
+      MarshallableObject<Predicate<? super CacheEntry<K, V>>> getPredicate() {
+         return MarshallableObject.create(predicate);
       }
 
       R perform(Cache<K, V> cache, CacheEntry<K, V> entry) {
@@ -247,9 +258,9 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
       }
    }
 
+   @ProtoTypeId(ProtoStreamTypeIds.STREAM_LOCKED_STREAM_CACHE_ENTRY_FUNCTION)
    @Scope(Scopes.NONE)
-   @SerializeWith(value = CacheEntryFunction.Externalizer.class)
-   static class CacheEntryFunction<K, V, R> extends LockHelper<K, V, KeyValuePair<K, R>> implements Function<CacheEntry<K, V>, Stream<KeyValuePair<K, R>>> {
+   public static class CacheEntryFunction<K, V, R> extends LockHelper<K, V, KeyValuePair<K, R>> implements Function<CacheEntry<K, V>, Stream<KeyValuePair<K, R>>> {
       private final BiFunction<Cache<K, V>, ? super CacheEntry<K, V>, R> biFunction;
       @Inject protected transient Cache<K, V> cache;
 
@@ -257,6 +268,17 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
             Predicate<? super CacheEntry<K, V>> predicate) {
          super(predicate);
          this.biFunction = biFunction;
+      }
+
+      @ProtoFactory
+      CacheEntryFunction(MarshallableObject<Predicate<? super CacheEntry<K, V>>> predicate,
+                         MarshallableObject<BiFunction<Cache<K, V>, ? super CacheEntry<K, V>, R>> biFunction) {
+         this(MarshallableObject.unwrap(biFunction),  MarshallableObject.unwrap(predicate));
+      }
+
+      @ProtoField(2)
+      MarshallableObject<BiFunction<Cache<K, V>, ? super CacheEntry<K, V>, R>> getBiFunction() {
+         return MarshallableObject.create(biFunction);
       }
 
       @Override
@@ -269,29 +291,27 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
       protected KeyValuePair<K, R> actualPerform(Cache<K, V> cache, CacheEntry<K, V> entry) {
          return new KeyValuePair<>(entry.getKey(), biFunction.apply(cache, entry));
       }
-
-      public static final class Externalizer implements org.infinispan.commons.marshall.Externalizer<CacheEntryFunction> {
-         @Override
-         public void writeObject(ObjectOutput output, CacheEntryFunction object) throws IOException {
-            output.writeObject(object.biFunction);
-            output.writeObject(object.predicate);
-         }
-
-         @Override
-         public CacheEntryFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-            return new CacheEntryFunction((BiFunction) input.readObject(), (Predicate) input.readObject());
-         }
-      }
    }
 
-   @SerializeWith(value = CacheEntryConsumer.Externalizer.class)
-   static class CacheEntryConsumer<K, V> extends LockHelper<K, V, Void> implements BiConsumer<Cache<K, V>, CacheEntry<K, V>> {
+   @ProtoTypeId(ProtoStreamTypeIds.STREAM_LOCKED_STREAM_CACHE_ENTRY_CONSUMER)
+   public static class CacheEntryConsumer<K, V> extends LockHelper<K, V, Void> implements BiConsumer<Cache<K, V>, CacheEntry<K, V>> {
       private final BiConsumer<Cache<K, V>, ? super CacheEntry<K, V>> realConsumer;
 
       private CacheEntryConsumer(BiConsumer<Cache<K, V>, ? super CacheEntry<K, V>> realConsumer,
             Predicate<? super CacheEntry<K, V>> predicate) {
          super(predicate);
          this.realConsumer = realConsumer;
+      }
+
+      @ProtoFactory
+      CacheEntryConsumer(MarshallableObject<Predicate<? super CacheEntry<K, V>>> predicate,
+                         MarshallableObject<BiConsumer<Cache<K, V>, ? super CacheEntry<K, V>>> realConsumer) {
+         this(MarshallableObject.unwrap(realConsumer),  MarshallableObject.unwrap(predicate));
+      }
+
+      @ProtoField(2)
+      MarshallableObject<BiConsumer<Cache<K, V>, ? super CacheEntry<K, V>>> getRealConsumer() {
+         return MarshallableObject.create(realConsumer);
       }
 
       @Override
@@ -303,19 +323,6 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
       protected Void actualPerform(Cache<K, V> cache, CacheEntry<K, V> entry) {
          realConsumer.accept(cache, new EntryWrapper<>(cache, entry));
          return null;
-      }
-
-      public static final class Externalizer implements org.infinispan.commons.marshall.Externalizer<CacheEntryConsumer> {
-         @Override
-         public void writeObject(ObjectOutput output, CacheEntryConsumer object) throws IOException {
-            output.writeObject(object.realConsumer);
-            output.writeObject(object.predicate);
-         }
-
-         @Override
-         public CacheEntryConsumer readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-            return new CacheEntryConsumer((BiConsumer) input.readObject(), (Predicate) input.readObject());
-         }
       }
    }
 }

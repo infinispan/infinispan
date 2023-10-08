@@ -1,28 +1,33 @@
 package org.infinispan.multimap.impl.function.hmap;
 
-import static org.infinispan.multimap.impl.ExternalizerIds.HASH_MAP_REMOVE_FUNCTION;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Optional;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
+import org.infinispan.marshall.protostream.impl.MarshallableCollection;
 import org.infinispan.multimap.impl.HashMapBucket;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_HASH_MAP_REMOVE_FUNCTION)
 public class HashMapRemoveFunction<K, HK, HV> extends HashMapBucketBaseFunction<K, HK, HV, Integer> {
-   public static final Externalizer EXTERNALIZER = new Externalizer();
 
    private final Collection<HK> keys;
 
    public HashMapRemoveFunction(Collection<HK> keys) {
       this.keys = keys;
+   }
+
+   @ProtoFactory
+   HashMapRemoveFunction(MarshallableCollection<HK> keys) {
+      this.keys = MarshallableCollection.unwrap(keys);
+   }
+
+   @ProtoField(1)
+   public MarshallableCollection<HK> getKeys() {
+      return MarshallableCollection.create(keys);
    }
 
    @Override
@@ -39,31 +44,5 @@ public class HashMapRemoveFunction<K, HK, HV> extends HashMapBucketBaseFunction<
          view.set(res.bucket());
       }
       return res.response();
-   }
-
-   @SuppressWarnings({"rawtypes"})
-   private static class Externalizer implements AdvancedExternalizer<HashMapRemoveFunction> {
-
-      @Override
-      public Set<Class<? extends HashMapRemoveFunction>> getTypeClasses() {
-         return Collections.singleton(HashMapRemoveFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return HASH_MAP_REMOVE_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, HashMapRemoveFunction object) throws IOException {
-         MarshallUtil.marshallCollection(object.keys, output);
-      }
-
-      @Override
-      @SuppressWarnings("unchecked")
-      public HashMapRemoveFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Collection keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
-         return new HashMapRemoveFunction(keys);
-      }
    }
 }

@@ -8,6 +8,11 @@ import org.infinispan.rest.search.entity.Person;
 import org.infinispan.rest.search.entity.PhoneNumber;
 
 @ProtoSchema(
+      dependsOn = {
+            org.infinispan.query.remote.impl.persistence.PersistenceContextInitializer.class,
+            org.infinispan.rest.GlobalContextInitializer.class,
+            org.infinispan.server.core.GlobalContextInitializer.class
+      },
       includeClasses = {
             Address.class,
             Gender.class,

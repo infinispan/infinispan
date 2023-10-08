@@ -32,7 +32,6 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.ControlledConsistentHashFactory;
@@ -59,7 +58,7 @@ public class RehashClusterPublisherManagerTest extends MultipleCacheManagersTest
       ConfigurationBuilder builderUsed = new ConfigurationBuilder();
       factory = new ControlledConsistentHashFactory.Default(START_SEGMENT_OWNERS);
       builderUsed.clustering().cacheMode(CacheMode.DIST_SYNC).hash().consistentHashFactory(factory).numSegments(4);
-      createClusteredCaches(4, TestDataSCI.INSTANCE, builderUsed);
+      createClusteredCaches(4, ControlledConsistentHashFactory.SCI.INSTANCE, builderUsed);
    }
 
    @BeforeMethod

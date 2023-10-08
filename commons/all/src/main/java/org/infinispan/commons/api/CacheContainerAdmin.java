@@ -3,6 +3,9 @@ package org.infinispan.commons.api;
 import java.util.EnumSet;
 
 import org.infinispan.commons.configuration.BasicConfiguration;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.Proto;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Administrative cache container operations.
@@ -19,6 +22,8 @@ public interface CacheContainerAdmin<C extends CacheContainerAdmin, A extends Ba
     * @author Tristan Tarrant
     * @since 9.2
     */
+   @Proto
+   @ProtoTypeId(ProtoStreamTypeIds.CACHE_CONTAINER_ADMIN_FLAG)
    enum AdminFlag {
       /**
        * Configuration changes will not be persisted to the global state.

@@ -12,7 +12,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -181,7 +180,7 @@ public class DefaultIterationManager implements IterationManager {
          if (segments != null) {
             stream.filterKeySegments(IntSets.from(segments.stream().iterator()));
          }
-         IterationFilter iterationFilter = new IterationFilter(storageMediaType, requestValueType, Optional.of(filter.getKey()));
+         IterationFilter iterationFilter = new IterationFilter(storageMediaType, requestValueType, (filter.getKey()));
          filteredStream = filterAndConvert(stream.segmentCompletionListener(segmentListener), iterationFilter);
          if (filterMediaType != null && !storageMediaType.equals(requestValueType)) {
             resultTransformer = valueDataConversion::fromStorage;

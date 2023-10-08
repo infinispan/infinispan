@@ -107,8 +107,6 @@
          </authorization>
       </security>
       <serialization marshaller="org.infinispan.marshall.TestObjectStreamMarshaller">
-         <advanced-externalizer class="org.infinispan.marshall.AdvancedExternalizerTest$IdViaConfigObj$Externalizer" id="9001" />
-         <advanced-externalizer class="org.infinispan.marshall.AdvancedExternalizerTest$IdViaAnnotationObj$Externalizer" id="9002" />
          <context-initializer class="org.infinispan.marshall.UserSCIImpl" />
          <white-list>
             <class>org.infinispan.test.data.Person</class>

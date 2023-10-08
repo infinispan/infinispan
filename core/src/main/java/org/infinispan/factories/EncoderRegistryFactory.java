@@ -11,7 +11,6 @@ import org.infinispan.commons.dataconversion.JavaSerializationEncoder;
 import org.infinispan.commons.dataconversion.TranscoderMarshallerAdapter;
 import org.infinispan.commons.dataconversion.UTF8Encoder;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.encoding.ProtostreamTranscoder;
 import org.infinispan.encoding.impl.JavaSerializationTranscoder;
 import org.infinispan.factories.annotations.ComponentName;
@@ -32,7 +31,7 @@ import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 public class EncoderRegistryFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
    // Must not start the global marshaller or it will be too late for modules to register their externalizers
    @Inject @ComponentName(KnownComponentNames.INTERNAL_MARSHALLER)
-   ComponentRef<StreamingMarshaller> globalMarshaller;
+   ComponentRef<Marshaller> globalMarshaller;
    @Inject @ComponentName(KnownComponentNames.USER_MARSHALLER)
    Marshaller userMarshaller;
 

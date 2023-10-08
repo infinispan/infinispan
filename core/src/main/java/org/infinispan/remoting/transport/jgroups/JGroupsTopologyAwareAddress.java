@@ -1,14 +1,11 @@
 package org.infinispan.remoting.transport.jgroups;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
 import org.jgroups.util.ExtendedUUID;
 import org.jgroups.util.NameCache;
@@ -20,6 +17,7 @@ import org.jgroups.util.Util;
  * @author Bela Ban
  * @since 5.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.JGROUPS_TOPOLOGY_AWARE_ADDRESS)
 public class JGroupsTopologyAwareAddress extends JGroupsAddress implements TopologyAwareAddress {
    private static final byte[] SITE_KEY = Util.stringToBytes("site-id");
    private static final byte[] RACK_KEY = Util.stringToBytes("rack-id");
@@ -40,6 +38,11 @@ public class JGroupsTopologyAwareAddress extends JGroupsAddress implements Topol
       if (stringValue != null) {
          uuid.put(key, Util.stringToBytes(stringValue));
       }
+   }
+
+   @ProtoFactory
+   static JGroupsTopologyAwareAddress protoFactory(byte[] bytes) throws IOException {
+      return (JGroupsTopologyAwareAddress) JGroupsAddress.protoFactory(bytes);
    }
 
    public JGroupsTopologyAwareAddress(ExtendedUUID address) {
@@ -118,45 +121,5 @@ public class JGroupsTopologyAwareAddress extends JGroupsAddress implements Topol
 
    private ExtendedUUID topologyAddress() {
       return (ExtendedUUID) address;
-   }
-
-   public static final class Externalizer extends InstanceReusingAdvancedExternalizer<JGroupsTopologyAwareAddress> {
-
-      public Externalizer() {
-         super(false);
-      }
-
-      @Override
-      public void doWriteObject(ObjectOutput output, JGroupsTopologyAwareAddress address) throws IOException {
-         try {
-            Util.writeAddress(address.address, output);
-         } catch (Exception e) {
-            throw new IOException(e);
-         }
-      }
-
-      @Override
-      public JGroupsTopologyAwareAddress doReadObject(ObjectInput unmarshaller) throws IOException {
-         try {
-            var jgroupsAddress = Util.readAddress(unmarshaller);
-            // Note: Use org.jgroups.Address, not the concrete UUID class.
-            // Otherwise applications that only use local caches would have to bundle the JGroups jar,
-            // because the verifier needs to check the arguments of fromJGroupsAddress
-            // even if this method is never called.
-            return (JGroupsTopologyAwareAddress) JGroupsAddressCache.fromJGroupsAddress(jgroupsAddress);
-         } catch (Exception e) {
-            throw new IOException(e);
-         }
-      }
-
-      @Override
-      public Set<Class<? extends JGroupsTopologyAwareAddress>> getTypeClasses() {
-         return Collections.singleton(JGroupsTopologyAwareAddress.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.JGROUPS_TOPOLOGY_AWARE_ADDRESS;
-      }
    }
 }

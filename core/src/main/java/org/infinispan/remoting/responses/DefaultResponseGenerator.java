@@ -14,15 +14,18 @@ import org.infinispan.util.logging.LogFactory;
 public class DefaultResponseGenerator implements ResponseGenerator {
    private static final Log log = LogFactory.getLog(DefaultResponseGenerator.class);
 
-   public Response getResponse(CacheRpcCommand command, Object returnValue) {
-      if (returnValue instanceof Response)
-         return (Response) returnValue;
+   public Response getResponse(CacheRpcCommand command, Object rv) {
+      if (rv instanceof Response)
+         return (Response) rv;
 
       if (command.isReturnValueExpected()) {
-         return command.isSuccessful() ? SuccessfulResponse.create(returnValue) : UnsuccessfulResponse.create(returnValue);
+         if (!command.isSuccessful())
+            return rv == null ? UnsuccessfulResponse.EMPTY_RESPONSE : new UnsuccessfulResponse<>(rv);
+
+         return SuccessfulResponse.create(rv);
       } else {
-         if (returnValue != null) {
-            if (log.isTraceEnabled()) log.tracef("Ignoring non-null response for command %s: %s", command, returnValue);
+         if (rv != null) {
+            if (log.isTraceEnabled()) log.tracef("Ignoring non-null response for command %s: %s", command, rv);
          }
          return null; // saves on serializing a response!
       }

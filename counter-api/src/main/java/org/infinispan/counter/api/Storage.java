@@ -22,10 +22,4 @@ public enum Storage {
     */
    @ProtoEnumValue(number = 1)
    PERSISTENT;
-
-   private static final Storage[] CACHED_VALUES = values();
-
-   public static Storage valueOf(int index) {
-      return CACHED_VALUES[index];
-   }
 }

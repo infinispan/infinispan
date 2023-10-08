@@ -1,10 +1,16 @@
 package org.infinispan.reactive.publisher.impl;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.Proto;
+import org.infinispan.protostream.annotations.ProtoTypeId;
+
 /**
  * Enumeration defining the possible delivery guarantees for entries.
  * @author wburns
  * @since 10.0
  */
+@Proto
+@ProtoTypeId(ProtoStreamTypeIds.DELIVERY_GUARANTEE)
 public enum DeliveryGuarantee {
    /**
     * The least strict guarantee that ensures that data is never read more than once, but may be missed. This guarantee

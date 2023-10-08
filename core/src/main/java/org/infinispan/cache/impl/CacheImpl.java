@@ -59,7 +59,6 @@ import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Version;
@@ -86,8 +85,6 @@ import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.expiration.impl.TouchCommand;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.impl.ComponentRef;
@@ -157,8 +154,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache<K, V>
    @Inject protected ComponentRegistry componentRegistry;
    @Inject protected TransactionManager transactionManager;
    @Inject protected RpcManager rpcManager;
-   @Inject @ComponentName(KnownComponentNames.INTERNAL_MARSHALLER)
-   protected StreamingMarshaller marshaller;
    @Inject protected KeyPartitioner keyPartitioner;
    @Inject EvictionManager<K,V> evictionManager;
    @Inject InternalExpirationManager<K, V> expirationManager;

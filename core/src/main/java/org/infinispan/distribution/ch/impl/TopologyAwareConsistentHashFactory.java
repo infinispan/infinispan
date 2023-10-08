@@ -1,16 +1,13 @@
 package org.infinispan.distribution.ch.impl;
 
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.distribution.topologyaware.TopologyInfo;
 import org.infinispan.distribution.topologyaware.TopologyLevel;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
 import org.infinispan.util.KeyValuePair;
@@ -21,6 +18,7 @@ import org.infinispan.util.KeyValuePair;
  * @author Dan Berindei
  * @since 5.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.TOPOLOGY_AWARE_CONSISTENT_HASH)
 public class TopologyAwareConsistentHashFactory extends DefaultConsistentHashFactory {
 
    @Override
@@ -227,28 +225,5 @@ public class TopologyAwareConsistentHashFactory extends DefaultConsistentHashFac
       }
 
       return newLocations.size() >= oldLocations.size();
-   }
-
-   public static class Externalizer extends AbstractExternalizer<TopologyAwareConsistentHashFactory> {
-
-      @Override
-      public void writeObject(ObjectOutput output, TopologyAwareConsistentHashFactory chf) {
-      }
-
-      @Override
-      @SuppressWarnings("unchecked")
-      public TopologyAwareConsistentHashFactory readObject(ObjectInput unmarshaller) {
-         return new TopologyAwareConsistentHashFactory();
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.TOPOLOGY_AWARE_CONSISTENT_HASH_FACTORY;
-      }
-
-      @Override
-      public Set<Class<? extends TopologyAwareConsistentHashFactory>> getTypeClasses() {
-         return Collections.<Class<? extends TopologyAwareConsistentHashFactory>>singleton(TopologyAwareConsistentHashFactory.class);
-      }
    }
 }

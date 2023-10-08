@@ -124,7 +124,7 @@ public class DistributedExecutorMassIndexer implements Indexer {
             isRunning = true;
             Collection<Class<?>> javaClasses = (entities.length == 0) ?
                   indexUpdater.allJavaClasses() : Arrays.asList(entities);
-            IndexWorker indexWork = new IndexWorker(cache.getName(), javaClasses, skipIndex, null);
+            IndexWorker indexWork = new IndexWorker(cache.getName(), javaClasses, skipIndex, (Set<Object>) null);
             ClusterExecutor clusterExecutor = executor.timeout(Long.MAX_VALUE, TimeUnit.SECONDS);
             if (local) {
                clusterExecutor = clusterExecutor.filterTargets(a -> a.equals(cache.getRpcManager().getAddress()));

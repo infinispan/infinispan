@@ -1,10 +1,10 @@
 package org.infinispan.commands.triangle;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
 
 /**
@@ -13,37 +13,24 @@ import org.infinispan.util.ByteString;
  * @author Dan Berindei
  * @since 12.1
  */
+@ProtoTypeId(ProtoStreamTypeIds.BACKUP_NOOP_COMMAND)
 public class BackupNoopCommand extends BackupWriteCommand {
 
    public static final byte COMMAND_ID = 81;
-   //for testing
-   @SuppressWarnings("unused")
-   public BackupNoopCommand() {
-      super(null);
+
+   @ProtoFactory
+   BackupNoopCommand(ByteString cacheName, CommandInvocationId commandInvocationId, int topologyId,
+                     long flags, long sequence, int segmentId) {
+      super(cacheName, commandInvocationId, topologyId, flags, sequence, segmentId);
    }
 
-   public BackupNoopCommand(ByteString cacheName) {
-      super(cacheName);
+   public BackupNoopCommand(ByteString cacheName, WriteCommand command, long sequence, int segmentId) {
+      super(cacheName, command, sequence, segmentId);
    }
 
    @Override
    public byte getCommandId() {
       return COMMAND_ID;
-   }
-
-   public void setWriteCommand(WriteCommand command) {
-      super.setCommonAttributesFromCommand(command);
-   }
-
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      writeBase(output);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      readBase(input);
    }
 
    @Override

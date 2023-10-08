@@ -3,6 +3,9 @@ package org.infinispan.stream.impl.intops.primitive.l;
 import java.util.function.LongPredicate;
 import java.util.stream.LongStream;
 
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -17,13 +20,19 @@ public class FilterLongOperation<S> implements IntermediateOperation<Long, LongS
       this.predicate = predicate;
    }
 
+   @ProtoFactory
+   FilterLongOperation(MarshallableObject<LongPredicate> predicate) {
+      this.predicate = MarshallableObject.unwrap(predicate);
+   }
+
+   @ProtoField(1)
+   MarshallableObject<LongPredicate> getPredicate() {
+      return MarshallableObject.create(predicate);
+   }
+
    @Override
    public LongStream perform(LongStream stream) {
       return stream.filter(predicate);
-   }
-
-   public LongPredicate getPredicate() {
-      return predicate;
    }
 
    @Override

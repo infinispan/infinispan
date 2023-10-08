@@ -15,7 +15,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Properties;
@@ -24,7 +23,6 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
@@ -65,7 +63,6 @@ import org.infinispan.factories.threads.EnhancedQueueExecutorFactory;
 import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.jmx.CustomMBeanServerPropertiesTest;
-import org.infinispan.marshall.AdvancedExternalizerTest;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
@@ -535,11 +532,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertNull(threadPool);
 
             assertTrue(g.serialization().marshaller() instanceof TestObjectStreamMarshaller);
-            Map<Integer, AdvancedExternalizer<?>> externalizers = g.serialization().advancedExternalizers();
-            AdvancedExternalizer<?> externalizer = externalizers.get(9001);
-            assertTrue(externalizer instanceof AdvancedExternalizerTest.IdViaConfigObj.Externalizer);
-            externalizer = externalizers.get(9002);
-            assertTrue(externalizer instanceof AdvancedExternalizerTest.IdViaAnnotationObj.Externalizer);
+
             assertEquals(ShutdownHookBehavior.DONT_REGISTER, g.shutdown().hookBehavior());
 
             // Default cache is "local" named cache

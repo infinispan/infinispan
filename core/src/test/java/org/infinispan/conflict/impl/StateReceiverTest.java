@@ -26,6 +26,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
 import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ImmortalCacheEntry;
@@ -48,7 +49,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.InboundTransferTask;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.PersistentUUID;
@@ -169,7 +169,7 @@ public class StateReceiverTest extends AbstractInfinispanTest {
    }
 
    private Collection<StateChunk> createStateChunks(Object key, Object value) {
-      Collection<InternalCacheEntry<?, ?>> entries = Collections.singleton(new ImmortalCacheEntry(key, value));
+      List<InternalCacheEntry<?, ?>> entries = List.of(new ImmortalCacheEntry(key, value));
       return Collections.singleton(new StateChunk(0, entries, true));
    }
 

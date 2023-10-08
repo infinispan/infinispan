@@ -1,21 +1,22 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.ByteString;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -25,25 +26,31 @@ import org.infinispan.util.logging.LogFactory;
  * @author wburns
  * @since 10.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTI_CLUSTER_EVENT_COMMAND)
 public class MultiClusterEventCommand<K, V> extends BaseRpcCommand {
 
    public static final int COMMAND_ID = 19;
 
    private static final Log log = LogFactory.getLog(MultiClusterEventCommand.class);
 
-   private Map<UUID, Collection<ClusterEvent<K, V>>> multiEvents;
-
-   public MultiClusterEventCommand() {
-      super(null);
-   }
-
-   public MultiClusterEventCommand(ByteString cacheName) {
-      super(cacheName);
-   }
+   private final Map<UUID, Collection<ClusterEvent<K, V>>> multiEvents;
 
    public MultiClusterEventCommand(ByteString cacheName, Map<UUID, Collection<ClusterEvent<K, V>>> events) {
       super(cacheName);
       this.multiEvents = events;
+   }
+
+   @ProtoFactory
+   MultiClusterEventCommand(ByteString cacheName, Stream<UUIDMap<K, V>> events) {
+      super(cacheName);
+      this.multiEvents = events.collect(Collectors.toMap(e -> e.uuid, e -> e.events));
+   }
+
+   @ProtoField(2)
+   Stream<UUIDMap<K, V>> getEvents() {
+      return multiEvents.entrySet()
+            .stream()
+            .map(e -> new UUIDMap<>(e.getKey(), e.getValue()));
    }
 
    @Override
@@ -74,28 +81,19 @@ public class MultiClusterEventCommand<K, V> extends BaseRpcCommand {
       return false;
    }
 
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(getOrigin());
-      if (multiEvents.size() == 1) {
-         output.writeBoolean(true);
-         Entry entry = multiEvents.entrySet().iterator().next();
-         output.writeObject(entry.getKey());
-         output.writeObject(entry.getValue());
-      } else {
-         output.writeBoolean(false);
-         output.writeObject(multiEvents);
-      }
-   }
+   @ProtoTypeId(ProtoStreamTypeIds.MULTI_CLUSTER_EVENT_COMMAND_UUID_MAP)
+   public static class UUIDMap<K, V> {
 
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      setOrigin((Address) input.readObject());
-      boolean single = input.readBoolean();
-      if (single) {
-         multiEvents = Collections.singletonMap((UUID) input.readObject(), (Collection<ClusterEvent<K, V>>) input.readObject());
-      } else {
-         multiEvents = (Map<UUID, Collection<ClusterEvent<K, V>>>)input.readObject();
+      @ProtoField(1)
+      final UUID uuid;
+
+      @ProtoField(2)
+      final Collection<ClusterEvent<K, V>> events;
+
+      @ProtoFactory
+      UUIDMap(UUID uuid, Collection<ClusterEvent<K, V>> events) {
+         this.uuid = uuid;
+         this.events = events;
       }
    }
 }

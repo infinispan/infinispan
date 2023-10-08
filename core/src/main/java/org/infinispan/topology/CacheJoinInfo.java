@@ -1,17 +1,14 @@
 package org.infinispan.topology;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.Optional;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * This class contains the information that a cache needs to supply to the coordinator when starting up.
@@ -19,9 +16,10 @@ import org.infinispan.marshall.core.Ids;
  * @author Dan Berindei
  * @since 5.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.CACHE_JOIN_INFO)
 public class CacheJoinInfo {
    // Global configuration
-   private final ConsistentHashFactory consistentHashFactory;
+   private final ConsistentHashFactory<?> consistentHashFactory;
    private final int numSegments;
    private final int numOwners;
    private final long timeout;
@@ -35,8 +33,8 @@ public class CacheJoinInfo {
    private final Optional<Integer> persistentStateChecksum;
 
    public CacheJoinInfo(ConsistentHashFactory consistentHashFactory, int numSegments, int numOwners, long timeout,
-         CacheMode cacheMode, float capacityFactor,
-         PersistentUUID persistentUUID, Optional<Integer> persistentStateChecksum) {
+                        CacheMode cacheMode, float capacityFactor,
+                        PersistentUUID persistentUUID, Optional<Integer> persistentStateChecksum) {
       this.consistentHashFactory = consistentHashFactory;
       this.numSegments = numSegments;
       this.numOwners = numOwners;
@@ -47,34 +45,54 @@ public class CacheJoinInfo {
       this.persistentStateChecksum = persistentStateChecksum;
    }
 
+   @ProtoFactory
+   CacheJoinInfo(MarshallableObject<ConsistentHashFactory<?>> wrappedConsistentHashFactory, int numSegments, int numOwners,
+                 long timeout, CacheMode cacheMode, float capacityFactor,
+                 PersistentUUID persistentUUID, Integer persistentStateChecksum) {
+      this(MarshallableObject.unwrap(wrappedConsistentHashFactory), numSegments, numOwners, timeout, cacheMode, capacityFactor,
+            persistentUUID, Optional.ofNullable(persistentStateChecksum));
+   }
+
    public ConsistentHashFactory getConsistentHashFactory() {
       return consistentHashFactory;
    }
 
+   @ProtoField(1)
+   MarshallableObject<ConsistentHashFactory<?>> getWrappedConsistentHashFactory() {
+      return MarshallableObject.create(consistentHashFactory);
+   }
+
+   @ProtoField(2)
    public int getNumSegments() {
       return numSegments;
    }
 
+   @ProtoField(3)
    public int getNumOwners() {
       return numOwners;
    }
 
+   @ProtoField(4)
    public long getTimeout() {
       return timeout;
    }
 
+   @ProtoField(6)
    public CacheMode getCacheMode() {
       return cacheMode;
    }
 
+   @ProtoField(7)
    public float getCapacityFactor() {
       return capacityFactor;
    }
 
+   @ProtoField(8)
    public PersistentUUID getPersistentUUID() {
       return persistentUUID;
    }
 
+   @ProtoField(9)
    public Optional<Integer> getPersistentStateChecksum() {
       return persistentStateChecksum;
    }
@@ -143,43 +161,5 @@ public class CacheJoinInfo {
             ", persistentStateChecksum=" + persistentStateChecksum +
             ", capacityFactor=" + getCapacityFactor() +
             '}';
-   }
-
-   public static class Externalizer extends AbstractExternalizer<CacheJoinInfo> {
-      @Override
-      public void writeObject(ObjectOutput output, CacheJoinInfo cacheJoinInfo) throws IOException {
-         output.writeObject(cacheJoinInfo.consistentHashFactory);
-         output.writeInt(cacheJoinInfo.numSegments);
-         output.writeInt(cacheJoinInfo.numOwners);
-         output.writeLong(cacheJoinInfo.timeout);
-         MarshallUtil.marshallEnum(cacheJoinInfo.cacheMode, output);
-         output.writeFloat(cacheJoinInfo.capacityFactor);
-         output.writeObject(cacheJoinInfo.persistentUUID);
-         output.writeObject(cacheJoinInfo.persistentStateChecksum);
-      }
-
-      @Override
-      public CacheJoinInfo readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
-         ConsistentHashFactory consistentHashFactory = (ConsistentHashFactory) unmarshaller.readObject();
-         int numSegments = unmarshaller.readInt();
-         int numOwners = unmarshaller.readInt();
-         long timeout = unmarshaller.readLong();
-         CacheMode cacheMode = MarshallUtil.unmarshallEnum(unmarshaller, CacheMode::valueOf);
-         float capacityFactor = unmarshaller.readFloat();
-         PersistentUUID persistentUUID = (PersistentUUID) unmarshaller.readObject();
-         Optional<Integer> persistentStateChecksum = (Optional<Integer>) unmarshaller.readObject();
-         return new CacheJoinInfo(consistentHashFactory, numSegments, numOwners, timeout, cacheMode,
-               capacityFactor, persistentUUID, persistentStateChecksum);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.CACHE_JOIN_INFO;
-      }
-
-      @Override
-      public Set<Class<? extends CacheJoinInfo>> getTypeClasses() {
-         return Collections.singleton(CacheJoinInfo.class);
-      }
    }
 }

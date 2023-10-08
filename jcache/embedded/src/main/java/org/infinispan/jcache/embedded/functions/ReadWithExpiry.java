@@ -6,12 +6,15 @@ import javax.cache.expiry.Duration;
 import javax.cache.expiry.ExpiryPolicy;
 
 import org.infinispan.commands.functional.functions.InjectableComponent;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.MetaParam;
 import org.infinispan.jcache.Expiration;
 import org.infinispan.jcache.embedded.Durations;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
+@ProtoTypeId(ProtoStreamTypeIds.JCACHE_READ_WITH_EXPIRY)
 public class ReadWithExpiry<K, V> implements Function<EntryView.ReadWriteEntryView<K, V>, V>, InjectableComponent {
    private ExpiryPolicy expiryPolicy;
 

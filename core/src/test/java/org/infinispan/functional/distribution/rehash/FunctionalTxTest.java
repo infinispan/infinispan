@@ -16,7 +16,6 @@ import java.util.function.BiFunction;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.functional.EntryView;
@@ -51,7 +50,7 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
       cb.transaction().transactionMode(TransactionMode.TRANSACTIONAL).useSynchronization(false);
       cb.clustering().cacheMode(CacheMode.DIST_SYNC).hash().numSegments(1).consistentHashFactory(chf);
 
-      createCluster(cb, 3);
+      createCluster(ControlledConsistentHashFactory.SCI.INSTANCE, cb, 3);
       waitForClusterToForm();
    }
 
@@ -112,7 +111,7 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
 
       chf.setOwnerIndexes(0, 2);
 
-      EmbeddedCacheManager cm = createClusteredCacheManager(false, GlobalConfigurationBuilder.defaultClusteredBuilder(),
+      EmbeddedCacheManager cm = createClusteredCacheManager(false, ControlledConsistentHashFactory.SCI.INSTANCE,
                                                             cb, new TransportFlags());
       registerCacheManager(cm);
       Future<?> future = fork(() -> {
@@ -146,7 +145,7 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
       BlockingStateConsumer bsc2 = TestingUtil.wrapComponent(cache(2), StateConsumer.class, BlockingStateConsumer::new);
 
       chf.setOwnerIndexes(0, 2);
-      EmbeddedCacheManager cm = createClusteredCacheManager(false, GlobalConfigurationBuilder.defaultClusteredBuilder(),
+      EmbeddedCacheManager cm = createClusteredCacheManager(false, ControlledConsistentHashFactory.SCI.INSTANCE,
                                                             cb, new TransportFlags());
       registerCacheManager(cm);
       Future<?> future = fork(() -> {

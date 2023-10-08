@@ -1,12 +1,13 @@
 package org.infinispan.xsite.commands;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.statetransfer.XSiteStateProvider;
@@ -17,22 +18,18 @@ import org.infinispan.xsite.statetransfer.XSiteStateProvider;
  * @author Ryan Emerson
  * @since 11.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.XSITE_STATE_TRANSFER_START_SEND_COMMAND)
 public class XSiteStateTransferStartSendCommand extends BaseRpcCommand {
 
    public static final byte COMMAND_ID = 104;
 
-   private String siteName;
-   private int topologyId;
+   @ProtoField(2)
+   final String siteName;
 
-   // For CommandIdUniquenessTest only
-   public XSiteStateTransferStartSendCommand() {
-      super(null);
-   }
+   @ProtoField(3)
+   final int topologyId;
 
-   public XSiteStateTransferStartSendCommand(ByteString cacheName) {
-      this(cacheName, null, -1);
-   }
-
+   @ProtoFactory
    public XSiteStateTransferStartSendCommand(ByteString cacheName, String siteName, int topologyId) {
       super(cacheName);
       this.siteName = siteName;
@@ -53,18 +50,6 @@ public class XSiteStateTransferStartSendCommand extends BaseRpcCommand {
    @Override
    public boolean isReturnValueExpected() {
       return false;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeUTF(siteName);
-      output.writeInt(topologyId);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      siteName = input.readUTF();
-      topologyId = input.readInt();
    }
 
    @Override

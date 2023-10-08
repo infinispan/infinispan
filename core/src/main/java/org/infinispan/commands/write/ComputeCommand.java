@@ -2,50 +2,76 @@ package org.infinispan.commands.write;
 
 import static org.infinispan.commons.util.Util.toStr;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Objects;
 import java.util.function.BiFunction;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
+@ProtoTypeId(ProtoStreamTypeIds.COMPUTE_COMMAND)
 public class ComputeCommand extends AbstractDataWriteCommand implements MetadataAwareCommand {
 
    public static final int COMMAND_ID = 68;
 
-   private BiFunction remappingBiFunction;
+   private BiFunction<?, ?, ?> remappingBiFunction;
    private Metadata metadata;
    private boolean computeIfPresent;
-   private boolean successful = true;
    private PrivateMetadata internalMetadata;
+   private transient boolean successful = true;
 
-   public ComputeCommand() {
-   }
-
-   public ComputeCommand(Object key,
-                         BiFunction remappingBiFunction,
-                         boolean computeIfPresent,
-                         int segment, long flagsBitSet,
-                         CommandInvocationId commandInvocationId,
-                         Metadata metadata) {
-
+   public ComputeCommand(Object key, BiFunction<?, ?, ?> remappingBiFunction, boolean computeIfPresent, int segment,
+                         long flagsBitSet, CommandInvocationId commandInvocationId, Metadata metadata) {
       super(key, segment, flagsBitSet, commandInvocationId);
       this.remappingBiFunction = remappingBiFunction;
       this.computeIfPresent = computeIfPresent;
       this.metadata = metadata;
    }
 
+   @ProtoFactory
+   ComputeCommand(MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment,
+                  CommandInvocationId commandInvocationId, MarshallableObject<BiFunction<?, ?, ?>> wrappedRemappingBiFunction,
+                  MarshallableObject<Metadata> wrappedMetadata, boolean computeIfPresent, PrivateMetadata internalMetadata) {
+      super(wrappedKey, flagsWithoutRemote, topologyId, segment, commandInvocationId);
+      this.remappingBiFunction = MarshallableObject.unwrap(wrappedRemappingBiFunction);
+      this.metadata = MarshallableObject.unwrap(wrappedMetadata);
+      this.computeIfPresent = computeIfPresent;
+      this.internalMetadata = internalMetadata;
+   }
+
+   @ProtoField(number = 6, name = "remappingBiFunction")
+   MarshallableObject<BiFunction<?, ?, ?>> getWrappedRemappingBiFunction() {
+      return MarshallableObject.create(remappingBiFunction);
+   }
+
+   @ProtoField(number = 7, name = "metadata")
+   MarshallableObject<Metadata> getWrappedMetadata() {
+      return MarshallableObject.create(metadata);
+   }
+
+   @ProtoField(8)
    public boolean isComputeIfPresent() {
       return computeIfPresent;
+   }
+
+   @Override
+   @ProtoField(9)
+   public PrivateMetadata getInternalMetadata() {
+      return internalMetadata;
+   }
+
+   @Override
+   public void setInternalMetadata(PrivateMetadata internalMetadata) {
+      this.internalMetadata = internalMetadata;
    }
 
    public void setComputeIfPresent(boolean computeIfPresent) {
@@ -93,36 +119,17 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
    }
 
    @Override
+   public final boolean isReturnValueExpected() {
+      return true;
+   }
+
+   @Override
    public byte getCommandId() {
       return COMMAND_ID;
    }
 
    public BiFunction getRemappingBiFunction() {
       return remappingBiFunction;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(key);
-      output.writeBoolean(computeIfPresent);
-      output.writeObject(remappingBiFunction);
-      UnsignedNumeric.writeUnsignedInt(output, segment);
-      output.writeObject(metadata);
-      CommandInvocationId.writeTo(output, commandInvocationId);
-      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
-      output.writeObject(internalMetadata);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      key = input.readObject();
-      computeIfPresent = input.readBoolean();
-      remappingBiFunction = (BiFunction) input.readObject();
-      segment = UnsignedNumeric.readUnsignedInt(input);
-      metadata = (Metadata) input.readObject();
-      commandInvocationId = CommandInvocationId.readFrom(input);
-      setFlagsBitSet(input.readLong());
-      internalMetadata = (PrivateMetadata) input.readObject();
    }
 
    @Override
@@ -165,20 +172,5 @@ public class ComputeCommand extends AbstractDataWriteCommand implements Metadata
             ", valueMatcher=" + getValueMatcher() +
             ", topologyId=" + getTopologyId() +
             '}';
-   }
-
-   @Override
-   public final boolean isReturnValueExpected() {
-      return true;
-   }
-
-   @Override
-   public PrivateMetadata getInternalMetadata() {
-      return internalMetadata;
-   }
-
-   @Override
-   public void setInternalMetadata(PrivateMetadata internalMetadata) {
-      this.internalMetadata = internalMetadata;
    }
 }

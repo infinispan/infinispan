@@ -543,33 +543,83 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public SingleKeyBackupWriteCommand buildSingleKeyBackupWriteCommand() {
-      return actual.buildSingleKeyBackupWriteCommand();
+   public SingleKeyBackupWriteCommand buildSingleKeyBackupWriteCommand(ReplaceCommand command, long sequenceId, int segmentId) {
+      return actual.buildSingleKeyBackupWriteCommand(command, sequenceId, segmentId);
    }
 
    @Override
-   public SingleKeyFunctionalBackupWriteCommand buildSingleKeyFunctionalBackupWriteCommand() {
-      return actual.buildSingleKeyFunctionalBackupWriteCommand();
+   public SingleKeyBackupWriteCommand buildSingleKeyBackupWriteCommand(ComputeIfAbsentCommand command, long sequenceId, int segmentId) {
+      return actual.buildSingleKeyBackupWriteCommand(command, sequenceId, segmentId);
    }
 
    @Override
-   public PutMapBackupWriteCommand buildPutMapBackupWriteCommand() {
-      return actual.buildPutMapBackupWriteCommand();
+   public SingleKeyBackupWriteCommand buildSingleKeyBackupWriteCommand(ComputeCommand command, long sequenceId, int segmentId) {
+      return actual.buildSingleKeyBackupWriteCommand(command, sequenceId, segmentId);
    }
 
    @Override
-   public MultiEntriesFunctionalBackupWriteCommand buildMultiEntriesFunctionalBackupWriteCommand() {
-      return actual.buildMultiEntriesFunctionalBackupWriteCommand();
+   public <K, V, T, R> SingleKeyFunctionalBackupWriteCommand buildSingleKeyBackupWriteCommand(ReadWriteKeyValueCommand<K, V, T, R> command, long sequenceId, int segmentId) {
+      return actual.buildSingleKeyBackupWriteCommand(command, sequenceId, segmentId);
    }
 
    @Override
-   public MultiKeyFunctionalBackupWriteCommand buildMultiKeyFunctionalBackupWriteCommand() {
-      return actual.buildMultiKeyFunctionalBackupWriteCommand();
+   public <K, V, R> SingleKeyFunctionalBackupWriteCommand buildSingleKeyBackupWriteCommand(ReadWriteKeyCommand<K, V, R> command, long sequenceId, int segmentId) {
+      return actual.buildSingleKeyBackupWriteCommand(command, sequenceId, segmentId);
    }
 
    @Override
-   public BackupNoopCommand buildBackupNoopCommand() {
-      return actual.buildBackupNoopCommand();
+   public <K, V> SingleKeyFunctionalBackupWriteCommand buildSingleKeyBackupWriteCommand(WriteOnlyKeyCommand<K, V> command, long sequenceId, int segmentId) {
+      return actual.buildSingleKeyBackupWriteCommand(command, sequenceId, segmentId);
+   }
+
+   @Override
+   public <K, V, T> SingleKeyFunctionalBackupWriteCommand buildSingleKeyBackupWriteCommand(WriteOnlyKeyValueCommand<K, V, T> command, long sequenceId, int segmentId) {
+      return actual.buildSingleKeyBackupWriteCommand(command, sequenceId, segmentId);
+   }
+
+   @Override
+   public SingleKeyBackupWriteCommand buildSingleKeyBackupWriteCommand(PutKeyValueCommand command, long sequence, int segmentId) {
+      return actual.buildSingleKeyBackupWriteCommand(command, sequence, segmentId);
+   }
+
+   @Override
+   public SingleKeyBackupWriteCommand buildSingleKeyBackupWriteCommand(IracPutKeyValueCommand command, long sequence, int segmentId) {
+      return actual.buildSingleKeyBackupWriteCommand(command, sequence, segmentId);
+   }
+
+   @Override
+   public SingleKeyBackupWriteCommand buildSingleKeyBackupWriteCommand(RemoveCommand command, long sequence, int segmentId) {
+      return actual.buildSingleKeyBackupWriteCommand(command, sequence, segmentId);
+   }
+
+   @Override
+   public PutMapBackupWriteCommand buildPutMapBackupWriteCommand(PutMapCommand command, Collection<Object> keys, long sequenceId, int segmentId) {
+      return actual.buildPutMapBackupWriteCommand(command, keys, sequenceId, segmentId);
+   }
+
+   @Override
+   public <K, V, T> MultiEntriesFunctionalBackupWriteCommand buildMultiEntriesFunctionalBackupWriteCommand(WriteOnlyManyEntriesCommand<K, V, T> command, Collection<Object> keys, long sequenceId, int segmendId) {
+      return actual.buildMultiEntriesFunctionalBackupWriteCommand(command, keys, sequenceId, segmendId);
+   }
+
+   @Override
+   public <K, V, T, R> MultiEntriesFunctionalBackupWriteCommand buildMultiEntriesFunctionalBackupWriteCommand(ReadWriteManyEntriesCommand<K, V, T, R> command, Collection<Object> keys, long sequenceId, int segmendId) {
+      return actual.buildMultiEntriesFunctionalBackupWriteCommand(command, keys, sequenceId, segmendId);
+   }
+
+   @Override
+   public <K, V> MultiKeyFunctionalBackupWriteCommand buildMultiKeyFunctionalBackupWriteCommand(WriteOnlyManyCommand<K, V> command, Collection<Object> keys, long sequenceId, int segmendId) {
+      return actual.buildMultiKeyFunctionalBackupWriteCommand(command, keys, sequenceId, segmendId);
+   }
+
+   @Override
+   public <K, V, R> MultiKeyFunctionalBackupWriteCommand buildMultiKeyFunctionalBackupWriteCommand(ReadWriteManyCommand<K, V, R> command, Collection<Object> keys, long sequenceId, int segmendId) {
+      return actual.buildMultiKeyFunctionalBackupWriteCommand(command, keys, sequenceId, segmendId);
+   }
+
+   @Override
+   public BackupNoopCommand buildBackupNoopCommand(WriteCommand command, long sequence, int segmentId) {
+      return actual.buildBackupNoopCommand(command, sequence, segmentId);
    }
 
    @Override

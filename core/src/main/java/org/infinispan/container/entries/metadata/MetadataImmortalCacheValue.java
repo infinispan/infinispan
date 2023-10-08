@@ -1,17 +1,14 @@
 package org.infinispan.container.entries.metadata;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A form of {@link ImmortalCacheValue} that is {@link MetadataAware}.
@@ -19,6 +16,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
  * @author Galder Zamarreño
  * @since 5.3
  */
+@ProtoTypeId(ProtoStreamTypeIds.METADATA_IMMORTAL_VALUE)
 public class MetadataImmortalCacheValue extends ImmortalCacheValue implements MetadataAware {
 
    Metadata metadata;
@@ -30,6 +28,18 @@ public class MetadataImmortalCacheValue extends ImmortalCacheValue implements Me
    protected MetadataImmortalCacheValue(Object value, PrivateMetadata internalMetadata, Metadata metadata) {
       super(value, internalMetadata);
       this.metadata = metadata;
+   }
+
+   @ProtoFactory
+   MetadataImmortalCacheValue(MarshallableObject<?> wrappedValue, PrivateMetadata internalMetadata,
+                              MarshallableObject<Metadata> wrappedMetadata) {
+      super(wrappedValue, internalMetadata);
+      this.metadata = MarshallableObject.unwrap(wrappedMetadata);
+   }
+
+   @ProtoField(number = 3, name = "metadata")
+   MarshallableObject<Metadata> getWrappedMetadata() {
+      return MarshallableObject.create(metadata);
    }
 
    @Override
@@ -52,32 +62,4 @@ public class MetadataImmortalCacheValue extends ImmortalCacheValue implements Me
       super.appendFieldsToString(builder);
       builder.append(", metadata=").append(metadata);
    }
-
-   public static class Externalizer extends AbstractExternalizer<MetadataImmortalCacheValue> {
-      @Override
-      public void writeObject(ObjectOutput output, MetadataImmortalCacheValue icv) throws IOException {
-         output.writeObject(icv.value);
-         output.writeObject(icv.internalMetadata);
-         output.writeObject(icv.metadata);
-      }
-
-      @Override
-      public MetadataImmortalCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Object value = input.readObject();
-         PrivateMetadata internalMetadata = (PrivateMetadata) input.readObject();
-         Metadata metadata = (Metadata) input.readObject();
-         return new MetadataImmortalCacheValue(value, internalMetadata, metadata);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.METADATA_IMMORTAL_VALUE;
-      }
-
-      @Override
-      public Set<Class<? extends MetadataImmortalCacheValue>> getTypeClasses() {
-         return Collections.singleton(MetadataImmortalCacheValue.class);
-      }
-   }
-
 }

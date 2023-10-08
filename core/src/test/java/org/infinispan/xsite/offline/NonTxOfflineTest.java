@@ -38,7 +38,7 @@ public class NonTxOfflineTest extends BaseSiteUnreachableTest {
 
       for (int i = 0; i < FAILURES / nrRpcPerPut; i++) {
          try {
-            assertEquals(BringSiteOnlineResponse.ALREADY_ONLINE, tom.bringSiteOnline(NYC));
+            assertEquals(BringSiteOnlineResponse.BSOR_ALREADY_ONLINE, tom.bringSiteOnline(NYC));
             cache(LON, 0).put(keys[i], "v" + i);
             fail("This should have failed");
          } catch (Exception e) {
@@ -56,9 +56,9 @@ public class NonTxOfflineTest extends BaseSiteUnreachableTest {
          assertEquals("v" + i, cache(LON, 0).get(keys[i]));
       }
 
-      assertEquals(BringSiteOnlineResponse.NO_SUCH_SITE, tom.bringSiteOnline("NO_SITE"));
+      assertEquals(BringSiteOnlineResponse.BSOR_NO_SUCH_SITE, tom.bringSiteOnline("NO_SITE"));
 
-      assertEquals(BringSiteOnlineResponse.BROUGHT_ONLINE, tom.bringSiteOnline(NYC));
+      assertEquals(BringSiteOnlineResponse.BSOR_BROUGHT_ONLINE, tom.bringSiteOnline(NYC));
 
       for (int i = 0; i < FAILURES / nrRpcPerPut; i++) {
          try {
