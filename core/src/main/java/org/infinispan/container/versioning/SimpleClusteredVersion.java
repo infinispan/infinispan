@@ -1,15 +1,8 @@
 package org.infinispan.container.versioning;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.Objects;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.marshall.core.Ids;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
@@ -89,31 +82,5 @@ public class SimpleClusteredVersion implements IncrementableEntryVersion {
             "topologyId=" + topologyId +
             ", version=" + version +
             '}';
-   }
-
-   public static class Externalizer extends AbstractExternalizer<SimpleClusteredVersion> {
-
-      @Override
-      public void writeObject(ObjectOutput output, SimpleClusteredVersion ch) throws IOException {
-         output.writeInt(ch.topologyId);
-         output.writeLong(ch.version);
-      }
-
-      @Override
-      public SimpleClusteredVersion readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
-         int topologyId = unmarshaller.readInt();
-         long version = unmarshaller.readLong();
-         return new SimpleClusteredVersion(topologyId, version);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.SIMPLE_CLUSTERED_VERSION;
-      }
-
-      @Override
-      public Set<Class<? extends SimpleClusteredVersion>> getTypeClasses() {
-         return Collections.singleton(SimpleClusteredVersion.class);
-      }
    }
 }

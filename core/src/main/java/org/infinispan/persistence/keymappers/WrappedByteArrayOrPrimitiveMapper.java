@@ -2,7 +2,6 @@ package org.infinispan.persistence.keymappers;
 
 import java.util.Base64;
 
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 
 /**
@@ -14,11 +13,6 @@ import org.infinispan.commons.marshall.WrappedByteArray;
  * @since 5.2
  */
 public class WrappedByteArrayOrPrimitiveMapper extends DefaultTwoWayKey2StringMapper implements MarshallingTwoWayKey2StringMapper {
-
-   @Override
-   public void setMarshaller(StreamingMarshaller marshaller) {
-      //TODO The marshaler is not used so we could maybe implement TwoWayKey2StringMapper instead of MarshallingTwoWayKey2StringMapper
-   }
 
    @Override
    public String getStringMapping(Object key) {
@@ -54,25 +48,11 @@ public class WrappedByteArrayOrPrimitiveMapper extends DefaultTwoWayKey2StringMa
       }
    }
 
-   /**
-    * Use MarshalledValue.Externalizer to serialize.
-    *
-    * @param mv
-    * @return
-    * @throws Exception
-    */
-   private String serializeObj(WrappedByteArray mv) throws Exception {
+   private String serializeObj(WrappedByteArray mv) {
       return Base64.getEncoder().encodeToString(mv.getBytes());
    }
 
-   /**
-    * Use MarshalledValue.Externalizer to deserialize.
-    *
-    * @param key
-    * @return
-    * @throws Exception
-    */
-   private WrappedByteArray deserializeObj(String key) throws Exception {
+   private WrappedByteArray deserializeObj(String key) {
       byte[] data = Base64.getDecoder().decode(key);
       return new WrappedByteArray(data);
    }

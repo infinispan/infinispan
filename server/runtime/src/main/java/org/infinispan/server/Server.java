@@ -4,8 +4,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -40,7 +38,7 @@ import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.io.FileWatcher;
 import org.infinispan.commons.io.StringBuilderWriter;
 import org.infinispan.commons.jdkspecific.ProcessInfo;
-import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.time.DefaultTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.OS;
@@ -59,6 +57,8 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.annotations.Proto;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.remoting.transport.jgroups.NamedSocketFactory;
@@ -633,32 +633,14 @@ public class Server extends BaseServerManagement implements AutoCloseable {
       scheduler.schedule(() -> getExitHandler().exit(exitStatus), SHUTDOWN_DELAY_SECONDS, TimeUnit.SECONDS);
    }
 
-   @SerializeWith(ShutdownRunnable.Externalizer.class)
-   static final class ShutdownRunnable implements SerializableFunction<EmbeddedCacheManager, Void> {
-      private final ExitStatus exitStatus;
-
-      ShutdownRunnable(ExitStatus exitStatus) {
-         this.exitStatus = exitStatus;
-      }
-
+   @Proto
+   @ProtoTypeId(ProtoStreamTypeIds.SERVER_RUNTIME_SERVER_SHUTDOWN_RUNNABLE)
+   record ShutdownRunnable(ExitStatus exitStatus) implements SerializableFunction<EmbeddedCacheManager, Void> {
       @Override
       public Void apply(EmbeddedCacheManager em) {
          Server server = SecurityActions.getCacheManagerConfiguration(em).module(ServerConfiguration.class).getServer();
          server.serverStopHandler(exitStatus);
          return null;
-      }
-
-      public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<ShutdownRunnable> {
-         @Override
-         public void writeObject(ObjectOutput output, ShutdownRunnable object) throws IOException {
-            output.writeObject(object.exitStatus);
-         }
-
-         @Override
-         public ShutdownRunnable readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-            ExitStatus exitStatus = (ExitStatus) input.readObject();
-            return new ShutdownRunnable(exitStatus);
-         }
       }
    }
 

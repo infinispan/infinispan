@@ -20,7 +20,6 @@ import org.infinispan.commons.io.LazyByteArrayOutputStream;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AbstractMarshaller;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.jboss.marshalling.ExceptionListener;
 import org.jboss.marshalling.Marshalling;
 import org.jboss.marshalling.MarshallingConfiguration;
@@ -62,7 +61,6 @@ public abstract class AbstractJBossMarshaller extends AbstractMarshaller impleme
       // Class resolver now set when marshaller/unmarshaller will be created
       baseCfg = new MarshallingConfiguration();
       baseCfg.setExceptionListener(new DebuggingExceptionListener());
-      baseCfg.setClassExternalizerFactory(new SerializeWithExtFactory());
       baseCfg.setInstanceCount(DEF_INSTANCE_COUNT);
       baseCfg.setClassCount(DEF_CLASS_COUNT);
       baseCfg.setVersion(3);

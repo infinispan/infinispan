@@ -81,7 +81,7 @@ public class PessimisticDeadlockTest extends MultipleCacheManagersTest {
       builder.clustering().hash().consistentHashFactory(new ControlledConsistentHashFactory.Default(1, 2))
             .numSegments(1)
             .numOwners(2);
-      createClusteredCaches(4, builder);
+      createClusteredCaches(4, ControlledConsistentHashFactory.SCI.INSTANCE, builder);
    }
 
    private Future<Boolean> runTransaction(String key, String value) {

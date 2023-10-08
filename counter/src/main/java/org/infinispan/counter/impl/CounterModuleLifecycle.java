@@ -4,9 +4,6 @@ import static java.util.EnumSet.of;
 import static org.infinispan.registry.InternalCacheRegistry.Flag.EXCLUSIVE;
 import static org.infinispan.registry.InternalCacheRegistry.Flag.PERSISTENT;
 
-import java.util.Map;
-
-import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -15,16 +12,6 @@ import org.infinispan.counter.api.CounterManager;
 import org.infinispan.counter.configuration.CounterManagerConfiguration;
 import org.infinispan.counter.configuration.CounterManagerConfigurationBuilder;
 import org.infinispan.counter.configuration.Reliability;
-import org.infinispan.counter.impl.function.AddFunction;
-import org.infinispan.counter.impl.function.CompareAndSwapFunction;
-import org.infinispan.counter.impl.function.CreateAndAddFunction;
-import org.infinispan.counter.impl.function.CreateAndCASFunction;
-import org.infinispan.counter.impl.function.CreateAndSetFunction;
-import org.infinispan.counter.impl.function.InitializeCounterFunction;
-import org.infinispan.counter.impl.function.ReadFunction;
-import org.infinispan.counter.impl.function.RemoveFunction;
-import org.infinispan.counter.impl.function.ResetFunction;
-import org.infinispan.counter.impl.function.SetFunction;
 import org.infinispan.counter.impl.interceptor.CounterInterceptor;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.counter.impl.persistence.PersistenceContextInitializerImpl;
@@ -79,10 +66,6 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
       return builder.build();
    }
 
-   private static void addAdvancedExternalizer(Map<Integer, AdvancedExternalizer<?>> map, AdvancedExternalizer<?> ext) {
-      map.put(ext.getId(), ext);
-   }
-
    private static CounterManagerConfiguration extractConfiguration(GlobalConfiguration globalConfiguration) {
       CounterManagerConfiguration config = globalConfiguration.module(CounterManagerConfiguration.class);
       return config == null ? CounterManagerConfigurationBuilder.defaultConfiguration() : config;
@@ -101,24 +84,12 @@ public class CounterModuleLifecycle implements ModuleLifecycle {
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration) {
       log.debug("Initialize counter module lifecycle");
-      Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalConfiguration.serialization().advancedExternalizers();
-
-      // Only required by GlobalMarshaller
-      addAdvancedExternalizer(externalizerMap, ResetFunction.EXTERNALIZER);
-      addAdvancedExternalizer(externalizerMap, ReadFunction.EXTERNALIZER);
-      addAdvancedExternalizer(externalizerMap, InitializeCounterFunction.EXTERNALIZER);
-      addAdvancedExternalizer(externalizerMap, AddFunction.EXTERNALIZER);
-      addAdvancedExternalizer(externalizerMap, CompareAndSwapFunction.EXTERNALIZER);
-      addAdvancedExternalizer(externalizerMap, CreateAndCASFunction.EXTERNALIZER);
-      addAdvancedExternalizer(externalizerMap, CreateAndAddFunction.EXTERNALIZER);
-      addAdvancedExternalizer(externalizerMap, RemoveFunction.EXTERNALIZER);
-      addAdvancedExternalizer(externalizerMap, SetFunction.EXTERNALIZER);
-      addAdvancedExternalizer(externalizerMap, CreateAndSetFunction.EXTERNALIZER);
 
       BasicComponentRegistry bcr = gcr.getComponent(BasicComponentRegistry.class);
       InternalCacheRegistry internalCacheRegistry = bcr.getComponent(InternalCacheRegistry.class).running();
 
       SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
+      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.GLOBAL, new GlobalContextInitializerImpl());
       ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.PERSISTENCE, new PersistenceContextInitializerImpl());
 
       log.debugf("Register counter's cache %s", COUNTER_CACHE_NAME);

@@ -88,7 +88,7 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
       AdvancedCache<byte[], Object> cache = handler.typedCache(null);
       DataConversion vc = cache.getValueDataConversion();
       PubSubListener pubSubListener = new PubSubListener(handler, cache, configuration);
-      EventListenerKeysFilter filter = new EventListenerKeysFilter(configuration.keys().toArray(byte[][]::new));
+      EventListenerKeysFilter filter = new EventListenerKeysFilter(configuration.keys().stream());
       CompletionStage<Void> addListenerStage = cache.addListenerAsync(pubSubListener, filter,
             new EventListenerConverter<Object, Object, byte[]>(vc));
       addListenerStage.whenComplete((ignore, t) -> {

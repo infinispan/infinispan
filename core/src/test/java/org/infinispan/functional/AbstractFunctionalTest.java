@@ -7,6 +7,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.testng.SkipException;
@@ -41,11 +42,13 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
 
    private boolean skipSimpleCache = false;
 
+   protected SerializationContextInitializer serializationContextInitializer = TestDataSCI.INSTANCE;
+
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder localBuilder = new ConfigurationBuilder();
       configureCache(localBuilder);
-      createClusteredCaches(numNodes, TestDataSCI.INSTANCE, localBuilder);
+      createClusteredCaches(numNodes, serializationContextInitializer, localBuilder);
       defineSimpleCache();
       // Create distributed caches
       ConfigurationBuilder distBuilder = new ConfigurationBuilder();

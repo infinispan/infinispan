@@ -1,14 +1,6 @@
 package org.infinispan.container.entries;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
-
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.metadata.Metadata;
@@ -74,42 +66,5 @@ public class RemoteMetadata implements Metadata {
       sb.append(", version=").append(version);
       sb.append('}');
       return sb.toString();
-   }
-
-   public static class Externalizer implements AdvancedExternalizer<RemoteMetadata> {
-      @Override
-      public Set<Class<? extends RemoteMetadata>> getTypeClasses() {
-         return Util.asSet(RemoteMetadata.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.METADATA_REMOTE;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, RemoteMetadata entry) throws IOException {
-         output.writeObject(entry.getAddress());
-         if (entry.version != null) {
-            output.writeInt(entry.version.getTopologyId());
-            output.writeLong(entry.version.getVersion());
-         } else {
-            output.writeInt(-1);
-         }
-      }
-
-      @Override
-      public RemoteMetadata readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         JGroupsAddress address = (JGroupsAddress) input.readObject();
-         int topologyId = input.readInt();
-         SimpleClusteredVersion clusteredVersion;
-         if (topologyId == -1) {
-            clusteredVersion = null;
-         } else {
-            long version = input.readLong();
-            clusteredVersion = new SimpleClusteredVersion(topologyId, version);
-         }
-         return new RemoteMetadata(address, clusteredVersion);
-      }
    }
 }

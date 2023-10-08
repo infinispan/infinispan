@@ -1,26 +1,31 @@
 package org.infinispan.expiration.impl;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.read.AbstractDataCommand;
-import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * This command updates a cache entry's last access timestamp. If eviction is enabled, it will also update the recency information
  * <p>
  * This command returns a Boolean that is whether this command was able to touch the value or not.
  */
+@ProtoTypeId(ProtoStreamTypeIds.TOUCH_COMMAND)
 public class TouchCommand extends AbstractDataCommand {
    public static final byte COMMAND_ID = 66;
 
-   private boolean touchEvenIfExpired;
+   @ProtoField(number = 5, defaultValue = "false")
+   boolean touchEvenIfExpired;
 
-   public TouchCommand() { }
+   @ProtoFactory
+   TouchCommand(MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment, boolean touchEvenIfExpired) {
+      super(wrappedKey, flagsWithoutRemote, topologyId, segment);
+      this.touchEvenIfExpired = touchEvenIfExpired;
+   }
 
    public TouchCommand(Object key, int segment, long flagBitSet, boolean touchEvenIfExpired) {
       super(key, segment, flagBitSet);
@@ -31,28 +36,6 @@ public class TouchCommand extends AbstractDataCommand {
    public byte getCommandId() {
       return COMMAND_ID;
    }
-
-   @Override
-   public boolean isReturnValueExpected() {
-      return true;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(key);
-      UnsignedNumeric.writeUnsignedInt(output, segment);
-      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
-      output.writeBoolean(touchEvenIfExpired);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      key = input.readObject();
-      segment = UnsignedNumeric.readUnsignedInt(input);
-      setFlagsBitSet(input.readLong());
-      touchEvenIfExpired = input.readBoolean();
-   }
-
 
    public boolean isTouchEvenIfExpired() {
       return touchEvenIfExpired;

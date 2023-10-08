@@ -3,6 +3,9 @@ package org.infinispan.stream.impl.intops.primitive.d;
 import java.util.function.DoublePredicate;
 import java.util.stream.DoubleStream;
 
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -17,13 +20,19 @@ public class FilterDoubleOperation implements IntermediateOperation<Double, Doub
       this.predicate = predicate;
    }
 
+   @ProtoFactory
+   FilterDoubleOperation(MarshallableObject<DoublePredicate> predicate) {
+      this.predicate = MarshallableObject.unwrap(predicate);
+   }
+
+   @ProtoField(1)
+   MarshallableObject<DoublePredicate> getPredicate() {
+      return MarshallableObject.create(predicate);
+   }
+
    @Override
    public DoubleStream perform(DoubleStream stream) {
       return stream.filter(predicate);
-   }
-
-   public DoublePredicate getPredicate() {
-      return predicate;
    }
 
    @Override

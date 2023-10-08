@@ -6,8 +6,8 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.protostream.WrappedMessage;
+import org.jboss.marshalling.Externalizer;
 
 /**
  * jboss-marshalling externalizers for QueryRequest and QueryResponse objects.
@@ -20,10 +20,11 @@ public final class Externalizers {
    private Externalizers() {
    }
 
-   public static final class QueryRequestExternalizer implements Externalizer<QueryRequest> {
+   public static final class QueryRequestExternalizer implements Externalizer {
 
       @Override
-      public void writeObject(ObjectOutput output, QueryRequest queryRequest) throws IOException {
+      public void writeExternal(Object object, ObjectOutput output) throws IOException {
+         QueryRequest queryRequest = (QueryRequest) object;
          output.writeUTF(queryRequest.getQueryString());
          output.writeLong(queryRequest.getStartOffset() != null ? queryRequest.getStartOffset() : -1);
          output.writeInt(queryRequest.getMaxResults() != null ? queryRequest.getMaxResults() : -1);
@@ -33,8 +34,7 @@ public final class Externalizers {
       }
 
       @Override
-      @SuppressWarnings("unchecked")
-      public QueryRequest readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public Object createExternal(Class<?> aClass, ObjectInput input) throws IOException, ClassNotFoundException {
          QueryRequest queryRequest = new QueryRequest();
          queryRequest.setQueryString(input.readUTF());
          long startOffset = input.readLong();
@@ -49,26 +49,28 @@ public final class Externalizers {
       }
    }
 
-   public static final class NamedParameterExternalizer implements Externalizer<QueryRequest.NamedParameter> {
+   public static final class NamedParameterExternalizer implements Externalizer {
 
       @Override
-      public void writeObject(ObjectOutput output, QueryRequest.NamedParameter namedParameter) throws IOException {
+      public void writeExternal(Object object, ObjectOutput output) throws IOException {
+         QueryRequest.NamedParameter namedParameter = (QueryRequest.NamedParameter) object;
          output.writeUTF(namedParameter.getName());
          output.writeObject(namedParameter.getValue());
       }
 
       @Override
-      public QueryRequest.NamedParameter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public Object createExternal(Class<?> aClass, ObjectInput input) throws IOException, ClassNotFoundException {
          String name = input.readUTF();
          Object value = input.readObject();
          return new QueryRequest.NamedParameter(name, value);
       }
    }
 
-   public static final class QueryResponseExternalizer implements Externalizer<QueryResponse> {
+   public static final class QueryResponseExternalizer implements Externalizer {
 
       @Override
-      public void writeObject(ObjectOutput output, QueryResponse queryResponse) throws IOException {
+      public void writeExternal(Object object, ObjectOutput output) throws IOException {
+         QueryResponse queryResponse = (QueryResponse) object;
          output.writeInt(queryResponse.getNumResults());
          output.writeInt(queryResponse.getProjectionSize());
          List<WrappedMessage> wrappedResults = queryResponse.getResults();
@@ -82,8 +84,7 @@ public final class Externalizers {
       }
 
       @Override
-      @SuppressWarnings("unchecked")
-      public QueryResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public Object createExternal(Class<?> aClass, ObjectInput input) throws IOException, ClassNotFoundException {
          QueryResponse queryResponse = new QueryResponse();
          queryResponse.setNumResults(input.readInt());
          queryResponse.setProjectionSize(input.readInt());

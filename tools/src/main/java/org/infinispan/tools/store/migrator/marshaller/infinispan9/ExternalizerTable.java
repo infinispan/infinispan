@@ -6,19 +6,17 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.infinispan.commons.io.ByteBufferImpl;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.tools.store.migrator.marshaller.common.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.util.Immutables;
-import org.infinispan.container.versioning.NumericVersion;
-import org.infinispan.container.versioning.SimpleClusteredVersion;
-import org.infinispan.marshall.exts.CollectionExternalizer;
-import org.infinispan.marshall.exts.EnumSetExternalizer;
-import org.infinispan.marshall.exts.MapExternalizer;
-import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.tools.store.migrator.marshaller.common.ByteBufferImplExternalizer;
+import org.infinispan.tools.store.migrator.marshaller.common.EmbeddedMetadataExternalizer;
+import org.infinispan.tools.store.migrator.marshaller.common.EnumSetExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.ImmortalCacheEntryExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.ImmortalCacheValueExternalizer;
+import org.infinispan.tools.store.migrator.marshaller.common.ImmutableMapWrapperExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.InternalMetadataImplExternalizer;
+import org.infinispan.tools.store.migrator.marshaller.common.KeyValuePairExternalizer;
+import org.infinispan.tools.store.migrator.marshaller.common.MapExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.MarshalledEntryImpl;
 import org.infinispan.tools.store.migrator.marshaller.common.MetadataImmortalCacheEntryExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.MetadataImmortalCacheValueExternalizer;
@@ -30,11 +28,12 @@ import org.infinispan.tools.store.migrator.marshaller.common.MetadataTransientMo
 import org.infinispan.tools.store.migrator.marshaller.common.MetadataTransientMortalCacheValueExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.MortalCacheEntryExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.MortalCacheValueExternalizer;
+import org.infinispan.tools.store.migrator.marshaller.common.NumericVersionExternalizer;
+import org.infinispan.tools.store.migrator.marshaller.common.SimpleClusteredVersionExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.TransientCacheEntryExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.TransientCacheValueExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.TransientMortalCacheEntryExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.common.TransientMortalCacheValueExternalizer;
-import org.infinispan.util.KeyValuePair;
 
 /**
  * Legacy externalizers for Infinispan 9.
@@ -50,10 +49,10 @@ class ExternalizerTable {
       INTERNAL_EXTERNALIZERS.add(new CollectionExternalizer());
       INTERNAL_EXTERNALIZERS.add(new MapExternalizer());
       INTERNAL_EXTERNALIZERS.add(new EnumSetExternalizer());
-      INTERNAL_EXTERNALIZERS.add(new Immutables.ImmutableMapWrapperExternalizer());
-      INTERNAL_EXTERNALIZERS.add(new ByteBufferImpl.Externalizer());
-      INTERNAL_EXTERNALIZERS.add(new NumericVersion.Externalizer());
-      INTERNAL_EXTERNALIZERS.add(new KeyValuePair.Externalizer());
+      INTERNAL_EXTERNALIZERS.add(new ImmutableMapWrapperExternalizer());
+      INTERNAL_EXTERNALIZERS.add(new ByteBufferImplExternalizer());
+      INTERNAL_EXTERNALIZERS.add(new NumericVersionExternalizer());
+      INTERNAL_EXTERNALIZERS.add(new KeyValuePairExternalizer());
       INTERNAL_EXTERNALIZERS.add(new InternalMetadataImplExternalizer(INTERNAL_METADATA));
       INTERNAL_EXTERNALIZERS.add(new ImmortalCacheEntryExternalizer());
       INTERNAL_EXTERNALIZERS.add(new MortalCacheEntryExternalizer());
@@ -63,7 +62,7 @@ class ExternalizerTable {
       INTERNAL_EXTERNALIZERS.add(new MortalCacheValueExternalizer());
       INTERNAL_EXTERNALIZERS.add(new TransientCacheValueExternalizer());
       INTERNAL_EXTERNALIZERS.add(new TransientMortalCacheValueExternalizer());
-      INTERNAL_EXTERNALIZERS.add(new SimpleClusteredVersion.Externalizer());
+      INTERNAL_EXTERNALIZERS.add(new SimpleClusteredVersionExternalizer());
       INTERNAL_EXTERNALIZERS.add(new MetadataImmortalCacheEntryExternalizer());
       INTERNAL_EXTERNALIZERS.add(new MetadataMortalCacheEntryExternalizer());
       INTERNAL_EXTERNALIZERS.add(new MetadataTransientCacheEntryExternalizer());
@@ -72,7 +71,7 @@ class ExternalizerTable {
       INTERNAL_EXTERNALIZERS.add(new MetadataMortalCacheValueExternalizer());
       INTERNAL_EXTERNALIZERS.add(new MetadataTransientCacheValueExternalizer());
       INTERNAL_EXTERNALIZERS.add(new MetadataTransientMortalCacheValueExternalizer());
-      INTERNAL_EXTERNALIZERS.add(new EmbeddedMetadata.Externalizer());
+      INTERNAL_EXTERNALIZERS.add(new EmbeddedMetadataExternalizer());
    }
 
    static  Map<Integer, AdvancedExternalizer> getInternalExternalizers(Marshaller marshaller) {

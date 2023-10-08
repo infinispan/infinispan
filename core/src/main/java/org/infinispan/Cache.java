@@ -333,8 +333,8 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * {@inheritDoc}
     * <p>
     * When this method is used on a clustered cache, either replicated or distributed, the function will be serialized
-    * to owning nodes to perform the operation in the most performant way. However this means the function must
-    * have an appropriate {@link org.infinispan.commons.marshall.Externalizer} or be {@link java.io.Serializable} itself.
+    * to owning nodes to perform the operation in the most performant way. However this means the function must be
+    * marshallable either directly using the configured user marshaller, or by being {@link java.io.Serializable} itself.
     * <p>
     * For transactional caches, whenever the values of the caches are collections, and the mapping function modifies the collection, the collection
     * must be copied and not directly modified, otherwise whenever rollback is called it won't work.
@@ -421,8 +421,8 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * {@inheritDoc}
     * <p>
     * When this method is used on a clustered cache, either replicated or distributed, the bifunction will be serialized
-    * to owning nodes to perform the operation in the most performant way. However this means the bifunction must
-    * have an appropriate {@link org.infinispan.commons.marshall.Externalizer} or be {@link java.io.Serializable} itself.
+    * to owning nodes to perform the operation in the most performant way.  However this means the bifunction must be
+    * marshallable either directly using the configured user marshaller, or by being {@link java.io.Serializable} itself.
     * <p>
     * For transactional caches, whenever the values of the caches are collections, and the mapping function modifies the collection, the collection
     * must be copied and not directly modified, otherwise whenever rollback is called it won't work.
@@ -463,8 +463,8 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * {@inheritDoc}
     * <p>
     * When this method is used on a clustered cache, either replicated or distributed, the bifunction will be serialized
-    * to owning nodes to perform the operation in the most performant way. However this means the bifunction must
-    * have an appropriate {@link org.infinispan.commons.marshall.Externalizer} or be {@link java.io.Serializable} itself.
+    * to owning nodes to perform the operation in the most performant way.  However this means the bifunction must be
+    * marshallable either directly using the configured user marshaller, or by being {@link java.io.Serializable} itself.
     * <p>
     * For transactional caches, whenever the values of the caches are collections, and the mapping function modifies the collection, the collection
     * must be copied and not directly modified, otherwise whenever rollback is called it won't work.
@@ -555,8 +555,8 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * {@inheritDoc}
     * <p>
     * When this method is used on a clustered cache, either replicated or distributed, the bifunction will be serialized
-    * to owning nodes to perform the operation in the most performant way. However this means the bifunction must
-    * have an appropriate {@link org.infinispan.commons.marshall.Externalizer} or be {@link java.io.Serializable} itself.
+    * to owning nodes to perform the operation in the most performant way.  However this means the bifunction must be
+    * marshallable either directly using the configured user marshaller, or by being {@link java.io.Serializable} itself.
     * <p>
     * For transactional caches, whenever the values of the caches are collections, and the mapping function modifies the collection, the collection
     * must be copied and not directly modified, otherwise whenever rollback is called it won't work.

@@ -63,7 +63,7 @@ public class ClusteredLockImpl implements ClusteredLock {
    private final EmbeddedClusteredLockManager clusteredLockManager;
    private final FunctionalMap.ReadWriteMap<ClusteredLockKey, ClusteredLockValue> readWriteMap;
    private final Queue<RequestHolder> pendingRequests;
-   private final Object originator;
+   private final Address originator;
    private final AtomicInteger viewChangeUnlockHappening = new AtomicInteger(0);
    private final RequestExpirationScheduler requestExpirationScheduler;
    private final ClusterChangeListener clusterChangeListener;
@@ -97,9 +97,9 @@ public class ClusteredLockImpl implements ClusteredLock {
    public abstract class RequestHolder<E> {
       protected final CompletableFuture<E> request;
       protected final String requestId;
-      protected final Object requestor;
+      protected final Address requestor;
 
-      public RequestHolder(Object requestor, CompletableFuture<E> request) {
+      public RequestHolder(Address requestor, CompletableFuture<E> request) {
          this.requestId = createRequestId();
          this.requestor = requestor;
          this.request = request;
@@ -135,7 +135,7 @@ public class ClusteredLockImpl implements ClusteredLock {
 
    public class LockRequestHolder extends RequestHolder<Void> {
 
-      public LockRequestHolder(Object requestor, CompletableFuture<Void> request) {
+      public LockRequestHolder(Address requestor, CompletableFuture<Void> request) {
          super(requestor, request);
       }
 
@@ -169,13 +169,13 @@ public class ClusteredLockImpl implements ClusteredLock {
       private final TimeUnit unit;
       private boolean isScheduled;
 
-      public TryLockRequestHolder(Object requestor, CompletableFuture<Boolean> request) {
+      public TryLockRequestHolder(Address requestor, CompletableFuture<Boolean> request) {
          super(requestor, request);
          this.time = 0;
          this.unit = null;
       }
 
-      public TryLockRequestHolder(Object requestor, CompletableFuture<Boolean> request, long time, TimeUnit unit) {
+      public TryLockRequestHolder(Address requestor, CompletableFuture<Boolean> request, long time, TimeUnit unit) {
          super(requestor, request);
          this.time = time;
          this.unit = unit;
@@ -314,7 +314,7 @@ public class ClusteredLockImpl implements ClusteredLock {
             return;
          }
 
-         Set<Object> leavingNodes = oldMembers.stream().filter(a -> !newMembers.contains(a)).collect(Collectors.toSet());
+         Set<Address> leavingNodes = oldMembers.stream().filter(a -> !newMembers.contains(a)).collect(Collectors.toSet());
 
          if (leavingNodes.isEmpty()) {
             if (log.isTraceEnabled()) {
@@ -346,7 +346,7 @@ public class ClusteredLockImpl implements ClusteredLock {
        *
        * @param possibleOwners
        */
-      private void forceUnlockForLeavingMembers(Set<Object> possibleOwners) {
+      private void forceUnlockForLeavingMembers(Set<Address> possibleOwners) {
          if (log.isTraceEnabled()) {
             log.tracef("LOCK[%s] Call force unlock for %s from %s ", getName(), possibleOwners, originator);
          }
@@ -490,7 +490,7 @@ public class ClusteredLockImpl implements ClusteredLock {
       return isLockedByMeRequest;
    }
 
-   private CompletableFuture<Boolean> unlock(String requestId, Set<Object> possibleOwners) {
+   private CompletableFuture<Boolean> unlock(String requestId, Set<Address> possibleOwners) {
       if (log.isTraceEnabled()) {
          log.tracef("LOCK[%s] unlock called for %s %s", getName(), requestId, possibleOwners);
       }

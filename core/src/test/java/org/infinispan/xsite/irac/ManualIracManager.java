@@ -177,17 +177,17 @@ public class ManualIracManager extends ControlledIracManager {
 
       @Override
       public Object getKey() {
-         return keyInfo.key();
+         return keyInfo.getKey();
       }
 
       @Override
       public Object getOwner() {
-         return keyInfo.owner();
+         return keyInfo.getOwner();
       }
 
       @Override
       public int getSegment() {
-         return keyInfo.segment();
+         return keyInfo.getSegment();
       }
 
       @Override

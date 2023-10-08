@@ -12,5 +12,7 @@ import org.infinispan.factories.scopes.Scopes;
  */
 @Scope(Scopes.NAMED_CACHE)
 public interface ResponseGenerator {
+   ResponseGenerator INSTANCE = new DefaultResponseGenerator();
+
    Response getResponse(CacheRpcCommand command, Object returnValue);
 }

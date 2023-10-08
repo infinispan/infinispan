@@ -27,6 +27,7 @@ import org.infinispan.commons.dataconversion.JavaSerializationEncoder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.UTF8Encoder;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
@@ -42,7 +43,6 @@ import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
-import org.infinispan.marshall.core.GlobalMarshaller;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
@@ -324,7 +324,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
    public void testSerialization() {
       withCacheManager(new CacheManagerCallable(createCacheManager(TestDataSCI.INSTANCE, new ConfigurationBuilder())) {
 
-         final GlobalMarshaller marshaller = TestingUtil.extractGlobalMarshaller(cm);
+         final Marshaller marshaller = TestingUtil.extractGlobalMarshaller(cm);
 
          private void testWith(DataConversion dataConversion, ComponentRegistry registry) throws Exception {
             byte[] marshalled = marshaller.objectToByteBuffer(dataConversion);

@@ -1,9 +1,5 @@
 package org.infinispan.jcache.embedded.functions;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -13,9 +9,7 @@ import javax.cache.processor.EntryProcessor;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.functional.functions.InjectableComponent;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.util.Util;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
@@ -23,8 +17,13 @@ import org.infinispan.functional.MetaParam;
 import org.infinispan.jcache.Exceptions;
 import org.infinispan.jcache.Expiration;
 import org.infinispan.jcache.embedded.Durations;
-import org.infinispan.jcache.embedded.ExternalizerIds;
+import org.infinispan.marshall.protostream.impl.MarshallableArray;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
+@ProtoTypeId(ProtoStreamTypeIds.JCACHE_INVOKE)
 public class Invoke<K, V, R> implements Function<EntryView.ReadWriteEntryView<K, V>, R>, InjectableComponent {
    private final EntryProcessor<K, V, R> processor;
    private final Object[] arguments;
@@ -36,6 +35,28 @@ public class Invoke<K, V, R> implements Function<EntryView.ReadWriteEntryView<K,
       this.processor = processor;
       this.arguments = arguments;
       this.storeByReference = storeByReference;
+   }
+
+   @ProtoFactory
+   Invoke(MarshallableObject<EntryProcessor<K, V, R>> processor, MarshallableArray<Object> arguments, boolean storeByReference) {
+      this.processor = MarshallableObject.unwrap(processor);
+      this.arguments = MarshallableArray.unwrap(arguments);
+      this.storeByReference = storeByReference;
+   }
+
+   @ProtoField(1)
+   MarshallableObject<EntryProcessor<K, V, R>> getProcessor() {
+      return MarshallableObject.create(processor);
+   }
+
+   @ProtoField(2)
+   MarshallableArray<Object> getArguments() {
+      return MarshallableArray.create(arguments);
+   }
+
+   @ProtoField(3)
+   boolean isStoreByReference() {
+      return storeByReference;
    }
 
    @Override
@@ -89,31 +110,6 @@ public class Invoke<K, V, R> implements Function<EntryView.ReadWriteEntryView<K,
       } catch (Exception e) {
          throw new CacheException(
                "Unexpected error making a copy of entry " + original, e);
-      }
-   }
-
-   public static class Externalizer implements AdvancedExternalizer<Invoke> {
-      @Override
-      public Set<Class<? extends Invoke>> getTypeClasses() {
-         return Util.asSet(Invoke.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.INVOKE;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, Invoke object) throws IOException {
-         output.writeObject(object.processor);
-         MarshallUtil.marshallArray(object.arguments, output);
-         output.writeBoolean(object.storeByReference);
-      }
-
-      @Override
-      public Invoke readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new Invoke((EntryProcessor) input.readObject(),
-               MarshallUtil.unmarshallArray(input, Util::objectArray), input.readBoolean());
       }
    }
 }

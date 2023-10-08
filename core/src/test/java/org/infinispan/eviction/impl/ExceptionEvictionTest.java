@@ -7,16 +7,9 @@ import static org.testng.AssertJUnit.fail;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.transaction.HeuristicMixedException;
-import jakarta.transaction.HeuristicRollbackException;
-import jakarta.transaction.NotSupportedException;
-import jakarta.transaction.RollbackException;
-import jakarta.transaction.Status;
-import jakarta.transaction.SystemException;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.Cache;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -38,10 +31,17 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.commons.time.ControlledTimeService;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.HeuristicMixedException;
+import jakarta.transaction.HeuristicRollbackException;
+import jakarta.transaction.NotSupportedException;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Status;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.TransactionManager;
 
 /**
  * @author wburns
@@ -150,8 +150,9 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
             memoryConfigurationBuilder.evictionType(EvictionType.MEMORY).size(convertAmountForStorage(SIZE) + MORTAL_ENTRY_OVERHEAD);
             break;
          case OFF_HEAP:
-            // Each entry takes up 63 bytes total for our tests, however tests that add expiration require 16 more
-            memoryConfigurationBuilder.evictionType(EvictionType.MEMORY).size(24 +
+            memoryConfigurationBuilder.evictionType(EvictionType.MEMORY).size(
+                  // The first entry has metadata with expiration which adds 2 additional bytes
+                  MORTAL_ENTRY_OVERHEAD +
                   // If we are running optimistic transactions we have to store version so it is larger than pessimistic
                   convertAmountForStorage(SIZE) +
                   UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(OffHeapConcurrentMap.INITIAL_SIZE << 3));
@@ -221,8 +222,14 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
          case BINARY:
             return expected * (optimistic ? IMMORTAL_ENTRY_SIZE + OPTIMISTIC_TX_OVERHEAD : IMMORTAL_ENTRY_SIZE);
          case OFF_HEAP:
-            return expected * (optimistic ? UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(51) :
-                               UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(33));
+            int perEntrySize = 25;
+            if (optimistic) {
+               perEntrySize += 14;
+               if (cacheMode.isClustered()) {
+                  perEntrySize += 2;
+               }
+            }
+            return expected * UnpooledOffHeapMemoryAllocator.estimateSizeOverhead(perEntrySize);
          default:
             throw new IllegalStateException("Unconfigured storage type: " + storageType);
       }
@@ -285,8 +292,7 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
       // Now we should have an extra space
       cache(0).remove(0);
 
-      // Have to use a cached Integer value otherwise this will blosw up as too large
-      cache(0).put(-128, -128);
+      cache(0).put(SIZE + 1, SIZE + 1);
 
       try {
          cache(0).put(-1, -1);
@@ -495,7 +501,7 @@ public class ExceptionEvictionTest extends MultipleCacheManagersTest {
       }
 
       // This insert should work now
-      cache(0).put(-128, -128);
+      cache(0).put(expiringKey, expiringKey);
 
       // This should fail now
       try {

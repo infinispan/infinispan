@@ -551,7 +551,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    }
 
    private void removeStateFromLocal(IracManagerKeyInfo state) {
-      updatedKeys.computeIfPresent(state.key(), (ignored, existingState) -> {
+      updatedKeys.computeIfPresent(state.getKey(), (ignored, existingState) -> {
          // remove if the same state
          if (existingState.getKeyInfo().equals(state)) {
             if (log.isTraceEnabled()) {
@@ -721,8 +721,8 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    public void checkStaleKeys(Address origin, Collection<IracManagerKeyInfo> keys) {
       var topology = clusteringDependentLogic.getCacheTopology();
       var toCleanup = keys.stream()
-            .filter(info -> topology.getSegmentDistribution(info.segment()).isPrimary())
-            .filter(info -> !updatedKeys.containsKey(info.key()))
+            .filter(info -> topology.getSegmentDistribution(info.getSegment()).isPrimary())
+            .filter(info -> !updatedKeys.containsKey(info.getKey()))
             .toList();
       if (toCleanup.isEmpty()) {
          return;

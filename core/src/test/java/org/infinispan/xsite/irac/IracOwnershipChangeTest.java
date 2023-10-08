@@ -11,6 +11,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.LocalizedCacheTopology;
@@ -59,6 +60,12 @@ public class IracOwnershipChangeTest extends AbstractMultipleSitesTest {
       return builder;
    }
 
+   @Override
+   protected GlobalConfigurationBuilder defaultGlobalConfigurationForSite(int index) {
+      var cfg = super.defaultGlobalConfigurationForSite(index);
+      cfg.serialization().addContextInitializer(ControlledConsistentHashFactory.SCI.INSTANCE);
+      return cfg;
+   }
 
    @BeforeMethod(alwaysRun = true)
    @Override

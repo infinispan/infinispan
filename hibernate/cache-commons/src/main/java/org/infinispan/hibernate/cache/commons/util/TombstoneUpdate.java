@@ -1,19 +1,18 @@
 package org.infinispan.hibernate.cache.commons.util;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 
 import org.infinispan.commands.functional.functions.InjectableComponent;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.MetaParam;
 import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Request to update cache either as a result of putFromLoad (if {@link #getValue()} is non-null
@@ -23,6 +22,7 @@ import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
+@ProtoTypeId(ProtoStreamTypeIds.HIBERNATE_TOMBSTONE_UPDATE)
 public class TombstoneUpdate<T> implements Function<EntryView.ReadWriteEntryView<Object, Object>, Void>, InjectableComponent {
 	private static final UUID ZERO = new UUID(0, 0);
 
@@ -35,12 +35,23 @@ public class TombstoneUpdate<T> implements Function<EntryView.ReadWriteEntryView
 		this.value = value;
 	}
 
+	@ProtoFactory
+	TombstoneUpdate(long timestamp, MarshallableObject<T> wrappedValue) {
+		this(timestamp, MarshallableObject.unwrap(wrappedValue));
+	}
+
+	@ProtoField(1)
 	public long getTimestamp() {
 		return timestamp;
 	}
 
 	public T getValue() {
 		return value;
+	}
+
+	@ProtoField(number = 2, name = "value")
+	MarshallableObject<T> getWrappedValue() {
+		return MarshallableObject.create(value);
 	}
 
 	@Override
@@ -84,30 +95,5 @@ public class TombstoneUpdate<T> implements Function<EntryView.ReadWriteEntryView
 	@Override
 	public void inject(ComponentRegistry registry) {
 		region = registry.getComponent(InfinispanDataRegion.class);
-	}
-
-	public static class Externalizer implements AdvancedExternalizer<TombstoneUpdate> {
-		@Override
-		public Set<Class<? extends TombstoneUpdate>> getTypeClasses() {
-			return Collections.singleton(TombstoneUpdate.class);
-		}
-
-		@Override
-		public Integer getId() {
-			return Externalizers.TOMBSTONE_UPDATE;
-		}
-
-		@Override
-		public void writeObject(ObjectOutput output, TombstoneUpdate object) throws IOException {
-			output.writeObject(object.getValue());
-			output.writeLong(object.getTimestamp());
-		}
-
-		@Override
-		public TombstoneUpdate readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-			Object value = input.readObject();
-			long timestamp = input.readLong();
-			return new TombstoneUpdate(timestamp, value);
-		}
 	}
 }

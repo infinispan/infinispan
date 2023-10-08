@@ -3,8 +3,13 @@ package org.infinispan.commands.statetransfer;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.marshall.protostream.impl.WrappedMessages;
+import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.statetransfer.StateProvider;
 import org.infinispan.statetransfer.TransactionInfo;
 import org.infinispan.util.ByteString;
@@ -15,17 +20,14 @@ import org.infinispan.util.ByteString;
  * @author Ryan Emerson
  * @since 11.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.STATE_TRANSFER_GET_TRANSACTIONS_COMMAND)
 public class StateTransferGetTransactionsCommand extends AbstractStateTransferCommand {
 
    public static final byte COMMAND_ID = 119;
 
-   // For command id uniqueness test only
-   public StateTransferGetTransactionsCommand() {
-      this(null);
-   }
-
-   public StateTransferGetTransactionsCommand(ByteString cacheName) {
-      super(COMMAND_ID, cacheName);
+   @ProtoFactory
+   StateTransferGetTransactionsCommand(ByteString cacheName, int topologyId, WrappedMessage wrappedSegments) {
+      this(cacheName, topologyId, WrappedMessages.<IntSet>unwrap(wrappedSegments));
    }
 
    public StateTransferGetTransactionsCommand(ByteString cacheName, int topologyId, IntSet segments) {

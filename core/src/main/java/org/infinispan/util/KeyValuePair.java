@@ -1,13 +1,10 @@
 package org.infinispan.util;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  *
@@ -16,6 +13,7 @@ import org.infinispan.marshall.core.Ids;
  * @author Mircea Markus
  * @since 6.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.KEY_VALUE_PAIR)
 public class KeyValuePair<K,V> {
    private final K key;
    private final V value;
@@ -29,39 +27,27 @@ public class KeyValuePair<K,V> {
       this.value = value;
    }
 
+   @ProtoFactory
+   KeyValuePair(MarshallableObject<K> wrappedKey, MarshallableObject<V> wrappedValue) {
+      this(MarshallableObject.unwrap(wrappedKey), MarshallableObject.unwrap(wrappedValue));
+   }
+
+   @ProtoField(number = 1, name = "key")
+   MarshallableObject<K> getWrappedKey() {
+      return MarshallableObject.create(key);
+   }
+
+   @ProtoField(number = 2, name = "value")
+   MarshallableObject<V> getWrappedValue() {
+      return MarshallableObject.create(value);
+   }
+
    public K getKey() {
       return key;
    }
 
    public V getValue() {
       return value;
-   }
-
-
-   public static class Externalizer extends AbstractExternalizer<KeyValuePair> {
-
-      private static final long serialVersionUID = -5291318076267612501L;
-
-      @Override
-      public void writeObject(ObjectOutput output, KeyValuePair kvPair) throws IOException {
-         output.writeObject(kvPair.getKey());
-         output.writeObject(kvPair.getValue());
-      }
-
-      @Override
-      public KeyValuePair readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new KeyValuePair(input.readObject(), input.readObject());
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.KEY_VALUE_PAIR_ID;
-      }
-
-      @Override
-      public Set<Class<? extends KeyValuePair>> getTypeClasses() {
-         return Collections.singleton(KeyValuePair.class);
-      }
    }
 
    @Override

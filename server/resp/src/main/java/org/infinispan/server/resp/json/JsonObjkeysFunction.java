@@ -1,20 +1,17 @@
 package org.infinispan.server.resp.json;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.server.resp.ExternalizerIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.server.resp.RespUtil;
 import org.infinispan.util.function.SerializableFunction;
 
@@ -24,12 +21,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+@ProtoTypeId(ProtoStreamTypeIds.RESP_JSON_OBJ_KEY_FUNCTION)
 public class JsonObjkeysFunction
         implements SerializableFunction<EntryView.ReadWriteEntryView<byte[], JsonBucket>, List<List<byte[]>>> {
-    public static final AdvancedExternalizer<JsonObjkeysFunction> EXTERNALIZER = new JsonObjkeysFunction.Externalizer();
 
-    private byte[] path;
+    @ProtoField(1)
+    final byte[] path;
 
+    @ProtoFactory
     public JsonObjkeysFunction(byte[] path) {
         this.path = path;
     }
@@ -61,30 +60,6 @@ public class JsonObjkeysFunction
             return resultList;
         } catch (JsonProcessingException e) {
             throw new CacheException(e);
-        }
-    }
-
-    private static class Externalizer implements AdvancedExternalizer<JsonObjkeysFunction> {
-
-        @Override
-        public void writeObject(ObjectOutput output, JsonObjkeysFunction object) throws IOException {
-            JSONUtil.writeBytes(output, object.path);
-        }
-
-        @Override
-        public JsonObjkeysFunction readObject(ObjectInput input) throws IOException {
-            byte[] path = JSONUtil.readBytes(input);
-            return new JsonObjkeysFunction(path);
-        }
-
-        @Override
-        public Set<Class<? extends JsonObjkeysFunction>> getTypeClasses() {
-            return Collections.singleton(JsonObjkeysFunction.class);
-        }
-
-        @Override
-        public Integer getId() {
-            return ExternalizerIds.JSON_OBJKEYS_FUNCTION;
         }
     }
 }

@@ -1,16 +1,10 @@
 package org.infinispan.context;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.Proto;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Available flags, which may be set on a per-invocation basis.  These are
@@ -25,13 +19,17 @@ import org.infinispan.marshall.core.Ids;
  * @author Galder Zamarreño
  * @since 4.0
  */
+@Proto
+@ProtoTypeId(ProtoStreamTypeIds.FLAG)
 public enum Flag {
+
    /**
     * Overrides the {@link org.infinispan.configuration.cache.LockingConfiguration#lockAcquisitionTimeout(long)} configuration setting by ensuring lock
     * managers use a 0-millisecond lock acquisition timeout.  Useful if you only want to acquire a lock on an entry
     * <i>if and only if</i> the lock is uncontended.
     */
    ZERO_LOCK_ACQUISITION_TIMEOUT,
+
    /**
     * Forces LOCAL mode operation, even if the cache is configured to use a clustered mode like replication,
     * invalidation or distribution. Applying this flag will suppress any RPC messages otherwise associated with this
@@ -40,6 +38,7 @@ public enum Flag {
     * that node.
     */
    CACHE_MODE_LOCAL,
+
    /**
     * Bypasses lock acquisition for this invocation altogether. A potentially dangerous flag, as it can lead to
     * inconsistent data: a Lock is needed to make sure the same value is written to each node replica; a lock
@@ -50,26 +49,31 @@ public enum Flag {
     * never happen in practice. If this is unclear, avoid it.
     */
    SKIP_LOCKING,
+
    /**
     * Forces a write lock, even if the invocation is a read operation.  Useful when reading an entry to later update it
     * within the same transaction, and is analogous in behavior and use case to a <code>select ... for update ... </code>
     * SQL statement.
     */
    FORCE_WRITE_LOCK,
+
    /**
     * Forces asynchronous network calls where possible, even if otherwise configured to use synchronous network calls.
     * Only applicable to non-local, clustered caches.
     */
    FORCE_ASYNCHRONOUS,
+
    /**
     * Forces synchronous network calls where possible, even if otherwise configured to use asynchronous network calls.
     * Only applicable to non-local, clustered caches.
     */
    FORCE_SYNCHRONOUS,
+
    /**
     * Skips storing an entry to any configured {@link org.infinispan.persistence.spi.CacheLoader}s.
     */
    SKIP_CACHE_STORE,
+
    /**
     * Skips loading an entry from any configured {@link org.infinispan.persistence.spi.CacheLoader}s.
     * Useful for example to perform a {@link Cache#put(Object, Object)} operation while not interested
@@ -80,6 +84,7 @@ public enum Flag {
     * you should use {@link #IGNORE_RETURN_VALUES} instead.
     */
    SKIP_CACHE_LOAD,
+
    /**
     * <p>Swallows any exceptions, logging them instead at a low log level.  Will prevent a failing operation from
     * affecting any ongoing JTA transactions as well.</p>
@@ -89,6 +94,7 @@ public enum Flag {
     * back to the transaction manager. This is done for safety reasons to avoid inconsistent cache contents.</p>
     */
    FAIL_SILENTLY,
+
    /**
     * When used with <b>distributed</b> cache mode, will prevent retrieving a remote value either when
     * executing a {@link Cache#get(Object)} or {@link Cache#containsKey(Object)},
@@ -135,6 +141,7 @@ public enum Flag {
     * If this flag is enabled, if a cache store is shared, then storage to the store is skipped.
     */
    SKIP_SHARED_CACHE_STORE,
+
    /**
     * Ignore current consistent hash and read from data container/commit the change no matter what (if the flag is set).
     */
@@ -251,35 +258,5 @@ public enum Flag {
     * Signals that a state transfer is in course. This is primarily used to identify how to load data from cache stores
     * during the state transfer.
     */
-   STATE_TRANSFER_PROGRESS,
-   ;
-
-   private static final Flag[] CACHED_VALUES = values();
-
-   private static Flag valueOf(int ordinal) {
-      return CACHED_VALUES[ordinal];
-   }
-
-   public static class Externalizer extends AbstractExternalizer<Flag> {
-
-      @Override
-      public Integer getId() {
-         return Ids.FLAG;
-      }
-
-      @Override
-      public Set<Class<? extends Flag>> getTypeClasses() {
-         return Collections.singleton(Flag.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, Flag flag) throws IOException {
-         MarshallUtil.marshallEnum(flag, output);
-      }
-
-      @Override
-      public Flag readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return MarshallUtil.unmarshallEnum(input, Flag::valueOf);
-      }
-   }
+   STATE_TRANSFER_PROGRESS
 }

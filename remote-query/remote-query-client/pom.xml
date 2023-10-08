@@ -19,6 +19,11 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-jboss-marshalling</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>org.infinispan.protostream</groupId>
          <artifactId>protostream</artifactId>
       </dependency>

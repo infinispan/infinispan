@@ -26,10 +26,10 @@ import org.junit.jupiter.api.extension.RegisterExtension;
  * @since 15.0
  **/
 public class FootprintIT {
-   private static final int LOADED_CLASS_COUNT_LOWER_BOUND = 11_700;
-   private static final int LOADED_CLASS_COUNT_UPPER_BOUND = 11_900;
-   private static final long HEAP_USAGE_LOWER_BOUND = 25_250_000L;
-   private static final long HEAP_USAGE_UPPER_BOUND = 26_250_000L;
+   private static final int LOADED_CLASS_COUNT_LOWER_BOUND = 11_900;
+   private static final int LOADED_CLASS_COUNT_UPPER_BOUND = 12_250;
+   private static final long HEAP_USAGE_LOWER_BOUND = 26_000_000L;
+   private static final long HEAP_USAGE_UPPER_BOUND = 28_000_000L;
    private static final long DISK_USAGE_LOWER_BOUND = 74_000_000L;
    private static final long DISK_USAGE_UPPER_BOUND = 76_000_000L;
    public static final String HEAP_DUMP = "footprint.hprof";

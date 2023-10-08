@@ -1,8 +1,5 @@
 package org.infinispan.commons.util;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -10,11 +7,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
-import java.util.Set;
-
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.Ids;
-import org.infinispan.commons.marshall.MarshallUtil;
 
 import net.jcip.annotations.Immutable;
 
@@ -231,31 +223,6 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Immutables.
    @Override
    public int hashCode() {
       return Arrays.hashCode(elements);
-   }
-
-   @SuppressWarnings("rawtypes")
-   public static class Externalizer implements AdvancedExternalizer<ImmutableListCopy> {
-
-      @Override
-      public Integer getId() {
-         return Ids.IMMUTABLE_LIST_COPY;
-      }
-
-      @Override
-      public Set<Class<? extends ImmutableListCopy>> getTypeClasses() {
-         return Util.asSet(ImmutableListCopy.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, ImmutableListCopy object) throws IOException {
-         MarshallUtil.marshallArray(object.elements, output);
-      }
-
-      @Override
-      public ImmutableListCopy readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Object[] elements = MarshallUtil.unmarshallArray(input, Util::objectArray);
-         return new ImmutableListCopy<>(elements);
-      }
    }
 
    private class ImmutableIterator implements ListIterator<E> {

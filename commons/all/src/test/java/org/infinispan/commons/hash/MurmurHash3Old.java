@@ -1,12 +1,6 @@
 package org.infinispan.commons.hash;
 
-import java.io.ObjectInput;
 import java.nio.charset.StandardCharsets;
-import java.util.Set;
-
-import org.infinispan.commons.marshall.Ids;
-import org.infinispan.commons.marshall.exts.NoStateExternalizer;
-import org.infinispan.commons.util.Util;
 
 import net.jcip.annotations.Immutable;
 import net.jcip.annotations.ThreadSafe;
@@ -407,23 +401,5 @@ public class MurmurHash3Old implements Hash {
    @Override
    public String toString() {
       return "MurmurHash3";
-   }
-
-   public static class Externalizer extends NoStateExternalizer<MurmurHash3Old> {
-      @Override
-      @SuppressWarnings("unchecked")
-      public Set<Class<? extends MurmurHash3Old>> getTypeClasses() {
-         return Util.asSet(MurmurHash3Old.class);
-      }
-
-      @Override
-      public MurmurHash3Old readObject(ObjectInput input) {
-         return instance;
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.MURMURHASH_3;
-      }
    }
 }

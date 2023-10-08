@@ -1,7 +1,6 @@
 package org.infinispan.factories;
 
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.remoting.responses.DefaultResponseGenerator;
 import org.infinispan.remoting.responses.ResponseGenerator;
 
 /**
@@ -14,6 +13,6 @@ import org.infinispan.remoting.responses.ResponseGenerator;
 public class ResponseGeneratorFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
    @Override
    public Object construct(String componentName) {
-      return new DefaultResponseGenerator();
+      return ResponseGenerator.INSTANCE;
    }
 }

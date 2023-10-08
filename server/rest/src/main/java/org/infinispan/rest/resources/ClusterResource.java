@@ -199,10 +199,12 @@ public class ClusterResource implements ResourceHandler {
       boolean pretty = isPretty(request);
       Map<String, Json> clusterInfos = new ConcurrentHashMap<>();
       return SecurityActions.getClusterExecutor(cacheManager)
-              .submitConsumer(ecm -> ecm.getCacheManagerInfo().toJson().asMap(), (addr, info, t) -> {
+              .submitConsumer(ecm -> ecm.getCacheManagerInfo().toJson().toString(), (addr, json
+                    , t) -> {
                  if (t != null) {
                     throw CompletableFutures.asCompletionException(t);
                  }
+                 Map<String, Object> info = Json.read(json).asMap();
                  Json infoToPass = Json.object();
                  infoToPass.set(VERSION, info.get(VERSION));
                  infoToPass.set(NODE_ADDRESS, info.get(NODE_ADDRESS));

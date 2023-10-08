@@ -1,42 +1,51 @@
 package org.infinispan.commands.functional;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.function.Consumer;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.write.ValueMatcher;
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.impl.Params;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
+@ProtoTypeId(ProtoStreamTypeIds.WRITE_ONLY_KEY_COMMAND)
 public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, V> {
 
    public static final byte COMMAND_ID = 54;
 
    private Consumer<WriteEntryView<K, V>> f;
 
-   public WriteOnlyKeyCommand(Object key,
-                              Consumer<WriteEntryView<K, V>> f,
-                              int segment, CommandInvocationId id,
-                              ValueMatcher valueMatcher,
-                              Params params,
-                              DataConversion keyDataConversion,
+   public WriteOnlyKeyCommand(Object key, Consumer<WriteEntryView<K, V>> f, int segment, CommandInvocationId id,
+                              ValueMatcher valueMatcher, Params params, DataConversion keyDataConversion,
                               DataConversion valueDataConversion) {
       super(key, valueMatcher, segment, id, params, keyDataConversion, valueDataConversion);
       this.f = f;
    }
 
-   public WriteOnlyKeyCommand() {
+   @ProtoFactory
+   WriteOnlyKeyCommand(MarshallableObject<?> wrappedKey, long flagsWithoutRemote, int topologyId, int segment,
+                       CommandInvocationId commandInvocationId, Params params, ValueMatcher valueMatcher,
+                       DataConversion keyDataConversion, DataConversion valueDataConversion,
+                       MarshallableObject<Consumer<WriteEntryView<K, V>>> wrappedConsumer,
+                       PrivateMetadata internalMetadata) {
+      super(wrappedKey, flagsWithoutRemote, topologyId, segment, commandInvocationId, params, valueMatcher,
+            keyDataConversion, valueDataConversion, internalMetadata);
+      this.f = MarshallableObject.unwrap(wrappedConsumer);
+   }
+
+   @ProtoField(number = 11, name = "consumer")
+   MarshallableObject<Consumer<WriteEntryView<K, V>>> getWrappedConsumer() {
+      return MarshallableObject.create(f);
    }
 
    @Override
@@ -49,34 +58,6 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
    @Override
    public byte getCommandId() {
       return COMMAND_ID;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(key);
-      output.writeObject(f);
-      MarshallUtil.marshallEnum(valueMatcher, output);
-      UnsignedNumeric.writeUnsignedInt(output, segment);
-      Params.writeObject(output, params);
-      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
-      CommandInvocationId.writeTo(output, commandInvocationId);
-      DataConversion.writeTo(output, keyDataConversion);
-      DataConversion.writeTo(output, valueDataConversion);
-      output.writeObject(internalMetadata);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      key = input.readObject();
-      f = (Consumer<WriteEntryView<K, V>>) input.readObject();
-      valueMatcher = MarshallUtil.unmarshallEnum(input, ValueMatcher::valueOf);
-      segment = UnsignedNumeric.readUnsignedInt(input);
-      params = Params.readObject(input);
-      setFlagsBitSet(input.readLong());
-      commandInvocationId = CommandInvocationId.readFrom(input);
-      keyDataConversion = DataConversion.readFrom(input);
-      valueDataConversion = DataConversion.readFrom(input);
-      internalMetadata = (PrivateMetadata) input.readObject();
    }
 
    @Override

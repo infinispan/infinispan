@@ -4,6 +4,9 @@ import java.util.function.LongToDoubleFunction;
 import java.util.stream.DoubleStream;
 import java.util.stream.LongStream;
 
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.stream.impl.intops.MappingOperation;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -18,13 +21,19 @@ public class MapToDoubleLongOperation implements MappingOperation<Long, LongStre
       this.function = function;
    }
 
+   @ProtoFactory
+   MapToDoubleLongOperation(MarshallableObject<LongToDoubleFunction> function) {
+      this.function = MarshallableObject.unwrap(function);
+   }
+
+   @ProtoField(1)
+   MarshallableObject<LongToDoubleFunction> getFunction() {
+      return MarshallableObject.create(function);
+   }
+
    @Override
    public DoubleStream perform(LongStream stream) {
       return stream.mapToDouble(function);
-   }
-
-   public LongToDoubleFunction getFunction() {
-      return function;
    }
 
    @Override

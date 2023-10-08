@@ -1,19 +1,16 @@
 package org.infinispan.marshall.protostream.impl;
 
+import java.io.IOException;
+
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.commons.util.Util;
 import org.infinispan.protostream.BaseMarshaller;
 import org.infinispan.protostream.ProtobufTagMarshaller;
 import org.infinispan.protostream.TagReader;
 import org.infinispan.protostream.annotations.ProtoFactory;
-import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.protostream.descriptors.WireType;
-
-import java.io.IOException;
-import java.util.Objects;
 
 /**
  * A wrapper message used by ProtoStream Marshallers to allow user objects to be marshalled/unmarshalled via the {@link
@@ -34,74 +31,41 @@ import java.util.Objects;
  * @author Ryan Emerson
  * @since 10.0
  */
+// TODO avoid use in commands?
 @ProtoTypeId(ProtoStreamTypeIds.MARSHALLABLE_USER_OBJECT)
-public class MarshallableUserObject<T> {
+public class MarshallableUserObject<T> extends AbstractMarshallableWrapper<T> {
 
-   private final T object;
+   /**
+    * @param wrapper the {@link MarshallableUserObject} instance to unwrap.
+    * @return the wrapped {@link Object} or null if the provided wrapper does not exist.
+    */
+   public static <T> T unwrap(MarshallableUserObject<T> wrapper) {
+      return wrapper == null ? null : wrapper.get();
+   }
+
+   /**
+    * @param object the Object to be wrapped.
+    * @return a new {@link MarshallableUserObject} instance containing the passed object if the object is not null,
+    * otherwise null.
+    */
+   public static <T> MarshallableUserObject<T> create(T object) {
+      return object == null ? null : new MarshallableUserObject<>(object);
+   }
 
    @ProtoFactory
    MarshallableUserObject(byte[] bytes) {
-      // no-op never actually used, as we override the default marshaller
-      throw new IllegalStateException(this.getClass().getSimpleName() + " marshaller not overridden in SerializationContext");
+      super(bytes);
    }
 
    public MarshallableUserObject(T object) {
-      this.object = object;
-   }
-
-   @ProtoField(1)
-   byte[] getBytes() {
-      return Util.EMPTY_BYTE_ARRAY;
-   }
-
-   public T get() {
-      return object;
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      MarshallableUserObject other = (MarshallableUserObject) o;
-      return Objects.equals(object, other.object);
-   }
-
-   @Override
-   public int hashCode() {
-      return object != null ? object.hashCode() : 0;
-   }
-
-   public static int size(int objectBytes) {
-      int typeId = ProtoStreamTypeIds.MARSHALLABLE_USER_OBJECT;
-      int typeIdSize = tagSize(19, 1) + computeUInt32SizeNoTag(typeId);
-      int userBytesFieldSize = tagSize(1, 2) + computeUInt32SizeNoTag(objectBytes) + objectBytes;
-      int wrappedMessageSize = tagSize(17, 2) + computeUInt32SizeNoTag(objectBytes);
-
-      return typeIdSize + userBytesFieldSize + wrappedMessageSize;
-   }
-
-   private static int tagSize(int fieldNumber, int wireType) {
-      return computeUInt32SizeNoTag(fieldNumber << 3 | wireType);
-   }
-
-   // Protobuf logic included to avoid requiring a dependency on com.google.protobuf.CodedOutputStream
-   private static int computeUInt32SizeNoTag(int value) {
-      if ((value & -128) == 0) {
-         return 1;
-      } else if ((value & -16384) == 0) {
-         return 2;
-      } else if ((value & -2097152) == 0) {
-         return 3;
-      } else {
-         return (value & -268435456) == 0 ? 4 : 5;
-      }
+      super(object);
    }
 
    public static class Marshaller implements ProtobufTagMarshaller<MarshallableUserObject> {
 
       private final String typeName;
       private final org.infinispan.commons.marshall.Marshaller userMarshaller;
+
 
       public Marshaller(String typeName, org.infinispan.commons.marshall.Marshaller userMarshaller) {
          this.typeName = typeName;

@@ -1,16 +1,14 @@
 package org.infinispan.commands.irac;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.irac.IracManagerKeyInfo;
@@ -20,24 +18,19 @@ import org.infinispan.xsite.irac.IracManagerKeyInfo;
  *
  * @since 15.2
  */
-public class IracPrimaryPendingKeyCheckCommand implements CacheRpcCommand {
+@ProtoTypeId(ProtoStreamTypeIds.IRAC_PRIMARY_PENDING_KEY_CHECK)
+public class IracPrimaryPendingKeyCheckCommand extends BaseIracCommand {
 
    public static final byte COMMAND_ID = 15;
 
    private Address origin;
-   private ByteString cacheName;
-   private Collection<IracManagerKeyInfo> keys;
 
-   @SuppressWarnings("unused")
-   public IracPrimaryPendingKeyCheckCommand() {
-   }
+   @ProtoField(2)
+   final Collection<IracManagerKeyInfo> keys;
 
-   public IracPrimaryPendingKeyCheckCommand(ByteString cacheName) {
-      this.cacheName = cacheName;
-   }
-
+   @ProtoFactory
    public IracPrimaryPendingKeyCheckCommand(ByteString cacheName, Collection<IracManagerKeyInfo> keys) {
-      this.cacheName = cacheName;
+      super(cacheName);
       this.keys = keys;
    }
 
@@ -50,26 +43,6 @@ public class IracPrimaryPendingKeyCheckCommand implements CacheRpcCommand {
    @Override
    public byte getCommandId() {
       return COMMAND_ID;
-   }
-
-   @Override
-   public boolean isReturnValueExpected() {
-      return false;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      MarshallUtil.marshallCollection(keys, output, IracManagerKeyInfo::writeTo);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      keys = MarshallUtil.unmarshallCollection(input, ArrayList::new, IracManagerKeyInfo::readFrom);
-   }
-
-   @Override
-   public ByteString getCacheName() {
-      return cacheName;
    }
 
    @Override

@@ -22,7 +22,6 @@ public class Infinispan10Marshaller extends AbstractUnsupportedStreamingMarshall
       internalSCIs.add(new org.infinispan.persistence.rocksdb.PersistenceContextInitializerImpl());
       internalSCIs.add(new org.infinispan.persistence.jdbc.impl.PersistenceContextInitializerImpl());
       internalSCIs.add(new org.infinispan.query.core.stats.impl.PersistenceContextInitializerImpl());
-      internalSCIs.add(new org.infinispan.query.impl.PersistenceContextInitializerImpl());
       internalSCIs.add(new org.infinispan.server.core.PersistenceContextInitializerImpl());
    }
 

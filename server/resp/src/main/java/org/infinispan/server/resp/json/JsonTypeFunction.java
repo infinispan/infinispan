@@ -1,29 +1,26 @@
 package org.infinispan.server.resp.json;
 
+import static java.util.Objects.requireNonNull;
+
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.function.SerializableFunction;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.jayway.jsonpath.JsonPath;
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.server.resp.ExternalizerIds;
-import org.infinispan.util.function.SerializableFunction;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
-import static java.util.Objects.requireNonNull;
-
-public class JsonTypeFunction
-      implements SerializableFunction<ReadWriteEntryView<byte[], JsonBucket>, List<String>> {
+@ProtoTypeId(ProtoStreamTypeIds.RESP_JSON_TYPE_FUNCTION)
+public class JsonTypeFunction implements SerializableFunction<ReadWriteEntryView<byte[], JsonBucket>, List<String>> {
    public static final String ERR_PATH_CAN_T_BE_NULL = "path can't be null";
-   public static final AdvancedExternalizer<JsonTypeFunction> EXTERNALIZER = new JsonTypeFunction.Externalizer();
    private static final String STRING = "string";
    private static final String BOOLEAN = "boolean";
    private static final String INTEGER = "integer";
@@ -33,8 +30,10 @@ public class JsonTypeFunction
    private static final String UNKNOWN = "unknown";
    private static final String OBJECT = "object";
 
-   byte[] path;
+   @ProtoField(1)
+   final byte[] path;
 
+   @ProtoFactory
    public JsonTypeFunction(byte[] path) {
       requireNonNull(path, ERR_PATH_CAN_T_BE_NULL);
       this.path = path;
@@ -107,29 +106,4 @@ public class JsonTypeFunction
       }
       return UNKNOWN;
    }
-
-   private static class Externalizer implements AdvancedExternalizer<JsonTypeFunction> {
-
-      @Override
-      public void writeObject(ObjectOutput output, JsonTypeFunction object) throws IOException {
-         JSONUtil.writeBytes(output, object.path);
-      }
-
-      @Override
-      public JsonTypeFunction readObject(ObjectInput input) throws IOException {
-         byte[] path = JSONUtil.readBytes(input);
-         return new JsonTypeFunction(path);
-      }
-
-      @Override
-      public Set<Class<? extends JsonTypeFunction>> getTypeClasses() {
-         return Collections.singleton(JsonTypeFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.JSON_TYPE_FUNCTION;
-      }
-   }
-
 }

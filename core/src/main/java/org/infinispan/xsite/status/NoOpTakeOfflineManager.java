@@ -51,11 +51,11 @@ public class NoOpTakeOfflineManager implements TakeOfflineManager {
 
    @Override
    public BringSiteOnlineResponse bringSiteOnline(String siteName) {
-      return BringSiteOnlineResponse.NO_SUCH_SITE;
+      return BringSiteOnlineResponse.BSOR_NO_SUCH_SITE;
    }
 
    @Override
    public TakeSiteOfflineResponse takeSiteOffline(String siteName) {
-      return TakeSiteOfflineResponse.NO_SUCH_SITE;
+      return TakeSiteOfflineResponse.TSOR_NO_SUCH_SITE;
    }
 }
