@@ -1,17 +1,15 @@
 package org.infinispan.multimap.impl.function.list;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.functional.EntryView;
-import org.infinispan.multimap.impl.ExternalizerIds;
-import org.infinispan.multimap.impl.ListBucket;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Optional;
-import java.util.Set;
+
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.functional.EntryView;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.multimap.impl.ListBucket;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Serializable function used by
@@ -22,18 +20,35 @@ import java.util.Set;
  * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_INDEX_OF_FUNCTION)
 public final class IndexOfFunction<K, V> implements ListBucketBaseFunction<K, V, Collection<Long>> {
-   public static final AdvancedExternalizer<IndexOfFunction> EXTERNALIZER = new IndexOfFunction.Externalizer();
+
+   @ProtoField(value = 1, defaultValue = "-1")
+   final long count;
+
+   @ProtoField(value = 2, defaultValue = "-1")
+   final long rank;
+
+   @ProtoField(value = 3, defaultValue = "-1")
+   final long maxLen;
+
    private final V element;
-   private final long count;
-   private final long rank;
-   private final long maxLen;
 
    public IndexOfFunction(V element, long count, long rank, long maxLen) {
       this.element = element;
       this.count = count;
       this.rank = rank;
       this.maxLen = maxLen;
+   }
+
+   @ProtoFactory
+   IndexOfFunction(long count, long rank, long maxLen, MarshallableObject<V> element) {
+      this(MarshallableObject.unwrap(element), count, rank, maxLen);
+   }
+
+   @ProtoField(4)
+   MarshallableObject<V> getElement() {
+      return MarshallableObject.create(element);
    }
 
    @Override
@@ -44,31 +59,5 @@ public final class IndexOfFunction<K, V> implements ListBucketBaseFunction<K, V,
       }
       // key does not exist
       return null;
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<IndexOfFunction> {
-
-      @Override
-      public Set<Class<? extends IndexOfFunction>> getTypeClasses() {
-         return Collections.singleton(IndexOfFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.INDEXOF_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, IndexOfFunction object) throws IOException {
-         output.writeObject(object.element);
-         output.writeLong(object.count);
-         output.writeLong(object.rank);
-         output.writeLong(object.maxLen);
-      }
-
-      @Override
-      public IndexOfFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException{
-         return new IndexOfFunction(input.readObject(), input.readLong(), input.readLong(), input.readLong());
-      }
    }
 }

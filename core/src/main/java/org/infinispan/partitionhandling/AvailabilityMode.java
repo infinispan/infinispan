@@ -1,30 +1,27 @@
 package org.infinispan.partitionhandling;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
-
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoEnumValue;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
 * @author Mircea Markus
 * @author Dan Berindei
 * @since 7.0
 */
+@ProtoTypeId(ProtoStreamTypeIds.AVAILABILITY_MODE)
 public enum AvailabilityMode {
 
    /**
     * Regular operation mode
     */
+   @ProtoEnumValue(number = 1)
    AVAILABLE,
 
    /**
     * Data can not be safely accessed because of a network split or successive nodes leaving.
     */
+   @ProtoEnumValue(number = 2)
    DEGRADED_MODE;
 
    public AvailabilityMode min(AvailabilityMode other) {
@@ -37,27 +34,5 @@ public enum AvailabilityMode {
 
    public static AvailabilityMode valueOf(int ordinal) {
       return CACHED_VALUES[ordinal];
-   }
-
-   public static final class Externalizer extends AbstractExternalizer<AvailabilityMode> {
-      @Override
-      public Integer getId() {
-         return Ids.AVAILABILITY_MODE;
-      }
-
-      @Override
-      public Set<Class<? extends AvailabilityMode>> getTypeClasses() {
-         return Util.asSet(AvailabilityMode.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, AvailabilityMode AvailabilityMode) throws IOException {
-         MarshallUtil.marshallEnum(AvailabilityMode, output);
-      }
-
-      @Override
-      public AvailabilityMode readObject(ObjectInput input) throws IOException {
-         return MarshallUtil.unmarshallEnum(input, AvailabilityMode::valueOf);
-      }
    }
 }

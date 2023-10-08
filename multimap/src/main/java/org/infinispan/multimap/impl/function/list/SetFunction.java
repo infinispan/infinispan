@@ -1,17 +1,15 @@
 package org.infinispan.multimap.impl.function.list;
 
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.functional.EntryView;
-import org.infinispan.multimap.impl.ExternalizerIds;
-import org.infinispan.multimap.impl.ListBucket;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.Optional;
-import java.util.Set;
+
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.functional.EntryView;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.multimap.impl.ListBucket;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Serializable function used by
@@ -22,14 +20,26 @@ import java.util.Set;
  * @see <a href="http://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_SET_FUNCTION)
 public final class SetFunction<K, V> implements ListBucketBaseFunction<K, V, Boolean> {
-   public static final AdvancedExternalizer<SetFunction> EXTERNALIZER = new Externalizer();
-   private final long index;
+
+   @ProtoField(value = 1, defaultValue = "-1")
+   final long index;
    private final V value;
 
    public SetFunction(long index, V value) {
       this.index = index;
       this.value = value;
+   }
+
+   @ProtoFactory
+   SetFunction(long index, MarshallableObject<V> value) {
+      this(index, MarshallableObject.unwrap(value));
+   }
+
+   @ProtoField(2)
+   MarshallableObject<V> getValue() {
+      return MarshallableObject.create(value);
    }
 
    @Override
@@ -45,29 +55,5 @@ public final class SetFunction<K, V> implements ListBucketBaseFunction<K, V, Boo
          throw new CacheException(new IndexOutOfBoundsException("Index is out of range"));
       }
       return false;
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<SetFunction> {
-
-      @Override
-      public Set<Class<? extends SetFunction>> getTypeClasses() {
-         return Collections.singleton(SetFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.SET_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, SetFunction object) throws IOException {
-         output.writeLong(object.index);
-         output.writeObject(object.value);
-      }
-
-      @Override
-      public SetFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new SetFunction(input.readLong(), input.readObject());
-      }
    }
 }

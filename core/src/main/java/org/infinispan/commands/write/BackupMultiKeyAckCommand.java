@@ -1,9 +1,10 @@
 package org.infinispan.commands.write;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
+import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CommandAckCollector;
 
@@ -15,46 +16,40 @@ import org.infinispan.util.concurrent.CommandAckCollector;
  * @author Pedro Ruivo
  * @since 9.0
  */
-public class BackupMultiKeyAckCommand extends BackupAckCommand {
+@ProtoTypeId(ProtoStreamTypeIds.BACKUP_MULTI_KEY_ACK_COMMAND)
+public class BackupMultiKeyAckCommand extends BaseRpcCommand {
 
    public static final byte COMMAND_ID = 41;
-   private int segment;
 
-   public BackupMultiKeyAckCommand() {
-      super(null);
-   }
+   @ProtoField(number = 2, defaultValue = "-1")
+   final long id;
 
-   public BackupMultiKeyAckCommand(ByteString cacheName) {
+   @ProtoField(number = 3, defaultValue = "-1")
+   final int topologyId;
+
+   @ProtoField(number = 4, defaultValue = "-1")
+   final int segment;
+
+   @ProtoFactory
+   public BackupMultiKeyAckCommand(ByteString cacheName, long id, int segment, int topologyId) {
       super(cacheName);
-   }
-
-   public BackupMultiKeyAckCommand(ByteString cacheName, long id, int segment,
-         int topologyId) {
-      super(cacheName, id, topologyId);
+      this.id = id;
+      this.topologyId = topologyId;
       this.segment = segment;
    }
 
-   @Override
    public void ack(CommandAckCollector ackCollector) {
       ackCollector.backupAck(id, getOrigin(), segment, topologyId);
    }
 
    @Override
+   public final boolean isReturnValueExpected() {
+      return false;
+   }
+
+   @Override
    public byte getCommandId() {
       return COMMAND_ID;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      super.writeTo(output);
-      // todo write vint?
-      output.writeInt(segment);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      super.readFrom(input);
-      segment = input.readInt();
    }
 
    @Override

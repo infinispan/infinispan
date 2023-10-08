@@ -1,15 +1,15 @@
 package org.infinispan.xsite.commands;
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.concurrent.CompletionStage;
 
 /**
  * Finish receiving XSite state.
@@ -17,21 +17,15 @@ import java.util.concurrent.CompletionStage;
  * @author Ryan Emerson
  * @since 11.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.XSITE_STATE_TRANSFER_FINISH_RECEIVE_COMMAND)
 public class XSiteStateTransferFinishReceiveCommand extends BaseRpcCommand {
 
    public static final byte COMMAND_ID = 107;
 
-   private String siteName;
+   @ProtoField(number = 2)
+   final String siteName;
 
-   // For CommandIdUniquenessTest only
-   public XSiteStateTransferFinishReceiveCommand() {
-      this(null, null);
-   }
-
-   public XSiteStateTransferFinishReceiveCommand(ByteString cacheName) {
-      this(cacheName, null);
-   }
-
+   @ProtoFactory
    public XSiteStateTransferFinishReceiveCommand(ByteString cacheName, String siteName) {
       super(cacheName);
       this.siteName = siteName;
@@ -43,10 +37,6 @@ public class XSiteStateTransferFinishReceiveCommand extends BaseRpcCommand {
       return CompletableFutures.completedNull();
    }
 
-   public void setSiteName(String siteName) {
-      this.siteName = siteName;
-   }
-
    @Override
    public byte getCommandId() {
       return COMMAND_ID;
@@ -55,16 +45,6 @@ public class XSiteStateTransferFinishReceiveCommand extends BaseRpcCommand {
    @Override
    public boolean isReturnValueExpected() {
       return false;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      MarshallUtil.marshallString(siteName, output);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      siteName = MarshallUtil.unmarshallString(input);
    }
 
    @Override

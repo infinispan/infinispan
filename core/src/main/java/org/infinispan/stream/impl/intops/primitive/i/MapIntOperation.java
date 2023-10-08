@@ -3,6 +3,9 @@ package org.infinispan.stream.impl.intops.primitive.i;
 import java.util.function.IntUnaryOperator;
 import java.util.stream.IntStream;
 
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.stream.impl.intops.MappingOperation;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -17,13 +20,19 @@ public class MapIntOperation implements MappingOperation<Integer, IntStream, Int
       this.operator = operator;
    }
 
+   @ProtoFactory
+   MapIntOperation(MarshallableObject<IntUnaryOperator> operator) {
+      this.operator = MarshallableObject.unwrap(operator);
+   }
+
+   @ProtoField(number = 1)
+   MarshallableObject<IntUnaryOperator> getOperator() {
+      return MarshallableObject.create(operator);
+   }
+
    @Override
    public IntStream perform(IntStream stream) {
       return stream.map(operator);
-   }
-
-   public IntUnaryOperator getOperator() {
-      return operator;
    }
 
    @Override

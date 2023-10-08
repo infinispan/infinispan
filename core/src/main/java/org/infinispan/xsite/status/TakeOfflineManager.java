@@ -74,8 +74,8 @@ public interface TakeOfflineManager extends CustomMetricsSupplier {
    /**
     * It changes the site {@code siteName} to online.
     * <p>
-    * If the site is already online, then {@link BringSiteOnlineResponse#ALREADY_ONLINE} is returned. If it doesn't
-    * exits, {@link BringSiteOnlineResponse#NO_SUCH_SITE} is returned.
+    * If the site is already online, then {@link BringSiteOnlineResponse#BSOR_ALREADY_ONLINE} is returned. If it doesn't
+    * exits, {@link BringSiteOnlineResponse#BSOR_NO_SUCH_SITE} is returned.
     *
     * @param siteName The remote site name.
     * @return The {@link BringSiteOnlineResponse}.
@@ -85,8 +85,8 @@ public interface TakeOfflineManager extends CustomMetricsSupplier {
    /**
     * It changes the site {@code siteName} to offline.
     * <p>
-    * If the site is already offline, then {@link TakeSiteOfflineResponse#ALREADY_OFFLINE} is returned. If it doesn't
-    * exits, {@link TakeSiteOfflineResponse#NO_SUCH_SITE} is returned.
+    * If the site is already offline, then {@link TakeSiteOfflineResponse#TSOR_ALREADY_OFFLINE} is returned. If it doesn't
+    * exits, {@link TakeSiteOfflineResponse#TSOR_NO_SUCH_SITE} is returned.
     *
     * @param siteName The remote site name.
     * @return The {@link TakeSiteOfflineResponse}.

@@ -6,14 +6,24 @@ import java.util.PrimitiveIterator;
 import java.util.Set;
 import java.util.stream.IntStream;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
+
 /**
  * Immutable empty IntSet
  * @author wburns
  * @since 9.3
  */
-class EmptyIntSet extends AbstractImmutableIntSet {
+@ProtoTypeId(ProtoStreamTypeIds.INTSET_EMPTY)
+public class EmptyIntSet extends AbstractImmutableIntSet {
    // We just use default hashCode as we only have 1 instance
    private final static EmptyIntSet INSTANCE = new EmptyIntSet();
+
+   @ProtoFactory
+   static EmptyIntSet create() {
+      return INSTANCE;
+   }
 
    public static IntSet getInstance() {
       return INSTANCE;

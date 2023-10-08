@@ -44,7 +44,8 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
@@ -171,10 +172,12 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
    private static final byte REQUEST = 0;
    private static final byte RESPONSE = 1;
    private static final byte SINGLE_MESSAGE = 2;
+   private static final byte EMPTY_MESSAGE_BYTE = 0;
+   private static final ByteBuffer EMPTY_MESSAGE_BUFFER = ByteBufferImpl.create(new byte[]{EMPTY_MESSAGE_BYTE});
 
    @Inject protected GlobalConfiguration configuration;
    @Inject @ComponentName(KnownComponentNames.INTERNAL_MARSHALLER)
-   protected StreamingMarshaller marshaller;
+   protected Marshaller marshaller;
    @Inject protected CacheManagerNotifier notifier;
    @Inject protected TimeService timeService;
    @Inject protected InboundInvocationHandler invocationHandler;
@@ -1471,7 +1474,9 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
          return;
       }
       try {
-         bytes = marshaller.objectToBuffer(response);
+         // If no response, then send a buffer containing a single byte. An empty payload is not possible,
+         // as this can also signify to a receiver that the ForkChannel is not running on this node.
+         bytes = response == null ? EMPTY_MESSAGE_BUFFER : marshaller.objectToBuffer(response);
       } catch (Throwable t) {
          try {
             // this call should succeed (all exceptions are serializable)
@@ -1544,11 +1549,10 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
          if (length == 0) {
             // Empty buffer signals the ForkChannel with this name is not running on the remote node
             response = CacheNotFoundResponse.INSTANCE;
+         } else if (length == 1 && buffer[0] == EMPTY_MESSAGE_BYTE) {
+            response = SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE;
          } else {
             response = (Response) marshaller.objectFromByteBuffer(buffer, offset, length);
-            if (response == null) {
-               response = SuccessfulResponse.SUCCESSFUL_EMPTY_RESPONSE;
-            }
          }
          if (log.isTraceEnabled())
             log.tracef("%s received response for request %d from %s: %s", getAddress(), requestId, src, response);

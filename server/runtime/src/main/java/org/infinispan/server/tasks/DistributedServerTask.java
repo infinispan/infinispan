@@ -7,9 +7,9 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.protostream.impl.GlobalMarshaller;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
@@ -43,7 +43,7 @@ public class DistributedServerTask<T> implements Function<EmbeddedCacheManager, 
       // todo inject global component registry to be independent of existence of cache.
       GlobalComponentRegistry componentRegistry = SecurityActions.getGlobalComponentRegistry(embeddedCacheManager);
       ServerTaskEngine serverTaskEngine = componentRegistry.getComponent(ServerTaskEngine.class);
-      Marshaller marshaller = componentRegistry.getComponent(StreamingMarshaller.class);
+      Marshaller marshaller = componentRegistry.getComponent(GlobalMarshaller.class);
       ServerTaskWrapper<T> task = serverTaskEngine.getTask(taskName);
       TaskContext ctx = prepareContext(embeddedCacheManager, cache, marshaller);
       try {

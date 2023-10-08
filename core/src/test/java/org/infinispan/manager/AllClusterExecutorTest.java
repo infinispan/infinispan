@@ -22,6 +22,8 @@ import java.util.function.Supplier;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.MultiCacheManagerCallable;
@@ -66,8 +68,8 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
 
    public void testExecutorRunnable() {
       withCacheManagers(new MultiCacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false)) {
+            createCacheManager(CacheMode.REPL_SYNC),
+            createCacheManager(CacheMode.REPL_SYNC)) {
          @Override
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
@@ -97,9 +99,9 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
 
    public void testExecutor3NodesRunnable() {
       withCacheManagers(new MultiCacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false)) {
+            createCacheManager(CacheMode.REPL_SYNC),
+            createCacheManager(CacheMode.REPL_SYNC),
+            createCacheManager(CacheMode.REPL_SYNC)) {
          @Override
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
@@ -114,8 +116,8 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
 
    public void testExecutorRunnablePredicateFilter() {
       withCacheManagers(new MultiCacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false)) {
+            createCacheManager(CacheMode.REPL_SYNC),
+            createCacheManager(CacheMode.REPL_SYNC)) {
          @Override
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
@@ -131,8 +133,8 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
 
    public void testExecutorRunnableCollectionFilter() {
       withCacheManagers(new MultiCacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false)) {
+            createCacheManager(CacheMode.REPL_SYNC),
+            createCacheManager(CacheMode.REPL_SYNC)) {
          @Override
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
@@ -149,8 +151,8 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
 
    public void testExecutorRunnableException() {
       withCacheManagers(new MultiCacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false)) {
+            createCacheManager(CacheMode.REPL_SYNC),
+            createCacheManager(CacheMode.REPL_SYNC)) {
          @Override
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
@@ -165,8 +167,8 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
 
    public void testExecutorRunnableExceptionWhenComplete() {
       withCacheManagers(new MultiCacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false)) {
+            createCacheManager(CacheMode.REPL_SYNC),
+            createCacheManager(CacheMode.REPL_SYNC)) {
          @Override
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
@@ -192,9 +194,9 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
 
    public void testExecutorRunnable3NodesException() {
       withCacheManagers(new MultiCacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false)) {
+            createCacheManager(CacheMode.REPL_SYNC),
+            createCacheManager(CacheMode.REPL_SYNC),
+            createCacheManager(CacheMode.REPL_SYNC)) {
          @Override
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
@@ -209,9 +211,9 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
 
    public void testExecutorRunnable3NodesExceptionExcludeLocal() {
       withCacheManagers(new MultiCacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false)) {
+            createCacheManager(CacheMode.REPL_SYNC),
+            createCacheManager(CacheMode.REPL_SYNC),
+            createCacheManager(CacheMode.REPL_SYNC)) {
          @Override
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
@@ -226,8 +228,8 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
 
    public void testExecutorTimeoutException() {
       withCacheManagers(new MultiCacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(CacheMode.DIST_SYNC, false),
-            TestCacheManagerFactory.createCacheManager(CacheMode.DIST_SYNC, false)) {
+            createCacheManager(CacheMode.DIST_SYNC),
+            createCacheManager(CacheMode.DIST_SYNC)) {
          @Override
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
@@ -251,8 +253,8 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
 
    public void testExecutorExecuteRunnable() {
       withCacheManagers(new MultiCacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false)) {
+            createCacheManager(CacheMode.REPL_SYNC),
+            createCacheManager(CacheMode.REPL_SYNC)) {
          @Override
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
@@ -281,8 +283,8 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
 
    public void testExecutorTriConsumer() {
       withCacheManagers(new MultiCacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false)) {
+            createCacheManager(CacheMode.REPL_SYNC),
+            createCacheManager(CacheMode.REPL_SYNC)) {
          @Override
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
@@ -334,9 +336,9 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
 
    public void testExecutor3NodeTriConsumer() {
       withCacheManagers(new MultiCacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(CacheMode.DIST_SYNC, false),
-            TestCacheManagerFactory.createCacheManager(CacheMode.DIST_SYNC, false),
-            TestCacheManagerFactory.createCacheManager(CacheMode.DIST_SYNC, false)) {
+            createCacheManager(CacheMode.DIST_SYNC),
+            createCacheManager(CacheMode.DIST_SYNC),
+            createCacheManager(CacheMode.DIST_SYNC)) {
          @Override
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
@@ -361,8 +363,8 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
 
    public void testExecutorTriConsumerException() {
       withCacheManagers(new MultiCacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false)) {
+            createCacheManager(CacheMode.REPL_SYNC),
+            createCacheManager(CacheMode.REPL_SYNC)) {
          @Override
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
@@ -382,8 +384,8 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
 
    public void testExecutorTriConsumerTimeoutException() {
       withCacheManagers(new MultiCacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(CacheMode.DIST_SYNC, false),
-            TestCacheManagerFactory.createCacheManager(CacheMode.DIST_SYNC, false)) {
+            createCacheManager(CacheMode.DIST_SYNC),
+            createCacheManager(CacheMode.DIST_SYNC)) {
          @Override
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
@@ -428,8 +430,8 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
 
    public void testExecutorTriConsumerExceptionFromConsumer() {
       withCacheManagers(new MultiCacheManagerCallable(
-              TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
-              TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false)) {
+              createCacheManager(CacheMode.REPL_SYNC),
+              createCacheManager(CacheMode.REPL_SYNC)) {
          @Override
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
@@ -446,8 +448,8 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
 
    public void testExecutorTriConsumerExceptionWhenComplete() {
       withCacheManagers(new MultiCacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false),
-            TestCacheManagerFactory.createCacheManager(CacheMode.REPL_SYNC, false)) {
+            createCacheManager(CacheMode.REPL_SYNC),
+            createCacheManager(CacheMode.REPL_SYNC)) {
          @Override
          public void call() throws InterruptedException, ExecutionException, TimeoutException {
             EmbeddedCacheManager cm1 = cms[0];
@@ -470,5 +472,20 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
             assertEquals(NullPointerException.class, t.getClass());
          }
       });
+   }
+
+   private EmbeddedCacheManager createCacheManager(CacheMode cacheMode) {
+      return TestCacheManagerFactory.createCacheManager(AllClusterExecutorTestSCI.INSTANCE, cacheMode, false);
+   }
+
+   @ProtoSchema(
+         includeClasses = TestClassLocal.class,
+         schemaFileName = "test.core.AllClusterExecutorTest.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.core.AllClusterExecutorTest",
+         service = false
+   )
+   public interface AllClusterExecutorTestSCI extends SerializationContextInitializer {
+      SerializationContextInitializer INSTANCE = new AllClusterExecutorTestSCIImpl();
    }
 }

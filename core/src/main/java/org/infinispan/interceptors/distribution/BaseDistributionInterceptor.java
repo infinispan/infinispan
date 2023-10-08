@@ -23,7 +23,7 @@ import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.remote.BaseClusteredReadCommand;
+import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -160,7 +160,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return rpcManager.invokeCommandStaggered(info.readOwners(), getCommand, new RemoteGetSingleKeyCollector(),
                                                rpcManager.getSyncRpcOptions())
                        .thenAccept(response -> {
-                          Object responseValue = response.getResponseValue();
+                          InternalCacheValue<?> responseValue = response.getResponseObject();
                           if (responseValue == null) {
                              if (rvrl != null) {
                                 rvrl.remoteValueNotFound(key);
@@ -168,7 +168,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                              wrapRemoteEntry(ctx, key, NullCacheEntry.getInstance(), isWrite);
                              return;
                           }
-                          InternalCacheEntry ice = ((InternalCacheValue) responseValue).toInternalCacheEntry(key);
+                          InternalCacheEntry<?, ?> ice = responseValue.toInternalCacheEntry(key);
                           if (rvrl != null) {
                              rvrl.remoteValueFound(ice);
                           }
@@ -471,7 +471,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                System.arraycopy(values, 0, allFuture.results, destinationIndex, values.length);
                allFuture.countDown();
             } else {
-               allFuture.completeExceptionally(new IllegalStateException("Unexpected response value " + responseValue));
+               allFuture.completeExceptionally(new IllegalStateException("Unexpected response " + response));
             }
          } catch (Throwable t) {
             allFuture.completeExceptionally(t);
@@ -661,10 +661,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          CompletionStage<SuccessfulResponse> rpc =
             rpcManager.invokeCommandStaggered(owners, remoteCommand, new RemoteGetSingleKeyCollector(),
                                               rpcManager.getSyncRpcOptions());
-         return asyncValue(rpc).thenApply(ctx, command, (rCtx, rCommand, response) -> {
-            Object responseValue = ((SuccessfulResponse) response).getResponseValue();
-            return unwrapFunctionalResultOnOrigin(rCtx, rCommand.getKey(), responseValue);
-         });
+         return asyncValue(rpc).thenApply(ctx, command, (rCtx, rCommand, response) ->
+               unwrapFunctionalResultOnOrigin(rCtx, rCommand.getKey(), ((SuccessfulResponse) response).getResponseObject()));
       } else {
          // This has LOCAL flags, just wrap NullCacheEntry and let the command run
          entryFactory.wrapExternalEntry(ctx, key, NullCacheEntry.getInstance(), true, false);
@@ -712,7 +710,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             throw unexpected(primaryOwner, response);
          }
          // We expect only successful/unsuccessful responses, not unsure
-         return ((ValidResponse) response).getResponseValue();
+         return ((ValidResponse) response).getResponseObject();
       });
    }
 
@@ -794,7 +792,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       public ReplicableCommand apply(Address target) {
          List<Object> targetKeys = requestedKeys.get(target);
          assert !targetKeys.isEmpty();
-         BaseClusteredReadCommand getCommand = cf.buildClusteredGetAllCommand(targetKeys, flags, gtx);
+         ClusteredGetAllCommand<?,?> getCommand = cf.buildClusteredGetAllCommand(targetKeys, flags, gtx);
          getCommand.setTopologyId(topologyId);
          return getCommand;
       }
@@ -846,18 +844,15 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          }
 
          SuccessfulResponse successfulResponse = (SuccessfulResponse) response;
-         Object responseValue = successfulResponse.getResponseValue();
-         if (!(responseValue instanceof InternalCacheValue[])) {
-            throw CompletableFutures.asCompletionException(
-               new IllegalStateException("Unexpected response value: " + responseValue));
-         }
+         InternalCacheValue<?>[] values = successfulResponse.getResponseArray(new InternalCacheValue[0]);
+         if (values == null)
+            throw CompletableFutures.asCompletionException(new IllegalStateException("null response value"));
 
          List<Object> senderKeys = requestedKeys.get(sender);
-         InternalCacheValue[] values = (InternalCacheValue[]) responseValue;
          for (int i = 0; i < senderKeys.size(); ++i) {
             Object key = senderKeys.get(i);
-            InternalCacheValue value = values[i];
-            CacheEntry entry = value == null ? NullCacheEntry.getInstance() : value.toInternalCacheEntry(key);
+            InternalCacheValue<?> value = values[i];
+            CacheEntry<?, ?> entry = value == null ? NullCacheEntry.getInstance() : value.toInternalCacheEntry(key);
             wrapRemoteEntry(ctx, key, entry, command instanceof WriteCommand);
          }
          // TODO Dan: handleRemotelyRetrievedKeys could call wrapRemoteEntry itself after transforming the entries

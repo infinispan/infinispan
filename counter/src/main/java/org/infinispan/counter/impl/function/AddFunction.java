@@ -1,19 +1,15 @@
 package org.infinispan.counter.impl.function;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.counter.impl.entries.CounterKey;
 import org.infinispan.counter.impl.entries.CounterValue;
-import org.infinispan.counter.impl.externalizers.ExternalizerIds;
-import org.infinispan.functional.impl.CounterConfigurationMetaParam;
 import org.infinispan.counter.logging.Log;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.functional.impl.CounterConfigurationMetaParam;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * The adding function to update the {@link CounterValue}.
@@ -21,12 +17,15 @@ import org.infinispan.functional.EntryView.ReadWriteEntryView;
  * @author Pedro Ruivo
  * @since 9.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.COUNTER_FUNCTION_ADD)
 public final class AddFunction<K extends CounterKey> extends BaseFunction<K, CounterValue> {
 
-   public static final AdvancedExternalizer<AddFunction> EXTERNALIZER = new Externalizer();
    private static final Log log = LogFactory.getLog(AddFunction.class, Log.class);
-   private final long delta;
 
+   @ProtoField(number = 1, defaultValue = "-1")
+   final long delta;
+
+   @ProtoFactory
    public AddFunction(long delta) {
       this.delta = delta;
    }
@@ -40,28 +39,4 @@ public final class AddFunction<K extends CounterKey> extends BaseFunction<K, Cou
    protected Log getLog() {
       return log;
    }
-
-   private static class Externalizer implements AdvancedExternalizer<AddFunction> {
-
-      @Override
-      public Set<Class<? extends AddFunction>> getTypeClasses() {
-         return Collections.singleton(AddFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.ADD_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, AddFunction object) throws IOException {
-         output.writeLong(object.delta);
-      }
-
-      @Override
-      public AddFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new AddFunction(input.readLong());
-      }
-   }
-
 }

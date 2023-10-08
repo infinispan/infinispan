@@ -1,50 +1,30 @@
 package org.infinispan.remoting.responses;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
+import java.util.Collection;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.Ids;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.util.Util;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.marshall.protostream.impl.MarshallableArray;
+import org.infinispan.marshall.protostream.impl.MarshallableCollection;
+import org.infinispan.marshall.protostream.impl.MarshallableMap;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 
+@ProtoTypeId(ProtoStreamTypeIds.BIAS_REVOCATION_RESPONSE)
 public class BiasRevocationResponse extends SuccessfulResponse {
-   private final Address[] waitFor;
 
-   public BiasRevocationResponse(Object responseValue, Address[] waitFor) {
-      super(responseValue);
-      this.waitFor = waitFor;
+   public BiasRevocationResponse(Object responseValue, Collection<Address> waitFor) {
+      super(MarshallableObject.create(responseValue), MarshallableCollection.create(waitFor), null, null);
    }
 
-   public Address[] getWaitList() {
-      return waitFor;
+   @ProtoFactory
+   BiasRevocationResponse(MarshallableObject<?> object, MarshallableCollection<?> collection,
+                          MarshallableMap<?, ?> map, MarshallableArray<?> array) {
+      super(object, collection, map, array);
    }
 
-   public static class Externalizer implements AdvancedExternalizer<BiasRevocationResponse> {
-      @Override
-      public Set<Class<? extends BiasRevocationResponse>> getTypeClasses() {
-         return Util.asSet(BiasRevocationResponse.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.BIAS_REVOCATION_RESPONSE;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, BiasRevocationResponse object) throws IOException {
-         output.writeObject(object.getResponseValue());
-         MarshallUtil.marshallArray(object.waitFor, output);
-      }
-
-      @Override
-      public BiasRevocationResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Object value = input.readObject();
-         Address[] waitFor = MarshallUtil.unmarshallArray(input, Address[]::new);
-         return new BiasRevocationResponse(value, waitFor);
-      }
+   public Collection<Address> getWaitList() {
+      return getResponseCollection();
    }
 }

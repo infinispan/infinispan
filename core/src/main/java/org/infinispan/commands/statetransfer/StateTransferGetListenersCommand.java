@@ -1,16 +1,17 @@
 package org.infinispan.commands.statetransfer;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.statetransfer.StateProvider;
 import org.infinispan.util.ByteString;
 
@@ -20,21 +21,15 @@ import org.infinispan.util.ByteString;
  * @author Ryan Emerson
  * @since 11.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.STATE_TRANSFER_GET_LISTENERS_COMMAND)
 public class StateTransferGetListenersCommand extends BaseRpcCommand implements TopologyAffectedCommand {
 
    public static final byte COMMAND_ID = 118;
 
-   private int topologyId;
+   @ProtoField(number = 2, defaultValue = "-1")
+   int topologyId;
 
-   // For command id uniqueness test only
-   public StateTransferGetListenersCommand() {
-      this(null);
-   }
-
-   public StateTransferGetListenersCommand(ByteString cacheName) {
-      super(cacheName);
-   }
-
+   @ProtoFactory
    public StateTransferGetListenersCommand(ByteString cacheName, int topologyId) {
       super(cacheName);
       this.topologyId = topologyId;
@@ -65,14 +60,6 @@ public class StateTransferGetListenersCommand extends BaseRpcCommand implements 
    @Override
    public boolean isReturnValueExpected() {
       return true;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
    }
 
    @Override

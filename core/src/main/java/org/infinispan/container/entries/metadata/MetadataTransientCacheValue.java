@@ -1,20 +1,16 @@
 package org.infinispan.container.entries.metadata;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.TransientCacheEntry;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A transient cache value, to correspond with {@link TransientCacheEntry} which is {@link MetadataAware}
@@ -22,6 +18,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
  * @author Galder Zamarreño
  * @since 5.3
  */
+@ProtoTypeId(ProtoStreamTypeIds.METADATA_TRANSIENT_CACHE_VALUE)
 public class MetadataTransientCacheValue extends ImmortalCacheValue implements MetadataAware {
 
    Metadata metadata;
@@ -38,6 +35,25 @@ public class MetadataTransientCacheValue extends ImmortalCacheValue implements M
       this.lastUsed = lastUsed;
    }
 
+   @ProtoFactory
+   protected MetadataTransientCacheValue(MarshallableObject<?> wrappedValue, PrivateMetadata internalMetadata,
+                                         MarshallableObject<Metadata> wrappedMetadata, long lastUsed) {
+      super(wrappedValue, internalMetadata);
+      this.metadata = MarshallableObject.unwrap(wrappedMetadata);
+      this.lastUsed = lastUsed;
+   }
+
+   @ProtoField(number = 4, name = "metadata")
+   MarshallableObject<Metadata> getWrappedMetadata() {
+      return MarshallableObject.create(metadata);
+   }
+
+   @Override
+   @ProtoField(number = 5, defaultValue = "-1")
+   public final long getLastUsed() {
+      return lastUsed;
+   }
+
    @Override
    public InternalCacheEntry<?, ?> toInternalCacheEntry(Object key) {
       return new MetadataTransientCacheEntry(key, value, internalMetadata, metadata, lastUsed);
@@ -46,11 +62,6 @@ public class MetadataTransientCacheValue extends ImmortalCacheValue implements M
    @Override
    public long getMaxIdle() {
       return metadata.maxIdle();
-   }
-
-   @Override
-   public long getLastUsed() {
-      return lastUsed;
    }
 
    @Override
@@ -89,34 +100,5 @@ public class MetadataTransientCacheValue extends ImmortalCacheValue implements M
       super.appendFieldsToString(builder);
       builder.append(", metadata=").append(metadata);
       builder.append(", lastUsed=").append(lastUsed);
-   }
-
-   public static class Externalizer extends AbstractExternalizer<MetadataTransientCacheValue> {
-      @Override
-      public void writeObject(ObjectOutput output, MetadataTransientCacheValue tcv) throws IOException {
-         output.writeObject(tcv.value);
-         output.writeObject(tcv.internalMetadata);
-         output.writeObject(tcv.metadata);
-         UnsignedNumeric.writeUnsignedLong(output, tcv.lastUsed);
-      }
-
-      @Override
-      public MetadataTransientCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Object value = input.readObject();
-         PrivateMetadata internalMetadata = (PrivateMetadata) input.readObject();
-         Metadata metadata = (Metadata) input.readObject();
-         long lastUsed = UnsignedNumeric.readUnsignedLong(input);
-         return new MetadataTransientCacheValue(value, internalMetadata, metadata, lastUsed);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.METADATA_TRANSIENT_VALUE;
-      }
-
-      @Override
-      public Set<Class<? extends MetadataTransientCacheValue>> getTypeClasses() {
-         return Collections.singleton(MetadataTransientCacheValue.class);
-      }
    }
 }

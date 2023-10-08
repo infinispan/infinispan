@@ -66,6 +66,9 @@ import org.infinispan.util.logging.events.EventLogLevel;
       syntax = ProtoSyntax.PROTO2
 )
 public interface PersistenceContextInitializer extends SerializationContextInitializer {
+
+   SerializationContextInitializer INSTANCE = new PersistenceContextInitializerImpl();
+
    String PACKAGE_NAME = "org.infinispan.persistence.core";
 
    static String getFqTypeName(Class<?> clazz) {

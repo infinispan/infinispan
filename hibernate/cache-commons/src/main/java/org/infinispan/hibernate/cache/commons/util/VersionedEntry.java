@@ -6,29 +6,29 @@
  */
 package org.infinispan.hibernate.cache.commons.util;
 
+import java.util.Comparator;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
 import org.hibernate.cache.spi.entry.CacheEntry;
 import org.hibernate.cache.spi.entry.StructuredCacheEntry;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
 import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
+@ProtoTypeId(ProtoStreamTypeIds.HIBERNATE_VERSIONED_ENTRY)
 public class VersionedEntry implements Function<EntryView.ReadWriteEntryView<Object, Object>, Void>, InjectableComponent {
 	private static final Log log = LogFactory.getLog(VersionedEntry.class);
 
@@ -48,14 +48,30 @@ public class VersionedEntry implements Function<EntryView.ReadWriteEntryView<Obj
 		this.timestamp = timestamp;
 	}
 
+	@ProtoFactory
+	VersionedEntry(MarshallableObject<?> wrappedValue, MarshallableObject<?> wrappedVersion, long timestamp) {
+		this(MarshallableObject.unwrap(wrappedValue), MarshallableObject.unwrap(wrappedVersion), timestamp);
+	}
+
 	public Object getValue() {
 		return value;
+	}
+
+	@ProtoField(value = 1, name = "value")
+	MarshallableObject<?> getWrappedValue() {
+		return MarshallableObject.create(value);
 	}
 
 	public Object getVersion() {
 		return version;
 	}
 
+	@ProtoField(value = 2, name = "version")
+	MarshallableObject<?> getWrappedVersion() {
+		return MarshallableObject.create(version);
+	}
+
+	@ProtoField(value = 3, defaultValue = "-1")
 	public long getTimestamp() {
 		return timestamp;
 	}
@@ -159,7 +175,8 @@ public class VersionedEntry implements Function<EntryView.ReadWriteEntryView<Obj
 		region = registry.getComponent(InfinispanDataRegion.class);
 	}
 
-	private static class ExcludeEmptyFilter implements Predicate<Map.Entry<Object, Object>> {
+	@ProtoTypeId(ProtoStreamTypeIds.HIBERNATE_VERSIONED_ENTRY_EXCLUDE_EMPTY_FILTER)
+	public static class ExcludeEmptyFilter implements Predicate<Map.Entry<Object, Object>> {
       @Override
       public boolean test(Map.Entry<Object, Object> entry) {
          if (entry.getValue() instanceof VersionedEntry) {
@@ -168,52 +185,4 @@ public class VersionedEntry implements Function<EntryView.ReadWriteEntryView<Obj
          return true;
       }
    }
-
-	public static class Externalizer implements AdvancedExternalizer<VersionedEntry> {
-		@Override
-		public Set<Class<? extends VersionedEntry>> getTypeClasses() {
-			return Collections.<Class<? extends VersionedEntry>>singleton(VersionedEntry.class);
-		}
-
-		@Override
-		public Integer getId() {
-			return Externalizers.VERSIONED_ENTRY;
-		}
-
-		@Override
-		public void writeObject(ObjectOutput output, VersionedEntry object) throws IOException {
-			output.writeObject(object.value);
-			output.writeObject(object.version);
-			output.writeLong(object.timestamp);
-		}
-
-		@Override
-		public VersionedEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-			Object value = input.readObject();
-			Object version = input.readObject();
-			long timestamp = input.readLong();
-			return new VersionedEntry(value, version, timestamp);
-		}
-	}
-
-	public static class ExcludeEmptyVersionedEntryExternalizer implements AdvancedExternalizer<ExcludeEmptyFilter> {
-		@Override
-		public Set<Class<? extends ExcludeEmptyFilter>> getTypeClasses() {
-			return Collections.<Class<? extends ExcludeEmptyFilter>>singleton(ExcludeEmptyFilter.class);
-		}
-
-		@Override
-		public Integer getId() {
-			return Externalizers.EXCLUDE_EMPTY_VERSIONED_ENTRY;
-		}
-
-		@Override
-		public void writeObject(ObjectOutput output, ExcludeEmptyFilter object) throws IOException {
-		}
-
-		@Override
-		public ExcludeEmptyFilter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-			return EXCLUDE_EMPTY_VERSIONED_ENTRY;
-		}
-	}
 }
