@@ -1,14 +1,8 @@
 package org.infinispan.reactive.publisher;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
@@ -20,9 +14,12 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -42,27 +39,27 @@ public class PublisherReducers {
    }
 
    public static <E> Function<Publisher<E>, CompletionStage<Boolean>> allMatch(Predicate<? super E> predicate) {
-      return new AllMatchReducer<>(predicate);
+      return new AllMatchReducer<>(MarshallableObject.create(predicate));
    }
 
    public static <E> Function<Publisher<E>, CompletionStage<Boolean>> anyMatch(Predicate<? super E> predicate) {
-      return new AnyMatchReducer<>(predicate);
+      return new AnyMatchReducer<>(MarshallableObject.create(predicate));
    }
 
    public static <I, E> Function<Publisher<I>, CompletionStage<E>> collect(Supplier<E> supplier, BiConsumer<E, ? super I> consumer) {
-      return new CollectReducer<>(supplier, consumer);
+      return new CollectReducer<>(MarshallableObject.create(supplier), MarshallableObject.create(consumer));
    }
 
    public static <I, E> Function<Publisher<I>, CompletionStage<E>> collectorReducer(Collector<? super I, E, ?> collector) {
-      return new CollectorReducer<>(collector);
+      return new CollectorReducer<>(MarshallableObject.create(collector));
    }
 
    public static <E> Function<Publisher<E>, CompletionStage<E>> collectorFinalizer(Collector<?, E, ?> collector) {
-      return new CollectorFinalizer<>(collector);
+      return new CollectorFinalizer<>(MarshallableObject.create(collector));
    }
 
    public static <E> Function<Publisher<E>, CompletionStage<E>> accumulate(BiConsumer<E, E> biConsumer) {
-      return new CombinerFinalizer<>(biConsumer);
+      return new CombinerFinalizer<>(MarshallableObject.create(biConsumer));
    }
 
    public static <E> Function<Publisher<E>, CompletionStage<E>> findFirst() {
@@ -70,15 +67,15 @@ public class PublisherReducers {
    }
 
    public static <E> Function<Publisher<E>, CompletionStage<E>> max(Comparator<? super E> comparator) {
-      return new MaxReducerFinalizer<>(comparator);
+      return new MaxReducerFinalizer<>(MarshallableObject.create(comparator));
    }
 
    public static <E> Function<Publisher<E>, CompletionStage<E>> min(Comparator<? super E> comparator) {
-      return new MinReducerFinalizer<>(comparator);
+      return new MinReducerFinalizer<>(MarshallableObject.create(comparator));
    }
 
    public static <E> Function<Publisher<E>, CompletionStage<Boolean>> noneMatch(Predicate<? super E> predicate) {
-      return new NoneMatchReducer<>(predicate);
+      return new NoneMatchReducer<>(MarshallableObject.create(predicate));
    }
 
    public static Function<Publisher<Boolean>, CompletionStage<Boolean>> or() {
@@ -98,16 +95,16 @@ public class PublisherReducers {
     */
    public static <I, E> Function<Publisher<I>, CompletionStage<E>> reduce(E identity,
          BiFunction<E, ? super I, E> biFunction) {
-      return new ReduceWithIdentityReducer<>(identity, biFunction);
+      return new ReduceWithIdentityReducer<>(MarshallableObject.create(identity), MarshallableObject.create(biFunction));
    }
 
    public static <I, E> Function<Publisher<I>, CompletionStage<E>> reduceWith(Callable<? extends E> initialSupplier,
          BiFunction<E, ? super I, E> biFunction) {
-      return new ReduceWithInitialSupplierReducer<>(initialSupplier, biFunction);
+      return new ReduceWithInitialSupplierReducer<>(MarshallableObject.create(initialSupplier), MarshallableObject.create(biFunction));
    }
 
    public static <E> Function<Publisher<E>, CompletionStage<E>> reduce(BinaryOperator<E> operator) {
-      return new ReduceReducerFinalizer<>(operator);
+      return new ReduceReducerFinalizer<>(MarshallableObject.create(operator));
    }
 
    public static Function<Publisher<?>, CompletionStage<Long>> count() {
@@ -123,7 +120,7 @@ public class PublisherReducers {
    }
 
    public static <I extends E, E> Function<Publisher<I>, CompletionStage<E[]>> toArrayReducer(IntFunction<E[]> generator) {
-      return new ToArrayReducer<>(generator);
+      return new ToArrayReducer<>(MarshallableObject.create(generator));
    }
 
    public static <E> Function<Publisher<E[]>, CompletionStage<E[]>> toArrayFinalizer() {
@@ -131,43 +128,55 @@ public class PublisherReducers {
    }
 
    public static <E> Function<Publisher<E[]>, CompletionStage<E[]>> toArrayFinalizer(IntFunction<E[]> generator) {
-      return new ToArrayFinalizer<>(generator);
+      return new ToArrayFinalizer<>(MarshallableObject.create(generator));
    }
 
-   private static class AllMatchReducer<E> implements Function<Publisher<E>, CompletionStage<Boolean>> {
-      private final Predicate<? super E> predicate;
+   @ProtoTypeId(ProtoStreamTypeIds.ALL_MATCH_REDUCER)
+   public static class AllMatchReducer<E> implements Function<Publisher<E>, CompletionStage<Boolean>> {
 
-      private AllMatchReducer(Predicate<? super E> predicate) {
+      @ProtoField(1)
+      final MarshallableObject<Predicate<? super E>> predicate;
 
+      @ProtoFactory
+      AllMatchReducer(MarshallableObject<Predicate<? super E>> predicate) {
          this.predicate = predicate;
       }
 
       @Override
       public CompletionStage<Boolean> apply(Publisher<E> ePublisher) {
          return Flowable.fromPublisher(ePublisher)
-               .all(predicate::test)
+               .all(predicate.get()::test)
                .toCompletionStage();
       }
    }
 
-   private static class AnyMatchReducer<E> implements Function<Publisher<E>, CompletionStage<Boolean>> {
-      private final Predicate<? super E> predicate;
+   @ProtoTypeId(ProtoStreamTypeIds.ANY_MATCH_REDUCER)
+   public static class AnyMatchReducer<E> implements Function<Publisher<E>, CompletionStage<Boolean>> {
 
-      private AnyMatchReducer(Predicate<? super E> predicate) {
+      @ProtoField(1)
+      final MarshallableObject<Predicate<? super E>> predicate;
 
+      @ProtoFactory
+      AnyMatchReducer(MarshallableObject<Predicate<? super E>> predicate) {
          this.predicate = predicate;
       }
 
       @Override
       public CompletionStage<Boolean> apply(Publisher<E> ePublisher) {
          return Flowable.fromPublisher(ePublisher)
-               .any(predicate::test)
+               .any(predicate.get()::test)
                .toCompletionStage();
       }
    }
 
-   private static final class AndFinalizer implements Function<Publisher<Boolean>, CompletionStage<Boolean>> {
+   @ProtoTypeId(ProtoStreamTypeIds.AND_FINALIZER)
+   public static final class AndFinalizer implements Function<Publisher<Boolean>, CompletionStage<Boolean>> {
       private static final AndFinalizer INSTANCE = new AndFinalizer();
+
+      @ProtoFactory
+      static AndFinalizer protoFactory() {
+         return INSTANCE;
+      }
 
       @Override
       public CompletionStage<Boolean> apply(Publisher<Boolean> booleanPublisher) {
@@ -177,15 +186,20 @@ public class PublisherReducers {
       }
    }
 
-   private static final class CollectorFinalizer<E, R> implements Function<Publisher<E>, CompletionStage<E>> {
-      private final Collector<?, E, ?> collector;
+   @ProtoTypeId(ProtoStreamTypeIds.COLLECTOR_FINALIZER)
+   public static final class CollectorFinalizer<E, R> implements Function<Publisher<E>, CompletionStage<E>> {
 
-      private CollectorFinalizer(Collector<?, E, ?> collector) {
+      @ProtoField(1)
+      final MarshallableObject<Collector<?, E, ?>> collector;
+
+      @ProtoFactory
+      CollectorFinalizer(MarshallableObject<Collector<?, E, ?>> collector) {
          this.collector = collector;
       }
 
       @Override
       public CompletionStage<E> apply(Publisher<E> ePublisher) {
+         Collector<?, E, ?> collector = this.collector.get();
          return Flowable.fromPublisher(ePublisher)
                .reduce(collector.combiner()::apply)
                // This is to ensure at least the default value is provided - this shouldnt be required - but
@@ -195,11 +209,17 @@ public class PublisherReducers {
       }
    }
 
-   private static final class CollectReducer<I, E> implements Function<Publisher<I>, CompletionStage<E>> {
-      private final Supplier<E> supplier;
-      private final BiConsumer<E, ? super I> accumulator;
+   @ProtoTypeId(ProtoStreamTypeIds.COLLECT_REDUCER)
+   public static final class CollectReducer<I, E> implements Function<Publisher<I>, CompletionStage<E>> {
 
-      private CollectReducer(Supplier<E> supplier, BiConsumer<E, ? super I> accumulator) {
+      @ProtoField(1)
+      final MarshallableObject<Supplier<E>> supplier;
+
+      @ProtoField(2)
+      final MarshallableObject<BiConsumer<E, ? super I>> accumulator;
+
+      @ProtoFactory
+      CollectReducer(MarshallableObject<Supplier<E>> supplier, MarshallableObject<BiConsumer<E, ? super I>> accumulator) {
          this.supplier = supplier;
          this.accumulator = accumulator;
       }
@@ -207,30 +227,39 @@ public class PublisherReducers {
       @Override
       public CompletionStage<E> apply(Publisher<I> iPublisher) {
          return Flowable.fromPublisher(iPublisher)
-               .collect(supplier::get, accumulator::accept)
+               .collect(supplier.get()::get, accumulator.get()::accept)
                .toCompletionStage();
       }
    }
 
-   private static final class CollectorReducer<I, E> implements Function<Publisher<I>, CompletionStage<E>> {
-      private final Collector<? super I, E, ?> collector;
+   @ProtoTypeId(ProtoStreamTypeIds.COLLECTOR_REDUCER)
+   public static final class CollectorReducer<I, E> implements Function<Publisher<I>, CompletionStage<E>> {
 
-      private CollectorReducer(Collector<? super I, E, ?> collector) {
+      @ProtoField(1)
+      final MarshallableObject<Collector<? super I, E, ?>> collector;
+
+      @ProtoFactory
+      CollectorReducer(MarshallableObject<Collector<? super I, E, ?>> collector) {
          this.collector = collector;
       }
 
       @Override
       public CompletionStage<E> apply(Publisher<I> iPublisher) {
+         Collector<? super I, E, ?> collector = this.collector.get();
          return Flowable.fromPublisher(iPublisher)
                .collect(collector.supplier()::get, collector.accumulator()::accept)
                .toCompletionStage();
       }
    }
 
-   private static final class CombinerFinalizer<E> implements Function<Publisher<E>, CompletionStage<E>> {
-      private final BiConsumer<E, E> biConsumer;
+   @ProtoTypeId(ProtoStreamTypeIds.COMBINER_FINALIZER)
+   public static final class CombinerFinalizer<E> implements Function<Publisher<E>, CompletionStage<E>> {
 
-      private CombinerFinalizer(BiConsumer<E, E> biConsumer) {
+      @ProtoField(1)
+      final MarshallableObject<BiConsumer<E, E>> biConsumer;
+
+      @ProtoFactory
+      CombinerFinalizer(MarshallableObject<BiConsumer<E, E>> biConsumer) {
          this.biConsumer = biConsumer;
       }
 
@@ -238,15 +267,21 @@ public class PublisherReducers {
       public CompletionStage<E> apply(Publisher<E> ePublisher) {
          return Flowable.fromPublisher(ePublisher)
                .reduce((e1, e2) -> {
-                  biConsumer.accept(e1, e2);
+                  biConsumer.get().accept(e1, e2);
                   return e1;
                })
                .toCompletionStage(null);
       }
    }
 
-   private static final class FindFirstReducerFinalizer<E> implements Function<Publisher<E>, CompletionStage<E>> {
+   @ProtoTypeId(ProtoStreamTypeIds.FIND_FIRST_REDUCER_FINALIZER)
+   public static final class FindFirstReducerFinalizer<E> implements Function<Publisher<E>, CompletionStage<E>> {
       private static final FindFirstReducerFinalizer INSTANCE = new FindFirstReducerFinalizer();
+
+      @ProtoFactory
+      static FindFirstReducerFinalizer protoFactory() {
+         return INSTANCE;
+      }
 
       @Override
       public CompletionStage<E> apply(Publisher<E> ePublisher) {
@@ -256,11 +291,14 @@ public class PublisherReducers {
       }
    }
 
-   private static class MaxReducerFinalizer<E> implements Function<Publisher<E>, CompletionStage<E>> {
-      private final Comparator<? super E> comparator;
+   @ProtoTypeId(ProtoStreamTypeIds.MAX_REDUCER_FINALIZER)
+   public static class MaxReducerFinalizer<E> implements Function<Publisher<E>, CompletionStage<E>> {
 
-      private MaxReducerFinalizer(Comparator<? super E> comparator) {
+      @ProtoField(1)
+      final MarshallableObject<Comparator<? super E>> comparator;
 
+      @ProtoFactory
+      MaxReducerFinalizer(MarshallableObject<Comparator<? super E>> comparator) {
          this.comparator = comparator;
       }
 
@@ -268,7 +306,7 @@ public class PublisherReducers {
       public CompletionStage<E> apply(Publisher<E> ePublisher) {
          return Flowable.fromPublisher(ePublisher)
                .reduce((e1, e2) -> {
-                  if (comparator.compare(e1, e2) > 0) {
+                  if (comparator.get().compare(e1, e2) > 0) {
                      return e1;
                   }
                   return e2;
@@ -277,11 +315,14 @@ public class PublisherReducers {
       }
    }
 
-   private static class MinReducerFinalizer<E> implements Function<Publisher<E>, CompletionStage<E>> {
-      private final Comparator<? super E> comparator;
+   @ProtoTypeId(ProtoStreamTypeIds.MIN_REDUCER_FINALIZER)
+   public static class MinReducerFinalizer<E> implements Function<Publisher<E>, CompletionStage<E>> {
 
-      private MinReducerFinalizer(Comparator<? super E> comparator) {
+      @ProtoField(1)
+      final MarshallableObject<Comparator<? super E>> comparator;
 
+      @ProtoFactory
+      MinReducerFinalizer(MarshallableObject<Comparator<? super E>> comparator) {
          this.comparator = comparator;
       }
 
@@ -289,7 +330,7 @@ public class PublisherReducers {
       public CompletionStage<E> apply(Publisher<E> ePublisher) {
          return Flowable.fromPublisher(ePublisher)
                .reduce((e1, e2) -> {
-                  if (comparator.compare(e1, e2) > 0) {
+                  if (comparator.get().compare(e1, e2) > 0) {
                      return e2;
                   }
                   return e1;
@@ -298,24 +339,33 @@ public class PublisherReducers {
       }
    }
 
-   private static class NoneMatchReducer<E> implements Function<Publisher<E>, CompletionStage<Boolean>> {
-      private final Predicate<? super E> predicate;
+   @ProtoTypeId(ProtoStreamTypeIds.NONE_MATCH_REDUCER)
+   public static class NoneMatchReducer<E> implements Function<Publisher<E>, CompletionStage<Boolean>> {
 
-      private NoneMatchReducer(Predicate<? super E> predicate) {
+      @ProtoField(1)
+      final MarshallableObject<Predicate<? super E>> predicate;
 
+      @ProtoFactory
+      NoneMatchReducer(MarshallableObject<Predicate<? super E>> predicate) {
          this.predicate = predicate;
       }
 
       @Override
       public CompletionStage<Boolean> apply(Publisher<E> ePublisher) {
          return Flowable.fromPublisher(ePublisher)
-               .all(predicate.negate()::test)
+               .all(predicate.get().negate()::test)
                .toCompletionStage();
       }
    }
 
-   private static final class OrFinalizer implements Function<Publisher<Boolean>, CompletionStage<Boolean>> {
+   @ProtoTypeId(ProtoStreamTypeIds.OR_FINALIZER)
+   public static final class OrFinalizer implements Function<Publisher<Boolean>, CompletionStage<Boolean>> {
       private static final OrFinalizer INSTANCE = new OrFinalizer();
+
+      @ProtoFactory
+      static OrFinalizer protoFactory() {
+         return INSTANCE;
+      }
 
       @Override
       public CompletionStage<Boolean> apply(Publisher<Boolean> booleanPublisher) {
@@ -325,11 +375,17 @@ public class PublisherReducers {
       }
    }
 
-   private static class ReduceWithIdentityReducer<I, E> implements Function<Publisher<I>, CompletionStage<E>> {
-      private final E identity;
-      private final BiFunction<E, ? super I, E> biFunction;
+   @ProtoTypeId(ProtoStreamTypeIds.REDUCE_WITH_IDENTITY_REDUCER)
+   public static class ReduceWithIdentityReducer<I, E> implements Function<Publisher<I>, CompletionStage<E>> {
 
-      private ReduceWithIdentityReducer(E identity, BiFunction<E, ? super I, E> biFunction) {
+      @ProtoField(1)
+      final MarshallableObject<E> identity;
+
+      @ProtoField(2)
+      final MarshallableObject<BiFunction<E, ? super I, E>> biFunction;
+
+      @ProtoFactory
+      ReduceWithIdentityReducer(MarshallableObject<E> identity, MarshallableObject<BiFunction<E, ? super I, E>> biFunction) {
          this.identity = identity;
          this.biFunction = biFunction;
       }
@@ -337,16 +393,23 @@ public class PublisherReducers {
       @Override
       public CompletionStage<E> apply(Publisher<I> iPublisher) {
          return Flowable.fromPublisher(iPublisher)
-               .reduce(identity, biFunction::apply)
+               .reduce(identity.get(), biFunction.get()::apply)
                .toCompletionStage();
       }
    }
 
-   private static class ReduceWithInitialSupplierReducer<I, E> implements Function<Publisher<I>, CompletionStage<E>> {
-      private final Callable<? extends E> initialSupplier;
-      private final BiFunction<E, ? super I, E> biFunction;
+   @ProtoTypeId(ProtoStreamTypeIds.REDUCE_WITH_INITIAL_SUPPLIER_REDUCER)
+   public static class ReduceWithInitialSupplierReducer<I, E> implements Function<Publisher<I>, CompletionStage<E>> {
 
-      private ReduceWithInitialSupplierReducer(Callable<? extends E> initialSupplier, BiFunction<E, ? super I, E> biFunction) {
+      @ProtoField(1)
+      final MarshallableObject<Callable<? extends E>> initialSupplier;
+
+      @ProtoField(2)
+      final MarshallableObject<BiFunction<E, ? super I, E>> biFunction;
+
+      @ProtoFactory
+      ReduceWithInitialSupplierReducer(MarshallableObject<Callable<? extends E>> initialSupplier,
+                                       MarshallableObject<BiFunction<E, ? super I, E>> biFunction) {
          this.initialSupplier = initialSupplier;
          this.biFunction = biFunction;
       }
@@ -354,28 +417,38 @@ public class PublisherReducers {
       @Override
       public CompletionStage<E> apply(Publisher<I> iPublisher) {
          return Flowable.fromPublisher(iPublisher)
-               .reduceWith(initialSupplier::call, biFunction::apply)
+               .reduceWith(initialSupplier.get()::call, biFunction.get()::apply)
                .toCompletionStage();
       }
    }
 
-   private static class ReduceReducerFinalizer<E> implements Function<Publisher<E>, CompletionStage<E>> {
-      private final BinaryOperator<E> operator;
+   @ProtoTypeId(ProtoStreamTypeIds.REDUCE_REDUCER_FINALIZER)
+   public static class ReduceReducerFinalizer<E> implements Function<Publisher<E>, CompletionStage<E>> {
 
-      private ReduceReducerFinalizer(BinaryOperator<E> operator) {
+      @ProtoField(1)
+      final MarshallableObject<BinaryOperator<E>> operator;
+
+      @ProtoFactory
+      ReduceReducerFinalizer(MarshallableObject<BinaryOperator<E>> operator) {
          this.operator = operator;
       }
 
       @Override
       public CompletionStage<E> apply(Publisher<E> ePublisher) {
          return Flowable.fromPublisher(ePublisher)
-               .reduce(operator::apply)
+               .reduce(operator.get()::apply)
                .toCompletionStage(null);
       }
    }
 
-   private static class SumReducer implements Function<Publisher<?>, CompletionStage<Long>> {
+   @ProtoTypeId(ProtoStreamTypeIds.SUM_REDUCER)
+   public static class SumReducer implements Function<Publisher<?>, CompletionStage<Long>> {
       private static final SumReducer INSTANCE = new SumReducer();
+
+      @ProtoFactory
+      static SumReducer protoFactory() {
+         return INSTANCE;
+      }
 
       @Override
       public CompletionStage<Long> apply(Publisher<?> longPublisher) {
@@ -385,8 +458,14 @@ public class PublisherReducers {
       }
    }
 
-   private static class SumFinalizer implements Function<Publisher<Long>, CompletionStage<Long>> {
+   @ProtoTypeId(ProtoStreamTypeIds.SUM_FINALIZER)
+   public static class SumFinalizer implements Function<Publisher<Long>, CompletionStage<Long>> {
       private static final SumFinalizer INSTANCE = new SumFinalizer();
+
+      @ProtoFactory
+      static SumFinalizer protoFactory() {
+         return INSTANCE;
+      }
 
       @Override
       public CompletionStage<Long> apply(Publisher<Long> longPublisher) {
@@ -396,10 +475,14 @@ public class PublisherReducers {
       }
    }
 
-   private static class ToArrayReducer<I extends E, E> implements Function<Publisher<I>, CompletionStage<E[]>> {
-      private final IntFunction<E[]> generator;
+   @ProtoTypeId(ProtoStreamTypeIds.TO_ARRAY_REDUCER)
+   public static class ToArrayReducer<I extends E, E> implements Function<Publisher<I>, CompletionStage<E[]>> {
 
-      private ToArrayReducer(IntFunction<E[]> generator) {
+      @ProtoField(1)
+      final MarshallableObject<IntFunction<E[]>> generator;
+
+      @ProtoFactory
+      ToArrayReducer(MarshallableObject<IntFunction<E[]>> generator) {
          this.generator = generator;
       }
 
@@ -409,7 +492,7 @@ public class PublisherReducers {
          Single<E[]> arraySingle;
          if (generator != null) {
             arraySingle = listSingle.map(l -> {
-               E[] array = generator.apply(l.size());
+               E[] array = generator.get().apply(l.size());
                int offset = 0;
                for (E e : l) {
                   array[offset++] = e;
@@ -423,10 +506,14 @@ public class PublisherReducers {
       }
    }
 
-   private static class ToArrayFinalizer<E> implements Function<Publisher<E[]>, CompletionStage<E[]>> {
-      private final IntFunction<E[]> generator;
+   @ProtoTypeId(ProtoStreamTypeIds.TO_ARRAY_FINALIZER)
+   public static class ToArrayFinalizer<E> implements Function<Publisher<E[]>, CompletionStage<E[]>> {
 
-      private ToArrayFinalizer(IntFunction<E[]> generator) {
+      @ProtoField(1)
+      final MarshallableObject<IntFunction<E[]>> generator;
+
+      @ProtoFactory
+      ToArrayFinalizer(MarshallableObject<IntFunction<E[]>> generator) {
          this.generator = generator;
       }
 
@@ -435,6 +522,7 @@ public class PublisherReducers {
          Flowable<E[]> flowable = Flowable.fromPublisher(publisher);
          Single<E[]> arraySingle;
          if (generator != null) {
+            IntFunction<E[]> generator = this.generator.get();
             arraySingle = flowable.reduce((v1, v2) -> {
                E[] array = generator.apply(v1.length + v2.length);
                System.arraycopy(v1, 0, array, 0, v1.length);
@@ -449,165 +537,6 @@ public class PublisherReducers {
             }).switchIfEmpty(Single.just((E[]) Util.EMPTY_OBJECT_ARRAY));
          }
          return arraySingle.toCompletionStage();
-      }
-   }
-
-   public static final class PublisherReducersExternalizer implements AdvancedExternalizer<Object> {
-      enum ExternalizerId {
-         ALL_MATCH_REDUCER(AllMatchReducer.class),
-         ANY_MATCH_REDUCER(AnyMatchReducer.class),
-         AND_FINALIZER(AndFinalizer.class),
-         COLLECT_REDUCER(CollectReducer.class),
-         COLLECTOR_FINALIZER(CollectorFinalizer.class),
-         COLLECTOR_REDUCER(CollectorReducer.class),
-         COMBINER_FINALIZER(CombinerFinalizer.class),
-         FIND_FIRST_REDUCER_FINALIZER(FindFirstReducerFinalizer.class),
-         MAX_REDUCER_FINALIZER(MaxReducerFinalizer.class),
-         MIN_REDUCER_FINALIZER(MinReducerFinalizer.class),
-         NONE_MATCH_REDUCER(NoneMatchReducer.class),
-         OR_FINALIZER(OrFinalizer.class),
-         REDUCE_WITH_IDENTITY_REDUCER(ReduceWithIdentityReducer.class),
-         REDUCE_WITH_INITIAL_SUPPLIER_REDUCER(ReduceWithInitialSupplierReducer.class),
-         REDUCE_REDUCER_FINALIZER(ReduceReducerFinalizer.class),
-         SUM_REDUCER(SumReducer.class),
-         SUM_FINALIZER(SumFinalizer.class),
-         TO_ARRAY_FINALIZER(ToArrayFinalizer.class),
-         TO_ARRAY_REDUCER(ToArrayReducer.class),
-         ;
-
-         private final Class<?> marshalledClass;
-
-         ExternalizerId(Class<?> marshalledClass) {
-            this.marshalledClass = marshalledClass;
-         }
-      }
-
-      private static final ExternalizerId[] VALUES = ExternalizerId.values();
-
-      private final Map<Class<?>, ExternalizerId> objects = new HashMap<>();
-
-      public PublisherReducersExternalizer() {
-         for (ExternalizerId id : ExternalizerId.values()) {
-            objects.put(id.marshalledClass, id);
-         }
-      }
-
-      @Override
-      public Set<Class<?>> getTypeClasses() {
-         return objects.keySet();
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.PUBLISHER_REDUCERS;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, Object object) throws IOException {
-         ExternalizerId id = objects.get(object.getClass());
-         if (id == null) {
-            throw new IllegalArgumentException("Unsupported class " + object.getClass() + " was provided!");
-         }
-         output.writeByte(id.ordinal());
-         switch (id) {
-            case ALL_MATCH_REDUCER:
-               output.writeObject(((AllMatchReducer) object).predicate);
-               break;
-            case ANY_MATCH_REDUCER:
-               output.writeObject(((AnyMatchReducer) object).predicate);
-               break;
-            case COLLECT_REDUCER:
-               output.writeObject(((CollectReducer) object).supplier);
-               output.writeObject(((CollectReducer) object).accumulator);
-               break;
-            case COLLECTOR_FINALIZER:
-               output.writeObject(((CollectorFinalizer) object).collector);
-               break;
-            case COLLECTOR_REDUCER:
-               output.writeObject(((CollectorReducer) object).collector);
-               break;
-            case COMBINER_FINALIZER:
-               output.writeObject(((CombinerFinalizer) object).biConsumer);
-               break;
-            case MAX_REDUCER_FINALIZER:
-               output.writeObject(((MaxReducerFinalizer) object).comparator);
-               break;
-            case MIN_REDUCER_FINALIZER:
-               output.writeObject(((MinReducerFinalizer) object).comparator);
-               break;
-            case NONE_MATCH_REDUCER:
-               output.writeObject(((NoneMatchReducer) object).predicate);
-               break;
-            case REDUCE_WITH_IDENTITY_REDUCER:
-               output.writeObject(((ReduceWithIdentityReducer) object).identity);
-               output.writeObject(((ReduceWithIdentityReducer) object).biFunction);
-               break;
-            case REDUCE_WITH_INITIAL_SUPPLIER_REDUCER:
-               output.writeObject(((ReduceWithInitialSupplierReducer) object).initialSupplier);
-               output.writeObject(((ReduceWithInitialSupplierReducer) object).biFunction);
-               break;
-            case REDUCE_REDUCER_FINALIZER:
-               output.writeObject(((ReduceReducerFinalizer) object).operator);
-               break;
-            case TO_ARRAY_REDUCER:
-               output.writeObject(((ToArrayReducer) object).generator);
-               break;
-            case TO_ARRAY_FINALIZER:
-               output.writeObject(((ToArrayFinalizer) object).generator);
-               break;
-         }
-      }
-
-      @Override
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         int number = input.readUnsignedByte();
-         ExternalizerId[] ids = VALUES;
-         if (number < 0 || number >= ids.length) {
-            throw new IllegalArgumentException("Found invalid number " + number);
-         }
-         ExternalizerId id = ids[number];
-         switch (id) {
-            case AND_FINALIZER:
-               return AndFinalizer.INSTANCE;
-            case ALL_MATCH_REDUCER:
-               return new AllMatchReducer((Predicate) input.readObject());
-            case ANY_MATCH_REDUCER:
-               return new AnyMatchReducer((Predicate) input.readObject());
-            case COLLECT_REDUCER:
-               return new CollectReducer((Supplier) input.readObject(), (BiConsumer) input.readObject());
-            case COLLECTOR_FINALIZER:
-               return new CollectorFinalizer((Collector) input.readObject());
-            case COLLECTOR_REDUCER:
-               return new CollectorReducer((Collector) input.readObject());
-            case COMBINER_FINALIZER:
-               return new CombinerFinalizer((BiConsumer) input.readObject());
-            case FIND_FIRST_REDUCER_FINALIZER:
-               return FindFirstReducerFinalizer.INSTANCE;
-            case MAX_REDUCER_FINALIZER:
-               return new MaxReducerFinalizer<>((Comparator) input.readObject());
-            case MIN_REDUCER_FINALIZER:
-               return new MinReducerFinalizer((Comparator) input.readObject());
-            case NONE_MATCH_REDUCER:
-               return new NoneMatchReducer((Predicate) input.readObject());
-            case OR_FINALIZER:
-               return OrFinalizer.INSTANCE;
-            case REDUCE_WITH_IDENTITY_REDUCER:
-               return new ReduceWithIdentityReducer(input.readObject(), (BiFunction) input.readObject());
-            case REDUCE_WITH_INITIAL_SUPPLIER_REDUCER:
-               return new ReduceWithInitialSupplierReducer<>((Callable) input.readObject(), (BiFunction) input.readObject());
-            case REDUCE_REDUCER_FINALIZER:
-               return new ReduceReducerFinalizer((BinaryOperator) input.readObject());
-            case SUM_REDUCER:
-               return SumReducer.INSTANCE;
-            case SUM_FINALIZER:
-               return SumFinalizer.INSTANCE;
-            case TO_ARRAY_REDUCER:
-               return new ToArrayReducer((IntFunction) input.readObject());
-            case TO_ARRAY_FINALIZER:
-               return new ToArrayFinalizer((IntFunction) input.readObject());
-            default:
-               throw new IllegalArgumentException("ExternalizerId not supported: " + id);
-         }
       }
    }
 }

@@ -1,19 +1,15 @@
 package org.infinispan.filter;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.marshall.protostream.impl.MarshallableArray;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Allows AND-composing several key/value filters.
@@ -21,17 +17,29 @@ import org.infinispan.metadata.Metadata;
  * @author wburns
  * @since 7.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.COMPOSITE_KEY_VALUE_FILTER)
 @Scope(Scopes.NONE)
 public class CompositeKeyValueFilter<K, V> implements KeyValueFilter<K, V> {
-   private final KeyValueFilter<? super K, ? super V> filters[];
+   private final MarshallableArray<KeyValueFilter<? super K, ? super V>> filters;
 
    public CompositeKeyValueFilter(KeyValueFilter<? super K, ? super V>... filters) {
+      this.filters = MarshallableArray.create(filters);
+   }
+
+   @ProtoFactory
+   @SuppressWarnings("unchecked")
+   CompositeKeyValueFilter(MarshallableArray<KeyValueFilter<? super K, ? super V>> filters) {
       this.filters = filters;
+   }
+
+   @ProtoField(1)
+   MarshallableArray<KeyValueFilter<? super K, ? super V>> getFilters() {
+      return filters;
    }
 
    @Override
    public boolean accept(K key, V value, Metadata metadata) {
-      for (KeyValueFilter<? super K, ? super V> filter : filters) {
+      for (KeyValueFilter<? super K, ? super V> filter : MarshallableArray.unwrap(filters)) {
          if (!filter.accept(key, value, metadata)) {
             return false;
          }
@@ -41,38 +49,8 @@ public class CompositeKeyValueFilter<K, V> implements KeyValueFilter<K, V> {
 
    @Inject
    protected void injectDependencies(ComponentRegistry cr) {
-      for (KeyValueFilter<? super K, ? super V> f : filters) {
+      for (KeyValueFilter<? super K, ? super V> f : MarshallableArray.unwrap(filters)) {
          cr.wireDependencies(f);
-      }
-   }
-
-   public static class Externalizer extends AbstractExternalizer<CompositeKeyValueFilter> {
-      @Override
-      public Set<Class<? extends CompositeKeyValueFilter>> getTypeClasses() {
-         return Collections.singleton(CompositeKeyValueFilter.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, CompositeKeyValueFilter object) throws IOException {
-         UnsignedNumeric.writeUnsignedInt(output, object.filters.length);
-         for (KeyValueFilter filter : object.filters) {
-            output.writeObject(filter);
-         }
-      }
-
-      @Override
-      public CompositeKeyValueFilter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         int filtersSize = UnsignedNumeric.readUnsignedInt(input);
-         KeyValueFilter[] filters = new KeyValueFilter[filtersSize];
-         for (int i = 0; i < filtersSize; ++i) {
-            filters[i] = (KeyValueFilter)input.readObject();
-         }
-         return new CompositeKeyValueFilter(filters);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.COMPOSITE_KEY_VALUE_FILTER;
       }
    }
 }

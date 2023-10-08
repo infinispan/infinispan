@@ -1,20 +1,18 @@
 package org.infinispan.multimap.impl.function.hmap;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
-import org.infinispan.multimap.impl.ExternalizerIds;
 import org.infinispan.multimap.impl.HashMapBucket;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.KeyValuePair;
 
 /**
  * Serializable function use by {@link org.infinispan.multimap.impl.EmbeddedMultimapPairCache#set(Object, Map.Entry[])}.
@@ -25,8 +23,8 @@ import org.infinispan.multimap.impl.HashMapBucket;
  * @see <a href="https://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_HASH_MAP_PUT_FUNCTION)
 public class HashMapPutFunction<K, HK, HV> extends HashMapBucketBaseFunction<K, HK, HV, Integer> {
-   public static final AdvancedExternalizer<HashMapPutFunction> EXTERNALIZER = new Externalizer();
 
    private final Collection<Map.Entry<HK, HV>> entries;
    private final boolean putIfAbsent;
@@ -38,6 +36,22 @@ public class HashMapPutFunction<K, HK, HV> extends HashMapBucketBaseFunction<K, 
    public HashMapPutFunction(Collection<Map.Entry<HK, HV>> entries, boolean putIfAbsent) {
       this.entries = entries;
       this.putIfAbsent = putIfAbsent;
+   }
+
+   @ProtoFactory
+   HashMapPutFunction(Stream<KeyValuePair<HK, HV>> entries, boolean putIfAbsent) {
+      this.entries = entries.collect(Collectors.toMap(KeyValuePair::getKey, KeyValuePair::getValue)).entrySet();
+      this.putIfAbsent = putIfAbsent;
+   }
+
+   @ProtoField(1)
+   Stream<KeyValuePair<HK, HV>> getEntries() {
+      return entries.stream().map(e -> new KeyValuePair<>(e.getKey(), e.getValue()));
+   }
+
+   @ProtoField(2)
+   boolean isPutIfAbsent() {
+      return putIfAbsent;
    }
 
    @Override
@@ -56,39 +70,5 @@ public class HashMapPutFunction<K, HK, HV> extends HashMapBucketBaseFunction<K, 
       view.set(res.bucket());
 
       return res.response();
-   }
-
-   public static class Externalizer implements AdvancedExternalizer<HashMapPutFunction> {
-
-      @Override
-      public Set<Class<? extends HashMapPutFunction>> getTypeClasses() {
-         return Collections.singleton(HashMapPutFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.HASH_MAP_PUT_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, HashMapPutFunction object) throws IOException {
-         output.writeInt(object.entries.size());
-         Collection<Map.Entry> e = object.entries;
-         for (Map.Entry entry : e) {
-            output.writeObject(entry.getKey());
-            output.writeObject(entry.getValue());
-         }
-         output.writeBoolean(object.putIfAbsent);
-      }
-
-      @Override
-      public HashMapPutFunction<?, ?, ?> readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         int size = input.readInt();
-         Map<Object, Object> values = new HashMap<>(size);
-         for (int i = 0; i < size; i++) {
-            values.put(input.readObject(), input.readObject());
-         }
-         return new HashMapPutFunction<>(values.entrySet(), input.readBoolean());
-      }
    }
 }

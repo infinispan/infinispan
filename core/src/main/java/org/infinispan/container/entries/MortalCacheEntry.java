@@ -1,17 +1,13 @@
 package org.infinispan.container.entries;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A cache entry that is mortal.  I.e., has a lifespan.
@@ -19,6 +15,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
  * @author Manik Surtani
  * @since 4.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.MORTAL_CACHE_ENTRY)
 public class MortalCacheEntry extends AbstractInternalCacheEntry {
 
    protected long lifespan;
@@ -33,6 +30,26 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
       super(key, value, internalMetadata);
       this.lifespan = lifespan;
       this.created = created;
+   }
+
+   @ProtoFactory
+   MortalCacheEntry(MarshallableObject<?> wrappedKey, MarshallableObject<?> wrappedValue,
+                    PrivateMetadata internalMetadata, long created, long lifespan) {
+      super(wrappedKey, wrappedValue, internalMetadata);
+      this.created = created;
+      this.lifespan = lifespan;
+   }
+
+   @Override
+   @ProtoField(4)
+   public final long getCreated() {
+      return created;
+   }
+
+   @Override
+   @ProtoField(5)
+   public final long getLifespan() {
+      return lifespan;
    }
 
    @Override
@@ -50,18 +67,8 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
    }
 
    @Override
-   public final long getCreated() {
-      return created;
-   }
-
-   @Override
    public final long getLastUsed() {
       return -1;
-   }
-
-   @Override
-   public final long getLifespan() {
-      return lifespan;
    }
 
    @Override
@@ -110,36 +117,5 @@ public class MortalCacheEntry extends AbstractInternalCacheEntry {
       super.appendFieldsToString(builder);
       builder.append(", created=").append(created);
       builder.append(", lifespan=").append(lifespan);
-   }
-
-   public static class Externalizer extends AbstractExternalizer<MortalCacheEntry> {
-      @Override
-      public void writeObject(ObjectOutput output, MortalCacheEntry mce) throws IOException {
-         output.writeObject(mce.key);
-         output.writeObject(mce.value);
-         output.writeObject(mce.internalMetadata);
-         UnsignedNumeric.writeUnsignedLong(output, mce.created);
-         output.writeLong(mce.lifespan); // could be negative so should not use unsigned longs
-      }
-
-      @Override
-      public MortalCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Object key = input.readObject();
-         Object value = input.readObject();
-         PrivateMetadata internalMetadata = (PrivateMetadata) input.readObject();
-         long created = UnsignedNumeric.readUnsignedLong(input);
-         long lifespan = input.readLong();
-         return new MortalCacheEntry(key, value, internalMetadata, lifespan, created);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.MORTAL_ENTRY;
-      }
-
-      @Override
-      public Set<Class<? extends MortalCacheEntry>> getTypeClasses() {
-         return Collections.singleton(MortalCacheEntry.class);
-      }
    }
 }

@@ -1,20 +1,18 @@
 package org.infinispan.multimap.impl.function.set;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
-import org.infinispan.multimap.impl.ExternalizerIds;
 import org.infinispan.multimap.impl.SetBucket;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Serializable function used by
@@ -26,11 +24,16 @@ import org.infinispan.multimap.impl.SetBucket;
  *      Functions</a>
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_S_POP_FUNCTION)
 public final class SPopFunction<K, V> implements SetBucketBaseFunction<K, V, Collection<V>> {
-   public static final AdvancedExternalizer<SPopFunction> EXTERNALIZER = new Externalizer();
-   private final long count;
-   private final boolean remove;
 
+   @ProtoField(1)
+   final long count;
+
+   @ProtoField(2)
+   final boolean remove;
+
+   @ProtoFactory
    public SPopFunction(long count, boolean remove) {
       this.count = count;
       this.remove = remove;
@@ -69,32 +72,6 @@ public final class SPopFunction<K, V> implements SetBucketBaseFunction<K, V, Col
       } else {
          Collections.shuffle(list);
          return list.stream().limit(count).collect(Collectors.toList());
-      }
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<SPopFunction> {
-
-      @Override
-      public Set<Class<? extends SPopFunction>> getTypeClasses() {
-         return Collections.singleton(SPopFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.SET_POP_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, SPopFunction object) throws IOException {
-         output.writeLong(object.count);
-         output.writeBoolean(object.remove);
-      }
-
-      @Override
-      public SPopFunction<?, ?> readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         var count = input.readLong();
-         var remove = input.readBoolean();
-         return new SPopFunction<>(count, remove);
       }
    }
 }

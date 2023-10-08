@@ -1,9 +1,5 @@
 package org.infinispan.commands.read;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.LocalCommand;
 
@@ -16,16 +12,12 @@ import org.infinispan.commands.LocalCommand;
  */
 public abstract class AbstractLocalCommand extends AbstractFlagAffectedCommand implements LocalCommand {
 
+   protected AbstractLocalCommand() {
+      super(0);
+   }
+
    public byte getCommandId() {
       return 0;  // no-op
-   }
-
-   public final void writeTo(ObjectOutput output) throws IOException {
-      //no-op
-   }
-
-   public final void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      //no-op
    }
 
    public boolean isReturnValueExpected() {

@@ -1,18 +1,16 @@
 package org.infinispan.multimap.impl.function.sortedset;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.functional.EntryView;
-import org.infinispan.multimap.impl.ExternalizerIds;
-import org.infinispan.multimap.impl.ScoredValue;
-import org.infinispan.multimap.impl.SortedSetBucket;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.Set;
+
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.functional.EntryView;
+import org.infinispan.multimap.impl.ScoredValue;
+import org.infinispan.multimap.impl.SortedSetBucket;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Serializable function used by
@@ -22,11 +20,16 @@ import java.util.Set;
  * @see <a href="https://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_POP_FUNCTION)
 public final class PopFunction<K, V> implements SortedSetBucketBaseFunction<K, V, Collection<ScoredValue<V>>> {
-   public static final AdvancedExternalizer<PopFunction> EXTERNALIZER = new Externalizer();
-   private final boolean min;
-   private final long count;
 
+   @ProtoField(1)
+   final boolean min;
+
+   @ProtoField(2)
+   final long count;
+
+   @ProtoFactory
    public PopFunction(boolean min, long count) {
       this.min = min;
       this.count = count;
@@ -47,29 +50,5 @@ public final class PopFunction<K, V> implements SortedSetBucketBaseFunction<K, V
          return poppedValues;
       }
       return Collections.emptyList();
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<PopFunction> {
-
-      @Override
-      public Set<Class<? extends PopFunction>> getTypeClasses() {
-         return Collections.singleton(PopFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.SORTED_SET_POP_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, PopFunction object) throws IOException {
-         output.writeBoolean(object.min);
-         output.writeLong(object.count);
-      }
-
-      @Override
-      public PopFunction readObject(ObjectInput input) throws IOException {
-         return new PopFunction(input.readBoolean(), input.readLong());
-      }
    }
 }

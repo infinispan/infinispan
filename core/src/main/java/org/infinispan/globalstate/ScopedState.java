@@ -1,13 +1,11 @@
 package org.infinispan.globalstate;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
+import java.util.Objects;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Key for scoped entries in the ClusterConfigurationManager state cache
@@ -15,20 +13,23 @@ import org.infinispan.commons.marshall.Ids;
  * @author Tristan Tarrant
  * @since 9.2
  */
-
+@ProtoTypeId(ProtoStreamTypeIds.SCOPED_STATE)
 public class ScopedState {
    private final String scope;
    private final String name;
 
+   @ProtoFactory
    public ScopedState(String scope, String name) {
       this.scope = scope;
       this.name = name;
    }
 
+   @ProtoField(1)
    public String getScope() {
       return scope;
    }
 
+   @ProtoField(2)
    public String getName() {
       return name;
    }
@@ -39,9 +40,9 @@ public class ScopedState {
       if (o == null || getClass() != o.getClass()) return false;
 
       ScopedState that = (ScopedState) o;
-
-      if (scope != null ? !scope.equals(that.scope) : that.scope != null) return false;
-      return name != null ? name.equals(that.name) : that.name == null;
+      if (!Objects.equals(scope, that.scope))
+         return false;
+      return Objects.equals(name, that.name);
    }
 
    @Override
@@ -57,33 +58,5 @@ public class ScopedState {
             "scope='" + scope + '\'' +
             ", name='" + name + '\'' +
             '}';
-   }
-
-   public static class Externalizer extends AbstractExternalizer<ScopedState> {
-      private static final long serialVersionUID = 326802903448963450L;
-
-      @Override
-      public Integer getId() {
-         return Ids.SCOPED_STATE;
-      }
-
-      @Override
-      public Set<Class<? extends ScopedState>> getTypeClasses() {
-         return Collections.singleton(ScopedState.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, ScopedState object) throws IOException {
-         output.writeUTF(object.scope);
-         output.writeUTF(object.name);
-      }
-
-      @Override
-      public ScopedState readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         String scope = input.readUTF();
-         String name = input.readUTF();
-
-         return new ScopedState(scope, name);
-      }
    }
 }

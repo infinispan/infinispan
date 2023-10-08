@@ -2,24 +2,17 @@ package org.infinispan.tools.store.migrator.marshaller.infinispan8;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.List;
 import java.util.Set;
 
 import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.ImmutableListCopy;
-import org.infinispan.commons.util.Util;
+import org.infinispan.tools.store.migrator.marshaller.common.AbstractMigratorExternalizer;
 
-class ImmutableListCopyExternalizer extends AbstractExternalizer<List> {
+class ImmutableListCopyExternalizer extends AbstractMigratorExternalizer<List> {
 
-   @Override
-   public void writeObject(ObjectOutput output, List list) throws IOException {
-      int size = list.size();
-      UnsignedNumeric.writeUnsignedInt(output, size);
-      for (int i = 0; i < size; i++) {
-         output.writeObject(list.get(i));
-      }
+   ImmutableListCopyExternalizer() {
+      super(Set.of(ImmutableListCopy.class, ImmutableListCopy.ImmutableSubList.class), ExternalizerTable.IMMUTABLE_LIST);
    }
 
    @Override
@@ -30,15 +23,5 @@ class ImmutableListCopyExternalizer extends AbstractExternalizer<List> {
          elements[i] = input.readObject();
 
       return new ImmutableListCopy(elements);
-   }
-
-   @Override
-   public Integer getId() {
-      return ExternalizerTable.IMMUTABLE_LIST;
-   }
-
-   @Override
-   public Set<Class<? extends List>> getTypeClasses() {
-      return Util.asSet(ImmutableListCopy.class, ImmutableListCopy.ImmutableSubList.class);
    }
 }

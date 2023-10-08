@@ -27,7 +27,6 @@ import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.configuration.io.Location;
 import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.TypedProperties;
@@ -905,11 +904,11 @@ public interface Log extends BasicLogger {
    @Message(value = "Duplicate id found! AdvancedExternalizer id=%d for %s is shared by another externalizer (%s). Reader index is %d", id = 245)
    CacheConfigurationException duplicateExternalizerIdFound(int externalizerId, Class<?> typeClass, String otherExternalizer, int readerIndex);
 
-   @Message(value = "Internal %s externalizer is using an id(%d) that exceeded the limit. It needs to be smaller than %d", id = 246)
-   CacheConfigurationException internalExternalizerIdLimitExceeded(AdvancedExternalizer<?> ext, int externalizerId, int maxId);
-
-   @Message(value = "Foreign %s externalizer is using a negative id(%d). Only positive id values are allowed.", id = 247)
-   CacheConfigurationException foreignExternalizerUsingNegativeId(AdvancedExternalizer<?> ext, int externalizerId);
+//   @Message(value = "Internal %s externalizer is using an id(%d) that exceeded the limit. It needs to be smaller than %d", id = 246)
+//   CacheConfigurationException internalExternalizerIdLimitExceeded(AdvancedExternalizer<?> ext, int externalizerId, int maxId);
+//
+//   @Message(value = "Foreign %s externalizer is using a negative id(%d). Only positive id values are allowed.", id = 247)
+//   CacheConfigurationException foreignExternalizerUsingNegativeId(AdvancedExternalizer<?> ext, int externalizerId);
 
 //   @Message(value =  "Invalid cache loader configuration!!  Only ONE cache loader may have fetchPersistentState set " +
 //         "to true.  Cache will not start!", id = 248)
@@ -2388,4 +2387,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Received new cross-site event, site(s) %s: %s", id = 703)
    @Description("A cluster has either joined or left the global cluster view.")
    void crossSiteViewEvent(String action, String sites);
+
+   @Message(value = "%s marshaller implementation not overridden in SerializationContext", id = 704)
+   IllegalStateException marshallerNotOverridden(String className);
 }

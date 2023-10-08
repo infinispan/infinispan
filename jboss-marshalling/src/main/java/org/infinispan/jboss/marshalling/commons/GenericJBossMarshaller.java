@@ -1,6 +1,7 @@
 package org.infinispan.jboss.marshalling.commons;
 
 import org.infinispan.commons.configuration.ClassAllowList;
+import org.jboss.marshalling.AnnotationClassExternalizerFactory;
 
 /**
  * A marshaller that makes use of <a href="http://www.jboss.org/jbossmarshalling">JBoss Marshalling</a>
@@ -36,6 +37,7 @@ public final class GenericJBossMarshaller extends AbstractJBossMarshaller {
       if (classLoader == null) {
          classLoader = getClass().getClassLoader();
       }
+      baseCfg.setClassExternalizerFactory(new AnnotationClassExternalizerFactory());
       baseCfg.setClassResolver(classAllowList == null ?
             new DefaultContextClassResolver(classLoader) :
             new CheckedClassResolver(classAllowList, classLoader)

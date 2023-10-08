@@ -1,21 +1,19 @@
 package org.infinispan.lock.impl.functions;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
 import java.util.function.Function;
 
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
 import org.infinispan.lock.impl.entries.ClusteredLockKey;
 import org.infinispan.lock.impl.entries.ClusteredLockState;
 import org.infinispan.lock.impl.entries.ClusteredLockValue;
-import org.infinispan.lock.impl.externalizers.ExternalizerIds;
 import org.infinispan.lock.logging.Log;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 
 /**
  * Lock function that allows to acquire the lock by a requestor, if such action is possible. It returns {@link
@@ -24,17 +22,32 @@ import org.infinispan.lock.logging.Log;
  * @author Katia Aresti, karesti@redhat.com
  * @since 9.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.CLUSTERED_LOCK_FUNCTION_LOCK)
 public class LockFunction implements Function<EntryView.ReadWriteEntryView<ClusteredLockKey, ClusteredLockValue>, Boolean> {
 
    private static final Log log = LogFactory.getLog(LockFunction.class, Log.class);
 
-   public static final AdvancedExternalizer<LockFunction> EXTERNALIZER = new Externalizer();
    private final String requestId;
-   private final Object requestor;
+   private final Address requestor;
 
-   public LockFunction(String requestId, Object requestor) {
+   public LockFunction(String requestId, Address requestor) {
       this.requestId = requestId;
       this.requestor = requestor;
+   }
+
+   @ProtoFactory
+   LockFunction(String requestId, JGroupsAddress requestor) {
+      this(requestId, (Address) requestor);
+   }
+
+   @ProtoField(1)
+   String getRequestId() {
+      return requestId;
+   }
+
+   @ProtoField(value = 2, javaType = JGroupsAddress.class)
+   Address getRequestor() {
+      return requestor;
    }
 
    @Override
@@ -57,29 +70,5 @@ public class LockFunction implements Function<EntryView.ReadWriteEntryView<Clust
          log.tracef("LOCK[%s] lock not available, owned by %s %s", entryView.key().getName(), lock.getRequestId(), lock.getOwner());
       }
       return Boolean.FALSE;
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<LockFunction> {
-
-      @Override
-      public Set<Class<? extends LockFunction>> getTypeClasses() {
-         return Collections.singleton(LockFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.LOCK_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, LockFunction object) throws IOException {
-         MarshallUtil.marshallString(object.requestId, output);
-         output.writeObject(object.requestor);
-      }
-
-      @Override
-      public LockFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new LockFunction(MarshallUtil.unmarshallString(input), input.readObject());
-      }
    }
 }

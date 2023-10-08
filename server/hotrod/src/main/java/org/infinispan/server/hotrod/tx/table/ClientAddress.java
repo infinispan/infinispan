@@ -1,15 +1,13 @@
 package org.infinispan.server.hotrod.tx.table;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.Objects;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.server.core.ExternalizerIds;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 
 /**
  * A {@link Address} implementation for a client transaction.
@@ -19,13 +17,23 @@ import org.infinispan.server.core.ExternalizerIds;
  * @author Pedro Ruivo
  * @since 9.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.SERVER_HR_CLIENT_ADDRESS)
 public class ClientAddress implements Address {
 
-   public static final AdvancedExternalizer<ClientAddress> EXTERNALIZER = new Externalizer();
    private final Address localAddress;
 
    public ClientAddress(Address localAddress) {
       this.localAddress = localAddress;
+   }
+
+   @ProtoFactory
+   ClientAddress(JGroupsAddress localAddress) {
+      this.localAddress = localAddress;
+   }
+
+   @ProtoField(number = 1, javaType = JGroupsAddress.class)
+   Address getLocalAddress() {
+      return localAddress;
    }
 
    @Override
@@ -61,32 +69,5 @@ public class ClientAddress implements Address {
       return "ClientAddress{" +
             "localAddress=" + localAddress +
             '}';
-   }
-
-   Address getLocalAddress() {
-      return localAddress;
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<ClientAddress> {
-
-      @Override
-      public Set<Class<? extends ClientAddress>> getTypeClasses() {
-         return Collections.singleton(ClientAddress.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.CLIENT_ADDRESS;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, ClientAddress object) throws IOException {
-         output.writeObject(object.localAddress);
-      }
-
-      @Override
-      public ClientAddress readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new ClientAddress((Address) input.readObject());
-      }
    }
 }

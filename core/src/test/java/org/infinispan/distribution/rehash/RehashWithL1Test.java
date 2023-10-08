@@ -4,17 +4,17 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
 
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commons.marshall.Externalizer;
-import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.ProtoName;
+import org.infinispan.protostream.annotations.ProtoSchema;
+import org.infinispan.protostream.annotations.ProtoSyntax;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
@@ -37,7 +37,7 @@ public class RehashWithL1Test extends MultipleCacheManagersTest {
       builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       builder.clustering().hash().numSegments(1).numOwners(1).consistentHashFactory(chf);
       builder.clustering().l1().enable().lifespan(10, TimeUnit.MINUTES);
-      createClusteredCaches(3, builder);
+      createClusteredCaches(3, RehashWithL1TestSCI.INSTANCE, builder);
    }
 
    public void testPutWithRehashAndCacheClear() throws Exception {
@@ -99,8 +99,8 @@ public class RehashWithL1Test extends MultipleCacheManagersTest {
       assertEquals(0, cache(2).size());
    }
 
-   @SerializeWith(MyBaseControlledConsistentHashFactory.Ext.class)
-   private static class MyBaseControlledConsistentHashFactory extends BaseControlledConsistentHashFactory<DefaultConsistentHash> {
+   @ProtoName("MyBaseControlledConsistentHashFactory")
+   public static class MyBaseControlledConsistentHashFactory extends BaseControlledConsistentHashFactory<DefaultConsistentHash> {
       public MyBaseControlledConsistentHashFactory() {
          super(new DefaultTrait(), 1);
       }
@@ -109,17 +109,17 @@ public class RehashWithL1Test extends MultipleCacheManagersTest {
       protected int[][] assignOwners(int numSegments, List<Address> members) {
          return new int[][]{{members.size() - 1}};
       }
+   }
 
-      public static final class Ext implements Externalizer<MyBaseControlledConsistentHashFactory> {
-         @Override
-         public void writeObject(ObjectOutput output, MyBaseControlledConsistentHashFactory object) {
-            // No-op
-         }
-
-         @Override
-         public MyBaseControlledConsistentHashFactory readObject(ObjectInput input) {
-            return new MyBaseControlledConsistentHashFactory();
-         }
-      }
+   @ProtoSchema(
+         includeClasses = RehashWithL1Test.MyBaseControlledConsistentHashFactory.class,
+         schemaFileName = "test.core.RehashWithL1Test.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.core.RehashWithL1Test",
+         service = false,
+         syntax = ProtoSyntax.PROTO3
+   )
+   interface RehashWithL1TestSCI extends SerializationContextInitializer {
+      SerializationContextInitializer INSTANCE = new RehashWithL1TestSCIImpl();
    }
 }

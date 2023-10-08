@@ -15,13 +15,10 @@ import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "statetransfer.OrphanTransactionsCleanupTest")
 public class OrphanTransactionsCleanupTest extends MultipleCacheManagersTest {
-   private static final Log log = LogFactory.getLog(OrphanTransactionsCleanupTest.class);
 
    protected ConfigurationBuilder configurationBuilder;
 
@@ -37,8 +34,7 @@ public class OrphanTransactionsCleanupTest extends MultipleCacheManagersTest {
       configurationBuilder.clustering().hash().numSegments(1).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
       configurationBuilder.clustering().stateTransfer().awaitInitialTransfer(false);
 
-      addClusterEnabledCacheManager(configurationBuilder);
-      addClusterEnabledCacheManager(configurationBuilder);
+      createCluster(ReplicatedControlledConsistentHashFactory.SCI.INSTANCE, configurationBuilder, 2);
       waitForClusterToForm();
    }
 
@@ -52,7 +48,7 @@ public class OrphanTransactionsCleanupTest extends MultipleCacheManagersTest {
       ltm0.setRebalancingEnabled(false);
 
       // Add a new node
-      addClusterEnabledCacheManager(configurationBuilder);
+      addClusterEnabledCacheManager(ReplicatedControlledConsistentHashFactory.SCI.INSTANCE, configurationBuilder);
       Cache<Object, Object> c2 = manager(2).getCache();
 
       // Start a transaction from c2, but don't commit yet

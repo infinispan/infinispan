@@ -6,27 +6,18 @@
  */
 package org.infinispan.hibernate.cache.commons.util;
 
-import java.util.Map;
-
-import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.InfinispanModule;
 import org.infinispan.lifecycle.ModuleLifecycle;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 
 @InfinispanModule(name = "hibernate-cache-commons", requiredModules = "core")
 public class LifecycleCallbacks implements ModuleLifecycle {
 
 	@Override
 	public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
-		Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
-		externalizerMap.put( Externalizers.UUID, new Externalizers.UUIDExternalizer() );
-		externalizerMap.put( Externalizers.TOMBSTONE, new Tombstone.Externalizer() );
-		externalizerMap.put( Externalizers.EXCLUDE_TOMBSTONES_FILTER, new Tombstone.ExcludeTombstonesFilterExternalizer() );
-		externalizerMap.put( Externalizers.TOMBSTONE_UPDATE, new TombstoneUpdate.Externalizer() );
-		externalizerMap.put( Externalizers.FUTURE_UPDATE, new FutureUpdate.Externalizer() );
-		externalizerMap.put( Externalizers.VERSIONED_ENTRY, new VersionedEntry.Externalizer() );
-		externalizerMap.put( Externalizers.EXCLUDE_EMPTY_VERSIONED_ENTRY, new VersionedEntry.ExcludeEmptyVersionedEntryExternalizer() );
+		SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
+		ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.GLOBAL, new org.infinispan.hibernate.cache.commons.GlobalContextInitializerImpl());
 	}
-
 }

@@ -3,6 +3,7 @@ package org.infinispan.stream.impl.intops.primitive.l;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.stream.impl.intops.MappingOperation;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -14,6 +15,7 @@ public class BoxedLongOperation implements MappingOperation<Long, LongStream, Lo
    private static final BoxedLongOperation OPERATION = new BoxedLongOperation();
    private BoxedLongOperation() { }
 
+   @ProtoFactory
    public static BoxedLongOperation getInstance() {
       return OPERATION;
    }

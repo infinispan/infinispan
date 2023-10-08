@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
+import org.infinispan.protostream.annotations.Proto;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
@@ -35,9 +36,8 @@ public class SortedSetBucket<V> implements SortableBucket<V>, BaseSetBucket<V> {
    private final TreeSet<ScoredValue<V>> scoredEntries;
    private final Map<MultimapObjectWrapper<V>, Double> entries;
 
-   /**
-    *
-    */
+   @Proto
+   @ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_SORTED_SET_BUCKET_AGGREGATE_FUNCTION)
    public enum AggregateFunction {
       /**
        *
@@ -50,19 +50,14 @@ public class SortedSetBucket<V> implements SortableBucket<V>, BaseSetBucket<V> {
       }, MIN {
          @Override
          public double apply(double first, double second) {
-            return first < second ? first : second;
+            return Math.min(first, second);
          }
       }, MAX {
          @Override
          public double apply(double first, double second) {
-            return first > second ? first : second;
+            return Math.max(first, second);
          }
       };
-
-      private static final SortedSetBucket.AggregateFunction[] CACHED_VALUES = values();
-      public static SortedSetBucket.AggregateFunction valueOf(int ordinal) {
-         return CACHED_VALUES[ordinal];
-      }
 
       public abstract double apply(double first, double second);
    }

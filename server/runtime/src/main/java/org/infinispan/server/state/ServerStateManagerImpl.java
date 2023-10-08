@@ -338,7 +338,7 @@ public final class ServerStateManagerImpl implements ServerStateManager {
    }
 
    @ProtoTypeId(ProtoStreamTypeIds.IGNORED_CACHES)
-   static final class IgnoredCaches {
+   public static final class IgnoredCaches {
 
       @ProtoField(number = 1, collectionImplementation = HashSet.class)
       final Set<String> caches;
@@ -361,7 +361,7 @@ public final class ServerStateManagerImpl implements ServerStateManager {
    }
 
    @ProtoTypeId(ProtoStreamTypeIds.IP_FILTER_RULE)
-   static final class IpFilterRule {
+   public static final class IpFilterRule {
 
       @ProtoField(number = 1)
       final String cidr;
@@ -394,7 +394,7 @@ public final class ServerStateManagerImpl implements ServerStateManager {
    }
 
    @ProtoTypeId(ProtoStreamTypeIds.IP_FILTER_RULES)
-   static final class IpFilterRules {
+   public static final class IpFilterRules {
 
       @ProtoField(number = 1, collectionImplementation = LinkedHashSet.class)
       final Set<IpFilterRule> rules;

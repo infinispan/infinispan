@@ -1,12 +1,12 @@
 package org.infinispan.commands.topology;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -15,15 +15,17 @@ import org.infinispan.remoting.transport.Address;
  * @author Ryan Emerson
  * @since 11.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.CACHE_LEAVE_COMMAND)
 public class CacheLeaveCommand extends AbstractCacheControlCommand {
 
    public static final byte COMMAND_ID = 86;
 
-   private String cacheName;
+   @ProtoField(1)
+   final String cacheName;
 
-   // For CommandIdUniquenessTest only
-   public CacheLeaveCommand() {
-      super(COMMAND_ID);
+   @ProtoFactory
+   CacheLeaveCommand(String cacheName) {
+      this(cacheName, null);
    }
 
    public CacheLeaveCommand(String cacheName, Address origin) {
@@ -35,16 +37,6 @@ public class CacheLeaveCommand extends AbstractCacheControlCommand {
    public CompletionStage<?> invokeAsync(GlobalComponentRegistry gcr) throws Throwable {
       return gcr.getClusterTopologyManager()
             .handleLeave(cacheName, origin);
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      MarshallUtil.marshallString(cacheName, output);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      cacheName = MarshallUtil.unmarshallString(input);
    }
 
    @Override

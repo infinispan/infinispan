@@ -1,8 +1,5 @@
 package org.infinispan.server.resp.json;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.nio.charset.StandardCharsets;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -53,22 +50,6 @@ public class JSONUtil {
    public static ParseContext parserForDefiniteMod = JsonPath.using(configForMod);
 
    public static final ObjectMapper objectMapper = new ObjectMapper();
-   public static void writeBytes(ObjectOutput output, byte[] b) throws IOException {
-      output.writeInt(b.length);
-      if (b.length > 0) {
-         output.write(b);
-      }
-   }
-
-   public static byte[] readBytes(ObjectInput input) throws IOException {
-      int length = input.readInt();
-      if (length < 0) {
-         throw new IOException("Length cannot be less than 0");
-      }
-      byte[] b = new byte[length];
-      input.read(b);
-      return b;
-   }
 
    public static boolean isRoot(byte[] path) {
       return path != null && path.length == 1 && path[0] == JSON_ROOT_BYTE;

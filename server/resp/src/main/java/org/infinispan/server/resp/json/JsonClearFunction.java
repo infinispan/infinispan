@@ -1,33 +1,32 @@
 package org.infinispan.server.resp.json;
 
+import static java.util.Objects.requireNonNull;
+
+import java.nio.charset.StandardCharsets;
+
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.function.SerializableFunction;
+
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.server.resp.ExternalizerIds;
-import org.infinispan.util.function.SerializableFunction;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.Set;
-
-import static java.util.Objects.requireNonNull;
-
-public class JsonClearFunction
-      implements SerializableFunction<ReadWriteEntryView<byte[], JsonBucket>, Integer> {
+@ProtoTypeId(ProtoStreamTypeIds.RESP_JSON_CLEAR_FUNCTION)
+public class JsonClearFunction implements SerializableFunction<ReadWriteEntryView<byte[], JsonBucket>, Integer> {
    public static final String ERR_PATH_CAN_T_BE_NULL = "path can't be null";
-   public static final AdvancedExternalizer<JsonClearFunction> EXTERNALIZER = new JsonClearFunction.Externalizer();
 
-   byte[] path;
+   @ProtoField(1)
+   final byte[] path;
 
+   @ProtoFactory
    public JsonClearFunction(byte[] path) {
       requireNonNull(path, ERR_PATH_CAN_T_BE_NULL);
       this.path = path;
@@ -102,28 +101,4 @@ public class JsonClearFunction
          throw new CacheException(e);
       }
    }
-
-   private static class Externalizer implements AdvancedExternalizer<JsonClearFunction> {
-
-      @Override
-      public void writeObject(ObjectOutput output, JsonClearFunction object) throws IOException {
-         JSONUtil.writeBytes(output, object.path);
-      }
-
-      @Override
-      public JsonClearFunction readObject(ObjectInput input) throws IOException {
-         return new JsonClearFunction(JSONUtil.readBytes(input));
-      }
-
-      @Override
-      public Set<Class<? extends JsonClearFunction>> getTypeClasses() {
-         return Collections.singleton(JsonClearFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.JSON_CLEAR_FUNCTION;
-      }
-   }
-
 }

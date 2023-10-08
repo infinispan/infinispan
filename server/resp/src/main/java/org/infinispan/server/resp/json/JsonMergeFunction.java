@@ -1,17 +1,15 @@
 package org.infinispan.server.resp.json;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.Set;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.server.resp.ExternalizerIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.server.resp.serialization.RespConstants;
 import org.infinispan.util.function.SerializableFunction;
 
@@ -22,12 +20,15 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 
-public class JsonMergeFunction
-        implements SerializableFunction<EntryView.ReadWriteEntryView<byte[], JsonBucket>, String> {
-    public static final AdvancedExternalizer<JsonMergeFunction> EXTERNALIZER = new JsonMergeFunction.Externalizer();
-    private byte[] path;
-    private byte[] value;
+@ProtoTypeId(ProtoStreamTypeIds.RESP_JSON_MERGE_FUNCTION)
+public class JsonMergeFunction implements SerializableFunction<EntryView.ReadWriteEntryView<byte[], JsonBucket>, String> {
 
+    @ProtoField(1)
+    final byte[] path;
+    @ProtoField(2)
+    final byte[] value;
+
+    @ProtoFactory
     public JsonMergeFunction(byte[] path, byte[] value) {
         this.path = path;
         this.value = value;
@@ -148,31 +149,4 @@ public class JsonMergeFunction
             }
         });
     }
-
-    private static class Externalizer implements AdvancedExternalizer<JsonMergeFunction> {
-
-        @Override
-        public void writeObject(ObjectOutput output, JsonMergeFunction object) throws IOException {
-            JSONUtil.writeBytes(output, object.path);
-            JSONUtil.writeBytes(output, object.value);
-        }
-
-        @Override
-        public JsonMergeFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-            byte[] path = JSONUtil.readBytes(input);
-            byte[] value = JSONUtil.readBytes(input);
-            return new JsonMergeFunction(path, value);
-        }
-
-        @Override
-        public Set<Class<? extends JsonMergeFunction>> getTypeClasses() {
-            return Collections.singleton(JsonMergeFunction.class);
-        }
-
-        @Override
-        public Integer getId() {
-            return ExternalizerIds.JSON_MERGE_FUNCTION;
-        }
-    }
-
 }

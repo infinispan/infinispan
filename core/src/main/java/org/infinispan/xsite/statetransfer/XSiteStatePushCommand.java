@@ -1,15 +1,15 @@
 package org.infinispan.xsite.statetransfer;
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.concurrent.CompletionStage;
 
 /**
  * Wraps the state to be sent to another site
@@ -17,22 +17,21 @@ import java.util.concurrent.CompletionStage;
  * @author Pedro Ruivo
  * @since 7.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.XSITE_STATE_PUSH_COMMAND)
 public class XSiteStatePushCommand extends BaseRpcCommand {
 
    public static final byte COMMAND_ID = 33;
    private XSiteState[] chunk;
 
+   @ProtoFactory
    public XSiteStatePushCommand(ByteString cacheName, XSiteState[] chunk) {
       super(cacheName);
       this.chunk = chunk;
    }
 
-   public XSiteStatePushCommand(ByteString cacheName) {
-      super(cacheName);
-   }
-
-   public XSiteStatePushCommand() {
-      this(null);
+   @ProtoField(2)
+   public XSiteState[] getChunk() {
+      return chunk;
    }
 
    @Override
@@ -45,16 +44,6 @@ public class XSiteStatePushCommand extends BaseRpcCommand {
    @Override
    public byte getCommandId() {
       return COMMAND_ID;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      MarshallUtil.marshallArray(chunk, output);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      chunk = MarshallUtil.unmarshallArray(input, XSiteState[]::new);
    }
 
    @Override

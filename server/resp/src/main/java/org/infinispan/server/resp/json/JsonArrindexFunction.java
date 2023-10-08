@@ -1,19 +1,16 @@
 package org.infinispan.server.resp.json;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.server.resp.ExternalizerIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.server.resp.RespUtil;
 import org.infinispan.util.function.SerializableFunction;
 
@@ -22,16 +19,26 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
+@ProtoTypeId(ProtoStreamTypeIds.RESP_JSON_ARRINDEX_FUNCTION)
 public class JsonArrindexFunction
         implements SerializableFunction<EntryView.ReadWriteEntryView<byte[], JsonBucket>, List<Integer>> {
 
-    public static final AdvancedExternalizer<JsonArrindexFunction> EXTERNALIZER = new JsonArrindexFunction.Externalizer();
-    private byte[] jsonPath;
-    private byte[] value;
-    private int start;
-    private int stop;
-    private boolean isLegacy;
+    @ProtoField(1)
+    final byte[] jsonPath;
 
+    @ProtoField(2)
+    final byte[] value;
+
+    @ProtoField(3)
+    final int start;
+
+    @ProtoField(4)
+    final int stop;
+
+    @ProtoField(5)
+    final boolean isLegacy;
+
+    @ProtoFactory
     public JsonArrindexFunction(byte[] jsonPath, byte[] value, int start, int stop, boolean isLegacy) {
         this.jsonPath = jsonPath;
         this.value = value;
@@ -96,37 +103,4 @@ public class JsonArrindexFunction
         // 0 means to the end of the array
         return stop <= 0 ? Math.max(size + stop, 0) : Math.min(stop, size);
     }
-
-    private static class Externalizer implements AdvancedExternalizer<JsonArrindexFunction> {
-
-        @Override
-        public void writeObject(ObjectOutput output, JsonArrindexFunction object) throws IOException {
-            JSONUtil.writeBytes(output, object.jsonPath);
-            JSONUtil.writeBytes(output, object.value);
-            output.writeInt(object.start);
-            output.writeInt(object.stop);
-            output.writeBoolean(object.isLegacy);
-        }
-
-        @Override
-        public JsonArrindexFunction readObject(ObjectInput input) throws IOException {
-            byte[] jsonPath = JSONUtil.readBytes(input);
-            byte[] value = JSONUtil.readBytes(input);
-            int start = input.readInt();
-            int stop = input.readInt();
-            boolean isLegacy = input.readBoolean();
-            return new JsonArrindexFunction(jsonPath, value, start, stop, isLegacy);
-        }
-
-        @Override
-        public Set<Class<? extends JsonArrindexFunction>> getTypeClasses() {
-            return Collections.singleton(JsonArrindexFunction.class);
-        }
-
-        @Override
-        public Integer getId() {
-            return ExternalizerIds.JSON_ARRINDEX_FUNCTION;
-        }
-    }
-
 }

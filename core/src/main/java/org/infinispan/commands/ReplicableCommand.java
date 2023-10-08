@@ -54,6 +54,7 @@ public interface ReplicableCommand extends TracedCommand {
     *
     * @return the method id of this command.  This is compatible with pre-2.2.0 MethodCall ids.
     */
+   // TODO do we just ignore this? Not possible to use ProtoStreamTypeIDs as it's a byte
    byte getCommandId();
 
    /**
@@ -97,7 +98,9 @@ public interface ReplicableCommand extends TracedCommand {
     *
     * @param output the stream.
     * @throws IOException if an error occurred during the I/O.
+    * @deprecated since 16.0 command objects should be marshalled directly by ProtoStream
     */
+   @Deprecated(forRemoval = true, since = "16.0")
    default void writeTo(ObjectOutput output) throws IOException {
       // no-op
    }
@@ -108,7 +111,9 @@ public interface ReplicableCommand extends TracedCommand {
     * @param input the stream to read.
     * @throws IOException            if an error occurred during the I/O.
     * @throws ClassNotFoundException if it tries to load an undefined class.
+    * @deprecated since 16.0 command objects should be marshalled directly by ProtoStream
     */
+   @Deprecated(forRemoval = true, since = "16.0")
    default void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       // no-op
    }

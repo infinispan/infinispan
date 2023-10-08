@@ -2,9 +2,6 @@ package org.infinispan.commands.triangle;
 
 import static org.infinispan.commands.write.ValueMatcher.MATCH_ALWAYS;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.CommandInvocationId;
@@ -15,6 +12,7 @@ import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.util.ByteString;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 
@@ -23,7 +21,8 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
  * <p>
  * This is a base command with the {@link CommandInvocationId}, topology and flags.
  * <p>
- * Since the primary &rarr; backup operations are ordered by segment, it contains the segment to be updated and its sequence number.
+ * Since the primary &rarr; backup operations are ordered by segment, it contains the segment to be updated and its
+ * sequence number.
  *
  * @author Pedro Ruivo
  * @since 9.2
@@ -31,16 +30,40 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 public abstract class BackupWriteCommand extends BaseRpcCommand {
 
    //common attributes of all write commands
-   private CommandInvocationId commandInvocationId;
-   private int topologyId;
-   private long flags;
+   @ProtoField(2)
+   final CommandInvocationId commandInvocationId;
+
+   @ProtoField(3)
+   final int topologyId;
+
+   @ProtoField(4)
+   final long flags;
 
    //backup commands are ordered by segment. this is the sequence number of the segment.
-   private long sequence;
-   protected int segmentId;
+   @ProtoField(5)
+   final long sequence;
 
-   BackupWriteCommand(ByteString cacheName) {
+   @ProtoField(6)
+   final int segmentId;
+
+   protected BackupWriteCommand(ByteString cacheName, WriteCommand command, long sequence, int segmentId) {
       super(cacheName);
+      this.commandInvocationId = command.getCommandInvocationId();
+      this.topologyId = command.getTopologyId();
+      this.flags = command.getFlagsBitSet();
+      this.sequence = sequence;
+      this.segmentId = segmentId;
+   }
+
+   // Used by ProtoFactory implementations
+   protected BackupWriteCommand(ByteString cacheName, CommandInvocationId commandInvocationId, int topologyId,
+                                long flags, long sequence, int segmentId) {
+      super(cacheName);
+      this.commandInvocationId = commandInvocationId;
+      this.topologyId = topologyId;
+      this.flags = flags;
+      this.sequence = sequence;
+      this.segmentId = segmentId;
    }
 
    @Override
@@ -77,10 +100,6 @@ public abstract class BackupWriteCommand extends BaseRpcCommand {
       return sequence;
    }
 
-   public final void setSequence(long sequence) {
-      this.sequence = sequence;
-   }
-
    public final CommandInvocationId getCommandInvocationId() {
       return commandInvocationId;
    }
@@ -95,32 +114,6 @@ public abstract class BackupWriteCommand extends BaseRpcCommand {
 
    public final int getSegmentId() {
       return segmentId;
-   }
-
-   public final void setSegmentId(int segmentId) {
-      this.segmentId = segmentId;
-   }
-
-   final void writeBase(ObjectOutput output) throws IOException {
-      CommandInvocationId.writeTo(output, commandInvocationId);
-      output.writeInt(topologyId);
-      output.writeLong(flags);
-      output.writeLong(sequence);
-      output.writeInt(segmentId);
-   }
-
-   final void readBase(ObjectInput input) throws IOException, ClassNotFoundException {
-      commandInvocationId = CommandInvocationId.readFrom(input);
-      topologyId = input.readInt();
-      flags = input.readLong();
-      sequence = input.readLong();
-      segmentId = input.readInt();
-   }
-
-   void setCommonAttributesFromCommand(WriteCommand command) {
-      this.commandInvocationId = command.getCommandInvocationId();
-      this.topologyId = command.getTopologyId();
-      this.flags = command.getFlagsBitSet();
    }
 
    abstract WriteCommand createWriteCommand();

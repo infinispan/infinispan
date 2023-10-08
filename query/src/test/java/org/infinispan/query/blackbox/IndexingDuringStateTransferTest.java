@@ -25,6 +25,7 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.test.AnotherGrassEater;
@@ -62,7 +63,13 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
             .addIndexedEntity(Person.class)
             .addIndexedEntity(AnotherGrassEater.class);
       builder.clustering().hash().numSegments(1).numOwners(2).consistentHashFactory(chf);
-      createClusteredCaches(2, QueryTestSCI.INSTANCE, builder);
+      createClusteredCaches(2, globalConfigurationBuilder(), builder);
+   }
+
+   private GlobalConfigurationBuilder globalConfigurationBuilder() {
+      GlobalConfigurationBuilder globalBuilder = defaultGlobalConfigurationBuilder();
+      globalBuilder.serialization().addContextInitializers(QueryTestSCI.INSTANCE, ControlledConsistentHashFactory.SCI.INSTANCE);
+      return globalBuilder;
    }
 
    @BeforeMethod
@@ -138,7 +145,7 @@ public class IndexingDuringStateTransferTest extends MultipleCacheManagersTest {
 
       // add new node, cache(0) will lose ownership of the segment
       chf.setOwnerIndexes(1, 2);
-      addClusterEnabledCacheManager(QueryTestSCI.INSTANCE, builder).getCache();
+      addClusterEnabledCacheManager(globalConfigurationBuilder(), builder).getCache();
 
       // wait until the node discards old entries
       eventuallyEquals(null, () -> cache0.getAdvancedCache().getDataContainer().peek(KEY));

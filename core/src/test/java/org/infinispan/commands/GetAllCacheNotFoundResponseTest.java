@@ -13,6 +13,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
+import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.ImmortalCacheValue;
@@ -23,7 +24,6 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsureResponse;
-import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -35,14 +35,13 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "commands.GetAllCacheNotFoundResponseTest")
 public class GetAllCacheNotFoundResponseTest extends MultipleCacheManagersTest {
 
-
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cb = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       ControlledConsistentHashFactory.Default chf = new ControlledConsistentHashFactory.Default(
             new int[][]{{0, 1}, {0, 2}, {2, 3}});
       cb.clustering().hash().numOwners(2).numSegments(3).consistentHashFactory(chf);
-      createClusteredCaches(5, cb);
+      createClusteredCaches(5, ControlledConsistentHashFactory.SCI.INSTANCE, cb);
    }
 
    public void test() throws InterruptedException, ExecutionException, TimeoutException {

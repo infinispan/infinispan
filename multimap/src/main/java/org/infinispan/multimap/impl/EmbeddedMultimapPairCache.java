@@ -180,7 +180,7 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
     */
    public CompletionStage<Set<HK>> keySet(K key) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
-      return readWriteMap.eval(key, new HashMapKeySetFunction<>());
+      return readWriteMap.eval(key, HashMapKeySetFunction.instance());
    }
 
    /**
@@ -192,7 +192,7 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
     */
    public CompletionStage<Collection<HV>> values(K key) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
-      return readWriteMap.eval(key, new HashMapValuesFunction<>());
+      return readWriteMap.eval(key, HashMapValuesFunction.instance());
    }
 
    /**

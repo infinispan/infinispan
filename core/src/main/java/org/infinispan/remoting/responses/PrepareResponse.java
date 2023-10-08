@@ -1,22 +1,15 @@
 package org.infinispan.remoting.responses;
 
-import static org.infinispan.commons.marshall.MarshallUtil.marshallMap;
-import static org.infinispan.commons.marshall.MarshallUtil.unmarshallMap;
-
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.marshall.protostream.impl.MarshallableMap;
 import org.infinispan.metadata.impl.IracMetadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.transaction.impl.WriteSkewHelper;
 
 /**
@@ -29,37 +22,39 @@ import org.infinispan.transaction.impl.WriteSkewHelper;
  * @author Pedro Ruivo
  * @since 11.0
  */
-public class PrepareResponse extends ValidResponse {
-
-   public static final Externalizer EXTERNALIZER = new Externalizer();
+@ProtoTypeId(ProtoStreamTypeIds.PREPARE_RESPONSE)
+public class PrepareResponse implements ValidResponse<Void> {
 
    private Map<Object, IncrementableEntryVersion> newWriteSkewVersions;
    private Map<Integer, IracMetadata> newIracMetadata;
-
-   public static void writeTo(PrepareResponse response, ObjectOutput output) throws IOException {
-      marshallMap(response.newWriteSkewVersions, output);
-      marshallMap(response.newIracMetadata, DataOutput::writeInt, IracMetadata::writeTo, output);
-   }
-
-   public static PrepareResponse readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      PrepareResponse response = new PrepareResponse();
-      response.newWriteSkewVersions = unmarshallMap(input, HashMap::new);
-      response.newIracMetadata = unmarshallMap(input, DataInput::readInt, IracMetadata::readFrom, HashMap::new);
-      return response;
-   }
 
    public static PrepareResponse asPrepareResponse(Object rv) {
       assert rv == null || rv instanceof PrepareResponse;
       return rv == null ? new PrepareResponse() : (PrepareResponse) rv;
    }
 
-   @Override
-   public boolean isSuccessful() {
-      return true;
+   public PrepareResponse() {
+   }
+
+   @ProtoFactory
+   PrepareResponse(MarshallableMap<Object, IncrementableEntryVersion> newWriteSkewVersions,
+                   Map<Integer, IracMetadata> newIracMetadata) {
+      this.newWriteSkewVersions = MarshallableMap.unwrap(newWriteSkewVersions);
+      this.newIracMetadata = newIracMetadata;
+   }
+
+   @ProtoField(1)
+   MarshallableMap<Object, IncrementableEntryVersion> getNewWriteSkewVersions() {
+      return MarshallableMap.create(newWriteSkewVersions);
+   }
+
+   @ProtoField(2)
+   Map<Integer, IracMetadata> getNewIracMetadata() {
+      return newIracMetadata;
    }
 
    @Override
-   public Object getResponseValue() {
+   public Void getResponseValue() {
       throw new UnsupportedOperationException();
    }
 
@@ -98,29 +93,5 @@ public class PrepareResponse extends ValidResponse {
       }
       newWriteSkewVersions = WriteSkewHelper.mergeEntryVersions(newWriteSkewVersions, entryVersions);
       return newWriteSkewVersions;
-   }
-
-   private static class Externalizer extends AbstractExternalizer<PrepareResponse> {
-
-
-      @Override
-      public Integer getId() {
-         return Ids.PREPARE_RESPONSE;
-      }
-
-      @Override
-      public Set<Class<? extends PrepareResponse>> getTypeClasses() {
-         return Collections.singleton(PrepareResponse.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, PrepareResponse object) throws IOException {
-         writeTo(object, output);
-      }
-
-      @Override
-      public PrepareResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return readFrom(input);
-      }
    }
 }

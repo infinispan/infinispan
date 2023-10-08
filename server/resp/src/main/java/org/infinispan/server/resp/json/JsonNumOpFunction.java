@@ -1,33 +1,37 @@
 package org.infinispan.server.resp.json;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.JsonPath;
-import org.infinispan.commons.CacheException;
-import org.infinispan.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.util.function.SerializableFunction;
+import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.util.Objects.requireNonNull;
+import org.infinispan.commons.CacheException;
+import org.infinispan.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.util.function.SerializableFunction;
 
-public abstract class JsonNumOpFunction
-      implements SerializableFunction<ReadWriteEntryView<byte[], JsonBucket>, List<Number>> {
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.jayway.jsonpath.DocumentContext;
+import com.jayway.jsonpath.JsonPath;
+
+abstract class JsonNumOpFunction implements SerializableFunction<ReadWriteEntryView<byte[], JsonBucket>, List<Number>> {
    public static final String ERR_PATH_CAN_T_BE_NULL = "path can't be null";
    public static final String ERR_INCREMENT_CANT_BE_NULL = "increment can't be null";
 
-   protected byte[] path;
-   protected byte[] value;
+   @ProtoField(1)
+   protected final byte[] path;
 
-   public JsonNumOpFunction(byte[] path, byte[] increment) {
-       requireNonNull(path, ERR_PATH_CAN_T_BE_NULL);
-       requireNonNull(increment, ERR_INCREMENT_CANT_BE_NULL);
-       this.value = increment;
-       this.path = path;
+   @ProtoField(2)
+   protected final byte[] value;
+
+   protected JsonNumOpFunction(byte[] path, byte[] value) {
+      requireNonNull(path, ERR_PATH_CAN_T_BE_NULL);
+      requireNonNull(value, ERR_INCREMENT_CANT_BE_NULL);
+      this.value = value;
+      this.path = path;
    }
 
    @Override
