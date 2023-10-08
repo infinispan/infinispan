@@ -1,22 +1,17 @@
 package org.infinispan.multimap.impl.function.list;
 
-import static org.infinispan.commons.marshall.MarshallUtil.unmarshallCollection;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayDeque;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
-import org.infinispan.multimap.impl.ExternalizerIds;
+import org.infinispan.marshall.protostream.impl.MarshallableDeque;
 import org.infinispan.multimap.impl.ListBucket;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Serializable function used by
@@ -26,8 +21,9 @@ import org.infinispan.multimap.impl.ListBucket;
  * @see <a href="https://infinispan.org/documentation/">Marshalling of Functions</a>
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_REPLACE_LIST_FUNCTION)
 public final class ReplaceListFunction<K, V> implements ListBucketBaseFunction<K, V, Long> {
-   public static final AdvancedExternalizer<ReplaceListFunction> EXTERNALIZER = new Externalizer();
+
    private final Deque<V> values;
 
    public ReplaceListFunction(List<V> values) {
@@ -36,6 +32,16 @@ public final class ReplaceListFunction<K, V> implements ListBucketBaseFunction<K
 
    public ReplaceListFunction(Deque<V> values) {
       this.values = values;
+   }
+
+   @ProtoFactory
+   ReplaceListFunction(MarshallableDeque<V> values) {
+      this.values = MarshallableDeque.unwrap(values);
+   }
+
+   @ProtoField(1)
+   MarshallableDeque<V> getValues() {
+      return MarshallableDeque.create(values);
    }
 
    @Override
@@ -68,29 +74,5 @@ public final class ReplaceListFunction<K, V> implements ListBucketBaseFunction<K
          return (Deque<E>) values;
 
       return new ArrayDeque<>(values);
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<ReplaceListFunction> {
-
-      @Override
-      public Set<Class<? extends ReplaceListFunction>> getTypeClasses() {
-         return Collections.singleton(ReplaceListFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.REPLACE_LIST_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, ReplaceListFunction object) throws IOException {
-         MarshallUtil.marshallCollection(object.values, output);
-      }
-
-      @Override
-      public ReplaceListFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Deque values = unmarshallCollection(input, ArrayDeque::new);
-         return new ReplaceListFunction(values);
-      }
    }
 }

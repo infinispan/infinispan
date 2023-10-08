@@ -47,9 +47,7 @@ public class PrepareTimeoutTest extends MultipleCacheManagersTest {
       builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       builder.transaction().completedTxTimeout(COMPLETED_TX_TIMEOUT);
 
-      addClusterEnabledCacheManager(builder);
-      addClusterEnabledCacheManager(builder);
-      addClusterEnabledCacheManager(builder);
+      createCluster(ControlledConsistentHashFactory.SCI.INSTANCE, builder, 3);
       waitForClusterToForm();
    }
 

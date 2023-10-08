@@ -15,6 +15,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoSchema;
+import org.infinispan.protostream.annotations.ProtoSyntax;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestBlocking;
@@ -199,7 +200,8 @@ public class ReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
          schemaFileName = "test.core.ReadAfterLostOwnershipTest.proto",
          schemaFilePath = "proto/generated",
          schemaPackageName = "org.infinispan.test.core.ReadAfterLostOwnershipTest",
-         service = false
+         service = false,
+         syntax = ProtoSyntax.PROTO3
    )
    interface ReadAfterLostOwnershipTestSCI extends SerializationContextInitializer {
       ReadAfterLostOwnershipTestSCI INSTANCE = new ReadAfterLostOwnershipTestSCIImpl();

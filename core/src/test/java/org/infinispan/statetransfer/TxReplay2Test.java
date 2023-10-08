@@ -151,7 +151,7 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
             .hash().numOwners(3).numSegments(1).consistentHashFactory(consistentHashFactory)
             .stateTransfer().fetchInMemoryState(true);
       builder.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
-      createClusteredCaches(4, builder);
+      createClusteredCaches(4, ControlledConsistentHashFactory.SCI.INSTANCE, builder);
    }
 
    private void checkKeyInDataContainer(Object key) {

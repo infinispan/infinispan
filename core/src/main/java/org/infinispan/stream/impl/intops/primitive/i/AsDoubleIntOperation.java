@@ -3,6 +3,7 @@ package org.infinispan.stream.impl.intops.primitive.i;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.stream.impl.intops.MappingOperation;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -14,6 +15,7 @@ public class AsDoubleIntOperation implements MappingOperation<Integer, IntStream
    private static final AsDoubleIntOperation OPERATION = new AsDoubleIntOperation();
    private AsDoubleIntOperation() { }
 
+   @ProtoFactory
    public static AsDoubleIntOperation getInstance() {
       return OPERATION;
    }

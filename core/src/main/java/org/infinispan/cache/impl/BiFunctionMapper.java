@@ -1,23 +1,22 @@
 package org.infinispan.cache.impl;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
 import java.util.function.BiFunction;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A Bifuncion wrapper that uses the cache's underlying DataConversion objects to perform its operations.
  */
+@ProtoTypeId(ProtoStreamTypeIds.BI_FUNCTION_MAPPER)
 @Scope(Scopes.NAMED_CACHE)
 public class BiFunctionMapper implements BiFunction {
 
@@ -40,10 +39,25 @@ public class BiFunctionMapper implements BiFunction {
       this.valueDataConversion = valueDataConversion;
    }
 
+   @ProtoFactory
+   BiFunctionMapper(MarshallableObject<BiFunction> biFunction, DataConversion keyDataConversion,
+                    DataConversion valueDataConversion) {
+      this.biFunction = MarshallableObject.unwrap(biFunction);
+      this.keyDataConversion = keyDataConversion;
+      this.valueDataConversion = valueDataConversion;
+   }
+
+   @ProtoField(1)
+   MarshallableObject<BiFunction> getBiFunction() {
+      return MarshallableObject.create(biFunction);
+   }
+
+   @ProtoField(2)
    public DataConversion getKeyDataConversion() {
       return keyDataConversion;
    }
 
+   @ProtoField(3)
    public DataConversion getValueDataConversion() {
       return valueDataConversion;
    }
@@ -54,31 +68,5 @@ public class BiFunctionMapper implements BiFunction {
       Object value = valueDataConversion.fromStorage(v);
       Object result = biFunction.apply(key, value);
       return result != null ? valueDataConversion.toStorage(result) : null;
-   }
-
-   public static class Externalizer implements AdvancedExternalizer<BiFunctionMapper> {
-
-      @Override
-      public Set<Class<? extends BiFunctionMapper>> getTypeClasses() {
-         return Collections.singleton(BiFunctionMapper.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.BI_FUNCTION_MAPPER;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, BiFunctionMapper object) throws IOException {
-         output.writeObject(object.biFunction);
-         DataConversion.writeTo(output, object.keyDataConversion);
-         DataConversion.writeTo(output, object.valueDataConversion);
-      }
-
-      @Override
-      public BiFunctionMapper readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new BiFunctionMapper((BiFunction) input.readObject(),
-               DataConversion.readFrom(input), DataConversion.readFrom(input));
-      }
    }
 }

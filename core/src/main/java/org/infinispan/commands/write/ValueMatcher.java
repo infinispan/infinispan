@@ -1,6 +1,9 @@
 package org.infinispan.commands.write;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.Proto;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A policy for determining if a write command should be executed based on the current value in the cache.
@@ -13,6 +16,8 @@ import org.infinispan.Cache;
  * @author Dan Berindei
  * @since 6.0
  */
+@Proto
+@ProtoTypeId(ProtoStreamTypeIds.VALUE_MATCHER)
 public enum ValueMatcher {
    /**
     * Always match. Used when the command is not conditional or when the value was already checked
@@ -64,7 +69,6 @@ public enum ValueMatcher {
          return MATCH_EXPECTED_OR_NEW;
       }
    },
-
    MATCH_EXPECTED_OR_NULL() {
       @Override
       public boolean matches(Object existingValue, Object expectedValue, Object newValue) {

@@ -85,7 +85,7 @@ public class StateTransferSegmentMetricsTest extends BaseDistFunctionalTest<Stri
       factory.setOwnerIndexes(owners1And3);
 
       // New node joins the cluster to trigger the topology change.
-      EmbeddedCacheManager cm = addClusterEnabledCacheManager();
+      EmbeddedCacheManager cm = addClusterEnabledCacheManager(getSerializationContext());
       cm.defineConfiguration(cacheName, configuration.build());
       Future<Void> join = fork(() -> {
          waitForClusterToForm(cacheName);

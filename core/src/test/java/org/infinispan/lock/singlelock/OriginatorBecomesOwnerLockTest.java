@@ -16,15 +16,16 @@ import jakarta.transaction.SystemException;
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
+import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commands.statetransfer.StateTransferGetTransactionsCommand;
 import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
@@ -35,6 +36,7 @@ import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.ControlledRpcManager;
+import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
 import org.testng.annotations.Test;
 
 
@@ -72,7 +74,11 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
             new ControlledConsistentHashFactory.Default(new int[][]{{KILLED_INDEX, ORIGINATOR_INDEX},
                   {KILLED_INDEX, OTHER_INDEX}});
       configurationBuilder.clustering().hash().numSegments(2).consistentHashFactory(consistentHashFactory);
-      createCluster(TestDataSCI.INSTANCE, configurationBuilder, 3);
+
+      GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      globalBuilder.serialization().addContextInitializers(TestDataSCI.INSTANCE, ControlledConsistentHashFactory.SCI.INSTANCE,
+            ReplicatedControlledConsistentHashFactory.SCI.INSTANCE);
+      createCluster(globalBuilder, configurationBuilder, 3);
       waitForClusterToForm();
 
       originatorCache = cache(ORIGINATOR_INDEX);

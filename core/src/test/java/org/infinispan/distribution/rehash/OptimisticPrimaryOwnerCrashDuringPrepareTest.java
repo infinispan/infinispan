@@ -81,7 +81,7 @@ public class OptimisticPrimaryOwnerCrashDuringPrepareTest extends MultipleCacheM
             .consistentHashFactory(new ControlledConsistentHashFactory.Default(1, 0));
       config.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup())
             .cacheStopTimeout(1, SECONDS);
-      createCluster(config, 2);
+      createCluster(ControlledConsistentHashFactory.SCI.INSTANCE, config, 2);
       waitForClusterToForm();
    }
 }

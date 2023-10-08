@@ -1,10 +1,16 @@
 package org.infinispan.xsite.events;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.Proto;
+import org.infinispan.protostream.annotations.ProtoTypeId;
+
 /**
  * Types of {@link XSiteEvent}.
  *
  * @since 15.0
  */
+@Proto
+@ProtoTypeId(ProtoStreamTypeIds.XSITE_EVENT_TYPE)
 public enum XSiteEventType {
    /**
     * Sent from site A to site B, notifies site B that a new connection to A is available.

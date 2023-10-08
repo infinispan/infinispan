@@ -19,11 +19,13 @@ import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.tx.XidImpl;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.SuccessfulCollectionResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -35,7 +37,6 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.LocalXaTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -239,7 +240,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
                throw new CacheException("Could not fetch in doubt transactions: " + r);
             }
             // noinspection unchecked
-            Set<InDoubtTxInfo> infoInDoubtSet = ((SuccessfulResponse<Set<InDoubtTxInfo>>) r).getResponseValue();
+            Collection<InDoubtTxInfo> infoInDoubtSet = ((SuccessfulCollectionResponse<InDoubtTxInfo>) r).getResponseValue();
             for (InDoubtTxInfo infoInDoubt : infoInDoubtSet) {
                InDoubtTxInfo inDoubtTxInfo = result.get(infoInDoubt.getXid());
                if (inDoubtTxInfo == null) {

@@ -22,7 +22,6 @@ import org.infinispan.commands.triangle.MultiKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.PutMapBackupWriteCommand;
 import org.infinispan.commands.triangle.SingleKeyBackupWriteCommand;
 import org.infinispan.commands.triangle.SingleKeyFunctionalBackupWriteCommand;
-import org.infinispan.commands.write.BackupAckCommand;
 import org.infinispan.commands.write.BackupMultiKeyAckCommand;
 import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.distribution.TriangleOrderManager;
@@ -78,8 +77,10 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
                handleBackupWriteCommand((BackupWriteCommand) command);
                return;
             case BackupMultiKeyAckCommand.COMMAND_ID:
+               ((BackupMultiKeyAckCommand) command).ack(commandAckCollector);
+               return;
             case ExceptionAckCommand.COMMAND_ID:
-               handleBackupAckCommand((BackupAckCommand) command);
+               ((ExceptionAckCommand) command).ack(commandAckCollector);
                return;
             case ConflictResolutionStartCommand.COMMAND_ID:
             case StateTransferCancelCommand.COMMAND_ID:
@@ -130,10 +131,6 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
             command.getSegmentId());
       BlockingRunnable runnable = createBackupWriteRunnable(command, topologyId, readyAction);
       nonBlockingExecutor.execute(runnable);
-   }
-
-   private void handleBackupAckCommand(BackupAckCommand command) {
-      command.ack(commandAckCollector);
    }
 
    private void handleSingleRpcCommand(SingleRpcCommand command, Reply reply, DeliverOrder order) {

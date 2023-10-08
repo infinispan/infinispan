@@ -3,8 +3,11 @@ package org.infinispan.jcache.embedded.functions;
 import java.util.Optional;
 import java.util.function.Function;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
+@ProtoTypeId(ProtoStreamTypeIds.JCACHE_GET_AND_REMOVE)
 public class GetAndRemove<K, V> implements Function<EntryView.ReadWriteEntryView<K, V>, V> {
    private static final GetAndRemove INSTANCE = new GetAndRemove();
 

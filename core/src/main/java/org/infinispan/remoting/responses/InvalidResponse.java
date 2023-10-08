@@ -6,19 +6,14 @@ package org.infinispan.remoting.responses;
  * @author Manik Surtani
  * @since 4.0
  */
-public abstract class InvalidResponse implements Response {
+public interface InvalidResponse extends Response {
    @Override
-   public boolean isValid() {
+   default boolean isValid() {
       return false;
    }
 
    @Override
-   public boolean isSuccessful() {
+   default boolean isSuccessful() {
       return false;
-   }
-
-   @Override
-   public String toString() {
-      return getClass().getSimpleName();
    }
 }

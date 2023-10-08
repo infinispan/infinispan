@@ -15,7 +15,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.concurrent.InvocationMatcher;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -48,7 +47,7 @@ public class OptimisticPartialCommitTest extends MultipleCacheManagersTest {
       configuration.clustering().hash().numSegments(2).numOwners(2).consistentHashFactory(controlledCHFactory);
       configuration.transaction().lockingMode(LockingMode.OPTIMISTIC)
             .locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
-      createCluster(TestDataSCI.INSTANCE, configuration, 4);
+      createCluster(ControlledConsistentHashFactory.SCI.INSTANCE, configuration, 4);
       waitForClusterToForm();
    }
 

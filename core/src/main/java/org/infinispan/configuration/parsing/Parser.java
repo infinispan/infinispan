@@ -1,6 +1,7 @@
 package org.infinispan.configuration.parsing;
 
 import static org.infinispan.configuration.parsing.ParseUtils.ignoreAttribute;
+import static org.infinispan.configuration.parsing.ParseUtils.ignoreElement;
 import static org.infinispan.configuration.parsing.Parser.NAMESPACE;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.BLOCKING_EXECUTOR;
@@ -28,7 +29,6 @@ import java.util.regex.Pattern;
 import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
 import org.infinispan.commons.configuration.io.NamingStrategy;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
@@ -162,8 +162,8 @@ public class Parser extends CacheParser {
                break;
             }
             case ADVANCED_EXTERNALIZER: {
-               CONFIG.advancedExternalizerDeprecated();
-               parseAdvancedExternalizer(reader, holder.getClassLoader(), builder.serialization());
+               ParseUtils.elementRemovedSince(reader, 16, 0);
+               ignoreElement(reader, element);
                break;
             }
             case SERIALIZATION_CONTEXT_INITIALIZER: {
@@ -237,39 +237,6 @@ public class Parser extends CacheParser {
                throw ParseUtils.unexpectedElement(reader);
             }
          }
-      }
-   }
-
-   private void parseAdvancedExternalizer(final ConfigurationReader reader, final ClassLoader classLoader,
-                                          final SerializationConfigurationBuilder builder) {
-      int attributes = reader.getAttributeCount();
-      AdvancedExternalizer<?> advancedExternalizer = null;
-      Integer id = null;
-      ParseUtils.requireAttributes(reader, Attribute.CLASS.getLocalName());
-      for (int i = 0; i < attributes; i++) {
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case CLASS: {
-               advancedExternalizer = Util.getInstance(value, classLoader);
-               break;
-            }
-            case ID: {
-               id = ParseUtils.parseInt(reader, i, value);
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedAttribute(reader, i);
-            }
-         }
-      }
-
-      ParseUtils.requireNoContent(reader);
-
-      if (id != null) {
-         builder.addAdvancedExternalizer(id, advancedExternalizer);
-      } else {
-         builder.addAdvancedExternalizer(advancedExternalizer);
       }
    }
 

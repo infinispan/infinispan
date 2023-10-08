@@ -1,33 +1,35 @@
 package org.infinispan.server.resp.json;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.server.resp.ExternalizerIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.function.SerializableFunction;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.jayway.jsonpath.JsonPath;
 
-public class JsonArrayAppendFunction
-        implements SerializableFunction<ReadWriteEntryView<byte[], JsonBucket>, List<Long>> {
-    public static final AdvancedExternalizer<JsonArrayAppendFunction> EXTERNALIZER = new JsonArrayAppendFunction.Externalizer();
-    final byte[] path;
-    final List<byte[]> arrValues;
+@ProtoTypeId(ProtoStreamTypeIds.RESP_JSON_ARRAY_APPEND_FUNCTION)
+public class JsonArrayAppendFunction implements SerializableFunction<ReadWriteEntryView<byte[], JsonBucket>, List<Long>> {
 
+    @ProtoField(1)
+    final byte[] path;
+
+    @ProtoField(2)
+    final List<byte[]> values;
+
+    @ProtoFactory
     public JsonArrayAppendFunction(byte[] path, List<byte[]> values) {
         this.path = path;
-        this.arrValues = values;
+        this.values = values;
     }
 
     @Override
@@ -46,7 +48,7 @@ public class JsonArrayAppendFunction
             List<Long> resList = new ArrayList<>();
             boolean changed = false;
             ArrayNode srcNodes = JSONUtil.objectMapper.createArrayNode();
-            for (byte[] value : arrValues) {
+            for (byte[] value : values) {
                 srcNodes.add(JSONUtil.objectMapper.readTree(value));
             }
             for (JsonNode pathAsNode : pathList) {
@@ -74,39 +76,6 @@ public class JsonArrayAppendFunction
             return resList;
         } catch (IOException e) {
             throw new CacheException(e);
-        }
-    }
-
-    private static class Externalizer implements AdvancedExternalizer<JsonArrayAppendFunction> {
-
-        @Override
-        public void writeObject(ObjectOutput output, JsonArrayAppendFunction jsonAppendFunction) throws IOException {
-            JSONUtil.writeBytes(output, jsonAppendFunction.path);
-            output.writeInt(jsonAppendFunction.arrValues.size());
-            for (byte[] value : jsonAppendFunction.arrValues) {
-                JSONUtil.writeBytes(output, value);
-            }
-        }
-
-        @Override
-        public JsonArrayAppendFunction readObject(ObjectInput input) throws IOException {
-            byte[] path = JSONUtil.readBytes(input);
-            int count = input.readInt();
-            var values = new ArrayList<byte[]>();
-            for (int i = 0; i < count; i++) {
-                values.add(JSONUtil.readBytes(input));
-            }
-            return new JsonArrayAppendFunction(path, values);
-        }
-
-        @Override
-        public Set<Class<? extends JsonArrayAppendFunction>> getTypeClasses() {
-            return Collections.singleton(JsonArrayAppendFunction.class);
-        }
-
-        @Override
-        public Integer getId() {
-            return ExternalizerIds.JSON_ARRAY_APPEND_FUNCTION;
         }
     }
 }

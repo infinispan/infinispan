@@ -168,7 +168,7 @@
       <testjvm.dynamicAgentLoading/>
       <testjvm.jdkSpecificArgs>${testjvm.jigsawArgs} -Dnet.bytebuddy.experimental=true ${testjvm.blockHoundRedefinitionArgs} ${testjvm.dynamicAgentLoading}</testjvm.jdkSpecificArgs>
       <testjvm.extraArgs/>
-      <forkJvmArgs>-Xmx1G ${testjvm.commonArgs} ${testjvm.jdkSpecificArgs} ${testjvm.extraArgs}</forkJvmArgs>
+      <forkJvmArgs>-Xmx2G ${testjvm.commonArgs} ${testjvm.jdkSpecificArgs} ${testjvm.extraArgs}</forkJvmArgs>
       <server.jvm>${env.JAVA_HOME}</server.jvm>
       <server.jvm.args>${testjvm.commonArgs} ${testjvm.jdkSpecificArgs} ${testjvm.extraArgs}</server.jvm.args>
       <infinispan.module-suffix>-${project.artifactId}</infinispan.module-suffix>

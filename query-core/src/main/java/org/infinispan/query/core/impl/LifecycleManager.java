@@ -1,16 +1,15 @@
 package org.infinispan.query.core.impl;
 
+import static org.infinispan.marshall.protostream.impl.SerializationContextRegistry.MarshallerType.GLOBAL;
 import static org.infinispan.marshall.protostream.impl.SerializationContextRegistry.MarshallerType.PERSISTENCE;
 
 import java.util.EnumSet;
 import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.QueryProducer;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.AggregatedClassLoader;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -21,10 +20,6 @@ import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.query.core.QueryProducerImpl;
-import org.infinispan.query.core.impl.continuous.ContinuousQueryResult;
-import org.infinispan.query.core.impl.continuous.IckleContinuousQueryCacheEventFilterConverter;
-import org.infinispan.query.core.impl.eventfilter.IckleCacheEventFilterConverter;
-import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
 import org.infinispan.query.core.stats.IndexStatistics;
 import org.infinispan.query.core.stats.impl.IndexStatisticsSnapshotImpl;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
@@ -124,16 +119,9 @@ public class LifecycleManager implements ModuleLifecycle {
             EnumSet.of(InternalCacheRegistry.Flag.EXCLUSIVE));
       gcr.registerComponent(new QueryCache(), QueryCache.class);
 
-      Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
-      externalizerMap.put(ExternalizerIds.ICKLE_FILTER_AND_CONVERTER, new IckleFilterAndConverter.IckleFilterAndConverterExternalizer());
-      externalizerMap.put(ExternalizerIds.ICKLE_FILTER_RESULT, new IckleFilterAndConverter.FilterResultExternalizer());
-      externalizerMap.put(ExternalizerIds.ICKLE_CACHE_EVENT_FILTER_CONVERTER, new IckleCacheEventFilterConverter.Externalizer());
-      externalizerMap.put(ExternalizerIds.ICKLE_CONTINUOUS_QUERY_CACHE_EVENT_FILTER_CONVERTER, new IckleContinuousQueryCacheEventFilterConverter.Externalizer());
-      externalizerMap.put(ExternalizerIds.ICKLE_CONTINUOUS_QUERY_RESULT, new ContinuousQueryResult.Externalizer());
-      externalizerMap.put(ExternalizerIds.ICKLE_DELETE_FUNCTION, new EmbeddedQuery.DeleteFunctionExternalizer());
-
       SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
       ctxRegistry.addContextInitializer(PERSISTENCE, new PersistenceContextInitializerImpl());
+      ctxRegistry.addContextInitializer(GLOBAL, new GlobalContextInitializerImpl());
    }
 
    @Override

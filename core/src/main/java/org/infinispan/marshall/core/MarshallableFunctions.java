@@ -7,12 +7,18 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.InjectiveFunction;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.MetaParam;
+import org.infinispan.marshall.protostream.impl.MarshallableArray;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 public final class MarshallableFunctions {
 
@@ -88,7 +94,7 @@ public final class MarshallableFunctions {
       return new SetValueMetas<>(metas);
    }
 
-   public static <K, V> BiConsumer<V, WriteEntryView<K, V>> setInternalCacheValueConsumer() {
+   public static <K, V> BiConsumer<InternalCacheValue<V>, WriteEntryView<K, V>> setInternalCacheValueConsumer() {
       return SetInternalCacheValue.getInstance();
    }
 
@@ -120,12 +126,54 @@ public final class MarshallableFunctions {
       return Identity.getInstance();
    }
 
-   private static abstract class AbstractSetValueReturnPrevOrNull<K, V>
-         implements BiFunction<V, ReadWriteEntryView<K, V>, V> {
+   private abstract static class AbstractParamWritableFunction {
       final MetaParam.Writable[] metas;
 
-      protected AbstractSetValueReturnPrevOrNull(MetaParam.Writable[] metas) {
+      AbstractParamWritableFunction(MetaParam.Writable[] metas) {
          this.metas = metas;
+      }
+
+      @ProtoFactory
+      AbstractParamWritableFunction(MarshallableArray<MetaParam.Writable> metas) {
+         this(MarshallableArray.unwrap(metas, new MetaParam.Writable[0]));
+      }
+
+      @ProtoField(1)
+      MarshallableArray<MetaParam.Writable> getMetas() {
+         return MarshallableArray.create(metas);
+      }
+   }
+
+   @ProtoTypeId(ProtoStreamTypeIds.MF_SET_VALUE_RETURN_PREV_OR_NULL)
+   public static final class SetValueReturnPrevOrNull<K, V> implements BiFunction<V, ReadWriteEntryView<K, V>, V> {
+
+      private static final SetValueReturnPrevOrNull INSTANCE = new SetValueReturnPrevOrNull<>();
+
+      @SuppressWarnings("unchecked")
+      @ProtoFactory
+      static <K, V> SetValueReturnPrevOrNull<K, V> getInstance() {
+         return SetValueReturnPrevOrNull.INSTANCE;
+      }
+
+      @Override
+      public V apply(V v, ReadWriteEntryView<K, V> rw) {
+         V prev = rw.find().orElse(null);
+         rw.set(v);
+         return prev;
+      }
+   }
+
+   @ProtoTypeId(ProtoStreamTypeIds.MF_SET_VALUE_METAS_RETURN_PREV_OR_NULL)
+   public static final class SetValueMetasReturnPrevOrNull<K, V> extends AbstractParamWritableFunction
+         implements BiFunction<V, ReadWriteEntryView<K, V>, V> {
+
+      SetValueMetasReturnPrevOrNull(MetaParam.Writable[] metas) {
+         super(metas);
+      }
+
+      @ProtoFactory
+      SetValueMetasReturnPrevOrNull(MarshallableArray<MetaParam.Writable> metas) {
+         super(metas);
       }
 
       @Override
@@ -136,41 +184,15 @@ public final class MarshallableFunctions {
       }
    }
 
-   private static final class SetValueReturnPrevOrNull<K, V> extends AbstractSetValueReturnPrevOrNull<K, V> {
-      protected SetValueReturnPrevOrNull(MetaParam.Writable[] metas) {
-         super(metas);
-      }
+   @ProtoTypeId(ProtoStreamTypeIds.MF_SET_VALUE_RETURN_VIEW)
+   public static final class SetValueReturnView<K, V> implements BiFunction<V, ReadWriteEntryView<K, V>, ReadWriteEntryView<K, V>> {
 
-      private static final SetValueReturnPrevOrNull INSTANCE =
-         new SetValueReturnPrevOrNull<>(new MetaParam.Writable[0]);
+      private static final SetValueReturnView INSTANCE = new SetValueReturnView<>();
+
+      @ProtoFactory
       @SuppressWarnings("unchecked")
-      private static <K, V> BiFunction<V, ReadWriteEntryView<K, V>, V> getInstance() {
-         return SetValueReturnPrevOrNull.INSTANCE;
-      }
-   }
-
-   interface LambdaWithMetas {
-      MetaParam.Writable[] metas();
-   }
-
-   static final class SetValueMetasReturnPrevOrNull<K, V>
-         extends AbstractSetValueReturnPrevOrNull<K, V> implements LambdaWithMetas {
-      SetValueMetasReturnPrevOrNull(MetaParam.Writable[] metas) {
-         super(metas);
-      }
-
-      @Override
-      public MetaParam.Writable[] metas() {
-         return metas;
-      }
-   }
-
-   private static abstract class AbstractSetValueReturnView<K, V>
-         implements BiFunction<V, ReadWriteEntryView<K, V>, ReadWriteEntryView<K, V>> {
-      final MetaParam.Writable[] metas;
-
-      protected AbstractSetValueReturnView(MetaParam.Writable[] metas) {
-         this.metas = metas;
+      static <K, V> SetValueReturnView<K, V> getInstance() {
+         return SetValueReturnView.INSTANCE;
       }
 
       @Override
@@ -180,35 +202,59 @@ public final class MarshallableFunctions {
       }
    }
 
-   private static final class SetValueReturnView<K, V> extends AbstractSetValueReturnView<K, V> {
-      protected SetValueReturnView(MetaParam.Writable[] metas) {
+   @ProtoTypeId(ProtoStreamTypeIds.MF_SET_VALUE_METAS_RETURN_VIEW)
+   public static final class SetValueMetasReturnView<K, V> extends AbstractParamWritableFunction
+         implements BiFunction<V, ReadWriteEntryView<K, V>, ReadWriteEntryView<K, V>> {
+
+      SetValueMetasReturnView(MetaParam.Writable[] metas) {
          super(metas);
       }
 
-      private static final SetValueReturnView INSTANCE = new SetValueReturnView<>(new MetaParam.Writable[]{});
-      @SuppressWarnings("unchecked")
-      private static <K, V> BiFunction<V, ReadWriteEntryView<K, V>, ReadWriteEntryView<K, V>> getInstance() {
-         return SetValueReturnView.INSTANCE;
-      }
-   }
-
-   static final class SetValueMetasReturnView<K, V> extends AbstractSetValueReturnView<K, V> implements LambdaWithMetas {
-      protected SetValueMetasReturnView(MetaParam.Writable[] metas) {
+      @ProtoFactory
+      SetValueMetasReturnView(MarshallableArray<MetaParam.Writable> metas) {
          super(metas);
       }
 
       @Override
-      public MetaParam.Writable[] metas() {
-         return metas;
+      public ReadWriteEntryView<K, V> apply(V v, ReadWriteEntryView<K, V> rw) {
+         rw.set(v);
+         return rw;
       }
    }
 
-   private static abstract class AbstractSetValueIfAbsentReturnPrevOrNull<K, V>
-         implements BiFunction<V, ReadWriteEntryView<K, V>, V> {
-      final MetaParam.Writable[] metas;
+   @ProtoTypeId(ProtoStreamTypeIds.MF_SET_VALUE_IF_ABSENT_RETURN_PREV_OR_NULL)
+   public static final class SetValueIfAbsentReturnPrevOrNull<K, V> implements BiFunction<V, ReadWriteEntryView<K, V>, V> {
 
-      protected AbstractSetValueIfAbsentReturnPrevOrNull(MetaParam.Writable[] metas) {
-         this.metas = metas;
+      private static final SetValueIfAbsentReturnPrevOrNull INSTANCE = new SetValueIfAbsentReturnPrevOrNull<>();
+
+      @ProtoFactory
+      @SuppressWarnings("unchecked")
+      static <K, V> SetValueIfAbsentReturnPrevOrNull<K, V> getInstance() {
+         return SetValueIfAbsentReturnPrevOrNull.INSTANCE;
+      }
+
+      @Override
+      public V apply(V v, ReadWriteEntryView<K, V> rw) {
+         Optional<V> opt = rw.find();
+         V prev = opt.orElse(null);
+         if (!opt.isPresent())
+            rw.set(v);
+
+         return prev;
+      }
+   }
+
+   @ProtoTypeId(ProtoStreamTypeIds.MF_SET_VALUE_METAS_IF_ABSENT_RETURN_PREV_OR_NULL)
+   public static final class SetValueMetasIfAbsentReturnPrevOrNull<K, V> extends AbstractParamWritableFunction
+         implements BiFunction<V, ReadWriteEntryView<K, V>, V> {
+
+      SetValueMetasIfAbsentReturnPrevOrNull(MetaParam.Writable[] metas) {
+         super(metas);
+      }
+
+      @ProtoFactory
+      SetValueMetasIfAbsentReturnPrevOrNull(MarshallableArray<MetaParam.Writable> metas) {
+         super(metas);
       }
 
       @Override
@@ -222,38 +268,36 @@ public final class MarshallableFunctions {
       }
    }
 
-   private static final class SetValueIfAbsentReturnPrevOrNull<K, V>
-      extends AbstractSetValueIfAbsentReturnPrevOrNull<K, V> {
-      protected SetValueIfAbsentReturnPrevOrNull(MetaParam.Writable[] metas) {
-         super(metas);
-      }
+   @ProtoTypeId(ProtoStreamTypeIds.MF_SET_VALUE_IF_ABSENT_RETURN_BOOLEAN)
+   public static final class SetValueIfAbsentReturnBoolean<K, V> implements BiFunction<V, ReadWriteEntryView<K, V>, Boolean> {
 
-      private static final SetValueIfAbsentReturnPrevOrNull INSTANCE =
-         new SetValueIfAbsentReturnPrevOrNull<>(new MetaParam.Writable[]{});
+      private static final SetValueIfAbsentReturnBoolean INSTANCE = new SetValueIfAbsentReturnBoolean<>();
+
+      @ProtoFactory
       @SuppressWarnings("unchecked")
-      private static <K, V> BiFunction<V, ReadWriteEntryView<K, V>, V> getInstance() {
-         return SetValueIfAbsentReturnPrevOrNull.INSTANCE;
-      }
-   }
-
-   static final class SetValueMetasIfAbsentReturnPrevOrNull<K, V>
-         extends AbstractSetValueIfAbsentReturnPrevOrNull<K, V> implements LambdaWithMetas {
-      protected SetValueMetasIfAbsentReturnPrevOrNull(MetaParam.Writable[] metas) {
-         super(metas);
+      static <K, V> SetValueIfAbsentReturnBoolean<K, V> getInstance() {
+         return SetValueIfAbsentReturnBoolean.INSTANCE;
       }
 
       @Override
-      public MetaParam.Writable[] metas() {
-         return metas;
+      public Boolean apply(V v, ReadWriteEntryView<K, V> rw) {
+         Optional<V> opt = rw.find();
+         boolean success = !opt.isPresent();
+         if (success) rw.set(v);
+         return success;
       }
    }
 
-   private static abstract class AbstractSetValueIfAbsentReturnBoolean<K, V>
+   @ProtoTypeId(ProtoStreamTypeIds.MF_SET_VALUE_METAS_IF_ABSENT_RETURN_BOOLEAN)
+   public static final class SetValueMetasIfAbsentReturnBoolean<K, V> extends AbstractParamWritableFunction
          implements BiFunction<V, ReadWriteEntryView<K, V>, Boolean> {
-      final MetaParam.Writable[] metas;
+      SetValueMetasIfAbsentReturnBoolean(MetaParam.Writable[] metas) {
+         super(metas);
+      }
 
-      private AbstractSetValueIfAbsentReturnBoolean(MetaParam.Writable[] metas) {
-         this.metas = metas;
+      @ProtoFactory
+      SetValueMetasIfAbsentReturnBoolean(MarshallableArray<MetaParam.Writable> metas) {
+         super(metas);
       }
 
       @Override
@@ -265,38 +309,36 @@ public final class MarshallableFunctions {
       }
    }
 
-   private static final class SetValueIfAbsentReturnBoolean<K, V>
-      extends AbstractSetValueIfAbsentReturnBoolean<K, V> {
-      private SetValueIfAbsentReturnBoolean(MetaParam.Writable[] metas) {
-         super(metas);
-      }
+   @ProtoTypeId(ProtoStreamTypeIds.MF_SET_VALUE_IF_PRESENT_RETURN_PREV_OR_NULL)
+   public static final class SetValueIfPresentReturnPrevOrNull<K, V> implements BiFunction<V, ReadWriteEntryView<K, V>, V> {
+      private static final SetValueIfPresentReturnPrevOrNull INSTANCE = new SetValueIfPresentReturnPrevOrNull<>();
 
-      private static final SetValueIfAbsentReturnBoolean INSTANCE =
-         new SetValueIfAbsentReturnBoolean<>(new MetaParam.Writable[]{});
+      @ProtoFactory
       @SuppressWarnings("unchecked")
-      private static <K, V> BiFunction<V, ReadWriteEntryView<K, V>, Boolean> getInstance() {
-         return SetValueIfAbsentReturnBoolean.INSTANCE;
-      }
-   }
-
-   static final class SetValueMetasIfAbsentReturnBoolean<K, V>
-         extends AbstractSetValueIfAbsentReturnBoolean<K, V> implements LambdaWithMetas {
-      SetValueMetasIfAbsentReturnBoolean(MetaParam.Writable[] metas) {
-         super(metas);
+      static <K, V> SetValueIfPresentReturnPrevOrNull<K, V> getInstance() {
+         return SetValueIfPresentReturnPrevOrNull.INSTANCE;
       }
 
       @Override
-      public MetaParam.Writable[] metas() {
-         return metas;
+      public V apply(V v, ReadWriteEntryView<K, V> rw) {
+         return rw.find().map(prev -> {
+            rw.set(v);
+            return prev;
+         }).orElse(null);
       }
    }
 
-   private static abstract class AbstractSetValueIfPresentReturnPrevOrNull<K, V>
+   @ProtoTypeId(ProtoStreamTypeIds.MF_SET_VALUE_METAS_IF_PRESENT_RETURN_PREV_OR_NULL)
+   public static final class SetValueMetasIfPresentReturnPrevOrNull<K, V> extends AbstractParamWritableFunction
          implements BiFunction<V, ReadWriteEntryView<K, V>, V> {
-      final MetaParam.Writable[] metas;
 
-      protected AbstractSetValueIfPresentReturnPrevOrNull(MetaParam.Writable[] metas) {
-         this.metas = metas;
+      SetValueMetasIfPresentReturnPrevOrNull(MetaParam.Writable[] metas) {
+         super(metas);
+      }
+
+      @ProtoFactory
+      SetValueMetasIfPresentReturnPrevOrNull(MarshallableArray<MetaParam.Writable> metas) {
+         super(metas);
       }
 
       @Override
@@ -308,83 +350,66 @@ public final class MarshallableFunctions {
       }
    }
 
-   private static final class SetValueIfPresentReturnPrevOrNull<K, V>
-         extends AbstractSetValueIfPresentReturnPrevOrNull<K, V> {
-      protected SetValueIfPresentReturnPrevOrNull(MetaParam.Writable[] metas) {
-         super(metas);
-      }
+   @ProtoTypeId(ProtoStreamTypeIds.MF_SET_VALUE_IF_PRESENT_RETURN_BOOLEAN)
+   public static final class SetValueIfPresentReturnBoolean<K, V> implements BiFunction<V, ReadWriteEntryView<K, V>, Boolean> {
+      private static final SetValueIfPresentReturnBoolean INSTANCE = new SetValueIfPresentReturnBoolean<>();
 
-      private static final SetValueIfPresentReturnPrevOrNull INSTANCE =
-         new SetValueIfPresentReturnPrevOrNull<>(new MetaParam.Writable[]{});
+      @ProtoFactory
       @SuppressWarnings("unchecked")
-      private static <K, V> BiFunction<V, ReadWriteEntryView<K, V>, V> getInstance() {
-         return SetValueIfPresentReturnPrevOrNull.INSTANCE;
-      }
-   }
-
-   static final class SetValueMetasIfPresentReturnPrevOrNull<K, V>
-         extends AbstractSetValueIfPresentReturnPrevOrNull<K, V> implements LambdaWithMetas {
-      protected SetValueMetasIfPresentReturnPrevOrNull(MetaParam.Writable[] metas) {
-         super(metas);
-      }
-
-      @Override
-      public MetaParam.Writable[] metas() {
-         return metas;
-      }
-   }
-
-   private static abstract class AbstractSetValueIfPresentReturnBoolean<K, V>
-         implements BiFunction<V, ReadWriteEntryView<K, V>, Boolean> {
-      final MetaParam.Writable[] metas;
-
-      private AbstractSetValueIfPresentReturnBoolean(MetaParam.Writable[] metas) {
-         this.metas = metas;
+      static <K, V> SetValueIfPresentReturnBoolean<K, V> getInstance() {
+         return SetValueIfPresentReturnBoolean.INSTANCE;
       }
 
       @Override
       public Boolean apply(V v, ReadWriteEntryView<K, V> rw) {
          return rw.find().map(prev -> {
-            rw.set(v, metas);
+            rw.set(v);
             return true;
          }).orElse(false);
       }
    }
 
-   private static final class SetValueIfPresentReturnBoolean<K, V>
-      extends AbstractSetValueIfPresentReturnBoolean<K, V> {
-      private SetValueIfPresentReturnBoolean(MetaParam.Writable[] metas) {
-         super(metas);
-      }
-
-      private static final SetValueIfPresentReturnBoolean INSTANCE =
-         new SetValueIfPresentReturnBoolean<>(new MetaParam.Writable[]{});
-      @SuppressWarnings("unchecked")
-      private static <K, V> BiFunction<V, ReadWriteEntryView<K, V>, Boolean> getInstance() {
-         return SetValueIfPresentReturnBoolean.INSTANCE;
-      }
-   }
-
-   static final class SetValueMetasIfPresentReturnBoolean<K, V>
-         extends AbstractSetValueIfPresentReturnBoolean<K, V> implements LambdaWithMetas {
+   @ProtoTypeId(ProtoStreamTypeIds.MF_SET_VALUE_METAS_IF_PRESENT_RETURN_BOOLEAN)
+   public static final class SetValueMetasIfPresentReturnBoolean<K, V> extends AbstractParamWritableFunction
+         implements BiFunction<V, ReadWriteEntryView<K, V>, Boolean> {
       SetValueMetasIfPresentReturnBoolean(MetaParam.Writable[] metas) {
          super(metas);
       }
 
+      @ProtoFactory
+      SetValueMetasIfPresentReturnBoolean(MarshallableArray<MetaParam.Writable> metas) {
+         super(metas);
+      }
+
       @Override
-      public MetaParam.Writable[] metas() {
-         return metas;
+      public Boolean apply(V v, ReadWriteEntryView<K, V> rw) {
+         return rw.find().map(prev -> {
+            rw.set(v);
+            return true;
+         }).orElse(false);
       }
    }
 
-   static final class SetValueIfEqualsReturnBoolean<K, V>
-         implements BiFunction<V, ReadWriteEntryView<K, V>, Boolean>, LambdaWithMetas {
-      final V oldValue;
-      final MetaParam.Writable[] metas;
+   @ProtoTypeId(ProtoStreamTypeIds.MF_SET_VALUE_IF_EQUALS_RETURN_BOOLEAN)
+   public static final class SetValueIfEqualsReturnBoolean<K, V> extends AbstractParamWritableFunction
+         implements BiFunction<V, ReadWriteEntryView<K, V>, Boolean> {
 
-      public SetValueIfEqualsReturnBoolean(V oldValue, MetaParam.Writable[] metas) {
+      final V oldValue;
+
+      SetValueIfEqualsReturnBoolean(V oldValue, MetaParam.Writable[] metas) {
+         super(metas);
          this.oldValue = oldValue;
-         this.metas = metas;
+      }
+
+      @ProtoFactory
+      SetValueIfEqualsReturnBoolean(MarshallableObject<V> oldValue, MarshallableArray<MetaParam.Writable> metas) {
+         super(metas);
+         this.oldValue = MarshallableObject.unwrap(oldValue);
+      }
+
+      @ProtoField(2)
+      MarshallableObject<V> getOldValue() {
+         return MarshallableObject.create(oldValue);
       }
 
       @Override
@@ -397,15 +422,10 @@ public final class MarshallableFunctions {
             return false;
          }).orElse(false);
       }
-
-      @Override
-      public MetaParam.Writable[] metas() {
-         return metas;
-      }
    }
 
-   private static final class RemoveReturnPrevOrNull<K, V>
-         implements Function<ReadWriteEntryView<K, V>, V> {
+   @ProtoTypeId(ProtoStreamTypeIds.MF_REMOVE_RETURN_PREV_OR_NULL)
+   public static final class RemoveReturnPrevOrNull<K, V> implements Function<ReadWriteEntryView<K, V>, V> {
       @Override
       public V apply(ReadWriteEntryView<K, V> rw) {
          V prev = rw.find().orElse(null);
@@ -414,14 +434,16 @@ public final class MarshallableFunctions {
       }
 
       private static final RemoveReturnPrevOrNull INSTANCE = new RemoveReturnPrevOrNull<>();
+
+      @ProtoFactory
       @SuppressWarnings("unchecked")
-      private static <K, V> Function<ReadWriteEntryView<K, V>, V> getInstance() {
+      static <K, V> RemoveReturnPrevOrNull<K, V> getInstance() {
          return RemoveReturnPrevOrNull.INSTANCE;
       }
    }
 
-   private static final class RemoveReturnBoolean<K, V>
-         implements Function<ReadWriteEntryView<K, V>, Boolean> {
+   @ProtoTypeId(ProtoStreamTypeIds.MF_REMOVE_RETURN_BOOLEAN)
+   public static final class RemoveReturnBoolean<K, V> implements Function<ReadWriteEntryView<K, V>, Boolean> {
       @Override
       public Boolean apply(ReadWriteEntryView<K, V> rw) {
          boolean success = rw.find().isPresent();
@@ -430,14 +452,16 @@ public final class MarshallableFunctions {
       }
 
       private static final RemoveReturnBoolean INSTANCE = new RemoveReturnBoolean<>();
+
+      @ProtoFactory
       @SuppressWarnings("unchecked")
-      private static <K, V> Function<ReadWriteEntryView<K, V>, Boolean> getInstance() {
+      static <K, V> RemoveReturnBoolean<K, V> getInstance() {
          return RemoveReturnBoolean.INSTANCE;
       }
    }
 
-   private static final class RemoveIfValueEqualsReturnBoolean<K, V>
-         implements BiFunction<V, ReadWriteEntryView<K, V>, Boolean> {
+   @ProtoTypeId(ProtoStreamTypeIds.MF_REMOVE_IF_VALUE_EQUALS_RETURN_BOOLEAN)
+   public static final class RemoveIfValueEqualsReturnBoolean<K, V> implements BiFunction<V, ReadWriteEntryView<K, V>, Boolean> {
       @Override
       public Boolean apply(V v, ReadWriteEntryView<K, V> rw) {
          return rw.find().map(prev -> {
@@ -450,19 +474,40 @@ public final class MarshallableFunctions {
          }).orElse(false);
       }
 
-      private static final RemoveIfValueEqualsReturnBoolean INSTANCE =
-         new RemoveIfValueEqualsReturnBoolean<>();
+      private static final RemoveIfValueEqualsReturnBoolean INSTANCE = new RemoveIfValueEqualsReturnBoolean<>();
+
+      @ProtoFactory
       @SuppressWarnings("unchecked")
-      private static <K, V> BiFunction<V, ReadWriteEntryView<K, V>, Boolean> getInstance() {
+      static <K, V> RemoveIfValueEqualsReturnBoolean<K, V> getInstance() {
          return RemoveIfValueEqualsReturnBoolean.INSTANCE;
       }
    }
 
-   private static abstract class AbstractSetValue<K, V> implements BiConsumer<V, WriteEntryView<K, V>> {
-      final MetaParam.Writable[] metas;
+   @ProtoTypeId(ProtoStreamTypeIds.MF_SET_VALUE)
+   public static final class SetValue<K, V> implements BiConsumer<V, WriteEntryView<K, V>> {
+      private static final SetValue INSTANCE = new SetValue<>();
 
-      protected AbstractSetValue(MetaParam.Writable[] metas) {
-         this.metas = metas;
+      @ProtoFactory
+      @SuppressWarnings("unchecked")
+      static <K, V> SetValue<K, V> getInstance() {
+         return SetValue.INSTANCE;
+      }
+
+      @Override
+      public void accept(V v, WriteEntryView<K, V> wo) {
+         wo.set(v);
+      }
+   }
+
+   @ProtoTypeId(ProtoStreamTypeIds.MF_SET_VALUE_META)
+   public static final class SetValueMetas<K, V> extends AbstractParamWritableFunction implements BiConsumer<V, WriteEntryView<K, V>> {
+      SetValueMetas(MetaParam.Writable[] metas) {
+         super(metas);
+      }
+
+      @ProtoFactory
+      SetValueMetas(MarshallableArray<MetaParam.Writable> metas) {
+         super(metas);
       }
 
       @Override
@@ -471,99 +516,88 @@ public final class MarshallableFunctions {
       }
    }
 
-   private static final class SetValue<K, V> extends AbstractSetValue<K, V> {
-      protected SetValue(MetaParam.Writable[] metas) {
-         super(metas);
-      }
-
-      private static final SetValue INSTANCE = new SetValue<>(new MetaParam.Writable[0]);
-      @SuppressWarnings("unchecked")
-      private static <K, V> BiConsumer<V, WriteEntryView<K, V>> getInstance() {
-         return SetValue.INSTANCE;
-      }
-   }
-
-   static final class SetValueMetas<K, V> extends AbstractSetValue<K, V> implements LambdaWithMetas {
-      SetValueMetas(MetaParam.Writable[] metas) {
-         super(metas);
-      }
-
-      @Override
-      public MetaParam.Writable[] metas() {
-         return metas;
-      }
-   }
-
-   private static final class SetInternalCacheValue<V> implements BiConsumer<InternalCacheValue<V>, WriteEntryView<?, V>> {
+   @ProtoTypeId(ProtoStreamTypeIds.MF_SET_INTERNAL_CACHE_VALUE)
+   public static final class SetInternalCacheValue<K, V> implements BiConsumer<InternalCacheValue<V>, WriteEntryView<K, V>> {
       private static final SetInternalCacheValue INSTANCE = new SetInternalCacheValue<>();
+
+      @ProtoFactory
       @SuppressWarnings("unchecked")
-      private static <K, V> BiConsumer<V, WriteEntryView<K, V>> getInstance() {
+      static <K, V> SetInternalCacheValue<K, V> getInstance() {
          return SetInternalCacheValue.INSTANCE;
       }
 
       @Override
-      public void accept(InternalCacheValue<V> icv, WriteEntryView<?, V> view) {
+      public void accept(InternalCacheValue<V> icv, WriteEntryView<K, V> view) {
          view.set(icv.getValue(), icv.getMetadata());
       }
    }
 
-   private static final class Remove<V> implements Consumer<WriteEntryView<?, V>> {
+   @ProtoTypeId(ProtoStreamTypeIds.MF_REMOVE)
+   public static final class Remove<K, V> implements Consumer<WriteEntryView<K, V>> {
       @Override
-      public void accept(WriteEntryView<?, V> wo) {
+      public void accept(WriteEntryView<K, V> wo) {
          wo.remove();
       }
 
       private static final Remove INSTANCE = new Remove<>();
+
+      @ProtoFactory
       @SuppressWarnings("unchecked")
-      private static <K, V> Consumer<WriteEntryView<K, V>> getInstance() {
+      static <K, V> Remove<K, V> getInstance() {
          return Remove.INSTANCE;
       }
    }
 
-   private static final class ReturnReadWriteFind<K, V>
-         implements Function<ReadWriteEntryView<K, V>, Optional<V>> {
+   @ProtoTypeId(ProtoStreamTypeIds.MF_RETURN_READ_WRITE_FIND)
+   public static final class ReturnReadWriteFind<K, V> implements Function<ReadWriteEntryView<K, V>, Optional<V>> {
       @Override
       public Optional<V> apply(ReadWriteEntryView<K, V> rw) {
          return rw.find();
       }
 
       private static final ReturnReadWriteFind INSTANCE = new ReturnReadWriteFind<>();
+
+      @ProtoFactory
       @SuppressWarnings("unchecked")
-      private static <K, V> Function<ReadWriteEntryView<K, V>, Optional<V>> getInstance() {
+      static <K, V> ReturnReadWriteFind<K, V> getInstance() {
          return ReturnReadWriteFind.INSTANCE;
       }
    }
 
-   private static final class ReturnReadWriteGet<K, V>
-      implements Function<ReadWriteEntryView<K, V>, V> {
+   @ProtoTypeId(ProtoStreamTypeIds.MF_RETURN_READ_WRITE_GET)
+   public static final class ReturnReadWriteGet<K, V> implements Function<ReadWriteEntryView<K, V>, V> {
       @Override
       public V apply(ReadWriteEntryView<K, V> rw) {
          return rw.get();
       }
 
       private static final ReturnReadWriteGet INSTANCE = new ReturnReadWriteGet<>();
+
+      @ProtoFactory
       @SuppressWarnings("unchecked")
-      private static <K, V> Function<ReadWriteEntryView<K, V>, V> getInstance() {
+      static <K, V> ReturnReadWriteGet<K, V> getInstance() {
          return ReturnReadWriteGet.INSTANCE;
       }
    }
 
-   private static final class ReturnReadWriteView<K, V>
-      implements Function<ReadWriteEntryView<K, V>, ReadWriteEntryView<K, V>> {
+   @ProtoTypeId(ProtoStreamTypeIds.MF_RETURN_READ_WRITE_VIEW)
+   public static final class ReturnReadWriteView<K, V> implements Function<ReadWriteEntryView<K, V>, ReadWriteEntryView<K, V>> {
       @Override
       public ReadWriteEntryView<K, V> apply(ReadWriteEntryView<K, V> rw) {
          return rw;
       }
 
       private static final ReturnReadWriteView INSTANCE = new ReturnReadWriteView<>();
+
+      @ProtoFactory
       @SuppressWarnings("unchecked")
-      private static <K, V> Function<ReadWriteEntryView<K, V>, ReadWriteEntryView<K, V>> getInstance() {
+      static <K, V> ReturnReadWriteView<K, V> getInstance() {
          return ReturnReadWriteView.INSTANCE;
       }
    }
 
-   private static final class ReturnReadOnlyFindOrNull<K, V>
-      implements Function<ReadEntryView<K, V>, V> {
+   @ProtoTypeId(ProtoStreamTypeIds.MF_RETURN_READ_ONLY_FIND_OR_NULL)
+   public static final class ReturnReadOnlyFindOrNull<K, V> implements Function<ReadEntryView<K, V>, V> {
       @Override
       public V apply(ReadEntryView<K, V> ro) {
          return ro.find().orElse(null);
@@ -571,13 +605,15 @@ public final class MarshallableFunctions {
 
       private static final ReturnReadOnlyFindOrNull INSTANCE = new ReturnReadOnlyFindOrNull<>();
 
-      private static <K, V> Function<ReadEntryView<K, V>, V> getInstance() {
+      @ProtoFactory
+      @SuppressWarnings("unchecked")
+      static <K, V> ReturnReadOnlyFindOrNull<K, V> getInstance() {
          return INSTANCE;
       }
    }
 
-   private static final class ReturnReadOnlyFindIsPresent<K, V>
-      implements Function<ReadEntryView<K, V>, Boolean> {
+   @ProtoTypeId(ProtoStreamTypeIds.MF_RETURN_READ_ONLY_FIND_IS_PRESENT)
+   public static final class ReturnReadOnlyFindIsPresent<K, V> implements Function<ReadEntryView<K, V>, Boolean> {
       @Override
       public Boolean apply(ReadEntryView<K, V> ro) {
          return ro.find().isPresent();
@@ -585,12 +621,15 @@ public final class MarshallableFunctions {
 
       private static final ReturnReadOnlyFindIsPresent INSTANCE = new ReturnReadOnlyFindIsPresent<>();
 
-      private static <K, V> Function<ReadEntryView<K, V>, Boolean> getInstance() {
+      @ProtoFactory
+      @SuppressWarnings("unchecked")
+      static <K, V> ReturnReadOnlyFindIsPresent<K, V> getInstance() {
          return INSTANCE;
       }
    }
 
-   private static final class Identity<T> implements InjectiveFunction<T, T>, UnaryOperator<T> {
+   @ProtoTypeId(ProtoStreamTypeIds.MF_IDENTITY)
+   public static final class Identity<T> implements InjectiveFunction<T, T>, UnaryOperator<T> {
       @Override
       public T apply(T o) {
          return o;
@@ -598,7 +637,8 @@ public final class MarshallableFunctions {
 
       private static final Identity INSTANCE = new Identity<>();
 
-      private static <T> Function<T, T> getInstance() {
+      @ProtoFactory
+      static <T> Identity<T> getInstance() {
          return INSTANCE;
       }
    }
@@ -606,5 +646,4 @@ public final class MarshallableFunctions {
    private MarshallableFunctions() {
       // No-op, holds static variables
    }
-
 }

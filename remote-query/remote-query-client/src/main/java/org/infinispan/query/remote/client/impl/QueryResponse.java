@@ -6,19 +6,19 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
-import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.jboss.marshalling.Externalize;
 
 /**
  * @author anistor@redhat.com
  * @since 6.0
  */
+@Externalize(Externalizers.QueryResponseExternalizer.class)
 @ProtoTypeId(ProtoStreamTypeIds.REMOTE_QUERY_RESPONSE)
-@SerializeWith(Externalizers.QueryResponseExternalizer.class)
 public final class QueryResponse implements BaseQueryResponse {
 
    private int numResults;
@@ -31,7 +31,7 @@ public final class QueryResponse implements BaseQueryResponse {
 
    private boolean hitCountExact;
 
-   @ProtoField(number = 1, defaultValue = "0")
+   @ProtoField(1)
    public int getNumResults() {
       return numResults;
    }
@@ -40,7 +40,7 @@ public final class QueryResponse implements BaseQueryResponse {
       this.numResults = numResults;
    }
 
-   @ProtoField(number = 2, defaultValue = "0")
+   @ProtoField(2)
    public int getProjectionSize() {
       return projectionSize;
    }
@@ -92,7 +92,7 @@ public final class QueryResponse implements BaseQueryResponse {
    }
 
    @Override
-   @ProtoField(number = 4, defaultValue = "-1")
+   @ProtoField(4)
    public int hitCount() {
       return hitCount;
    }

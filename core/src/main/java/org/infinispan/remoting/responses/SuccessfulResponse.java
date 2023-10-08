@@ -1,13 +1,18 @@
 package org.infinispan.remoting.responses;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
+import java.util.Collection;
+import java.util.Map;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.container.entries.ImmortalCacheValue;
+import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.container.entries.MortalCacheValue;
+import org.infinispan.container.entries.TransientCacheValue;
+import org.infinispan.container.entries.TransientMortalCacheValue;
+import org.infinispan.container.entries.metadata.MetadataImmortalCacheValue;
+import org.infinispan.container.entries.metadata.MetadataMortalCacheValue;
+import org.infinispan.container.entries.metadata.MetadataTransientCacheValue;
+import org.infinispan.container.entries.metadata.MetadataTransientMortalCacheValue;
 
 /**
  * A successful response
@@ -15,71 +20,59 @@ import org.infinispan.marshall.core.Ids;
  * @author Manik Surtani
  * @since 4.0
  */
-public class SuccessfulResponse<T> extends ValidResponse {
-   public static final SuccessfulResponse SUCCESSFUL_EMPTY_RESPONSE = new SuccessfulResponse<>(null);
+public interface SuccessfulResponse<T> extends ValidResponse<T> {
 
-   private final T responseValue;
+   SuccessfulResponse SUCCESSFUL_EMPTY_RESPONSE = new SuccessfulObjResponse<>(null);
 
-   protected SuccessfulResponse(T responseValue) {
-      this.responseValue = responseValue;
-   }
+   static SuccessfulResponse<?> create(Object rv) {
+      if (rv == null)
+         return SUCCESSFUL_EMPTY_RESPONSE;
 
-   @SuppressWarnings("unchecked")
-   public static <T> SuccessfulResponse<T> create(T responseValue) {
-      return responseValue == null ? SUCCESSFUL_EMPTY_RESPONSE : new SuccessfulResponse<>(responseValue);
-   }
+      if (rv instanceof Long l)
+         return new SuccessfulLongResponse(l);
 
-   @Override
-   public boolean isSuccessful() {
-      return true;
-   }
+      if (rv instanceof Boolean b)
+         return new SuccessfulBooleanResponse(b);
 
-   public T getResponseValue() {
-      return responseValue;
-   }
+      if (rv instanceof InternalCacheValue<?>) {
+         if (rv instanceof MetadataImmortalCacheValue v)
+            return new SuccessfulMetadataImmortalMortalCacheValueResponse(v);
 
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+         if (rv instanceof MetadataTransientMortalCacheValue v)
+            return new SuccessfulMetadataTransientMortalCacheValueResponse(v);
 
-      SuccessfulResponse that = (SuccessfulResponse) o;
+         if (rv instanceof MetadataMortalCacheValue v)
+            return new SuccessfulMetadataMortalCacheValueResponse(v);
 
-      if (responseValue != null ? !responseValue.equals(that.responseValue) : that.responseValue != null) return false;
+         if (rv instanceof MetadataTransientCacheValue v)
+            return new SuccessfulMetadataTransientCacheValueResponse(v);
 
-      return true;
-   }
+         if (rv instanceof TransientMortalCacheValue v)
+            return new SuccessfulTransientMortalCacheValueResponse(v);
 
-   @Override
-   public int hashCode() {
-      return responseValue != null ? responseValue.hashCode() : 0;
-   }
+         if (rv instanceof MortalCacheValue v)
+            return new SuccessfulMortalCacheValueResponse(v);
 
-   @Override
-   public String toString() {
-      return "SuccessfulResponse(" + Util.toStr(responseValue) + ")";
-   }
+         if (rv instanceof TransientCacheValue v)
+            return new SuccessfulTransientCacheValueResponse(v);
 
-   public static class Externalizer extends AbstractExternalizer<SuccessfulResponse> {
-      @Override
-      public void writeObject(ObjectOutput output, SuccessfulResponse response) throws IOException {
-         output.writeObject(response.responseValue);
+         if (rv instanceof ImmortalCacheValue v)
+            return new SuccessfulImmortalCacheValueResponse(v);
       }
 
-      @Override
-      public SuccessfulResponse readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return create(input.readObject());
-      }
+      if (rv instanceof Collection<?> collection && !(rv instanceof IntSet))
+         return new SuccessfulCollectionResponse<>(collection);
 
-      @Override
-      public Integer getId() {
-         return Ids.SUCCESSFUL_RESPONSE;
+      if (rv.getClass().isArray()) {
+         if (rv instanceof byte[] bytes) {
+            return new SuccessfulBytesResponse(bytes);
+         }
+         // suppress unchecked
+         return new SuccessfulArrayResponse<>((Object[]) rv);
       }
+      if (rv instanceof Map<?, ?> map)
+         return new SuccessfulMapResponse<>(map);
 
-      @Override
-      public Set<Class<? extends SuccessfulResponse>> getTypeClasses() {
-         return Util.<Class<? extends SuccessfulResponse>>asSet(SuccessfulResponse.class);
-      }
+      return new SuccessfulObjResponse<>(rv);
    }
-
 }

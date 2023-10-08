@@ -2,6 +2,7 @@ package org.infinispan.stream.impl.intops.primitive.l;
 
 import java.util.stream.LongStream;
 
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -13,6 +14,7 @@ public class DistinctLongOperation implements IntermediateOperation<Long, LongSt
    private static final DistinctLongOperation OPERATION = new DistinctLongOperation();
    private DistinctLongOperation() { }
 
+   @ProtoFactory
    public static DistinctLongOperation getInstance() {
       return OPERATION;
    }

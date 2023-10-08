@@ -1,9 +1,5 @@
 package org.infinispan.reactive.publisher.impl.commands.batch;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
@@ -11,36 +7,36 @@ import java.util.function.Function;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.marshall.protostream.impl.MarshallableSet;
+import org.infinispan.marshall.protostream.impl.WrappedMessages;
+import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.reactive.publisher.impl.PublisherHandler;
 import org.infinispan.util.ByteString;
 import org.reactivestreams.Publisher;
 
+@ProtoTypeId(ProtoStreamTypeIds.INITIAL_PUBLISHER_COMMAND)
 public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements TopologyAffectedCommand {
    public static final byte COMMAND_ID = 18;
 
-   private String requestId;
-   private DeliveryGuarantee deliveryGuarantee;
-   private int batchSize;
-   private IntSet segments;
-   private Set<K> keys;
-   private Set<K> excludedKeys;
-   private long explicitFlags;
-   private boolean entryStream;
-   private boolean trackKeys;
-   private Function<? super Publisher<I>, ? extends Publisher<R>> transformer;
+   final String requestId;
+   final DeliveryGuarantee deliveryGuarantee;
+   final int batchSize;
+   final IntSet segments;
+   final Set<K> keys;
+   final Set<K> excludedKeys;
+   final long explicitFlags;
+   final boolean entryStream;
+   final boolean trackKeys;
+   final Function<? super Publisher<I>, ? extends Publisher<R>> transformer;
    private int topologyId = -1;
-
-   // Only here for CommandIdUniquenessTest
-   private InitialPublisherCommand() { super(null); }
-
-   public InitialPublisherCommand(ByteString cacheName) {
-      super(cacheName);
-   }
 
    public InitialPublisherCommand(ByteString cacheName, String requestId, DeliveryGuarantee deliveryGuarantee,
          int batchSize, IntSet segments, Set<K> keys, Set<K> excludedKeys, long explicitFlags, boolean entryStream,
@@ -58,14 +54,37 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
       this.transformer = transformer;
    }
 
+
+   @ProtoFactory
+   InitialPublisherCommand(ByteString cacheName, String requestId, DeliveryGuarantee deliveryGuarantee, int batchSize,
+                           WrappedMessage wrappedSegments, MarshallableSet<K> wrappedKeys, MarshallableSet<K> wrappedExcludedKeys,
+                           long explicitFlags, boolean entryStream, boolean trackKeys, int topologyId,
+                           MarshallableObject<Function<? super Publisher<I>, ? extends Publisher<R>>> wrappedTransformer) {
+      super(cacheName);
+      this.requestId = requestId;
+      this.deliveryGuarantee = deliveryGuarantee;
+      this.batchSize = batchSize;
+      this.segments = WrappedMessages.unwrap(wrappedSegments);
+      this.keys = MarshallableSet.unwrap(wrappedKeys);
+      this.excludedKeys = MarshallableSet.unwrap(wrappedExcludedKeys);
+      this.explicitFlags = explicitFlags;
+      this.entryStream = entryStream;
+      this.trackKeys = trackKeys;
+      this.transformer = MarshallableObject.unwrap(wrappedTransformer);
+      this.topologyId = topologyId;
+   }
+
+   @ProtoField(2)
    public String getRequestId() {
       return requestId;
    }
 
+   @ProtoField(3)
    public DeliveryGuarantee getDeliveryGuarantee() {
       return deliveryGuarantee;
    }
 
+   @ProtoField(4)
    public int getBatchSize() {
       return batchSize;
    }
@@ -74,22 +93,40 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
       return segments;
    }
 
+   @ProtoField(5)
+   WrappedMessage getWrappedSegments() {
+      return WrappedMessages.orElseNull(segments);
+   }
+
    public Set<K> getKeys() {
       return keys;
+   }
+
+   @ProtoField(number = 6, name = "keys")
+   MarshallableSet<K> getWrappedKeys() {
+      return MarshallableSet.create(keys);
    }
 
    public Set<K> getExcludedKeys() {
       return excludedKeys;
    }
 
+   @ProtoField(number = 7, name = "excludedKeys")
+   MarshallableSet<K> getWrappedExcludedKeys() {
+      return MarshallableSet.create(excludedKeys);
+   }
+
+   @ProtoField(8)
    public long getExplicitFlags() {
       return explicitFlags;
    }
 
+   @ProtoField(9)
    public boolean isEntryStream() {
       return entryStream;
    }
 
+   @ProtoField(10)
    public boolean isTrackKeys() {
       return trackKeys;
    }
@@ -98,17 +135,13 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
       return transformer;
    }
 
-   @Override
-   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
-      if (transformer instanceof InjectableComponent) {
-         ((InjectableComponent) transformer).inject(componentRegistry);
-      }
-
-      PublisherHandler publisherHandler = componentRegistry.getPublisherHandler().running();
-      return publisherHandler.register(this);
+   @ProtoField(number = 11, name = "transformer")
+   MarshallableObject<Function<? super Publisher<I>, ? extends Publisher<R>>> getWrappedTransformer() {
+      return MarshallableObject.create(transformer);
    }
 
    @Override
+   @ProtoField(12)
    public int getTopologyId() {
       return topologyId;
    }
@@ -129,31 +162,12 @@ public class InitialPublisherCommand<K, I, R> extends BaseRpcCommand implements 
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeUTF(requestId);
-      MarshallUtil.marshallEnum(deliveryGuarantee, output);
-      UnsignedNumeric.writeUnsignedInt(output, batchSize);
-      output.writeObject(segments);
-      MarshallUtil.marshallCollection(keys, output);
-      MarshallUtil.marshallCollection(excludedKeys, output);
-      // Maybe put the booleans into a single byte - only saves 2 bytes though
-      output.writeLong(explicitFlags);
-      output.writeBoolean(entryStream);
-      output.writeBoolean(trackKeys);
-      output.writeObject(transformer);
-   }
+   public CompletionStage<?> invokeAsync(ComponentRegistry componentRegistry) throws Throwable {
+      if (transformer instanceof InjectableComponent) {
+         ((InjectableComponent) transformer).inject(componentRegistry);
+      }
 
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      requestId = input.readUTF();
-      deliveryGuarantee = MarshallUtil.unmarshallEnum(input, DeliveryGuarantee::valueOf);
-      batchSize = UnsignedNumeric.readUnsignedInt(input);
-      segments = (IntSet) input.readObject();
-      keys = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
-      excludedKeys = MarshallUtil.unmarshallCollectionUnbounded(input, HashSet::new);
-      explicitFlags = input.readLong();
-      entryStream = input.readBoolean();
-      trackKeys = input.readBoolean();
-      transformer = (Function) input.readObject();
+      PublisherHandler publisherHandler = componentRegistry.getPublisherHandler().running();
+      return publisherHandler.register(this);
    }
 }

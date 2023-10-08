@@ -107,7 +107,7 @@ public class AnchoredKeysOperationsTest extends AbstractAnchoredKeysTest {
 
    private Address addNode() {
       GlobalConfigurationBuilder managerBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      managerBuilder.defaultCacheName(CACHE_NAME).serialization().addContextInitializer(TestDataSCI.INSTANCE);
+      managerBuilder.defaultCacheName(CACHE_NAME).serialization().addContextInitializers(ControlledConsistentHashFactory.SCI.INSTANCE, TestDataSCI.INSTANCE);
       if (serverMode) {
          managerBuilder.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
       }

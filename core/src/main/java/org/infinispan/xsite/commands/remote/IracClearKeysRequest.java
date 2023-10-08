@@ -2,6 +2,9 @@ package org.infinispan.xsite.commands.remote;
 
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.irac.IracManager;
@@ -12,13 +15,11 @@ import org.infinispan.xsite.irac.IracManager;
  * @author Pedro Ruivo
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.IRAC_CLEAR_KEYS_COMMAND)
 public class IracClearKeysRequest extends IracUpdateKeyRequest<Void> {
 
 
-   public IracClearKeysRequest() {
-      super(null);
-   }
-
+   @ProtoFactory
    public IracClearKeysRequest(ByteString cacheName) {
       super(cacheName);
    }

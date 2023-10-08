@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.UnaryOperator;
 
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.remoting.transport.Address;
@@ -27,7 +25,7 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
     * The membership of the cache topology that uses this CH.
     */
    protected final List<Address> members;
-   protected final float[] capacityFactors;
+   protected final List<Float> capacityFactors;
 
    protected AbstractConsistentHash(int numSegments, List<Address> members, Map<Address, Float> capacityFactors) {
       if (numSegments < 1)
@@ -37,14 +35,13 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
       if (capacityFactors == null) {
          this.capacityFactors = null;
       } else {
-         this.capacityFactors = new float[members.size()];
-         for (int i = 0; i < this.capacityFactors.length; i++) {
-            this.capacityFactors[i] = capacityFactors.get(members.get(i));
-         }
+         this.capacityFactors = new ArrayList<>(members.size());
+         for (Address member : members)
+            this.capacityFactors.add(capacityFactors.get(member));
       }
    }
 
-   protected AbstractConsistentHash(int numSegments, List<Address> members, float[] capacityFactors) {
+   protected AbstractConsistentHash(int numSegments, List<Address> members, List<Float> capacityFactors) {
       if (numSegments < 1)
          throw new IllegalArgumentException("The number of segments must be strictly positive");
 
@@ -70,15 +67,11 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
       return members;
    }
 
-   protected static Hash parseHashFunction(ScopedPersistentState state) {
-      return Util.getInstance(state.getProperty(ConsistentHashPersistenceConstants.STATE_HASH_FUNCTION), null);
-   }
-
-   protected static float[] parseCapacityFactors(ScopedPersistentState state) {
+   protected static List<Float> parseCapacityFactors(ScopedPersistentState state) {
       int numCapacityFactors = Integer.parseInt(state.getProperty(STATE_CAPACITY_FACTORS));
-      float[] capacityFactors = new float[numCapacityFactors];
+      List<Float> capacityFactors = new ArrayList<>(numCapacityFactors);
       for (int i = 0; i < numCapacityFactors; i++) {
-         capacityFactors[i] = Float.parseFloat(state.getProperty(String.format(STATE_CAPACITY_FACTOR, i)));
+         capacityFactors.add(Float.parseFloat(state.getProperty(String.format(STATE_CAPACITY_FACTOR, i))));
       }
       return capacityFactors;
    }
@@ -92,9 +85,9 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
          state.setProperty(String.format(ConsistentHashPersistenceConstants.STATE_MEMBER, i),
             members.get(i).toString());
       }
-      state.setProperty(STATE_CAPACITY_FACTORS, capacityFactors.length);
-      for (int i = 0; i < capacityFactors.length; i++) {
-         state.setProperty(String.format(STATE_CAPACITY_FACTOR, i), capacityFactors[i]);
+      state.setProperty(STATE_CAPACITY_FACTORS, capacityFactors.size());
+      for (int i = 0; i < capacityFactors.size(); i++) {
+         state.setProperty(String.format(STATE_CAPACITY_FACTOR, i), capacityFactors.get(i));
       }
    }
 
@@ -117,7 +110,7 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
       }
    }
 
-   static HashMap<Address, Integer> getMemberIndexMap(List<Address> members) {
+   public static HashMap<Address, Integer> getMemberIndexMap(List<Address> members) {
       HashMap<Address, Integer> memberIndexes = new HashMap<>(members.size());
       for (int i = 0; i < members.size(); i++) {
          memberIndexes.put(members.get(i), i);
@@ -131,7 +124,7 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
 
       Map<Address, Float> capacityFactorsMap = new HashMap<>(members.size());
       for (int i = 0; i < members.size(); i++) {
-         capacityFactorsMap.put(members.get(i), capacityFactors[i]);
+         capacityFactorsMap.put(members.get(i), capacityFactors.get(i));
       }
       return capacityFactorsMap;
    }
@@ -175,7 +168,7 @@ public abstract class AbstractConsistentHash implements ConsistentHash {
                if (allowMissing) continue;
                return null;
             }
-            remappedCapacityFactors.put(a, capacityFactors[i]);
+            remappedCapacityFactors.put(a, capacityFactors.get(i));
          }
       }
       return remappedCapacityFactors;

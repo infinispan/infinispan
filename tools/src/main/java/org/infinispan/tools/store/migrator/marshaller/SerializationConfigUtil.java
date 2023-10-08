@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.ClassAllowList;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
@@ -36,6 +35,7 @@ import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.tools.store.migrator.StoreProperties;
+import org.infinispan.tools.store.migrator.marshaller.common.AdvancedExternalizer;
 import org.infinispan.tools.store.migrator.marshaller.infinispan10.Infinispan10Marshaller;
 import org.infinispan.tools.store.migrator.marshaller.infinispan8.Infinispan8Marshaller;
 import org.infinispan.tools.store.migrator.marshaller.infinispan9.Infinispan9Marshaller;
@@ -46,7 +46,6 @@ public class SerializationConfigUtil {
       Marshaller marshaller = getMarshaller(props);
       builder.marshaller(marshaller);
       configureAllowList(props, builder);
-      configureExternalizers(props, builder);
       configureSerializationContextInitializers(props, builder);
    }
 
@@ -143,15 +142,6 @@ public class SerializationConfigUtil {
          return prop.split(",");
 
       return EMPTY_STRING_ARRAY;
-   }
-
-   private static void configureExternalizers(StoreProperties props, SerializationConfigurationBuilder builder) {
-      Map<Integer, AdvancedExternalizer> externalizerMap = getExternalizersFromProps(props);
-      if (externalizerMap == null)
-         return;
-
-      for (Map.Entry<Integer, AdvancedExternalizer> entry : externalizerMap.entrySet())
-         builder.addAdvancedExternalizer(entry.getKey(), entry.getValue());
    }
 
    // Expects externalizer string to be a comma-separated list of "<id>:<class>"

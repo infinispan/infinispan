@@ -1,19 +1,17 @@
 package org.infinispan.commands.control;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.context.Flag;
@@ -22,6 +20,10 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.marshall.protostream.impl.MarshallableList;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -39,6 +41,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.LOCK_CONTROL_COMMAND)
 public class LockControlCommand extends AbstractTransactionBoundaryCommand implements FlagAffectedCommand, TopologyAffectedCommand, TransactionalRemoteLockCommand {
 
    private static final Log log = LogFactory.getLog(LockControlCommand.class);
@@ -47,34 +50,47 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
 
    private List<Object> keys;
    private boolean unlock = false;
-   private long flags = EnumUtil.EMPTY_BIT_SET;
+   private long flags;
 
-   private LockControlCommand() {
-      super(null); // For command id uniqueness test
-   }
-
-   public LockControlCommand(ByteString cacheName) {
-      super(cacheName);
-   }
-
-   public LockControlCommand(Collection<?> keys, ByteString cacheName, long flags, GlobalTransaction gtx) {
-      super(cacheName);
-      if (keys != null) {
-         //building defensive copies is here in order to support replaceKey operation
-         this.keys = new ArrayList<>(keys);
-      } else {
-         this.keys = Collections.emptyList();
-      }
+   public LockControlCommand(Collection<?> keys, ByteString cacheName, long flags, GlobalTransaction globalTx) {
+      super(cacheName, globalTx);
+      //building defensive copies is here in order to support replaceKey operation
+      this.keys = keys == null ? Collections.emptyList() : new ArrayList<>(keys);
       this.flags = flags;
-      this.globalTx = gtx;
+      this.globalTx = globalTx;
    }
 
-   public LockControlCommand(Object key, ByteString cacheName, long flags, GlobalTransaction gtx) {
-      this(cacheName);
-      this.keys = new ArrayList<>(1);
-      this.keys.add(key);
-      this.flags = flags;
-      this.globalTx = gtx;
+   public LockControlCommand(Object key, ByteString cacheName, long flags, GlobalTransaction globalTx) {
+      this(Collections.singletonList(key), cacheName, flags, globalTx);
+   }
+
+   @ProtoFactory
+   LockControlCommand(int topologyId, ByteString cacheName, GlobalTransaction globalTransaction, MarshallableList<Object> wrappedKeys,
+                      boolean unlock, long flagsBitSetWithoutRemote) {
+      super(topologyId, cacheName, globalTransaction);
+      this.keys = MarshallableList.unwrap(wrappedKeys);
+      this.unlock = unlock;
+      this.flags = flagsBitSetWithoutRemote;
+   }
+
+   @ProtoField(number = 4, name = "keys")
+   MarshallableList<Object> getWrappedKeys() {
+      return MarshallableList.create(keys);
+   }
+
+   @ProtoField(5)
+   public boolean isUnlock() {
+      return unlock;
+   }
+
+   @Override
+   public long getFlagsBitSet() {
+      return flags;
+   }
+
+   @ProtoField(6)
+   long getFlagsBitSetWithoutRemote() {
+      return FlagBitSets.copyWithoutRemotableFlags(flags);
    }
 
    public void setGlobalTransaction(GlobalTransaction gtx) {
@@ -132,27 +148,6 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       return COMMAND_ID;
    }
 
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      super.writeTo(output);
-      output.writeBoolean(unlock);
-      MarshallUtil.marshallCollection(keys, output);
-      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(flags));
-   }
-
-   @Override
-   @SuppressWarnings("unchecked")
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      super.readFrom(input);
-      unlock = input.readBoolean();
-      keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
-      flags = input.readLong();
-   }
-
-   public boolean isUnlock() {
-      return unlock;
-   }
-
    public void setUnlock(boolean unlock) {
       this.unlock = unlock;
    }
@@ -162,40 +157,25 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       if (!super.equals(o)) return false;
-
       LockControlCommand that = (LockControlCommand) o;
-
-      if (unlock != that.unlock) return false;
-      if (flags != that.flags) return false;
-      if (!keys.equals(that.keys)) return false;
-
-      return true;
+      return unlock == that.unlock &&
+            flags == that.flags &&
+            Objects.equals(keys, that.keys);
    }
 
    @Override
    public int hashCode() {
-      int result = super.hashCode();
-      result = 31 * result + keys.hashCode();
-      result = 31 * result + (unlock ? 1 : 0);
-      result = 31 * result + (int) (flags ^ (flags >>> 32));
-      return result;
+      return Objects.hash(super.hashCode(), keys, unlock, flags);
    }
 
    @Override
    public String toString() {
-      return new StringBuilder()
-         .append("LockControlCommand{cache=").append(cacheName)
-         .append(", keys=").append(keys)
-         .append(", flags=").append(EnumUtil.prettyPrintBitSet(flags, Flag.class))
-         .append(", unlock=").append(unlock)
-         .append(", gtx=").append(globalTx)
-         .append("}")
-         .toString();
-   }
-
-   @Override
-   public long getFlagsBitSet() {
-      return flags;
+      return "LockControlCommand{cache=" + cacheName +
+            ", keys=" + keys +
+            ", flags=" + EnumUtil.prettyPrintBitSet(flags, Flag.class) +
+            ", unlock=" + unlock +
+            ", gtx=" + globalTx +
+            "}";
    }
 
    @Override

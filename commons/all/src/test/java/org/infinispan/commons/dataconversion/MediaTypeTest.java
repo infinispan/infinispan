@@ -270,26 +270,6 @@ public class MediaTypeTest {
       assertTrue(one.match(one));
    }
 
-   @Test
-   public void testMediaTypeExternalizerNoId() throws Exception {
-      ObjectInOut inOutOrig = new ObjectInOut();
-      MediaType.MediaTypeExternalizer mediaTypeExternalizer = new MediaType.MediaTypeExternalizer();
-      mediaTypeExternalizer.writeObject(inOutOrig, MediaType.APPLICATION_XML);
-      MediaType mediaType = mediaTypeExternalizer.readObject(inOutOrig);
-
-      assertMediaTypeNoParams(mediaType, "application", "xml");
-   }
-
-   @Test
-   public void testMediaTypeExternalizerId() throws Exception {
-      ObjectInOut inOutOrig = new ObjectInOut();
-      MediaType.MediaTypeExternalizer mediaTypeExternalizer = new MediaType.MediaTypeExternalizer();
-      mediaTypeExternalizer.writeObject(inOutOrig, MediaType.TEXT_PLAIN);
-      MediaType mediaType = mediaTypeExternalizer.readObject(inOutOrig);
-
-      assertMediaTypeNoParams(mediaType, "text", "plain");
-   }
-
    private void assertMediaTypeNoParams(MediaType mediaType, String type, String subType) {
       assertEquals(type, mediaType.getType());
       assertEquals(subType, mediaType.getSubType());

@@ -14,7 +14,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.LockingMode;
@@ -42,7 +41,7 @@ public class PrimaryOwnerChangePessimistTxTest extends MultipleCacheManagersTest
    @Override
    protected void createCacheManagers() throws Throwable {
       factory = new ControlledConsistentHashFactory.Default(new int[][]{{0, 1}, {0, 2}});
-      createClusteredCaches(3, TestDataSCI.INSTANCE, configuration(), new TransportFlags().withFD(true));
+      createClusteredCaches(3, ControlledConsistentHashFactory.SCI.INSTANCE, configuration(), new TransportFlags().withFD(true));
    }
 
    private ConfigurationBuilder configuration() {
@@ -118,7 +117,7 @@ public class PrimaryOwnerChangePessimistTxTest extends MultipleCacheManagersTest
    }
 
    private void nodeJoins() {
-      addClusterEnabledCacheManager(configuration(), new TransportFlags().withFD(true));
+      addClusterEnabledCacheManager(ControlledConsistentHashFactory.SCI.INSTANCE, configuration(), new TransportFlags().withFD(true));
       waitForClusterToForm();
    }
 

@@ -1,10 +1,8 @@
 package org.infinispan.lock.impl;
 
 import java.util.EnumSet;
-import java.util.Map;
 
 import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -19,14 +17,9 @@ import org.infinispan.lock.api.ClusteredLockManager;
 import org.infinispan.lock.configuration.ClusteredLockManagerConfiguration;
 import org.infinispan.lock.configuration.ClusteredLockManagerConfigurationBuilder;
 import org.infinispan.lock.configuration.Reliability;
-import org.infinispan.lock.impl.entries.ClusteredLockKey;
-import org.infinispan.lock.impl.entries.ClusteredLockValue;
-import org.infinispan.lock.impl.functions.IsLocked;
-import org.infinispan.lock.impl.functions.LockFunction;
-import org.infinispan.lock.impl.functions.UnlockFunction;
-import org.infinispan.lock.impl.lock.ClusteredLockFilter;
 import org.infinispan.lock.impl.manager.EmbeddedClusteredLockManager;
 import org.infinispan.lock.logging.Log;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.transaction.TransactionMode;
@@ -50,14 +43,8 @@ public class ClusteredLockModuleLifecycle implements ModuleLifecycle {
          return;
       }
 
-      final Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalConfiguration.serialization()
-            .advancedExternalizers();
-      externalizerMap.put(ClusteredLockKey.EXTERNALIZER.getId(), ClusteredLockKey.EXTERNALIZER);
-      externalizerMap.put(ClusteredLockValue.EXTERNALIZER.getId(), ClusteredLockValue.EXTERNALIZER);
-      externalizerMap.put(LockFunction.EXTERNALIZER.getId(), LockFunction.EXTERNALIZER);
-      externalizerMap.put(UnlockFunction.EXTERNALIZER.getId(), UnlockFunction.EXTERNALIZER);
-      externalizerMap.put(IsLocked.EXTERNALIZER.getId(), IsLocked.EXTERNALIZER);
-      externalizerMap.put(ClusteredLockFilter.EXTERNALIZER.getId(), ClusteredLockFilter.EXTERNALIZER);
+      SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
+      ctxRegistry.addContextInitializer(SerializationContextRegistry.MarshallerType.GLOBAL, new GlobalContextInitializerImpl());
 
       ClusteredLockManagerConfiguration config = extractConfiguration(gcr);
       InternalCacheRegistry internalCacheRegistry = gcr.getComponent(InternalCacheRegistry.class);
