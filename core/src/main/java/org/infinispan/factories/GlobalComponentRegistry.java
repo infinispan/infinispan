@@ -4,11 +4,6 @@ import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,12 +13,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.management.MBeanServerFactory;
 
-import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.module.ModuleCommandExtensions;
-import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -135,8 +126,6 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          basicComponentRegistry.registerComponent(EntryMergePolicyFactoryRegistry.class.getName(), new EntryMergePolicyFactoryRegistry(), true);
          basicComponentRegistry.registerComponent(GlobalXSiteAdminOperations.class.getName(), new GlobalXSiteAdminOperations(), true);
 
-         loadModuleCommandFactories(configuredClassLoader);
-
          // Allow caches to depend only on module initialization instead of the entire GCR
          basicComponentRegistry.registerComponent(ModuleInitializer.class, new ModuleInitializer(), true);
 
@@ -158,34 +147,6 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          cacheComponents();
       } catch (Exception e) {
          throw new CacheException("Unable to construct a GlobalComponentRegistry!", e);
-      }
-   }
-
-   private void loadModuleCommandFactories(ClassLoader cl) {
-      Collection<ModuleCommandExtensions> moduleCmdExtLoader = ServiceFinder.load(ModuleCommandExtensions.class, cl);
-      Map<Byte, ModuleCommandFactory> commandFactories;
-      Collection<Class<? extends ReplicableCommand>> moduleCommands;
-      if (moduleCmdExtLoader.iterator().hasNext()) {
-         commandFactories = new HashMap<>();
-         moduleCommands = new HashSet<>();
-         for (ModuleCommandExtensions extension : moduleCmdExtLoader) {
-            log.debugf("Loading module command extension SPI class: %s", extension);
-            ModuleCommandFactory cmdFactory = extension.getModuleCommandFactory();
-            Objects.requireNonNull(cmdFactory);
-            for (Map.Entry<Byte, Class<? extends ReplicableCommand>> command : cmdFactory.getModuleCommands().entrySet()) {
-               byte id = command.getKey();
-               if (commandFactories.containsKey(id))
-                  throw Log.CONTAINER.commandIdAlreadyInUse(id, commandFactories.get(id).getClass().getName());
-               commandFactories.put(id, cmdFactory);
-               moduleCommands.add(command.getValue());
-            }
-         }
-         registerNonVolatileComponent(Map.copyOf(commandFactories), KnownComponentNames.MODULE_COMMAND_FACTORIES);
-         registerNonVolatileComponent(Set.copyOf(moduleCommands), KnownComponentNames.MODULE_COMMANDS);
-      } else {
-         log.debug("No module command extensions to load");
-         registerNonVolatileComponent(Collections.emptyMap(), KnownComponentNames.MODULE_COMMAND_FACTORIES);
-         registerNonVolatileComponent(Collections.emptySet(), KnownComponentNames.MODULE_COMMANDS);
       }
    }
 

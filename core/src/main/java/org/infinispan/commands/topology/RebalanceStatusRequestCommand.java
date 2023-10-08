@@ -1,13 +1,13 @@
 package org.infinispan.commands.topology;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.topology.RebalancingStatus;
 
 /**
@@ -16,17 +16,19 @@ import org.infinispan.topology.RebalancingStatus;
  * @author Ryan Emerson
  * @since 11.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.REBALANCE_STATUS_REQUEST_COMMAND)
 public class RebalanceStatusRequestCommand extends AbstractCacheControlCommand {
 
    public static final byte COMMAND_ID = 90;
 
-   private String cacheName;
+   @ProtoField(1)
+   final String cacheName;
 
-   // For CommandIdUniquenessTest only
    public RebalanceStatusRequestCommand() {
-      super(COMMAND_ID);
+      this(null);
    }
 
+   @ProtoFactory
    public RebalanceStatusRequestCommand(String cacheName) {
       super(COMMAND_ID);
       this.cacheName = cacheName;
@@ -45,16 +47,6 @@ public class RebalanceStatusRequestCommand extends AbstractCacheControlCommand {
 
    public String getCacheName() {
       return cacheName;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      MarshallUtil.marshallString(cacheName, output);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      cacheName = MarshallUtil.unmarshallString(input);
    }
 
    @Override

@@ -11,15 +11,24 @@ import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 import java.util.stream.IntStream;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
+
 /**
  * Read-only set representing all the integers from {@code 0} to {@code size - 1} (inclusive).
  *
  * @author Dan Berindei
  * @since 9.0
  */
-class RangeSet implements IntSet {
+@ProtoTypeId(ProtoStreamTypeIds.INTSET_RANGE)
+public class RangeSet implements IntSet {
+
+   @ProtoField(1)
    final int size;
 
+   @ProtoFactory
    public RangeSet(int size) {
       this.size = size;
    }

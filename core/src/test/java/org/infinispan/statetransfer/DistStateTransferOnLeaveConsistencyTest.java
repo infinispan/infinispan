@@ -133,7 +133,7 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
    private void testOperationDuringLeave(Operation op, boolean isOptimistic) throws Exception {
       ConfigurationBuilder builder = createConfigurationBuilder(isOptimistic);
 
-      createCluster(builder, 3);
+      createCluster(ControlledConsistentHashFactory.SCI.INSTANCE, builder, 3);
       waitForClusterToForm();
 
       final int numKeys = 5;

@@ -1,16 +1,12 @@
 package org.infinispan.container.entries;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A cache entry that is immortal/cannot expire
@@ -18,13 +14,20 @@ import org.infinispan.metadata.impl.PrivateMetadata;
  * @author Manik Surtani
  * @since 4.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.IMMORTAL_CACHE_ENTRY)
 public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
+
+   @ProtoFactory
+   ImmortalCacheEntry(MarshallableObject<?> wrappedKey, MarshallableObject<?> wrappedValue,
+                      PrivateMetadata internalMetadata) {
+      super(wrappedKey, wrappedValue, internalMetadata);
+   }
 
    public ImmortalCacheEntry(Object key, Object value) {
       this(key, value, null);
    }
 
-   protected ImmortalCacheEntry(Object key, Object value, PrivateMetadata internalMetadata) {
+   public ImmortalCacheEntry(Object key, Object value, PrivateMetadata internalMetadata) {
       super(key, value, internalMetadata);
    }
 
@@ -93,32 +96,4 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
    public ImmortalCacheEntry clone() {
       return (ImmortalCacheEntry) super.clone();
    }
-
-   public static class Externalizer extends AbstractExternalizer<ImmortalCacheEntry> {
-      @Override
-      public void writeObject(ObjectOutput output, ImmortalCacheEntry ice) throws IOException {
-         output.writeObject(ice.key);
-         output.writeObject(ice.value);
-         output.writeObject(ice.internalMetadata);
-      }
-
-      @Override
-      public ImmortalCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Object key = input.readObject();
-         Object value = input.readObject();
-         PrivateMetadata internalMetadata = (PrivateMetadata) input.readObject();
-         return new ImmortalCacheEntry(key, value, internalMetadata);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.IMMORTAL_ENTRY;
-      }
-
-      @Override
-      public Set<Class<? extends ImmortalCacheEntry>> getTypeClasses() {
-         return Collections.singleton(ImmortalCacheEntry.class);
-      }
-   }
-
 }

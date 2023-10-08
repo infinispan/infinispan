@@ -718,33 +718,6 @@
 
   <xs:complexType name="serialization">
     <xs:sequence>
-      <xs:element name="advanced-externalizer" minOccurs="0" maxOccurs="unbounded">
-        <xs:annotation>
-          <xs:documentation>Deprecated since 10.0. Please utilise ProtoStream based marshalling for your Java objects by
-            configuring one or more context-initializer elements. Alternatively, it's possible to configure a custom
-            org.infinispan.commons.marshall.Marshaller implementation for user types, via the "marshaller" attribute.
-            AdvancedExternalizer implementations allow users to have fine grained control over how Java objects are
-            serialized. Providing smaller payloads than traditional Serialization or Externalizer implementations by
-            writing a class ID value instead of the classes FQN.
-          </xs:documentation>
-        </xs:annotation>
-        <xs:complexType>
-          <xs:attribute name="class" type="xs:string">
-            <xs:annotation>
-              <xs:documentation>
-                Class of the custom externalizer
-              </xs:documentation>
-            </xs:annotation>
-          </xs:attribute>
-          <xs:attribute name="id" type="xs:int">
-            <xs:annotation>
-              <xs:documentation>
-                Id of the custom externalizer
-              </xs:documentation>
-            </xs:annotation>
-          </xs:attribute>
-        </xs:complexType>
-      </xs:element>
       <xs:element name="context-initializer" minOccurs="0" maxOccurs="unbounded">
         <xs:annotation>
           <xs:documentation>

@@ -42,11 +42,7 @@ import org.infinispan.util.function.SerializableFunction;
  * are not exposed.
  *
  * <p>Lambdas passed in to read-write and write-only operations, when
- * running in a cluster, must be marshallable. One option to do so is to
- * mark them as being {@link java.io.Serializable} but this is expensive
- * in terms of payload size. Alternatively, you can provide an Infinispan
- * {@link org.infinispan.commons.marshall.Externalizer} for it which
- * drastically reduces the payload size. Marshallable lambdas for some of
+ * running in a cluster, must be marshallable. Marshallable lambdas for some of
  * the most popular lambda functions used by {@link ConcurrentMap} are
  * available via the {@link MarshallableFunctions} helper class.
  *

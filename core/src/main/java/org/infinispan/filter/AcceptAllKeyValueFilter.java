@@ -1,13 +1,9 @@
 package org.infinispan.filter;
 
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A key value filter that accepts all entries found.
@@ -18,6 +14,7 @@ import org.infinispan.metadata.Metadata;
  * @author wburns
  * @since 7.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.ACCEPT_ALL_KEY_VALUE_FILTER)
 public final class AcceptAllKeyValueFilter implements KeyValueFilter<Object, Object> {
 
    private AcceptAllKeyValueFilter() {
@@ -27,6 +24,7 @@ public final class AcceptAllKeyValueFilter implements KeyValueFilter<Object, Obj
       private static final AcceptAllKeyValueFilter INSTANCE = new AcceptAllKeyValueFilter();
    }
 
+   @ProtoFactory
    public static AcceptAllKeyValueFilter getInstance() {
       return StaticHolder.INSTANCE;
    }
@@ -34,26 +32,5 @@ public final class AcceptAllKeyValueFilter implements KeyValueFilter<Object, Obj
    @Override
    public boolean accept(Object key, Object value, Metadata metadata) {
       return true;
-   }
-
-   public static final class Externalizer extends AbstractExternalizer<AcceptAllKeyValueFilter> {
-      @Override
-      public Set<Class<? extends AcceptAllKeyValueFilter>> getTypeClasses() {
-         return Collections.singleton(AcceptAllKeyValueFilter.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, AcceptAllKeyValueFilter object) {
-      }
-
-      @Override
-      public AcceptAllKeyValueFilter readObject(ObjectInput input) {
-         return AcceptAllKeyValueFilter.getInstance();
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.ACCEPT_ALL_KEY_VALUE_FILTER;
-      }
    }
 }

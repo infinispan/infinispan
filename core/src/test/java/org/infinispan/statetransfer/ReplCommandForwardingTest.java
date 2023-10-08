@@ -26,6 +26,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -60,7 +61,9 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
    }
 
    public void testForwardToJoinerNonTransactional() throws Exception {
+      SerializationContextInitializer sci = ReplicatedControlledConsistentHashFactory.SCI.INSTANCE;
       GlobalConfigurationBuilder gc1 = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      gc1.serialization().addContextInitializer(sci);
       // We must block after the commit was replicated, but before the entries are committed
       TestCacheManagerFactory.addInterceptor(gc1, CACHE_NAME::equals, new DelayInterceptor(PutKeyValueCommand.class), TestCacheManagerFactory.InterceptorPosition.AFTER, EntryWrappingInterceptor.class);
 
@@ -70,6 +73,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       int initialTopologyId = c1.getAdvancedCache().getDistributionManager().getCacheTopology().getTopologyId();
 
       GlobalConfigurationBuilder gc2 = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      gc2.serialization().addContextInitializer(sci);
       // We must block after the commit was replicated, but before the entries are committed
       TestCacheManagerFactory.addInterceptor(gc2, CACHE_NAME::equals, new DelayInterceptor(PutKeyValueCommand.class), TestCacheManagerFactory.InterceptorPosition.AFTER, EntryWrappingInterceptor.class);
 
@@ -83,6 +87,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       // Start a 3rd node, but start a different cache there so that the topology stays the same.
       // Otherwise the put command blocked on node 1 could block the view message (as both are broadcast by node 0).
       GlobalConfigurationBuilder gc3 = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      gc3.serialization().addContextInitializer(sci);
       // We must block after the commit was replicated, but before the entries are committed
       TestCacheManagerFactory.addInterceptor(gc3, CACHE_NAME::equals, new DelayInterceptor(PutKeyValueCommand.class), TestCacheManagerFactory.InterceptorPosition.AFTER, EntryWrappingInterceptor.class);
       EmbeddedCacheManager cm3 = addClusterEnabledCacheManager(gc3, null);

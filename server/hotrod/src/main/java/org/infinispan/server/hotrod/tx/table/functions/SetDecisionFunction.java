@@ -5,15 +5,11 @@ import static org.infinispan.server.hotrod.tx.table.Status.MARK_ROLLBACK;
 import static org.infinispan.server.hotrod.tx.table.Status.NO_TRANSACTION;
 import static org.infinispan.server.hotrod.tx.table.Status.OK;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
-import org.infinispan.server.core.ExternalizerIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.server.hotrod.tx.table.CacheXid;
 import org.infinispan.server.hotrod.tx.table.Status;
 import org.infinispan.server.hotrod.tx.table.TxState;
@@ -29,16 +25,16 @@ import org.infinispan.server.hotrod.tx.table.TxState;
  * @author Pedro Ruivo
  * @since 9.4
  */
+@ProtoTypeId(ProtoStreamTypeIds.SERVER_HR_FUNCTION_DECISION)
 public class SetDecisionFunction extends TxFunction {
 
-   public static final AdvancedExternalizer<SetDecisionFunction> EXTERNALIZER = new Externalizer();
+   @ProtoField(1)
+   final boolean commit;
 
-   private final boolean commit;
-
+   @ProtoFactory
    public SetDecisionFunction(boolean commit) {
       this.commit = commit;
    }
-
 
    @Override
    public Byte apply(EntryView.ReadWriteEntryView<CacheXid, TxState> view) {
@@ -90,28 +86,4 @@ public class SetDecisionFunction extends TxFunction {
             "commit=" + commit +
             '}';
    }
-
-   private static class Externalizer implements AdvancedExternalizer<SetDecisionFunction> {
-
-      @Override
-      public Set<Class<? extends SetDecisionFunction>> getTypeClasses() {
-         return Collections.singleton(SetDecisionFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.DECISION_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, SetDecisionFunction object) throws IOException {
-         output.writeBoolean(object.commit);
-      }
-
-      @Override
-      public SetDecisionFunction readObject(ObjectInput input) throws IOException {
-         return new SetDecisionFunction(input.readBoolean());
-      }
-   }
-
 }

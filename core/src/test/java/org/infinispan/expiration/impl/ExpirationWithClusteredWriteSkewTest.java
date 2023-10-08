@@ -53,7 +53,7 @@ public class ExpirationWithClusteredWriteSkewTest extends MultipleCacheManagersT
             .locking()
             .isolationLevel(IsolationLevel.REPEATABLE_READ);
 
-      createCluster(builder, 2);
+      createCluster(ControlledConsistentHashFactory.SCI.INSTANCE, builder, 2);
       TestingUtil.replaceComponent(manager(0), TimeService.class, timeService, true);
       expirationManager1 = cache(0).getAdvancedCache().getExpirationManager();
       TestingUtil.replaceComponent(manager(1), TimeService.class, timeService, true);

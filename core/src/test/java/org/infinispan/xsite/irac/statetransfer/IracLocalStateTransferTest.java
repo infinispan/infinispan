@@ -352,7 +352,7 @@ public class IracLocalStateTransferTest extends AbstractXSiteTest {
 
    private GlobalConfigurationBuilder globalConfigurationBuilderForSite() {
       GlobalConfigurationBuilder builder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      builder.serialization().addContextInitializer(TestDataSCI.INSTANCE);
+      builder.serialization().addContextInitializers(TestDataSCI.INSTANCE, ControlledConsistentHashFactory.SCI.INSTANCE);
       return builder;
    }
 

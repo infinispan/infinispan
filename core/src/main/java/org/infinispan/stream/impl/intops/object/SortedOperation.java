@@ -2,6 +2,7 @@ package org.infinispan.stream.impl.intops.object;
 
 import java.util.stream.Stream;
 
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -13,6 +14,7 @@ public class SortedOperation<S> implements IntermediateOperation<S, Stream<S>, S
    private static final SortedOperation<?> OPERATION = new SortedOperation<>();
    private SortedOperation() { }
 
+   @ProtoFactory
    public static <S> SortedOperation<S> getInstance() {
       return (SortedOperation<S>) OPERATION;
    }

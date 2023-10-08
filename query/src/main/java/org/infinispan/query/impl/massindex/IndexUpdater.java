@@ -5,8 +5,8 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.core.impl.Log;
+import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.util.logging.LogFactory;
 
@@ -65,7 +65,7 @@ public class IndexUpdater {
       getSearchMapping().scope(javaClasses).workspace().purge();
    }
 
-   public Collection<Class<?>> allJavaClasses() {
+   public Set<Class<?>> allJavaClasses() {
       return getSearchMapping().allIndexedEntityJavaClasses();
    }
 

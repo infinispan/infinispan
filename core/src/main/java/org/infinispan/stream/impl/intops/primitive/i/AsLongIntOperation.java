@@ -3,6 +3,7 @@ package org.infinispan.stream.impl.intops.primitive.i;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
+import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.stream.impl.intops.MappingOperation;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -14,6 +15,7 @@ public class AsLongIntOperation implements MappingOperation<Integer, IntStream, 
    private static final AsLongIntOperation OPERATION = new AsLongIntOperation();
    private AsLongIntOperation() { }
 
+   @ProtoFactory
    public static AsLongIntOperation getInstance() {
       return OPERATION;
    }

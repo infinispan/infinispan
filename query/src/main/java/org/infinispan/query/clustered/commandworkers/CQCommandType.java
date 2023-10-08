@@ -6,6 +6,9 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.Proto;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.query.clustered.QueryResponse;
 import org.infinispan.query.impl.QueryDefinition;
 
@@ -17,6 +20,8 @@ import org.infinispan.query.impl.QueryDefinition;
  * @author anistor@redhat.com
  * @since 5.1
  */
+@Proto
+@ProtoTypeId(ProtoStreamTypeIds.CQ_COMMAND_TYPE)
 public enum CQCommandType {
 
    //TODO [ISPN-12182] Add support for scrolling

@@ -1,6 +1,6 @@
 package org.infinispan.distribution.impl;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -147,8 +147,9 @@ public class DistributionManagerImpl implements DistributionManager {
    public static LocalizedCacheTopology makeSingletonTopology(CacheMode cacheMode, KeyPartitioner keyPartitioner,
          int numSegments, Address localAddress) {
       List<Address> members = Collections.singletonList(localAddress);
-      int[] owners = new int[numSegments];
-      Arrays.fill(owners, 0);
+      List<Integer> owners = new ArrayList<>(numSegments);
+      for (int i = 0; i < numSegments; i++)
+         owners.add(0);
       ConsistentHash ch = new ReplicatedConsistentHash(members, null, Collections.emptyList(), owners);
       CacheTopology cacheTopology = new CacheTopology(-1, -1, ch, null, CacheTopology.Phase.NO_REBALANCE, members, null);
       return new LocalizedCacheTopology(cacheMode, cacheTopology, keyPartitioner, localAddress, false);

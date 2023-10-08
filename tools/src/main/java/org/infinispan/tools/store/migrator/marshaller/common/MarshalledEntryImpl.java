@@ -2,14 +2,9 @@ package org.infinispan.tools.store.migrator.marshaller.common;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Set;
 
 import org.infinispan.commons.io.ByteBuffer;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.Ids;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.util.Util;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.spi.PersistenceException;
 
@@ -154,21 +149,13 @@ public class MarshalledEntryImpl<K,V> {
       return sb.toString();
    }
 
-   public static class Externalizer extends AbstractExternalizer<MarshalledEntryImpl> {
-
-      private static final long serialVersionUID = -5291318076267612501L;
+   public static class Externalizer extends AbstractMigratorExternalizer<MarshalledEntryImpl> {
 
       private final Marshaller marshaller;
 
       public Externalizer(Marshaller marshaller) {
+         super(MarshalledEntryImpl.class, Ids.MARSHALLED_ENTRY_ID);
          this.marshaller = marshaller;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, MarshalledEntryImpl me) throws IOException {
-         output.writeObject(me.getKeyBytes());
-         output.writeObject(me.getValueBytes());
-         output.writeObject(me.getMetadataBytes());
       }
 
       @Override
@@ -177,17 +164,6 @@ public class MarshalledEntryImpl<K,V> {
          ByteBuffer valueBytes = (ByteBuffer) input.readObject();
          ByteBuffer metadataBytes = (ByteBuffer) input.readObject();
          return new MarshalledEntryImpl(keyBytes, valueBytes, metadataBytes, marshaller);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.MARSHALLED_ENTRY_ID;
-      }
-
-      @Override
-      @SuppressWarnings("unchecked")
-      public Set<Class<? extends MarshalledEntryImpl>> getTypeClasses() {
-         return Util.<Class<? extends MarshalledEntryImpl>>asSet(MarshalledEntryImpl.class);
       }
    }
 }

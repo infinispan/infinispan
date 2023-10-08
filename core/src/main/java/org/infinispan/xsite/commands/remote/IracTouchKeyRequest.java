@@ -1,10 +1,12 @@
 package org.infinispan.xsite.commands.remote;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.irac.IracManager;
@@ -15,17 +17,24 @@ import org.infinispan.xsite.irac.IracManager;
  * @author William Burns
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.IRAC_TOUCH_KEY_REQUEST)
 public class IracTouchKeyRequest extends IracUpdateKeyRequest<Boolean> {
 
    private Object key;
 
-   public IracTouchKeyRequest() {
-      super(null);
-   }
-
    public IracTouchKeyRequest(ByteString cacheName, Object key) {
       super(cacheName);
       this.key = key;
+   }
+
+   @ProtoFactory
+   IracTouchKeyRequest(ByteString cacheName, MarshallableObject<Object> key) {
+      this(cacheName, MarshallableObject.unwrap(key));
+   }
+
+   @ProtoField(2)
+   MarshallableObject<Object> getKey() {
+      return MarshallableObject.create(key);
    }
 
    @Override
@@ -36,17 +45,5 @@ public class IracTouchKeyRequest extends IracUpdateKeyRequest<Boolean> {
    @Override
    public byte getCommandId() {
       return Ids.IRAC_TOUCH;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(key);
-      super.writeTo(output);
-   }
-
-   @Override
-   public XSiteRequest<Boolean> readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      key = input.readObject();
-      return super.readFrom(input);
    }
 }

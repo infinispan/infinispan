@@ -1,16 +1,12 @@
 package org.infinispan.counter.impl.function;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.util.Collections;
-import java.util.Set;
 import java.util.function.Function;
 
-import org.infinispan.functional.EntryView;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.exts.NoStateExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.counter.impl.entries.CounterValue;
-import org.infinispan.counter.impl.externalizers.ExternalizerIds;
+import org.infinispan.functional.EntryView;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Read function that returns the current counter's delta.
@@ -20,14 +16,15 @@ import org.infinispan.counter.impl.externalizers.ExternalizerIds;
  * @author Pedro Ruivo
  * @since 9.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.COUNTER_FUNCTION_READ)
 public class ReadFunction<K> implements Function<EntryView.ReadEntryView<K, CounterValue>, Long> {
 
-   public static final AdvancedExternalizer<ReadFunction> EXTERNALIZER = new Externalizer();
    private static final ReadFunction INSTANCE = new ReadFunction();
 
    private ReadFunction() {
    }
 
+   @ProtoFactory
    public static <K> ReadFunction<K> getInstance() {
       //noinspection unchecked
       return INSTANCE;
@@ -41,26 +38,5 @@ public class ReadFunction<K> implements Function<EntryView.ReadEntryView<K, Coun
    @Override
    public Long apply(EntryView.ReadEntryView<K, CounterValue> view) {
       return view.find().map(CounterValue::getValue).orElse(null);
-   }
-
-   private static class Externalizer extends NoStateExternalizer<ReadFunction> {
-
-      private Externalizer() {
-      }
-
-      @Override
-      public Set<Class<? extends ReadFunction>> getTypeClasses() {
-         return Collections.singleton(ReadFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.READ_FUNCTION;
-      }
-
-      @Override
-      public ReadFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return INSTANCE;
-      }
    }
 }

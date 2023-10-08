@@ -1,25 +1,20 @@
 package org.infinispan.server.hotrod.tx.table;
 
-import static org.infinispan.commons.marshall.MarshallUtil.marshallCollection;
-import static org.infinispan.commons.marshall.MarshallUtil.unmarshallCollection;
 import static org.infinispan.server.hotrod.tx.table.Status.ACTIVE;
 import static org.infinispan.server.hotrod.tx.table.Status.PREPARING;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.marshall.protostream.impl.MarshallableList;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.server.core.ExternalizerIds;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 import net.jcip.annotations.Immutable;
@@ -31,16 +26,25 @@ import net.jcip.annotations.Immutable;
  * @since 9.4
  */
 @Immutable
+@ProtoTypeId(ProtoStreamTypeIds.SERVER_HR_TX_STATE)
 public class TxState {
 
-   public static final AdvancedExternalizer<TxState> EXTERNALIZER = new Externalizer();
+   @ProtoField(1)
+   final GlobalTransaction globalTransaction;
 
-   private final GlobalTransaction globalTransaction;
-   private final Status status;
+   @ProtoField(2)
+   final Status status;
+
+   @ProtoField(3)
+   final boolean recoverable;
+
+   @ProtoField(4)
+   final long timeout; //ms
+
+   @ProtoField(5)
+   final long lastAccessTimeNs; //ns
+
    private final List<WriteCommand> modifications;
-   private final boolean recoverable;
-   private final long timeout; //ms
-   private final long lastAccessTimeNs; //ns
 
    public TxState(GlobalTransaction globalTransaction, boolean recoverable, long timeout, TimeService timeService) {
       this(globalTransaction, ACTIVE, null, recoverable, timeout, timeService.time());
@@ -56,6 +60,16 @@ public class TxState {
       lastAccessTimeNs = accessTime;
    }
 
+   @ProtoFactory
+   TxState(GlobalTransaction globalTransaction, Status status, boolean recoverable, long timeout, long lastAccessTimeNs,
+           MarshallableList<WriteCommand> wrappedModifications) {
+      this(globalTransaction, status, MarshallableList.unwrap(wrappedModifications), recoverable, timeout, lastAccessTimeNs);
+   }
+
+   @ProtoField(number = 6, name = "modification")
+   MarshallableList<WriteCommand> getWrappedModifications() {
+      return MarshallableList.create(modifications);
+   }
 
    public long getTimeout() {
       return timeout;
@@ -135,36 +149,5 @@ public class TxState {
              ", timeout=" + timeout +
              ", lastAccessTime=" + lastAccessTimeNs +
              '}';
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<TxState> {
-
-      @Override
-      public Set<Class<? extends TxState>> getTypeClasses() {
-         return Collections.singleton(TxState.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.TX_STATE;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, TxState object) throws IOException {
-         output.writeObject(object.globalTransaction);
-         Status.writeTo(output, object.status);
-         marshallCollection(object.modifications, output);
-         output.writeBoolean(object.recoverable);
-         output.writeLong(object.timeout);
-         output.writeLong(object.lastAccessTimeNs);
-      }
-
-      @Override
-      public TxState readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new TxState((GlobalTransaction) input.readObject(),
-               Status.readFrom(input),
-               unmarshallCollection(input, ArrayList::new),
-               input.readBoolean(), input.readLong(), input.readLong());
-      }
    }
 }

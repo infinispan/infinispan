@@ -1,28 +1,25 @@
 package org.infinispan.reactive.publisher.impl.commands.batch;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.reactive.publisher.impl.PublisherHandler;
 import org.infinispan.util.ByteString;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 
+@ProtoTypeId(ProtoStreamTypeIds.CANCEL_PUBLISHER_COMMAND)
 public class CancelPublisherCommand extends BaseRpcCommand {
    public static final byte COMMAND_ID = 49;
 
-   private String requestId;
+   @ProtoField(2)
+   final String requestId;
 
-   // Only here for CommandIdUniquenessTest
-   private CancelPublisherCommand() { super(null); }
-
-   public CancelPublisherCommand(ByteString cacheName) {
-      super(cacheName);
-   }
-
+   @ProtoFactory
    public CancelPublisherCommand(ByteString cacheName, String requestId) {
       super(cacheName);
       this.requestId = requestId;
@@ -43,15 +40,5 @@ public class CancelPublisherCommand extends BaseRpcCommand {
    @Override
    public boolean isReturnValueExpected() {
       return true;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeUTF(requestId);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      requestId = input.readUTF();
    }
 }

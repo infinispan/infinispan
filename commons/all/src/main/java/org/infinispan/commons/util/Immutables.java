@@ -1,15 +1,10 @@
 package org.infinispan.commons.util;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.io.Reader;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -17,10 +12,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
-
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.Ids;
-import org.infinispan.commons.marshall.MarshallUtil;
 
 
 /**
@@ -353,30 +344,7 @@ public class Immutables {
       }
    }
 
-   public static class ImmutableSetWrapperExternalizer extends AbstractExternalizer<Set> {
-      @Override
-      public void writeObject(ObjectOutput output, Set set) throws IOException {
-         MarshallUtil.marshallCollection(set, output);
-      }
-
-      @Override
-      public Set readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Set<Object> set = MarshallUtil.unmarshallCollection(input, HashSet::new);
-         return Immutables.immutableSetWrap(set);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.IMMUTABLE_SET;
-      }
-
-      @Override
-      public Set<Class<? extends Set>> getTypeClasses() {
-         return Util.asSet(ImmutableSetWrapper.class);
-      }
-   }
-
-   private static class ImmutableMapWrapper<K, V> implements Map<K, V>, Serializable, Immutable {
+   public static class ImmutableMapWrapper<K, V> implements Map<K, V>, Serializable, Immutable {
       private static final long serialVersionUID = 708144227046742221L;
 
       private final Map<? extends K, ? extends V> map;
@@ -458,28 +426,6 @@ public class Immutables {
       @Override
       public String toString() {
          return map.toString();
-      }
-   }
-
-   public static class ImmutableMapWrapperExternalizer extends AbstractExternalizer<Map> {
-      @Override
-      public void writeObject(ObjectOutput output, Map map) throws IOException {
-         MarshallUtil.marshallMap(map, output);
-      }
-
-      @Override
-      public Map readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return Immutables.immutableMapWrap(MarshallUtil.unmarshallMap(input, HashMap::new));
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.IMMUTABLE_MAP;
-      }
-
-      @Override
-      public Set<Class<? extends Map>> getTypeClasses() {
-         return Util.asSet(ImmutableMapWrapper.class);
       }
    }
 

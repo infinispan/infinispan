@@ -11,6 +11,7 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.distribution.VersionedDistributionInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -28,7 +29,7 @@ public class StaleLocksOnPrepareFailureTest extends MultipleCacheManagersTest {
       cfg.clustering().hash().numOwners(NUM_CACHES)
          .locking().lockAcquisitionTimeout(TestingUtil.shortTimeoutMillis());
       for (int i = 0; i < NUM_CACHES; i++) {
-         EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(cfg);
+         EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(TestDataSCI.INSTANCE, cfg);
          registerCacheManager(cm);
       }
       waitForClusterToForm();

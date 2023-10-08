@@ -1,17 +1,17 @@
 package org.infinispan.xsite.commands;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * A {@link CacheRpcCommand} that sets the {@link XSiteStateTransferMode} cluster-wide.
@@ -19,22 +19,18 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
  * @author Pedro Ruivo
  * @since 12.1
  */
+@ProtoTypeId(ProtoStreamTypeIds.XSITE_SET_STATE_TRANSFER_MODE_COMMAND)
 public class XSiteSetStateTransferModeCommand extends BaseRpcCommand {
 
    public static final int COMMAND_ID = 36;
 
-   private String site;
-   private XSiteStateTransferMode mode;
+   @ProtoField(2)
+   final String site;
 
-   @SuppressWarnings("unused") // for CommandIdUniquenessTest
-   public XSiteSetStateTransferModeCommand() {
-      super(null);
-   }
+   @ProtoField(3)
+   final XSiteStateTransferMode mode;
 
-   public XSiteSetStateTransferModeCommand(ByteString cacheName) {
-      super(cacheName);
-   }
-
+   @ProtoFactory
    public XSiteSetStateTransferModeCommand(ByteString cacheName, String site, XSiteStateTransferMode mode) {
       super(cacheName);
       this.site = site;
@@ -49,18 +45,6 @@ public class XSiteSetStateTransferModeCommand extends BaseRpcCommand {
    @Override
    public boolean isReturnValueExpected() {
       return false;
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeUTF(site);
-      MarshallUtil.marshallEnum(mode, output);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      site = input.readUTF();
-      mode = MarshallUtil.unmarshallEnum(input, XSiteStateTransferMode::valueOf);
    }
 
    @Override

@@ -1,18 +1,13 @@
 package org.infinispan.multimap.impl.function.hmap;
 
-import static org.infinispan.multimap.impl.ExternalizerIds.HASH_MAP_VALUES_FUNCTION;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
 import org.infinispan.multimap.impl.HashMapBucket;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Serializable function used by {@link org.infinispan.multimap.impl.EmbeddedMultimapPairCache#values(Object)}.
@@ -26,9 +21,8 @@ import org.infinispan.multimap.impl.HashMapBucket;
  * @since 15.0
  * @see BaseFunction
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_HASH_MAP_VALUES_FUNCTION)
 public class HashMapValuesFunction<K, HK, HV> extends HashMapBucketBaseFunction<K, HK, HV, Collection<HV>> {
-
-   public static final Externalizer EXTERNALIZER = new Externalizer();
 
    @Override
    public Collection<HV> apply(EntryView.ReadWriteEntryView<K, HashMapBucket<HK, HV>> view) {
@@ -37,27 +31,5 @@ public class HashMapValuesFunction<K, HK, HV> extends HashMapBucketBaseFunction<
          return existing.get().values();
       }
       return Collections.emptyList();
-   }
-
-   @SuppressWarnings({"rawtypes", "deprecation"})
-   private static class Externalizer implements AdvancedExternalizer<HashMapValuesFunction> {
-
-      @Override
-      public Set<Class<? extends HashMapValuesFunction>> getTypeClasses() {
-         return Collections.singleton(HashMapValuesFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return HASH_MAP_VALUES_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, HashMapValuesFunction object) throws IOException { }
-
-      @Override
-      public HashMapValuesFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new HashMapValuesFunction();
-      }
    }
 }

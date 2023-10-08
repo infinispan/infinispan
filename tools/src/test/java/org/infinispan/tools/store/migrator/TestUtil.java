@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commons.io.ByteBufferImpl;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.tools.store.migrator.marshaller.common.AdvancedExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;

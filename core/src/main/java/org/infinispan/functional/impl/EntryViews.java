@@ -2,17 +2,11 @@ package org.infinispan.functional.impl;
 
 import static org.infinispan.metadata.Metadatas.updateMetadata;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Experimental;
-import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.versioning.EntryVersion;
@@ -21,8 +15,11 @@ import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.MetaParam;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Entry views implementation class holder.
@@ -61,11 +58,11 @@ public final class EntryViews {
    }
 
    public static <K, V> ReadEntryView<K, V> noValue(Object key) {
-      return new NoValueReadOnlyView<>(key, null);
+      return new NoValueReadOnlyView<>((K) key, null);
    }
 
    public static <K, V> ReadEntryView<K, V> noValue(Object key, DataConversion keyDataConversion) {
-      return new NoValueReadOnlyView<>(key, keyDataConversion);
+      return new NoValueReadOnlyView<>((K) key, keyDataConversion);
    }
 
    /**
@@ -148,44 +145,17 @@ public final class EntryViews {
       }
    }
 
-   private static final class ReadOnlySnapshotView<K, V> implements ReadEntryView<K, V> {
-      final K key;
-      final V value;
-      final Metadata metadata;
+   @ProtoTypeId(ProtoStreamTypeIds.ENTRY_VIEWS_READ_ONLY_SNAPSHOT)
+   public static final class ReadOnlySnapshotView<K, V> extends AbstractReadEntryView<K, V> {
 
       private ReadOnlySnapshotView(K key, V value, Metadata metadata) {
-         this.key = key;
-         this.value = value;
-         this.metadata = metadata;
+         super(key, value, metadata);
       }
 
-      @Override
-      public K key() {
-         return key;
-      }
-
-      @Override
-      public V get() throws NoSuchElementException {
-         if (value == null) throw new NoSuchElementException("No value");
-         return value;
-      }
-
-      @Override
-      public Optional<V> find() {
-         return Optional.ofNullable(value);
-      }
-
-      // TODO: Duplication
-      @Override
-      public <T extends MetaParam> Optional<T> findMetaParam(Class<T> type) {
-         if (metadata instanceof MetaParamsInternalMetadata) {
-            MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
-            return metaParamsMetadata.findMetaParam(type);
-         }
-
-         // TODO: Add interoperability support, e.g. able to retrieve lifespan for data stored in Cache via lifespan API
-
-         return Optional.empty();
+      @ProtoFactory
+      ReadOnlySnapshotView(MarshallableObject<K> key, MarshallableObject<V> value,
+                           MarshallableObject<Metadata> metadata) {
+         this(MarshallableObject.unwrap(key), MarshallableObject.unwrap(value), MarshallableObject.unwrap(metadata));
       }
 
       @Override
@@ -499,13 +469,24 @@ public final class EntryViews {
       }
    }
 
-   private static final class NoValueReadOnlyView<K, V> implements ReadEntryView<K, V> {
-      final Object key;
+   @ProtoTypeId(ProtoStreamTypeIds.ENTRY_VIEWS_NO_VALUE_READ_ONLY)
+   public static final class NoValueReadOnlyView<K, V> implements ReadEntryView<K, V> {
+      final K key;
       private final DataConversion keyDataConversion;
 
-      public NoValueReadOnlyView(Object key, DataConversion keyDataConversion) {
+      public NoValueReadOnlyView(K key, DataConversion keyDataConversion) {
          this.key = key;
          this.keyDataConversion = keyDataConversion;
+      }
+
+      @ProtoFactory
+      NoValueReadOnlyView(MarshallableObject<K> key) {
+         this(MarshallableObject.unwrap(key), null);
+      }
+
+      @ProtoField(1)
+      MarshallableObject<K> getKey() {
+         return MarshallableObject.create(key);
       }
 
       @Override
@@ -534,15 +515,30 @@ public final class EntryViews {
       }
    }
 
-   private static final class ReadWriteSnapshotView<K, V> implements ReadWriteEntryView<K, V> {
+   private static abstract class AbstractReadEntryView<K, V> implements ReadEntryView<K, V> {
       final K key;
       final V value;
       final Metadata metadata;
 
-      public ReadWriteSnapshotView(K key, V value, Metadata metadata) {
+      private AbstractReadEntryView(K key, V value, Metadata metadata) {
          this.key = key;
          this.value = value;
          this.metadata = metadata;
+      }
+
+      @ProtoField(1)
+      MarshallableObject<K> getKey() {
+         return MarshallableObject.create(key);
+      }
+
+      @ProtoField(2)
+      MarshallableObject<V> getValue() {
+         return MarshallableObject.create(value);
+      }
+
+      @ProtoField(3)
+      MarshallableObject<Metadata> getMetadata() {
+         return MarshallableObject.create(metadata);
       }
 
       @Override
@@ -563,7 +559,6 @@ public final class EntryViews {
          return Optional.ofNullable(value);
       }
 
-      // TODO: Duplication
       @Override
       public <T extends MetaParam> Optional<T> findMetaParam(Class<T> type) {
          if (metadata instanceof MetaParamsInternalMetadata) {
@@ -572,8 +567,21 @@ public final class EntryViews {
          }
 
          // TODO: Add interoperability support, e.g. able to retrieve lifespan for data stored in Cache via lifespan API
-
          return Optional.empty();
+      }
+   }
+
+   @ProtoTypeId(ProtoStreamTypeIds.ENTRY_VIEWS_READ_WRITE_SNAPSHOT)
+   public static final class ReadWriteSnapshotView<K, V> extends AbstractReadEntryView<K, V> implements ReadWriteEntryView<K, V> {
+
+      public ReadWriteSnapshotView(K key, V value, Metadata metadata) {
+         super(key, value, metadata);
+      }
+
+      @ProtoFactory
+      ReadWriteSnapshotView(MarshallableObject<K> key, MarshallableObject<V> value,
+                           MarshallableObject<Metadata> metadata) {
+         this(MarshallableObject.unwrap(key), MarshallableObject.unwrap(value), MarshallableObject.unwrap(metadata));
       }
 
       @Override
@@ -620,100 +628,4 @@ public final class EntryViews {
 
       updateMetadata(entry, MetaParamsInternalMetadata.from(metaParams));
    }
-
-   private static <K, V> MetaParams extractMetaParams(CacheEntry<K, V> entry) {
-      // TODO: Deal with entry instances that are MetaParamsCacheEntry and merge meta params
-      // e.g. check if meta params exist and if so, merge, but also check for old metadata
-      // information and merge it individually
-
-      Metadata metadata = entry.getMetadata();
-      if (metadata instanceof MetaParamsInternalMetadata) {
-         MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
-         return metaParamsMetadata.params;
-      }
-
-      return MetaParams.empty();
-   }
-
-   public static final class ReadOnlySnapshotViewExternalizer implements AdvancedExternalizer<ReadOnlySnapshotView> {
-      @Override
-      public Set<Class<? extends ReadOnlySnapshotView>> getTypeClasses() {
-         return Util.asSet(ReadOnlySnapshotView.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.READ_ONLY_SNAPSHOT_VIEW;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, ReadOnlySnapshotView object) throws IOException {
-         output.writeObject(object.key);
-         output.writeObject(object.value);
-         output.writeObject(object.metadata);
-      }
-
-      @Override
-      public ReadOnlySnapshotView readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Object key = input.readObject();
-         Object value = input.readObject();
-         Metadata metadata = (Metadata) input.readObject();
-         return new ReadOnlySnapshotView<>(key, value, metadata);
-      }
-   }
-
-   public static final class NoValueReadOnlyViewExternalizer implements AdvancedExternalizer<NoValueReadOnlyView> {
-
-      @Override
-      public Set<Class<? extends NoValueReadOnlyView>> getTypeClasses() {
-         return Util.asSet(NoValueReadOnlyView.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.NO_VALUE_READ_ONLY_VIEW;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, NoValueReadOnlyView object) throws IOException {
-         output.writeObject(object.key);
-      }
-
-      @Override
-      public NoValueReadOnlyView readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new NoValueReadOnlyView(input.readObject(), null);
-      }
-   }
-
-   // Externalizer class defined outside of externalized class to avoid having
-   // to making externalized class public, since that would leak internal impl.
-   public static final class ReadWriteSnapshotViewExternalizer extends AbstractExternalizer<ReadWriteSnapshotView> {
-      @Override
-      public Integer getId() {
-         return Ids.READ_WRITE_SNAPSHOT_VIEW;
-      }
-
-      @Override
-      @SuppressWarnings("unchecked")
-      public Set<Class<? extends ReadWriteSnapshotView>> getTypeClasses() {
-         return Util.asSet(ReadWriteSnapshotView.class);
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, ReadWriteSnapshotView obj) throws IOException {
-         output.writeObject(obj.key);
-         output.writeObject(obj.value);
-         output.writeObject(obj.metadata);
-      }
-
-      @Override
-      @SuppressWarnings("unchecked")
-      public ReadWriteSnapshotView readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Object key = input.readObject();
-         Object value = input.readObject();
-         Metadata metadata = (Metadata) input.readObject();
-         return new ReadWriteSnapshotView(key, value, metadata);
-      }
-   }
-
 }

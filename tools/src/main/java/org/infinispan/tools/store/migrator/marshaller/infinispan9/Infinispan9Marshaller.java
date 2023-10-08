@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.Externalizer;
+import org.infinispan.tools.store.migrator.marshaller.common.AdvancedExternalizer;
+import org.infinispan.tools.store.migrator.marshaller.common.Externalizer;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.tools.store.migrator.marshaller.common.AbstractUnsupportedStreamingMarshaller;
 

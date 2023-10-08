@@ -8,6 +8,7 @@ import static org.testng.AssertJUnit.fail;
 import java.util.Collection;
 import java.util.List;
 
+import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.LocalizedCacheTopology;
@@ -15,9 +16,7 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.topology.LocalTopologyManager;
@@ -90,7 +89,7 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
 
       cchf.setOwnerIndexes(new int[][]{{a0, a1}, {a1, c0}, {c0, c1}, {c1, a0}});
       configBuilder.clustering().hash().consistentHashFactory(cchf);
-      createCluster(TestDataSCI.INSTANCE, configBuilder, 4);
+      createCluster(ControlledConsistentHashFactory.SCI.INSTANCE, configBuilder, 4);
       waitForClusterToForm();
 
       Object k0 = new MagicKey("k1", cache(a0), cache(a1));

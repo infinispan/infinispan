@@ -1,7 +1,6 @@
 package org.infinispan.persistence.keymappers;
 
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.StreamingMarshaller;
 
 /**
  *
@@ -11,14 +10,6 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
  * @since 5.2
  */
 public interface MarshallingTwoWayKey2StringMapper extends TwoWayKey2StringMapper {
-
-   /**
-    * @deprecated since 10.0, use {@link #setMarshaller(Marshaller)} instead
-    */
-   @Deprecated(forRemoval=true, since = "10.0")
-   default void setMarshaller(StreamingMarshaller marshaller) {
-      // no-op
-   }
 
    default void setMarshaller(Marshaller marshaller) {
       // no-op

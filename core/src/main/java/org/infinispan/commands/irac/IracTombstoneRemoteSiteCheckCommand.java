@@ -1,22 +1,21 @@
 package org.infinispan.commands.irac;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.remoting.transport.Address;
+import org.infinispan.marshall.protostream.impl.MarshallableList;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.irac.IracManager;
 
@@ -28,24 +27,27 @@ import org.infinispan.xsite.irac.IracManager;
  *
  * @since 14.0
  */
-public class IracTombstoneRemoteSiteCheckCommand extends BaseRpcCommand {
+@ProtoTypeId(ProtoStreamTypeIds.IRAC_TOMBSTONE_REMOTE_SITE_CHECK_COMMAND)
+public class IracTombstoneRemoteSiteCheckCommand extends BaseIracCommand {
 
    public static final byte COMMAND_ID = 38;
 
-   private List<Object> keys;
-
-   @SuppressWarnings("unused")
-   public IracTombstoneRemoteSiteCheckCommand() {
-      super(null);
-   }
-
-   public IracTombstoneRemoteSiteCheckCommand(ByteString cacheName) {
-      super(cacheName);
-   }
+   final List<Object> keys;
 
    public IracTombstoneRemoteSiteCheckCommand(ByteString cacheName, List<Object> keys) {
       super(cacheName);
       this.keys = keys;
+   }
+
+   @ProtoFactory
+   IracTombstoneRemoteSiteCheckCommand(ByteString cacheName, MarshallableList<Object> wrappedKeys) {
+      super(cacheName);
+      this.keys = MarshallableList.unwrap(wrappedKeys);
+   }
+
+   @ProtoField(2)
+   MarshallableList<Object> getWrappedKeys()  {
+      return MarshallableList.create(keys);
    }
 
    @Override
@@ -76,32 +78,10 @@ public class IracTombstoneRemoteSiteCheckCommand extends BaseRpcCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      MarshallUtil.marshallCollection(keys, output);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
-   }
-
-   @Override
-   public Address getOrigin() {
-      //not needed
-      return null;
-   }
-
-   @Override
-   public void setOrigin(Address origin) {
-      //no-op
-   }
-
-   @Override
    public String toString() {
       return "IracSiteTombstoneCheckCommand{" +
             "cacheName=" + cacheName +
             ", keys=" + keys.stream().map(Util::toStr).collect(Collectors.joining(",")) +
             '}';
    }
-
 }

@@ -1,15 +1,11 @@
 package org.infinispan.container.entries;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A mortal cache value, to correspond with {@link MortalCacheEntry}
@@ -17,6 +13,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
  * @author Manik Surtani
  * @since 4.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.MORTAL_CACHE_VALUE)
 public class MortalCacheValue extends ImmortalCacheValue {
 
    protected long created;
@@ -32,7 +29,16 @@ public class MortalCacheValue extends ImmortalCacheValue {
       this.lifespan = lifespan;
    }
 
+   @ProtoFactory
+   MortalCacheValue(MarshallableObject<?> wrappedValue, PrivateMetadata internalMetadata, long created,
+                    long lifespan) {
+      super(wrappedValue, internalMetadata);
+      this.created = created;
+      this.lifespan =lifespan;
+   }
+
    @Override
+   @ProtoField(3)
    public final long getCreated() {
       return created;
    }
@@ -42,6 +48,7 @@ public class MortalCacheValue extends ImmortalCacheValue {
    }
 
    @Override
+   @ProtoField(4)
    public final long getLifespan() {
       return lifespan;
    }
@@ -103,34 +110,5 @@ public class MortalCacheValue extends ImmortalCacheValue {
       super.appendFieldsToString(builder);
       builder.append(", created=").append(created);
       builder.append(", lifespan=").append(lifespan);
-   }
-
-   public static class Externalizer extends AbstractExternalizer<MortalCacheValue> {
-      @Override
-      public void writeObject(ObjectOutput output, MortalCacheValue mcv) throws IOException {
-         output.writeObject(mcv.value);
-         output.writeObject(mcv.internalMetadata);
-         UnsignedNumeric.writeUnsignedLong(output, mcv.created);
-         output.writeLong(mcv.lifespan); // could be negative so should not use unsigned longs
-      }
-
-      @Override
-      public MortalCacheValue readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Object value = input.readObject();
-         PrivateMetadata internalMetadata = (PrivateMetadata) input.readObject();
-         long created = UnsignedNumeric.readUnsignedLong(input);
-         long lifespan = input.readLong();
-         return new MortalCacheValue(value, internalMetadata, created, lifespan);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.MORTAL_VALUE;
-      }
-
-      @Override
-      public Set<Class<? extends MortalCacheValue>> getTypeClasses() {
-         return Collections.singleton(MortalCacheValue.class);
-      }
    }
 }

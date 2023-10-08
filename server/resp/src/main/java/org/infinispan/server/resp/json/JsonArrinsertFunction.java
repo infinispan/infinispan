@@ -1,20 +1,18 @@
 package org.infinispan.server.resp.json;
 
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.server.resp.ExternalizerIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.server.resp.RespUtil;
 import org.infinispan.util.function.SerializableFunction;
 
@@ -23,14 +21,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.jayway.jsonpath.JsonPath;
 
+@ProtoTypeId(ProtoStreamTypeIds.RESP_JSON_ARRINSERT_FUNCTION)
 public class JsonArrinsertFunction
         implements SerializableFunction<EntryView.ReadWriteEntryView<byte[], JsonBucket>, List<Integer>> {
-    public static final AdvancedExternalizer<JsonArrinsertFunction> EXTERNALIZER = new JsonArrinsertFunction.Externalizer();
 
-    private byte[] path;
-    private int index;
-    private List<byte[]> values;
+    @ProtoField(1)
+    final byte[] path;
 
+    @ProtoField(2)
+    final int index;
+
+    @ProtoField(3)
+    final List<byte[]> values;
+
+    @ProtoFactory
     public JsonArrinsertFunction(byte[] path, int index, List<byte[]> values) {
         this.path = path;
         this.index = index;
@@ -101,40 +105,5 @@ public class JsonArrinsertFunction
             result.add(outer.get(i));
         }
         return result;
-    }
-
-    private static class Externalizer implements AdvancedExternalizer<JsonArrinsertFunction> {
-
-        @Override
-        public void writeObject(ObjectOutput output, JsonArrinsertFunction object) throws IOException {
-            JSONUtil.writeBytes(output, object.path);
-            output.writeInt(object.index);
-            output.writeInt(object.values.size());
-            for (byte[] value : object.values) {
-                JSONUtil.writeBytes(output, value);
-            }
-        }
-
-        @Override
-        public JsonArrinsertFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-            byte[] jsonPath = JSONUtil.readBytes(input);
-            int index = input.readInt();
-            int size = input.readInt();
-            List<byte[]> values = new ArrayList<>(size);
-            for (int i = 0; i < size; i++) {
-                values.add(JSONUtil.readBytes(input));
-            }
-            return new JsonArrinsertFunction(jsonPath, index, values);
-        }
-
-        @Override
-        public Set<Class<? extends JsonArrinsertFunction>> getTypeClasses() {
-            return Collections.singleton(JsonArrinsertFunction.class);
-        }
-
-        @Override
-        public Integer getId() {
-            return ExternalizerIds.JSON_ARRINSERT_FUNCTION;
-        }
     }
 }

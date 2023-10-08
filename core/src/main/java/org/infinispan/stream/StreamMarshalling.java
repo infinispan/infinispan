@@ -1,24 +1,20 @@
 package org.infinispan.stream;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.util.Util;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Static factory class containing methods that will provide marshallable instances for very common use cases.
@@ -34,7 +30,7 @@ public class StreamMarshalling {
     * @return the predicate
     */
    public static Predicate<Object> equalityPredicate(Object object) {
-      return new EqualityPredicate(object);
+      return new EqualityPredicate(MarshallableObject.create(object));
    }
 
    /**
@@ -95,47 +91,58 @@ public class StreamMarshalling {
       return new KeyToEntryFunction<>();
    }
 
-   private static final class EqualityPredicate implements Predicate<Object> {
-      private final Object object;
+   @ProtoTypeId(ProtoStreamTypeIds.EQUALITY_PREDICATE)
+   public static final class EqualityPredicate implements Predicate<Object> {
 
-      private EqualityPredicate(Object object) {
-         Objects.nonNull(object);
+      @ProtoField(1)
+      final MarshallableObject<Object> object;
+
+      @ProtoFactory
+      EqualityPredicate(MarshallableObject<Object> object) {
          this.object = object;
       }
 
       @Override
       public boolean test(Object t) {
-         return object.equals(t);
+         return object.get().equals(t);
       }
    }
 
-   private static final class NonNullPredicate implements Predicate<Object> {
+   @ProtoTypeId(ProtoStreamTypeIds.NON_NULL_PREDICATE)
+   public static final class NonNullPredicate implements Predicate<Object> {
       private static final NonNullPredicate INSTANCE = new NonNullPredicate();
 
+      @ProtoFactory
       public static NonNullPredicate getInstance() {
          return INSTANCE;
       }
+
       @Override
       public boolean test(Object t) {
          return t != null;
       }
    }
 
-   private static final class AlwaysTruePredicate implements Predicate<Object> {
+   @ProtoTypeId(ProtoStreamTypeIds.ALWAYS_TRUE_PREDICATE)
+   public static final class AlwaysTruePredicate implements Predicate<Object> {
       private static final AlwaysTruePredicate INSTANCE = new AlwaysTruePredicate();
 
+      @ProtoFactory
       public static AlwaysTruePredicate getInstance() {
          return INSTANCE;
       }
+
       @Override
       public boolean test(Object t) {
          return true;
       }
    }
 
-   private static final class EntryToKeyFunction<K, V> implements Function<Map.Entry<K, V>, K> {
+   @ProtoTypeId(ProtoStreamTypeIds.ENTRY_KEY_FUNCTION)
+   public static final class EntryToKeyFunction<K, V> implements Function<Map.Entry<K, V>, K> {
       private static final EntryToKeyFunction<?, ?> FUNCTION = new EntryToKeyFunction<>();
 
+      @ProtoFactory
       public static <K, V> EntryToKeyFunction<K, V> getInstance() {
          return (EntryToKeyFunction<K, V>) FUNCTION;
       }
@@ -146,9 +153,11 @@ public class StreamMarshalling {
       }
    }
 
-   private static final class EntryToValueFunction<K, V> implements Function<Map.Entry<K, V>, V> {
+   @ProtoTypeId(ProtoStreamTypeIds.ENTRY_VALUE_FUNCTION)
+   public static final class EntryToValueFunction<K, V> implements Function<Map.Entry<K, V>, V> {
       private static final EntryToValueFunction<?, ?> FUNCTION = new EntryToValueFunction<>();
 
+      @ProtoFactory
       public static <K, V> EntryToValueFunction<K, V> getInstance() {
          return (EntryToValueFunction<K, V>) FUNCTION;
       }
@@ -159,6 +168,7 @@ public class StreamMarshalling {
       }
    }
 
+   @ProtoTypeId(ProtoStreamTypeIds.KEY_ENTRY_FUNCTION)
    @Scope(Scopes.NONE)
    static final class KeyToEntryFunction<K, V> implements Function<K, CacheEntry<K, V>> {
       @Inject AdvancedCache<K, V> advancedCache;
@@ -169,9 +179,11 @@ public class StreamMarshalling {
       }
    }
 
-   private static final class IdentityFunction<T> implements Function<T, T> {
+   @ProtoTypeId(ProtoStreamTypeIds.IDENTITY_FUNCTION)
+   public static final class IdentityFunction<T> implements Function<T, T> {
       private static final IdentityFunction<?> FUNCTION = new IdentityFunction<>();
 
+      @ProtoFactory
       public static <T> IdentityFunction<T> getInstance() {
          return (IdentityFunction<T>) FUNCTION;
       }
@@ -179,87 +191,6 @@ public class StreamMarshalling {
       @Override
       public T apply(T t) {
          return t;
-      }
-   }
-
-   public static final class StreamMarshallingExternalizer implements AdvancedExternalizer<Object> {
-      enum ExternalizerId {
-         EQUALITY_PREDICATE(EqualityPredicate.class),
-         ENTRY_KEY_FUNCTION(EntryToKeyFunction.class),
-         ENTRY_VALUE_FUNCTION(EntryToValueFunction.class),
-         NON_NULL_PREDICATE(NonNullPredicate.class),
-         ALWAYS_TRUE_PREDICATE(AlwaysTruePredicate.class),
-         KEY_ENTRY_FUNCTION(KeyToEntryFunction.class),
-         IDENTITY_FUNCTION(IdentityFunction.class),
-         ;
-
-         private final Class<? extends Object> marshalledClass;
-
-         ExternalizerId(Class<? extends Object> marshalledClass) {
-            this.marshalledClass = marshalledClass;
-         }
-      }
-
-      private final Map<Class<? extends Object>, ExternalizerId> objects = new HashMap<>();
-
-      public StreamMarshallingExternalizer() {
-         for (ExternalizerId id : ExternalizerId.values()) {
-            objects.put(id.marshalledClass, id);
-         }
-      }
-
-      @Override
-      public Set<Class<?>> getTypeClasses() {
-         return Util.<Class<? extends Object>>asSet(EqualityPredicate.class, EntryToKeyFunction.class,
-               EntryToValueFunction.class, NonNullPredicate.class, AlwaysTruePredicate.class,
-               KeyToEntryFunction.class, IdentityFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.STREAM_MARSHALLING;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, Object object) throws IOException {
-         ExternalizerId id = objects.get(object.getClass());
-         if (id == null) {
-            throw new IllegalArgumentException("Unsupported class " + object.getClass() + " was provided!");
-         }
-         output.writeByte(id.ordinal());
-         switch (id) {
-            case EQUALITY_PREDICATE:
-               output.writeObject(((EqualityPredicate) object).object);
-               break;
-         }
-      }
-
-      @Override
-      public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         int number = input.readUnsignedByte();
-         ExternalizerId[] ids = ExternalizerId.values();
-         if (number < 0 || number >= ids.length) {
-            throw new IllegalArgumentException("Found invalid number " + number);
-         }
-         ExternalizerId id = ids[number];
-         switch (id) {
-            case EQUALITY_PREDICATE:
-               return new EqualityPredicate(input.readObject());
-            case ENTRY_KEY_FUNCTION:
-               return EntryToKeyFunction.getInstance();
-            case ENTRY_VALUE_FUNCTION:
-               return EntryToValueFunction.getInstance();
-            case NON_NULL_PREDICATE:
-               return NonNullPredicate.getInstance();
-            case ALWAYS_TRUE_PREDICATE:
-               return AlwaysTruePredicate.getInstance();
-            case KEY_ENTRY_FUNCTION:
-               return new KeyToEntryFunction<>();
-            case IDENTITY_FUNCTION:
-               return IdentityFunction.getInstance();
-            default:
-               throw new IllegalArgumentException("ExternalizerId not supported: " + id);
-         }
       }
    }
 }
