@@ -1,36 +1,39 @@
 package org.infinispan.server.resp.json;
 
+import static java.util.Objects.requireNonNull;
+
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.util.function.SerializableFunction;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.server.resp.ExternalizerIds;
-import org.infinispan.util.function.SerializableFunction;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
-import static java.util.Objects.requireNonNull;
-
+@ProtoTypeId(ProtoStreamTypeIds.RESP_JSON_NUM_INCR_BY_FUNCTION)
 public class JsonNumIncrByFunction
       implements SerializableFunction<ReadWriteEntryView<byte[], JsonBucket>, List<Number>> {
    public static final String ERR_PATH_CAN_T_BE_NULL = "path can't be null";
    public static final String ERR_INCREMENT_CANT_BE_NULL = "increment can't be null";
-   public static final AdvancedExternalizer<JsonNumIncrByFunction> EXTERNALIZER = new JsonNumIncrByFunction.Externalizer();
 
-   byte[] path;
-   byte[] increment;
+   @ProtoField(1)
+   final byte[] path;
 
+   @ProtoField(2)
+   final byte[] increment;
+
+   @ProtoFactory
    public JsonNumIncrByFunction(byte[] path, byte[] increment) {
        requireNonNull(path, ERR_PATH_CAN_T_BE_NULL);
        requireNonNull(increment, ERR_INCREMENT_CANT_BE_NULL);
@@ -110,31 +113,4 @@ public class JsonNumIncrByFunction
 
       return numNode.intValue() + incrNode.intValue();
    }
-
-   private static class Externalizer implements AdvancedExternalizer<JsonNumIncrByFunction> {
-
-      @Override
-      public void writeObject(ObjectOutput output, JsonNumIncrByFunction object) throws IOException {
-         JSONUtil.writeBytes(output, object.path);
-         JSONUtil.writeBytes(output, object.increment);
-      }
-
-      @Override
-      public JsonNumIncrByFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         byte[] path = JSONUtil.readBytes(input);
-         byte[] increment = JSONUtil.readBytes(input);
-         return new JsonNumIncrByFunction(path, increment);
-      }
-
-      @Override
-      public Set<Class<? extends JsonNumIncrByFunction>> getTypeClasses() {
-         return Collections.singleton(JsonNumIncrByFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.JSON_NUMINCRBY_FUNCTION;
-      }
-   }
-
 }

@@ -42,6 +42,7 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.conflict.impl.InternalConflictManager;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -77,7 +78,6 @@ import org.infinispan.topology.PersistentUUIDManagerImpl;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CommandAckCollector;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
@@ -274,9 +274,9 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       eventually(() -> !stateConsumer.hasActiveTransfers());
    }
 
-   private static void applyState(StateConsumer stateConsumer, Map<Address, Set<Integer>> requestedSegments, Collection<InternalCacheEntry<?, ?>> cacheEntries) {
+   private static void applyState(StateConsumer stateConsumer, Map<Address, Set<Integer>> requestedSegments, List<InternalCacheEntry<?, ?>> cacheEntries) {
       Map.Entry<Address, Set<Integer>> entry = requestedSegments.entrySet().iterator().next();
-      Collection<StateChunk> chunks = Collections.singletonList(
+      List<StateChunk> chunks = Collections.singletonList(
             new StateChunk(entry.getValue().iterator().next(), cacheEntries, true));
       stateConsumer.applyState(entry.getKey(), 22, chunks);
    }

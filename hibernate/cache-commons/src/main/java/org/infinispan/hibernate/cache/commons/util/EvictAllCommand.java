@@ -6,14 +6,15 @@
  */
 package org.infinispan.hibernate.cache.commons.util;
 
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
 
 /**
@@ -22,15 +23,17 @@ import org.infinispan.util.ByteString;
  * @author Galder Zamarreño
  * @since 4.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.HIBERNATE_EVICT_ALL_COMMAND)
 public class EvictAllCommand extends BaseRpcCommand {
 
    /**
     * Evict all command constructor.
     *
-    * @param regionName name of the region to evict
+    * @param cacheName name of the region to evict
     */
-	public EvictAllCommand(ByteString regionName) {
-		super(regionName);
+   @ProtoFactory
+   public EvictAllCommand(ByteString cacheName) {
+		super(cacheName);
 	}
 
 	@Override
@@ -50,17 +53,7 @@ public class EvictAllCommand extends BaseRpcCommand {
 	}
 
 	@Override
-   public void writeTo(ObjectOutput output) {
-		// No-op
-	}
-
-	@Override
 	public boolean isReturnValueExpected() {
 		return false;
 	}
-
-	@Override
-   public void readFrom(ObjectInput input) {
-      // No-op
-   }
 }

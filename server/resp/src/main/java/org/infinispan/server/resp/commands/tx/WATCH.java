@@ -1,16 +1,12 @@
 package org.infinispan.server.resp.commands.tx;
 
-import java.io.ObjectInput;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.exts.NoStateExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.metadata.Metadata;
@@ -23,8 +19,8 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.server.resp.AclCategory;
-import org.infinispan.server.resp.ExternalizerIds;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
@@ -56,7 +52,6 @@ import io.netty.util.AttributeKey;
  * @since 15.0
  */
 public class WATCH extends RespCommand implements Resp3Command, TransactionResp3Command {
-   public static final AdvancedExternalizer<TxEventConverterEmpty> EXTERNALIZER = new TxEventConverterEmpty.Externalizer();
 
    static final AttributeKey<List<TxKeysListener>> WATCHER_KEY = AttributeKey.newInstance("watchers");
 
@@ -129,30 +124,13 @@ public class WATCH extends RespCommand implements Resp3Command, TransactionResp3
       }
    }
 
-   private static class TxEventConverterEmpty implements CacheEventConverter<Object, Object, Object> {
+   @ProtoTypeId(ProtoStreamTypeIds.RESP_WATCH_TX_EVENT_CONVERTER_EMPTY)
+   public static class TxEventConverterEmpty implements CacheEventConverter<Object, Object, Object> {
 
       @Override
       public Object convert(Object key, Object oldValue, Metadata oldMetadata, Object newValue, Metadata newMetadata, EventType eventType) {
          // We don't care about the event value.
          return null;
-      }
-
-      private static class Externalizer extends NoStateExternalizer<TxEventConverterEmpty> {
-
-         @Override
-         public Integer getId() {
-            return ExternalizerIds.EVENT_IGNORE_VALUE_CONVERTER;
-         }
-
-         @Override
-         public Set<Class<? extends TxEventConverterEmpty>> getTypeClasses() {
-            return Collections.singleton(TxEventConverterEmpty.class);
-         }
-
-         @Override
-         public TxEventConverterEmpty readObject(ObjectInput input) {
-            return new TxEventConverterEmpty();
-         }
       }
    }
 }

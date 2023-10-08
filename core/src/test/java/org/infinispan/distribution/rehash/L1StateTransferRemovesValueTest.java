@@ -91,7 +91,7 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
       // Now force 1 and 3 to be owners so then 3 will get invalidation and state transfer
       factory.setOwnerIndexes(0, 2);
 
-      EmbeddedCacheManager cm = addClusterEnabledCacheManager();
+      EmbeddedCacheManager cm = addClusterEnabledCacheManager(getSerializationContext());
       cm.defineConfiguration(cacheName, configuration.build());
 
       Future<Void> join = fork(() -> {
@@ -153,7 +153,7 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
       // Now force 1 and 3 to be owners so then 3 will get invalidation and state transfer
       factory.setOwnerIndexes(0, 2);
 
-      EmbeddedCacheManager cm = addClusterEnabledCacheManager();
+      EmbeddedCacheManager cm = addClusterEnabledCacheManager(getSerializationContext());
       cm.defineConfiguration(cacheName, configuration.build());
 
       Future<Void> join = fork(() -> {

@@ -45,6 +45,8 @@ public class JSONUtil {
    public static ParseContext parserForMod = JsonPath.using(configForMod);
 
    public static final ObjectMapper objectMapper = new ObjectMapper();
+
+   // TODO remove
    public static void writeBytes(ObjectOutput output, byte[] b) throws IOException {
       output.writeInt(b.length);
       if (b.length > 0) {
@@ -52,6 +54,7 @@ public class JSONUtil {
       }
    }
 
+   // TODO remove
    public static byte[] readBytes(ObjectInput input) throws IOException {
       int length = input.readInt();
       if (length < 0) {

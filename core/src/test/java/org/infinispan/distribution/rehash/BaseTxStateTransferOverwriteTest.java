@@ -28,7 +28,8 @@ import org.infinispan.commands.statetransfer.StateTransferStartCommand;
 import org.infinispan.commands.triangle.BackupWriteCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.commands.write.BackupAckCommand;
+import org.infinispan.commands.write.BackupMultiKeyAckCommand;
+import org.infinispan.commands.write.ExceptionAckCommand;
 import org.infinispan.distribution.BaseDistFunctionalTest;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.distribution.MagicKey;
@@ -333,7 +334,7 @@ public abstract class BaseTxStateTransferOverwriteTest extends BaseDistFunctiona
       blockingRpcManager0.excludeCommands(BackupWriteCommand.class, PrepareCommand.class, CommitCommand.class,
                                           TxCompletionNotificationCommand.class
       );
-      blockingRpcManager2.excludeCommands(BackupAckCommand.class);
+      blockingRpcManager2.excludeCommands(BackupMultiKeyAckCommand.class, ExceptionAckCommand.class);
 
       // Block the rebalance confirmation on cache0
       int rebalanceTopologyId = preJoinTopologyId + 2;

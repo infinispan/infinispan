@@ -2,20 +2,13 @@ package org.infinispan.security;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.io.Serializable;
 import java.security.Principal;
-import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 
 import javax.security.auth.Subject;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -23,6 +16,10 @@ import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuild
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoSchema;
+import org.infinispan.protostream.annotations.ProtoSyntax;
 import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -54,7 +51,7 @@ public class ClusteredSecureCacheTest extends MultipleCacheManagersTest {
       for (AuthorizationPermission perm : AuthorizationPermission.values()) {
          globalRoles.role(perm.toString()).permission(perm);
       }
-      global.serialization().addAdvancedExternalizer(4321, new SecureConsumer.Externalizer());
+      global.serialization().addContextInitializer(new ClustedSecureCacheSCIImpl());
       AuthorizationConfigurationBuilder authConfig = builder.security().authorization().enable();
       for (AuthorizationPermission perm : AuthorizationPermission.values()) {
          authConfig.role(perm.toString());
@@ -116,26 +113,26 @@ public class ClusteredSecureCacheTest extends MultipleCacheManagersTest {
       }
    }
 
-   static class SecureConsumer implements Function<EmbeddedCacheManager, Subject>, Serializable {
+   static class SecureConsumer implements Function<EmbeddedCacheManager, Subject> {
       @Override
       public Subject apply(EmbeddedCacheManager m) {
          return Security.getSubject();
       }
 
-      public static class Externalizer extends AbstractExternalizer<SecureConsumer> {
-         @Override
-         public Set<Class<? extends SecureConsumer>> getTypeClasses() {
-            return Collections.singleton(SecureConsumer.class);
-         }
-
-         @Override
-         public void writeObject(ObjectOutput output, SecureConsumer task) throws IOException {
-         }
-
-         @Override
-         public SecureConsumer readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-            return new SecureConsumer();
-         }
+      @ProtoFactory
+      static SecureConsumer create() {
+         return new SecureConsumer();
       }
+   }
+
+   @ProtoSchema(
+         includeClasses = SecureConsumer.class,
+         schemaFileName = "test.core.security.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "org.infinispan.test.core.security",
+         service = false,
+         syntax = ProtoSyntax.PROTO3
+   )
+   public interface ClustedSecureCacheSCI extends SerializationContextInitializer {
    }
 }

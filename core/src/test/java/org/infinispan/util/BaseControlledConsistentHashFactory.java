@@ -143,9 +143,9 @@ public abstract class BaseControlledConsistentHashFactory<CH extends ConsistentH
       public ReplicatedConsistentHash create(int numOwners, int numSegments, List<Address> members,
                                             Map<Address, Float> capacityFactors, List<Address>[] segmentOwners,
                                             boolean rebalanced) {
-         int[] segmentOwners1 = Stream.of(segmentOwners)
-                                      .mapToInt(list -> members.indexOf(list.get(0)))
-                                      .toArray();
+         List<Integer> segmentOwners1 = Stream.of(segmentOwners)
+                                      .map(list -> members.indexOf(list.get(0)))
+                                      .toList();
          // No support for zero-capacity nodes for now
          return new ReplicatedConsistentHash(members, capacityFactors, Collections.emptyList(), segmentOwners1);
       }

@@ -1,16 +1,17 @@
 package org.infinispan.commands.topology;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.PersistentUUID;
 
@@ -20,23 +21,51 @@ import org.infinispan.topology.PersistentUUID;
  * @author Ryan Emerson
  * @since 11.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.REBALANCE_START_COMMAND)
 public class RebalanceStartCommand extends AbstractCacheControlCommand {
 
    public static final byte COMMAND_ID = 92;
 
-   private String cacheName;
-   private ConsistentHash currentCH;
-   private ConsistentHash pendingCH;
-   private CacheTopology.Phase phase;
-   private List<Address> actualMembers;
-   private List<PersistentUUID> persistentUUIDs;
-   private int rebalanceId;
-   private int topologyId;
-   private int viewId;
+   @ProtoField(1)
+   final String cacheName;
 
-   // For CommandIdUniquenessTest only
-   public RebalanceStartCommand() {
+   @ProtoField(2)
+   final WrappedMessage currentCH;
+
+   @ProtoField(3)
+   final WrappedMessage pendingCH;
+
+   @ProtoField(4)
+   final CacheTopology.Phase phase;
+
+   @ProtoField(5)
+   final List<PersistentUUID> persistentUUIDs;
+
+   @ProtoField(6)
+   final int rebalanceId;
+
+   @ProtoField(7)
+   final int topologyId;
+
+   @ProtoField(8)
+   final int viewId;
+
+   private List<Address> actualMembers;
+
+   @ProtoFactory
+   RebalanceStartCommand(String cacheName, WrappedMessage currentCH, WrappedMessage pendingCH,
+                                CacheTopology.Phase phase, List<PersistentUUID> persistentUUIDs,
+                                int rebalanceId, int topologyId, int viewId, List<JGroupsAddress> actualMembers) {
       super(COMMAND_ID);
+      this.cacheName = cacheName;
+      this.currentCH = currentCH;
+      this.pendingCH = pendingCH;
+      this.phase = phase;
+      this.persistentUUIDs = persistentUUIDs;
+      this.rebalanceId = rebalanceId;
+      this.topologyId = topologyId;
+      this.viewId = viewId;
+      this.actualMembers = (List<Address>)(List<?>) actualMembers;
    }
 
    public RebalanceStartCommand(String cacheName, Address origin, CacheTopology cacheTopology, int viewId) {
@@ -44,8 +73,8 @@ public class RebalanceStartCommand extends AbstractCacheControlCommand {
       this.cacheName = cacheName;
       this.topologyId = cacheTopology.getTopologyId();
       this.rebalanceId = cacheTopology.getRebalanceId();
-      this.currentCH = cacheTopology.getCurrentCH();
-      this.pendingCH = cacheTopology.getPendingCH();
+      this.currentCH = new WrappedMessage(cacheTopology.getCurrentCH());
+      this.pendingCH = new WrappedMessage(cacheTopology.getPendingCH());
       this.phase = cacheTopology.getPhase();
       this.actualMembers = cacheTopology.getActualMembers();
       this.persistentUUIDs = cacheTopology.getMembersPersistentUUIDs();
@@ -54,9 +83,14 @@ public class RebalanceStartCommand extends AbstractCacheControlCommand {
 
    @Override
    public CompletionStage<?> invokeAsync(GlobalComponentRegistry gcr) throws Throwable {
-      CacheTopology topology = new CacheTopology(topologyId, rebalanceId, currentCH, pendingCH, phase, actualMembers, persistentUUIDs);
+      CacheTopology topology = new CacheTopology(topologyId, rebalanceId, getCurrentCH(), getPendingCH(), phase, actualMembers, persistentUUIDs);
       return gcr.getLocalTopologyManager()
             .handleRebalance(cacheName, topology, viewId, origin);
+   }
+
+   @ProtoField(9)
+   List<JGroupsAddress> getActualMembers() {
+      return (List<JGroupsAddress>)(List<?>) actualMembers;
    }
 
    public String getCacheName() {
@@ -64,11 +98,11 @@ public class RebalanceStartCommand extends AbstractCacheControlCommand {
    }
 
    public ConsistentHash getCurrentCH() {
-      return currentCH;
+      return (ConsistentHash) currentCH.getValue();
    }
 
    public ConsistentHash getPendingCH() {
-      return pendingCH;
+      return (ConsistentHash) pendingCH.getValue();
    }
 
    public CacheTopology.Phase getPhase() {
@@ -80,38 +114,12 @@ public class RebalanceStartCommand extends AbstractCacheControlCommand {
    }
 
    @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      MarshallUtil.marshallString(cacheName, output);
-      output.writeObject(currentCH);
-      output.writeObject(pendingCH);
-      MarshallUtil.marshallEnum(phase, output);
-      MarshallUtil.marshallCollection(actualMembers, output);
-      MarshallUtil.marshallCollection(persistentUUIDs, output);
-      output.writeInt(topologyId);
-      output.writeInt(rebalanceId);
-      output.writeInt(viewId);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      cacheName = MarshallUtil.unmarshallString(input);
-      currentCH = (ConsistentHash) input.readObject();
-      pendingCH = (ConsistentHash) input.readObject();
-      phase = MarshallUtil.unmarshallEnum(input, CacheTopology.Phase::valueOf);
-      actualMembers = MarshallUtil.unmarshallCollection(input, ArrayList::new);
-      persistentUUIDs = MarshallUtil.unmarshallCollection(input, ArrayList::new);
-      topologyId = input.readInt();
-      rebalanceId = input.readInt();
-      viewId = input.readInt();
-   }
-
-   @Override
    public String toString() {
       return "RebalanceStartCommand{" +
             "cacheName='" + cacheName + '\'' +
             ", origin=" + origin +
-            ", currentCH=" + currentCH +
-            ", pendingCH=" + pendingCH +
+            ", currentCH=" + getCurrentCH() +
+            ", pendingCH=" + getPendingCH() +
             ", phase=" + phase +
             ", actualMembers=" + actualMembers +
             ", persistentUUIDs=" + persistentUUIDs +

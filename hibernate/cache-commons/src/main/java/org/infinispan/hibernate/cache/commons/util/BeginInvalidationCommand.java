@@ -6,43 +6,43 @@
  */
 package org.infinispan.hibernate.cache.commons.util;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.Objects;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.marshall.protostream.impl.MarshallableArray;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
+@ProtoTypeId(ProtoStreamTypeIds.HIBERNATE_INVALIDATE_COMMAND_BEGIN)
 public class BeginInvalidationCommand extends InvalidateCommand {
 	private Object lockOwner;
-
-	public BeginInvalidationCommand() {
-	}
 
 	public BeginInvalidationCommand(long flagsBitSet, CommandInvocationId commandInvocationId, Object[] keys, Object lockOwner) {
 		super(flagsBitSet, commandInvocationId, keys);
 		this.lockOwner = lockOwner;
 	}
+	@ProtoFactory
+	BeginInvalidationCommand(long flagsWithoutRemote, int topologyId, CommandInvocationId commandInvocationId,
+							MarshallableArray<Object> wrappedKeys, MarshallableObject<Object> wrappedLockOwner) {
+		super(flagsWithoutRemote, topologyId, commandInvocationId, wrappedKeys);
+		this.lockOwner = MarshallableObject.unwrap(wrappedLockOwner);
+	}
+
+	@ProtoField(number = 5, name = "lock_owner")
+	MarshallableObject<Object> getWrappedLockOwner() {
+		return MarshallableObject.create(lockOwner);
+	}
 
 	public Object getLockOwner() {
 		return lockOwner;
-	}
-
-	@Override
-	public void writeTo(ObjectOutput output) throws IOException {
-		super.writeTo(output);
-      LockOwner.writeTo( output, lockOwner );
-	}
-
-	@Override
-	public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-		super.readFrom(input);
-		lockOwner = LockOwner.readFrom( input );
 	}
 
 	@Override

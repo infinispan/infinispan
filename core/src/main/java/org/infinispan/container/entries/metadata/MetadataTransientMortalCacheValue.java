@@ -2,20 +2,16 @@ package org.infinispan.container.entries.metadata;
 
 import static java.lang.Math.min;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheValue;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A form of {@link TransientMortalCacheValue} that stores {@link Metadata}
@@ -23,6 +19,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
  * @author Manik Surtani
  * @since 5.1
  */
+@ProtoTypeId(ProtoStreamTypeIds.METADATA_TRANSIENT_MORTAL_CACHE_VALUE)
 public class MetadataTransientMortalCacheValue extends MetadataMortalCacheValue implements MetadataAware {
 
    long lastUsed;
@@ -37,19 +34,28 @@ public class MetadataTransientMortalCacheValue extends MetadataMortalCacheValue 
       this.lastUsed = lastUsed;
    }
 
+   @ProtoFactory
+   MetadataTransientMortalCacheValue(MarshallableObject<?> wrappedValue, PrivateMetadata internalMetadata,
+                                     MarshallableObject<Metadata> wrappedMetadata, long created, long lastUsed) {
+      super(wrappedValue, internalMetadata, wrappedMetadata, created);
+      this.lastUsed = lastUsed;
+   }
+
+   @Override
+   @ProtoField(5)
+   public long getLastUsed() {
+      return lastUsed;
+   }
+
    @Override
    public InternalCacheEntry<?, ?> toInternalCacheEntry(Object key) {
-      return new MetadataTransientMortalCacheEntry(key, value, internalMetadata, metadata, lastUsed, created);
+      return new MetadataTransientMortalCacheEntry((MarshallableObject<?>) key, value, internalMetadata, metadata,
+            lastUsed, created);
    }
 
    @Override
    public long getMaxIdle() {
       return metadata.maxIdle();
-   }
-
-   @Override
-   public long getLastUsed() {
-      return lastUsed;
    }
 
    @Override
@@ -78,37 +84,4 @@ public class MetadataTransientMortalCacheValue extends MetadataMortalCacheValue 
       super.appendFieldsToString(builder);
       builder.append(", lastUsed=").append(lastUsed);
    }
-
-   public static class Externalizer extends AbstractExternalizer<MetadataTransientMortalCacheValue> {
-      @Override
-      public void writeObject(ObjectOutput output, MetadataTransientMortalCacheValue value) throws IOException {
-         output.writeObject(value.value);
-         output.writeObject(value.internalMetadata);
-         output.writeObject(value.metadata);
-         UnsignedNumeric.writeUnsignedLong(output, value.created);
-         UnsignedNumeric.writeUnsignedLong(output, value.lastUsed);
-      }
-
-      @Override
-      public MetadataTransientMortalCacheValue readObject(ObjectInput input)
-            throws IOException, ClassNotFoundException {
-         Object value = input.readObject();
-         PrivateMetadata internalMetadata = (PrivateMetadata) input.readObject();
-         Metadata metadata = (Metadata) input.readObject();
-         long created = UnsignedNumeric.readUnsignedLong(input);
-         long lastUsed = UnsignedNumeric.readUnsignedLong(input);
-         return new MetadataTransientMortalCacheValue(value, internalMetadata, metadata, created, lastUsed);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.METADATA_TRANSIENT_MORTAL_VALUE;
-      }
-
-      @Override
-      public Set<Class<? extends MetadataTransientMortalCacheValue>> getTypeClasses() {
-         return Collections.singleton(MetadataTransientMortalCacheValue.class);
-      }
-   }
-
 }

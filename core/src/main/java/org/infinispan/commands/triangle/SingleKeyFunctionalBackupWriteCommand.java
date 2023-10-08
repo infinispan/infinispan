@@ -1,23 +1,33 @@
 package org.infinispan.commands.triangle;
 
+import static org.infinispan.commands.triangle.SingleKeyFunctionalBackupWriteCommand.Operation.READ_WRITE;
+import static org.infinispan.commands.triangle.SingleKeyFunctionalBackupWriteCommand.Operation.READ_WRITE_KEY_VALUE;
+import static org.infinispan.commands.triangle.SingleKeyFunctionalBackupWriteCommand.Operation.WRITE_ONLY;
+import static org.infinispan.commands.triangle.SingleKeyFunctionalBackupWriteCommand.Operation.WRITE_ONLY_KEY_VALUE;
 import static org.infinispan.commands.write.ValueMatcher.MATCH_ALWAYS;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.functional.AbstractWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.encoding.DataConversion;
+import org.infinispan.functional.impl.Params;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.protostream.annotations.Proto;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoName;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
 
 /**
@@ -26,10 +36,10 @@ import org.infinispan.util.ByteString;
  * @author Pedro Ruivo
  * @since 9.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.SINGLE_KEY_FUNCTIONAL_BACKUP_WRITE_COMMAND)
 public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWriteCommand {
 
    public static final byte COMMAND_ID = 77;
-   private static final Operation[] CACHED_OPERATION = Operation.values();
 
    private Operation operation;
    private Object key;
@@ -37,87 +47,81 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
    private Object prevValue;
    private Metadata prevMetadata;
 
-   //for testing
-   @SuppressWarnings("unused")
-   public SingleKeyFunctionalBackupWriteCommand() {
-      super(null);
+   private SingleKeyFunctionalBackupWriteCommand(ByteString cacheName, AbstractWriteKeyCommand<?, ?> command, long sequence, int segmentId,
+                                                 Operation operation, Object key, Object value, Object prevValue,
+                                                 Metadata prevMetadata, Object function) {
+      super(cacheName, command, sequence, segmentId, function);
+      this.operation = operation;
+      this.key = key;
+      this.value = value;
+      this.prevValue = prevValue;
+      this.prevMetadata = prevMetadata;
    }
 
-   public SingleKeyFunctionalBackupWriteCommand(ByteString cacheName) {
-      super(cacheName);
+   @ProtoFactory
+   SingleKeyFunctionalBackupWriteCommand(ByteString cacheName, CommandInvocationId commandInvocationId, int topologyId,
+                                         long flags, long sequence, int segmentId, MarshallableObject<?> function,
+                                         Params params, DataConversion keyDataConversion, DataConversion valueDataConversion,
+                                         Operation operation, MarshallableObject<?> key, MarshallableObject<?> value,
+                                         MarshallableObject<?> prevValue, MarshallableObject<Metadata> prevMetadata) {
+      super(cacheName, commandInvocationId, topologyId, flags, sequence, segmentId, function, params, keyDataConversion,
+            valueDataConversion);
+      this.operation = operation;
+      this.key = MarshallableObject.unwrap(key);
+      this.value = MarshallableObject.unwrap(value);
+      this.prevValue = MarshallableObject.unwrap(prevValue);
+      this.prevMetadata = MarshallableObject.unwrap(prevMetadata);
    }
 
-   private static Operation valueOf(int index) {
-      return CACHED_OPERATION[index];
+   public static SingleKeyFunctionalBackupWriteCommand create(ByteString cacheName, ReadWriteKeyCommand<?, ?, ?> command, long sequence, int segmentId) {
+      return new SingleKeyFunctionalBackupWriteCommand(cacheName, command, sequence, segmentId, READ_WRITE, command.getKey(), null, null,
+            null, command.getFunction());
+   }
+
+   public static SingleKeyFunctionalBackupWriteCommand create(ByteString cacheName, ReadWriteKeyValueCommand<?, ?, ?, ?> command, long sequence, int segmentId) {
+      return new SingleKeyFunctionalBackupWriteCommand(cacheName, command, sequence, segmentId, READ_WRITE_KEY_VALUE, command.getKey(), command.getArgument(),
+            command.getPrevValue(), command.getPrevMetadata(), command.getBiFunction());
+   }
+
+
+   public static SingleKeyFunctionalBackupWriteCommand create(ByteString cacheName, WriteOnlyKeyValueCommand<?, ?, ?> command, long sequence, int segmentId) {
+      return new SingleKeyFunctionalBackupWriteCommand(cacheName, command, sequence, segmentId, WRITE_ONLY_KEY_VALUE, command.getKey(), command.getArgument(),
+            null, null, command.getBiConsumer());
+   }
+
+   public static SingleKeyFunctionalBackupWriteCommand create(ByteString cacheName, WriteOnlyKeyCommand<?, ?> command, long sequence, int segmentId) {
+      return new SingleKeyFunctionalBackupWriteCommand(cacheName, command, sequence, segmentId, WRITE_ONLY, command.getKey(), null, null,
+            null, command.getConsumer());
+   }
+
+   @ProtoField(11)
+   Operation getOperation() {
+      return operation;
+   }
+
+   @ProtoField(12)
+   MarshallableObject<?> getKey() {
+      return MarshallableObject.create(key);
+   }
+
+   @ProtoField(13)
+   MarshallableObject<?> getValue() {
+      return MarshallableObject.create(value);
+   }
+
+   @ProtoField(14)
+   MarshallableObject<?> getPrevValue() {
+      return MarshallableObject.create(prevValue);
+   }
+
+   @ProtoField(15)
+   MarshallableObject<Metadata> getPrevMetadata() {
+      return MarshallableObject.create(prevMetadata);
    }
 
    @Override
    public byte getCommandId() {
       return COMMAND_ID;
-   }
-
-   public void setReadWriteKeyCommand(ReadWriteKeyCommand command) {
-      this.operation = Operation.READ_WRITE;
-      setCommonFields(command);
-      this.function = command.getFunction();
-   }
-
-   public void setReadWriteKeyValueCommand(ReadWriteKeyValueCommand command) {
-      this.operation = Operation.READ_WRITE_KEY_VALUE;
-      setCommonFields(command);
-      this.function = command.getBiFunction();
-      this.value = command.getArgument();
-      this.prevValue = command.getPrevValue();
-      this.prevMetadata = command.getPrevMetadata();
-   }
-
-   public void setWriteOnlyKeyValueCommand(WriteOnlyKeyValueCommand command) {
-      this.operation = Operation.WRITE_ONLY_KEY_VALUE;
-      setCommonFields(command);
-      this.function = command.getBiConsumer();
-      this.value = command.getArgument();
-   }
-
-   public void setWriteOnlyKeyCommand(WriteOnlyKeyCommand command) {
-      this.operation = Operation.WRITE_ONLY;
-      setCommonFields(command);
-      this.function = command.getConsumer();
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      writeBase(output);
-      writeFunctionAndParams(output);
-      MarshallUtil.marshallEnum(operation, output);
-      output.writeObject(key);
-      switch (operation) {
-         case READ_WRITE_KEY_VALUE:
-            output.writeObject(prevValue);
-            output.writeObject(prevMetadata);
-         case WRITE_ONLY_KEY_VALUE:
-            output.writeObject(value);
-         case READ_WRITE:
-         case WRITE_ONLY:
-         default:
-      }
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      readBase(input);
-      readFunctionAndParams(input);
-      operation = MarshallUtil.unmarshallEnum(input, SingleKeyFunctionalBackupWriteCommand::valueOf);
-      key = input.readObject();
-      switch (operation) {
-         case READ_WRITE_KEY_VALUE:
-            prevValue = input.readObject();
-            prevMetadata = (Metadata) input.readObject();
-         case WRITE_ONLY_KEY_VALUE:
-            value = input.readObject();
-         case READ_WRITE:
-         case WRITE_ONLY:
-         default:
-      }
    }
 
    @Override
@@ -146,13 +150,10 @@ public class SingleKeyFunctionalBackupWriteCommand extends FunctionalBackupWrite
       }
    }
 
-   private <C extends AbstractWriteKeyCommand> void setCommonFields(C command) {
-      setCommonAttributesFromCommand(command);
-      setFunctionalCommand(command);
-      this.key = command.getKey();
-   }
-
-   private enum Operation {
+   @Proto
+   @ProtoName(value = "SingleKeyFunctionBackupOperation")
+   @ProtoTypeId(ProtoStreamTypeIds.SINGLE_KEY_FUNCTIONAL_BACKUP_WRITE_COMMAND_OPERATION)
+   public enum Operation {
       READ_WRITE_KEY_VALUE,
       READ_WRITE,
       WRITE_ONLY_KEY_VALUE,

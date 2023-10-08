@@ -2,14 +2,9 @@ package org.infinispan.commands.read;
 
 import static org.infinispan.commons.util.Util.toStr;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
+import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.FlagBitSets;
 
 /**
  * Implements functionality defined by {@link org.infinispan.Cache#get(Object)} and
@@ -18,15 +13,12 @@ import org.infinispan.context.impl.FlagBitSets;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 4.0
  */
-public class GetKeyValueCommand extends AbstractDataCommand {
+public class GetKeyValueCommand extends AbstractDataCommand implements LocalCommand {
 
    public static final byte COMMAND_ID = 4;
 
    public GetKeyValueCommand(Object key, int segment, long flagsBitSet) {
       super(key, segment, flagsBitSet);
-   }
-
-   public GetKeyValueCommand() {
    }
 
    @Override
@@ -44,27 +36,10 @@ public class GetKeyValueCommand extends AbstractDataCommand {
       return COMMAND_ID;
    }
 
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      output.writeObject(key);
-      UnsignedNumeric.writeUnsignedInt(output, segment);
-      output.writeLong(FlagBitSets.copyWithoutRemotableFlags(getFlagsBitSet()));
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      key = input.readObject();
-      segment = UnsignedNumeric.readUnsignedInt(input);
-      setFlagsBitSet(input.readLong());
-   }
-
    public String toString() {
-      return new StringBuilder()
-            .append("GetKeyValueCommand {key=")
-            .append(toStr(key))
-            .append(", flags=").append(printFlags())
-            .append("}")
-            .toString();
+      return "GetKeyValueCommand {key=" +
+            toStr(key) +
+            ", flags=" + printFlags() +
+            "}";
    }
-
 }

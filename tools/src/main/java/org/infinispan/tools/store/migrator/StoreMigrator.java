@@ -8,17 +8,11 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.stream.Collectors;
-
-import jakarta.transaction.Status;
-import jakarta.transaction.TransactionManager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.io.ByteBufferImpl;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Version;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
@@ -42,6 +36,9 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.util.KeyValuePair;
+
+import jakarta.transaction.Status;
+import jakarta.transaction.TransactionManager;
 
 /**
  * @author Ryan Emerson
@@ -98,18 +95,12 @@ public class StoreMigrator {
       try (EmbeddedCacheManager manager = TargetStoreFactory.getCacheManager(properties);
            StoreIterator sourceReader = StoreIteratorFactory.get(properties)) {
 
-         Map<Integer, AdvancedExternalizer<?>> externalizers = manager.getCacheManagerConfiguration().serialization().advancedExternalizers();
-         Set<Class> externalizerClasses = externalizers.values().stream()
-               .flatMap(e -> e.getTypeClasses().stream())
-               .collect(Collectors.toSet());
-
          AdvancedCache targetCache = TargetStoreFactory.getTargetCache(manager, properties);
          // Txs used so that writes to the DB are batched. Migrator will always operate locally Tx overhead should be negligible
          TransactionManager tm = targetCache.getTransactionManager();
          int txBatchSize = 0;
          for (MarshallableEntry entry : sourceReader) {
-            if (warnAndIgnoreInternalClasses(entry.getKey(), externalizerClasses, output) ||
-                  warnAndIgnoreInternalClasses(entry.getValue(), externalizerClasses, output))
+            if (warnAndIgnoreInternalClasses(entry.getKey(), output) || warnAndIgnoreInternalClasses(entry.getValue(), output))
                continue;
 
             if (txBatchSize == 0)
@@ -144,14 +135,14 @@ public class StoreMigrator {
       out.println("License Apache License, v. 2.0. http://www.apache.org/licenses/LICENSE-2.0");
    }
 
-   private boolean warnAndIgnoreInternalClasses(Object o, Set<Class> extClass, boolean output) {
-      Class clazz = o.getClass();
-      boolean isBlackListed = !extClass.contains(clazz) && !clazz.isPrimitive() && INTERNAL_BLACKLIST.stream().anyMatch(c -> c.isAssignableFrom(clazz));
+   private boolean warnAndIgnoreInternalClasses(Object o, boolean output) {
+      Class<?> clazz = o.getClass();
+      boolean isBlackListed = !clazz.isPrimitive() && INTERNAL_BLACKLIST.stream().anyMatch(c -> c.isAssignableFrom(clazz));
       if (isBlackListed) {
          if (output) {
-            System.err.println(String.format("Ignoring entry with class %s as this is an internal Infinispan class that" +
+            System.err.printf("Ignoring entry with class '%s' as this is an internal Infinispan class that" +
                   "should not be used by users. If you really require this class, it's possible to explicitly provide the" +
-                  "associated AdvancedExternalizer via the property 'target.marshaller.externalizers=Externalizer.class`", o.getClass()));
+                  "Infinispan SerializationContextInitializers via the property 'target.marshaller.context-initializers=%n", o.getClass());
          }
          return true;
       }

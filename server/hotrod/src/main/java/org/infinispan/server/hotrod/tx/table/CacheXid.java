@@ -1,14 +1,9 @@
 package org.infinispan.server.hotrod.tx.table;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.tx.XidImpl;
-import org.infinispan.server.core.ExternalizerIds;
+import org.infinispan.protostream.annotations.Proto;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
 
 /**
@@ -20,29 +15,12 @@ import org.infinispan.util.ByteString;
  * @author Pedro Ruivo
  * @since 9.1
  */
-public class CacheXid {
-
-   public static final AdvancedExternalizer<CacheXid> EXTERNALIZER = new Externalizer();
-
-   private final ByteString cacheName;
-   private final XidImpl xid;
-
-   public CacheXid(ByteString cacheName, XidImpl xid) {
-      this.cacheName = cacheName;
-      this.xid = xid;
-   }
+@Proto
+@ProtoTypeId(ProtoStreamTypeIds.SERVER_HR_CACHE_XID)
+public record CacheXid(ByteString cacheName, XidImpl xid) {
 
    public boolean sameXid(XidImpl other) {
       return xid.equals(other);
-   }
-
-   public static void writeTo(ObjectOutput output, CacheXid object) throws IOException {
-      ByteString.writeObject(output, object.cacheName);
-      XidImpl.writeTo(output, object.xid);
-   }
-
-   public static CacheXid readFrom(ObjectInput input) throws IOException {
-      return new CacheXid(ByteString.readObject(input), XidImpl.readFrom(input));
    }
 
    @Override
@@ -59,48 +37,10 @@ public class CacheXid {
    }
 
    @Override
-   public int hashCode() {
-      int result = cacheName.hashCode();
-      result = 31 * result + xid.hashCode();
-      return result;
-   }
-
-   @Override
    public String toString() {
       return "CacheXid{" +
             "cacheName=" + cacheName +
             ", xid=" + xid +
             '}';
-   }
-
-   public ByteString getCacheName() {
-      return cacheName;
-   }
-
-   public XidImpl getXid() {
-      return xid;
-   }
-
-   private static class Externalizer implements AdvancedExternalizer<CacheXid> {
-
-      @Override
-      public Set<Class<? extends CacheXid>> getTypeClasses() {
-         return Collections.singleton(CacheXid.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return ExternalizerIds.CACHE_XID;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, CacheXid object) throws IOException {
-         writeTo(output, object);
-      }
-
-      @Override
-      public CacheXid readObject(ObjectInput input) throws IOException {
-         return readFrom(input);
-      }
    }
 }

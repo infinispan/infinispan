@@ -1,18 +1,22 @@
 package org.infinispan.commands.triangle;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.functional.AbstractWriteManyCommand;
 import org.infinispan.commands.functional.ReadWriteManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.encoding.DataConversion;
+import org.infinispan.functional.impl.Params;
+import org.infinispan.marshall.protostream.impl.MarshallableCollection;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
 
 /**
@@ -21,6 +25,7 @@ import org.infinispan.util.ByteString;
  * @author Pedro Ruivo
  * @since 9.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.MULTI_KEY_FUNCTIONAL_BACKUP_WRITE_COMMAND)
 public class MultiKeyFunctionalBackupWriteCommand extends FunctionalBackupWriteCommand {
 
    public static final byte COMMAND_ID = 80;
@@ -28,51 +33,46 @@ public class MultiKeyFunctionalBackupWriteCommand extends FunctionalBackupWriteC
    private boolean writeOnly;
    private Collection<?> keys;
 
-   //for testing
-   @SuppressWarnings("unused")
-   public MultiKeyFunctionalBackupWriteCommand() {
-      super(null);
+   public static <K, V> MultiKeyFunctionalBackupWriteCommand create(ByteString cacheName, WriteOnlyManyCommand<K, V> command,
+                                                                    Collection<?> keys, long sequence, int segmentId) {
+      return new MultiKeyFunctionalBackupWriteCommand(cacheName, command, sequence, segmentId, command.getConsumer(), true, keys);
    }
 
-   public MultiKeyFunctionalBackupWriteCommand(ByteString cacheName) {
-      super(cacheName);
+   public static <K, V, R> MultiKeyFunctionalBackupWriteCommand create(ByteString cacheName, ReadWriteManyCommand<K, V, R> command,
+                                                                       Collection<?> keys, long sequence, int segmentId) {
+      return new MultiKeyFunctionalBackupWriteCommand(cacheName, command, sequence, segmentId, command.getFunction(), false, keys);
+   }
+
+   private MultiKeyFunctionalBackupWriteCommand(ByteString cacheName, AbstractWriteManyCommand<?, ?> command, long sequence,
+                                                int segmentId, Object function, boolean writeOnly, Collection<?> keys) {
+      super(cacheName, command, sequence, segmentId, function);
+      this.writeOnly = writeOnly;
+      this.keys = keys;
+   }
+
+   @ProtoFactory
+   MultiKeyFunctionalBackupWriteCommand(ByteString cacheName, CommandInvocationId commandInvocationId, int topologyId,
+                                        long flags, long sequence, int segmentId, MarshallableObject<?> function,
+                                        Params params, DataConversion keyDataConversion, DataConversion valueDataConversion,
+                                        boolean writeOnly, MarshallableCollection<?> keys) {
+      super(cacheName, commandInvocationId, topologyId, flags, sequence, segmentId, function, params, keyDataConversion, valueDataConversion);
+      this.writeOnly = writeOnly;
+      this.keys = MarshallableCollection.unwrap(keys);
+   }
+
+   @ProtoField(11)
+   boolean isWriteOnly() {
+      return writeOnly;
+   }
+
+   @ProtoField(12)
+   MarshallableCollection<?> getKeys() {
+      return MarshallableCollection.create(keys);
    }
 
    @Override
    public byte getCommandId() {
       return COMMAND_ID;
-   }
-
-   public <K, V> void setWriteOnly(WriteOnlyManyCommand<K, V> command, Collection<Object> keys) {
-      setCommonAttributesFromCommand(command);
-      setFunctionalCommand(command);
-      this.writeOnly = true;
-      this.keys = keys;
-      this.function = command.getConsumer();
-   }
-
-   public <K, V, R> void setReadWrite(ReadWriteManyCommand<K, V, R> command, Collection<Object> keys) {
-      setCommonAttributesFromCommand(command);
-      setFunctionalCommand(command);
-      this.writeOnly = false;
-      this.keys = keys;
-      this.function = command.getFunction();
-   }
-
-   @Override
-   public void writeTo(ObjectOutput output) throws IOException {
-      writeBase(output);
-      writeFunctionAndParams(output);
-      output.writeBoolean(writeOnly);
-      MarshallUtil.marshallCollection(keys, output);
-   }
-
-   @Override
-   public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      readBase(input);
-      readFunctionAndParams(input);
-      writeOnly = input.readBoolean();
-      keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
    }
 
    @Override
@@ -86,5 +86,4 @@ public class MultiKeyFunctionalBackupWriteCommand extends FunctionalBackupWriteC
       cmd.setForwarded(true);
       return cmd;
    }
-
 }

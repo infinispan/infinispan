@@ -1,22 +1,18 @@
 package org.infinispan.multimap.impl.function.hmap;
 
-import static org.infinispan.multimap.impl.ExternalizerIds.HASH_MAP_REPLACE_FUNCTION;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.functional.EntryView;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.multimap.impl.HashMapBucket;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
+@ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_HASH_MAP_REPLACE_FUNCTION)
 public class HashMapReplaceFunction<K, HK, HV> extends HashMapBucketBaseFunction<K, HK, HV, Boolean> {
-
-   public static final Externalizer EXTERNALIZER = new Externalizer();
 
    private final HK property;
    private final HV expected;
@@ -26,6 +22,28 @@ public class HashMapReplaceFunction<K, HK, HV> extends HashMapBucketBaseFunction
       this.property = property;
       this.expected = expected;
       this.replacement = replacement;
+   }
+
+   @ProtoFactory
+   HashMapReplaceFunction(MarshallableObject<HK> property, MarshallableObject<HV> expected, MarshallableObject<HV> replacement) {
+      this.property = MarshallableObject.unwrap(property);
+      this.expected = MarshallableObject.unwrap(expected);
+      this.replacement = MarshallableObject.unwrap(replacement);
+   }
+
+   @ProtoField(1)
+   MarshallableObject<HK> getProperty() {
+      return MarshallableObject.create(property);
+   }
+
+   @ProtoField(2)
+   MarshallableObject<HV> getExpected() {
+      return MarshallableObject.create(expected);
+   }
+
+   @ProtoField(3)
+   MarshallableObject<HV> getReplacement() {
+      return MarshallableObject.create(replacement);
    }
 
    @Override
@@ -38,31 +56,5 @@ public class HashMapReplaceFunction<K, HK, HV> extends HashMapBucketBaseFunction
       if (next != null && next != bucket) view.set(next);
 
       return next != null;
-   }
-
-   @SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
-   private static class Externalizer implements AdvancedExternalizer<HashMapReplaceFunction> {
-
-      @Override
-      public Set<Class<? extends HashMapReplaceFunction>> getTypeClasses() {
-         return Collections.singleton(HashMapReplaceFunction.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return HASH_MAP_REPLACE_FUNCTION;
-      }
-
-      @Override
-      public void writeObject(ObjectOutput output, HashMapReplaceFunction object) throws IOException {
-         output.writeObject(object.property);
-         output.writeObject(object.expected);
-         output.writeObject(object.replacement);
-      }
-
-      @Override
-      public HashMapReplaceFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new HashMapReplaceFunction(input.readObject(), input.readObject(), input.readObject());
-      }
    }
 }

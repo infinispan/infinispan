@@ -1,9 +1,11 @@
 package org.infinispan.commands.remote;
 
+import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
 
 public abstract class BaseRpcCommand implements CacheRpcCommand {
+
    protected final ByteString cacheName;
 
    protected Address origin;
@@ -13,6 +15,7 @@ public abstract class BaseRpcCommand implements CacheRpcCommand {
    }
 
    @Override
+   @ProtoField(1)
    public ByteString getCacheName() {
       return cacheName;
    }

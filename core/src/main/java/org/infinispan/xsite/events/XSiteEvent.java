@@ -1,11 +1,11 @@
 package org.infinispan.xsite.events;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Objects;
 
-import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.ByteString;
 
 /**
@@ -15,22 +15,21 @@ import org.infinispan.util.ByteString;
  *
  * @since 15.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.XSITE_EVENT)
 public final class XSiteEvent {
 
-   private static final XSiteEventType[] CACHED_TYPE = XSiteEventType.values();
+   @ProtoField(1)
+   final XSiteEventType type;
+   @ProtoField(2)
+   final ByteString siteName;
+   @ProtoField(3)
+   final ByteString cacheName;
 
-   private final XSiteEventType type;
-   private final ByteString siteName;
-   private final ByteString cacheName;
-
-   private XSiteEvent(XSiteEventType type, ByteString siteName, ByteString cacheName) {
+   @ProtoFactory
+   XSiteEvent(XSiteEventType type, ByteString siteName, ByteString cacheName) {
       this.type = Objects.requireNonNull(type);
       this.siteName = siteName;
       this.cacheName = cacheName;
-   }
-
-   private static XSiteEventType typeFrom(int ordinal) {
-      return CACHED_TYPE[ordinal];
    }
 
    public static XSiteEvent createConnectEvent(ByteString localSite) {
@@ -84,33 +83,5 @@ public final class XSiteEvent {
       result = 31 * result + (siteName != null ? siteName.hashCode() : 0);
       result = 31 * result + (cacheName != null ? cacheName.hashCode() : 0);
       return result;
-   }
-
-   public static void writeTo(ObjectOutput output, XSiteEvent event) throws IOException {
-      MarshallUtil.marshallEnum(event.type, output);
-      switch (event.type) {
-         case SITE_CONNECTED:
-            ByteString.writeObject(output, event.siteName);
-            return;
-         case STATE_REQUEST:
-         case INITIAL_STATE_REQUEST:
-            ByteString.writeObject(output, event.siteName);
-            ByteString.writeObject(output, event.cacheName);
-      }
-   }
-
-   public static XSiteEvent readFrom(ObjectInput input) throws IOException {
-      var type = MarshallUtil.unmarshallEnum(input, XSiteEvent::typeFrom);
-      assert type != null;
-      switch (type) {
-         case SITE_CONNECTED:
-            return createConnectEvent(ByteString.readObject(input));
-         case STATE_REQUEST:
-            return createRequestState(ByteString.readObject(input), ByteString.readObject(input));
-         case INITIAL_STATE_REQUEST:
-            return createInitialStateRequest(ByteString.readObject(input), ByteString.readObject(input));
-         default:
-            throw new IllegalStateException();
-      }
    }
 }

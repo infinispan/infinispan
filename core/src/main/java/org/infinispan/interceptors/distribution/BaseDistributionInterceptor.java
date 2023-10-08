@@ -54,6 +54,7 @@ import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.SuccessfulArrayResponse;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.responses.ValidResponse;
@@ -845,19 +846,14 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             }
          }
 
-         SuccessfulResponse successfulResponse = (SuccessfulResponse) response;
-         Object responseValue = successfulResponse.getResponseValue();
-         if (!(responseValue instanceof InternalCacheValue[])) {
-            throw CompletableFutures.asCompletionException(
-               new IllegalStateException("Unexpected response value: " + responseValue));
-         }
+         SuccessfulArrayResponse<InternalCacheValue<?>> rsp = (SuccessfulArrayResponse<InternalCacheValue<?>>) response;
+         InternalCacheValue<?>[] values = rsp.toArray(new InternalCacheValue[0]);
 
          List<Object> senderKeys = requestedKeys.get(sender);
-         InternalCacheValue[] values = (InternalCacheValue[]) responseValue;
          for (int i = 0; i < senderKeys.size(); ++i) {
             Object key = senderKeys.get(i);
-            InternalCacheValue value = values[i];
-            CacheEntry entry = value == null ? NullCacheEntry.getInstance() : value.toInternalCacheEntry(key);
+            InternalCacheValue<?> value = values[i];
+            CacheEntry<?, ?> entry = value == null ? NullCacheEntry.getInstance() : value.toInternalCacheEntry(key);
             wrapRemoteEntry(ctx, key, entry, command instanceof WriteCommand);
          }
          // TODO Dan: handleRemotelyRetrievedKeys could call wrapRemoteEntry itself after transforming the entries
@@ -871,11 +867,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          }
          List<Object> senderKeys = requestedKeys.get(sender);
          for (Object key : senderKeys) {
-            Collection<Address> keyUnsureOwners = unsureOwners.get(key);
-            if (keyUnsureOwners == null) {
-               keyUnsureOwners = new ArrayList<>();
-               unsureOwners.put(key, keyUnsureOwners);
-            }
+            Collection<Address> keyUnsureOwners = unsureOwners.computeIfAbsent(key, k -> new ArrayList<>());
             keyUnsureOwners.add(sender);
          }
       }

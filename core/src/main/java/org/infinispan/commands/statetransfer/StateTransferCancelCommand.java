@@ -2,11 +2,16 @@ package org.infinispan.commands.statetransfer;
 
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.marshall.protostream.impl.WrappedMessages;
+import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.statetransfer.StateProvider;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * Cancel state transfer.
@@ -14,16 +19,14 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
  * @author Ryan Emerson
  * @since 11.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.STATE_TRANSFER_CANCEL_COMMAND)
 public class StateTransferCancelCommand extends AbstractStateTransferCommand {
 
    public static final byte COMMAND_ID = 117;
 
-   public StateTransferCancelCommand() {
-      this(null);
-   }
-
-   public StateTransferCancelCommand(ByteString cacheName) {
-      super(COMMAND_ID, cacheName);
+   @ProtoFactory
+   StateTransferCancelCommand(ByteString cacheName, int topologyId, WrappedMessage wrappedSegments) {
+      this(cacheName, topologyId, WrappedMessages.<IntSet>unwrap(wrappedSegments));
    }
 
    public StateTransferCancelCommand(ByteString cacheName, int topologyId, IntSet segments) {

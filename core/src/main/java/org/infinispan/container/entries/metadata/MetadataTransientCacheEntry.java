@@ -1,19 +1,15 @@
 package org.infinispan.container.entries.metadata;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.Set;
-
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.container.entries.AbstractInternalCacheEntry;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.InternalCacheValue;
-import org.infinispan.marshall.core.Ids;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * A cache entry that is transient, i.e., it can be considered expired after a period of not being used, and {@link
@@ -22,6 +18,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
  * @author Galder Zamarreño
  * @since 5.3
  */
+@ProtoTypeId(ProtoStreamTypeIds.METADATA_TRANSIENT_CACHE_ENTRY)
 public class MetadataTransientCacheEntry extends AbstractInternalCacheEntry implements MetadataAware {
 
    protected Metadata metadata;
@@ -36,6 +33,26 @@ public class MetadataTransientCacheEntry extends AbstractInternalCacheEntry impl
       super(key, value, internalMetadata);
       this.metadata = metadata;
       this.lastUsed = lastUsed;
+   }
+
+   @ProtoFactory
+   protected MetadataTransientCacheEntry(MarshallableObject<?> wrappedKey, MarshallableObject<?> wrappedValue,
+                                         PrivateMetadata internalMetadata, MarshallableObject<Metadata> wrappedMetadata,
+                                        long lastUsed) {
+      super(wrappedKey, wrappedValue, internalMetadata);
+      this.metadata = MarshallableObject.unwrap(wrappedMetadata);
+      this.lastUsed = lastUsed;
+   }
+
+   @ProtoField(number = 4, name = "metadata")
+   MarshallableObject<Metadata> getWrappedMetadata() {
+      return MarshallableObject.create(metadata);
+   }
+
+   @Override
+   @ProtoField(5)
+   public final long getLastUsed() {
+      return lastUsed;
    }
 
    @Override
@@ -67,11 +84,6 @@ public class MetadataTransientCacheEntry extends AbstractInternalCacheEntry impl
    @Override
    public long getCreated() {
       return -1;
-   }
-
-   @Override
-   public final long getLastUsed() {
-      return lastUsed;
    }
 
    @Override
@@ -110,36 +122,5 @@ public class MetadataTransientCacheEntry extends AbstractInternalCacheEntry impl
       super.appendFieldsToString(builder);
       builder.append(", metadata=").append(metadata);
       builder.append(", lastUsed=").append(lastUsed);
-   }
-
-   public static class Externalizer extends AbstractExternalizer<MetadataTransientCacheEntry> {
-      @Override
-      public void writeObject(ObjectOutput output, MetadataTransientCacheEntry ice) throws IOException {
-         output.writeObject(ice.key);
-         output.writeObject(ice.value);
-         output.writeObject(ice.internalMetadata);
-         output.writeObject(ice.metadata);
-         UnsignedNumeric.writeUnsignedLong(output, ice.lastUsed);
-      }
-
-      @Override
-      public MetadataTransientCacheEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Object key = input.readObject();
-         Object value = input.readObject();
-         PrivateMetadata internalMetadata = (PrivateMetadata) input.readObject();
-         Metadata metadata = (Metadata) input.readObject();
-         long lastUsed = UnsignedNumeric.readUnsignedLong(input);
-         return new MetadataTransientCacheEntry(key, value, internalMetadata, metadata, lastUsed);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.METADATA_TRANSIENT_ENTRY;
-      }
-
-      @Override
-      public Set<Class<? extends MetadataTransientCacheEntry>> getTypeClasses() {
-         return Collections.singleton(MetadataTransientCacheEntry.class);
-      }
    }
 }
