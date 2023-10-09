@@ -1230,6 +1230,30 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
+          <xs:attribute name="container" type="xs:boolean" default="${Tracing.container}">
+            <xs:annotation>
+              <xs:documentation>
+                Enable or disable tracing for container category on the given cache.
+                This property can be used to enable or disable tracing at runtime.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="cluster" type="xs:boolean" default="${Tracing.cluster}">
+            <xs:annotation>
+              <xs:documentation>
+                Enable or disable tracing for cluster category on the given cache.
+                This property can be used to enable or disable tracing at runtime.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="x-site" type="xs:boolean" default="${Tracing.x-site}">
+            <xs:annotation>
+              <xs:documentation>
+                Enable or disable tracing for x-site category on the given cache.
+                This property can be used to enable or disable tracing at runtime.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
         </xs:complexType>
       </xs:element>
       <xs:element name="custom-interceptors" type="tns:custom-interceptors" minOccurs="0">
