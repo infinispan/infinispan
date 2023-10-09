@@ -1495,6 +1495,18 @@ public class CacheParser implements ConfigurationParser {
             case ENABLED:
                builder.tracing().enabled(ParseUtils.parseBoolean(reader, i, value));
                break;
+            case CONTAINER:
+               boolean container = ParseUtils.parseBoolean(reader, i, value);
+               builder.tracing().container(container);
+               break;
+            case CLUSTER:
+               boolean cluster = ParseUtils.parseBoolean(reader, i, value);
+               builder.tracing().cluster(cluster);
+               break;
+            case X_SITE:
+               boolean xSite = ParseUtils.parseBoolean(reader, i, value);
+               builder.tracing().xSite(xSite);
+               break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }

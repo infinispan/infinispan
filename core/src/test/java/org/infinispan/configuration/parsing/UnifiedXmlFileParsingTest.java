@@ -149,6 +149,9 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             // enabled by default, even if the tracing property is not present in the cache configuration
             assertThat(tracing).isNotNull();
             assertThat(tracing.enabled()).isTrue();
+            assertThat(tracing.container()).isTrue();
+            assertThat(tracing.cluster()).isFalse();
+            assertThat(tracing.xSite()).isFalse();
 
             tracing = getConfiguration(holder, "disabled-tracing").tracing();
             assertThat(tracing).isNotNull();

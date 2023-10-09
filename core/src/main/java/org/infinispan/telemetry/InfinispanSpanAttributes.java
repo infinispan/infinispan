@@ -30,7 +30,7 @@ public class InfinispanSpanAttributes {
          return false;
       }
 
-      return !cacheConfiguration.tracing().enabled();
+      return !cacheConfiguration.tracing().enabled(category);
    }
 
    public static class Builder {

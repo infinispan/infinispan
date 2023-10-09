@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.test.Eventually;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.InfinispanServerDriver;
 import org.infinispan.server.test.core.InfinispanServerListener;
 import org.infinispan.server.test.core.ServerRunMode;
@@ -64,7 +65,11 @@ public class RequestTracingIT {
 
    @Test
    public void testRequestIsTraced() {
-      RemoteCache<Object, Object> remoteCache = SERVER.hotrod().create();
+      org.infinispan.configuration.cache.ConfigurationBuilder cache = new org.infinispan.configuration.cache.ConfigurationBuilder();
+      cache.clustering().cacheMode(CacheMode.DIST_SYNC);
+      cache.tracing().cluster(true); // we want to trace also cluster spans
+
+      RemoteCache<Object, Object> remoteCache = SERVER.hotrod().withServerConfiguration(cache).create();
       remoteCache.put("key", "value");
       String cacheName = remoteCache.getName();
       HttpClient client = HttpClient.newHttpClient();
