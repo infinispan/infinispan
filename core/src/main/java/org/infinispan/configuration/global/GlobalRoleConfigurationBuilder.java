@@ -18,9 +18,10 @@ import org.infinispan.security.impl.CacheRoleImpl;
  */
 public class GlobalRoleConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements GlobalRolesConfigurationChildBuilder, Builder<Role> {
    private Set<AuthorizationPermission> permissions = new HashSet<>();
-   private boolean inheritable = true;
    private final GlobalAuthorizationConfigurationBuilder builder;
    private final String name;
+   private boolean inheritable = true;
+   private String description;
 
    public GlobalRoleConfigurationBuilder(String name, GlobalAuthorizationConfigurationBuilder builder) {
       super(builder.getGlobalConfig());
@@ -94,9 +95,20 @@ public class GlobalRoleConfigurationBuilder extends AbstractGlobalConfigurationB
       return this;
    }
 
+   /**
+    * A description for the role
+    * @param description
+    * @return
+    */
+   @Override
+   public GlobalRoleConfigurationBuilder description(String description) {
+      this.description = description;
+      return this;
+   }
+
    @Override
    public Role create() {
-      return new CacheRoleImpl(name, inheritable, permissions);
+      return new CacheRoleImpl(name, description, false, inheritable, permissions);
    }
 
    @Override
@@ -104,6 +116,7 @@ public class GlobalRoleConfigurationBuilder extends AbstractGlobalConfigurationB
       permissions.clear();
       permissions.addAll(template.getPermissions());
       inheritable = template.isInheritable();
+      description = template.getDescription();
       return this;
    }
 }

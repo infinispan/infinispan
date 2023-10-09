@@ -56,6 +56,7 @@ public enum Attribute {
     DEFAULT_CACHE,
     DEFAULT_STACK,
     DEFAULT_MAX_RESULTS,
+    DESCRIPTION,
     DOMAIN,
     ENABLED,
     ENCODER,

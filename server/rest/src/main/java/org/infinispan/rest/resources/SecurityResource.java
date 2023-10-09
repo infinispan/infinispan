@@ -126,7 +126,7 @@ public class SecurityResource implements ResourceHandler {
          return completedFuture(builder.status(HttpResponseStatus.BAD_REQUEST).build());
       }
       Set<AuthorizationPermission> permissions = perms.stream().map(p -> AuthorizationPermission.valueOf(p.toUpperCase())).collect(Collectors.toSet());
-      Role role = new CacheRoleImpl(name, true, permissions);
+      Role role = new CacheRoleImpl(name, request.contents().asString(), false, true, permissions);
       return rolePermissionMapper.addRole(role).thenCompose(ignore -> aclCacheFlush(request));
    }
 
@@ -143,14 +143,17 @@ public class SecurityResource implements ResourceHandler {
       if (role == null) {
          return completedFuture(builder.status(NOT_FOUND).build());
       }
-      Json roles = Json.object();
-      roles.set("name", name);
+      Json roleDetail = Json.object();
+      roleDetail.set("name", name);
       Json permissions = Json.array();
       for (AuthorizationPermission p : role.getPermissions()) {
          permissions.add(p.toString());
       }
-      roles.set("permissions", permissions);
-      return asJsonResponseFuture(invocationHelper.newResponse(request), roles, isPretty(request));
+      roleDetail.set("permissions", permissions);
+      roleDetail.set("isImplicit", role.isImplicit());
+      roleDetail.set("isInheritable", role.isInheritable());
+      roleDetail.set("description", role.getDescription());
+      return asJsonResponseFuture(invocationHelper.newResponse(request), roleDetail, isPretty(request));
    }
 
    private CompletionStage<RestResponse> deleteRole(RestRequest request) {

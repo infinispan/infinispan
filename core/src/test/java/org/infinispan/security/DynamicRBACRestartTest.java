@@ -38,8 +38,8 @@ public class DynamicRBACRestartTest extends MultipleCacheManagersTest {
          crm = (ClusterRoleMapper) cacheManagers.get(0).getCacheManagerConfiguration().security().authorization().principalRoleMapper();
          crm.grant("admin", "admin");
          cpm = (ClusterPermissionMapper) cacheManagers.get(0).getCacheManagerConfiguration().security().authorization().rolePermissionMapper();
-         await(cpm.addRole(Role.newRole("wizard", true, AuthorizationPermission.ALL_WRITE)));
-         await(cpm.addRole(Role.newRole("cleric", true, AuthorizationPermission.ALL_READ)));
+         await(cpm.addRole(Role.newRole("wizard", "wizard role", false, true, AuthorizationPermission.ALL_WRITE)));
+         await(cpm.addRole(Role.newRole("cleric", null, false, true, AuthorizationPermission.ALL_READ)));
          return null;
       });
    }

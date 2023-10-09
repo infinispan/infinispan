@@ -111,8 +111,12 @@ public class Roles extends CliCommand {
       @Argument(description = "Provides a name for the new role", required = true)
       String name;
 
+      @Option(description = "Provides a description for the new role")
+      String description;
+
       @OptionList(shortName = 'p', required = true, completer = AuthorizationPermissionCompleter.class)
       List<String> permissions;
+
 
       @Option(shortName = 'h', hasValue = false, overrideRequired = true)
       protected boolean help;
@@ -124,7 +128,7 @@ public class Roles extends CliCommand {
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
-         return client.security().createRole(name, permissions);
+         return client.security().createRole(name, description, permissions);
       }
    }
 

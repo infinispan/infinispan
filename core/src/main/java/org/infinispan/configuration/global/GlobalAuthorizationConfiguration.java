@@ -17,6 +17,7 @@ import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.Role;
 import org.infinispan.security.RolePermissionMapper;
 import org.infinispan.security.audit.NullAuditLogger;
+import org.infinispan.util.logging.events.Messages;
 
 /**
  * GlobalAuthorizationConfiguration.
@@ -44,17 +45,19 @@ public class GlobalAuthorizationConfiguration {
 
    static {
       DEFAULT_ROLES = Map.of(
-            "admin", Role.newRole("admin", true,
+            "admin", Role.newRole("admin", Messages.MESSAGES.adminRoleDescription(),
+                  true, true,
                   AuthorizationPermission.ALL
             ),
-            "application", Role.newRole("application", true,
+            "application", Role.newRole("application", Messages.MESSAGES.applicationRoleDescription(),
+                  true,true,
                   AuthorizationPermission.ALL_READ,
                   AuthorizationPermission.ALL_WRITE,
                   AuthorizationPermission.LISTEN,
                   AuthorizationPermission.EXEC,
                   AuthorizationPermission.MONITOR
             ),
-            "deployer", Role.newRole("deployer", true,
+            "deployer", Role.newRole("deployer", Messages.MESSAGES.deployerRoleDescription(), true, true,
                   AuthorizationPermission.ALL_READ,
                   AuthorizationPermission.ALL_WRITE,
                   AuthorizationPermission.LISTEN,
@@ -62,18 +65,22 @@ public class GlobalAuthorizationConfiguration {
                   AuthorizationPermission.CREATE,
                   AuthorizationPermission.MONITOR
             ),
-            "observer", Role.newRole("observer", true,
+            "observer", Role.newRole("observer", Messages.MESSAGES.observerRoleDescription(),
+                  true, true,
                   AuthorizationPermission.ALL_READ,
                   AuthorizationPermission.MONITOR
             ),
-            "monitor", Role.newRole("monitor", true,
+            "monitor", Role.newRole("monitor", Messages.MESSAGES.monitorRoleDescription(),
+                  true, true,
                   AuthorizationPermission.MONITOR
             ),
             // Deprecated roles. Will be removed in Infinispan 16.0
-            "___schema_manager", Role.newRole("___schema_manager", false,
+            "___schema_manager", Role.newRole("___schema_manager", "Deprecated role for schema management.",
+                  true, false,
                   AuthorizationPermission.CREATE
             ),
-            "___script_manager", Role.newRole("___script_manager", false,
+            "___script_manager", Role.newRole("___script_manager", "Deprecated role for script management.",
+                  true, false,
                   AuthorizationPermission.CREATE
             ));
    }

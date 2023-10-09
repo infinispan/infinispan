@@ -31,7 +31,17 @@ public interface Role {
     */
    boolean isInheritable();
 
-   static Role newRole(String name, boolean inheritable, AuthorizationPermission... authorizationPermissions) {
-      return new CacheRoleImpl(name, inheritable, authorizationPermissions);
+   /**
+    * A description for the role.
+    */
+   String getDescription();
+
+   /**
+    * If this role is part of the implicit authorization configuration
+    */
+   boolean isImplicit();
+
+   static Role newRole(String name, String description, boolean isImplicit, boolean inheritable, AuthorizationPermission... authorizationPermissions) {
+      return new CacheRoleImpl(name, description, isImplicit, inheritable, authorizationPermissions);
    }
 }

@@ -682,6 +682,13 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
+          <xs:attribute name="description" type="xs:string">
+            <xs:annotation>
+              <xs:documentation>
+                Defines the description of the role.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
           <xs:attribute name="permissions" use="required" type="tns:permission-list">
             <xs:annotation>
               <xs:documentation>

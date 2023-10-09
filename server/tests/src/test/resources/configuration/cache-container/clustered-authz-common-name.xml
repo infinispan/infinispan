@@ -7,7 +7,7 @@
       <authorization group-only-mapping="false">
          <common-name-role-mapper/>
          <roles>
-            <role name="admin" permissions="ALL"/>
+            <role name="admin" permissions="ALL" description="super admin"/>
             <role name="application" permissions="ALL_READ ALL_WRITE LISTEN EXEC"/>
             <role name="deployer" permissions="ALL_READ ALL_WRITE LISTEN EXEC CREATE"/>
             <role name="observer" permissions="ALL_READ"/>

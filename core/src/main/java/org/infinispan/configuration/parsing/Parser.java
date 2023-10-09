@@ -1077,6 +1077,7 @@ public class Parser extends CacheParser {
       if (name == null) {
          name = ParseUtils.requireAttributes(reader, Attribute.NAME.getLocalName())[0];
       }
+      String description = null;
       String[] permissions = null;
       GlobalRoleConfigurationBuilder role = builder.role(name);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
@@ -1091,11 +1092,16 @@ public class Parser extends CacheParser {
                permissions = reader.getListAttributeValue(i);
                break;
             }
+            case DESCRIPTION: {
+               description = reader.getAttributeValue(i);
+               break;
+            }
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);
             }
          }
       }
+      role.description(description);
       if (permissions != null) {
          role.permission(permissions);
       } else {
