@@ -64,7 +64,7 @@ public class SFSToSIFSStore<K, V> extends DelegatingNonBlockingStore<K, V> {
 
          Flowable<GroupedFlowable<Integer, MarshallableEntry<K, V>>> groupedFlowable =
                Flowable.fromPublisher(sourceStore.publishEntries(allSegments, null, true))
-                     .groupBy(ctx.getKeyPartitioner()::getSegment);
+                     .groupBy(entry -> ctx.getKeyPartitioner().getSegment(entry.getKey()));
 
          return targetStore.batch(segmentCount, Flowable.empty(), groupedFlowable.map(SegmentPublisherWrapper::wrap))
                .thenCompose(ignore -> sourceStore.destroy());
