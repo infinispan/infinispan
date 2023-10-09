@@ -22,6 +22,7 @@ import org.infinispan.server.resp.configuration.RespServerConfiguration;
 import org.infinispan.server.resp.filter.ComposedFilterConverterFactory;
 import org.infinispan.server.resp.filter.GlobMatchFilterConverterFactory;
 import org.infinispan.server.resp.filter.RespTypeFilterConverterFactory;
+import org.infinispan.server.resp.commands.cluster.SegmentSlotRelation;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInboundHandler;
@@ -43,6 +44,7 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
    private DefaultIterationManager iterationManager;
    private ExternalSourceIterationManager dataStructureIterationManager;
    private TimeService timeService;
+   private SegmentSlotRelation segmentSlots;
 
    public RespServer() {
       super("Resp");
@@ -84,12 +86,14 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
             if (cacheManager.getCacheManagerConfiguration().isClustered()) { // We are running in clustered mode
                builder.clustering().cacheMode(CacheMode.REPL_SYNC);
                // See: https://redis.io/docs/reference/cluster-spec/#key-distribution-model
-               builder.clustering().hash().keyPartitioner(new CRC16HashFunctionPartitioner()).numSegments(16384);
+               builder.clustering().hash().keyPartitioner(new CRC16HashFunctionPartitioner()).numSegments(256);
             }
             builder.encoding().key().mediaType(RESP_KEY_MEDIA_TYPE);
             builder.encoding().value().mediaType(configuredValueType);
          }
-         cacheManager.defineConfiguration(configuration.defaultCacheName(), builder.build());
+         Configuration cfg = builder.build();
+         cacheManager.defineConfiguration(configuration.defaultCacheName(), cfg);
+         segmentSlots = new SegmentSlotRelation(cfg.clustering().hash().numSegments());
       } else if (!RESP_KEY_MEDIA_TYPE.equals(explicitConfiguration.encoding().keyDataType().mediaType())) {
          throw CONFIG.respCacheKeyMediaTypeSupplied(cacheName, explicitConfiguration.encoding().keyDataType().mediaType());
       }
@@ -148,5 +152,9 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
 
    public TimeService getTimeService() {
       return timeService;
+   }
+
+   public SegmentSlotRelation segmentSlotRelation() {
+      return segmentSlots;
    }
 }

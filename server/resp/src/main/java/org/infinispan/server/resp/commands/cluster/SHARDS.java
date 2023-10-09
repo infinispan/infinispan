@@ -4,6 +4,7 @@ import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
 import static org.infinispan.server.resp.commands.cluster.CLUSTER.findPhysicalAddress;
 import static org.infinispan.server.resp.commands.cluster.CLUSTER.findPort;
 import static org.infinispan.server.resp.commands.cluster.CLUSTER.getOnlyIp;
+import static org.infinispan.server.resp.commands.cluster.SegmentSlotRelation.SLOT_SIZE;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -83,8 +84,9 @@ public class SHARDS extends RespCommand implements Resp3Command {
 
    private static CompletionStage<CharSequence> readShardsInformation(ConsistentHash hash, ClusterExecutor executor) {
       Map<List<Address>, IntSet> segmentOwners = new HashMap<>();
-      for (int i = 0; i < hash.getNumSegments(); i++) {
-         segmentOwners.computeIfAbsent(hash.locateOwnersForSegment(i), ignore -> IntSets.mutableEmptySet())
+      for (int i = 0; i < SLOT_SIZE; i++) {
+         int s = i % hash.getNumSegments();
+         segmentOwners.computeIfAbsent(hash.locateOwnersForSegment(s), ignore -> IntSets.mutableEmptySet())
                .add(i);
       }
 

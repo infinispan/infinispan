@@ -6,6 +6,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.distribution.ch.impl.CRC16HashFunctionPartitioner;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.resp.Consumers;
@@ -38,7 +39,17 @@ public class KEYSLOT extends RespCommand implements Resp3Command {
       KeyPartitioner partitioner = SecurityActions.getCacheComponentRegistry(respCache)
             .getComponent(KeyPartitioner.class);
 
-      CompletionStage<Integer> cs = CompletableFuture.completedFuture(partitioner.getSegment(arguments.get(1)));
+      CompletionStage<Integer> cs;
+      if (partitioner instanceof CRC16HashFunctionPartitioner) {
+         CRC16HashFunctionPartitioner crc16hfp = (CRC16HashFunctionPartitioner) partitioner;
+         byte[] key = arguments.get(1);
+         int h = crc16hfp.hashObject(key);
+         int s = crc16hfp.segmentFromHash(h);
+         cs = CompletableFuture.completedFuture(handler.respServer().segmentSlotRelation().segmentToSingleSlot(h, s));
+      } else {
+         cs = CompletableFuture.completedFuture(partitioner.getSegment(arguments.get(1)));
+      }
+
       return handler.stageToReturn(cs, ctx, Consumers.INT_BICONSUMER);
    }
 }

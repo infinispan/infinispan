@@ -25,7 +25,7 @@ public class CRC16HashFunctionPartitioner extends HashFunctionPartitioner {
       isPow2 = isPow2(numSegments);
    }
 
-   private static boolean isPow2(int n) {
+   public static boolean isPow2(int n) {
       // If `n` is pow2 the binary is a 1 followed by only zeroes and `n - 1` is a 0 followed by only ones.
       // The binary and always resolves to 0.
       return (n & (n - 1)) == 0;
@@ -33,14 +33,21 @@ public class CRC16HashFunctionPartitioner extends HashFunctionPartitioner {
 
    @Override
    public int getSegment(Object key) {
-      int h = hashFunction.hash(key) & Integer.MAX_VALUE;
+      int h = hashObject(key);
+      return segmentFromHash(h);
+   }
 
+   public int hashObject(Object key) {
+      return hashFunction.hash(key) & Integer.MAX_VALUE;
+   }
+
+   public int segmentFromHash(int hash) {
       // See: https://redis.io/docs/reference/cluster-spec/#key-distribution-model
-      return isPow2 ? (h & (numSegments - 1)) : h % numSegments;
+      return isPow2 ? (hash & (numSegments - 1)) : hash % numSegments;
    }
 
    @Override
-   protected Hash getHash() {
+   public Hash getHash() {
       return CRC16.getInstance();
    }
 }
