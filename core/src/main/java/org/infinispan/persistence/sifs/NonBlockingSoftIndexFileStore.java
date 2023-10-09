@@ -394,7 +394,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
                      return null;
                   }
                   if (temporaryTable.set(segment, key, file, offset)) {
-                     index.handleRequest(IndexRequest.update(segment, key, ByteBufferImpl.create(serializedKey), file, offset, size));
+                     index.handleRequest(IndexRequest.update(segment, key, ByteBufferImpl.create(serializedKey), false, file, offset, size));
                   }
                   return null;
                }).doOnComplete(() -> compactor.completeFile(outerFile, -1, nextExpirationTime.get(), false));

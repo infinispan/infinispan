@@ -14,6 +14,7 @@ import org.infinispan.commons.util.Util;
 class IndexRequest extends CompletableFuture<Object> {
    public enum Type {
       UPDATE,
+      UPDATE_REMOVAL,
       MOVED,
       DROPPED,
       FOUND_OLD,
@@ -44,8 +45,8 @@ class IndexRequest extends CompletableFuture<Object> {
       this.size = size;
    }
 
-   public static IndexRequest update(int segment, Object key, ByteBuffer serializedKey, int file, int offset, int size) {
-      return new IndexRequest(Type.UPDATE, segment, Objects.requireNonNull(key), serializedKey, file, offset, size, -1, -1);
+   public static IndexRequest update(int segment, Object key, ByteBuffer serializedKey, boolean isRemove, int file, int offset, int size) {
+      return new IndexRequest(isRemove ? Type.UPDATE_REMOVAL : Type.UPDATE, segment, Objects.requireNonNull(key), serializedKey, file, offset, size, -1, -1);
    }
 
    public static IndexRequest moved(int segment, Object key, ByteBuffer serializedKey, int file, int offset, int size, int prevFile, int prevOffset) {

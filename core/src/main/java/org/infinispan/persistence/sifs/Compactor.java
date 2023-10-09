@@ -658,7 +658,7 @@ class Compactor implements Consumer<Object> {
                if (isLogFile) {
                   // When it is a log file we are still keeping the original entry, we are just updating it to say
                   // it was expired
-                  indexRequest = IndexRequest.update(segment, key, keyBuffer, logFile.fileId, entryOffset, writtenLength);
+                  indexRequest = IndexRequest.update(segment, key, keyBuffer, false, logFile.fileId, entryOffset, writtenLength);
                } else {
                   // entryFile cannot be used as we have to report the file due to free space statistics
                   indexRequest = IndexRequest.moved(segment, key, keyBuffer, logFile.fileId, entryOffset, writtenLength,
