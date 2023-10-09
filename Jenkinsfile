@@ -10,7 +10,7 @@ pipeline {
     }
 
     options {
-        timeout(time: 150, unit: 'MINUTES')
+        timeout(time: 3, unit: 'HOURS')
         timestamps()
         buildDiscarder(logRotator(numToKeepStr: '100', daysToKeepStr: '61'))
     }
@@ -133,7 +133,9 @@ pipeline {
 
         stage('Tests') {
             steps {
-                sh "$MAVEN_HOME/bin/mvn verify -B -V -e -DrerunFailingTestsCount=2 -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative $ALT_TEST_BUILD"
+                timeout(time: 2, unit: 'HOURS') {
+                    sh "$MAVEN_HOME/bin/mvn verify -B -V -e -DrerunFailingTestsCount=2 -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative $ALT_TEST_BUILD"
+                }
                 // Remove any default TestNG report files as this will result in tests being counted twice by Jenkins statistics
                 sh "rm -rf **/target/*-reports*/**/TEST-TestSuite.xml"
                 // TODO Add StabilityTestDataPublisher after https://issues.jenkins-ci.org/browse/JENKINS-42610 is fixed
