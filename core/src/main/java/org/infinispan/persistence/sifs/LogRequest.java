@@ -85,7 +85,7 @@ class LogRequest extends CompletableFuture<Void> {
       return key;
    }
 
-   public int getSement() {
+   public int getSegment() {
       return segment;
    }
 
