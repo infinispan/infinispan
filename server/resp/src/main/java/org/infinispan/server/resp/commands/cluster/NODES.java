@@ -12,7 +12,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -105,7 +104,7 @@ public class NODES extends RespCommand implements Resp3Command {
                int cport = findClientPort(ctx.channel().remoteAddress());
                for (Address member : hash.getMembers()) {
                   boolean isMyself = member.equals(local);
-                  IntSet owner = IntSets.from(hash.getPrimarySegmentsForOwner(member));
+                  IntSet owner = CLUSTER.ownedSegments(member, hash, handler.respServer().segmentSlotRelation());
                   String initial = information.get(member);
                   String health = "connected";
 

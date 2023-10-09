@@ -278,6 +278,9 @@ public interface Log extends BasicLogger {
    @Message(value = "RESP cache '%s' key media type must be configured as application/octet-stream but was %s", id = 964)
    IllegalArgumentException respCacheKeyMediaTypeSupplied(String cacheName, MediaType mediaType);
 
+   @Message(value = "Relation between segment and slots only for power 2, received: %s", id = 965)
+   IllegalArgumentException respCacheSegmentSizePow2(int configured);
+
    //----- counters exceptions // don't use the same id range ------
 
    @Message(value = CounterOutOfBoundsException.FORMAT_MESSAGE, id = 29501)

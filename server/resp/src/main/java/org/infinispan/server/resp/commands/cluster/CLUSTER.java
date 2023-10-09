@@ -2,6 +2,9 @@ package org.infinispan.server.resp.commands.cluster;
 
 import java.util.List;
 
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
@@ -61,5 +64,13 @@ public class CLUSTER extends FamilyCommand {
          return ((IpAddress) jAddress.getJGroupsAddress()).getIpAddress().getHostAddress();
       }
       return address.toString();
+   }
+
+   static IntSet ownedSegments(Address member, ConsistentHash ch, SegmentSlotRelation ssr) {
+      IntSet slots = IntSets.mutableEmptySet();
+      for (int segment: ch.getPrimarySegmentsForOwner(member)) {
+         slots.addAll(ssr.segmentToSlots(segment));
+      }
+      return IntSets.immutableSet(slots);
    }
 }

@@ -1,6 +1,7 @@
 package org.infinispan.server.resp.commands.cluster;
 
 import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
+import static org.infinispan.server.resp.commands.cluster.SegmentSlotRelation.SLOT_SIZE;
 
 import java.util.HashMap;
 import java.util.List;
@@ -91,8 +92,9 @@ public class SLOTS extends RespCommand implements Resp3Command {
                StringBuilder builder = new StringBuilder();
 
                Map<List<Address>, IntSet> segmentOwners = new HashMap<>();
-               for (int i = 0; i < hash.getNumSegments(); i++) {
-                  segmentOwners.computeIfAbsent(hash.locateOwnersForSegment(i), ignore -> IntSets.mutableEmptySet())
+               for (int i = 0; i < SLOT_SIZE; i++) {
+                  int s = i % hash.getNumSegments();
+                  segmentOwners.computeIfAbsent(hash.locateOwnersForSegment(s), ignore -> IntSets.mutableEmptySet())
                         .add(i);
                }
 
