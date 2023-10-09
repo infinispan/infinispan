@@ -89,6 +89,25 @@ pipeline {
                 sh "$MAVEN_HOME/bin/mvn -B -V -Dmessage='next version ${nextVersion}' -DscmVersion=${branch} -DscmVersionType=branch scm:checkin"
             }
         }
+
+        stage('Images') {
+            steps {
+                build job: 'Image Release', parameters: [
+                        string(
+                                name: 'ispnVersion',
+                                value: "${version}"
+                        ),
+                        booleanParam(
+                                name: 'pushLatestTag',
+                                value: false
+                        ),
+                        gitParameter(
+                                name: 'branch',
+                                value: "${branch}"
+                        )
+                ]
+            }
+        }
     }
 
     post {
