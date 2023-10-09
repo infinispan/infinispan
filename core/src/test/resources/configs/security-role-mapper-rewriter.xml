@@ -12,7 +12,7 @@
                   <regex-principal-transformer pattern="cn=([^,]+),.*" replacement="$1"/>
                </name-rewriter>
             </cluster-role-mapper>
-            <role name="admin" permissions="ALL" />
+            <role name="admin" permissions="ALL" description="happiness is everything"/>
             <role name="reader" permissions="READ" />
             <role name="writer" permissions="WRITE" />
             <role name="supervisor" permissions="READ WRITE EXEC"/>

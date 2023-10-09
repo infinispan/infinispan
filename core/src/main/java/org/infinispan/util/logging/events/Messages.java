@@ -106,4 +106,19 @@ public interface Messages {
 
    @Message(value = "Rebalance failed with members %s, topology id %s and cause %s", id = 100016)
    String rebalanceFinishedWithFailure(Collection<Address> members, int topologyId, Throwable t);
+
+   @Message(value = "Superuser with all permissions including control of the Cache Manager lifecycle")
+   String adminRoleDescription();
+
+   @Message(value = "Has read and write access to resources in addition to `observer` permissions. Can also listen to events and execute server tasks and scripts.")
+   String applicationRoleDescription();
+
+   @Message(value = "Can create and delete resources in addition to `application` permissions.")
+   String deployerRoleDescription();
+
+   @Message(value = "Has read access to resources in addition to `monitor` permissions.")
+   String observerRoleDescription();
+
+   @Message(value = "Can view statistics via JMX and the `metrics` endpoint.")
+   String monitorRoleDescription();
 }

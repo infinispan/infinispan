@@ -1,15 +1,16 @@
 package org.infinispan.client.rest.impl.okhttp;
 
-import static org.infinispan.client.rest.impl.okhttp.RestClientOkHttp.EMPTY_BODY;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.internal.Util;
+import org.infinispan.client.rest.RestResponse;
+import org.infinispan.client.rest.RestSecurityClient;
 
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.client.rest.RestResponse;
-import org.infinispan.client.rest.RestSecurityClient;
-
-import okhttp3.Request;
-import okhttp3.internal.Util;
+import static org.infinispan.client.rest.impl.okhttp.RestClientOkHttp.EMPTY_BODY;
+import static org.infinispan.client.rest.impl.okhttp.RestClientOkHttp.TEXT_PLAIN;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -64,7 +65,7 @@ public class RestSecurityClientOkHttp implements RestSecurityClient {
    }
 
    @Override
-   public CompletionStage<RestResponse> createRole(String name, List<String> permissions) {
+   public CompletionStage<RestResponse> createRole(String name, String description, List<String> permissions) {
       Request.Builder builder = new Request.Builder();
       StringBuilder sb = new StringBuilder(baseSecurityURL);
       sb.append("/permissions/").append(name).append('?');
@@ -74,7 +75,13 @@ public class RestSecurityClientOkHttp implements RestSecurityClient {
          }
          sb.append("permission=").append(permissions.get(i));
       }
-      builder.url(sb.toString()).put(Util.EMPTY_REQUEST);
+      builder.url(sb.toString());
+      if (description != null) {
+         builder.put(RequestBody.create(TEXT_PLAIN, description));
+      } else {
+         builder.put(Util.EMPTY_REQUEST);
+      }
+
       return client.execute(builder);
    }
 

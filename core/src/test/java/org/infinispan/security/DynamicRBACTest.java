@@ -47,8 +47,8 @@ public class DynamicRBACTest extends MultipleCacheManagersTest {
          crm = (ClusterRoleMapper) cacheManagers.get(0).getCacheManagerConfiguration().security().authorization().principalRoleMapper();
          crm.grant("admin", "admin");
          cpm = (ClusterPermissionMapper) cacheManagers.get(0).getCacheManagerConfiguration().security().authorization().rolePermissionMapper();
-         await(cpm.addRole(Role.newRole("wizard", true, AuthorizationPermission.ALL_WRITE)));
-         await(cpm.addRole(Role.newRole("cleric", true, AuthorizationPermission.ALL_READ)));
+         await(cpm.addRole(Role.newRole("wizard", "", false, true, AuthorizationPermission.ALL_WRITE)));
+         await(cpm.addRole(Role.newRole("cleric", "", false, true, AuthorizationPermission.ALL_READ)));
          return null;
       });
    }
@@ -116,7 +116,7 @@ public class DynamicRBACTest extends MultipleCacheManagersTest {
       Cache<?, ?> crmCache = extractField(crm, "clusterRoleMap");
       ClusterTopologyManager crmTM = TestingUtil.extractComponent(crmCache, ClusterTopologyManager.class);
       crmTM.setRebalancingEnabled(false);
-      await(cpm.addRole(Role.newRole("rogue", true, AuthorizationPermission.LISTEN)));
+      await(cpm.addRole(Role.newRole("rogue", "", false, true, AuthorizationPermission.LISTEN)));
       Cache<?, ?> cpmCache = extractField(cpm, "clusterPermissionMap");
       ClusterTopologyManager cpmTM = TestingUtil.extractComponent(cpmCache, ClusterTopologyManager.class);
       cpmTM.setRebalancingEnabled(false);
