@@ -35,6 +35,7 @@ import org.infinispan.util.logging.events.EventLoggerNotifier;
 import org.infinispan.util.logging.events.impl.EventLogManagerImpl;
 import org.infinispan.util.logging.events.impl.EventLoggerNotifierImpl;
 import org.infinispan.xsite.XSiteCacheMapper;
+import org.infinispan.xsite.events.NoOpXSiteEventsManager;
 import org.infinispan.xsite.events.XSiteEventsManager;
 import org.infinispan.xsite.events.XSiteEventsManagerImpl;
 
@@ -98,7 +99,9 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
       else if (componentName.equals(XSiteCacheMapper.class.getName())) {
          return new XSiteCacheMapper();
       } else if (componentName.equals(XSiteEventsManager.class.getName())) {
-         return new XSiteEventsManagerImpl();
+         return globalConfiguration.isClustered() ?
+               new XSiteEventsManagerImpl() :
+               NoOpXSiteEventsManager.INSTANCE;
       }
 
       throw CONTAINER.factoryCannotConstructComponent(componentName);
