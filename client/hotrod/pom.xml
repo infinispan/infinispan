@@ -112,11 +112,6 @@
          <artifactId>opentelemetry-api</artifactId>
          <optional>true</optional>
       </dependency>
-      <dependency>
-         <groupId>io.opentelemetry</groupId>
-         <artifactId>opentelemetry-sdk-testing</artifactId>
-         <scope>test</scope>
-      </dependency>
       <!-- Test dependencies -->
       <dependency>
          <groupId>org.junit.jupiter</groupId>

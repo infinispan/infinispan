@@ -126,12 +126,6 @@
          <scope>test</scope>
       </dependency>
 
-      <!-- OpenTelemetry dependencies -->
-      <dependency>
-         <groupId>io.opentelemetry</groupId>
-         <artifactId>opentelemetry-sdk-testing</artifactId>
-      </dependency>
-
       <!-- Kafka for CloudEvents testing -->
       <dependency>
          <groupId>org.testcontainers</groupId>
