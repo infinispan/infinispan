@@ -1,5 +1,6 @@
 package org.infinispan.persistence.sifs;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyInt;
 import static org.testng.AssertJUnit.assertEquals;
@@ -17,6 +18,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.test.Exceptions;
@@ -205,5 +207,62 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
       checkPoint.triggerForever(Mocks.BEFORE_RELEASE);
 
       future.get(10, TimeUnit.SECONDS);
+   }
+
+   public void testWriteDuringCompaction() throws Exception {
+      Compactor compactor = TestingUtil.extractField(store.delegate(), "compactor");
+      CheckPoint checkPoint = new CheckPoint();
+
+      TemporaryTable ignore = Mocks.blockingFieldMock(checkPoint, TemporaryTable.class, compactor, Compactor.class, "temporaryTable",
+            (stubber, table) -> stubber.when(table).get(anyInt(), any()));
+
+      store.write(marshalledEntry(internalCacheEntry("foo", "bar", 10)));
+
+      AtomicInteger expired = new AtomicInteger(0);
+      TestSubscriber<Object> testSubscriber = TestSubscriber.create();
+      testSubscriber.onSubscribe(new AsyncSubscription());
+      // We don't care about the actual expiration sub info
+      Compactor.CompactionExpirationSubscriber sub = new Compactor.CompactionExpirationSubscriber() {
+         @Override
+         public void onEntryPosition(EntryPosition entryPosition) { }
+         @Override
+         public void onEntryEntryRecord(EntryRecord entryRecord) {
+            expired.incrementAndGet();
+         }
+         @Override
+         public void onComplete() {
+            testSubscriber.onComplete();
+         }
+         @Override
+         public void onError(Throwable t) {
+            testSubscriber.onError(t);
+         }
+      };
+
+      timeService.advance(11);
+
+      Future<Void> compaction = fork(() -> compactor.performExpirationCompaction(sub));
+      checkPoint.awaitStrict(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS);
+
+      // Compaction is still running.
+      testSubscriber.assertNotComplete();
+
+      // We write a new entry, concurrently modifying the file during compaction.
+      store.write(marshalledEntry(internalCacheEntry("newer", "entry", 10)));
+
+      // Allow compaction to run.
+      checkPoint.trigger(Mocks.BEFORE_RELEASE);
+
+      checkPoint.awaitStrict(Mocks.AFTER_INVOCATION, 10, TimeUnit.SECONDS);
+      checkPoint.triggerForever(Mocks.AFTER_RELEASE);
+
+      // Compaction finishes successfully.
+      eventually(compaction::isDone);
+      compaction.get(10, TimeUnit.SECONDS);
+      testSubscriber.awaitDone(10, TimeUnit.SECONDS)
+            .assertComplete().assertNoErrors();
+
+      // Only a single entry was expired.
+      assertThat(expired.get()).isEqualTo(1);
    }
 }

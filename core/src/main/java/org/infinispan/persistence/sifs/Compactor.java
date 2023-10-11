@@ -487,6 +487,11 @@ class Compactor {
             }
             long remainingBytes = fileSize - scheduledOffset;
             if (header.totalLength() > remainingBytes) {
+               if (isLogFile) {
+                  log.tracef("Log file %d compacted %d bytes, but file is now larger ignoring remaining contents", scheduledFile, scheduledOffset);
+                  break;
+               }
+
                byte[] serializedKey = null;
                // Attempt to read the key to give a better warning
                if (header.keyLength() < remainingBytes) {
