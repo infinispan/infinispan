@@ -22,19 +22,17 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.server.core.telemetry.OpenTelemetryService;
 import org.infinispan.telemetry.InfinispanTelemetry;
+import org.infinispan.server.core.telemetry.inmemory.InMemoryTelemetryClient;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter;
 import io.opentelemetry.sdk.trace.data.SpanData;
 
-@Test(groups = "functional", testName = "org.infinispan.client.hotrod.tracing.TracingDisabledTest")
+@Test(groups = "tracing", testName = "org.infinispan.client.hotrod.tracing.TracingDisabledTest")
 public class TracingDisabledTest extends SingleHotRodServerTest {
 
-   private final InMemorySpanExporter inMemorySpanExporter = InMemorySpanExporter.create();
-
    // Configure OpenTelemetry SDK for tests
-   private final OpenTelemetryClient oTelConfig = new OpenTelemetryClient(inMemorySpanExporter);
+   private final InMemoryTelemetryClient telemetryClient = new InMemoryTelemetryClient();
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -47,7 +45,8 @@ public class TracingDisabledTest extends SingleHotRodServerTest {
       manager.defineConfiguration("poems", builder.build());
 
       GlobalComponentRegistry globalComponentRegistry = manager.getGlobalComponentRegistry();
-      globalComponentRegistry.registerComponent(new OpenTelemetryService(oTelConfig.openTelemetry()), InfinispanTelemetry.class);
+      globalComponentRegistry.registerComponent(
+            new OpenTelemetryService(telemetryClient.telemetryService().openTelemetry()), InfinispanTelemetry.class);
       return manager;
    }
 
@@ -60,7 +59,7 @@ public class TracingDisabledTest extends SingleHotRodServerTest {
 
    @Override
    protected void teardown() {
-      oTelConfig.shutdown();
+      telemetryClient.reset();
       super.teardown();
    }
 
@@ -72,18 +71,18 @@ public class TracingDisabledTest extends SingleHotRodServerTest {
    @Test
    public void smokeTest() {
       RemoteCache<Integer, Poem> remoteCache = remoteCacheManager.getCache("poems");
-      oTelConfig.withinClientSideSpan("user-client-side-span", () -> {
+      telemetryClient.withinClientSideSpan("user-client-side-span", () -> {
          remoteCache.put(1, new Poem(new Author("Edgar Allen Poe"), "The Raven", 1845));
          remoteCache.put(2, new Poem(new Author("Emily Dickinson"), "Because I could not stop for Death", 1890));
       });
 
       // We might have a slight delay between receiving the response and the server span registered.
-      eventually(() -> inMemorySpanExporter.getFinishedSpanItems().toString(),
-            () -> inMemorySpanExporter.getFinishedSpanItems().size() == 3, 10, TimeUnit.SECONDS);
+      eventually(() -> telemetryClient.finishedSpanItems().toString(),
+            () -> telemetryClient.finishedSpanItems().size() == 3, 10, TimeUnit.SECONDS);
 
       // Verify that the client span (user-client-side-span) and the two PUT server spans are exported correctly.
       // We're going now to correlate the client span with the server spans!
-      List<SpanData> spans = inMemorySpanExporter.getFinishedSpanItems();
+      List<SpanData> spans = telemetryClient.finishedSpanItems();
       assertThat(spans).hasSize(3);
 
       String traceId = null;

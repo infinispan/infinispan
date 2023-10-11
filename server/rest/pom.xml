@@ -215,11 +215,6 @@
          <artifactId>infinispan-client-rest</artifactId>
          <scope>test</scope>
       </dependency>
-      <dependency>
-         <groupId>io.opentelemetry</groupId>
-         <artifactId>opentelemetry-sdk-testing</artifactId>
-         <scope>test</scope>
-      </dependency>
    </dependencies>
 
    <build>
@@ -241,6 +236,29 @@
                   <dependency>org.infinispan:infinispan-commons-test</dependency>
                </dependenciesToScan>
             </configuration>
+            <executions>
+               <execution>
+                  <id>serial-execution</id>
+                  <phase>test</phase>
+                  <goals>
+                     <goal>test</goal>
+                  </goals>
+                  <configuration>
+                     <properties>
+                        <configurationParameters>
+                           testng.excludedGroups = ${defaultExcludedTestNGGroups}
+                           testng.groups = tracing
+                           testng.listeners = ${testNGListeners}
+                           testng.useDefaultListeners = false
+                           testng.parallel = none
+                           testng.threadCount = ${infinispan.test.parallel.threads}
+                        </configurationParameters>
+                     </properties>
+                     <parallel>none</parallel>
+                     <groups>tracing</groups>
+                  </configuration>
+               </execution>
+            </executions>
          </plugin>
 
          <plugin>

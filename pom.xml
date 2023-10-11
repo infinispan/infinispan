@@ -1791,12 +1791,6 @@
             <scope>test</scope>
          </dependency>
          <dependency>
-            <groupId>io.opentelemetry</groupId>
-            <artifactId>opentelemetry-sdk-testing</artifactId>
-            <version>${version.opentelemetry}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
             <version>${versionx.org.testcontainers.testcontainers}</version>

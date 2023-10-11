@@ -13,6 +13,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.telemetry.InfinispanTelemetry;
 import org.infinispan.telemetry.impl.DisabledInfinispanTelemetry;
 import org.jboss.logging.Logger;
+import org.infinispan.server.core.telemetry.inmemory.InMemoryTelemetryService;
 
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk;
@@ -21,8 +22,9 @@ import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk;
 @DefaultFactoryFor(classes = InfinispanTelemetry.class)
 public class TelemetryServiceFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
 
-   public static final Log log = Logger.getMessageLogger(Log.class, "org.infinispan.SERVER");
+   public static final String IN_MEMORY_COLLECTOR_ENDPOINT = "memory:local-process";
 
+   private static final Log log = Logger.getMessageLogger(Log.class, "org.infinispan.SERVER");
    private static final boolean TRACING_ENABLED = Boolean.getBoolean("infinispan.tracing.enabled");
 
    @Override
@@ -32,6 +34,11 @@ public class TelemetryServiceFactory extends AbstractComponentFactory implements
       }
       if (!TRACING_ENABLED) {
          return new DisabledInfinispanTelemetry();
+      }
+
+      String collectorEndpoint = System.getProperty("otel.exporter.otlp.endpoint");
+      if (IN_MEMORY_COLLECTOR_ENDPOINT.equals(collectorEndpoint)) {
+         return new OpenTelemetryService(InMemoryTelemetryService.instance().openTelemetry());
       }
 
       try {

@@ -24,24 +24,22 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.server.core.telemetry.OpenTelemetryService;
 import org.infinispan.telemetry.InfinispanTelemetry;
+import org.infinispan.server.core.telemetry.inmemory.InMemoryTelemetryClient;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
 import io.opentelemetry.context.Context;
-import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter;
 import io.opentelemetry.sdk.trace.data.SpanData;
 
-@Test(groups = "functional", testName = "rest.tracing.TracingPropagationTest")
+@Test(groups = "tracing", testName = "rest.tracing.TracingPropagationTest")
 public class TracingPropagationTest extends SingleCacheManagerTest {
 
    private static final String CACHE_NAME = "tracing";
 
-   private final InMemorySpanExporter inMemorySpanExporter = InMemorySpanExporter.create();
-
    // Configure OpenTelemetry SDK for tests
-   private final OpenTelemetryClient oTelConfig = new OpenTelemetryClient(inMemorySpanExporter);
+   private final InMemoryTelemetryClient telemetryClient = new InMemoryTelemetryClient();
 
    private RestServerHelper restServer;
    private RestClient restClient;
@@ -52,7 +50,8 @@ public class TracingPropagationTest extends SingleCacheManagerTest {
       cacheManager.createCache(CACHE_NAME, getDefaultClusteredCacheConfig(CacheMode.LOCAL).build());
 
       GlobalComponentRegistry globalComponentRegistry = cacheManager.getGlobalComponentRegistry();
-      globalComponentRegistry.registerComponent(new OpenTelemetryService(oTelConfig.openTelemetry()), InfinispanTelemetry.class);
+      globalComponentRegistry.registerComponent(
+            new OpenTelemetryService(telemetryClient.telemetryService().openTelemetry()), InfinispanTelemetry.class);
 
       restServer = new RestServerHelper(cacheManager);
       restServer.start(TestResourceTracker.getCurrentTestShortName());
@@ -67,7 +66,7 @@ public class TracingPropagationTest extends SingleCacheManagerTest {
    public void smokeTest() {
       RestCacheClient client = restClient.cache(CACHE_NAME);
 
-      oTelConfig.withinClientSideSpan("user-client-side-span", () -> {
+      telemetryClient.withinClientSideSpan("user-client-side-span", () -> {
          // verify that the client thread contains the span context
          Map<String, String> contextMap = getContextMap();
          Assertions.assertThat(contextMap).isNotEmpty();
@@ -83,7 +82,7 @@ public class TracingPropagationTest extends SingleCacheManagerTest {
 
       // Verify that the client span (user-client-side-span) and the two PUT server spans are exported correctly.
       // We're going now to correlate the client span with the server spans!
-      List<SpanData> spans = inMemorySpanExporter.getFinishedSpanItems();
+      List<SpanData> spans = telemetryClient.finishedSpanItems();
       Assertions.assertThat(spans).hasSize(3);
 
       String traceId = null;
@@ -119,7 +118,7 @@ public class TracingPropagationTest extends SingleCacheManagerTest {
    @Override
    protected void teardown() {
       try {
-         oTelConfig.shutdown();
+         telemetryClient.reset();
          restClient.close();
       } catch (IOException ex) {
          // ignore it
