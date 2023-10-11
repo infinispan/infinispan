@@ -26,6 +26,7 @@ import org.junit.platform.suite.api.Suite;
       HotRodTransactionalCacheOperations.class,
       RestOperations.class,
       RestRouter.class,
+      RestCacheManagerResource.class
 })
 public class NativeClusteredIT extends ClusteredIT {
 }
