@@ -36,8 +36,10 @@ import com.thoughtworks.xstream.security.NoTypePermission;
 public class XMLTranscoder extends OneToManyTranscoder {
 
    private static final Log logger = LogFactory.getLog(XMLTranscoder.class, Log.class);
+   private final ClassLoader classLoader;
+   private final ClassAllowList allowList;
 
-   private final XStreamEngine xstream;
+   private volatile XStreamEngine xstream;
 
    public XMLTranscoder() {
       this(XMLTranscoder.class.getClassLoader(), new ClassAllowList(Collections.emptyList()));
@@ -49,11 +51,23 @@ public class XMLTranscoder extends OneToManyTranscoder {
 
    public XMLTranscoder(ClassLoader classLoader, ClassAllowList allowList) {
       super(APPLICATION_XML, APPLICATION_OBJECT, APPLICATION_OCTET_STREAM, TEXT_PLAIN, APPLICATION_WWW_FORM_URLENCODED, APPLICATION_UNKNOWN);
-      xstream = new XStreamEngine();
-      xstream.addPermission(NoTypePermission.NONE);
-      xstream.addPermission(type -> allowList.isSafeClass(type.getName()));
-      xstream.setClassLoader(classLoader);
-      xstream.setMode(XStream.NO_REFERENCES);
+      this.classLoader = classLoader;
+      this.allowList = allowList;
+   }
+
+   private XStreamEngine xstreamEngine() {
+      if (xstream == null) {
+         synchronized (this) {
+            if (xstream == null) {
+               xstream = new XStreamEngine();
+               xstream.addPermission(NoTypePermission.NONE);
+               xstream.addPermission(type -> allowList.isSafeClass(type.getName()));
+               xstream.setClassLoader(classLoader);
+               xstream.setMode(XStream.NO_REFERENCES);
+            }
+         }
+      }
+      return xstream;
    }
 
    @Override
@@ -63,18 +77,18 @@ public class XMLTranscoder extends OneToManyTranscoder {
             return StandardConversions.convertCharset(content, contentType.getCharset(), destinationType.getCharset());
          }
          if (contentType.match(APPLICATION_OBJECT)) {
-            String xmlString = xstream.toXML(content);
+            String xmlString = xstreamEngine().toXML(content);
             return xmlString.getBytes(destinationType.getCharset());
          }
          if (contentType.match(TEXT_PLAIN) || contentType.match(APPLICATION_WWW_FORM_URLENCODED)) {
             String inputText = StandardConversions.convertTextToObject(content, contentType);
             if (isWellFormed(inputText.getBytes())) return inputText.getBytes();
-            String xmlString = xstream.toXML(inputText);
+            String xmlString = xstreamEngine().toXML(inputText);
             return xmlString.getBytes(destinationType.getCharset());
          } else if (contentType.match(APPLICATION_OCTET_STREAM) || contentType.match(APPLICATION_UNKNOWN)) {
             String inputText = StandardConversions.convertTextToObject(content, contentType);
             if (isWellFormed(inputText.getBytes())) return inputText.getBytes();
-            String xmlString = xstream.toXML(inputText);
+            String xmlString = xstreamEngine().toXML(inputText);
             return xmlString.getBytes(destinationType.getCharset());
          }
       }
@@ -89,7 +103,7 @@ public class XMLTranscoder extends OneToManyTranscoder {
             Reader xmlReader = content instanceof byte[] ?
                   new InputStreamReader(new ByteArrayInputStream((byte[]) content)) :
                   new StringReader(content.toString());
-            return xstream.fromXML(xmlReader);
+            return xstreamEngine().fromXML(xmlReader);
          } catch (ForbiddenClassException e) {
             throw logger.errorDeserializing(e.getMessage());
          } catch (XStreamException e) {
