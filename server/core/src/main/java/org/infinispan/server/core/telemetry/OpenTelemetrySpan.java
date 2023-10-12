@@ -3,9 +3,11 @@ package org.infinispan.server.core.telemetry;
 import java.util.Objects;
 
 import org.infinispan.telemetry.InfinispanSpan;
+import org.infinispan.telemetry.SafeAutoClosable;
 
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.context.Scope;
 
 public class OpenTelemetrySpan implements InfinispanSpan {
 
@@ -16,8 +18,9 @@ public class OpenTelemetrySpan implements InfinispanSpan {
    }
 
    @Override
-   public AutoCloseable makeCurrent() {
-      return span.makeCurrent();
+   public SafeAutoClosable makeCurrent() {
+      Scope scope = span.makeCurrent();
+      return () -> scope.close();
    }
 
    @Override

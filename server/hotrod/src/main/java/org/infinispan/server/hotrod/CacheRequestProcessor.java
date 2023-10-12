@@ -1,6 +1,5 @@
 package org.infinispan.server.hotrod;
 
-import javax.security.auth.Subject;
 import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +10,8 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
+
+import javax.security.auth.Subject;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.logging.LogFactory;
@@ -33,6 +34,7 @@ import org.infinispan.stats.Stats;
 import org.infinispan.telemetry.InfinispanSpan;
 import org.infinispan.telemetry.InfinispanSpanAttributes;
 import org.infinispan.telemetry.InfinispanTelemetry;
+import org.infinispan.telemetry.SafeAutoClosable;
 import org.infinispan.telemetry.SpanCategory;
 
 import io.netty.buffer.ByteBuf;
@@ -229,8 +231,10 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       InfinispanSpan span = requestStart(header, cache);
-      metadata.version(cacheInfo.versionGenerator.generateNew());
-      putInternal(header, cache, key, value, metadata.build(), span);
+      try (SafeAutoClosable scope = span.makeCurrent()) {
+         metadata.version(cacheInfo.versionGenerator.generateNew());
+         putInternal(header, cache, key, value, metadata.build(), span);
+      }
    }
 
    private void putInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] value,
@@ -252,8 +256,10 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       InfinispanSpan span = requestStart(header, cache);
-      metadata.version(cacheInfo.versionGenerator.generateNew());
-      replaceIfUnmodifiedInternal(header, cache, key, version, value, metadata.build(), span);
+      try (SafeAutoClosable scope = span.makeCurrent()) {
+         metadata.version(cacheInfo.versionGenerator.generateNew());
+         replaceIfUnmodifiedInternal(header, cache, key, version, value, metadata.build(), span);
+      }
    }
 
    private void replaceIfUnmodifiedInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key,
@@ -298,8 +304,10 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       InfinispanSpan span = requestStart(header, cache);
-      metadata.version(cacheInfo.versionGenerator.generateNew());
-      replaceInternal(header, cache, key, value, metadata.build(), span);
+      try (SafeAutoClosable scope = span.makeCurrent()) {
+         metadata.version(cacheInfo.versionGenerator.generateNew());
+         replaceInternal(header, cache, key, value, metadata.build(), span);
+      }
    }
 
    private void replaceInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] value,
@@ -342,8 +350,10 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       InfinispanSpan span = requestStart(header, cache);
-      metadata.version(cacheInfo.versionGenerator.generateNew());
-      putIfAbsentInternal(header, cache, key, value, metadata.build(), span);
+      try (SafeAutoClosable scope = span.makeCurrent()) {
+         metadata.version(cacheInfo.versionGenerator.generateNew());
+         putIfAbsentInternal(header, cache, key, value, metadata.build(), span);
+      }
    }
 
    private void putIfAbsentInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] value,
@@ -369,7 +379,9 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       InfinispanSpan span = requestStart(header, cache);
-      removeInternal(header, cache, key, span);
+      try (SafeAutoClosable scope = span.makeCurrent()) {
+         removeInternal(header, cache, key, span);
+      }
    }
 
    private void removeInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key,
@@ -392,7 +404,9 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       InfinispanSpan span = requestStart(header, cache);
-      removeIfUnmodifiedInternal(header, cache, key, version, span);
+      try (SafeAutoClosable scope = span.makeCurrent()) {
+         removeIfUnmodifiedInternal(header, cache, key, version, span);
+      }
    }
 
    private void removeIfUnmodifiedInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key,
@@ -437,7 +451,9 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       InfinispanSpan span = requestStart(header, cache);
-      clearInternal(header, cache, span);
+      try (SafeAutoClosable scope = span.makeCurrent()) {
+         clearInternal(header, cache, span);
+      }
    }
 
    private void clearInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, InfinispanSpan span) {
@@ -455,8 +471,10 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       InfinispanSpan span = requestStart(header, cache);
-      metadata.version(cacheInfo.versionGenerator.generateNew());
-      putAllInternal(header, cache, entries, metadata.build(), span);
+      try (SafeAutoClosable scope = span.makeCurrent()) {
+         metadata.version(cacheInfo.versionGenerator.generateNew());
+         putAllInternal(header, cache, entries, metadata.build(), span);
+      }
    }
 
    private void putAllInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, Map<byte[], byte[]> entries,
@@ -495,7 +513,9 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    void size(HotRodHeader header, Subject subject) {
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
       InfinispanSpan span = requestStart(header, cache);
-      sizeInternal(header, cache, span);
+      try (SafeAutoClosable scope = span.makeCurrent()) {
+         sizeInternal(header, cache, span);
+      }
    }
 
    private void sizeInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, InfinispanSpan span) {
@@ -563,34 +583,38 @@ class CacheRequestProcessor extends BaseRequestProcessor {
                           List<byte[]> converterParams, boolean useRawData, int listenerInterests, int bloomBits) {
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
       InfinispanSpan span = requestStart(header, cache);
-      BloomFilter<byte[]> bloomFilter = null;
-      if (bloomBits > 0) {
-         bloomFilter = MurmurHash3BloomFilter.createConcurrentFilter(bloomBits);
-         BloomFilter<byte[]> priorFilter = bloomFilters.putIfAbsent(header.cacheName, bloomFilter);
-         assert priorFilter == null;
-      }
-      CompletionStage<Void> stage = listenerRegistry.addClientListener(channel, header, listenerId, cache,
-            includeCurrentState, filterFactory, filterParams, converterFactory, converterParams, useRawData,
-            listenerInterests, bloomFilter);
-      stage.whenComplete((ignore, cause) -> {
-         if (cause != null) {
-            log.trace("Failed to add listener", cause);
-            if (cause instanceof CompletionException) {
-               writeException(header, span, cause.getCause());
-            } else {
-               writeException(header, span, cause);
-            }
-         } else {
-            writeSuccess(header);
+      try (SafeAutoClosable scope = span.makeCurrent()) {
+         BloomFilter<byte[]> bloomFilter = null;
+         if (bloomBits > 0) {
+            bloomFilter = MurmurHash3BloomFilter.createConcurrentFilter(bloomBits);
+            BloomFilter<byte[]> priorFilter = bloomFilters.putIfAbsent(header.cacheName, bloomFilter);
+            assert priorFilter == null;
          }
-         span.complete();
-      });
+         CompletionStage<Void> stage = listenerRegistry.addClientListener(channel, header, listenerId, cache,
+               includeCurrentState, filterFactory, filterParams, converterFactory, converterParams, useRawData,
+               listenerInterests, bloomFilter);
+         stage.whenComplete((ignore, cause) -> {
+            if (cause != null) {
+               log.trace("Failed to add listener", cause);
+               if (cause instanceof CompletionException) {
+                  writeException(header, span, cause.getCause());
+               } else {
+                  writeException(header, span, cause);
+               }
+            } else {
+               writeSuccess(header);
+            }
+            span.complete();
+         });
+      }
    }
 
    void removeClientListener(HotRodHeader header, Subject subject, byte[] listenerId) {
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
       InfinispanSpan span = requestStart(header, cache);
-      removeClientListenerInternal(header, cache, listenerId, span);
+      try (SafeAutoClosable scope = span.makeCurrent()) {
+         removeClientListenerInternal(header, cache, listenerId, span);
+      }
    }
 
    private void removeClientListenerInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache,

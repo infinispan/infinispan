@@ -1,6 +1,7 @@
 package org.infinispan.telemetry.impl;
 
 import org.infinispan.telemetry.InfinispanSpan;
+import org.infinispan.telemetry.SafeAutoClosable;
 
 public class DisabledInfinispanSpan implements InfinispanSpan {
 
@@ -14,7 +15,7 @@ public class DisabledInfinispanSpan implements InfinispanSpan {
    }
 
    @Override
-   public AutoCloseable makeCurrent() {
+   public SafeAutoClosable makeCurrent() {
       return () -> {
          // nothing to close
       };
