@@ -977,7 +977,7 @@ class IndexNode {
 
    private static byte[] commonPrefix(byte[] oldPrefix, byte[] newKey) {
       int i = Arrays.mismatch(oldPrefix, newKey);
-      if (i == oldPrefix.length) {
+      if (i == -1 || i == oldPrefix.length) {
          return oldPrefix;
       }
       if (i == newKey.length) {
