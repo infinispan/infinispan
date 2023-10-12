@@ -2,7 +2,7 @@ package org.infinispan.telemetry;
 
 public interface InfinispanSpan {
 
-   AutoCloseable makeCurrent();
+   SafeAutoClosable makeCurrent();
 
    void complete();
 
