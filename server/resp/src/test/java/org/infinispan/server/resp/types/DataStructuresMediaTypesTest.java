@@ -16,10 +16,10 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.distribution.ch.impl.CRC16HashFunctionPartitioner;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.resp.SingleNodeRespBaseTest;
 import org.infinispan.server.resp.configuration.RespServerConfiguration;
+import org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
@@ -174,7 +174,7 @@ public class DataStructuresMediaTypesTest extends SingleNodeRespBaseTest {
       TestCacheManagerFactory.amendGlobalConfiguration(globalBuilder, new TransportFlags());
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.encoding().key().mediaType(MediaType.APPLICATION_OCTET_STREAM);
-      builder.clustering().hash().keyPartitioner(new CRC16HashFunctionPartitioner()).numSegments(256);
+      builder.clustering().hash().keyPartitioner(new RESPHashFunctionPartitioner()).numSegments(256);
       amendConfiguration(builder);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.newDefaultCacheManager(true, globalBuilder, builder);
       TestingUtil.replaceComponent(cacheManager, TimeService.class, timeService, true);
@@ -184,9 +184,7 @@ public class DataStructuresMediaTypesTest extends SingleNodeRespBaseTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() {
       cacheManager = createTestCacheManager();
-      Configuration configuration = new ConfigurationBuilder()
-            .encoding()
-            .key().mediaType(MediaType.APPLICATION_OCTET_STREAM)
+      Configuration configuration = defaultRespConfiguration()
             .encoding()
             .value().mediaType(valueType.toString())
             .build();

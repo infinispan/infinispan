@@ -41,6 +41,11 @@ public class CRC16 implements Hash {
    }
 
    @Override
+   public int maxHashBits() {
+      return 16;
+   }
+
+   @Override
    public int hash(int hashcode) {
       byte b0 = (byte) hashcode;
       byte b1 = (byte) (hashcode >>> 8);

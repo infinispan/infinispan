@@ -33,7 +33,7 @@ public final class SegmentConsistentHash implements ConsistentHash {
    public void init(SocketAddress[][] segmentOwners, int numSegments) {
       this.segmentOwners = segmentOwners;
       this.numSegments = numSegments;
-      this.segmentSize = Util.getSegmentSize(numSegments);
+      this.segmentSize = Util.getSegmentSize(hash, numSegments);
    }
 
    @Override

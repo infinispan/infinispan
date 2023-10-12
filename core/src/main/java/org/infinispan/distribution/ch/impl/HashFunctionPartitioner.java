@@ -20,6 +20,7 @@ public class HashFunctionPartitioner implements KeyPartitioner, Cloneable {
    protected Hash hashFunction;
    protected int numSegments;
    private int segmentSize;
+   private int mask;
 
 
    public HashFunctionPartitioner() {}
@@ -57,16 +58,32 @@ public class HashFunctionPartitioner implements KeyPartitioner, Cloneable {
       }
       this.hashFunction = getHash();
       this.numSegments = numSegments;
-      this.segmentSize = Util.getSegmentSize(numSegments);
+      int maxBits = Math.min(bitsToUse(), 31);
+      this.mask = (1 << maxBits) - 1;
+
+      this.segmentSize = Util.getSegmentSize(maxBits, numSegments);
+   }
+
+   protected int bitsToUse() {
+      return hashFunction.maxHashBits();
    }
 
    @Override
    public int getSegment(Object key) {
-      // The result must always be positive, so we make sure the dividend is positive first
-      return (hashFunction.hash(key) & Integer.MAX_VALUE) / segmentSize;
+      int hash = getHashForKey(key);
+      return getSegmentForHash(hash);
    }
 
-   protected Hash getHash() {
+   public int getHashForKey(Object key) {
+      return hashFunction.hash(key) & mask;
+   }
+
+   public int getSegmentForHash(int hash) {
+      // The result must always be positive, so we make sure the dividend is positive first
+      return (hash & Integer.MAX_VALUE) / segmentSize;
+   }
+
+   public Hash getHash() {
       return MurmurHash3.getInstance();
    }
 

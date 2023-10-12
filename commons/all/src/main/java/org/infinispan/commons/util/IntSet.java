@@ -196,7 +196,7 @@ public interface IntSet extends Set<Integer> {
       PrimitiveIterator.OfInt iter = iterator();
       int i = 0;
       while (iter.hasNext()) {
-         array[i] = iter.next();
+         array[i++] = iter.next();
       }
       return array;
    }

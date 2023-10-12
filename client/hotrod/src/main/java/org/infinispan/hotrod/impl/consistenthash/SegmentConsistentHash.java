@@ -6,12 +6,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.infinispan.hotrod.impl.logging.Log;
-import org.infinispan.hotrod.impl.logging.LogFactory;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.Util;
+import org.infinispan.hotrod.impl.logging.Log;
+import org.infinispan.hotrod.impl.logging.LogFactory;
 
 /**
  */
@@ -32,7 +32,7 @@ public final class SegmentConsistentHash implements ConsistentHash {
    public void init(SocketAddress[][] segmentOwners, int numSegments) {
       this.segmentOwners = segmentOwners;
       this.numSegments = numSegments;
-      this.segmentSize = Util.getSegmentSize(numSegments);
+      this.segmentSize = Util.getSegmentSize(hash, numSegments);
    }
 
    @Override

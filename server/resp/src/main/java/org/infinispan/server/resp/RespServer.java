@@ -10,7 +10,6 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.distribution.ch.impl.CRC16HashFunctionPartitioner;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.AbstractProtocolServer;
@@ -19,10 +18,11 @@ import org.infinispan.server.core.transport.NettyInitializers;
 import org.infinispan.server.iteration.DefaultIterationManager;
 import org.infinispan.server.iteration.ExternalSourceIterationManager;
 import org.infinispan.server.resp.configuration.RespServerConfiguration;
+import org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner;
+import org.infinispan.server.resp.commands.cluster.SegmentSlotRelation;
 import org.infinispan.server.resp.filter.ComposedFilterConverterFactory;
 import org.infinispan.server.resp.filter.GlobMatchFilterConverterFactory;
 import org.infinispan.server.resp.filter.RespTypeFilterConverterFactory;
-import org.infinispan.server.resp.commands.cluster.SegmentSlotRelation;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInboundHandler;
@@ -72,8 +72,8 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
             builder.read(defaultCacheConfiguration);
             configuredValueType = builder.encoding().value().mediaType();
             if (cacheManager.getCacheManagerConfiguration().isClustered() &&
-                  !(builder.clustering().hash().keyPartitioner() instanceof CRC16HashFunctionPartitioner)) {
-               log.warn("Clustered RESP server should use CRC16HashFunctionPartitioner for key partitioning.");
+                  !(builder.clustering().hash().keyPartitioner() instanceof RESPHashFunctionPartitioner)) {
+               throw CONFIG.respCacheUseDefineConsistentHash(cacheName, builder.clustering().hash().keyPartitioner().getClass().getName());
             }
             MediaType keyMediaType = builder.encoding().key().mediaType();
             if (keyMediaType == null) {
@@ -86,7 +86,7 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
             if (cacheManager.getCacheManagerConfiguration().isClustered()) { // We are running in clustered mode
                builder.clustering().cacheMode(CacheMode.REPL_SYNC);
                // See: https://redis.io/docs/reference/cluster-spec/#key-distribution-model
-               builder.clustering().hash().keyPartitioner(new CRC16HashFunctionPartitioner()).numSegments(256);
+               builder.clustering().hash().keyPartitioner(new RESPHashFunctionPartitioner());
             }
             builder.encoding().key().mediaType(RESP_KEY_MEDIA_TYPE);
             builder.encoding().value().mediaType(configuredValueType);
@@ -94,8 +94,14 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
          Configuration cfg = builder.build();
          cacheManager.defineConfiguration(configuration.defaultCacheName(), cfg);
          segmentSlots = new SegmentSlotRelation(cfg.clustering().hash().numSegments());
-      } else if (!RESP_KEY_MEDIA_TYPE.equals(explicitConfiguration.encoding().keyDataType().mediaType())) {
-         throw CONFIG.respCacheKeyMediaTypeSupplied(cacheName, explicitConfiguration.encoding().keyDataType().mediaType());
+      } else {
+         if (!RESP_KEY_MEDIA_TYPE.equals(explicitConfiguration.encoding().keyDataType().mediaType()))
+            throw CONFIG.respCacheKeyMediaTypeSupplied(cacheName, explicitConfiguration.encoding().keyDataType().mediaType());
+
+         if (cacheManager.getCacheManagerConfiguration().isClustered() &&
+               !(explicitConfiguration.clustering().hash().keyPartitioner() instanceof RESPHashFunctionPartitioner)) {
+            throw CONFIG.respCacheUseDefineConsistentHash(cacheName, explicitConfiguration.clustering().hash().keyPartitioner().getClass().getName());
+         }
       }
       super.startInternal();
    }

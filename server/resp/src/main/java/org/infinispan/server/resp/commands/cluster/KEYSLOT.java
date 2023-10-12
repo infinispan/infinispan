@@ -6,12 +6,13 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.distribution.ch.KeyPartitioner;
-import org.infinispan.distribution.ch.impl.CRC16HashFunctionPartitioner;
+import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
+import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 
@@ -39,16 +40,15 @@ public class KEYSLOT extends RespCommand implements Resp3Command {
       KeyPartitioner partitioner = SecurityActions.getCacheComponentRegistry(respCache)
             .getComponent(KeyPartitioner.class);
 
-      CompletionStage<Integer> cs;
-      if (partitioner instanceof CRC16HashFunctionPartitioner) {
-         CRC16HashFunctionPartitioner crc16hfp = (CRC16HashFunctionPartitioner) partitioner;
-         byte[] key = arguments.get(1);
-         int h = crc16hfp.hashObject(key);
-         int s = crc16hfp.segmentFromHash(h);
-         cs = CompletableFuture.completedFuture(handler.respServer().segmentSlotRelation().segmentToSingleSlot(h, s));
-      } else {
-         cs = CompletableFuture.completedFuture(partitioner.getSegment(arguments.get(1)));
+      if (!(partitioner instanceof HashFunctionPartitioner)) {
+         RespErrorUtil.customError("Key partitioner not configured properly", handler.allocator());
+         return handler.myStage();
       }
+
+      HashFunctionPartitioner hashPartitioner = (HashFunctionPartitioner) partitioner;
+      byte[] key = arguments.get(1);
+      int h = hashPartitioner.getHashForKey(key);
+      CompletionStage<Integer> cs = CompletableFuture.completedFuture(handler.respServer().segmentSlotRelation().hashToSlot(h));
 
       return handler.stageToReturn(cs, ctx, Consumers.INT_BICONSUMER);
    }

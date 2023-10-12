@@ -51,6 +51,17 @@ public class IntSets {
    }
 
    /**
+    * Creates an immutable {@link IntSet} containing all values from {@param start} to {@param exclusiveEnd}.
+    *
+    * @param start: Inclusive start of integer interval.
+    * @param exclusiveEnd: Exclusive end of integer interval.
+    * @return {@link IntSet} with the values in the given open interval available.
+    */
+   public static IntSet immutableOffsetIntSet(int start, int exclusiveEnd) {
+      return new OffsetIntSet(start, exclusiveEnd);
+   }
+
+   /**
     * Returns an IntSet based on the provided Set. This method tries to return or create the most performant IntSet
     * based on the Set provided. If the Set is already an IntSet it will just return that. The returned IntSet may or
     * may not be immutable, so no guarantees are provided from that respect.

@@ -11,7 +11,7 @@ import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.distribution.ch.impl.CRC16HashFunctionPartitioner;
+import org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.resp.configuration.RespServerConfiguration;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
@@ -46,13 +46,18 @@ public abstract class SingleNodeRespBaseTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createTestCacheManager() {
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
       TestCacheManagerFactory.amendGlobalConfiguration(globalBuilder, new TransportFlags());
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.encoding().key().mediaType(MediaType.APPLICATION_OCTET_STREAM);
-      builder.clustering().hash().keyPartitioner(new CRC16HashFunctionPartitioner()).numSegments(256);
+      ConfigurationBuilder builder = defaultRespConfiguration();
       amendConfiguration(builder);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.newDefaultCacheManager(true, globalBuilder, builder);
       TestingUtil.replaceComponent(cacheManager, TimeService.class, timeService, true);
       return cacheManager;
+   }
+
+   protected ConfigurationBuilder defaultRespConfiguration() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.encoding().key().mediaType(MediaType.APPLICATION_OCTET_STREAM);
+      builder.clustering().hash().keyPartitioner(new RESPHashFunctionPartitioner()).numSegments(256);
+      return builder;
    }
 
    protected void amendConfiguration(ConfigurationBuilder configurationBuilder) {
