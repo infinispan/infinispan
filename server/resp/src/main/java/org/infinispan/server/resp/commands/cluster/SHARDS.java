@@ -4,7 +4,6 @@ import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
 import static org.infinispan.server.resp.commands.cluster.CLUSTER.findPhysicalAddress;
 import static org.infinispan.server.resp.commands.cluster.CLUSTER.findPort;
 import static org.infinispan.server.resp.commands.cluster.CLUSTER.getOnlyIp;
-import static org.infinispan.server.resp.commands.cluster.SegmentSlotRelation.SLOT_SIZE;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -75,18 +74,19 @@ public class SHARDS extends RespCommand implements Resp3Command {
 
       synchronized (this) {
          if (!hash.equals(lastAcceptedHash)) {
-            lastExecution = readShardsInformation(hash, SecurityActions.getClusterExecutor(respCache));
+            lastExecution = readShardsInformation(hash, SecurityActions.getClusterExecutor(respCache),
+                  handler.respServer().segmentSlotRelation().slotWidth());
             lastAcceptedHash = hash;
          }
       }
       return handler.stageToReturn(lastExecution, ctx, ByteBufferUtils::stringToByteBuf);
    }
 
-   private static CompletionStage<CharSequence> readShardsInformation(ConsistentHash hash, ClusterExecutor executor) {
+   private static CompletionStage<CharSequence> readShardsInformation(ConsistentHash hash, ClusterExecutor executor, int slotWidth) {
+
       Map<List<Address>, IntSet> segmentOwners = new HashMap<>();
-      for (int i = 0; i < SLOT_SIZE; i++) {
-         int s = i % hash.getNumSegments();
-         segmentOwners.computeIfAbsent(hash.locateOwnersForSegment(s), ignore -> IntSets.mutableEmptySet())
+      for (int i = 0; i < hash.getNumSegments(); i++) {
+         segmentOwners.computeIfAbsent(hash.locateOwnersForSegment(i), ignore -> IntSets.mutableEmptySet(hash.getNumSegments()))
                .add(i);
       }
 
@@ -124,7 +124,7 @@ public class SHARDS extends RespCommand implements Resp3Command {
                         replicas.add(replica);
                      }
                   }
-                  serialize(response, leader, replicas, entry.getValue());
+                  serialize(response, leader, replicas, entry.getValue(), slotWidth);
                }
                return response;
             });
@@ -178,7 +178,7 @@ public class SHARDS extends RespCommand implements Resp3Command {
       sb.append("$").append(health.length()).append(CRLF_STRING).append(health).append(CRLF_STRING);
    }
 
-   private static void serialize(StringBuilder output, String leader, List<String> replicas, IntSet ranges) {
+   private static void serialize(StringBuilder output, String leader, List<String> replicas, IntSet ranges, int slotWidth) {
       // Each element in the list has 2 properties, the ranges and nodes, and the associated values.
       output.append("*4\r\n");
 
@@ -190,8 +190,13 @@ public class SHARDS extends RespCommand implements Resp3Command {
             i++;
          }
 
-         segments.append(":").append(runStart).append(CRLF_STRING);
-         segments.append(":").append(i).append(CRLF_STRING);
+         segments.append(":").append(runStart * slotWidth).append(CRLF_STRING);
+         int endSlot = (i - 1) * slotWidth;
+         // In case if the numSegments is not divisible by 2
+         if (endSlot > SegmentSlotRelation.SLOT_SIZE) {
+            endSlot = SegmentSlotRelation.SLOT_SIZE - 1;
+         }
+         segments.append(":").append(endSlot).append(CRLF_STRING);
          segmentCount++;
       }
 

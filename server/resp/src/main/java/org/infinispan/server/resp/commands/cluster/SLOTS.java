@@ -1,17 +1,13 @@
 package org.infinispan.server.resp.commands.cluster;
 
 import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
-import static org.infinispan.server.resp.commands.cluster.SegmentSlotRelation.SLOT_SIZE;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -90,33 +86,34 @@ public class SLOTS extends RespCommand implements Resp3Command {
       return requestNodesNetworkInformation(hash.getMembers(), handler)
             .thenApply(information -> {
                StringBuilder builder = new StringBuilder();
-
-               Map<List<Address>, IntSet> segmentOwners = new HashMap<>();
-               for (int i = 0; i < SLOT_SIZE; i++) {
-                  int s = i % hash.getNumSegments();
-                  segmentOwners.computeIfAbsent(hash.locateOwnersForSegment(s), ignore -> IntSets.mutableEmptySet())
-                        .add(i);
-               }
-
                int size = 0;
-               for (Map.Entry<List<Address>, IntSet> entry : segmentOwners.entrySet()) {
-                  List<Address> owners = entry.getKey();
-                  IntSet segments = entry.getValue();
 
-                  for (int i = segments.nextSetBit(0); i >= 0; i = segments.nextSetBit(i + 1)) {
-                     int runStart = i;
-                     while (segments.contains(i + 1)) {
-                        i++;
-                     }
+               SegmentSlotRelation ssr = handler.respServer().segmentSlotRelation();
 
-                     size++;
-                     builder.append('*').append(2 + owners.size()).append(CRLF_STRING);
-                     builder.append(':').append(runStart).append(CRLF_STRING);
-                     builder.append(':').append(i).append(CRLF_STRING);
-                     for (Address owner: owners) {
-                        String info = information.get(owner);
-                        builder.append(info);
+               // These two will always be initialized in first loop below
+               int previousOwnedSegment = -1;
+               List<Address> ownersForSegment = null;
+
+               int slotWidth = ssr.slotWidth();
+               int totalSegmentCount = hash.getNumSegments();
+               for (int i = 0; i < totalSegmentCount; ++i) {
+                  List<Address> currentOwners = hash.locateOwnersForSegment(i);
+
+                  if (!currentOwners.equals(ownersForSegment) || i == (totalSegmentCount - 1)) {
+                     if (ownersForSegment != null) {
+                        builder.append('*').append(2 + ownersForSegment.size()).append(CRLF_STRING);
+                        int start = previousOwnedSegment * slotWidth;
+                        int end = (i * slotWidth) - 1;
+                        builder.append(':').append(start).append(CRLF_STRING);
+                        builder.append(':').append(end).append(CRLF_STRING);
+                        for (Address owner: ownersForSegment) {
+                           String info = information.get(owner);
+                           builder.append(info);
+                        }
+                        size++;
                      }
+                     ownersForSegment = currentOwners;
+                     previousOwnedSegment = i;
                   }
                }
                return "*" + size + CRLF_STRING + builder;

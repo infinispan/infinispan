@@ -53,8 +53,8 @@ import org.infinispan.configuration.global.JGroupsConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.conflict.MergePolicy;
-import org.infinispan.distribution.ch.impl.CRC16HashFunctionPartitioner;
 import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
+import org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner;
 import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
@@ -136,7 +136,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertThat(query.hitCountAccuracy()).isEqualTo(10_000);
 
             Configuration configuration = getConfiguration(holder, "repl");
-            assertThat(configuration.clustering().hash().keyPartitioner().getClass()).isEqualTo(CRC16HashFunctionPartitioner.class);
+            assertThat(configuration.clustering().hash().keyPartitioner().getClass()).isEqualTo(RESPHashFunctionPartitioner.class);
 
             configuration = getConfiguration(holder, "dist");
             assertThat(configuration.clustering().hash().keyPartitioner().getClass()).isEqualTo(HashFunctionPartitioner.class);

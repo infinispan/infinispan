@@ -2,49 +2,47 @@ package org.infinispan.server.resp.commands.cluster;
 
 import static org.infinispan.commons.logging.Log.CONFIG;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import org.infinispan.distribution.ch.impl.CRC16HashFunctionPartitioner;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.Util;
 
 public class SegmentSlotRelation {
 
    // This is the default number of slots a clustered Redis has. Which is not configurable.
    // See: https://redis.io/docs/reference/cluster-spec/#key-distribution-model
-   static final int SLOT_SIZE = 1 << 14;
-   private final int segmentSize;
+   public static final int SLOT_SIZE = 1 << 14;
+   private final int segmentCount;
    private final int width;
 
    public SegmentSlotRelation(int segmentSize) {
-      if (!CRC16HashFunctionPartitioner.isPow2(segmentSize))
+      if (!Util.isPow2(segmentSize))
          throw CONFIG.respCacheSegmentSizePow2(segmentSize);
-      this.segmentSize = segmentSize;
-      this.width = 1 << Integer.numberOfTrailingZeros(SLOT_SIZE) - Integer.numberOfTrailingZeros(segmentSize);
-   }
-
-   public int segmentToSingleSlot(int hash, int segment) {
-      assert segment >= 0 && segment < segmentSize : "Not provided a segment value";
-      return segmentSize * reduce(hash) + segment;
-   }
-
-   public Collection<Integer> segmentToSlots(int segment) {
-      assert segment >= 0 && segment < segmentSize : "Not provided a segment value";
-
-      List<Integer> slots = new ArrayList<>();
-      for (int i = 0; i < width; i++) {
-         slots.add(segment + segmentSize * i);
+      this.segmentCount = segmentSize;
+      if (segmentSize > SLOT_SIZE) {
+         throw new IllegalArgumentException("Number of segments cannot be larger than " + SLOT_SIZE);
       }
-      return slots;
+      this.width = SLOT_SIZE / segmentSize;
+   }
+
+   public int hashToSlot(int hash) {
+      return hash % SLOT_SIZE;
+   }
+
+   public IntSet segmentToSlots(int segment) {
+      assert segment >= 0 && segment < segmentCount : "Not provided a segment value";
+
+      int start = segment * width;
+      int end = segment * width + width;
+      return IntSets.immutableOffsetIntSet(start, end);
    }
 
    public int slotToSegment(int slot) {
       assert slot >= 0 && slot < SLOT_SIZE : "Not provided a slot value";
 
-      return slot % segmentSize;
+      return slot / width;
    }
 
-   private int reduce(int hash) {
-      return (hash / segmentSize) % width;
+   public int slotWidth() {
+      return width;
    }
 }

@@ -104,7 +104,7 @@ public class NODES extends RespCommand implements Resp3Command {
                int cport = findClientPort(ctx.channel().remoteAddress());
                for (Address member : hash.getMembers()) {
                   boolean isMyself = member.equals(local);
-                  IntSet owner = CLUSTER.ownedSegments(member, hash, handler.respServer().segmentSlotRelation());
+                  IntSet owner = CLUSTER.ownedSlots(member, hash, handler.respServer().segmentSlotRelation());
                   String initial = information.get(member);
                   String health = "connected";
 

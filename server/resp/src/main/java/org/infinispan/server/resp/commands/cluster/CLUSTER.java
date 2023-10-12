@@ -66,7 +66,7 @@ public class CLUSTER extends FamilyCommand {
       return address.toString();
    }
 
-   static IntSet ownedSegments(Address member, ConsistentHash ch, SegmentSlotRelation ssr) {
+   static IntSet ownedSlots(Address member, ConsistentHash ch, SegmentSlotRelation ssr) {
       IntSet slots = IntSets.mutableEmptySet();
       for (int segment: ch.getPrimarySegmentsForOwner(member)) {
          slots.addAll(ssr.segmentToSlots(segment));

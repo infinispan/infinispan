@@ -35,4 +35,13 @@ public interface Hash {
     * @return a hashcode
     */
    int hash(Object o);
+
+   /**
+    * How many bits this hash function may utilize. By default a hash algorithm is assumed to use all
+    * 32 bits producing a value in the full range of int values.
+    * @return how many bits the resulting int may use
+    */
+   default int maxHashBits() {
+      return Integer.SIZE;
+   }
 }

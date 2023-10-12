@@ -695,13 +695,41 @@ public final class Util {
    }
 
    /**
-    * Returns the size of each segment, given a number of segments.
+    * Returns the size of each segment, given a number of segments. This assumes
+    * a 32 bit hash is used and we ignore the most significant bit.
     *
     * @param numSegments number of segments required
     * @return the size of each segment
     */
    public static int getSegmentSize(int numSegments) {
       return (int) Math.ceil((double) (1L << 31) / numSegments);
+   }
+
+   public static int getSegmentSize(Hash hash, int numSegments) {
+      return getSegmentSize(hash.maxHashBits(), numSegments);
+   }
+
+   public static int getSegmentSize(int maxHashBits, int numSegments) {
+      assert maxHashBits <= 32;
+      // If using all 32 bits we ignore one as we don't want negative segments
+      if (maxHashBits == 32) {
+         maxHashBits--;
+      }
+      return (int) Math.ceil((double) (1L << maxHashBits) / numSegments);
+   }
+
+   /**
+    * Returns whether the provided integer is a power of two or not. That is any number that is divisible by
+    * two even if negative.
+    * @param n the number to test
+    * @return whether the number is a power of two or not.
+    */
+   public static boolean isPow2(int n) {
+      // Just in case it is negative
+      n = Math.abs(n);
+      // If `n` is pow2 the binary is a 1 followed by only zeroes and `n - 1` is a 0 followed by only ones.
+      // The binary and always resolves to 0.
+      return (n & (n - 1)) == 0;
    }
 
    public static String join(List<String> strings, String separator) {
