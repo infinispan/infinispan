@@ -196,6 +196,7 @@
       <version.smallrye-metrics>3.0.1</version.smallrye-metrics>
       <version.microprofile-config-api>2.0</version.microprofile-config-api>
       <version.microprofile-metrics-api>3.0</version.microprofile-metrics-api>
+      <version.snappy>1.1.10.5</version.snappy>
       <version.spring.boot>2.6.6</version.spring.boot>
       <version.spring5>5.3.18</version.spring5>
       <version.spring.session>2.6.2</version.spring.session>
