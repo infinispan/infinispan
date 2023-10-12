@@ -1,15 +1,14 @@
 package org.infinispan.server.resp.commands.generic;
 
 import io.netty.channel.ChannelHandlerContext;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.util.concurrent.CompletionStages;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
@@ -29,11 +28,9 @@ public class TOUCH extends RespCommand implements Resp3Command {
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
 
-      CompletableFuture<Long> totalTouchCount = CompletableFutures.sequence(
-            arguments.stream()
-                  .map(key -> (CompletableFuture<Boolean>) handler.cache().touch(key, true))
-                  .collect(Collectors.toList())
-      ).thenApply(result -> result.stream().filter(r -> r.booleanValue()).count());
+      CompletionStage<Long> totalTouchCount = CompletionStages.performSequentially(arguments.iterator(),
+            k -> handler.cache().touch(k, false),
+            Collectors.summingLong(touched -> touched ? 1 : 0));
 
       return handler.stageToReturn(totalTouchCount, ctx, Consumers.LONG_BICONSUMER);
    }
