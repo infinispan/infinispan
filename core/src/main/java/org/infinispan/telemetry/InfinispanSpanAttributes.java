@@ -49,6 +49,11 @@ public class InfinispanSpanAttributes {
          return this;
       }
 
+      public Builder withCacheName(String cacheName) {
+         this.cacheName = cacheName;
+         return this;
+      }
+
       public InfinispanSpanAttributes build() {
          return new InfinispanSpanAttributes(cacheName, cacheConfiguration, category);
       }

@@ -22,7 +22,12 @@ public enum SpanCategory {
    /**
     * Span category for persistence operations causally related by client interactions.
     */
-   PERSISTENCE;
+   PERSISTENCE,
+
+   /**
+    * Span category for security operations causally related by client interactions.
+    */
+   SECURITY;
 
    @Override
    public String toString() {
