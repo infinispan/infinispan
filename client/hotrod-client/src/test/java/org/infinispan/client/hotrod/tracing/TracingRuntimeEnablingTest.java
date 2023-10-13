@@ -34,6 +34,9 @@ public class TracingRuntimeEnablingTest extends SingleHotRodServerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
+      telemetryClient.reset();
+      assertThat(telemetryClient.finishedSpanItems()).isEmpty();
+
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder().nonClusteredDefault();
       global.tracing().collectorEndpoint(TelemetryServiceFactory.IN_MEMORY_COLLECTOR_ENDPOINT);
 

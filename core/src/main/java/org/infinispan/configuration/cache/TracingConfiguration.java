@@ -12,9 +12,10 @@ public class TracingConfiguration extends ConfigurationElement<TracingConfigurat
    public static final AttributeDefinition<Boolean> CONTAINER = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CONTAINER, true, Boolean.class).build();
    public static final AttributeDefinition<Boolean> CLUSTER = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CLUSTER, false, Boolean.class).build();
    public static final AttributeDefinition<Boolean> X_SITE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.X_SITE, false, Boolean.class).build();
+   public static final AttributeDefinition<Boolean> PERSISTENCE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.PERSISTENCE, false, Boolean.class).build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(TracingConfiguration.class, ENABLED, CONTAINER, CLUSTER, X_SITE);
+      return new AttributeSet(TracingConfiguration.class, ENABLED, CONTAINER, CLUSTER, X_SITE, PERSISTENCE);
    }
 
    protected TracingConfiguration(AttributeSet attributes) {
@@ -43,11 +44,16 @@ public class TracingConfiguration extends ConfigurationElement<TracingConfigurat
       return enabled() && attributes.attribute(X_SITE).get();
    }
 
+   public boolean persistence() {
+      return enabled() && attributes.attribute(PERSISTENCE).get();
+   }
+
    public boolean enabled(SpanCategory category) {
       return enabled() && switch (category) {
          case CONTAINER -> container();
          case CLUSTER -> cluster();
          case X_SITE -> xSite();
+         case PERSISTENCE -> persistence();
       };
    }
 }

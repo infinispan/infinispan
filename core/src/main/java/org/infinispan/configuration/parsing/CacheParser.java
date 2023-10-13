@@ -1507,6 +1507,10 @@ public class CacheParser implements ConfigurationParser {
                boolean xSite = ParseUtils.parseBoolean(reader, i, value);
                builder.tracing().xSite(xSite);
                break;
+            case PERSISTENCE:
+               boolean persistence = ParseUtils.parseBoolean(reader, i, value);
+               builder.tracing().persistence(persistence);
+               break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }

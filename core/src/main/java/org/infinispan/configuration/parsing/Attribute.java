@@ -218,6 +218,7 @@ public enum Attribute {
     ACCURATE_SIZE,
     REGEX,
     PATTERN,
+    PERSISTENCE,
     REPLACEMENT,
     REPLACE_ALL,
     UNCLEAN_SHUTDOWN_ACTION,
