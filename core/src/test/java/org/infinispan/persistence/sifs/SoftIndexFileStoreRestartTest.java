@@ -23,6 +23,7 @@ import org.infinispan.persistence.support.WaitDelegatingNonBlockingStore;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -31,12 +32,15 @@ import org.testng.annotations.Test;
 public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, String, SoftIndexFileStoreRestartTest> {
    protected String tmpDirectory;
    protected int fileSize;
+   protected boolean hasPassivation;
 
    {
       // We don't really need a cluster
       INIT_CLUSTER_SIZE = 1;
       l1CacheEnabled = false;
       segmented = true;
+
+      cleanup = CleanupPhase.AFTER_METHOD;
    }
 
    SoftIndexFileStoreRestartTest fileSize(int fileSize) {
@@ -44,28 +48,34 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
       return this;
    }
 
+   SoftIndexFileStoreRestartTest hasPassivation(boolean passivation) {
+      this.hasPassivation = passivation;
+      return this;
+   }
+
    @Override
    public Object[] factory() {
       return Stream.of(CacheMode.DIST_SYNC, CacheMode.LOCAL)
-            .flatMap(type ->
-                  Stream.builder()
-                        .add(new SoftIndexFileStoreRestartTest().fileSize(1_000).cacheMode(type))
-                        .add(new SoftIndexFileStoreRestartTest().fileSize(10_000).cacheMode(type))
-                        .add(new SoftIndexFileStoreRestartTest().fileSize(320_000).cacheMode(type))
-                        .add(new SoftIndexFileStoreRestartTest().fileSize(2_000_000).cacheMode(type))
-                        .add(new SoftIndexFileStoreRestartTest().fileSize(DataConfiguration.MAX_FILE_SIZE.getDefaultValue()).cacheMode(type)
-                        ).build()
+            .flatMap(type -> Stream.of(Boolean.TRUE, Boolean.FALSE)
+                  .flatMap(hasPassivation -> Stream.builder()
+                        .add(new SoftIndexFileStoreRestartTest().hasPassivation(hasPassivation).fileSize(1_000).cacheMode(type))
+                        .add(new SoftIndexFileStoreRestartTest().hasPassivation(hasPassivation).fileSize(10_000).cacheMode(type))
+                        .add(new SoftIndexFileStoreRestartTest().hasPassivation(hasPassivation).fileSize(320_000).cacheMode(type))
+                        .add(new SoftIndexFileStoreRestartTest().hasPassivation(hasPassivation).fileSize(2_000_000).cacheMode(type))
+                        .add(new SoftIndexFileStoreRestartTest().hasPassivation(hasPassivation).fileSize(DataConfiguration.MAX_FILE_SIZE.getDefaultValue()).cacheMode(type))
+                        .build()
+                  )
             ).toArray();
    }
 
    @Override
    protected String[] parameterNames() {
-      return concat(super.parameterNames(), "fileSize");
+      return concat(super.parameterNames(), "fileSize", "hasPassivation");
    }
 
    @Override
    protected Object[] parameterValues() {
-      return concat(super.parameterValues(), fileSize);
+      return concat(super.parameterValues(), fileSize, hasPassivation);
    }
 
 
@@ -81,13 +91,25 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
    @Override
    protected void destroy() {
       super.destroy();
-      Util.recursiveFileRemove(tmpDirectory);
+      if (cleanup == CleanupPhase.AFTER_TEST) {
+         Util.recursiveFileRemove(tmpDirectory);
+      }
+   }
+
+   @AfterMethod(alwaysRun = true)
+   @Override
+   protected void clearContent() throws Throwable {
+      super.clearContent();
+      if (cleanup == CleanupPhase.AFTER_METHOD) {
+         Util.recursiveFileRemove(tmpDirectory);
+      }
    }
 
    @Override
    protected StoreConfigurationBuilder addStore(PersistenceConfigurationBuilder persistenceConfigurationBuilder, boolean shared) {
       // We don't support shared for SIFS
       assert !shared;
+      persistenceConfigurationBuilder.passivation(hasPassivation);
       return persistenceConfigurationBuilder.addSoftIndexFileStore()
             // Force some extra files
             .maxFileSize(fileSize)
