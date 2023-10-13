@@ -436,7 +436,10 @@ public class Server extends BaseServerManagement implements AutoCloseable {
          // Register ourselves with the global registry
          GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(cacheManager);
          gcr.registerComponent(this, ServerManagement.class);
-         defaultAuditLogger.setTelemetryService(gcr.getComponent(InfinispanTelemetry.class));
+
+         if (gcr.getGlobalConfiguration().tracing().security()) {
+            defaultAuditLogger.setTelemetryService(gcr.getComponent(InfinispanTelemetry.class));
+         }
 
          // Start the cache manager
          SecurityActions.startCacheManager(cacheManager);

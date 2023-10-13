@@ -164,6 +164,7 @@ public enum Attribute {
     REMOTE_SITE,
     REMOTE_TIMEOUT,
     ROLES,
+    SECURITY,
     SEGMENTED,
     SEGMENTS,
     SERVICE_NAME,

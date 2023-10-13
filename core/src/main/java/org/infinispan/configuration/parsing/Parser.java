@@ -1135,6 +1135,11 @@ public class Parser extends CacheParser {
                builder.tracing().serviceName(value);
                break;
             }
+            case SECURITY: {
+               boolean security = ParseUtils.parseBoolean(reader, i, value);
+               builder.tracing().traceSecurity(security);
+               break;
+            }
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);
             }

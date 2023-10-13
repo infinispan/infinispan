@@ -873,6 +873,13 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute name="security" type="xs:boolean" default="${GlobalTracing.security}">
+      <xs:annotation>
+        <xs:documentation>
+          If true, it allows to trace security events. False by default.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="jmx">

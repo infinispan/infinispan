@@ -3,6 +3,7 @@ package org.infinispan.configuration.global;
 import static org.infinispan.configuration.global.GlobalTracingConfiguration.COLLECTOR_ENDPOINT;
 import static org.infinispan.configuration.global.GlobalTracingConfiguration.ENABLED;
 import static org.infinispan.configuration.global.GlobalTracingConfiguration.EXPORTER_PROTOCOL;
+import static org.infinispan.configuration.global.GlobalTracingConfiguration.SECURITY;
 import static org.infinispan.configuration.global.GlobalTracingConfiguration.SERVICE_NAME;
 
 import java.net.MalformedURLException;
@@ -59,6 +60,15 @@ public class GlobalTracingConfigurationBuilder extends AbstractGlobalConfigurati
 
    public GlobalTracingConfigurationBuilder serviceName(String serviceName) {
       attributes.attribute(SERVICE_NAME).set(serviceName);
+      return this;
+   }
+
+   public boolean traceSecurity() {
+      return attributes.attribute(SECURITY).get();
+   }
+
+   public GlobalTracingConfigurationBuilder traceSecurity(boolean security) {
+      attributes.attribute(SECURITY).set(security);
       return this;
    }
 

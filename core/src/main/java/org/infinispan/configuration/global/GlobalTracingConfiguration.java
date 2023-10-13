@@ -14,9 +14,10 @@ public class GlobalTracingConfiguration {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ENABLED, true, Boolean.class).immutable().build();
    public static final AttributeDefinition<TracingExporterProtocol> EXPORTER_PROTOCOL = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.EXPORTER_PROTOCOL, TracingExporterProtocol.OTLP).immutable().build();
    public static final AttributeDefinition<String> SERVICE_NAME = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.SERVICE_NAME, "infinispan-server").immutable().build();
+   public static final AttributeDefinition<Boolean> SECURITY = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.SECURITY, false, Boolean.class).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(GlobalTracingConfiguration.class, COLLECTOR_ENDPOINT, ENABLED, EXPORTER_PROTOCOL, SERVICE_NAME);
+      return new AttributeSet(GlobalTracingConfiguration.class, COLLECTOR_ENDPOINT, ENABLED, EXPORTER_PROTOCOL, SERVICE_NAME, SECURITY);
    }
 
    private final AttributeSet attributes;
@@ -67,6 +68,13 @@ public class GlobalTracingConfiguration {
     */
    public String serviceName() {
       return attributes.attribute(SERVICE_NAME).get();
+   }
+
+   /**
+    * @return true whether the tracing of security events is enabled
+    */
+   public boolean security() {
+      return enabled() && attributes.attribute(SECURITY).get();
    }
 
    @Override
