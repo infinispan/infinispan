@@ -32,6 +32,7 @@ import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ArrayCollector;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -65,7 +66,6 @@ import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
 import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.CacheTopologyUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -245,6 +245,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       ValueMatcher originalMatcher = command.getValueMatcher();
       // Ignore the previous value on the backup owners
       command.setValueMatcher(ValueMatcher.MATCH_ALWAYS);
+      boolean hadIgnoreReturnValues = command.hasAnyFlag(FlagBitSets.IGNORE_RETURN_VALUES);
+      command.addFlags(FlagBitSets.IGNORE_RETURN_VALUES);
       if (!isSynchronous(command)) {
          if (isReplicated) {
             rpcManager.sendToAll(command, DeliverOrder.PER_SENDER);
@@ -265,6 +267,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return asyncValue(remoteInvocation.handle((ignored, t) -> {
          // Unset the backup write bit as the command will be retried
          command.setFlagsBitSet(command.getFlagsBitSet() & ~FlagBitSets.BACKUP_WRITE);
+         // Unset only if it didn't have ignore return values before
+         if (!hadIgnoreReturnValues) command.setFlagsBitSet(command.getFlagsBitSet() & ~FlagBitSets.IGNORE_RETURN_VALUES);
          // Switch to the retry policy, in case the primary owner changed and the write already succeeded on the new primary
          command.setValueMatcher(originalMatcher.matcherForRetry());
          CompletableFutures.rethrowExceptionIfPresent(t);
