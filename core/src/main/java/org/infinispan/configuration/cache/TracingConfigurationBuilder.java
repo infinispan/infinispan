@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import static org.infinispan.configuration.cache.TracingConfiguration.CLUSTER;
 import static org.infinispan.configuration.cache.TracingConfiguration.CONTAINER;
 import static org.infinispan.configuration.cache.TracingConfiguration.ENABLED;
+import static org.infinispan.configuration.cache.TracingConfiguration.PERSISTENCE;
 import static org.infinispan.configuration.cache.TracingConfiguration.X_SITE;
 
 import org.infinispan.commons.configuration.Builder;
@@ -80,6 +81,17 @@ public class TracingConfigurationBuilder extends AbstractConfigurationChildBuild
     */
    public TracingConfigurationBuilder xSite(boolean enable) {
       attributes.attribute(X_SITE).set(enable);
+      return this;
+   }
+
+   /**
+    * Enable or disable tracing for persistence category on the given cache.
+    * This property can be used to enable tracing at runtime.
+    *
+    * @return <code>this</code>, for method chaining
+    */
+   public TracingConfigurationBuilder persistence(boolean enable) {
+      attributes.attribute(PERSISTENCE).set(enable);
       return this;
    }
 

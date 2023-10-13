@@ -1254,6 +1254,14 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
+          <xs:attribute name="persistence" type="xs:boolean" default="${Tracing.persistence}">
+            <xs:annotation>
+              <xs:documentation>
+                Enable or disable tracing for persistence category on the given cache.
+                This property can be used to enable or disable tracing at runtime.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
         </xs:complexType>
       </xs:element>
       <xs:element name="custom-interceptors" type="tns:custom-interceptors" minOccurs="0">

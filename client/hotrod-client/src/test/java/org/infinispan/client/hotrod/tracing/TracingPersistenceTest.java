@@ -9,64 +9,66 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
-import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.server.core.telemetry.TelemetryServiceFactory;
 import org.infinispan.server.core.telemetry.inmemory.InMemoryTelemetryClient;
-import org.testng.annotations.AfterClass;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import io.opentelemetry.sdk.trace.data.SpanData;
 
-@Test(groups = "tracing", testName = "org.infinispan.client.hotrod.tracing.TracingClusterTest")
-public class TracingClusterTest extends MultiHotRodServersTest {
-
-   private static final int NUM_SERVERS = 3;
+@Test(groups = "tracing", testName = "org.infinispan.client.hotrod.tracing.TracingPersistenceTest")
+public class TracingPersistenceTest extends SingleHotRodServerTest {
 
    // Configure OpenTelemetry SDK for tests
    private final InMemoryTelemetryClient telemetryClient = new InMemoryTelemetryClient();
 
    @Override
-   protected void modifyGlobalConfiguration(GlobalConfigurationBuilder builder) {
-      builder.tracing().collectorEndpoint(TelemetryServiceFactory.IN_MEMORY_COLLECTOR_ENDPOINT);
+   protected void teardown() {
+      telemetryClient.reset();
+      super.teardown();
    }
 
    @Override
-   protected void createCacheManagers() throws Throwable {
+   protected EmbeddedCacheManager createCacheManager() throws Exception {
       telemetryClient.reset();
       assertThat(telemetryClient.finishedSpanItems()).isEmpty();
 
-      ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      config.tracing().cluster(true);
-      createHotRodServers(NUM_SERVERS, config);
-      waitForClusterToForm();
-   }
+      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder().nonClusteredDefault();
+      global.tracing().collectorEndpoint(TelemetryServiceFactory.IN_MEMORY_COLLECTOR_ENDPOINT);
 
-   @AfterClass(alwaysRun = true)
-   @Override
-   protected void destroy() {
-      telemetryClient.reset();
-      super.destroy();
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.tracing().persistence(true);
+      builder.persistence()
+            .passivation(false)
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+            .storeName(getClass().getName())
+            .purgeOnStartup(true);
+
+      EmbeddedCacheManager manager = TestCacheManagerFactory.createServerModeCacheManager(global);
+      manager.defineConfiguration("persistence", builder.build());
+      return manager;
    }
 
    @Test
-   public void spanExport() {
-      RemoteCache<Object, Object> cache1 = client(0).getCache();
-      cache1.put("AAA", "aaa");
-      cache1.put("AAA", "bbb");
-      cache1.put("AAA", "ccc");
+   public void test() throws Exception {
+      RemoteCache<Integer, String> remoteCache = remoteCacheManager.getCache("persistence");
+      remoteCache.put(1, "bla bla bla");
+      remoteCache.put(2, "one two three");
+      remoteCache.put(3, "foo bar baz");
 
       eventually(() -> telemetryClient.finishedSpanItems().toString(),
             () -> telemetryClient.finishedSpanItems().size() == 6, 10, TimeUnit.SECONDS);
       List<SpanData> spanItems = telemetryClient.finishedSpanItems();
 
       Map<String, List<SpanData>> spansByName = InMemoryTelemetryClient.aggregateByName(spanItems);
-      assertThat(spansByName).hasSize(2);
       List<SpanData> parents = spansByName.get("PUT");
       assertThat(parents).hasSize(3);
-      List<SpanData> children = spansByName.get("PutKeyValueCommand");
+      List<SpanData> children = spansByName.get("writeToAllNonTxStores");
       assertThat(children).hasSize(3);
 
       Set<String> parentSpanIds = new HashSet<>(3);

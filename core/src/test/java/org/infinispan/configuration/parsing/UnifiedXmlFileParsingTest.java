@@ -152,6 +152,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertThat(tracing.container()).isTrue();
             assertThat(tracing.cluster()).isFalse();
             assertThat(tracing.xSite()).isFalse();
+            assertThat(tracing.persistence()).isFalse();
 
             tracing = getConfiguration(holder, "disabled-tracing").tracing();
             assertThat(tracing).isNotNull();
