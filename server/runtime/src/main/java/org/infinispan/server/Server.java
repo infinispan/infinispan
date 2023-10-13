@@ -114,6 +114,7 @@ import org.infinispan.server.security.ElytronUsernamePasswordAuthenticator;
 import org.infinispan.server.state.ServerStateManagerImpl;
 import org.infinispan.server.tasks.admin.ServerAdminOperationsHandler;
 import org.infinispan.tasks.TaskManager;
+import org.infinispan.telemetry.InfinispanTelemetry;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.function.SerializableFunction;
 import org.infinispan.util.logging.LogFactory;
@@ -210,6 +211,7 @@ public class Server extends BaseServerManagement implements AutoCloseable {
    private final File serverConf;
    private final long startTime;
    private final Properties properties;
+   private final LoggingAuditLogger defaultAuditLogger = new LoggingAuditLogger();
    private ExitHandler exitHandler = new DefaultExitHandler();
    private ConfigurationBuilderHolder defaultsHolder;
    private ConfigurationBuilderHolder configurationBuilderHolder;
@@ -315,7 +317,7 @@ public class Server extends BaseServerManagement implements AutoCloseable {
          defaultsHolder = parser.parse(defaults);
 
          // Set a default audit logger
-         defaultsHolder.getGlobalConfigurationBuilder().security().authorization().auditLogger(new LoggingAuditLogger());
+         defaultsHolder.getGlobalConfigurationBuilder().security().authorization().auditLogger(defaultAuditLogger);
 
          // base the global configuration to the default
          configurationBuilderHolder = new ConfigurationBuilderHolder(classLoader);
@@ -434,6 +436,8 @@ public class Server extends BaseServerManagement implements AutoCloseable {
          // Register ourselves with the global registry
          GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(cacheManager);
          gcr.registerComponent(this, ServerManagement.class);
+         defaultAuditLogger.setTelemetryService(gcr.getComponent(InfinispanTelemetry.class));
+
          // Start the cache manager
          SecurityActions.startCacheManager(cacheManager);
          serverStateManager = new ServerStateManagerImpl(this, cacheManager, gcr.getComponent(GlobalConfigurationManager.class));
