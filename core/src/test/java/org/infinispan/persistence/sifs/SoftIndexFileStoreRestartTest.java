@@ -6,8 +6,6 @@ import static org.testng.AssertJUnit.assertNull;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.ConcurrentMap;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
@@ -275,38 +273,5 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
          Util.recursiveFileRemove(Paths.get(tmpDirectory, "index"));
       }
       createCacheManagers();
-   }
-
-   @Test(dataProvider = "booleans")
-   public void testRestartWithRemoveOnly(boolean deleteIndex) throws Throwable {
-      cache(0, cacheName).remove("k1");
-
-      Supplier<Long> statsUsedSize = () -> {
-         NonBlockingSoftIndexFileStore sifs = TestingUtil.getFirstStore(cache(0, cacheName));
-
-         Compactor compactor = TestingUtil.extractField(sifs, "compactor");
-
-         ConcurrentMap<Integer, Compactor.Stats> stats = compactor.getFileStats();
-
-         long size = 0;
-         for (Compactor.Stats stat : stats.values()) {
-            size += stat.getTotal();
-            size -= stat.getFree();
-         }
-         return size;
-      };
-
-      // This will be -40 due to tracking the file has 40 bytes free, but total size is not set until file complete
-      eventuallyEquals(-40L, statsUsedSize);
-
-      killMember(0, cacheName);
-
-      if (deleteIndex) {
-         // Delete the index which should force it to rebuild
-         Util.recursiveFileRemove(Paths.get(tmpDirectory, "index"));
-      }
-      createCacheManagers();
-
-      eventuallyEquals(0L, statsUsedSize);
    }
 }
