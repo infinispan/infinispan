@@ -76,13 +76,17 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
       return concat(super.parameterValues(), numOwners != 2 ? numOwners : null, l1CacheEnabled ? null : Boolean.FALSE, groupers ? Boolean.TRUE : null);
    }
 
+   protected void createClusteredCache() {
+      // Create clustered caches with failure detection protocols on
+      createClusteredCaches(INIT_CLUSTER_SIZE, cacheName, getSerializationContext(), configuration,
+            new TransportFlags().withFD(false));
+   }
+
    @Override
    protected void createCacheManagers() throws Throwable {
       cacheName = "dist";
       configuration = buildConfiguration();
-      // Create clustered caches with failure detection protocols on
-      createClusteredCaches(INIT_CLUSTER_SIZE, cacheName, getSerializationContext(), configuration,
-                                     new TransportFlags().withFD(false));
+      createClusteredCache();
       caches = caches(cacheName);
       if (INIT_CLUSTER_SIZE > 0) c1 = caches.get(0);
       if (INIT_CLUSTER_SIZE > 1) c2 = caches.get(1);
