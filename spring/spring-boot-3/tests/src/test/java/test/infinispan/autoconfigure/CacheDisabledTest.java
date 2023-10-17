@@ -1,11 +1,10 @@
 package test.infinispan.autoconfigure;
 
 //import org.infinispan.client.hotrod.RemoteCacheManager;
+
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.spring.starter.embedded.InfinispanEmbeddedAutoConfiguration;
 import org.infinispan.spring.starter.embedded.InfinispanEmbeddedCacheManagerAutoConfiguration;
-//import org.infinispan.spring.starter.remote.InfinispanRemoteAutoConfiguration;
-//import org.infinispan.spring.starter.remote.InfinispanRemoteCacheManagerAutoConfiguration;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -13,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.cache.CacheAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
+import org.springframework.test.annotation.DirtiesContext;
 
 @SpringBootTest(
       classes = {
@@ -27,6 +27,7 @@ import org.springframework.context.ApplicationContext;
             "spring.cache.type=NONE",
             "infinispan.remote.server-list=127.0.0.1:6667"
       })
+@DirtiesContext
 public class CacheDisabledTest {
    @Autowired
    private ApplicationContext context;
