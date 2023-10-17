@@ -1,5 +1,9 @@
 package test.infinispan.integration.remote;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_SERIALIZED_OBJECT_TYPE;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -16,11 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.CacheManager;
 import org.springframework.test.annotation.DirtiesContext;
-import test.infinispan.integration.AbstractSpringSessionTCK;
 
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_SERIALIZED_OBJECT_TYPE;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import test.infinispan.integration.AbstractSpringSessionTCK;
 
 @SpringBootTest(classes = RemoteSessionApp.class,
       webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -64,7 +65,7 @@ public class RemoteSpringSessionTest extends AbstractSpringSessionTCK {
    @Test
    public void testCacheManagerBean() {
       assertNotNull(cacheManager);
-      assertTrue(cacheManager instanceof SpringRemoteCacheManager);
+      assertInstanceOf(SpringRemoteCacheManager.class, cacheManager);
       RemoteCacheManager nativeCacheManager = ((SpringRemoteCacheManager) cacheManager).getNativeCacheManager();
       assertNotNull(nativeCacheManager);
    }
