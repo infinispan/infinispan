@@ -1,11 +1,18 @@
 package org.infinispan.persistence.sifs;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.fail;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
@@ -18,7 +25,9 @@ import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.distribution.BaseDistStoreTest;
 import org.infinispan.persistence.sifs.configuration.DataConfiguration;
 import org.infinispan.persistence.support.WaitDelegatingNonBlockingStore;
+import org.infinispan.test.Mocks;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -275,5 +284,60 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
          Util.recursiveFileRemove(Paths.get(tmpDirectory, "index"));
       }
       createCacheManagers();
+   }
+
+   public void testRestartCompactorNotComplete() throws Throwable {
+      if (fileSize > 320_000) {
+         // Don't test larger as tests take way too long
+         return;
+      }
+      WaitDelegatingNonBlockingStore store = TestingUtil.getFirstStoreWait(cache(0, cacheName));
+
+      Compactor compactor = TestingUtil.extractField(store.delegate(), "compactor");
+
+      CheckPoint checkPoint = new CheckPoint();
+      checkPoint.triggerForever(Mocks.AFTER_RELEASE);
+      Mocks.blockingFieldMock(checkPoint, Index.class, compactor, Compactor.class, "index",
+            (stubber, index) -> stubber.when(index).handleRequest(any()));
+
+      cache(0, cacheName).remove("removed-key");
+      int size = 0;
+      ConcurrentMap<Integer, Compactor.Stats> stats;
+      // Insert until compactor has filled a file - which we can force compaction on below
+      while ((stats = compactor.getFileStats()).isEmpty()) {
+         cache(0, cacheName).put("key-" + size, "value-" + size);
+         size++;
+      }
+
+      Integer fileId = stats.keySet().iterator().next();
+
+      CompletionStage<Void> compactorStage = compactor.forceCompactionForAllNonLogFiles();
+
+      checkPoint.awaitStrict(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS);
+
+      Future<Void> killFuture = fork(() -> killMember(0, cacheName));
+
+      checkPoint.triggerForever(Mocks.BEFORE_RELEASE);
+
+      compactorStage.toCompletableFuture().get(10, TimeUnit.SECONDS);
+
+      killFuture.get(10, TimeUnit.SECONDS);
+
+      createCacheManagers();
+
+      Path dataPath = Path.of(tmpDirectory, "data", cacheName, "data");
+      File[] dataFiles = dataPath.toFile().listFiles();
+
+      for (File file : dataFiles) {
+         if (file.getName().equals(NonBlockingSoftIndexFileStore.PREFIX_LATEST + fileId)) {
+            fail("File " + fileId + " that was compacted is still present!");
+         }
+      }
+
+      assertNull(cache(0, cacheName).get("removed-key"));
+
+      for (int i = 0; i < size; i++) {
+         assertEquals("value-" + i, cache(0, cacheName).get("key-" + i));
+      }
    }
 }
