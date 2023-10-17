@@ -362,12 +362,6 @@ class Index {
                      total = (int) fileProvider.getFileSize(file);
                   }
                   int free = entry.getValue().getFree();
-                  if (total == free) {
-                     log.tracef("Deleting file %s since it has no free bytes in it", file);
-                     // No reason to keep an empty file around
-                     fileProvider.deleteFile(file);
-                     continue;
-                  }
                   buffer.putInt(file);
                   buffer.putInt(total);
                   buffer.putInt(free);

@@ -462,6 +462,13 @@ class Compactor {
          long currentTimeMilliseconds) throws IOException, ClassNotFoundException {
       int scheduledFile = compactionRequest.fileId;
       assert scheduledFile >= 0;
+
+      if (clearSignal.get() || terminateSignal) {
+         log.tracef("Not compacting file %d as either the terminate or clear signal were set", scheduledFile);
+         completeFuture(compactionRequest);
+         return;
+      }
+
       CompactionExpirationSubscriber subscriber = compactionRequest.subscriber;
       boolean isLogFile = compactionRequest.isLogFile;
       if (subscriber == null) {
@@ -480,11 +487,8 @@ class Compactor {
       try (handle) {
          long fileSize = handle.getFileSize();
          AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
-         while (!clearSignal.get() && !terminateSignal) {
-            EntryHeader header = EntryRecord.readEntryHeader(handle, scheduledOffset);
-            if (header == null) {
-               break;
-            }
+         EntryHeader header;
+         while ((header = EntryRecord.readEntryHeader(handle, scheduledOffset)) != null) {
             long remainingBytes = fileSize - scheduledOffset;
             if (header.totalLength() > remainingBytes) {
                if (isLogFile) {
@@ -739,7 +743,7 @@ class Compactor {
       }
       if (isLogFile) {
          log.tracef("Finished expiring entries in log file %d, leaving file as is", scheduledFile);
-      } else if (!terminateSignal && !clearSignal.get()) {
+      } else {
          // The deletion must be executed only after the index is fully updated.
          log.tracef("Finished compacting %d, scheduling delete", scheduledFile);
          // Mark the file for deletion so expiration won't check it
@@ -748,8 +752,6 @@ class Compactor {
             stats.markForDeletion();
          }
          index.deleteFileAsync(scheduledFile);
-      } else {
-         log.tracef("Not doing anything to compacted file %d as either the terminate clear signal were set", scheduledFile);
       }
    }
 
