@@ -292,7 +292,7 @@
       <versionx.io.protostuff.protostuff-runtime>${version.protostuff}</versionx.io.protostuff.protostuff-runtime>
       <versionx.io.protostuff.protostuff-runtime-registry>${version.protostuff}</versionx.io.protostuff.protostuff-runtime-registry>
       <versionx.io.reactivex.rxjava2.rxjava>${version.rxjava}</versionx.io.reactivex.rxjava2.rxjava>
-      <versionx.io.undertow.undertow-core>2.0.31.Final</versionx.io.undertow.undertow-core>
+      <versionx.io.undertow.undertow-core>2.2.28.Final</versionx.io.undertow.undertow-core>
       <versionx.jakarta-regexp.jakarta-regexp>1.4</versionx.jakarta-regexp.jakarta-regexp>
       <versionx.javax.activation.activation>1.1.1</versionx.javax.activation.activation>
       <versionx.javax.activation.javax.activation-api>1.2.0</versionx.javax.activation.javax.activation-api>
