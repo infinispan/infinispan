@@ -26,6 +26,12 @@ credential:: Corresponds to the password associated with the principal mentioned
 The principal for LDAP connections must have necessary privileges to perform LDAP queries and access specific attributes.
 ====
 
+[TIP]
+====
+Enabling `connection-pooling` significantly improves the performance of authentication to LDAP servers.
+The connection pooling mechanism is provided by the JDK. For more information see link:https://docs.oracle.com/javase/jndi/tutorial/ldap/connect/config.html[Connection Pooling Configuration] and link:https://docs.oracle.com/javase/tutorial/jndi/ldap/pool.html[Java Tutorials: Pooling].
+====
+
 == LDAP realm user authentication methods
 Configure the user authentication method in the LDAP realm.
 
