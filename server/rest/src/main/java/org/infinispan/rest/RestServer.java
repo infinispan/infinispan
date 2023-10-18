@@ -1,5 +1,10 @@
 package org.infinispan.rest;
 
+import static org.infinispan.rest.RestChannelInitializer.MAX_HEADER_SIZE;
+import static org.infinispan.rest.RestChannelInitializer.MAX_INITIAL_LINE_SIZE;
+
+import java.util.List;
+
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.authentication.Authenticator;
 import org.infinispan.rest.authentication.impl.VoidAuthenticator;
@@ -14,6 +19,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInboundHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOutboundHandler;
+import io.netty.handler.codec.http.cors.CorsConfig;
 
 /**
  * REST Protocol Server.
@@ -26,6 +32,8 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
    private CacheOperations cacheOperations;
    private SearchOperations searchOperations;
    private RestCacheManager<Object> restCacheManager;
+   private volatile int maxContentLength;
+   private volatile List<CorsConfig> corsRules;
 
    public RestServer() {
       super("REST");
@@ -92,6 +100,7 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
    @Override
    protected void startInternal(RestServerConfiguration configuration, EmbeddedCacheManager cacheManager) {
       super.startInternal(configuration, cacheManager);
+      this.maxContentLength = configuration.maxContentLength() + MAX_INITIAL_LINE_SIZE + MAX_HEADER_SIZE;
       restCacheManager = new RestCacheManager<>(cacheManager, this::isCacheIgnored);
       this.cacheOperations = new CacheOperations(configuration, restCacheManager);
       this.searchOperations = new SearchOperations(configuration, restCacheManager);
@@ -101,5 +110,9 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
    public int getWorkerThreads() {
       // Unused for now, so just return the smallest possible valid value
       return 1;
+   }
+
+   public int maxContentLength() {
+      return maxContentLength;
    }
 }

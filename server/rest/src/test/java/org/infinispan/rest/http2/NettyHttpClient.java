@@ -3,6 +3,8 @@ package org.infinispan.rest.http2;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.IllegalLifecycleStateException;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
@@ -13,7 +15,6 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.ssl.ApplicationProtocolNames;
 import io.netty.handler.ssl.SslContext;
-import org.infinispan.IllegalLifecycleStateException;
 
 /**
  * HTTP/2 client based on Netty.
@@ -45,10 +46,6 @@ public class NettyHttpClient {
 
    public static NettyHttpClient newHttp2ClientWithHttp11Upgrade() {
       return new NettyHttpClient(null, new Http2ClientInitializer(null, Integer.MAX_VALUE));
-   }
-
-   public static NettyHttpClient newHttp11Client() {
-      return new NettyHttpClient(null, new Http11ClientInitializer(null, Integer.MAX_VALUE));
    }
 
    public static NettyHttpClient newHttp2ClientWithALPN(String keystorePath, String keystorePassword) throws Exception {

@@ -3,12 +3,12 @@ package org.infinispan.server.core.utils;
 import java.util.Arrays;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
 
 import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.server.core.configuration.SslConfiguration;
 import org.infinispan.server.core.configuration.SslEngineConfiguration;
 
-import io.netty.handler.ssl.AlpnHackedJdkSslContext;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.IdentityCipherSuiteFilter;
@@ -43,23 +43,12 @@ public class SslUtils {
    }
 
    private static JdkSslContext createSslContext(SSLContext sslContext, ClientAuth clientAuth, ApplicationProtocolConfig alpnConfig) {
-      //Unfortunately we need to grab a list of available ciphers from the engine.
-      //If we won't, JdkSslContext will use common ciphers from DEFAULT and SUPPORTED, which gives us 5 out of ~50 available ciphers
-      //Of course, we don't need to any specific engine configuration here... just a list of ciphers
-      String[] ciphers = SslContextFactory.getEngine(sslContext, false, clientAuth == ClientAuth.REQUIRE).getSupportedCipherSuites();
-      if (alpnConfig != null && !isJdkAlpn()) {
-         //we want to minimize the impact of possibly bugs in hacked SSL Context.
-         return new AlpnHackedJdkSslContext(sslContext, false, Arrays.asList(ciphers), IdentityCipherSuiteFilter.INSTANCE, alpnConfig, clientAuth);
-      } else {
-         return new JdkSslContext(sslContext, false, Arrays.asList(ciphers), IdentityCipherSuiteFilter.INSTANCE, alpnConfig, clientAuth);
-      }
+      SSLEngine engine = SslContextFactory.getEngine(sslContext, false, clientAuth == ClientAuth.REQUIRE);
+      String[] ciphers = engine.getEnabledCipherSuites();
+      return new JdkSslContext(sslContext, false, Arrays.asList(ciphers), IdentityCipherSuiteFilter.INSTANCE, alpnConfig, clientAuth, null, false);
    }
 
    private static ClientAuth requireClientAuth(SslConfiguration sslConfig) {
       return sslConfig.requireClientAuth() ? ClientAuth.REQUIRE : ClientAuth.NONE;
-   }
-
-   private static boolean isJdkAlpn() {
-      return !SecurityActions.getSystemProperty("java.version").startsWith("1.8");
    }
 }

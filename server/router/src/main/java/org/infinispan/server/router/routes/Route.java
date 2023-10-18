@@ -10,7 +10,7 @@ public class Route<Source extends RouteSource, Destination extends RouteDestinat
         this.routeDestination = routeDestination;
     }
 
-    public Destination getRouteDesitnation() {
+    public Destination getRouteDestination() {
         return routeDestination;
     }
 

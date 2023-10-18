@@ -1,17 +1,23 @@
 package org.infinispan.rest;
 
-import org.eclipse.jetty.client.HttpClient;
-import org.eclipse.jetty.client.api.ContentResponse;
-import org.eclipse.jetty.http.HttpMethod;
-import org.eclipse.jetty.util.ssl.SslContextFactory;
-import org.infinispan.rest.assertion.ResponseAssertion;
+import static io.netty.handler.codec.http.HttpMethod.GET;
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+
+import java.util.Queue;
+
+import org.assertj.core.api.Assertions;
 import org.infinispan.rest.authentication.impl.ClientCertAuthenticator;
 import org.infinispan.rest.helper.RestServerHelper;
+import org.infinispan.rest.http2.NettyHttpClient;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.Test;
+
+import io.netty.handler.codec.http.DefaultFullHttpRequest;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.FullHttpResponse;
 
 @Test(groups = "functional", testName = "rest.CertificateTest")
 public class CertificateTest extends AbstractInfinispanTest {
@@ -19,16 +25,16 @@ public class CertificateTest extends AbstractInfinispanTest {
    public static final String TRUST_STORE_PATH = CertificateTest.class.getClassLoader().getResource("./client.p12").getPath();
    public static final String KEY_STORE_PATH = CertificateTest.class.getClassLoader().getResource("./client.p12").getPath();
 
-   private HttpClient client;
+   private NettyHttpClient client;
    private RestServerHelper restServer;
 
    @AfterSuite
-   public void afterSuite() throws Exception {
+   public void afterSuite() {
       restServer.stop();
    }
 
    @AfterMethod
-   public void afterMethod() throws Exception {
+   public void afterMethod() {
       if (restServer != null) {
          restServer.stop();
       }
@@ -38,31 +44,22 @@ public class CertificateTest extends AbstractInfinispanTest {
    @Test
    public void shouldAllowProperCertificate() throws Exception {
       //given
-      SslContextFactory sslContextFactory = new SslContextFactory();
-      sslContextFactory.setTrustStorePassword(TRUST_STORE_PATH);
-      sslContextFactory.setTrustStorePassword("secret");
-      sslContextFactory.setTrustStoreType("pkcs12");
-      sslContextFactory.setKeyStorePath(KEY_STORE_PATH);
-      sslContextFactory.setKeyStorePassword("secret");
-      sslContextFactory.setKeyStoreType("pkcs12");
-
-      client = new HttpClient(sslContextFactory);
-      client.start();
-
       restServer = RestServerHelper.defaultRestServer()
             .withAuthenticator(new ClientCertAuthenticator())
             .withKeyStore(KEY_STORE_PATH, "secret", "pkcs12")
             .withTrustStore(TRUST_STORE_PATH, "secret", "pkcs12")
             .withClientAuth()
             .start(TestResourceTracker.getCurrentTestShortName());
+      client = NettyHttpClient.newHttp2ClientWithALPN(KEY_STORE_PATH, "secret");
+      client.start(restServer.getHost(), restServer.getPort());
 
       //when
-      ContentResponse response = client
-            .newRequest(String.format("https://localhost:%d/rest/%s/%s", restServer.getPort(), "default", "test"))
-            .method(HttpMethod.GET)
-            .send();
+      FullHttpRequest get = new DefaultFullHttpRequest(HTTP_1_1, GET, "/rest/default/test");
+      client.sendRequest(get);
+      Queue<FullHttpResponse> responses = client.getResponses();
 
       //then
-      ResponseAssertion.assertThat(response).isNotFound();
+      Assertions.assertThat(responses).hasSize(1);
+      Assertions.assertThat(responses.element().status().code()).isEqualTo(404);
    }
 }

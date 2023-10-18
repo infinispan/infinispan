@@ -11,6 +11,7 @@ import org.infinispan.rest.RestResponseException;
 import org.infinispan.rest.authentication.AuthenticationException;
 import org.infinispan.rest.authentication.Authenticator;
 
+import io.netty.channel.Channel;
 import io.netty.handler.ssl.SslHandler;
 
 /**
@@ -27,7 +28,8 @@ public class ClientCertAuthenticator implements Authenticator {
    @Override
    public void challenge(InfinispanRequest request) throws RestResponseException {
       try {
-         SslHandler sslHandler = request.getRawContext().pipeline().get(SslHandler.class);
+         Channel parent = request.getRawContext().channel().parent();
+         SslHandler sslHandler = parent != null ? parent.pipeline().get(SslHandler.class) : request.getRawContext().pipeline().get(SslHandler.class);
          SSLSession session = sslHandler.engine().getSession();
          Subject subject = new Subject();
          subject.getPrincipals().add(session.getPeerPrincipal());

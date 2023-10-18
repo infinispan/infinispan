@@ -11,7 +11,8 @@ import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
-import io.netty.util.DomainNameMapping;
+import io.netty.handler.ssl.SslContext;
+import io.netty.util.Mapping;
 
 /**
  * Log abstraction for the Hot Rod server module. For this module, message ids ranging from 14000 to 15000 inclusively
@@ -24,7 +25,7 @@ public interface RouterLogger extends BasicLogger {
 
     @LogMessage(level = DEBUG)
     @Message(value = "Using SNI Handler with domain mapping %s", id = 14001)
-    void initializedSni(DomainNameMapping domainNameMapping);
+    void initializedSni(Mapping<String, SslContext> domainNameMapping);
 
     @Message(value = "Could not find matching route", id = 14002)
     IllegalArgumentException noRouteFound();

@@ -1,5 +1,6 @@
 package org.infinispan.rest;
 
+import static io.netty.handler.codec.http.HttpResponseStatus.CONTINUE;
 import static io.netty.handler.codec.http.HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
@@ -15,19 +16,21 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.unix.Errors;
 import io.netty.handler.codec.TooLongFrameException;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpUtil;
 
 /**
  * Netty REST handler for HTTP/2.0
  *
  * @author Sebastian Łaskawiec
  */
-public class Http20RequestHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
+public class RestRequestHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
 
-   protected final static Log logger = LogFactory.getLog(Http20RequestHandler.class, Log.class);
+   protected final static Log logger = LogFactory.getLog(RestRequestHandler.class, Log.class);
 
    private final Authenticator authenticator;
    final RestAccessLoggingHandler restAccessLoggingHandler = new RestAccessLoggingHandler();
@@ -35,11 +38,11 @@ public class Http20RequestHandler extends SimpleChannelInboundHandler<FullHttpRe
    protected final RestServerConfiguration configuration;
 
    /**
-    * Creates new {@link Http20RequestHandler}.
+    * Creates new {@link RestRequestHandler}.
     *
     * @param restServer    Rest Server.
     */
-   public Http20RequestHandler(RestServer restServer) {
+   public RestRequestHandler(RestServer restServer) {
       this.restServer = restServer;
       this.configuration = restServer.getConfiguration();
       this.authenticator = restServer.getAuthenticator();
@@ -51,6 +54,9 @@ public class Http20RequestHandler extends SimpleChannelInboundHandler<FullHttpRe
       InfinispanRequest infinispanRequest = null;
       try {
          restAccessLoggingHandler.preLog(request);
+         if (HttpUtil.is100ContinueExpected(request)) {
+            ctx.write(new DefaultFullHttpResponse(HTTP_1_1, CONTINUE));
+         }
          infinispanRequest = InfinispanRequestFactory.createRequest(restServer, request, ctx);
          this.checkContext(infinispanRequest);
          authenticator.challenge(infinispanRequest);

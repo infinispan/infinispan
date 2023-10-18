@@ -178,7 +178,7 @@
       <version.net.bytebuddy>1.9.7</version.net.bytebuddy>
       <version.netty>4.1.100.Final</version.netty>
       <version.netty-conscrypt-optional>1.0.0</version.netty-conscrypt-optional>
-      <version.netty.tcnative>2.0.28.Final</version.netty.tcnative>
+      <version.netty.tcnative>2.0.62.Final</version.netty.tcnative>
       <version.openjdk.jmh>1.12</version.openjdk.jmh>
       <version.ops4j.base>1.5.0</version.ops4j.base>
       <version.ops4j.pax.exam>4.13.0</version.ops4j.pax.exam>

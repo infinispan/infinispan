@@ -1,13 +1,13 @@
 package org.infinispan.rest.http2;
 
-import java.io.FileInputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.KeyStore;
 
 import javax.net.ssl.KeyManagerFactory;
 
 import io.netty.handler.codec.http2.Http2SecurityUtil;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
-import io.netty.handler.ssl.OpenSsl;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
@@ -23,11 +23,11 @@ public class NettyTruststoreUtil {
 
    public static SslContext createTruststoreContext(String truststore, char[] password, String... alpnProtocols) throws Exception {
       KeyStore ks = KeyStore.getInstance("JKS");
-      ks.load(new FileInputStream(truststore), password);
+      ks.load(Files.newInputStream(Paths.get(truststore)), password);
       KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
       kmf.init(ks, password);
 
-      SslProvider provider = OpenSsl.isAlpnSupported() ? SslProvider.OPENSSL : SslProvider.JDK;
+      SslProvider provider = SslProvider.JDK;
       return SslContextBuilder.forClient()
             .sslProvider(provider)
             .keyManager(kmf)
