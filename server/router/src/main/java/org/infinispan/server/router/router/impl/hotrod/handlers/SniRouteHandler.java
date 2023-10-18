@@ -17,7 +17,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.handler.ssl.SniHandler;
 import io.netty.handler.ssl.SslContext;
-import io.netty.util.DomainNameMapping;
+import io.netty.util.Mapping;
 
 /**
  * Handler responsible for routing requests to proper backend based on SNI Host Name.
@@ -36,7 +36,7 @@ public class SniRouteHandler extends SniHandler {
      * @param mapping      SNI Host Name mapping.
      * @param routingTable The {@link RoutingTable} for supplying the {@link Route}s.
      */
-    public SniRouteHandler(DomainNameMapping<? extends SslContext> mapping, RoutingTable routingTable) {
+    public SniRouteHandler(Mapping<String, SslContext> mapping, RoutingTable routingTable) {
         super(mapping);
         this.routingTable = routingTable;
     }
@@ -53,7 +53,7 @@ public class SniRouteHandler extends SniHandler {
                     .filter(r -> r.getRouteSource().getSniHostName().equals(this.hostname()))
                     .findAny();
 
-            HotRodServerRouteDestination routeDestination = route.orElseThrow(() -> logger.noRouteFound()).getRouteDesitnation();
+            HotRodServerRouteDestination routeDestination = route.orElseThrow(() -> logger.noRouteFound()).getRouteDestination();
             ChannelInitializer<Channel> channelInitializer = routeDestination.getHotrodServer().getInitializer();
 
             ctx.pipeline().addLast(channelInitializer);

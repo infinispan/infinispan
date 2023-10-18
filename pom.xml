@@ -4150,7 +4150,7 @@
                   <configuration>
                      <rules>
                         <requireJavaVersion>
-                           <version>[${version.java},)</version>
+                           <version>[${version.java},12)</version>
                         </requireJavaVersion>
                         <requireMavenVersion>
                            <version>[3.2.1,)</version>

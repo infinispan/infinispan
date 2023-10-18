@@ -40,7 +40,7 @@ public class CorsHandler extends ChannelDuplexHandler {
 
    private HttpRequest request;
    private final List<CorsConfig> configList;
-   private boolean isShortCircuit;
+   private final boolean isShortCircuit;
 
    /**
     * Creates a new instance with the specified config list. If more than one
@@ -50,7 +50,7 @@ public class CorsHandler extends ChannelDuplexHandler {
     * @param isShortCircuit Same as {@link CorsConfig#shortCircuit} but applicable to all supplied configs.
     */
    public CorsHandler(final List<CorsConfig> configList, boolean isShortCircuit) {
-      if (configList == null || configList.size() < 1) {
+      if (configList == null || configList.isEmpty()) {
          throw new IllegalArgumentException("List of corsConfig must contain at least one item");
       }
       this.configList = configList;

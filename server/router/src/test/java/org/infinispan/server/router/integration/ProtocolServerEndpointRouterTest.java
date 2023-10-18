@@ -72,7 +72,7 @@ public class ProtocolServerEndpointRouterTest {
      * The router should match properly SNI based routes and connect clients to proper server instances.
      */
     @Test
-    public void shouldRouteToProperHotRodServerBasedOnSniHostName() throws Exception {
+    public void shouldRouteToProperHotRodServerBasedOnSniHostName() {
         //given
         hotrodServer1 = HotRodTestingUtil.startHotRodServerWithoutTransport();
         hotrodServer2 = HotRodTestingUtil.startHotRodServerWithoutTransport();

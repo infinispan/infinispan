@@ -7,14 +7,15 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.server.router.RoutingTable;
 import org.infinispan.server.router.logging.RouterLogger;
 import org.infinispan.server.router.router.impl.hotrod.handlers.util.SslUtils;
+import org.infinispan.server.router.routes.Route;
 import org.infinispan.server.router.routes.RouteDestination;
 import org.infinispan.server.router.routes.SniRouteSource;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.handler.ssl.SslContext;
-import io.netty.util.DomainMappingBuilder;
-import io.netty.util.DomainNameMapping;
+import io.netty.util.DomainWildcardMappingBuilder;
+import io.netty.util.Mapping;
 
 /**
  * Initializer for SNI Handlers.
@@ -37,18 +38,14 @@ public class SniHandlerInitializer extends ChannelInitializer<Channel> {
     }
 
     @Override
-    protected void initChannel(Channel channel) throws Exception {
+    protected void initChannel(Channel channel) {
         SslContext defaultContext = SslUtils.INSTANCE.toNettySslContext(Optional.empty());
-        DomainMappingBuilder<SslContext> domainMappingBuilder = new DomainMappingBuilder<>(defaultContext);
-
+        DomainWildcardMappingBuilder<SslContext> domainMappingBuilder = new DomainWildcardMappingBuilder<>(defaultContext);
         routingTable.streamRoutes(SniRouteSource.class, RouteDestination.class)
-                .map(r -> r.getRouteSource())
-                .forEach(r -> domainMappingBuilder.add(r.getSniHostName(), SslUtils.INSTANCE.toNettySslContext(Optional.of(r.getSslContext()))));
-
-        DomainNameMapping<SslContext> domainNameMapping = domainMappingBuilder.build();
-
+              .map(Route::getRouteSource)
+              .forEach(r -> domainMappingBuilder.add(r.getSniHostName(), SslUtils.INSTANCE.toNettySslContext(Optional.of(r.getSslContext()))));
+        Mapping<String, SslContext> domainNameMapping = domainMappingBuilder.build();
         logger.initializedSni(domainNameMapping);
-
         channel.pipeline().addLast(new SniRouteHandler(domainNameMapping, routingTable));
     }
 }

@@ -1,7 +1,6 @@
 package org.infinispan.server.core.transport;
 
 import java.net.InetSocketAddress;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -102,7 +101,7 @@ public class NettyTransport implements Transport {
 
    private final NettyTransportConnectionStats connectionStats;
 
-   private Optional<Integer> nettyPort = Optional.empty();
+   private int nettyPort = -1;
 
    @Override
    public void start() {
@@ -125,7 +124,7 @@ public class NettyTransport implements Transport {
       Channel ch;
       try {
          ch = bootstrap.bind(address).sync().channel();
-         nettyPort = Optional.of(((InetSocketAddress)ch.localAddress()).getPort());
+         nettyPort = ((InetSocketAddress) ch.localAddress()).getPort();
       } catch (InterruptedException e) {
          throw new CacheException(e);
       }
@@ -168,7 +167,7 @@ public class NettyTransport implements Transport {
       }
       if (log.isDebugEnabled())
          log.debug("Channel group completely closed, external resources released");
-      nettyPort = Optional.empty();
+      nettyPort = -1;
    }
 
    @Override
@@ -188,7 +187,7 @@ public class NettyTransport implements Transport {
 
    @Override
    public int getPort() {
-      return nettyPort.orElse(address.getPort());
+      return nettyPort == -1 ? address.getPort() : nettyPort;
    }
 
    @Override

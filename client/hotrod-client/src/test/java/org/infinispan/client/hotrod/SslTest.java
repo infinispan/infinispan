@@ -3,8 +3,6 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.io.IOException;
-
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.SslConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
@@ -20,6 +18,8 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
+
+import io.netty.handler.codec.DecoderException;
 
 /**
  * @author Adrian Brock
@@ -139,7 +139,7 @@ public class SslTest extends SingleCacheManagerTest {
 
    // Note: with Netty this started to throw SSLException instead of SSLHandshakeException
    public void testClientAuthWithAnonClient() throws Exception {
-      Exceptions.expectExceptionNonStrict(TransportException.class, IOException.class, () -> initServerAndClient(true, true, true, false, false));
+      Exceptions.expectExceptionNonStrict(TransportException.class, DecoderException.class, () -> initServerAndClient(true, true, true, false, false));
    }
 
    public void testClientAuthAltCertPassword() throws Exception {

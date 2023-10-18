@@ -9,14 +9,6 @@ import java.lang.invoke.MethodHandles;
 import java.net.InetAddress;
 import java.util.Queue;
 
-import io.netty.buffer.ByteBufAllocator;
-import io.netty.handler.codec.http.DefaultFullHttpRequest;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.ssl.OpenSsl;
-import io.netty.handler.ssl.SslContext;
-import io.netty.util.CharsetUtil;
 import org.infinispan.rest.RestServer;
 import org.infinispan.rest.http2.NettyHttpClient;
 import org.infinispan.rest.http2.NettyTruststoreUtil;
@@ -39,6 +31,14 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.handler.codec.http.DefaultFullHttpRequest;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.ssl.SslContext;
+import io.netty.util.CharsetUtil;
 
 public class SinglePortTest {
 
@@ -122,10 +122,6 @@ public class SinglePortTest {
 
     @Test
     public void shouldUpgradeThroughALPN() throws Exception {
-        if (!OpenSsl.isAlpnSupported()) {
-            throw new IllegalStateException("OpenSSL is not present, can not test TLS/ALPN support. Version: " + OpenSsl.versionString() + " Cause: " + OpenSsl.unavailabilityCause());
-        }
-
         //given
         restServer = RestTestingUtil.createDefaultRestServer("default");
 
@@ -163,10 +159,6 @@ public class SinglePortTest {
 
     @Test
     public void shouldUpgradeToHotRodThroughALPN() throws Exception {
-        if (!OpenSsl.isAlpnSupported()) {
-            throw new IllegalStateException("OpenSSL is not present, can not test TLS/ALPN support. Version: " + OpenSsl.versionString() + " Cause: " + OpenSsl.unavailabilityCause());
-        }
-
         //given
         hotrodServer = HotRodTestingUtil.startHotRodServerWithoutTransport("default");
         restServer = RestTestingUtil.createDefaultRestServer("default");

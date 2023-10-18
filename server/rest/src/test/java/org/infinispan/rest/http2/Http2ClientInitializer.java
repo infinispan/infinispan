@@ -58,7 +58,7 @@ public class Http2ClientInitializer extends CommunicationInitializer {
     }
 
     @Override
-    public void initChannel(SocketChannel ch) throws Exception {
+    public void initChannel(SocketChannel ch) {
         final Http2Connection connection = new DefaultHttp2Connection(false);
         connectionHandler = new HttpToHttp2ConnectionHandlerBuilder()
                 .frameListener(new DelegatingDecompressorFrameListener(

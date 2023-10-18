@@ -55,7 +55,7 @@ public class Router {
     * Stops the router.
     */
    public void stop() {
-      endpointRouters.forEach(r -> r.stop());
+      endpointRouters.forEach(EndpointRouter::stop);
    }
 
    /**

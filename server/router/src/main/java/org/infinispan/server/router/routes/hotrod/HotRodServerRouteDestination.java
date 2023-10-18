@@ -27,7 +27,7 @@ public class HotRodServerRouteDestination implements RouteDestination {
 
     @Override
     public void validate() {
-        if (name == null || "".equals(name)) {
+        if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException("Name can not be null");
         }
         if (hotrodServer == null) {

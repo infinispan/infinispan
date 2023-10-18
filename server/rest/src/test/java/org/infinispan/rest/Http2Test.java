@@ -20,19 +20,18 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import java.util.Queue;
 
-import io.netty.handler.codec.http.DefaultFullHttpRequest;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.ssl.OpenSsl;
-import io.netty.util.CharsetUtil;
 import org.assertj.core.api.Assertions;
-import org.infinispan.commons.test.skip.SkipTestNG;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.rest.http2.NettyHttpClient;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
+
+import io.netty.handler.codec.http.DefaultFullHttpRequest;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.util.CharsetUtil;
 
 /**
  * Most of the REST Server functionality is tested in {@link org.infinispan.rest.RestOperationsTest}. We can do that since
@@ -60,11 +59,6 @@ public final class Http2Test extends AbstractInfinispanTest {
 
     @Test
     public void shouldUpgradeUsingALPN() throws Exception {
-        SkipTestNG.skipSinceJDK(10); // TODO: OpenSSL ALPN doesn't seem to work. Restructure the test to use internal JDK ALPN
-        if (!OpenSsl.isAlpnSupported()) {
-            throw new IllegalStateException("OpenSSL is not present, can not test TLS/ALPN support. Version: " + OpenSsl.versionString() + " Cause: " + OpenSsl.unavailabilityCause());
-        }
-
         //given
         restServer = RestServerHelper.defaultRestServer("http2testcache")
               .withKeyStore(KEY_STORE_PATH, "secret", "pkcs12")
