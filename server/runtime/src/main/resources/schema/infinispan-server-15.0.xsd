@@ -1377,7 +1377,7 @@
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute type="xs:boolean" name="enable-connection-pooling" default="false">
+      <xs:attribute type="xs:boolean" name="connection-pooling" default="false">
          <xs:annotation>
             <xs:documentation>
                Enables connection pooling.
