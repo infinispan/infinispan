@@ -1146,4 +1146,13 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       redis.rename(srcKey, dstKey);
       assertThat(redis.lrange(dstKey,0,-1)).containsExactly(val);
    }
+
+   @Test
+   public void testTime() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      var redisNow = redis.time();
+      var now = timeService.instant();
+      assertThat(Integer.parseInt(redisNow.get(0))).isEqualTo(now.getEpochSecond());
+      assertThat(Integer.parseInt(redisNow.get(1))).isEqualTo(TimeUnit.NANOSECONDS.toMicros(now.getNano()));
+   }
 }

@@ -330,6 +330,9 @@ provides a read-uncommitted isolation.
 | link:https://redis.io/commands/sunionstore[SUNIONSTORE]
 |
 
+| link:https://redis.io/commands/time[TIME]
+|
+
 | link:https://redis.io/commands/ttl[TTL]
 |
 
