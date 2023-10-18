@@ -18,7 +18,7 @@ Make caches available in one of the following ways:
 +
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/caches/<cacheName>?action=set-availability&availability=AVAILABLE
+POST /rest/v2/caches/<cacheName>?action=set-availability&availability=AVAILABLE
 ----
 
 * Programmatically change the availability of embedded caches with the `AdvancedCache` API.
