@@ -26,7 +26,7 @@ migrate cluster synchronize -c myCache
 +
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/caches/myCache?action=sync-data
+POST /rest/v2/caches/myCache?action=sync-data
 ----
 +
 When the operation completes, {brandname} responds with the total number of
@@ -45,7 +45,7 @@ migrate cluster disconnect -c myCache
 +
 [source,options="nowrap",subs=attributes+]
 ----
-DELETE /v2/caches/myCache/rolling-upgrade/source-connection
+DELETE /rest/v2/caches/myCache/rolling-upgrade/source-connection
 ----
 
 .Next steps
