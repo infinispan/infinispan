@@ -76,7 +76,7 @@ Reindex all data in caches with `POST` requests and the `?action=reindex` parame
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST  /v2/caches/{cacheName}/search/indexes?action=reindex
+POST /rest/v2/caches/{cacheName}/search/indexes?action=reindex
 ----
 
 .Request Parameters
@@ -108,7 +108,7 @@ Update the index schema of values in your cache using `POST` requests and the `?
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST  /v2/caches/{cacheName}/search/indexes?action=updateSchema
+POST /rest/v2/caches/{cacheName}/search/indexes?action=updateSchema
 ----
 
 [id='rest_v2_query_purge_index']
@@ -118,7 +118,7 @@ parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST  /rest/v2/caches/{cacheName}/search/indexes?action=clear
+POST /rest/v2/caches/{cacheName}/search/indexes?action=clear
 ----
 
 If the operation successfully completes, the service returns `204 (No Content)`.
@@ -129,7 +129,7 @@ Present the full index schema metamodel of all indexes defined on this cache.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET  /rest/v2/caches/{cacheName}/search/indexes/metamodel
+GET /rest/v2/caches/{cacheName}/search/indexes/metamodel
 ----
 
 .{brandname} response

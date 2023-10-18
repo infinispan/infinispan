@@ -22,5 +22,5 @@ CompletionStage<SearchStatisticsSnapshot> statistics = Search.getClusteredSearch
 .Remote caches
 [source,options="nowrap",subs=attributes+,role="secondary"]
 ----
-GET /v2/caches/{cacheName}/search/stats
+GET /rest/v2/caches/{cacheName}/search/stats
 ----
