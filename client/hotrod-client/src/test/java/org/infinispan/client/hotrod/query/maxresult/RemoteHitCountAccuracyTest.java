@@ -1,4 +1,4 @@
-package org.infinispan.client.hotrod.maxresult;
+package org.infinispan.client.hotrod.query.maxresult;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
@@ -17,7 +17,7 @@ import org.infinispan.query.model.Game;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "org.infinispan.client.hotrod.maxresult.RemoteHitCountAccuracyTest")
+@Test(groups = "functional", testName = "org.infinispan.client.hotrod.query.maxresult.RemoteHitCountAccuracyTest")
 @TestForIssue(jiraKey = "ISPN-14195")
 public class RemoteHitCountAccuracyTest extends SingleHotRodServerTest {
 
