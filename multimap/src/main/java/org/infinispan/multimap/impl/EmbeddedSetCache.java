@@ -128,7 +128,7 @@ public class EmbeddedSetCache<K, V> {
     * Returns the number of elements in the set.
     * If the entry does not exit, returns size 0.
     *
-    * @param key, the name of the list
+    * @param key, the name of the set
     * @return {@link CompletionStage} containing a {@link Long}
     */
    public CompletionStage<Long> size(K key) {
@@ -159,6 +159,18 @@ public class EmbeddedSetCache<K, V> {
    public CompletionStage<Collection<V>> pop(K key, Long count, boolean remove) {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       return readWriteMap.eval(key, new SPopFunction<K,V>(count != null ? count : 1, remove));
+   }
+
+   /**
+    * Returns if a set contains an element
+    *
+    * @param key, the name of the set
+    * @param element, the element
+    * @return {@link CompletionStage} containing a boolean
+    */
+   public CompletionStage<Boolean> contains(K key, V element) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      return cache.getAsync(key).thenApply(b -> b == null ? false : b.contains(element));
    }
 
 }

@@ -81,6 +81,7 @@ import org.infinispan.server.resp.commands.set.SDIFFSTORE;
 import org.infinispan.server.resp.commands.set.SINTER;
 import org.infinispan.server.resp.commands.set.SINTERCARD;
 import org.infinispan.server.resp.commands.set.SINTERSTORE;
+import org.infinispan.server.resp.commands.set.SISMEMBER;
 import org.infinispan.server.resp.commands.set.SMEMBERS;
 import org.infinispan.server.resp.commands.set.SMOVE;
 import org.infinispan.server.resp.commands.set.SPOP;
@@ -171,7 +172,7 @@ public final class Commands {
       ALL_COMMANDS[16] = new RespCommand[]{new QUIT()};
       ALL_COMMANDS[17] = new RespCommand[]{new RPUSH(), new RPUSHX(), new RPOP(), new RESET(), new READWRITE(), new READONLY(), new RPOPLPUSH(), new RENAME(), new RENAMENX() };
       // SET should always be first here
-      ALL_COMMANDS[18] = new RespCommand[]{new SET(), new SMEMBERS(), new SADD(), new STRLEN(), new SMOVE(), new SCARD(), new SINTER(), new SINTERSTORE(), new SINTERCARD(), new SUNION(), new SUNIONSTORE(), new SPOP(), new SRANDMEMBER(), new SREM(), new SDIFF(), new SDIFFSTORE(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN(), new SSCAN(), new SETRANGE(), new SORT(), new SORT_RO()};
+      ALL_COMMANDS[18] = new RespCommand[]{new SET(), new SMEMBERS(), new SISMEMBER(), new SADD(), new STRLEN(), new SMOVE(), new SCARD(), new SINTER(), new SINTERSTORE(), new SINTERCARD(), new SUNION(), new SUNIONSTORE(), new SPOP(), new SRANDMEMBER(), new SREM(), new SDIFF(), new SDIFFSTORE(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN(), new SSCAN(), new SETRANGE(), new SORT(), new SORT_RO()};
       ALL_COMMANDS[19] = new RespCommand[]{new TTL(), new TYPE(), new TOUCH(), new TIME() };
       ALL_COMMANDS[20] = new RespCommand[]{new UNSUBSCRIBE(), new UNWATCH()};
       ALL_COMMANDS[22] = new RespCommand[]{new WATCH()};
