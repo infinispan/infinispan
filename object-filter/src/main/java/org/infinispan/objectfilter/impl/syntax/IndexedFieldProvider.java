@@ -17,7 +17,7 @@ public interface IndexedFieldProvider<TypeMetadata> {
        * @param propertyPath the path of the property
        * @return {@code true} if the property is indexed, {@code false} otherwise.
        */
-      boolean isIndexed(String[] propertyPath);
+      boolean isSearchable(String[] propertyPath);
 
       /**
        * Checks if the property of the indexed entity is analyzed.
@@ -44,6 +44,14 @@ public interface IndexedFieldProvider<TypeMetadata> {
       boolean isProjectable(String[] propertyPath);
 
       /**
+       * Checks if the property of the indexed entity is aggregable.
+       *
+       * @param propertyPath the path of the property
+       * @return {@code true} if the property is aggregable, {@code false} otherwise.
+       */
+      boolean isAggregable(String[] propertyPath);
+
+      /**
        * Checks if the property of the indexed entity is sortable.
        *
        * @param propertyPath the path of the property
@@ -56,7 +64,7 @@ public interface IndexedFieldProvider<TypeMetadata> {
 
    FieldIndexingMetadata NO_INDEXING = new FieldIndexingMetadata() {
       @Override
-      public boolean isIndexed(String[] propertyPath) {
+      public boolean isSearchable(String[] propertyPath) {
          return false;
       }
 
@@ -72,6 +80,11 @@ public interface IndexedFieldProvider<TypeMetadata> {
 
       @Override
       public boolean isProjectable(String[] propertyPath) {
+         return false;
+      }
+
+      @Override
+      public boolean isAggregable(String[] propertyPath) {
          return false;
       }
 

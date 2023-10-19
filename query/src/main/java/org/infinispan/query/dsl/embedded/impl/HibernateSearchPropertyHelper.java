@@ -153,7 +153,7 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
       }
 
       @Override
-      public boolean isIndexed(String[] propertyPath) {
+      public boolean isSearchable(String[] propertyPath) {
          IndexValueFieldTypeDescriptor field = getField(propertyPath);
          return field != null && field.searchable();
       }
@@ -174,6 +174,12 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
       public boolean isProjectable(String[] propertyPath) {
          IndexValueFieldTypeDescriptor field = getField(propertyPath);
          return field != null && field.projectable();
+      }
+
+      @Override
+      public boolean isAggregable(String[] propertyPath) {
+         IndexValueFieldTypeDescriptor field = getField(propertyPath);
+         return field != null && field.aggregable();
       }
 
       @Override

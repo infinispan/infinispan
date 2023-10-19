@@ -4,6 +4,7 @@ import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -13,6 +14,7 @@ import org.hibernate.search.backend.lucene.search.query.LuceneSearchQuery;
 import org.hibernate.search.backend.lucene.search.query.dsl.LuceneSearchQueryOptionsStep;
 import org.hibernate.search.engine.backend.common.DocumentReference;
 import org.hibernate.search.engine.common.EntityReference;
+import org.hibernate.search.engine.search.aggregation.AggregationKey;
 import org.hibernate.search.engine.search.predicate.SearchPredicate;
 import org.hibernate.search.engine.search.projection.SearchProjection;
 import org.hibernate.search.engine.search.projection.dsl.SearchProjectionFactory;
@@ -27,9 +29,12 @@ import org.infinispan.search.mapper.session.SearchSession;
  */
 public final class SearchQueryBuilder {
 
+   public static final String INFINISPAN_AGGREGATION_KEY_NAME = "InfinispanSingletonKey";
+
    private final SearchSession querySession;
    private final SearchScope<?> scope;
    private final SearchProjectionInfo projectionInfo;
+   private final InfinispanAggregation<?> aggregation;
    private final SearchPredicate predicate;
    private final SearchSort sort;
 
@@ -41,17 +46,19 @@ public final class SearchQueryBuilder {
    private TimeUnit timeUnit;
 
    public SearchQueryBuilder(SearchSession querySession, SearchScope<?> scope, SearchProjectionInfo projectionInfo,
-                             SearchPredicate predicate, SearchSort sort, int hitCountAccuracy) {
+                             InfinispanAggregation<?> aggregation, SearchPredicate predicate, SearchSort sort, int hitCountAccuracy) {
       this.querySession = querySession;
       this.scope = scope;
       this.projectionInfo = projectionInfo;
+      this.aggregation = aggregation;
       this.predicate = predicate;
       this.sort = sort;
       this.hitCountAccuracy = hitCountAccuracy;
    }
 
    public LuceneSearchQuery<?> build() {
-      return build(projectionInfo.getProjection());
+      return (aggregation == null) ? build(projectionInfo.getProjection()) :
+            buildWithAggregation(projectionInfo.getProjection(), aggregation);
    }
 
    public LuceneSearchQuery<Object> ids() {
@@ -92,6 +99,10 @@ public final class SearchQueryBuilder {
       return ids().luceneSort();
    }
 
+   public InfinispanAggregation<?> aggregation() {
+      return aggregation;
+   }
+
    private <T> LuceneSearchQuery<T> build(SearchProjection<T> searchProjection) {
       LuceneSearchQueryOptionsStep<T, ?> queryOptionsStep = querySession.search(scope)
             .extension(LuceneExtension.get())
@@ -104,6 +115,26 @@ public final class SearchQueryBuilder {
          queryOptionsStep = queryOptionsStep.failAfter(timeout, timeUnit);
       }
       queryOptionsStep = queryOptionsStep.totalHitCountThreshold(hitCountAccuracy);
+
+      return queryOptionsStep.toQuery();
+   }
+
+   private <T, A> LuceneSearchQuery<T> buildWithAggregation(SearchProjection<T> searchProjection,
+                                                                   InfinispanAggregation<A> aggregation) {
+      AggregationKey<Map<A, Long>> aggregationKey = AggregationKey.of(INFINISPAN_AGGREGATION_KEY_NAME);
+      LuceneSearchQueryOptionsStep<T, ?> queryOptionsStep = querySession.search(scope)
+            .extension(LuceneExtension.get())
+            .select(searchProjection)
+            .where(predicate)
+            .aggregation(aggregationKey, aggregation.searchAggregation())
+            .sort(sort)
+            .routing(routingKeys);
+
+      if (timeout != null && timeUnit != null) {
+         queryOptionsStep = queryOptionsStep.failAfter(timeout, timeUnit);
+      }
+      // we don't need the hit count
+      queryOptionsStep = queryOptionsStep.totalHitCountThreshold(0);
 
       return queryOptionsStep.toQuery();
    }

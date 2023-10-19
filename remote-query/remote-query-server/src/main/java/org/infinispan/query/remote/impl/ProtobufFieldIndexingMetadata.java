@@ -30,7 +30,7 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
    }
 
    @Override
-   public boolean isIndexed(String[] propertyPath) {
+   public boolean isSearchable(String[] propertyPath) {
       return getFlag(propertyPath, IndexingMetadata::isFieldSearchable);
    }
 
@@ -47,6 +47,11 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
    @Override
    public boolean isProjectable(String[] propertyPath) {
       return getFlag(propertyPath, IndexingMetadata::isFieldProjectable);
+   }
+
+   @Override
+   public boolean isAggregable(String[] propertyPath) {
+      return getFlag(propertyPath, IndexingMetadata::isFieldAggregable);
    }
 
    @Override

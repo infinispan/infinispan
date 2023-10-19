@@ -53,7 +53,7 @@ public final class BooleShannonExpansion {
       @Override
       public BooleanExpr visit(FullTextTermExpr fullTextTermExpr) {
          PropertyValueExpr propertyValueExpr = (PropertyValueExpr) fullTextTermExpr.getChild();
-         if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
+         if (fieldIndexingMetadata.isSearchable(propertyValueExpr.getPropertyPath().asArrayPath())) {
             foundIndexed = true;
          } else {
             predicatesToRemove.add(fullTextTermExpr);
@@ -64,7 +64,7 @@ public final class BooleShannonExpansion {
       @Override
       public BooleanExpr visit(FullTextRegexpExpr fullTextRegexpExpr) {
          PropertyValueExpr propertyValueExpr = (PropertyValueExpr) fullTextRegexpExpr.getChild();
-         if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
+         if (fieldIndexingMetadata.isSearchable(propertyValueExpr.getPropertyPath().asArrayPath())) {
             foundIndexed = true;
          } else {
             predicatesToRemove.add(fullTextRegexpExpr);
@@ -75,7 +75,7 @@ public final class BooleShannonExpansion {
       @Override
       public BooleanExpr visit(FullTextRangeExpr fullTextRangeExpr) {
          PropertyValueExpr propertyValueExpr = (PropertyValueExpr) fullTextRangeExpr.getChild();
-         if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
+         if (fieldIndexingMetadata.isSearchable(propertyValueExpr.getPropertyPath().asArrayPath())) {
             foundIndexed = true;
          } else {
             predicatesToRemove.add(fullTextRangeExpr);
@@ -113,7 +113,7 @@ public final class BooleShannonExpansion {
       @Override
       public BooleanExpr visit(IsNullExpr isNullExpr) {
          PropertyValueExpr propertyValueExpr = (PropertyValueExpr) isNullExpr.getChild();
-         if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
+         if (fieldIndexingMetadata.isSearchable(propertyValueExpr.getPropertyPath().asArrayPath())) {
             foundIndexed = true;
          } else {
             predicatesToRemove.add(isNullExpr);
@@ -124,7 +124,7 @@ public final class BooleShannonExpansion {
       @Override
       public BooleanExpr visit(ComparisonExpr comparisonExpr) {
          PropertyValueExpr propertyValueExpr = (PropertyValueExpr) comparisonExpr.getLeftChild();
-         if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
+         if (fieldIndexingMetadata.isSearchable(propertyValueExpr.getPropertyPath().asArrayPath())) {
             foundIndexed = true;
          } else {
             predicatesToRemove.add(comparisonExpr);
@@ -135,7 +135,7 @@ public final class BooleShannonExpansion {
       @Override
       public BooleanExpr visit(LikeExpr likeExpr) {
          PropertyValueExpr propertyValueExpr = (PropertyValueExpr) likeExpr.getChild();
-         if (fieldIndexingMetadata.isIndexed(propertyValueExpr.getPropertyPath().asArrayPath())) {
+         if (fieldIndexingMetadata.isSearchable(propertyValueExpr.getPropertyPath().asArrayPath())) {
             foundIndexed = true;
          } else {
             predicatesToRemove.add(likeExpr);
