@@ -19,7 +19,6 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -62,7 +61,7 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       return invokeNextThenApply(ctx, command, (rCtx, putKeyValueCommand, rv) -> {
          Object key = putKeyValueCommand.getKey();
-         if (!putKeyValueCommand.hasAnyFlag(FlagBitSets.ROLLING_UPGRADE) && (!isStoreEnabled(putKeyValueCommand) || rCtx.isInTxScope() || !putKeyValueCommand.isSuccessful()))
+         if (!putKeyValueCommand.hasAnyFlag(FlagBitSets.ROLLING_UPGRADE) && (!isStoreEnabled(putKeyValueCommand) || rCtx.isInTxScope() || !putKeyValueCommand.shouldReplicate(ctx, true)))
             return rv;
          if (!isProperWriter(rCtx, putKeyValueCommand, putKeyValueCommand.getKey()))
             return rv;
@@ -75,7 +74,7 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
    public Object visitIracPutKeyValueCommand(InvocationContext ctx, IracPutKeyValueCommand command) {
       return invokeNextThenApply(ctx, command, (rCtx, cmd, rv) -> {
          Object key = cmd.getKey();
-         if (!isStoreEnabled(cmd) || !cmd.isSuccessful())
+         if (!isStoreEnabled(cmd) || !cmd.shouldReplicate(rCtx, true))
             return rv;
          if (!isProperWriter(rCtx, cmd, cmd.getKey()))
             return rv;
@@ -111,7 +110,7 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return invokeNextThenApply(ctx, command, (rCtx, removeCommand, rv) -> {
          Object key = removeCommand.getKey();
-         if (!isStoreEnabled(removeCommand) || rCtx.isInTxScope() || !removeCommand.isSuccessful())
+         if (!isStoreEnabled(removeCommand) || rCtx.isInTxScope() || !removeCommand.shouldReplicate(ctx, true))
             return rv;
          if (!isProperWriter(rCtx, removeCommand, key))
             return rv;
@@ -130,7 +129,7 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return invokeNextThenApply(ctx, command, (rCtx, replaceCommand, rv) -> {
          Object key = replaceCommand.getKey();
-         if (!isStoreEnabled(replaceCommand) || rCtx.isInTxScope() || !replaceCommand.isSuccessful())
+         if (!isStoreEnabled(replaceCommand) || rCtx.isInTxScope() || !replaceCommand.shouldReplicate(ctx, true))
             return rv;
          if (!isProperWriter(rCtx, replaceCommand, replaceCommand.getKey()))
             return rv;
@@ -143,23 +142,21 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
    public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) throws Throwable {
       return invokeNextThenApply(ctx, command, (rCtx, computeCommand, rv) -> {
          Object key = computeCommand.getKey();
-         if (!isStoreEnabled(computeCommand) || rCtx.isInTxScope() || !computeCommand.isSuccessful())
+         if (!isStoreEnabled(computeCommand) || rCtx.isInTxScope() || !computeCommand.shouldReplicate(ctx, true))
             return rv;
          if (!isProperWriter(rCtx, computeCommand, computeCommand.getKey()))
             return rv;
 
          CompletionStage<?> stage;
-         if (computeCommand.isSuccessful() && rv == null) {
+         if (rv == null) {
              stage = persistenceManager.deleteFromAllStores(key, computeCommand.getSegment(),
                   skipSharedStores(rCtx, key, computeCommand) ? PRIVATE : BOTH);
             if (log.isTraceEnabled()) {
                stage = stage.thenAccept(removed ->
                      getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, removed));
             }
-         } else if (computeCommand.isSuccessful()) {
-            stage = storeEntry(rCtx, key, computeCommand);
          } else {
-            stage = CompletableFutures.completedNull();
+            stage = storeEntry(rCtx, key, computeCommand);
          }
          return delayedValue(stage, rv);
       });
@@ -169,7 +166,7 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
    public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) throws Throwable {
       return invokeNextThenApply(ctx, command, (rCtx, computeIfAbsentCommand, rv) -> {
          Object key = computeIfAbsentCommand.getKey();
-         if (!isStoreEnabled(computeIfAbsentCommand) || rCtx.isInTxScope() || !computeIfAbsentCommand.isSuccessful())
+         if (!isStoreEnabled(computeIfAbsentCommand) || rCtx.isInTxScope() || !computeIfAbsentCommand.shouldReplicate(ctx, true))
             return rv;
          if (!isProperWriter(rCtx, computeIfAbsentCommand, computeIfAbsentCommand.getKey()))
             return rv;

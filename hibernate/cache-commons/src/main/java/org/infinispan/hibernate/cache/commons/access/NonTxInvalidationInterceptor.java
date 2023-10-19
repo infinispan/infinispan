@@ -125,6 +125,7 @@ public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
    }
 
    private Object handleWriteReturn(InvocationContext ctx, RemoveCommand removeCmd, Object rv) {
+		// Invalidation always has to send even if the command says not to replicate
 		if ( removeCmd.isSuccessful()) {
 			return invalidateAcrossCluster(removeCmd, true, removeCmd.getKey(), removeCmd.getKeyLockOwner());
 		}
@@ -132,6 +133,7 @@ public class NonTxInvalidationInterceptor extends BaseInvalidationInterceptor {
 	}
 
 	private Object handleEvictReturn(InvocationContext ctx, RemoveCommand removeCmd, Object rv) {
+		// Invalidation always has to send even if the command says not to replicate
 		if ( removeCmd.isSuccessful()) {
 			return invalidateAcrossCluster(removeCmd, false, removeCmd.getKey(), removeCmd.getKeyLockOwner());
 		}

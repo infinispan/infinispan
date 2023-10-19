@@ -6,6 +6,7 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.metadata.impl.PrivateMetadata;
 
 /**
@@ -23,6 +24,19 @@ public interface WriteCommand extends VisitableCommand, FlagAffectedCommand, Top
     * @return true if the command completed successfully, false otherwise.
     */
    boolean isSuccessful();
+
+   /**
+    * Some commands may be successful but not need to be replicated to other nodes, stores or listeners. For example
+    * a unconditional remove may be performed on a key that doesn't exist. In that case the command is still successful
+    * but does not need to replicate that information other places.
+    * @param ctx invocation context if present, may be null
+    * @param requireReplicateIfRemote if the command can replicate even if not a locally invoked command
+    * @return whether the command should replicate
+    * @implSpec default just invokes {@link #isSuccessful()}
+    */
+   default boolean shouldReplicate(InvocationContext ctx, boolean requireReplicateIfRemote) {
+      return isSuccessful();
+   }
 
    /**
     * Certain commands only work based on a certain condition or state of the cache.  For example, {@link
