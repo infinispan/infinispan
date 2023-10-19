@@ -13,8 +13,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import jakarta.transaction.Transaction;
-import net.jcip.annotations.GuardedBy;
 import org.infinispan.Cache;
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
@@ -71,6 +69,9 @@ import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.xsite.commands.remote.XSiteCacheRequest;
 import org.infinispan.xsite.status.SiteState;
 import org.infinispan.xsite.status.TakeOfflineManager;
+
+import jakarta.transaction.Transaction;
+import net.jcip.annotations.GuardedBy;
 
 /**
  * @author Mircea Markus
@@ -248,7 +249,7 @@ public class BackupSenderImpl implements BackupSender {
       // in a replicable and another time in a non-replicable way
       for (ListIterator<WriteCommand> it = modifications.listIterator(modifications.size()); it.hasPrevious(); ) {
          WriteCommand writeCommand = it.previous();
-         if (!writeCommand.isSuccessful() || writeCommand.hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP)) {
+         if (!writeCommand.shouldReplicate(null, true) || writeCommand.hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP)) {
             continue;
          }
          // Note: ClearCommand should be replicated out of transaction

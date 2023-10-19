@@ -56,6 +56,19 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
    }
 
    @Override
+   public boolean shouldReplicate(InvocationContext ctx, boolean requireReplicateIfRemote) {
+      if (!isSuccessful()) {
+         return false;
+      }
+      // XSITE backup should always replicate remove command
+      // If skip cache load is set we don't know if the store had a null value for remove so we have to replicate still
+      // Also if this is a backup write then we can't skip replication to stores
+      // Also if the caller says we must replicte on remote, make sure we are local
+      return (!nonExistent || hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP |
+            FlagBitSets.SKIP_CACHE_LOAD) || (requireReplicateIfRemote && (ctx == null || !ctx.isOriginLocal())));
+   }
+
+   @Override
    public byte getCommandId() {
       return COMMAND_ID;
    }
@@ -117,7 +130,7 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
    }
 
    public void nonExistant() {
-      nonExistent = false;
+      nonExistent = true;
    }
 
    public boolean isNonExistent() {

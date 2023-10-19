@@ -7,11 +7,6 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicLong;
 
-import jakarta.transaction.InvalidTransactionException;
-import jakarta.transaction.SystemException;
-import jakarta.transaction.Transaction;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.VisitableCommand;
@@ -37,6 +32,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -60,10 +56,14 @@ import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import jakarta.transaction.InvalidTransactionException;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 /**
  * Writes modifications back to the store on the way out: stores modifications back through the CacheLoader, either
@@ -178,7 +178,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return invokeNextThenApply(ctx, command, (rCtx, removeCommand, rv) -> {
-         if (!isStoreEnabled(removeCommand) || rCtx.isInTxScope() || !removeCommand.isSuccessful() ||
+         if (!isStoreEnabled(removeCommand) || rCtx.isInTxScope() || !removeCommand.shouldReplicate(ctx, true) ||
                !isProperWriter(rCtx, removeCommand, removeCommand.getKey())) {
             return rv;
          }
@@ -220,7 +220,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) throws Throwable {
       return invokeNextThenApply(ctx, command, (rCtx, computeCommand, rv) -> {
-         if (!isStoreEnabled(computeCommand) || rCtx.isInTxScope() || !computeCommand.isSuccessful() ||
+         if (!isStoreEnabled(computeCommand) || rCtx.isInTxScope() || !computeCommand.shouldReplicate(ctx, true) ||
                !isProperWriter(rCtx, computeCommand, computeCommand.getKey()))
             return rv;
 
@@ -244,7 +244,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitComputeIfAbsentCommand(InvocationContext ctx, ComputeIfAbsentCommand command) throws Throwable {
       return invokeNextThenApply(ctx, command, (rCtx, computeIfAbsentCommand, rv) -> {
-         if (!isStoreEnabled(computeIfAbsentCommand) || rCtx.isInTxScope() || !computeIfAbsentCommand.isSuccessful())
+         if (!isStoreEnabled(computeIfAbsentCommand) || rCtx.isInTxScope() || !computeIfAbsentCommand.shouldReplicate(ctx, true))
             return rv;
          if (!isProperWriter(rCtx, computeIfAbsentCommand, computeIfAbsentCommand.getKey()))
             return rv;
@@ -301,7 +301,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
 
    private <T extends DataWriteCommand & FunctionalCommand> Object visitWriteCommand(InvocationContext ctx, T command) {
       return invokeNextThenApply(ctx, command, (rCtx, dataWriteCommand, rv) -> {
-         if (!isStoreEnabled(dataWriteCommand) || rCtx.isInTxScope() || !dataWriteCommand.isSuccessful() ||
+         if (!isStoreEnabled(dataWriteCommand) || rCtx.isInTxScope() || !dataWriteCommand.shouldReplicate(ctx, true) ||
                !isProperWriter(rCtx, dataWriteCommand, dataWriteCommand.getKey()))
             return rv;
 
@@ -490,7 +490,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
 
    private Object visitDataWriteCommandToStore(InvocationContext ctx, DataWriteCommand command) {
       return invokeNextThenApply(ctx, command, (rCtx, cmd, rv) -> {
-         if (!isStoreEnabled(cmd) || rCtx.isInTxScope() || !cmd.isSuccessful())
+         if (!isStoreEnabled(cmd) || rCtx.isInTxScope() || !cmd.shouldReplicate(ctx, true))
             return rv;
          if (!isProperWriter(rCtx, cmd, cmd.getKey()))
             return rv;

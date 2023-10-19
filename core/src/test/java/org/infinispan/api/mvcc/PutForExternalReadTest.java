@@ -161,8 +161,11 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
    }
 
    public void testExceptionSuppression() throws Exception {
-      Cache<String, String> cache1 = cache(0, CACHE_NAME);
-      Cache<String, String> cache2 = cache(1, CACHE_NAME);
+      Cache<Object, String> cache1 = cache(0, CACHE_NAME);
+      Cache<Object, String> cache2 = cache(1, CACHE_NAME);
+
+      // Need to use a MagicKey so the interceptor is always installed on the primary
+      MagicKey key = new MagicKey(cache1);
 
       assertTrue(extractInterceptorChain(cache1).addInterceptorBefore(new BaseAsyncInterceptor() {
          @Override
@@ -192,7 +195,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       assertNull("Should have cleaned up", cache1.get(key));
       assertNull("Should have cleaned up", cache1.getAdvancedCache().getDataContainer().get(key));
       assertNull("Should have cleaned up", cache2.get(key));
-      InternalCacheEntry<String, String> cache2Entry = cache2.getAdvancedCache().getDataContainer().get(key);
+      InternalCacheEntry<Object, String> cache2Entry = cache2.getAdvancedCache().getDataContainer().get(key);
       assertTrue("Should have cleaned up", cache2Entry == null);
 
       // should not barf
