@@ -17,6 +17,7 @@
 
    <properties>
       <certificate.dname>CN=HotRod_1,OU=Infinispan,O=JBoss,L=Red Hat,ST=World,C=WW</certificate.dname>
+      <testjvm.extraArgs>-Djdk.httpclient.allowRestrictedHeaders=host</testjvm.extraArgs>
    </properties>
 
    <dependencies>
@@ -219,14 +220,6 @@
 
    <build>
       <plugins>
-         <plugin>
-            <artifactId>maven-war-plugin</artifactId>
-            <configuration>
-               <!-- we also pack WEB-INF/classes separately so JDG can use infinispan-server-rest-x.y.z-classes.jar
-                    to build a custom server war rather than use the war generated here -->
-               <attachClasses>true</attachClasses>
-            </configuration>
-         </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>

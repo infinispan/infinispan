@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
+import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.test.security.TestCertificates;
@@ -55,13 +56,13 @@ public class CertificateTest extends AbstractInfinispanTest {
             .keyStorePassword(TestCertificates.KEY_PASSWORD)
             .keyStoreType(TestCertificates.KEYSTORE_TYPE)
             .hostnameVerifier((hostname, session) -> true)
-            .addServer().host("localhost").port(restServer.getPort());
+            .addServer().host("localhost").port(restServer.getPort()).protocol(Protocol.HTTP_11);
       client = RestClient.forConfiguration(config.build());
 
       //when
       CompletionStage<RestResponse> response = client.raw().get("/rest/v2/caches/default/test", Collections.emptyMap());
 
       //then
-      assertEquals(404, response.toCompletableFuture().get(10, TimeUnit.MINUTES).getStatus());
+      assertEquals(404, response.toCompletableFuture().get(10, TimeUnit.MINUTES).status());
    }
 }

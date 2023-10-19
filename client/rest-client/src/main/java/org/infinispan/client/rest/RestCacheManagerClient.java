@@ -135,6 +135,10 @@ public interface RestCacheManagerClient {
     */
    CompletionStage<RestResponse> restore(String name, String backupLocation, Map<String, List<String>> resources);
 
+   default CompletionStage<RestResponse> restore(String name, String backupLocation) {
+      return restore(name, backupLocation, null);
+   }
+
    /**
     * Polls a restore request progress with the given name. 201 indicates that the request has completed, 202 that it's
     * in progress and 404 that it can't be found.

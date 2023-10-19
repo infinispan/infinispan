@@ -6,7 +6,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.rest.logging.Log;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -15,6 +17,7 @@ import io.netty.channel.ChannelHandlerContext;
  * @since 13.0
  **/
 public class EventStream implements Closeable {
+   private final static Log log = LogFactory.getLog(EventStream.class, Log.class);
    private final Consumer<EventStream> onOpen;
    private final Runnable onClose;
    private ChannelHandlerContext ctx;
@@ -26,6 +29,7 @@ public class EventStream implements Closeable {
 
    public CompletionStage<Void> sendEvent(ServerSentEvent e) {
       if (ctx != null) {
+         log.tracef("Sending event: %s", e);
          CompletableFuture<Void> cf = new CompletableFuture<>();
          ctx.writeAndFlush(e).addListener(v -> cf.complete(null));
          return cf;
@@ -36,6 +40,7 @@ public class EventStream implements Closeable {
 
    @Override
    public void close() throws IOException {
+      log.tracef("Closing listener");
       if (onClose != null) {
          onClose.run();
       }

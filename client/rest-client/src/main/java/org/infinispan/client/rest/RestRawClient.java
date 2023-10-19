@@ -1,10 +1,11 @@
 package org.infinispan.client.rest;
 
 import java.io.Closeable;
+import java.net.http.HttpResponse;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Supplier;
 
 /**
  * Client to execute arbitrary requests on the server.
@@ -15,21 +16,30 @@ import java.util.concurrent.CompletionStage;
  * @since 10.0
  **/
 public interface RestRawClient {
-   CompletionStage<RestResponse> postForm(String path, Map<String, String> headers, Map<String, List<String>> formParameters);
 
    default CompletionStage<RestResponse> post(String path) {
-      return post(path, Collections.emptyMap());
+      return post(path, Collections.emptyMap(), RestEntity.empty());
    }
 
-   CompletionStage<RestResponse> postMultipartForm(String url, Map<String, String> headers, Map<String, List<String>> formParameters);
+   default CompletionStage<RestResponse> post(String path, Map<String, String> headers) {
+      return post(path, headers, RestEntity.empty());
+   }
 
-   CompletionStage<RestResponse> post(String path, String body, String bodyMediaType);
+   default CompletionStage<RestResponse> post(String path, RestEntity entity) {
+      return post(path, Collections.emptyMap(), entity);
+   }
 
-   CompletionStage<RestResponse> post(String path, Map<String, String> headers);
+   CompletionStage<RestResponse> post(String path, Map<String, String> headers, RestEntity entity);
 
-   CompletionStage<RestResponse> post(String path, Map<String, String> headers, String body, String bodyMediaType);
+   default CompletionStage<RestResponse> put(String path) {
+      return put(path, Collections.emptyMap(), RestEntity.empty());
+   }
 
-   CompletionStage<RestResponse> putValue(String path, Map<String, String> headers, String body, String bodyMediaType);
+   default CompletionStage<RestResponse> put(String path, RestEntity entity) {
+      return put(path, Collections.emptyMap(), entity);
+   }
+
+   CompletionStage<RestResponse> put(String path, Map<String, String> headers, RestEntity entity);
 
    default CompletionStage<RestResponse> get(String path) {
       return get(path, Collections.emptyMap());
@@ -37,21 +47,25 @@ public interface RestRawClient {
 
    CompletionStage<RestResponse> get(String path, Map<String, String> headers);
 
-   default CompletionStage<RestResponse> put(String path) {
-      return put(path, Collections.emptyMap());
-   }
-
-   CompletionStage<RestResponse> put(String path, Map<String, String> headers);
-
    default CompletionStage<RestResponse> delete(String path) {
       return delete(path, Collections.emptyMap());
    }
 
+   CompletionStage<RestResponse> get(String path, Map<String, String> headers, Supplier<HttpResponse.BodyHandler<?>> supplier);
+
    CompletionStage<RestResponse> delete(String path, Map<String, String> headers);
+
+   default CompletionStage<RestResponse> options(String path) {
+      return options(path, Collections.emptyMap());
+   }
 
    CompletionStage<RestResponse> options(String path, Map<String, String> headers);
 
    CompletionStage<RestResponse> head(String path, Map<String, String> headers);
+
+   default CompletionStage<RestResponse> head(String path) {
+      return head(path, Collections.emptyMap());
+   }
 
    Closeable listen(String url, Map<String, String> headers, RestEventListener listener);
 }

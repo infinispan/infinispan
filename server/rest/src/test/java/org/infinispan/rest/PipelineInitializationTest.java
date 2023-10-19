@@ -6,7 +6,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertFalse;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -47,7 +46,7 @@ public class PipelineInitializationTest extends AbstractInfinispanTest {
    }
 
    @AfterMethod(alwaysRun = true)
-   public void afterMethod() throws IOException {
+   public void afterMethod() throws Exception {
       restServer.clear();
       if (restServer != null) {
          restServer.stop();
@@ -63,7 +62,7 @@ public class PipelineInitializationTest extends AbstractInfinispanTest {
          } catch (InterruptedException ignored) {
          }
          RestResponse response = await(client.caches());
-         return response.getStatus();
+         return response.status();
       };
    }
 

@@ -3,7 +3,6 @@ package org.infinispan.server.router.integration;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
-import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.net.InetAddress;
 import java.util.concurrent.CompletionStage;
@@ -68,7 +67,7 @@ public class SinglePortTest {
     }
 
     @After
-    public void afterMethod() throws IOException {
+    public void afterMethod() throws Exception {
         if (httpClient != null) {
             httpClient.close();
         }

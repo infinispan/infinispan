@@ -12,7 +12,7 @@ import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
 import static org.infinispan.util.concurrent.CompletionStages.join;
-import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
@@ -149,14 +149,14 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       byte[] marshalledValue = new ProtoStreamMarshaller().objectToByteBuffer(value);
 
       defaultMarshalledRemoteCache.put(key, value);
-      assertEquals(defaultMarshalledRemoteCache.get(key), value);
+      assertArrayEquals(value, (byte[]) defaultMarshalledRemoteCache.get(key));
 
       // Read via Rest the raw content, as it is stored
-      Object rawFromRest = new RestRequest().cache(MARSHALLED_CACHE_NAME)
+      RestResponse response = new RestRequest().cache(MARSHALLED_CACHE_NAME)
             .key(key).accept(APPLICATION_PROTOSTREAM)
             .read();
 
-      assertArrayEquals((byte[]) rawFromRest, marshalledValue);
+      assertArrayEquals(response.bodyAsByteArray(), marshalledValue);
 
       // Write via rest raw bytes
       String otherKey = "string-2";
@@ -168,7 +168,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
             .write();
 
       // Read via Hot Rod
-      assertEquals(defaultMarshalledRemoteCache.get(otherKey), otherValue);
+      assertArrayEquals(otherValue, (byte[]) defaultMarshalledRemoteCache.get(otherKey));
 
       // Read via Hot Rod using a String key, and getting the raw value (as it is stored) back
       DataFormat format = DataFormat.builder()
@@ -193,20 +193,20 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
       // Write <Integer, byte[]> via Hot Rod (the HR client is configured with the default marshaller)
       defaultMarshalledRemoteCache.put(10, value);
-      assertEquals(defaultMarshalledRemoteCache.get(10), value);
+      assertArrayEquals(value, (byte[]) defaultMarshalledRemoteCache.get(10));
 
       // Read via Rest
-      Object bytesFromRest = new RestRequest().cache(MARSHALLED_CACHE_NAME)
+      RestResponse response = new RestRequest().cache(MARSHALLED_CACHE_NAME)
             .key("10", integerKeyType).accept(APPLICATION_OCTET_STREAM)
             .read();
 
-      assertArrayEquals((byte[]) bytesFromRest, value);
+      assertArrayEquals(value, response.bodyAsByteArray());
 
       // Write via rest
       new RestRequest().cache(MARSHALLED_CACHE_NAME).key("20", integerKeyType).value(otherValue).write();
 
       // Read via Hot Rod
-      assertEquals(defaultMarshalledRemoteCache.get(20), otherValue);
+      assertArrayEquals(otherValue, (byte[]) defaultMarshalledRemoteCache.get(20));
    }
 
    @Test
@@ -223,19 +223,19 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       assertEquals(defaultMarshalledRemoteCache.get(key), value);
 
       // Read via Rest the raw byte[] as marshalled by the client
-      Object bytesFromRest = new RestRequest().cache(MARSHALLED_CACHE_NAME)
+      RestResponse response = new RestRequest().cache(MARSHALLED_CACHE_NAME)
             .key(key.toString(), floatContentType)
             .accept(APPLICATION_PROTOSTREAM)
             .read();
 
-      assertArrayEquals((byte[]) bytesFromRest, valueMarshalled);
+      assertArrayEquals(response.bodyAsByteArray(), valueMarshalled);
 
       // Read via Rest the value as String
-      Object stringFromRest = new RestRequest().cache(MARSHALLED_CACHE_NAME)
+      response = new RestRequest().cache(MARSHALLED_CACHE_NAME)
             .key(key.toString(), floatContentType)
             .accept(TEXT_PLAIN)
             .read();
-      assertArrayEquals("32.4".getBytes(), (byte[]) stringFromRest);
+      assertEquals("32.4", response.body());
 
       // Write via rest
       Object otherKey = 2.2f;
@@ -257,8 +257,8 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       assertEquals(stringRemoteCache.get("key"), "true");
 
       // Read via Rest
-      Object bytesFromRest = new RestRequest().cache(STRING_CACHE_NAME).key("key").accept(TEXT_PLAIN).read();
-      assertEquals(asString(bytesFromRest), "true");
+      RestResponse response = new RestRequest().cache(STRING_CACHE_NAME).key("key").accept(TEXT_PLAIN).read();
+      assertEquals(response.body(), "true");
 
       // Write via rest
       new RestRequest().cache(STRING_CACHE_NAME).key("key2").value("Testing").write();
@@ -268,7 +268,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
       // Get values as JSON from Hot Rod
       Object jsonString = stringRemoteCache.withDataFormat(DataFormat.builder()
-            .valueType(APPLICATION_JSON).valueMarshaller(new UTF8StringMarshaller()).build())
+                  .valueType(APPLICATION_JSON).valueMarshaller(new UTF8StringMarshaller()).build())
             .get("key");
       assertEquals("true", jsonString);
 
@@ -284,20 +284,20 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       assertArrayEquals((byte[]) defaultMarshalledRemoteCache.get(key), value);
 
       // Read via Rest
-      Object bytesFromRest = new RestRequest().cache(MARSHALLED_CACHE_NAME)
+      RestResponse response = new RestRequest().cache(MARSHALLED_CACHE_NAME)
             .key("0x7418", OCTET_STREAM_HEX)
             .accept(APPLICATION_OCTET_STREAM)
             .read();
 
-      assertEquals(bytesFromRest, value);
+      assertEquals(response.bodyAsByteArray(), value);
 
       // Read marshalled content directly
-      Object marshalledContent = new RestRequest().cache(MARSHALLED_CACHE_NAME)
+      response = new RestRequest().cache(MARSHALLED_CACHE_NAME)
             .key("0x7418", OCTET_STREAM_HEX)
             .accept(APPLICATION_PROTOSTREAM)
             .read();
 
-      assertArrayEquals((byte[]) marshalledContent, new ProtoStreamMarshaller().objectToByteBuffer(value));
+      assertArrayEquals(response.bodyAsByteArray(), new ProtoStreamMarshaller().objectToByteBuffer(value));
 
       // Write via rest
       byte[] newKey = new byte[]{0x23};
@@ -309,7 +309,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
             .write();
 
       // Read via Hot Rod
-      assertEquals(defaultMarshalledRemoteCache.get(newKey), value);
+      assertArrayEquals(value, (byte[]) defaultMarshalledRemoteCache.get(newKey));
    }
 
    @Test
@@ -323,12 +323,12 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       assertArrayEquals(defaultRemoteCache.get(key), value);
 
       // Read via Rest
-      Object bytesFromRest = new RestRequest().cache(DEFAULT_CACHE_NAME)
+      RestResponse response = new RestRequest().cache(DEFAULT_CACHE_NAME)
             .key("0x1326", OCTET_STREAM_HEX)
             .accept(APPLICATION_OCTET_STREAM)
             .read();
 
-      assertEquals(bytesFromRest, value);
+      assertEquals(response.bodyAsByteArray(), value);
 
       // Write via rest
       byte[] newKey = new byte[]{0, 0, 0, 1};
@@ -358,11 +358,11 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       String restKey = StandardConversions.bytesToHex(key);
 
       // Read via Rest
-      Object bytesFromRest = new RestRequest().cache(DEFAULT_CACHE_NAME)
+      RestResponse response = new RestRequest().cache(DEFAULT_CACHE_NAME)
             .key(restKey, OCTET_STREAM_HEX).accept(APPLICATION_OCTET_STREAM)
             .read();
 
-      assertArrayEquals((byte[]) bytesFromRest, value);
+      assertArrayEquals(response.bodyAsByteArray(), value);
    }
 
    @Test
@@ -373,7 +373,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
       // Read from REST
       RestRequest restRequest = new RestRequest().cache(STRING_CACHE_NAME).key("key").accept(TEXT_PLAIN);
-      assertEquals(restRequest.executeGet().getBody(), "Hello World");
+      assertEquals(restRequest.executeGet().body(), "Hello World");
 
       // Delete the cache
       RemoteCacheManagerAdmin admin = stringRemoteCache.getRemoteCacheManager().administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE);
@@ -381,7 +381,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
 
       // Check cache not available
       assertClientError(() -> stringRemoteCache.get("key"), "CacheNotFoundException");
-      assertEquals(restRequest.executeGet().getStatus(), 404);
+      assertEquals(restRequest.executeGet().status(), 404);
 
       // Recreate the cache
       RemoteCache<String, String> recreated = admin.getOrCreateCache(stringRemoteCache.getName(), new ConfigurationBuilder()
@@ -394,7 +394,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       assertEquals(recreated.get("key"), "Hello World");
 
       // Read from REST
-      assertEquals(restRequest.executeGet().getBody(), "Hello World");
+      assertEquals(restRequest.executeGet().body(), "Hello World");
    }
 
    private void assertClientError(Runnable runnable, String messagePart) {
@@ -406,15 +406,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       }
    }
 
-   private String asString(Object content) {
-      if (content instanceof byte[]) {
-         return new String((byte[]) content, UTF_8);
-      }
-      return content.toString();
-   }
-
    private class RestRequest {
-      private String cacheName;
       private Object key;
       private Object value;
       private String keyContentType;
@@ -423,7 +415,6 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
       private RestCacheClient restCacheClient;
 
       public RestRequest cache(String cacheName) {
-         this.cacheName = cacheName;
          this.restCacheClient = restClient.cache(cacheName);
          return this;
       }
@@ -477,7 +468,7 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
          } else {
             response = join(restCacheClient.put(this.key.toString(), restEntity));
          }
-         assertEquals(204, response.getStatus());
+         assertEquals(204, response.status());
       }
 
       RestResponse executeGet() {
@@ -491,10 +482,10 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
          return join(restCacheClient.get(this.key.toString(), headers));
       }
 
-      Object read() {
+      RestResponse read() {
          RestResponse response = executeGet();
-         assertEquals(response.getStatus(), 200);
-         return response.getBodyAsByteArray();
+         assertEquals(response.status(), 200);
+         return response;
       }
    }
 

@@ -36,16 +36,16 @@ public class RestCacheManagerResource {
    @Test
    public void testHealthStatus() throws Exception {
       RestResponse restResponse = sync(client().healthStatus());
-      assertEquals(200, restResponse.getStatus());
-      assertEquals("HEALTHY", restResponse.getBody());
+      assertEquals(200, restResponse.status());
+      assertEquals("HEALTHY", restResponse.  body());
    }
 
    @Test
    public void testHealthInfo() throws Exception {
       RestResponse restResponse = sync(client().health());
-      assertEquals(200, restResponse.getStatus());
+      assertEquals(200, restResponse.status());
 
-      JsonNode root = mapper.readTree(restResponse.getBody());
+      JsonNode root = mapper.readTree(restResponse.body());
 
       JsonNode clusterHealth = root.get("cluster_health");
       assertEquals(abbreviate(RestCacheManagerResource.class.getName()), clusterHealth.get("cluster_name").asText());
@@ -63,8 +63,8 @@ public class RestCacheManagerResource {
    @Test
    public void testNamedCacheConfiguration() throws Exception {
       RestResponse restResponse = sync(client().cacheConfigurations());
-      assertEquals(200, restResponse.getStatus());
-      ArrayNode configArray = (ArrayNode) mapper.readTree(restResponse.getBody());
+      assertEquals(200, restResponse.status());
+      ArrayNode configArray = (ArrayNode) mapper.readTree(restResponse.body());
       configArray.forEach(config -> {
          assertNotNull(config.get("name"));
          assertNotNull(config.get("configuration"));
@@ -76,11 +76,11 @@ public class RestCacheManagerResource {
       RestClient client = SERVERS.rest().create();
       String cacheName = "test";
       RestResponse restResponse = sync(client.cache(cacheName).createWithTemplate("org.infinispan.LOCAL"));
-      assertEquals(200, restResponse.getStatus());
+      assertEquals(200, restResponse.status());
 
       restResponse = sync(client.raw().get("/rest/v2/cache-managers/default/caches"));
-      assertEquals(200, restResponse.getStatus());
-      ArrayNode cacheArray = (ArrayNode) mapper.readTree(restResponse.getBody());
+      assertEquals(200, restResponse.status());
+      ArrayNode cacheArray = (ArrayNode) mapper.readTree(restResponse.body());
       assertNotNull(cacheArray);
       cacheArray.forEach(cache -> {
          assertEquals("RUNNING", cache.get("status").asText());

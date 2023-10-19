@@ -46,7 +46,7 @@ public class ReplEmbeddedRestHotRodTest extends AbstractInfinispanTest {
       // 1. Put with REST
       RestEntity value = RestEntity.create(MediaType.TEXT_PLAIN, "<hey>ho</hey>".getBytes());
       RestResponse response = join(cacheFactory1.getRestCacheClient().put(key, value));
-      assertEquals(204, response.getStatus());
+      assertEquals(204, response.status());
 
       // 2. Get with Embedded
       Cache embeddedCache = cacheFactory2.getEmbeddedCache().getAdvancedCache();
@@ -69,8 +69,8 @@ public class ReplEmbeddedRestHotRodTest extends AbstractInfinispanTest {
       // 3. Get with REST, specifying the results as 'text'
       RestResponse response = join(cacheFactory2.getRestCacheClient().get(key, TEXT_PLAIN_TYPE));
 
-      assertEquals(200, response.getStatus());
-      assertEquals("v1", response.getBody());
+      assertEquals(200, response.status());
+      assertEquals("v1", response.body());
    }
 
    public void testHotRodPutEmbeddedRestGet() {
@@ -87,7 +87,7 @@ public class ReplEmbeddedRestHotRodTest extends AbstractInfinispanTest {
       // 3. Get with REST
       RestResponse response = join(cacheFactory2.getRestCacheClient().get(key, TEXT_PLAIN_TYPE));
 
-      assertEquals(200, response.getStatus());
-      assertEquals("v1", response.getBody());
+      assertEquals(200, response.status());
+      assertEquals("v1", response.body());
    }
 }

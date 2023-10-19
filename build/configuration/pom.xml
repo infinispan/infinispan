@@ -179,7 +179,6 @@
       <version.nashorn>15.4</version.nashorn>
       <version.netty>4.1.100.Final</version.netty>
       <version.netty.incubator.iouring>0.0.19.Final</version.netty.incubator.iouring>
-      <version.okhttp>3.14.9</version.okhttp>
       <version.openjdk.jmh>1.23</version.openjdk.jmh>
       <version.org.wildfly.elytron>2.2.2.Final</version.org.wildfly.elytron>
       <version.org.wildfly.openssl>2.2.5.Final</version.org.wildfly.openssl>

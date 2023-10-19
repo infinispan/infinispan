@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -82,8 +83,8 @@ public class RestServerHelper {
    }
 
    public void stop() {
-      restServer.stop();
-      cacheManager.stop();
+      Util.close(restServer);
+      Util.close(cacheManager);
    }
 
    public int getPort() {

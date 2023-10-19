@@ -141,8 +141,8 @@ public class ForkedInfinispanServerDriver extends AbstractInfinispanServerDriver
          try (RestClient restClient = getRestClient(0)) {
             RestResponse response = sync(restClient.cluster().stop());
             // Ensure non-error response code from the REST endpoint.
-            if (response.getStatus() >= 400) {
-               throw new IllegalStateException(String.format("Failed to shutdown the cluster gracefully, got status %d.", response.getStatus()));
+            if (response.status() >= 400) {
+               throw new IllegalStateException(String.format("Failed to shutdown the cluster gracefully, got status %d.", response.status()));
             } else {
                // Ensure that the server process has really quit
                // - if it has; the getPid will throw an exception

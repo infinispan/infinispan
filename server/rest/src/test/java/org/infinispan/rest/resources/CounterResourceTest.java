@@ -52,7 +52,7 @@ public class CounterResourceTest extends AbstractRestResourceTest {
       RestCounterClient counterClient = client.counter("sample-counter");
 
       RestResponse response = join(counterClient.configuration(APPLICATION_JSON_TYPE));
-      Json jsonNode = Json.read(response.getBody());
+      Json jsonNode = Json.read(response.body());
       Json config = jsonNode.at("weak-counter");
       assertEquals(config.at("initial-value").asInteger(), 5);
       assertEquals(config.at("storage").asString(), "VOLATILE");
@@ -147,7 +147,7 @@ public class CounterResourceTest extends AbstractRestResourceTest {
 
       RestResponse response = join(client.counters());
       assertThat(response).isOk();
-      Json jsonNode = Json.read(response.getBody());
+      Json jsonNode = Json.read(response.body());
       Collection<String> counterNames = EmbeddedCounterManagerFactory.asCounterManager(cacheManagers.get(0)).getCounterNames();
       int size = jsonNode.asList().size();
       assertEquals(counterNames.size(), size);
@@ -179,7 +179,7 @@ public class CounterResourceTest extends AbstractRestResourceTest {
       eventually(() -> {
          RestResponse r = join(counterClient.get());
          assertThat(r).isOk();
-         long value = Long.parseLong(r.getBody());
+         long value = Long.parseLong(r.body());
          return value == i;
       });
    }

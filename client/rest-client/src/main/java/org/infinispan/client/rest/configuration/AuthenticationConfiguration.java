@@ -49,4 +49,14 @@ public class AuthenticationConfiguration {
       return password;
    }
 
+   @Override
+   public String toString() {
+      return "AuthenticationConfiguration{" +
+            "enabled=" + enabled +
+            ", clientSubject=" + clientSubject +
+            ", mechanism='" + mechanism + '\'' +
+            ", realm='" + realm + '\'' +
+            ", username='" + username + '\'' +
+            '}';
+   }
 }

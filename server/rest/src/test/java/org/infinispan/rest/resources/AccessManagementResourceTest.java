@@ -32,12 +32,12 @@ public class AccessManagementResourceTest extends AbstractRestResourceTest {
       CompletionStage<RestResponse> response = adminClient.security().listRoles();
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasContentType("application/json");
-      Json jsonNode = Json.read(join(response).getBody());
+      Json jsonNode = Json.read(join(response).body());
       assertThat(jsonNode.isArray()).isTrue();
       assertThat(jsonNode.asList()).containsExactlyInAnyOrder("ADMIN", "USER");
 
       response = adminClient.security().listRoles(false);
-      jsonNode = Json.read(join(response).getBody());
+      jsonNode = Json.read(join(response).body());
       assertThat(jsonNode.isArray()).isTrue();
       assertThat(jsonNode.asList()).containsExactlyInAnyOrder("ADMIN", "USER");
    }
@@ -46,7 +46,7 @@ public class AccessManagementResourceTest extends AbstractRestResourceTest {
    public void testDescribeRole() {
       CompletionStage<RestResponse> response = adminClient.security().describeRole("ADMIN");
       ResponseAssertion.assertThat(response).isOk();
-      Json jsonNode = Json.read(join(response).getBody());
+      Json jsonNode = Json.read(join(response).body());
       assertThat(jsonNode.at("name").asString()).isEqualTo("ADMIN");
       assertThat(jsonNode.at("permissions").asList()).containsExactly("ALL");
       assertThat(jsonNode.at("description").asString()).contains("admin role");
@@ -64,21 +64,21 @@ public class AccessManagementResourceTest extends AbstractRestResourceTest {
       CompletionStage<RestResponse> readNewRole = adminClient.security().describeRole("NEW_ROLE");
       ResponseAssertion.assertThat(readNewRole).isOk();
       ResponseAssertion.assertThat(readNewRole).hasContentType("application/json");
-      Json jsonRole = Json.read(join(readNewRole).getBody());
+      Json jsonRole = Json.read(join(readNewRole).body());
       assertRoleJson(jsonRole, "ALL", "something");
 
       CompletionStage<RestResponse> updateResponse = adminClient.security().updateRole("NEW_ROLE", "desUpdate", Collections.emptyList());
       ResponseAssertion.assertThat(updateResponse).isOk();
 
       CompletionStage<RestResponse> updatedRole = adminClient.security().describeRole("NEW_ROLE");
-      Json jsonUpdatedRole = Json.read(join(updatedRole).getBody());
+      Json jsonUpdatedRole = Json.read(join(updatedRole).body());
       assertRoleJson(jsonUpdatedRole, "ALL", "desUpdate");
 
       updateResponse = adminClient.security().updateRole("NEW_ROLE", "", Collections.singletonList("READ"));
       ResponseAssertion.assertThat(updateResponse).isOk();
 
       updatedRole = adminClient.security().describeRole("NEW_ROLE");
-      jsonUpdatedRole = Json.read(join(updatedRole).getBody());
+      jsonUpdatedRole = Json.read(join(updatedRole).body());
       assertRoleJson(jsonUpdatedRole, "READ", "desUpdate");
 
       CompletionStage<RestResponse> removeRole = adminClient.security().removeRole("NEW_ROLE");
@@ -98,7 +98,7 @@ public class AccessManagementResourceTest extends AbstractRestResourceTest {
       CompletionStage<RestResponse> response = adminClient.security().listRoles(true);
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasContentType("application/json");
-      Json jsonNode = Json.read(join(response).getBody());
+      Json jsonNode = Json.read(join(response).body());
       assertThat(jsonNode.asJsonMap()).hasSize(2);
       assertThat(jsonNode.at("ADMIN").at("permissions").asList()).containsExactly("ALL");
       assertThat(jsonNode.at("ADMIN").at("inheritable").asBoolean()).isTrue();

@@ -5,7 +5,6 @@ import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -15,6 +14,7 @@ import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
+import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
@@ -65,7 +65,7 @@ public class RestHitCountAccuracyTest extends SingleCacheManagerTest {
       restServer = new RestServerHelper(cacheManager);
       restServer.start(TestResourceTracker.getCurrentTestShortName());
       restClient = RestClient.forConfiguration(new RestClientConfigurationBuilder().addServer()
-            .host(restServer.getHost()).port(restServer.getPort())
+            .host(restServer.getHost()).port(restServer.getPort()).protocol(Protocol.HTTP_20)
             .build());
 
       return cacheManager;
@@ -75,7 +75,7 @@ public class RestHitCountAccuracyTest extends SingleCacheManagerTest {
    protected void teardown() {
       try {
          restClient.close();
-      } catch (IOException ex) {
+      } catch (Exception ex) {
          // ignore it
       } finally {
          try {
@@ -97,7 +97,7 @@ public class RestHitCountAccuracyTest extends SingleCacheManagerTest {
       CompletionStage<RestResponse> response = cacheClient.query("from Game where description : 'game'", 10, 0);
       assertThat(response).isOk();
 
-      Json body = Json.read(response.toCompletableFuture().get().getBody());
+      Json body = Json.read(response.toCompletableFuture().get().body());
       Object hitCountExact = body.at("hit_count_exact").getValue();
       assertEquals(hitCountExact, false);
 
@@ -105,7 +105,7 @@ public class RestHitCountAccuracyTest extends SingleCacheManagerTest {
       response = cacheClient.query("from Game where description : 'game'", 10, 0, ENTRIES);
       assertThat(response).isOk();
 
-      body = Json.read(response.toCompletableFuture().get().getBody());
+      body = Json.read(response.toCompletableFuture().get().body());
       hitCountExact = body.at("hit_count_exact").getValue();
       assertEquals(hitCountExact, true);
       assertEquals(body.at("hit_count").asInteger(), ENTRIES);
@@ -128,7 +128,7 @@ public class RestHitCountAccuracyTest extends SingleCacheManagerTest {
 
    private int count(RestCacheClient cacheClient) {
       RestResponse response = join(cacheClient.searchStats());
-      Json stat = Json.read(response.getBody());
+      Json stat = Json.read(response.body());
       Json indexGame = stat.at("index").at("types").at("Game");
       return indexGame.at("count").asInteger();
    }

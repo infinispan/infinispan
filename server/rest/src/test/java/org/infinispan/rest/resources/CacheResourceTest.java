@@ -20,6 +20,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_SERIAL
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
+import static org.infinispan.commons.test.skip.SkipTestNG.skipIf;
 import static org.infinispan.commons.util.Util.getResourceAsString;
 import static org.infinispan.dataconversion.Gzip.decompress;
 import static org.infinispan.rest.JSONConstants.TYPE;
@@ -27,7 +28,6 @@ import static org.infinispan.rest.RequestHeader.IF_MODIFIED_SINCE;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 import static org.testng.AssertJUnit.assertEquals;
 
-import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -265,7 +265,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       //given
       putBinaryValueInCache("default", "keyA", "<hey>ho</hey>".getBytes(), MediaType.APPLICATION_OCTET_STREAM);
       //when
-      CompletionStage<RestResponse> response = client.cache("default").get("keyA");
+      CompletionStage<RestResponse> response = client.cache("default").get("keyA", Map.of("Accept", APPLICATION_OCTET_STREAM_TYPE));
 
       //then
       assertThat(response).isOk();
@@ -309,7 +309,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       CompletionStage<RestResponse> response = defaultCache.remove("test");
       //then
       assertThat(response).isOk();
-      Assertions.assertThat(join(defaultCache.size()).getBody()).isEqualTo("0");
+      Assertions.assertThat(join(defaultCache.size()).body()).isEqualTo("0");
    }
 
    @Test
@@ -357,6 +357,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
 
    @Test
    public void testCorsSameOrigin() {
+      skipIf(protocol == HTTP_20, "Skipping for HTTP/2");
       Map<String, String> headers = new HashMap<>();
       String scheme = ssl ? "https://" : "http://";
       headers.put(ORIGIN.toString(), scheme + "origin-host.org");
@@ -368,7 +369,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
    }
 
    @Test
-   public void testCORSAllOrigins() throws IOException {
+   public void testCORSAllOrigins() throws Exception {
       RestServerHelper restServerHelper = null;
       RestClient client = null;
       try {
@@ -430,10 +431,10 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       assertThat(response).hasNoContentEncoding();
       assertThat(response).hasContentLength(payload.getBytes().length);
 
-      response = join(client.raw().get(path, singletonMap(ACCEPT_ENCODING.toString(), "gzip")));
+      response = join(client.raw().get(path, Map.of("Accept", MediaType.APPLICATION_OCTET_STREAM.toString(), ACCEPT_ENCODING.toString(), "gzip")));
 
       assertThat(response).hasGzipContentEncoding();
-      assertEquals(decompress(response.getBodyAsByteArray()), payload);
+      assertEquals(decompress(response.bodyAsByteArray()), payload);
    }
 
    @Test
@@ -449,7 +450,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
 
       response = join(client.cache("objectCache").get("key", APPLICATION_JSON_TYPE));
 
-      Json jsonNode = Json.read(response.getBody());
+      Json jsonNode = Json.read(response.body());
       assertEquals(jsonNode.at("name").asString(), "test2");
    }
 

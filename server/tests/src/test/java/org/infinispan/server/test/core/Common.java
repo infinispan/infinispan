@@ -135,12 +135,12 @@ public class Common {
       int MAX_RETRIES = 100;
       for (int i = 0; i < MAX_RETRIES; i++) {
          try (RestResponse response = sync(request.get())) {
-            if (response.getStatus() == pendingStatus) {
+            if (response.status() == pendingStatus) {
                TestingUtil.sleepThread(100);
-            } else if (response.getStatus() == completeStatus) {
+            } else if (response.status() == completeStatus) {
                return f.apply(response);
             } else {
-               fail(String.format("Request returned unexpected status %d instead of %d or %d", response.getStatus(), pendingStatus, completeStatus));
+               fail(String.format("Request returned unexpected status %d instead of %d or %d", response.status(), pendingStatus, completeStatus));
             }
          }
       }
@@ -156,14 +156,14 @@ public class Common {
       int MAX_RETRIES = 100;
       for (int i = 0; i < MAX_RETRIES; i++) {
          RestResponse response = sync(request.get());
-         if (response.getStatus() == pendingStatus) {
+         if (response.status() == pendingStatus) {
             response.close();
             TestingUtil.sleepThread(100);
-         } else if (response.getStatus() == completeStatus) {
+         } else if (response.status() == completeStatus) {
             return response;
          } else {
             response.close();
-            fail(String.format("Request returned unexpected status %d instead of %d or %d", response.getStatus(), pendingStatus, completeStatus));
+            fail(String.format("Request returned unexpected status %d instead of %d or %d", response.status(), pendingStatus, completeStatus));
          }
       }
       fail(String.format("Request did not complete with status %d after %d retries", completeStatus, MAX_RETRIES));
@@ -180,8 +180,8 @@ public class Common {
 
    public static String assertStatus(int status, CompletionStage<RestResponse> request) {
       try (RestResponse response = sync(request)) {
-         String body = response.getBody();
-         assertEquals(status, response.getStatus(), body);
+         String body = response.body();
+         assertEquals(status, response.status(), body);
          return body;
       }
    }
@@ -197,7 +197,7 @@ public class Common {
 
    public static void assertResponse(int status, CompletionStage<RestResponse> request, Consumer<RestResponse> consumer) {
       try (RestResponse response = sync(request)) {
-         assertEquals(status, response.getStatus());
+         assertEquals(status, response.status());
          consumer.accept(response);
       }
    }

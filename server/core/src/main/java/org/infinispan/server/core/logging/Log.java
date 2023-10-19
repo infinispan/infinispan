@@ -4,6 +4,7 @@ import static org.jboss.logging.Logger.Level.DEBUG;
 import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.WARN;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.file.Path;
@@ -203,4 +204,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Flushed cache for security realm '%s'", id = 28027)
    void flushRealmCache(String name);
+
+   @Message(value = "Unable to read backup '%s'", id = 28028)
+   CacheException unableToReadBackup(Path backup, @Cause IOException e);
 }

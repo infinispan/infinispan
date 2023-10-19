@@ -6,10 +6,8 @@ import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.IOException;
-import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
@@ -78,8 +76,8 @@ public class ProtocolManagementIT {
       }
 
       assertStatus(204, loopbackClient.server().connectorIpFilterSet("endpoint-default", rules));
-      Exceptions.expectException(RuntimeException.class, ExecutionException.class, SocketException.class, () -> sync(siteLocalClient0.server().connectorNames()));
-      Exceptions.expectException(RuntimeException.class, ExecutionException.class, SocketException.class, () -> sync(siteLocalClient1.server().connectorNames()));
+      Exceptions.expectException(RuntimeException.class, IOException.class, () -> sync(siteLocalClient0.server().connectorNames()));
+      Exceptions.expectException(RuntimeException.class, IOException.class, () -> sync(siteLocalClient1.server().connectorNames()));
       assertStatus(204, loopbackClient.server().connectorIpFiltersClear("endpoint-default"));
       assertStatus(200, siteLocalClient0.server().connectorNames());
       assertStatus(200, siteLocalClient1.server().connectorNames());
@@ -113,7 +111,7 @@ public class ProtocolManagementIT {
       assertStatus(200, alternateClient.caches());
 
       assertStatus(204, defaultClient.server().connectorStop("endpoint-alternate-1"));
-      Exceptions.expectException(RuntimeException.class, ExecutionException.class, SocketException.class, () -> sync(alternateClient.caches()));
+      Exceptions.expectException(RuntimeException.class, IOException.class, () -> sync(alternateClient.caches()));
       assertStatus(204, defaultClient.server().connectorStart("endpoint-alternate-1"));
       assertStatus(200, alternateClient.caches());
 

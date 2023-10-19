@@ -249,7 +249,6 @@
       <versionx.com.mysqldatabase.mysql>8.0.33</versionx.com.mysqldatabase.mysql>
       <versionx.com.postgresqldatabase.postgresql>42.4.3</versionx.com.postgresqldatabase.postgresql>
       <versionx.com.oracle.ojdbc.ojdbc8>19.3.0.0</versionx.com.oracle.ojdbc.ojdbc8>
-      <versionx.com.squareup.okhttp3.ohhttp>${version.okhttp}</versionx.com.squareup.okhttp3.ohhttp>
       <versionx.com.squareup.protoparser>4.0.3</versionx.com.squareup.protoparser>
       <versionx.com.thoughtworks.xstream.xstream>${version.xstream}</versionx.com.thoughtworks.xstream.xstream>
       <versionx.commons-dbcp.commons-dbcp>1.4</versionx.commons-dbcp.commons-dbcp>
@@ -557,16 +556,6 @@
             <groupId>com.puppycrawl.tools</groupId>
             <artifactId>checkstyle</artifactId>
             <version>${versionx.com.puppycrawl.tools.checkstyle}</version>
-         </dependency>
-         <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>okhttp</artifactId>
-            <version>${versionx.com.squareup.okhttp3.ohhttp}</version>
-         </dependency>
-         <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>okhttp-sse</artifactId>
-            <version>${versionx.com.squareup.okhttp3.ohhttp}</version>
          </dependency>
          <dependency>
             <groupId>com.thoughtworks.xstream</groupId>
@@ -2583,6 +2572,7 @@
                   <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
                   <ansi.strip>${ansi.strip}</ansi.strip>
                   <org.infinispan.threads.virtual>${org.infinispan.tests.threads.virtual}</org.infinispan.threads.virtual>
+                  <jdk.httpclient.connectionPoolSize>50</jdk.httpclient.connectionPoolSize>
                </systemPropertyVariables>
                <trimStackTrace>false</trimStackTrace>
                <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Djdk.attach.allowAttachSelf=true</argLine>

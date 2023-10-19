@@ -62,7 +62,7 @@ class BackupReader {
 
             List<String> backupContainers = Arrays.asList(manifest.getProperty(CONTAINER_KEY).split(","));
             Set<String> requestedContainers = new HashSet<>(params.keySet());
-            requestedContainers.removeAll(backupContainers);
+            backupContainers.forEach(requestedContainers::remove);
             if (!requestedContainers.isEmpty()) {
                throw log.unableToFindBackupResource("Containers", requestedContainers);
             }
@@ -73,7 +73,7 @@ class BackupReader {
             }
             CompletionStages.join(stages.freeze());
          } catch (IOException e) {
-            throw new CacheException(String.format("Unable to read zip file '%s'", backup));
+            throw log.unableToReadBackup(backup, e);
          }
       }, "process-containers");
    }

@@ -2,7 +2,6 @@ package org.infinispan.rest.tracing;
 
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -111,7 +110,7 @@ public class RestTracingPropagationTest extends SingleCacheManagerTest {
       try {
          telemetryClient.reset();
          restClient.close();
-      } catch (IOException ex) {
+      } catch (Exception ex) {
          // ignore it
       } finally {
          try {

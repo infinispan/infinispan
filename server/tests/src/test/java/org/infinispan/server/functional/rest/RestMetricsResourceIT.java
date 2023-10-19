@@ -65,9 +65,9 @@ public class RestMetricsResourceIT {
       String metricName = "cache_manager_default_cache_" + SERVERS.getMethodName() + "_statistics_stores";
 
       try (RestResponse response = sync(metricsClient.metrics(true))) {
-         assertEquals(200, response.getStatus());
+         assertEquals(200, response.status());
          checkIsOpenmetrics(response.contentType());
-         String metricsText = response.getBody();
+         String metricsText = response.body();
          assertTrue(metricsText.contains("# TYPE vendor_" + metricName + " gauge\n"));
          assertTrue(metricsText.contains("vendor_" + metricName + "{cache=\"" + SERVERS.getMethodName()));
       }
@@ -222,9 +222,9 @@ public class RestMetricsResourceIT {
 
    public static List<Metric> getMetrics(RestMetricsClient client) {
       try (RestResponse response = sync(client.metrics())) {
-         assertEquals(200, response.getStatus());
+         assertEquals(200, response.status());
          checkIsPrometheus(response.contentType());
-         return response.getBody().lines()
+         return response.body().lines()
                .map(PROMETHEUS_PATTERN::matcher)
                .filter(Matcher::matches)
                .map(RestMetricsResourceIT::matcherToMetric)

@@ -17,7 +17,7 @@ import io.netty.channel.group.ChannelMatcher;
  * @author wburns
  * @since 9.0
  */
-public interface ProtocolServer<C extends ProtocolServerConfiguration> {
+public interface ProtocolServer<C extends ProtocolServerConfiguration> extends AutoCloseable {
 
    /**
     * Starts the server backed by the given cache manager, with the corresponding configuration. The cache manager is
@@ -88,4 +88,9 @@ public interface ProtocolServer<C extends ProtocolServerConfiguration> {
     * @param ch
     */
    void installDetector(Channel ch);
+
+   @Override
+   default void close() throws Exception {
+      stop();
+   }
 }

@@ -63,7 +63,7 @@ public class RestLoggingResource {
    }
 
    private boolean findLogger(RestResponse response, String name, String level, String... appenders) {
-      Json loggers = Json.read(response.getBody());
+      Json loggers = Json.read(response.body());
       for (int i = 0; i < loggers.asJsonList().size(); i++) {
          Json logger = loggers.at(i);
          if (name.equals(logger.at("name").asString())) {

@@ -65,7 +65,7 @@ public class HttpBenchmark {
       client = RestClient.forConfiguration(builder.build());
       cache = client.cache(cacheName);
       try (RestResponse response = uncheckedAwait(cache.exists())) {
-         switch (response.getStatus()) {
+         switch (response.status()) {
             case RestResponse.OK:
             case RestResponse.NO_CONTENT:
                break;
@@ -74,10 +74,10 @@ public class HttpBenchmark {
                throw new IllegalArgumentException("Could not find cache '" + cacheName+"'");
             case RestResponse.UNAUTHORIZED:
                Util.close(client);
-               throw new SecurityException(response.getBody());
+               throw new SecurityException(response.body());
             default:
                Util.close(client);
-               throw new RuntimeException(response.getBody());
+               throw new RuntimeException(response.body());
          }
       }
       value = RestEntity.create(MediaType.APPLICATION_OCTET_STREAM, new byte[valueSize]);
@@ -96,7 +96,7 @@ public class HttpBenchmark {
    @Benchmark
    public void get(Blackhole bh) {
       try(RestResponse response = uncheckedAwait(cache.get(nextKey()))) {
-         bh.consume(response.getBody());
+         bh.consume(response.body());
       }
    }
 

@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.internal.Json;
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.testcontainers.containers.FixedHostPortGenericContainer;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.MountableFile;
 
@@ -34,7 +36,7 @@ import org.testcontainers.utility.MountableFile;
  * @since 10.0
  **/
 public class KeyCloakServerExtension implements AfterAllCallback, BeforeAllCallback {
-   public static final String KEYCLOAK_IMAGE = System.getProperty(TestSystemPropertyNames.KEYCLOAK_IMAGE, "quay.io/keycloak/keycloak:10.0.1");
+   public static final String KEYCLOAK_IMAGE = System.getProperty(TestSystemPropertyNames.KEYCLOAK_IMAGE, "quay.io/keycloak/keycloak:latest");
    private final String realmJsonFile;
 
    private FixedHostPortGenericContainer<?> container;
@@ -50,7 +52,6 @@ public class KeyCloakServerExtension implements AfterAllCallback, BeforeAllCallb
    public void beforeAll(ExtensionContext context) {
       Class<?> testClass = context.getRequiredTestClass();
       keycloakDirectory.mkdirs();
-      beforeListeners.forEach(l -> l.accept(this));
 
       File keycloakImport = new File(keycloakDirectory, "keycloak.json");
       try (InputStream is = getClass().getClassLoader().getResourceAsStream(realmJsonFile); OutputStream os = new FileOutputStream(keycloakImport)) {
@@ -60,21 +61,18 @@ public class KeyCloakServerExtension implements AfterAllCallback, BeforeAllCallb
       }
 
       final Map<String, String> environment = new HashMap<>();
-      environment.put("DB_VENDOR", "h2");
-      environment.put(System.getProperty(TestSystemPropertyNames.KEYCLOAK_USER, "KEYCLOAK_USER"), "keycloak");
-      environment.put(System.getProperty(TestSystemPropertyNames.KEYCLOAK_PASSWORD, "KEYCLOAK_PASSWORD"), "keycloak");
-      environment.put("KEYCLOAK_IMPORT", keycloakImport.getAbsolutePath());
-      environment.put("JAVA_OPTS_APPEND", "-Dkeycloak.migration.action=import -Dkeycloak.migration.provider=singleFile -Dkeycloak.migration.file="+keycloakImport.getAbsolutePath());
+      environment.put(System.getProperty(TestSystemPropertyNames.KEYCLOAK_USER, "KEYCLOAK_ADMIN"), "keycloak");
+      environment.put(System.getProperty(TestSystemPropertyNames.KEYCLOAK_PASSWORD, "KEYCLOAK_ADMIN_PASSWORD"), "keycloak");
       container = new FixedHostPortGenericContainer<>(KEYCLOAK_IMAGE);
       container
             .withFixedExposedPort(14567, 8080)
             .withFixedExposedPort(14568, 8443)
             .withEnv(environment)
-            .withCopyFileToContainer(MountableFile.forHostPath(keycloakImport.getAbsolutePath()), keycloakImport.getPath())
-            .withCopyFileToContainer(MountableFile.forHostPath(keycloakDirectory.getPath()), "/etc/x509/https")
-            //.waitingFor(Wait.forHttp("/").forPort(14567))
-            .waitingFor(Wait.forLogMessage(".*WFLYSRV0025.*",1))
+            .withCopyFileToContainer(MountableFile.forHostPath(keycloakImport.getAbsolutePath()), "/opt/keycloak/data/import/infinispan-realm.json")
+            .withCommand("start-dev", "--import-realm")
+            .waitingFor(Wait.forLogMessage(".*org.keycloak.quarkus.runtime.KeycloakMain.*",1))
             .withLogConsumer(new JBossLoggingConsumer(LogFactory.getLog(testClass)));
+      beforeListeners.forEach(l -> l.accept(this));
       container.start();
    }
 
@@ -87,17 +85,17 @@ public class KeyCloakServerExtension implements AfterAllCallback, BeforeAllCallb
       } else {
          port = 8080;
       }
-      builder.addServer().host(container.getContainerIpAddress()).port(container.getMappedPort(port)).connectionTimeout(5000).socketTimeout(5000);
+      builder.addServer().host(container.getHost()).port(container.getMappedPort(port)).connectionTimeout(5000).socketTimeout(5000);
       try (RestClient c = RestClient.forConfiguration(builder.build())) {
-         String url = String.format("/auth/realms/%s/protocol/openid-connect/token", realm);
+         String url = String.format("/realms/%s/protocol/openid-connect/token", realm);
          Map<String, List<String>> form = new HashMap<>();
          form.put("client_id", Collections.singletonList(client));
          form.put("client_secret", Collections.singletonList(secret));
          form.put("username", Collections.singletonList(username));
          form.put("password", Collections.singletonList(password));
          form.put("grant_type", Collections.singletonList("password"));
-         RestResponse response = c.raw().postForm(url, Collections.singletonMap("Content-Type", "application/x-www-form-urlencoded"), form).toCompletableFuture().get(5, TimeUnit.SECONDS);
-         Map<String, Json> map = Json.read(response.getBody()).asJsonMap();
+         RestResponse response = c.raw().post(url, RestEntity.form(form)).toCompletableFuture().get(5, TimeUnit.SECONDS);
+         Map<String, Json> map = Json.read(response.body()).asJsonMap();
          return map.get("access_token").asString();
       } catch (Exception e) {
          throw new RuntimeException(e);
@@ -114,7 +112,7 @@ public class KeyCloakServerExtension implements AfterAllCallback, BeforeAllCallb
       return this;
    }
 
-   public File getKeycloakDirectory() {
-      return keycloakDirectory;
+   public GenericContainer<?> getKeycloakContainer() {
+      return container;
    }
 }

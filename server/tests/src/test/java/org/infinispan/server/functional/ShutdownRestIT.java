@@ -8,7 +8,6 @@ import static org.infinispan.server.test.core.Common.sync;
 import java.net.ConnectException;
 
 import org.infinispan.client.rest.RestClient;
-import org.infinispan.commons.util.Util;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
 import org.junit.jupiter.api.Test;
@@ -37,7 +36,7 @@ public class ShutdownRestIT {
       try {
          sync(client.server().configuration()).close();
       } catch (RuntimeException r) {
-         return (Util.getRootCause(r) instanceof ConnectException);
+         return (r.getCause() instanceof ConnectException);
       }
       return false;
    }

@@ -96,7 +96,7 @@ public class GracefulShutdownRestartIT {
 
       // Since the node left abruptly, the cluster should be DEGRADED.
       try (RestResponse res = sync(rest.cacheManager("default").health())) {
-         Json body = Json.read(res.getBody());
+         Json body = Json.read(res.body());
          Json clusterHealth = body.at("cluster_health");
          assertThat(clusterHealth.at("health_status").asString()).isEqualTo("DEGRADED");
          assertThat(clusterHealth.at("number_of_nodes").asInteger()).isEqualTo(1);
@@ -112,7 +112,7 @@ public class GracefulShutdownRestartIT {
 
       // After the node joining again, it should be healthy.
       try (RestResponse res = sync(rest.cacheManager("default").health())) {
-         Json body = Json.read(res.getBody());
+         Json body = Json.read(res.body());
          Json clusterHealth = body.at("cluster_health");
          assertThat(clusterHealth.at("health_status").asString()).isEqualTo("HEALTHY");
          assertThat(clusterHealth.at("number_of_nodes").asInteger()).isEqualTo(2);

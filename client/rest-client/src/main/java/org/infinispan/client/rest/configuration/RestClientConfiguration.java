@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
 
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.util.TypedProperties;
@@ -28,8 +29,9 @@ public class RestClientConfiguration {
    private final boolean priorKnowledge;
    private final boolean followRedirects;
    private final Map<String, String> headers;
+   private final ExecutorService executorService;
 
-   RestClientConfiguration(List<ServerConfiguration> servers, Protocol protocol, long connectionTimeout, long socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive, String contextPath, boolean priorKnowledge, boolean followRedirects, Map<String, String> headers) {
+   RestClientConfiguration(List<ServerConfiguration> servers, Protocol protocol, long connectionTimeout, long socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive, String contextPath, boolean priorKnowledge, boolean followRedirects, Map<String, String> headers, ExecutorService executorService) {
       this.servers = Collections.unmodifiableList(servers);
       this.protocol = protocol;
       this.connectionTimeout = connectionTimeout;
@@ -41,6 +43,7 @@ public class RestClientConfiguration {
       this.priorKnowledge = priorKnowledge;
       this.followRedirects = followRedirects;
       this.headers = headers;
+      this.executorService = executorService;
    }
 
    public Protocol protocol() {
@@ -85,6 +88,10 @@ public class RestClientConfiguration {
 
    public Map<String, String> headers() {
       return headers;
+   }
+
+   public ExecutorService executorService() {
+      return executorService;
    }
 
    public Properties properties() {
@@ -158,5 +165,22 @@ public class RestClientConfiguration {
       }
 
       return sb.toString();
+   }
+
+   @Override
+   public String toString() {
+      return "RestClientConfiguration{" +
+            "connectionTimeout=" + connectionTimeout +
+            ", servers=" + servers +
+            ", socketTimeout=" + socketTimeout +
+            ", tcpNoDelay=" + tcpNoDelay +
+            ", tcpKeepAlive=" + tcpKeepAlive +
+            ", protocol=" + protocol +
+            ", contextPath='" + contextPath + '\'' +
+            ", priorKnowledge=" + priorKnowledge +
+            ", followRedirects=" + followRedirects +
+            ", headers=" + headers +
+            ", security=" + security +
+            '}';
    }
 }

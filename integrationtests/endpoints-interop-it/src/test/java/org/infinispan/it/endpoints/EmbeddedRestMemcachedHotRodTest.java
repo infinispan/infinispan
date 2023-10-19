@@ -59,8 +59,8 @@ public class EmbeddedRestMemcachedHotRodTest extends AbstractInfinispanTest {
 
       // 3. Get with REST
       RestResponse response = join(cacheFactory.getRestCacheClient().get(key, MediaType.TEXT_PLAIN_TYPE));
-      assertEquals(200, response.getStatus());
-      assertEquals("v1", response.getBody());
+      assertEquals(200, response.status());
+      assertEquals("v1", response.body());
 
       // 4. Get with Hot Rod
       assertEquals("v1", cacheFactory.getHotRodCache().get(key));
@@ -77,8 +77,8 @@ public class EmbeddedRestMemcachedHotRodTest extends AbstractInfinispanTest {
 
       // 3. Get with REST
       RestResponse response = join(cacheFactory.getRestCacheClient().get(key, MediaType.TEXT_PLAIN_TYPE));
-      assertEquals(200, response.getStatus());
-      assertEquals("v1", response.getBody());
+      assertEquals(200, response.status());
+      assertEquals("v1", response.body());
 
       // 4. Get with Hot Rod
       assertEquals("v1", cacheFactory.getHotRodCache().get(key));
@@ -90,7 +90,7 @@ public class EmbeddedRestMemcachedHotRodTest extends AbstractInfinispanTest {
       // 1. Put with REST
       RestEntity value = RestEntity.create(MediaType.TEXT_PLAIN, "<hey>ho</hey>");
       RestResponse response = join(cacheFactory.getRestCacheClient().put(key, value));
-      assertEquals(204, response.getStatus());
+      assertEquals(204, response.status());
 
       // 2. Get with Embedded (given a marshaller, it can unmarshall the result)
       assertEquals("<hey>ho</hey>", cacheFactory.getEmbeddedCache().get(key));
@@ -119,8 +119,8 @@ public class EmbeddedRestMemcachedHotRodTest extends AbstractInfinispanTest {
 
       // 4. Get with REST
       RestResponse response = join(cacheFactory.getRestCacheClient().get(key, MediaType.TEXT_PLAIN_TYPE));
-      assertEquals(200, response.getStatus());
-      assertEquals("v1", response.getBody());
+      assertEquals(200, response.status());
+      assertEquals("v1", response.body());
    }
 
    public void testEmbeddedReplaceMemcachedCASTest() throws Exception {

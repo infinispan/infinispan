@@ -1,15 +1,13 @@
 package org.infinispan.server.security;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 
 import org.infinispan.server.test.core.KeyCloakServerExtension;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.testcontainers.utility.MountableFile;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -23,17 +21,14 @@ public class AuthenticationKeyCloakSSLIT extends AbstractAuthenticationKeyCloak 
                .build();
 
    @RegisterExtension
-   public static KeyCloakServerExtension KEYCLOAK = new KeyCloakServerExtension(System.getProperty(TestSystemPropertyNames.KEYCLOAK_REALM, "keycloak/infinispan-keycloak-realm.json"))
-         .addBeforeListener(k -> {
-            Path serverConfPath = SERVERS.getServerDriver().getConfDir().toPath();
-            Path keyCloakPath = k.getKeycloakDirectory().toPath();
-            try {
-               Files.copy(serverConfPath.resolve("ca.pfx.crt"), keyCloakPath.resolve("tls.crt"), StandardCopyOption.REPLACE_EXISTING);
-               Files.copy(serverConfPath.resolve("ca.pfx.key"), keyCloakPath.resolve("tls.key"), StandardCopyOption.REPLACE_EXISTING);
-            } catch (IOException e) {
-               throw new RuntimeException(e);
-            }
-         });
+   public static KeyCloakServerExtension KEYCLOAK =
+         new KeyCloakServerExtension(System.getProperty(TestSystemPropertyNames.KEYCLOAK_REALM, "keycloak/infinispan-keycloak-realm.json"))
+               .addBeforeListener(k -> {
+                  Path serverConfPath = SERVERS.getServerDriver().getConfDir().toPath();
+                  k.getKeycloakContainer()
+                        .withCopyFileToContainer(MountableFile.forHostPath(serverConfPath.resolve("server.pfx")), "/opt/keycloak/conf/server.pfx")
+                        .withCommand("start-dev", "--import-realm", "--https-key-store-file=/opt/keycloak/conf/server.pfx", "--https-key-store-password=secret");
+               });
 
    public AuthenticationKeyCloakSSLIT() {
       super(SERVERS);

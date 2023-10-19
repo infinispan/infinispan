@@ -31,14 +31,14 @@ public class RestResponses {
 
    public static int responseStatus(CompletionStage<RestResponse> responseStage) {
       try (RestResponse response = sync(responseStage)) {
-         return response.getStatus();
+         return response.status();
       }
    }
 
    public static String responseBody(CompletionStage<RestResponse> responseStage) {
       try (RestResponse response = sync(responseStage)) {
-         assertEquals(200, response.getStatus());
-         return response.getBody();
+         assertEquals(200, response.status());
+         return response.body();
       }
    }
 

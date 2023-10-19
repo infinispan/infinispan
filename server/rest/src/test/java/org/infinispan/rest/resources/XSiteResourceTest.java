@@ -15,7 +15,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -30,8 +29,10 @@ import org.infinispan.Cache;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestCacheManagerClient;
 import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.BackupConfiguration;
@@ -121,7 +122,7 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
       clientPerSite.values().forEach(cli -> {
          try {
             cli.close();
-         } catch (IOException ignored) {
+         } catch (Exception ignored) {
          }
       });
       restServerPerSite.values().forEach(RestServerHelper::stop);
@@ -296,7 +297,7 @@ public class XSiteResourceTest extends AbstractMultipleSitesTest {
    public void testInvalidInputTakeOffline() {
       RestClient restClient = clientPerSite.get(LON);
       String url = String.format("/rest/v2/caches/%s/x-site/backups/%s/take-offline-config", CACHE_1, NYC);
-      assertStatus(400, restClient.raw().putValue(url, new HashMap<>(), "invalid", "application/json"));
+      assertStatus(400, restClient.raw().put(url, RestEntity.create(MediaType.APPLICATION_JSON, "invalid")));
    }
 
    @Test

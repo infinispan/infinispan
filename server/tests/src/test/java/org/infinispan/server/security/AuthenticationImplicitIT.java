@@ -107,14 +107,14 @@ public class AuthenticationImplicitIT {
       } else {
          RestClient client = SERVERS.rest().withClientConfiguration(builder).create();
          try (RestResponse response = sync(client.cache(SERVERS.getMethodName()).post("k1", "v1"))) {
-            assertEquals(204, response.getStatus());
-            assertEquals(protocol, response.getProtocol());
+            assertEquals(204, response.status());
+            assertEquals(protocol, response.protocol());
          }
 
          try (RestResponse response = sync(client.cache(SERVERS.getMethodName()).get("k1"))) {
-            assertEquals(200, response.getStatus());
-            assertEquals(protocol, response.getProtocol());
-            assertEquals("v1", response.getBody());
+            assertEquals(200, response.status());
+            assertEquals(protocol, response.protocol());
+            assertEquals("v1", response.body());
          }
       }
    }

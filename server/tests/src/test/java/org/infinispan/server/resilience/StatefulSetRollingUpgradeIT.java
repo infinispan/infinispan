@@ -5,7 +5,7 @@ import static org.infinispan.server.test.core.Common.assertStatus;
 import java.util.stream.IntStream;
 
 import org.infinispan.client.rest.RestClient;
-import org.infinispan.client.rest.impl.okhttp.StringRestEntityOkHttp;
+import org.infinispan.client.rest.RestEntity;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.categories.Unstable;
 import org.infinispan.server.test.core.InfinispanServerDriver;
@@ -57,8 +57,8 @@ public class StatefulSetRollingUpgradeIT {
 
          // ISPN-13997 Ensure that Memory max-size is represented in original format in caches.xml
          String cacheConfig = "<replicated-cache name=\"cache01\"><memory storage=\"OFF_HEAP\" max-size=\"200MB\"/><transaction transaction-manager-lookup=\"org.infinispan.transaction.lookup.GenericTransactionManagerLookup\"/></replicated-cache>";
-         StringRestEntityOkHttp body = new StringRestEntityOkHttp(MediaType.APPLICATION_XML, cacheConfig);
-         assertStatus(HttpResponseStatus.OK.code(), client.rest().get().cache("cache01").createWithConfiguration(body));
+         RestEntity entity = RestEntity.create(MediaType.APPLICATION_XML, cacheConfig);
+         assertStatus(HttpResponseStatus.OK.code(), client.rest().get().cache("cache01").createWithConfiguration(entity));
          for (int i = 0; i < NUM_ROLLING_UPGRADES; i++) {
             for (int j = numServers - 1; j > -1; j--) {
                serverDriver.stop(j);

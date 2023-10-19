@@ -8,6 +8,7 @@ import static org.infinispan.client.rest.RestResponse.NOT_MODIFIED;
 import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
 import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.client.rest.RestResponse.TEMPORARY_REDIRECT;
+import static org.infinispan.client.rest.impl.jdk.RestClientJDK.CONTENT_DISPOSITION;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.assertStatusAndBodyEquals;
 import static org.infinispan.server.test.core.Common.awaitStatus;
@@ -41,12 +42,13 @@ import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestCacheManagerClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestClusterClient;
+import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
+import org.infinispan.client.rest.RestResponseInfo;
 import org.infinispan.client.rest.RestSecurityClient;
 import org.infinispan.client.rest.RestServerClient;
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
-import org.infinispan.client.rest.impl.okhttp.StringRestEntityOkHttp;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
@@ -75,10 +77,12 @@ abstract class RESTAuthorizationTest {
    public RESTAuthorizationTest(InfinispanServerExtension ext) {
       this(ext, TestUser::getUser, user -> {
          RestClientConfigurationBuilder restBuilder = new RestClientConfigurationBuilder();
-         restBuilder.security().authentication()
-               .mechanism("AUTO")
-               .username(user.getUser())
-               .password(user.getPassword());
+         if (user.getUser() != null) {
+            restBuilder.security().authentication()
+                  .mechanism("AUTO")
+                  .username(user.getUser())
+                  .password(user.getPassword());
+         }
          return restBuilder;
       });
    }
@@ -415,20 +419,20 @@ abstract class RESTAuthorizationTest {
       RestClusterClient restClient = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().cluster();
       CompletionStage<RestResponse> distribution = restClient.distribution();
       RestResponse distributionResponse = CompletionStages.join(distribution);
-      assertEquals(OK, distributionResponse.getStatus());
-      Json json = Json.read(distributionResponse.getBody());
+      assertEquals(OK, distributionResponse.status());
+      Json json = Json.read(distributionResponse.body());
       List<String> nodes = json.asJsonList().stream().map(j -> j.at("node_name").asString()).collect(Collectors.toList());
 
       RestServerClient client = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().server();
       for (String name : nodes) {
          RestResponse response = CompletionStages.join(client.report(name));
-         assertEquals(OK, response.getStatus());
-         assertEquals("application/gzip", response.getHeader("content-type"));
-         assertTrue(response.getHeader("Content-Disposition").startsWith("attachment;"));
+         assertEquals(OK, response.status());
+         assertEquals("application/gzip", response.header("content-type"));
+         assertTrue(response.header("Content-Disposition").startsWith("attachment;"));
       }
 
       RestResponse response = CompletionStages.join(client.report("not-a-node-name"));
-      assertEquals(NOT_FOUND, response.getStatus());
+      assertEquals(NOT_FOUND, response.status());
 
       for (TestUser user : EnumSet.complementOf(EnumSet.of(TestUser.ANONYMOUS, TestUser.ADMIN))) {
          RestServerClient otherClient = ext.rest().withClientConfiguration(restBuilders.get(user)).get().server();
@@ -439,12 +443,12 @@ abstract class RESTAuthorizationTest {
    @Test
    public void testRestAdminsMustAccessBackupsAndRestores() {
       String BACKUP_NAME = "backup";
-      RestClusterClient client = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().cluster();
+      RestCacheManagerClient client = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().cacheManager("default");
       assertStatus(ACCEPTED, client.createBackup(BACKUP_NAME));
       File zip = awaitStatus(() -> client.getBackup(BACKUP_NAME, false), ACCEPTED, OK, response -> {
-         String fileName = response.getHeader("Content-Disposition").split("=")[1];
+         String fileName = response.header(CONTENT_DISPOSITION).split("=")[1];
          File backupZip = new File(ext.getServerDriver().getRootDir(), fileName);
-         try (InputStream is = response.getBodyAsStream()) {
+         try (InputStream is = response.bodyAsStream()) {
             Files.copy(is, backupZip.toPath(), StandardCopyOption.REPLACE_EXISTING);
          } catch (IOException e) {
             throw new RuntimeException(e);
@@ -462,7 +466,7 @@ abstract class RESTAuthorizationTest {
    @Test
    public void testRestNonAdminsMustNotAccessBackupsAndRestores() {
       for (TestUser user : TestUser.NON_ADMINS) {
-         RestClusterClient client = ext.rest().withClientConfiguration(restBuilders.get(user)).get().cluster();
+         RestCacheManagerClient client = ext.rest().withClientConfiguration(restBuilders.get(user)).get().cacheManager("default");
          assertStatus(FORBIDDEN, client.createBackup("backup"));
          assertStatus(FORBIDDEN, client.getBackup("backup", true));
          assertStatus(FORBIDDEN, client.getBackupNames());
@@ -490,8 +494,8 @@ abstract class RESTAuthorizationTest {
          RestClient client = ext.rest().withClientConfiguration(restBuilders.get(nonAdmin)).get();
          WeakSSEListener listener = new WeakSSEListener() {
             @Override
-            public void onError(Throwable t, RestResponse response) {
-               if (response.getStatus() == FORBIDDEN) {
+            public void onError(Throwable t, RestResponseInfo response) {
+               if (response.status() == FORBIDDEN) {
                   latch.countDown();
                }
             }
@@ -527,8 +531,8 @@ abstract class RESTAuthorizationTest {
 
       for (TestUser type : EnumSet.of(TestUser.ADMIN, TestUser.OBSERVER, TestUser.DEPLOYER)) {
          try (RestResponse caches = CompletionStages.join(ext.rest().withClientConfiguration(restBuilders.get(type)).get().cacheManager("default").caches())) {
-            assertEquals(OK, caches.getStatus());
-            Json json = Json.read(caches.getBody());
+            assertEquals(OK, caches.status());
+            Json json = Json.read(caches.body());
             Set<String> names = json.asJsonList().stream().map(Json::asJsonMap).map(j -> j.get("name").asString()).collect(Collectors.toSet());
             assertTrue(names.contains(name), names.toString());
          }
@@ -537,8 +541,8 @@ abstract class RESTAuthorizationTest {
       // Types with no access.
       for (TestUser type : EnumSet.complementOf(EnumSet.of(TestUser.ADMIN, TestUser.OBSERVER, TestUser.DEPLOYER, TestUser.ANONYMOUS))) {
          try (RestResponse caches = CompletionStages.join(ext.rest().withClientConfiguration(restBuilders.get(type)).get().cacheManager("default").caches())) {
-            assertEquals(OK, caches.getStatus());
-            Json json = Json.read(caches.getBody());
+            assertEquals(OK, caches.status());
+            Json json = Json.read(caches.body());
             Set<String> names = json.asJsonList().stream().map(Json::asJsonMap).map(j -> j.get("name").asString()).collect(Collectors.toSet());
             assertFalse(names.contains(name), names.toString());
          }
@@ -597,7 +601,7 @@ abstract class RESTAuthorizationTest {
 
          // The code below only works when using the cluster mapper
          try (RestResponse response = sync(security.grant("myuser", List.of("myrole")))) {
-            if (response.getStatus() == NO_CONTENT) {
+            if (response.status() == NO_CONTENT) {
                assertStatusAndBodyEquals(OK, "[\"myrole\"]", security.listRoles("myuser"));
                CompletionStage<RestResponse> listRoles = security.listRoles();
                ResponseAssertion.assertThat(listRoles).isOk();
@@ -645,7 +649,7 @@ abstract class RESTAuthorizationTest {
 
       assertStatus(OK,
             adminClient.cache(cacheName)
-                  .createWithConfiguration(new StringRestEntityOkHttp(MediaType.APPLICATION_JSON, cacheConfig))
+                  .createWithConfiguration(RestEntity.create(MediaType.APPLICATION_JSON, cacheConfig))
       );
    }
 

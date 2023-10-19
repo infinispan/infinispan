@@ -36,7 +36,7 @@ public class EmbeddedRestHotRodWithStringTest extends AbstractInfinispanTest {
       // 1. Put text content with REST
       RestEntity value = RestEntity.create(MediaType.TEXT_PLAIN, "<hey>ho</hey>");
       RestResponse response = join(cacheFactory.getRestCacheClient().put(key, value));
-      assertEquals(204, response.getStatus());
+      assertEquals(204, response.status());
 
       // 3. Get with Hot Rod
       assertEquals("<hey>ho</hey>", cacheFactory.getHotRodCache().get(key));
@@ -50,8 +50,8 @@ public class EmbeddedRestHotRodWithStringTest extends AbstractInfinispanTest {
 
       //5. Read with rest
       response = join(cacheFactory.getRestCacheClient().get(newKey));
-      assertEquals(200, response.getStatus());
-      assertEquals(newValue, response.getBody());
+      assertEquals(200, response.status());
+      assertEquals(newValue, response.body());
    }
 
 }

@@ -46,7 +46,6 @@ import org.infinispan.cli.impl.AeshDelegatingShell;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestCacheManagerClient;
 import org.infinispan.client.rest.RestClient;
-import org.infinispan.client.rest.RestClusterClient;
 import org.infinispan.client.rest.RestCounterClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
@@ -230,13 +229,13 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
       String name = "testClusterBackup";
       performTest(
             client -> {
-               RestClusterClient cluster = client.cluster();
+               RestCacheManagerClient cluster = client.cacheManager("default");
                assertStatus(ACCEPTED, cluster.createBackup(name));
                return awaitOk(() -> cluster.getBackup(name, false));
             },
             client -> await(client.cacheManager("clustered").deleteBackup(name)),
             (zip, client) -> {
-               RestClusterClient c = client.cluster();
+               RestCacheManagerClient c = client.cacheManager("default");
                assertStatus(ACCEPTED, c.restore(name, zip));
                return awaitCreated(() -> c.getRestore(name));
             },
@@ -250,13 +249,13 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
       String name = "testClusterBackup";
       performTest(
             client -> {
-               RestClusterClient cluster = client.cluster();
+               RestCacheManagerClient cluster = client.cacheManager("default");
                assertStatus(ACCEPTED, cluster.createBackup(name));
                return awaitOk(() -> cluster.getBackup(name, false));
             },
             client -> await(client.cacheManager("clustered").deleteBackup(name)),
             (zip, client) -> {
-               RestClusterClient c = client.cluster();
+               RestCacheManagerClient c = client.cacheManager("default");
                assertStatus(ACCEPTED, c.restore(name, zip.getPath()));
                return awaitCreated(() -> c.getRestore(name));
             },
@@ -418,11 +417,11 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
 
       // Perform the backup and download
       RestResponse getResponse = backupAndDownload.apply(client);
-      String fileName = getResponse.getHeader("Content-Disposition").split("=")[1];
+      String fileName = getResponse.header("Content-Disposition").split("=")[1];
 
       // Delete the backup from the server
       try (RestResponse deleteResponse = delete.apply(client)) {
-         assertEquals(204, deleteResponse.getStatus());
+         assertEquals(204, deleteResponse.status());
       }
 
       // Ensure that all of the backup files have been deleted from the source cluster
@@ -439,7 +438,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
 
       // Copy the returned zip bytes to the local working dir
       File backupZip = new File(WORKING_DIR, fileName);
-      try (InputStream is = getResponse.getBodyAsStream()) {
+      try (InputStream is = getResponse.bodyAsStream()) {
          Files.copy(is, backupZip.toPath(), StandardCopyOption.REPLACE_EXISTING);
       }
       getResponse.close();
@@ -450,7 +449,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
 
       // Upload the backup to the target cluster
       try (RestResponse restoreResponse = restore.apply(backupZip, client)) {
-         assertEquals(201, restoreResponse.getStatus(), restoreResponse.getBody());
+         assertEquals(201, restoreResponse.status(), restoreResponse.body());
       }
 
       // Assert that all content has been restored as expected, connecting to the second node in the cluster to ensure
@@ -526,8 +525,8 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
 
    private void assertCounter(RestClient client, String name, Element type, Storage storage, long expectedValue) {
       RestResponse rsp = await(client.counter(name).configuration());
-      assertEquals(200, rsp.getStatus());
-      String content = rsp.getBody();
+      assertEquals(200, rsp.status());
+      String content = rsp.body();
       Json config = Json.read(content).at(type.toString());
       assertEquals(storage.toString(), config.at("storage").asString());
       assertEquals(0, config.at("initial-value").asInteger());

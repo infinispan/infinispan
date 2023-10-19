@@ -16,6 +16,7 @@ import org.junit.ComparisonFailure;
  * @since 10.0
  **/
 public class AeshTestShell implements Shell {
+   private final Size SIZE = new Size(80, 25);
    private StringBuilder bufferBuilder = new StringBuilder();
 
 
@@ -71,7 +72,7 @@ public class AeshTestShell implements Shell {
 
    @Override
    public Size size() {
-      return null;
+      return SIZE;
    }
 
    @Override

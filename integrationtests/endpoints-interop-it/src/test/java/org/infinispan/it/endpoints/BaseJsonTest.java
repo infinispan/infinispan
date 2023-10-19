@@ -97,12 +97,12 @@ public abstract class BaseJsonTest extends AbstractInfinispanTest {
       RestEntity value = RestEntity.create(MediaType.APPLICATION_JSON, currency.toString());
       RestResponse response = join(restCacheClient.put(key, value));
 
-      assertEquals(response.getStatus(), 204);
+      assertEquals(response.status(), 204);
    }
 
    private CryptoCurrency readCurrencyViaJson(String key) {
       RestResponse response = join(restCacheClient.get(key, MediaType.APPLICATION_JSON_TYPE));
-      String json = response.getBody();
+      String json = response.body();
       Json jsonNode = Json.read(json);
       Json description = jsonNode.at("description");
       Json rank = jsonNode.at("rank");

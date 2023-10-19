@@ -55,7 +55,7 @@ public class TasksResourceTest extends AbstractRestResourceTest {
       RestResponse response = join(taskClient.list(ALL));
       ResponseAssertion.assertThat(response).isOk();
 
-      Json jsonNode = Json.read(response.getBody());
+      Json jsonNode = Json.read(response.body());
       assertEquals(DummyTaskEngine.DummyTaskTypes.values().length, jsonNode.asList().size());
       Json task = jsonNode.at(0);
       assertEquals("Dummy", task.at("type").asString());
@@ -68,7 +68,7 @@ public class TasksResourceTest extends AbstractRestResourceTest {
       RestTaskClient taskClient = client.tasks();
       RestResponse response = join(taskClient.exec("SUCCESSFUL_TASK"));
       ResponseAssertion.assertThat(response).isOk();
-      Json jsonNode = Json.read(response.getBody());
+      Json jsonNode = Json.read(response.body());
       assertEquals("result", jsonNode.asString());
    }
 
@@ -77,7 +77,7 @@ public class TasksResourceTest extends AbstractRestResourceTest {
       RestTaskClient taskClient = client.tasks();
       CompletionStage<RestResponse> response = taskClient.exec("PARAMETERIZED_TASK", singletonMap("parameter", "Hello"));
       ResponseAssertion.assertThat(response).isOk();
-      Json jsonNode = Json.read(join(response).getBody());
+      Json jsonNode = Json.read(join(response).body());
       assertEquals("Hello", jsonNode.asString());
    }
 
@@ -100,12 +100,12 @@ public class TasksResourceTest extends AbstractRestResourceTest {
 
       response = taskClient.exec("hello", Collections.singletonMap("greetee", "Friend"));
       ResponseAssertion.assertThat(response).isOk();
-      Json jsonNode = Json.read(join(response).getBody());
+      Json jsonNode = Json.read(join(response).body());
       assertEquals("Hello Friend", jsonNode.asString());
 
       response = taskClient.downloadScript("hello");
       ResponseAssertion.assertThat(response).isOk();
-      assertEquals(script, join(response).getBody());
+      assertEquals(script, join(response).body());
    }
 
    @Test
@@ -113,7 +113,7 @@ public class TasksResourceTest extends AbstractRestResourceTest {
       RestTaskClient taskClient = client.tasks();
       CompletionStage<RestResponse> response = taskClient.exec("CACHE_TASK", "default", Collections.emptyMap());
       ResponseAssertion.assertThat(response).isOk();
-      Json jsonNode = Json.read(join(response).getBody());
+      Json jsonNode = Json.read(join(response).body());
       assertEquals("default", jsonNode.asString());
    }
 }

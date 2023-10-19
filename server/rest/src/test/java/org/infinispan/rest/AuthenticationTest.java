@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
-import java.io.IOException;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -51,7 +50,7 @@ public class AuthenticationTest extends AbstractInfinispanTest {
    }
 
    @AfterMethod(alwaysRun = true)
-   public void afterMethod() throws IOException {
+   public void afterMethod() throws Exception {
       restServer.clear();
       if (restServer != null) {
          restServer.stop();

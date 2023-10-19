@@ -3,7 +3,6 @@ package org.infinispan.rest.tracing;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 
-import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -25,8 +24,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.server.core.telemetry.TelemetryServiceFactory;
-import org.infinispan.telemetry.SpanCategory;
 import org.infinispan.server.core.telemetry.inmemory.InMemoryTelemetryClient;
+import org.infinispan.telemetry.SpanCategory;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -122,11 +121,11 @@ public class RestTracingRuntimeEnablingTest extends SingleCacheManagerTest {
 
    @Override
    protected void teardown() {
-      try (Closer<IOException> closer = new Closer<>()) {
+      try (Closer<Exception> closer = new Closer<>()) {
          closer.push(InMemoryTelemetryClient::reset, telemetryClient);
          closer.push(RestClient::close, restClient);
          closer.push(RestServerHelper::stop, restServer);
-      } catch (IOException e) {
+      } catch (Exception e) {
          // ignore it
       } finally {
          Util.recursiveFileRemove(PERSISTENT_LOCATION);

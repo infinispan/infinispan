@@ -4,6 +4,8 @@ import static org.wildfly.security.http.HttpConstants.SECURITY_IDENTITY;
 
 import java.security.Provider;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 import javax.security.auth.Subject;
@@ -47,10 +49,12 @@ public class ElytronHTTPAuthenticator implements RestAuthenticator {
    private final String serverPrincipal;
    private final Collection<String> mechanisms;
    private final Provider[] providers;
+   private final Map<String, String> challengePrefixMechanisms;
    private HttpAuthenticationFactory factory;
    private ServerSecurityRealm serverSecurityRealm;
    private BlockingManager blockingManager;
    private RestServerConfiguration configuration;
+
 
    public ElytronHTTPAuthenticator(String name, String serverPrincipal, Collection<String> mechanisms) {
       this.name = name;
@@ -63,6 +67,32 @@ public class ElytronHTTPAuthenticator implements RestAuthenticator {
             WildFlyElytronHttpClientCertProvider.getInstance(),
             WildFlyElytronHttpSpnegoProvider.getInstance(),
       };
+      Map<String, String> prefixes = new HashMap<>();
+      for (String m : mechanisms) {
+         switch (m) {
+            case "BASIC":
+               prefixes.put("BASIC", "BASIC");
+               break;
+            case "SPNEGO":
+               prefixes.put("NEGOTIATE", "SPNEGO");
+               break;
+            case "BEARER_TOKEN":
+               prefixes.put("BEARER", "BEARER_TOKEN");
+               break;
+            case "DIGEST":
+               prefixes.put("DIGEST", "DIGEST");
+               break;
+            case "DIGEST-SHA-256":
+               prefixes.put("DIGEST", "DIGEST-SHA-256");
+               break;
+            case "DIGEST-SHA-512-256":
+               prefixes.put("DIGEST", "DIGEST-SHA-512-256");
+               break;
+            default:
+               prefixes.put(m, m);
+         }
+      }
+      challengePrefixMechanisms = Map.copyOf(prefixes);
    }
 
    public static void init(RestServerConfiguration configuration, ServerConfiguration serverConfiguration) {
@@ -103,12 +133,7 @@ public class ElytronHTTPAuthenticator implements RestAuthenticator {
                   extractSubject(request, mechanism);
                }
             } else {
-               String mechName = authorizationHeader.substring(0, authorizationHeader.indexOf(' ')).toUpperCase();
-               if ("BEARER".equals(mechName)) {
-                  mechName = "BEARER_TOKEN";
-               } else if ("NEGOTIATE".equals(mechName)) {
-                  mechName = "SPNEGO";
-               }
+               String mechName = challengePrefixMechanisms.get(authorizationHeader.substring(0, authorizationHeader.indexOf(' ')).toUpperCase());
                HttpServerAuthenticationMechanism mechanism = factory.createMechanism(mechName);
                if (mechanism == null) {
                   throw Server.log.unsupportedMechanism(mechName);

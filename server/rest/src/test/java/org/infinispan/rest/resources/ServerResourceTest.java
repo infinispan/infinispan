@@ -1,6 +1,5 @@
 package org.infinispan.rest.resources;
 
-import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -45,7 +44,7 @@ public class ServerResourceTest extends AbstractRestResourceTest {
    public void testServerConnectorDetail() {
       CompletionStage<RestResponse> response = adminClient.server().connector("DummyProtocol");
       ResponseAssertion.assertThat(response).isOk();
-      String body = join(response).getBody();
+      String body = join(response).body();
       Json jsonNode = Json.read(body);
       assertEquals("DummyProtocol", jsonNode.at("name").asString());
       assertEquals(MockProtocolServer.DEFAULT_CACHE_NAME, jsonNode.at("default-cache").asString());

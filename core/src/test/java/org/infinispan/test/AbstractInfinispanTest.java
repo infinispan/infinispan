@@ -2,11 +2,13 @@ package org.infinispan.test;
 
 import static org.testng.AssertJUnit.fail;
 
-import java.lang.invoke.MethodHandles;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.invoke.MethodHandles;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
@@ -33,8 +35,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-
-import jakarta.transaction.TransactionManager;
 
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.api.BasicCacheContainer;
@@ -64,6 +64,10 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Listeners;
 import org.testng.internal.MethodInstance;
+
+import com.sun.management.UnixOperatingSystemMXBean;
+
+import jakarta.transaction.TransactionManager;
 
 
 /**
@@ -193,6 +197,14 @@ public abstract class AbstractInfinispanTest {
       List<Runnable> runnables = testExecutor.shutdownNow();
       if (!runnables.isEmpty()) {
          log.errorf("There were runnables %s left uncompleted in test %s", runnables, getClass().getSimpleName());
+      }
+   }
+
+   @AfterMethod(alwaysRun = true)
+   public void checkOpenFDs() {
+      OperatingSystemMXBean os = ManagementFactory.getOperatingSystemMXBean();
+      if (os instanceof UnixOperatingSystemMXBean) {
+         log.tracef("Number of open file descriptors: %d", ((UnixOperatingSystemMXBean) os).getOpenFileDescriptorCount());
       }
    }
 

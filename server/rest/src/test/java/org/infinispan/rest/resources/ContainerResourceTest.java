@@ -1,5 +1,35 @@
 package org.infinispan.rest.resources;
 
+import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
+import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
+import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
+import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
+import static org.infinispan.configuration.cache.CacheMode.LOCAL;
+import static org.infinispan.partitionhandling.PartitionHandling.DENY_READ_WRITES;
+import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
+
+import java.io.Closeable;
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
 import org.assertj.core.api.Assertions;
 import org.infinispan.client.rest.RestCacheManagerClient;
 import org.infinispan.client.rest.RestEntity;
@@ -7,6 +37,7 @@ import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.io.StringBuilderWriter;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
@@ -25,40 +56,8 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.LocalTopologyManager;
-import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.util.KeyValuePair;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
-import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
-import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
-import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
-import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
-import static org.infinispan.configuration.cache.CacheMode.LOCAL;
-import static org.infinispan.partitionhandling.PartitionHandling.DENY_READ_WRITES;
-import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 
 @Test(groups = "functional", testName = "rest.ContainerResourceTest")
 public class ContainerResourceTest extends AbstractRestResourceTest {
@@ -149,7 +148,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       RestResponse response = join(cacheManagerClient.health());
       ResponseAssertion.assertThat(response).isOk();
 
-      Json jsonNode = Json.read(response.getBody());
+      Json jsonNode = Json.read(response.body());
       Json clusterHealth = jsonNode.at("cluster_health");
       // One of the caches is in FAILED state
       assertEquals(clusterHealth.at("health_status").asString(), HealthStatus.FAILED.toString());
@@ -174,7 +173,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
       ResponseAssertion.assertThat(response).isOk();
 
-      String json = response.getBody();
+      String json = response.body();
       Json jsonNode = Json.read(json);
       Map<String, String> cachesAndConfig = cacheAndConfig(jsonNode);
 
@@ -190,7 +189,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
       ResponseAssertion.assertThat(response).isOk();
 
-      String json = response.getBody();
+      String json = response.body();
       Json jsonNode = Json.read(json);
       Map<String, String> cachesAndConfig = cacheAndConfig(jsonNode);
 
@@ -204,7 +203,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       RestResponse response = join(cacheManagerClient.caches());
       ResponseAssertion.assertThat(response).isOk();
 
-      String json = response.getBody();
+      String json = response.body();
       Json jsonNode = Json.read(json);
       List<String> names = find(jsonNode, "name");
       Set<String> expectedNames = Util.asSet(DEFAULT_CACHE, CACHE_1, CACHE_2, CACHE_3, INVALID_CACHE);
@@ -228,8 +227,8 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       assertTrue(persistent.contains("false"));
 
       List<String> bounded = find(jsonNode, "bounded");
-      List<String> notBoundedCaches = bounded.stream().filter(b -> "false".equals(b)).collect(Collectors.toList());
-      List<String> boundedCaches = bounded.stream().filter(b -> "true".equals(b)).collect(Collectors.toList());
+      List<String> notBoundedCaches = bounded.stream().filter("false"::equals).collect(Collectors.toList());
+      List<String> boundedCaches = bounded.stream().filter("true"::equals).collect(Collectors.toList());
       assertEquals(1, boundedCaches.size());
       assertEquals(4, notBoundedCaches.size());
 
@@ -261,7 +260,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       RestResponse response = join(cacheManagerClient.caches());
       ResponseAssertion.assertThat(response).isOk();
 
-      String json = response.getBody();
+      String json = response.body();
       Json jsonNode = Json.read(json);
       List<String> names = find(jsonNode, "name");
       Set<String> expectedNames = Util.asSet(DEFAULT_CACHE, CACHE_1, CACHE_2, CACHE_3, INVALID_CACHE);
@@ -283,7 +282,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
       ResponseAssertion.assertThat(response).isOk();
 
-      String json = response.getBody();
+      String json = response.body();
       EmbeddedCacheManager embeddedCacheManager = cacheManagers.get(0);
       GlobalConfiguration globalConfiguration = embeddedCacheManager.withSubject(ADMIN).getCacheManagerConfiguration();
       StringBuilderWriter sw = new StringBuilderWriter();
@@ -299,7 +298,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
       ResponseAssertion.assertThat(response).isOk();
 
-      String xml = response.getBody();
+      String xml = response.body();
       ParserRegistry parserRegistry = new ParserRegistry();
       ConfigurationBuilderHolder builderHolder = parserRegistry.parse(xml);
 
@@ -313,7 +312,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
       ResponseAssertion.assertThat(response).isOk();
 
-      String json = response.getBody();
+      String json = response.body();
       Json cmInfo = Json.read(json);
 
       assertFalse(cmInfo.at("version").asString().isEmpty());
@@ -333,7 +332,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
       ResponseAssertion.assertThat(response).isOk();
 
-      String json = response.getBody();
+      String json = response.body();
       Json cmStats = Json.read(json);
 
       assertTrue(cmStats.at("statistics_enabled").asBoolean());
@@ -344,7 +343,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       timeService.advance(1000);
 
       cacheManagers.iterator().next().getCache(CACHE_1).put("key", "value");
-      cmStats = Json.read(join(adminCacheManagerClient.stats()).getBody());
+      cmStats = Json.read(join(adminCacheManagerClient.stats()).body());
       assertEquals(1, cmStats.at("stores").asInteger());
       assertEquals(1, cmStats.at("number_of_entries").asInteger());
    }
@@ -353,7 +352,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
    public void testConfigListener() throws InterruptedException, IOException {
       SSEListener sseListener = new SSEListener();
       try (Closeable ignored = adminClient.raw().listen("/rest/v2/container/config?action=listen&includeCurrentState=true", Collections.emptyMap(), sseListener)) {
-         AssertJUnit.assertTrue(sseListener.openLatch.await(10, TimeUnit.SECONDS));
+         assertTrue(sseListener.await(10, TimeUnit.SECONDS));
 
          // Assert that all of the existing caches and templates have a corresponding event
          List<String> elements = List.of(TEMPLATE_CONFIG, CACHE_1, CACHE_2, CACHE_3, DEFAULT_CACHE,
@@ -410,7 +409,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
             try {
                return TestingUtil.extractGlobalComponent(cm, LocalTopologyManager.class).isRebalancingEnabled();
             } catch (Exception e) {
-               fail("Unexpected exception", e);
+               fail("Unexpected exception " + e);
                return !enabled;
             }
          });

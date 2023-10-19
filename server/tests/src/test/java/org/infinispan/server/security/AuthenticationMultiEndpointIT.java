@@ -149,6 +149,7 @@ public class AuthenticationMultiEndpointIT {
          );
       }
    }
+
    static class Endpoint {
       private final String protocol;
       private final String mechanism;
@@ -211,10 +212,10 @@ public class AuthenticationMultiEndpointIT {
          Protocol proto = Protocol.valueOf(protocol);
          RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder()
                .followRedirects(false)
-               .contextPath(contextPath);
+               .contextPath(contextPath)
+               .protocol(proto);
          if (useAuth) {
             builder
-                  .protocol(proto)
                   .security().authentication()
                   .mechanism(mechanism)
                   .realm(realm)
@@ -226,14 +227,14 @@ public class AuthenticationMultiEndpointIT {
             RestClient client = SERVERS.rest().withClientConfiguration(builder).withPort(port).create();
             validateSuccess();
             try (RestResponse response = sync(client.cache(SERVERS.getMethodName()).post("k1", "v1"))) {
-               assertEquals(204, response.getStatus());
-               assertEquals(proto, response.getProtocol());
+               assertEquals(204, response.status());
+               assertEquals(proto, response.protocol());
             }
 
             try (RestResponse response = sync(client.cache(SERVERS.getMethodName()).get("k1"))) {
-               assertEquals(200, response.getStatus());
-               assertEquals(proto, response.getProtocol());
-               assertEquals("v1", response.getBody());
+               assertEquals(200, response.status());
+               assertEquals(proto, response.protocol());
+               assertEquals("v1", response.body());
             }
 
             assertStatus(isAdmin ? 307 : 404, client.raw().get("/"));
@@ -252,14 +253,14 @@ public class AuthenticationMultiEndpointIT {
          }
       }
 
-      private void validateException(RuntimeException e) {
+      private void validateException(Throwable e) {
          if (useAuth && isAnonymous) return;
          if (!useAuth && !isAnonymous) return;
          if (isAlternateRealm && "default".equals(realm)) return;
          if (!isAlternateRealm && !"default".equals(realm)) return;
          if (isPlain && !isMechanismClearText) return;
          if (!isPlain && isMechanismClearText) return;
-         throw e;
+         throw (e instanceof RuntimeException) ? (RuntimeException) e : new RuntimeException(e);
       }
    }
 }
