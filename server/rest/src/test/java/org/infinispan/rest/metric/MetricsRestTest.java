@@ -2,8 +2,6 @@ package org.infinispan.rest.metric;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.IOException;
-
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.test.TestResourceTracker;
@@ -34,7 +32,7 @@ public class MetricsRestTest extends SingleCacheManagerTest {
 
    @Test
    public void smokeTest() {
-      String response = restClient.metrics().metrics().toCompletableFuture().join().getBody();
+      String response = restClient.metrics().metrics().toCompletableFuture().join().body();
       assertThat(response).contains("#");
    }
 
@@ -42,7 +40,7 @@ public class MetricsRestTest extends SingleCacheManagerTest {
    protected void teardown() {
       try {
          restClient.close();
-      } catch (IOException ex) {
+      } catch (Exception ex) {
          // ignore it
       } finally {
          try {

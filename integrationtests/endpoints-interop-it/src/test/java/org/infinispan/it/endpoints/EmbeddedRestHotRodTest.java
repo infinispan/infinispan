@@ -10,7 +10,6 @@ import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.rest.JSONConstants.TYPE;
 import static org.infinispan.rest.ResponseHeader.CONTENT_TYPE_HEADER;
 import static org.infinispan.util.concurrent.CompletionStages.join;
-import static org.testng.AssertJUnit.assertArrayEquals;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
@@ -80,7 +79,7 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
       // 1. Put with REST
       RestCacheClient restCacheClient = cacheFactory.getRestCacheClient();
       CompletionStage<RestResponse> response = restCacheClient.put(key, RestEntity.create(TEXT_PLAIN, "<hey>ho</hey>"));
-      assertEquals(204, join(response).getStatus());
+      assertEquals(204, join(response).status());
 
       // 2. Get with Embedded
       assertEquals("<hey>ho</hey>", cacheFactory.getEmbeddedCache().get(key));
@@ -100,8 +99,8 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
 
       // 3. Get with REST
       RestResponse response = join(cacheFactory.getRestCacheClient().get(key, TEXT_PLAIN_TYPE));
-      assertEquals(200, response.getStatus());
-      assertEquals("v1", response.getBody());
+      assertEquals(200, response.status());
+      assertEquals("v1", response.body());
    }
 
    public void testHotRodPutEmbeddedRestGet() {
@@ -116,8 +115,8 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
 
       // 3. Get with REST
       RestResponse response = join(cacheFactory.getRestCacheClient().get(key, TEXT_PLAIN_TYPE));
-      assertEquals(200, response.getStatus());
-      assertEquals("v1", response.getBody());
+      assertEquals(200, response.status());
+      assertEquals("v1", response.body());
    }
 
    public void testCustomObjectHotRodPutEmbeddedRestGet() throws Exception {
@@ -133,10 +132,10 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
 
       // 3. Get with REST
       RestResponse response = join(cacheFactory.getRestCacheClient().get(key, APPLICATION_SERIALIZED_OBJECT_TYPE));
-      assertEquals(200, response.getStatus());
+      assertEquals(200, response.status());
 
       // REST finds the Java POJO in-memory and returns the Java serialized version
-      assertEquals(p, new ObjectInputStream(response.getBodyAsStream()).readObject());
+      assertEquals(p, new ObjectInputStream(new ByteArrayInputStream(response.bodyAsByteArray())).readObject());
    }
 
    public void testCustomObjectEmbeddedPutHotRodRestGet() throws Exception {
@@ -152,10 +151,10 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
       // 3. Get with REST
       RestResponse response = join(cacheFactory.getRestCacheClient()
             .get(key, "application/x-java-serialized-object, application/json;q=0.3"));
-      assertEquals(200, response.getStatus());
+      assertEquals(200, response.status());
 
       // REST finds the Java POJO in-memory and returns the Java serialized version
-      assertEquals(p, new ObjectInputStream(response.getBodyAsStream()).readObject());
+      assertEquals(p, new ObjectInputStream(new ByteArrayInputStream(response.bodyAsByteArray())).readObject());
    }
 
    public void testCustomObjectEmbeddedPutRestGetAcceptJSONAndXML() {
@@ -167,14 +166,14 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
 
       // 2. Get with REST (accept application/json)
       RestResponse response = join(cacheFactory.getRestCacheClient().get(key, APPLICATION_JSON_TYPE));
-      String body = response.getBody();
-      assertEquals(200, response.getStatus());
+      String body = response.body();
+      assertEquals(200, response.status());
       assertEquals(asJson(p), body);
 
       // 3. Get with REST (accept application/xml)
       response = join(cacheFactory.getRestCacheClient().get(key, APPLICATION_XML_TYPE));
-      assertEquals(200, response.getStatus());
-      assertTrue(response.getBody().contains("<name>Anna</name>"));
+      assertEquals(200, response.status());
+      assertTrue(response.body().contains("<name>Anna</name>"));
    }
 
    public void testCustomObjectHotRodPutRestGetAcceptJSONAndXML() {
@@ -187,13 +186,13 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
 
       // 2. Get with REST (accept application/json)
       RestResponse response = join(cacheFactory.getRestCacheClient().get(key, APPLICATION_JSON_TYPE));
-      assertEquals(200, response.getStatus());
-      assertEquals(asJson(p), response.getBody());
+      assertEquals(200, response.status());
+      assertEquals(asJson(p), response.body());
 
       // 3. Get with REST (accept application/xml)
       response = join(cacheFactory.getRestCacheClient().get(key, APPLICATION_XML_TYPE));
-      assertEquals(200, response.getStatus());
-      assertTrue(response.getBody().contains("<name>Jakub</name>"));
+      assertEquals(200, response.status());
+      assertTrue(response.body().contains("<name>Jakub</name>"));
    }
 
    public void testCustomObjectRestPutHotRodEmbeddedGet() throws Exception {
@@ -230,15 +229,15 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
 
       // 3. HEAD with REST key1
       RestResponse response = join(cacheFactory.getRestCacheClient().head(key1));
-      assertEquals(200, response.getStatus());
-      String expires = response.getHeader(ResponseHeader.EXPIRES_HEADER.getValue());
+      assertEquals(200, response.status());
+      String expires = response.header(ResponseHeader.EXPIRES_HEADER.getValue());
       assertNotNull(expires);
       assertTrue(dateFormat.parse(expires).after(new GregorianCalendar(2013, Calendar.JANUARY, 1).getTime()));
 
       // 4. HEAD with REST key2
       response = join(cacheFactory.getRestCacheClient().head(key2));
-      assertEquals(200, response.getStatus());
-      expires = response.getHeader(ResponseHeader.EXPIRES_HEADER.getValue());
+      assertEquals(200, response.status());
+      expires = response.header(ResponseHeader.EXPIRES_HEADER.getValue());
       assertNotNull(expires);
    }
 
@@ -254,12 +253,12 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
 
       // 3. Get with REST key
       RestResponse response = join(cacheFactory.getRestCacheClient().get(key));
-      assertEquals(200, response.getStatus());
+      assertEquals(200, response.status());
       assertDate(response, "Expires");
 
       // 4. Get with REST key2
       response = join(cacheFactory.getRestCacheClient().get(key2));
-      assertEquals(200, response.getStatus());
+      assertEquals(200, response.status());
       assertDate(response, "Expires");
    }
 
@@ -275,17 +274,17 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
 
       // 3. Get with REST key
       RestResponse response = join(cacheFactory.getRestCacheClient().get(key));
-      assertEquals(200, response.getStatus());
+      assertEquals(200, response.status());
       assertDate(response, "Last-Modified");
 
       // 4. Get with REST key2
       response = join(cacheFactory.getRestCacheClient().get(key2));
-      assertEquals(200, response.getStatus());
+      assertEquals(200, response.status());
       assertDate(response, "Last-Modified");
    }
 
    private static void assertDate(RestResponse response, String header) throws Exception {
-      String dateHeader = response.getHeader(header);
+      String dateHeader = response.header(header);
       assertNotNull(dateHeader);
       Date parsedDate = dateFormat.parse(dateHeader);
       assertTrue("Parsed date is before this code was written: " + parsedDate,
@@ -305,15 +304,15 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
 
       // 3. Get with REST key1
       RestResponse response = join(cacheFactory.getRestCacheClient().get(key1, TEXT_PLAIN_TYPE));
-      assertEquals(200, response.getStatus());
-      assertEquals(TEXT_PLAIN_TYPE, response.getHeader(CONTENT_TYPE_HEADER.getValue()));
-      assertArrayEquals("v1".getBytes(), response.getBodyAsByteArray());
+      assertEquals(200, response.status());
+      assertEquals(TEXT_PLAIN_TYPE, response.header(CONTENT_TYPE_HEADER.getValue()));
+      assertEquals("v1", response.body());
 
       // 4. Get with REST key2
       response = join(cacheFactory.getRestCacheClient().get(key2, TEXT_PLAIN_TYPE));
-      assertEquals(200, response.getStatus());
-      assertEquals(TEXT_PLAIN_TYPE, response.getHeader(CONTENT_TYPE_HEADER.getValue()));
-      assertArrayEquals("v2".getBytes(), response.getBodyAsByteArray());
+      assertEquals(200, response.status());
+      assertEquals(TEXT_PLAIN_TYPE, response.header(CONTENT_TYPE_HEADER.getValue()));
+      assertEquals("v2", response.body());
    }
 
    public void testHotRodEmbeddedPutRestGetWrongAccept() {
@@ -327,12 +326,12 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
       assertNull(cacheFactory.getEmbeddedCache().put(key2, "v2"));
 
       // 3. GET with REST key1
-      RestResponse response = join(cacheFactory.getRestCacheClient().get(key1, "unknown-media-type"));
-      assertEquals(406, response.getStatus());
+      RestResponse response = join(cacheFactory.getRestCacheClient().get(key1, "unknown-media-type/unknown"));
+      assertEquals(406, response.status());
 
       // 4. GET with REST key2
-      response = join(cacheFactory.getRestCacheClient().get(key2, "unknown-media-type"));
-      assertEquals(406, response.getStatus());
+      response = join(cacheFactory.getRestCacheClient().get(key2, "unknown-media-type/unknown"));
+      assertEquals(406, response.status());
    }
 
    public void testHotRodEmbeddedPutRestGetCacheControlHeader() {
@@ -348,11 +347,11 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
       // 3. GET with REST key1, long min-fresh
       Map<String, String> headers = singletonMap("Cache-Control", "min-fresh=20");
       RestResponse response = join(cacheFactory.getRestCacheClient().get(key1, headers));
-      assertEquals(404, response.getStatus());
+      assertEquals(404, response.status());
 
       // 4. GET with REST key2, long min-fresh
       response = join(cacheFactory.getRestCacheClient().get(key2, headers));
-      assertEquals(404, response.getStatus());
+      assertEquals(404, response.status());
 
       // 5. GET with REST key1, short min-fresh
       headers = new HashMap<>();
@@ -360,16 +359,16 @@ public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
       headers.put("Cache-Control", "min-fresh=3");
       response = join(cacheFactory.getRestCacheClient().get(key1, headers));
 
-      assertEquals(200, response.getStatus());
-      assertNotNull(response.getHeader("Cache-Control"));
-      assertTrue(response.getHeader("Cache-Control").contains("max-age"));
-      assertEquals("v1", response.getBody());
+      assertEquals(200, response.status());
+      assertNotNull(response.header("Cache-Control"));
+      assertTrue(response.header("Cache-Control").contains("max-age"));
+      assertEquals("v1", response.body());
 
       // 6. GET with REST key2, short min-fresh
       response = join(cacheFactory.getRestCacheClient().get(key2, headers));
-      assertEquals(200, response.getStatus());
-      assertTrue(response.getHeader("Cache-Control").contains("max-age"));
-      assertEquals("v2", response.getBody());
+      assertEquals(200, response.status());
+      assertTrue(response.header("Cache-Control").contains("max-age"));
+      assertEquals("v2", response.body());
    }
 
    private String asJson(Person p) {

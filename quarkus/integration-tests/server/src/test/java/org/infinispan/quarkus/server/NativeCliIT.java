@@ -36,8 +36,8 @@ public class NativeCliIT {
       RestClient client = SERVERS.rest().create();
       RestCacheManagerClient cm = client.cacheManager("default");
       RestResponse restResponse = sync(cm.healthStatus());
-      assertEquals(200, restResponse.getStatus());
-      assertEquals("HEALTHY", restResponse.getBody());
+      assertEquals(200, restResponse.status());
+      assertEquals("HEALTHY", restResponse.body());
 
       String cliPath = resource("ispn-cli");
       String batchFile = resource("batch.file");
@@ -67,7 +67,7 @@ public class NativeCliIT {
       }
       assertEquals(0, p.exitValue());
       restResponse = sync(client.cache("mybatch").exists());
-      assertEquals(204, restResponse.getStatus());
+      assertEquals(204, restResponse.status());
    }
 
    private String resource(String name) throws Exception {

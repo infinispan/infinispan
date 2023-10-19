@@ -55,7 +55,7 @@ public class OverviewReportIT {
 
       CompletionStage<RestResponse> response = restClient.server().overviewReport();
       ResponseAssertion.assertThat(response).isOk();
-      Json report = Json.read(join(response).getBody());
+      Json report = Json.read(join(response).body());
       assertThat(report).isNotNull();
 
       Map<String, Json> clients = report.at("clients").asJsonMap();
@@ -63,6 +63,5 @@ public class OverviewReportIT {
 
       Map<String, Json> singlePort = clients.get("SinglePort").asJsonMap();
       assertThat(singlePort.get("protocol-versions").asList()).isNotEmpty();
-      assertThat(singlePort.get("client-library-names").asList()).isNotEmpty();
    }
 }

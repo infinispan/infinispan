@@ -1,6 +1,5 @@
 package org.infinispan.server.test.core;
 
-import java.io.Closeable;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -45,14 +44,14 @@ import net.spy.memcached.MemcachedClient;
 public class TestClient {
    protected InfinispanServerTestConfiguration configuration;
    protected TestServer testServer;
-   protected List<Closeable> resources;
+   protected List<AutoCloseable> resources;
    private String methodName;
 
    public TestClient(TestServer testServer) {
       this.testServer = testServer;
    }
 
-   public <T extends Closeable> T registerResource(T resource) {
+   public <T extends AutoCloseable> T registerResource(T resource) {
       resources.add(resource);
       return resource;
    }

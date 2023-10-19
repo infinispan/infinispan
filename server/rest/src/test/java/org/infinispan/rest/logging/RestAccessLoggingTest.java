@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.test.skip.StringLogAppender;
@@ -45,7 +46,7 @@ public class RestAccessLoggingTest extends SingleCacheManagerTest {
       restServer = new RestServerHelper(cacheManager);
       restServer.start(TestResourceTracker.getCurrentTestShortName());
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
-      builder.addServer().host(restServer.getHost()).port(restServer.getPort());
+      builder.addServer().host(restServer.getHost()).port(restServer.getPort()).protocol(Protocol.HTTP_11);
       restClient = RestClient.forConfiguration(builder.create());
       cacheClient = restClient.cache("default");
    }

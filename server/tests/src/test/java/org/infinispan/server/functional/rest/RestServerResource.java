@@ -53,7 +53,7 @@ public class RestServerResource {
 
       assertResponse(OK, client.server().threads(), r -> {
          assertEquals(MediaType.TEXT_PLAIN, r.contentType());
-         assertTrue(r.getBody().contains("state=RUNNABLE"));
+         assertTrue(r.body().contains("state=RUNNABLE"));
       });
    }
 

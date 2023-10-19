@@ -179,7 +179,7 @@ public class HotRodCacheQueries {
 
       RestClient restClient = SERVERS.rest().withClientConfiguration(new RestClientConfigurationBuilder()).get();
       try (RestResponse response = sync(restClient.cache(SERVERS.getMethodName()).query(query))) {
-         Json results = Json.read(response.getBody());
+         Json results = Json.read(response.body());
          assertEquals(1, results.at("hit_count").asInteger());
       }
    }
@@ -264,11 +264,11 @@ public class HotRodCacheQueries {
 
       RestClient restClient = SERVERS.rest().get();
       try (RestResponse response = sync(restClient.cache(peopleCache.getName()).entries(1000))) {
-         if (response.getStatus() != 200) {
-            fail(response.getBody());
+         if (response.status() != 200) {
+            fail(response.body());
          }
 
-         Collection<?> entities = (Collection<?>) Json.read(response.getBody()).getValue();
+         Collection<?> entities = (Collection<?>) Json.read(response.body()).getValue();
          assertThat(entities).hasSize(4);
       }
    }

@@ -36,7 +36,7 @@ public class ClusterResourceTest extends AbstractRestResourceTest {
       CompletionStage<RestResponse> response = adminClient.cluster().distribution();
       assertThat(response).isOk();
 
-      Json json = Json.read(join(response).getBody());
+      Json json = Json.read(join(response).body());
       assertTrue(json.isArray());
       List<Json> list = json.asJsonList();
 

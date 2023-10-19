@@ -134,7 +134,7 @@ public class StaticContentResource implements ResourceHandler {
       String resolved = MediaTypeResolver.getMediaType(file.getName());
       String mediaType = resolved != null ? resolved : APPLICATION_OCTET_STREAM_TYPE;
 
-      responseBuilder.contentLength(file.length())
+      responseBuilder
             .contentType(mediaType)
             .entity(file);
       return completedFuture(responseBuilder.build());

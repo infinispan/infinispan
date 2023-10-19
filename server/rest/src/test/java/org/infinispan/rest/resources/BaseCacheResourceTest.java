@@ -223,9 +223,9 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       putBinaryValueInCache("serialized", "test", convertToBytes(testClass), APPLICATION_SERIALIZED_OBJECT);
 
       //when
-      RestResponse response = join(client.cache("serialized").get("test"));
+      RestResponse response = join(client.cache("serialized").get("test", Map.of(ACCEPT_HEADER.getValue(), APPLICATION_SERIALIZED_OBJECT_TYPE)));
 
-      TestClass convertedObject = convertFromBytes(response.getBodyAsByteArray());
+      TestClass convertedObject = convertFromBytes(response.bodyAsByteArray());
 
       //then
       ResponseAssertion.assertThat(response).isOk();
@@ -408,7 +408,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    public void shouldNotAcceptUnknownContentTypeWithHead() throws Exception {
       putStringValueInCache("default", "key1", "test1");
 
-      Map<String, String> headers = createHeaders(ACCEPT_HEADER, "garbage");
+      Map<String, String> headers = createHeaders(ACCEPT_HEADER, "garbage/garbage");
 
       CompletionStage<RestResponse> response = client.cache("default").head("key1", headers);
 
@@ -461,7 +461,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       //then
       ResponseAssertion.assertThat(getResponse).isOk();
       ResponseAssertion.assertThat(getResponse).hasEtag();
-      Assertions.assertThat(getResponse.getBody()).isEqualTo("Hey!");
+      Assertions.assertThat(getResponse.body()).isEqualTo("Hey!");
    }
 
    @Test
@@ -488,7 +488,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       //then
       ResponseAssertion.assertThat(getResponse).isOk();
       ResponseAssertion.assertThat(getResponse).hasEtag();
-      Assertions.assertThat(getResponse.getBody()).isEqualTo("Hey!");
+      Assertions.assertThat(getResponse.body()).isEqualTo("Hey!");
    }
 
    @Test
@@ -502,7 +502,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(response).isOk();
 
       RestResponse getResponse = join(client.cache("serialized").get("test", APPLICATION_SERIALIZED_OBJECT_TYPE));
-      TestClass valueFromCache = convertFromBytes(getResponse.getBodyAsByteArray());
+      TestClass valueFromCache = convertFromBytes(getResponse.bodyAsByteArray());
 
       ResponseAssertion.assertThat(getResponse).hasEtag();
       Assertions.assertThat(valueFromCache.getName()).isEqualTo("test");
@@ -534,7 +534,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       //then
       ResponseAssertion.assertThat(getResponse).isOk();
-      Assertions.assertThat(getResponse.getBody()).isEqualTo("Hey!");
+      Assertions.assertThat(getResponse.body()).isEqualTo("Hey!");
    }
 
    @Test
@@ -560,7 +560,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
    }
 
    private Long getLongHeader(RestResponse response, ResponseHeader responseHeader) {
-      String header = response.getHeader(responseHeader.getValue());
+      String header = response.header(responseHeader.getValue());
       if (header == null) {
          return null;
       }
@@ -633,8 +633,8 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasEtag();
 
-      RestResponse getResponse = join(binaryCache.get("test"));
-      Assertions.assertThat(getResponse.getBodyAsByteArray().length).isEqualTo(1_000_000);
+      RestResponse getResponse = join(binaryCache.get("test", Map.of("Accept", APPLICATION_OCTET_STREAM_TYPE)));
+      Assertions.assertThat(getResponse.bodyAsByteArray().length).isEqualTo(1_000_000);
    }
 
    @Test
@@ -730,8 +730,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       RestResponse response = get("default", "test", APPLICATION_OCTET_STREAM_TYPE);
 
-      ResponseAssertion.assertThat(response).hasContentType(APPLICATION_OCTET_STREAM_TYPE);
-      ResponseAssertion.assertThat(response).hasReturnedBytes(javaSerialized);
+      ResponseAssertion.assertThat(response).hasContentType(APPLICATION_OCTET_STREAM_TYPE).hasReturnedBytes(javaSerialized);
    }
 
    @Test
@@ -792,7 +791,7 @@ public abstract class BaseCacheResourceTest extends AbstractRestResourceTest {
 
       RestResponse textResponse = get(cacheName, key, TEXT_PLAIN_TYPE);
 
-      ResponseAssertion.assertThat(textResponse).hasReturnedBytes(value.getBytes(UTF_8));
+      ResponseAssertion.assertThat(textResponse).hasReturnedText(value);
       ResponseAssertion.assertThat(textResponse).hasContentType(TEXT_PLAIN_TYPE);
    }
 

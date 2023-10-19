@@ -87,7 +87,7 @@ public class RestAuthentication {
 
       try (RestClient restClient = RestClient.forConfiguration(builder.build());
            RestResponse response = sync(restClient.raw().get("/rest/v2/caches"))) {
-         assertEquals(401, response.getStatus());
+         assertEquals(401, response.status());
          String auth = response.headers().get("Www-Authenticate").stream().filter(h -> h.startsWith("Digest")).findFirst().get();
          HashMap<String, byte[]> parameters = DigestUtil.parseResponse(auth.substring(7).getBytes(UTF_8), UTF_8, false, httpDigest);
          final String realm = new String(parameters.get("realm"), UTF_8);
@@ -130,14 +130,14 @@ public class RestAuthentication {
       } else {
          RestClient client = SERVERS.rest().withClientConfiguration(builder).create();
          try (RestResponse response = sync(client.cache(SERVERS.getMethodName()).post("k1", "v1"))) {
-            assertEquals(204, response.getStatus());
-            assertEquals(protocol, response.getProtocol());
+            assertEquals(204, response.status());
+            assertEquals(protocol, response.protocol());
          }
 
          try (RestResponse response = sync(client.cache(SERVERS.getMethodName()).get("k1"))) {
-            assertEquals(200, response.getStatus());
-            assertEquals(protocol, response.getProtocol());
-            assertEquals("v1", response.getBody());
+            assertEquals(200, response.status());
+            assertEquals(protocol, response.protocol());
+            assertEquals("v1", response.body());
          }
       }
    }

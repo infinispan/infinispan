@@ -52,13 +52,13 @@ public class RestOperations {
       builder.protocol(protocol);
       RestClient client = SERVERS.rest().withClientConfiguration(builder).create();
       RestCacheClient cache = client.cache(SERVERS.getMethodName());
-      assertResponse(NO_CONTENT, cache.post("k1", "v1"), r -> assertEquals(protocol, r.getProtocol()));
+      assertResponse(NO_CONTENT, cache.post("k1", "v1"), r -> assertEquals(protocol, r.protocol()));
       assertResponse(OK, cache.get("k1"), r -> {
-         assertEquals(protocol, r.getProtocol());
-         assertEquals("v1", r.getBody());
+         assertEquals(protocol, r.protocol());
+         assertEquals("v1", r.body());
       });
-      assertResponse(NO_CONTENT, cache.remove("k1"), r -> assertEquals(protocol, r.getProtocol()));
-      assertResponse(NOT_FOUND, cache.get("k1"), r -> assertEquals(protocol, r.getProtocol()));
+      assertResponse(NO_CONTENT, cache.remove("k1"), r -> assertEquals(protocol, r.protocol()));
+      assertResponse(NOT_FOUND, cache.get("k1"), r -> assertEquals(protocol, r.protocol()));
    }
 
    @ParameterizedTest

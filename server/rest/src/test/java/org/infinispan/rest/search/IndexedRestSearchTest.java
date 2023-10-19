@@ -47,7 +47,7 @@ public class IndexedRestSearchTest extends BaseRestSearchTest {
 
       RestResponse response = join(get("10", "application/json"));
 
-      Json person = Json.read(response.getBody());
+      Json person = Json.read(response.body());
       assertEquals("Surname", person.at("surname").asString());
    }
 

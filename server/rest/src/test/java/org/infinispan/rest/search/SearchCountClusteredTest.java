@@ -85,8 +85,8 @@ public class SearchCountClusteredTest extends MultiNodeRestTest {
                .set("sortableNotStoredField", "index_" + i % 20)
                .set("notIndexedField", str).toString();
          RestResponse response = await(indexedCache().put(String.valueOf(i), RestEntity.create(APPLICATION_JSON, value)));
-         assertEquals(204, response.getStatus());
-         assertTrue(response.getBody().isEmpty());
+         assertEquals(204, response.status());
+         assertTrue(response.body().isEmpty());
       });
 
       LongStream.range(0, NOT_INDEXED_ENTRIES).forEach(i -> {
@@ -94,8 +94,8 @@ public class SearchCountClusteredTest extends MultiNodeRestTest {
          Json json = Json.object().set("_type", "NotIndexedEntity").set("field1", value).set("field2", value);
          RestResponse response =
                await(nonIndexedCache().put(String.valueOf(i), RestEntity.create(APPLICATION_JSON, json.toString())));
-         assertEquals(204, response.getStatus());
-         assertTrue(response.getBody().isEmpty());
+         assertEquals(204, response.status());
+         assertTrue(response.body().isEmpty());
       });
    }
 
@@ -330,7 +330,7 @@ public class SearchCountClusteredTest extends MultiNodeRestTest {
 
    private void assertTotalAndPageSize(CompletionStage<RestResponse> response, int expectedHitCount, int pageSize) {
       RestResponse restResponse = await(response);
-      String body = restResponse.getBody();
+      String body = restResponse.body();
       Json responseDoc = Json.read(body);
       Json hitCount = responseDoc.at("hit_count");
       assertEquals(expectedHitCount, hitCount.asInteger());
@@ -355,7 +355,7 @@ public class SearchCountClusteredTest extends MultiNodeRestTest {
 
    private int getFieldAggregationValue(CompletionStage<RestResponse> response, String field) {
       RestResponse restResponse = await(response);
-      String body = restResponse.getBody();
+      String body = restResponse.body();
       return Json.read(body).at("hits").asJsonList().get(0).at("hit").at(field).asInteger();
    }
 

@@ -16,9 +16,9 @@ import java.util.stream.Collectors;
 
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.client.rest.configuration.ServerConfigurationBuilder;
-import org.infinispan.client.rest.impl.okhttp.StringRestEntityOkHttp;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -88,8 +88,8 @@ abstract class AbstractMultiClusterIT {
 
    protected void createCache(String cacheName, ConfigurationBuilder builder, RestClient client) {
       String cacheConfig = Common.cacheConfigToJson(cacheName, builder.build());
-      StringRestEntityOkHttp body = new StringRestEntityOkHttp(MediaType.APPLICATION_JSON, cacheConfig);
-      assertStatus(OK, client.cache(cacheName).createWithConfiguration(body));
+      RestEntity entity = RestEntity.create(MediaType.APPLICATION_JSON, cacheConfig);
+      assertStatus(OK, client.cache(cacheName).createWithConfiguration(entity));
    }
 
    protected KeyValuePair<String, String> getCredentials() {

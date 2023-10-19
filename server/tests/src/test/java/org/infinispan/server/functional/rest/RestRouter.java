@@ -5,7 +5,6 @@ import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.IOException;
 import java.util.function.Function;
 
 import org.infinispan.client.rest.RestClient;
@@ -24,7 +23,7 @@ public class RestRouter {
    public static InfinispanServerExtension SERVERS = ClusteredIT.SERVERS;
 
    @Test
-   public void testRestRouting() throws IOException {
+   public void testRestRouting() throws Exception {
       Function<String, RestClient> client = c -> SERVERS.rest()
             .withClientConfiguration(new RestClientConfigurationBuilder().contextPath(c))
             .get();

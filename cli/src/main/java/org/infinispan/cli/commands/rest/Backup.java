@@ -99,7 +99,7 @@ public class Backup extends CliCommand {
          return Flowable.timer(500, TimeUnit.MILLISECONDS, Schedulers.trampoline())
                .repeat(100)
                .flatMapSingle(Void -> Single.fromCompletionStage(client.cacheManager(container).getBackup(name, noContent)))
-               .takeUntil(rsp -> rsp.getStatus() != 202)
+               .takeUntil(rsp -> rsp.status() != 202)
                .lastOrErrorStage();
       }
 
@@ -168,14 +168,14 @@ public class Backup extends CliCommand {
    }
 
    private static CompletionStage<RestResponse> pollRestore(String restoreName, String container, RestClient c, RestResponse rsp) {
-      if (rsp.getStatus() != 202) {
+      if (rsp.status() != 202) {
          return CompletableFuture.completedFuture(rsp);
       }
       // Poll the restore progress every 500 milliseconds with a maximum of 100 attempts
       return Flowable.timer(500, TimeUnit.MILLISECONDS, Schedulers.trampoline())
             .repeat(100)
             .flatMapSingle(Void -> Single.fromCompletionStage(c.cacheManager(container).getRestore(restoreName)))
-            .takeUntil(r -> r.getStatus() != 202)
+            .takeUntil(r -> r.status() != 202)
             .lastOrErrorStage();
    }
 

@@ -56,6 +56,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.assertj.core.api.Assertions;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.client.rest.MultiPartRestEntity;
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestEntity;
@@ -108,16 +109,11 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import io.reactivex.rxjava3.core.Flowable;
-import okhttp3.internal.http2.StreamResetException;
 
 @Test(groups = "functional", testName = "rest.CacheResourceV2Test")
 public class CacheResourceV2Test extends AbstractRestResourceTest {
-
-   // Wild guess: an empty index shouldn't be more than this many bytes
-   private static final long MAX_EMPTY_INDEX_SIZE = 300L;
    // Wild guess: a non-empty index (populated with addData) should be more than this many bytes
    private static final long MIN_NON_EMPTY_INDEX_SIZE = 1000L;
-
    private static final String PERSISTENT_LOCATION = tmpDirectory(CacheResourceV2Test.class.getName());
 
    private static final String PROTO_SCHEMA =
@@ -133,6 +129,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
                "    required int32 value=1;         \n" +
                "    optional string description=2;  \n" +
                " }";
+   public static final String ACCEPT = "Accept";
 
    protected CacheMode cacheMode;
 
@@ -299,7 +296,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
       RestResponse namesResponse = join(client.caches());
       assertThat(namesResponse).isOk();
-      List<String> names = Json.read(namesResponse.getBody()).asJsonList().stream().map(Json::asString).collect(Collectors.toList());
+      List<String> names = Json.read(namesResponse.body()).asJsonList().stream().map(Json::asString).collect(Collectors.toList());
       assertTrue(names.contains(name));
 
       CompletionStage<RestResponse> putResponse = cacheClient.post("key", "value");
@@ -368,7 +365,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
       response = adminClient.cache("mutable").configuration();
       assertThat(response).isOk();
-      String configFromServer = join(response).getBody();
+      String configFromServer = join(response).body();
 
       assertTrue(configFromServer.contains("\"expiration\":{\"lifespan\":\"30000\"}"));
       assertTrue(configFromServer.contains("\"memory\":{\"max-count\":\"2000\""));
@@ -387,7 +384,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertThat(response).isOk();
       response = cacheClient.updateWithConfiguration(RestEntity.create(APPLICATION_YAML, cacheConfigAlter));
       assertThat(response).isBadRequest();
-      String body = join(response).getBody();
+      String body = join(response).body();
       assertThat(body).contains("ISPN000961: Incompatible attribute");
    }
 
@@ -398,7 +395,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       RestCacheClient cacheClient = createCache(adminClient, json, cacheName);
       CompletionStage<RestResponse> response = cacheClient.configurationAttributes(true);
       assertThat(response).isOk();
-      Json attributes = Json.read(join(response).getBody());
+      Json attributes = Json.read(join(response).body());
       assertEquals(14, attributes.asJsonMap().size());
       assertEquals("long", attributes.at("clustering.remote-timeout").at("type").asString());
       assertEquals(15000, attributes.at("clustering.remote-timeout").at("value").asLong());
@@ -456,7 +453,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
       response = cacheClient.configuration();
       assertThat(response).isOk();
-      String configFromServer = join(response).getBody();
+      String configFromServer = join(response).body();
 
       assertThat(configFromServer)
             .contains("\"indexed-entities\":[\"org.infinispan.Engineer\",\"org.infinispan.Developer\"]");
@@ -481,17 +478,17 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       String mediaList = "application/json,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
       response = adminClient.cache("cache1").configuration(mediaList);
       assertThat(response).isOk();
-      String cache1Cfg = join(response).getBody();
+      String cache1Cfg = join(response).body();
 
       response = adminClient.cache("cache2").configuration();
       assertThat(response).isOk();
-      String cache2Cfg = join(response).getBody();
+      String cache2Cfg = join(response).body();
 
       assertEquals(cache1Cfg, cache2Cfg.replace("cache2", "cache1"));
 
       response = adminClient.cache("cache1").configuration("application/xml");
       assertThat(response).isOk();
-      String cache1Xml = join(response).getBody();
+      String cache1Xml = join(response).body();
 
       ParserRegistry registry = new ParserRegistry();
       Configuration xmlConfig = registry.parse(cache1Xml).getCurrentConfigurationBuilder().build();
@@ -552,7 +549,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       response = cacheClient.stats();
       assertThat(response).isOk();
 
-      Json jsonNode = Json.read(join(response).getBody());
+      Json jsonNode = Json.read(join(response).body());
       assertEquals(jsonNode.at("current_number_of_entries").asInteger(), 2);
       assertEquals(jsonNode.at("stores").asInteger(), 2);
 
@@ -570,7 +567,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertThat(details).isOk();
 
       RestResponse response = join(details);
-      String body = response.getBody();
+      String body = response.body();
       assertThat(body).isNotBlank();
    }
 
@@ -590,7 +587,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       response = cacheClient.distribution();
       assertThat(response).isOk();
 
-      Json jsonNode = Json.read(join(response).getBody());
+      Json jsonNode = Json.read(join(response).body());
       assertTrue(jsonNode.isArray());
       List<Json> jsons = jsonNode.asJsonList();
 
@@ -612,7 +609,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
       response = cacheClient.distribution();
       assertThat(response).isOk();
-      jsonNode = Json.read(join(response).getBody());
+      jsonNode = Json.read(join(response).body());
 
       assertTrue(jsonNode.isArray());
       jsons = jsonNode.asJsonList();
@@ -646,7 +643,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
          assertThat(response).isOk();
 
          try (RestResponse restResponse = join(response)) {
-            Json jsonNode = Json.read(restResponse.getBody());
+            Json jsonNode = Json.read(restResponse.body());
             assertEquals((boolean) entry.getValue(), jsonNode.at("contains_key").asBoolean());
             assertTrue(jsonNode.at("owners").isArray());
 
@@ -686,7 +683,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    @Test
    public void testCacheFullDetail() {
       RestResponse response = join(adminClient.cache("proto").details());
-      Json document = Json.read(response.getBody());
+      Json document = Json.read(response.body());
       assertThat(response).isOk();
       assertThat(document.at("stats")).isNotNull();
       assertThat(document.at("size")).isNotNull();
@@ -711,7 +708,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       // non admins should have an empty config
       if (security) {
          response = join(client.cache("default").details());
-         document = Json.read(response.getBody());
+         document = Json.read(response.body());
          assertThat(response).isOk();
          assertThat(document.at("configuration")).isNull();
          assertThat(document.at("storage_type")).isNull();
@@ -720,7 +717,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       }
 
       response = join(client.cache("proto").details());
-      document = Json.read(response.getBody());
+      document = Json.read(response.body());
       assertThat(document.at("key_storage").asString()).isEqualTo("application/x-protostream");
       assertThat(document.at("value_storage").asString()).isEqualTo("application/x-protostream");
    }
@@ -825,7 +822,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
       assertThat(response).isOk();
 
-      return Json.read(response.getBody());
+      return Json.read(response.body());
    }
 
    @Test
@@ -834,7 +831,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
       assertThat(response).isOk();
 
-      List responseCacheNames = Json.read(join(response).getBody()).asList();
+      List responseCacheNames = Json.read(join(response).body()).asList();
       assertThat(responseCacheNames).containsExactlyElementsOf(cacheManagers.get(0).getCacheNames());
 
       assertThat(client.caches()).isOk();
@@ -885,7 +882,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       RestResponse response = queryCache(name);
       assertThat(response).isBadRequest();
 
-      Json json = Json.read(response.getBody());
+      Json json = Json.read(response.body());
       assertTrue(json.at("error").at("cause").toString().matches(".*ISPN028015.*"));
    }
 
@@ -924,10 +921,10 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       TestingUtil.replaceComponent(c, ClusterPublisherManager.class, spyCpm, true);
 
       if (protocol == HTTP_11) {
-         Exceptions.expectCompletionException(IOException.class, "unexpected end of stream on .*", client.cache("default").keys());
+         Exceptions.expectCompletionException(IOException.class, "HTTP/1.1 header parser received no bytes", client.cache("default").keys());
       } else {
          // OkHttp wraps the exception in a StreamResetException.
-         Exceptions.expectCompletionException(StreamResetException.class, "stream was reset: .*", client.cache("default").keys());
+         Exceptions.expectCompletionException(IOException.class, "Received RST_STREAM: Stream cancelled", client.cache("default").keys());
       }
       TestingUtil.replaceComponent(c, ClusterPublisherManager.class, cpm, true);
    }
@@ -950,10 +947,9 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       TestingUtil.replaceComponent(c, ClusterPublisherManager.class, spyCpm, true);
 
       if (protocol == HTTP_11) {
-         Exceptions.expectCompletionException(IOException.class, "unexpected end of stream on .*", client.cache("default").entries());
+         Exceptions.expectCompletionException(IOException.class, "HTTP/1.1 header parser received no bytes", client.cache("default").entries());
       } else {
-         // OkHttp wraps the exception in a StreamResetException.
-         Exceptions.expectCompletionException(StreamResetException.class, "stream was reset: .*", client.cache("default").entries());
+         Exceptions.expectCompletionException(IOException.class, "Received RST_STREAM: Stream cancelled", client.cache("default").entries());
       }
       TestingUtil.replaceComponent(c, ClusterPublisherManager.class, cpm, true);
    }
@@ -962,13 +958,13 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    public void testMultiByte() {
       putTextEntryInCache("default", "José", "Uberlândia");
       RestResponse response = join(client.cache("default").keys());
-      String body = response.getBody();
+      String body = response.body();
       Collection<Json> singleSet = Json.read(body).asJsonList();
       assertEquals(1, singleSet.size());
       assertTrue(singleSet.contains(Json.factory().string("José")));
 
       response = join(client.cache("default").entries());
-      body = response.getBody();
+      body = response.body();
       singleSet = Json.read(body).asJsonList();
       assertEquals(1, singleSet.size());
       Json entity = singleSet.stream().findFirst().orElseThrow();
@@ -981,12 +977,12 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    @Test
    public void testGetAllKeys() {
       RestResponse response = join(client.cache("default").keys());
-      Collection<?> emptyKeys = Json.read(response.getBody()).asJsonList();
+      Collection<?> emptyKeys = Json.read(response.body()).asJsonList();
       assertEquals(0, emptyKeys.size());
 
       putTextEntryInCache("default", "1", "value");
       response = join(client.cache("default").keys());
-      Collection<?> singleSet = Json.read(response.getBody()).asJsonList();
+      Collection<?> singleSet = Json.read(response.body()).asJsonList();
       assertEquals(1, singleSet.size());
 
       int entries = 10;
@@ -994,12 +990,12 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
          putTextEntryInCache("default", String.valueOf(i), "value");
       }
       response = join(client.cache("default").keys());
-      Set<?> keys = Json.read(response.getBody()).asJsonList().stream().map(Json::asInteger).collect(Collectors.toSet());
+      Set<?> keys = Json.read(response.body()).asJsonList().stream().map(Json::asInteger).collect(Collectors.toSet());
       assertEquals(entries, keys.size());
       assertTrue(IntStream.range(0, entries).allMatch(keys::contains));
 
       response = join(client.cache("default").keys(5));
-      Set<?> keysLimited = Json.read(response.getBody()).asJsonList().stream().map(Json::asInteger).collect(Collectors.toSet());
+      Set<?> keysLimited = Json.read(response.body()).asJsonList().stream().map(Json::asInteger).collect(Collectors.toSet());
       assertEquals(5, keysLimited.size());
    }
 
@@ -1022,13 +1018,13 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertThat(r).isOk();
 
       RestResponse response = join(client.cache(cacheName).keys());
-      Collection<?> emptyKeys = Json.read(response.getBody()).asJsonList();
+      Collection<?> emptyKeys = Json.read(response.body()).asJsonList();
       assertEquals(0, emptyKeys.size());
 
       // Test key with escape.
       putInCache(cacheName, "{\"text\": \"I'm right \\\\\"here\\\\\".\"}", APPLICATION_JSON_TYPE, value, APPLICATION_XML);
       response = join(client.cache(cacheName).keys());
-      Collection<?> singleSet = Json.read(response.getBody()).asJsonList();
+      Collection<?> singleSet = Json.read(response.body()).asJsonList();
       assertEquals(1, singleSet.size());
       join(client.cache(cacheName).clear());
 
@@ -1037,11 +1033,11 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
          putInCache(cacheName, String.format("{\"v\": %d}", i), APPLICATION_JSON_TYPE, value, APPLICATION_XML);
       }
       response = join(client.cache(cacheName).keys());
-      List<Json> keys = Json.read(response.getBody()).asJsonList();
+      List<Json> keys = Json.read(response.body()).asJsonList();
       assertEquals(entries, keys.size());
 
       response = join(client.cache(cacheName).keys(5));
-      List<?> keysLimited = Json.read(response.getBody()).asJsonList();
+      List<?> keysLimited = Json.read(response.body()).asJsonList();
       assertEquals(5, keysLimited.size());
    }
 
@@ -1053,21 +1049,21 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    @Test
    public void testStreamEntries() {
       RestResponse response = join(client.cache("default").entries());
-      Collection<?> emptyEntries = Json.read(response.getBody()).asJsonList();
+      Collection<?> emptyEntries = Json.read(response.body()).asJsonList();
       assertEquals(0, emptyEntries.size());
       putTextEntryInCache("default", "key_0", "value_0");
       response = join(client.cache("default").entries());
-      Collection<?> singleSet = Json.read(response.getBody()).asJsonList();
+      Collection<?> singleSet = Json.read(response.body()).asJsonList();
       assertEquals(1, singleSet.size());
       for (int i = 0; i < 20; i++) {
          putTextEntryInCache("default", "key_" + i, "value_" + i);
       }
       response = join(client.cache("default").entries());
-      List<Json> jsons = Json.read(response.getBody()).asJsonList();
+      List<Json> jsons = Json.read(response.body()).asJsonList();
       assertEquals(20, jsons.size());
 
       response = join(client.cache("default").entries(3));
-      jsons = Json.read(response.getBody()).asJsonList();
+      jsons = Json.read(response.body()).asJsonList();
       assertEquals(3, jsons.size());
       Json first = jsons.get(0);
       String entry = first.toPrettyString();
@@ -1083,22 +1079,22 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    @Test
    public void testStreamComplexProtobufEntries() {
       RestResponse response = join(client.cache("indexedCache").entries(-1, false));
-      Collection<?> emptyEntries = Json.read(response.getBody()).asJsonList();
+      Collection<?> emptyEntries = Json.read(response.body()).asJsonList();
       assertEquals(0, emptyEntries.size());
       insertEntity(3, "Another", 3, "Three");
       response = join(client.cache("indexedCache").entries(-1, true));
 
-      if (response.getStatus() != 200) {
-         Assertions.fail(response.getBody());
+      if (response.status() != 200) {
+         Assertions.fail(response.body());
       }
-      List<Json> jsons = Json.read(response.getBody()).asJsonList();
+      List<Json> jsons = Json.read(response.body()).asJsonList();
       assertThat(jsons).hasSize(1);
 
       response = join(client.cache("indexedCache").keys());
-      if (response.getStatus() != 200) {
-         Assertions.fail(response.getBody());
+      if (response.status() != 200) {
+         Assertions.fail(response.body());
       }
-      jsons = Json.read(response.getBody()).asJsonList();
+      jsons = Json.read(response.body()).asJsonList();
       assertThat(jsons).hasSize(1);
       assertThat(jsons).contains(Json.factory().string("3"));
    }
@@ -1120,7 +1116,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       Map<String, String> entries = entriesAsMap(response);
 
       // Obtain the negotiated media type of the entries
-      String contentTypeHeader = response.getHeader(ResponseHeader.VALUE_CONTENT_TYPE_HEADER.getValue());
+      String contentTypeHeader = response.header(ResponseHeader.VALUE_CONTENT_TYPE_HEADER.getValue());
 
       // Check entries are in the required format
       assertEquals(data.size(), entries.size());
@@ -1194,28 +1190,28 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
    private Map<String, String> entriesAsMap(RestResponse response) {
       assertThat(response).isOk();
-      List<Json> entries = Json.read(response.getBody()).asJsonList();
+      List<Json> entries = Json.read(response.body()).asJsonList();
       return entries.stream().collect(Collectors.toMap(j -> asString(j.at("key")), j -> asString(j.at("value"))));
    }
 
    @Test
    public void testStreamEntriesWithMetadata() {
       RestResponse response = join(client.cache("default").entries(-1, true));
-      Collection<?> emptyEntries = Json.read(response.getBody()).asJsonList();
+      Collection<?> emptyEntries = Json.read(response.body()).asJsonList();
       assertEquals(0, emptyEntries.size());
       putTextEntryInCache("default", "key_0", "value_0");
       response = join(client.cache("default").entries(-1, true));
-      Collection<?> singleSet = Json.read(response.getBody()).asJsonList();
+      Collection<?> singleSet = Json.read(response.body()).asJsonList();
       assertEquals(1, singleSet.size());
       for (int i = 0; i < 20; i++) {
          putTextEntryInCache("default", "key_" + i, "value_" + i);
       }
       response = join(client.cache("default").entries(-1, true));
-      List<Json> jsons = Json.read(response.getBody()).asJsonList();
+      List<Json> jsons = Json.read(response.body()).asJsonList();
       assertEquals(20, jsons.size());
 
       response = join(client.cache("default").entries(3, true));
-      jsons = Json.read(response.getBody()).asJsonList();
+      jsons = Json.read(response.body()).asJsonList();
       assertEquals(3, jsons.size());
       Json first = jsons.get(0);
       String entry = first.toPrettyString();
@@ -1233,7 +1229,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       RestEntity textValue = RestEntity.create(TEXT_PLAIN, "value1");
       join(client.cache("default").put("key1", TEXT_PLAIN_TYPE, textValue, 1000, 5000));
       RestResponse response = join(client.cache("default").entries(1, true));
-      List<Json> jsons = Json.read(response.getBody()).asJsonList();
+      List<Json> jsons = Json.read(response.body()).asJsonList();
 
       assertEquals(1, jsons.size());
       Json first = jsons.get(0);
@@ -1253,7 +1249,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       putStringValueInCache(cache, "sample.proto", PROTO_SCHEMA);
 
       RestResponse response = join(client.cache(PROTOBUF_METADATA_CACHE_NAME).keys());
-      String contentAsString = response.getBody();
+      String contentAsString = response.body();
       Collection<?> keys = Json.read(contentAsString).asJsonList();
       assertEquals(3, keys.size());
    }
@@ -1277,7 +1273,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       RestResponse response = join(cacheClient.entries(100, true));
       assertThat(response).isOk();
 
-      String body = response.getBody();
+      String body = response.body();
       Assert.assertTrue(body.contains("key-1"));
       Assert.assertTrue(body.contains("key-2"));
       Assert.assertTrue(body.contains("key-3"));
@@ -1341,7 +1337,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    private String getCacheConfig(String accept, String name) {
       RestResponse response = join(adminClient.cache(name).configuration(accept));
       assertThat(response).isOk();
-      return response.getBody();
+      return response.body();
    }
 
    @Test
@@ -1359,11 +1355,11 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
                   "</%s>", root, root
       );
 
-      CompletionStage<RestResponse> response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap("Accept", APPLICATION_JSON_TYPE), xml, APPLICATION_XML_TYPE);
+      CompletionStage<RestResponse> response = rawClient.post("/rest/v2/caches?action=convert", Map.of(ACCEPT, APPLICATION_JSON_TYPE), RestEntity.create(APPLICATION_XML, xml));
       assertThat(response).isOk();
       checkJSON(response, "cacheName", root);
 
-      response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap("Accept", APPLICATION_YAML_TYPE), xml, APPLICATION_XML_TYPE);
+      response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap(ACCEPT, APPLICATION_YAML_TYPE), RestEntity.create(APPLICATION_XML, xml));
       assertThat(response).isOk();
       checkYaml(response, "cacheName", root);
    }
@@ -1379,11 +1375,11 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
       String json = String.format("{\"%s\":{\"configuration\":\"parent\",\"mode\":\"SYNC\",\"memory\":{\"storage\":\"OBJECT\",\"max-count\":\"20\"}}}", root);
 
-      CompletionStage<RestResponse> response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap("Accept", APPLICATION_XML_TYPE), json, APPLICATION_JSON_TYPE);
+      CompletionStage<RestResponse> response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap(ACCEPT, APPLICATION_XML_TYPE), RestEntity.create(APPLICATION_JSON, json));
       assertThat(response).isOk();
       checkXML(response, root);
 
-      response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap("Accept", APPLICATION_YAML_TYPE), json, APPLICATION_JSON_TYPE);
+      response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap(ACCEPT, APPLICATION_YAML_TYPE), RestEntity.create(APPLICATION_JSON, json));
       assertThat(response).isOk();
       checkYaml(response, "", root);
    }
@@ -1404,11 +1400,11 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
             "    storage: 'OBJECT'\n" +
             "    maxCount: 20", root);
 
-      CompletionStage<RestResponse> response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap("Accept", APPLICATION_XML_TYPE), yaml, APPLICATION_YAML_TYPE);
+      CompletionStage<RestResponse> response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap(ACCEPT, APPLICATION_XML_TYPE), RestEntity.create(APPLICATION_YAML, yaml));
       assertThat(response).isOk();
       checkXML(response, root);
 
-      response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap("Accept", APPLICATION_JSON_TYPE), yaml, APPLICATION_YAML_TYPE);
+      response = rawClient.post("/rest/v2/caches?action=convert", Collections.singletonMap(ACCEPT, APPLICATION_JSON_TYPE), RestEntity.create(APPLICATION_YAML, yaml));
       assertThat(response).isOk();
       checkJSON(response, "", root);
    }
@@ -1417,7 +1413,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    public void testBrokenConfiguration() throws IOException {
       for (String name : Arrays.asList("broken.xml", "broken.yaml", "broken.json")) {
          CompletionStage<RestResponse> response = createCacheFromResource(name);
-         String body = join(response).getBody();
+         String body = join(response).body();
          assertThat(body).contains("ISPN000327: Cannot find a parser for element 'error' in namespace '' at [");
       }
    }
@@ -1433,7 +1429,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    }
 
    private void checkJSON(CompletionStage<RestResponse> response, String name, String rootElement) {
-      Json jsonNode = Json.read(join(response).getBody());
+      Json jsonNode = Json.read(join(response).body());
       if (!name.isBlank()) {
          jsonNode = jsonNode.at(name);
       }
@@ -1445,7 +1441,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    }
 
    private void checkXML(CompletionStage<RestResponse> response, String rootElement) throws Exception {
-      String xml = join(response).getBody();
+      String xml = join(response).body();
       Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
       Element root = doc.getDocumentElement();
       assertEquals(NamingStrategy.KEBAB_CASE.convert(rootElement), root.getTagName());
@@ -1460,7 +1456,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
    private void checkYaml(CompletionStage<RestResponse> response, String name, String root) {
       String rootElement = NamingStrategy.CAMEL_CASE.convert(root);
-      try (YamlConfigurationReader yaml = new YamlConfigurationReader(new StringReader(join(response).getBody()), new URLConfigurationResourceResolver(null), new Properties(), PropertyReplacer.DEFAULT, NamingStrategy.KEBAB_CASE)) {
+      try (YamlConfigurationReader yaml = new YamlConfigurationReader(new StringReader(join(response).body()), new URLConfigurationResourceResolver(null), new Properties(), PropertyReplacer.DEFAULT, NamingStrategy.KEBAB_CASE)) {
          Map<String, Object> config = yaml.asMap();
          assertEquals("parent", getYamlProperty(config, name, rootElement, "configuration"));
          assertEquals("SYNC", getYamlProperty(config, name, rootElement, "mode"));
@@ -1527,7 +1523,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       join(cacheClient.clear());
 
       RestResponse response = join(cacheClient.indexMetamodel());
-      Json indexMetamodel = Json.read(response.getBody());
+      Json indexMetamodel = Json.read(response.body());
 
       List<Json> indexes = indexMetamodel.asJsonList();
       assertThat(indexes).hasSize(2);
@@ -1567,7 +1563,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       RestResponse response = join(cacheClient.clearSearchStats());
       assertThat(response).isOk();
       response = join(cacheClient.searchStats());
-      Json statJson = Json.read(response.getBody());
+      Json statJson = Json.read(response.body());
       assertIndexStatsEmpty(statJson.at("index"));
       assertAllQueryStatsEmpty(statJson.at("query"));
 
@@ -1585,7 +1581,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertThat(response).isOk();
 
       // All stats should be zero in the absence of query
-      statJson = Json.read(response.getBody());
+      statJson = Json.read(response.body());
       assertAllQueryStatsEmpty(statJson.at("query"));
 
       // Execute some indexed queries
@@ -1593,12 +1589,12 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       IntStream.range(0, 3).forEach(i -> {
          RestResponse response1 = join(cacheClient.query(indexedQuery));
          assertThat(response1).isOk();
-         Json queryJson = Json.read(response1.getBody());
+         Json queryJson = Json.read(response1.body());
          assertEquals(2, queryJson.at("hit_count").asInteger());
          assertEquals(true, queryJson.at("hit_count_exact").asBoolean());
       });
       response = join(cacheClient.searchStats());
-      statJson = Json.read(response.getBody());
+      statJson = Json.read(response.body());
 
       // Hybrid and non-indexed queries stats should be empty
       assertEquals(0, statJson.at("query").at("hybrid").at("count").asLong());
@@ -1620,11 +1616,11 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       // Execute a hybrid query
       String hybrid = "FROM Entity WHERE value > 5 AND description = 'One'";
       response = join(cacheClient.query(hybrid));
-      Json queryJson = Json.read(response.getBody());
+      Json queryJson = Json.read(response.body());
       assertEquals(0, queryJson.at("hit_count").asInteger());
       assertEquals(true, queryJson.at("hit_count_exact").asBoolean());
       response = join(cacheClient.searchStats());
-      statJson = Json.read(response.getBody());
+      statJson = Json.read(response.body());
 
       // Hybrid queries should be recorded
       assertEquals(1, statJson.at("query").at("hybrid").at("count").asLong());
@@ -1633,7 +1629,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
       // Check index stats
       response = join(cacheClient.searchStats());
-      statJson = Json.read(response.getBody());
+      statJson = Json.read(response.body());
       assertEquals(3, statJson.at("index").at("types").at("Entity").at("count").asInteger());
       assertEquals(2, statJson.at("index").at("types").at("Another").at("count").asInteger());
       assertThat(statJson.at("index").at("types").at("Entity").at("size").asLong())
@@ -1722,8 +1718,8 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    @Test
    public void testCacheListener() throws InterruptedException, IOException {
       SSEListener sseListener = new SSEListener();
-      Closeable listen = client.raw().listen("/rest/v2/caches/default?action=listen", Collections.singletonMap("Accept", "text/plain"), sseListener);
-      assertTrue(sseListener.openLatch.await(10, TimeUnit.SECONDS));
+      Closeable listen = client.raw().listen("/rest/v2/caches/default?action=listen", Collections.singletonMap(ACCEPT, TEXT_PLAIN_TYPE), sseListener);
+      assertTrue(sseListener.await(10, TimeUnit.SECONDS));
       putTextEntryInCache("default", "AKey", "AValue");
       sseListener.expectEvent("cache-entry-created", "AKey");
       removeTextEntryFromCache("default", "AKey");
@@ -1763,7 +1759,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       eventuallyEquals("Availability status not updated!", "DEGRADED_MODE", () -> {
          RestResponse r = join(cacheClient.getAvailability());
          ResponseAssertion.assertThat(r).isOk();
-         return r.getBody();
+         return r.body();
       });
 
       // Ensure that the endpoints can be utilised with internal caches
@@ -1792,39 +1788,39 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       String json30 = "{\"distributed-cache\":{\"memory\":{\"storage\":\"OBJECT\",\"max-count\":\"30\"}}}";
       String jsonrepl = "{\"replicated-cache\":{\"memory\":{\"storage\":\"OBJECT\",\"max-count\":\"30\"}}}";
 
-      Map<String, List<String>> form = new HashMap<>();
-      form.put("one", Collections.singletonList(xml));
-      form.put("two", Collections.singletonList(json20));
+      MultiPartRestEntity multiPart = RestEntity.multiPart();
+      multiPart.addPart("one", xml);
+      multiPart.addPart("two", json20);
 
-      CompletionStage<RestResponse> response = rawClient.postMultipartForm("/rest/v2/caches?action=compare", Collections.emptyMap(), form);
+      CompletionStage<RestResponse> response = rawClient.post("/rest/v2/caches?action=compare", multiPart);
       assertThat(response).isOk();
 
-      form = new HashMap<>();
-      form.put("one", Collections.singletonList(xml));
-      form.put("two", Collections.singletonList(json30));
+      multiPart = RestEntity.multiPart();
+      multiPart.addPart("one", xml);
+      multiPart.addPart("two", json30);
 
-      response = rawClient.postMultipartForm("/rest/v2/caches?action=compare", Collections.emptyMap(), form);
+      response = rawClient.post("/rest/v2/caches?action=compare", multiPart);
       assertThat(response).isConflicted();
 
-      response = rawClient.postMultipartForm("/rest/v2/caches?action=compare&ignoreMutable=true", Collections.emptyMap(), form);
+      response = rawClient.post("/rest/v2/caches?action=compare&ignoreMutable=true", multiPart);
       assertThat(response).isOk();
 
-      form = new HashMap<>();
-      form.put("one", Collections.singletonList(xml));
-      form.put("two", Collections.singletonList(jsonrepl));
+      multiPart = RestEntity.multiPart();
+      multiPart.addPart("one", xml);
+      multiPart.addPart("two", jsonrepl);
 
-      response = rawClient.postMultipartForm("/rest/v2/caches?action=compare&ignoreMutable=true", Collections.emptyMap(), form);
+      response = rawClient.post("/rest/v2/caches?action=compare&ignoreMutable=true", Collections.emptyMap(), multiPart);
       assertThat(response).isConflicted();
 
-      form = new HashMap<>();
-      form.put("one", Collections.singletonList("{\"local-cache\":{\"statistics\":true,\"encoding\":{\"key\": {\"media-type\":\"text/plain\"} ,\"value\":{\"media-type\":\"text/plain\"}},\"memory\":{\"max-count\":\"50\"}}}"));
-      form.put("two", Collections.singletonList("{\"local-cache\":{\"statistics\":true,\"encoding\":{\"key\":{\"media-type\":\"application/x-protostream\"},\"value\":{\"media-type\":\"application/x-protostream\"}},\"memory\":{\"max-count\":\"50\"}}}"));
-      response = rawClient.postMultipartForm("/rest/v2/caches?action=compare&ignoreMutable=true", Collections.emptyMap(), form);
+      multiPart = RestEntity.multiPart();
+      multiPart.addPart("one", "{\"local-cache\":{\"statistics\":true,\"encoding\":{\"key\": {\"media-type\":\"text/plain\"} ,\"value\":{\"media-type\":\"text/plain\"}},\"memory\":{\"max-count\":\"50\"}}}");
+      multiPart.addPart("two", "{\"local-cache\":{\"statistics\":true,\"encoding\":{\"key\":{\"media-type\":\"application/x-protostream\"},\"value\":{\"media-type\":\"application/x-protostream\"}},\"memory\":{\"max-count\":\"50\"}}}");
+      response = rawClient.post("/rest/v2/caches?action=compare&ignoreMutable=true", Collections.emptyMap(), multiPart);
       assertThat(response).isConflicted();
       assertEquals("ISPN000963: Invalid configuration in 'local-cache'\n" +
                   "    ISPN000961: Incompatible attribute 'local-cache.encoding.key.media-type' existing value='text/plain', new value='application/x-protostream'\n" +
                   "    ISPN000961: Incompatible attribute 'local-cache.encoding.value.media-type' existing value='text/plain', new value='application/x-protostream'",
-            join(response).getBody());
+            join(response).body());
    }
 
    @Test
@@ -1832,7 +1828,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       if (security) {
          RestResponse response = join(adminClient.cachesByRole("ADMIN"));
          ResponseAssertion.assertThat(response).isOk();
-         String json = response.getBody();
+         String json = response.body();
          Json jsonNode = Json.read(json);
          assertThat(jsonNode.at("secured").asList()).containsExactlyInAnyOrder("secured-simple-text");
          assertThat(jsonNode.at("non-secured").asList()).containsExactlyInAnyOrder("default",
@@ -1842,7 +1838,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
                "denyReadWritesCache",
                "defaultcache");
          response = join(adminClient.cachesByRole("USER"));
-         json = response.getBody();
+         json = response.body();
          jsonNode = Json.read(json);
          assertThat(jsonNode.at("secured").asList()).isEmpty();
          assertThat(jsonNode.at("non-secured").asList()).containsExactlyInAnyOrder("default",
@@ -1892,7 +1888,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
    private int checkCache(String name) {
       CompletionStage<RestResponse> response = client.cache(name).exists();
-      return join(response).getStatus();
+      return join(response).status();
    }
 
    private void registerSchema(String name, String schema) {
@@ -1929,6 +1925,6 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       String query = "FROM Entity WHERE value = " + value;
       RestResponse response = join(client.cache("indexedCache").query(query));
       assertThat(response).isOk();
-      assertEquals(present, response.getBody().contains(String.valueOf(value)));
+      assertEquals(present, response.body().contains(String.valueOf(value)));
    }
 }

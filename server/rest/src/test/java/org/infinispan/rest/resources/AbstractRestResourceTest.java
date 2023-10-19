@@ -199,7 +199,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
       Map<String, String> headers = new HashMap<>();
       if (keyContentType != null) headers.put(KEY_CONTENT_TYPE_HEADER.getValue(), contentType);
 
-      CompletionStage<RestResponse> response = client.raw().putValue(url, headers, value, contentType);
+      CompletionStage<RestResponse> response = client.raw().put(url, headers, RestEntity.create(MediaType.fromString(contentType), value));
 
       ResponseAssertion.assertThat(response).isOk();
    }
@@ -286,11 +286,11 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
 
    protected void checkBrowserHeaders(RestResponse response) {
       if (browser) {
-         assertEquals("sameorigin", response.getHeader("X-Frame-Options"));
-         assertEquals("1; mode=block", response.getHeader("X-XSS-Protection"));
-         assertEquals("nosniff", response.getHeader("X-Content-Type-Options"));
+         assertEquals("sameorigin", response.header("X-Frame-Options"));
+         assertEquals("1; mode=block", response.header("X-XSS-Protection"));
+         assertEquals("nosniff", response.header("X-Content-Type-Options"));
          if (ssl) {
-            assertEquals("max-age=31536000 ; includeSubDomains", response.getHeader("Strict-Transport-Security"));
+            assertEquals("max-age=31536000 ; includeSubDomains", response.header("Strict-Transport-Security"));
          }
       }
    }

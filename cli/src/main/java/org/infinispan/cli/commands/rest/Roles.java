@@ -55,7 +55,7 @@ public class Roles extends CliCommand {
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
-         return client.security().listRoles(principal);
+         return principal == null ? client.security().listRoles() : client.security().listRoles(principal);
       }
    }
 

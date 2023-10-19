@@ -1,24 +1,23 @@
-package org.infinispan.client.rest.impl.okhttp;
+package org.infinispan.client.rest.impl.jdk;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OPENMETRICS_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.client.rest.RestMetricsClient;
 import org.infinispan.client.rest.RestResponse;
 
-import okhttp3.Request;
+/**
+ * @since 14.0
+ **/
+public class RestMetricsClientJDK implements RestMetricsClient {
+   private final RestRawClientJDK client;
+   private final String path = "/metrics";
 
-public class RestMetricsClientOkHttp implements RestMetricsClient {
-
-   private final RestClientOkHttp client;
-
-   private final String baseMetricsURL;
-
-   RestMetricsClientOkHttp(RestClientOkHttp client) {
+   RestMetricsClientJDK(RestRawClientJDK client) {
       this.client = client;
-      this.baseMetricsURL = String.format("%s/metrics", client.getBaseURL());
    }
 
    @Override
@@ -37,14 +36,10 @@ public class RestMetricsClientOkHttp implements RestMetricsClient {
    }
 
    private CompletionStage<RestResponse> metricsGet(boolean openMetricsFormat) {
-      Request.Builder builder = new Request.Builder()
-            .addHeader("ACCEPT", openMetricsFormat ? APPLICATION_OPENMETRICS_TYPE : TEXT_PLAIN_TYPE);
-      return client.execute(builder, baseMetricsURL);
+      return client.get(path, Map.of(RestClientJDK.ACCEPT, openMetricsFormat ? APPLICATION_OPENMETRICS_TYPE : TEXT_PLAIN_TYPE));
    }
 
    private CompletionStage<RestResponse> metricsOptions() {
-      Request.Builder builder = new Request.Builder()
-            .method("OPTIONS", null);
-      return client.execute(builder, baseMetricsURL);
+      return client.options(path);
    }
 }

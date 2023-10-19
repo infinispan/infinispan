@@ -103,7 +103,7 @@ public class XSiteRestMetricsOperations {
       assertSiteStatusMetrics(metricsClient, statusMetricName, 1);
 
       try (RestResponse response = sync(client.cacheManager("default").takeOffline(NYC))) {
-         assertEquals(200, response.getStatus());
+         assertEquals(200, response.status());
       }
 
       assertSiteStatusMetrics(metricsClient, statusMetricName, 0);

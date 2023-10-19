@@ -1,10 +1,8 @@
 package org.infinispan.rest.resources;
 
-import org.infinispan.client.rest.RestEventListener;
-import org.infinispan.client.rest.RestResponse;
-import org.infinispan.util.KeyValuePair;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,9 +12,11 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.AssertJUnit.assertEquals;
+import org.infinispan.client.rest.RestEventListener;
+import org.infinispan.client.rest.RestResponseInfo;
+import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -27,12 +27,19 @@ public class SSEListener implements RestEventListener {
    private static final Log log = LogFactory.getLog(SSEListener.class);
 
    BlockingDeque<KeyValuePair<String, String>> events = new LinkedBlockingDeque<>();
-   CountDownLatch openLatch = new CountDownLatch(1);
+   private final CountDownLatch openLatch;
+
+   public SSEListener() {
+      this.openLatch = new CountDownLatch(1);
+   }
+
 
    @Override
-   public void onOpen(RestResponse response) {
+   public void onOpen(RestResponseInfo response) {
       log.tracef("open");
-      openLatch.countDown();
+      if (response.status() < 300) {
+         openLatch.countDown();
+      }
    }
 
    @Override

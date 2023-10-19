@@ -135,7 +135,7 @@ public class MultiResourceTest extends AbstractRestResourceTest {
             eventually(() -> {
                RestResponse r = join(counterClient.get());
                ResponseAssertion.assertThat(r).isOk();
-               long value = Long.parseLong(r.getBody());
+               long value = Long.parseLong(r.body());
                return value == 2;
             });
             return true;
@@ -186,7 +186,7 @@ public class MultiResourceTest extends AbstractRestResourceTest {
    private String getValue(String cacheName, String key) {
       RestResponse response = join(client.cache(cacheName).get(key));
       ResponseAssertion.assertThat(response).isOk();
-      return response.getBody();
+      return response.body();
    }
 
    private void changeValue(String cacheName, String key, String value) {
@@ -199,7 +199,7 @@ public class MultiResourceTest extends AbstractRestResourceTest {
       RestResponse response = join(schemas.put(name, value));
       ResponseAssertion.assertThat(response).isOk();
       ObjectMapper objectMapper = new ObjectMapper();
-      JsonNode jsonNode = objectMapper.readTree(response.getBody());
+      JsonNode jsonNode = objectMapper.readTree(response.body());
       assertEquals("null", jsonNode.get("error").asText());
    }
 
@@ -207,7 +207,7 @@ public class MultiResourceTest extends AbstractRestResourceTest {
       RestSchemaClient schemas = client.schemas();
       RestResponse response = join(schemas.get(name));
       ResponseAssertion.assertThat(response).isOk();
-      return response.getBody();
+      return response.body();
    }
 
    private void createCounters(String... names) {

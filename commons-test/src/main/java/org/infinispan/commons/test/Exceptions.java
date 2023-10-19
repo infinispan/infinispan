@@ -311,6 +311,9 @@ public class Exceptions {
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
          throw new RuntimeException(e);
+      } catch (ExecutionException e) {
+         Throwable cause = e.getCause();
+         throw (cause instanceof RuntimeException) ? (RuntimeException) cause : new RuntimeException(cause);
       } catch (RuntimeException e) {
          throw e;
       } catch (Throwable t) {

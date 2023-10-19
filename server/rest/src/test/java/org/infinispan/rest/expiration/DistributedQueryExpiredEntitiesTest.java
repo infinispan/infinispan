@@ -94,7 +94,7 @@ public class DistributedQueryExpiredEntitiesTest extends MultipleCacheManagersTe
       response = cacheClient.query("from Game g where g.description : 'enlightenment'", 5, 0);
       assertThat(response).isOk();
 
-      Json body = Json.read(response.toCompletableFuture().get().getBody());
+      Json body = Json.read(response.toCompletableFuture().get().body());
       List<?> hits = (List<?>) body.at("hits").getValue();
       Assertions.assertThat(hits).isNotEmpty();
 
@@ -103,7 +103,7 @@ public class DistributedQueryExpiredEntitiesTest extends MultipleCacheManagersTe
       response = cacheClient.query("from Game g where g.description : 'enlightenment'", 5, 0);
       assertThat(response).isOk();
 
-      body = Json.read(response.toCompletableFuture().get().getBody());
+      body = Json.read(response.toCompletableFuture().get().body());
       hits = (List<?>) body.at("hits").getValue();
       Assertions.assertThat(hits).isEmpty();
    }

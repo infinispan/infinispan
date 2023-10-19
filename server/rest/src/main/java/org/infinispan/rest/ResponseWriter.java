@@ -67,9 +67,9 @@ public enum ResponseWriter {
             // The file is closed by the ChunkedWriteHandler
             RandomAccessFile randomAccessFile = new RandomAccessFile((File) response.getEntity(), "r");
             HttpResponse res = response.getResponse();
-            HttpUtil.setContentLength(res, randomAccessFile.length());
             log(ctx, request, res);
-            response.getResponse().headers().add(ResponseHeader.TRANSFER_ENCODING.getValue(), "chunked");
+            res.headers().add(ResponseHeader.TRANSFER_ENCODING.getValue(), HttpHeaderValues.CHUNKED);
+            res.headers().remove(ResponseHeader.CONTENT_LENGTH_HEADER.getValue());
             ctx.write(res);
             ctx.writeAndFlush(new HttpChunkedInput(new ChunkedFile(randomAccessFile, 0, randomAccessFile.length(), 8192)), ctx.newProgressivePromise());
          } catch (IOException e) {
@@ -82,6 +82,7 @@ public enum ResponseWriter {
       void writeResponse(ChannelHandlerContext ctx, FullHttpRequest request, NettyRestResponse response) {
          HttpResponse res = response.getResponse();
          res.headers().set(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED);
+         res.headers().remove(ResponseHeader.CONTENT_LENGTH_HEADER.getValue());
          res.headers().set(CONNECTION, KEEP_ALIVE);
          log(ctx, request, res);
          ctx.write(res);
@@ -95,6 +96,7 @@ public enum ResponseWriter {
          HttpResponse res = response.getResponse();
          res.headers().set(CACHE_CONTROL, NO_CACHE);
          res.headers().set(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED);
+         res.headers().remove(ResponseHeader.CONTENT_LENGTH_HEADER.getValue());
          res.headers().set(CONNECTION, KEEP_ALIVE);
          log(ctx, request, res);
          ctx.writeAndFlush(res).addListener(v -> {

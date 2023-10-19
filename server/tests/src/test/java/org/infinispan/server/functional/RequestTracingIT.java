@@ -1,8 +1,12 @@
 package org.infinispan.server.functional;
 
-import static org.infinispan.server.test.core.Containers.ipAddress;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.infinispan.server.test.core.Containers.ipAddress;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -11,20 +15,16 @@ import java.util.stream.Collectors;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.test.Eventually;
-import org.infinispan.telemetry.SpanCategory;
 import org.infinispan.server.test.core.InfinispanServerDriver;
 import org.infinispan.server.test.core.InfinispanServerListener;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
+import org.infinispan.telemetry.SpanCategory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.testcontainers.containers.GenericContainer;
-
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 
 /**
  * Test OpenTelemetry tracing integration with the Jaeger client
@@ -68,31 +68,28 @@ public class RequestTracingIT {
       for (int i = 0; i < NUM_KEYS; i++) {
          remoteCache.put("key" + i, "value");
       }
-
       String cacheName = remoteCache.getName();
-
-      OkHttpClient httpClient = new OkHttpClient();
+      HttpClient client = HttpClient.newHttpClient();
       String queryUrl = String.format("http://%s:%s/api/traces?service=%s",
-                                      ipAddress(JAEGER),
-                                      JAEGER_QUERY_PORT,
-                                      SERVICE_NAME);
+            ipAddress(JAEGER),
+            JAEGER_QUERY_PORT,
+            SERVICE_NAME);
 
       AtomicReference<List<Json>> returnedTraces = new AtomicReference<>();
       Eventually.eventually(() -> {
-         try (Response response = httpClient.newCall(new Request.Builder().url(queryUrl).build()).execute()) {
-            if (response.body() == null) {
-               return false;
-            }
-
-            Json json = Json.read(response.body().string());
-            if (!json.has("data")) {
-               return false;
-            }
-
-            List<Json> traces = json.at("data").asJsonList();
-            returnedTraces.set(traces);
-            return !traces.isEmpty();
+         HttpResponse<String> response = client.send(HttpRequest.newBuilder().uri(URI.create(queryUrl)).build(), HttpResponse.BodyHandlers.ofString());
+         if (response.body() == null) {
+            return false;
          }
+
+         Json json = Json.read(response.body());
+         if (!json.has("data")) {
+            return false;
+         }
+
+         List<Json> traces = json.at("data").asJsonList();
+         returnedTraces.set(traces);
+         return !traces.isEmpty();
       });
 
       Map<String, Json> span = returnedTraces.get().get(0).asJsonMap().get("spans").asJsonList().get(0).asJsonMap();

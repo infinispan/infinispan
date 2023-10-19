@@ -85,15 +85,15 @@ public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDri
          future = restClient.cache(name).createWithTemplate("org.infinispan." + Objects.requireNonNullElse(mode, CacheMode.DIST_SYNC).name(), flags.toArray(new CacheContainerAdmin.AdminFlag[0]));
       }
       try (RestResponse response = Exceptions.unchecked(() -> future.toCompletableFuture().get(TIMEOUT, TimeUnit.SECONDS))) {
-         if (response.getStatus() != 200) {
-            switch (response.getStatus()) {
+         if (response.status() != 200) {
+            switch (response.status()) {
                case 400:
-                  throw new IllegalArgumentException("Bad request while attempting to obtain rest client: " + response.getStatus());
+                  throw new IllegalArgumentException("Bad request while attempting to obtain rest client: " + response.status());
                case 401:
                case 403:
-                  throw new SecurityException("Authentication error while attempting to obtain rest client = " + response.getStatus());
+                  throw new SecurityException("Authentication error while attempting to obtain rest client = " + response.status());
                default:
-                  throw new RuntimeException("Could not obtain rest client = " + response.getStatus());
+                  throw new RuntimeException("Could not obtain rest client = " + response.status());
             }
          } else {
             // If the request succeeded without authn but we were expecting to authenticate, it's an error

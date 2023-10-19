@@ -1,5 +1,6 @@
 package org.infinispan.rest.search;
 
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.query.remote.json.JSONConstants.HIT;
 import static org.infinispan.query.remote.json.JSONConstants.HIT_COUNT;
@@ -12,6 +13,7 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -28,7 +30,6 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
-import org.infinispan.client.rest.impl.okhttp.StringRestEntityOkHttp;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.test.TestResourceTracker;
@@ -153,13 +154,13 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       String wrongQuery = "from Whatever";
       String path = getPath();
       if (method == POST) {
-         response = client.raw().post(path, "{ \"query\": \"" + wrongQuery + "\"}", APPLICATION_JSON_TYPE);
+         response = client.raw().post(path, RestEntity.create(APPLICATION_JSON, "{ \"query\": \"" + wrongQuery + "\"}"));
       } else {
-         String getURL = path.concat("&query=").concat(URLEncoder.encode(wrongQuery, "UTF-8"));
+         String getURL = path.concat("&query=").concat(URLEncoder.encode(wrongQuery, StandardCharsets.UTF_8));
          response = client.raw().get(getURL);
       }
       ResponseAssertion.assertThat(response).isBadRequest();
-      String contentAsString = join(response).getBody();
+      String contentAsString = join(response).body();
 
       assertTrue(contentAsString.contains("Unknown entity name") ||
             contentAsString.contains("Unknown type name"), contentAsString);
@@ -265,7 +266,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       }
 
       ResponseAssertion.assertThat(response).isBadRequest();
-      String contentAsString = join(response).getBody();
+      String contentAsString = join(response).body();
       Json jsonNode = Json.read(contentAsString);
 
       assertTrue(jsonNode.at("error").at("message").asString().contains("Invalid search request"));
@@ -287,7 +288,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       ResponseAssertion.assertThat(fromBrowser).isOk();
       ResponseAssertion.assertThat(fromBrowser).hasContentType(APPLICATION_JSON_TYPE);
 
-      Json person = Json.read(fromBrowser.getBody());
+      Json person = Json.read(fromBrowser.body());
       assertEquals(person.at("id").asInteger(), 2);
    }
 
@@ -351,7 +352,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
          ResponseAssertion.assertThat(response).isBadRequest();
       } else {
          ResponseAssertion.assertThat(response).isOk();
-         Json stats = Json.read(response.getBody());
+         Json stats = Json.read(response.body());
          assertTrue(stats.at("search_query_execution_count").asLong() >= 0);
          assertTrue(stats.at("search_query_total_time").asLong() >= 0);
          assertTrue(stats.at("search_query_execution_max_time").asLong() >= 0);
@@ -364,7 +365,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
          RestResponse clearResponse = join(cacheClient.clearQueryStats());
          response = join(cacheClient.queryStats());
-         stats = Json.read(response.getBody());
+         stats = Json.read(response.body());
          ResponseAssertion.assertThat(clearResponse).isOk();
          assertEquals(stats.at("search_query_execution_count").asLong(), 0);
          assertEquals(stats.at("search_query_execution_max_time").asLong(), 0);
@@ -379,7 +380,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
          ResponseAssertion.assertThat(response).isBadRequest();
       } else {
          ResponseAssertion.assertThat(response).isOk();
-         Json stats = Json.read(response.getBody());
+         Json stats = Json.read(response.body());
          Json indexClassNames = stats.at("indexed_class_names");
 
          String indexName = "org.infinispan.rest.search.entity.Person";
@@ -397,7 +398,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
       int sum = clients.stream().map(cli -> {
          RestResponse queryResponse = join(cli.cache(cacheName()).query("FROM org.infinispan.rest.search.entity.Person", true));
-         return Json.read(queryResponse.getBody()).at(HIT_COUNT).asInteger();
+         return Json.read(queryResponse.body()).at(HIT_COUNT).asInteger();
       }).mapToInt(value -> value).sum();
 
       int expected = ENTRIES;
@@ -465,9 +466,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
    @AfterClass(alwaysRun = true)
    public void tearDown() throws Exception {
-      for (RestClient client : clients) {
-         client.close();
-      }
+      clients.forEach(Util::close);
       restServers.forEach(RestServerHelper::stop);
    }
 
@@ -500,7 +499,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    }
 
    protected void write(int id, String contents, Method method, MediaType contentType) {
-      RestEntity entity = new StringRestEntityOkHttp(contentType, contents);
+      RestEntity entity = RestEntity.create(contentType, contents);
       CompletionStage<RestResponse> response;
       if (method.equals(POST)) {
          response = client.cache(cacheName()).post(String.valueOf(id), entity);
@@ -561,7 +560,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
          queryReq.set("query", q);
          queryReq.set("offset", offset);
          queryReq.set("max_results", maxResults);
-         return client.raw().post(path, queryReq.toString(), APPLICATION_JSON_TYPE);
+         return client.raw().post(path, RestEntity.create(APPLICATION_JSON, queryReq.toString()));
       }
       String queryReq = path + "&query=" + URLEncoder.encode(q, "UTF-8") +
             "&offset=" + offset +
@@ -572,7 +571,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    private Json query(String q, Method method, int offset, int maxResults) throws Exception {
       CompletionStage<RestResponse> response = executeQueryRequest(method, q, offset, maxResults);
       ResponseAssertion.assertThat(response).isOk();
-      String contentAsString = join(response).getBody();
+      String contentAsString = join(response).body();
       return Json.read(contentAsString);
    }
 

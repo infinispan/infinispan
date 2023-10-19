@@ -98,7 +98,7 @@ public final class Http2Test extends AbstractInfinispanTest {
 
       RestEntity value = RestEntity.create(MediaType.APPLICATION_OCTET_STREAM, "test".getBytes(CharsetUtil.UTF_8));
       response = client.cache("defaultcache").put("test", value);
-      Assertions.assertThat(join(response).getStatus()).isEqualTo(204);
+      Assertions.assertThat(join(response).status()).isEqualTo(204);
 
       Assertions.assertThat(restServer.getCacheManager().getCache().size()).isEqualTo(1);
    }
@@ -117,7 +117,7 @@ public final class Http2Test extends AbstractInfinispanTest {
       RestEntity value = RestEntity.create(MediaType.APPLICATION_OCTET_STREAM, "test".getBytes(CharsetUtil.UTF_8));
       response = client.cache("defaultcache").post("test", value);
 
-      Assertions.assertThat(join(response).getStatus()).isEqualTo(204);
+      Assertions.assertThat(join(response).status()).isEqualTo(204);
       Assertions.assertThat(restServer.getCacheManager().getCache().size()).isEqualTo(1);
    }
 

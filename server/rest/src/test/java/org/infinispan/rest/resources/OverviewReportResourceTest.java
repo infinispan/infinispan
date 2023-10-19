@@ -25,7 +25,7 @@ public class OverviewReportResourceTest extends AbstractRestResourceTest {
    public void overviewReport() {
       CompletionStage<RestResponse> response = adminClient.server().overviewReport();
       ResponseAssertion.assertThat(response).isOk();
-      Json report = Json.read(join(response).getBody());
+      Json report = Json.read(join(response).body());
 
       assertThat(report.at("version").asString()).isNotBlank();
       assertThat(report.at("node-id").asString()).isNotBlank();

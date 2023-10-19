@@ -6,10 +6,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -25,6 +27,7 @@ import java.security.Provider;
 import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
@@ -404,6 +407,18 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
                                           X500Principal issuerDN,
                                           String name, String extension, KeyStore trustStore) throws CertificateException {
       X509Certificate caCertificate = ca.getSelfSignedCertificate();
+      List<GeneralName> sANs = new ArrayList<>();
+      sANs.add(new GeneralName.DNSName("infinispan.test"));
+      sANs.add(new GeneralName.DNSName("localhost"));
+      byte[] address = testHostAddress.getAddress();
+      while (address[3] != -1) {
+         try {
+            sANs.add(new GeneralName.IPAddress(InetAddress.getByAddress(address).getHostAddress()));
+         } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+         }
+         address[3]++;
+      }
       X509Certificate certificate = new X509CertificateBuilder()
             .setIssuerDn(issuerDN)
             .setSubjectDn(dn(name))
@@ -412,7 +427,7 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
             .setPublicKey(publicKey)
             .setSerialNumber(BigInteger.valueOf(certSerial.getAndIncrement()))
             .addExtension(new BasicConstraintsExtension(false, false, -1))
-            .addExtension(new SubjectAlternativeNamesExtension(false, List.of(new GeneralName.DNSName("infinispan.test"))))
+            .addExtension(new SubjectAlternativeNamesExtension(false, sANs))
             .build();
 
       try {
@@ -428,8 +443,31 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
          } catch (KeyStoreException e) {
             throw new RuntimeException(e);
          }
-
       });
+      try (Writer w = Files.newBufferedWriter(getCertificateFile(name + ".pem").toPath())) {
+         w.write("-----BEGIN PRIVATE KEY-----\n");
+         w.write(Base64.getEncoder().encodeToString(ca.getSigningKey().getEncoded()));
+         w.write("\n-----END PRIVATE KEY-----\n");
+         w.write("-----BEGIN CERTIFICATE-----\n");
+         w.write(Base64.getEncoder().encodeToString(certificate.getEncoded()));
+         w.write("\n-----END CERTIFICATE-----\n");
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
+      try (FileWriter w = new FileWriter(new File(confDir, name + extension + ".crt"))) {
+         w.write("-----BEGIN CERTIFICATE-----\n");
+         w.write(Base64.getEncoder().encodeToString(certificate.getEncoded()));
+         w.write("\n-----END CERTIFICATE-----\n");
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
+      try (FileWriter w = new FileWriter(new File(confDir, name + extension + ".key"))) {
+         w.write("-----BEGIN PRIVATE KEY-----\n");
+         w.write(Base64.getEncoder().encodeToString(ca.getSigningKey().getEncoded()));
+         w.write("\n-----END PRIVATE KEY-----\n");
+      } catch (Exception e) {
+         throw new RuntimeException(e);
+      }
    }
 
    private void writeKeyStore(File file, String type, String providerName, Consumer<KeyStore> consumer) {

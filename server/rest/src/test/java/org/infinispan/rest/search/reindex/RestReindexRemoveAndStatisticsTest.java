@@ -5,7 +5,6 @@ import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -21,6 +20,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.test.annotation.TestForIssue;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.configuration.cache.IndexingMode;
@@ -123,16 +123,11 @@ public class RestReindexRemoveAndStatisticsTest extends SingleCacheManagerTest {
 
    @Override
    protected void teardown() {
+      Util.close(restClient);
       try {
-         restClient.close();
-      } catch (IOException ex) {
-         // ignore it
+         restServer.stop();
       } finally {
-         try {
-            restServer.stop();
-         } finally {
-            super.teardown();
-         }
+         super.teardown();
       }
    }
 
@@ -153,7 +148,7 @@ public class RestReindexRemoveAndStatisticsTest extends SingleCacheManagerTest {
 
    private int count(RestCacheClient cacheClient) {
       RestResponse response = join(cacheClient.searchStats());
-      Json stat = Json.read(response.getBody());
+      Json stat = Json.read(response.body());
       Json indexGame = stat.at("index").at("types").at("Game");
       return indexGame.at("count").asInteger();
    }

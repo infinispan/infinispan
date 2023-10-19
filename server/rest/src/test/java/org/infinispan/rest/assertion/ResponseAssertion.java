@@ -24,6 +24,7 @@ import static org.infinispan.rest.ResponseHeader.DATE_HEADER;
 import static org.infinispan.rest.ResponseHeader.ETAG_HEADER;
 import static org.infinispan.rest.ResponseHeader.EXPIRES_HEADER;
 import static org.infinispan.rest.ResponseHeader.LAST_MODIFIED_HEADER;
+import static org.infinispan.rest.ResponseHeader.TRANSFER_ENCODING;
 import static org.infinispan.rest.ResponseHeader.WWW_AUTHENTICATE_HEADER;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -47,8 +48,8 @@ import org.assertj.core.api.Assertions;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
-import org.infinispan.rest.DateUtils;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.rest.DateUtils;
 
 public class ResponseAssertion {
 
@@ -72,31 +73,31 @@ public class ResponseAssertion {
    }
 
    public ResponseAssertion isOk() {
-      if (response.getStatus() >= OK.code() && response.getStatus() <= NO_CONTENT.code()) {
+      if (response.status() >= OK.code() && response.status() <= NO_CONTENT.code()) {
          return this;
       }
 
-      Assertions.fail("Unexpected error code " + response.getStatus() + ": " + response.getBody());
+      Assertions.fail("Unexpected error code " + response.status() + ": " + response.body());
       return this;
    }
 
    public ResponseAssertion isRedirect() {
-      Assertions.assertThat(response.getStatus()).isIn(MOVED_PERMANENTLY.code(), FOUND.code(), TEMPORARY_REDIRECT.code(), PERMANENT_REDIRECT.code());
+      Assertions.assertThat(response.status()).isIn(MOVED_PERMANENTLY.code(), FOUND.code(), TEMPORARY_REDIRECT.code(), PERMANENT_REDIRECT.code());
       return this;
    }
 
    public ResponseAssertion doesntExist() {
-      Assertions.assertThat(response.getStatus()).isEqualTo(NOT_FOUND.code());
+      Assertions.assertThat(response.status()).isEqualTo(NOT_FOUND.code());
       return this;
    }
 
    public ResponseAssertion hasReturnedText(String text) {
-      Assertions.assertThat(response.getBody()).isEqualTo(text);
+      Assertions.assertThat(response.body()).isEqualTo(text);
       return this;
    }
 
    public ResponseAssertion containsInAnyOrderReturnedText(String... text) {
-      String body = response.getBody();
+      String body = response.body();
       Assertions.assertThat(body).matches(s -> {
          for (String possible : text) {
             if (s != null && !s.contains(possible)) {
@@ -109,7 +110,7 @@ public class ResponseAssertion {
    }
 
    public ResponseAssertion hasReturnedText(String... textPossibilities) {
-      String body = response.getBody();
+      String body = response.body();
       Assertions.assertThat(body).matches(s -> {
          for (String possible : textPossibilities) {
             if (s != null && s.equals(possible)) {
@@ -122,12 +123,12 @@ public class ResponseAssertion {
    }
 
    public ResponseAssertion containsReturnedText(String text) {
-      Assertions.assertThat(response.getBody()).contains(text);
+      Assertions.assertThat(response.body()).contains(text);
       return this;
    }
 
    public ResponseAssertion bodyNotEmpty() {
-      Assertions.assertThat(response.getBody()).isNotEmpty();
+      Assertions.assertThat(response.body()).isNotEmpty();
       return this;
    }
 
@@ -137,7 +138,7 @@ public class ResponseAssertion {
    }
 
    public ResponseAssertion hasNoContent() {
-      Assertions.assertThat(response.getBody()).isEmpty();
+      Assertions.assertThat(response.body()).isEmpty();
       return this;
    }
 
@@ -152,27 +153,27 @@ public class ResponseAssertion {
    }
 
    public ResponseAssertion hasContentType(String contentType) {
-      Assertions.assertThat(response.getHeader(CONTENT_TYPE_HEADER.getValue()).replace(" ", "")).contains(contentType.replace(" ", ""));
+      Assertions.assertThat(response.header(CONTENT_TYPE_HEADER.getValue()).replace(" ", "")).contains(contentType.replace(" ", ""));
       return this;
    }
 
    public ResponseAssertion hasContentLength(Integer value) {
-      Assertions.assertThat(response.getHeader(CONTENT_LENGTH_HEADER.getValue())).isEqualTo(value.toString());
+      Assertions.assertThat(response.header(CONTENT_LENGTH_HEADER.getValue())).isEqualTo(value.toString());
       return this;
    }
 
    public ResponseAssertion hasContentLength(Long value) {
-      Assertions.assertThat(response.getHeader(CONTENT_LENGTH_HEADER.getValue())).isEqualTo(value.toString());
+      Assertions.assertThat(response.header(CONTENT_LENGTH_HEADER.getValue())).isEqualTo(value.toString());
       return this;
    }
 
    public ResponseAssertion hasGzipContentEncoding() {
-      Assertions.assertThat(response.getHeader(CONTENT_ENCODING_HEADER.getValue())).isEqualTo("gzip");
+      Assertions.assertThat(response.header(CONTENT_ENCODING_HEADER.getValue())).isEqualTo("gzip");
       return this;
    }
 
    public ResponseAssertion hasHeaderMatching(String header, String regexp) {
-      Assertions.assertThat(response.getHeader(header)).matches(regexp);
+      Assertions.assertThat(response.header(header)).matches(regexp);
       return this;
    }
 
@@ -202,47 +203,52 @@ public class ResponseAssertion {
       return this;
    }
 
+   public ResponseAssertion hasTransferEncoding(String encoding) {
+      Assertions.assertThat(response.headers().get(TRANSFER_ENCODING.getValue())).contains(encoding);
+      return this;
+   }
+
    public ResponseAssertion isConflicted() {
-      Assertions.assertThat(response.getStatus()).isEqualTo(CONFLICT.code());
+      Assertions.assertThat(response.status()).isEqualTo(CONFLICT.code());
       return this;
    }
 
    public ResponseAssertion isError() {
-      Assertions.assertThat(response.getStatus()).isEqualTo(INTERNAL_SERVER_ERROR.code());
+      Assertions.assertThat(response.status()).isEqualTo(INTERNAL_SERVER_ERROR.code());
       return this;
    }
 
    public ResponseAssertion isUnauthorized() {
-      Assertions.assertThat(response.getStatus()).isEqualTo(UNAUTHORIZED.code());
+      Assertions.assertThat(response.status()).isEqualTo(UNAUTHORIZED.code());
       Assertions.assertThat(response.headers().get(WWW_AUTHENTICATE_HEADER.getValue())).isNotNull().isNotEmpty();
       return this;
    }
 
    public ResponseAssertion isForbidden() {
-      Assertions.assertThat(response.getStatus()).isEqualTo(FORBIDDEN.code());
+      Assertions.assertThat(response.status()).isEqualTo(FORBIDDEN.code());
       return this;
    }
 
    public ResponseAssertion isNotFound() {
-      Assertions.assertThat(response.getStatus()).isEqualTo(NOT_FOUND.code());
+      Assertions.assertThat(response.status()).isEqualTo(NOT_FOUND.code());
       return this;
    }
 
    public ResponseAssertion isPayloadTooLarge() {
-      Assertions.assertThat(response.getStatus()).isEqualTo(REQUEST_ENTITY_TOO_LARGE.code());
+      Assertions.assertThat(response.status()).isEqualTo(REQUEST_ENTITY_TOO_LARGE.code());
       return this;
    }
 
    public ResponseAssertion isNotModified() {
-      Assertions.assertThat(response.getStatus()).isEqualTo(NOT_MODIFIED.code());
+      Assertions.assertThat(response.status()).isEqualTo(NOT_MODIFIED.code());
       return this;
    }
 
    public ResponseAssertion hasContentEqualToFile(String fileName) {
       try {
          Path path = Paths.get(getClass().getClassLoader().getResource(fileName).toURI());
-         byte[] loadedFile = Files.readAllBytes(path);
-         Assertions.assertThat(response.getBodyAsByteArray()).isEqualTo(loadedFile);
+         String loadedFile = Files.readString(path);
+         Assertions.assertThat(response.body()).isEqualTo(loadedFile);
       } catch (Exception e) {
          throw new AssertionError(e);
       }
@@ -250,12 +256,12 @@ public class ResponseAssertion {
    }
 
    public ResponseAssertion isNotAcceptable() {
-      Assertions.assertThat(response.getStatus()).isEqualTo(NOT_ACCEPTABLE.code());
+      Assertions.assertThat(response.status()).isEqualTo(NOT_ACCEPTABLE.code());
       return this;
    }
 
    public ResponseAssertion isBadRequest() {
-      Assertions.assertThat(response.getStatus()).isEqualTo(BAD_REQUEST.code());
+      Assertions.assertThat(response.status()).isEqualTo(BAD_REQUEST.code());
       return this;
    }
 
@@ -265,24 +271,24 @@ public class ResponseAssertion {
    }
 
    public ResponseAssertion hasReturnedBytes(byte[] bytes) {
-      Assertions.assertThat(response.getBodyAsByteArray()).isEqualTo(bytes);
+      Assertions.assertThat(response.bodyAsByteArray()).isEqualTo(bytes);
       return this;
    }
 
    public ResponseAssertion isServiceUnavailable() {
-      Assertions.assertThat(response.getStatus()).isEqualTo(SERVICE_UNAVAILABLE.code());
+      Assertions.assertThat(response.status()).isEqualTo(SERVICE_UNAVAILABLE.code());
       return this;
    }
 
    public ResponseAssertion hasMediaType(MediaType[] mediaType) {
-      String contentType = response.getHeader(CONTENT_TYPE_HEADER.getValue());
+      String contentType = response.header(CONTENT_TYPE_HEADER.getValue());
       boolean hasMatches = Arrays.stream(mediaType).anyMatch(m -> MediaType.fromString(contentType).match(m));
       Assertions.assertThat(hasMatches).isTrue();
       return this;
    }
 
    public ResponseAssertion hasValidDate() {
-      String dateHeader = response.getHeader(DATE_HEADER.getValue());
+      String dateHeader = response.header(DATE_HEADER.getValue());
       ZonedDateTime zonedDateTime = DateUtils.parseRFC1123(dateHeader);
       Assertions.assertThat(zonedDateTime).isNotNull();
       return this;
@@ -290,7 +296,7 @@ public class ResponseAssertion {
    }
 
    public ResponseAssertion hasLastModified(long timestamp) {
-      String dateHeader = response.getHeader(LAST_MODIFIED_HEADER.getValue());
+      String dateHeader = response.header(LAST_MODIFIED_HEADER.getValue());
       Assertions.assertThat(dateHeader).isNotNull();
       ZonedDateTime zonedDateTime = Instant.ofEpochMilli(timestamp).atZone(ZoneId.systemDefault());
       String value = DateTimeFormatter.RFC_1123_DATE_TIME.format(zonedDateTime);
@@ -299,8 +305,8 @@ public class ResponseAssertion {
    }
 
    public ResponseAssertion expiresAfter(int expireDuration) {
-      String dateHeader = response.getHeader(DATE_HEADER.getValue());
-      String expiresHeader = response.getHeader(EXPIRES_HEADER.getValue());
+      String dateHeader = response.header(DATE_HEADER.getValue());
+      String expiresHeader = response.header(EXPIRES_HEADER.getValue());
 
       ZonedDateTime date = DateUtils.parseRFC1123(dateHeader);
       ZonedDateTime expires = DateUtils.parseRFC1123(expiresHeader);
@@ -317,7 +323,7 @@ public class ResponseAssertion {
    }
 
    public JsonAssertion hasJson() {
-      Json node = Json.read(response.getBody());
+      Json node = Json.read(response.body());
       return new JsonAssertion(node);
    }
 }

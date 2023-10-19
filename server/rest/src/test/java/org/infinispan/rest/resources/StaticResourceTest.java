@@ -22,12 +22,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.client.rest.RestClient;
-import org.infinispan.client.rest.RestRawClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Util;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.DateUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -56,21 +54,15 @@ public class StaticResourceTest extends AbstractRestResourceTest {
       Util.close(noRedirectsClient);
    }
 
-   @Override
-   protected void defineCaches(EmbeddedCacheManager cm) {
-   }
-
    private RestResponse call(String path) {
-      RestRawClient rawClient = client.raw();
-      return join(rawClient.get(path, NO_COMPRESSION));
+      return join(client.raw().get(path, NO_COMPRESSION));
    }
 
    private RestResponse call(String path, String ifModifiedSince) {
       Map<String, String> allHeaders = new HashMap<>(NO_COMPRESSION);
       allHeaders.put(IF_MODIFIED_SINCE.getValue(), ifModifiedSince);
       allHeaders.putAll(NO_COMPRESSION);
-      RestRawClient rawClient = client.raw();
-      return join(rawClient.get(path, allHeaders));
+      return join(client.raw().get(path, allHeaders));
    }
 
    @Override
@@ -143,7 +135,9 @@ public class StaticResourceTest extends AbstractRestResourceTest {
       int expireDuration = 60 * 60 * 24 * 31;
       File test = getTestFile(path);
       assertNotNull(test);
-      assertThat(response).hasContentLength(test.length());
+      if (protocol == HTTP_11) {
+         assertThat(response).hasTransferEncoding("chunked");
+      }
       assertThat(response).hasLastModified(test.lastModified());
       assertThat(response).hasCacheControlHeaders("private, max-age=" + expireDuration);
       assertThat(response).expiresAfter(expireDuration);

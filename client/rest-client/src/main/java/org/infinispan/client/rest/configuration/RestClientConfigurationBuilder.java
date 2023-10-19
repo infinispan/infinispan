@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
 import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,7 +30,7 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
 
    // Match IPv4 (host:port) or IPv6 ([host]:port) addresses
    private static final Pattern ADDRESS_PATTERN = Pattern
-         .compile("(\\[([0-9A-Fa-f:]+)\\]|([^:/?#]*))(?::(\\d*))?");
+         .compile("(\\[([0-9A-Fa-f:]+)]|([^:/?#]*))(?::(\\d*))?");
 
    private long connectionTimeout = RestClientConfigurationProperties.DEFAULT_CONNECT_TIMEOUT;
    private long socketTimeout = RestClientConfigurationProperties.DEFAULT_SO_TIMEOUT;
@@ -38,11 +39,12 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
    private final SecurityConfigurationBuilder security;
    private boolean tcpNoDelay = true;
    private boolean tcpKeepAlive = false;
-   private Protocol protocol = Protocol.HTTP_11;
+   private Protocol protocol = Protocol.HTTP_20;
    private String contextPath = RestClientConfigurationProperties.DEFAULT_CONTEXT_PATH;
    private boolean priorKnowledge;
    private boolean followRedirects = true;
    private final Map<String, String> headers = new HashMap<>();
+   private ExecutorService executorService;
 
    public RestClientConfigurationBuilder() {
       this.security = new SecurityConfigurationBuilder(this);
@@ -163,6 +165,11 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
       return this;
    }
 
+   public RestClientConfigurationBuilder executorService(ExecutorService executorService) {
+      this.executorService = executorService;
+      return this;
+   }
+
    @Override
    public RestClientConfigurationBuilder withProperties(Properties properties) {
       TypedProperties typed = TypedProperties.toTypedProperties(properties);
@@ -199,7 +206,8 @@ public class RestClientConfigurationBuilder implements RestClientConfigurationCh
          servers.add(new ServerConfiguration("127.0.0.1", RestClientConfigurationProperties.DEFAULT_REST_PORT));
       }
 
-      return new RestClientConfiguration(servers, protocol, connectionTimeout, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, contextPath, priorKnowledge, followRedirects, headers);
+      return new RestClientConfiguration(servers, protocol, connectionTimeout, socketTimeout, security.create(),
+            tcpNoDelay, tcpKeepAlive, contextPath, priorKnowledge, followRedirects, headers, executorService);
    }
 
 

@@ -69,7 +69,7 @@ public class XSiteRestCacheOperations {
       RestCacheClient nycCache = createDefaultRestCacheClient(NYC, SERVERS.getMethodName());
 
       assertStatus(NOT_FOUND, nycCache.xsiteBackups());
-      assertResponse(OK, lonCache.backupStatus(NYC), r -> assertEquals(NUM_SERVERS, Json.read(r.getBody()).asMap().size()));
+      assertResponse(OK, lonCache.backupStatus(NYC), r -> assertEquals(NUM_SERVERS, Json.read(r.body()).asMap().size()));
       assertStatus(NOT_FOUND, nycCache.backupStatus(LON));
 
       assertResponse(OK, lonCache.xsiteBackups(), r -> checkSiteStatus(r, NYC, "online"));
@@ -90,7 +90,7 @@ public class XSiteRestCacheOperations {
    }
 
    private static void checkSiteStatus(RestResponse r, String site, String status) {
-      Json backups = Json.read(r.getBody());
+      Json backups = Json.read(r.body());
       assertEquals(status, backups.asJsonMap().get(site).asJsonMap().get("status").asString());
    }
 
@@ -106,7 +106,7 @@ public class XSiteRestCacheOperations {
       IntStream.range(0, NR_KEYS)
             .mapToObj(Integer::toString)
             .forEach(s -> assertStatus(NO_CONTENT, lonCache.put(s, s)));
-      eventuallyEquals(Integer.toString(NR_KEYS), () -> sync(nycCache.size()).getBody());
+      eventuallyEquals(Integer.toString(NR_KEYS), () -> sync(nycCache.size()).body());
       assertEquals(MAX_COUNT_KEYS, getTotalMemoryEntries(lonCache));
    }
 
@@ -120,9 +120,9 @@ public class XSiteRestCacheOperations {
       assertStatus(NO_CONTENT, nycCache.put("k2", "v2"));
       assertEquals("v1", assertStatus(OK, lonCache.get("k1")));
       assertEquals("v2", assertStatus(OK, nycCache.get("k2")));
-      eventuallyEquals("v1", () -> sync(nycCache.get("k1")).getBody());
+      eventuallyEquals("v1", () -> sync(nycCache.get("k1")).body());
       if (allSitesBackup) {
-         eventuallyEquals("v2", () -> sync(lonCache.get("k2")).getBody());
+         eventuallyEquals("v2", () -> sync(lonCache.get("k2")).body());
       } else {
          assertStatus(NOT_FOUND, lonCache.get("k2"));
       }

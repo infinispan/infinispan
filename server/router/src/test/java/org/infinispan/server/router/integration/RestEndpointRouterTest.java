@@ -2,13 +2,14 @@ package org.infinispan.server.router.integration;
 
 import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.util.concurrent.CompletionStages.join;
 
 import java.lang.invoke.MethodHandles;
 import java.net.InetAddress;
 
 import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestRawClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.client.rest.configuration.ServerConfigurationBuilder;
@@ -95,11 +96,11 @@ public class RestEndpointRouterTest {
         String path1 = "/rest/rest1/v2/caches/default/test";
         String path2 = "/rest/rest2/v2/caches/default/test";
 
-        join(rawClient.putValue(path1, emptyMap(), "rest1", TEXT_PLAIN_TYPE));
-        join(rawClient.putValue(path2, emptyMap(), "rest2", TEXT_PLAIN_TYPE));
+        join(rawClient.put(path1, emptyMap(), RestEntity.create(TEXT_PLAIN, "rest1")));
+        join(rawClient.put(path2, emptyMap(), RestEntity.create(TEXT_PLAIN, "rest2")));
 
-        String valueReturnedFromRest1 = join(rawClient.get(path1)).getBody();
-        String valueReturnedFromRest2 = join(rawClient.get(path2)).getBody();
+        String valueReturnedFromRest1 = join(rawClient.get(path1)).body();
+        String valueReturnedFromRest2 = join(rawClient.get(path2)).body();
 
         //then
         assertThat(valueReturnedFromRest1).isEqualTo("rest1");

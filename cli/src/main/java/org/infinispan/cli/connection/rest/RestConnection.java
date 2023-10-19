@@ -139,20 +139,20 @@ public class RestConnection implements Connection, Closeable {
       response = handleResponseStatus(response);
       if (response != null) {
          if (returnClass == InputStream.class) {
-            return (T) response.getBodyAsStream();
+            return (T) response.bodyAsStream();
          } else if (returnClass == String.class) {
             if (MediaType.APPLICATION_JSON.equals(response.contentType())) {
-               Json json = Json.read(response.getBody());
+               Json json = Json.read(response.body());
                return (T) json.toPrettyString();
             } else {
-               return (T) response.getBody();
+               return (T) response.body();
             }
          } else {
             if (returnClass == Map.class) {
-               return (T) Json.read(response.getBody()).asMap();
+               return (T) Json.read(response.body()).asMap();
             }
             if (returnClass == List.class) {
-               return (T) Json.read(response.getBody()).asList();
+               return (T) Json.read(response.body()).asList();
             }
          }
       }
@@ -160,7 +160,7 @@ public class RestConnection implements Connection, Closeable {
    }
 
    private RestResponse handleResponseStatus(RestResponse response) throws IOException {
-      switch (response.getStatus()) {
+      switch (response.status()) {
          case 200:
          case 201:
          case 202:
@@ -168,13 +168,13 @@ public class RestConnection implements Connection, Closeable {
          case 204:
             return null;
          case 401:
-            throw MSG.unauthorized(response.getBody());
+            throw MSG.unauthorized(response.body());
          case 403:
-            throw MSG.forbidden(response.getBody());
+            throw MSG.forbidden(response.body());
          case 404:
-            throw MSG.notFound(response.getBody());
+            throw MSG.notFound(response.body());
          default:
-            throw MSG.error(response.getBody());
+            throw MSG.error(response.body());
       }
    }
 

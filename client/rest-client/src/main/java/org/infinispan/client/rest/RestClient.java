@@ -1,12 +1,11 @@
 package org.infinispan.client.rest;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
-import org.infinispan.client.rest.impl.okhttp.RestClientOkHttp;
+import org.infinispan.client.rest.impl.jdk.RestClientJDK;
 import org.infinispan.commons.util.Experimental;
+import org.jboss.logging.Logger;
 
 /**
  * An experimental client for interacting with an Infinispan REST server.
@@ -15,10 +14,9 @@ import org.infinispan.commons.util.Experimental;
  * @since 10.0
  **/
 @Experimental("This is not a supported API. Are you here for a perilous journey?")
-public interface RestClient extends Closeable {
+public interface RestClient extends AutoCloseable {
 
-   @Override
-   void close() throws IOException;
+   Logger LOG = Logger.getLogger("org.infinispan.REST");
 
    /**
     * Interact with the single server
@@ -102,7 +100,7 @@ public interface RestClient extends Closeable {
     * @return a {@link RestClient} instance
     */
    static RestClient forConfiguration(RestClientConfiguration configuration) {
-      return new RestClientOkHttp(configuration);
+      return new RestClientJDK(configuration);
    }
 
    /**

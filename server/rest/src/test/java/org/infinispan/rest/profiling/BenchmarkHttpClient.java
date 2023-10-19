@@ -1,6 +1,5 @@
 package org.infinispan.rest.profiling;
 
-import java.io.IOException;
 import java.util.Random;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
@@ -70,7 +69,7 @@ public class BenchmarkHttpClient {
       Eventually.eventually(() -> count.get() == 0);
    }
 
-   public void stop() throws IOException {
+   public void stop() throws Exception {
       client.close();
       executor.shutdownNow();
    }

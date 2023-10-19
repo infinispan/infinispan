@@ -10,8 +10,6 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
@@ -56,23 +54,21 @@ public class TestCertificates {
    private static void createKeyStores() {
       try {
          // Create the CA
-         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(KEY_ALGORITHM);
-         KeyPair keyPair = keyPairGenerator.generateKeyPair();
-         PrivateKey signingKey = keyPair.getPrivate();
-         PublicKey publicKey = keyPair.getPublic();
          X500Principal CA_DN = dn("CA");
+         SelfSignedX509CertificateAndSigningKey ca = createSelfSignedCertificate(CA_DN, "ca");
+
+         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(KEY_ALGORITHM);
          KeyStore trustStore = KeyStore.getInstance(KEYSTORE_TYPE);
          trustStore.load(null, null);
-         SelfSignedX509CertificateAndSigningKey ca = createSelfSignedCertificate(CA_DN, true, "ca");
          trustStore.setCertificateEntry("ca", ca.getSelfSignedCertificate());
 
          // Create a server certificate signed by the CA
-         createSignedCertificate(signingKey, publicKey, ca, CA_DN, "server", trustStore);
+         createSignedCertificate(ca, "server", trustStore, keyPairGenerator);
 
          // Create a client certificate signed by the CA
-         createSignedCertificate(signingKey, publicKey, ca, CA_DN, "client", trustStore);
+         createSignedCertificate(ca, "client", trustStore, keyPairGenerator);
          // A certificate for SNI tests
-         createSignedCertificate(signingKey, publicKey, ca, CA_DN, "sni", trustStore);
+         createSignedCertificate(ca, "sni", trustStore, keyPairGenerator);
 
          // Write the trust store
          try (OutputStream os = Files.newOutputStream(getCertificateFile("trust" + EXTENSION))) {
@@ -80,7 +76,7 @@ public class TestCertificates {
          }
 
          // Create an untrusted certificate
-         createSelfSignedCertificate(CA_DN, true, "untrusted");
+         createSelfSignedCertificate(CA_DN, "untrusted");
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
@@ -98,19 +94,13 @@ public class TestCertificates {
       return baseDir().resolve(name);
    }
 
-   private static SelfSignedX509CertificateAndSigningKey createSelfSignedCertificate(X500Principal dn, boolean isCA, String name) {
-      SelfSignedX509CertificateAndSigningKey.Builder certificateBuilder = SelfSignedX509CertificateAndSigningKey.builder()
+   private static SelfSignedX509CertificateAndSigningKey createSelfSignedCertificate(X500Principal dn, String name) {
+      SelfSignedX509CertificateAndSigningKey certificate = SelfSignedX509CertificateAndSigningKey.builder()
             .setDn(dn)
             .setSignatureAlgorithmName(KEY_SIGNATURE_ALGORITHM)
-            .setKeyAlgorithmName(KEY_ALGORITHM);
-
-      if (isCA) {
-         certificateBuilder.addExtension(false, "BasicConstraints", "CA:true,pathlen:2147483647");
-      }
-      SelfSignedX509CertificateAndSigningKey certificate = certificateBuilder.build();
-
+            .setKeyAlgorithmName(KEY_ALGORITHM)
+            .addExtension(false, "BasicConstraints", "CA:true,pathlen:2147483647").build();
       X509Certificate issuerCertificate = certificate.getSelfSignedCertificate();
-
       writeKeyStore(getCertificateFile(name + EXTENSION), ks -> {
          try {
             ks.setCertificateEntry(name, issuerCertificate);
@@ -128,24 +118,24 @@ public class TestCertificates {
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
-
       return certificate;
    }
 
-   private static void createSignedCertificate(PrivateKey signingKey, PublicKey publicKey,
-                                          SelfSignedX509CertificateAndSigningKey ca,
-                                          X500Principal issuerDN,
-                                          String name, KeyStore trustStore) throws CertificateException {
+   private static void createSignedCertificate(SelfSignedX509CertificateAndSigningKey ca,
+                                               String name, KeyStore trustStore, KeyPairGenerator keyPairGenerator) throws CertificateException {
+      KeyPair keyPair = keyPairGenerator.generateKeyPair();
+
       X509Certificate caCertificate = ca.getSelfSignedCertificate();
+      X500Principal issuerDN = caCertificate.getIssuerX500Principal();
       X509Certificate certificate = new X509CertificateBuilder()
             .setIssuerDn(issuerDN)
             .setSubjectDn(dn(name))
             .setSignatureAlgorithmName(KEY_SIGNATURE_ALGORITHM)
             .setSigningKey(ca.getSigningKey())
-            .setPublicKey(publicKey)
+            .setPublicKey(keyPair.getPublic())
             .setSerialNumber(BigInteger.valueOf(CERT_SERIAL.getAndIncrement()))
             .addExtension(new BasicConstraintsExtension(false, false, -1))
-            .addExtension(new SubjectAlternativeNamesExtension(false, List.of(new GeneralName.DNSName(name))))
+            .addExtension(new SubjectAlternativeNamesExtension(false, List.of(new GeneralName.DNSName(name), new GeneralName.DNSName("localhost"))))
             .build();
 
       try {
@@ -157,7 +147,7 @@ public class TestCertificates {
       writeKeyStore(getCertificateFile(name + EXTENSION), ks -> {
          try {
             ks.setCertificateEntry("ca", caCertificate);
-            ks.setKeyEntry(name, signingKey, KEY_PASSWORD, new X509Certificate[]{certificate, caCertificate});
+            ks.setKeyEntry(name, keyPair.getPrivate(), KEY_PASSWORD, new X509Certificate[]{certificate, caCertificate});
          } catch (KeyStoreException e) {
             throw new RuntimeException(e);
          }

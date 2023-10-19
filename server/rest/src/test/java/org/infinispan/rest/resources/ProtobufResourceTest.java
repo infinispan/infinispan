@@ -39,7 +39,7 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
       CompletionStage<RestResponse> response = client.schemas().names();
 
       ResponseAssertion.assertThat(response).isOk();
-      Json jsonNode = Json.read(join(response).getBody());
+      Json jsonNode = Json.read(join(response).body());
       assertEquals(0, jsonNode.asList().size());
    }
 
@@ -69,7 +69,7 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
             + " Syntax error in error.proto at 3:8: unexpected label: messoge";
 
       ResponseAssertion.assertThat(response).isOk();
-      Json jsonNode = Json.read(response.getBody());
+      Json jsonNode = Json.read(response.body());
       assertEquals("error.proto", jsonNode.at("name").asString());
       assertEquals("Schema error.proto has errors", jsonNode.at("error").at("message").asString());
       assertEquals(cause, jsonNode.at("error").at("cause").asString());
@@ -91,7 +91,7 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
       RestResponse response = join(schemaClient.post("person", personProto));
       ResponseAssertion.assertThat(response).isOk();
 
-      Json jsonNode = Json.read(response.getBody());
+      Json jsonNode = Json.read(response.body());
       assertTrue(jsonNode.at("error").isNull());
 
       // Read
@@ -141,7 +141,7 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
       RestResponse response = join(schemaClient.names());
 
       ResponseAssertion.assertThat(response).isOk();
-      Json jsonNode = Json.read(response.getBody());
+      Json jsonNode = Json.read(response.body());
       assertEquals(3, jsonNode.asList().size());
       assertEquals("dancers.proto", jsonNode.at(0).at("name").asString());
       assertEquals("people.proto", jsonNode.at(1).at("name").asString());
@@ -158,7 +158,7 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
 
       RestResponse response = join(schemaClient.types());
       ResponseAssertion.assertThat(response).isOk();
-      Json jsonNode = Json.read(response.getBody());
+      Json jsonNode = Json.read(response.body());
       assertEquals(4, jsonNode.asList().size());
       assertTrue(jsonNode.asList().contains("org.infinispan.rest.search.entity.Person"));
    }
@@ -174,7 +174,7 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
 
       RestResponse response = join(schemaClient.names());
 
-      Json jsonNode = Json.read(response.getBody());
+      Json jsonNode = Json.read(response.body());
       assertEquals(1, jsonNode.asList().size());
       assertEquals(fileName, jsonNode.at(0).at("name").asString());
 

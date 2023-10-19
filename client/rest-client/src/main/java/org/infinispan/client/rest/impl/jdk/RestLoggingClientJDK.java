@@ -1,43 +1,40 @@
-package org.infinispan.client.rest.impl.okhttp;
+package org.infinispan.client.rest.impl.jdk;
 
-import static org.infinispan.client.rest.impl.okhttp.RestClientOkHttp.sanitize;
+
+import static org.infinispan.client.rest.impl.jdk.RestClientJDK.sanitize;
 
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.client.rest.RestLoggingClient;
 import org.infinispan.client.rest.RestResponse;
 
-import okhttp3.Request;
-import okhttp3.internal.Util;
-
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 11.0
  **/
-public class RestLoggingClientOkHttp implements RestLoggingClient {
+public class RestLoggingClientJDK implements RestLoggingClient {
 
-   private final RestClientOkHttp client;
-   private final String baseLoggingURL;
+   private final RestRawClientJDK client;
+   private final String path;
 
-   RestLoggingClientOkHttp(RestClientOkHttp restClient) {
+   RestLoggingClientJDK(RestRawClientJDK restClient) {
       this.client = restClient;
-      this.baseLoggingURL = String.format("%s%s/v2/logging", restClient.getBaseURL(), restClient.getConfiguration().contextPath());
+      this.path = restClient.getConfiguration().contextPath() + "/v2/logging";
    }
 
    @Override
    public CompletionStage<RestResponse> listLoggers() {
-      return client.execute(baseLoggingURL, "loggers");
+      return client.get(path + "/loggers");
    }
 
    @Override
    public CompletionStage<RestResponse> listAppenders() {
-      return client.execute(baseLoggingURL, "appenders");
+      return client.get(path + "/appenders");
    }
 
    @Override
    public CompletionStage<RestResponse> setLogger(String name, String level, String... appenders) {
-      Request.Builder builder = new Request.Builder();
-      StringBuilder sb = new StringBuilder(baseLoggingURL);
+      StringBuilder sb = new StringBuilder(path);
       sb.append("/loggers/");
       if (name != null) {
          sb.append(sanitize(name));
@@ -57,14 +54,11 @@ public class RestLoggingClientOkHttp implements RestLoggingClient {
             amp = true;
          }
       }
-      builder.url(sb.toString()).put(Util.EMPTY_REQUEST);
-      return client.execute(builder);
+      return client.put(sb.toString());
    }
 
    @Override
    public CompletionStage<RestResponse> removeLogger(String name) {
-      Request.Builder builder = new Request.Builder();
-      builder.url(baseLoggingURL + "/loggers/" + sanitize(name)).delete();
-      return client.execute(builder);
+      return client.delete(path + "/loggers/" + sanitize(name));
    }
 }
