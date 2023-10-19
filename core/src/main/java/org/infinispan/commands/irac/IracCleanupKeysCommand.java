@@ -12,10 +12,10 @@ import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.irac.IracManager;
 import org.infinispan.xsite.irac.IracManagerKeyInfo;
 import org.infinispan.xsite.irac.IracManagerKeyInfoImpl;
@@ -93,7 +93,7 @@ public class IracCleanupKeysCommand implements CacheRpcCommand {
 
    @Override
    public String toString() {
-      return "IracCleanupKeyCommand{" +
+      return "IracCleanupKeysCommand{" +
             "cacheName=" + cacheName +
             ", cleanup=" + Util.toStr(cleanup) +
             '}';

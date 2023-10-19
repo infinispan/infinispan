@@ -10,6 +10,7 @@ import org.infinispan.commands.GlobalRpcCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.CrossSiteIllegalLifecycleStateException;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.ComponentRegistry;
@@ -90,7 +91,15 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
       if (log.isTraceEnabled()) {
          log.tracef("Handling command %s from remote site %s", command, origin);
       }
-      command.invokeInLocalSite(origin, globalComponentRegistry).whenComplete(new XSiteResponseConsumer(reply, command));
+      var rspConsumer = new XSiteResponseConsumer(reply, command);
+      if (!globalComponentRegistry.getStatus().allowInvocations()) {
+         // Cross-site channel is the first to start.
+         // Theoretically, it can receive requests before the CacheManager is ready.
+         // return IllegalLifecycleStateException -> triggers back-off and retry in the originator
+         rspConsumer.accept(null, log.xsiteCacheManagerDoesNotAllowInvocations(origin));
+         return;
+      }
+      command.invokeInLocalSite(origin, globalComponentRegistry).whenComplete(rspConsumer);
    }
 
    private void handleCacheRpcCommand(Address origin, CacheRpcCommand command, Reply reply, DeliverOrder mode) {
@@ -194,7 +203,7 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
 
       @Override
       boolean logThrowable(Throwable throwable) {
-         return true;
+         return !(throwable instanceof CrossSiteIllegalLifecycleStateException);
       }
    }
 

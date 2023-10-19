@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CrossSiteIllegalLifecycleStateException;
 import org.infinispan.commons.stat.MetricInfo;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
@@ -78,7 +79,8 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
             error instanceof org.infinispan.util.concurrent.TimeoutException ||
             error instanceof UnreachableException ||
             error instanceof CacheUnreachableException ||
-            error instanceof SuspectException;
+            error instanceof SuspectException ||
+            error instanceof CrossSiteIllegalLifecycleStateException;
    }
 
    private static Optional<CacheConfigurationException> findConfigurationError(Throwable throwable) {

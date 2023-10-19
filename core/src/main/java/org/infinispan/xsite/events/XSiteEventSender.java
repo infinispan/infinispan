@@ -6,8 +6,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -17,19 +17,20 @@ import org.infinispan.xsite.commands.remote.XSiteRemoteEventCommand;
 /**
  * A collector of events to be sent to the remote site.
  * <p>
- * This class implements {@link AutoCloseable} so it can be used with try-with-resources. The {@link #close()} methods sends the events.
+ * This class implements {@link AutoCloseable} so it can be used with try-with-resources. The {@link #close()} methods
+ * sends the events.
  *
  * @since 15.0
  */
 public class XSiteEventSender implements AutoCloseable {
 
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
-   private final Transport transport;
+   private final BiConsumer<XSiteBackup, XSiteRemoteEventCommand> sender;
    private final Map<ByteString, EventList> eventsToRemoteSites;
 
-   public XSiteEventSender(Transport transport) {
+   public XSiteEventSender(BiConsumer<XSiteBackup, XSiteRemoteEventCommand> sender) {
       eventsToRemoteSites = new ConcurrentHashMap<>(4);
-      this.transport = transport;
+      this.sender = sender;
    }
 
    public void addEventToSite(ByteString site, XSiteEvent event) {
@@ -43,10 +44,9 @@ public class XSiteEventSender implements AutoCloseable {
       for (var eventList : eventsToRemoteSites.values()) {
          var cmd = new XSiteRemoteEventCommand(eventList.events);
          var backup = new XSiteBackup(eventList.site.toString(), false, 10000);
-         transport.backupRemotely(backup, cmd);
+         sender.accept(backup, cmd);
       }
    }
-
 
    private static class EventList {
       final ByteString site;
