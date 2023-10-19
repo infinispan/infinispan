@@ -76,15 +76,15 @@ public class ProtobufFieldIndexingMetadataTest extends SingleCacheManagerTest {
       ProtobufFieldIndexingMetadata addressIndexedFieldProvider = new ProtobufFieldIndexingMetadata(serCtx.getMessageDescriptor("User.Address"));
 
       // try top level attributes
-      assertTrue(userIndexedFieldProvider.isIndexed(new String[]{"name"}));
-      assertFalse(userIndexedFieldProvider.isIndexed(new String[]{"surname"}));
-      assertTrue(addressIndexedFieldProvider.isIndexed(new String[]{"street"}));
-      assertFalse(addressIndexedFieldProvider.isIndexed(new String[]{"postCode"}));
+      assertTrue(userIndexedFieldProvider.isSearchable(new String[]{"name"}));
+      assertFalse(userIndexedFieldProvider.isSearchable(new String[]{"surname"}));
+      assertTrue(addressIndexedFieldProvider.isSearchable(new String[]{"street"}));
+      assertFalse(addressIndexedFieldProvider.isSearchable(new String[]{"postCode"}));
 
       // try nested attributes
-      assertTrue(userIndexedFieldProvider.isIndexed(new String[]{"indexedAddresses", "street"}));
-      assertFalse(userIndexedFieldProvider.isIndexed(new String[]{"indexedAddresses", "postCode"}));
-      assertFalse(userIndexedFieldProvider.isIndexed(new String[]{"unindexedAddresses", "street"}));
-      assertFalse(userIndexedFieldProvider.isIndexed(new String[]{"unindexedAddresses", "postCode"}));
+      assertTrue(userIndexedFieldProvider.isSearchable(new String[]{"indexedAddresses", "street"}));
+      assertFalse(userIndexedFieldProvider.isSearchable(new String[]{"indexedAddresses", "postCode"}));
+      assertFalse(userIndexedFieldProvider.isSearchable(new String[]{"unindexedAddresses", "street"}));
+      assertFalse(userIndexedFieldProvider.isSearchable(new String[]{"unindexedAddresses", "postCode"}));
    }
 }

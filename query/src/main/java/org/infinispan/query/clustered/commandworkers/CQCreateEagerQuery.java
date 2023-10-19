@@ -1,10 +1,15 @@
 package org.infinispan.query.clustered.commandworkers;
 
+import static org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder.INFINISPAN_AGGREGATION_KEY_NAME;
+
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 import org.hibernate.search.backend.lucene.search.query.LuceneSearchResult;
+import org.hibernate.search.engine.search.aggregation.AggregationKey;
 import org.hibernate.search.engine.search.query.SearchResultTotal;
 import org.infinispan.query.clustered.NodeTopDocs;
 import org.infinispan.query.clustered.QueryResponse;
@@ -24,7 +29,14 @@ final class CQCreateEagerQuery extends CQWorker {
       SearchQueryBuilder query = queryDefinition.getSearchQueryBuilder();
       setFilter(segments);
 
-      CompletionStage<NodeTopDocs> nodeTopDocs = query.isEntityProjection() ? collectKeys(query) : collectProjections(query);
+      CompletionStage<NodeTopDocs> nodeTopDocs;
+      if (query.aggregation() != null) {
+         nodeTopDocs = collectAggregations(query);
+      } else if (query.isEntityProjection()) {
+         nodeTopDocs = collectKeys(query);
+      } else {
+         nodeTopDocs = collectProjections(query);
+      }
 
       return nodeTopDocs.thenApply(QueryResponse::new);
    }
@@ -76,6 +88,27 @@ final class CQCreateEagerQuery extends CQWorker {
                List<?> hits = queryResult.hits();
                Object[] projections = hits.toArray(new Object[0]);
                return new NodeTopDocs(cache.getRpcManager().getAddress(), queryResult.topDocs(), hitCount, countIsExact,
+                     null, projections);
+            });
+   }
+
+   private CompletionStage<NodeTopDocs> collectAggregations(SearchQueryBuilder query) {
+      boolean displayGroupFirst = query.aggregation().displayGroupFirst();
+
+      return blockingManager.supplyBlocking(() -> fetchHits(query), "CQCreateEagerQuery#collectAggregations")
+            .thenApply(queryResult -> {
+               Map<?, Long> aggregation = queryResult.aggregation(AggregationKey.of(INFINISPAN_AGGREGATION_KEY_NAME));
+               ArrayList<Object[]> hits = new ArrayList<>(aggregation.size());
+               for (Map.Entry<?, Long> groupAggregation : aggregation.entrySet()) {
+                  if (displayGroupFirst) {
+                     hits.add(new Object[]{groupAggregation.getKey(), groupAggregation.getValue()});
+                  } else {
+                     hits.add(new Object[]{groupAggregation.getValue(), groupAggregation.getKey()});
+                  }
+               }
+
+               Object[] projections = hits.toArray(new Object[0]);
+               return new NodeTopDocs(cache.getRpcManager().getAddress(), queryResult.topDocs(), hits.size(), true,
                      null, projections);
             });
    }

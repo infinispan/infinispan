@@ -1,13 +1,18 @@
 package org.infinispan.query.impl;
 
+import static org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder.INFINISPAN_AGGREGATION_KEY_NAME;
+import static org.infinispan.query.logging.Log.CONTAINER;
+
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
-import static org.infinispan.query.logging.Log.CONTAINER;
-
+import org.apache.lucene.search.Sort;
 import org.hibernate.search.backend.lucene.search.query.LuceneSearchQuery;
+import org.hibernate.search.engine.search.aggregation.AggregationKey;
 import org.hibernate.search.engine.search.query.SearchQuery;
 import org.hibernate.search.engine.search.query.SearchResult;
 import org.hibernate.search.engine.search.query.SearchResultTotal;
@@ -159,13 +164,14 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
 
       try {
          partitionHandlingSupport.checkCacheAvailable();
+         SearchQueryBuilder searchQueryBuilder = queryDefinition.getSearchQueryBuilder();
+         if (searchQueryBuilder.aggregation() != null) {
+            return aggregation();
+         }
 
          long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
-
-         SearchQueryBuilder searchQueryBuilder = queryDefinition.getSearchQueryBuilder();
          SearchQuery<E> searchQuery = (SearchQuery<E>) searchQueryBuilder.build();
          SearchResult<E> searchResult = searchQuery.fetch(queryDefinition.getFirstResult(), queryDefinition.getMaxResults());
-
          if (queryStatistics.isEnabled()) recordQuery(System.nanoTime() - start);
 
          // TODO ISPN-14198 Make the accuracy of the query count more expressive
@@ -178,6 +184,36 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
       } catch (org.hibernate.search.util.common.SearchTimeoutException timeoutException) {
          throw new SearchTimeoutException();
       }
+   }
+
+   public QueryResult<?> aggregation() {
+      long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
+      SearchQueryBuilder searchQueryBuilder = queryDefinition.getSearchQueryBuilder();
+      SearchQuery<E> searchQuery = (SearchQuery<E>) searchQueryBuilder.build();
+      SearchResult<E> searchResult = searchQuery.fetch(0, 0); // we don't need to fetch any values except the aggregations
+      if (queryStatistics.isEnabled()) recordQuery(System.nanoTime() - start);
+
+      Map<Comparable<?>, Long> aggregationResult = searchResult
+            .aggregation(AggregationKey.of(INFINISPAN_AGGREGATION_KEY_NAME));
+      Sort sort = searchQueryBuilder.getLuceneSort();
+      Map<Comparable<?>, Long> aggregation;
+      if (sort.getSort().length == 1) {
+         aggregation = sort.getSort()[0].getReverse() ? new TreeMap<>(Collections.reverseOrder()) : new TreeMap<>();
+         aggregation.putAll(aggregationResult);
+      } else {
+         aggregation = aggregationResult;
+      }
+
+      ArrayList<Object[]> result = new ArrayList<>(aggregation.size());
+      boolean displayGroupFirst = searchQueryBuilder.aggregation().displayGroupFirst();
+      for (Map.Entry<?, Long> groupAggregation : aggregation.entrySet()) {
+         if (displayGroupFirst) {
+            result.add(new Object[]{groupAggregation.getKey(), groupAggregation.getValue()});
+         } else {
+            result.add(new Object[]{groupAggregation.getValue(), groupAggregation.getKey()});
+         }
+      }
+      return new QueryResultImpl<>(searchResult.total().hitCountLowerBound(), result);
    }
 
    @Override

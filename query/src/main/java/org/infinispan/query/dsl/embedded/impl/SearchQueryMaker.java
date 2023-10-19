@@ -6,6 +6,7 @@ import static org.infinispan.query.logging.Log.CONTAINER;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 
@@ -19,6 +20,7 @@ import org.hibernate.search.backend.lucene.search.predicate.dsl.LuceneSearchPred
 import org.hibernate.search.engine.backend.common.spi.FieldPaths;
 import org.hibernate.search.engine.backend.metamodel.IndexFieldDescriptor;
 import org.hibernate.search.engine.backend.metamodel.IndexValueFieldDescriptor;
+import org.hibernate.search.engine.search.aggregation.SearchAggregation;
 import org.hibernate.search.engine.search.predicate.SearchPredicate;
 import org.hibernate.search.engine.search.predicate.dsl.BooleanPredicateClausesStep;
 import org.hibernate.search.engine.search.predicate.dsl.ExistsPredicateOptionsStep;
@@ -57,6 +59,7 @@ import org.infinispan.objectfilter.impl.syntax.NotExpr;
 import org.infinispan.objectfilter.impl.syntax.OrExpr;
 import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
 import org.infinispan.objectfilter.impl.syntax.Visitor;
+import org.infinispan.objectfilter.impl.syntax.parser.AggregationPropertyPath;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 import org.infinispan.query.logging.Log;
@@ -115,17 +118,48 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
       indexedEntity = targetedTypeName == null ? searchMapping.indexedEntity(targetedType) :
             searchMapping.indexedEntity(targetedTypeName);
 
-      SearchPredicate predicate = makePredicate(parsingResult.getWhereClause()).toPredicate();
+      InfinispanAggregation<?> aggregation = makeAggregation(scope, parsingResult);
+      SearchPredicate predicate = makePredicate(parsingResult.getWhereClause(), aggregation).toPredicate();
       SearchProjectionInfo projection = makeProjection(parsingResult.getTargetEntityMetadata(), scope.projection(), parsingResult.getProjections(),
-            parsingResult.getProjectedTypes());
+            parsingResult.getProjectedTypes(), aggregation);
       SearchSort sort = makeSort(scope.sort(), parsingResult.getSortFields());
 
-      return new SearchQueryParsingResult(targetedType, targetedTypeName, projection, predicate, sort, hitCountAccuracy);
+      return new SearchQueryParsingResult(targetedType, targetedTypeName, projection, aggregation, predicate, sort, hitCountAccuracy);
+   }
+
+   private <T> InfinispanAggregation makeAggregation(SearchScope<?> scope, IckleParsingResult<TypeMetadata> parsingResult) {
+      PropertyPath[] groupBy = parsingResult.getGroupBy();
+      if (groupBy == null || groupBy.length != 1) {
+         return null;
+      }
+
+      AggregationPropertyPath aggregationPropertyPath = null;
+      Class<T> projectedType = null;
+      boolean displayGroupFirst = false;
+
+      for (int i=0; i<parsingResult.getProjectedPaths().length; i++) {
+         PropertyPath projectedPath = parsingResult.getProjectedPaths()[i];
+         if (projectedPath instanceof AggregationPropertyPath) {
+            if (projectedType != null) {
+               displayGroupFirst = true;
+            }
+            aggregationPropertyPath = (AggregationPropertyPath) projectedPath;
+         } else if (Arrays.equals(groupBy[0].asArrayPath(), projectedPath.asArrayPath())) {
+            projectedType = (Class<T>) parsingResult.getProjectedTypes()[i];
+         }
+      }
+      if (aggregationPropertyPath == null || projectedType == null) {
+         return null;
+      }
+
+      SearchAggregation<? extends Map<T, Long>> searchAggregation = scope.aggregation().terms()
+            .field(groupBy[0].asStringPathWithoutAlias(), projectedType).toAggregation();
+      return new InfinispanAggregation(searchAggregation, aggregationPropertyPath, displayGroupFirst);
    }
 
    private SearchProjectionInfo makeProjection(TypeMetadata typeMetadata, SearchProjectionFactory<EntityReference, ?> projectionFactory,
-                                               String[] projections, Class<?>[] projectedTypes) {
-      if (projections == null || projections.length == 0) {
+                                               String[] projections, Class<?>[] projectedTypes, InfinispanAggregation aggregation) {
+      if (projections == null || projections.length == 0 || aggregation != null) {
          return SearchProjectionInfo.entity(projectionFactory);
       }
 
@@ -183,8 +217,19 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
       return optionsStep.toSort();
    }
 
-   private PredicateFinalStep makePredicate(BooleanExpr expr) {
-      return expr == null ? predicateFactory.matchAll() : expr.acceptVisitor(this);
+   private PredicateFinalStep makePredicate(BooleanExpr expr, InfinispanAggregation aggregation) {
+      if (expr == null) {
+         return predicateFactory.matchAll();
+      }
+
+      PredicateFinalStep predicateFinalStep = expr.acceptVisitor(this);
+      if (aggregation == null || aggregation.propertyPath() == null) {
+         return predicateFinalStep;
+      }
+
+      return predicateFactory.bool()
+            .must(predicateFinalStep)
+            .must(predicateFactory.exists().field(aggregation.propertyPath().asStringPath()));
    }
 
    @Override
