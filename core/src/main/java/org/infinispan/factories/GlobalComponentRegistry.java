@@ -280,6 +280,8 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       if (versionLogged.compareAndSet(false, true)) {
          CONTAINER.version(Version.printVersion());
       }
+      // start XSiteEventManager first to register the CacheStarted listener for each cache started
+      basicComponentRegistry.getComponent(XSiteEventsManager.class).running();
    }
 
    public void postStart() {

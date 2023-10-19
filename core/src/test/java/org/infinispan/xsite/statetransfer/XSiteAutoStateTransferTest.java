@@ -20,6 +20,7 @@ import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
 import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
 import org.infinispan.commands.irac.IracUpdateVersionCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commands.statetransfer.StateTransferCancelCommand;
 import org.infinispan.commands.statetransfer.StateTransferStartCommand;
@@ -116,7 +117,7 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
       SiteMasterController controller = findSiteMaster(null);
 
       // having a single node set to manual should be enough to block the state transfer
-      stateTransferManager((controller.managerIndex +1) % defaultNumberOfNodes(), null).setAutomaticStateTransfer(remoteSite, XSiteStateTransferMode.MANUAL);
+      stateTransferManager((controller.managerIndex + 1) % defaultNumberOfNodes(), null).setAutomaticStateTransfer(remoteSite, XSiteStateTransferMode.MANUAL);
 
       //block sites up event and wait until received
       controller.getStateTransferManager().startBlockSiteUpEvent();
@@ -156,11 +157,9 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
       //make sure data didn't go through
       checkNoDataInSite1(method, null);
 
-      SiteMasterController controller = findSiteMaster(null);
-
       //let the state command go through
-      controller.getRpcManager().excludeCommands(XSiteStatePushCommand.class, IracCleanupKeysCommand.class,
-            IracTombstoneStateResponseCommand.class, StateTransferCancelCommand.class);
+      SiteMasterController controller = findSiteMaster(null, XSiteStatePushCommand.class,
+            IracCleanupKeysCommand.class, IracTombstoneStateResponseCommand.class, StateTransferCancelCommand.class);
       CompletableFuture<ControlledRpcManager.BlockedRequest<XSiteAutoTransferStatusCommand>> req1 =
             controller.getRpcManager().expectCommandAsync(XSiteAutoTransferStatusCommand.class);
       CompletableFuture<ControlledRpcManager.BlockedRequest<XSiteBringOnlineCommand>> req2 =
@@ -211,19 +210,19 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
       checkNoDataInSite1(method, null);
 
       SiteMasterController oldSiteMaster = findSiteMaster(null);
+      //let the state command go through
       SiteMasterController newSiteMaster = getSiteMasterController(
-            oldSiteMaster.managerIndex + 1 % defaultNumberOfNodes());
+            oldSiteMaster.managerIndex + 1 % defaultNumberOfNodes(),
+            XSiteStatePushCommand.class,
+            StateTransferStartCommand.class, StateResponseCommand.class,
+            StateTransferCancelCommand.class,
+            IracRequestStateCommand.class, IracStateResponseCommand.class,
+            IracUpdateVersionCommand.class, IracCleanupKeysCommand.class,
+            IracTombstoneStateResponseCommand.class);
 
       //reset current site master
       oldSiteMaster.getRpcManager().stopBlocking();
 
-      //let the state command go through
-      newSiteMaster.getRpcManager().excludeCommands(XSiteStatePushCommand.class,
-                                                    StateTransferStartCommand.class, StateResponseCommand.class,
-                                                    StateTransferCancelCommand.class,
-                                                    IracRequestStateCommand.class, IracStateResponseCommand.class,
-                                                    IracUpdateVersionCommand.class, IracCleanupKeysCommand.class,
-                                                    IracTombstoneStateResponseCommand.class);
       //the JGroups events triggers this command where NodeB checks if it needs to start the transfer
       CompletableFuture<ControlledRpcManager.BlockedRequest<XSiteAutoTransferStatusCommand>> req1 = newSiteMaster
             .getRpcManager().expectCommandAsync(XSiteAutoTransferStatusCommand.class);
@@ -266,7 +265,7 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
    }
 
    public void testInitialStateTransferDuringCacheStart(Method method) throws InterruptedException {
-      final var remoteSite = siteName(1); //site1 is the async one
+      var remoteSite = siteName(1); //site1 is the async one
       final var cacheName = "initial-state-transfer-1";
 
       // create cache in site0
@@ -308,7 +307,7 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
    }
 
    public void testInitialStateTransferDoesNotStartWithManual(Method method) throws InterruptedException, ExecutionException, TimeoutException {
-      final var remoteSite = siteName(1); //site1 is the async one
+      var remoteSite = siteName(1); //site1 is the async one
       final var cacheName = "initial-state-transfer-2";
 
       // create cache in site0
@@ -367,7 +366,7 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
       // code changed, the receiver site is the one that notifies the sender site
       if (siteIndex == 0) {
          builder.sites().addBackup().site(siteName(1)).strategy(BackupConfiguration.BackupStrategy.ASYNC)
-                .sites().addBackup().site(siteName(2)).strategy(BackupConfiguration.BackupStrategy.SYNC);
+               .sites().addBackup().site(siteName(2)).strategy(BackupConfiguration.BackupStrategy.SYNC);
       } else if (siteIndex == 1) {
          builder.sites().addBackup().site(siteName(0)).strategy(BackupConfiguration.BackupStrategy.ASYNC)
                .sites().addBackup().site(siteName(2)).strategy(BackupConfiguration.BackupStrategy.SYNC);
@@ -449,7 +448,8 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
       return TestingUtil.extractComponent(cache(0, managerIndex, cacheName), TakeOfflineManager.class);
    }
 
-   private SiteMasterController findSiteMaster(String cacheName) {
+   @SafeVarargs
+   private SiteMasterController findSiteMaster(String cacheName, Class<? extends CacheRpcCommand>... excludedCommands) {
       for (int i = 0; i < defaultNumberOfNodes(); ++i) {
          var manager = manager(0, i);
          var relay2 = findRelay2(manager);
@@ -459,7 +459,7 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
             //we need to replace the RpcManager before XSiteStateTransferManager
             //so the XSiteStateTransferManager gets the new RpcManager
             var cache = cacheName == null ? manager.getCache() : manager.getCache(cacheName);
-            var rpcManager = ControlledRpcManager.replaceRpcManager(cache);
+            var rpcManager = ControlledRpcManager.replaceRpcManager(cache, excludedCommands);
             var stateTransferManager = ControlledXSiteStateTransferManager.extract(cache);
             cleanupTasks.add(() -> {
                try {
@@ -475,11 +475,11 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
       throw new IllegalStateException();
    }
 
-   private void triggerSiteUpEvent(SiteMasterController controller, String site) {
+   private static void triggerSiteUpEvent(SiteMasterController controller, String site) {
       controller.getRelay2().getRouteStatusListener().sitesUp(site);
    }
 
-   private Optional<RELAY2> findRelay2(EmbeddedCacheManager manager) {
+   private static Optional<RELAY2> findRelay2(EmbeddedCacheManager manager) {
       return Optional.ofNullable(TestingUtil.extractJChannel(manager).getProtocolStack().findProtocol(RELAY2.class));
    }
 
@@ -487,13 +487,14 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
       return TestingUtil.extractComponent(cache(0, managerIndex, cacheName), XSiteStateTransferManager.class);
    }
 
-   private SiteMasterController getSiteMasterController(int index) {
+   @SafeVarargs
+   private SiteMasterController getSiteMasterController(int index, Class<? extends CacheRpcCommand>... excludedCommands) {
       EmbeddedCacheManager manager = manager(0, index);
       Optional<RELAY2> relay2 = findRelay2(manager);
       if (relay2.isPresent()) {
          //we need to replace the RpcManager before XSiteStateTransferManager
          //so the XSiteStateTransferManager gets the new RpcManager
-         var rpcManager = ControlledRpcManager.replaceRpcManager(manager.getCache());
+         var rpcManager = ControlledRpcManager.replaceRpcManager(manager.getCache(), excludedCommands);
          var stateTransferManager = ControlledXSiteStateTransferManager.extract(manager.getCache());
          cleanupTasks.add(() -> {
             try {
@@ -515,22 +516,22 @@ public class XSiteAutoStateTransferTest extends AbstractMultipleSitesTest {
       private final int managerIndex;
 
       private SiteMasterController(RELAY2 relay2, ControlledXSiteStateTransferManager stateTransferManager,
-            ControlledRpcManager rpcManager, int managerIndex) {
+                                   ControlledRpcManager rpcManager, int managerIndex) {
          this.relay2 = relay2;
          this.stateTransferManager = stateTransferManager;
          this.rpcManager = rpcManager;
          this.managerIndex = managerIndex;
       }
 
-      public RELAY2 getRelay2() {
+      RELAY2 getRelay2() {
          return relay2;
       }
 
-      public ControlledXSiteStateTransferManager getStateTransferManager() {
+      ControlledXSiteStateTransferManager getStateTransferManager() {
          return stateTransferManager;
       }
 
-      public ControlledRpcManager getRpcManager() {
+      ControlledRpcManager getRpcManager() {
          return rpcManager;
       }
    }

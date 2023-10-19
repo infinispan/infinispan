@@ -1602,15 +1602,14 @@ public class JGroupsTransport implements Transport, ChannelListener {
    private class ChannelCallbacks implements RouteStatusListener, UpHandler {
       @Override
       public void sitesUp(String... sites) {
-         updateSitesView(Arrays.asList(sites), Collections.emptyList());
          for (String upSite : sites) {
             unreachableSites.remove(upSite, SiteUnreachableReason.SITE_DOWN_EVENT);
          }
+         updateSitesView(Arrays.asList(sites), Collections.emptyList());
       }
 
       @Override
       public void sitesDown(String... sites) {
-         updateSitesView(Collections.emptyList(), Arrays.asList(sites));
          List<String> requestsToCancel = new ArrayList<>(sites.length);
          for (String downSite : sites) {
             // if there is something stored in the map, do not try to cancel the requests.
@@ -1619,6 +1618,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
             }
          }
          requestsToCancel.forEach(JGroupsTransport.this::cancelRequestsFromSite);
+         updateSitesView(Collections.emptyList(), Arrays.asList(sites));
       }
 
       @Override
