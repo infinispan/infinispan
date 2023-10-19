@@ -1,4 +1,4 @@
-package org.infinispan.client.hotrod.maxresult;
+package org.infinispan.client.hotrod.query.maxresult;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
@@ -16,7 +16,7 @@ import org.infinispan.query.model.NonIndexedGame;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "org.infinispan.client.hotrod.maxresult.RemoteDefaultMaxResultTest")
+@Test(groups = "functional", testName = "org.infinispan.client.hotrod.query.maxresult.RemoteDefaultMaxResultTest")
 @TestForIssue(jiraKey = "ISPN-14194")
 public class RemoteDefaultMaxResultTest extends SingleHotRodServerTest {
 
