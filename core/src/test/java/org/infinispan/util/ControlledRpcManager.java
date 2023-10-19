@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ScheduledExecutorService;
@@ -73,9 +74,8 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
    @Inject @ComponentName(NON_BLOCKING_EXECUTOR)
    ExecutorService nonBlockingExecutor;
 
-   private volatile boolean stopped = false;
-   private final Set<Class<? extends ReplicableCommand>> excludedCommands =
-      Collections.synchronizedSet(new HashSet<>());
+   private volatile boolean stopped;
+   private final Set<Class<? extends ReplicableCommand>> excludedCommands = ConcurrentHashMap.newKeySet();
    private final BlockingQueue<CompletableFuture<ControlledRequest<?>>> waiters = new LinkedBlockingDeque<>();
    private RuntimeException globalError;
 
@@ -84,12 +84,14 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
       this.cache = cache;
    }
 
-   public static ControlledRpcManager replaceRpcManager(Cache<?, ?> cache) {
+   @SafeVarargs
+   public static ControlledRpcManager replaceRpcManager(Cache<?, ?> cache, Class<? extends ReplicableCommand>... excludedCommand) {
       RpcManager rpcManager = extractComponent(cache, RpcManager.class);
       if (rpcManager instanceof ControlledRpcManager) {
          throw new IllegalStateException("One ControlledRpcManager per cache should be enough");
       }
       ControlledRpcManager controlledRpcManager = new ControlledRpcManager(rpcManager, cache);
+      controlledRpcManager.excludeCommands(excludedCommand);
       log.tracef("Installing ControlledRpcManager on %s", controlledRpcManager.getAddress());
       TestingUtil.replaceComponent(cache, RpcManager.class, controlledRpcManager, true);
       return controlledRpcManager;
@@ -146,7 +148,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
 
    public <T extends ReplicableCommand>
    BlockedRequests<T> expectCommands(Class<T> expectedCommandClass, Collection<Address> targets) {
-      Map<Address, BlockedRequest<T>> requests = new HashMap<>();
+      Map<Address, BlockedRequest<T>> requests = new HashMap<>(targets.size());
       for (int i = 0; i < targets.size(); i++) {
          BlockedRequest<T> request = expectCommand(expectedCommandClass);
          requests.put(request.getTarget(), request);
@@ -191,7 +193,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
          log.tracef("Not blocking excluded command %s", command);
          return invoker.apply(collector);
       }
-      log.debugf("Intercepted command to %s: %s", targets, command);
+      log.debugf("Intercepted command to %s: %s (excluded=%s)", targets, command, excludedCommands);
       // Ignore the SingleRpcCommand wrapper
       if (command instanceof SingleRpcCommand) {
          command = ((SingleRpcCommand) command).getCommand();
@@ -247,11 +249,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
    }
 
    private boolean isCommandExcluded(ReplicableCommand command) {
-      for (Class<? extends ReplicableCommand> excludedCommand : excludedCommands) {
-         if (excludedCommand.isInstance(command))
-            return true;
-      }
-      return false;
+      return excludedCommands.stream().anyMatch(aClass -> aClass.isInstance(command));
    }
 
    private void throwGlobalError() {
@@ -260,7 +258,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
       }
    }
 
-   static <T> T uncheckedGet(CompletionStage<T> stage) {
+   private static <T> T uncheckedGet(CompletionStage<T> stage) {
       try {
          return stage.toCompletableFuture().get(TIMEOUT_SECONDS, SECONDS);
       } catch (Exception e) {
@@ -315,7 +313,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
       }
 
       void send() {
-         invoker.apply(new ResponseCollector<T>() {
+         invoker.apply(new ResponseCollector<>() {
             @Override
             public T addResponse(Address sender, Response response) {
                queueResponse(sender, response);
@@ -666,7 +664,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
        */
       public SentRequest receive() {
          log.tracef("Unblocking response from %s: %s", sender, response);
-         request.collectResponse(this.sender, response);
+         request.collectResponse(sender, response);
          return sentRequest;
       }
 
@@ -675,7 +673,7 @@ public class ControlledRpcManager extends AbstractDelegatingRpcManager {
        */
       public SentRequest replace(Response newResponse) {
          log.tracef("Replacing response from %s: %s (was %s)", sender, newResponse, response);
-         request.collectResponse(this.sender, newResponse);
+         request.collectResponse(sender, newResponse);
          return sentRequest;
       }
 

@@ -89,6 +89,8 @@ public class ThreadLeakChecker {
                       "|OkHttp Http2Connection" +
                       // The mysql driver uses a daemon thread to check for connection leaks
                       "|mysql-cj-abandoned-connection-cleanup" +
+                      // CompletableFuture scheduler executor
+                      "|CompletableFutureDelayScheduler" +
                       // virtual threads - thread pools
                       "|ForkJoinPool" +
                       "|Write-Updater" +

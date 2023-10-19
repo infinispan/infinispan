@@ -35,12 +35,20 @@ public abstract class XSiteCacheRequest<T> implements XSiteRequest<T> {
    public final CompletionStage<T> invokeInLocalSite(String origin, GlobalComponentRegistry registry) {
       var cacheInfo = registry.getXSiteCacheMapper().findLocalCache(origin, cacheName);
       if (cacheInfo == null) {
+         // cache does not exist
+         // return CacheConfigurationException -> site switched to OFFLINE in the originator and no more retries
          return CompletableFuture.failedFuture(log.xsiteCacheNotFound(origin, cacheName));
       } else if (cacheInfo.isLocalOnly()) {
+         // cache exists, but it is not valid to received xsite requests
+         // return CacheConfigurationException -> site switched to OFFLINE in the originator and no more retries
          return CompletableFuture.failedFuture(log.xsiteInLocalCache(origin, cacheInfo.cacheName()));
       }
       var cr = registry.getNamedComponentRegistry(cacheInfo.cacheName());
-      if (cr == null) {
+      if (cr == null || !cr.getStatus().allowInvocations()) {
+         // XSiteCacheMapper.findLocalCache found a cache but there is no ComponentRegistry. Possible options are
+         // * cache is stopped
+         // * cache is initializing/starting
+         // return IllegalLifecycleStateException -> triggers back-off and retry in the originator
          return CompletableFuture.failedFuture(log.xsiteCacheNotStarted(origin, cacheInfo.cacheName()));
       }
       cr.getComponent(XSiteMetricsCollector.class).recordRequestsReceived(origin);

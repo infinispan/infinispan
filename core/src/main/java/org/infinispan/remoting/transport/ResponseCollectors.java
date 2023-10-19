@@ -3,6 +3,7 @@ package org.infinispan.remoting.transport;
 import static org.infinispan.util.logging.Log.CLUSTER;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.CrossSiteIllegalLifecycleStateException;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.partitionhandling.AvailabilityException;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
@@ -18,7 +19,7 @@ public class ResponseCollectors {
       CacheException e;
       if (exception instanceof SuspectException) {
          e = CLUSTER.thirdPartySuspected(sender, (SuspectException) exception);
-      } else if (exception instanceof AvailabilityException || exception instanceof OutdatedTopologyException) {
+      } else if (exception instanceof AvailabilityException || exception instanceof OutdatedTopologyException || exception instanceof CrossSiteIllegalLifecycleStateException) {
          e = (CacheException) exception;
       } else {
          // if we have any application-level exceptions make sure we throw them!!

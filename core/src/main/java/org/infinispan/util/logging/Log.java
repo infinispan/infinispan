@@ -27,6 +27,7 @@ import javax.transaction.xa.XAResource;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.CacheListenerException;
+import org.infinispan.commons.CrossSiteIllegalLifecycleStateException;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.configuration.io.Location;
 import org.infinispan.commons.dataconversion.EncodingException;
@@ -2083,7 +2084,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot handle cross-site request from site '%s'. Cache '%s' is stopped.", id = 604)
    @Description("A remote cluster attempted to replicate data to a cache that is not available. Start, or restart, the cache.")
-   CacheConfigurationException xsiteCacheNotStarted(String origin, ByteString cacheName);
+   CrossSiteIllegalLifecycleStateException xsiteCacheNotStarted(String origin, ByteString cacheName);
 
    @Message(value = "Cannot handle cross-site request from site '%s'. Cache '%s' is not clustered.", id = 605)
    @Description("A remote cluster attempted to replicate data to a local cache. Either recreate the cache with a distributed or replicated mode or remove the backup configuration.")
@@ -2401,4 +2402,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Failed to register metrics with id %s. Reason: %s", id = 970)
    void metricRegistrationFailed(String id, String reason);
+
+   @Message(value = "Cannot handle cross-site request from site '%s'. CacheManager isn't started yet.", id = 971)
+   CrossSiteIllegalLifecycleStateException xsiteCacheManagerDoesNotAllowInvocations(String origin);
 }

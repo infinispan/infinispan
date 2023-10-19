@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -22,6 +25,7 @@ import org.infinispan.notifications.cachemanagerlistener.event.SitesViewChangedE
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
@@ -29,6 +33,8 @@ import org.infinispan.xsite.XSiteCacheMapper;
 import org.infinispan.xsite.XSiteNamedCache;
 import org.infinispan.xsite.commands.XSiteLocalEventCommand;
 import org.infinispan.xsite.commands.remote.XSiteRemoteEventCommand;
+
+import net.jcip.annotations.GuardedBy;
 
 /**
  * Default implementation of {@link XSiteEventsManager}.
@@ -39,16 +45,14 @@ import org.infinispan.xsite.commands.remote.XSiteRemoteEventCommand;
 @Listener
 public class XSiteEventsManagerImpl implements XSiteEventsManager {
 
+   private static final int[] BACK_OFF_DELAYS = {200, 500, 1000, 2000, 5000};
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
-   @Inject
-   Transport transport;
-   @Inject
-   CacheManagerNotifier notifier;
-   @Inject
-   GlobalComponentRegistry globalRegistry;
-   @Inject
-   XSiteCacheMapper xSiteCacheMapper;
+   @Inject Transport transport;
+   @Inject CacheManagerNotifier notifier;
+   @Inject GlobalComponentRegistry globalRegistry;
+   @Inject XSiteCacheMapper xSiteCacheMapper;
+   private Executor backOffExecutor;
 
    @Start
    public void start() {
@@ -60,10 +64,15 @@ public class XSiteEventsManagerImpl implements XSiteEventsManager {
       notifier.removeListener(this);
    }
 
+   @Inject
+   public void createExecutor(BlockingManager blockingManager) {
+      backOffExecutor = blockingManager.asExecutor("x-site-evt-backoff");
+   }
+
    @Override
    public CompletionStage<Void> onLocalEvents(List<XSiteEvent> events) {
       log.debugf("Local events received: %s", events);
-      try (var holder = new XSiteEventSender(transport)) {
+      try (var holder = new XSiteEventSender(this::sendWithBackOff)) {
          for (var e : events) {
             switch (e.getType()) {
                case SITE_CONNECTED:
@@ -115,7 +124,7 @@ public class XSiteEventsManagerImpl implements XSiteEventsManager {
       if (!transport.isCoordinator()) {
          return;
       }
-      try (var sender = new XSiteEventSender(transport)) {
+      try (var sender = new XSiteEventSender(this::sendWithBackOff)) {
          xSiteCacheMapper.findRemoteCachesWithAsyncBackup(event.getCacheName())
                .forEach(i -> sender.addEventToSite(i.siteName(), XSiteEvent.createInitialStateRequest(localSite(), i.cacheName())));
       } catch (Exception e) {
@@ -133,7 +142,7 @@ public class XSiteEventsManagerImpl implements XSiteEventsManager {
       var cmd = new XSiteRemoteEventCommand(List.of(XSiteEvent.createConnectEvent(localSite())));
       var backup = new XSiteBackup(remoteSite, false, 10000);
       log.debugf("Sending connection event to %s: %s", backup, cmd);
-      transport.backupRemotely(backup, cmd);
+      sendWithBackOff(backup, cmd);
    }
 
    private void onRemoteSiteStateRequest(ByteString remoteSite, ByteString localCacheName, boolean initialState) {
@@ -152,5 +161,50 @@ public class XSiteEventsManagerImpl implements XSiteEventsManager {
 
    private ByteString localSite() {
       return XSiteNamedCache.cachedByteString(transport.localSiteName());
+   }
+
+   private void sendWithBackOff(XSiteBackup backup, XSiteRemoteEventCommand cmd) {
+      if (transport.localSiteName().equals(backup.getSiteName())) {
+         return;
+      }
+      new BackOffSender(cmd, backup).run();
+   }
+
+   private Executor delayExecutor(int step) {
+      return CompletableFuture.delayedExecutor(BACK_OFF_DELAYS[step], TimeUnit.MILLISECONDS, backOffExecutor);
+   }
+
+   private class BackOffSender implements Runnable, Function<Throwable, Void> {
+      private final XSiteRemoteEventCommand cmd;
+      private final XSiteBackup backup;
+      @GuardedBy("this")
+      private int backoffStep;
+
+      private BackOffSender(XSiteRemoteEventCommand cmd, XSiteBackup backup) {
+         this.cmd = cmd;
+         this.backup = backup;
+      }
+
+      @Override
+      public void run() {
+         log.debugf("Sending %s to %s", cmd, backup);
+         transport.backupRemotely(backup, cmd).exceptionally(this);
+      }
+
+      @Override
+      public Void apply(Throwable throwable) {
+         var step = nextBackOffStep();
+         if (step >= BACK_OFF_DELAYS.length) {
+            log.debugf(throwable, "Failed to send %s to %s", cmd, cmd);
+            return null;
+         }
+         log.debugf(throwable, "Sending %s to %s with delay of %s milliseconds", cmd, backup, BACK_OFF_DELAYS[step]);
+         delayExecutor(step).execute(this);
+         return null;
+      }
+
+      private synchronized int nextBackOffStep() {
+         return backoffStep++;
+      }
    }
 }
