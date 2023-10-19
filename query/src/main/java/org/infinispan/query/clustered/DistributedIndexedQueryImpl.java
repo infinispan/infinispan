@@ -13,6 +13,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.apache.lucene.search.Sort;
 import org.hibernate.search.util.common.SearchException;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterator;
@@ -21,6 +22,8 @@ import org.infinispan.query.SearchTimeoutException;
 import org.infinispan.query.core.impl.QueryResultImpl;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.QueryResult;
+import org.infinispan.query.dsl.embedded.impl.InfinispanAggregation;
+import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
 import org.infinispan.query.impl.IndexedQuery;
 import org.infinispan.query.impl.IndexedQueryImpl;
 import org.infinispan.query.impl.QueryDefinition;
@@ -84,8 +87,16 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
       ClusteredQueryOperation command = ClusteredQueryOperation.createEagerIterator(queryDefinition);
       Map<Address, NodeTopDocs> topDocsResponses = broadcastQuery(command);
 
-      return new DistributedIterator<>(queryStatistics, queryDefinition.getSearchQueryBuilder().getLuceneSort(),
-            maxResults, resultSize, maxResults,
+      SearchQueryBuilder searchQueryBuilder = queryDefinition.getSearchQueryBuilder();
+      Sort luceneSort = searchQueryBuilder.getLuceneSort();
+      InfinispanAggregation<?> aggregation = searchQueryBuilder.aggregation();
+
+      if (aggregation != null) {
+         return (CloseableIterator<E>) new AggregationDistributedIterator(topDocsResponses,
+               aggregation.displayGroupFirst(), luceneSort);
+      }
+
+      return new DistributedIterator<>(queryStatistics, luceneSort, maxResults, resultSize, maxResults,
             firstResult, topDocsResponses, cache);
    }
 

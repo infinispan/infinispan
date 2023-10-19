@@ -429,7 +429,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    }
 
    private void checkIndexed(PropertyPath<?> propertyPath) {
-      if (!fieldIndexingMetadata.isIndexed(propertyPath.asArrayPath())) {
+      if (!fieldIndexingMetadata.isSearchable(propertyPath.asArrayPath())) {
          throw log.getFullTextQueryOnNotIndexedPropertyNotSupportedException(targetTypeName, propertyPath.asStringPath());
       }
    }

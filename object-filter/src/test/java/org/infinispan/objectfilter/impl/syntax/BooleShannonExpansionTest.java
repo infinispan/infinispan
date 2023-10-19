@@ -22,7 +22,7 @@ public class BooleShannonExpansionTest {
 
    private final BooleShannonExpansion booleShannonExpansion = new BooleShannonExpansion(3, new IndexedFieldProvider.FieldIndexingMetadata() {
       @Override
-      public boolean isIndexed(String[] propertyPath) {
+      public boolean isSearchable(String[] propertyPath) {
          String last = propertyPath[propertyPath.length - 1];
          return !"number".equals(last) && !"license".equals(last);
       }
@@ -39,12 +39,17 @@ public class BooleShannonExpansionTest {
 
       @Override
       public boolean isProjectable(String[] propertyPath) {
-         return isIndexed(propertyPath);
+         return isSearchable(propertyPath);
+      }
+
+      @Override
+      public boolean isAggregable(String[] propertyPath) {
+         return false;
       }
 
       @Override
       public boolean isSortable(String[] propertyPath) {
-         return isIndexed(propertyPath);
+         return isSearchable(propertyPath);
       }
 
       @Override
