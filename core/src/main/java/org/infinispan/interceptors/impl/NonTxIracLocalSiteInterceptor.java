@@ -153,7 +153,8 @@ public class NonTxIracLocalSiteInterceptor extends AbstractIracLocalSiteIntercep
     */
    @SuppressWarnings("unused")
    private void handleWriteCommand(InvocationContext ctx, WriteCommand command, Object rv, Throwable t) {
-      if (!command.isSuccessful()) {
+      // TODO: this is another to look into
+      if (!command.shouldReplicate(ctx, true)) {
          return;
       }
       for (Object key : command.getAffectedKeys()) {

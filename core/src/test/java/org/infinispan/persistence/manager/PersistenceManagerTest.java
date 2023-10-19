@@ -30,6 +30,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestException;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -44,6 +45,24 @@ import io.reactivex.rxjava3.subscribers.TestSubscriber;
 @Test(groups = "unit", testName = "persistence.PersistenceManagerTest")
 @CleanupAfterMethod
 public class PersistenceManagerTest extends SingleCacheManagerTest {
+   private boolean transactional;
+
+   private PersistenceManagerTest transactional(boolean transactional) {
+      this.transactional = transactional;
+      return this;
+   }
+   @Factory
+   public static Object[] factory() {
+      return new Object[] {
+            new PersistenceManagerTest().transactional(true),
+            new PersistenceManagerTest().transactional(false)
+      };
+   }
+
+   @Override
+   protected String parameters() {
+      return "transactional=" + transactional;
+   }
 
    /**
     * Simulates cache receiving a topology update while stopping.
@@ -152,9 +171,20 @@ public class PersistenceManagerTest extends SingleCacheManagerTest {
       assertFalse(store1.contains(key));
    }
 
+   public void testStoreNotWrittenOnRemoveMiss() {
+      if (transactional) {
+         // Only supported for non tx
+         return;
+      }
+      FailStore store2 = getStore(cache, 1, true);
+      store2.failModification(1);
+
+      cache.remove("k");
+   }
+
    @Override
    protected EmbeddedCacheManager createCacheManager() {
-      ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
+      ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(transactional);
       cfg.persistence().addStore(DelayStore.ConfigurationBuilder.class);
       cfg.persistence().addStore(FailStore.ConfigurationBuilder.class);
       cfg.persistence().addStore(FailStore.ConfigurationBuilder.class);

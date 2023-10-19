@@ -58,6 +58,12 @@ public class RemoveExpiredCommand extends RemoveCommand {
    }
 
    @Override
+   public boolean shouldReplicate(InvocationContext ctx, boolean requireReplicateIfRemote) {
+      // TODO: I think expiration always has to replicate - check if works later
+      return isSuccessful();
+   }
+
+   @Override
    public String toString() {
       return "RemoveExpiredCommand{" +
               "key=" + toStr(key) +

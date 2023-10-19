@@ -192,7 +192,7 @@ public abstract class AbstractIracLocalSiteInterceptor extends DDAsyncIntercepto
    @SuppressWarnings("unused")
    private void handleNonTxDataWriteCommand(InvocationContext ctx, DataWriteCommand command, Object rv, Throwable t) {
       final Object key = command.getKey();
-      if (!command.isSuccessful() || skipEntryCommit(ctx, command, key)) {
+      if (!command.shouldReplicate(ctx, true) || skipEntryCommit(ctx, command, key)) {
          return;
       }
       setMetadataToCacheEntry(ctx.lookupEntry(key), command.getSegment(), command.getInternalMetadata(key).iracMetadata());

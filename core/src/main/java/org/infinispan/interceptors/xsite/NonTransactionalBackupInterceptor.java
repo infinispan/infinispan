@@ -140,6 +140,12 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
          }
          return rv;
       }
+      if (!writeCommand.shouldReplicate(ctx, true)) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Command %s says not to replicate", writeCommand);
+         }
+         return rv;
+      }
       Map<Object, Object> map = new HashMap<>(); // must support null values
       LocalizedCacheTopology localizedCacheTopology = clusteringDependentLogic.getCacheTopology();
       for (Object key : writeCommand.getAffectedKeys()) {
