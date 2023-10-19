@@ -89,6 +89,14 @@ public final class IndexingMetadata {
       return fieldMapping != null && fieldMapping.projectable();
    }
 
+   public boolean isFieldAggregable(String fieldName) {
+      if (fields == null) {
+         return isIndexed;
+      }
+      FieldMapping fieldMapping = fields.get(fieldName);
+      return fieldMapping != null && fieldMapping.aggregable();
+   }
+
    public boolean isFieldSortable(String fieldName) {
       if (fields == null) {
          return isIndexed;

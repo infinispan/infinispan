@@ -85,6 +85,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
    private final boolean broadcastQuery;
    private final int defaultMaxResults;
    private final int defaultHitCountAccuracy;
+   private final QueryAnalyzer<TypeMetadata> queryAnalyzer;
 
    public QueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed) {
       this(cache, isIndexed, ObjectReflectionMatcher.class);
@@ -98,6 +99,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       this.isIndexed = isIndexed;
       this.defaultMaxResults = configuration.query().defaultMaxResults();
       this.defaultHitCountAccuracy = configuration.query().hitCountAccuracy();
+      queryAnalyzer = new QueryAnalyzer<>(getPropertyHelper());
    }
 
    protected SearchMapping getSearchMapping() {
@@ -119,6 +121,10 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
    protected BaseQuery<?> buildQueryWithAggregations(QueryFactory queryFactory, String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult, boolean local) {
       if (parsingResult.getProjectedPaths() == null) {
          throw CONTAINER.groupingAndAggregationQueriesMustUseProjections();
+      }
+
+      if (queryAnalyzer.fullIndexingAggregation(parsingResult)) {
+         return buildQueryWithNativeAggregations(queryFactory, namedParameters, startOffset, maxResults, parsingResult, local);
       }
 
       LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns = new LinkedHashMap<>();
@@ -280,6 +286,10 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
             noOfGroupingColumns, accumulators, false,
             getObjectFilter(new RowMatcher(_columns), secondPhaseQueryStr, namedParameters, null),
             startOffset, maxResults, baseQuery, queryStatistics, local);
+   }
+
+   private EmbeddedLuceneQuery<TypeMetadata, Object> buildQueryWithNativeAggregations(QueryFactory queryFactory, Map<String, Object> namedParameters, long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult, boolean local) {
+      return new EmbeddedLuceneQuery<>(this, queryFactory, namedParameters, parsingResult, parsingResult.getProjections(), null, startOffset, maxResults, local);
    }
 
    /**
@@ -650,13 +660,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       if (!isIndexed) {
          throw CONTAINER.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
       }
-
-      IckleParsingResult<TypeMetadata> parsingResult = parse(queryString);
-      if (parsingResult.hasGroupingOrAggregations()) {
-         throw CONTAINER.groupAggregationsNotSupported();
-      }
-
-      return transformParsingResult(parsingResult, namedParameters);
+      return transformParsingResult(parse(queryString), namedParameters);
    }
 
    public <E> IndexedQuery<E> buildLuceneQuery(IckleParsingResult<TypeMetadata> parsingResult,

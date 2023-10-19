@@ -17,6 +17,7 @@ import org.infinispan.client.hotrod.evolution.model.BaseModelWithNameIndexedAndN
 import org.infinispan.client.hotrod.evolution.model.BaseModelWithNameIndexedFieldEntity.BaseModelWithNameIndexedFieldEntitySchema;
 import org.infinispan.client.hotrod.evolution.model.BaseModelWithNewIndexedFieldEntity.BaseModelWithNewIndexedFieldEntitySchema;
 import org.infinispan.client.hotrod.evolution.model.ModelUtils;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.api.query.Query;
@@ -39,6 +40,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
@@ -393,9 +395,10 @@ public class IndexSchemaNoDowntimeUpgradeTest extends SingleHotRodServerTest {
 
         // VERSION 2
         // aggregable = false
-        for (int i = 0; i < 5; i++) { expected[i][0] = i; expected[i][1] = 2L; }
-        assertThat(doQuery("SELECT e.number, COUNT(e.number) FROM evolution.Model e WHERE e.number <= 10 GROUP BY e.number", cache))
-                .containsExactlyInAnyOrder(expected[0], expected[1], expected[2], expected[3], expected[4]);
+        // changing aggregable on pre-existent data is no longer supported
+        assertThatThrownBy(() -> doQuery("SELECT e.number, COUNT(e.number) FROM evolution.Model e WHERE e.number <= 10 GROUP BY e.number", cache))
+              .isInstanceOf(HotRodClientException.class)
+              .hasMessageContaining("Re-index with correct docvalues type");
 
         // projectable = false
         try {
