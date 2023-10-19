@@ -51,6 +51,23 @@ public class RespSetCommandsTest extends SingleNodeRespBaseTest {
    }
 
    @Test
+   public void testSismember() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "sismember";
+      redis.sadd(key, "e1", "e2", "e3");
+      assertThat(redis.sismember(key, "e1")).isTrue();
+      assertThat(redis.sismember(key, "e4")).isFalse();
+      assertThat(redis.sismember("nonexistent-sismember", "e4")).isFalse();
+
+      // SISMEMBER on an existing key that contains a String, not a Set!
+      // Set a String Command
+      assertWrongType(() -> redis.set("leads", "tristan"), () -> redis.sismember("leads", "tristan"));
+      // SISMEMBER on an existing key that contains a List, not a Set!
+      // Create a List
+      assertWrongType(() -> redis.rpush("listleads", "tristan"), () -> redis.sismember("listleads", "tristan"));
+   }
+
+   @Test
    public void testScard() {
       RedisCommands<String, String> redis = redisConnection.sync();
       String key = "smembers";

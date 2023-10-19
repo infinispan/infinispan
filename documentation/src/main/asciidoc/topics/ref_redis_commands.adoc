@@ -297,6 +297,9 @@ provides a read-uncommitted isolation.
 | link:https://redis.io/commands/sinterstore[SINTERSTORE]
 |
 
+| link:https://redis.io/commands/sismember[SISMEMBER]
+|
+
 | link:https://redis.io/commands/sort[SORT]
 |
 
