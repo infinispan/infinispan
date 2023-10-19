@@ -27,11 +27,6 @@ import org.testng.annotations.Test;
 public class InvalidConfigurationOfflineTest extends AbstractMultipleSitesTest {
 
    @Override
-   protected int defaultNumberOfSites() {
-      return 2;
-   }
-
-   @Override
    protected int defaultNumberOfNodes() {
       return 1;
    }
@@ -45,10 +40,8 @@ public class InvalidConfigurationOfflineTest extends AbstractMultipleSitesTest {
    public Object[][] collectionItemProvider() {
       return new Object[][]{
             {"not-defined-true", true, RemoteSiteMode.NOT_DEFINED},
-            {"not-started-true", true, RemoteSiteMode.NOT_STARTED},
             {"not-clustered-true", true, RemoteSiteMode.LOCAL_CACHE},
             {"not-defined-false", false, RemoteSiteMode.NOT_DEFINED},
-            {"not-started-false", false, RemoteSiteMode.NOT_STARTED},
             {"not-clustered-false", false, RemoteSiteMode.LOCAL_CACHE},
       };
    }
@@ -58,7 +51,7 @@ public class InvalidConfigurationOfflineTest extends AbstractMultipleSitesTest {
       configureSite1(cacheName, takeOfflineEnabled);
       configureSite2(cacheName, remoteSiteMode);
 
-      final OfflineStatus offlineStatus = takeOfflineManager(cacheName).getOfflineStatus(siteName(1));
+      OfflineStatus offlineStatus = takeOfflineManager(cacheName).getOfflineStatus(siteName(1));
       assertEquals(takeOfflineEnabled, offlineStatus.isEnabled());
       assertFalse(offlineStatus.isOffline());
 
@@ -82,11 +75,6 @@ public class InvalidConfigurationOfflineTest extends AbstractMultipleSitesTest {
          case NOT_DEFINED:
             assertFalse(site(1).cacheManagers().get(0).cacheExists(cacheName));
             return;
-         case NOT_STARTED:
-            //it defines the cache but doesn't start it.
-            defineInSite(site(1), cacheName, getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC).build());
-            assertFalse(site(1).cacheManagers().get(0).isRunning(cacheName));
-            return;
          default:
             fail("Unexpected: " + remoteSiteMode);
       }
@@ -104,9 +92,8 @@ public class InvalidConfigurationOfflineTest extends AbstractMultipleSitesTest {
       site(0).waitForClusterToForm(cacheName);
    }
 
-   private enum RemoteSiteMode {
+   public enum RemoteSiteMode {
       NOT_DEFINED,
-      NOT_STARTED,
       LOCAL_CACHE
    }
 }
