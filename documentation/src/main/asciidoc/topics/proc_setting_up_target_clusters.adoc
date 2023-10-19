@@ -39,7 +39,7 @@ include::json/remote_store_minimal.json[]
 +
 [source,options="nowrap",subs=attributes+]
 ----
-POST /v2/caches/myCache/rolling-upgrade/source-connection
+POST /rest/v2/caches/myCache/rolling-upgrade/source-connection
 ----
 +
 . Repeat the preceding step for each cache that you want to migrate.
