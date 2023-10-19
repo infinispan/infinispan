@@ -25,6 +25,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.LocalTxInvocationContext;
@@ -41,7 +42,6 @@ import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.transport.impl.VoidResponseCollector;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -231,6 +231,8 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
          return invokeNext(ctx, command);
       }
       return invokeNextThenApply(ctx, command, (rCtx, writeCommand, rv) -> {
+         // Invaldation ignores a commands attempt at avoiding replication (e.g. writeCommand.shouldReplicate)
+         // as the local node may not have the key but others could
          if (writeCommand.isSuccessful()) {
             if (keys != null && keys.length != 0) {
                if (!isLocalModeForced(writeCommand)) {

@@ -447,7 +447,7 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
          final C dwCommand = (C) rCommand;
          final CommandInvocationId id = dwCommand.getCommandInvocationId();
          Collection<Address> backupOwners = distributionInfo.writeBackups();
-         if (!dwCommand.isSuccessful() || backupOwners.isEmpty()) {
+         if (!dwCommand.shouldReplicate(rCtx, true) || backupOwners.isEmpty()) {
             if (log.isTraceEnabled()) {
                log.tracef("Not sending command %s to backups", id);
             }
@@ -496,9 +496,11 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
          final C dwCommand = (C) rCommand;
          final CommandInvocationId id = dwCommand.getCommandInvocationId();
          Collection<Address> backupOwners = distributionInfo.writeBackups();
+         // Note we have to replicate even if the command says not to with triangle if the command
+         // didn't originate at the primary since the backup may be the originator
          if (!dwCommand.isSuccessful() || backupOwners.isEmpty()) {
             if (log.isTraceEnabled()) {
-               log.tracef("Command %s not successful in primary owner.", id);
+               log.tracef("Command %s not replicating from primary owner.", id);
             }
             return rv;
          }

@@ -25,6 +25,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -34,7 +35,6 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InvocationSuccessFunction;
 import org.infinispan.interceptors.impl.BaseRpcInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -143,7 +143,7 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
    private Object handleDataWriteCommand(InvocationContext rCtx, DataWriteCommand writeCommand, Object rv, boolean assumeOriginKeptEntryInL1) {
       Object key;
       Object key1 = (key = writeCommand.getKey());
-      if (shouldUpdateOnWriteCommand(writeCommand) && writeCommand.isSuccessful() &&
+      if (shouldUpdateOnWriteCommand(writeCommand) && writeCommand.shouldReplicate(rCtx, true) &&
             cdl.getCacheTopology().isWriteOwner(key1)) {
          if (log.isTraceEnabled()) {
             log.trace("Sending additional invalidation for requestors if necessary.");

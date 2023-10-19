@@ -250,7 +250,7 @@ public class BackupSenderImpl implements BackupSender {
       // in a replicable and another time in a non-replicable way
       for (ListIterator<WriteCommand> it = modifications.listIterator(modifications.size()); it.hasPrevious(); ) {
          WriteCommand writeCommand = it.previous();
-         if (!writeCommand.isSuccessful() || writeCommand.hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP)) {
+         if (!writeCommand.shouldReplicate(null, true) || writeCommand.hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP)) {
             continue;
          }
          // Note: ClearCommand should be replicated out of transaction
