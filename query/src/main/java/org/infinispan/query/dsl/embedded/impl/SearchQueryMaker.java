@@ -60,6 +60,7 @@ import org.infinispan.objectfilter.impl.syntax.OrExpr;
 import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
 import org.infinispan.objectfilter.impl.syntax.Visitor;
 import org.infinispan.objectfilter.impl.syntax.parser.AggregationPropertyPath;
+import org.infinispan.objectfilter.impl.syntax.parser.CacheValueAggregationPropertyPath;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 import org.infinispan.query.logging.Log;
@@ -224,7 +225,7 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
       }
 
       PredicateFinalStep predicateFinalStep = expr.acceptVisitor(this);
-      if (aggregation == null || aggregation.propertyPath() == null) {
+      if (aggregation == null || aggregation.propertyPath() == null || aggregation.propertyPath() instanceof CacheValueAggregationPropertyPath) {
          return predicateFinalStep;
       }
 

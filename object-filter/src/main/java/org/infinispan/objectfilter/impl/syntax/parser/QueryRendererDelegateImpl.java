@@ -485,11 +485,14 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
     */
    @Override
    public void setPropertyPath(PropertyPath<TypeDescriptor<TypeMetadata>> propertyPath) {
+      boolean aggregationPropertyPath = false;
+
       if (aggregationFunction != null) {
          if (propertyPath == null && aggregationFunction != AggregationFunction.COUNT && aggregationFunction != AggregationFunction.COUNT_DISTINCT) {
             throw log.getAggregationCanOnlyBeAppliedToPropertyReferencesException(aggregationFunction.name());
          }
          propertyPath = new AggregationPropertyPath<>(aggregationFunction, propertyPath.getNodes());
+         aggregationPropertyPath = true;
       }
       if (phase == Phase.SELECT) {
          if (projections == null) {
@@ -501,7 +504,12 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
          Class<?> propertyType;
          Object nullMarker;
          if (propertyPath.getLength() == 1 && propertyPath.isAlias()) {
-            projection = new CacheValuePropertyPath<>();
+            if (!aggregationPropertyPath) {
+               projection = new CacheValuePropertyPath<>();
+            } else {
+               projection = new CacheValueAggregationPropertyPath<>();
+            }
+
             propertyType = null;
             nullMarker = null;
          } else {
