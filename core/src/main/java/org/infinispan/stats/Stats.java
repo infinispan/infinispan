@@ -1,5 +1,6 @@
 package org.infinispan.stats;
 
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 
 /**
@@ -9,6 +10,34 @@ import org.infinispan.commons.dataconversion.internal.JsonSerialization;
  * @since 4.0
  */
 public interface Stats extends JsonSerialization {
+
+   @Override
+   default Json toJson() {
+      return Json.object()
+            .set("time_since_start", getTimeSinceStart())
+            .set("time_since_reset", getTimeSinceReset())
+            .set("approximate_entries", getApproximateEntries())
+            .set("approximate_entries_in_memory", getApproximateEntriesInMemory())
+            .set("approximate_entries_unique", getApproximateEntriesUnique())
+            .set("current_number_of_entries", getCurrentNumberOfEntries())
+            .set("current_number_of_entries_in_memory", getCurrentNumberOfEntriesInMemory())
+            .set("off_heap_memory_used", getOffHeapMemoryUsed())
+            .set("data_memory_used", getDataMemoryUsed())
+            .set("stores", getStores())
+            .set("retrievals", getRetrievals())
+            .set("hits", getHits())
+            .set("misses", getMisses())
+            .set("remove_hits", getRemoveHits())
+            .set("remove_misses", getRemoveMisses())
+            .set("evictions", getEvictions())
+            .set("average_read_time", getAverageReadTime())
+            .set("average_read_time_nanos", getAverageReadTimeNanos())
+            .set("average_write_time", getAverageWriteTime())
+            .set("average_write_time_nanos", getAverageRemoveTimeNanos())
+            .set("average_remove_time", getAverageRemoveTime())
+            .set("average_remove_time_nanos", getAverageRemoveTimeNanos())
+            .set("required_minimum_number_of_nodes", getRequiredMinimumNumberOfNodes());
+   }
 
    /**
     * @return Number of seconds since cache started.
