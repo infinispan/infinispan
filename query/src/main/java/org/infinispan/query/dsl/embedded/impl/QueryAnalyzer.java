@@ -8,6 +8,7 @@ import org.infinispan.objectfilter.impl.ql.PropertyPath;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
 import org.infinispan.objectfilter.impl.syntax.parser.AggregationPropertyPath;
+import org.infinispan.objectfilter.impl.syntax.parser.CacheValueAggregationPropertyPath;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 
@@ -57,7 +58,7 @@ public final class QueryAnalyzer<TypeMetadata> {
                return false;
             }
             boolean aggregationTargetsAProperty = propertyHelper.hasProperty(parsingResult.getTargetEntityMetadata(), aggregation.asArrayPath());
-            if (aggregationTargetsAProperty) {
+            if (aggregationTargetsAProperty && !(aggregation instanceof CacheValueAggregationPropertyPath)) {
                if (!metadata.isSearchable(aggregation.asArrayPath())) {
                   return false;
                }
