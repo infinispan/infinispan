@@ -14,7 +14,7 @@ import org.jboss.logging.Logger;
  * @author anistor@redhat.com
  * @since 9.0
  */
-public final class AggregationPropertyPath<TypeMetadata> extends PropertyPath<TypeDescriptor<TypeMetadata>> {
+public class AggregationPropertyPath<TypeMetadata> extends PropertyPath<TypeDescriptor<TypeMetadata>> {
 
    private static final Log log = Logger.getMessageLogger(Log.class, AggregationPropertyPath.class.getName());
 

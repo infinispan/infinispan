@@ -25,6 +25,7 @@ public class QueryAggregationCountTest extends SingleCacheManagerTest {
    // these results depend on the seed
    public static final Object[][] AGGREGATION_RESULT = {{"BLOCKED", 161L}, {"CLOSE", 152L}, {"IN_PROGRESS", 174L}, {"OPEN", 141L}, {"WAITING", 172L}};
    public static final Object[][] REV_AGGREGATION_RESULT = {{161L, "BLOCKED"}, {152L, "CLOSE"}, {174L, "IN_PROGRESS"}, {141L, "OPEN"}, {172L, "WAITING"}};
+   public static final Object[][] FULL_AGGREGATION_RESULT = {{"BLOCKED", 205L}, {"CLOSE", 189L}, {"IN_PROGRESS", 213L}, {"OPEN", 178L}, {"WAITING", 215L}};
 
    private final Random fixedSeedPseudoRandom = new Random(739);
 
@@ -49,11 +50,11 @@ public class QueryAggregationCountTest extends SingleCacheManagerTest {
       query = cache.query("select status, count(code) from org.infinispan.query.model.Sale where day = :day group by status order by status");
       query.setParameter("day", NUMBER_OF_DAYS / 2);
       assertThat(query.list()).containsExactly(AGGREGATION_RESULT);
-
+      // inverted count / group
       query = cache.query("select count(code), status from org.infinispan.query.model.Sale where day = :day group by status order by status");
       query.setParameter("day", NUMBER_OF_DAYS / 2);
       assertThat(query.list()).containsExactly(REV_AGGREGATION_RESULT);
-
+      // no order by
       query = cache.query("select status, count(code) from org.infinispan.query.model.Sale where day = :day group by status");
       query.setParameter("day", NUMBER_OF_DAYS / 2);
       assertThat(query.list()).containsExactlyInAnyOrder(AGGREGATION_RESULT);
@@ -62,6 +63,15 @@ public class QueryAggregationCountTest extends SingleCacheManagerTest {
       Optional<Integer> totalNotNullItems = query.list().stream()
             .map(objects -> ((Long) objects[1]).intValue()).reduce(Integer::sum);
       assertThat(totalNotNullItems).hasValue(CHUNK_SIZE * NUMBER_OF_DAYS);
+
+      // alias
+      query = cache.query("select s.status, count(s.code) from org.infinispan.query.model.Sale s where s.day = :day group by s.status order by s.status");
+      query.setParameter("day", NUMBER_OF_DAYS / 2);
+      assertThat(query.list()).containsExactly(AGGREGATION_RESULT);
+      // alias && count on entity
+      query = cache.query("select s.status, count(s) from org.infinispan.query.model.Sale s where s.day = :day group by s.status order by s.status");
+      query.setParameter("day", NUMBER_OF_DAYS / 2);
+      assertThat(query.list()).containsExactly(FULL_AGGREGATION_RESULT);
    }
 
    public static HashMap<String, Sale> chunk(int day, Random random) {
