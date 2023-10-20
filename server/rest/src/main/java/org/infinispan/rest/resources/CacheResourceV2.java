@@ -117,6 +117,7 @@ import org.infinispan.rest.tracing.RestTelemetryService;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.stats.ClusterCacheStats;
 import org.infinispan.stats.Stats;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.upgrade.RollingUpgradeManager;
@@ -671,8 +672,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       Boolean queryable = null;
 
       try {
-         // TODO Shouldn't we return the clustered stats, like Hot Rod does?
-         stats = cache.getAdvancedCache().getStats();
+         stats = SecurityActions.getComponentRegistry(cache.getAdvancedCache()).getComponent(ClusterCacheStats.class);
          DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
          rehashInProgress = distributionManager != null && distributionManager.isRehashInProgress();
       } catch (SecurityException ex) {
