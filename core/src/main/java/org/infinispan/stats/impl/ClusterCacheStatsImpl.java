@@ -1,54 +1,9 @@
 package org.infinispan.stats.impl;
 
-import static org.infinispan.stats.impl.StatKeys.ACTIVATIONS;
-import static org.infinispan.stats.impl.StatKeys.APPROXIMATE_ENTRIES;
-import static org.infinispan.stats.impl.StatKeys.APPROXIMATE_ENTRIES_IN_MEMORY;
-import static org.infinispan.stats.impl.StatKeys.APPROXIMATE_ENTRIES_UNIQUE;
-import static org.infinispan.stats.impl.StatKeys.AVERAGE_READ_TIME;
-import static org.infinispan.stats.impl.StatKeys.AVERAGE_READ_TIME_NANOS;
-import static org.infinispan.stats.impl.StatKeys.AVERAGE_REMOVE_TIME;
-import static org.infinispan.stats.impl.StatKeys.AVERAGE_REMOVE_TIME_NANOS;
-import static org.infinispan.stats.impl.StatKeys.AVERAGE_WRITE_TIME;
-import static org.infinispan.stats.impl.StatKeys.AVERAGE_WRITE_TIME_NANOS;
-import static org.infinispan.stats.impl.StatKeys.CACHE_LOADER_LOADS;
-import static org.infinispan.stats.impl.StatKeys.CACHE_LOADER_MISSES;
-import static org.infinispan.stats.impl.StatKeys.CACHE_WRITER_STORES;
-import static org.infinispan.stats.impl.StatKeys.DATA_MEMORY_USED;
-import static org.infinispan.stats.impl.StatKeys.EVICTIONS;
-import static org.infinispan.stats.impl.StatKeys.HITS;
-import static org.infinispan.stats.impl.StatKeys.INVALIDATIONS;
-import static org.infinispan.stats.impl.StatKeys.MISSES;
-import static org.infinispan.stats.impl.StatKeys.NUMBER_OF_ENTRIES;
-import static org.infinispan.stats.impl.StatKeys.NUMBER_OF_ENTRIES_IN_MEMORY;
-import static org.infinispan.stats.impl.StatKeys.NUMBER_OF_LOCKS_AVAILABLE;
-import static org.infinispan.stats.impl.StatKeys.NUMBER_OF_LOCKS_HELD;
-import static org.infinispan.stats.impl.StatKeys.OFF_HEAP_MEMORY_USED;
-import static org.infinispan.stats.impl.StatKeys.PASSIVATIONS;
-import static org.infinispan.stats.impl.StatKeys.REMOVE_HITS;
-import static org.infinispan.stats.impl.StatKeys.REMOVE_MISSES;
-import static org.infinispan.stats.impl.StatKeys.REQUIRED_MIN_NODES;
-import static org.infinispan.stats.impl.StatKeys.STORES;
-import static org.infinispan.stats.impl.StatKeys.TIME_SINCE_START;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.function.Function;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
-import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
@@ -79,6 +34,50 @@ import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
+
+import static org.infinispan.stats.impl.StatKeys.ACTIVATIONS;
+import static org.infinispan.stats.impl.StatKeys.APPROXIMATE_ENTRIES;
+import static org.infinispan.stats.impl.StatKeys.APPROXIMATE_ENTRIES_IN_MEMORY;
+import static org.infinispan.stats.impl.StatKeys.APPROXIMATE_ENTRIES_UNIQUE;
+import static org.infinispan.stats.impl.StatKeys.AVERAGE_READ_TIME;
+import static org.infinispan.stats.impl.StatKeys.AVERAGE_READ_TIME_NANOS;
+import static org.infinispan.stats.impl.StatKeys.AVERAGE_REMOVE_TIME;
+import static org.infinispan.stats.impl.StatKeys.AVERAGE_REMOVE_TIME_NANOS;
+import static org.infinispan.stats.impl.StatKeys.AVERAGE_WRITE_TIME;
+import static org.infinispan.stats.impl.StatKeys.AVERAGE_WRITE_TIME_NANOS;
+import static org.infinispan.stats.impl.StatKeys.CACHE_LOADER_LOADS;
+import static org.infinispan.stats.impl.StatKeys.CACHE_LOADER_MISSES;
+import static org.infinispan.stats.impl.StatKeys.CACHE_WRITER_STORES;
+import static org.infinispan.stats.impl.StatKeys.DATA_MEMORY_USED;
+import static org.infinispan.stats.impl.StatKeys.EVICTIONS;
+import static org.infinispan.stats.impl.StatKeys.HITS;
+import static org.infinispan.stats.impl.StatKeys.INVALIDATIONS;
+import static org.infinispan.stats.impl.StatKeys.MISSES;
+import static org.infinispan.stats.impl.StatKeys.NUMBER_OF_ENTRIES;
+import static org.infinispan.stats.impl.StatKeys.NUMBER_OF_ENTRIES_IN_MEMORY;
+import static org.infinispan.stats.impl.StatKeys.NUMBER_OF_LOCKS_AVAILABLE;
+import static org.infinispan.stats.impl.StatKeys.NUMBER_OF_LOCKS_HELD;
+import static org.infinispan.stats.impl.StatKeys.OFF_HEAP_MEMORY_USED;
+import static org.infinispan.stats.impl.StatKeys.PASSIVATIONS;
+import static org.infinispan.stats.impl.StatKeys.REMOVE_HITS;
+import static org.infinispan.stats.impl.StatKeys.REMOVE_MISSES;
+import static org.infinispan.stats.impl.StatKeys.REQUIRED_MIN_NODES;
+import static org.infinispan.stats.impl.StatKeys.STORES;
+import static org.infinispan.stats.impl.StatKeys.TIME_SINCE_START;
 
 @MBean(objectName = ClusterCacheStats.OBJECT_NAME, description = "General cluster statistics such as timings, hit/miss ratio, etc. for a cache.")
 @Scope(Scopes.NAMED_CACHE)
@@ -535,12 +534,6 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
    private static <T extends AsyncInterceptor> T getFirstInterceptorWhichExtends(AdvancedCache<?, ?> cache,
                                                                                  Class<T> interceptorClass) {
       return cache.getAsyncInterceptorChain().findInterceptorExtending(interceptorClass);
-   }
-
-   @Override
-   public Json toJson() {
-      //TODO
-      throw new UnsupportedOperationException();
    }
 
    private static class DistributedCacheStatsCallable implements Function<EmbeddedCacheManager, Map<String, Number>> {
