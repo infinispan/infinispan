@@ -1,5 +1,14 @@
 package org.infinispan.stats.impl;
 
+import net.jcip.annotations.Immutable;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
+import org.infinispan.stats.Stats;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.infinispan.stats.impl.StatKeys.APPROXIMATE_ENTRIES;
 import static org.infinispan.stats.impl.StatKeys.APPROXIMATE_ENTRIES_IN_MEMORY;
 import static org.infinispan.stats.impl.StatKeys.APPROXIMATE_ENTRIES_UNIQUE;
@@ -23,17 +32,6 @@ import static org.infinispan.stats.impl.StatKeys.RETRIEVALS;
 import static org.infinispan.stats.impl.StatKeys.STORES;
 import static org.infinispan.stats.impl.StatKeys.TIME_SINCE_RESET;
 import static org.infinispan.stats.impl.StatKeys.TIME_SINCE_START;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import org.infinispan.commons.dataconversion.internal.Json;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
-import org.infinispan.stats.Stats;
-
-import net.jcip.annotations.Immutable;
 
 /**
  * StatsImpl.
@@ -298,34 +296,5 @@ public class StatsImpl implements Stats {
       } else if (source != null) {
          source.setStatisticsEnabled(enabled);
       }
-   }
-
-   @Override
-   public Json toJson() {
-      return Json.object()
-            .set("time_since_start", getTimeSinceStart())
-            .set("time_since_reset", getTimeSinceReset())
-            .set("approximate_entries", getApproximateEntries())
-            .set("approximate_entries_in_memory", getApproximateEntriesInMemory())
-            .set("approximate_entries_unique", getApproximateEntriesUnique())
-            .set("current_number_of_entries", getCurrentNumberOfEntries())
-            .set("current_number_of_entries_in_memory", getCurrentNumberOfEntriesInMemory())
-            .set("total_number_of_entries", getTotalNumberOfEntries())
-            .set("off_heap_memory_used", getOffHeapMemoryUsed())
-            .set("data_memory_used", getDataMemoryUsed())
-            .set("stores", getStores())
-            .set("retrievals", getRetrievals())
-            .set("hits", getHits())
-            .set("misses", getMisses())
-            .set("remove_hits", getRemoveHits())
-            .set("remove_misses", getRemoveMisses())
-            .set("evictions", getEvictions())
-            .set("average_read_time", getAverageReadTime())
-            .set("average_read_time_nanos", getAverageReadTimeNanos())
-            .set("average_write_time", getAverageWriteTime())
-            .set("average_write_time_nanos", getAverageRemoveTimeNanos())
-            .set("average_remove_time", getAverageRemoveTime())
-            .set("average_remove_time_nanos", getAverageRemoveTimeNanos())
-            .set("required_minimum_number_of_nodes", getRequiredMinimumNumberOfNodes());
    }
 }
