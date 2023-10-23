@@ -75,6 +75,8 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       return 3;
    }
 
+   protected abstract String cacheName();
+
    @Override
    protected void createCacheManagers() throws Exception {
       // global config
@@ -102,15 +104,15 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       });
 
       client = clients.get(0);
-      cacheClient = client.cache(CACHE_NAME);
+      cacheClient = client.cache(cacheName());
       // register protobuf schema
       String protoFileContents = Util.getResourceAsString(PROTO_FILE_NAME, getClass().getClassLoader());
       registerProtobuf(protoFileContents);
 
       // start indexed test cache that depends on the protobuf schema
       cacheManagers.forEach(cm -> {
-         cm.defineConfiguration(CACHE_NAME, builder.build());
-         cm.getCache(CACHE_NAME);
+         cm.defineConfiguration(cacheName(), builder.build());
+         cm.getCache(cacheName());
       });
    }
 
@@ -132,7 +134,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    }
 
    protected String getPath() {
-      return String.format("/rest/v2/caches/%s?action=search", CACHE_NAME);
+      return String.format("/rest/v2/caches/%s?action=search", cacheName());
    }
 
    @BeforeClass
@@ -306,7 +308,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    public void testMassIndexing() {
       boolean indexEnabled = getConfigBuilder().indexing().enabled();
 
-      CompletionStage<RestResponse> clearResponse = client.cache(CACHE_NAME).clearIndex();
+      CompletionStage<RestResponse> clearResponse = client.cache(cacheName()).clearIndex();
       if (indexEnabled) {
          ResponseAssertion.assertThat(clearResponse).isOk();
       } else {
@@ -315,7 +317,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
 
       if (indexEnabled) eventually(() -> getCount() == 0);
 
-      CompletionStage<RestResponse> massIndexResponse = client.cache(CACHE_NAME).reindex();
+      CompletionStage<RestResponse> massIndexResponse = client.cache(cacheName()).reindex();
 
       if (indexEnabled) {
          ResponseAssertion.assertThat(massIndexResponse).isOk();
@@ -335,7 +337,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       registerProtobuf(changedSchema);
 
       // reindex
-      join(client.cache(CACHE_NAME).reindex()).close();
+      join(client.cache(cacheName()).reindex()).close();
 
       // Query on the new field
       Json result = query("FROM org.infinispan.rest.search.entity.Person where newField = 'value'", GET);
@@ -394,7 +396,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       ClusteringConfiguration clustering = configuration.clustering();
 
       int sum = clients.stream().map(cli -> {
-         RestResponse queryResponse = join(cli.cache(CACHE_NAME).query("FROM org.infinispan.rest.search.entity.Person", true));
+         RestResponse queryResponse = join(cli.cache(cacheName()).query("FROM org.infinispan.rest.search.entity.Person", true));
          return Json.read(queryResponse.getBody()).at(HIT_COUNT).asInteger();
       }).mapToInt(value -> value).sum();
 
@@ -412,34 +414,34 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       if (!indexEnabled || getNumNodes() < 2) return;
 
       // reindex() reindex the whole cluster
-      join(clients.get(0).cache(CACHE_NAME).reindex());
+      join(clients.get(0).cache(cacheName()).reindex());
       assertAllIndexed();
 
       clearIndexes();
 
       // Local indexing should not touch the indexes of other caches
-      join(clients.get(0).cache(CACHE_NAME).reindexLocal());
+      join(clients.get(0).cache(cacheName()).reindexLocal());
       assertOnlyIndexed(0);
 
       clearIndexes();
 
-      join(clients.get(1).cache(CACHE_NAME).reindexLocal());
+      join(clients.get(1).cache(cacheName()).reindexLocal());
       assertOnlyIndexed(1);
 
       clearIndexes();
 
-      join(clients.get(2).cache(CACHE_NAME).reindexLocal());
+      join(clients.get(2).cache(cacheName()).reindexLocal());
       assertOnlyIndexed(2);
 
    }
 
    void clearIndexes() {
-      join(clients.get(0).cache(CACHE_NAME).clearIndex());
+      join(clients.get(0).cache(cacheName()).clearIndex());
    }
 
    private void assertIndexState(BiConsumer<IndexInfo, Integer> cacheIndexInfo) {
       IntStream.range(0, getNumNodes()).forEach(i -> {
-         Cache<?, ?> cache = cache(i, CACHE_NAME);
+         Cache<?, ?> cache = cache(i, cacheName());
          SearchStatistics searchStatistics = Search.getSearchStatistics(cache);
          Map<String, IndexInfo> indexInfo = join(searchStatistics.getIndexStatistics().computeIndexInfos());
          cacheIndexInfo.accept(indexInfo.get(Person.class.getName()), i);
@@ -501,15 +503,15 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
       RestEntity entity = new StringRestEntityOkHttp(contentType, contents);
       CompletionStage<RestResponse> response;
       if (method.equals(POST)) {
-         response = client.cache(CACHE_NAME).post(String.valueOf(id), entity);
+         response = client.cache(cacheName()).post(String.valueOf(id), entity);
       } else {
-         response = client.cache(CACHE_NAME).put(String.valueOf(id), entity);
+         response = client.cache(cacheName()).put(String.valueOf(id), entity);
       }
       ResponseAssertion.assertThat(response).isOk();
    }
 
    protected CompletionStage<RestResponse> get(String id, String accept) {
-      String path = String.format("/rest/v2/caches/%s/%s", CACHE_NAME, id);
+      String path = String.format("/rest/v2/caches/%s/%s", cacheName(), id);
       return client.raw().get(path, Collections.singletonMap(RequestHeader.ACCEPT_HEADER.getValue(), accept));
    }
 
