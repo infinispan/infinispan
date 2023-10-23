@@ -20,4 +20,9 @@ public class NonIndexedRestOffHeapSearch extends BaseRestSearchTest {
       configurationBuilder.memory().storageType(StorageType.OFF_HEAP);
       return configurationBuilder;
    }
+
+   @Override
+   protected String cacheName() {
+      return "search-rest-non-indexed-off-heap";
+   }
 }
