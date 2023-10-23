@@ -30,7 +30,7 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
 
    private static final int OFF_HEAP_KEY_SIZE = 6;
    private static final int OFF_HEAP_VALUE_SIZE = 8;
-   private static final long OFF_HEAP_SIZE = offHeapEntrySize(true, false /*immortal entries*/, OFF_HEAP_KEY_SIZE, OFF_HEAP_VALUE_SIZE);
+   private long OFF_HEAP_SIZE = -1;
 
    protected final int EVICTION_MAX_ENTRIES = 3;
    protected final int TOTAL_ENTRIES = 5;
@@ -43,6 +43,7 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
    @Override
    public Object[] factory() {
       return Arrays.stream(EvictionStrategy.values())
+            .filter(EvictionStrategy::isEnabled)
             .flatMap(strategy ->
                   Arrays.stream(new Object[]{
                         new SingleStatsTest().withStorage(StorageType.BINARY).withCountEviction(false).withEvictionStrategy(strategy),
@@ -122,6 +123,7 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
 
    public SingleStatsTest withEvictionStrategy(EvictionStrategy evictionStrategy) {
       this.evictionStrategy = evictionStrategy;
+      OFF_HEAP_SIZE = offHeapEntrySize(evictionStrategy == EvictionStrategy.REMOVE, false /*immortal entries*/, OFF_HEAP_KEY_SIZE, OFF_HEAP_VALUE_SIZE);
       return this;
    }
 
