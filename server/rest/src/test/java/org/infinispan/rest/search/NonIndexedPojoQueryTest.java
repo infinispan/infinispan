@@ -26,6 +26,11 @@ public class NonIndexedPojoQueryTest extends BaseRestSearchTest {
    }
 
    @Override
+   protected String cacheName() {
+      return "search-rest-non-indexed-pojo";
+   }
+
+   @Override
    protected void createCacheManagers() throws Exception {
       super.createCacheManagers();
       cacheManagers.forEach(cm -> cm.getClassAllowList().addRegexps("org.infinispan.rest.search.entity.*"));

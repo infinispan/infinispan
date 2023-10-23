@@ -28,4 +28,9 @@ public class SingleNodeLocalIndexTest extends BaseRestSearchTest {
    protected int getNumNodes() {
       return 1;
    }
+
+   @Override
+   protected String cacheName() {
+      return "search-rest-single-node-local";
+   }
 }
