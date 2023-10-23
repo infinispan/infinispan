@@ -68,7 +68,7 @@
                   <usedefaultlisteners>false</usedefaultlisteners>
                   <listener>${testNGListeners}</listener>
                </properties>
-               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Djava.security.manager=allow</argLine>
+               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} ${testjvm.javaSecurityManager}</argLine>
                <dependenciesToScan>
                   <!-- TestNGSuiteChecksTest -->
                   <dependency>org.infinispan:infinispan-commons-test</dependency>
