@@ -692,7 +692,7 @@ public class Server extends BaseServerManagement implements AutoCloseable {
    }
 
    @Override
-   public Map<String, List<Principal>> getPrincipalList() {
+   public Map<String, List<Principal>> getUsers() {
       Map<String, List<Principal>> map = new HashMap<>();
       RealmsConfiguration realms = serverConfiguration.security().realms();
       for (Map.Entry<String, RealmConfiguration> realm : realms.realms().entrySet()) {

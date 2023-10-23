@@ -25,6 +25,7 @@ import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.security.impl.Authorizer;
 import org.infinispan.security.impl.CacheRoleImpl;
 import org.infinispan.security.impl.SubjectACL;
+import org.infinispan.security.mappers.ClusterRoleMapper;
 import org.infinispan.server.core.ServerManagement;
 
 import javax.security.auth.Subject;
@@ -83,7 +84,7 @@ public class SecurityResource implements ResourceHandler {
             .invocation().method(GET).path("/v2/security/roles")
                .permission(AuthorizationPermission.ADMIN).name("ROLES").auditContext(AuditContext.SERVER)
                .handleWith(r -> listAllRoles(r, false))
-            .invocation().method(GET).path("/v2/security/roles-detail")
+            .invocation().method(GET).path("/v2/security/roles").withAction("detailed")
                .permission(AuthorizationPermission.ADMIN).name("ROLES DESCRIBE").auditContext(AuditContext.SERVER)
                .handleWith(r -> listAllRoles(r, true))
             .invocation().method(GET).path("/v2/security/roles/{principal}")
@@ -95,9 +96,15 @@ public class SecurityResource implements ResourceHandler {
             .invocation().method(PUT).path("/v2/security/roles/{principal}").withAction("deny")
                .permission(AuthorizationPermission.ADMIN).name("ROLES DENY").auditContext(AuditContext.SERVER)
                .handleWith(this::deny)
-            .invocation().methods(GET).path("/v2/security/principals")
-               .permission(AuthorizationPermission.ADMIN).name("PRINCIPALS LIST").auditContext(AuditContext.SERVER)
-               .handleWith(this::listPrincipals)
+            .invocation().methods(GET).path("/v2/security/users")
+               .permission(AuthorizationPermission.ADMIN).name("USERS LIST").auditContext(AuditContext.SERVER)
+               .handleWith(this::listUsers)
+            .invocation().method(GET).path("/v2/security/principals-detail")
+               .permission(AuthorizationPermission.ADMIN).name("ACCESS PRINCIPALS").auditContext(AuditContext.SERVER)
+               .handleWith(r -> listAllPrincipals(r, true))
+            .invocation().method(GET).path("/v2/security/principals")
+               .permission(AuthorizationPermission.ADMIN).name("ACCESS PRINCIPALS").auditContext(AuditContext.SERVER)
+               .handleWith(r -> listAllPrincipals(r, false))
             .invocation().methods(POST, PUT).path("/v2/security/permissions/{role}")
                .permission(AuthorizationPermission.ADMIN).name("ROLES CREATE").auditContext(AuditContext.SERVER)
                .handleWith(this::createRole)
@@ -113,8 +120,8 @@ public class SecurityResource implements ResourceHandler {
             .create();
    }
 
-   private CompletionStage<RestResponse> listPrincipals(RestRequest request) {
-      Json principals = Json.make(invocationHelper.getServer().getPrincipalList());
+   private CompletionStage<RestResponse> listUsers(RestRequest request) {
+      Json principals = Json.make(invocationHelper.getServer().getUsers());
       return asJsonResponseFuture(invocationHelper.newResponse(request), principals, isPretty(request));
    }
 
@@ -150,6 +157,21 @@ public class SecurityResource implements ResourceHandler {
       Json json = new RoleJson(role).toJson();
       json.set("name", name);
       return asJsonResponseFuture(invocationHelper.newResponse(request), json , isPretty(request));
+   }
+
+   private CompletionStage<RestResponse> listAllPrincipals(RestRequest request, boolean detailed) {
+      if (!detailed) {
+         return asJsonResponseFuture(invocationHelper.newResponse(request),
+               Json.make(principalRoleMapper.listPrincipals()),
+               isPretty(request));
+      }
+
+      Set<Map.Entry<String, ClusterRoleMapper.RoleSet>> entries = principalRoleMapper.listPrincipalsAndRoleSet();
+      Json json = Json.object();
+      entries.stream().forEach(e -> json.set(e.getKey(), e.getValue().getRoles()));
+      return asJsonResponseFuture(invocationHelper.newResponse(request),
+            json,
+            isPretty(request));
    }
 
    private CompletionStage<RestResponse> deleteRole(RestRequest request) {

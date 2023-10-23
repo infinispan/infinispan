@@ -1,11 +1,5 @@
 package org.infinispan.security.mappers;
 
-import java.security.Principal;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.configuration.cache.CacheMode;
@@ -23,6 +17,15 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.security.MutablePrincipalRoleMapper;
 import org.infinispan.security.actions.SecurityActions;
+
+import java.security.Principal;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * ClusterRoleMapper. This class implements both a {@link MutablePrincipalRoleMapper} storing the mappings in a
@@ -104,6 +107,29 @@ public class ClusterRoleMapper implements MutablePrincipalRoleMapper {
          sb.append(set.roles.toString());
       }
       return sb.toString();
+   }
+
+   @Override
+   public Set<String> listPrincipals() {
+      return clusterRoleReadMap.keySet().stream().collect(Collectors.toSet());
+   }
+
+   @Override
+   public Set<Map.Entry<String, RoleSet>> listPrincipalsAndRoleSet() {
+      return clusterRoleReadMap.entrySet().stream().collect(Collectors.toSet());
+   }
+
+   @Override
+   public Set<String> listPrincipalsByRole(String role) {
+      return clusterRoleReadMap.entrySet().stream()
+            .map(e -> {
+               if (e.getValue() != null) {
+                  return e.getValue().getRoles().contains(role) ? e.getKey() : null;
+               }
+               return null;
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
    }
 
    public void nameRewriter(NameRewriter nameRewriter) {

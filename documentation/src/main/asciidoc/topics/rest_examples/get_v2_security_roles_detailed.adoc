@@ -1,1 +1,1 @@
-GET /rest/v2/security/roles-detail
+GET /rest/v2/security/roles?action=detailed

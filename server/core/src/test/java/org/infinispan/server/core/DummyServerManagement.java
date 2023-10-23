@@ -115,7 +115,7 @@ public class DummyServerManagement extends BaseServerManagement {
    }
 
    @Override
-   public Map<String, List<Principal>> getPrincipalList() {
+   public Map<String, List<Principal>> getUsers() {
       return Collections.emptyMap();
    }
 
