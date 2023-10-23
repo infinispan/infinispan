@@ -216,6 +216,7 @@
          --add-modules=java.se
       </testjvm.jigsawArgs>
       <testjvm.blockHoundRedefinitionArgs/>
+      <testjvm.javaSecurityManager>-Djava.security.manager=allow</testjvm.javaSecurityManager>
       <testjvm.jdkSpecificArgs>${testjvm.jigsawArgs} -Dnet.bytebuddy.experimental=true ${testjvm.blockHoundRedefinitionArgs}</testjvm.jdkSpecificArgs>
       <testjvm.extraArgs/>
       <forkJvmArgs>-Xmx1G ${testjvm.commonArgs} ${testjvm.jdkSpecificArgs} ${testjvm.extraArgs}</forkJvmArgs>
@@ -3011,6 +3012,7 @@
             <!-- Unset all JDK-specific properties -->
             <testjvm.jigsawArgs/>
             <testjvm.blockHoundRedefinitionArgs/>
+            <testjvm.javaSecurityManager/>
             <!-- Also unset the aggregate property, just in case -->
             <testjvm.jdkSpecificArgs/>
          </properties>
