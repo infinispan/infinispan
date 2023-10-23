@@ -1,5 +1,6 @@
 package org.infinispan.persistence.remote;
 
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -12,10 +13,24 @@ import org.testng.annotations.Test;
 public class RemoteStoreConfigUriTest extends RemoteStoreConfigTest {
 
    private static final int PORT = 19811;
-   public static final String CACHE_LOADER_CONFIG = "remote-cl-uri-config.xml";
+   public static final String CACHE_LOADER_CONFIG_1 = "remote-cl-uri-config-1.xml";
+   public static final String CACHE_LOADER_CONFIG_2 = "remote-cl-uri-config-2.xml";
    public static final String STORE_CACHE_NAME = "RemoteStoreConfigUriTest";
 
-   public RemoteStoreConfigUriTest() {
-      super(CACHE_LOADER_CONFIG,STORE_CACHE_NAME, PORT);
+   @Factory
+   public static Object[] factory() {
+      return new Object[] {
+            new RemoteStoreConfigUriTest(CACHE_LOADER_CONFIG_1, STORE_CACHE_NAME),
+            new RemoteStoreConfigUriTest(CACHE_LOADER_CONFIG_2, STORE_CACHE_NAME),
+      };
+   }
+
+   @Override
+   protected String parameters() {
+      return "xml=" + cacheLoaderConfig;
+   }
+
+   public RemoteStoreConfigUriTest(String cacheLoaderConfig, String storeCacheName) {
+      super(cacheLoaderConfig, storeCacheName, PORT);
    }
 }
