@@ -16,6 +16,11 @@ import org.testng.annotations.Test;
 public class IndexedRestOffHeapSearchTest extends BaseRestSearchTest {
 
    @Override
+   protected String cacheName() {
+      return "search-rest-indexed-off-heap";
+   }
+
+   @Override
    protected ConfigurationBuilder getConfigBuilder() {
       ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       configurationBuilder.indexing().enable().storage(LOCAL_HEAP)

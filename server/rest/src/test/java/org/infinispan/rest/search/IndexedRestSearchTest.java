@@ -26,6 +26,11 @@ import org.testng.annotations.Test;
 public class IndexedRestSearchTest extends BaseRestSearchTest {
 
    @Override
+   protected String cacheName() {
+      return "search-rest-indexed";
+   }
+
+   @Override
    protected ConfigurationBuilder getConfigBuilder() {
       ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       configurationBuilder.indexing()

@@ -17,4 +17,9 @@ public class NonIndexedRestSearchTest extends BaseRestSearchTest {
       configurationBuilder.encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM);
       return configurationBuilder;
    }
+
+   @Override
+   protected String cacheName() {
+      return "search-rest-non-indexed";
+   }
 }

@@ -16,6 +16,11 @@ import org.testng.annotations.Test;
 public class NonSharedIndexSearchTest extends BaseRestSearchTest {
 
    @Override
+   protected String cacheName() {
+      return "search-rest-non-shared-indexed";
+   }
+
+   @Override
    protected ConfigurationBuilder getConfigBuilder() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       builder.indexing().enable()

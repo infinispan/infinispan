@@ -23,4 +23,9 @@ public class EmbeddedRestSearchTest extends SingleNodeLocalIndexTest {
    protected boolean isServerMode() {
       return false;
    }
+
+   @Override
+   protected String cacheName() {
+      return "search-rest-embedded-search";
+   }
 }
