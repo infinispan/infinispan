@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Duration;
 
+import io.agroal.api.configuration.AgroalConnectionPoolConfiguration;
 import org.infinispan.commons.util.Util;
 import org.infinispan.persistence.jdbc.common.JdbcUtil;
 import org.infinispan.persistence.jdbc.common.configuration.ConnectionFactoryConfiguration;
@@ -57,6 +58,9 @@ public class PooledConnectionFactory extends ConnectionFactory {
                   .connectionPoolConfiguration(cp -> cp
                         .maxSize(10)
                         .acquisitionTimeout(Duration.ofSeconds(30))
+                                .validationTimeout(Duration.ofSeconds(5))
+                                .leakTimeout(Duration.ofSeconds(60))
+                                .connectionValidator(AgroalConnectionPoolConfiguration.ConnectionValidator.defaultValidator())
                         .connectionFactoryConfiguration(cf -> cf
                               .jdbcUrl(poolConfig.connectionUrl())
                               .connectionProviderClass(driverClass)
