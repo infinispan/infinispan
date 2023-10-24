@@ -12,7 +12,7 @@ import org.infinispan.lock.api.ClusteredLockManager;
  *
  * @since 10.1
  */
-final class DistributedIndexerLock implements IndexLock {
+public final class DistributedIndexerLock implements IndexLock {
    private final String lockName;
    private volatile ClusteredLock clusteredLock;
    private final Cache<?, ?> cache;
