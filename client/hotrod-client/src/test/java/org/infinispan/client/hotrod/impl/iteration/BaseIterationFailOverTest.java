@@ -6,6 +6,7 @@ import static org.infinispan.client.hotrod.impl.iteration.Util.rangeAsSet;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,6 +15,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.CloseableIteratorSet;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.dsl.embedded.DslSCI;
@@ -66,6 +68,24 @@ public abstract class BaseIterationFailOverTest extends MultiHotRodServersTest {
          Map.Entry<Object, Object> next = iterator.next();
          entries.add(next);
 
+      }
+
+      assertEquals(cacheSize, entries.size());
+
+      Set<Integer> keys = extractKeys(entries);
+      assertEquals(rangeAsSet(0, cacheSize), keys);
+   }
+
+   @Test(groups = "functional")
+   public void testServerLeaveButIterateTwice() throws InterruptedException {
+      testFailOver();
+      int cacheSize = 1_000;
+
+      RemoteCache<Integer, AccountHS> cache = clients.get(0).getCache();
+      Collection<Map.Entry<Object, Object>> entries = new ArrayList<>();
+      CloseableIteratorSet<Map.Entry<Integer, AccountHS>> iterator = cache.entrySet();
+      for (Map.Entry<Integer, AccountHS> entry : iterator) {
+         entries.add((Map.Entry) entry);
       }
 
       assertEquals(cacheSize, entries.size());
