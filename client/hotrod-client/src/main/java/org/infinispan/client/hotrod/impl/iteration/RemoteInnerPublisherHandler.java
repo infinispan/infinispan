@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
 import java.lang.invoke.MethodHandles;
+import java.net.ConnectException;
 import java.net.SocketAddress;
 import java.util.List;
 import java.util.Map;
@@ -112,7 +113,7 @@ class RemoteInnerPublisherHandler<K, E> extends AbstractAsyncPublisherHandler<Ma
 
    @Override
    protected void handleThrowableInResponse(Throwable t, Map.Entry<SocketAddress, IntSet> target) {
-      if (t instanceof TransportException || t instanceof RemoteIllegalLifecycleStateException) {
+      if (t instanceof TransportException || t instanceof RemoteIllegalLifecycleStateException || t instanceof ConnectException) {
          log.throwableDuringPublisher(t);
          if (log.isTraceEnabled()) {
             IntSet targetSegments = target.getValue();
