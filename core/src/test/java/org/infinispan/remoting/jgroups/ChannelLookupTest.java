@@ -5,7 +5,7 @@ import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNotSame;
+import static org.testng.AssertJUnit.assertSame;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collections;
@@ -33,12 +33,11 @@ import org.testng.annotations.Test;
 @Test(testName = "remoting.jgroups.ChannelLookupTest", groups = "functional")
 public class ChannelLookupTest extends AbstractInfinispanTest {
    static JChannel mockChannel = mock(JChannel.class);
-   private ProtocolStack ps = mock(ProtocolStack.class);
-   private Address a = new UUID(1, 1);
-   private View v = new View(a, 1, Collections.singletonList(a));
+   private final ProtocolStack ps = mock(ProtocolStack.class);
+   private final Address a = new UUID(1, 1);
+   private final View v = new View(a, 1, Collections.singletonList(a));
 
    public void channelLookupTest() {
-
       when(mockChannel.getAddress()).thenReturn(a);
       when(mockChannel.down(isA(Event.class))).thenReturn(a);
       when(mockChannel.getView()).thenReturn(v);
@@ -60,7 +59,7 @@ public class ChannelLookupTest extends AbstractInfinispanTest {
          Transport t = gcr.getComponent(Transport.class);
          assertNotNull(t);
          assertTrue(t instanceof JGroupsTransport);
-         assertNotSame(JChannel.class, ((JGroupsTransport) t).getChannel().getClass());
+         assertSame(mockChannel, ((JGroupsTransport) t).getChannel());
       } finally {
          TestingUtil.killCacheManagers(cm);
       }
