@@ -130,6 +130,7 @@ public class RemotePublisher<K, E> implements Publisher<Map.Entry<K, E>> {
                int batchSize = (this.batchSize / actualTargets.size()) + 1;
                return Flowable.fromIterable(actualTargets.entrySet())
                      .map(entry -> {
+                        log.tracef("Requesting next for: %s", entry);
                         RemoteInnerPublisherHandler<K, E> innerHandler = new RemoteInnerPublisherHandler<>(this,
                               batchSize, () -> null, entry);
                         return innerHandler.startPublisher();
