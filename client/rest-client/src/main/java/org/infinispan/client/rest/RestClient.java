@@ -51,6 +51,11 @@ public interface RestClient extends Closeable {
    CompletionStage<RestResponse> caches();
 
    /**
+    * Returns a list of available caches for a role
+    */
+   CompletionStage<RestResponse> cachesByRole(String roleName);
+
+   /**
     * Operations on the specified cache
     */
    RestCacheClient cache(String name);

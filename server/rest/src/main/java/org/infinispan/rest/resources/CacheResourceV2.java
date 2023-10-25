@@ -35,10 +35,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
@@ -65,7 +67,9 @@ import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.SecurityConfiguration;
 import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.configuration.global.GlobalAuthorizationConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
@@ -118,6 +122,7 @@ import org.infinispan.rest.tracing.RestTelemetryService;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.Role;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.stats.Stats;
 import org.infinispan.topology.ClusterTopologyManager;
@@ -175,6 +180,11 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
             // List
             .invocation().methods(GET).path("/v2/caches/").handleWith(this::getCacheNames)
+
+            // List of caches for role
+            .invocation().methods(GET).path("/v2/caches").withAction("role-accessible")
+            .permission(AuthorizationPermission.ADMIN).name("CACHES PER ROLE LIST").auditContext(AuditContext.CACHE)
+            .handleWith(this::getCacheNamesPerRole)
 
             // Health
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("health").handleWith(this::getCacheHealth)
@@ -1145,5 +1155,47 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       public StatelessCacheListener(Cache<?, ?> cache) {
          super(cache);
       }
+   }
+
+   private CompletionStage<RestResponse> getCacheNamesPerRole(RestRequest request) throws RestResponseException {
+      String roleName = request.getParameter("role");
+      NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
+
+      if (roleName == null) {
+         return completedFuture(builder.status(HttpResponseStatus.BAD_REQUEST).build());
+      }
+
+      GlobalAuthorizationConfiguration authorization = invocationHelper.getRestCacheManager()
+            .getInstance().getCacheManagerConfiguration().security().authorization();
+      Role role = authorization.getRole(roleName);
+
+      if (role == null) {
+         return completedFuture(builder.status(NOT_FOUND).build());
+      }
+
+      // secured caches
+      Set<String> cachesNames = new HashSet<>(invocationHelper.getRestCacheManager().getAccessibleCacheNames());
+      cachesNames.removeAll(internalCacheRegistry.getInternalCacheNames());
+
+      Set<String> securedCaches = new HashSet<>();
+      Set<String> nonSecuredCaches = new HashSet<>();
+
+      cachesNames.stream().forEach(cacheName -> {
+         try {
+            AdvancedCache cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
+            SecurityConfiguration config = cache.getCacheConfiguration().security();
+            if (config.authorization().enabled() && config.authorization().roles().contains(roleName)) {
+               securedCaches.add(cacheName);
+            } else {
+               nonSecuredCaches.add(cacheName);
+            }
+         } catch (Exception ex) {
+            // the cache might be invalid
+         }
+      });
+      Json json = Json.object();
+      json.set("secured", Json.make(securedCaches));
+      json.set("non-secured", Json.make(nonSecuredCaches));
+      return asJsonResponseFuture(builder, Json.make(json), isPretty(request));
    }
 }

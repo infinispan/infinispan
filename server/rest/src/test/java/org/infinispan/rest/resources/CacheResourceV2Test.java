@@ -157,6 +157,11 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       cm.defineConfiguration("proto", getProtoCacheBuilder().build());
       cm.defineConfiguration("simple-text", getTextCacheBuilder().build());
 
+      if (security) {
+         cm.defineConfiguration("secured-simple-text", getTextCacheBuilder()
+               .security().authorization().enable().roles("ADMIN", "USER").build());
+      }
+
       Cache<String, String> metadataCache = cm.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
       metadataCache.putIfAbsent("sample.proto", PROTO_SCHEMA);
       assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
@@ -829,13 +834,8 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
       assertThat(response).isOk();
 
-      Json jsonNode = Json.read(join(response).getBody());
-      Set<String> cacheNames = cacheManagers.get(0).getCacheNames();
-      int size = jsonNode.asList().size();
-      assertEquals(cacheNames.size(), size);
-      for (int i = 0; i < size; i++) {
-         assertTrue(cacheNames.contains(jsonNode.at(i).asString()));
-      }
+      List responseCacheNames = Json.read(join(response).getBody()).asList();
+      assertThat(responseCacheNames).containsExactlyElementsOf(cacheManagers.get(0).getCacheNames());
    }
 
    @Test
@@ -1823,6 +1823,27 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
                   "    ISPN000961: Incompatible attribute 'local-cache.encoding.key.media-type' existing value='text/plain', new value='application/x-protostream'\n" +
                   "    ISPN000961: Incompatible attribute 'local-cache.encoding.value.media-type' existing value='text/plain', new value='application/x-protostream'",
             join(response).getBody());
+   }
+
+   @Test
+   public void testAccessibleCaches() {
+      if (security) {
+         RestResponse response = join(adminClient.cachesByRole("ADMIN"));
+         ResponseAssertion.assertThat(response).isOk();
+         String json = response.getBody();
+         Json jsonNode = Json.read(json);
+         assertThat(jsonNode.at("secured").asList()).containsExactlyInAnyOrder("secured-simple-text");
+         assertThat(jsonNode.at("non-secured").asList()).containsExactlyInAnyOrder("default",
+               "simple-text",
+               "indexedCache",
+               "proto",
+               "denyReadWritesCache",
+               "defaultcache");
+         ResponseAssertion.assertThat(join(client.cachesByRole("ADMIN"))).isForbidden();
+      } else {
+         ResponseAssertion.assertThat(join(adminClient.cachesByRole("ADMIN"))).isNotFound();
+         ResponseAssertion.assertThat(join(client.cachesByRole("ADMIN"))).isNotFound();
+      }
    }
 
    private void assertBadResponse(RestCacheClient client, String config) {

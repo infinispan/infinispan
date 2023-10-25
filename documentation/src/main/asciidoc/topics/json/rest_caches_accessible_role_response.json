@@ -1,0 +1,4 @@
+{
+  "secured" : ["securedCache1", "securedCache2"],
+  "non-secured" : ["cache1", "cache2", "cache3"]
+}

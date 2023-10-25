@@ -1,34 +1,6 @@
 package org.infinispan.rest.resources;
 
-import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
-import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
-import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
-import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
-import static org.infinispan.configuration.cache.CacheMode.LOCAL;
-import static org.infinispan.partitionhandling.PartitionHandling.DENY_READ_WRITES;
-import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
+import org.assertj.core.api.Assertions;
 import org.infinispan.client.rest.RestCacheManagerClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
@@ -54,14 +26,46 @@ import org.infinispan.security.Security;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.ControlledTimeService;
+import org.infinispan.util.KeyValuePair;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
+
+import java.io.Closeable;
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
+import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
+import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
+import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
+import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
+import static org.infinispan.configuration.cache.CacheMode.LOCAL;
+import static org.infinispan.partitionhandling.PartitionHandling.DENY_READ_WRITES;
+import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 
 @Test(groups = "functional", testName = "rest.ContainerResourceTest")
 public class ContainerResourceTest extends AbstractRestResourceTest {
    private static final String PERSISTENT_LOCATION = tmpDirectory(ContainerResourceTest.class.getName());
    private static final String CACHE_1 = "cache1";
    private static final String CACHE_2 = "cache2";
+   private static final String CACHE_3= "cache3";
    private static final String DEFAULT_CACHE = "defaultcache";
    private static final String INVALID_CACHE = "invalid";
    private static final String CACHE_MANAGER_NAME = "default";
@@ -115,6 +119,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       templateConfig = templateConfigBuilder.build();
       cm.defineConfiguration(CACHE_1, cache1Config);
       cm.defineConfiguration(CACHE_2, cache2Config);
+      cm.defineConfiguration(CACHE_3, getCache3Config());
       cm.defineConfiguration(TEMPLATE_CONFIG, templateConfig);
    }
 
@@ -128,6 +133,14 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.statistics().enable().clustering().cacheMode(LOCAL).encoding().key().mediaType(TEXT_PLAIN_TYPE);
       builder.memory().maxCount(1000).storage(StorageType.HEAP).whenFull(EvictionStrategy.REMOVE);
+      return builder.build();
+   }
+
+   private Configuration getCache3Config() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      if (security) {
+         builder.security().authorization().enable().roles("ADMIN", "USER");
+      }
       return builder.build();
    }
 
@@ -194,7 +207,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       String json = response.getBody();
       Json jsonNode = Json.read(json);
       List<String> names = find(jsonNode, "name");
-      Set<String> expectedNames = Util.asSet(DEFAULT_CACHE, CACHE_1, CACHE_2, INVALID_CACHE);
+      Set<String> expectedNames = Util.asSet(DEFAULT_CACHE, CACHE_1, CACHE_2, CACHE_3, INVALID_CACHE);
 
       assertEquals(expectedNames, new HashSet<>(names));
 
@@ -218,7 +231,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       List<String> notBoundedCaches = bounded.stream().filter(b -> "false".equals(b)).collect(Collectors.toList());
       List<String> boundedCaches = bounded.stream().filter(b -> "true".equals(b)).collect(Collectors.toList());
       assertEquals(1, boundedCaches.size());
-      assertEquals(3, notBoundedCaches.size());
+      assertEquals(4, notBoundedCaches.size());
 
       List<String> secured = find(jsonNode, "secured");
       assertTrue(secured.contains("false"));
@@ -251,7 +264,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
       String json = response.getBody();
       Json jsonNode = Json.read(json);
       List<String> names = find(jsonNode, "name");
-      Set<String> expectedNames = Util.asSet(DEFAULT_CACHE, CACHE_1, CACHE_2, INVALID_CACHE);
+      Set<String> expectedNames = Util.asSet(DEFAULT_CACHE, CACHE_1, CACHE_2, CACHE_3, INVALID_CACHE);
 
       assertEquals(expectedNames, new HashSet<>(names));
 
@@ -343,13 +356,22 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
          AssertJUnit.assertTrue(sseListener.openLatch.await(10, TimeUnit.SECONDS));
 
          // Assert that all of the existing caches and templates have a corresponding event
-         sseListener.expectEvent("create-template", TEMPLATE_CONFIG);
-         sseListener.expectEvent("create-cache", "___protobuf_metadata");
-         sseListener.expectEvent("create-cache", CACHE_2);
-         sseListener.expectEvent("create-cache", INVALID_CACHE);
-         sseListener.expectEvent("create-cache", CACHE_1);
-         sseListener.expectEvent("create-cache", DEFAULT_CACHE);
-         sseListener.expectEvent("create-cache", "___script_cache");
+         List<String> elements = List.of(TEMPLATE_CONFIG, CACHE_1, CACHE_2, CACHE_3, DEFAULT_CACHE,
+               INVALID_CACHE, "___protobuf_metadata", "___script_cache");
+         List<KeyValuePair<String, String>> events = sseListener.poll(elements.size());
+         Assertions.assertThat(events).extracting(KeyValuePair::getKey)
+               .containsAnyOf("create-cache", "create-template");
+         elements.stream().forEach(element -> {
+            Iterator<KeyValuePair<String, String>> iterator = events.iterator();
+            boolean found = false;
+            while (iterator.hasNext() && !found) {
+               KeyValuePair<String, String> next = iterator.next();
+               if (next.getValue().contains(element)) {
+                  found = true;
+               }
+            }
+            assertTrue(found);
+         });
 
          // Assert that new cache creations create an event
          createCache("{\"local-cache\":{\"encoding\":{\"media-type\":\"text/plain\"}}}", "listen1");
