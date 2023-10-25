@@ -1,9 +1,6 @@
 package org.infinispan.server.resilience;
 
-import static org.infinispan.server.test.core.Common.assertStatus;
-
-import java.util.stream.IntStream;
-
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -17,7 +14,9 @@ import org.junit.experimental.categories.Category;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
+import java.util.stream.IntStream;
+
+import static org.infinispan.server.test.core.Common.assertStatus;
 
 /**
  * Start cluster (0..numServers) redeploy after upgrade. Rolling upgrades always occur in the order numServers...0 and
@@ -30,7 +29,6 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 public class StatefulSetRollingUpgradeIT {
 
    private static final int NUM_ROLLING_UPGRADES = 4;
-   private static final String CACHE_MANAGER = "default";
 
    @ParameterizedTest
    @ValueSource(ints = {2, 3, 4, 5})
@@ -74,6 +72,6 @@ public class StatefulSetRollingUpgradeIT {
 
    private void assertLiveness(TestClient client, int server) {
       RestClient rest = client.rest().get(server);
-      assertStatus(HttpResponseStatus.OK.code(), rest.cacheManager(CACHE_MANAGER).healthStatus());
+      assertStatus(HttpResponseStatus.OK.code(), rest.container().healthStatus());
    }
 }

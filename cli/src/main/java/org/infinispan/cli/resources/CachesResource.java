@@ -15,14 +15,14 @@ public class CachesResource extends AbstractResource {
 
    @Override
    public Iterable<String> getChildrenNames() {
-      return getConnection().getAvailableCaches(getParent().getName());
+      return getConnection().getAvailableCaches();
    }
 
    @Override
    public Resource getChild(String name) {
       if (Resource.PARENT.equals(name)) {
          return parent;
-      } else if (getConnection().getAvailableCaches(getParent().getName()).contains(name)) {
+      } else if (getConnection().getAvailableCaches().contains(name)) {
          return new CacheResource(this, name);
       } else {
          throw Messages.MSG.noSuchResource(name);

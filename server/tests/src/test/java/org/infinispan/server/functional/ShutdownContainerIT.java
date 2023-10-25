@@ -29,17 +29,17 @@ public class ShutdownContainerIT {
       RestClient client = SERVER.rest().get();
 
       String containerName = "default";
-      assertStatus(OK, client.cacheManager(containerName).caches());
+      assertStatus(OK, client.caches());
 
       assertStatus(NO_CONTENT, client.container().shutdown());
 
       // Ensure operations on the cachemanager are not possible
-      assertStatus(SERVICE_UNAVAILABLE, client.cacheManager(containerName).caches());
+      assertStatus(SERVICE_UNAVAILABLE, client.caches());
 
 
       assertStatus(SERVICE_UNAVAILABLE, client.counters());
 
       // Ensure that the K8s liveness pods will not fail
-      assertStatus(OK, client.cacheManager(containerName).healthStatus());
+      assertStatus(OK, client.container().healthStatus());
    }
 }

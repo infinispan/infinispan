@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import org.infinispan.client.rest.RestCacheManagerClient;
+import org.infinispan.client.rest.RestContainerClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
@@ -99,7 +99,7 @@ public class RestCacheManagerResource {
       });
    }
 
-   private RestCacheManagerClient client() {
-      return SERVERS.rest().create().cacheManager("default");
+   private RestContainerClient client() {
+      return SERVERS.rest().create().container();
    }
 }

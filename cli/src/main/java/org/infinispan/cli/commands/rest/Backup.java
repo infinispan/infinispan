@@ -75,9 +75,8 @@ public class Backup extends CliCommand {
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) {
-         String container = invocation.getContext().getConnection().getActiveContainer().getName();
          invocation.printf("Deleting backup %s%n", name);
-         return client.cacheManager(container).deleteBackup(this.name);
+         return client.container().deleteBackup(this.name);
       }
    }
 
@@ -93,12 +92,11 @@ public class Backup extends CliCommand {
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) {
-         String container = invocation.getContext().getConnection().getActiveContainer().getName();
          invocation.printf("Downloading backup %s%n", name);
          // Poll the backup's availability every 500 milliseconds with a maximum of 100 attempts
          return Flowable.timer(500, TimeUnit.MILLISECONDS, Schedulers.trampoline())
                .repeat(100)
-               .flatMapSingle(Void -> Single.fromCompletionStage(client.cacheManager(container).getBackup(name, noContent)))
+               .flatMapSingle(Void -> Single.fromCompletionStage(client.container().getBackup(name, noContent)))
                .takeUntil(rsp -> rsp.status() != 202)
                .lastOrErrorStage();
       }
@@ -115,7 +113,7 @@ public class Backup extends CliCommand {
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, org.infinispan.cli.resources.Resource resource) {
          String container = invocation.getContext().getConnection().getActiveContainer().getName();
-         return client.cacheManager(container).getBackupNames();
+         return client.container().getBackupNames();
       }
    }
 
@@ -133,8 +131,7 @@ public class Backup extends CliCommand {
          // If the backup name has not been specified generate one based upon the Infinispan version and timestamp
          String backupName = name != null ? name : String.format("%s-%tY%2$tm%2$td%2$tH%2$tM%2$tS", Version.getBrandName(), LocalDateTime.now());
          invocation.printf("Creating backup '%s'%n", backupName);
-         String container = invocation.getContext().getConnection().getActiveContainer().getName();
-         return client.cacheManager(container).createBackup(backupName, dir, createResourceMap());
+         return client.container().createBackup(backupName, dir, createResourceMap());
       }
    }
 
@@ -159,10 +156,10 @@ public class Backup extends CliCommand {
          if (upload) {
             invocation.printf("Uploading backup '%s' and restoring%n", path.getAbsolutePath());
             File file = new File(path.getAbsolutePath());
-            return client.cacheManager(container).restore(restoreName, file, resources).thenCompose(rsp -> pollRestore(restoreName, container, client, rsp));
+            return client.container().restore(restoreName, file, resources).thenCompose(rsp -> pollRestore(restoreName, container, client, rsp));
          } else {
             invocation.printf("Restoring from backup '%s'%n", path.getAbsolutePath());
-            return client.cacheManager(container).restore(restoreName, path.getAbsolutePath(), resources).thenCompose(rsp -> pollRestore(restoreName, container, client, rsp));
+            return client.container().restore(restoreName, path.getAbsolutePath(), resources).thenCompose(rsp -> pollRestore(restoreName, container, client, rsp));
          }
       }
    }
@@ -174,7 +171,7 @@ public class Backup extends CliCommand {
       // Poll the restore progress every 500 milliseconds with a maximum of 100 attempts
       return Flowable.timer(500, TimeUnit.MILLISECONDS, Schedulers.trampoline())
             .repeat(100)
-            .flatMapSingle(Void -> Single.fromCompletionStage(c.cacheManager(container).getRestore(restoreName)))
+            .flatMapSingle(Void -> Single.fromCompletionStage(c.container().getRestore(restoreName)))
             .takeUntil(r -> r.status() != 202)
             .lastOrErrorStage();
    }

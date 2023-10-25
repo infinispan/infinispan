@@ -48,7 +48,7 @@ public class Stats extends RestCliCommand {
          if (resource instanceof CacheResource) {
             return reset ? client.cache(resource.getName()).statsReset() : client.cache(resource.getName()).stats();
          } else if (resource instanceof ContainerResource) {
-            return reset ? client.cacheManager(resource.getName()).statsReset() : client.cacheManager(resource.getName()).stats();
+            return reset ? client.container().statsReset() : client.container().stats();
          } else {
             if (reset) {
                throw MSG.cannotResetIndividualStat();

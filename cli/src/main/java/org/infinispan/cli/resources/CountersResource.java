@@ -17,14 +17,14 @@ public class CountersResource extends AbstractResource {
 
    @Override
    public Iterable<String> getChildrenNames() throws IOException {
-      return getConnection().getAvailableCounters(getParent().getName());
+      return getConnection().getAvailableCounters();
    }
 
    @Override
    public Resource getChild(String name) throws IOException {
       if (Resource.PARENT.equals(name)) {
          return parent;
-      } else if (getConnection().getAvailableCounters(getParent().getName()).contains(name)) {
+      } else if (getConnection().getAvailableCounters().contains(name)) {
          return new CounterResource(this, name);
       } else {
          throw Messages.MSG.noSuchResource(name);

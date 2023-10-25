@@ -119,21 +119,45 @@ public class XSiteResource implements ResourceHandler {
                .permission(AuthorizationPermission.ADMIN).name("XSITE SET STATE TRANSFER MODE").auditContext(AuditContext.CACHE)
                .handleWith(this::setStateTransferMode)
             .invocation().methods(GET).path("/v2/cache-managers/{name}/x-site/backups/")
+               .deprecated()
+               .permission(AuthorizationPermission.ADMIN).name("XSITE GLOBAL STATUS").auditContext(AuditContext.CACHEMANAGER)
+               .handleWith(this::globalStatus)
+            .invocation().methods(GET).path("/v2/container/x-site/backups/")
                .permission(AuthorizationPermission.ADMIN).name("XSITE GLOBAL STATUS").auditContext(AuditContext.CACHEMANAGER)
                .handleWith(this::globalStatus)
             .invocation().methods(GET).path("/v2/cache-managers/{name}/x-site/backups/{site}")
+               .deprecated()
+               .permission(AuthorizationPermission.ADMIN).name("XSITE GLOBAL SITE STATUS").auditContext(AuditContext.CACHEMANAGER)
+               .handleWith(this::globalStatus)
+            .invocation().methods(GET).path("/v2/container/x-site/backups/{site}")
                .permission(AuthorizationPermission.ADMIN).name("XSITE GLOBAL SITE STATUS").auditContext(AuditContext.CACHEMANAGER)
                .handleWith(this::globalStatus)
             .invocation().methods(POST).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("bring-online")
+               .deprecated()
+               .permission(AuthorizationPermission.ADMIN).name("XSITE BRING ALL ONLINE").auditContext(AuditContext.CACHEMANAGER)
+               .handleWith(this::bringAllOnline)
+            .invocation().methods(POST).path("/v2/container/x-site/backups/{site}").withAction("bring-online")
                .permission(AuthorizationPermission.ADMIN).name("XSITE BRING ALL ONLINE").auditContext(AuditContext.CACHEMANAGER)
                .handleWith(this::bringAllOnline)
             .invocation().methods(POST).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("take-offline")
+               .deprecated()
+               .permission(AuthorizationPermission.ADMIN).name("XSITE TAKE ALL OFFLINE").auditContext(AuditContext.CACHEMANAGER)
+               .handleWith(this::takeAllOffline)
+            .invocation().methods(POST).path("/v2/container/x-site/backups/{site}").withAction("take-offline")
                .permission(AuthorizationPermission.ADMIN).name("XSITE TAKE ALL OFFLINE").auditContext(AuditContext.CACHEMANAGER)
                .handleWith(this::takeAllOffline)
             .invocation().methods(POST).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("start-push-state")
+               .deprecated()
+               .permission(AuthorizationPermission.ADMIN).name("XSITE START PUSH ALL").auditContext(AuditContext.CACHEMANAGER)
+               .handleWith(this::startPushAll)
+            .invocation().methods(POST).path("/v2/container/x-site/backups/{site}").withAction("start-push-state")
                .permission(AuthorizationPermission.ADMIN).name("XSITE START PUSH ALL").auditContext(AuditContext.CACHEMANAGER)
                .handleWith(this::startPushAll)
             .invocation().methods(POST).path("/v2/cache-managers/{name}/x-site/backups/{site}").withAction("cancel-push-state")
+               .deprecated()
+               .permission(AuthorizationPermission.ADMIN).name("XSITE CANCEL PUSH ALL").auditContext(AuditContext.CACHEMANAGER)
+               .handleWith(this::cancelPushAll)
+            .invocation().methods(POST).path("/v2/container/x-site/backups/{site}").withAction("cancel-push-state")
                .permission(AuthorizationPermission.ADMIN).name("XSITE CANCEL PUSH ALL").auditContext(AuditContext.CACHEMANAGER)
                .handleWith(this::cancelPushAll)
             .create();
@@ -340,11 +364,7 @@ public class XSiteResource implements ResourceHandler {
    }
 
    private GlobalXSiteAdminOperations getGlobalXSiteAdmin(RestRequest request) {
-      String cacheManager = request.variables().get("name");
       EmbeddedCacheManager cm = invocationHelper.getRestCacheManager().getInstance();
-
-      if (!cacheManager.equals(cm.getCacheManagerInfo().getName())) return null;
-
       return SecurityActions.getGlobalComponentRegistry(cm).getComponent(GlobalXSiteAdminOperations.class);
    }
 

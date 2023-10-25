@@ -4,7 +4,7 @@ import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.client.rest.RestCacheManagerClient;
+import org.infinispan.client.rest.RestContainerClient;
 import org.infinispan.client.rest.RestResponse;
 import org.testng.annotations.Test;
 
@@ -13,7 +13,7 @@ public class ResourceExceptionHandlingTest extends AbstractRestResourceTest {
 
    public void testHeadRequestHasContentLengthZero() {
       // All Backup/Restore operations will fail with a NPE as ServerManagement#getBackupManager returns null
-      RestCacheManagerClient cacheManager = client.cacheManager("default");
+      RestContainerClient cacheManager = client.container();
       String backupName = "failure";
       // GET request, expect content
       CompletionStage<RestResponse> response = cacheManager.getBackup(backupName, false);

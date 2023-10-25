@@ -14,6 +14,6 @@ public class TaskCompleter extends ListCompleter {
    @Override
    Collection<String> getAvailableItems(Context context) throws IOException {
       Connection connection = context.getConnection();
-      return connection.getAvailableTasks(connection.getActiveContainer().getName());
+      return connection.getAvailableTasks();
    }
 }

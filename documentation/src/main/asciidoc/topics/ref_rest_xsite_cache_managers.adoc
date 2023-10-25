@@ -1,11 +1,11 @@
 [id='rest_v2_cache_manager_site_status_{context}']
 = Getting status of backup locations
-Retrieve the status of all backup locations from Cache Managers with `GET`
+Retrieve the status of all backup locations with `GET`
 requests.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/
+GET /rest/v2/container/x-site/backups/
 ----
 
 {brandname} responds with status in JSON format, as in the following example:
@@ -32,7 +32,7 @@ include::json/xsite_backup_status.json[]
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{site}
+GET /rest/v2/container/x-site/backups/{site}
 ----
 
 Returns the status for a single backup location.
@@ -43,7 +43,7 @@ Take backup locations offline with the `?action=take-offline` parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action=take-offline
+POST /rest/v2/container/x-site/backups/{siteName}?action=take-offline
 ----
 
 [id='rest_v2_cache_manager_bring_online_{context}']
@@ -52,7 +52,7 @@ Bring backup locations online with the `?action=bring-online` parameter.
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action=bring-online
+POST /rest/v2/container/x-site/backups/{siteName}?action=bring-online
 ----
 
 [id='rest_v2_cache_manager_get_state_transfer_mode_{context}']
@@ -79,7 +79,7 @@ Push state of all caches to remote sites with the `?action=start-push-state` par
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action=start-push-state
+POST /rest/v2/container/x-site/backups/{siteName}?action=start-push-state
 ----
 
 
@@ -89,5 +89,5 @@ Cancel ongoing state transfer operations with the `?action=cancel-push-state` pa
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /rest/v2/cache-managers/{cacheManagerName}/x-site/backups/{siteName}?action=cancel-push-state
+POST /rest/v2/container/x-site/backups/{siteName}?action=cancel-push-state
 ----

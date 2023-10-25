@@ -52,11 +52,11 @@ public interface RestServerClient {
 
    CompletionStage<RestResponse> report(String node);
 
-   CompletionStage<RestResponse> ignoreCache(String cacheManagerName, String cacheName);
+   CompletionStage<RestResponse> ignoreCache(String cacheName);
 
-   CompletionStage<RestResponse> unIgnoreCache(String cacheManagerName, String cacheName);
+   CompletionStage<RestResponse> unIgnoreCache(String cacheName);
 
-   CompletionStage<RestResponse> listIgnoredCaches(String cacheManagerName);
+   CompletionStage<RestResponse> listIgnoredCaches();
 
    RestLoggingClient logging();
 

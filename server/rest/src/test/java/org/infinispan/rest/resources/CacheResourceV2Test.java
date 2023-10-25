@@ -41,6 +41,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -97,6 +98,7 @@ import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.rest.ResponseHeader;
 import org.infinispan.rest.assertion.ResponseAssertion;
+import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.LocalTopologyManager;
@@ -681,6 +683,59 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    }
 
    @Test
+   public void testCaches() {
+      RestResponse response = join(adminClient.detailedCacheList());
+      ResponseAssertion.assertThat(response).isOk();
+
+      String json = response.body();
+      Json jsonNode = Json.read(json);
+      List<String> names = find(jsonNode, "name");
+      Set<String> expectedNames = new HashSet<>(cacheManagers.get(0).getCacheNames());
+      expectedNames.remove(ScriptingManager.SCRIPT_CACHE);
+      expectedNames.remove(PROTOBUF_METADATA_CACHE_NAME);
+
+      assertEquals(expectedNames, new HashSet<>(names));
+
+      List<String> status = find(jsonNode, "status");
+      Assert.assertTrue(status.contains("RUNNING"));
+
+      List<String> types = find(jsonNode, "type");
+      Assert.assertTrue(types.contains("distributed-cache"));
+
+      List<String> simpleCaches = find(jsonNode, "simple_cache");
+      Assert.assertTrue(simpleCaches.contains("false"));
+
+      List<String> transactional = find(jsonNode, "transactional");
+      Assert.assertTrue(transactional.contains("false"));
+
+      List<String> persistent = find(jsonNode, "persistent");
+      Assert.assertTrue(persistent.contains("false"));
+
+      List<String> bounded = find(jsonNode, "bounded");
+      Assert.assertTrue(bounded.contains("false"));
+
+      List<String> secured = find(jsonNode, "secured");
+      Assert.assertTrue(secured.contains("false"));
+
+      List<String> indexed = find(jsonNode, "indexed");
+      Assert.assertTrue(indexed.contains("false"));
+
+      List<String> hasRemoteBackup = find(jsonNode, "has_remote_backup");
+      Assert.assertTrue(hasRemoteBackup.contains("false"));
+
+      List<String> health = find(jsonNode, "health");
+
+      Assert.assertTrue(health.contains("HEALTHY"));
+
+      List<String> isRebalancingEnabled = find(jsonNode, "rebalancing_enabled");
+      Assert.assertTrue(isRebalancingEnabled.contains("true"));
+   }
+
+   private List<String> find(Json array, String name) {
+      return array.asJsonList().stream().map(j -> j.at(name).getValue().toString()).collect(Collectors.toList());
+   }
+
+   @Test
    public void testCacheFullDetail() {
       RestResponse response = join(adminClient.cache("proto").details());
       Json document = Json.read(response.body());
@@ -765,7 +820,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       response = client.cache("CACHE").exists();
       assertThat(response).isOk();
 
-      CompletionStage<RestResponse> healthResponse = client.cacheManager("default").health();
+      CompletionStage<RestResponse> healthResponse = client.container().health();
       assertThat(healthResponse).isOk().containsReturnedText("{\"status\":\"FAILED\",\"cache_name\":\"CACHE\"}");
 
       // The only way to recover from a broken cache is to delete it

@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.infinispan.client.rest.RestCacheClient;
-import org.infinispan.client.rest.RestCacheManagerClient;
+import org.infinispan.client.rest.RestContainerClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestClusterClient;
 import org.infinispan.client.rest.RestEntity;
@@ -266,7 +266,7 @@ abstract class RESTAuthorizationTest {
    @Test
    public void testAnonymousHealthPredefinedCache() {
       RestClient client = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ANONYMOUS)).get();
-      assertStatusAndBodyEquals(OK, "HEALTHY", client.cacheManager("default").healthStatus());
+      assertStatusAndBodyEquals(OK, "HEALTHY", client.container().healthStatus());
    }
 
    @Test
@@ -287,8 +287,8 @@ abstract class RESTAuthorizationTest {
    public void testRestNonAdminsMustNotModifyCacheIgnores() {
       for (TestUser user : TestUser.NON_ADMINS) {
          RestClient client = ext.rest().withClientConfiguration(restBuilders.get(user)).get();
-         assertStatus(FORBIDDEN, client.server().ignoreCache("default", "predefined"));
-         assertStatus(FORBIDDEN, client.server().unIgnoreCache("default", "predefined"));
+         assertStatus(FORBIDDEN, client.server().ignoreCache("predefined"));
+         assertStatus(FORBIDDEN, client.server().unIgnoreCache("predefined"));
       }
    }
 
@@ -368,7 +368,7 @@ abstract class RESTAuthorizationTest {
       assertStatus(noContentStatus, xsiteCache.updateXSiteTakeOfflineConfig("NYC", 10, 1000));
       assertStatus(status, xsiteCache.xSiteStateTransferMode("NYC"));
       assertStatus(notModifiedStatus, xsiteCache.xSiteStateTransferMode("NYC", XSiteStateTransferMode.MANUAL));
-      RestCacheManagerClient xsiteCacheManager = client.cacheManager("default");
+      RestContainerClient xsiteCacheManager = client.container();
       assertStatus(status, xsiteCacheManager.bringBackupOnline("NYC"));
       assertStatus(status, xsiteCacheManager.takeOffline("NYC"));
       assertStatus(status, xsiteCacheManager.backupStatuses());
@@ -443,7 +443,7 @@ abstract class RESTAuthorizationTest {
    @Test
    public void testRestAdminsMustAccessBackupsAndRestores() {
       String BACKUP_NAME = "backup";
-      RestCacheManagerClient client = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().cacheManager("default");
+      RestContainerClient client = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().container();
       assertStatus(ACCEPTED, client.createBackup(BACKUP_NAME));
       File zip = awaitStatus(() -> client.getBackup(BACKUP_NAME, false), ACCEPTED, OK, response -> {
          String fileName = response.header(CONTENT_DISPOSITION).split("=")[1];
@@ -466,7 +466,7 @@ abstract class RESTAuthorizationTest {
    @Test
    public void testRestNonAdminsMustNotAccessBackupsAndRestores() {
       for (TestUser user : TestUser.NON_ADMINS) {
-         RestCacheManagerClient client = ext.rest().withClientConfiguration(restBuilders.get(user)).get().cacheManager("default");
+         RestContainerClient client = ext.rest().withClientConfiguration(restBuilders.get(user)).get().container();
          assertStatus(FORBIDDEN, client.createBackup("backup"));
          assertStatus(FORBIDDEN, client.getBackup("backup", true));
          assertStatus(FORBIDDEN, client.getBackupNames());
@@ -530,20 +530,20 @@ abstract class RESTAuthorizationTest {
       String name = ext.getMethodName();
 
       for (TestUser type : EnumSet.of(TestUser.ADMIN, TestUser.OBSERVER, TestUser.DEPLOYER)) {
-         try (RestResponse caches = CompletionStages.join(ext.rest().withClientConfiguration(restBuilders.get(type)).get().cacheManager("default").caches())) {
+         try (RestResponse caches = CompletionStages.join(ext.rest().withClientConfiguration(restBuilders.get(type)).get().caches())) {
             assertEquals(OK, caches.status());
             Json json = Json.read(caches.body());
-            Set<String> names = json.asJsonList().stream().map(Json::asJsonMap).map(j -> j.get("name").asString()).collect(Collectors.toSet());
+            Set<String> names = json.asJsonList().stream().map(Json::asString).collect(Collectors.toSet());
             assertTrue(names.contains(name), names.toString());
          }
       }
 
       // Types with no access.
       for (TestUser type : EnumSet.complementOf(EnumSet.of(TestUser.ADMIN, TestUser.OBSERVER, TestUser.DEPLOYER, TestUser.ANONYMOUS))) {
-         try (RestResponse caches = CompletionStages.join(ext.rest().withClientConfiguration(restBuilders.get(type)).get().cacheManager("default").caches())) {
+         try (RestResponse caches = CompletionStages.join(ext.rest().withClientConfiguration(restBuilders.get(type)).get().caches())) {
             assertEquals(OK, caches.status());
             Json json = Json.read(caches.body());
-            Set<String> names = json.asJsonList().stream().map(Json::asJsonMap).map(j -> j.get("name").asString()).collect(Collectors.toSet());
+            Set<String> names = json.asJsonList().stream().map(Json::asString).collect(Collectors.toSet());
             assertFalse(names.contains(name), names.toString());
          }
       }

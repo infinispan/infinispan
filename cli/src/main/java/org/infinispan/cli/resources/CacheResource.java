@@ -23,7 +23,7 @@ public class CacheResource extends AbstractResource {
    }
 
    public Iterable<String> getChildrenNames(int limit) throws IOException {
-      Iterable<Map<String, String>> keys = getConnection().getCacheKeys(getParent().getParent().getName(), name, limit);
+      Iterable<Map<String, String>> keys = getConnection().getCacheKeys(name, limit);
       return new TransformingIterable<>(keys, SINGLETON_MAP_VALUE);
    }
 
@@ -33,15 +33,15 @@ public class CacheResource extends AbstractResource {
       PrettyRowPrinter rowPrinter;
       switch (format) {
          case NAMES:
-            it = getConnection().getCacheKeys(getParent().getParent().getName(), name, limit);
+            it = getConnection().getCacheKeys(name, limit);
             rowPrinter = new CacheEntryRowPrinter(shell.size().getWidth(), 1);
             break;
          case VALUES:
-            it = getConnection().getCacheEntries(getParent().getParent().getName(), name, limit, false);
+            it = getConnection().getCacheEntries(name, limit, false);
             rowPrinter = new CacheEntryRowPrinter(shell.size().getWidth(), 2);
             break;
          case FULL:
-            it = getConnection().getCacheEntries(getParent().getParent().getName(), name, limit, true);
+            it = getConnection().getCacheEntries(name, limit, true);
             rowPrinter = new CacheEntryRowPrinter(shell.size().getWidth(), 7);
             break;
          default:
@@ -69,7 +69,7 @@ public class CacheResource extends AbstractResource {
 
    @Override
    public String describe() throws IOException {
-      return getConnection().describeCache(getParent().getParent().getName(), name);
+      return getConnection().describeCache(name);
    }
 
    public static String cacheName(Resource resource) {

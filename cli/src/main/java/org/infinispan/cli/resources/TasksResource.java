@@ -17,14 +17,14 @@ public class TasksResource extends AbstractResource {
 
    @Override
    public Iterable<String> getChildrenNames() throws IOException {
-      return getConnection().getAvailableTasks(getParent().getName());
+      return getConnection().getAvailableTasks();
    }
 
    @Override
    public Resource getChild(String name) throws IOException {
       if (Resource.PARENT.equals(name)) {
          return parent;
-      } else if (getConnection().getAvailableTasks(getParent().getName()).contains(name)) {
+      } else if (getConnection().getAvailableTasks().contains(name)) {
          return new TaskResource(this, name);
       } else {
          throw Messages.MSG.noSuchResource(name);

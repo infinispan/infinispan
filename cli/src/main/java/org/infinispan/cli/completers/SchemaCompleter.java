@@ -19,6 +19,6 @@ public class SchemaCompleter extends ListCompleter {
    Collection<String> getAvailableItems(Context context) throws IOException {
       Connection connection = context.getConnection();
       ContainerResource container = connection.getActiveResource().findAncestor(ContainerResource.class);
-      return container != null ? connection.getAvailableSchemas(container.getName()) : Collections.emptyList();
+      return container != null ? connection.getAvailableSchemas() : Collections.emptyList();
    }
 }

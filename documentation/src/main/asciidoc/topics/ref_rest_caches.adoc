@@ -581,6 +581,36 @@ List all available caches in {brandname} clusters with `GET` requests.
 GET /rest/v2/caches/
 ----
 
+
+[id='rest_v2_cache_list_detailed']
+= Obtaining Caches Status and Information
+Retrieve a list of all available caches for the cache manager, along with cache statuses and details, with `GET` requests.
+
+[source,options="nowrap",subs=attributes+]
+----
+GET /rest/v2/caches?action=detailed
+----
+
+{brandname} responds with JSON arrays that lists and describes each available
+cache, as in the following example:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+include::json/rest_caches_info_response.json[]
+----
+
+.Request parameters
+
+|===
+|Parameter |Required or Optional |Description
+
+|`pretty`
+|OPTIONAL
+|If `true` returns formatted content, including additional spacing and line separators which improve readability but increase payload size. The default is `false`.
+
+|===
+
+
 [id='rest_v2_list_caches_by_role']
 = Listing accessible caches for a role
 When security is enabled, retrieve a list of all the accessible caches for a role.

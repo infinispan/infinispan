@@ -34,7 +34,7 @@ public class SiteCompleter extends ListCompleter {
 
    private static Collection<String> getAvailableSites(Connection connection, String cacheName) {
       try {
-         return connection.getAvailableSites(connection.getActiveContainer().getName(), cacheName);
+         return connection.getAvailableSites(cacheName);
       } catch (Exception e) {
          return Collections.emptyList();
       }

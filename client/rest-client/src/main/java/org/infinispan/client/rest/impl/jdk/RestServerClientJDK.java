@@ -71,18 +71,18 @@ public class RestServerClientJDK implements RestServerClient {
    }
 
    @Override
-   public CompletionStage<RestResponse> ignoreCache(String cacheManagerName, String cacheName) {
-      return client.post(path + "/ignored-caches/" + cacheManagerName + "/" + cacheName);
+   public CompletionStage<RestResponse> ignoreCache(String cacheName) {
+      return client.post(path + "/ignored-caches/" + cacheName);
    }
 
    @Override
-   public CompletionStage<RestResponse> unIgnoreCache(String cacheManagerName, String cacheName) {
-      return client.delete(path + "/ignored-caches/" + cacheManagerName + "/" + cacheName);
+   public CompletionStage<RestResponse> unIgnoreCache(String cacheName) {
+      return client.delete(path + "/ignored-caches/" + cacheName);
    }
 
    @Override
-   public CompletionStage<RestResponse> listIgnoredCaches(String cacheManagerName) {
-      return client.get(path + "/ignored-caches/" + cacheManagerName);
+   public CompletionStage<RestResponse> listIgnoredCaches() {
+      return client.get(path + "/ignored-caches");
    }
 
    @Override

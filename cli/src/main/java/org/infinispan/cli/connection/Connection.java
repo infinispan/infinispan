@@ -28,43 +28,43 @@ public interface Connection extends Closeable {
 
    Resource getActiveContainer();
 
-   Collection<String> getAvailableCaches(String container);
+   Collection<String> getAvailableCaches();
 
    Collection<String> getAvailableContainers();
 
-   Collection<String> getAvailableCounters(String container) throws IOException;
+   Collection<String> getAvailableCounters() throws IOException;
 
-   Collection<String> getAvailableCacheConfigurations(String container);
+   Collection<String> getAvailableCacheConfigurations();
 
-   Collection<String> getAvailableSchemas(String container) throws IOException;
+   Collection<String> getAvailableSchemas() throws IOException;
 
-   Collection<String> getAvailableServers(String container) throws IOException;
+   Collection<String> getAvailableServers() throws IOException;
 
-   Collection<String> getAvailableSites(String container, String cache) throws IOException;
+   Collection<String> getAvailableSites(String cache) throws IOException;
 
-   Collection<String> getAvailableTasks(String container) throws IOException;
+   Collection<String> getAvailableTasks() throws IOException;
 
-   Iterable<Map<String, String>> getCacheKeys(String container, String cache) throws IOException;
+   Iterable<Map<String, String>> getCacheKeys(String cache) throws IOException;
 
-   Iterable<Map<String, String>> getCacheKeys(String container, String cache, int limit) throws IOException;
+   Iterable<Map<String, String>> getCacheKeys(String cache, int limit) throws IOException;
 
-   Iterable<Map<String, String>> getCacheEntries(String container, String cache, int limit, boolean metadata) throws IOException;
+   Iterable<Map<String, String>> getCacheEntries(String cache, int limit, boolean metadata) throws IOException;
 
-   Iterable<String> getCounterValue(String container, String counter) throws IOException;
+   Iterable<String> getCounterValue(String counter) throws IOException;
 
    boolean isConnected();
 
-   String describeContainer(String container) throws IOException;
+   String describeContainer() throws IOException;
 
-   String describeCache(String container, String cache) throws IOException;
+   String describeCache(String cache) throws IOException;
 
-   String describeKey(String container, String cache, String key) throws IOException;
+   String describeKey(String cache, String key) throws IOException;
 
-   String describeConfiguration(String container, String configuration) throws IOException;
+   String describeConfiguration(String configuration) throws IOException;
 
-   String describeCounter(String container, String counter) throws IOException;
+   String describeCounter(String counter) throws IOException;
 
-   String describeTask(String container, String taskName) throws IOException;
+   String describeTask(String taskName) throws IOException;
 
    String getConnectionInfo();
 
@@ -76,7 +76,7 @@ public interface Connection extends Closeable {
 
    Collection<String> getAvailableLoggers() throws IOException;
 
-   Collection<String> getBackupNames(String container) throws IOException;
+   Collection<String> getBackupNames() throws IOException;
 
    Collection<String> getSitesView();
 

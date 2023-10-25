@@ -31,15 +31,11 @@ public interface RestClient extends AutoCloseable {
    /**
     * Returns a list of available cache manager names
     */
+   @Deprecated
    CompletionStage<RestResponse> cacheManagers();
 
    /**
-    * Operations on the specified cache manager
-    */
-   RestCacheManagerClient cacheManager(String name);
-
-   /**
-    * Operations on the server's Container
+    * Operations on the cache manager
     */
    RestContainerClient container();
 
@@ -47,6 +43,11 @@ public interface RestClient extends AutoCloseable {
     * Returns a list of available caches
     */
    CompletionStage<RestResponse> caches();
+
+   /**
+    * Returns a list of available caches detailed
+    */
+   CompletionStage<RestResponse> detailedCacheList();
 
    /**
     * Returns a list of available caches for a role
