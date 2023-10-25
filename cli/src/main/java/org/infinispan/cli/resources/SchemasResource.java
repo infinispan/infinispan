@@ -17,7 +17,7 @@ public class SchemasResource extends AbstractResource {
 
    @Override
    public Iterable<String> getChildrenNames() throws IOException {
-      return getConnection().getAvailableSchemas(getParent().getName());
+      return getConnection().getAvailableSchemas();
    }
 
    @Override

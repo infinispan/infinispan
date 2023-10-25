@@ -69,7 +69,7 @@ public class GracefulShutdownRestartIT {
       RestClient rest = SERVER.rest().withClientConfiguration(restClientBuilder).get();
 
       // First, we disable rebalance cluster-wide.
-      assertStatus(204, rest.cacheManager("default").disableRebalancing());
+      assertStatus(204, rest.container().disableRebalancing());
 
       // We get the cache details to assert it is in fact disabled.
       try (RestResponse res = sync(rest.cache(hotRod.getName()).details())) {
@@ -87,7 +87,7 @@ public class GracefulShutdownRestartIT {
       }
 
       // We enable rebalance again after restart.
-      assertStatus(204, rest.cacheManager("default").enableRebalancing());
+      assertStatus(204, rest.container().enableRebalancing());
 
       // Assert all nodes back.
       assertHealthyCluster(rest);
@@ -124,7 +124,7 @@ public class GracefulShutdownRestartIT {
       serverDriver.stop(1);
 
       // Since the node left abruptly, the cluster should be DEGRADED.
-      try (RestResponse res = sync(rest.cacheManager("default").health())) {
+      try (RestResponse res = sync(rest.container().health())) {
          Json body = Json.read(res.body());
          Json clusterHealth = body.at("cluster_health");
          assertThat(clusterHealth.at("health_status").asString()).isEqualTo("DEGRADED");
@@ -166,7 +166,7 @@ public class GracefulShutdownRestartIT {
    }
 
    private void assertHealthyCluster(RestClient rest) {
-      try (RestResponse response = sync(rest.cacheManager("default").health())) {
+      try (RestResponse response = sync(rest.container().health())) {
          Json body = Json.read(response.body());
          assertThat(body.at("cluster_health")).isNotNull();
 

@@ -23,10 +23,9 @@ import org.infinispan.cli.completers.XSiteStateTransferModeCompleter;
 import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.resources.CacheResource;
-import org.infinispan.cli.resources.ContainerResource;
 import org.infinispan.cli.resources.Resource;
 import org.infinispan.client.rest.RestCacheClient;
-import org.infinispan.client.rest.RestCacheManagerClient;
+import org.infinispan.client.rest.RestContainerClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.configuration.cache.XSiteStateTransferMode;
@@ -97,7 +96,7 @@ public class Site extends CliCommand {
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) throws RequiredOptionException {
          checkMutualExclusiveCacheAndGlobal(cache, allCaches);
          if (allCaches) {
-            RestCacheManagerClient cm = restCacheManagerClient(client, resource);
+            RestContainerClient cm = client.container();
             return site == null ? cm.backupStatuses() : cm.backupStatus(site);
          }
          RestCacheClient c = restCacheClient(client, resource, cache);
@@ -133,7 +132,7 @@ public class Site extends CliCommand {
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) throws RequiredOptionException {
          checkMutualExclusiveCacheAndGlobal(cache, allCaches);
          return allCaches ?
-               restCacheManagerClient(client, resource).bringBackupOnline(site) :
+               client.container().bringBackupOnline(site) :
                restCacheClient(client, resource, cache).bringSiteOnline(site);
       }
 
@@ -166,7 +165,7 @@ public class Site extends CliCommand {
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) throws RequiredOptionException {
          checkMutualExclusiveCacheAndGlobal(cache, allCaches);
          return allCaches ?
-               restCacheManagerClient(client, resource).takeOffline(site) :
+               client.container().takeOffline(site) :
                restCacheClient(client, resource, cache).takeSiteOffline(site);
       }
 
@@ -199,7 +198,7 @@ public class Site extends CliCommand {
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) throws RequiredOptionException {
          checkMutualExclusiveCacheAndGlobal(cache, allCaches);
          return allCaches ?
-               restCacheManagerClient(client, resource).pushSiteState(site) :
+               client.container().pushSiteState(site) :
                restCacheClient(client, resource, cache).pushSiteState(site);
       }
 
@@ -232,7 +231,7 @@ public class Site extends CliCommand {
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) throws RequiredOptionException {
          checkMutualExclusiveCacheAndGlobal(cache, allCaches);
          return allCaches ?
-               restCacheManagerClient(client, resource).cancelPushState(site) :
+               client.container().cancelPushState(site) :
                restCacheClient(client, resource, cache).cancelPushState(site);
       }
 
@@ -503,10 +502,6 @@ public class Site extends CliCommand {
       if (cache != null && global) {
          throw MSG.mutuallyExclusiveOptions("cache", "all-caches");
       }
-   }
-
-   private static RestCacheManagerClient restCacheManagerClient(RestClient client, Resource resource) {
-      return ContainerResource.findContainerName(resource).map(client::cacheManager).orElseThrow(MSG::illegalContext);
    }
 
    private static RestCacheClient restCacheClient(RestClient client, Resource resource, String cacheName) throws RequiredOptionException {

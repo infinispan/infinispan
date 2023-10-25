@@ -93,7 +93,7 @@ public final class Http2Test extends AbstractInfinispanTest {
       builder.addServer().host(restServer.getHost()).port(restServer.getPort()).protocol(HTTP_11);
       client = RestClient.forConfiguration(builder.build());
 
-      CompletionStage<RestResponse> response = client.cacheManager("default").info();
+      CompletionStage<RestResponse> response = client.container().info();
       ResponseAssertion.assertThat(response).isOk();
 
       RestEntity value = RestEntity.create(MediaType.APPLICATION_OCTET_STREAM, "test".getBytes(CharsetUtil.UTF_8));
@@ -111,7 +111,7 @@ public final class Http2Test extends AbstractInfinispanTest {
 
       client = RestClient.forConfiguration(builder.build());
 
-      CompletionStage<RestResponse> response = client.cacheManager("default").info();
+      CompletionStage<RestResponse> response = client.container().info();
       ResponseAssertion.assertThat(response).isOk();
 
       RestEntity value = RestEntity.create(MediaType.APPLICATION_OCTET_STREAM, "test".getBytes(CharsetUtil.UTF_8));

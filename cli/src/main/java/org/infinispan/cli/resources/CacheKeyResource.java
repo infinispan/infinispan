@@ -18,6 +18,6 @@ public class CacheKeyResource extends AbstractResource {
 
    @Override
    public String describe() throws IOException {
-      return getConnection().describeKey(getParent().getParent().getName(), getParent().getName(), name);
+      return getConnection().describeKey(getParent().getName(), name);
    }
 }

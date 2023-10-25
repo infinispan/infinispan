@@ -13,7 +13,7 @@ public class CounterResource extends AbstractResource {
 
    @Override
    public Iterable<String> getChildrenNames() throws IOException {
-      return getConnection().getCounterValue(getParent().getParent().getName(), name);
+      return getConnection().getCounterValue(name);
    }
 
    @Override
@@ -23,7 +23,7 @@ public class CounterResource extends AbstractResource {
 
    @Override
    public String describe() throws IOException {
-      return getConnection().describeCounter(getParent().getParent().getName(), name);
+      return getConnection().describeCounter(name);
    }
 
    public static String counterName(Resource resource) {

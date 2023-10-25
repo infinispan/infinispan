@@ -138,7 +138,7 @@ abstract class AbstractMultiClusterIT {
       }
 
       Set<String> getMembers() {
-         String response = assertStatus(OK, getClient().cacheManager("default").info());
+         String response = assertStatus(OK, getClient().container().info());
          Json jsonNode = Json.read(response);
          return jsonNode.at("cluster_members").asJsonList().stream().map(Json::asString).collect(Collectors.toSet());
       }

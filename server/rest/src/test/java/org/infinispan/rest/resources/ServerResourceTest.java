@@ -68,4 +68,30 @@ public class ServerResourceTest extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasContentType("application/gzip");
    }
+
+   @Test
+   public void testIgnoreCache() {
+      CompletionStage<RestResponse> response = adminClient.server().listIgnoredCaches();
+      ResponseAssertion.assertThat(response).isOk();
+      ResponseAssertion.assertThat(response).hasReturnedText("[]");
+
+      response = adminClient.server().ignoreCache("one-cache");
+      ResponseAssertion.assertThat(response).isNotFound();
+
+      response = adminClient.server().ignoreCache("defaultcache");
+      ResponseAssertion.assertThat(response).isOk();
+
+      response = adminClient.server().listIgnoredCaches();
+      ResponseAssertion.assertThat(response).isOk();
+      ResponseAssertion.assertThat(response).hasReturnedText("[\"defaultcache\"]");
+
+      response = adminClient.server().unIgnoreCache("one-cache");
+      ResponseAssertion.assertThat(response).isNotFound();
+      response = adminClient.server().unIgnoreCache("defaultcache");
+      ResponseAssertion.assertThat(response).isOk();
+
+      response = adminClient.server().listIgnoredCaches();
+      ResponseAssertion.assertThat(response).isOk();
+      ResponseAssertion.assertThat(response).hasReturnedText("[]");
+   }
 }

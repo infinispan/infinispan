@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -78,7 +79,10 @@ import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.health.CacheHealth;
+import org.infinispan.health.HealthStatus;
 import org.infinispan.health.impl.CacheHealthImpl;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerAdmin;
 import org.infinispan.marshall.core.EncoderRegistry;
@@ -124,6 +128,7 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Role;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.stats.ClusterCacheStats;
+import org.infinispan.server.core.ServerStateManager;
 import org.infinispan.stats.Stats;
 import org.infinispan.telemetry.InfinispanTelemetry;
 import org.infinispan.topology.ClusterTopologyManager;
@@ -150,11 +155,13 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
    private final ParserRegistry parserRegistry = new ParserRegistry();
    private final InternalCacheRegistry internalCacheRegistry;
+   private final ServerStateManager serverStateManager;
 
    public CacheResourceV2(InvocationHelper invocationHelper, InfinispanTelemetry telemetryService) {
       super(invocationHelper, telemetryService);
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       GlobalComponentRegistry globalComponentRegistry = SecurityActions.getGlobalComponentRegistry(cacheManager);
+      this.serverStateManager = globalComponentRegistry.getComponent(ServerStateManager.class);
       this.internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
    }
 
@@ -164,6 +171,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             // Key related operations
             .invocation().methods(PUT, POST).path("/v2/caches/{cacheName}/{cacheKey}").handleWith(this::putValueToCache)
             .invocation().methods(GET, HEAD).path("/v2/caches/{cacheName}/{cacheKey}").handleWith(this::getCacheValue)
+            .invocation().method(GET).path("/v2/caches/{cacheName}/{cacheKey}").withAction("distribution").handleWith(this::getKeyDistribution)
             .invocation().method(GET).path("/v2/caches/{cacheName}/{cacheKey}").withAction("distribution").handleWith(this::getKeyDistribution)
             .invocation().method(DELETE).path("/v2/caches/{cacheName}/{cacheKey}").handleWith(this::deleteCacheValue)
             .invocation().methods(GET).path("/v2/caches/{cacheName}").withAction("keys").handleWith(this::streamKeys)
@@ -181,6 +189,9 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
             // List
             .invocation().methods(GET).path("/v2/caches/").handleWith(this::getCacheNames)
+            .invocation().methods(GET).deprecated().path("/v2/cache-managers/{name}/caches").handleWith(this::getCaches)
+            .invocation().methods(GET).path("/v2/caches").withAction("detailed").handleWith(this::getCaches)
+
 
             // List of caches for role
             .invocation().methods(GET).path("/v2/caches").withAction("role-accessible")
@@ -239,6 +250,144 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             .handleWith(this::reinitializeCache)
 
             .create();
+   }
+
+   private CompletionStage<RestResponse> getCaches(RestRequest request) {
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
+      if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
+
+      EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
+      EmbeddedCacheManager subjectCacheManager = cacheManager.withSubject(request.getSubject());
+      // Remove internal caches
+      Set<String> cacheNames = new HashSet<>(subjectCacheManager.getAccessibleCacheNames());
+      cacheNames.removeAll(internalCacheRegistry.getInternalCacheNames());
+
+
+      Set<String> ignoredCaches = serverStateManager.getIgnoredCaches();
+      List<CacheHealth> cachesHealth = SecurityActions.getHealth(subjectCacheManager).getCacheHealth(cacheNames);
+
+      LocalTopologyManager localTopologyManager = null;
+      Boolean clusterRebalancingEnabled = null;
+      try {
+         localTopologyManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getLocalTopologyManager();
+         if (localTopologyManager != null) {
+            clusterRebalancingEnabled = localTopologyManager.isRebalancingEnabled();
+         }
+      } catch (Exception e) {
+         // Unable to get the component. Just ignore.
+      }
+
+      // We rely on the fact that getCacheNames doesn't block for embedded - remote it does unfortunately
+      LocalTopologyManager finalLocalTopologyManager = localTopologyManager;
+      Boolean finalClusterRebalancingEnabled = clusterRebalancingEnabled;
+      boolean pretty = isPretty(request);
+      return Flowable.fromIterable(cachesHealth)
+            .map(chHealth -> getCacheInfo(request, cacheManager, subjectCacheManager, ignoredCaches,
+                  finalLocalTopologyManager, finalClusterRebalancingEnabled, chHealth))
+            .sorted(Comparator.comparing(c -> c.name))
+            .collect(Collectors.toList()).map(cacheInfos -> (RestResponse) addEntityAsJson(Json.make(cacheInfos), responseBuilder, pretty).build())
+            .toCompletionStage();
+   }
+
+   private CacheInfo getCacheInfo(RestRequest request, EmbeddedCacheManager cacheManager,
+                                                    EmbeddedCacheManager subjectCacheManager, Set<String> ignoredCaches,
+                                                    LocalTopologyManager finalLocalTopologyManager,
+                                                    Boolean finalClusterRebalancingEnabled, CacheHealth chHealth) {
+      CacheInfo cacheInfo = new CacheInfo();
+      String cacheName = chHealth.getCacheName();
+      cacheInfo.name = cacheName;
+      HealthStatus cacheHealth = chHealth.getStatus();
+      cacheInfo.health = cacheHealth;
+      Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(subjectCacheManager, cacheName);
+      cacheInfo.type = cacheConfiguration.clustering().cacheMode().toCacheType();
+      boolean isPersistent = false;
+      if (chHealth.getStatus() != HealthStatus.FAILED) {
+         PersistenceManager pm = SecurityActions.getPersistenceManager(cacheManager, cacheName);
+         isPersistent = pm.isEnabled();
+      }
+      cacheInfo.simpleCache = cacheConfiguration.simpleCache();
+      cacheInfo.transactional = cacheConfiguration.transaction().transactionMode().isTransactional();
+      cacheInfo.persistent = isPersistent;
+      cacheInfo.persistent = cacheConfiguration.persistence().usingStores();
+      cacheInfo.bounded = cacheConfiguration.memory().whenFull().isEnabled();
+      cacheInfo.secured = cacheConfiguration.security().authorization().enabled();
+      cacheInfo.indexed = cacheConfiguration.indexing().enabled();
+      cacheInfo.hasRemoteBackup = cacheConfiguration.sites().hasBackups();
+
+      // If the cache is ignored, status is IGNORED
+      if (ignoredCaches.contains(cacheName)) {
+         cacheInfo.status = "IGNORED";
+      } else {
+         switch (cacheHealth) {
+            case FAILED:
+               cacheInfo.status = ComponentStatus.FAILED.toString();
+               break;
+            case INITIALIZING:
+               cacheInfo.status = ComponentStatus.INITIALIZING.toString();
+               break;
+            default:
+               Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
+               cacheInfo.status = cache.getStatus().toString();
+               break;
+         }
+      }
+
+      // if any of those are null, don't keep trying to retrieve the rebalancing status
+      if (finalLocalTopologyManager != null && finalClusterRebalancingEnabled != null) {
+         Boolean perCacheRebalancing = null;
+         if (finalClusterRebalancingEnabled) {
+            // if the global rebalancing is enabled, retrieve each cache status
+            try {
+               perCacheRebalancing = finalLocalTopologyManager.isCacheRebalancingEnabled(cacheName);
+            } catch (Exception ex) {
+               // There was an error retrieving this value. Just ignore
+            }
+         } else {
+            // set all to false. global disabled rebalancing disables all caches rebalancing
+            perCacheRebalancing = Boolean.FALSE;
+         }
+
+         cacheInfo.rebalancing_enabled = perCacheRebalancing;
+      }
+
+      return cacheInfo;
+   }
+
+   static class CacheInfo implements JsonSerialization {
+      public String status;
+      public String name;
+      public String type;
+      public boolean simpleCache;
+      public boolean transactional;
+      public boolean persistent;
+      public boolean bounded;
+      public boolean indexed;
+      public boolean secured;
+      public boolean hasRemoteBackup;
+      public HealthStatus health;
+      public Boolean rebalancing_enabled;
+
+      @Override
+      public Json toJson() {
+         Json payload = Json.object()
+               .set("status", status)
+               .set("name", name)
+               .set("type", type)
+               .set("simple_cache", simpleCache)
+               .set("transactional", transactional)
+               .set("persistent", persistent)
+               .set("bounded", bounded)
+               .set("secured", secured)
+               .set("indexed", indexed)
+               .set("has_remote_backup", hasRemoteBackup)
+               .set("health", health);
+
+         if (rebalancing_enabled != null) {
+            payload.set("rebalancing_enabled", rebalancing_enabled);
+         }
+
+         return payload;
+      }
    }
 
    @SuppressWarnings("rawtypes")

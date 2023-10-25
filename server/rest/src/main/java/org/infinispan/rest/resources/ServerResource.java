@@ -57,11 +57,11 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.manager.CacheManagerInfo;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.rest.InvocationHelper;
 import org.infinispan.rest.NettyRestResponse;
+import org.infinispan.rest.cachemanager.RestCacheManager;
 import org.infinispan.rest.framework.ResourceHandler;
 import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
@@ -97,67 +97,101 @@ public class ServerResource implements ResourceHandler {
    public Invocations getInvocations() {
       return new Invocations.Builder()
             .invocation().methods(GET).path("/v2/server/")
-            .handleWith(this::info)
+               .handleWith(this::info)
             .invocation().methods(GET).path("/v2/server/config")
-            .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).handleWith(this::config)
+               .permission(AuthorizationPermission.ADMIN)
+               .auditContext(AuditContext.SERVER)
+               .handleWith(this::config)
             .invocation().methods(GET).path("/v2/server/env")
-            .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).handleWith(this::env)
+               .permission(AuthorizationPermission.ADMIN)
+               .auditContext(AuditContext.SERVER)
+               .handleWith(this::env)
             .invocation().methods(GET).path("/v2/server/memory")
-            .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).handleWith(this::memory)
+               .permission(AuthorizationPermission.ADMIN)
+               .auditContext(AuditContext.SERVER)
+               .handleWith(this::memory)
             .invocation().methods(POST).path("/v2/server/memory").withAction("heap-dump")
-            .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).handleWith(this::heapDump)
+               .permission(AuthorizationPermission.ADMIN)
+               .auditContext(AuditContext.SERVER)
+               .handleWith(this::heapDump)
             .invocation().methods(POST).path("/v2/server/").withAction("stop")
-            .permission(AuthorizationPermission.ADMIN)
-            .handleWith(this::stop)
+               .permission(AuthorizationPermission.ADMIN)
+               .handleWith(this::stop)
             .invocation().methods(GET).path("/v2/server/overview-report")
-            .permission(AuthorizationPermission.ADMIN)
-            .handleWith(this::overviewReport)
+               .permission(AuthorizationPermission.ADMIN)
+               .handleWith(this::overviewReport)
             .invocation().methods(GET).path("/v2/server/threads")
-            .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).handleWith(this::threads)
+               .permission(AuthorizationPermission.ADMIN)
+               .auditContext(AuditContext.SERVER)
+               .handleWith(this::threads)
             .invocation().methods(GET).path("/v2/server/report")
-            .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER)
-            .handleWith(this::report)
+               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER)
+               .handleWith(this::report)
             .invocation().methods(GET).path("/v2/server/report/{nodeName}")
-            .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER)
-            .handleWith(this::nodeReport)
+               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER)
+               .handleWith(this::nodeReport)
             .invocation().methods(GET).path("/v2/server/cache-managers")
-            .handleWith(this::cacheManagers)
+               .handleWith(this::cacheManagers)
             .invocation().methods(GET).path("/v2/server/ignored-caches/{cache-manager}")
-            .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).handleWith(this::listIgnored)
+               .deprecated()
+               .permission(AuthorizationPermission.ADMIN)
+               .auditContext(AuditContext.SERVER)
+               .handleWith(this::listIgnored)
+            .invocation().methods(GET).path("/v2/server/ignored-caches")
+               .permission(AuthorizationPermission.ADMIN)
+               .auditContext(AuditContext.SERVER)
+               .handleWith(this::listIgnored)
             .invocation().methods(POST, DELETE).path("/v2/server/ignored-caches/{cache-manager}/{cache}")
-            .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER)
-            .handleWith(this::doIgnoreOp)
+               .deprecated()
+               .permission(AuthorizationPermission.ADMIN)
+               .auditContext(AuditContext.SERVER)
+               .handleWith(this::doIgnoreOp)
+            .invocation().methods(POST, DELETE).path("/v2/server/ignored-caches/{cache}")
+               .permission(AuthorizationPermission.ADMIN)
+               .auditContext(AuditContext.SERVER)
+               .handleWith(this::doIgnoreOp)
             .invocation().methods(GET).path("/v2/server/connections")
-            .permission(AuthorizationPermission.ADMIN).name("CONNECTION LIST").auditContext(AuditContext.SERVER)
-            .handleWith(this::listConnections)
+               .permission(AuthorizationPermission.ADMIN).name("CONNECTION LIST")
+               .auditContext(AuditContext.SERVER)
+               .handleWith(this::listConnections)
             .invocation().methods(GET).path("/v2/server/connectors")
-            .permission(AuthorizationPermission.ADMIN).name("CONNECTOR LIST").auditContext(AuditContext.SERVER)
-            .handleWith(this::listConnectors)
+               .permission(AuthorizationPermission.ADMIN).name("CONNECTOR LIST")
+               .auditContext(AuditContext.SERVER)
+               .handleWith(this::listConnectors)
             .invocation().methods(GET).path("/v2/server/connectors/{connector}")
-            .permission(AuthorizationPermission.ADMIN).name("CONNECTOR GET").auditContext(AuditContext.SERVER)
-            .handleWith(this::connectorStatus)
+               .permission(AuthorizationPermission.ADMIN).name("CONNECTOR GET")
+               .auditContext(AuditContext.SERVER)
+               .handleWith(this::connectorStatus)
             .invocation().methods(POST).path("/v2/server/connectors/{connector}").withAction("start")
-            .permission(AuthorizationPermission.ADMIN).name("CONNECTOR START").auditContext(AuditContext.SERVER)
-            .handleWith(this::connectorStartStop)
+               .permission(AuthorizationPermission.ADMIN).name("CONNECTOR START")
+               .auditContext(AuditContext.SERVER)
+               .handleWith(this::connectorStartStop)
             .invocation().methods(POST).path("/v2/server/connectors/{connector}").withAction("stop")
-            .permission(AuthorizationPermission.ADMIN).name("CONNECTOR STOP").auditContext(AuditContext.SERVER)
-            .handleWith(this::connectorStartStop)
+               .permission(AuthorizationPermission.ADMIN).name("CONNECTOR STOP")
+               .auditContext(AuditContext.SERVER)
+               .handleWith(this::connectorStartStop)
             .invocation().methods(GET).path("/v2/server/connectors/{connector}/ip-filter")
-            .permission(AuthorizationPermission.ADMIN).name("CONNECTOR FILTER GET").auditContext(AuditContext.SERVER)
-            .handleWith(this::connectorIpFilterList)
+               .permission(AuthorizationPermission.ADMIN).name("CONNECTOR FILTER GET")
+               .auditContext(AuditContext.SERVER)
+               .handleWith(this::connectorIpFilterList)
             .invocation().methods(POST).path("/v2/server/connectors/{connector}/ip-filter")
-            .permission(AuthorizationPermission.ADMIN).name("CONNECTOR FILTER SET").auditContext(AuditContext.SERVER)
-            .handleWith(this::connectorIpFilterSet)
+               .permission(AuthorizationPermission.ADMIN).name("CONNECTOR FILTER SET")
+               .auditContext(AuditContext.SERVER)
+               .handleWith(this::connectorIpFilterSet)
             .invocation().methods(DELETE).path("/v2/server/connectors/{connector}/ip-filter")
-            .permission(AuthorizationPermission.ADMIN).name("CONNECTOR FILTER DELETE").auditContext(AuditContext.SERVER)
-            .handleWith(this::connectorIpFilterClear)
+               .permission(AuthorizationPermission.ADMIN).name("CONNECTOR FILTER DELETE")
+               .auditContext(AuditContext.SERVER)
+               .handleWith(this::connectorIpFilterClear)
             .invocation().methods(GET).path("/v2/server/datasources")
-            .permission(AuthorizationPermission.ADMIN).name("DATASOURCE LIST").auditContext(AuditContext.SERVER)
-            .handleWith(this::dataSourceList)
+               .permission(AuthorizationPermission.ADMIN).name("DATASOURCE LIST")
+               .auditContext(AuditContext.SERVER)
+               .handleWith(this::dataSourceList)
             .invocation().methods(POST).path("/v2/server/datasources/{datasource}").withAction("test")
-            .permission(AuthorizationPermission.ADMIN).name("DATASOURCE TEST").auditContext(AuditContext.SERVER)
-            .handleWith(this::dataSourceTest)
-            .invocation().methods(GET).path("/v2/server/caches/defaults").handleWith(this::getCacheConfigDefaultAttributes)
+               .permission(AuthorizationPermission.ADMIN).name("DATASOURCE TEST")
+               .auditContext(AuditContext.SERVER)
+               .handleWith(this::dataSourceTest)
+            .invocation().methods(GET).path("/v2/server/caches/defaults")
+               .handleWith(this::getCacheConfigDefaultAttributes)
             .create();
    }
 
@@ -165,27 +199,23 @@ public class ServerResource implements ResourceHandler {
       NettyRestResponse.Builder builder = invocationHelper.newResponse(request).status(NO_CONTENT);
       boolean add = request.method().equals(POST);
 
+      RestCacheManager<Object> cacheManager = invocationHelper.getRestCacheManager();
       String cacheManagerName = request.variables().get("cache-manager");
-      DefaultCacheManager cacheManager = invocationHelper.getServer().getCacheManager(cacheManagerName);
-
-      if (cacheManager == null) return completedFuture(builder.status(NOT_FOUND).build());
-
       String cacheName = request.variables().get("cache");
-
+      if (cacheName == null) {
+         cacheName = cacheManagerName;
+      }
       if (!cacheManager.getCacheNames().contains(cacheName)) {
          return completedFuture(builder.status(NOT_FOUND).build());
       }
+      final String cacheNameFinal = cacheName;
       ServerManagement server = invocationHelper.getServer();
       ServerStateManager ignoreManager = server.getServerStateManager();
-      return Security.doAs(request.getSubject(), () -> add ? ignoreManager.ignoreCache(cacheName) : ignoreManager.unignoreCache(cacheName))
+      return Security.doAs(request.getSubject(), () -> add ? ignoreManager.ignoreCache(cacheNameFinal) : ignoreManager.unignoreCache(cacheNameFinal))
             .thenApply(r -> builder.build());
    }
 
    private CompletionStage<RestResponse> listIgnored(RestRequest request) {
-      String cacheManagerName = request.variables().get("cache-manager");
-      DefaultCacheManager cacheManager = invocationHelper.getServer().getCacheManager(cacheManagerName);
-
-      if (cacheManager == null) return invocationHelper.newResponse(request, NOT_FOUND).toFuture();
       ServerStateManager serverStateManager = invocationHelper.getServer().getServerStateManager();
       Set<String> ignored = serverStateManager.getIgnoredCaches();
       return asJsonResponseFuture(invocationHelper.newResponse(request), Json.make(ignored), isPretty(request));

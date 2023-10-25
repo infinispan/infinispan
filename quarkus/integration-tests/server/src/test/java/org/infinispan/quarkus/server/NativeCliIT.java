@@ -10,7 +10,7 @@ import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.client.rest.RestCacheManagerClient;
+import org.infinispan.client.rest.RestContainerClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
@@ -34,7 +34,7 @@ public class NativeCliIT {
    @Test
    public void testCliBatch() throws Exception {
       RestClient client = SERVERS.rest().create();
-      RestCacheManagerClient cm = client.cacheManager("default");
+      RestContainerClient cm = client.container();
       RestResponse restResponse = sync(cm.healthStatus());
       assertEquals(200, restResponse.status());
       assertEquals("HEALTHY", restResponse.body());

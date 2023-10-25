@@ -86,7 +86,7 @@ public class AuthenticationTest extends AbstractInfinispanTest {
 
    @Test
    public void shouldAllowHealthAnonymously() {
-      CompletionStage<RestResponse> response = client.cacheManager("default").healthStatus();
+      CompletionStage<RestResponse> response = client.container().healthStatus();
       ResponseAssertion.assertThat(response).isOk();
       ResponseAssertion.assertThat(response).hasContentType("text/plain");
       ResponseAssertion.assertThat(response).hasReturnedText("HEALTHY");

@@ -1,10 +1,10 @@
-[id='rest_v2_cache_manager_info']
-= Getting Basic Cache Manager Information
-Retrieving information about Cache Managers with `GET` requests.
+[id='rest_v2_container_info']
+= Getting Basic Container Information
+Retrieving information about the cache manager with `GET` requests.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/cache-managers/{cacheManagerName}
+GET /rest/v2/container
 ----
 
 {brandname} responds with information in JSON format, as in the following example:
@@ -13,7 +13,7 @@ NOTE: Information about caches with security authorization is available only to 
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json/rest_cache_manager_response.json[]
+include::json/rest_container_response.json[]
 ----
 
 * `version` contains the {brandname} version
@@ -40,13 +40,13 @@ If cross-site replication is not configured, {brandname} returns an empty list.
 * `rebalancing_enabled` is true if rebalancing is enabled. Fetching this property might fail on the server. In that case the property won't be present in the payload.
 
 
-[id='rest_v2_cache_manager_health']
+[id='rest_v2_container_health']
 = Getting Cluster Health
 Retrieve health information for {brandname} clusters with `GET` requests.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/cache-managers/{cacheManagerName}/health
+GET /rest/v2/container/health
 ----
 
 {brandname} responds with cluster health information in JSON format, as in the
@@ -54,7 +54,7 @@ following example:
 
 [source,json,options="nowrap",subs=attributes+]
 ----
-include::json/rest_cache_health_response.json[]
+include::json/rest_container_health_response.json[]
 ----
 
 * `cluster_health` contains the health of the cluster
@@ -73,13 +73,13 @@ Empty for standalone servers.
 ** `cache_name` the name of the cache as defined in the configuration.
 
 
-[id='rest_v2_cache_manager_health_status']
-= Getting Cache Manager Health Status
-Retrieve the health status of Cache Managers with `GET` requests that do not require authentication.
+[id='rest_v2_container_health_status']
+= Getting Container Health Status
+Retrieve the health status of the {brandname} container with `GET` requests that do not require authentication.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/cache-managers/{cacheManagerName}/health/status
+GET /rest/v2/container/health/status
 ----
 
 {brandname} responds with one of the following in `text/plain` format:
@@ -90,26 +90,26 @@ GET /rest/v2/cache-managers/{cacheManagerName}/health/status
 * `FAILED`
 
 
-[id='rest_v2_cache_manager_availability']
+[id='rest_v2_container_availability']
 = Checking REST Endpoint Availability
 Verify {brandname} server REST endpoint availability with `HEAD` requests.
 
 [source,options="nowrap",subs=attributes+]
 ----
-HEAD /rest/v2/cache-managers/{cacheManagerName}/health
+HEAD /rest/v2/container/health
 ----
 
 If you receive a successful response code then the {brandname} REST server is
 running and serving requests.
 
 
-[id='rest_v2_cache_manager_config']
-= Obtaining Global Configuration for Cache Managers
-Retrieve global configuration for Cache Managers with `GET` requests.
+[id='rest_v2_container_config']
+= Obtaining Global Configuration
+Retrieve global configuration for the data container with `GET` requests.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/cache-managers/{cacheManagerName}/config
+GET /rest/v2/container/config
 ----
 
 .Headers
@@ -138,13 +138,13 @@ GET /rest/v2/cache-managers/{cacheManagerName}/config
 link:{javadocroot}/org/infinispan/configuration/global/GlobalConfiguration.html[GlobalConfiguration]
 
 
-[id='rest_v2_cache_manager_caches_config']
+[id='rest_v2_container_caches_config']
 = Obtaining Configuration for All Caches
 Retrieve the configuration for all caches with `GET` requests.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/cache-managers/{cacheManagerName}/cache-configs
+GET /rest/v2/container/cache-configs
 ----
 
 {brandname} responds with `JSON` arrays that contain each cache and cache
@@ -166,13 +166,13 @@ include::json/rest_cache_config_response.json[]
 
 |===
 
-[id='rest_v2_cache_manager_cache_templates']
+[id='rest_v2_container_cache_templates']
 = Listing Available Cache Templates
 Retrieve all available {brandname} cache templates with `GET` requests.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/cache-managers/{cacheManagerName}/cache-configs/templates
+GET /rest/v2/cache-configs/templates
 ----
 
 [TIP]
@@ -191,42 +191,14 @@ See link:#rest_v2_create_cache_template[Creating Caches with Templates].
 
 |===
 
-[id='rest_v2_cache_manager_cache_list']
-= Obtaining Cache Status and Information
-Retrieve a list of all available caches for a Cache Manager, along with cache statuses and details, with `GET` requests.
+
+[id='rest_v2_container_stats']
+= Getting Container Statistics
+Retrieve the statistics of the container with `GET` requests.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/cache-managers/{cacheManagerName}/caches
-----
-
-{brandname} responds with JSON arrays that lists and describes each available
-cache, as in the following example:
-
-[source,json,options="nowrap",subs=attributes+]
-----
-include::json/rest_caches_info_response.json[]
-----
-
-.Request parameters
-
-|===
-|Parameter |Required or Optional |Description
-
-|`pretty`
-|OPTIONAL
-|If `true` returns formatted content, including additional spacing and line separators which improve readability but increase payload size. The default is `false`.
-
-|===
-
-
-[id='rest_v2_cache_manager_stats']
-= Getting Cache Manager Statistics
-Retrieve the statistics for Cache Managers with `GET` requests.
-
-[source,options="nowrap",subs=attributes+]
-----
-GET /rest/v2/cache-managers/{cacheManagerName}/stats
+GET /rest/v2/container/stats
 ----
 
 {brandname} responds with Cache Manager statistics in JSON format, as in the following example:
@@ -258,16 +230,16 @@ include::json/rest_cache_stats_response.json[]
 * `hit_ratio` provides the total percentage hit/(hit+miss) ratio for all caches.
 * `retrievals` shows the total number of `get()` operations.
 
-[id='rest_v2_cache_manager_stats_reset']
-= Resetting Cache Manager Statistics
-Reset the statistics for Cache Managers with `POST` requests.
+[id='rest_v2_container_stats_reset']
+= Resetting Container Statistics
+Reset the statistics with `POST` requests.
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /rest/v2/cache-managers/{cacheManagerName}/stats?action=reset
+POST /rest/v2/container/stats?action=reset
 ----
 
-[id='rest_v2_cache_manager_shutdown']
+[id='rest_v2_container_shutdown']
 = Shutdown all container caches
 Shut down the {brandname} container on the server with `POST` requests.
 
@@ -286,33 +258,33 @@ be manually terminated shortly after this endpoint is invoked. Once this method 
 restart the container state.
 ====
 
-[id='rest_v2_cache_manager_enable_rebalancing']
+[id='rest_v2_container_enable_rebalancing']
 = Enabling rebalancing for all caches
 Turn on automatic rebalancing for all caches.
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /rest/v2/cache-managers/{cacheManagerName}?action=enable-rebalancing
+POST /rest/v2/container?action=enable-rebalancing
 ----
 
-[id='rest_v2_cache_manager_disable_rebalancing']
+[id='rest_v2_container_disable_rebalancing']
 = Disabling rebalancing for all caches
 Turn off automatic rebalancing for all caches.
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /rest/v2/cache-managers/{cacheManagerName}?action=disable-rebalancing
+POST /rest/v2/container?action=disable-rebalancing
 ----
 
 [id='rest_v2_backup_manager_create']
-= Backing Up {brandname} Cache Managers
+= Backing Up {brandname}
 Create backup archives, `application/zip`, that contain resources (caches, cache
 templates, counters, Protobuf schemas, server tasks, and so on) currently
-stored in the Cache Manager.
+stored in the {brandname}
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /rest/v2/cache-managers/{cacheManagerName}/backups/{backupName}
+POST /rest/v2/container/backups/{backupName}
 ----
 
 If a backup with the same name already exists, the service responds with `409 (Conflict)`.
@@ -353,7 +325,7 @@ failed.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/cache-managers/{cacheManagerName}/backups
+GET /rest/v2/container/backups
 ----
 
 {brandname} responds with an Array of all backup names as in the following example:
@@ -369,7 +341,7 @@ Verify that a backup operation is complete.
 
 [source,options="nowrap",subs=attributes+]
 ----
-HEAD /rest/v2/cache-managers/{cacheManagerName}/backups/{backupName}
+HEAD /rest/v2/container/backups/{backupName}
 ----
 
 A `200` response indicates the backup archive is available.
@@ -381,7 +353,7 @@ Download backup archives from the server.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/cache-managers/{cacheManagerName}/backups/{backupName}
+GET /rest/v2/container/backups/{backupName}
 ----
 
 A `200` response indicates the backup archive is available.
@@ -393,7 +365,7 @@ Remove backup archives from the server.
 
 [source,options="nowrap",subs=attributes+]
 ----
-DELETE /rest/v2/cache-managers/{cacheManagerName}/backups/{backupName}
+DELETE /rest/v2/container/backups/{backupName}
 ----
 
 A `204` response indicates that the backup archive is deleted. A `202` response
@@ -415,7 +387,7 @@ matches `{cacheManagerName}`.
 
 [source,options="nowrap",subs=attributes+]
 ----
-POST /rest/v2/cache-managers/{cacheManagerName}/restores/{restoreName}
+POST /rest/v2/container/restores/{restoreName}
 ----
 
 A `202` response indicates
@@ -511,7 +483,7 @@ Verify that a restore operation is complete.
 
 [source,options="nowrap",subs=attributes+]
 ----
-HEAD /rest/v2/cache-managers/{cacheManagerName}/restores/{restoreName}
+HEAD /rest/v2/container/restores/{restoreName}
 ----
 
 A `201 (Created)` response indicates the restore operation is completed.
@@ -525,7 +497,7 @@ the request metadata, you can use the request name to perform subsequent restore
 
 [source,options="nowrap",subs=attributes+]
 ----
-DELETE /rest/v2/cache-managers/{cacheManagerName}/restores/{restoreName}
+DELETE /rest/v2/container/restores/{restoreName}
 ----
 
 A `204 (No Content)` response indicates that the restore metadata is deleted.

@@ -42,7 +42,7 @@ public class ContainerResource extends AbstractResource {
 
    @Override
    public String describe() throws IOException {
-      return getConnection().describeContainer(name);
+      return getConnection().describeContainer();
    }
 
    public static Optional<String> findContainerName(Resource resource) {

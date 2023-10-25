@@ -244,7 +244,7 @@ public class RestConnection implements Connection, Closeable {
    }
 
    @Override
-   public Collection<String> getAvailableCaches(String container) {
+   public Collection<String> getAvailableCaches() {
       return availableCaches;
    }
 
@@ -254,57 +254,57 @@ public class RestConnection implements Connection, Closeable {
    }
 
    @Override
-   public Collection<String> getAvailableCounters(String container) throws IOException {
+   public Collection<String> getAvailableCounters() throws IOException {
       return parseBody(fetch(() -> client.counters()), List.class);
    }
 
    @Override
-   public Collection<String> getAvailableCacheConfigurations(String container) {
+   public Collection<String> getAvailableCacheConfigurations() {
       return availableConfigurations;
    }
 
    @Override
-   public Collection<String> getAvailableSchemas(String container) throws IOException {
-      TransformingIterable<Map<String, String>, String> i = new TransformingIterable<>(getCacheKeys(container, PROTOBUF_METADATA_CACHE_NAME), SINGLETON_MAP_VALUE);
+   public Collection<String> getAvailableSchemas() throws IOException {
+      TransformingIterable<Map<String, String>, String> i = new TransformingIterable<>(getCacheKeys(PROTOBUF_METADATA_CACHE_NAME), SINGLETON_MAP_VALUE);
       List<String> list = new ArrayList<>();
       i.forEach(list::add);
       return list;
    }
 
    @Override
-   public Collection<String> getAvailableServers(String container) throws IOException {
-      return (List<String>) parseBody(fetch(() -> client.cacheManager(container).info()), Map.class).get("cluster_members");
+   public Collection<String> getAvailableServers() throws IOException {
+      return (List<String>) parseBody(fetch(() -> client.container().info()), Map.class).get("cluster_members");
    }
 
    @Override
-   public Collection<String> getAvailableTasks(String container) throws IOException {
+   public Collection<String> getAvailableTasks() throws IOException {
       List<Map<String, String>> list = parseBody(fetch(() -> client.tasks().list(ResultType.ALL)), List.class);
       return list.stream().map(i -> i.get("name")).collect(Collectors.toList());
    }
 
    @Override
-   public Collection<String> getAvailableSites(String container, String cache) throws IOException {
+   public Collection<String> getAvailableSites(String cache) throws IOException {
       Map<String, String> sites = parseBody(fetch(() -> client.cache(cache).xsiteBackups()), Map.class);
       return sites == null ? Collections.emptyList() : sites.keySet();
    }
 
    @Override
-   public Iterable<Map<String, String>> getCacheKeys(String container, String cache) throws IOException {
+   public Iterable<Map<String, String>> getCacheKeys(String cache) throws IOException {
       return new JsonReaderIterable(parseBody(fetch(() -> client.cache(cache).keys()), InputStream.class));
    }
 
    @Override
-   public Iterable<Map<String, String>> getCacheKeys(String container, String cache, int limit) throws IOException {
+   public Iterable<Map<String, String>> getCacheKeys(String cache, int limit) throws IOException {
       return new JsonReaderIterable(parseBody(fetch(() -> client.cache(cache).keys(limit)), InputStream.class));
    }
 
    @Override
-   public Iterable<Map<String, String>> getCacheEntries(String container, String cache, int limit, boolean metadata) throws IOException {
+   public Iterable<Map<String, String>> getCacheEntries(String cache, int limit, boolean metadata) throws IOException {
       return new JsonReaderIterable(parseBody(fetch(() -> client.cache(cache).entries(limit, metadata)), InputStream.class));
    }
 
    @Override
-   public Iterable<String> getCounterValue(String container, String counter) throws IOException {
+   public Iterable<String> getCounterValue(String counter) throws IOException {
       return Collections.singletonList(parseBody(fetch(() -> client.counter(counter).get()), String.class));
    }
 
@@ -319,33 +319,33 @@ public class RestConnection implements Connection, Closeable {
    }
 
    @Override
-   public String describeContainer(String container) throws IOException {
-      return parseBody(fetch(() -> client.cacheManager(container).info()), String.class);
+   public String describeContainer() throws IOException {
+      return parseBody(fetch(() -> client.container().info()), String.class);
    }
 
    @Override
-   public String describeCache(String container, String cache) throws IOException {
+   public String describeCache(String cache) throws IOException {
       return parseBody(fetch(() -> client.cache(cache).configuration()), String.class);
    }
 
    @Override
-   public String describeKey(String container, String cache, String key) throws IOException {
+   public String describeKey(String cache, String key) throws IOException {
       Map<String, List<String>> headers = parseHeaders(fetch(() -> client.cache(cache).head(key)));
       return Json.make(headers).toPrettyString();
    }
 
    @Override
-   public String describeConfiguration(String container, String counter) {
+   public String describeConfiguration(String counter) {
       return null; // TODO
    }
 
    @Override
-   public String describeCounter(String container, String counter) throws IOException {
+   public String describeCounter(String counter) throws IOException {
       return parseBody(fetch(() -> client.counter(counter).configuration()), String.class);
    }
 
    @Override
-   public String describeTask(String container, String taskName) throws IOException {
+   public String describeTask(String taskName) throws IOException {
       List<Map<String, Object>> list = parseBody(fetch(() -> client.tasks().list(ResultType.ALL)), List.class);
       Optional<Map<String, Object>> task = list.stream().filter(i -> taskName.equals(i.get("name"))).findFirst();
       return task.map(Object::toString).orElseThrow(() -> MSG.noSuchResource(taskName));
@@ -379,8 +379,8 @@ public class RestConnection implements Connection, Closeable {
    }
 
    @Override
-   public Collection<String> getBackupNames(String container) throws IOException {
-      return parseBody(fetch(client.cacheManager(container).getBackupNames()), List.class);
+   public Collection<String> getBackupNames() throws IOException {
+      return parseBody(fetch(client.container().getBackupNames()), List.class);
    }
 
    @Override
@@ -425,14 +425,12 @@ public class RestConnection implements Connection, Closeable {
    @Override
    public void refreshServerInfo() throws IOException {
       try {
-         ContainerResource container = getActiveContainer();
-         String containerName = container.getName();
-         Map cacheManagerInfo = parseBody(fetch(() -> client.cacheManager(containerName).info()), Map.class);
+         Map cacheManagerInfo = parseBody(fetch(() -> client.container().info()), Map.class);
          List<Map<String, Object>> definedCaches = (List<Map<String, Object>>) cacheManagerInfo.get("defined_caches");
          availableCaches = new ArrayList<>();
          definedCaches.forEach(m -> availableCaches.add((String) m.get("name")));
          availableCaches.remove(PROTOBUF_METADATA_CACHE_NAME);
-         List configurationList = parseBody(fetch(() -> client.cacheManager(containerName).cacheConfigurations()), List.class);
+         List configurationList = parseBody(fetch(() -> client.container().cacheConfigurations()), List.class);
          availableConfigurations = new ArrayList<>(configurationList.size());
          for (Object item : configurationList) {
             availableConfigurations.add(((Map<String, String>) item).get("name"));

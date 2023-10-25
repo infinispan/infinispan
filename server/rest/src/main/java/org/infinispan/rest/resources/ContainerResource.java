@@ -24,7 +24,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.StringWriter;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,7 +31,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
-import org.infinispan.Cache;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
@@ -49,13 +47,10 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.health.CacheHealth;
 import org.infinispan.health.ClusterHealth;
 import org.infinispan.health.Health;
-import org.infinispan.health.HealthStatus;
-import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ConfigurationChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ConfigurationChangedEvent;
-import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.rest.EventStream;
 import org.infinispan.rest.InvocationHelper;
@@ -73,14 +68,10 @@ import org.infinispan.security.Security;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.ServerStateManager;
-import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.logging.annotation.impl.Logged;
 import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogSerializer;
-
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * REST resource to manage the cache container.
@@ -111,16 +102,30 @@ public class ContainerResource implements ResourceHandler {
    public Invocations getInvocations() {
       return new Invocations.Builder()
             // Health
-            .invocation().methods(GET, HEAD).path("/v2/cache-managers/{name}/health").handleWith(this::getHealth)
-            .invocation().methods(GET, HEAD).anonymous(true).path("/v2/cache-managers/{name}/health/status").handleWith(this::getHealthStatus)
+            .invocation().methods(GET, HEAD).path("/v2/cache-managers/{name}/health")
+            .deprecated() // TODO: remove in 16
+            .handleWith(this::getHealth)
+            .invocation().methods(GET, HEAD).path("/v2/container/health")
+            .handleWith(this::getHealth)
+
+            .invocation().methods(GET, HEAD).anonymous(true).path("/v2/cache-managers/{name}/health/status")
+            .deprecated() // TODO: remove in 16
+            .handleWith(this::getHealthStatus)
+            .invocation().methods(GET, HEAD).anonymous(true).path("/v2/container/health/status")
+            .handleWith(this::getHealthStatus)
 
             // Config
-            .invocation().methods(GET).path("/v2/cache-managers/{name}/cache-configs").handleWith(this::getAllCachesConfiguration)
-            .invocation().methods(GET).path("/v2/cache-managers/{name}/cache-configs/templates").handleWith(this::getAllCachesConfigurationTemplates)
-            .invocation().methods(POST).path("/v2/cache-managers/{name}/config").withAction("toJSON").handleWith(this::convertToJson)
+            .invocation().methods(GET).deprecated().path("/v2/cache-managers/{name}/cache-configs").handleWith(this::getAllCachesConfiguration)
+            .invocation().methods(GET).deprecated().path("/v2/cache-managers/{name}/cache-configs/templates").handleWith(this::getAllCachesConfigurationTemplates)
+            .invocation().methods(POST).deprecated().path("/v2/cache-managers/{name}/config").withAction("toJSON").handleWith(this::convertToJson)
+
+            .invocation().methods(GET).path("/v2/container/cache-configs").handleWith(this::getAllCachesConfiguration)
+            .invocation().methods(GET).path("/v2/container/cache-configs/templates").handleWith(this::getAllCachesConfigurationTemplates)
+            .invocation().methods(POST).path("/v2/container/cache-configs/config").withAction("toJSON").handleWith(this::convertToJson)
 
             // Cache Manager config
-            .invocation().methods(GET).path("/v2/cache-managers/{name}/config").handleWith(this::getConfig)
+            .invocation().methods(GET).deprecated().path("/v2/cache-managers/{name}/config").handleWith(this::getConfig)
+            .invocation().methods(GET).path("/v2/container/config").handleWith(this::getConfig)
 
             // Shutdown the container content
             .invocation().methods(POST).path("/v2/container").withAction("shutdown").name("SHUTDOWN CONTAINER")
@@ -135,41 +140,65 @@ public class ContainerResource implements ResourceHandler {
                .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).handleWith(this::listenLifecycle)
 
             // Cache Manager info
-            .invocation().methods(GET).path("/v2/cache-managers/{name}").handleWith(this::getInfo)
+            .invocation().methods(GET).path("/v2/cache-managers/{name}").deprecated().handleWith(this::getInfo)
+            .invocation().methods(GET).path("/v2/container").handleWith(this::getInfo)
 
             // Enable Rebalance
             .invocation().methods(POST).path("/v2/cache-managers/{name}").withAction("enable-rebalancing")
+            .permission(AuthorizationPermission.ADMIN).name("ENABLE REBALANCE GLOBAL").auditContext(AuditContext.CACHEMANAGER)
+            .deprecated()
+            .handleWith(r -> setRebalancing(true, r))
+
+            .invocation().methods(POST).path("/v2/container").withAction("enable-rebalancing")
             .permission(AuthorizationPermission.ADMIN).name("ENABLE REBALANCE GLOBAL").auditContext(AuditContext.CACHEMANAGER)
             .handleWith(r -> setRebalancing(true, r))
 
             // Disable Rebalance
             .invocation().methods(POST).path("/v2/cache-managers/{name}").withAction("disable-rebalancing")
             .permission(AuthorizationPermission.ADMIN).name("DISABLE REBALANCE GLOBAL").auditContext(AuditContext.CACHEMANAGER)
+            .deprecated()
+            .handleWith(r -> setRebalancing(false, r))
+
+            .invocation().methods(POST).path("/v2/container").withAction("disable-rebalancing")
+            .permission(AuthorizationPermission.ADMIN).name("DISABLE REBALANCE GLOBAL").auditContext(AuditContext.CACHEMANAGER)
             .handleWith(r -> setRebalancing(false, r))
 
             // Stats
-            .invocation().methods(GET).path("/v2/cache-managers/{name}/stats").handleWith(this::getStats)
-            .invocation().methods(POST).path("/v2/cache-managers/{name}/stats").withAction("reset").permission(AuthorizationPermission.ADMIN).handleWith(this::resetStats)
+            .invocation().methods(GET).path("/v2/cache-managers/{name}/stats").deprecated().handleWith(this::getStats)
+            .invocation().methods(POST).path("/v2/cache-managers/{name}/stats").deprecated().withAction("reset").permission(AuthorizationPermission.ADMIN).handleWith(this::resetStats)
 
-            // Caches
-            .invocation().methods(GET).path("/v2/cache-managers/{name}/caches").handleWith(this::getCaches)
+            .invocation().methods(GET).path("/v2/container/stats").handleWith(this::getStats)
+            .invocation().methods(POST).path("/v2/container/stats").withAction("reset").permission(AuthorizationPermission.ADMIN).handleWith(this::resetStats)
 
             // BackupManager
-            .invocation().methods(GET).path("/v2/cache-managers/{name}/backups").handleWith(this::getAllBackupNames)
+            .invocation().methods(GET).path("/v2/cache-managers/{name}/backups")
+               .deprecated().handleWith(this::getAllBackupNames)
             .invocation().methods(DELETE, GET, HEAD, POST).path("/v2/cache-managers/{name}/backups/{backupName}")
                .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).name("BACKUP")
-               .handleWith(this::backup)
+               .deprecated().handleWith(this::backup)
             .invocation().methods(GET).path("/v2/cache-managers/{name}/restores")
                .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).name("BACKUP")
-               .handleWith(this::getAllRestoreNames)
+               .deprecated().handleWith(this::getAllRestoreNames)
             .invocation().methods(DELETE, HEAD, POST).path("/v2/cache-managers/{name}/restores/{restoreName}")
                .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).name("BACKUP")
+               .deprecated().handleWith(this::restore)
+
+            .invocation().methods(GET).path("/v2/container/backups").handleWith(this::getAllBackupNames)
+            .invocation().methods(DELETE, GET, HEAD, POST).path("/v2/container/backups/{backupName}")
+               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).name("BACKUP")
+               .handleWith(this::backup)
+            .invocation().methods(GET).path("/v2/container/restores")
+               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).name("BACKUP")
+               .handleWith(this::getAllRestoreNames)
+            .invocation().methods(DELETE, HEAD, POST).path("/v2/container/restores/{restoreName}")
+               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER).name("BACKUP")
                .handleWith(this::restore)
+
             .create();
    }
 
    private CompletionStage<RestResponse> getInfo(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
@@ -178,7 +207,7 @@ public class ContainerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> setRebalancing(boolean enable, RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND)
          return completedFuture(responseBuilder.build());
 
@@ -195,7 +224,7 @@ public class ContainerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> getConfig(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
       EmbeddedCacheManager embeddedCacheManager = invocationHelper.getRestCacheManager().getInstance().withSubject(request.getSubject());
@@ -219,7 +248,7 @@ public class ContainerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> getStats(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
@@ -228,7 +257,7 @@ public class ContainerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> resetStats(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
@@ -247,7 +276,7 @@ public class ContainerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> getHealth(RestRequest request, boolean anon) {
-      NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
 
       // If /v2/containers?action=shutdown has been executed, we must still return OK so that the k8s probes don't fail
@@ -271,109 +300,8 @@ public class ContainerResource implements ResourceHandler {
       return completedFuture(responseBuilder.build());
    }
 
-   private CompletionStage<RestResponse> getCaches(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
-      if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
-
-      EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
-      EmbeddedCacheManager subjectCacheManager = cacheManager.withSubject(request.getSubject());
-      // Remove internal caches
-      Set<String> cacheNames = new HashSet<>(subjectCacheManager.getAccessibleCacheNames());
-      cacheNames.removeAll(internalCacheRegistry.getInternalCacheNames());
-
-
-      Set<String> ignoredCaches = serverStateManager.getIgnoredCaches();
-      List<CacheHealth> cachesHealth = SecurityActions.getHealth(subjectCacheManager).getCacheHealth(cacheNames);
-
-      LocalTopologyManager localTopologyManager = null;
-      Boolean clusterRebalancingEnabled = null;
-      try {
-         localTopologyManager = SecurityActions.getGlobalComponentRegistry(cacheManager).getLocalTopologyManager();
-         if (localTopologyManager != null) {
-            clusterRebalancingEnabled = localTopologyManager.isRebalancingEnabled();
-         }
-      } catch (Exception e) {
-         // Unable to get the component. Just ignore.
-      }
-
-      // We rely on the fact that getCacheNames doesn't block for embedded - remote it does unfortunately
-      LocalTopologyManager finalLocalTopologyManager = localTopologyManager;
-      Boolean finalClusterRebalancingEnabled = clusterRebalancingEnabled;
-      boolean pretty = isPretty(request);
-      return Flowable.fromIterable(cachesHealth)
-            .map(chHealth -> getCacheInfo(request, cacheManager, subjectCacheManager, ignoredCaches,
-                  finalLocalTopologyManager, finalClusterRebalancingEnabled, chHealth))
-            .sorted(Comparator.comparing(c -> c.name))
-            .collect(Collectors.toList()).map(cacheInfos -> (RestResponse) addEntityAsJson(Json.make(cacheInfos), responseBuilder, pretty).build())
-            .toCompletionStage();
-   }
-
-   private CacheInfo getCacheInfo(RestRequest request, EmbeddedCacheManager cacheManager,
-                                  EmbeddedCacheManager subjectCacheManager, Set<String> ignoredCaches,
-                                  LocalTopologyManager finalLocalTopologyManager,
-                                  Boolean finalClusterRebalancingEnabled, CacheHealth chHealth) {
-      CacheInfo cacheInfo = new CacheInfo();
-      String cacheName = chHealth.getCacheName();
-      cacheInfo.name = cacheName;
-      HealthStatus cacheHealth = chHealth.getStatus();
-      cacheInfo.health = cacheHealth;
-      Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(subjectCacheManager, cacheName);
-      cacheInfo.type = cacheConfiguration.clustering().cacheMode().toCacheType();
-      boolean isPersistent = false;
-      if (chHealth.getStatus() != HealthStatus.FAILED) {
-         PersistenceManager pm = SecurityActions.getPersistenceManager(cacheManager, cacheName);
-         isPersistent = pm.isEnabled();
-      }
-      cacheInfo.simpleCache = cacheConfiguration.simpleCache();
-      cacheInfo.transactional = cacheConfiguration.transaction().transactionMode().isTransactional();
-      cacheInfo.persistent = isPersistent;
-      cacheInfo.persistent = cacheConfiguration.persistence().usingStores();
-      cacheInfo.bounded = cacheConfiguration.memory().whenFull().isEnabled();
-      cacheInfo.secured = cacheConfiguration.security().authorization().enabled();
-      cacheInfo.indexed = cacheConfiguration.indexing().enabled();
-      cacheInfo.hasRemoteBackup = cacheConfiguration.sites().hasBackups();
-
-      // If the cache is ignored, status is IGNORED
-      if (ignoredCaches.contains(cacheName)) {
-         cacheInfo.status = "IGNORED";
-      } else {
-         switch (cacheHealth) {
-            case FAILED:
-               cacheInfo.status = ComponentStatus.FAILED.toString();
-               break;
-            case INITIALIZING:
-               cacheInfo.status = ComponentStatus.INITIALIZING.toString();
-               break;
-            default:
-               Cache<?, ?> cache = restCacheManager.getCache(cacheName, request);
-               cacheInfo.status = cache.getStatus().toString();
-               break;
-         }
-      }
-
-      // if any of those are null, don't keep trying to retrieve the rebalancing status
-      if (finalLocalTopologyManager != null && finalClusterRebalancingEnabled != null) {
-         Boolean perCacheRebalancing = null;
-         if (finalClusterRebalancingEnabled) {
-            // if the global rebalancing is enabled, retrieve each cache status
-            try {
-               perCacheRebalancing = finalLocalTopologyManager.isCacheRebalancingEnabled(cacheName);
-            } catch (Exception ex) {
-               // There was an error retrieving this value. Just ignore
-            }
-         } else {
-            // set all to false. global disabled rebalancing disables all caches rebalancing
-            perCacheRebalancing = Boolean.FALSE;
-         }
-
-         cacheInfo.rebalancing_enabled = perCacheRebalancing;
-      }
-
-      return cacheInfo;
-   }
-
    private CompletionStage<RestResponse> getAllCachesConfiguration(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
       boolean pretty = isPretty(request);
       EmbeddedCacheManager subjectCacheManager = invocationHelper.getRestCacheManager().getInstance().withSubject(request.getSubject());
@@ -391,7 +319,7 @@ public class ContainerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> getAllCachesConfigurationTemplates(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
       boolean pretty = isPretty(request);
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
@@ -452,7 +380,7 @@ public class ContainerResource implements ResourceHandler {
    }
 
    private CompletionStage<RestResponse> convertToJson(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = checkCacheManager(request);
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       if (responseBuilder.getHttpStatus() == NOT_FOUND) return completedFuture(responseBuilder.build());
       ContentSource contents = request.contents();
 
@@ -464,17 +392,6 @@ public class ContainerResource implements ResourceHandler {
       }
       responseBuilder.contentType(APPLICATION_JSON).entity(sw.toString());
       return completedFuture(responseBuilder.build());
-   }
-
-   private NettyRestResponse.Builder checkCacheManager(RestRequest request) {
-      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
-
-      String name = request.variables().get("name");
-      if (!name.equals(cacheManagerName)) {
-         responseBuilder.status(HttpResponseStatus.NOT_FOUND);
-      }
-      return responseBuilder;
-
    }
 
    static class HealthInfo implements JsonSerialization {
@@ -508,43 +425,6 @@ public class ContainerResource implements ResourceHandler {
          return Json.object()
                .set("name", name)
                .set("configuration", Json.factory().raw(configuration));
-      }
-   }
-
-   static class CacheInfo implements JsonSerialization {
-      public String status;
-      public String name;
-      public String type;
-      public boolean simpleCache;
-      public boolean transactional;
-      public boolean persistent;
-      public boolean bounded;
-      public boolean indexed;
-      public boolean secured;
-      public boolean hasRemoteBackup;
-      public HealthStatus health;
-      public Boolean rebalancing_enabled;
-
-      @Override
-      public Json toJson() {
-         Json payload = Json.object()
-               .set("status", status)
-               .set("name", name)
-               .set("type", type)
-               .set("simple_cache", simpleCache)
-               .set("transactional", transactional)
-               .set("persistent", persistent)
-               .set("bounded", bounded)
-               .set("secured", secured)
-               .set("indexed", indexed)
-               .set("has_remote_backup", hasRemoteBackup)
-               .set("health", health);
-
-         if (rebalancing_enabled != null) {
-            payload.set("rebalancing_enabled", rebalancing_enabled);
-         }
-
-         return payload;
       }
    }
 

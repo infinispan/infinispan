@@ -18,6 +18,6 @@ public class TaskResource extends AbstractResource {
 
    @Override
    public String describe() throws IOException {
-      return getConnection().describeTask(getParent().getParent().getName(), name);
+      return getConnection().describeTask(name);
    }
 }

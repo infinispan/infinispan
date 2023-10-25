@@ -5,10 +5,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.client.rest.RestCacheClient;
-import org.infinispan.client.rest.RestCacheManagerClient;
+import org.infinispan.client.rest.RestContainerClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestClusterClient;
-import org.infinispan.client.rest.RestContainerClient;
 import org.infinispan.client.rest.RestCounterClient;
 import org.infinispan.client.rest.RestMetricsClient;
 import org.infinispan.client.rest.RestRawClient;
@@ -59,11 +58,6 @@ public class RestClientJDK implements RestClient {
    }
 
    @Override
-   public RestCacheManagerClient cacheManager(String name) {
-      return new RestCacheManagerClientJdk(rawClient, name);
-   }
-
-   @Override
    public RestContainerClient container() {
       return new RestContainerClientJDK(rawClient);
    }
@@ -71,6 +65,11 @@ public class RestClientJDK implements RestClient {
    @Override
    public CompletionStage<RestResponse> caches() {
       return rawClient.get(contextPath + "/v2/caches");
+   }
+
+   @Override
+   public CompletionStage<RestResponse> detailedCacheList() {
+      return rawClient.get(contextPath + "/v2/caches?action=detailed");
    }
 
    @Override

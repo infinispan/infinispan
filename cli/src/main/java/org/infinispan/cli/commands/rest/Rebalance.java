@@ -65,7 +65,7 @@ public class Rebalance extends CliCommand {
             if (resource instanceof CacheResource) {
                return client.cache(resource.getName()).enableRebalancing();
             } else if (resource instanceof ContainerResource) {
-               return client.cacheManager(resource.getName()).enableRebalancing();
+               return client.container().enableRebalancing();
             } else {
                String name = resource.getName();
                throw MSG.invalidResource(name.isEmpty() ? "/" : name);
@@ -96,7 +96,7 @@ public class Rebalance extends CliCommand {
             if (resource instanceof CacheResource) {
                return client.cache(resource.getName()).disableRebalancing();
             } else if (resource instanceof ContainerResource) {
-               return client.cacheManager(resource.getName()).disableRebalancing();
+               return client.container().disableRebalancing();
             } else {
                String name = resource.getName();
                throw MSG.invalidResource(name.isEmpty() ? "/" : name);

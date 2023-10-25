@@ -27,35 +27,33 @@ public class IgnoreCaches {
    @RegisterExtension
    public static InfinispanServerExtension SERVERS = ClusteredIT.SERVERS;
 
-   private static final String CACHE_MANAGER = "default";
-
    @Test
    public void testIgnoreCaches() {
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       RestClient client = SERVERS.rest().withClientConfiguration(builder).create();
       String testCache = SERVERS.getMethodName();
 
-      assertTrue(getIgnoredCaches(client, CACHE_MANAGER).isEmpty());
+      assertTrue(getIgnoredCaches(client).isEmpty());
       assertCacheResponse(client, testCache, 404);
       assertCacheResponse(client, PROTOBUF_METADATA_CACHE_NAME, 404);
 
       ignoreCache(client, testCache);
-      assertEquals(singleton(testCache), getIgnoredCaches(client, CACHE_MANAGER));
+      assertEquals(singleton(testCache), getIgnoredCaches(client));
       assertCacheResponse(client, testCache, 503);
       assertCacheResponse(client, PROTOBUF_METADATA_CACHE_NAME, 404);
 
       ignoreCache(client, PROTOBUF_METADATA_CACHE_NAME);
-      assertEquals(asSet(testCache, PROTOBUF_METADATA_CACHE_NAME), getIgnoredCaches(client, CACHE_MANAGER));
+      assertEquals(asSet(testCache, PROTOBUF_METADATA_CACHE_NAME), getIgnoredCaches(client));
       assertCacheResponse(client, testCache, 503);
       assertCacheResponse(client, PROTOBUF_METADATA_CACHE_NAME, 503);
 
       unIgnoreCache(client, testCache);
-      assertEquals(singleton(PROTOBUF_METADATA_CACHE_NAME), getIgnoredCaches(client, CACHE_MANAGER));
+      assertEquals(singleton(PROTOBUF_METADATA_CACHE_NAME), getIgnoredCaches(client));
       assertCacheResponse(client, testCache, 404);
       assertCacheResponse(client, PROTOBUF_METADATA_CACHE_NAME, 503);
 
       unIgnoreCache(client, PROTOBUF_METADATA_CACHE_NAME);
-      assertTrue(getIgnoredCaches(client, CACHE_MANAGER).isEmpty());
+      assertTrue(getIgnoredCaches(client).isEmpty());
       assertCacheResponse(client, testCache, 404);
       assertCacheResponse(client, PROTOBUF_METADATA_CACHE_NAME, 404);
    }
@@ -69,15 +67,15 @@ public class IgnoreCaches {
    }
 
    private void unIgnoreCache(RestClient client, String cacheName) {
-      assertStatus(204, client.server().unIgnoreCache(CACHE_MANAGER, cacheName));
+      assertStatus(204, client.server().unIgnoreCache(cacheName));
    }
 
    private void ignoreCache(RestClient client, String cacheName) {
-      assertStatus(204, client.server().ignoreCache(CACHE_MANAGER, cacheName));
+      assertStatus(204, client.server().ignoreCache(cacheName));
    }
 
-   private Set<String> getIgnoredCaches(RestClient client, String cacheManagerName) {
-      Json body = RestResponses.jsonResponseBody(client.server().listIgnoredCaches(cacheManagerName));
+   private Set<String> getIgnoredCaches(RestClient client) {
+      Json body = RestResponses.jsonResponseBody(client.server().listIgnoredCaches());
       return body.asJsonList().stream().map(Json::asString).collect(Collectors.toSet());
    }
 }
