@@ -79,20 +79,38 @@ public class RestSecurityClientOkHttp implements RestSecurityClient {
 
    @Override
    public CompletionStage<RestResponse> createRole(String name, String description, List<String> permissions) {
+     return createOrUpdate(name, description, permissions, true);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> updateRole(String name, String description, List<String> permissions) {
+      return createOrUpdate(name, description, permissions, false);
+   }
+
+   private CompletionStage<RestResponse> createOrUpdate(String name, String description, List<String> permissions, boolean create) {
       Request.Builder builder = new Request.Builder();
       StringBuilder sb = new StringBuilder(baseSecurityURL);
       sb.append("/permissions/").append(name).append('?');
-      for (int i = 0; i < permissions.size(); i++) {
-         if (i > 0) {
-            sb.append('&');
+      if (permissions != null) {
+         for (int i = 0; i < permissions.size(); i++) {
+            if (i > 0) {
+               sb.append('&');
+            }
+            sb.append("permission=").append(permissions.get(i));
          }
-         sb.append("permission=").append(permissions.get(i));
       }
       builder.url(sb.toString());
+      RequestBody requestBody;
       if (description != null) {
-         builder.put(RequestBody.create(TEXT_PLAIN, description));
+         requestBody = RequestBody.create(TEXT_PLAIN, description);
       } else {
-         builder.put(Util.EMPTY_REQUEST);
+         requestBody = Util.EMPTY_REQUEST;
+      }
+
+      if (create) {
+         builder.post(requestBody);
+      } else {
+         builder.put(requestBody);
       }
 
       return client.execute(builder);

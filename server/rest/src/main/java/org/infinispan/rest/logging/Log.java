@@ -175,4 +175,10 @@ public interface Log extends BasicLogger {
 
    @Message(value = "No such script '%s'", id = 12048)
    NoSuchElementException noSuchScript(String taskName);
+
+   @Message(value = "Role already exists", id = 12049)
+   String roleAlreadyExists();
+
+   @Message(value = "Predefined roles are not mutable", id = 12050)
+   String predefinedRolesAreNotMutable();
 }

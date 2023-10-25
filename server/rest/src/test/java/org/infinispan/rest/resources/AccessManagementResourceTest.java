@@ -5,6 +5,8 @@ import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.testng.annotations.Test;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,6 +51,46 @@ public class AccessManagementResourceTest extends AbstractRestResourceTest {
       assertThat(jsonNode.at("permissions").asList()).containsExactly("ALL");
       assertThat(jsonNode.at("description").asString()).contains("admin role");
       assertThat(jsonNode.at("implicit").asBoolean()).isFalse();
+   }
+
+   @Test
+   public void testCRUDRole() {
+      CompletionStage<RestResponse> createRoleResponse = adminClient.security().createRole("NEW_ROLE", "something", List.of("ALL"));
+      ResponseAssertion.assertThat(createRoleResponse).isOk();
+      // second time fails!
+      createRoleResponse = adminClient.security().createRole("NEW_ROLE", "something", List.of("ALL"));
+      ResponseAssertion.assertThat(createRoleResponse).isConflicted();
+
+      CompletionStage<RestResponse> readNewRole = adminClient.security().describeRole("NEW_ROLE");
+      ResponseAssertion.assertThat(readNewRole).isOk();
+      ResponseAssertion.assertThat(readNewRole).hasContentType("application/json");
+      Json jsonRole = Json.read(join(readNewRole).getBody());
+      assertRoleJson(jsonRole, "ALL", "something");
+
+      CompletionStage<RestResponse> updateResponse = adminClient.security().updateRole("NEW_ROLE", "desUpdate", Collections.emptyList());
+      ResponseAssertion.assertThat(updateResponse).isOk();
+
+      CompletionStage<RestResponse> updatedRole = adminClient.security().describeRole("NEW_ROLE");
+      Json jsonUpdatedRole = Json.read(join(updatedRole).getBody());
+      assertRoleJson(jsonUpdatedRole, "ALL", "desUpdate");
+
+      updateResponse = adminClient.security().updateRole("NEW_ROLE", "", Collections.singletonList("READ"));
+      ResponseAssertion.assertThat(updateResponse).isOk();
+
+      updatedRole = adminClient.security().describeRole("NEW_ROLE");
+      jsonUpdatedRole = Json.read(join(updatedRole).getBody());
+      assertRoleJson(jsonUpdatedRole, "READ", "desUpdate");
+
+      CompletionStage<RestResponse> removeRole = adminClient.security().removeRole("NEW_ROLE");
+      ResponseAssertion.assertThat(removeRole).isOk();
+      ResponseAssertion.assertThat(adminClient.security().describeRole("NEW_ROLE")).isNotFound();
+   }
+
+   private static void assertRoleJson(Json jsonRole, String permission, String something) {
+      assertThat(jsonRole.at("name").asString()).isEqualTo("NEW_ROLE");
+      assertThat(jsonRole.at("permissions").asList()).containsExactly(permission);
+      assertThat(jsonRole.at("description").asString()).isEqualTo(something);
+      assertThat(jsonRole.at("implicit").asBoolean()).isFalse();
    }
 
    @Test

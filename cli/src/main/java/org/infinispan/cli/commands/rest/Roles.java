@@ -22,7 +22,7 @@ import org.infinispan.client.rest.RestResponse;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 12.1
  **/
-@GroupCommandDefinition(name = "roles", description = "Manages user roles for security authorization", activator = ConnectionActivator.class, groupCommands = {Roles.Ls.class, Roles.Grant.class, Roles.Deny.class, Roles.Create.class, Roles.Remove.class, Roles.Describe.class})
+@GroupCommandDefinition(name = "roles", description = "Manages user roles for security authorization", activator = ConnectionActivator.class, groupCommands = {Roles.Ls.class, Roles.Grant.class, Roles.Deny.class, Roles.Create.class, Roles.Update.class, Roles.Remove.class, Roles.Describe.class})
 public class Roles extends CliCommand {
 
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
@@ -129,6 +129,33 @@ public class Roles extends CliCommand {
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
          return client.security().createRole(name, description, permissions);
+      }
+   }
+
+   @CommandDefinition(name = "update", description = "Updates an existing role")
+   public static class Update extends RestCliCommand {
+
+      @Argument(description = "The name of the role", required = true)
+      String name;
+
+      @Option(description = "Provides a description for the new role")
+      String description;
+
+      @OptionList(shortName = 'p', completer = AuthorizationPermissionCompleter.class)
+      List<String> permissions;
+
+
+      @Option(shortName = 'h', hasValue = false, overrideRequired = true)
+      protected boolean help;
+
+      @Override
+      protected boolean isHelp() {
+         return help;
+      }
+
+      @Override
+      protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
+         return client.security().updateRole(name, description, permissions);
       }
    }
 
