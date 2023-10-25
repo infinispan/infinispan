@@ -24,6 +24,8 @@ public interface RestSecurityClient {
 
    CompletionStage<RestResponse> createRole(String name, String description, List<String> permissions);
 
+   CompletionStage<RestResponse> updateRole(String name, String description, List<String> permissions);
+
    CompletionStage<RestResponse> removeRole(String name);
 
    CompletionStage<RestResponse> describeRole(String name);

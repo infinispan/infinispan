@@ -30,7 +30,9 @@ SYNOPSIS
 
 *user roles deny* --roles='role1'[,'role2'...] 'principal'
 
-*user roles create* --permissions='perm1'[,'perm2'...] 'role'
+*user roles create* --description='custom description' --permissions='perm1'[,'perm2'...] 'role'
+
+*user roles update* --permissions='perm1'[,'perm2'...] --description='updated description' 'role'
 
 *user roles remove* 'role'
 

@@ -30,6 +30,7 @@ import org.infinispan.server.core.ServerManagement;
 
 import javax.security.auth.Subject;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,6 +39,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.CONFLICT;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
@@ -112,9 +114,12 @@ public class SecurityResource implements ResourceHandler {
             .invocation().method(GET).path("/v2/security/principals")
                .permission(AuthorizationPermission.ADMIN).name("ACCESS PRINCIPALS").auditContext(AuditContext.SERVER)
                .handleWith(r -> listAllPrincipals(r, false))
-            .invocation().methods(POST, PUT).path("/v2/security/permissions/{role}")
+            .invocation().methods(POST).path("/v2/security/permissions/{role}")
                .permission(AuthorizationPermission.ADMIN).name("ROLES CREATE").auditContext(AuditContext.SERVER)
                .handleWith(this::createRole)
+            .invocation().methods(PUT).path("/v2/security/permissions/{role}")
+               .permission(AuthorizationPermission.ADMIN).name("ROLES UPDATE").auditContext(AuditContext.SERVER)
+               .handleWith(this::updateRole)
             .invocation().methods(GET).path("/v2/security/permissions/{role}")
                .permission(AuthorizationPermission.ADMIN).name("ROLES DESCRIBE").auditContext(AuditContext.SERVER)
                .handleWith(this::describeRole)
@@ -135,15 +140,59 @@ public class SecurityResource implements ResourceHandler {
    private CompletionStage<RestResponse> createRole(RestRequest request) {
       NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
       if (rolePermissionMapper == null) {
-         return completedFuture(invocationHelper.newResponse(request).status(CONFLICT).entity(Log.REST.rolePermissionMapperNotMutable()).build());
+         return completedFuture(builder.status(CONFLICT).entity(Log.REST.rolePermissionMapperNotMutable()).build());
       }
+
       String name = request.variables().get("role");
+      if (rolePermissionMapper.getAllRoles().containsKey(name)) {
+         return completedFuture(builder.status(CONFLICT).entity(Log.REST.roleAlreadyExists()).build());
+      }
+
       List<String> perms = request.parameters().get("permission");
       if (perms == null) {
          return completedFuture(builder.status(HttpResponseStatus.BAD_REQUEST).build());
       }
       Set<AuthorizationPermission> permissions = perms.stream().map(p -> AuthorizationPermission.valueOf(p.toUpperCase())).collect(Collectors.toSet());
       Role role = new CacheRoleImpl(name, request.contents().asString(), false, true, permissions);
+      return rolePermissionMapper.addRole(role).thenCompose(ignore -> aclCacheFlush(request));
+   }
+
+   private CompletionStage<RestResponse> updateRole(RestRequest request) {
+      NettyRestResponse.Builder builder = invocationHelper.newResponse(request);
+
+      if (rolePermissionMapper == null) {
+         return completedFuture(builder.status(CONFLICT).entity(Log.REST.rolePermissionMapperNotMutable()).build());
+      }
+      String name = request.variables().get("role");
+      Role existingRole = rolePermissionMapper.getAllRoles().get(name);
+      if (existingRole == null) {
+         return completedFuture(builder.status(NOT_FOUND).build());
+      }
+
+      // Implicit roles can't be updated
+      if (existingRole.isImplicit()) {
+         return completedFuture(builder.status(BAD_REQUEST).entity(Log.REST.predefinedRolesAreNotMutable()).build());
+      }
+
+      // update permissions if needed
+      List<String> perms = request.parameters().get("permission");
+      Set<AuthorizationPermission> rolePermissions;
+      if (perms != null) {
+        rolePermissions = perms.stream()
+               .map(p -> AuthorizationPermission.valueOf(p.toUpperCase())).collect(Collectors.toSet());
+
+      } else {
+         rolePermissions = new HashSet<>(existingRole.getPermissions());
+      }
+
+      // update description if needed
+      String description = existingRole.getDescription();
+      String requestDescription = request.contents().asString();
+      if (requestDescription != null && !requestDescription.isEmpty()) {
+         description = requestDescription;
+      }
+
+      Role role = new CacheRoleImpl(existingRole.getName(), description, false, true, rolePermissions);
       return rolePermissionMapper.addRole(role).thenCompose(ignore -> aclCacheFlush(request));
    }
 

@@ -131,7 +131,7 @@ include::json/rest_security_principals.json[]
 
 [id='rest_v2_create_role']
 = Creating roles
-Create a role by defining its permissions.
+Create a role by defining a name, its permissions and an optional description in the request body.
 
 [source,options="nowrap",subs=attributes+]
 ----
@@ -148,7 +148,26 @@ include::rest_examples/get_v2_security_roles_create.adoc[]
 |The name of a permission
 |===
 
-[id='rest_v2_create_role']
+[id='rest_v2_update_role']
+= Updating roles
+Update an existing role permissions and/or description.
+
+[source,options="nowrap",subs=attributes+]
+----
+include::rest_examples/get_v2_security_roles_create.adoc[]
+----
+
+.Request Parameters
+
+|===
+|Parameter |Required or Optional |Value
+
+|`permission`
+|REQUIRED
+|The name of a permission
+|===
+
+[id='rest_v2_delete_role']
 = Deleting roles
 Delete an existing role.
 
