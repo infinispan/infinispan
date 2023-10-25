@@ -191,6 +191,14 @@ public class RestClientOkHttp implements RestClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> cachesByRole(String roleName) {
+      String cacheUrl = String.format("%s%s/v2/caches", baseURL, this.getConfiguration().contextPath());
+
+      return execute(new Request.Builder()
+            .url(cacheUrl + "?action=role-accessible&role=" + roleName));
+   }
+
+   @Override
    public RestClusterClient cluster() {
       return new RestClusterClientOkHttp(this);
    }

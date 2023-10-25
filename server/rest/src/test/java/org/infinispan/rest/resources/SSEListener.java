@@ -1,20 +1,22 @@
 package org.infinispan.rest.resources;
 
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.AssertJUnit.assertEquals;
+import org.infinispan.client.rest.RestEventListener;
+import org.infinispan.client.rest.RestResponse;
+import org.infinispan.util.KeyValuePair;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import org.infinispan.client.rest.RestEventListener;
-import org.infinispan.client.rest.RestResponse;
-import org.infinispan.util.KeyValuePair;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -45,6 +47,17 @@ public class SSEListener implements RestEventListener {
 
    public void expectEvent(String type, String subString) throws InterruptedException {
       expectEvent(type, subString, NO_OP);
+   }
+
+   public List<KeyValuePair<String, String>> poll(int num) throws InterruptedException {
+      List<KeyValuePair<String, String>> polled = new ArrayList<>();
+
+      for (int i = 0; i < num; i++) {
+         KeyValuePair<String, String> event = events.poll(10, TimeUnit.SECONDS);
+         assertNotNull(event);
+         polled.add(event);
+      }
+      return polled;
    }
 
    public void expectEvent(String type, String subString, Consumer<KeyValuePair<String, String>> consumer) throws InterruptedException {
