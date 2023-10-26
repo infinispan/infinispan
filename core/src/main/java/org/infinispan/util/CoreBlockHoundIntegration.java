@@ -30,6 +30,7 @@ import org.jgroups.protocols.pbcast.GMS;
 import org.jgroups.util.TimeScheduler3;
 import org.kohsuke.MetaInfServices;
 
+import io.reactivex.rxjava3.internal.operators.flowable.BlockingFlowableIterable;
 import reactor.blockhound.BlockHound;
 import reactor.blockhound.integration.BlockHoundIntegration;
 
@@ -81,6 +82,9 @@ public class CoreBlockHoundIntegration implements BlockHoundIntegration {
 
       // Reads from a file during initialization which is during store startup
       builder.allowBlockingCallsInside("org.infinispan.persistence.sifs.Index", "checkForExistingIndexSizeFile");
+
+      // FlowableIterable may be completed on a non blocking thread, however this is very short
+      builder.allowBlockingCallsInside(BlockingFlowableIterable.class.getName() + "$FlowableSubscriber", "signalConsumer");
 
       methodsToBeRemoved(builder);
 
