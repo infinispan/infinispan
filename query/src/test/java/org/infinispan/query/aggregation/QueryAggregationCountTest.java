@@ -72,6 +72,10 @@ public class QueryAggregationCountTest extends SingleCacheManagerTest {
       query = cache.query("select s.status, count(s) from org.infinispan.query.model.Sale s where s.day = :day group by s.status order by s.status");
       query.setParameter("day", NUMBER_OF_DAYS / 2);
       assertThat(query.list()).containsExactly(FULL_AGGREGATION_RESULT);
+      // no alias && count on entity
+      query = cache.query("select status, count(*) from org.infinispan.query.model.Sale where day = :day group by status");
+      query.setParameter("day", NUMBER_OF_DAYS / 2);
+      assertThat(query.list()).containsExactly(FULL_AGGREGATION_RESULT);
    }
 
    public static HashMap<String, Sale> chunk(int day, Random random) {
