@@ -115,6 +115,8 @@ public interface QueryRendererDelegate<TypeDescriptor> {
 
    void activateAggregation(AggregationFunction aggregationFunction);
 
+   void activateAsteriskAggregation(AggregationFunction aggregationFunction);
+
    void deactivateAggregation();
 
    void projectVersion();
