@@ -9,10 +9,13 @@ import static org.infinispan.test.TestingUtil.replaceComponent;
 import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
 import static org.infinispan.transaction.impl.WriteSkewHelper.versionFromEntry;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.function.Function;
@@ -23,6 +26,7 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
@@ -46,7 +50,6 @@ import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.util.AbstractDelegatingRpcManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 /**
@@ -61,9 +64,9 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
    public void testValidationOnlyInPrimaryOwner() throws Exception {
       // ControlledConsistentHashFactory sets cache(1) as the primary owner and cache(0) as the backup for all keys
       final Object key = "key";
-      final DataContainer<?, ?> primaryOwnerDataContainer = extractComponent(cache(1), InternalDataContainer.class);
-      final DataContainer<?, ?> backupOwnerDataContainer = extractComponent(cache(0), InternalDataContainer.class);
-      final VersionGenerator versionGenerator = extractComponent(cache(1), VersionGenerator.class);
+      DataContainer<?, ?> primaryOwnerDataContainer = extractComponent(cache(1), InternalDataContainer.class);
+      DataContainer<?, ?> backupOwnerDataContainer = extractComponent(cache(0), InternalDataContainer.class);
+      VersionGenerator versionGenerator = extractComponent(cache(1), VersionGenerator.class);
 
       injectReorderResponseRpcManager(cache(3), cache(0));
       cache(1).put(key, 1);
@@ -71,19 +74,19 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
          assertEquals("Wrong initial value for cache " + address(cache), 1, cache.get(key));
       }
 
-      InternalCacheEntry<? ,?> ice0 = primaryOwnerDataContainer.peek(key);
+      InternalCacheEntry<?, ?> ice0 = primaryOwnerDataContainer.peek(key);
       InternalCacheEntry<?, ?> ice1 = backupOwnerDataContainer.peek(key);
       assertSameVersion("Wrong version for the same key", versionFromEntry(ice0), versionFromEntry(ice1));
 
-      final IncrementableEntryVersion version0 = versionFromEntry(ice0);
+      IncrementableEntryVersion version0 = versionFromEntry(ice0);
       //version1 is put by tx1
-      final IncrementableEntryVersion version1 = versionGenerator.increment(version0);
+      IncrementableEntryVersion version1 = versionGenerator.increment(version0);
       //version2 is put by tx2
-      final IncrementableEntryVersion version2 = versionGenerator.increment(version1);
+      IncrementableEntryVersion version2 = versionGenerator.increment(version1);
 
       ControllerInboundInvocationHandler handler = wrapInboundInvocationHandler(cache(0), ControllerInboundInvocationHandler::new);
       BackupOwnerInterceptor backupOwnerInterceptor = injectBackupOwnerInterceptor(cache(0));
-      backupOwnerInterceptor.blockCommit(true);
+      backupOwnerInterceptor.blockCommit();
       handler.discardRemoteGet = true;
 
       Future<Boolean> tx1 = fork(() -> {
@@ -94,18 +97,15 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
          return Boolean.TRUE;
       });
 
-      //after this, the primary owner has committed the new value but still have the locks acquired.
-      //in the backup owner, it still has the old value
-
-      eventually(() -> {
-         Integer value = (Integer) cache(3).get(key);
-         return value != null && value == 2;
-      });
+      //node2 sends the commit to all owners. node0 (backup owner) should block the commit
+      //check the data in node1 (primary owner) to make sure the commit is processed there
+      eventually(() -> Objects.equals(cache(1).get(key), 2));
+      eventually(() -> Objects.equals(cache(3).get(key), 2));
 
       assertSameVersion("Wrong version in the primary owner", versionFromEntry(primaryOwnerDataContainer.peek(key)),
-                    version1);
+            version1);
       assertSameVersion("Wrong version in the backup owner", versionFromEntry(backupOwnerDataContainer.peek(key)),
-                    version0);
+            version0);
 
       backupOwnerInterceptor.resetPrepare();
 
@@ -120,20 +120,20 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
 
       //if everything works fine, it should ignore the value from the backup owner and only use the version returned by
       //the primary owner.
-      AssertJUnit.assertTrue("Prepare of tx2 was never received.", backupOwnerInterceptor.awaitPrepare(10000));
+      assertTrue("Prepare of tx2 was never received.", backupOwnerInterceptor.awaitPrepare());
 
-      backupOwnerInterceptor.blockCommit(false);
+      backupOwnerInterceptor.unblockCommit();
       handler.discardRemoteGet = false;
 
       //both transaction should commit
-      AssertJUnit.assertTrue("Error in tx1.", tx1.get(15, SECONDS));
-      AssertJUnit.assertTrue("Error in tx2.", tx2.get(15, SECONDS));
+      assertTrue("Error in tx1.", tx1.get(15, SECONDS));
+      assertTrue("Error in tx2.", tx2.get(15, SECONDS));
 
       //both txs has committed
       assertSameVersion("Wrong version in the primary owner", versionFromEntry(primaryOwnerDataContainer.peek(key)),
-                    version2);
+            version2);
       assertSameVersion("Wrong version in the backup owner", versionFromEntry(backupOwnerDataContainer.peek(key)),
-                    version2);
+            version2);
 
 
       assertNoTransactions();
@@ -144,15 +144,15 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
    protected final void createCacheManagers() {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(cacheMode, true);
       builder.locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
-      ControlledConsistentHashFactory consistentHashFactory =
+      ControlledConsistentHashFactory<?> consistentHashFactory =
             cacheMode.isReplicated() ?
-            new ControlledConsistentHashFactory.Replicated(1) :
-            new ControlledConsistentHashFactory.Default(1, 0);
+                  new ControlledConsistentHashFactory.Replicated(1) :
+                  new ControlledConsistentHashFactory.Default(1, 0);
       builder.clustering().hash().numSegments(1).consistentHashFactory(consistentHashFactory);
       createClusteredCaches(4, TestDataSCI.INSTANCE, builder);
    }
 
-   private BackupOwnerInterceptor injectBackupOwnerInterceptor(Cache<?, ?> cache) {
+   private static BackupOwnerInterceptor injectBackupOwnerInterceptor(Cache<?, ?> cache) {
       BackupOwnerInterceptor ownerInterceptor = new BackupOwnerInterceptor();
       extractInterceptorChain(cache).addInterceptor(ownerInterceptor, 1);
       return ownerInterceptor;
@@ -164,22 +164,20 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
       replaceComponent(toInject, RpcManager.class, newRpcManager, true);
    }
 
-   private void assertSameVersion(String message, EntryVersion v0, EntryVersion v1) {
+   private static void assertSameVersion(String message, EntryVersion v0, EntryVersion v1) {
       assertEquals(message, InequalVersionComparisonResult.EQUAL, v0.compareTo(v1));
    }
 
    @SuppressWarnings("rawtypes")
    static class BackupOwnerInterceptor extends DDAsyncInterceptor {
 
-      private final Object blockCommitLock = new Object();
       private final Object prepareProcessedLock = new Object();
-      private boolean blockCommit;
       private boolean prepareProcessed;
+      private volatile CompletableFuture<Void> commitBlocker = CompletableFutures.completedNull();
 
       @Override
       public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
-         blockIfNeeded();
-         return invokeNext(ctx, command);
+         return asyncInvokeNext(ctx, command, commitBlocker);
       }
 
       @Override
@@ -187,18 +185,17 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
          return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, throwable) -> notifyPrepareProcessed());
       }
 
-      public void blockCommit(boolean blockCommit) {
-         synchronized (blockCommitLock) {
-            this.blockCommit = blockCommit;
-            if (!blockCommit) {
-               blockCommitLock.notifyAll();
-            }
-         }
+      void blockCommit() {
+         commitBlocker = new CompletableFuture<>();
       }
 
-      public boolean awaitPrepare(long milliseconds) throws InterruptedException {
+      void unblockCommit() {
+         commitBlocker.complete(null);
+      }
+
+      boolean awaitPrepare() throws InterruptedException {
          synchronized (prepareProcessedLock) {
-            long endTime = System.nanoTime() + MILLISECONDS.toNanos(milliseconds);
+            long endTime = System.nanoTime() + MILLISECONDS.toNanos(10000);
             long sleepTime = NANOSECONDS.toMillis(endTime - System.nanoTime());
             while (!prepareProcessed && sleepTime > 0) {
                prepareProcessedLock.wait(sleepTime);
@@ -208,7 +205,7 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
          }
       }
 
-      public void resetPrepare() {
+      void resetPrepare() {
          synchronized (prepareProcessedLock) {
             prepareProcessed = false;
          }
@@ -220,21 +217,13 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
             prepareProcessedLock.notifyAll();
          }
       }
-
-      private void blockIfNeeded() throws InterruptedException {
-         synchronized (blockCommitLock) {
-            while (blockCommit) {
-               blockCommitLock.wait();
-            }
-         }
-      }
    }
 
-   private class ReorderResponsesRpcManager extends AbstractDelegatingRpcManager {
+   private static class ReorderResponsesRpcManager extends AbstractDelegatingRpcManager {
 
       private final Address lastResponse;
 
-      public ReorderResponsesRpcManager(Address lastResponse, RpcManager realOne) {
+      ReorderResponsesRpcManager(Address lastResponse, RpcManager realOne) {
          super(realOne);
          this.lastResponse = lastResponse;
       }
@@ -246,29 +235,29 @@ public class WriteSkewConsistencyTest extends MultipleCacheManagersTest {
                                                       Function<ResponseCollector<T>, CompletionStage<T>> invoker,
                                                       RpcOptions rpcOptions) {
          return super.performRequest(targets, command, collector, invoker, rpcOptions)
-                     .thenApply(responseObject -> {
-                        if (!(responseObject instanceof Map)) {
-                           log.debugf("Single response for command %s: %s", command, responseObject);
-                           return responseObject;
-                        }
+               .thenApply(responseObject -> {
+                  if (!(responseObject instanceof Map)) {
+                     log.debugf("Single response for command %s: %s", command, responseObject);
+                     return responseObject;
+                  }
 
-                        Map<Address, Response> newResponseMap = new LinkedHashMap<>();
-                        boolean containsLastResponseAddress = false;
-                        for (Map.Entry<Address, Response> entry : ((Map<Address, Response>) responseObject)
-                                                                     .entrySet()) {
-                           if (lastResponse.equals(entry.getKey())) {
-                              containsLastResponseAddress = true;
-                              continue;
-                           }
-                           newResponseMap.put(entry.getKey(), entry.getValue());
-                        }
-                        if (containsLastResponseAddress) {
-                           newResponseMap.put(lastResponse,
-                                              ((Map<Address, Response>) responseObject).get(lastResponse));
-                        }
-                        log.debugf("Responses for command %s are %s", command, newResponseMap.values());
-                        return (T) newResponseMap;
-                     });
+                  Map<Address, Response> newResponseMap = new LinkedHashMap<>(targets.size());
+                  boolean containsLastResponseAddress = false;
+                  for (Map.Entry<Address, Response> entry : ((Map<Address, Response>) responseObject)
+                        .entrySet()) {
+                     if (lastResponse.equals(entry.getKey())) {
+                        containsLastResponseAddress = true;
+                        continue;
+                     }
+                     newResponseMap.put(entry.getKey(), entry.getValue());
+                  }
+                  if (containsLastResponseAddress) {
+                     newResponseMap.put(lastResponse,
+                           ((Map<Address, Response>) responseObject).get(lastResponse));
+                  }
+                  log.debugf("Responses for command %s are %s", command, newResponseMap.values());
+                  return (T) newResponseMap;
+               });
       }
    }
 
