@@ -68,9 +68,9 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
    private final List<BlockingInterceptor<IracPutKeyValueCommand>> blockingInterceptorList;
 
    public XSiteMBeanTest() {
-      this.iracManagerList = new ArrayList<>(N_SITES * CLUSTER_SIZE);
-      this.rpcManagerList = new ArrayList<>(N_SITES * CLUSTER_SIZE);
-      this.blockingInterceptorList = new ArrayList<>(N_SITES * CLUSTER_SIZE);
+      iracManagerList = new ArrayList<>(N_SITES * CLUSTER_SIZE);
+      rpcManagerList = new ArrayList<>(N_SITES * CLUSTER_SIZE);
+      blockingInterceptorList = new ArrayList<>(N_SITES * CLUSTER_SIZE);
    }
 
    private static void assertSameAttributeAndOperation(MBeanServer mBeanServer, ObjectName objectName,
@@ -104,7 +104,7 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
          throws Exception {
       long val = invokeLongAttribute(mBeanServer, objectName, attribute);
       if (val == -1L) {
-         fail("Attribute " + attribute + " expected to be different. " + val + " == -1");
+         fail("Attribute " + attribute + " expected to exist but it is -1.");
       }
    }
 
@@ -147,8 +147,8 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
    }
 
    public void testRequestsSent(Method method) throws Exception {
-      final String key = k(method);
-      final String value = v(method);
+      String key = k(method);
+      String value = v(method);
       Cache<String, String> cache = cache(0, 0);
       MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
       ObjectName rpcManager = getRpcManagerObjectName(0);
@@ -160,7 +160,7 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
       assertEventuallyInSite(siteName(1), cache1 -> Objects.equals(value, cache1.get(key)), 10, TimeUnit.SECONDS);
 
       // the metrics are updated after the reply, so wait until the reply is received and the metrics updated
-      awaitUnitKeysSent();
+      awaitUntilKeysSent();
       assertAttribute(mBeanServer, rpcManager, Attribute.REQ_SENT, 1);
       assertOperation(mBeanServer, rpcManager, Attribute.REQ_SENT, siteName(1), 1);
 
@@ -182,8 +182,8 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
    }
 
    public void testRequestsReceived(Method method) throws Exception {
-      final String key = k(method);
-      final String value = v(method);
+      String key = k(method);
+      String value = v(method);
       Cache<String, String> cache = cache(0, 0);
       MBeanServer mBeanServer = mBeanServerLookup.getMBeanServer();
       ObjectName rpcManager = getRpcManagerObjectName(1);
@@ -193,6 +193,7 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
 
       cache.put(k(method), v(method));
       assertEventuallyInSite(siteName(1), cache1 -> Objects.equals(value, cache1.get(key)), 10, TimeUnit.SECONDS);
+      awaitUntilKeysSent();
 
       assertAttribute(mBeanServer, rpcManager, Attribute.REQ_RECV, 1);
       assertOperation(mBeanServer, rpcManager, Attribute.REQ_RECV, siteName(0), 1);
@@ -223,7 +224,7 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
       eventuallyAssertInAllSitesAndCaches(cache -> Objects.equals("value", cache.get("key")));
 
       // the queue is clean after the reply is received. wait until it is.
-      awaitUnitKeysSent();
+      awaitUntilKeysSent();
       assertEquals(0, invokeQueueSizeAttribute(mBeanServer, iracManager));
 
       setStatisticsEnabled(mBeanServer, iracManager, false);
@@ -257,6 +258,7 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
       assertAttribute(mBeanServer, iracManager2, Attribute.CONFLICT_MERGED, 0);
 
       // now reset statistics
+      awaitUntilKeysSent();
       for (ObjectName objectName : Arrays.asList(iracManager1, iracManager2)) {
          resetIracManagerStats(mBeanServer, objectName);
          setStatisticsEnabled(mBeanServer, objectName, false);
@@ -292,6 +294,7 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
       replaceComponent(cache(1, 0), XSiteEntryMergePolicy.class, DefaultXSiteEntryMergePolicy.getInstance(), true);
 
       //reset stats
+      awaitUntilKeysSent();
       for (ObjectName objectName : Arrays.asList(iracManager1, iracManager2)) {
          resetIracManagerStats(mBeanServer, objectName);
          setStatisticsEnabled(mBeanServer, objectName, false);
@@ -312,6 +315,7 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
       assertAttribute(mBeanServer, iracManager, Attribute.DISCARDS, 1);
 
       // now reset statistics
+      awaitUntilKeysSent();
       resetIracManagerStats(mBeanServer, iracManager);
       setStatisticsEnabled(mBeanServer, iracManager, false);
       assertAttribute(mBeanServer, iracManager, Attribute.DISCARDS, -1);
@@ -380,7 +384,7 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
       super.clearContent();
    }
 
-   private void awaitUnitKeysSent() {
+   private void awaitUntilKeysSent() {
       // we assume 1 node per site!
       assertEquals(1, defaultNumberOfNodes());
       ManualIracManager iracManager = iracManagerList.get(0);
@@ -463,7 +467,7 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
       }
    }
 
-   private void resetIracManagerStats(MBeanServer mBeanServer, ObjectName iracManager) throws Exception {
+   private static void resetIracManagerStats(MBeanServer mBeanServer, ObjectName iracManager) throws Exception {
       mBeanServer.invoke(iracManager, "resetStatistics", new Object[0], new String[0]);
       assertAttribute(mBeanServer, iracManager, Attribute.CONFLICTS, 0);
       assertAttribute(mBeanServer, iracManager, Attribute.CONFLICT_LOCAL, 0);
@@ -472,7 +476,7 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
       assertAttribute(mBeanServer, iracManager, Attribute.DISCARDS, 0);
    }
 
-   private void setStatisticsEnabled(MBeanServer mBeanServer, ObjectName objectName, boolean enabled) throws Exception {
+   private static void setStatisticsEnabled(MBeanServer mBeanServer, ObjectName objectName, boolean enabled) throws Exception {
       mBeanServer.setAttribute(objectName, new javax.management.Attribute("StatisticsEnabled", enabled));
    }
 
@@ -514,7 +518,7 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
 
       private volatile BlockedRequest blockedRequest;
 
-      public ManualRpcManager(RpcManager realOne) {
+      ManualRpcManager(RpcManager realOne) {
          super(realOne);
       }
 
@@ -579,7 +583,7 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
       @Override
       public void onCompleted(XSiteBackup backup, long sendTimeNanos, long durationNanos, Throwable throwable) {
          this.backup = backup;
-         this.sendTimeStamp = sendTimeNanos;
+         sendTimeStamp = sendTimeNanos;
          this.durationNanos = durationNanos;
          if (throwable != null) {
             completeExceptionally(throwable);
@@ -590,7 +594,7 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
 
       @Override
       public void whenCompleted(XSiteResponseCompleted xSiteResponseCompleted) {
-         this.whenComplete((ignore, throwable) -> xSiteResponseCompleted.onCompleted(backup, sendTimeStamp,
+         whenComplete((ignore, throwable) -> xSiteResponseCompleted.onCompleted(backup, sendTimeStamp,
                durationNanos, throwable));
       }
 
