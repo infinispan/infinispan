@@ -5,6 +5,7 @@ import java.security.SecureRandom;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.locks.StampedLock;
 
 import org.apache.logging.log4j.spi.AbstractLogger;
 import org.infinispan.commons.dataconversion.MediaTypeResolver;
@@ -65,6 +66,8 @@ public class CommonsBlockHoundIntegration implements BlockHoundIntegration {
       builder.allowBlockingCallsInside(ForkJoinPool.class.getName(), "runWorker");
       // The scan method is where the task is actually ran
       builder.disallowBlockingCallsInside(ForkJoinPool.class.getName(), "scan");
+      // StampedLock unlock can cause a Thread.onSpinWait call which causes blockhound issues
+      builder.allowBlockingCallsInside(StampedLock.class.getName(), "tryDecReaderOverflow");
 
       // SecureRandom reads from a socket
       builder.allowBlockingCallsInside(SecureRandom.class.getName(), "nextBytes");
