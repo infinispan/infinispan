@@ -92,6 +92,8 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
 
    private final String queryString;
 
+   private boolean asteriskCount = false;
+
    QueryRendererDelegateImpl(String queryString, ObjectPropertyHelper<TypeMetadata> propertyHelper) {
       this.queryString = queryString;
       this.propertyHelper = propertyHelper;
@@ -538,6 +540,12 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    }
 
    @Override
+   public void activateAsteriskAggregation(AggregationFunction aggregationFunction) {
+      activateAggregation(aggregationFunction);
+      asteriskCount = true;
+   }
+
+   @Override
    public void deactivateAggregation() {
       aggregationFunction = null;
    }
@@ -589,6 +597,19 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
          groupBy = new ArrayList<>(ARRAY_INITIAL_LENGTH);
       }
       groupBy.add(resolveAlias(propertyPath));
+
+      if (!asteriskCount) {
+         return;
+      }
+      if (projections == null) {
+         projections = new ArrayList<>(ARRAY_INITIAL_LENGTH);
+         projectedTypes = new ArrayList<>(ARRAY_INITIAL_LENGTH);
+         projectedNullMarkers = new ArrayList<>(ARRAY_INITIAL_LENGTH);
+      }
+      projections.add(new CacheValueAggregationPropertyPath<>());
+      projectedTypes.add(null);
+      projectedNullMarkers.add(null);
+      asteriskCount = false;
    }
 
    private Object parameterValue(String value) {
