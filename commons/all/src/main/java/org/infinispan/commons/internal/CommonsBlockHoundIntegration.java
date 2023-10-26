@@ -2,6 +2,7 @@ package org.infinispan.commons.internal;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.locks.StampedLock;
 
 import org.infinispan.commons.dataconversion.MediaTypeResolver;
 import org.infinispan.commons.executors.NonBlockingResource;
@@ -59,5 +60,7 @@ public class CommonsBlockHoundIntegration implements BlockHoundIntegration {
       builder.allowBlockingCallsInside(ForkJoinPool.class.getName(), "runWorker");
       // The scan method is where the task is actually ran
       builder.disallowBlockingCallsInside(ForkJoinPool.class.getName(), "scan");
+      // StampedLock unlock can cause a Thread.onSpinWait call which causes blockhound issues
+      builder.allowBlockingCallsInside(StampedLock.class.getName(), "tryDecReaderOverflow");
    }
 }
