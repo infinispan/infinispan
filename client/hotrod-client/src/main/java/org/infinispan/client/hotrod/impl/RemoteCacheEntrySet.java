@@ -1,8 +1,12 @@
 package org.infinispan.client.hotrod.impl;
 
 import java.util.AbstractSet;
+import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Spliterator;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.infinispan.commons.util.CloseableIterator;
@@ -70,5 +74,66 @@ class RemoteCacheEntrySet<K, V> extends AbstractSet<Map.Entry<K, V>> implements 
       //noinspection unchecked
       Map.Entry<K, V> entry = (Map.Entry<K, V>) o;
       return remoteCache.removeEntry(entry);
+   }
+
+   @Override
+   public boolean removeIf(Predicate<? super Map.Entry<K, V>> filter) {
+      Objects.requireNonNull(filter);
+      boolean removed = false;
+      try (CloseableIterator<Map.Entry<K, V>> each = iterator()) {
+         while (each.hasNext()) {
+            if (filter.test(each.next())) {
+               each.remove();
+               removed = true;
+            }
+         }
+      }
+      return removed;
+   }
+
+   @Override
+   public boolean removeAll(Collection<?> c) {
+      Objects.requireNonNull(c);
+      boolean modified = false;
+
+      if (size() > c.size()) {
+         for (Object e : c)
+            modified |= remove(e);
+      } else {
+         try (CloseableIterator<Map.Entry<K, V>> i = iterator()) {
+            while (i.hasNext()) {
+               if (c.contains(i.next())) {
+                  i.remove();
+                  modified = true;
+               }
+            }
+         }
+      }
+      return modified;
+   }
+
+   @Override
+   public boolean retainAll(Collection<?> c) {
+      Objects.requireNonNull(c);
+      boolean modified = false;
+      try (CloseableIterator<Map.Entry<K, V>> it = iterator()) {
+         while (it.hasNext()) {
+            if (!c.contains(it.next())) {
+               it.remove();
+               modified = true;
+            }
+         }
+      }
+      return modified;
+   }
+
+   @Override
+   public void forEach(Consumer<? super Map.Entry<K, V>> action) {
+      Objects.requireNonNull(action);
+      try (CloseableIterator<Map.Entry<K, V>> it = iterator()) {
+         while (it.hasNext()) {
+            action.accept(it.next());
+         }
+      }
    }
 }
