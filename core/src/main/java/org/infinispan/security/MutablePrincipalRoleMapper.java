@@ -1,5 +1,8 @@
 package org.infinispan.security;
 
+import org.infinispan.security.mappers.ClusterRoleMapper;
+
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -14,4 +17,10 @@ public interface MutablePrincipalRoleMapper extends PrincipalRoleMapper {
    Set<String> list(String principalName);
 
    String listAll();
+
+   Set<String> listPrincipals();
+
+   Set<Map.Entry<String, ClusterRoleMapper.RoleSet>> listPrincipalsAndRoleSet();
+
+   Set<String> listPrincipalsByRole(String role);
 }

@@ -27,8 +27,8 @@ public class RestSecurityClientOkHttp implements RestSecurityClient {
    }
 
    @Override
-   public CompletionStage<RestResponse> listPrincipals() {
-      return client.execute(baseSecurityURL, "principals");
+   public CompletionStage<RestResponse> listUsers() {
+      return client.execute(baseSecurityURL, "users");
    }
 
    @Override
@@ -39,7 +39,7 @@ public class RestSecurityClientOkHttp implements RestSecurityClient {
    @Override
    public CompletionStage<RestResponse> listRoles(boolean detailed) {
       if (detailed) {
-         return client.execute(baseSecurityURL, "roles-detail", null);
+         return client.execute(new Request.Builder().url(baseSecurityURL + "/roles?action=detailed"));
       }
       return listRoles();
    }
@@ -109,6 +109,20 @@ public class RestSecurityClientOkHttp implements RestSecurityClient {
    public CompletionStage<RestResponse> describeRole(String name) {
       Request.Builder builder = new Request.Builder();
       builder.url(baseSecurityURL + "/permissions/" + name);
+      return client.execute(builder.get());
+   }
+
+   @Override
+   public CompletionStage<RestResponse> listPrincipals() {
+      Request.Builder builder = new Request.Builder();
+      builder.url(baseSecurityURL + "/principals/");
+      return client.execute(builder.get());
+   }
+
+   @Override
+   public CompletionStage<RestResponse> listPrincipals(boolean detailed) {
+      Request.Builder builder = new Request.Builder();
+      builder.url(baseSecurityURL + "/principals?action=detailed");
       return client.execute(builder.get());
    }
 }

@@ -8,7 +8,7 @@ import java.util.concurrent.CompletionStage;
  * @since 12.1
  **/
 public interface RestSecurityClient {
-   CompletionStage<RestResponse> listPrincipals();
+   CompletionStage<RestResponse> listUsers();
 
    CompletionStage<RestResponse> listRoles();
 
@@ -27,4 +27,8 @@ public interface RestSecurityClient {
    CompletionStage<RestResponse> removeRole(String name);
 
    CompletionStage<RestResponse> describeRole(String name);
+
+   CompletionStage<RestResponse> listPrincipals();
+
+   CompletionStage<RestResponse> listPrincipals(boolean detailed);
 }
