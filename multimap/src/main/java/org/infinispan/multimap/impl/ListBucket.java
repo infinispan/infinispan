@@ -44,8 +44,8 @@ public class ListBucket<V> implements SortableBucket<V> {
       this.values = values;
    }
 
-   public static <V> ListBucket<V> create(V value) {
-      return new ListBucket<>(value);
+   public static <V> ListBucket<V> create(Collection<V> value) {
+      return new ListBucket<>(new ArrayDeque<V>(value));
    }
 
    @ProtoFactory
@@ -88,19 +88,22 @@ public class ListBucket<V> implements SortableBucket<V> {
       return "ListBucket{values=" + Util.toStr(values) + '}';
    }
 
-   public ListBucket<V> offer(V value, boolean first) {
+   public ListBucket<V> offer(Collection<V> value, boolean first) {
       if (first) {
-         values.offerFirst(value);
+         for (V v : value) {
+            values.offerFirst(v);
+         }
       } else {
-         values.offerLast(value);
+         for (V v : value) {
+            values.offerLast(v);
+         }
       }
-
       return new ListBucket<>(values);
    }
 
    public ListBucket<V> set(long index, V value) {
-      if ((index >= 0 && (values.size()-1 < index)) || (index < 0 && (values.size() + index < 0))) {
-        return null;
+      if ((index >= 0 && (values.size() - 1 < index)) || (index < 0 && (values.size() + index < 0))) {
+         return null;
       }
 
       // set head
@@ -111,7 +114,7 @@ public class ListBucket<V> implements SortableBucket<V> {
       }
 
       // set tail
-      if (index == -1 || index == values.size() -1) {
+      if (index == -1 || index == values.size() - 1) {
          values.pollLast();
          values.offerLast(value);
          return new ListBucket<>(values);
@@ -121,7 +124,7 @@ public class ListBucket<V> implements SortableBucket<V> {
       if (index > 0) {
          Iterator<V> ite = values.iterator();
          int currentIndex = 0;
-         while(ite.hasNext()) {
+         while (ite.hasNext()) {
             V element = ite.next();
             if (index == currentIndex) {
                newBucket.offerLast(value);
@@ -135,7 +138,7 @@ public class ListBucket<V> implements SortableBucket<V> {
       if (index < -1) {
          Iterator<V> ite = values.descendingIterator();
          int currentIndex = -1;
-         while(ite.hasNext()) {
+         while (ite.hasNext()) {
             V element = ite.next();
             if (index == currentIndex) {
                newBucket.offerFirst(value);
@@ -174,11 +177,11 @@ public class ListBucket<V> implements SortableBucket<V> {
       int offset = 0;
       while (ite.hasNext()) {
          V element = ite.next();
-         if (offset < fromIte){
+         if (offset < fromIte) {
             offset++;
             continue;
          }
-         if (offset > toIte){
+         if (offset > toIte) {
             break;
          }
 
@@ -212,20 +215,20 @@ public class ListBucket<V> implements SortableBucket<V> {
       long keepCount = (to < 0 ? values.size() + to : to) - startRemoveCount;
 
       Iterator<V> ite = values.iterator();
-      while(ite.hasNext() && startRemoveCount > 0) {
+      while (ite.hasNext() && startRemoveCount > 0) {
          ite.next();
          ite.remove();
          startRemoveCount--;
       }
 
       // keep elements
-      while(ite.hasNext() && keepCount >= 0) {
+      while (ite.hasNext() && keepCount >= 0) {
          ite.next();
          keepCount--;
       }
 
       // remove remaining elements
-      while(ite.hasNext()) {
+      while (ite.hasNext()) {
          ite.next();
          ite.remove();
       }
@@ -266,7 +269,7 @@ public class ListBucket<V> implements SortableBucket<V> {
    }
 
    public ListBucket<V> insert(boolean before, V pivot, V element) {
-      Deque<V> newValues = new ArrayDeque<>(values.size() +1);
+      Deque<V> newValues = new ArrayDeque<>(values.size() + 1);
 
       Iterator<V> iterator = values.iterator();
       boolean found = false;
@@ -275,7 +278,7 @@ public class ListBucket<V> implements SortableBucket<V> {
          if (found) {
             newValues.offerLast(next);
          } else {
-            if (Objects.deepEquals(pivot, next))  {
+            if (Objects.deepEquals(pivot, next)) {
                found = true;
                if (before) {
                   newValues.offerLast(element);
@@ -304,9 +307,9 @@ public class ListBucket<V> implements SortableBucket<V> {
          ite = values.iterator();
       }
 
-      long maxRemovalsCount = count == 0 ?  values.size(): Math.abs(count);
+      long maxRemovalsCount = count == 0 ? values.size() : Math.abs(count);
       long removedElements = 0;
-      while(ite.hasNext()) {
+      while (ite.hasNext()) {
          V next = ite.next();
          if (Objects.deepEquals(next, element)) {
             ite.remove();
@@ -345,9 +348,9 @@ public class ListBucket<V> implements SortableBucket<V> {
       Stream<ScoredValue<V>> scoredValueStream;
       if (sortOptions.alpha) {
          scoredValueStream = values.stream().map(v -> {
-                  MultimapObjectWrapper<V> wrapped = new MultimapObjectWrapper<>(v);
-                  return new ScoredValue<>(1d, wrapped);
-               });
+            MultimapObjectWrapper<V> wrapped = new MultimapObjectWrapper<>(v);
+            return new ScoredValue<>(1d, wrapped);
+         });
       } else {
          scoredValueStream = values.stream().map(v -> {
             MultimapObjectWrapper<V> wrapped = new MultimapObjectWrapper<>(v);
@@ -367,6 +370,7 @@ public class ListBucket<V> implements SortableBucket<V> {
    public class ListBucketResult {
       private final Collection<V> result;
       private final ListBucket<V> bucketValue;
+
       public ListBucketResult(Collection<V> result, ListBucket<V> bucketValue) {
          this.result = result;
          this.bucketValue = bucketValue;
@@ -388,14 +392,14 @@ public class ListBucket<V> implements SortableBucket<V> {
             polledValues.addAll(values);
          } else {
             Iterator<V> ite = values.descendingIterator();
-            while(ite.hasNext()) {
+            while (ite.hasNext()) {
                polledValues.add(ite.next());
             }
          }
          return new ListBucketResult(polledValues, new ListBucket<>());
       }
 
-      for (int i = 0 ; i < count; i++) {
+      for (int i = 0; i < count; i++) {
          if (first) {
             polledValues.add(values.pollFirst());
          } else {

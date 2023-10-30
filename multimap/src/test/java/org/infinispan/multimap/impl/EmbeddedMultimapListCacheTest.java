@@ -98,12 +98,12 @@ public class EmbeddedMultimapListCacheTest extends SingleCacheManagerTest {
             .hasMessageContaining(ERR_KEY_CAN_T_BE_NULL);
 
       assertThatThrownBy(() ->
-         await(listCache.offerFirst(NAMES_KEY, null))
+         await(listCache.offerFirst(NAMES_KEY, (Person)null))
       ).isInstanceOf(NullPointerException.class)
             .hasMessageContaining(ERR_VALUE_CAN_T_BE_NULL);
 
       assertThatThrownBy(() -> {
-         await(listCache.offerLast(NAMES_KEY, null));
+         await(listCache.offerLast(NAMES_KEY, (Person)null));
       }).isInstanceOf(NullPointerException.class)
             .hasMessageContaining(ERR_VALUE_CAN_T_BE_NULL);
 
