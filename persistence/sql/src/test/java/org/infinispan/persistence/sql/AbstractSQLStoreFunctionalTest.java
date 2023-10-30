@@ -22,10 +22,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import jakarta.transaction.NotSupportedException;
-import jakarta.transaction.SystemException;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -46,6 +42,7 @@ import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Address;
 import org.infinispan.test.data.Key;
+import org.infinispan.test.data.Numerics;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.data.Sex;
 import org.infinispan.transaction.TransactionMode;
@@ -56,6 +53,9 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import jakarta.transaction.NotSupportedException;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.TransactionManager;
 import util.JdbcConnection;
 
 public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctionalTest {
@@ -336,6 +336,32 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
       assertEquals(value, cache.get(key));
    }
 
+   public void testNumericColumns(Method m) {
+      Number key = Integer.MAX_VALUE;
+
+      if (DB_TYPE.equals(SQLITE))
+         key = key.longValue();
+
+      String cacheName = m.getName();
+      schemaConsumer = builder ->
+            builder.schema()
+                  .embeddedKey(true)
+                  .messageName("Numerics")
+                  .packageName("org.infinispan.test.core");
+      Numerics v = new Numerics(Integer.MAX_VALUE, Long.MAX_VALUE, Float.MAX_VALUE, Double.MAX_VALUE);
+
+      // This test might operate in memory.
+      testSimpleGetAndPut(cacheName, key, v);
+
+      // Shutdown and start cache to retrieve data from store.
+      Cache<Object, Object> cache = cacheManager.getCache(cacheName);
+      cache.shutdown();
+      cache.start();
+
+      // Check again.
+      assertEquals(v, cache.get(key));
+   }
+
    private void testSimpleGetAndPut(String cacheName, Object key, Object value) {
       ConfigurationBuilder cb = getDefaultCacheConfiguration();
       createCacheStoreConfig(cb.persistence(), cacheName, false);
@@ -406,6 +432,42 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
          case H2:
          default:
             UnitTestDatabaseManager.configureUniqueConnectionFactory(builder);
+      }
+   }
+
+   String integerType() {
+      switch (DB_TYPE) {
+         case SQLITE:
+            return "INTEGER";
+         default:
+            return "NUMERIC(10, 0)";
+      }
+   }
+
+   String longType() {
+      switch (DB_TYPE) {
+         case SQLITE:
+            return "INTEGER";
+         default:
+            return "NUMERIC(19, 0)";
+      }
+   }
+
+   String floatType() {
+      switch (DB_TYPE) {
+         case SQLITE:
+            return "REAL";
+         default:
+            return "NUMERIC(45, 6)";
+      }
+   }
+
+   String doubleType() {
+      switch (DB_TYPE) {
+         case SQLITE:
+            return "REAL";
+         default:
+            return "DOUBLE";
       }
    }
 
@@ -519,6 +581,13 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
                "sex VARCHAR(255) NOT NULL, " +
                "name VARCHAR(255), " +
                "PRIMARY KEY (sex))";
+      } else if (upperCaseCacheName.equals("TESTNUMERICCOLUMNS")) {
+         tableCreation = "CREATE TABLE " + tableName + " (" +
+               "keycolumn " + integerType() + ", " +
+               "simpleLong " + longType() + ", " +
+               "simpleFloat " + floatType() + ", " +
+               "simpleDouble " + doubleType() + ", " +
+               "PRIMARY KEY (keycolumn))";
       } else {
          tableCreation = "CREATE TABLE " + tableName + " (" +
                "keycolumn VARCHAR(255) NOT NULL, " +

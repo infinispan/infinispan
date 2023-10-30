@@ -1,5 +1,6 @@
 package org.infinispan.persistence.sql;
 
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.stream.Stream;
@@ -8,6 +9,7 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.jdbc.common.DatabaseType;
 import org.infinispan.persistence.jdbc.common.SqlManager;
 import org.infinispan.persistence.sql.configuration.QueriesJdbcStoreConfigurationBuilder;
+import org.testng.SkipException;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
@@ -120,6 +122,13 @@ public class QueriesJdbcStoreFunctionalTest extends AbstractSQLStoreFunctionalTe
                .upsert(manager.getUpsertStatement(Collections.singletonList("sex"),
                      Arrays.asList("name", "sex")))
                .delete("DELETE FROM " + tableName + " WHERE sex = :sex");
+      } else if (cacheName.equalsIgnoreCase("TESTNUMERICCOLUMNS")) {
+         storeBuilder.queries()
+               .select("SELECT " + KEY_COLUMN + ", simpleLong, simpleFloat, simpleDouble FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
+               .selectAll("SELECT " + KEY_COLUMN + ", simpleLong, simpleFloat, simpleDouble FROM " + tableName)
+               .upsert(manager.getUpsertStatement(Collections.singletonList(KEY_COLUMN),
+                     Arrays.asList(KEY_COLUMN, "simpleLong", "simpleFloat", "simpleDouble")))
+               .delete("DELETE FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN);
       } else {
          storeBuilder.queries()
                .select("SELECT " + KEY_COLUMN + ", value1 FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
@@ -132,5 +141,13 @@ public class QueriesJdbcStoreFunctionalTest extends AbstractSQLStoreFunctionalTe
       createTable(cacheName, tableName, storeBuilder.getConnectionFactory());
 
       return persistence;
+   }
+
+   @Override
+   public void testNumericColumns(Method m) {
+      if (DB_TYPE.equals(DatabaseType.SQLITE))
+         throw new SkipException("Query store not running with SQLite to check numerics");
+
+      super.testNumericColumns(m);
    }
 }
