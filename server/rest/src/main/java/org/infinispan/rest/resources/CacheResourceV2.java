@@ -118,7 +118,6 @@ import org.infinispan.rest.logging.Log;
 import org.infinispan.rest.stream.CacheChunkedStream;
 import org.infinispan.rest.stream.CacheEntryStreamProcessor;
 import org.infinispan.rest.stream.CacheKeyStreamProcessor;
-import org.infinispan.rest.tracing.RestTelemetryService;
 import org.infinispan.security.AuditContext;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
@@ -126,6 +125,7 @@ import org.infinispan.security.Role;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.stats.ClusterCacheStats;
 import org.infinispan.stats.Stats;
+import org.infinispan.telemetry.InfinispanTelemetry;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.upgrade.RollingUpgradeManager;
@@ -151,7 +151,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    private final ParserRegistry parserRegistry = new ParserRegistry();
    private final InternalCacheRegistry internalCacheRegistry;
 
-   public CacheResourceV2(InvocationHelper invocationHelper, RestTelemetryService telemetryService) {
+   public CacheResourceV2(InvocationHelper invocationHelper, InfinispanTelemetry telemetryService) {
       super(invocationHelper, telemetryService);
       EmbeddedCacheManager cacheManager = invocationHelper.getRestCacheManager().getInstance();
       GlobalComponentRegistry globalComponentRegistry = SecurityActions.getGlobalComponentRegistry(cacheManager);

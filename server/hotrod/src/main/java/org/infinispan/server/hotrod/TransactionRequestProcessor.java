@@ -1,12 +1,11 @@
 package org.infinispan.server.hotrod;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.Executor;
-
 import javax.security.auth.Subject;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.Executor;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.tx.XidImpl;
@@ -15,12 +14,12 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.hotrod.logging.Log;
-import org.infinispan.server.hotrod.tracing.HotRodTelemetryService;
 import org.infinispan.server.hotrod.tx.PrepareCoordinator;
 import org.infinispan.server.hotrod.tx.operation.CommitTransactionOperation;
 import org.infinispan.server.hotrod.tx.operation.RollbackTransactionOperation;
 import org.infinispan.server.hotrod.tx.table.GlobalTxTable;
 import org.infinispan.server.hotrod.tx.table.TxState;
+import org.infinispan.telemetry.InfinispanTelemetry;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.LogFactory;
@@ -31,7 +30,7 @@ import io.netty.channel.Channel;
 class TransactionRequestProcessor extends CacheRequestProcessor {
    private static final Log log = LogFactory.getLog(TransactionRequestProcessor.class, Log.class);
 
-   TransactionRequestProcessor(Channel channel, Executor executor, HotRodServer server, HotRodTelemetryService telemetryService) {
+   TransactionRequestProcessor(Channel channel, Executor executor, HotRodServer server, InfinispanTelemetry telemetryService) {
       super(channel, executor, server, telemetryService);
    }
 

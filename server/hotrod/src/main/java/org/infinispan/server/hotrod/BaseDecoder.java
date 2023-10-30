@@ -15,9 +15,8 @@ import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.ServerConstants;
-import org.infinispan.server.core.telemetry.TelemetryService;
 import org.infinispan.server.hotrod.logging.Log;
-import org.infinispan.server.hotrod.tracing.HotRodTelemetryService;
+import org.infinispan.telemetry.InfinispanTelemetry;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -49,15 +48,11 @@ abstract class BaseDecoder extends ByteToMessageDecoder {
 
    @Override
    public void handlerAdded(ChannelHandlerContext ctx) {
-      TelemetryService telemetryService = SecurityActions.getGlobalComponentRegistry(cacheManager)
-            .getComponent(TelemetryService.class);
-      if (telemetryService == null) {
-         telemetryService = new TelemetryService.NoTelemetry();
-      }
-      HotRodTelemetryService hotRodTelemetryService = new HotRodTelemetryService(telemetryService);
+      InfinispanTelemetry telemetryService = SecurityActions.getGlobalComponentRegistry(cacheManager)
+            .getComponent(InfinispanTelemetry.class);
 
       auth = new Authentication(ctx.channel(), executor, server);
-      cacheProcessor = new TransactionRequestProcessor(ctx.channel(), executor, server, hotRodTelemetryService);
+      cacheProcessor = new TransactionRequestProcessor(ctx.channel(), executor, server, telemetryService);
       counterProcessor = new CounterRequestProcessor(ctx.channel(), (EmbeddedCounterManager) EmbeddedCounterManagerFactory.asCounterManager(cacheManager), executor, server);
       multimapProcessor = new MultimapRequestProcessor(ctx.channel(), executor, server);
       taskProcessor = new TaskRequestProcessor(ctx.channel(), executor, server);
