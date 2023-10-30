@@ -9,6 +9,7 @@ import org.infinispan.test.data.BrokenMarshallingPojo;
 import org.infinispan.test.data.CountMarshallingPojo;
 import org.infinispan.test.data.DelayedMarshallingPojo;
 import org.infinispan.test.data.Key;
+import org.infinispan.test.data.Numerics;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.data.Sex;
 import org.infinispan.test.data.Value;
@@ -26,6 +27,7 @@ import org.infinispan.xsite.irac.IracCustomConflictTest;
             Person.class,
             Sex.class,
             Value.class,
+            Numerics.class,
             IracCustomConflictTest.MySortedSet.class,
             ExpirationFunctionalTest.NoEquals.class,
       },
