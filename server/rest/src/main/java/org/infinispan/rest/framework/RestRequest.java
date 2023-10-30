@@ -10,11 +10,12 @@ import javax.security.auth.Subject;
 import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.context.Flag;
+import org.infinispan.telemetry.InfinispanSpanContext;
 
 /**
  * @since 10.0
  */
-public interface RestRequest {
+public interface RestRequest extends InfinispanSpanContext {
 
    Method method();
 
@@ -79,4 +80,14 @@ public interface RestRequest {
    Iterable<String> headersKeys();
 
    InetSocketAddress getRemoteAddress();
+
+   @Override
+   default Iterable<String> keys() {
+      return headersKeys();
+   }
+
+   @Override
+   default String getKey(String key) {
+      return header(key);
+   }
 }

@@ -1,19 +1,23 @@
 package org.infinispan.server.hotrod;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.Optional;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.context.Flag;
 import org.infinispan.server.hotrod.logging.Log;
+import org.infinispan.telemetry.InfinispanSpanContext;
 
 /**
  * @author wburns
  * @since 9.0
  */
-public class HotRodHeader {
+public class HotRodHeader implements InfinispanSpanContext {
    private static final Log log = LogFactory.getLog(HotRodHeader.class, Log.class);
 
    HotRodOperation op;
@@ -157,5 +161,18 @@ public class HotRodHeader {
             ", valueType=" + valueType +
             ", otherParams=" + otherParams +
             '}';
+   }
+
+   @Override
+   public Iterable<String> keys() {
+      return otherParams == null ? Collections.emptyList() : otherParams.keySet();
+   }
+
+   @Override
+   public String getKey(String key) {
+      return Optional.ofNullable(otherParams)
+            .map(stringMap -> stringMap.get(key))
+            .map(bytes -> new String(bytes, StandardCharsets.UTF_8))
+            .orElse(null);
    }
 }

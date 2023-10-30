@@ -32,12 +32,11 @@ import org.infinispan.rest.resources.ServerResource;
 import org.infinispan.rest.resources.StaticContentResource;
 import org.infinispan.rest.resources.TasksResource;
 import org.infinispan.rest.resources.XSiteResource;
-import org.infinispan.rest.tracing.RestTelemetryService;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.AbstractProtocolServer;
 import org.infinispan.server.core.logging.Log;
-import org.infinispan.server.core.telemetry.TelemetryService;
 import org.infinispan.server.core.transport.NettyInitializers;
+import org.infinispan.telemetry.InfinispanTelemetry;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInboundHandler;
@@ -124,12 +123,8 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
 
    @Override
    protected void startInternal() {
-      TelemetryService telemetryService = SecurityActions.getGlobalComponentRegistry(cacheManager)
-            .getComponent(TelemetryService.class);
-      if (telemetryService == null) {
-         telemetryService = new TelemetryService.NoTelemetry();
-      }
-      RestTelemetryService restTelemetryService = new RestTelemetryService(telemetryService);
+      InfinispanTelemetry telemetryService = SecurityActions.getGlobalComponentRegistry(cacheManager)
+            .getComponent(InfinispanTelemetry.class);
 
       this.maxContentLength = configuration.maxContentLength() + MAX_INITIAL_LINE_SIZE + MAX_HEADER_SIZE;
       RestAuthenticationConfiguration auth = configuration.authentication();
@@ -146,13 +141,13 @@ public class RestServer extends AbstractProtocolServer<RestServerConfiguration> 
       String restContext = configuration.contextPath();
       String rootContext = "/";
       ResourceManager resourceManager = new ResourceManagerImpl();
-      resourceManager.registerResource(restContext, new CacheResourceV2(invocationHelper, restTelemetryService));
+      resourceManager.registerResource(restContext, new CacheResourceV2(invocationHelper, telemetryService));
       resourceManager.registerResource(restContext, new CounterResource(invocationHelper));
       resourceManager.registerResource(restContext, new ContainerResource(invocationHelper));
       resourceManager.registerResource(restContext, new XSiteResource(invocationHelper));
       resourceManager.registerResource(restContext, new SearchAdminResource(invocationHelper));
       resourceManager.registerResource(restContext, new TasksResource(invocationHelper));
-      resourceManager.registerResource(restContext, new ProtobufResource(invocationHelper, restTelemetryService));
+      resourceManager.registerResource(restContext, new ProtobufResource(invocationHelper, telemetryService));
       resourceManager.registerResource(rootContext, new MetricsResource(auth.metricsAuth(), invocationHelper));
       Path staticResources = configuration.staticResources();
       if (staticResources != null) {

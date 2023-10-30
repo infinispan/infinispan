@@ -237,9 +237,9 @@ public interface Log extends BasicLogger {
    @Message(value = "OpenTelemetry tracing instance loaded: %s", id = 952)
    void telemetryLoaded(Object telemetry);
 
-   @LogMessage(level = INFO)
-   @Message(value = "OpenTelemetry tracing integration is disabled", id = 953)
-   void telemetryDisabled();
+//   @LogMessage(level = INFO)
+//   @Message(value = "OpenTelemetry tracing integration is disabled", id = 953)
+//   void telemetryDisabled();
 
    @LogMessage(level = WARN)
    @Message(value = "OpenTelemetry tracing cannot be configured.", id = 954)
