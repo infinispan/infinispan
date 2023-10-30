@@ -97,8 +97,9 @@ public class QueriesJdbcStore<K, V> extends AbstractSchemaJdbcStore<K, V, Querie
             for (int i = 1; i <= rsMetadata.getColumnCount(); ++i) {
                int columnType = rsMetadata.getColumnType(i);
                String name = rsMetadata.getColumnName(i);
+               int precision = rsMetadata.getPrecision(i);
                int scale = rsMetadata.getScale(i);
-               int actualType = typeWeUse(columnType, rsMetadata.getColumnTypeName(i), scale);
+               int actualType = typeWeUse(columnType, rsMetadata.getColumnTypeName(i), precision, scale);
                ProtostreamFieldType type = ProtostreamFieldType.from(actualType);
                String lowerCaseName = name.toLowerCase();
                // Make sure to reuse same parameter instance just with different offset
