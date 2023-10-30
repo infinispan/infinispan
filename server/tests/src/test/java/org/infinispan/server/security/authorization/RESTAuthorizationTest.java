@@ -585,7 +585,7 @@ abstract class RESTAuthorizationTest {
    public void testRoleManipulation() {
       for (TestUser user : EnumSet.of(TestUser.ADMIN)) {
          RestSecurityClient security = ext.rest().withClientConfiguration(restBuilders.get(user)).get().security();
-         assertStatus(OK, security.listPrincipals());
+         assertStatus(OK, security.listUsers());
          assertStatus(NO_CONTENT, security.createRole("myrole", "my-role description", List.of("ALL_READ", "ALL_WRITE")));
          Json json = Json.read(assertStatus(OK, security.describeRole("myrole")));
          assertEquals("myrole", json.at("name").asString());
@@ -611,7 +611,7 @@ abstract class RESTAuthorizationTest {
       }
       for (TestUser user : EnumSet.complementOf(EnumSet.of(TestUser.ADMIN, TestUser.ANONYMOUS))) {
          RestSecurityClient security = ext.rest().withClientConfiguration(restBuilders.get(user)).get().security();
-         assertStatus(FORBIDDEN, security.listPrincipals());
+         assertStatus(FORBIDDEN, security.listUsers());
          assertStatus(FORBIDDEN, security.createRole("myrole", "description", List.of("ALL_READ", "ALL_WRITE")));
          assertStatus(FORBIDDEN, security.describeRole("myrole"));
          assertStatus(FORBIDDEN, security.grant("myuser", List.of("myrole")));
