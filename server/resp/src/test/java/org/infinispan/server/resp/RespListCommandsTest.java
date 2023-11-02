@@ -42,7 +42,12 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
       assertThat(result).isEqualTo(5);
       assertThat(redis.lrange("people", 0, 4)).containsExactly("tristan", "william", "william", "jose", "pedro");
 
-      assertWrongType(() -> redis.set("leads", "tristan"), () ->  redis.rpush("leads", "william"));
+      // Test that order is correct with new list
+      result = redis.rpush("people2", "william", "jose", "pedro");
+      assertThat(result).isEqualTo(3);
+      assertThat(redis.lrange("people2", 0, -1)).containsExactly("william", "jose", "pedro");
+
+      assertWrongType(() -> redis.set("leads", "tristan"), () -> redis.rpush("leads", "william"));
    }
 
    public void testRPUSHX() {
@@ -69,6 +74,11 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
       result = redis.lpush("people", "william", "jose", "pedro");
       assertThat(result).isEqualTo(5);
       assertThat(redis.lrange("people", 0, 4)).containsExactly("pedro", "jose", "william", "william", "tristan");
+
+      // Test that order is correct with new list
+      result = redis.lpush("people2", "william", "jose", "pedro");
+      assertThat(result).isEqualTo(3);
+      assertThat(redis.lrange("people2", 0, -1)).containsExactly("pedro", "jose", "william");
 
       assertWrongType(() -> redis.set("leads", "tristan"), () -> redis.lpush("leads", "william"));
    }
@@ -98,11 +108,11 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
       // test multiple values
       assertThat(redis.rpush("leads", "tristan", "jose", "william", "pedro")).isEqualTo(4);
       assertThat(redis.rpop("leads", 0)).isEmpty();
-      assertThat(redis.rpop("leads", 3)).containsExactly( "pedro", "william", "jose");
+      assertThat(redis.rpop("leads", 3)).containsExactly("pedro", "william", "jose");
       assertThat(redis.rpop("leads", 1)).containsExactly("tristan");
       assertThat(redis.rpop("leads")).isNull();
 
-      assertWrongType(() -> redis.set("leads", "tristan"), () ->  redis.rpop("leads"));
+      assertWrongType(() -> redis.set("leads", "tristan"), () -> redis.rpop("leads"));
 
       // RPOP the count argument is negative
       assertThatThrownBy(() -> {
@@ -122,7 +132,7 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
       // test multiple values
       assertThat(redis.rpush("leads", "tristan", "jose", "william", "pedro")).isEqualTo(4);
       assertThat(redis.lpop("leads", 0)).isEmpty();
-      assertThat(redis.lpop("leads", 3)).containsExactly(  "tristan", "jose", "william");
+      assertThat(redis.lpop("leads", 3)).containsExactly("tristan", "jose", "william");
       assertThat(redis.lpop("leads", 1)).containsExactly("pedro");
       assertThat(redis.lpop("leads")).isNull();
 
@@ -180,15 +190,15 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
    public void testLSET() {
       redis.rpush("leads", "william", "jose", "ryan", "pedro", "vittorio");
 
-      assertThat(redis.lset("leads", 0,  "fabio")).isEqualTo("OK");
+      assertThat(redis.lset("leads", 0, "fabio")).isEqualTo("OK");
       assertThat(redis.lindex("leads", 0)).isEqualTo("fabio");
-      assertThat(redis.lset("leads", -1,  "tristan")).isEqualTo("OK");
+      assertThat(redis.lset("leads", -1, "tristan")).isEqualTo("OK");
       assertThat(redis.lindex("leads", -1)).isEqualTo("tristan");
 
-      assertThat(redis.lset("leads", 2,  "wolf")).isEqualTo("OK");
+      assertThat(redis.lset("leads", 2, "wolf")).isEqualTo("OK");
       assertThat(redis.lindex("leads", 2)).isEqualTo("wolf");
 
-      assertThat(redis.lset("leads", -3,  "anna")).isEqualTo("OK");
+      assertThat(redis.lset("leads", -3, "anna")).isEqualTo("OK");
       assertThat(redis.lindex("leads", -3)).isEqualTo("anna");
 
       assertThatThrownBy(() -> {
@@ -238,7 +248,7 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
       }).isInstanceOf(RedisCommandExecutionException.class)
             .hasMessageContaining("ERR RANK can't be zero");
 
-      assertWrongType(() -> redis.set("another", "tristan"), () -> redis.lpos("another","tristan"));
+      assertWrongType(() -> redis.set("another", "tristan"), () -> redis.lpos("another", "tristan"));
    }
 
    public void testLINSERT() {
@@ -246,11 +256,13 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.linsert("not_exsiting", true, "william", "fabio")).isEqualTo(0);
       assertThat(redis.linsert("leads", true, "vittorio", "fabio")).isEqualTo(-1);
       assertThat(redis.linsert("leads", true, "jose", "fabio")).isEqualTo(6);
-      assertThat(redis.lrange("leads",0, -1)).containsExactly("william", "fabio", "jose", "ryan", "pedro", "jose");
+      assertThat(redis.lrange("leads", 0, -1)).containsExactly("william", "fabio", "jose", "ryan", "pedro", "jose");
       assertThat(redis.linsert("leads", false, "jose", "fabio")).isEqualTo(7);
-      assertThat(redis.lrange("leads",0, -1)).containsExactly("william", "fabio", "jose", "fabio", "ryan", "pedro", "jose");
+      assertThat(redis.lrange("leads", 0, -1)).containsExactly("william", "fabio", "jose", "fabio", "ryan", "pedro",
+            "jose");
 
-      assertWrongType(() -> redis.set("another", "tristan"), () -> redis.linsert("another", true,"tristan", "william"));
+      assertWrongType(() -> redis.set("another", "tristan"),
+            () -> redis.linsert("another", true, "tristan", "william"));
    }
 
    public void testLREM() {
@@ -258,7 +270,8 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.lrem("not_existing", 1, "ramona")).isEqualTo(0);
       assertThat(redis.lrem("leads", 1, "ramona")).isEqualTo(0);
       assertThat(redis.lrem("leads", 1, "pedro")).isEqualTo(1);
-      assertThat(redis.lrange("leads", 0, -1)).containsExactly("william", "jose", "ryan", "jose", "pedro", "pedro", "tristan", "pedro");
+      assertThat(redis.lrange("leads", 0, -1)).containsExactly("william", "jose", "ryan", "jose", "pedro", "pedro",
+            "tristan", "pedro");
       assertThat(redis.lrem("leads", -2, "pedro")).isEqualTo(2);
       assertThat(redis.lrange("leads", 0, -1)).containsExactly("william", "jose", "ryan", "jose", "pedro", "tristan");
       assertThat(redis.lrem("leads", 0, "jose")).isEqualTo(2);
@@ -270,7 +283,7 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
       redis.lrem("leads", 0, "ryan");
       assertThat(redis.exists("leads")).isEqualTo(0);
 
-      assertWrongType(() -> redis.set("another", "tristan"), () -> redis.lrem("another", 0,"tristan"));
+      assertWrongType(() -> redis.set("another", "tristan"), () -> redis.lrem("another", 0, "tristan"));
    }
 
    public void testLTRIM() {
@@ -313,17 +326,20 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
 
       assertThat(redis.lmove("leads", "fantasy_leads", LMoveArgs.Builder.leftRight())).isEqualTo("william");
       assertThat(redis.lrange("leads", 0, -1)).containsExactly("tristan", "pedro");
-      assertThat(redis.lrange("fantasy_leads", 0, -1)).containsExactly("jose", "doraemon", "son goku", "snape", "ryan", "william");
+      assertThat(redis.lrange("fantasy_leads", 0, -1)).containsExactly("jose", "doraemon", "son goku", "snape", "ryan",
+            "william");
 
       assertThat(redis.lmove("leads", "fantasy_leads", LMoveArgs.Builder.leftLeft())).isEqualTo("tristan");
       assertThat(redis.lrange("leads", 0, -1)).containsExactly("pedro");
-      assertThat(redis.lrange("fantasy_leads", 0, -1)).containsExactly("tristan", "jose", "doraemon", "son goku", "snape", "ryan", "william");
+      assertThat(redis.lrange("fantasy_leads", 0, -1)).containsExactly("tristan", "jose", "doraemon", "son goku",
+            "snape", "ryan", "william");
 
       assertThat(redis.lmove("leads", "new_leads", LMoveArgs.Builder.leftLeft())).isEqualTo("pedro");
       assertThat(redis.lrange("leads", 0, -1)).isEmpty();
       assertThat(redis.lrange("new_leads", 0, -1)).containsExactly("pedro");
 
-      assertWrongType(() -> redis.set("another", "tristan"), () -> redis.lmove("another", "another", LMoveArgs.Builder.leftRight()));
+      assertWrongType(() -> redis.set("another", "tristan"),
+            () -> redis.lmove("another", "another", LMoveArgs.Builder.leftRight()));
    }
 
    public void testRPOPLPUSH() {

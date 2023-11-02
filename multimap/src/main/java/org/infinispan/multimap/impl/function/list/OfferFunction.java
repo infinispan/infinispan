@@ -55,7 +55,14 @@ public final class OfferFunction<K, V> implements ListBucketBaseFunction<K, V, V
             entryView.set(newBucket);
          }
       } else {
-         entryView.set(ListBucket.create(value));
+         if (first) {
+            // in this case collection needs to be reversed (if it supports order)
+            var copy = new ArrayList<>(value);
+            Collections.reverse(copy);
+            entryView.set(ListBucket.create(copy));
+         } else {
+            entryView.set(ListBucket.create(value));
+         }
       }
 
       return null;
@@ -77,7 +84,7 @@ public final class OfferFunction<K, V> implements ListBucketBaseFunction<K, V, V
       public void writeObject(ObjectOutput output, OfferFunction object) throws IOException {
          output.writeInt(object.value.size());
          for (var e : object.value) {
-         output.writeObject(e);
+            output.writeObject(e);
          }
          output.writeBoolean(object.first);
       }
@@ -86,7 +93,7 @@ public final class OfferFunction<K, V> implements ListBucketBaseFunction<K, V, V
       public OfferFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          var size = input.readInt();
          var array = new ArrayList<>(size);
-         for (int i = 0; i<size; i++) {
+         for (int i = 0; i < size; i++) {
             array.add(input.readObject());
          }
          return new OfferFunction(array, input.readBoolean());
