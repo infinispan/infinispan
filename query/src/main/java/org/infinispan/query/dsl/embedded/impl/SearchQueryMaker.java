@@ -153,7 +153,8 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
       }
 
       SearchAggregation<? extends Map<T, Long>> searchAggregation = scope.aggregation().terms()
-            .field(groupBy[0].asStringPathWithoutAlias(), projectedType).toAggregation();
+            .field(groupBy[0].asStringPathWithoutAlias(), projectedType)
+            .maxTermCount(Integer.MAX_VALUE).toAggregation();
       return new InfinispanAggregation(searchAggregation, aggregationPropertyPath, displayGroupFirst);
    }
 
