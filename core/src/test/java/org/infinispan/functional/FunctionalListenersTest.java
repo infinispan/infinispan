@@ -35,6 +35,10 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "functional.FunctionalListenersTest")
 public class FunctionalListenersTest extends AbstractFunctionalTest {
 
+   public void testSimpleLambdaReadWriteListeners() throws Exception {
+      doLambdaReadWriteListeners(supplyIntKey(), wo(fmapS1), rw(fmapS2), true);
+   }
+
 
    public void testLocalLambdaReadWriteListeners() throws Exception {
       doLambdaReadWriteListeners(supplyIntKey(), wo(fmapL1), rw(fmapL2), true);
@@ -103,6 +107,10 @@ public class FunctionalListenersTest extends AbstractFunctionalTest {
       awaitNoEvent(rwMap.eval(key5, "cuatro", setValueReturnPrevOrNull()), latches.get(0));
       awaitNoEvent(rwMap.eval(key5, "four", setValueReturnPrevOrNull()), latches.get(1));
       awaitNoEvent(rwMap.eval(key5, removeReturnPrevOrNull()), latches.get(2));
+   }
+
+   public void testSimpleLambdaWriteListeners() throws Exception {
+      doLambdaWriteListeners(supplyIntKey(), wo(fmapS1), true);
    }
 
    public void testLocalLambdaWriteListeners() throws Exception {

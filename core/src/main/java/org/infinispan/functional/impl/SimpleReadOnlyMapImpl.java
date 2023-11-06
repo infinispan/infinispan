@@ -24,7 +24,7 @@ import org.infinispan.util.concurrent.CompletionStages;
  * @see ReadOnlyMapImpl
  */
 @Experimental
-public class SimpleReadOnlyMapImpl<K, V> extends ReadOnlyMapImpl<K, V> {
+public class SimpleReadOnlyMapImpl<K, V> extends ReadOnlyMapImpl<K, V> implements SimpleFunctionalMap<K, V> {
    private static final String KEY_CANNOT_BE_NULL = "Key cannot be null";
    private static final String FUNCTION_CANNOT_BE_NULL = "Function cannot be null";
 
@@ -50,10 +50,7 @@ public class SimpleReadOnlyMapImpl<K, V> extends ReadOnlyMapImpl<K, V> {
       List<R> results = new ArrayList<>(keys.size());
       for (K key : keys) {
          // Everything is local, CF is always complete.
-         CompletableFuture<R> cf = eval(key, f);
-         assert cf.isDone() : "eval() returned an incomplete CF";
-
-         R r = CompletionStages.join(cf);
+         R r = toLocalExecution(eval(key, f));
          results.add(r);
       }
       return Traversables.of(results.stream());
@@ -63,13 +60,14 @@ public class SimpleReadOnlyMapImpl<K, V> extends ReadOnlyMapImpl<K, V> {
       Objects.requireNonNull(key, KEY_CANNOT_BE_NULL);
       Objects.requireNonNull(f, FUNCTION_CANNOT_BE_NULL);
 
-      InternalCacheEntry<K, V> ice = fmap.cache.getDataContainer().peek(key);
+      K storageKey = toStorageKey(key);
+      InternalCacheEntry<K, V> ice = fmap.cache.getDataContainer().peek(storageKey);
       boolean notify = false;
       EntryView.ReadEntryView<K, V> view;
       if (ice == null || ice.isNull()) {
-         view = EntryViews.noValue(key);
+         view = EntryViews.noValue(storageKey, fmap.cache.getKeyDataConversion());
       } else {
-         view = EntryViews.readOnly(ice);
+         view = EntryViews.readOnly(ice, fmap.cache.getKeyDataConversion(), fmap.cache.getValueDataConversion());
          notify = true;
       }
 

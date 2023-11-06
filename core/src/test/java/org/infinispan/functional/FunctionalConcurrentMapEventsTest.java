@@ -23,6 +23,11 @@ public class FunctionalConcurrentMapEventsTest extends FunctionalConcurrentMapTe
    }
 
    @Override
+   public void testSimpleEmptyGetThenPut() {
+      assertOrderedEvents(simple2, super::testSimpleEmptyGetThenPut, create("one"));
+   }
+
+   @Override
    public void testReplEmptyGetThenPutOnNonOwner() {
       assertOrderedEvents(repl2, super::testReplEmptyGetThenPutOnNonOwner, create("one"));
    }
@@ -45,6 +50,11 @@ public class FunctionalConcurrentMapEventsTest extends FunctionalConcurrentMapTe
    @Override
    public void testLocalPutGet() {
       assertOrderedEvents(local2, super::testLocalPutGet, create("one"));
+   }
+
+   @Override
+   public void testSimplePutGet() {
+      assertOrderedEvents(simple2, super::testSimplePutGet, create("one"));
    }
 
    @Override
@@ -73,6 +83,11 @@ public class FunctionalConcurrentMapEventsTest extends FunctionalConcurrentMapTe
    }
 
    @Override
+   public void testSimplePutUpdate() {
+      assertOrderedEvents(simple2, super::testSimplePutUpdate, createModify("one", "uno"));
+   }
+
+   @Override
    public void testReplPutUpdateOnNonOwner() {
       assertOrderedEvents(repl2, super::testReplPutUpdateOnNonOwner, createModify("one", "uno"));
    }
@@ -95,6 +110,11 @@ public class FunctionalConcurrentMapEventsTest extends FunctionalConcurrentMapTe
    @Override
    public void testLocalGetAndRemove() {
       assertOrderedEvents(local2, super::testLocalGetAndRemove, createRemove("one"));
+   }
+
+   @Override
+   public void testSimpleGetAndRemove() {
+      assertOrderedEvents(simple2, super::testSimpleGetAndRemove, createRemove("one"));
    }
 
    @Override
@@ -123,6 +143,11 @@ public class FunctionalConcurrentMapEventsTest extends FunctionalConcurrentMapTe
    }
 
    @Override
+   public void testSimpleContainsKey() {
+      assertOrderedEvents(simple2, super::testSimpleContainsKey, create("one"));
+   }
+
+   @Override
    public void testReplContainsKeyOnNonOwner() {
       assertOrderedEvents(repl2, super::testReplContainsKeyOnNonOwner, create("one"));
    }
@@ -145,6 +170,11 @@ public class FunctionalConcurrentMapEventsTest extends FunctionalConcurrentMapTe
    @Override
    public void testLocalContainsValue() {
       assertOrderedEvents(local2, super::testLocalContainsValue, create("one"));
+   }
+
+   @Override
+   public void testSimpleContainsValue() {
+      assertOrderedEvents(simple2, super::testSimpleContainsValue, create("one"));
    }
 
    @Override
@@ -173,6 +203,11 @@ public class FunctionalConcurrentMapEventsTest extends FunctionalConcurrentMapTe
    }
 
    @Override
+   public void testSimpleSize() {
+      assertOrderedEvents(simple2, super::testSimpleSize, createAllRemoveAll("one", "two"));
+   }
+
+   @Override
    public void testReplSizeOnNonOwner() {
       assertOrderedEvents(repl2, super::testReplSizeOnNonOwner, createAllRemoveAll("one", "two"));
    }
@@ -195,6 +230,11 @@ public class FunctionalConcurrentMapEventsTest extends FunctionalConcurrentMapTe
    @Override
    public void testLocalEmpty() {
       assertOrderedEvents(local2, super::testLocalEmpty, createRemove("one"));
+   }
+
+   @Override
+   public void testSimpleEmpty() {
+      assertOrderedEvents(simple2, super::testSimpleEmpty, createRemove("one"));
    }
 
    @Override
@@ -223,6 +263,11 @@ public class FunctionalConcurrentMapEventsTest extends FunctionalConcurrentMapTe
    }
 
    @Override
+   public void testSimplePutAll() {
+      assertUnorderedEvents(simple2, super::testSimplePutAll, writeRemove("one", "two", "two"));
+   }
+
+   @Override
    public void testReplPutAllOnNonOwner() {
       assertUnorderedEvents(repl2, super::testReplPutAllOnNonOwner, writeRemove("one", "two", "two"));
    }
@@ -245,6 +290,11 @@ public class FunctionalConcurrentMapEventsTest extends FunctionalConcurrentMapTe
    @Override
    public void testLocalClear() {
       assertUnorderedEvents(local2, super::testLocalClear, write("one", "two", "two"));
+   }
+
+   @Override
+   public void testSimpleClear() {
+      assertUnorderedEvents(simple2, super::testSimpleClear, write("one", "two", "two"));
    }
 
    @Override
@@ -271,6 +321,12 @@ public class FunctionalConcurrentMapEventsTest extends FunctionalConcurrentMapTe
    public void testLocalKeyValueAndEntrySets() {
       assertUnorderedEvents(local2, super::testLocalKeyValueAndEntrySets,
          createModifyRemove(Arrays.asList("one", "two", "two"), Arrays.asList("uno", "dos", "dos")));
+   }
+
+   @Override
+   public void testSimpleKeyValueAndEntrySets() {
+      assertUnorderedEvents(simple2, super::testSimpleKeyValueAndEntrySets,
+            createModifyRemove(Arrays.asList("one", "two", "two"), Arrays.asList("uno", "dos", "dos")));
    }
 
    @Override
@@ -302,6 +358,11 @@ public class FunctionalConcurrentMapEventsTest extends FunctionalConcurrentMapTe
    }
 
    @Override
+   public void testSimplePutIfAbsent() {
+      assertOrderedEvents(simple2, super::testSimplePutIfAbsent, createRemove("one"));
+   }
+
+   @Override
    public void testReplPutIfAbsentOnNonOwner() {
       assertOrderedEvents(repl2, super::testReplPutIfAbsentOnNonOwner, createRemove("one"));
    }
@@ -324,6 +385,11 @@ public class FunctionalConcurrentMapEventsTest extends FunctionalConcurrentMapTe
    @Override
    public void testLocalConditionalRemove() {
       assertOrderedEvents(local2, super::testLocalConditionalRemove, createRemove("one"));
+   }
+
+   @Override
+   public void testSimpleConditionalRemove() {
+      assertOrderedEvents(simple2, super::testSimpleConditionalRemove, createRemove("one"));
    }
 
    @Override
@@ -352,6 +418,11 @@ public class FunctionalConcurrentMapEventsTest extends FunctionalConcurrentMapTe
    }
 
    @Override
+   public void testSimpleReplace() {
+      assertOrderedEvents(simple2, super::testSimpleReplace, createModifyRemove("one", "uno"));
+   }
+
+   @Override
    public void testReplReplaceOnNonOwner() {
       assertOrderedEvents(repl2, super::testReplReplaceOnNonOwner, createModifyRemove("one", "uno"));
    }
@@ -374,6 +445,11 @@ public class FunctionalConcurrentMapEventsTest extends FunctionalConcurrentMapTe
    @Override
    public void testLocalReplaceWithValue() {
       assertOrderedEvents(local2, super::testLocalReplaceWithValue, createModifyRemove("one", "uno"));
+   }
+
+   @Override
+   public void testSimpleReplaceWithValue() {
+      assertOrderedEvents(simple2, super::testSimpleReplaceWithValue, createModifyRemove("one", "uno"));
    }
 
    @Override

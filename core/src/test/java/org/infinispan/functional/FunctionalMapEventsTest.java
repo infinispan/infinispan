@@ -23,6 +23,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "functional.FunctionalMapEventsTest")
 public class FunctionalMapEventsTest extends FunctionalMapTest {
 
+   LocalFunctionalListeners<Integer> simpleL2;
    LocalFunctionalListeners<Integer> localL2;
    LocalFunctionalListeners<Object> replL2;
    LocalFunctionalListeners<Object> distL2;
@@ -31,6 +32,7 @@ public class FunctionalMapEventsTest extends FunctionalMapTest {
    @Override
    public void createBeforeClass() throws Throwable {
       super.createBeforeClass();
+      simpleL2 = new LocalFunctionalListeners<>(fmapS2);
       localL2 = new LocalFunctionalListeners<>(fmapL2);
       replL2 = new LocalFunctionalListeners<>(fmapR2);
       distL2 = new LocalFunctionalListeners<>(fmapD2);
@@ -39,6 +41,11 @@ public class FunctionalMapEventsTest extends FunctionalMapTest {
    @Override
    public void testLocalWriteConstantAndReadGetsValue() {
       assertOrderedEvents(localL2, super::testLocalWriteConstantAndReadGetsValue, write("one"));
+   }
+
+   @Override
+   public void testSimpleWriteConstantAndReadGetsValue() {
+      assertOrderedEvents(simpleL2, super::testSimpleWriteConstantAndReadGetsValue, write("one"));
    }
 
    @Override
@@ -67,6 +74,11 @@ public class FunctionalMapEventsTest extends FunctionalMapTest {
    }
 
    @Override
+   public void testSimpleWriteValueAndReadValueAndMetadata() {
+      assertOrderedEvents(simpleL2, super::testSimpleWriteValueAndReadValueAndMetadata, write("one"));
+   }
+
+   @Override
    public void testReplWriteValueAndReadValueAndMetadataOnNonOwner() {
       assertOrderedEvents(replL2, super::testReplWriteValueAndReadValueAndMetadataOnNonOwner, write("one"));
    }
@@ -92,6 +104,11 @@ public class FunctionalMapEventsTest extends FunctionalMapTest {
    }
 
    @Override
+   public void testSimpleReadWriteGetsEmpty() {
+      assertNoEvents(simpleL2, super::testSimpleReadWriteGetsEmpty);
+   }
+
+   @Override
    public void testReplReadWriteGetsEmptyOnNonOwner() {
       assertNoEvents(replL2, super::testReplReadWriteGetsEmptyOnNonOwner);
    }
@@ -114,6 +131,11 @@ public class FunctionalMapEventsTest extends FunctionalMapTest {
    @Override
    public void testLocalReadWriteValuesReturnPrevious() {
       assertOrderedEvents(localL2, super::testLocalReadWriteValuesReturnPrevious, create("one"));
+   }
+
+   @Override
+   public void testSimpleReadWriteValuesReturnPrevious() {
+      assertOrderedEvents(simpleL2, super::testSimpleReadWriteValuesReturnPrevious, create("one"));
    }
 
    @Override
@@ -143,6 +165,12 @@ public class FunctionalMapEventsTest extends FunctionalMapTest {
    }
 
    @Override
+   public void testSimpleReadWriteForConditionalParamBasedReplace() {
+      Collection<TestEvent<String>> events = createUpdateCreate();
+      assertOrderedEvents(simpleL2, super::testSimpleReadWriteForConditionalParamBasedReplace, events);
+   }
+
+   @Override
    public void testReplReadWriteForConditionalParamBasedReplaceOnNonOwner() {
       assertOrderedEvents(replL2, super::testReplReadWriteForConditionalParamBasedReplaceOnNonOwner, createUpdateCreate());
    }
@@ -165,6 +193,11 @@ public class FunctionalMapEventsTest extends FunctionalMapTest {
    @Override
    public void testLocalReadOnlyEvalManyEmpty() {
       assertNoEvents(localL2, super::testLocalReadOnlyEvalManyEmpty);
+   }
+
+   @Override
+   public void testSimpleReadOnlyEvalManyEmpty() {
+      assertNoEvents(simpleL2, super::testSimpleReadOnlyEvalManyEmpty);
    }
 
    @Override
@@ -194,6 +227,12 @@ public class FunctionalMapEventsTest extends FunctionalMapTest {
    }
 
    @Override
+   public void testSimpleUpdateSubsetAndReturnPrevs() {
+      assertUnorderedEvents(simpleL2, super::testSimpleUpdateSubsetAndReturnPrevs,
+            writeModify(Arrays.asList("one", "two", "three"), Arrays.asList("bat", "bi", "hiru")));
+   }
+
+   @Override
    public void testReplUpdateSubsetAndReturnPrevsOnNonOwner() {
       assertUnorderedEvents(replL2, super::testReplUpdateSubsetAndReturnPrevsOnNonOwner,
          writeModify(Arrays.asList("one", "two", "three"), Arrays.asList("bat", "bi", "hiru")));
@@ -220,6 +259,12 @@ public class FunctionalMapEventsTest extends FunctionalMapTest {
    public void testLocalReadWriteToRemoveAllAndReturnPrevs() {
       assertUnorderedEvents(localL2, super::testLocalReadWriteToRemoveAllAndReturnPrevs,
          writeRemove("one", "two", "three"));
+   }
+
+   @Override
+   public void testSimpleReadWriteToRemoveAllAndReturnPrevs() {
+      assertUnorderedEvents(simpleL2, super::testSimpleReadWriteToRemoveAllAndReturnPrevs,
+            writeRemove("one", "two", "three"));
    }
 
    @Override
