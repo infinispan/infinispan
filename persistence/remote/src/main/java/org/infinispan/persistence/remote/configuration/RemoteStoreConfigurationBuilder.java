@@ -1,5 +1,6 @@
 package org.infinispan.persistence.remote.configuration;
 
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.PROPERTIES;
 import static org.infinispan.configuration.cache.AbstractStoreConfiguration.SEGMENTED;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.BALANCING_STRATEGY;
 import static org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration.CONNECTION_TIMEOUT;
@@ -22,9 +23,11 @@ import java.util.List;
 import java.util.Properties;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -224,13 +227,17 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
    @Override
    public void validate(GlobalConfiguration globalConfig) {
       // if no servers/uri has been specified, then there must be a remote cache container
-      if (attributes.attribute(URI).isNull() && servers.isEmpty()) {
+      if ((attributes.attribute(URI).isNull() && servers.isEmpty()) && !uriPropertyDefined()) {
          String containerName = attributes.attribute(REMOTE_CACHE_CONTAINER).get();
-         if (!globalConfig.module(RemoteContainersConfiguration.class).configurations().containsKey(containerName)) {
+         RemoteContainersConfiguration remoteContainersConfig = globalConfig.module(RemoteContainersConfiguration.class);
+         if (remoteContainersConfig == null || !remoteContainersConfig.configurations().containsKey(containerName))
             throw Log.CONFIG.remoteStoreWithoutContainer();
-         }
       }
       super.validate(globalConfig);
+   }
+
+   private boolean uriPropertyDefined() {
+      return TypedProperties.toTypedProperties(attributes.attribute(PROPERTIES).get()).containsKey(ConfigurationProperties.URI);
    }
 
    @Override
