@@ -27,7 +27,7 @@ public class RemoteStoreConfigUriTest extends RemoteStoreConfigTest {
 
    @Override
    protected String parameters() {
-      return "xml=" + cacheLoaderConfig;
+      return String.format("[xml=%s]", cacheLoaderConfig.replace(".xml", ""));
    }
 
    public RemoteStoreConfigUriTest(String cacheLoaderConfig, String storeCacheName) {
