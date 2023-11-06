@@ -16,7 +16,7 @@
 					cache="RemoteStoreConfigUriTest"
 					shared="true"
 					segmented="false">
-					<property name="uri">hotrods://127.0.0.1:19811?use_ssl=false&amp;tcp_no_delay=true&amp;tcp_keep_alive=false&amp;force_return_values=false</property>
+					<property name="infinispan.client.hotrod.uri">hotrods://127.0.0.1:19811?use_ssl=false&amp;tcp_no_delay=true&amp;tcp_keep_alive=false&amp;force_return_values=false</property>
 				</remote-store>
 			</persistence>
 		</local-cache>

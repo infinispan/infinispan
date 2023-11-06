@@ -20,6 +20,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.ExhaustedAction;
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.HotRodURI;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.protocol.Codec27;
@@ -125,7 +126,6 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
       }
 
       CompletionStage<RemoteCacheManager> rcmStage;
-
       if (isManagedRemoteCacheManager()) {
          BasicComponentRegistry bcr = ctx.getCache().getAdvancedCache().getComponentRegistry()
                .getGlobalComponentRegistry()
@@ -208,7 +208,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
    }
 
    private boolean isManagedRemoteCacheManager() {
-      return configuration.servers().isEmpty() && configuration.uri() == null;
+      return configuration.servers().isEmpty() && configuration.uri() == null && !configuration.properties().containsKey(ConfigurationProperties.URI);
    }
 
    @Override
