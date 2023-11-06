@@ -20,6 +20,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.ExhaustedAction;
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.HotRodURI;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.protocol.Codec27;
@@ -450,10 +451,16 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
 
    private ConfigurationBuilder buildRemoteConfiguration(RemoteStoreConfiguration configuration, Marshaller marshaller) {
 
-      ConfigurationBuilder builder = (configuration.uri() != null
-            && !configuration.uri().isEmpty())
-                  ? HotRodURI.create(configuration.uri()).toConfigurationBuilder()
-                  : new ConfigurationBuilder();
+      ConfigurationBuilder builder;
+      if (configuration.uri() != null && !configuration.uri().isEmpty()) {
+         builder = HotRodURI.create(configuration.uri()).toConfigurationBuilder();
+      } else if (configuration.properties().containsKey(ConfigurationProperties.URI)) {
+         // ISPN-15292 prevent ConfigurationBuilder#read call on HotRodURI overwriting config with default values
+         builder = HotRodURI.create(configuration.properties().getProperty(ConfigurationProperties.URI)).toConfigurationBuilder();
+         configuration.properties().remove(ConfigurationProperties.URI);
+      } else {
+         builder = new ConfigurationBuilder();
+      }
 
       List<RemoteServerConfiguration> servers = configuration.servers();
       for (RemoteServerConfiguration s : servers) {
