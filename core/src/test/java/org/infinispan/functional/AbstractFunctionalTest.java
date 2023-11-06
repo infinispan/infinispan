@@ -1,6 +1,7 @@
 package org.infinispan.functional;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.functional.impl.FunctionalMapImpl;
@@ -8,6 +9,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
+import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 
@@ -15,6 +17,7 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
 
    static final String DIST = "dist";
    static final String REPL = "repl";
+   static final String SIMPLE = "simple";
 
    // Create local caches as default in a cluster of 2
    int numNodes = 2;
@@ -22,6 +25,9 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
    boolean isSync = true;
    boolean persistence = true;
    boolean passivation = false;
+
+   FunctionalMapImpl<Integer, String> fmapS1;
+   FunctionalMapImpl<Integer, String> fmapS2;
 
    FunctionalMapImpl<Integer, String> fmapL1;
    FunctionalMapImpl<Integer, String> fmapL2;
@@ -33,11 +39,14 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
    FunctionalMapImpl<Object, String> fmapR1;
    FunctionalMapImpl<Object, String> fmapR2;
 
+   private boolean skipSimpleCache = false;
+
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder localBuilder = new ConfigurationBuilder();
       configureCache(localBuilder);
       createClusteredCaches(numNodes, TestDataSCI.INSTANCE, localBuilder);
+      defineSimpleCache();
       // Create distributed caches
       ConfigurationBuilder distBuilder = new ConfigurationBuilder();
       distBuilder.clustering().cacheMode(isSync ? CacheMode.DIST_SYNC : CacheMode.DIST_ASYNC).hash().numOwners(numDistOwners);
@@ -51,6 +60,20 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
 
       // Wait for cluster to form
       waitForClusterToForm(DIST, REPL);
+   }
+
+   private void defineSimpleCache() {
+      // Create simple cache
+      ConfigurationBuilder simpleBuilder = new ConfigurationBuilder();
+      configureCache(simpleBuilder);
+      simpleBuilder.persistence().stores().clear();
+      simpleBuilder.simpleCache(true);
+
+      try {
+         cacheManagers.forEach(cm -> cm.defineConfiguration(SIMPLE, simpleBuilder.build()));
+      } catch (CacheConfigurationException e) {
+         skipSimpleCache = e.getMessage().startsWith("ISPN000381");
+      }
    }
 
    protected void configureCache(ConfigurationBuilder builder) {
@@ -96,6 +119,11 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
    }
 
    protected void initMaps() {
+      if (!isSkipSimpleCache()) {
+         fmapS1 = FunctionalMapImpl.create(getAdvancedCache(cacheManagers.get(0), SIMPLE));
+         fmapS2 = FunctionalMapImpl.create(getAdvancedCache(cacheManagers.get(0), SIMPLE));
+      }
+
       fmapL1 = FunctionalMapImpl.create(getAdvancedCache(cacheManagers.get(0), null));
       fmapL2 = FunctionalMapImpl.create(getAdvancedCache(cacheManagers.get(0), null));
       fmapD1 = FunctionalMapImpl.create(getAdvancedCache(cacheManagers.get(0), DIST));
@@ -106,5 +134,14 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
 
    protected <K, V> AdvancedCache<K, V> getAdvancedCache(EmbeddedCacheManager cm, String cacheName) {
       return (AdvancedCache<K, V>) (cacheName == null ? cm.getCache() : cm.getCache(cacheName));
+   }
+
+   protected boolean isSkipSimpleCache() {
+      return skipSimpleCache;
+   }
+
+   protected void checkSimpleCacheAvailable() {
+      if (isSkipSimpleCache())
+         throw new SkipException("Skip test because simple cache not available");
    }
 }

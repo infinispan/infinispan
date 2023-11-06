@@ -78,6 +78,11 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "functional.FunctionalMapTest")
 public class FunctionalMapTest extends AbstractFunctionalTest {
 
+   public void testSimpleWriteConstantAndReadGetsValue() {
+      checkSimpleCacheAvailable();
+      doWriteConstantAndReadGetsValue(supplyIntKey(), ro(fmapS1), wo(fmapS2));
+   }
+
    public void testLocalWriteConstantAndReadGetsValue() {
       doWriteConstantAndReadGetsValue(supplyIntKey(), ro(fmapL1), wo(fmapL2));
    }
@@ -128,6 +133,11 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
          public void writeObject(ObjectOutput oo, Object o) {}
          public Object readObject(ObjectInput input) { return INSTANCE; }
       }
+   }
+
+   public void testSimpleWriteValueAndReadValueAndMetadata() {
+      checkSimpleCacheAvailable();
+      doWriteValueAndReadValueAndMetadata(supplyIntKey(), ro(fmapS1), wo(fmapS2));
    }
 
    public void testLocalWriteValueAndReadValueAndMetadata() {
@@ -191,6 +201,11 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       }
    }
 
+   public void testSimpleReadWriteGetsEmpty() {
+      checkSimpleCacheAvailable();
+      doReadWriteGetsEmpty(supplyIntKey(), rw(fmapS1));
+   }
+
    public void testLocalReadWriteGetsEmpty() {
       doReadWriteGetsEmpty(supplyIntKey(), rw(fmapL1));
    }
@@ -217,6 +232,11 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
    <K> void doReadWriteGetsEmpty(Supplier<K> keySupplier, ReadWriteMap<K, String> map) {
       K key = keySupplier.get();
       await(map.eval(key, returnReadWriteFind()).thenAccept(v -> assertEquals(Optional.empty(), v)));
+   }
+
+   public void testSimpleReadWriteValuesReturnPrevious() {
+      checkSimpleCacheAvailable();
+      doReadWriteConstantReturnPrev(supplyIntKey(), rw(fmapS1), rw(fmapS2));
    }
 
    public void testLocalReadWriteValuesReturnPrevious() {
@@ -278,6 +298,13 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
          public void writeObject(ObjectOutput oo, Object o) {}
          public Object readObject(ObjectInput input) { return INSTANCE; }
       }
+   }
+
+   public void testSimpleReadWriteForConditionalParamBasedReplace() {
+      checkSimpleCacheAvailable();
+      assumeNonTransactional();
+      // Data does not replicate between simple caches.
+      doReadWriteForConditionalParamBasedReplace(supplyIntKey(), rw(fmapS1), rw(fmapS2));
    }
 
    // Transactions use SimpleClusteredVersions, not NumericVersions, and user is not supposed to modify those
@@ -430,6 +457,11 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       });
    }
 
+   public void testSimpleReadOnlyEvalManyEmpty() {
+      checkSimpleCacheAvailable();
+      doReadOnlyEvalManyEmpty(supplyIntKey(), ro(fmapS1));
+   }
+
    public void testLocalReadOnlyEvalManyEmpty() {
       doReadOnlyEvalManyEmpty(supplyIntKey(), ro(fmapL1));
    }
@@ -455,6 +487,11 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       Traversable<ReadEntryView<K, String>> t = map
          .evalMany(new HashSet<>(Arrays.asList(key1, key2, key3)), identity());
       t.forEach(ro -> assertFalse(ro.find().isPresent()));
+   }
+
+   public void testSimpleUpdateSubsetAndReturnPrevs() {
+      checkSimpleCacheAvailable();
+      doUpdateSubsetAndReturnPrevs(supplyIntKey(), ro(fmapS1), wo(fmapS2), rw(fmapS2));
    }
 
    public void testLocalUpdateSubsetAndReturnPrevs() {
@@ -509,6 +546,11 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       assertEquals(newDataValues, collectedUpdates);
    }
 
+   public void testSimpleReadWriteToRemoveAllAndReturnPrevs() {
+      checkSimpleCacheAvailable();
+      doReadWriteToRemoveAllAndReturnPrevs(supplyIntKey(), wo(fmapS1), rw(fmapS2));
+   }
+
    public void testLocalReadWriteToRemoveAllAndReturnPrevs() {
       doReadWriteToRemoveAllAndReturnPrevs(supplyIntKey(), wo(fmapL1), rw(fmapL2));
    }
@@ -542,6 +584,11 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       assertEquals(new HashSet<>(data.values()), prevValues);
    }
 
+   public void testSimpleReturnViewFromReadOnlyEval() {
+      checkSimpleCacheAvailable();
+      doReturnViewFromReadOnlyEval(supplyIntKey(), ro(fmapS1), wo(fmapS2));
+   }
+
    public void testLocalReturnViewFromReadOnlyEval() {
       doReturnViewFromReadOnlyEval(supplyIntKey(), ro(fmapL1), wo(fmapL2));
    }
@@ -568,6 +615,11 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       assertReadOnlyViewEmpty(k, await(ro.eval(k, identity())));
       await(wo.eval(k, wv -> wv.set("one")));
       assertReadOnlyViewEquals(k, "one", await(ro.eval(k, identity())));
+   }
+
+   public void testSimpleReturnViewFromReadWriteEval() {
+      checkSimpleCacheAvailable();
+      doReturnViewFromReadWriteEval(supplyIntKey(), rw(fmapS1), rw(fmapS2));
    }
 
    public void testLocalReturnViewFromReadWriteEval() {

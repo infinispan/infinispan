@@ -15,14 +15,12 @@ import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
-import org.infinispan.container.entries.ReadCommittedEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.impl.ImmutableContext;
 import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.functional.EntryView;
+import org.infinispan.functional.Param;
 import org.infinispan.functional.Traversable;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -35,7 +33,7 @@ import org.infinispan.util.concurrent.CompletionStages;
  * @see ReadWriteMapImpl
  */
 @Experimental
-public class SimpleReadWriteMapImpl<K, V> extends ReadWriteMapImpl<K, V> {
+public class SimpleReadWriteMapImpl<K, V> extends ReadWriteMapImpl<K, V> implements SimpleFunctionalMap<K, V> {
    private static final String KEY_CANNOT_BE_NULL = "Key cannot be null";
    private static final String FUNCTION_CANNOT_BE_NULL = "Function cannot be null";
 
@@ -55,14 +53,13 @@ public class SimpleReadWriteMapImpl<K, V> extends ReadWriteMapImpl<K, V> {
 
    @Override
    public <T, R> CompletableFuture<R> eval(K key, T argument, BiFunction<T, EntryView.ReadWriteEntryView<K, V>, R> f) {
-      K storageKey = storageKey(key);
+      K storageKey = toStorageKey(key);
       InternalCacheEntry<K, V> ice = fmap.cache.getDataContainer().peek(storageKey);
       boolean expired = false;
       if (ice != null && ice.canExpire()) {
          int segment = fmap.keyPartitioner.getSegment(storageKey);
          CompletionStage<Boolean> expiration = expirationManager.handlePossibleExpiration(ice, segment, true);
-         assert expiration.toCompletableFuture().isDone() : "Expiration CF is not done!";
-         expired = CompletionStages.join(expiration);
+         expired = toLocalExecution(expiration.toCompletableFuture());
 
          if (expired && notifier.hasListener(CacheEntryExpired.class)) {
             CompletionStages.join(notifier.notifyCacheEntryExpired(ice.getKey(), ice.getValue(), ice.getMetadata(),   ImmutableContext.INSTANCE));
@@ -86,9 +83,7 @@ public class SimpleReadWriteMapImpl<K, V> extends ReadWriteMapImpl<K, V> {
       List<R> results = new ArrayList<>(arguments.size());
       for (Map.Entry<? extends K, ? extends T> me : arguments.entrySet()) {
          CompletableFuture<R> cf = eval(me.getKey(), me.getValue(), f);
-         assert cf.isDone() : "eval() returned an incomplete CompletableFuture";
-
-         results.add(CompletionStages.join(cf));
+         results.add(toLocalExecution(cf));
       }
 
       return Traversables.of(results.stream());
@@ -99,10 +94,7 @@ public class SimpleReadWriteMapImpl<K, V> extends ReadWriteMapImpl<K, V> {
       List<R> results = new ArrayList<>(keys.size());
       BiFunction<?, EntryView.ReadWriteEntryView<K, V>, R> bf = (ignore, v) -> f.apply(v);
       for (K key : keys) {
-         CompletableFuture<R> cf = eval(key, null, bf);
-         assert cf.isDone() : "eval() returned an incomplete CompletableFuture";
-
-         results.add(CompletionStages.join(cf));
+         results.add(toLocalExecution(eval(key, null, bf)));
       }
 
       return Traversables.of(results.stream());
@@ -111,6 +103,10 @@ public class SimpleReadWriteMapImpl<K, V> extends ReadWriteMapImpl<K, V> {
    @Override
    public <R> Traversable<R> evalAll(Function<EntryView.ReadWriteEntryView<K, V>, R> f) {
       return evalMany(fmap.cache.keySet(), f);
+   }
+
+   private boolean isStatisticsEnabled() {
+      return !params.containsAll(Param.StatisticsMode.SKIP);
    }
 
    private <R, T> R evalInternal(K key, T argument, BiFunction<T, EntryView.ReadWriteEntryView<K, V>, R> f, InternalCacheEntry<K, V> override) {
@@ -127,7 +123,7 @@ public class SimpleReadWriteMapImpl<K, V> extends ReadWriteMapImpl<K, V> {
    private <R, T> InternalCacheEntry<K, V> compute(K key, T argument, BiFunction<T, EntryView.ReadWriteEntryView<K, V>, R> f,
                                                    InternalCacheEntry<K, V> oldEntry, InternalEntryFactory factory,
                                                    ByRef<R> result, ByRef<SimpleWriteNotifierHelper.EntryHolder<K, V>> holder) {
-      MVCCEntry<K, V> e = extractEntry(oldEntry, key);
+      MVCCEntry<K, V> e = readCacheEntry(key, oldEntry);
       EntryViews.AccessLoggingReadWriteView<K, V> view =  EntryViews.readWrite(e, fmap.cache.getKeyDataConversion(), fmap.cache.getValueDataConversion());
       result.set(EntryViews.snapshot(f.apply(argument, view)));
 
@@ -139,37 +135,10 @@ public class SimpleReadWriteMapImpl<K, V> extends ReadWriteMapImpl<K, V> {
       holder.set(eh);
       SimpleWriteNotifierHelper.handleNotification(notifier, fmap.notifier, key, eh, true);
 
+      if (e.isRemoved()) return null;
+
       return oldEntry == null
             ? factory.create(e)
             : factory.update(oldEntry, e.getValue(), e.getMetadata());
-   }
-
-   @SuppressWarnings("unchecked")
-   private K storageKey(K key) {
-      return (K) fmap.cache.getKeyDataConversion().toStorage(key);
-   }
-
-   private MVCCEntry<K, V> extractEntry(InternalCacheEntry<K, V> ice, K key) {
-      if (ice == null) {
-         return new ReadCommittedEntry<>(key, null, null);
-      }
-
-      return createWrapped(key, ice);
-   }
-
-   private MVCCEntry<K, V> createWrapped(K key, InternalCacheEntry<K, V> ice) {
-      V value;
-      Metadata metadata;
-      PrivateMetadata internalMetadata;
-      synchronized (ice) {
-         value = ice.getValue();
-         metadata = ice.getMetadata();
-         internalMetadata = ice.getInternalMetadata();
-      }
-      MVCCEntry<K, V> mvccEntry = new ReadCommittedEntry<>(key, value, metadata);
-      mvccEntry.setInternalMetadata(internalMetadata);
-      mvccEntry.setCreated(ice.getCreated());
-      mvccEntry.setLastUsed(ice.getLastUsed());
-      return mvccEntry;
    }
 }

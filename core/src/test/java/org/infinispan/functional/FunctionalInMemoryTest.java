@@ -84,16 +84,26 @@ public class FunctionalInMemoryTest extends AbstractFunctionalOpTest {
 
    @Test(dataProvider = "writeMethods")
    public void testWriteLoadLocal(WriteMethod method) {
-      Integer key = 1;
+      testWriteLoad(method, 1, lwo, lrw, null);
+   }
 
-      method.eval(key, lwo, lrw,
+   @Test(dataProvider = "writeMethods")
+   public void testWriteLoadSimple(WriteMethod method) {
+      checkSimpleCacheAvailable();
+      testWriteLoad(method, 1, swo, srw, SIMPLE);
+   }
+
+   private <K, R> void testWriteLoad(WriteMethod method, K key, FunctionalMap.WriteOnlyMap<K, String> wo,
+                                FunctionalMap.ReadWriteMap<K, String> rw, String name) {
+      method.eval(key, wo, rw,
             view -> { assertFalse(view.find().isPresent()); return null; },
             (view, nil) -> view.set("value"), getClass());
 
       assertInvocations(1);
-      assertEquals(cacheManagers.get(0).getCache().get(key), "value");
+      Cache<K, String> c = name == null ? cacheManagers.get(0).getCache() : cacheManagers.get(0).getCache(name);
+      assertEquals(c.get(key), "value");
 
-      method.eval(key, lwo, lrw,
+      method.eval(key, wo, rw,
             view -> {
                assertTrue(view.find().isPresent());
                assertEquals(view.get(), "value");

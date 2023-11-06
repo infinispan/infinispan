@@ -26,10 +26,10 @@ import org.infinispan.util.logging.LogFactory;
  * @since 8.0
  */
 @Experimental
-public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> implements WriteOnlyMap<K, V> {
+public class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> implements WriteOnlyMap<K, V> {
    private static final Log log = LogFactory.getLog(WriteOnlyMapImpl.class);
 
-   private WriteOnlyMapImpl(Params params, FunctionalMapImpl<K, V> functionalMap) {
+   protected WriteOnlyMapImpl(Params params, FunctionalMapImpl<K, V> functionalMap) {
       super(params, functionalMap);
    }
 
@@ -38,6 +38,8 @@ public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    }
 
    private static <K, V> WriteOnlyMap<K, V> create(Params params, FunctionalMapImpl<K, V> functionalMap) {
+      if (functionalMap.cache.getCacheConfiguration().simpleCache())
+         return new SimpleWriteOnlyMapImpl<>(params, functionalMap);
       return new WriteOnlyMapImpl<>(params, functionalMap);
    }
 

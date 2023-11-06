@@ -25,6 +25,9 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "functional.FunctionalConcurrentMapTest")
 public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
 
+   ConcurrentMap<Integer, String> simple1;
+   ConcurrentMap<Integer, String> simple2;
+
    ConcurrentMap<Integer, String> local1;
    ConcurrentMap<Integer, String> local2;
 
@@ -38,12 +41,18 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
    @Override
    public void createBeforeClass() throws Throwable {
       super.createBeforeClass();
+      simple1 = FunctionalConcurrentMap.create(cacheManagers.get(0).<Integer, String>getCache(SIMPLE).getAdvancedCache());
+      simple2 = FunctionalConcurrentMap.create(cacheManagers.get(0).<Integer, String>getCache(SIMPLE).getAdvancedCache());
       local1 = FunctionalConcurrentMap.create(cacheManagers.get(0).<Integer, String>getCache().getAdvancedCache());
       local2 = FunctionalConcurrentMap.create(cacheManagers.get(0).<Integer, String>getCache().getAdvancedCache());
       dist1 = FunctionalConcurrentMap.create(cacheManagers.get(0).<Object, String>getCache(DIST).getAdvancedCache());
       dist2 = FunctionalConcurrentMap.create(cacheManagers.get(1).<Object, String>getCache(DIST).getAdvancedCache());
       repl1 = FunctionalConcurrentMap.create(cacheManagers.get(0).<Object, String>getCache(REPL).getAdvancedCache());
       repl2 = FunctionalConcurrentMap.create(cacheManagers.get(1).<Object, String>getCache(REPL).getAdvancedCache());
+   }
+
+   public void testSimpleEmptyGetThenPut() {
+      doEmptyGetThenPut(supplyIntKey(), simple1, simple2);
    }
 
    public void testLocalEmptyGetThenPut() {
@@ -79,6 +88,10 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
       doPutGet(supplyIntKey(), local1, local2);
    }
 
+   public void testSimplePutGet() {
+      doPutGet(supplyIntKey(), simple1, simple2);
+   }
+
    public void testReplPutGetOnNonOwner() {
       doPutGet(supplyKeyForCache(1, REPL), repl1, repl2);
    }
@@ -105,6 +118,10 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
 
    public void testLocalPutUpdate() {
       doPutUpdate(supplyIntKey(), local1, local2);
+   }
+
+   public void testSimplePutUpdate() {
+      doPutUpdate(supplyIntKey(), simple1, simple2);
    }
 
    public void testReplPutUpdateOnNonOwner() {
@@ -134,6 +151,10 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
 
    public void testLocalGetAndRemove() {
       doGetAndRemove(supplyIntKey(), local1, local2);
+   }
+
+   public void testSimpleGetAndRemove() {
+      doGetAndRemove(supplyIntKey(), simple1, simple2);
    }
 
    public void testReplGetAndRemoveOnNonOwner() {
@@ -166,6 +187,10 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
       doContainsKey(supplyIntKey(), local1, local2);
    }
 
+   public void testSimpleContainsKey() {
+      doContainsKey(supplyIntKey(), simple1, simple2);
+   }
+
    public void testReplContainsKeyOnNonOwner() {
       doContainsKey(supplyKeyForCache(0, REPL), repl1, repl2);
    }
@@ -193,6 +218,10 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
 
    public void testLocalContainsValue() {
       doContainsValue(supplyIntKey(), "one", local1, local2);
+   }
+
+   public void testSimpleContainsValue() {
+      doContainsValue(supplyIntKey(), "one", simple1, simple2);
    }
 
    public void testReplContainsValueOnNonOwner() {
@@ -223,6 +252,10 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
 
    public void testLocalSize() {
       doSize(supplyIntKey(), local1, local2);
+   }
+
+   public void testSimpleSize() {
+      doSize(supplyIntKey(), simple1, simple2);
    }
 
    public void testReplSizeOnNonOwner() {
@@ -260,6 +293,10 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
       doEmpty(supplyIntKey(), local1, local2);
    }
 
+   public void testSimpleEmpty() {
+      doEmpty(supplyIntKey(), simple1, simple2);
+   }
+
    public void testReplEmptyOnNonOwner() {
       doEmpty(supplyKeyForCache(0, REPL), repl1, repl2);
    }
@@ -290,6 +327,10 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
 
    public void testLocalPutAll() {
       doPutAll(supplyIntKey(), local1, local2);
+   }
+
+   public void testSimplePutAll() {
+      doPutAll(supplyIntKey(), simple1, simple2);
    }
 
    public void testReplPutAllOnNonOwner() {
@@ -330,6 +371,10 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
       doClear(supplyIntKey(), local1, local2);
    }
 
+   public void testSimpleClear() {
+      doClear(supplyIntKey(), simple1, simple2);
+   }
+
    public void testReplClearOnNonOwner() {
       doClear(supplyKeyForCache(0, REPL), repl1, repl2);
    }
@@ -367,6 +412,10 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
 
    public void testLocalKeyValueAndEntrySets() {
       doKeyValueAndEntrySets(supplyIntKey(), local1, local2);
+   }
+
+   public void testSimpleKeyValueAndEntrySets() {
+      doKeyValueAndEntrySets(supplyIntKey(), simple1, simple2);
    }
 
    public void testReplKeyValueAndEntrySetsOnNonOwner() {
@@ -424,6 +473,10 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
       doPutIfAbsent(supplyIntKey(), local1, local2);
    }
 
+   public void testSimplePutIfAbsent() {
+      doPutIfAbsent(supplyIntKey(), simple1, simple2);
+   }
+
    public void testReplPutIfAbsentOnNonOwner() {
       doPutIfAbsent(supplyKeyForCache(0, REPL), repl1, repl2);
    }
@@ -455,6 +508,10 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
 
    public void testLocalConditionalRemove() {
       doConditionalRemove(supplyIntKey(), local1, local2);
+   }
+
+   public void testSimpleConditionalRemove() {
+      doConditionalRemove(supplyIntKey(), simple1, simple2);
    }
 
    public void testReplConditionalRemoveOnNonOwner() {
@@ -491,6 +548,10 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
       doReplace(supplyIntKey(), local1, local2);
    }
 
+   public void testSimpleReplace() {
+      doReplace(supplyIntKey(), simple1, simple2);
+   }
+
    public void testReplReplaceOnNonOwner() {
       doReplace(supplyKeyForCache(0, REPL), repl1, repl2);
    }
@@ -523,6 +584,10 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
 
    public void testLocalReplaceWithValue() {
       doReplaceWithValue(supplyIntKey(), local1, local2);
+   }
+
+   public void testSimpleReplaceWithValue() {
+      doReplaceWithValue(supplyIntKey(), simple1, simple2);
    }
 
    public void testReplReplaceWithValueOnNonOwner() {

@@ -53,11 +53,14 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
 
    FunctionalMap.ReadOnlyMap<Object, String> ro;
    FunctionalMap.ReadOnlyMap<Integer, String> lro;
+   FunctionalMap.ReadOnlyMap<Integer, String> sro;
    WriteOnlyMap<Object, String> wo;
    ReadWriteMap<Object, String> rw;
    AdvancedCache<Object, String> cache;
    WriteOnlyMap<Integer, String> lwo;
    ReadWriteMap<Integer, String> lrw;
+   WriteOnlyMap<Integer, String> swo;
+   ReadWriteMap<Integer, String> srw;
    List<CountingRequestRepository> countingRequestRepositories;
 
    public AbstractFunctionalOpTest() {
@@ -120,6 +123,12 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
       this.cache = cacheManagers.get(0).<Object, String>getCache(DIST).getAdvancedCache();
       this.lwo = WriteOnlyMapImpl.create(fmapL1);
       this.lrw = ReadWriteMapImpl.create(fmapL1);
+
+      if (!isSkipSimpleCache()) {
+         this.sro = ReadOnlyMapImpl.create(fmapS1);
+         this.swo = WriteOnlyMapImpl.create(fmapS1);
+         this.srw = ReadWriteMapImpl.create(fmapS1);
+      }
    }
 
    @Override
@@ -130,8 +139,10 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
                                                  .collect(Collectors.toList());
       for (EmbeddedCacheManager manager : managers()) {
          for (String cacheName : manager.getCacheNames()) {
-            TestingUtil.extractInterceptorChain(manager.getCache(cacheName))
-                       .addInterceptorBefore(new CommandCachingInterceptor(), CallInterceptor.class);
+            Cache<Object, Object> c = manager.getCache(cacheName);
+            if (!c.getCacheConfiguration().simpleCache())
+               TestingUtil.extractInterceptorChain(c)
+                          .addInterceptorBefore(new CommandCachingInterceptor(), CallInterceptor.class);
          }
       }
    }
