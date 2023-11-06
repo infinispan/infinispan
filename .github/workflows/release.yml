@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout Source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - id: release
         name: Create Release
@@ -61,7 +61,7 @@ jobs:
             asset_name: windows-amd64
             gu_binary: gu.cmd
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - if: ${{ matrix.os == 'windows-2022' }}
         name: Add msbuild to PATH
@@ -74,7 +74,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Checkout Release Tag
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - if: ${{ matrix.os == 'windows-2022' }}
         name: Build native executable
