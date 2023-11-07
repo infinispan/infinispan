@@ -133,7 +133,6 @@
       <version.console>15.0.0.Dev03</version.console>
       <version.fabric8.kubernetes-client>6.8.1</version.fabric8.kubernetes-client>
       <version.glassfish.jaxb>2.3.1</version.glassfish.jaxb>
-      <version.glassfish.json>1.1.4</version.glassfish.json>
       <version.graalvm>22.3.0</version.graalvm>
       <version.groovy>2.4.8</version.groovy>
       <version.hamcrest>1.3</version.hamcrest>
@@ -152,8 +151,7 @@
       <version.jackson.databind>2.15.2</version.jackson.databind>
       <version.jacoco>0.8.7</version.jacoco>
       <version.jakarta.annotation-api>2.1.1</version.jakarta.annotation-api>
-      <version.jakarta.json-api>2.0.0</version.jakarta.json-api>
-      <version.jakarta.json>2.0.0</version.jakarta.json>
+      <version.jakarta.json>2.0.1</version.jakarta.json>
       <version.jakarta.transaction>2.0.1</version.jakarta.transaction>
       <version.jakarta.enterprise.cdi>4.0.1</version.jakarta.enterprise.cdi>
       <version.jakarta.persistence>3.1.0</version.jakarta.persistence>

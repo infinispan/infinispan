@@ -168,10 +168,6 @@
          <scope>compile</scope>
       </dependency>
       <dependency>
-         <groupId>org.glassfish</groupId>
-         <artifactId>javax.json</artifactId>
-      </dependency>
-      <dependency>
          <groupId>org.kohsuke.metainf-services</groupId>
          <artifactId>metainf-services</artifactId>
       </dependency>
