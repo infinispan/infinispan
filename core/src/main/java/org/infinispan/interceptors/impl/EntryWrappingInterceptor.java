@@ -188,6 +188,10 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       return distributionManager.getCacheTopology().isReadOwner(key);
    }
 
+   protected boolean needsWriteKey(Object key) {
+      return distributionManager.getCacheTopology().isWriteOwner(key);
+   }
+
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       return wrapEntriesForPrepareAndApply(ctx, command, prepareHandler);
@@ -440,7 +444,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       for (Object key : command.getMap().keySet()) {
          // as listeners may need the value, we'll load the previous value
          currentStage = entryFactory.wrapEntryForWriting(ctx, key, keyPartitioner.getSegment(key),
-               ignoreOwnership || canReadKey(key), command.loadType() != VisitableCommand.LoadType.DONT_LOAD, currentStage);
+               ignoreOwnership || canReadKey(key) || needsWriteKey(key), command.loadType() != VisitableCommand.LoadType.DONT_LOAD, currentStage);
       }
       return setSkipRemoteGetsAndInvokeNextForManyEntriesCommand(ctx, command, expirationCheckDelay(currentStage, initialStage));
    }

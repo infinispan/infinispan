@@ -2,9 +2,14 @@ package org.infinispan.client.hotrod.retry;
 
 import static java.util.stream.IntStream.range;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.test.TestingUtil.blockUntilViewReceived;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.TreeMap;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
@@ -32,20 +37,31 @@ public class PutAllRetryTest extends MultiHotRodServersTest {
       return 10;
    }
 
-   @Test
-   public void testFailOver() throws InterruptedException {
+   @Test(invocationCount = 3)
+   public void testFailOver() throws InterruptedException, ExecutionException, TimeoutException {
       RemoteCache<Integer, String> remoteCache = clients.get(0).getCache();
 
-      int size = 1000;
+      int size = 10;
 
       TreeMap<Integer, String> dataMap = new TreeMap<>();
       range(0, size).forEach(num -> dataMap.put(num, "value" + num));
 
-      remoteCache.putAll(dataMap.subMap(0, size / 2));
+      CompletableFuture<Void> stage = remoteCache.putAllAsync(dataMap.subMap(0, size / 2));
 
       HotRodClientTestingUtil.killServers(servers.get(0));
+      killMember(0);
 
-      remoteCache.putAll(dataMap.subMap(size / 2, size));
+      stage.get(10, TimeUnit.SECONDS);
+
+      blockUntilViewReceived(manager(1).getCache(), 2, 10000, false);
+
+      stage = remoteCache.putAllAsync(dataMap.subMap(size / 2, size));
+
+      addHotRodServer(getCacheConfiguration());
+
+      blockUntilViewReceived(manager(2).getCache(), 3, 10000, false);
+
+      stage.get(10, TimeUnit.SECONDS);
 
       assertEquals(size, remoteCache.size());
    }

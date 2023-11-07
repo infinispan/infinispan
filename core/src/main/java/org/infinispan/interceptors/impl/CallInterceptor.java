@@ -540,8 +540,9 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    }
 
    private MVCCEntry<Object, Object> lookupMvccEntry(InvocationContext ctx, Object key) {
+      CacheEntry entry = ctx.lookupEntry(key);
       //noinspection unchecked
-      return (MVCCEntry) ctx.lookupEntry(key);
+      return (entry == null || entry.isNull()) ? null : (MVCCEntry) ctx.lookupEntry(key);
    }
 
    @Override
