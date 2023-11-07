@@ -29,6 +29,7 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.jboss.logging.annotations.Once;
 import org.jboss.logging.annotations.Param;
 
 import io.netty.channel.Channel;
@@ -394,10 +395,12 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = TRACE)
    @Message(value = "OpenTelemetry API is present in the classpath and the tracing propagation is enabled. Client context tracing will be propagated.", id = 4110)
+   @Once
    void openTelemetryPropagationEnabled();
 
    @LogMessage(level = TRACE)
    @Message(value = "OpenTelemetry API is present in the classpath, but the tracing propagation is not enabled. Client context tracing will not be propagated.", id = 4111)
+   @Once
    void openTelemetryPropagationDisabled();
 
    @Message(value = "The SNI hostname is required when hostname validation is enabled", id = 4112)
