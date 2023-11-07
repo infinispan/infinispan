@@ -26,9 +26,8 @@ import org.infinispan.client.hotrod.impl.query.RemoteQuery;
 import org.infinispan.client.hotrod.impl.transaction.entry.Modification;
 import org.infinispan.client.hotrod.impl.transaction.operations.PrepareTransactionOperation;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
-import org.infinispan.client.hotrod.logging.Log;
-import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
+import org.infinispan.client.hotrod.telemetry.impl.TelemetryServiceFactory;
 import org.infinispan.commons.util.IntSet;
 
 import io.netty.channel.Channel;
@@ -42,8 +41,6 @@ import net.jcip.annotations.Immutable;
  */
 @Immutable
 public class OperationsFactory implements HotRodConstants {
-
-   private static final Log log = LogFactory.getLog(OperationsFactory.class, Log.class);
 
    private final ThreadLocal<Integer> flagsMap = new ThreadLocal<>();
 
@@ -77,15 +74,7 @@ public class OperationsFactory implements HotRodConstants {
       this.listenerNotifier = listenerNotifier;
       this.cfg = cfg;
       this.clientStatistics = clientStatistics;
-
-      TelemetryService telemetryService = null;
-      if (cfg.tracingPropagationEnabled()) {
-         telemetryService = TelemetryService.INSTANCE;
-         log.openTelemetryPropagationEnabled();
-      } else {
-         log.openTelemetryPropagationDisabled();
-      }
-      this.telemetryService = telemetryService;
+      this.telemetryService = TelemetryServiceFactory.INSTANCE.telemetryService(cfg.tracingPropagationEnabled());
    }
 
    public OperationsFactory(ChannelFactory channelFactory, ClientListenerNotifier listenerNotifier, Configuration cfg) {
