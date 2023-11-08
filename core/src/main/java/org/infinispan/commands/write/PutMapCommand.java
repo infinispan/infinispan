@@ -177,6 +177,7 @@ public class PutMapCommand extends AbstractTopologyAffectedCommand implements Wr
          .append(", metadata=").append(metadata)
          .append(", internalMetadata=").append(internalMetadataMap)
          .append(", isForwarded=").append(isForwarded)
+         .append(", topologyId=").append(getTopologyId())
          .append("}");
       return sb.toString();
    }
