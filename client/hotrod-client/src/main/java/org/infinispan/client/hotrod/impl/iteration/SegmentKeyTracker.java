@@ -10,6 +10,7 @@ import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.client.hotrod.marshall.MediaTypeMarshaller;
 import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.IntSet;
@@ -40,11 +41,30 @@ class SegmentKeyTracker implements KeyTracker {
    }
 
    public boolean track(byte[] key, short status, ClassAllowList allowList) {
-      int segment = dataFormat.isObjectStorage() ?
-            segmentConsistentHash.getSegment(dataFormat.keyToObj(key, allowList)) :
-            segmentConsistentHash.getSegment(key);
+      int segment;
+      // In case is an object store, we marshall the bytes to the object to retrieve the segment.
+      if (dataFormat.isObjectStorage()) {
+         segment = segmentConsistentHash.getSegment(dataFormat.keyToObj(key, allowList));
+      } else {
+         // In case we use the direct bytes we have different options.
+         // If there is a server encoding, we need to transform the serialized type to an object,
+         // and transform the object with the server type.
+         // Since the response uses the client request type, the client marshaller transforms into an object but
+         // the server marshaller transforms into byte.
+         // This is a workaround for ISPN-15312.
+         if (dataFormat.server() != null) {
+            MediaTypeMarshaller mtm = dataFormat.server();
+            segment = segmentConsistentHash.getSegment(mtm.keyToBytes(dataFormat.keyToObj(key, allowList)));
+         } else {
+            // Otherwise, we can just use the bytes directly.
+            segment = segmentConsistentHash.getSegment(key);
+         }
+      }
       Set<WrappedByteArray> keys = keysPerSegment.get(segment);
-      if (keys == null) throw new IllegalStateException("Segment " + segment + " already completed");
+      if (keys == null) {
+         if (log.isTraceEnabled()) log.tracef("Key %s maps to %d which is not present", Util.toStr(key), segment, segment);
+         throw new IllegalStateException("Segment " + segment + " already completed");
+      }
       boolean result = keys.add(new WrappedByteArray(key));
       if (log.isTraceEnabled())
          log.trackingSegmentKey(Util.printArray(key), segment, !result);

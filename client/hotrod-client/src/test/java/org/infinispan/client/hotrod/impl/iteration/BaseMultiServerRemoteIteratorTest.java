@@ -19,16 +19,19 @@ import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.infinispan.client.hotrod.CacheTopologyInfo;
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Util;
@@ -75,6 +78,14 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
       return new InternalRemoteCacheManager(cfg);
    }
 
+   protected <T> Entry<Object, T> convertEntry(Entry<Object, ?> entry) {
+      return (Entry<Object, T>) entry;
+   }
+
+   protected <T> T convertKey(Object key) {
+      return (T) key;
+   }
+
    @Test
    public void testBatchSizes() {
       int maximumBatchSize = 120;
@@ -86,7 +97,7 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
       for (int batch = 1; batch < maximumBatchSize; batch += 10) {
          Set<Entry<Object, Object>> results = new HashSet<>(CACHE_SIZE);
          CloseableIterator<Entry<Object, Object>> iterator = cache.retrieveEntries(null, null, batch);
-         iterator.forEachRemaining(results::add);
+         iterator.forEachRemaining(r -> results.add(convertEntry(r)));
          iterator.close();
          assertEquals(CACHE_SIZE, results.size());
          assertEquals(expectedKeys, extractKeys(results));
@@ -160,8 +171,23 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
 
       Marshaller marshaller = clients.get(0).getMarshaller();
       KeyPartitioner keyPartitioner = TestingUtil.extractComponent(cache(0), KeyPartitioner.class);
+      DataFormat df = cache.getDataFormat();
 
-      assertKeysInSegment(entries, filterBySegments, marshaller, keyPartitioner::getSegment);
+      assertKeysInSegment(entries, filterBySegments, marshaller, extractKeySegment(cache));
+   }
+
+   private Function<byte[], Integer> extractKeySegment(RemoteCache<?, ?> cache) {
+      KeyPartitioner keyPartitioner = TestingUtil.extractComponent(cache(0), KeyPartitioner.class);
+      DataFormat df = cache.getDataFormat();
+      ClassAllowList cal = clients.get(0).getConfiguration().getClassAllowList();
+
+      return data -> {
+         if (df != null) {
+            if (df.isObjectStorage()) return keyPartitioner.getSegment(df.keyToObj(data, cal));
+            if (df.server() != null) data = df.server().keyToBytes(df.keyToObj(data, cal));
+         }
+         return keyPartitioner.getSegment(data);
+      };
    }
 
    @Test
@@ -172,7 +198,7 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
       cache.put(3, newAccount(3));
 
       try (CloseableIterator<Entry<Object, MetadataValue<Object>>> iterator = cache.retrieveEntriesWithMetadata(null, 10)) {
-         Entry<Object, MetadataValue<Object>> entry = iterator.next();
+         Entry<Object, MetadataValue<Object>> entry = convertEntry(iterator.next());
          if ((int) entry.getKey() == 1) {
             assertEquals(24 * 3600, entry.getValue().getLifespan());
             assertEquals(-1, entry.getValue().getMaxIdle());
@@ -188,16 +214,16 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
       }
    }
 
-   static final class ToHexConverterFactory implements KeyValueFilterConverterFactory<Integer, Integer, String>, Serializable {
+   static final class ToHexConverterFactory implements KeyValueFilterConverterFactory<Object, Integer, String>, Serializable {
       @Override
-      public KeyValueFilterConverter<Integer, Integer, String> getFilterConverter() {
+      public KeyValueFilterConverter<Object, Integer, String> getFilterConverter() {
          return new HexFilterConverter();
       }
 
       @ProtoName("HexFilterConverter")
-      static class HexFilterConverter extends AbstractKeyValueFilterConverter<Integer, Integer, String> {
+      static class HexFilterConverter extends AbstractKeyValueFilterConverter<Object, Integer, String> {
          @Override
-         public String filterAndConvert(Integer key, Integer value, Metadata metadata) {
+         public String filterAndConvert(Object key, Integer value, Metadata metadata) {
             return Integer.toHexString(value);
          }
       }
@@ -235,12 +261,13 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
 
    private Set<Integer> getKeysFromSegments(Set<Integer> segments) {
       RemoteCacheManager remoteCacheManager = clients.get(0);
-      RemoteCache<Integer, ?> cache = remoteCacheManager.getCache();
+      RemoteCache<Object, ?> cache = remoteCacheManager.getCache();
       Marshaller marshaller = clients.get(0).getMarshaller();
-      KeyPartitioner keyPartitioner = TestingUtil.extractComponent(cache(0), KeyPartitioner.class);
-      Set<Integer> keys = cache.keySet();
+      Function<byte[], Integer> segmentExtract = extractKeySegment(cache);
+      Set<Object> keys = cache.keySet();
       return keys.stream()
-                 .filter(b -> segments.contains(keyPartitioner.getSegment(toByteBuffer(b, marshaller))))
+                 .map(this::<Integer>convertKey)
+                 .filter(b -> segments.contains(segmentExtract.apply(toByteBuffer(b, marshaller))))
                  .collect(Collectors.toSet());
    }
 

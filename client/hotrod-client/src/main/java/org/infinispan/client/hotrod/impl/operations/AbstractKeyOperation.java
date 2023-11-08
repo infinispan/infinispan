@@ -12,6 +12,7 @@ import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
+import org.infinispan.client.hotrod.marshall.MediaTypeMarshaller;
 import org.infinispan.client.hotrod.telemetry.impl.TelemetryService;
 import org.infinispan.commons.util.Util;
 
@@ -42,10 +43,23 @@ public abstract class AbstractKeyOperation<T> extends StatsAffectingRetryingOper
    @Override
    protected void fetchChannelAndInvoke(int retryCount, Set<SocketAddress> failedServers) {
       if (retryCount == 0) {
-         channelFactory.fetchChannelAndInvoke(key == null ? keyBytes : key, failedServers, cacheName(), this);
+         channelFactory.fetchChannelAndInvoke(commandKey(), failedServers, cacheName(), this);
       } else {
          channelFactory.fetchChannelAndInvoke(failedServers, cacheName(), this);
       }
+   }
+
+   private Object commandKey() {
+      DataFormat df = dataFormat();
+      if (df == null) {
+         return key != null
+               ? key
+               : keyBytes;
+      }
+
+      return df.isObjectStorage()
+            ? key
+            : keyBytes;
    }
 
    protected T returnPossiblePrevValue(ByteBuf buf, short status) {
@@ -70,5 +84,18 @@ public abstract class AbstractKeyOperation<T> extends StatsAffectingRetryingOper
    @Override
    protected void addParams(StringBuilder sb) {
       sb.append(", key=").append(key == null ? Util.printArray(keyBytes) : key);
+   }
+
+   @Override
+   public Object routingObject(Object defaultObject) {
+      // We need to serialize the object and hash the bytes to retrieve the segment.
+      // To map to the correct segment, we need to utilize the server's target media-type.
+      DataFormat df = dataFormat();
+      if (df != null) {
+         MediaTypeMarshaller mtm = df.server();
+         if (mtm != null) return mtm.keyToBytes(key);
+      }
+
+      return defaultObject;
    }
 }

@@ -19,4 +19,8 @@ public interface ChannelOperation {
     * @param cause
     */
    void cancel(SocketAddress address, Throwable cause);
+
+   default Object routingObject(Object defaultObject) {
+      return defaultObject;
+   }
 }
