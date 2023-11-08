@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.StreamingRemoteCache;
 import org.infinispan.client.hotrod.VersionedMetadata;
 import org.infinispan.client.hotrod.impl.operations.GetStreamOperation;
@@ -25,9 +26,16 @@ public class StreamingRemoteCacheImpl<K> implements StreamingRemoteCache<K> {
       this.cache = cache;
    }
 
+   private K keyAsObjectIfNeeded(K key) {
+      DataFormat df = cache.getDataFormat();
+      return df.isObjectStorage()
+            ? key
+            : null;
+   }
+
    @Override
    public <T extends InputStream & VersionedMetadata> T get(K key) {
-      GetStreamOperation op = cache.getOperationsFactory().newGetStreamOperation(cache.keyAsObjectIfNeeded(key), cache.keyToBytes(key), 0);
+      GetStreamOperation op = cache.getOperationsFactory().newGetStreamOperation(keyAsObjectIfNeeded(key), cache.keyToBytes(key), 0);
       return (T) await(op.execute());
    }
 
@@ -43,7 +51,7 @@ public class StreamingRemoteCacheImpl<K> implements StreamingRemoteCache<K> {
 
    @Override
    public OutputStream put(K key, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      PutStreamOperation op = cache.getOperationsFactory().newPutStreamOperation(cache.keyAsObjectIfNeeded(key), cache.keyToBytes(key), lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+      PutStreamOperation op = cache.getOperationsFactory().newPutStreamOperation(keyAsObjectIfNeeded(key), cache.keyToBytes(key), lifespan, lifespanUnit, maxIdle, maxIdleUnit);
       return await(op.execute());
    }
 
@@ -59,7 +67,7 @@ public class StreamingRemoteCacheImpl<K> implements StreamingRemoteCache<K> {
 
    @Override
    public OutputStream putIfAbsent(K key, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      PutStreamOperation op = cache.getOperationsFactory().newPutIfAbsentStreamOperation(cache.keyAsObjectIfNeeded(key), cache.keyToBytes(key), lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+      PutStreamOperation op = cache.getOperationsFactory().newPutIfAbsentStreamOperation(keyAsObjectIfNeeded(key), cache.keyToBytes(key), lifespan, lifespanUnit, maxIdle, maxIdleUnit);
       return await(op.execute());
    }
 
@@ -75,7 +83,7 @@ public class StreamingRemoteCacheImpl<K> implements StreamingRemoteCache<K> {
 
    @Override
    public OutputStream replaceWithVersion(K key, long version, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      PutStreamOperation op = cache.getOperationsFactory().newPutStreamOperation(cache.keyAsObjectIfNeeded(key), cache.keyToBytes(key), version, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+      PutStreamOperation op = cache.getOperationsFactory().newPutStreamOperation(keyAsObjectIfNeeded(key), cache.keyToBytes(key), version, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
       return await(op.execute());
    }
 }

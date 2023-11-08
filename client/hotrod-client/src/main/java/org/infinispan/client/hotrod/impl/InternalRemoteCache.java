@@ -15,6 +15,7 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PingResponse;
 import org.infinispan.client.hotrod.impl.operations.RetryAwareCompletionStage;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.IntSet;
 
@@ -46,6 +47,10 @@ public interface InternalRemoteCache<K, V> extends RemoteCache<K, V> {
 
    void resolveStorage(boolean objectStorage);
 
+   default void resolveStorage(MediaType key, MediaType value, boolean objectStorage) {
+      resolveStorage(objectStorage);
+   }
+
    @Override
    ClientStatistics clientStatistics();
 
@@ -57,8 +62,6 @@ public interface InternalRemoteCache<K, V> extends RemoteCache<K, V> {
    OperationsFactory getOperationsFactory();
 
    boolean isObjectStorage();
-
-   K keyAsObjectIfNeeded(Object key);
 
    byte[] keyToBytes(Object o);
 

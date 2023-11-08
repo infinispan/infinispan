@@ -75,7 +75,7 @@ class Util {
    static void assertKeysInSegment(Set<Map.Entry<Object, Object>> entries, Set<Integer> segments,
                                     Marshaller marshaller, Function<byte[], Integer> segmentCalculator) {
       entries.forEach(e -> {
-         Integer key = (Integer) e.getKey();
+         Object key = e.getKey();
          int segment = segmentCalculator.apply(toByteBuffer(key, marshaller));
          assertTrue(segments.contains(segment));
       });

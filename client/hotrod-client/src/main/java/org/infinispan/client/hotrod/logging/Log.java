@@ -22,6 +22,7 @@ import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheListenerException;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
@@ -408,4 +409,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Unexpected error while creating the tracing propagation context. Client context tracing will not be propagated.", id = 4115)
    void errorCreatingPropagationContext(@Cause Throwable throwable);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Client cannot marshall the server's key media type ('%s'). This could cause poor performance.", id = 4116)
+   void serverKeyTypeNotRecognized(MediaType serverKeyType);
 }
