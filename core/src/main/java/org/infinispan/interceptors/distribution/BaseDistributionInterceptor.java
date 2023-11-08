@@ -852,7 +852,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             Object key = senderKeys.get(i);
             InternalCacheValue value = values[i];
             CacheEntry entry = value == null ? NullCacheEntry.getInstance() : value.toInternalCacheEntry(key);
-            wrapRemoteEntry(ctx, key, entry, false);
+            wrapRemoteEntry(ctx, key, entry, command instanceof WriteCommand);
          }
          // TODO Dan: handleRemotelyRetrievedKeys could call wrapRemoteEntry itself after transforming the entries
          handleRemotelyRetrievedKeys(ctx, command instanceof WriteCommand ? (WriteCommand) command : null, senderKeys);
