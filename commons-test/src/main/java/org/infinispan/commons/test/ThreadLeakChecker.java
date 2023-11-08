@@ -89,6 +89,15 @@ public class ThreadLeakChecker {
                       "|OkHttp Http2Connection" +
                       // The mysql driver uses a daemon thread to check for connection leaks
                       "|mysql-cj-abandoned-connection-cleanup" +
+                      // virtual threads - thread pools
+                      "|ForkJoinPool" +
+                      "|Write-Updater" +
+                      "|Write-Poller" +
+                      "|VirtualThread-unparker" +
+                      "|Read-Updater" +
+                      "|Read-Poller" +
+                      // Arjuna can start a Listener for recovery that is stopped in a shutdown hook
+                      "|Listener:[0-9]" +
                       ").*");
    private static final String ARQUILLIAN_CONSOLE_CONSUMER =
       "org.jboss.as.arquillian.container.CommonManagedDeployableContainer$ConsoleConsumer";
