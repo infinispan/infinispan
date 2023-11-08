@@ -93,9 +93,11 @@ public class ThreadLeakChecker {
                       "|ForkJoinPool" +
                       "|Write-Updater" +
                       "|Write-Poller" +
-                      "|VirtualThread-unparker"+
-                      "|Read-Updater"+
-                      "|Read-Poller"+
+                      "|VirtualThread-unparker" +
+                      "|Read-Updater" +
+                      "|Read-Poller" +
+                      // Arjuna can start a Listener for recovery that is stopped in a shutdown hook
+                      "|Listener:[0-9]" +
                       ").*");
    private static final String ARQUILLIAN_CONSOLE_CONSUMER =
       "org.jboss.as.arquillian.container.CommonManagedDeployableContainer$ConsoleConsumer";
