@@ -1,5 +1,7 @@
 package org.infinispan.persistence;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.testng.AssertJUnit.assertArrayEquals;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -14,7 +16,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -24,10 +29,13 @@ import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.CommonsTestingUtil;
+import org.infinispan.commons.time.ControlledTimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
@@ -36,23 +44,29 @@ import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.persistence.support.WaitDelegatingNonBlockingStore;
 import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.test.Mocks;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Address;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.data.Sex;
+import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
 /**
@@ -64,6 +78,7 @@ import org.testng.annotations.Test;
 public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
 
    private static final SerializationContextInitializer CONTEXT_INITIALIZER = TestDataSCI.INSTANCE;
+   protected final ControlledTimeService timeService = new ControlledTimeService();
 
    protected abstract PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder persistence,
          String cacheName, boolean preload);
@@ -83,12 +98,6 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
 
    protected BaseStoreFunctionalTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
-   }
-
-   @Override
-   protected void teardown() {
-      TestingUtil.clearContent(cacheManager);
-      super.teardown();
    }
 
    @Override
@@ -355,7 +364,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       KeyPartitioner kp = TestingUtil.extractComponent(cache, KeyPartitioner.class);
 
       Map<String, Object> targetMap = entriesMap.entrySet().stream().filter(e ->
-         segments.contains(kp.getSegment(e.getKey()))
+            segments.contains(kp.getSegment(e.getKey()))
       ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
       Map<String, Object> results = new HashMap<>(numberOfEntries);
@@ -459,6 +468,65 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
             Predicate<? super StoreConfiguration> predicate) {
          passivate.set(true);
          return super.writeEntries(iterable, predicate);
+      }
+   }
+
+   public void testPurgeWithConcurrentUpdate() throws InterruptedException, TimeoutException, ExecutionException {
+      String cacheName = "testPurgeWithConcurrentUpdate";
+      ConfigurationBuilder cb = getDefaultCacheConfiguration();
+      if (cb.clustering().cacheMode() != CacheMode.LOCAL) {
+         // Test only operates properly in a LOCAL cache mode
+         return;
+      }
+      cb.expiration().wakeUpInterval(Long.MAX_VALUE);
+      createCacheStoreConfig(cb.persistence(), cacheName, false);
+      TestingUtil.defineConfiguration(cacheManager, cacheName, cb.build());
+
+      TestingUtil.replaceComponent(cacheManager, TimeService.class, timeService, true);
+
+      Cache<String, Object> cache = cacheManager.getCache(cacheName);
+
+      WaitDelegatingNonBlockingStore store = TestingUtil.getFirstStoreWait(cache);
+      if (!store.characteristics().contains(NonBlockingStore.Characteristic.EXPIRATION)) {
+         // This test doesn't work if the store doesn't have expiration
+         return;
+      }
+
+      cache.put("expired-key", "expired-value", 10, TimeUnit.MILLISECONDS);
+      timeService.advance(11);
+
+      CheckPoint putCheckpoint = new CheckPoint();
+      putCheckpoint.triggerForever(Mocks.AFTER_RELEASE);
+
+      // The put should cause the store to remove the entry as it has expired
+      PersistenceManager original = Mocks.blockingMock(putCheckpoint, PersistenceManager.class, cache,
+            ((stub, m) -> stub.when(m).deleteFromAllStores(any(), anyInt(), any())));
+      try {
+
+         Future<Object> putFuture = fork(() -> cache.put("expired-key", "non-expired-value", 10, TimeUnit.HOURS));
+
+         putCheckpoint.awaitStrict(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS);
+
+         CheckPoint expirationCheckPoint = new CheckPoint();
+         expirationCheckPoint.triggerForever(Mocks.AFTER_RELEASE);
+         expirationCheckPoint.triggerForever(Mocks.BEFORE_RELEASE);
+
+         // We cannot mock the InternalEntryFactory as the PeristenceManager invokes it and thus it won't be replaced properly
+         Mocks.blockingMock(expirationCheckPoint, InternalDataContainer.class, cache,
+               ((stub, m) -> stub.when(m).compute(any(), any())));
+
+         Future<Void> expirationFuture = fork(() ->
+               CompletionStages.join(TestingUtil.extractComponent(cache, PersistenceManager.class).purgeExpired()));
+
+         expirationCheckPoint.awaitStrict(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS);
+
+         putCheckpoint.triggerForever(Mocks.BEFORE_RELEASE);
+
+         putFuture.get(10, TimeUnit.SECONDS);
+         expirationFuture.get(10, TimeUnit.SECONDS);
+      } finally {
+         // Some Stores may hold a lock so we can't replace the component back, instead we directly shut it down
+         original.stop();
       }
    }
 }
