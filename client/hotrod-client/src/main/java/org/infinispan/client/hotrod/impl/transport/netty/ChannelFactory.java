@@ -360,7 +360,7 @@ public class ChannelFactory {
                                                                byte[] cacheName, T operation) {
       CacheInfo cacheInfo = topologyInfo.getCacheInfo(wrapBytes(cacheName));
       if (cacheInfo != null && cacheInfo.getConsistentHash() != null) {
-         SocketAddress server = cacheInfo.getConsistentHash().getServer(key);
+         SocketAddress server = cacheInfo.getConsistentHash().getServer(operation.routingObject(key));
          if (server != null && (failedServers == null || !failedServers.contains(server))) {
             return fetchChannelAndInvoke(server, cacheName, operation);
          }

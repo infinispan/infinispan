@@ -50,7 +50,11 @@ public class MultiServerDistRemoteIteratorTest extends BaseMultiServerRemoteIter
 
    private static class TestSegmentKeyTracker implements KeyTracker {
 
-      final IntSet finished = IntSets.mutableEmptySet();
+      final IntSet finished;
+
+      public TestSegmentKeyTracker(int size) {
+         this.finished = IntSets.concurrentSet(size);
+      }
 
       @Override
       public boolean track(byte[] key, short status, ClassAllowList allowList) {
@@ -71,7 +75,7 @@ public class MultiServerDistRemoteIteratorTest extends BaseMultiServerRemoteIter
    public void testSegmentFinishedCallback() {
       RemoteCache<Integer, AccountHS> cache = clients.get(0).getCache();
       populateCache(CACHE_SIZE, Util::newAccount, cache);
-      TestSegmentKeyTracker testSegmentKeyTracker = new TestSegmentKeyTracker();
+      TestSegmentKeyTracker testSegmentKeyTracker = new TestSegmentKeyTracker(60);
 
       Publisher<Map.Entry<Integer, AccountHS>> publisher = cache.publishEntries(null, null, null, 3);
       TestingUtil.replaceField(testSegmentKeyTracker, "segmentKeyTracker", publisher, RemotePublisher.class);

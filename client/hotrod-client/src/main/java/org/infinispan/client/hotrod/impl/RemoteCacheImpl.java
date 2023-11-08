@@ -58,6 +58,7 @@ import org.infinispan.client.hotrod.impl.operations.StatsOperation;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.near.NearCacheService;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollection;
@@ -175,7 +176,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    public CompletableFuture<Boolean> removeWithVersionAsync(final K key, final long version) {
       assertRemoteCacheManagerIsStarted();
       RemoveIfUnmodifiedOperation<V> op = operationsFactory.newRemoveIfUnmodifiedOperation(
-            keyAsObjectIfNeeded(key), keyToBytes(key), version, dataFormat);
+            key, keyToBytes(key), version, dataFormat);
       return op.execute().thenApply(response -> response.getCode().isUpdated());
    }
 
@@ -187,7 +188,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    public CompletableFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
       assertRemoteCacheManagerIsStarted();
       ReplaceIfUnmodifiedOperation op = operationsFactory.newReplaceIfUnmodifiedOperation(
-            keyAsObjectIfNeeded(key), keyToBytes(key), valueToBytes(newValue), lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, version, dataFormat);
+            key, keyToBytes(key), valueToBytes(newValue), lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, version, dataFormat);
       return op.execute().thenApply(response -> response.getCode().isUpdated());
    }
 
@@ -239,7 +240,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    public CompletableFuture<MetadataValue<V>> getWithMetadataAsync(K key) {
       assertRemoteCacheManagerIsStarted();
       GetWithMetadataOperation<V> op = operationsFactory.newGetWithMetadataOperation(
-            keyAsObjectIfNeeded(key), keyToBytes(key), dataFormat);
+            key, keyToBytes(key), dataFormat);
       return op.execute();
    }
 
@@ -247,7 +248,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    public RetryAwareCompletionStage<MetadataValue<V>> getWithMetadataAsync(K key, SocketAddress preferredAddres) {
       assertRemoteCacheManagerIsStarted();
       GetWithMetadataOperation<V> op = operationsFactory.newGetWithMetadataOperation(
-            keyAsObjectIfNeeded(key), keyToBytes(key), dataFormat, preferredAddres);
+            key, keyToBytes(key), dataFormat, preferredAddres);
       return op.internalExecute();
    }
 
@@ -295,17 +296,12 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    }
 
    @Override
-   public K keyAsObjectIfNeeded(Object key) {
-      return isObjectStorage ? (K) key : null;
-   }
-
-   @Override
    public CompletableFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       assertRemoteCacheManagerIsStarted();
       if (log.isTraceEnabled()) {
          log.tracef("About to add (K,V): (%s, %s) lifespan:%d, maxIdle:%d", key, value, lifespan, maxIdleTime);
       }
-      PutOperation<V> op = operationsFactory.newPutKeyValueOperation(keyAsObjectIfNeeded(key),
+      PutOperation<V> op = operationsFactory.newPutKeyValueOperation(key,
             keyToBytes(key), valueToBytes(value), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit, dataFormat);
       return op.execute();
    }
@@ -407,7 +403,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       assertRemoteCacheManagerIsStarted();
-      PutIfAbsentOperation<V> op = operationsFactory.newPutIfAbsentOperation(keyAsObjectIfNeeded(key),
+      PutIfAbsentOperation<V> op = operationsFactory.newPutIfAbsentOperation(key,
             keyToBytes(key), valueToBytes(value), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit, dataFormat);
       return op.execute();
    }
@@ -438,7 +434,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    @Override
    public CompletableFuture<V> removeAsync(Object key) {
       assertRemoteCacheManagerIsStarted();
-      RemoveOperation<V> removeOperation = operationsFactory.newRemoveOperation(keyAsObjectIfNeeded(key), keyToBytes(key), dataFormat);
+      RemoveOperation<V> removeOperation = operationsFactory.newRemoveOperation(key, keyToBytes(key), dataFormat);
       // TODO: It sucks that you need the prev value to see if it works...
       // We need to find a better API for RemoteCache...
       return removeOperation.execute();
@@ -466,7 +462,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    @Override
    public CompletableFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       assertRemoteCacheManagerIsStarted();
-      ReplaceOperation<V> op = operationsFactory.newReplaceOperation(keyAsObjectIfNeeded(key),
+      ReplaceOperation<V> op = operationsFactory.newReplaceOperation(key,
             keyToBytes(key), valueToBytes(value), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit, dataFormat);
       return op.execute();
    }
@@ -474,8 +470,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    @Override
    public CompletableFuture<Boolean> containsKeyAsync(K key) {
       assertRemoteCacheManagerIsStarted();
-      ContainsKeyOperation op = operationsFactory.newContainsKeyOperation(
-            keyAsObjectIfNeeded(key), keyToBytes(key), dataFormat);
+      ContainsKeyOperation op = operationsFactory.newContainsKeyOperation(key, keyToBytes(key), dataFormat);
       return op.execute();
    }
 
@@ -587,7 +582,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    public CompletableFuture<V> getAsync(Object key) {
       assertRemoteCacheManagerIsStarted();
       byte[] keyBytes = keyToBytes(key);
-      GetOperation<V> gco = operationsFactory.newGetKeyOperation(keyAsObjectIfNeeded(key), keyBytes, dataFormat);
+      GetOperation<V> gco = operationsFactory.newGetKeyOperation(key, keyBytes, dataFormat);
       CompletableFuture<V> result = gco.execute();
       if (log.isTraceEnabled()) {
          result.thenAccept(value -> log.tracef("For key(%s) returning %s", key, value));
@@ -693,6 +688,33 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    public void resolveStorage(boolean objectStorage) {
       this.isObjectStorage = objectStorage;
       this.dataFormat.initialize(remoteCacheManager, name, isObjectStorage);
+   }
+
+   @Override
+   public void resolveStorage(MediaType key, MediaType value, boolean objectStorage) {
+      // Set the storage first and initialize the current data format.
+      // We need this to check if the key type match.
+      resolveStorage(objectStorage);
+
+      if (key != null && key != MediaType.APPLICATION_UNKNOWN && !dataFormat.getKeyType().match(key)) {
+         DataFormat.Builder server = DataFormat.builder()
+               .from(this.dataFormat)
+               .keyType(key)
+               .valueType(value);
+         this.dataFormat = DataFormat.builder()
+               .from(this.dataFormat)
+               .serverDataFormat(server)
+               .build();
+         resolveStorage(objectStorage);
+
+         // Now proceed and check if the server has an available marshaller.
+         // This means that the client DOES NOT have a marshaller capable of converting to the server key type.
+         // Therefore, it will utilize the default fallback and NOT convert the object.
+         // This could cause additional redirections on the server side and poor performance for the client.
+         if (remoteCacheManager.getMarshallerRegistry().getMarshaller(key) == null) {
+            log.serverKeyTypeNotRecognized(key);
+         }
+      }
    }
 
    @Override

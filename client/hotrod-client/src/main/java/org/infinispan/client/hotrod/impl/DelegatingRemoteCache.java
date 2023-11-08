@@ -340,11 +340,6 @@ public abstract class DelegatingRemoteCache<K, V> extends RemoteCacheSupport<K, 
    }
 
    @Override
-   public K keyAsObjectIfNeeded(Object key) {
-      return delegate.keyAsObjectIfNeeded(key);
-   }
-
-   @Override
    public byte[] keyToBytes(Object o) {
       return delegate.keyToBytes(o);
    }

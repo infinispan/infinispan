@@ -551,7 +551,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
       synchronized (cacheName2RemoteCache) {
          startRemoteCache(remoteCache, forceReturnValue);
          RemoteCacheHolder holder = new RemoteCacheHolder(remoteCache, forceReturnValueOverride);
-         remoteCache.resolveStorage(pingResponse.isObjectStorage());
+         remoteCache.resolveStorage(pingResponse.getKeyMediaType(), pingResponse.getValueMediaType(), pingResponse.isObjectStorage());
          cacheName2RemoteCache.putIfAbsent(key, holder);
          return remoteCache;
       }
