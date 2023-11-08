@@ -74,4 +74,9 @@ public class RemoteStoreFunctionalTest extends BaseStoreFunctionalTest {
             .segmented(true);
       cb.build();
    }
+
+   @Override
+   public void testPurgeWithConcurrentUpdate() {
+      // This test doesn't work as RemoteStore expiration is only on access and purgeExpired does nothing
+   }
 }

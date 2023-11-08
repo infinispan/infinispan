@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
@@ -113,7 +114,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
             }
             if (log.isTraceEnabled()) {
                log.tracef("Purging data container completed in %s",
-                          Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
+                     Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
             }
          } catch (Exception e) {
             CONTAINER.exceptionPurgingDataContainer(e);
@@ -132,20 +133,29 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
 
    @Override
    public CompletableFuture<Boolean> entryExpiredInMemory(InternalCacheEntry<K, V> entry, long currentTime,
-         boolean hasLock) {
-      return blockingManager.supplyBlocking(() ->
-            dataContainer.running().compute(entry.getKey(), ((k, oldEntry, factory) -> {
-               if (oldEntry != null) {
-                  synchronized (oldEntry) {
-                     if (oldEntry.isExpired(currentTime)) {
-                        deleteFromStoresAndNotify(k, oldEntry.getValue(), oldEntry.getMetadata(), oldEntry.getInternalMetadata());
-                     } else {
-                        return oldEntry;
-                     }
+                                                          boolean hasLock) {
+      return blockingManager.supplyBlocking(() -> {
+         ByRef<InternalCacheEntry<K, V>> oldRef = new ByRef<>(null);
+         dataContainer.running().compute(entry.getKey(), ((k, oldEntry, factory) -> {
+            if (oldEntry != null) {
+               synchronized (oldEntry) {
+                  if (!oldEntry.isExpired(currentTime)) {
+                     return oldEntry;
                   }
+                  oldRef.set(oldEntry);
                }
-               return null;
-            })) == null, "local-expiration").toCompletableFuture();
+            }
+            return null;
+         }));
+         InternalCacheEntry<K, V> oldEntry = oldRef.get();
+         if (oldEntry == null) {
+            return Boolean.FALSE;
+         }
+         // Note this is done outside of the compute to prevent a possible deadlock with a store but also
+         // technically allows more than notification for a given expired entry
+         deleteFromStoresAndNotify(oldEntry.getKey(), oldEntry.getValue(), oldEntry.getMetadata(), oldEntry.getInternalMetadata());
+         return Boolean.TRUE;
+      }, "local-expiration").toCompletableFuture();
    }
 
    @Override
