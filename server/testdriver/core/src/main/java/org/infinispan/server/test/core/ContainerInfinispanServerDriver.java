@@ -480,8 +480,10 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
          for (TarArchiveEntry entry = tar.getNextTarEntry(); entry != null; entry = tar.getNextTarEntry()) {
             Path entryPath = basePath.resolve(entry.getName());
             if (entry.isDirectory()) {
-               entryPath.toFile().mkdirs();
+               Files.createDirectories(entryPath);
             } else {
+               // Ensure the directory is there
+               Files.createDirectories(entryPath.getParent());
                OutputStream os = Files.newOutputStream(entryPath);
                for (int b = tar.read(); b >= 0; b = tar.read()) {
                   os.write(b);
