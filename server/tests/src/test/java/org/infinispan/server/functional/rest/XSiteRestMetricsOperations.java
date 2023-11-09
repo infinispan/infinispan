@@ -1,7 +1,7 @@
 package org.infinispan.server.functional.rest;
 
-import static org.infinispan.server.functional.rest.RestMetricsResource.Metric;
-import static org.infinispan.server.functional.rest.RestMetricsResource.getMetrics;
+import static org.infinispan.server.functional.rest.RestMetricsResourceIT.Metric;
+import static org.infinispan.server.functional.rest.RestMetricsResourceIT.getMetrics;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.LON;
 import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.NYC;
