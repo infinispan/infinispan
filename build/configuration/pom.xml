@@ -202,7 +202,7 @@
       <version.latencyutils>2.0.3</version.latencyutils>
 
       <!-- These versions must be kept in sync with ${version.quarkus} -->
-      <version.quarkus>3.5.0</version.quarkus>
+      <version.quarkus>3.5.1</version.quarkus>
       <version.graalvm>23.0.1</version.graalvm>
       <version.jandex>3.1.5</version.jandex>
 
