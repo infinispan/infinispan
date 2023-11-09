@@ -20,7 +20,6 @@ import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.impl.ImmutableContext;
 import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.functional.EntryView;
-import org.infinispan.functional.Param;
 import org.infinispan.functional.Traversable;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
@@ -114,58 +113,31 @@ public class SimpleReadWriteMapImpl<K, V> extends ReadWriteMapImpl<K, V> {
       return evalMany(fmap.cache.keySet(), f);
    }
 
-   private boolean isStatisticsEnabled() {
-      return !params.containsAll(Param.StatisticsMode.SKIP);
-   }
-
-   private boolean hasListeners() {
-      return !notifier.getListeners().isEmpty();
-   }
-
    private <R, T> R evalInternal(K key, T argument, BiFunction<T, EntryView.ReadWriteEntryView<K, V>, R> f, InternalCacheEntry<K, V> override) {
       Objects.requireNonNull(key, KEY_CANNOT_BE_NULL);
       Objects.requireNonNull(f, FUNCTION_CANNOT_BE_NULL);
       ByRef<R> result = new ByRef<>(null);
-      ByRef<EntryHolder<K, V>> holder = new ByRef<>(null);
+      ByRef<SimpleWriteNotifierHelper.EntryHolder<K, V>> holder = new ByRef<>(null);
       fmap.cache.getDataContainer().compute(key, (k, ignore, factory) ->
             compute(key, argument, f, override, factory, result, holder));
-      handleNotifications(key, holder.get());
+      SimpleWriteNotifierHelper.handleNotification(notifier, fmap.notifier, key, holder.get(), false);
       return result.get();
-   }
-
-   private void handleNotifications(K key, EntryHolder<K, V> holder) {
-      if (holder == null) return;
-
-      InternalCacheEntry<K, V> oldEntry = holder.before;
-      MVCCEntry<K, V> e = holder.after;
-
-      if (hasListeners()) {
-         if (oldEntry == null) {
-            CompletionStages.join(notifier.notifyCacheEntryCreated(key, e.getValue(), e.getOldMetadata(), false, ImmutableContext.INSTANCE, null));
-         } else {
-            CompletionStages.join(notifier.notifyCacheEntryModified(key, e.getValue(), e.getMetadata(), oldEntry.getValue(), oldEntry.getMetadata(), false, ImmutableContext.INSTANCE, null));
-         }
-      }
    }
 
    private <R, T> InternalCacheEntry<K, V> compute(K key, T argument, BiFunction<T, EntryView.ReadWriteEntryView<K, V>, R> f,
                                                    InternalCacheEntry<K, V> oldEntry, InternalEntryFactory factory,
-                                                   ByRef<R> result, ByRef<EntryHolder<K, V>> holder) {
+                                                   ByRef<R> result, ByRef<SimpleWriteNotifierHelper.EntryHolder<K, V>> holder) {
       MVCCEntry<K, V> e = extractEntry(oldEntry, key);
       EntryViews.AccessLoggingReadWriteView<K, V> view =  EntryViews.readWrite(e, fmap.cache.getKeyDataConversion(), fmap.cache.getValueDataConversion());
       result.set(EntryViews.snapshot(f.apply(argument, view)));
 
       if (!e.isChanged()) return oldEntry;
 
-      if (hasListeners()) {
-         if (oldEntry == null) {
-            holder.set(new EntryHolder<>(null, e));
-            CompletionStages.join(notifier.notifyCacheEntryCreated(key, e.getValue(), e.getOldMetadata(), true, ImmutableContext.INSTANCE, null));
-         } else {
-            holder.set(new EntryHolder<>(oldEntry, e));
-            CompletionStages.join(notifier.notifyCacheEntryModified(key, e.getValue(), e.getMetadata(), oldEntry.getValue(), oldEntry.getMetadata(), true, ImmutableContext.INSTANCE, null));
-         }
-      }
+      SimpleWriteNotifierHelper.EntryHolder<K, V> eh = oldEntry == null
+            ? SimpleWriteNotifierHelper.create(null, e)
+            : SimpleWriteNotifierHelper.create(factory.copy(oldEntry), e);
+      holder.set(eh);
+      SimpleWriteNotifierHelper.handleNotification(notifier, fmap.notifier, key, eh, true);
 
       return oldEntry == null
             ? factory.create(e)
@@ -199,15 +171,5 @@ public class SimpleReadWriteMapImpl<K, V> extends ReadWriteMapImpl<K, V> {
       mvccEntry.setCreated(ice.getCreated());
       mvccEntry.setLastUsed(ice.getLastUsed());
       return mvccEntry;
-   }
-
-   private static class EntryHolder<K, V> {
-      private final InternalCacheEntry<K, V> before;
-      private final MVCCEntry<K, V> after;
-
-      private EntryHolder(InternalCacheEntry<K, V> before, MVCCEntry<K, V> after) {
-         this.before = before;
-         this.after = after;
-      }
    }
 }
