@@ -34,7 +34,6 @@ import org.infinispan.server.functional.hotrod.HotRodTransactionalCacheOperation
 import org.infinispan.server.functional.hotrod.IgnoreCaches;
 import org.infinispan.server.functional.memcached.MemcachedOperations;
 import org.infinispan.server.functional.rest.RestLoggingResource;
-import org.infinispan.server.functional.rest.RestMetricsResource;
 import org.infinispan.server.functional.rest.RestOperations;
 import org.infinispan.server.functional.rest.RestRouter;
 import org.infinispan.server.functional.rest.RestServerResource;
@@ -56,9 +55,6 @@ import org.junit.platform.suite.api.Suite;
  **/
 @Suite
 @SelectClasses({
-      // This needs to be first as it collects all metrics and all the tests below add a lot which due to inefficiencies
-      // in small rye can be very very slow!
-      RestMetricsResource.class,
       HotRodCacheOperations.class,
       RestOperations.class,
       RestRouter.class,
