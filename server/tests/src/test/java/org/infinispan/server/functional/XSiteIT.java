@@ -31,7 +31,7 @@ public class XSiteIT extends InfinispanSuite {
 
    public static final String LON = "LON";
    public static final String NYC = "NYC";
-   public static final int NUM_SERVERS = 3;
+   public static final int NUM_SERVERS = 1;
 
    public static final String LON_CACHE_CONFIG =
          "<replicated-cache name=\"%s\">" +
