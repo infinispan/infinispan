@@ -3,8 +3,6 @@ package org.infinispan.server.functional.rest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
 import static org.infinispan.client.rest.RestResponse.OK;
-import static org.infinispan.server.functional.ClusteredIT.artifacts;
-import static org.infinispan.server.functional.ClusteredIT.mavenArtifacts;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -23,7 +21,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import io.prometheus.client.exporter.common.TextFormat;
 import org.assertj.core.api.AbstractDoubleAssert;
 import org.assertj.core.api.AbstractStringAssert;
 import org.infinispan.client.rest.RestCacheClient;
@@ -39,13 +36,15 @@ import org.infinispan.util.logging.LogFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import io.prometheus.client.exporter.common.TextFormat;
+
 /**
  * Tests the Micrometer metrics exporter.
  *
  * @author anistor@redhat.com
  * @since 10.0
  */
-public class RestMetricsResource {
+public class RestMetricsResourceIT {
 
    // copied from regex101.com
    private static final Pattern PROMETHEUS_PATTERN = Pattern.compile("^(?<metric>[a-zA-Z_:][a-zA-Z0-9_:]*]*)(?<tags>\\{.*})?[\\t ]*(?<value>-?[0-9E.]*)[\\t ]*(?<timestamp>[0-9]+)?$");
@@ -57,9 +56,6 @@ public class RestMetricsResource {
          InfinispanServerExtensionBuilder.config("configuration/ClusteredServerTest.xml")
                .numServers(NUM_SERVERS)
                .runMode(ServerRunMode.CONTAINER)
-               .mavenArtifacts(mavenArtifacts())
-               .artifacts(artifacts())
-               .property("infinispan.query.lucene.max-boolean-clauses", "1025")
                .build();
 
    @Test
@@ -170,23 +166,21 @@ public class RestMetricsResource {
 
    @Test
    public void testJGroupsDetailedMetrics() {
-      // test not related to cross-site, it is just the cross-site tests create a 3 nodes cluster
       RestMetricsClient metricsClient = SERVERS.rest().get().metrics();
       List<Metric> metrics = getMetrics(metricsClient);
 
-      // in 2 nodes cluster, we should have 1 metrics with the same name and different tags
       // async requests counter
-      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResource_stats_async_requests_total", false);
+      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_async_requests_total", false);
       // timed out request counter (no timeouts expected during testing)
-      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResource_stats_timed_out_requests_total", true);
+      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_timed_out_requests_total", true);
       // sync requests histogram
-      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResource_stats_sync_requests_seconds_count", false);
-      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResource_stats_sync_requests_seconds_sum", false);
-      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResource_stats_sync_requests_seconds_max", false);
+      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_sync_requests_seconds_count", false);
+      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_sync_requests_seconds_sum", false);
+      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_sync_requests_seconds_max", false);
       // bytes sent distribution summary
-      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResource_stats_bytes_sent_count", false);
-      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResource_stats_bytes_sent_sum", false);
-      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResource_stats_bytes_sent_max", false);
+      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_bytes_sent_count", false);
+      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_bytes_sent_sum", false);
+      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_bytes_sent_max", false);
    }
 
    private static void assertDetailedMetrics(List<Metric> allMetrics, String name, boolean isZero) {
@@ -233,7 +227,7 @@ public class RestMetricsResource {
          return response.getBody().lines()
                .map(PROMETHEUS_PATTERN::matcher)
                .filter(Matcher::matches)
-               .map(RestMetricsResource::matcherToMetric)
+               .map(RestMetricsResourceIT::matcherToMetric)
                .peek(log::debug)
                .collect(Collectors.toList());
       }
