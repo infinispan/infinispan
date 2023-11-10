@@ -12,11 +12,11 @@ import java.util.Optional;
 import java.util.Random;
 
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.model.Sale;
@@ -50,7 +50,7 @@ public class RemoteQueryAggregationCountTest extends SingleHotRodServerTest {
          remoteCache.putAll(chunk(day, fixedSeedPseudoRandom));
       }
 
-      QueryFactory queryFactory = Search.getQueryFactory(cache);
+      QueryFactory queryFactory = Search.getQueryFactory(remoteCache);
       Query<Object[]> query;
 
       query = queryFactory.create("select status, count(code) from Sale where day = :day group by status order by status");
