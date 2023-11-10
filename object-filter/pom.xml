@@ -113,16 +113,9 @@
                      <finalName>${project.artifactId}-${project.version}</finalName>
                      <minimizeJar>true</minimizeJar>
                      <artifactSet>
-                        <excludes>
-                           <exclude>net.jcip:jcip-annotations:jar:</exclude>
-                           <exclude>log4j:log4j:jar:</exclude>
-                           <exclude>org.jboss.logging:jboss-logging:jar:</exclude>
-                           <exclude>org.infinispan:infinispan-commons:jar:</exclude>
-                           <exclude>org.infinispan:infinispan-query-dsl:jar:</exclude>
-                           <exclude>org.infinispan.protostream:protostream:jar:</exclude>
-                           <exclude>org.infinispan.protostream:protostream-types:jar:</exclude>
-                           <exclude>org.infinispan:infinispan-component-annotations:</exclude>
-                        </excludes>
+                        <includes>
+                           <include>org.antlr:antlr-runtime</include>
+                        </includes>
                      </artifactSet>
                      <relocations>
                         <relocation>
