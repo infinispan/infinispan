@@ -1,30 +1,27 @@
 package org.infinispan.server.resp.commands.pubsub;
 
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.util.CharsetUtil;
+import java.lang.invoke.MethodHandles;
+import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.encoding.DataConversion;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
-import org.infinispan.notifications.cachelistener.filter.EventType;
-import org.infinispan.server.resp.commands.PubSubResp3Command;
-import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.SubscriberHandler;
+import org.infinispan.server.resp.commands.PubSubResp3Command;
+import org.infinispan.server.resp.commands.Resp3Command;
+import org.infinispan.server.resp.filter.EventListenerConverter;
 import org.infinispan.server.resp.filter.EventListenerKeysFilter;
 import org.infinispan.server.resp.logging.Log;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletionStages;
 
-import java.lang.invoke.MethodHandles;
-import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.CharsetUtil;
 
 /**
  * @link https://redis.io/commands/subscribe/
@@ -60,17 +57,7 @@ public class SUBSCRIBE extends RespCommand implements Resp3Command, PubSubResp3C
             handler.specificChannelSubscribers().put(wrappedByteArray, pubSubListener);
             byte[] channel = KeyChannelUtils.keyToChannel(keyChannel);
             DataConversion dc = handler.cache().getValueDataConversion();
-            CompletionStage<Void> stage = handler.cache().addListenerAsync(pubSubListener, new EventListenerKeysFilter(channel), new CacheEventConverter<Object, Object, byte[]>() {
-               @Override
-               public byte[] convert(Object key, Object oldValue, Metadata oldMetadata, Object newValue, Metadata newMetadata, EventType eventType) {
-                  return (byte[]) dc.fromStorage(newValue);
-               }
-
-               @Override
-               public MediaType format() {
-                  return MediaType.APPLICATION_OCTET_STREAM;
-               }
-            });
+            CompletionStage<Void> stage = handler.cache().addListenerAsync(pubSubListener, new EventListenerKeysFilter(channel), new EventListenerConverter<Object,Object,byte[]>(dc));
             aggregateCompletionStage.dependsOn(handler.handleStageListenerError(stage, keyChannel, true));
          }
       }
