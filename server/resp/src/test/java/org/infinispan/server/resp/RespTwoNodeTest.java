@@ -7,9 +7,12 @@ import static org.infinispan.test.TestingUtil.k;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -27,6 +30,8 @@ import org.testng.annotations.Test;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.pubsub.RedisPubSubAdapter;
+import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 
 @Test(groups = "functional", testName = "server.resp.RespTwoNodeTest")
 public class RespTwoNodeTest extends BaseMultipleRespTest {
@@ -105,5 +110,67 @@ public class RespTwoNodeTest extends BaseMultipleRespTest {
       assertThat(syncC2.pfadd(k1, "el-0", "hello-1", "hello-2")).isEqualTo(0L);
       assertThat(sa.errorsCollected()).hasSize(16);
       // TODO: Verify cardinality ISPN-14676
+   }
+   @Test
+   public void testPubSub() throws InterruptedException {
+      RedisPubSubCommands<String, String> connection = createPubSubConnection();
+      BlockingQueue<String> handOffQueue = addPubSubListener(connection);
+      // Subscribe to some channels
+      List<String> channels = Arrays.asList("channel2", "test", "channel");
+      connection.subscribe("channel2", "test");
+      String value = handOffQueue.poll(10, TimeUnit.SECONDS);
+      assertThat(value).isEqualTo("subscribed-channel2-1");
+      value = handOffQueue.poll(10, TimeUnit.SECONDS);
+      assertThat(value).isEqualTo("subscribed-test-2");
+
+      // Send a message to confirm it is properly listening
+      RedisCommands<String, String> redis = redisConnection2.sync();
+      redis.publish("channel2", "boomshakayaka");
+      value = handOffQueue.poll(10, TimeUnit.SECONDS);
+      assertThat(value).isEqualTo("message-channel2-boomshakayaka");
+
+      connection.subscribe("channel");
+      value = handOffQueue.poll(10, TimeUnit.SECONDS);
+      assertThat(value).isEqualTo("subscribed-channel-3");
+
+      connection.unsubscribe("channel2");
+      connection.unsubscribe("doesn't-exist");
+      connection.unsubscribe("channel", "test");
+
+      int subscriptions = 3;
+      for (String channel : new String[] { "channel2", "doesn't-exist", "channel", "test" }) {
+         value = handOffQueue.poll(10, TimeUnit.SECONDS);
+         assertThat(value).isEqualTo("unsubscribed-" + channel + "-" + Math.max(0, --subscriptions));
+      }
+   }
+
+   protected RedisPubSubCommands<String, String> createPubSubConnection() {
+      return client2.connectPubSub().sync();
+   }
+
+      private BlockingQueue<String> addPubSubListener(RedisPubSubCommands<String, String> connection) {
+      BlockingQueue<String> handOffQueue = new LinkedBlockingQueue<>();
+
+      connection.getStatefulConnection().addListener(new RedisPubSubAdapter<String, String>() {
+         @Override
+         public void message(String channel, String message) {
+            log.tracef("Received message on channel %s of %s", channel, message);
+            handOffQueue.add("message-" + channel + "-" + message);
+         }
+
+         @Override
+         public void subscribed(String channel, long count) {
+            log.tracef("Subscribed to %s with %s", channel, count);
+            handOffQueue.add("subscribed-" + channel + "-" + count);
+         }
+
+         @Override
+         public void unsubscribed(String channel, long count) {
+            log.tracef("Unsubscribed to %s with %s", channel, count);
+            handOffQueue.add("unsubscribed-" + channel + "-" + count);
+         }
+      });
+
+      return handOffQueue;
    }
 }
