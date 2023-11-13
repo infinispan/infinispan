@@ -32,7 +32,9 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.security.auth.Subject;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.cache.impl.AliasCache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
@@ -181,7 +183,7 @@ public class DefaultCacheManager extends InternalCacheManager {
     * {@link org.infinispan.configuration.global.GlobalConfiguration} for details of these defaults.
     */
    public DefaultCacheManager() {
-      this(null, null, true);
+      this(true);
    }
 
    /**
@@ -192,7 +194,7 @@ public class DefaultCacheManager extends InternalCacheManager {
     * @param start if true, the cache manager is started
     */
    public DefaultCacheManager(boolean start) {
-      this(null, null, start);
+      this(new ConfigurationBuilderHolder(), start);
    }
 
    /**
@@ -229,7 +231,7 @@ public class DefaultCacheManager extends InternalCacheManager {
     * @param globalConfiguration GlobalConfiguration to use for all caches created
     */
    public DefaultCacheManager(GlobalConfiguration globalConfiguration) {
-      this(globalConfiguration, null, true);
+      this(globalConfiguration, true);
    }
 
    /**
@@ -241,7 +243,7 @@ public class DefaultCacheManager extends InternalCacheManager {
     * @param start               if true, the cache manager is started.
     */
    public DefaultCacheManager(GlobalConfiguration globalConfiguration, boolean start) {
-      this(globalConfiguration, null, start);
+      this(new ConfigurationBuilderHolder(globalConfiguration.classLoader(), new GlobalConfigurationBuilder().read(globalConfiguration)), start);
    }
 
    /**
@@ -306,7 +308,7 @@ public class DefaultCacheManager extends InternalCacheManager {
 
       this.cacheManagerAdmin = new DefaultCacheManagerAdmin(this, authorizer, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class), null,
             globalComponentRegistry.getComponent(GlobalConfigurationManager.class));
-      if (start)
+     if (start)
          start();
    }
 
@@ -384,7 +386,6 @@ public class DefaultCacheManager extends InternalCacheManager {
          GlobalConfiguration globalConfiguration = configurationManager.getGlobalConfiguration();
          classAllowList = globalConfiguration.serialization().allowList().create();
          defaultCacheName = globalConfiguration.defaultCacheName().orElse(null);
-
          ModuleRepository moduleRepository = ModuleRepository.newModuleRepository(globalConfiguration.classLoader(), globalConfiguration);
          globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet(),
                moduleRepository, configurationManager);
@@ -398,10 +399,8 @@ public class DefaultCacheManager extends InternalCacheManager {
          health = new HealthImpl(this, internalCacheRegistry);
          cacheManagerInfo = new CacheManagerInfo(this, getConfigurationManager(), internalCacheRegistry, globalComponentRegistry.getComponent(LocalTopologyManager.class));
          globalComponentRegistry.registerComponent(new HealthJMXExposerImpl(health), HealthJMXExposer.class);
-
          authorizer = new Authorizer(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.cacheManagerName(), null);
          globalComponentRegistry.registerComponent(authorizer, Authorizer.class);
-
          cacheManagerAdmin = new DefaultCacheManagerAdmin(this, authorizer, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class),
                null, globalComponentRegistry.getComponent(GlobalConfigurationManager.class));
       } catch (CacheConfigurationException ce) {
@@ -534,8 +533,9 @@ public class DefaultCacheManager extends InternalCacheManager {
          throw new NullPointerException("Null arguments not allowed");
 
       assertIsNotTerminated();
+      String actualName = configurationManager.selectCache(cacheName);
       if (getCacheBlockingCheck != null) {
-         if (cacheName.equals(getCacheBlockingCheck.get())) {
+         if (actualName.equals(getCacheBlockingCheck.get())) {
             // isRunning() was called before getCache(), all good
             getCacheBlockingCheck.set(null);
          } else {
@@ -546,15 +546,15 @@ public class DefaultCacheManager extends InternalCacheManager {
 
       // No need to block if another thread (or even the current thread) is starting the global components
       // Because each cache component will wait for the global components it depends on
-      // And and ComponentRegistry depends on GlobalComponentRegistry.ModuleInitializer
+      // and ComponentRegistry depends on GlobalComponentRegistry.ModuleInitializer
       internalStart(false);
 
-      CompletableFuture<Cache<?, ?>> cacheFuture = caches.get(cacheName);
+      CompletableFuture<Cache<?, ?>> cacheFuture = caches.get(actualName);
       if (cacheFuture != null) {
          try {
             return (Cache<K, V>) cacheFuture.join();
          } catch (CompletionException e) {
-            caches.computeIfPresent(cacheName, (k, v) -> {
+            caches.computeIfPresent(actualName, (k, v) -> {
                if (v == cacheFuture) {
                   return null;
                }
@@ -562,8 +562,8 @@ public class DefaultCacheManager extends InternalCacheManager {
             });
          }
       }
-
-      return createCache(cacheName);
+      AdvancedCache<K, V> cache = (AdvancedCache<K, V>) createCache(actualName);
+      return actualName.equals(cacheName) ? cache : new AliasCache<>(cache, cacheName);
    }
 
    @Override
@@ -1015,6 +1015,7 @@ public class DefaultCacheManager extends InternalCacheManager {
 
    @Override
    public boolean isRunning(String cacheName) {
+      cacheName = configurationManager.selectCache(cacheName);
       if (getCacheBlockingCheck != null) {
          getCacheBlockingCheck.set(cacheName);
       }

@@ -5,6 +5,7 @@ import static org.infinispan.commons.configuration.attributes.IdentityAttributeC
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -15,6 +16,7 @@ import org.infinispan.util.logging.Log;
 /*
  * @since 10.0
  */
+@BuiltBy(JGroupsConfigurationBuilder.class)
 public class JGroupsConfiguration {
 
    static final AttributeDefinition<Transport> TRANSPORT = AttributeDefinition

@@ -38,47 +38,47 @@ class CacheContainerConfiguration {
             NON_BLOCKING_EXECUTOR, BLOCKING_EXECUTOR);
    }
 
+   private final AttributeSet attributes;
    private final Attribute<String> defaultCache;
    private final Attribute<String> name;
    private final Attribute<Boolean> statistics;
    private final Attribute<Boolean> zeroCapacityNode;
    private final boolean zeroCapacityAvailable;
-
-   private final ThreadsConfiguration threads;
-   private final GlobalMetricsConfiguration metrics;
-   private final GlobalTracingConfiguration tracing;
+   private final GlobalStateConfiguration globalState;
    private final GlobalJmxConfiguration jmx;
-   private final TransportConfiguration transport;
+   private final GlobalMetricsConfiguration metrics;
    private final GlobalSecurityConfiguration security;
    private final SerializationConfiguration serialization;
-   private final GlobalStateConfiguration globalState;
    private final ShutdownConfiguration shutdown;
-   private final AttributeSet attributes;
+   private final ThreadsConfiguration threads;
+   private final GlobalTracingConfiguration tracing;
+   private final TransportConfiguration transport;
+
 
    CacheContainerConfiguration(AttributeSet attributes,
-                               ThreadsConfiguration threadsConfiguration,
-                               GlobalMetricsConfiguration metrics,
-                               GlobalTracingConfiguration tracing,
+                               GlobalStateConfiguration globalState,
                                GlobalJmxConfiguration jmx,
-                               TransportConfiguration transport,
+                               GlobalMetricsConfiguration metrics,
                                GlobalSecurityConfiguration security,
                                SerializationConfiguration serialization,
-                               GlobalStateConfiguration globalState,
                                ShutdownConfiguration shutdown,
+                               ThreadsConfiguration threads,
+                               GlobalTracingConfiguration tracing,
+                               TransportConfiguration transport,
                                Features features) {
       this.attributes = attributes.checkProtection();
       this.defaultCache = attributes.attribute(DEFAULT_CACHE);
       this.name = attributes.attribute(NAME);
       this.statistics = attributes.attribute(STATISTICS);
       this.zeroCapacityNode = attributes.attribute(ZERO_CAPACITY_NODE);
-      this.threads = threadsConfiguration;
-      this.metrics = metrics;
       this.tracing = tracing;
-      this.jmx = jmx;
       this.globalState = globalState;
-      this.shutdown = shutdown;
+      this.jmx = jmx;
+      this.metrics = metrics;
       this.security = security;
       this.serialization = serialization;
+      this.shutdown = shutdown;
+      this.threads = threads;
       this.transport = transport;
       this.zeroCapacityAvailable = features.isAvailable(ZERO_CAPACITY_NODE_FEATURE);
    }
@@ -131,7 +131,7 @@ class CacheContainerConfiguration {
       return shutdown;
    }
 
-   @Deprecated(forRemoval=true, since = "10.1")
+   @Deprecated(forRemoval = true, since = "10.1")
    public String asyncExecutor() {
       return attributes.attribute(ASYNC_EXECUTOR).get();
    }
@@ -151,7 +151,7 @@ class CacheContainerConfiguration {
    /**
     * @deprecated Since 10.1, no longer used.
     */
-   @Deprecated(forRemoval=true, since = "10.1")
+   @Deprecated(forRemoval = true, since = "10.1")
    public String stateTransferExecutor() {
       return attributes.attribute(STATE_TRANSFER_EXECUTOR).get();
    }
@@ -188,7 +188,7 @@ class CacheContainerConfiguration {
       return threads.persistenceThreadPool();
    }
 
-   @Deprecated(forRemoval=true, since = "10.1")
+   @Deprecated(forRemoval = true, since = "10.1")
    public ThreadPoolConfiguration asyncThreadPool() {
       return threads.asyncThreadPool();
    }

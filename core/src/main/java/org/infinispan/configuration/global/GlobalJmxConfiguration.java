@@ -4,6 +4,7 @@ import static org.infinispan.commons.configuration.attributes.IdentityAttributeC
 
 import java.util.Objects;
 
+import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSerializer;
@@ -16,6 +17,7 @@ import org.infinispan.configuration.parsing.Element;
 /**
  * @since 10.1.3
  */
+@BuiltBy(GlobalJmxConfigurationBuilder.class)
 public class GlobalJmxConfiguration {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ENABLED, false).immutable().build();
    public static final AttributeDefinition<String> DOMAIN = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.DOMAIN, "org.infinispan").immutable().build();

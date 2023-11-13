@@ -2,14 +2,16 @@ package org.infinispan.configuration;
 
 import static org.infinispan.util.logging.Log.CONFIG;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Combine;
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeListener;
 import org.infinispan.commons.util.GlobUtils;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -27,12 +29,14 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
  */
 public class ConfigurationManager {
    private final GlobalConfiguration globalConfiguration;
-   private final ConcurrentMap<String, Configuration> namedConfiguration;
+   private final Map<String, Configuration> namedConfiguration;
+   private final Map<String, String> aliases;
 
 
    public ConfigurationManager(GlobalConfiguration globalConfiguration) {
       this.globalConfiguration = globalConfiguration;
       this.namedConfiguration = new ConcurrentHashMap<>();
+      this.aliases = new ConcurrentHashMap<>();
    }
 
    public ConfigurationManager(ConfigurationBuilderHolder holder) {
@@ -89,7 +93,10 @@ public class ConfigurationManager {
    }
 
    public Configuration putConfiguration(String cacheName, Configuration configuration) {
+      // This will fail if the names are already in use
+      addAliases(cacheName, configuration.aliases());
       namedConfiguration.put(cacheName, configuration);
+      configuration.attributes().attribute(Configuration.ALIASES).addListener(new AliasListener(cacheName));
       return configuration;
    }
 
@@ -98,13 +105,17 @@ public class ConfigurationManager {
    }
 
    public void removeConfiguration(String cacheName) {
-      namedConfiguration.remove(cacheName);
+      Configuration removed = namedConfiguration.remove(cacheName);
+      if (removed != null) {
+         removed.attributes().attribute(Configuration.ALIASES).removeListener(f -> f.getClass() == AliasListener.class);
+         removeAliases(removed.aliases());
+      }
    }
 
    public Collection<String> getDefinedCaches() {
       return namedConfiguration.entrySet().stream()
             .filter(entry -> !entry.getValue().isTemplate())
-            .map(Map.Entry::getKey).collect(Collectors.toUnmodifiableList());
+            .map(Map.Entry::getKey).toList();
    }
 
    public Collection<String> getDefinedConfigurations() {
@@ -118,5 +129,55 @@ public class ConfigurationManager {
          holder.newConfigurationBuilder(entry.getKey()).read(entry.getValue(), Combine.DEFAULT);
       }
       return holder;
+   }
+
+   private void addAliases(String cacheName, Collection<String> aliases) {
+      synchronized (this.aliases) {
+         for (String alias : aliases) {
+            // Ensure there are no cache name conflicts
+            if (this.namedConfiguration.containsKey(alias) || cacheName.equals(alias)) {
+               throw CONFIG.duplicateCacheName(alias);
+            }
+            // Ensure there are no alias name conflicts
+            if (this.aliases.containsKey(alias)) {
+               throw CONFIG.duplicateAliasName(alias, this.aliases.get(alias));
+            }
+         }
+         // Now we can register the aliases
+         for (String alias : aliases) {
+            this.aliases.put(alias, cacheName);
+         }
+      }
+   }
+
+   private void removeAliases(Collection<String> aliases) {
+      for (String alias : aliases) {
+         this.aliases.remove(alias);
+      }
+   }
+
+   public String selectCache(String cacheName) {
+      return aliases.getOrDefault(cacheName, cacheName);
+   }
+
+   class AliasListener implements AttributeListener<List<String>> {
+      private final String cacheName;
+
+      AliasListener(String cacheName) {
+         this.cacheName = cacheName;
+      }
+
+      public void attributeChanged(Attribute<List<String>> attribute, List<String> oldValues) {
+         synchronized (aliases) {
+            // Ensure that any new aliases aren't registered yet
+            List<String> newValues = new ArrayList<>(attribute.get());
+            newValues.removeAll(oldValues);
+            addAliases(cacheName, newValues);
+            // Now remove the ones that are no longer needed
+            List<String> removedValues = new ArrayList<>(oldValues);
+            removedValues.removeAll(attribute.get());
+            removeAliases(removedValues);
+         }
+      }
    }
 }

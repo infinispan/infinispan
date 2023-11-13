@@ -574,6 +574,7 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
     * No generics because some methods return {@code AdvancedCache<?, ?>},
     * and returning the proper type would require erasure anyway.
     */
+   @SuppressWarnings("rawtypes")
    public abstract AdvancedCache rewrap(AdvancedCache newDelegate);
 
    @Override

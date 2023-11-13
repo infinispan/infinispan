@@ -59,4 +59,5 @@ public abstract class AbstractCounterConfiguration {
       return attributes.attribute(STORAGE).get();
    }
 
+   abstract CounterConfigurationBuilder<?,?> toBuilder(CounterManagerConfigurationBuilder manager);
 }

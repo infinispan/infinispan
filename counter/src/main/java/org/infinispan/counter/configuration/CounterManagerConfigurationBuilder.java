@@ -119,6 +119,10 @@ public class CounterManagerConfigurationBuilder implements Builder<CounterManage
    @Override
    public Builder<?> read(CounterManagerConfiguration template, Combine combine) {
       this.attributes.read(template.attributes(), combine);
+      this.defaultCounters.clear();
+      for (AbstractCounterConfiguration counter : template.counters().values()) {
+         this.defaultCounters.add(counter.toBuilder(this));
+      }
       return this;
    }
 

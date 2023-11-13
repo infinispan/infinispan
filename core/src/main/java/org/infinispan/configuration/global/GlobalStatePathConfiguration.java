@@ -1,10 +1,12 @@
 package org.infinispan.configuration.global;
 
+import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.parsing.ParseUtils;
 
+@BuiltBy(GlobalStateConfigurationBuilder.class)
 public class GlobalStatePathConfiguration {
 
    public static final AttributeDefinition<String> PATH = AttributeDefinition.builder("path", null, String.class)

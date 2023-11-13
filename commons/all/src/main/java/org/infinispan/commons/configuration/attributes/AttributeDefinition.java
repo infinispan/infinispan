@@ -7,10 +7,9 @@ import java.util.function.Supplier;
 import org.infinispan.commons.CacheConfigurationException;
 
 /**
- *
  * AttributeDefinition. Defines the characteristics of a configuration attribute. It is used to
  * construct an actual {@link Attribute} holder.
- *
+ * <p>
  * An attribute definition has the following characteristics:
  * <ul>
  * <li>A name</li>
@@ -41,6 +40,7 @@ public final class AttributeDefinition<T> {
    private final int deprecatedMinor;
    private final int sinceMajor;
    private final int sinceMinor;
+   private final AttributeMatcher<T> matcher;
 
    private AttributeDefinition(Builder<T> builder) {
       this.name = builder.name;
@@ -50,6 +50,7 @@ public final class AttributeDefinition<T> {
       this.global = builder.global;
       this.copier = builder.copier;
       this.initializer = builder.initializer;
+      this.matcher = builder.matcher;
       this.validator = builder.validator;
       this.serializer = builder.serializer;
       this.parser = builder.parser;
@@ -104,6 +105,10 @@ public final class AttributeDefinition<T> {
       return initializer;
    }
 
+   public AttributeMatcher<T> matcher() {
+      return matcher;
+   }
+
    AttributeValidator<? super T> validator() {
       return validator;
    }
@@ -117,7 +122,7 @@ public final class AttributeDefinition<T> {
    }
 
    public Attribute<T> toAttribute() {
-      return new Attribute<T>(this);
+      return new Attribute<>(this);
    }
 
    public void validate(T value) {
@@ -201,12 +206,12 @@ public final class AttributeDefinition<T> {
       private AttributeValidator<? super T> validator;
       private AttributeSerializer<? super T> serializer = AttributeSerializer.DEFAULT;
       private AttributeParser<? super T> parser = AttributeParser.DEFAULT;
+      private AttributeMatcher<T> matcher;
       private int deprecatedMajor = Integer.MAX_VALUE;
       private int deprecatedMinor = Integer.MAX_VALUE;
       // We started with Infinispan 4.0
       private int sinceMajor = 4;
       private int sinceMinor = 0;
-
 
       private Builder(String name, T defaultValue, Class<T> type) {
          this.name = name;
@@ -226,6 +231,11 @@ public final class AttributeDefinition<T> {
 
       public Builder<T> initializer(AttributeInitializer<? extends T> initializer) {
          this.initializer = initializer;
+         return this;
+      }
+
+      public Builder<T> matcher(AttributeMatcher<T> matcher) {
+         this.matcher = matcher;
          return this;
       }
 

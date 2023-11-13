@@ -480,7 +480,7 @@ public class RestCacheClientJDK implements RestCacheClient {
    public CompletionStage<RestResponse> updateConfigurationAttribute(String attribute, String... value) {
       StringBuilder sb = new StringBuilder(path);
       sb.append("?action=set-mutable-attribute&attribute-name=");
-      sb.append(attribute);
+      sb.append(sanitize(attribute));
       for(String v : value) {
          sb.append("&attribute-value=");
          sb.append(sanitize(v));

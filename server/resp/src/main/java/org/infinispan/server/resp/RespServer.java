@@ -90,8 +90,8 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
             }
             builder.encoding().key().mediaType(RESP_KEY_MEDIA_TYPE);
             builder.encoding().value().mediaType(configuredValueType);
-            builder.statistics().enable();
          }
+         builder.statistics().enable().aliases("0");
          Configuration cfg = builder.build();
          cacheManager.defineConfiguration(configuration.defaultCacheName(), cfg);
          segmentSlots = new SegmentSlotRelation(cfg.clustering().hash().numSegments());

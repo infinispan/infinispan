@@ -21,6 +21,7 @@ public class ConnectionMetadata {
    private String clientLibVersion;
    private String protocolVersion;
    private Instant created;
+   private String cache;
 
    public static ConnectionMetadata getInstance(Channel channel) {
       ConnectionMetadata existing = channel.attr(METADATA).get();
@@ -73,6 +74,10 @@ public class ConnectionMetadata {
       return protocolVersion;
    }
 
+   public String cache() {
+      return cache;
+   }
+
    public void clientLibraryName(String name) {
       this.clientLibName = name;
    }
@@ -99,5 +104,9 @@ public class ConnectionMetadata {
 
    public void protocolVersion(String version) {
       this.protocolVersion = version;
+   }
+
+   public void cache(String cache) {
+      this.cache = cache;
    }
 }

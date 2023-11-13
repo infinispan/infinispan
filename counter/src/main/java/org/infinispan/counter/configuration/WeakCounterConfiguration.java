@@ -2,6 +2,7 @@ package org.infinispan.counter.configuration;
 
 import static org.infinispan.counter.logging.Log.CONTAINER;
 
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
@@ -34,5 +35,12 @@ public class WeakCounterConfiguration extends AbstractCounterConfiguration {
 
    public int concurrencyLevel() {
       return attributes.attribute(CONCURRENCY_LEVEL).get();
+   }
+
+   @Override
+   CounterConfigurationBuilder<?, ?> toBuilder(CounterManagerConfigurationBuilder manager) {
+      WeakCounterConfigurationBuilder builder = new WeakCounterConfigurationBuilder(manager);
+      builder.attributes.read(attributes, Combine.DEFAULT);
+      return builder;
    }
 }

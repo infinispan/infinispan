@@ -3,6 +3,7 @@ package org.infinispan.configuration.global;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
@@ -12,6 +13,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @author Tristan Tarrant
  * @since 7.0
  */
+@BuiltBy(GlobalSecurityConfigurationBuilder.class)
 public class GlobalSecurityConfiguration {
    private final GlobalAuthorizationConfiguration authorization;
    public static final AttributeDefinition<Integer> CACHE_SIZE = AttributeDefinition.builder("securityCacheSize", 1000).build();

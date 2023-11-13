@@ -1241,8 +1241,9 @@ public class Parser extends CacheParser {
                   break;
                }
                case INITIAL_CLUSTER_SIZE: {
-                 transport.initialClusterSize(ParseUtils.parseInt(reader, i, value));
-                 break;
+                  ParseUtils.introducedFrom(reader, 8, 2);
+                  transport.initialClusterSize(ParseUtils.parseInt(reader, i, value));
+                  break;
                }
                case INITIAL_CLUSTER_TIMEOUT: {
                   transport.initialClusterTimeout(ParseUtils.parseLong(reader, i, value), TimeUnit.MILLISECONDS);
