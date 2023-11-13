@@ -1280,9 +1280,14 @@
         <xs:documentation>The name of the cache configuration which this configuration inherits from.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute name="aliases" type="tns:string-list" default="">
+      <xs:annotation>
+        <xs:documentation>Zero or more cache alias names.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
     <xs:attribute name="statistics" type="xs:boolean" default="${Statistics.statistics}">
       <xs:annotation>
-        <xs:documentation>Determines whether or not the cache should collect statistics.  Keep disabled for optimal performance.</xs:documentation>
+        <xs:documentation>Determines whether the cache should collect statistics. Keep disabled for optimal performance.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="unreliable-return-values" type="xs:boolean" default="${Unsafe.unreliable-return-values}">
@@ -3328,6 +3333,9 @@
         </xs:annotation>
       </xs:enumeration>
     </xs:restriction>
+
+  <xs:simpleType name="string-list">
+    <xs:list itemType="xs:string"/>
   </xs:simpleType>
 
   <xs:simpleType name="schema-compatibility">

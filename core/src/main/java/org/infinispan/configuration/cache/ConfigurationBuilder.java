@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import static java.util.Arrays.asList;
+import static org.infinispan.configuration.cache.Configuration.ALIASES;
 import static org.infinispan.configuration.cache.Configuration.CONFIGURATION;
 import static org.infinispan.configuration.cache.Configuration.SIMPLE_CACHE;
 import static org.infinispan.util.logging.Log.CONFIG;
@@ -56,6 +57,14 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       this.unsafe = new UnsafeConfigurationBuilder(this);
       this.sites = new SitesConfigurationBuilder(this);
       this.memory = new MemoryConfigurationBuilder(this);
+   }
+
+   @Override
+   public ConfigurationBuilder aliases(String... aliases) {
+      List<String> existing = attributes.attribute(ALIASES).get();
+      Collections.addAll(existing, aliases);
+      attributes.attribute(ALIASES).set(existing);
+      return this;
    }
 
    @Override
@@ -140,7 +149,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    }
 
    @Override
-   public MemoryConfigurationBuilder memory() { return memory; }
+   public MemoryConfigurationBuilder memory() {
+      return memory;
+   }
 
    public List<Builder<?>> modules() {
       return Collections.unmodifiableList(modules);
@@ -186,10 +197,22 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
          validateSimpleCacheConfiguration();
       }
       List<RuntimeException> validationExceptions = new ArrayList<>();
-      for (Builder<?> validatable:
-            asList(clustering, expiration, query, indexing, tracing, encoding,
-                   invocationBatching, statistics, persistence, locking, transaction,
-                   unsafe, sites, memory)) {
+      for (Builder<?> validatable : asList(
+            clustering,
+            encoding,
+            expiration,
+            indexing,
+            invocationBatching,
+            locking,
+            memory,
+            persistence,
+            query,
+            sites,
+            statistics,
+            tracing,
+            transaction,
+            unsafe
+      )) {
          try {
             validatable.validate();
          } catch (RuntimeException e) {
@@ -203,7 +226,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
             validationExceptions.add(e);
          }
       }
-      CacheConfigurationException.fromMultipleRuntimeExceptions(validationExceptions).ifPresent(e -> { throw e; });
+      CacheConfigurationException.fromMultipleRuntimeExceptions(validationExceptions).ifPresent(e -> {
+         throw e;
+      });
    }
 
    private void validateSimpleCacheConfiguration() {
@@ -220,10 +245,23 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    @Override
    public void validate(GlobalConfiguration globalConfig) {
       List<RuntimeException> validationExceptions = new ArrayList<>();
-      for (ConfigurationChildBuilder validatable:
-            asList(clustering, expiration, query, indexing, tracing,
-                   invocationBatching, statistics, persistence, locking, transaction,
-                   unsafe, sites, security, memory)) {
+      for (ConfigurationChildBuilder validatable : asList(
+            clustering,
+            encoding,
+            expiration,
+            indexing,
+            invocationBatching,
+            locking,
+            memory,
+            persistence,
+            query,
+            security,
+            sites,
+            statistics,
+            tracing,
+            transaction,
+            unsafe
+      )) {
          try {
             validatable.validate(globalConfig);
          } catch (RuntimeException e) {
@@ -231,7 +269,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
          }
       }
       // Modules cannot be checked with GlobalConfiguration
-      CacheConfigurationException.fromMultipleRuntimeExceptions(validationExceptions).ifPresent(e -> { throw e; });
+      CacheConfigurationException.fromMultipleRuntimeExceptions(validationExceptions).ifPresent(e -> {
+         throw e;
+      });
    }
 
    @Override
@@ -251,10 +291,24 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       List<Object> modulesConfig = new LinkedList<>();
       for (Builder<?> module : modules)
          modulesConfig.add(module.create());
-      return new Configuration(template, attributes.protect(), clustering.create(),
-                               expiration.create(), encoding.create(), query.create(), indexing.create(), tracing.create(), invocationBatching.create(),
-                               statistics.create(), persistence.create(), locking.create(), security.create(),
-                               transaction.create(), unsafe.create(), sites.create(), memory.create(), modulesConfig);
+      return new Configuration(template, attributes.protect(),
+            clustering.create(),
+            encoding.create(),
+            expiration.create(),
+            indexing.create(),
+            invocationBatching.create(),
+            locking.create(),
+            memory.create(),
+            persistence.create(),
+            query.create(),
+            security.create(),
+            sites.create(),
+            statistics.create(),
+            tracing.create(),
+            transaction.create(),
+            unsafe.create(),
+            modulesConfig
+      );
    }
 
    public ConfigurationBuilder read(Configuration template) {
@@ -291,7 +345,8 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    @Override
    public String toString() {
       return "ConfigurationBuilder{" +
-            "clustering=" + clustering +
+            attributes +
+            ", clustering=" + clustering +
             ", expiration=" + expiration +
             ", query=" + query +
             ", indexing=" + indexing +

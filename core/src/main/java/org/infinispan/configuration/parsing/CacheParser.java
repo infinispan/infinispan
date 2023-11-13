@@ -168,9 +168,14 @@ public class CacheParser implements ConfigurationParser {
             ignoreAttribute(reader, index);
             break;
          }
-         case SIMPLE_CACHE:
+         case ALIASES: {
+            builder.aliases(ParseUtils.getListAttributeValue(value));
+            break;
+         }
+         case SIMPLE_CACHE: {
             builder.simpleCache(ParseUtils.parseBoolean(reader, index, value));
             break;
+         }
          case STATISTICS: {
             builder.statistics().enabled(ParseUtils.parseBoolean(reader, index, value));
             break;
@@ -779,31 +784,7 @@ public class CacheParser implements ConfigurationParser {
    }
 
    private void parseStateTransfer(ConfigurationReader reader, ConfigurationBuilder builder) {
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case AWAIT_INITIAL_TRANSFER: {
-               builder.clustering().stateTransfer().awaitInitialTransfer(ParseUtils.parseBoolean(reader, i, value));
-               break;
-            }
-            case ENABLED: {
-               builder.clustering().stateTransfer().fetchInMemoryState(ParseUtils.parseBoolean(reader, i, value));
-               break;
-            }
-            case TIMEOUT: {
-               builder.clustering().stateTransfer().timeout(ParseUtils.parseLong(reader, i, value));
-               break;
-            }
-            case CHUNK_SIZE: {
-               builder.clustering().stateTransfer().chunkSize(ParseUtils.parseInt(reader, i, value));
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedAttribute(reader, i);
-            }
-         }
-      }
+      ParseUtils.parseAttributes(reader, builder.clustering().stateTransfer());
       ParseUtils.requireNoContent(reader);
    }
 

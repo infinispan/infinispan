@@ -5,6 +5,7 @@ import static org.infinispan.counter.logging.Log.CONTAINER;
 import java.util.Collections;
 import java.util.Map;
 
+import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
@@ -19,6 +20,7 @@ import org.infinispan.configuration.serializing.SerializedWith;
  * @since 9.0
  */
 @SerializedWith(CounterConfigurationSerializer.class)
+@BuiltBy(CounterManagerConfigurationBuilder.class)
 public class CounterManagerConfiguration extends ConfigurationElement<CounterManagerConfiguration> {
    static final AttributeDefinition<Reliability> RELIABILITY = AttributeDefinition
          .builder("reliability", Reliability.AVAILABLE)

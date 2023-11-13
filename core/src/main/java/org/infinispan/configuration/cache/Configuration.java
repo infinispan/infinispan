@@ -1,5 +1,8 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.commons.configuration.attributes.AttributeSerializer.STRING_COLLECTION;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +11,7 @@ import java.util.Objects;
 import org.infinispan.commons.configuration.BasicConfiguration;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeMatcher;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.commons.configuration.attributes.Matchable;
@@ -19,9 +23,18 @@ import org.infinispan.configuration.parsing.ParserRegistry;
 public class Configuration extends ConfigurationElement<Configuration> implements BasicConfiguration {
    public static final AttributeDefinition<String> CONFIGURATION = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CONFIGURATION, null, String.class).immutable().build();
    public static final AttributeDefinition<Boolean> SIMPLE_CACHE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.SIMPLE_CACHE, false).immutable().build();
+   @SuppressWarnings("unchecked")
+   public static final AttributeDefinition<List<String>> ALIASES = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ALIASES, null, (Class<List<String>>) (Class<?>) List.class)
+         .since(15, 0)
+         .initializer(ArrayList::new)
+         // Ignore attribute in match comparison
+         .matcher(AttributeMatcher.alwaysTrue())
+         .serializer(STRING_COLLECTION)
+         .build();
+
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(Configuration.class, CONFIGURATION, SIMPLE_CACHE);
+      return new AttributeSet(Configuration.class, CONFIGURATION, SIMPLE_CACHE, ALIASES);
    }
 
    private final Attribute<Boolean> simpleCache;
@@ -45,36 +58,36 @@ public class Configuration extends ConfigurationElement<Configuration> implement
 
    Configuration(boolean template, AttributeSet attributes,
                  ClusteringConfiguration clusteringConfiguration,
-                 ExpirationConfiguration expirationConfiguration,
                  EncodingConfiguration encodingConfiguration,
-                 QueryConfiguration queryConfiguration,
+                 ExpirationConfiguration expirationConfiguration,
                  IndexingConfiguration indexingConfiguration,
-                 TracingConfiguration tracingConfiguration,
                  InvocationBatchingConfiguration invocationBatchingConfiguration,
-                 StatisticsConfiguration statisticsConfiguration,
-                 PersistenceConfiguration persistenceConfiguration,
                  LockingConfiguration lockingConfiguration,
+                 MemoryConfiguration memoryConfiguration,
+                 PersistenceConfiguration persistenceConfiguration,
+                 QueryConfiguration queryConfiguration,
                  SecurityConfiguration securityConfiguration,
+                 SitesConfiguration sitesConfiguration,
+                 StatisticsConfiguration statisticsConfiguration,
+                 TracingConfiguration tracingConfiguration,
                  TransactionConfiguration transactionConfiguration,
                  UnsafeConfiguration unsafeConfiguration,
-                 SitesConfiguration sitesConfiguration,
-                 MemoryConfiguration memoryConfiguration,
                  List<?> modules) {
       super(clusteringConfiguration.cacheMode().toElement(template), attributes,
             clusteringConfiguration,
-            expirationConfiguration,
             encodingConfiguration,
-            queryConfiguration,
+            expirationConfiguration,
             indexingConfiguration,
-            tracingConfiguration,
-            statisticsConfiguration,
-            persistenceConfiguration,
             lockingConfiguration,
+            memoryConfiguration,
+            persistenceConfiguration,
+            queryConfiguration,
             securityConfiguration,
-            transactionConfiguration,
-            unsafeConfiguration,
             sitesConfiguration,
-            memoryConfiguration);
+            statisticsConfiguration,
+            tracingConfiguration,
+            transactionConfiguration,
+            unsafeConfiguration);
       this.template = template;
       this.simpleCache = attributes.attribute(SIMPLE_CACHE);
       this.clusteringConfiguration = clusteringConfiguration;
@@ -93,10 +106,14 @@ public class Configuration extends ConfigurationElement<Configuration> implement
       this.sitesConfiguration = sitesConfiguration;
       this.memoryConfiguration = memoryConfiguration;
       Map<Class<?>, Object> modulesMap = new HashMap<>();
-      for(Object module : modules) {
+      for (Object module : modules) {
          modulesMap.put(module.getClass(), module);
       }
       this.moduleConfiguration = Map.copyOf(modulesMap);
+   }
+
+   public List<String> aliases() {
+      return attributes.attribute(ALIASES).get();
    }
 
    public boolean simpleCache() {
@@ -143,11 +160,13 @@ public class Configuration extends ConfigurationElement<Configuration> implement
       return lockingConfiguration;
    }
 
-   public MemoryConfiguration memory() { return memoryConfiguration; }
+   public MemoryConfiguration memory() {
+      return memoryConfiguration;
+   }
 
    @SuppressWarnings("unchecked")
    public <T> T module(Class<T> moduleClass) {
-      return (T)moduleConfiguration.get(moduleClass);
+      return (T) moduleConfiguration.get(moduleClass);
    }
 
    public Map<Class<?>, ?> modules() {
@@ -177,7 +196,7 @@ public class Configuration extends ConfigurationElement<Configuration> implement
    @Override
    public String toString() {
       return "Configuration{" +
-            "simpleCache=" + simpleCache.get() +
+            attributes.toString(null) +
             ", clustering=" + clusteringConfiguration +
             ", encoding=" + encodingConfiguration +
             ", expiration=" + expirationConfiguration +
@@ -249,8 +268,6 @@ public class Configuration extends ConfigurationElement<Configuration> implement
 
    @Override
    public boolean matches(Configuration other) {
-      if (!simpleCache.get().equals(other.simpleCache.get()))
-         return false;
       if (!clusteringConfiguration.matches(other.clusteringConfiguration))
          return false;
       if (!encodingConfiguration.matches(other.encodingConfiguration))
@@ -281,12 +298,12 @@ public class Configuration extends ConfigurationElement<Configuration> implement
          return false;
       if (!unsafeConfiguration.matches(other.unsafeConfiguration))
          return false;
-      for(Map.Entry<Class<?>, ?> module : moduleConfiguration.entrySet()) {
+      for (Map.Entry<Class<?>, ?> module : moduleConfiguration.entrySet()) {
          if (!other.moduleConfiguration.containsKey(module.getKey()))
             return false;
          Object thisModule = module.getValue();
          Object thatModule = other.moduleConfiguration.get(module.getKey());
-         if (thisModule instanceof Matchable && (!((Matchable)thisModule).matches(thatModule)))
+         if (thisModule instanceof Matchable && (!((Matchable) thisModule).matches(thatModule)))
             return false;
          if (!thisModule.equals(thatModule))
             return false;

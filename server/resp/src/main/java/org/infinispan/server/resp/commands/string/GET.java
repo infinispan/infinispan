@@ -1,14 +1,16 @@
 package org.infinispan.server.resp.commands.string;
 
-import io.netty.channel.ChannelHandlerContext;
-import org.infinispan.server.resp.commands.Resp3Command;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
+import org.infinispan.server.resp.commands.Resp3Command;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * GET Resp Command
@@ -30,6 +32,7 @@ public class GET extends RespCommand implements Resp3Command {
                                                       List<byte[]> arguments) {
       byte[] keyBytes = arguments.get(0);
 
-      return handler.stageToReturn(handler.cache().getAsync(keyBytes), ctx, Consumers.GET_BICONSUMER);
+      CompletableFuture<byte[]> async = handler.cache().getAsync(keyBytes);
+      return handler.stageToReturn(async, ctx, Consumers.GET_BICONSUMER);
    }
 }

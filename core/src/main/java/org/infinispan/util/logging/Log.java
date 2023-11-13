@@ -2387,4 +2387,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Security container cannot be enabled/disabled at cache level, since it is configured globally.", id = 974)
    CacheConfigurationException securityCacheTracing();
 
+   @Message(value = "The alias '%s' is already being used by cache '%s'", id = 975)
+   CacheConfigurationException duplicateAliasName(String alias, String cacheName);
 }

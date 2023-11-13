@@ -9,6 +9,11 @@ abstract class AbstractConfigurationChildBuilder implements ConfigurationChildBu
    }
 
    @Override
+   public ConfigurationBuilder aliases(String... aliases) {
+      return builder.aliases(aliases);
+   }
+
+   @Override
    public ConfigurationChildBuilder template(boolean template) {
       return builder.template(template);
    }

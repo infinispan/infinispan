@@ -1,5 +1,6 @@
 package org.infinispan.counter.configuration;
 
+import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
@@ -30,6 +31,13 @@ public class StrongCounterConfiguration extends AbstractCounterConfiguration {
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(StrongCounterConfiguration.class, AbstractCounterConfiguration.attributeDefinitionSet(),
             LOWER_BOUND, UPPER_BOUND, LIFESPAN);
+   }
+
+   @Override
+   CounterConfigurationBuilder<?, ?> toBuilder(CounterManagerConfigurationBuilder manager) {
+      StrongCounterConfigurationBuilder builder = new StrongCounterConfigurationBuilder(manager);
+      builder.attributes.read(attributes, Combine.DEFAULT);
+      return builder;
    }
 
    /**
