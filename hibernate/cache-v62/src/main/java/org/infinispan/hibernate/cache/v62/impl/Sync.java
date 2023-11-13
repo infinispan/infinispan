@@ -41,7 +41,7 @@ public class Sync implements CacheTransactionSynchronization {
       tasks[index++] = task;
    }
 
-   @Override
+   // Don't put override so it is compatible with both 6.2 and 6.3
    public long getCurrentTransactionStartTimestamp() {
       return transactionStartTimestamp;
    }

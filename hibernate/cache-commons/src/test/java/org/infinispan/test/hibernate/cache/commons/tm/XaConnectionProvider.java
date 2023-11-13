@@ -11,27 +11,23 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 import org.hibernate.HibernateException;
-import org.hibernate.service.UnknownUnwrapTypeException;
 import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
+import org.hibernate.service.UnknownUnwrapTypeException;
 import org.hibernate.service.spi.Stoppable;
 import org.hibernate.testing.env.ConnectionProviderBuilder;
 
 /**
  * XaConnectionProvider.
  *
- * Note: Does not implement {@link Stoppable} because we don't want to stop the global provider
- * cached in {@link #DEFAULT_CONNECTION_PROVIDER}.
- *
  * @author Galder Zamarreño
  * @since 3.5
  */
-public class XaConnectionProvider implements ConnectionProvider {
-	private final static ConnectionProvider DEFAULT_CONNECTION_PROVIDER = ConnectionProviderBuilder.buildConnectionProvider();
+public class XaConnectionProvider implements ConnectionProvider, Stoppable {
 	private final ConnectionProvider actualConnectionProvider;
 	private boolean isTransactional;
 
 	public XaConnectionProvider() {
-		this(DEFAULT_CONNECTION_PROVIDER);
+		this(ConnectionProviderBuilder.buildConnectionProvider());
 	}
 
 	public XaConnectionProvider(ConnectionProvider connectionProvider) {
@@ -90,13 +86,14 @@ public class XaConnectionProvider implements ConnectionProvider {
 		}
 	}
 
-	public void close() throws HibernateException {
+	@Override
+	public void stop() {
 		if ( actualConnectionProvider instanceof Stoppable ) {
 			((Stoppable) actualConnectionProvider).stop();
 		}
 	}
 
 	public boolean supportsAggressiveRelease() {
-		return true;
+		return actualConnectionProvider.supportsAggressiveRelease();
 	}
 }
