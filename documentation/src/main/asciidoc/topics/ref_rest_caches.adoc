@@ -588,7 +588,7 @@ This operation requires ADMIN permission.
 
 [source,options="nowrap",subs=attributes+]
 ----
-GET /rest/v2/cache-managers/{cacheManagerName}/caches?action=role-accessible&role=observer
+GET /rest/v2/caches?action=role-accessible&role=observer
 ----
 
 {brandname} responds with JSON as in the following example:

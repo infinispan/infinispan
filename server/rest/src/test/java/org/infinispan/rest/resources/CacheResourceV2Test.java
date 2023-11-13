@@ -159,7 +159,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
       if (security) {
          cm.defineConfiguration("secured-simple-text", getTextCacheBuilder()
-               .security().authorization().enable().roles("ADMIN", "USER").build());
+               .security().authorization().enable().roles("ADMIN").build());
       }
 
       Cache<String, String> metadataCache = cm.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
@@ -830,12 +830,14 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
 
    @Test
    public void testCacheNames() {
-      CompletionStage<RestResponse> response = client.caches();
+      CompletionStage<RestResponse> response = adminClient.caches();
 
       assertThat(response).isOk();
 
       List responseCacheNames = Json.read(join(response).getBody()).asList();
       assertThat(responseCacheNames).containsExactlyElementsOf(cacheManagers.get(0).getCacheNames());
+
+      assertThat(client.caches()).isOk();
    }
 
    @Test
@@ -1833,6 +1835,16 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
          String json = response.getBody();
          Json jsonNode = Json.read(json);
          assertThat(jsonNode.at("secured").asList()).containsExactlyInAnyOrder("secured-simple-text");
+         assertThat(jsonNode.at("non-secured").asList()).containsExactlyInAnyOrder("default",
+               "simple-text",
+               "indexedCache",
+               "proto",
+               "denyReadWritesCache",
+               "defaultcache");
+         response = join(adminClient.cachesByRole("USER"));
+         json = response.getBody();
+         jsonNode = Json.read(json);
+         assertThat(jsonNode.at("secured").asList()).isEmpty();
          assertThat(jsonNode.at("non-secured").asList()).containsExactlyInAnyOrder("default",
                "simple-text",
                "indexedCache",

@@ -1186,7 +1186,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             SecurityConfiguration config = cache.getCacheConfiguration().security();
             if (config.authorization().enabled() && config.authorization().roles().contains(roleName)) {
                securedCaches.add(cacheName);
-            } else {
+            } else if (!config.authorization().enabled()){
                nonSecuredCaches.add(cacheName);
             }
          } catch (Exception ex) {
