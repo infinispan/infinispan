@@ -4,14 +4,22 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.boot.registry.BootstrapServiceRegistry;
+import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
+import org.hibernate.boot.registry.StandardServiceInitiator;
 import org.hibernate.boot.spi.SessionFactoryOptions;
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.cfg.spi.DomainDataCachingConfig;
@@ -23,7 +31,10 @@ import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cache.spi.access.CachedDomainDataAccess;
 import org.hibernate.cache.spi.access.EntityDataAccess;
 import org.hibernate.cache.spi.access.SoftLock;
+import org.hibernate.cfg.Environment;
+import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
 import org.hibernate.engine.jdbc.connections.spi.JdbcConnectionAccess;
+import org.hibernate.engine.jdbc.dialect.spi.DialectFactory;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.engine.jdbc.spi.SqlExceptionHelper;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
@@ -34,6 +45,7 @@ import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
 import org.hibernate.internal.AbstractSharedSessionContract;
 import org.hibernate.internal.SessionCreationOptions;
 import org.hibernate.internal.SessionFactoryImpl;
+import org.hibernate.internal.util.PropertiesHelper;
 import org.hibernate.jpa.spi.JpaCompliance;
 import org.hibernate.metamodel.model.domain.NavigableRole;
 import org.hibernate.query.Query;
@@ -43,7 +55,11 @@ import org.hibernate.resource.transaction.backend.jdbc.internal.JdbcResourceLoca
 import org.hibernate.resource.transaction.backend.jdbc.spi.JdbcResourceTransactionAccess;
 import org.hibernate.resource.transaction.spi.TransactionCoordinator;
 import org.hibernate.resource.transaction.spi.TransactionCoordinatorOwner;
-import org.hibernate.service.ServiceRegistry;
+import org.hibernate.service.StandardServiceInitiators;
+import org.hibernate.service.internal.ProvidedService;
+import org.hibernate.testing.boot.DialectFactoryTestingImpl;
+import org.hibernate.testing.boot.ServiceRegistryTestingImpl;
+import org.hibernate.testing.env.ConnectionProviderBuilder;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.hibernate.cache.v62.impl.DomainDataRegionImpl;
 import org.infinispan.hibernate.cache.v62.impl.Sync;
@@ -95,8 +111,17 @@ public class TestSessionAccessImpl implements TestSessionAccess {
          SqlExceptionHelper sqlExceptionHelper = mock(SqlExceptionHelper.class);
          JdbcServices jdbcServices = mock(JdbcServices.class);
          when(jdbcServices.getSqlExceptionHelper()).thenReturn(sqlExceptionHelper);
-         ServiceRegistry serviceRegistry = mock(ServiceRegistry.class);
-         when(serviceRegistry.getService(JdbcServices.class)).thenReturn(jdbcServices);
+         ServiceRegistryTestingImpl serviceRegistry = createServiceRegistry(true,
+               new BootstrapServiceRegistryBuilder().build(),
+               StandardServiceInitiators.LIST,
+               Arrays.asList(
+                     dialectFactoryService(),
+                     connectionProviderService(),
+                     new ProvidedService<>(JdbcServices.class, jdbcServices)
+               ),
+               PropertiesHelper.map( Environment.getProperties())
+         );
+
          JdbcSessionContext jdbcSessionContext = mock(JdbcSessionContext.class);
          when(jdbcSessionContext.getServiceRegistry()).thenReturn(serviceRegistry);
          JpaCompliance jpaCompliance = mock(JpaCompliance.class);
@@ -139,6 +164,44 @@ public class TestSessionAccessImpl implements TestSessionAccess {
       doAnswer(___ -> timeService.wallClockTime()).when(cts).getCachingTimestamp();
 
       return session;
+   }
+
+   private static ProvidedService<DialectFactory> dialectFactoryService() {
+      return new ProvidedService<>( DialectFactory.class, new DialectFactoryTestingImpl() );
+   }
+
+   private static ProvidedService<ConnectionProvider> connectionProviderService() {
+      return new ProvidedService<>(
+            ConnectionProvider.class,
+            ConnectionProviderBuilder.buildConnectionProvider( true )
+      );
+   }
+
+   private static ServiceRegistryTestingImpl createServiceRegistry(boolean autoCloseRegistry,
+                                                                   BootstrapServiceRegistry bootstrapServiceRegistry,
+                                                                   List<StandardServiceInitiator<?>> serviceInitiators,
+                                                                   List<ProvidedService<?>> providedServices,
+                                                                   Map<String,Object> configurationValues) {
+      // The following code is so that both Hibernate 6.2 and 6.3 can both be tested. The two versions changed the
+      // ServiceRegistryTestingImpl creation methods. In 6.2 we have to use its constructor and in 6.3 we can use
+      // the create static method instead
+      try {
+         try {
+            // This method exists in 6.3
+            Method method = ServiceRegistryTestingImpl.class.getMethod("create", Boolean.TYPE,
+                  BootstrapServiceRegistry.class, List.class, List.class, Map.class);
+            return (ServiceRegistryTestingImpl) method.invoke(null, autoCloseRegistry, bootstrapServiceRegistry,
+                  serviceInitiators, providedServices, configurationValues);
+         } catch (NoSuchMethodException e) {
+            // Falling back to 6.2 code
+         }
+         Constructor<ServiceRegistryTestingImpl> constructor = ServiceRegistryTestingImpl.class.getConstructor(
+               Boolean.TYPE, BootstrapServiceRegistry.class, List.class, List.class, Map.class);
+         return constructor.newInstance(autoCloseRegistry, bootstrapServiceRegistry, serviceInitiators,
+               providedServices, configurationValues);
+      } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
+         throw new RuntimeException(e);
+      }
    }
 
    @Override

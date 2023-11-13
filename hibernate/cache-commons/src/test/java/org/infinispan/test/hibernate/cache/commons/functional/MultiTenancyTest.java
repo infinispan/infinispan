@@ -73,8 +73,8 @@ public class MultiTenancyTest extends SingleNodeTest {
 
 	 @Override
 	 protected void cleanupTest() throws Exception {
-		  db1.close();
-		  db2.close();
+		  db1.stop();
+		  db2.stop();
 	 }
 
 	 @Test
