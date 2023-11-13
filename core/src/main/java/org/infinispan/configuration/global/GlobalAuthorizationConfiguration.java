@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeInitializer;
@@ -25,6 +26,7 @@ import org.infinispan.util.logging.events.Messages;
  * @author Tristan Tarrant
  * @since 7.0
  */
+@BuiltBy(GlobalAuthorizationConfigurationBuilder.class)
 public class GlobalAuthorizationConfiguration {
    public static final Map<String, Role> DEFAULT_ROLES;
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ENABLED, false).immutable().build();

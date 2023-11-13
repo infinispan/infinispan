@@ -27,6 +27,7 @@ public enum Element {
     BINARY,
     BLOCKING_BOUNDED_QUEUE_THREAD_POOL,
     CACHE_CONTAINER,
+    CASE_PRINCIPAL_TRANSFORMER,
     CACHES,
     CACHED_THREAD_POOL,
     CLASS,
@@ -145,7 +146,7 @@ public enum Element {
     @Deprecated(forRemoval=true)
     WHITE_LIST,
     WRITE_BEHIND,
-    CASE_PRINCIPAL_TRANSFORMER;
+    ;
 
    private final String name;
 

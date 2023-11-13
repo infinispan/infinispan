@@ -1,7 +1,5 @@
 package org.infinispan.distribution.ch.impl;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 import org.infinispan.commons.hash.Hash;
@@ -44,8 +42,7 @@ public class HashFunctionPartitioner implements KeyPartitioner {
 
    @Override
    public void init(KeyPartitioner other) {
-      if (other instanceof HashFunctionPartitioner) {
-         HashFunctionPartitioner o = (HashFunctionPartitioner) other;
+      if (other instanceof HashFunctionPartitioner o) {
          if (o.numSegments > 0) { // The other HFP has been initialized, so we can use it
             init(o.numSegments);
          }
@@ -87,23 +84,13 @@ public class HashFunctionPartitioner implements KeyPartitioner {
       return MurmurHash3.getInstance();
    }
 
-   public List<Integer> getSegmentEndHashes() {
-      List<Integer> hashes = new ArrayList<>(numSegments);
-      for (int i = 0; i < numSegments; i++) {
-         hashes.add(((i + 1) % numSegments) * segmentSize);
-      }
-      return hashes;
-   }
-
    @Override
    public boolean equals(Object o) {
       if (this == o)
          return true;
       if (o == null || getClass() != o.getClass())
          return false;
-
       HashFunctionPartitioner that = (HashFunctionPartitioner) o;
-
       if (numSegments != that.numSegments)
          return false;
       return Objects.equals(hashFunction, that.hashFunction);

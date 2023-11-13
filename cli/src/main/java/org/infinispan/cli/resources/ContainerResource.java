@@ -22,22 +22,15 @@ public class ContainerResource extends AbstractResource {
 
    @Override
    public Resource getChild(String name) {
-      switch (name) {
-         case Resource.PARENT:
-            return parent;
-         case CachesResource.NAME:
-            return new CachesResource(this);
-         case CountersResource.NAME:
-            return new CountersResource(this);
-         case ConfigurationsResource.NAME:
-            return new ConfigurationsResource(this);
-         case SchemasResource.NAME:
-            return new SchemasResource(this);
-         case TasksResource.NAME:
-            return new TasksResource(this);
-         default:
-            throw Messages.MSG.noSuchResource(name);
-      }
+      return switch (name) {
+         case Resource.PARENT -> parent;
+         case CachesResource.NAME -> new CachesResource(this);
+         case CountersResource.NAME -> new CountersResource(this);
+         case ConfigurationsResource.NAME -> new ConfigurationsResource(this);
+         case SchemasResource.NAME -> new SchemasResource(this);
+         case TasksResource.NAME -> new TasksResource(this);
+         default -> throw Messages.MSG.noSuchResource(name);
+      };
    }
 
    @Override

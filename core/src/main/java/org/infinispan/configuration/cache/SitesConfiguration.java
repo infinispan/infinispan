@@ -213,7 +213,7 @@ public class SitesConfiguration extends ConfigurationElement<SitesConfiguration>
       }
 
       @Override
-      public XSiteEntryMergePolicy parse(Class klass, String value) {
+      public XSiteEntryMergePolicy parse(Class<?> klass, String value) {
          return XSiteMergePolicy.instanceFromString(value, null);
       }
    }

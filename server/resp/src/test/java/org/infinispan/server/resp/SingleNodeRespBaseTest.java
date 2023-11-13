@@ -15,7 +15,7 @@ public abstract class SingleNodeRespBaseTest extends AbstractRespTest {
    protected RedisClient client;
    protected RespServer server;
    protected StatefulRedisConnection<String, String> redisConnection;
-   private List<StatefulRedisConnection<String, String>> connections;
+   private final List<StatefulRedisConnection<String, String>> connections = new ArrayList<>();
    protected Cache<Object, Object> cache;
 
    @Override
@@ -23,9 +23,7 @@ public abstract class SingleNodeRespBaseTest extends AbstractRespTest {
       EmbeddedCacheManager cacheManager = manager(0);
       server = server(0);
       client = client(0);
-      redisConnection = client.connect();
-      connections = new ArrayList<>();
-      connections.add(redisConnection);
+      redisConnection = newConnection();
       cache = cacheManager.getCache(server.getConfiguration().defaultCacheName());
    }
 
@@ -43,10 +41,7 @@ public abstract class SingleNodeRespBaseTest extends AbstractRespTest {
    @AfterClass(alwaysRun = true)
    @Override
    protected void destroy() {
-      for (StatefulRedisConnection<String, String> conn : connections) {
-         conn.close();
-      }
-
+      connections.forEach(StatefulRedisConnection::close);
       super.destroy();
    }
 }

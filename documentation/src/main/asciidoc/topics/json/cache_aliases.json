@@ -1,0 +1,5 @@
+{
+  "distributed-cache": {
+    "aliases": ["0", "anothername"]
+  }
+}

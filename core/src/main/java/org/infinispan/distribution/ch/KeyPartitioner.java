@@ -36,7 +36,6 @@ public interface KeyPartitioner extends Matchable<KeyPartitioner>, ToIntFunction
 
    /**
     * Obtains the segment for a key.
-    *
     * Must be thread-safe.
     */
    int getSegment(Object key);
@@ -45,8 +44,6 @@ public interface KeyPartitioner extends Matchable<KeyPartitioner>, ToIntFunction
    default boolean matches(KeyPartitioner other) {
       if (this == other)
          return true;
-      if (other == null || getClass() != other.getClass())
-         return false;
-      return true;
+      return other != null && getClass() == other.getClass();
    }
 }

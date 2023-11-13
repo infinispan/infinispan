@@ -1,0 +1,11 @@
+[id='resp-logical-databases_{context}']
+= Mapping caches to Redis logical databases
+
+Use the cache `aliases` configuration attributes to map caches to Redis logical databases.
+The default `respCache` is mapped to logical database `0`.
+
+[TIP]
+====
+{brandname} can use multiple logical databases even in clustered mode, as opposed to Redis which only supports database
+`0` when using Redis Cluster.
+====

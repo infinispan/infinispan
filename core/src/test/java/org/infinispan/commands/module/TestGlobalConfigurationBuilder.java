@@ -1,6 +1,7 @@
 package org.infinispan.commands.module;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.function.Consumer;
 
 import org.infinispan.commons.configuration.Builder;
@@ -47,7 +48,9 @@ public class TestGlobalConfigurationBuilder implements Builder<TestGlobalConfigu
    }
 
    public TestGlobalConfigurationBuilder addCacheStartingCallback(Consumer<ComponentRegistry> callback) {
-      this.attributes.attribute(TestGlobalConfiguration.CACHE_STARTING_CALLBACKS).get().add(callback);
+      List<Consumer<ComponentRegistry>> callbacks = this.attributes.attribute(TestGlobalConfiguration.CACHE_STARTING_CALLBACKS).get();
+      callbacks.add(callback);
+      this.attributes.attribute(TestGlobalConfiguration.CACHE_STARTING_CALLBACKS).set(callbacks);
       return this;
    }
 

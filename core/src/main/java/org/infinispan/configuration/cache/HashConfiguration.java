@@ -20,18 +20,19 @@ import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 public class HashConfiguration extends ConfigurationElement<HashConfiguration> {
    public static final AttributeDefinition<ConsistentHashFactory> CONSISTENT_HASH_FACTORY = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CONSISTENT_HASH_FACTORY, null, ConsistentHashFactory.class)
          .serializer(AttributeSerializer.INSTANCE_CLASS_NAME).immutable().build();
-   public static final AttributeDefinition<Integer> NUM_OWNERS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.OWNERS , 2).immutable().build();
+   public static final AttributeDefinition<Integer> NUM_OWNERS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.OWNERS, 2).immutable().build();
    // Because it assigns owners randomly, SyncConsistentHashFactory doesn't work very well with a low number
    // of segments. (With DefaultConsistentHashFactory, 60 segments was ok up to 6 nodes.)
    public static final AttributeDefinition<Integer> NUM_SEGMENTS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.SEGMENTS, 256).immutable().build();
-   public static final AttributeDefinition<Float> CAPACITY_FACTOR= AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CAPACITY_FACTOR, 1.0f).immutable().global(false).build();
+   public static final AttributeDefinition<Float> CAPACITY_FACTOR = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CAPACITY_FACTOR, 1.0f).immutable().global(false).build();
    public static final AttributeDefinition<KeyPartitioner> KEY_PARTITIONER = AttributeDefinition
-         .builder(org.infinispan.configuration.parsing.Attribute.KEY_PARTITIONER, HashFunctionPartitioner.instance(NUM_SEGMENTS.getDefaultValue()), KeyPartitioner.class)
+         .builder(org.infinispan.configuration.parsing.Attribute.KEY_PARTITIONER, null, KeyPartitioner.class)
          .copier(original -> {
             KeyPartitioner copy = Util.getInstance(original.getClass());
             copy.init(original);
             return copy;
          })
+         .initializer(HashFunctionPartitioner::new)
          .serializer(AttributeSerializer.INSTANCE_CLASS_NAME)
          .immutable().build();
 
@@ -44,7 +45,6 @@ public class HashConfiguration extends ConfigurationElement<HashConfiguration> {
    private final Attribute<Integer> numOwners;
    private final Attribute<Integer> numSegments;
    private final Attribute<Float> capacityFactor;
-   private final Attribute<KeyPartitioner> keyPartitioner;
 
    private final GroupsConfiguration groupsConfiguration;
 
@@ -55,16 +55,17 @@ public class HashConfiguration extends ConfigurationElement<HashConfiguration> {
       numOwners = attributes.attribute(NUM_OWNERS);
       numSegments = attributes.attribute(NUM_SEGMENTS);
       capacityFactor = attributes.attribute(CAPACITY_FACTOR);
-      keyPartitioner = attributes.attribute(KEY_PARTITIONER);
+      attributes.attribute(KEY_PARTITIONER).get().init(this);
    }
 
    /**
     * The consistent hash factory in use.
+    *
     * @deprecated Since 11.0. Will be removed in 14.0, the segment allocation will no longer be customizable.
     */
    @Deprecated(forRemoval=true, since = "11.0")
    public ConsistentHashFactory<?> consistentHashFactory() {
-       return consistentHashFactory.get();
+      return consistentHashFactory.get();
    }
 
    /**
@@ -99,7 +100,7 @@ public class HashConfiguration extends ConfigurationElement<HashConfiguration> {
    }
 
    public KeyPartitioner keyPartitioner() {
-      return keyPartitioner.get();
+      return attributes.attribute(KEY_PARTITIONER).get();
    }
 
    /**

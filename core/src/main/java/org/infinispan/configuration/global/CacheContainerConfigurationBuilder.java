@@ -266,15 +266,15 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
       }
       return new CacheContainerConfiguration(
             attributes.protect(),
-            threads.create(),
-            metrics.create(),
-            tracing.create(),
+            globalState.create(),
             jmx.create(),
-            transport.create(),
+            metrics.create(),
             security.create(),
             serialization.create(),
-            globalState.create(),
             shutdown.create(),
+            threads.create(),
+            tracing.create(),
+            transport.create(),
             getGlobalConfig().getFeatures()
             );
    }

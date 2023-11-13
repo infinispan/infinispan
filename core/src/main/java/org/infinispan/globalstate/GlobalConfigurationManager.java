@@ -26,7 +26,7 @@ public interface GlobalConfigurationManager {
    /**
     * Returns the global state cache
     */
-   Cache<ScopedState, Object> getStateCache();
+   <V> Cache<ScopedState, V> getStateCache();
 
    /**
     * Defines a cluster-wide configuration template
