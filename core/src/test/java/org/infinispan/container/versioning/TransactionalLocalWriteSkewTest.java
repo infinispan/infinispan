@@ -74,11 +74,11 @@ public class TransactionalLocalWriteSkewTest extends SingleCacheManagerTest {
    }
 
    private static class IncrementCounterTask implements ExceptionRunnable {
-      private Cache<String, Integer> cache;
-      private ConcurrentSkipListSet<Integer> uniqueValuesSet;
-      private TransactionManager transactionManager;
+      private final Cache<String, Integer> cache;
+      private final ConcurrentSkipListSet<Integer> uniqueValuesSet;
+      private final TransactionManager transactionManager;
       private int lastValue;
-      private int counterMaxValue;
+      private final int counterMaxValue;
 
       public IncrementCounterTask(Cache<String, Integer> cache, ConcurrentSkipListSet<Integer> uniqueValuesSet, int counterMaxValue) {
          this.cache = cache;

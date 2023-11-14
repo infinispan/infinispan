@@ -35,7 +35,7 @@ public class IntermediateLongCacheStream implements LongCacheStream {
    private BaseCacheStream remoteStream;
    private final IntermediateType type;
    private LocalLongCacheStream localLongStream;
-   private IntermediateCacheStreamSupplier supplier;
+   private final IntermediateCacheStreamSupplier supplier;
 
    public IntermediateLongCacheStream(DistributedLongCacheStream remoteStream) {
       this.remoteStream = remoteStream;

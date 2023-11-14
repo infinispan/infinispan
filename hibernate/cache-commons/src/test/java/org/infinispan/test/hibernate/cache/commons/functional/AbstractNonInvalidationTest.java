@@ -60,7 +60,7 @@ public abstract class AbstractNonInvalidationTest extends SingleNodeTest {
    @BeforeClassOnce
    public void setup() {
       executor = Executors.newCachedThreadPool(new ThreadFactory() {
-         AtomicInteger counter = new AtomicInteger();
+         final AtomicInteger counter = new AtomicInteger();
 
          @Override
          public Thread newThread(Runnable r) {

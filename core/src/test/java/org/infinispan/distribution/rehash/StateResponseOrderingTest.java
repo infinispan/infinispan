@@ -154,7 +154,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
 
       final AtomicReference<Address> firstResponseSender = new AtomicReference<>();
       CommandMatcher firstStateResponseMatcher = new CommandMatcher() {
-         CommandMatcher realMatcher = matchCommand(StateResponseCommand.class).matchCount(0).build();
+         final CommandMatcher realMatcher = matchCommand(StateResponseCommand.class).matchCount(0).build();
 
          public boolean accept(ReplicableCommand command) {
             if (!realMatcher.accept(command))

@@ -7,7 +7,7 @@ import org.infinispan.protostream.annotations.ProtoField;
 
 public class LongAuto {
 
-   private Long purchases;
+   private final Long purchases;
 
    @ProtoFactory
    public LongAuto(Long purchases) {

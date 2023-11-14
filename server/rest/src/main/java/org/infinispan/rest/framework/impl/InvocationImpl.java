@@ -88,8 +88,8 @@ public class InvocationImpl implements Invocation {
 
    public static class Builder {
       private final Invocations.Builder parent;
-      private Set<Method> methods = new HashSet<>();
-      private Set<String> paths = new HashSet<>();
+      private final Set<Method> methods = new HashSet<>();
+      private final Set<String> paths = new HashSet<>();
       private Function<RestRequest, CompletionStage<RestResponse>> handler;
       private String action = null;
       private String name = null;

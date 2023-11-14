@@ -22,7 +22,7 @@ class IndentingXmlWriter implements XMLStreamWriter {
       INDENT[0] = '\n';
    }
 
-   private XMLStreamWriter writer;
+   private final XMLStreamWriter writer;
    private int indent;
    private boolean skipIndent;
 

@@ -17,8 +17,7 @@ import org.junit.ComparisonFailure;
  **/
 public class AeshTestShell implements Shell {
    private final Size SIZE = new Size(80, 25);
-   private StringBuilder bufferBuilder = new StringBuilder();
-
+   private final StringBuilder bufferBuilder = new StringBuilder();
 
    @Override
    public void write(String msg, boolean paging) {
@@ -41,12 +40,12 @@ public class AeshTestShell implements Shell {
    }
 
    @Override
-   public String readLine() throws InterruptedException {
+   public String readLine() {
       return null;
    }
 
    @Override
-   public String readLine(Prompt prompt) throws InterruptedException {
+   public String readLine(Prompt prompt) {
       return null;
    }
 
@@ -83,7 +82,7 @@ public class AeshTestShell implements Shell {
    public void assertEquals(String expected) {
       Eventually.eventually(
             () -> new ComparisonFailure("Expected output was not equal to expected string after timeout", expected, bufferBuilder.toString()),
-            () -> expected.equals(bufferBuilder.toString()), 10_000, 50, TimeUnit.MILLISECONDS);
+            () -> expected.contentEquals(bufferBuilder), 10_000, 50, TimeUnit.MILLISECONDS);
    }
 
    public void assertContains(String expected) {

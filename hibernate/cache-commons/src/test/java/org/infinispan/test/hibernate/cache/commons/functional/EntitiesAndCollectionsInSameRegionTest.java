@@ -210,7 +210,7 @@ public class EntitiesAndCollectionsInSameRegionTest extends SingleNodeTest {
 
       @ElementCollection
       @Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL, region = REGION_NAME)
-      private Set<String> valuesSet = new HashSet<>();
+      private final Set<String> valuesSet = new HashSet<>();
    }
 
    @Entity(name = "AnotherEntity")
@@ -222,7 +222,7 @@ public class EntitiesAndCollectionsInSameRegionTest extends SingleNodeTest {
 
       @ElementCollection
       @Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL, region = REGION_NAME)
-      private Set<Integer> valuesSet = new HashSet<>();
+      private final Set<Integer> valuesSet = new HashSet<>();
    }
 
 }

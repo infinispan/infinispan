@@ -117,7 +117,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    private final TransactionTable syncTransactionTable;
    private final XaModeTransactionTable xaTransactionTable;
    private ObjectName mbeanObjectName;
-   private TimeService timeService = DefaultTimeService.INSTANCE;
+   private final TimeService timeService = DefaultTimeService.INSTANCE;
    private ExecutorService asyncExecutorService;
 
    /**

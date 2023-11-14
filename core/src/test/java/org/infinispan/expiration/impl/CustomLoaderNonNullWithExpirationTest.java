@@ -46,7 +46,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "expiration.impl.CustomLoaderNonNullWithExpirationTest")
 public class CustomLoaderNonNullWithExpirationTest extends SingleCacheManagerTest {
-   private ControlledTimeService timeService = new ControlledTimeService();
+   private final ControlledTimeService timeService = new ControlledTimeService();
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {

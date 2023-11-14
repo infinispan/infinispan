@@ -116,7 +116,7 @@ public class HotRodFilterEventsTest extends HotRodSingleNodeTest {
    }
 
    static class StaticKeyValueFilterFactory implements CacheEventFilterFactory {
-      private byte[] staticKey;
+      private final byte[] staticKey;
 
       StaticKeyValueFilterFactory(byte[] staticKey) {
          this.staticKey = staticKey;

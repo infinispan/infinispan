@@ -1128,9 +1128,9 @@ class ClientHandler extends ChannelInboundHandlerAdapter {
       this.rspTimeoutSeconds = rspTimeoutSeconds;
    }
 
-   private Map<Long, CompletableFuture<TestResponse>> responses = new ConcurrentHashMap<>();
-   private Map<WrappedByteArray, TestClientListener> clientListeners = new ConcurrentHashMap<>();
-   private Map<WrappedByteArray, TestCounterNotificationManager> clientCounterListeners = new ConcurrentHashMap<>();
+   private final Map<Long, CompletableFuture<TestResponse>> responses = new ConcurrentHashMap<>();
+   private final Map<WrappedByteArray, TestClientListener> clientListeners = new ConcurrentHashMap<>();
+   private final Map<WrappedByteArray, TestCounterNotificationManager> clientCounterListeners = new ConcurrentHashMap<>();
 
    void registerCounterNotificationManager(TestCounterNotificationManager manager) {
       clientCounterListeners.putIfAbsent(manager.getListenerId(), manager);

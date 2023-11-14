@@ -19,10 +19,10 @@ public class KeyGenerator {
    private static final int valueSpaceSize = 100;
    private static final int valueObjectSize = 1000;
 
-   private RandomSequence keySequence;
-   private RandomSequence valueSequence;
+   private final RandomSequence keySequence;
+   private final RandomSequence valueSequence;
 
-   private Metadata metadata;
+   private final Metadata metadata;
 
    public KeyGenerator() {
       Random random = new Random(randomSeed);

@@ -56,8 +56,8 @@ public class TaskManagerImpl implements TaskManager {
    BlockingManager blockingManager;
    @Inject EventLogManager eventLogManager;
 
-   private List<TaskEngine> engines;
-   private ConcurrentMap<UUID, TaskExecution> runningTasks;
+   private final List<TaskEngine> engines;
+   private final ConcurrentMap<UUID, TaskExecution> runningTasks;
    private boolean useSecurity;
 
    public TaskManagerImpl() {

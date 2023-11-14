@@ -44,8 +44,8 @@ public class RemoteMultimapCacheImpl<K, V> implements RemoteMultimapCache<K, V> 
    private Marshaller marshaller;
    private final BufferSizePredictor keySizePredictor = new AdaptiveBufferSizePredictor();
    private final BufferSizePredictor valueSizePredictor = new AdaptiveBufferSizePredictor();
-   private long defaultLifespan = 0;
-   private long defaultMaxIdleTime = 0;
+   private final long defaultLifespan = 0;
+   private final long defaultMaxIdleTime = 0;
    private final boolean supportsDuplicates;
 
    public void init() {

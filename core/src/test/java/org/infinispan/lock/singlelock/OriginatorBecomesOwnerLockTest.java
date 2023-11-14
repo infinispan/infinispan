@@ -56,9 +56,9 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
 
    // Pseudo-configuration
    // TODO Test fails (expected RollbackException isn't raised) if waitForStateTransfer == false because of https://issues.jboss.org/browse/ISPN-2510
-   private boolean waitForStateTransfer = true;
+   private final boolean waitForStateTransfer = true;
    // TODO Tests fails with SuspectException if stopCacheOnly == false because of https://issues.jboss.org/browse/ISPN-2402
-   private boolean stopCacheOnly = true;
+   private final boolean stopCacheOnly = true;
 
    @Override
    protected void createCacheManagers() throws Throwable {

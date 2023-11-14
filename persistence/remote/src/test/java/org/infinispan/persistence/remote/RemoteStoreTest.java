@@ -58,7 +58,7 @@ public class RemoteStoreTest extends BaseNonBlockingStoreTest {
    private MediaType cacheMediaType;
    private boolean isRawValues;
 
-   private ProtoStreamMarshaller marshaller = new ProtoStreamMarshaller(ProtobufUtil.newSerializationContext());
+   private final ProtoStreamMarshaller marshaller = new ProtoStreamMarshaller(ProtobufUtil.newSerializationContext());
 
    public RemoteStoreTest segmented(boolean segmented) {
       this.segmented = segmented;

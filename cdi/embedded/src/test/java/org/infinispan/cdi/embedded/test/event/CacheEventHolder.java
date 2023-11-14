@@ -25,7 +25,7 @@ public class CacheEventHolder {
     *    </ul>
     * </p>
     */
-   private Map<Class<?>, Map<Class<?>, List<Object>>> eventMap = new HashMap<>();
+   private final Map<Class<?>, Map<Class<?>, List<Object>>> eventMap = new HashMap<>();
 
    private void addEventClass(Class<?> cacheAnnotationClass, Class<?> eventClass) {
       if(!eventMap.containsKey(cacheAnnotationClass)) {

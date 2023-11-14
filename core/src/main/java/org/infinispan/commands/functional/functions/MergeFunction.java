@@ -18,9 +18,9 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.util.UserRaisedFunctionalException;
 
 public class MergeFunction<K, V> implements Function<EntryView.ReadWriteEntryView<K, V>, V>, InjectableComponent, Serializable {
-   private BiFunction<? super V, ? super V, ? extends V> remappingFunction;
-   private V value;
-   private Metadata metadata;
+   private final BiFunction<? super V, ? super V, ? extends V> remappingFunction;
+   private final V value;
+   private final Metadata metadata;
 
    public MergeFunction(V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, Metadata metadata) {
       this.remappingFunction = remappingFunction;

@@ -28,8 +28,8 @@ import org.infinispan.util.logging.LogFactory;
 public class TopologyManagementHelper {
    private static final Log log = LogFactory.getLog(TopologyManagementHelper.class);
 
-   private GlobalComponentRegistry gcr;
-   private BasicComponentRegistry bcr;
+   private final GlobalComponentRegistry gcr;
+   private final BasicComponentRegistry bcr;
 
    public TopologyManagementHelper(GlobalComponentRegistry gcr) {
       this.gcr = gcr;

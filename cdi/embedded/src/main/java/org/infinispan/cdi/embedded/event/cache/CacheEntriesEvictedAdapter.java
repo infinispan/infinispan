@@ -27,7 +27,7 @@ public class CacheEntriesEvictedAdapter<K, V> extends AbstractAdapter<CacheEntri
     * be static).
     */
    private class CDICacheEntriesEvictedEvent implements CacheEntriesEvictedEvent<K, V> {
-      private CacheEntriesEvictedEvent<K, V> decoratedEvent;
+      private final CacheEntriesEvictedEvent<K, V> decoratedEvent;
 
       private CDICacheEntriesEvictedEvent(CacheEntriesEvictedEvent<K, V> decoratedEvent) {
          this.decoratedEvent = decoratedEvent;

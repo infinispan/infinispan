@@ -19,7 +19,7 @@ import org.testng.annotations.Test;
 public class XMLTranscoderTest {
 
    private Person person;
-   private XMLTranscoder xmlTranscoder = new XMLTranscoder(new ClassAllowList(singletonList(".*")));
+   private final XMLTranscoder xmlTranscoder = new XMLTranscoder(new ClassAllowList(singletonList(".*")));
 
    @BeforeClass(alwaysRun = true)
    public void setUp() {

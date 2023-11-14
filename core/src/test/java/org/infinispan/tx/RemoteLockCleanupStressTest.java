@@ -25,7 +25,7 @@ public class RemoteLockCleanupStressTest extends MultipleCacheManagersTest {
 
    private static final Log log = LogFactory.getLog(RemoteLockCleanupStressTest.class);
 
-   private String key = "locked-counter";
+   private final String key = "locked-counter";
 
    @Override
    protected void createCacheManagers() throws Throwable {

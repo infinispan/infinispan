@@ -28,7 +28,7 @@ public class DefaultThreadFactory implements ThreadFactory {
    private static final AtomicLong factoryIndexSequence = new AtomicLong(1L);
    private String node;
    private String component;
-   private ClassLoader classLoader;
+   private final ClassLoader classLoader;
    private boolean useVirtualThreads = ThreadCreator.useVirtualThreads();
 
    /**

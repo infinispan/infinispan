@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.time.ControlledTimeService;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.context.Flag;
@@ -20,8 +22,6 @@ import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.time.ControlledTimeService;
-import org.infinispan.commons.time.TimeService;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
@@ -131,7 +131,7 @@ public class EvictionFunctionalTest extends SingleCacheManagerTest {
    @Listener
    public static class EvictionListener {
 
-      private List<Map.Entry> evictedEntries = Collections.synchronizedList(new ArrayList<>());
+      private final List<Map.Entry> evictedEntries = Collections.synchronizedList(new ArrayList<>());
 
       @CacheEntriesEvicted
       public void nodeEvicted(CacheEntriesEvictedEvent e) {

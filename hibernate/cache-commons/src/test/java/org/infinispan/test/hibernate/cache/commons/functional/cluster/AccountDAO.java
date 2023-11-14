@@ -27,9 +27,9 @@ public class AccountDAO {
 	private final boolean useJta;
 	private final SessionFactory sessionFactory;
 
-	private AccountHolder smith = new AccountHolder("Smith", "1000");
-	private AccountHolder jones = new AccountHolder("Jones", "2000");
-	private AccountHolder barney = new AccountHolder("Barney", "3000");
+	private final AccountHolder smith = new AccountHolder("Smith", "1000");
+	private final AccountHolder jones = new AccountHolder("Jones", "2000");
+	private final AccountHolder barney = new AccountHolder("Barney", "3000");
 
 	public AccountDAO(boolean useJta, SessionFactory sessionFactory) throws Exception {
 		this.useJta = useJta;

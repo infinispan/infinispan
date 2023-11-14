@@ -5,8 +5,8 @@ import org.infinispan.protostream.annotations.ProtoField;
 
 public class Player {
 
-   private String name;
-   private FootballTeam footballTeam;
+   private final String name;
+   private final FootballTeam footballTeam;
 
    @ProtoFactory
    public Player(String name, FootballTeam footballTeam) {

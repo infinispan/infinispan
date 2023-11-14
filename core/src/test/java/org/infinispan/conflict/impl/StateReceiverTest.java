@@ -64,7 +64,7 @@ public class StateReceiverTest extends AbstractInfinispanTest {
 
    private StateReceiverImpl<Object, Object> stateReceiver;
    private LocalizedCacheTopology localizedCacheTopology;
-   private ExecutorService stateTransferExecutor =
+   private final ExecutorService stateTransferExecutor =
       Executors.newSingleThreadExecutor(getTestThreadFactory("StateTransfer"));
 
    public void testGetReplicaException() {

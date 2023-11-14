@@ -53,7 +53,7 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
 
    private RemoteCache<String, User> remoteCache;
 
-   private ControlledTimeService timeService = new ControlledTimeService();
+   private final ControlledTimeService timeService = new ControlledTimeService();
 
    @Override
    protected void createCacheManagers() throws Throwable {

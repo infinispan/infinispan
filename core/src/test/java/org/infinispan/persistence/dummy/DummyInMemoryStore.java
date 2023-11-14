@@ -65,7 +65,7 @@ public class DummyInMemoryStore<K, V> implements WaitNonBlockingStore<K, V> {
    // When a store is 'shared', multiple nodes could be trying to update it concurrently.
    private ConcurrentMap<String, AtomicInteger> stats;
    private int segmentCount;
-   private AtomicInteger initCount = new AtomicInteger();
+   private final AtomicInteger initCount = new AtomicInteger();
    private TimeService timeService;
    private PersistenceMarshaller marshaller;
    private DummyInMemoryStoreConfiguration configuration;
@@ -74,7 +74,7 @@ public class DummyInMemoryStore<K, V> implements WaitNonBlockingStore<K, V> {
    private volatile boolean running;
    private volatile boolean available;
    private volatile boolean exceptionOnAvailbilityCheck;
-   private AtomicInteger startAttempts = new AtomicInteger();
+   private final AtomicInteger startAttempts = new AtomicInteger();
 
    @Override
    public CompletionStage<Void> start(InitializationContext ctx) {

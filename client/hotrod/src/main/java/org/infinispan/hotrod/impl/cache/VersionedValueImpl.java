@@ -5,9 +5,9 @@ package org.infinispan.hotrod.impl.cache;
  */
 public class VersionedValueImpl<V> implements VersionedValue<V> {
 
-   private long version;
+   private final long version;
 
-   private V value;
+   private final V value;
 
    public VersionedValueImpl(long version, V value) {
       this.version = version;

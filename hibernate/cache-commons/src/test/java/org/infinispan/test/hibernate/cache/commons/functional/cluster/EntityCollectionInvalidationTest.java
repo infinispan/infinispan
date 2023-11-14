@@ -477,7 +477,7 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
 	@Listener
 	public static class MyListener {
 		private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( MyListener.class );
-		private Set<String> visited = ConcurrentHashMap.newKeySet();
+		private final Set<String> visited = ConcurrentHashMap.newKeySet();
 		private final String name;
 
 		public MyListener(String name) {

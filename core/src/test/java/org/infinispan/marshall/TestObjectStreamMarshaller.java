@@ -33,7 +33,7 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.GLOBAL)
 public class TestObjectStreamMarshaller implements PersistenceMarshaller {
 
-   private static Log log = LogFactory.getLog(TestObjectStreamMarshaller.class);
+   private static final Log log = LogFactory.getLog(TestObjectStreamMarshaller.class);
 
    private final PersistenceMarshallerImpl marshaller;
 

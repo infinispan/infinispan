@@ -29,8 +29,8 @@ public class RequestExpirationScheduler {
    }
 
    static class ScheduledRequest {
-      private CompletableFuture<Boolean> request;
-      private ScheduledFuture<?> scheduledFuture;
+      private final CompletableFuture<Boolean> request;
+      private final ScheduledFuture<?> scheduledFuture;
 
       public ScheduledRequest(CompletableFuture<Boolean> request, ScheduledFuture<?> scheduledFuture) {
          this.request = request;

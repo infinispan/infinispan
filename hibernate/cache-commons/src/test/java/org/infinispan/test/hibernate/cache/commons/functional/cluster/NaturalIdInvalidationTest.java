@@ -263,7 +263,7 @@ public class NaturalIdInvalidationTest extends DualNodeTest {
 	@Listener
 	public static class MyListener {
 		private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( MyListener.class );
-		private Set<String> visited = new ConcurrentSet<String>();
+		private final Set<String> visited = new ConcurrentSet<String>();
 		private final String name;
 
 		public MyListener(String name) {

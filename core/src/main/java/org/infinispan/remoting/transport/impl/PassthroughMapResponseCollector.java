@@ -14,7 +14,7 @@ import org.infinispan.remoting.transport.ResponseCollector;
  * @since 9.1
  */
 public class PassthroughMapResponseCollector implements ResponseCollector<Map<Address, Response>> {
-   private Map<Address, Response> map;
+   private final Map<Address, Response> map;
 
    public PassthroughMapResponseCollector(int expectedSize) {
       map = new HashMap<>(expectedSize);

@@ -60,7 +60,7 @@ public class InfinispanRemoteAutoConfiguration {
    private org.infinispan.client.hotrod.configuration.Configuration infinispanConfiguration;
 
    @Autowired(required = false)
-   private List<InfinispanRemoteCacheCustomizer> cacheCustomizers = Collections.emptyList();
+   private final List<InfinispanRemoteCacheCustomizer> cacheCustomizers = Collections.emptyList();
 
    @Autowired
    private ApplicationContext ctx;

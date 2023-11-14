@@ -16,10 +16,10 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 public class ExecutorAllCompletionService implements CompletionService<Void> {
-   private ExecutorCompletionService executorService;
-   private AtomicReference<ExecutionException> firstException = new AtomicReference<ExecutionException>();
-   private AtomicLong scheduled = new AtomicLong();
-   private AtomicLong completed = new AtomicLong();
+   private final ExecutorCompletionService executorService;
+   private final AtomicReference<ExecutionException> firstException = new AtomicReference<ExecutionException>();
+   private final AtomicLong scheduled = new AtomicLong();
+   private final AtomicLong completed = new AtomicLong();
 
    public ExecutorAllCompletionService(Executor executor) {
       this.executorService = new ExecutorCompletionService(executor);

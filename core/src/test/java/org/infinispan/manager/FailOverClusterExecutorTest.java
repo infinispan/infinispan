@@ -22,7 +22,7 @@ import org.testng.annotations.Test;
 @Test(groups = {"functional", "smoke"}, testName = "manager.FailOverClusterExecutorTest")
 public class FailOverClusterExecutorTest extends MultipleCacheManagersTest {
 
-   private static AtomicInteger failureCount = new AtomicInteger();
+   private static final AtomicInteger failureCount = new AtomicInteger();
 
    @Override
    protected void createCacheManagers() throws Throwable {

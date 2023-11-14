@@ -40,7 +40,7 @@ public class JUnitTestListener extends RunListener {
       }
    }
 
-   private ThreadLocal<Boolean> currentTestIsSuccessful = new ThreadLocal<>();
+   private final ThreadLocal<Boolean> currentTestIsSuccessful = new ThreadLocal<>();
 
    private final TestSuiteProgress progressLogger;
    private String currentTestRunName;

@@ -11,9 +11,9 @@ import org.infinispan.api.annotations.indexing.Indexed;
 @Indexed(index = "numeric")
 public class NumericType {
 
-   private int num1;
+   private final int num1;
 
-   private int num2;
+   private final int num2;
 
    private String name;
 

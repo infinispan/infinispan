@@ -18,8 +18,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.api.common.CacheOptions;
 import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.commons.executors.ExecutorFactory;
@@ -64,6 +62,8 @@ import org.infinispan.hotrod.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
 
+import jakarta.transaction.TransactionManager;
+
 /**
  * @since 14.0
  **/
@@ -80,7 +80,7 @@ public class HotRodTransport implements AutoCloseable {
    private final ExecutorService asyncExecutorService;
    private final Marshaller marshaller;
    private ClientListenerNotifier listenerNotifier;
-   private TimeService timeService = DefaultTimeService.INSTANCE;
+   private final TimeService timeService = DefaultTimeService.INSTANCE;
    private volatile boolean started = false;
    private final ConcurrentMap<RemoteCacheKey, CompletionStage<RemoteCache<Object, Object>>> cacheName2RemoteCache = new ConcurrentHashMap<>();
    private final MBeanHelper mBeanHelper;

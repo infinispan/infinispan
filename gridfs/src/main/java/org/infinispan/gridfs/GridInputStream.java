@@ -15,7 +15,7 @@ public class GridInputStream extends InputStream {
    private int index = 0;                // index into the file for writing
    private int localIndex = 0;
    private byte[] currentBuffer = null;
-   private int fSize;
+   private final int fSize;
    private boolean streamClosed = false;
    private final FileChunkMapper fileChunkMapper;
    private final int chunkSize; // Guaranteed to be a power of 2

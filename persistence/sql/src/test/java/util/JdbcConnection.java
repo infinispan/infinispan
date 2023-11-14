@@ -2,7 +2,9 @@ package util;
 
 public class JdbcConnection {
 
-    private String jdbcUrl, username, password;
+    private final String jdbcUrl;
+   private final String username;
+   private final String password;
 
     public JdbcConnection(String jdbcUrl, String username, String password) {
         this.jdbcUrl = jdbcUrl;

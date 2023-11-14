@@ -5,9 +5,9 @@ import org.infinispan.protostream.annotations.ProtoField;
 
 public class NonIndexedGame {
 
-   private String name;
+   private final String name;
 
-   private String description;
+   private final String description;
 
    @ProtoFactory
    public NonIndexedGame(String name, String description) {

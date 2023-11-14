@@ -15,7 +15,7 @@ import org.infinispan.hotrod.impl.cache.CacheEntryMetadataImpl;
 public class CacheEntryCollectionImpl<K, V> implements CacheEntryCollection<K, V> {
    private final K key;
    private final Collection<V> collection;
-   private CacheEntryMetadata metadata;
+   private final CacheEntryMetadata metadata;
 
    public CacheEntryCollectionImpl(K key, Collection<V> collection) {
       this(key, collection, new CacheEntryMetadataImpl());

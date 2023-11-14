@@ -25,7 +25,7 @@ public class DataConversionTest extends org.infinispan.dataconversion.DataConver
       withCacheManager(new CacheManagerCallable(
             createCacheManager(new ConfigurationBuilder())) {
 
-         GenericJBossMarshaller marshaller = new GenericJBossMarshaller();
+         final GenericJBossMarshaller marshaller = new GenericJBossMarshaller();
 
          private byte[] marshall(Object o) {
             try {

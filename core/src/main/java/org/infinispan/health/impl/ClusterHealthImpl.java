@@ -22,7 +22,7 @@ class ClusterHealthImpl implements ClusterHealth {
 
    private final EmbeddedCacheManager cacheManager;
    private final InternalCacheRegistry internalCacheRegistry;
-   private GlobalComponentRegistry gcr;
+   private final GlobalComponentRegistry gcr;
 
    ClusterHealthImpl(EmbeddedCacheManager cacheManager, InternalCacheRegistry internalCacheRegistry) {
       this.cacheManager = cacheManager;

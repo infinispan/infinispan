@@ -25,11 +25,11 @@ public class AeshTestConnection implements Connection, AutoCloseable {
    private Consumer<Size> sizeHandler;
    private Consumer<Signal> signalHandler;
    private Consumer<int[]> stdinHandler;
-   private Consumer<int[]> stdOutHandler;
+   private final Consumer<int[]> stdOutHandler;
    private Consumer<Void> closeHandler;
 
-   private StringBuilder bufferBuilder;
-   private Size size;
+   private final StringBuilder bufferBuilder;
+   private final Size size;
    private Attributes attributes;
 
    private volatile boolean reading = false;

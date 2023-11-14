@@ -8,7 +8,7 @@ import org.infinispan.protostream.annotations.ProtoField;
 @Indexed(index = "index-C")
 public class TypeC {
 
-   private String value;
+   private final String value;
 
    @ProtoFactory
    public TypeC(String value) {

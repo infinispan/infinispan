@@ -31,7 +31,7 @@ import org.testng.annotations.BeforeClass;
  * @since 4.1
  */
 public abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
-   private List<HotRodServer> hotRodServers = new ArrayList<>();
+   private final List<HotRodServer> hotRodServers = new ArrayList<>();
    private List<HotRodClient> hotRodClients = new ArrayList<>();
 
    @Override

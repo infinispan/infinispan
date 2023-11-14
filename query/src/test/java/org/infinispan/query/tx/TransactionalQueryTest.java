@@ -64,7 +64,7 @@ public class TransactionalQueryTest extends SingleCacheManagerTest {
 
    @Indexed(index = "SessionIndex")
    public static class Session {
-      private String m_id;
+      private final String m_id;
 
       @ProtoFactory
       Session(String id) {

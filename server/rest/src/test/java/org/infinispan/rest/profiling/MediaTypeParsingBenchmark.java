@@ -45,9 +45,9 @@ public class MediaTypeParsingBenchmark {
    public static class State {
       private final String mediaTypeNoParameter = "application/json";
       private final String mediaTypeOneQuotedParameter = "application/json; charset=\"UTF-8\"";
-      private String mediaTypeOneParameter = "application/x-java-object; type=ByteArray";
-      private String mediaTypeTwoParameters = "application/x-java-object; q=0.2; type=java.lang.Integer";
-      private String mediaTypeList =
+      private final String mediaTypeOneParameter = "application/x-java-object; type=ByteArray";
+      private final String mediaTypeTwoParameters = "application/x-java-object; q=0.2; type=java.lang.Integer";
+      private final String mediaTypeList =
             String.join(", ", mediaTypeNoParameter, mediaTypeOneParameter, mediaTypeOneQuotedParameter, mediaTypeTwoParameters);
 
       @Benchmark

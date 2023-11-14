@@ -27,7 +27,7 @@ public class CacheEntryLoadedAdapter<K, V> extends AbstractAdapter<CacheEntryLoa
     * be static).
     */
    private class CDICacheEntryLoadedEvent implements CacheEntryLoadedEvent<K, V> {
-      private CacheEntryLoadedEvent<K, V> decoratedEvent;
+      private final CacheEntryLoadedEvent<K, V> decoratedEvent;
 
       private CDICacheEntryLoadedEvent(CacheEntryLoadedEvent<K, V> decoratedEvent) {
          this.decoratedEvent = decoratedEvent;

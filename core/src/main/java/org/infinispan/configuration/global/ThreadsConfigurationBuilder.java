@@ -21,10 +21,10 @@ public class ThreadsConfigurationBuilder extends AbstractGlobalConfigurationBuil
    private final ThreadPoolConfigurationBuilder transportThreadPool;
    private final ThreadPoolConfigurationBuilder nonBlockingThreadPool;
    private final ThreadPoolConfigurationBuilder blockingThreadPool;
-   private List<ThreadFactoryConfigurationBuilder> threadFactoryBuilders = new ArrayList<>();
-   private List<BoundedThreadPoolConfigurationBuilder> boundedThreadPoolBuilders = new ArrayList<>();
-   private List<ScheduledThreadPoolConfigurationBuilder> scheduledThreadPoolBuilders = new ArrayList<>();
-   private List<CachedThreadPoolConfigurationBuilder> cachedThreadPoolBuilders = new ArrayList<>();
+   private final List<ThreadFactoryConfigurationBuilder> threadFactoryBuilders = new ArrayList<>();
+   private final List<BoundedThreadPoolConfigurationBuilder> boundedThreadPoolBuilders = new ArrayList<>();
+   private final List<ScheduledThreadPoolConfigurationBuilder> scheduledThreadPoolBuilders = new ArrayList<>();
+   private final List<CachedThreadPoolConfigurationBuilder> cachedThreadPoolBuilders = new ArrayList<>();
 
    private final Map<String, ThreadFactoryConfigurationBuilder> threadFactoryByName = new HashMap<>();
    private final Map<String, ThreadPoolBuilderAdapter> threadPoolByName = new HashMap<>();

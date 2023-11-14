@@ -41,7 +41,7 @@ import io.reactivex.rxjava3.core.Flowable;
 @Test(groups = "unit", testName = "persistence.rocksdb.RocksDBStoreTest")
 public class RocksDBStoreTest extends BaseNonBlockingStoreTest {
 
-   private String tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
+   private final String tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
    private boolean segmented;
    public static final String KEY_1 = "key1";
    public static final String KEY_2 = "key2";

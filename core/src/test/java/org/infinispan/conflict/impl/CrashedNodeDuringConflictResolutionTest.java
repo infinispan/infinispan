@@ -167,7 +167,7 @@ public class CrashedNodeDuringConflictResolutionTest extends BaseMergePolicyTest
 
    public static class TestKeyPartioner implements KeyPartitioner {
 
-      private KeyPartitioner delegate = new HashFunctionPartitioner();
+      private final KeyPartitioner delegate = new HashFunctionPartitioner();
 
       @Override
       public void init(HashConfiguration configuration) {

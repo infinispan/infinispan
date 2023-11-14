@@ -4,7 +4,7 @@ import java.math.BigInteger;
 
 public class CalculusManual {
 
-   private BigInteger purchases;
+   private final BigInteger purchases;
 
    public CalculusManual(BigInteger purchases) {
       this.purchases = purchases;

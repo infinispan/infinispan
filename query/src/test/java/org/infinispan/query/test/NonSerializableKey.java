@@ -10,7 +10,7 @@ import org.infinispan.query.Transformable;
 @Transformable
 public class NonSerializableKey {
 
-   private String key;
+   private final String key;
 
    public NonSerializableKey(String key) {
       this.key = key;

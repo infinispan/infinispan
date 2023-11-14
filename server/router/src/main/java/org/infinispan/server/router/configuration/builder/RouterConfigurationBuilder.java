@@ -9,10 +9,10 @@ import org.infinispan.server.router.configuration.RouterConfiguration;
  */
 public class RouterConfigurationBuilder implements ConfigurationBuilderParent {
 
-    private RoutingBuilder routingBuilder = new RoutingBuilder(this);
-    private HotRodRouterBuilder hotRodRouterBuilder = new HotRodRouterBuilder(this);
-    private RestRouterBuilder restRouterBuilder = new RestRouterBuilder(this);
-    private SinglePortRouterBuilder singlePortRouterBuilder = new SinglePortRouterBuilder(this);
+    private final RoutingBuilder routingBuilder = new RoutingBuilder(this);
+    private final HotRodRouterBuilder hotRodRouterBuilder = new HotRodRouterBuilder(this);
+    private final RestRouterBuilder restRouterBuilder = new RestRouterBuilder(this);
+    private final SinglePortRouterBuilder singlePortRouterBuilder = new SinglePortRouterBuilder(this);
 
     @Override
     public RoutingBuilder routing() {

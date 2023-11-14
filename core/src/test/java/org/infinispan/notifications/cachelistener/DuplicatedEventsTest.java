@@ -107,7 +107,7 @@ public class DuplicatedEventsTest extends MultipleCacheManagersTest {
    @Listener
    public static class MyCacheListener {
 
-      private List<CacheEntryEvent<String, String>> events = new LinkedList<CacheEntryEvent<String, String>>();
+      private final List<CacheEntryEvent<String, String>> events = new LinkedList<CacheEntryEvent<String, String>>();
 
       @CacheEntryCreated
       public void created(CacheEntryCreatedEvent<String, String> event) {

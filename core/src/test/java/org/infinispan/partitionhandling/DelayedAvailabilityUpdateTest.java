@@ -115,9 +115,9 @@ public class DelayedAvailabilityUpdateTest extends BasePartitionHandlingTest {
 
    @Listener
    public static class BlockAvailabilityChangeListener {
-      private boolean blockPre;
-      private StateSequencer ss;
-      private String[] states;
+      private final boolean blockPre;
+      private final StateSequencer ss;
+      private final String[] states;
 
       BlockAvailabilityChangeListener(boolean blockPre, StateSequencer ss, String... states) {
          this.blockPre = blockPre;

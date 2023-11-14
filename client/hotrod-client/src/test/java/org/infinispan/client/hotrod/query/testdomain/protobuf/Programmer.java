@@ -10,9 +10,9 @@ import org.infinispan.protostream.annotations.ProtoField;
 @Indexed
 public class Programmer {
 
-   private String nick;
+   private final String nick;
 
-   private Integer contributions;
+   private final Integer contributions;
 
    @ProtoFactory
    public Programmer(String nick, Integer contributions) {

@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional")
 public abstract class LockTestBase extends AbstractInfinispanTest {
-   private Log log = LogFactory.getLog(LockTestBase.class);
+   private final Log log = LogFactory.getLog(LockTestBase.class);
    protected boolean repeatableRead = true;
    private CacheContainer cm;
 

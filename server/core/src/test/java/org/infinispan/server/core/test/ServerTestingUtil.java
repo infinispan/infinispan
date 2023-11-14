@@ -22,7 +22,7 @@ public class ServerTestingUtil {
 
    private static final AtomicInteger DEFAULT_UNIQUE_PORT = new AtomicInteger(15232);
 
-   private static Log LOG = LogFactory.getLog(ServerTestingUtil.class);
+   private static final Log LOG = LogFactory.getLog(ServerTestingUtil.class);
 
    public static void killServer(AbstractProtocolServer<?> server) {
       try {

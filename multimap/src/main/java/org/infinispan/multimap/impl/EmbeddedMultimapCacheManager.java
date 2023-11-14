@@ -16,7 +16,7 @@ import org.infinispan.multimap.api.embedded.MultimapCacheManager;
  */
 public class EmbeddedMultimapCacheManager<K, V> implements MultimapCacheManager<K, V> {
 
-   private EmbeddedCacheManager cacheManager;
+   private final EmbeddedCacheManager cacheManager;
 
    public EmbeddedMultimapCacheManager(EmbeddedCacheManager embeddedMultimapCacheManager) {
       this.cacheManager = embeddedMultimapCacheManager;

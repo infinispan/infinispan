@@ -20,7 +20,7 @@ import org.infinispan.test.TestingUtil;
  */
 public class CountingRequestRepository extends RequestRepository {
    private final AtomicLong generation = new AtomicLong();
-   private Map<Long, Map<Long, Request<?>>> requests = new ConcurrentHashMap<>();
+   private final Map<Long, Map<Long, Request<?>>> requests = new ConcurrentHashMap<>();
 
    public static CountingRequestRepository replaceDispatcher(EmbeddedCacheManager cacheManager) {
       JGroupsTransport transport = (JGroupsTransport) GlobalComponentRegistry.componentOf(cacheManager, Transport.class);

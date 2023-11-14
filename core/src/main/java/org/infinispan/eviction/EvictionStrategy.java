@@ -25,8 +25,8 @@ public enum EvictionStrategy {
    EXCEPTION(true, false),
    ;
 
-   private boolean exception;
-   private boolean removal;
+   private final boolean exception;
+   private final boolean removal;
 
    EvictionStrategy(boolean exception, boolean removal) {
       this.exception = exception;

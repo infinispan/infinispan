@@ -14,7 +14,7 @@ import io.netty.handler.codec.http.cors.CorsConfig;
  * @since 10.0
  */
 public class CorsConfigurationBuilder implements Builder<CorsConfiguration> {
-   private List<CorsRuleConfigurationBuilder> corsRules = new ArrayList<>();
+   private final List<CorsRuleConfigurationBuilder> corsRules = new ArrayList<>();
    private List<CorsConfig> extraConfigs = new ArrayList<>();
 
    @Override

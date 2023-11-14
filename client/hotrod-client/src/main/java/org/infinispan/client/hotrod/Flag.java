@@ -63,7 +63,7 @@ public enum Flag {
    SKIP_LISTENER_NOTIFICATION(0x0020)
    ;
 
-   private int flagInt;
+   private final int flagInt;
 
    Flag(int flagInt) {
       this.flagInt = flagInt;

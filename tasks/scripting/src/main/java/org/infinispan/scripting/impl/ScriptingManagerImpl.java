@@ -59,8 +59,8 @@ public class ScriptingManagerImpl implements ScriptingManager {
    @Inject BlockingManager blockingManager;
 
    private ScriptEngineManager scriptEngineManager;
-   private ConcurrentMap<String, ScriptEngine> scriptEnginesByExtension = new ConcurrentHashMap<>(2);
-   private ConcurrentMap<String, ScriptEngine> scriptEnginesByLanguage = new ConcurrentHashMap<>(2);
+   private final ConcurrentMap<String, ScriptEngine> scriptEnginesByExtension = new ConcurrentHashMap<>(2);
+   private final ConcurrentMap<String, ScriptEngine> scriptEnginesByLanguage = new ConcurrentHashMap<>(2);
    private Cache<String, String> scriptCache;
    private ScriptConversions scriptConversions;
    ConcurrentMap<String, CompiledScript> compiledScripts = new ConcurrentHashMap<>();

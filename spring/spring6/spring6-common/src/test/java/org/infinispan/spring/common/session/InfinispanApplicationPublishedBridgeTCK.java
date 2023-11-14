@@ -113,7 +113,7 @@ public abstract class InfinispanApplicationPublishedBridgeTCK extends AbstractIn
    }
 
    static class EventsCollector implements ApplicationEventPublisher {
-      private List<ApplicationEvent> events = new CopyOnWriteArrayList<>();
+      private final List<ApplicationEvent> events = new CopyOnWriteArrayList<>();
 
       @Override
       public void publishEvent(ApplicationEvent event) {

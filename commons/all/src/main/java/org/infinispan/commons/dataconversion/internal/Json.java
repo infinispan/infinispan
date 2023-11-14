@@ -1227,7 +1227,7 @@ public class Json implements java.io.Serializable {
    private static Factory globalFactory = defaultFactory;
 
    // TODO: maybe use initialValue thread-local method to attach global factory by default here...
-   private static ThreadLocal<Factory> threadFactory = new ThreadLocal<Factory>();
+   private static final ThreadLocal<Factory> threadFactory = new ThreadLocal<Factory>();
 
    /**
     * <p>Return the {@link Factory} currently in effect. This is the factory that the {@link #make(Object)} method

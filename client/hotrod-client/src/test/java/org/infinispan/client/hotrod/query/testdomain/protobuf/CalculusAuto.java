@@ -10,7 +10,7 @@ import org.infinispan.protostream.types.java.CommonTypes;
 
 public class CalculusAuto {
 
-   private BigInteger purchases;
+   private final BigInteger purchases;
 
    @ProtoFactory
    public CalculusAuto(BigInteger purchases) {

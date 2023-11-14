@@ -15,7 +15,7 @@ import org.infinispan.commons.util.IntSet;
  */
 class ReplKeyTracker implements KeyTracker {
 
-   private Set<WrappedByteArray> keys = new HashSet<>();
+   private final Set<WrappedByteArray> keys = new HashSet<>();
 
    @Override
    public boolean track(byte[] key, short status, ClassAllowList allowList) {

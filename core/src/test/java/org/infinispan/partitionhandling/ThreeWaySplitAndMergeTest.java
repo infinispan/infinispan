@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "partitionhandling.ThreeWaySplitAndMergeTest")
 public class ThreeWaySplitAndMergeTest extends BasePartitionHandlingTest {
 
-   private static Log log = LogFactory.getLog(ThreeWaySplitAndMergeTest.class);
+   private static final Log log = LogFactory.getLog(ThreeWaySplitAndMergeTest.class);
 
    @Override
    public Object[] factory() {

@@ -68,7 +68,7 @@ public class NettyRestResponse implements RestResponse {
    }
 
    public static class Builder implements RestResponseBuilder<Builder> {
-      private Map<String, List<String>> headers = new HashMap<>();
+      private final Map<String, List<String>> headers = new HashMap<>();
       private Object entity;
       private HttpResponseStatus httpStatus = OK;
 

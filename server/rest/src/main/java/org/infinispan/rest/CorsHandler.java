@@ -59,7 +59,7 @@ public class CorsHandler extends ChannelDuplexHandler {
 
    private HttpRequest request;
    private final List<CorsConfig> configList;
-   private boolean isShortCircuit;
+   private final boolean isShortCircuit;
 
    /**
     * Creates a new instance with a single {@link CorsConfig}.

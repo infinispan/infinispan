@@ -36,7 +36,7 @@ import org.kohsuke.MetaInfServices;
       @Namespace(uri = "urn:infinispan:server:*", root = "rest-connector"),
 })
 public class RestServerConfigurationParser implements ConfigurationParser {
-   private static org.infinispan.util.logging.Log coreLog = LogFactory.getLog(ServerConfigurationParser.class);
+   private static final org.infinispan.util.logging.Log coreLog = LogFactory.getLog(ServerConfigurationParser.class);
 
    @Override
    public void readElement(ConfigurationReader reader, ConfigurationBuilderHolder holder) {

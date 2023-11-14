@@ -19,8 +19,8 @@ public class NamedLambdas {
 
    private static class NamedPredicate<T> implements Predicate<T> {
 
-      private String description;
-      private Predicate<T> predicate;
+      private final String description;
+      private final Predicate<T> predicate;
 
       public NamedPredicate(String description, Predicate<T> predicate) {
          this.description = description;
@@ -55,8 +55,8 @@ public class NamedLambdas {
 
    private static class NamedBiConsumer<T, U> implements BiConsumer<T, U> {
 
-      private String description;
-      private BiConsumer<T, U> biConsumer;
+      private final String description;
+      private final BiConsumer<T, U> biConsumer;
 
       public NamedBiConsumer(String description, BiConsumer<T, U> biConsumer) {
          this.description = description;

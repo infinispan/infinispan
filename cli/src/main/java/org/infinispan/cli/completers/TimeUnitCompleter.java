@@ -13,7 +13,7 @@ import org.infinispan.cli.Context;
  * @since 12.0
  **/
 public class TimeUnitCompleter extends ListCompleter {
-   private static List<String> VALUES = Arrays.stream(TimeUnit.values()).map(TimeUnit::name).collect(Collectors.toList());
+   private static final List<String> VALUES = Arrays.stream(TimeUnit.values()).map(TimeUnit::name).collect(Collectors.toList());
 
    @Override
    Collection<String> getAvailableItems(Context context) {

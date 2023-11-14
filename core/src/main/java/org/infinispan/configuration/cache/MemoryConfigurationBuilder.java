@@ -22,7 +22,7 @@ import org.infinispan.eviction.EvictionType;
  */
 public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilder implements
                                                                                   Builder<MemoryConfiguration> {
-   private MemoryStorageConfigurationBuilder legacyBuilder;
+   private final MemoryStorageConfigurationBuilder legacyBuilder;
    private final AttributeSet attributes;
    private final List<String> legacyAttributesUsed = new ArrayList<>();
    private boolean newAttributesUsed = false;

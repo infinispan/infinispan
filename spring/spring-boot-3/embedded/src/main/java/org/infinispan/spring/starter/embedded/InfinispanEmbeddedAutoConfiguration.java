@@ -41,19 +41,19 @@ public class InfinispanEmbeddedAutoConfiguration {
    private InfinispanEmbeddedConfigurationProperties infinispanProperties;
 
    @Autowired(required = false)
-   private List<InfinispanCacheConfigurer> configurers = Collections.emptyList();
+   private final List<InfinispanCacheConfigurer> configurers = Collections.emptyList();
 
    @Autowired(required = false)
-   private List<InfinispanConfigurationCustomizer> configurationCustomizers = Collections.emptyList();
+   private final List<InfinispanConfigurationCustomizer> configurationCustomizers = Collections.emptyList();
 
    @Autowired(required = false)
-   private Map<String, org.infinispan.configuration.cache.Configuration> cacheConfigurations = Collections.emptyMap();
+   private final Map<String, org.infinispan.configuration.cache.Configuration> cacheConfigurations = Collections.emptyMap();
 
    @Autowired(required = false)
    private InfinispanGlobalConfigurer infinispanGlobalConfigurer;
 
    @Autowired(required = false)
-   private List<InfinispanGlobalConfigurationCustomizer> globalConfigurationCustomizers = Collections.emptyList();
+   private final List<InfinispanGlobalConfigurationCustomizer> globalConfigurationCustomizers = Collections.emptyList();
 
    @Bean(destroyMethod = "stop")
    @Conditional(InfinispanEmbeddedCacheManagerChecker.class)

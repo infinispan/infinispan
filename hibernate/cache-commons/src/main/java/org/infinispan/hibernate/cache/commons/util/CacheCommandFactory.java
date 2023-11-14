@@ -30,7 +30,7 @@ public class CacheCommandFactory implements ModuleCommandFactory {
     * Keeps track of regions to which second-level cache specific commands have been plugged.
     * The regions are keyed by cache name (which is qualified), not by region name that is unqualified in Hibernate 5.3+
     */
-   private ConcurrentMap<ByteString, InfinispanBaseRegion> allRegions = new ConcurrentHashMap<>();
+   private final ConcurrentMap<ByteString, InfinispanBaseRegion> allRegions = new ConcurrentHashMap<>();
 
    /**
     * Add region so that commands can be cleared on shutdown.

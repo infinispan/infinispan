@@ -22,7 +22,7 @@ public class JGroupsConfigurationBuilder extends AbstractGlobalConfigurationBuil
 
    private List<StackConfigurationBuilder> stackConfigurationBuilders = new ArrayList<>();
    private List<StackFileConfigurationBuilder> stackFileConfigurationBuilders = new ArrayList<>();
-   private Set<String> buildersByName = new HashSet<>();
+   private final Set<String> buildersByName = new HashSet<>();
 
    JGroupsConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);

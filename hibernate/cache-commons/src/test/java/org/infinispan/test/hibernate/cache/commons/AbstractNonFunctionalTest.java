@@ -67,7 +67,7 @@ public abstract class AbstractNonFunctionalTest extends org.hibernate.testing.ju
 	private static final String JGROUPS_CFG_FILE = "hibernate.cache.infinispan.jgroups_cfg";
 	private String jgroupsCfgFile;
 
-	private CacheTestSupport testSupport = new CacheTestSupport();
+	private final CacheTestSupport testSupport = new CacheTestSupport();
 
 	@Parameterized.Parameters(name = "{0}, {2}, {3}")
 	public List<Object[]> getParameters() {

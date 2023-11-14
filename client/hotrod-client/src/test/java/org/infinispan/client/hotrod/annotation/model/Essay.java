@@ -7,9 +7,9 @@ import org.infinispan.protostream.annotations.ProtoField;
 
 public class Essay {
 
-   private String title;
+   private final String title;
 
-   private String content;
+   private final String content;
 
    @ProtoFactory
    public Essay(String title, String content) {

@@ -34,7 +34,7 @@ public class IntermediateDoubleCacheStream implements DoubleCacheStream {
    private BaseCacheStream remoteStream;
    private final IntermediateType type;
    private LocalDoubleCacheStream localDoubleStream;
-   private IntermediateCacheStreamSupplier supplier;
+   private final IntermediateCacheStreamSupplier supplier;
 
    public IntermediateDoubleCacheStream(DistributedDoubleCacheStream remoteStream) {
       this.remoteStream = remoteStream;

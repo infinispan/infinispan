@@ -24,7 +24,7 @@ public class StaggeredRequest<T> extends MultiTargetRequest<T> {
    private final JGroupsTransport transport;
 
    @GuardedBy("responseCollector")
-   private long deadline;
+   private final long deadline;
    @GuardedBy("responseCollector")
    private int targetIndex;
 

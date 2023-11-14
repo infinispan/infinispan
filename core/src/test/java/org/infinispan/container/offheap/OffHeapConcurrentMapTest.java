@@ -22,7 +22,7 @@ import org.testng.annotations.Test;
 @Test(groups = "stress", testName = "container.offheap.OffHeapConcurrentMapTest")
 public class OffHeapConcurrentMapTest {
    private OffHeapConcurrentMap map;
-   private WrappedByteArray valueByteArray = new WrappedByteArray(new byte[] { 0, 1, 2, 3, 4, 5 });
+   private final WrappedByteArray valueByteArray = new WrappedByteArray(new byte[] { 0, 1, 2, 3, 4, 5 });
 
    private static final int RESIZE_LIMITATION = OffHeapConcurrentMap.computeThreshold(OffHeapConcurrentMap.INITIAL_SIZE);
 

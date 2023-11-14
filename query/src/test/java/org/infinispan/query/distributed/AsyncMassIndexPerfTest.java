@@ -173,9 +173,9 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
 
    class EventLoop implements Runnable {
 
-      private Indexer indexer;
+      private final Indexer indexer;
       private CompletionStage<Void> future;
-      private AtomicInteger nexIndex = new AtomicInteger(OBJECT_COUNT);
+      private final AtomicInteger nexIndex = new AtomicInteger(OBJECT_COUNT);
 
       public EventLoop(Indexer indexer) {
          this.indexer = indexer;

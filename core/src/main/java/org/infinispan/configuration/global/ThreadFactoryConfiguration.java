@@ -18,7 +18,7 @@ class ThreadFactoryConfiguration {
    private final Attribute<String> groupName;
    private final Attribute<String> threadNamePattern;
    private final Attribute<Integer> priority;
-   private String nodeName;
+   private final String nodeName;
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(ThreadFactoryConfiguration.class, NAME, GROUP, THREAD_NAME_PATTERN, PRIORITY);

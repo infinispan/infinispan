@@ -14,9 +14,9 @@ import org.infinispan.protostream.annotations.ProtoField;
 @Indexed
 public class Poem {
 
-   private Author author;
-   private String description;
-   private Integer year;
+   private final Author author;
+   private final String description;
+   private final Integer year;
 
    @ProtoFactory
    public Poem(Author author, String description, Integer year) {

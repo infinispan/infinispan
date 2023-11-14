@@ -214,7 +214,7 @@ public class AnchoredKeysOperationsTest extends AbstractAnchoredKeysTest {
 
    @Listener(clustered = true)
    public class ClusteredListener {
-      private BlockingQueue<CacheEntryEvent<Object, Object>> events = new LinkedBlockingDeque<>();
+      private final BlockingQueue<CacheEntryEvent<Object, Object>> events = new LinkedBlockingDeque<>();
 
       @CacheEntryCreated @CacheEntryModified @CacheEntryRemoved
       public void onEntryEvent(CacheEntryEvent<Object, Object> e) {

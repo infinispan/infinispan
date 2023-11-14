@@ -26,7 +26,7 @@ public class TransactionRegisteredAdapter<K, V> extends AbstractAdapter<Transact
     * be static).
     */
    private class CDITransactionRegisteredEvent implements TransactionRegisteredEvent<K, V> {
-      private TransactionRegisteredEvent<K, V> decoratedEvent;
+      private final TransactionRegisteredEvent<K, V> decoratedEvent;
 
       private CDITransactionRegisteredEvent(TransactionRegisteredEvent<K, V> decoratedEvent) {
          this.decoratedEvent = decoratedEvent;

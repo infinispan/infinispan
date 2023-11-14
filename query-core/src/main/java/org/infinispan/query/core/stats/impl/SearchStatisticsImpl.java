@@ -13,8 +13,8 @@ import java.util.concurrent.CompletionStage;
  * since 12.0
  */
 public final class SearchStatisticsImpl implements SearchStatistics {
-   private QueryStatistics queryStatistics;
-   private IndexStatistics indexStatistics;
+   private final QueryStatistics queryStatistics;
+   private final IndexStatistics indexStatistics;
 
    public SearchStatisticsImpl(QueryStatistics queryStatistics, IndexStatistics indexStatistics) {
       this.queryStatistics = queryStatistics;

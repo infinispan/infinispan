@@ -166,7 +166,7 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
 
    static class ExceptionTrackerInterceptor extends BaseAsyncInterceptor {
 
-      private AtomicInteger exceptionsCaught = new AtomicInteger();
+      private final AtomicInteger exceptionsCaught = new AtomicInteger();
 
       @Override
       public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {

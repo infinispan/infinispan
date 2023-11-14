@@ -17,7 +17,7 @@ import org.infinispan.security.impl.CacheRoleImpl;
  * @since 7.0
  */
 public class GlobalRoleConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements GlobalRolesConfigurationChildBuilder, Builder<Role> {
-   private Set<AuthorizationPermission> permissions = new HashSet<>();
+   private final Set<AuthorizationPermission> permissions = new HashSet<>();
    private final GlobalAuthorizationConfigurationBuilder builder;
    private final String name;
    private boolean inheritable = true;

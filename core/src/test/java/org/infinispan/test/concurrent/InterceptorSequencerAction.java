@@ -22,7 +22,7 @@ public class InterceptorSequencerAction {
    private final StateSequencer stateSequencer;
    private final Cache<?, ?> cache;
    private final Class<? extends AsyncInterceptor> interceptorClass;
-   private CommandMatcher matcher;
+   private final CommandMatcher matcher;
    private SequencerInterceptor ourInterceptor;
 
    public InterceptorSequencerAction(StateSequencer stateSequencer, Cache<?, ?> cache, Class<? extends AsyncInterceptor> interceptorClass, CommandMatcher matcher) {

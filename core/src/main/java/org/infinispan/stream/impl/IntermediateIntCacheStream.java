@@ -35,7 +35,7 @@ public class IntermediateIntCacheStream implements IntCacheStream {
    private BaseCacheStream remoteStream;
    private final IntermediateType type;
    private LocalIntCacheStream localIntStream;
-   private IntermediateCacheStreamSupplier supplier;
+   private final IntermediateCacheStreamSupplier supplier;
 
    public IntermediateIntCacheStream(DistributedIntCacheStream remoteStream) {
       this.remoteStream = remoteStream;
