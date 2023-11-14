@@ -1,6 +1,5 @@
 package org.infinispan.server.core.configuration;
 
-import java.util.Collections;
 import java.util.List;
 
 import org.infinispan.server.core.transport.IpSubnetFilterRule;
@@ -21,7 +20,7 @@ public class IpFilterConfiguration {
    }
 
    public void rules(List<IpSubnetFilterRule> rules) {
-      this.rules = Collections.unmodifiableList(rules);
+      this.rules = List.copyOf(rules);
    }
 
    @Override

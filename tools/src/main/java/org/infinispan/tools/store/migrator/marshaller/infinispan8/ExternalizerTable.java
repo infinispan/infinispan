@@ -1,7 +1,6 @@
 package org.infinispan.tools.store.migrator.marshaller.infinispan8;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -56,33 +55,32 @@ import org.jboss.marshalling.Unmarshaller;
 class ExternalizerTable implements ObjectTable {
    private static final Map<Integer, Integer> LEGACY_MAP;
    static {
-      HashMap<Integer, Integer> map = new HashMap<>();
-      map.put(2, 1); // MAPS
-      map.put(10, 7); // IMMORTAL_ENTRY
-      map.put(11, 8); // MORTAL_ENTRY
-      map.put(12, 9); // TRANSIENT_ENTRY
-      map.put(13, 10); // TRANSIENT_MORTAL_ENTRY
-      map.put(14, 11); // IMMORTAL_VALUE
-      map.put(15, 12); // MORTAL_VALUE
-      map.put(16, 13); // TRANSIENT_VALUE
-      map.put(17, 14); // TRANSIENT_VALUE
-      map.put(19, 105); // IMMUTABLE_MAP
-      map.put(76, 38); // METADATA_IMMORTAL_ENTRY
-      map.put(77, 39); // METADATA_MORTAL_ENTRY
-      map.put(78, 40); // METADATA_TRANSIENT_ENTRY
-      map.put(79, 41); // METADATA_TRANSIENT_MORTAL_ENTRY
-      map.put(80, 42); // METADATA_IMMORTAL_ENTRY
-      map.put(81, 43); // METADATA_MORTAL_ENTRY
-      map.put(82, 44); // METADATA_TRANSIENT_VALUE
-      map.put(83, 45); // METADATA_TRANSIENT_MORTAL_VALUE
-      map.put(96, 55); // SIMPLE_CLUSTERED_VERSION
-      map.put(98, 57); // EMBEDDED_METADATA
-      map.put(99, 58); // NUMERIC_VERSION
-      map.put(103, 60); // KEY_VALUE_PAIR
-      map.put(105, 62); // MARSHALLED_ENTRY
-      map.put(106, 106); // BYTE_BUFFER
-      map.put(121, 63); // ENUM_SET
-      LEGACY_MAP = Collections.unmodifiableMap(map);
+      // ENUM_SET
+      LEGACY_MAP = Map.ofEntries(Map.entry(2, 1), // MAPS
+            Map.entry(10, 7), // IMMORTAL_ENTRY
+            Map.entry(11, 8), // MORTAL_ENTRY
+            Map.entry(12, 9), // TRANSIENT_ENTRY
+            Map.entry(13, 10), // TRANSIENT_MORTAL_ENTRY
+            Map.entry(14, 11), // IMMORTAL_VALUE
+            Map.entry(15, 12), // MORTAL_VALUE
+            Map.entry(16, 13), // TRANSIENT_VALUE
+            Map.entry(17, 14), // TRANSIENT_VALUE
+            Map.entry(19, 105), // IMMUTABLE_MAP
+            Map.entry(76, 38), // METADATA_IMMORTAL_ENTRY
+            Map.entry(77, 39), // METADATA_MORTAL_ENTRY
+            Map.entry(78, 40), // METADATA_TRANSIENT_ENTRY
+            Map.entry(79, 41), // METADATA_TRANSIENT_MORTAL_ENTRY
+            Map.entry(80, 42), // METADATA_IMMORTAL_ENTRY
+            Map.entry(81, 43), // METADATA_MORTAL_ENTRY
+            Map.entry(82, 44), // METADATA_TRANSIENT_VALUE
+            Map.entry(83, 45), // METADATA_TRANSIENT_MORTAL_VALUE
+            Map.entry(96, 55), // SIMPLE_CLUSTERED_VERSION
+            Map.entry(98, 57), // EMBEDDED_METADATA
+            Map.entry(99, 58), // NUMERIC_VERSION
+            Map.entry(103, 60), // KEY_VALUE_PAIR
+            Map.entry(105, 62), // MARSHALLED_ENTRY
+            Map.entry(106, 106), // BYTE_BUFFER
+            Map.entry(121, 63));
    }
 
    static int ARRAY_LIST = 0;

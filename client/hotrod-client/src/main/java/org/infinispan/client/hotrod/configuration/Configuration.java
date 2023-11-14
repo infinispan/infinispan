@@ -148,7 +148,7 @@ public class Configuration {
       this.marshallerClass = marshallerClass;
       this.marshaller = marshaller;
       this.protocolVersion = protocolVersion;
-      this.servers = Collections.unmodifiableList(servers);
+      this.servers = List.copyOf(servers);
       this.socketTimeout = socketTimeout;
       this.security = security;
       this.tcpNoDelay = tcpNoDelay;

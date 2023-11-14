@@ -1,6 +1,5 @@
 package org.infinispan.test.fwk;
 
-import static org.infinispan.commons.util.Immutables.immutableMapCopy;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_ALL;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.FD_ALL2;
@@ -238,7 +237,7 @@ public class JGroupsConfigBuilder {
          // Make a safe copy of the protocol stack to avoid concurrent modification issues
          List<ProtocolConfiguration> copy = new ArrayList<>(protocols.size());
          for (ProtocolConfiguration p : protocols) {
-            copy.add(new ProtocolConfiguration(p.getProtocolName(), immutableMapCopy(p.getProperties())));
+            copy.add(new ProtocolConfiguration(p.getProtocolName(), Map.copyOf(p.getProperties())));
          }
 
          return copy;

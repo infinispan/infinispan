@@ -17,7 +17,6 @@ import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.commons.marshall.WrappedBytes;
-import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.IntSets;
 
 /**
@@ -51,7 +50,7 @@ public class CacheInfo {
       this.clientTopology = new ClientTopology(HotRodConstants.DEFAULT_CACHE_TOPOLOGY, intelligence);
       this.consistentHash = null;
 
-      this.servers = Immutables.immutableListCopy(servers);
+      this.servers = List.copyOf(servers);
 
       // Before the first topology update or after a topology-aware (non-hash) topology update
       this.primarySegments = null;
@@ -88,7 +87,7 @@ public class CacheInfo {
       this.clientTopology = clientTopology;
       this.clientTopologyRef = clientTopologyRef;
 
-      this.servers = Immutables.immutableListCopy(servers);
+      this.servers = List.copyOf(servers);
 
       if (numSegments > 0) {
          // After the servers sent a hash-aware topology update

@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commons.util.ImmutableHopscotchHashSet;
-import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.CacheMode;
@@ -103,9 +102,9 @@ public class LocalizedCacheTopology extends CacheTopology {
             int segmentCopy = segmentId;
             Address primary = readCH.locatePrimaryOwnerForSegment(segmentId);
             List<Address> readOwners = readOwnersMap.computeIfAbsent(primary, p ->
-                  Immutables.immutableListCopy(readCH.locateOwnersForSegment(segmentCopy)));
+                  List.copyOf(readCH.locateOwnersForSegment(segmentCopy)));
             List<Address> writeOwners = writeOwnersMap.computeIfAbsent(primary, p ->
-                  Immutables.immutableListCopy(writeCH.locateOwnersForSegment(segmentCopy)));
+                  List.copyOf(writeCH.locateOwnersForSegment(segmentCopy)));
             List<Address> writeBackups = writeOwners.subList(1, writeOwners.size());
             this.distributionInfos[segmentId] =
                new DistributionInfo(segmentId, primary, readOwners, writeOwners, writeBackups, localAddress);

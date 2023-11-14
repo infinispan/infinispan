@@ -3,10 +3,8 @@ package org.infinispan.marshall.exts;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -46,6 +44,8 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
       numbers.put(ConcurrentHashMap.class, CONCURRENTHASHMAP);
       numbers.put(getPrivateSingletonMapClass(), SINGLETONMAP);
       numbers.put(getPrivateEmptyMapClass(), EMPTYMAP);
+      numbers.put(getPrivateImmutableMap1Class(), HASHMAP);
+      numbers.put(getPrivateImmutableMapNClass(), HASHMAP);
    }
 
    @Override
@@ -114,11 +114,12 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
     * @return immutable set of the private classes
     */
    public static Set<Class<? extends Map>> getSupportedPrivateClasses() {
-      Set<Class<? extends Map>> classNames = new HashSet<>(Arrays.asList(
+      return Set.of(
             getPrivateSingletonMapClass(),
-            getPrivateEmptyMapClass()
-      ));
-      return Collections.unmodifiableSet(classNames);
+            getPrivateEmptyMapClass(),
+            getPrivateImmutableMap1Class(),
+            getPrivateImmutableMapNClass()
+      );
    }
 
    private static Class<? extends Map> getPrivateSingletonMapClass() {
@@ -127,6 +128,14 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
 
    private static Class<? extends Map> getPrivateEmptyMapClass() {
       return getMapClass("java.util.Collections$EmptyMap");
+   }
+
+   private static Class<? extends Map> getPrivateImmutableMap1Class() {
+      return getMapClass("java.util.ImmutableCollections$Map1");
+   }
+
+   private static Class<? extends Map> getPrivateImmutableMapNClass() {
+      return getMapClass("java.util.ImmutableCollections$MapN");
    }
 
    private static Class<? extends Map> getMapClass(String className) {

@@ -1,6 +1,5 @@
 package org.infinispan.xsite.commands.remote;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -34,7 +33,7 @@ public final class Ids {
       ID_TO_COMMAND[IRAC_TOMBSTONE_CHECK] = IracTombstoneCheckRequest::new;
       ID_TO_COMMAND[SITE_EVENT] = XSiteRemoteEventCommand::new;
 
-      CLASSES = Collections.unmodifiableSet(checkMappingAndCreateClassSet());
+      CLASSES = Set.copyOf(checkMappingAndCreateClassSet());
    }
 
    @SuppressWarnings("rawtypes")

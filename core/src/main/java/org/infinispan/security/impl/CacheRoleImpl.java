@@ -2,7 +2,6 @@ package org.infinispan.security.impl;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Objects;
@@ -44,7 +43,7 @@ public class CacheRoleImpl implements Role {
       this.name = name;
       this.description = description;
       this.implicit = implicit;
-      this.permissions = Collections.unmodifiableSet(permissions);
+      this.permissions = Set.copyOf(permissions);
       int permMask = 0;
       for (AuthorizationPermission permission : permissions) {
          permMask |= permission.getMask();

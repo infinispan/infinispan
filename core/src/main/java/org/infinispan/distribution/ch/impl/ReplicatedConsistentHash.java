@@ -16,7 +16,6 @@ import java.util.Set;
 import java.util.function.UnaryOperator;
 
 import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
-import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -52,12 +51,12 @@ public class ReplicatedConsistentHash implements ConsistentHash {
    }
 
    public ReplicatedConsistentHash(List<Address> members, Map<Address, Float> capacityFactors, List<Address> membersWithoutState, int[] primaryOwners) {
-      this.members = Immutables.immutableListCopy(members);
-      this.membersWithoutState = Immutables.immutableListCopy(membersWithoutState);
+      this.members = List.copyOf(members);
+      this.membersWithoutState = List.copyOf(membersWithoutState);
       this.membersWithState = computeMembersWithState(members, membersWithoutState);
-      this.membersWithStateSet = Immutables.immutableSetConvert(this.membersWithState);
+      this.membersWithStateSet = Set.copyOf(this.membersWithState);
       this.primaryOwners = primaryOwners;
-      this.capacityFactors = Immutables.immutableMapCopy(capacityFactors);
+      this.capacityFactors = capacityFactors == null ? null : Map.copyOf(capacityFactors);
       this.segments = IntSets.immutableRangeSet(primaryOwners.length);
    }
 
@@ -114,12 +113,12 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       Map<Address, Float> capacityFactors = parseCapacityFactors(state, members);
       int[] primaryOwners = parsePrimaryOwners(state);
 
-      this.members = Immutables.immutableListCopy(members);
-      this.membersWithoutState = Immutables.immutableListCopy(membersWithoutState);
+      this.members = List.copyOf(members);
+      this.membersWithoutState = List.copyOf(membersWithoutState);
       this.membersWithState = computeMembersWithState(members, membersWithoutState);
-      this.membersWithStateSet = Immutables.immutableSetConvert(this.membersWithState);
+      this.membersWithStateSet = Set.copyOf(this.membersWithState);
       this.primaryOwners = primaryOwners;
-      this.capacityFactors = Immutables.immutableMapCopy(capacityFactors);
+      this.capacityFactors = Map.copyOf(capacityFactors);
       this.segments = IntSets.immutableRangeSet(this.primaryOwners.length);
    }
 
@@ -317,7 +316,7 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       } else {
          List<Address> membersWithState = new ArrayList<>(members);
          membersWithState.removeAll(membersWithoutState);
-         return Immutables.immutableListCopy(membersWithState);
+         return List.copyOf(membersWithState);
       }
    }
 

@@ -26,7 +26,6 @@ import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.marshall.SerializeWith;
-import org.infinispan.commons.util.Immutables;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
@@ -187,7 +186,7 @@ public final class MediaType {
       this.typeLength = typeLength;
       this.matchesAll = typeSubtype.equals(MATCH_ALL_TYPE);
       if (params != null) {
-         this.params = Immutables.immutableMapCopy(params);
+         this.params = Map.copyOf(params);
          String weight = params.get(WEIGHT_PARAM_NAME);
          this.weight = weight != null ? parseWeight(weight) : DEFAULT_WEIGHT;
       } else {

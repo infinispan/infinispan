@@ -6,7 +6,6 @@ import java.io.ObjectOutput;
 import java.util.AbstractMap;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -46,6 +45,8 @@ public class CollectionExternalizer implements AdvancedExternalizer<Collection> 
       numbers.put(ArrayList.class, ARRAY_LIST);
       numbers.put(getPrivateArrayListClass(), ARRAY_LIST);
       numbers.put(getPrivateUnmodifiableListClass(), ARRAY_LIST);
+      numbers.put(getPrivateImmutableList12Class(), ARRAY_LIST);
+      numbers.put(getPrivateImmutableListNClass(), ARRAY_LIST);
       numbers.put(LinkedList.class, LINKED_LIST);
       numbers.put(getPrivateSingletonListClass(), SINGLETON_LIST);
       numbers.put(getPrivateEmptyListClass(), EMPTY_LIST);
@@ -154,16 +155,17 @@ public class CollectionExternalizer implements AdvancedExternalizer<Collection> 
     * @return immutable set of the private classes
     */
    public static Set<Class<Collection>> getSupportedPrivateClasses() {
-      Set<Class<Collection>> classNames = new HashSet<>(Arrays.asList(
-            getPrivateArrayListClass(),
+      return Set.of(getPrivateArrayListClass(),
             getPrivateUnmodifiableListClass(),
             getPrivateEmptyListClass(),
             getPrivateEmptySetClass(),
             getPrivateSingletonListClass(),
             getPrivateSingletonSetClass(),
             getPrivateSynchronizedSetClass(),
-            getPrivateUnmodifiableSetClass()));
-      return Collections.unmodifiableSet(classNames);
+            getPrivateUnmodifiableSetClass(),
+            getPrivateImmutableList12Class(),
+            getPrivateImmutableListNClass()
+      );
    }
 
    private static Class<Collection> getPrivateArrayListClass() {
@@ -198,8 +200,18 @@ public class CollectionExternalizer implements AdvancedExternalizer<Collection> 
       return getCollectionClass("java.util.Collections$UnmodifiableSet");
    }
 
-   private static Class<Collection> getCollectionClass(String className) {
-      return Util.<Collection>loadClass(className, Collection.class.getClassLoader());
+   private static Class<Collection> getPrivateImmutableList12Class() {
+      return getCollectionClass("java.util.ImmutableCollections$List12");
    }
+
+   private static Class<Collection> getPrivateImmutableListNClass() {
+      return getCollectionClass("java.util.ImmutableCollections$ListN");
+   }
+
+   private static Class<Collection> getCollectionClass(String className) {
+      return Util.loadClass(className, Collection.class.getClassLoader());
+   }
+
+
 
 }

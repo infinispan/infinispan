@@ -2,7 +2,6 @@ package org.infinispan.configuration.cache;
 
 import static org.infinispan.commons.configuration.attributes.AttributeValidator.greaterThanZero;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -51,7 +50,7 @@ public class SitesConfiguration extends ConfigurationElement<SitesConfiguration>
 
    public SitesConfiguration(AttributeSet attributes, List<BackupConfiguration> allBackups, BackupForConfiguration backupFor) {
       super(Element.SITES, attributes, ConfigurationElement.list(Element.BACKUPS, allBackups), backupFor);
-      this.allBackups = Collections.unmodifiableList(allBackups);
+      this.allBackups = List.copyOf(allBackups);
       this.backupFor = backupFor;
    }
 

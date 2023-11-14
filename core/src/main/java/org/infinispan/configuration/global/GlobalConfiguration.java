@@ -1,6 +1,5 @@
 package org.infinispan.configuration.global;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +44,7 @@ public class GlobalConfiguration {
       for (Object module : modules) {
          moduleMap.put(module.getClass(), module);
       }
-      this.modules = Collections.unmodifiableMap(moduleMap);
+      this.modules = Map.copyOf(moduleMap);
       this.site = site;
       this.cl = cl;
       this.features = features;

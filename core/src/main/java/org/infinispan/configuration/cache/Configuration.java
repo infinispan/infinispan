@@ -1,6 +1,5 @@
 package org.infinispan.configuration.cache;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,7 +96,7 @@ public class Configuration extends ConfigurationElement<Configuration> implement
       for(Object module : modules) {
          modulesMap.put(module.getClass(), module);
       }
-      this.moduleConfiguration = Collections.unmodifiableMap(modulesMap);
+      this.moduleConfiguration = Map.copyOf(modulesMap);
    }
 
    public boolean simpleCache() {

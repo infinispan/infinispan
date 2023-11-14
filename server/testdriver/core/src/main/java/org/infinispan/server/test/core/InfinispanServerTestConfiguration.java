@@ -1,7 +1,5 @@
 package org.infinispan.server.test.core;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -23,11 +21,8 @@ public class InfinispanServerTestConfiguration {
    private static final int DEFAULT_DISCOVER_PORT = 46655;
 
    static {
-      Map<String, Integer> ports = new HashMap<>();
       //46655 is the default! don't use it!
-      ports.put(LON, 1000);
-      ports.put(NYC, 2000);
-      SITE_DISCOVER_PORTS_OFFSET = Collections.unmodifiableMap(ports);
+      SITE_DISCOVER_PORTS_OFFSET = Map.of(LON, 1000, NYC, 2000);
    }
 
    private final String configurationFile;
@@ -59,7 +54,7 @@ public class InfinispanServerTestConfiguration {
       this.jmx = jmx;
       this.parallelStartup = parallelStartup;
       this.defaultFile = defaultFile;
-      this.listeners = Collections.unmodifiableList(listeners);
+      this.listeners = List.copyOf(listeners);
       this.site = site;
       this.portOffset = portOffset;
       this.features = features;

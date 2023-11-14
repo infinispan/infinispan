@@ -7,9 +7,7 @@ import java.io.ObjectOutput;
 import java.io.Reader;
 import java.io.Serializable;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -35,16 +33,6 @@ import org.infinispan.commons.marshall.MarshallUtil;
  */
 public class Immutables {
    /**
-    * Whether or not this collection type is immutable
-    *
-    * @param o a Collection, Set, List, or Map
-    * @return true if immutable, false if not
-    */
-   public static boolean isImmutable(Object o) {
-      return o instanceof Immutable;
-   }
-
-   /**
     * Converts a Collection to an immutable List by copying it.
     *
     * @param source the collection to convert
@@ -52,21 +40,6 @@ public class Immutables {
     */
    public static <T> List<T> immutableListConvert(Collection<? extends T> source) {
       return new ImmutableListCopy<>(source);
-   }
-
-   /**
-    *
-    * Creates an immutable copy of the list.
-    *
-    * @param list the list to copy
-    * @return the immutable copy
-    */
-   public static <T> List<T> immutableListCopy(List<T> list) {
-      if (list == null) return null;
-      if (list.isEmpty()) return Collections.emptyList();
-      if (list.size() == 1) return Collections.singletonList(list.get(0));
-      if (list instanceof ImmutableListCopy) return list;
-      return new ImmutableListCopy<>(list);
    }
 
    /**
@@ -88,17 +61,6 @@ public class Immutables {
     */
    public static <T> List<T> immutableListWrap(T... array) {
       return new ImmutableListCopy<>(array);
-   }
-
-   /**
-    * Creates a new immutable list containing the union (combined entries) of both lists.
-    *
-    * @param list1 contains the first elements of the new list
-    * @param list2 contains the successor elements of the new list
-    * @return a new immutable merged copy of list1 and list2
-    */
-   public static <T> List<T> immutableListMerge(List<? extends T> list1, List<? extends T> list2) {
-      return new ImmutableListCopy<>(list1, list2);
    }
 
    public static <T> ImmutableListCopy<T> immutableListAdd(List<T> list, int position, T element) {
@@ -137,16 +99,6 @@ public class Immutables {
    }
 
    /**
-    * Converts a Collections into an immutable Set by copying it.
-    *
-    * @param collection the collection to convert/copy
-    * @return a new immutable set containing the elements in collection
-    */
-   public static <T> Set<T> immutableSetConvert(Collection<? extends T> collection) {
-      return immutableSetWrap(new HashSet<T>(collection));
-   }
-
-   /**
     * Wraps a set with an immutable set. There is no copying involved.
     *
     * @param set the set to wrap
@@ -157,21 +109,6 @@ public class Immutables {
    }
 
    /**
-    * Creates an immutable copy of the specified set.
-    *
-    * @param set the set to copy from
-    * @return an immutable set copy
-    */
-   public static <T> Set<T> immutableSetCopy(Set<T> set) {
-      if (set == null) return null;
-      if (set.isEmpty()) return Collections.emptySet();
-      if (set.size() == 1) return Collections.singleton(set.iterator().next());
-
-      return new ImmutableSetWrapper<>(new HashSet<>(set));
-   }
-
-
-   /**
     * Wraps a map with an immutable map. There is no copying involved.
     *
     * @param map the map to wrap
@@ -179,68 +116,6 @@ public class Immutables {
     */
    public static <K, V> Map<K, V> immutableMapWrap(Map<? extends K, ? extends V> map) {
       return new ImmutableMapWrapper<>(map);
-   }
-
-   /**
-    * Creates an immutable copy of the specified map.
-    *
-    * @param map the map to copy from
-    * @return an immutable map copy
-    */
-   public static <K, V> Map<K, V> immutableMapCopy(Map<K, V> map) {
-      if (map == null) return null;
-      if (map.isEmpty()) return Collections.emptyMap();
-      if (map.size() == 1) {
-         Map.Entry<K, V> me = map.entrySet().iterator().next();
-         return Collections.singletonMap(me.getKey(), me.getValue());
-      }
-
-      return new ImmutableMapWrapper<>(new HashMap<>(map));
-   }
-
-   /**
-    * Creates a new immutable copy of the specified Collection.
-    *
-    * @param collection the collection to copy
-    * @return an immutable copy
-    */
-   public static <T> Collection<T> immutableCollectionCopy(Collection<T> collection) {
-      if (collection == null) return null;
-      if (collection.isEmpty()) return Collections.emptySet();
-      if (collection.size() == 1) return Collections.singleton(collection.iterator().next());
-
-      return new ImmutableCollectionWrapper<>(new ArrayList<>(collection));
-   }
-
-   /**
-    * Wraps a collection with an immutable collection. There is no copying involved.
-    *
-    * @param collection the collection to wrap
-    * @return an immutable collection wrapper that delegates to the original collection
-    */
-   public static <T> Collection<T> immutableCollectionWrap(Collection<? extends T> collection) {
-      return new ImmutableCollectionWrapper<>(collection);
-   }
-
-   /**
-    * Wraps a {@link Map.Entry}} with an immutable {@link Map.Entry}}. There is no copying involved.
-    *
-    * @param entry the mapping to wrap.
-    * @return an immutable {@link Map.Entry}} wrapper that delegates to the original mapping.
-    */
-   public static <K, V> Map.Entry<K, V> immutableEntry(Map.Entry<K, V> entry) {
-      return new ImmutableEntry<>(entry);
-   }
-
-   /**
-    * Wraps a key and value with an immutable {@link Map.Entry}}. There is no copying involved.
-    *
-    * @param key the key to wrap.
-    * @param value the value to wrap.
-    * @return an immutable {@link Map.Entry}} wrapper that delegates to the original mapping.
-    */
-   public static <K, V> Map.Entry<K, V> immutableEntry(K key, V value) {
-      return new ImmutableEntry<>(key, value);
    }
 
    public interface  Immutable {
@@ -403,7 +278,7 @@ public class Immutables {
       }
 
       private static boolean eq(Object o1, Object o2) {
-         return o1 == o2 || (o1 != null && o1.equals(o2));
+         return Objects.equals(o1, o2);
       }
 
       @Override

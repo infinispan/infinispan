@@ -1,6 +1,5 @@
 package org.infinispan.security.impl;
 
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -17,7 +16,7 @@ public class SubjectACL {
    private final int mask;
 
    public SubjectACL(Set<String> roles, int mask) {
-      this.roles = Collections.unmodifiableSet(roles);
+      this.roles = Set.copyOf(roles);
       this.mask = mask;
    }
 

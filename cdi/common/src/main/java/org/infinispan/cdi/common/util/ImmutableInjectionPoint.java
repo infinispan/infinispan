@@ -1,11 +1,8 @@
 package org.infinispan.cdi.common.util;
 
-import static java.util.Collections.unmodifiableSet;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Member;
 import java.lang.reflect.Type;
-import java.util.HashSet;
 import java.util.Set;
 
 import jakarta.enterprise.inject.spi.Annotated;
@@ -48,7 +45,7 @@ public class ImmutableInjectionPoint implements InjectionPoint {
     public ImmutableInjectionPoint(AnnotatedField<?> field, Set<Annotation> qualifiers, Bean<?> declaringBean, boolean _transient, boolean delegate) {
         this.annotated = field;
         this.member = field.getJavaMember();
-        this.qualifiers = new HashSet<Annotation>(qualifiers);
+        this.qualifiers = Set.copyOf(qualifiers);
         this.type = field.getJavaMember().getGenericType();
         this._transient = _transient;
         this.delegate = delegate;
@@ -90,7 +87,7 @@ public class ImmutableInjectionPoint implements InjectionPoint {
     public ImmutableInjectionPoint(AnnotatedParameter<?> parameter, Set<Annotation> qualifiers, Bean<?> declaringBean, boolean _transient, boolean delegate) {
         this.annotated = parameter;
         this.member = parameter.getDeclaringCallable().getJavaMember();
-        this.qualifiers = new HashSet<Annotation>(qualifiers);
+        this.qualifiers = Set.copyOf(qualifiers);
         this._transient = _transient;
         this.delegate = delegate;
         this.declaringBean = declaringBean;
@@ -131,7 +128,7 @@ public class ImmutableInjectionPoint implements InjectionPoint {
     }
 
     public Set<Annotation> getQualifiers() {
-        return unmodifiableSet(qualifiers);
+        return qualifiers;
     }
 
     public Type getType() {

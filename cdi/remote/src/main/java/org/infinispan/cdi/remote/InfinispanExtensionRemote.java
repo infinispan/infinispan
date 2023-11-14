@@ -6,6 +6,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.infinispan.cdi.common.util.AnyLiteral;
+import org.infinispan.cdi.common.util.BeanBuilder;
+import org.infinispan.cdi.common.util.ContextualLifecycle;
+import org.infinispan.cdi.common.util.DefaultLiteral;
+import org.infinispan.cdi.common.util.Reflections;
+import org.infinispan.cdi.remote.logging.RemoteLog;
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.commons.logging.LogFactory;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.spi.CreationalContext;
 import jakarta.enterprise.event.Observes;
@@ -23,17 +34,6 @@ import jakarta.enterprise.inject.spi.ProcessProducer;
 import jakarta.enterprise.inject.spi.Producer;
 import jakarta.enterprise.util.AnnotationLiteral;
 
-import org.infinispan.cdi.common.util.AnyLiteral;
-import org.infinispan.cdi.common.util.BeanBuilder;
-import org.infinispan.cdi.common.util.ContextualLifecycle;
-import org.infinispan.cdi.common.util.DefaultLiteral;
-import org.infinispan.cdi.common.util.Reflections;
-import org.infinispan.cdi.remote.logging.RemoteLog;
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.commons.logging.LogFactory;
-
 public class InfinispanExtensionRemote implements Extension {
 
     private static final RemoteLog LOGGER = LogFactory.getLog(InfinispanExtensionRemote.class, RemoteLog.class);
@@ -45,7 +45,7 @@ public class InfinispanExtensionRemote implements Extension {
 
     public InfinispanExtensionRemote() {
         new ConfigurationBuilder(); // Attempt to initialize a hotrod client class
-        this.remoteCacheInjectionPoints = new HashMap<Type, Set<Annotation>>();
+        this.remoteCacheInjectionPoints = new HashMap<>();
     }
 
     void processProducers(@Observes ProcessProducer<?, ?> event) {

@@ -31,7 +31,6 @@ import java.util.function.Function;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.WrappedBytes;
-import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.hotrod.configuration.ClientIntelligence;
 import org.infinispan.hotrod.configuration.ClusterConfiguration;
@@ -147,7 +146,7 @@ public class ChannelFactory {
             }
             clustersDefinitions.add(mainCluster);
          }
-         clusters = Immutables.immutableListCopy(clustersDefinitions);
+         clusters = List.copyOf(clustersDefinitions);
          topologyInfo = new TopologyInfo(configuration, mainCluster);
          cacheOperationsFactory = new CacheOperationsFactory(this, codec, listenerNotifier, configuration);
          maxRetries = configuration.maxRetries();

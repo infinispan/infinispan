@@ -54,7 +54,6 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.WrappedBytes;
-import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.ProcessorInfo;
 
 import io.netty.bootstrap.Bootstrap;
@@ -160,7 +159,7 @@ public class ChannelFactory {
             }
             clustersDefinitions.add(mainCluster);
          }
-         clusters = Immutables.immutableListCopy(clustersDefinitions);
+         clusters = List.copyOf(clustersDefinitions);
          topologyInfo = new TopologyInfo(configuration, mainCluster);
          operationsFactory = new OperationsFactory(this, listenerNotifier, configuration);
          maxRetries = configuration.maxRetries();

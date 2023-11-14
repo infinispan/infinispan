@@ -8,8 +8,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -39,6 +37,7 @@ public class MediaTypeTest {
       MediaType.fromString("application/json/on");
    }
 
+   @Test
    public void testParsingNoType() {
       Exceptions.expectException(EncodingException.class, () -> MediaType.fromString(""));
 
@@ -124,12 +123,14 @@ public class MediaTypeTest {
    @Test
    public void testToString() {
       assertEquals("application/xml; q=0.9",
-            new MediaType("application", "xml", createMap(new MapEntry("q", "0.9"))).toString());
+            new MediaType("application", "xml", Map.of("q", "0.9")).toString());
       assertEquals("text/csv", new MediaType("text", "csv").toString());
-      assertEquals("foo/bar; a=2", new MediaType("foo", "bar", createMap(new MapEntry("a", "2"))).toString());
-      assertEquals("foo/bar; a=2; b=1; c=2", new MediaType("foo", "bar",
-                                                           createMap(new MapEntry("a", "2"), new MapEntry("b", "1"),
-                                                                     new MapEntry("c", "2"))).toString());
+      assertEquals("foo/bar; a=2", new MediaType("foo", "bar", Map.of("a", "2")).toString());
+      String type = new MediaType("foo", "bar", Map.of("a", "2", "b", "1", "c", "2")).toString();
+      assertTrue(type.startsWith("foo/bar; "));
+      assertTrue(type.contains("; a=2"));
+      assertTrue(type.contains("; b=1"));
+      assertTrue(type.contains("; c=2"));
       assertEquals("a/b; p=1", MediaType.fromString("a/b; p=1; q=2").toStringExcludingParam("q"));
    }
 
@@ -309,30 +310,6 @@ public class MediaTypeTest {
          String paramValue = paramValues[i];
          assertEquals(Optional.of(paramValue), mediaType.getParameter(paramName));
       }
-   }
-
-   private static class MapEntry {
-      private final String key;
-      private final String value;
-
-      String getKey() {
-         return key;
-      }
-
-      String getValue() {
-         return value;
-      }
-
-      MapEntry(String key, String value) {
-         this.key = key;
-         this.value = value;
-      }
-   }
-
-   private static Map<String, String> createMap(MapEntry... entries) {
-      Map<String, String> map = new HashMap<>();
-      Arrays.stream(entries).forEach(e -> map.put(e.getKey(), e.getValue()));
-      return map;
    }
 
    private static class ObjectInOut implements ObjectInput, ObjectOutput {
