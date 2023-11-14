@@ -85,8 +85,8 @@ public class SessionRefreshTest extends DualNodeTest {
 		AccountDAO dao0 = new AccountDAO(useJta, localFactory);
 		AccountDAO dao1 = new AccountDAO(useJta, remoteFactory);
 
-		Integer id = new Integer(1);
-		dao0.createAccount(dao0.getSmith(), id, new Integer(5), DualNodeTest.LOCAL);
+		Integer id = 1;
+		dao0.createAccount(dao0.getSmith(), id, 5, DualNodeTest.LOCAL);
 
 		// Basic sanity check
 		Account acct1 = dao1.getAccount(id);

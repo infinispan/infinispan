@@ -58,17 +58,12 @@ public class DefaultTwoWayKey2StringMapperTest {
    }
 
    public void testTwoWayContract() {
-      Object[] toTest = { 0, new Byte("1"), new Short("2"), (long) 3, new Double("3.4"), new Float("3.5"), Boolean.FALSE, "some string" };
+      Object[] toTest = { 0, (byte) 1, (short)2, 3.4, (float) 3.5, false, "some string" };
       for (Object o : toTest) {
          Class<?> type = o.getClass();
          String rep = mapper.getStringMapping(o);
          assert o.equals(mapper.getKeyMapping(rep)) : String.format("Failed on type %s and value %s", type, rep);
       }
-   }
-
-   public void testAssumption() {
-      // even if they have the same value, they have a different type
-      assert !new Float(3.0f).equals(new Integer(3));
    }
 
    public void testString() {
@@ -89,7 +84,7 @@ public class DefaultTwoWayKey2StringMapperTest {
 
    public void testLong() {
       assert mapper.isSupportedType(Long.class);
-      assert assertWorks(new Long(2));
+      assert assertWorks(2L);
    }
 
    public void testInteger() {

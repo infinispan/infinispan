@@ -68,7 +68,7 @@ import org.junit.rules.TestName;
 public class EntityCollectionInvalidationTest extends DualNodeTest {
 	private static final InfinispanMessageLogger log = InfinispanMessageLogger.Provider.getLog( EntityCollectionInvalidationTest.class );
 
-	private static final Integer CUSTOMER_ID = new Integer( 1 );
+	private static final Integer CUSTOMER_ID = 1;
 	private static final TestSessionAccess TEST_SESSION_ACCESS = TestSessionAccess.findTestSessionAccess();
 
 	private EmbeddedCacheManager localManager, remoteManager;

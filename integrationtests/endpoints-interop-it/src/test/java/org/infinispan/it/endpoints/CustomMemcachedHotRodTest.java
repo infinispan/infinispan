@@ -114,7 +114,7 @@ public class CustomMemcachedHotRodTest extends AbstractInfinispanTest {
          if (valueStr.startsWith("VALUE")) {
             String[] value = valueStr.split(" ");
             assertEquals(key, value[1]);
-            int size = new Integer(value[3]);
+            int size = Integer.parseInt(value[3]);
             byte[] ret = read(size);
             assertEquals('\r', read());
             assertEquals('\n', read());

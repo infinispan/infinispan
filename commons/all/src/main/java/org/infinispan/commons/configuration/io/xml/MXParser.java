@@ -2409,11 +2409,11 @@ public class MXParser implements XmlPullParser {
          if (ch == 'y') {
             ch = requireInput(ch, YES);
             //Boolean standalone = new Boolean(true);
-            xmlDeclStandalone = new Boolean(true);
+            xmlDeclStandalone = true;
          } else if (ch == 'n') {
             ch = requireInput(ch, NO);
             //Boolean standalone = new Boolean(false);
-            xmlDeclStandalone = new Boolean(false);
+            xmlDeclStandalone = false;
          } else {
             throw new XmlPullParserException(
                   "expected 'yes' or 'no' after standalone and not "

@@ -292,7 +292,7 @@ public class ReadWriteTest extends ReadOnlyTest {
 		Long initialVersion = item.getVersion();
 
 		// manually revert the version property
-		item.setVersion( new Long( item.getVersion().longValue() - 1 ) );
+		item.setVersion(item.getVersion() - 1 );
 
 		try {
 			withTxSession(s -> s.update(item));
