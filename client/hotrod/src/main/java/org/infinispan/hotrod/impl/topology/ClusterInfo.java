@@ -4,7 +4,6 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Objects;
 
-import org.infinispan.commons.util.Immutables;
 import org.infinispan.hotrod.configuration.ClientIntelligence;
 
 /**
@@ -28,7 +27,7 @@ public class ClusterInfo {
 
    private ClusterInfo(String clusterName, List<InetSocketAddress> servers, int topologyAge, ClientIntelligence intelligence, String sniHostName) {
       this.clusterName = clusterName;
-      this.servers = Immutables.immutableListCopy(servers);
+      this.servers = List.copyOf(servers);
       this.topologyAge = topologyAge;
       this.intelligence = Objects.requireNonNull(intelligence);
       this.sniHostName = sniHostName;

@@ -17,10 +17,10 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.core.ExternalizerIds;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.commons.time.TimeService;
 
 import net.jcip.annotations.Immutable;
 
@@ -50,7 +50,7 @@ public class TxState {
          boolean recoverable, long timeout, long accessTime) {
       this.globalTransaction = Objects.requireNonNull(globalTransaction);
       this.status = Objects.requireNonNull(status);
-      this.modifications = modifications == null ? null : Collections.unmodifiableList(modifications);
+      this.modifications = modifications == null ? null : List.copyOf(modifications);
       this.recoverable = recoverable;
       this.timeout = timeout;
       this.lastAccessTimeNs = accessTime;

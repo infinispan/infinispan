@@ -42,10 +42,10 @@ public class GetAllCommandTest extends MultipleCacheManagersTest {
 
    @Override
    protected String parameters() {
-      return new StringBuilder().append('[')
-            .append(cacheMode)
-            .append(", tx=").append(transactional)
-            .append("]").toString();
+      return "[" +
+            cacheMode +
+            ", tx=" + transactional +
+            "]";
    }
 
    public void testGetAllKeyNotPresent() {
@@ -116,7 +116,7 @@ public class GetAllCommandTest extends MultipleCacheManagersTest {
             mutableKeys.add("key" + i);
             expected.put("key" + i, "value" + i);
          }
-         Set<Object> immutableKeys = Collections.unmodifiableSet(mutableKeys);
+         Set<Object> immutableKeys = Set.copyOf(mutableKeys);
 
          for (Cache<Object, Object> cache : caches()) {
             Map<Object, Object> result = cache.getAdvancedCache().getAll(immutableKeys);
@@ -139,7 +139,7 @@ public class GetAllCommandTest extends MultipleCacheManagersTest {
             mutableKeys.add("key" + i);
             expected.put("key" + i, "value" + i);
          }
-         Set<Object> immutableKeys = Collections.unmodifiableSet(mutableKeys);
+         Set<Object> immutableKeys = Set.copyOf(mutableKeys);
 
          for (Cache<Object, Object> cache : caches()) {
             Map<Object, CacheEntry<Object, Object>> result = cache.getAdvancedCache().getAllCacheEntries(immutableKeys);

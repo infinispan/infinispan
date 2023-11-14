@@ -56,7 +56,7 @@ public class UserTool {
    private static final String ALGORITHM_COMMENT_PREFIX = "$ALGORITHM=";
 
 
-   public static final List<String> DEFAULT_ALGORITHMS = Collections.unmodifiableList(Arrays.asList(
+   public static final List<String> DEFAULT_ALGORITHMS = List.of(
          ScramDigestPassword.ALGORITHM_SCRAM_SHA_1,
          ScramDigestPassword.ALGORITHM_SCRAM_SHA_256,
          ScramDigestPassword.ALGORITHM_SCRAM_SHA_384,
@@ -66,13 +66,12 @@ public class UserTool {
          DigestPassword.ALGORITHM_DIGEST_SHA_256,
          DigestPassword.ALGORITHM_DIGEST_SHA_384,
          DigestPassword.ALGORITHM_DIGEST_SHA_512
-   ));
+   );
 
-   private final Path serverRoot;
    private final Path usersFile;
    private final Path groupsFile;
-   private Properties users = new Properties();
-   private Properties groups = new Properties();
+   private final Properties users = new Properties();
+   private final Properties groups = new Properties();
    private String realm = null;
    private Encryption encryption = Encryption.DEFAULT;
 
@@ -87,31 +86,32 @@ public class UserTool {
    }
 
    public UserTool(Path serverRoot, Path usersFile, Path groupsFile) {
+      Path serverRoot1;
       if (serverRoot != null && serverRoot.isAbsolute()) {
-         this.serverRoot = serverRoot;
+         serverRoot1 = serverRoot;
       } else {
          String serverHome = System.getProperty("infinispan.server.home.path");
          Path serverHomePath = serverHome == null ? Paths.get("") : Paths.get(serverHome);
          if (serverRoot == null) {
-            this.serverRoot = serverHomePath.resolve("server");
+            serverRoot1 = serverHomePath.resolve("server");
          } else {
-            this.serverRoot = serverHomePath.resolve(serverRoot);
+            serverRoot1 = serverHomePath.resolve(serverRoot);
          }
       }
 
       if (usersFile == null) {
-         this.usersFile = this.serverRoot.resolve("conf").resolve(DEFAULT_USERS_PROPERTIES_FILE);
+         this.usersFile = serverRoot1.resolve("conf").resolve(DEFAULT_USERS_PROPERTIES_FILE);
       } else if (usersFile.isAbsolute()) {
          this.usersFile = usersFile;
       } else {
-         this.usersFile = this.serverRoot.resolve("conf").resolve(usersFile);
+         this.usersFile = serverRoot1.resolve("conf").resolve(usersFile);
       }
       if (groupsFile == null) {
-         this.groupsFile = this.serverRoot.resolve("conf").resolve(DEFAULT_GROUPS_PROPERTIES_FILE);
+         this.groupsFile = serverRoot1.resolve("conf").resolve(DEFAULT_GROUPS_PROPERTIES_FILE);
       } else if (groupsFile.isAbsolute()) {
          this.groupsFile = groupsFile;
       } else {
-         this.groupsFile = this.serverRoot.resolve("conf").resolve(groupsFile);
+         this.groupsFile = serverRoot1.resolve("conf").resolve(groupsFile);
       }
       load();
    }
@@ -346,7 +346,7 @@ public class UserTool {
       return groups.values().stream()
             .map(o -> (String) o)
             .map(s -> s.split("\\s*,\\s*"))
-            .flatMap(a -> Arrays.stream(a))
+            .flatMap(Arrays::stream)
             .filter(g -> !g.isEmpty())
             .sorted()
             .distinct()

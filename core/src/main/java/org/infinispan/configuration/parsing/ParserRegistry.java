@@ -15,12 +15,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.ServiceLoader;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.io.ConfigurationReader;
@@ -57,7 +56,7 @@ import org.infinispan.configuration.serializing.CoreConfigurationSerializer;
  */
 public class ParserRegistry implements NamespaceMappingParser {
    private final ClassLoader cl;
-   private final ConcurrentMap<QName, NamespaceParserPair> parserMappings;
+   private final Map<QName, NamespaceParserPair> parserMappings;
    private final Properties properties;
 
    public ParserRegistry() {
@@ -69,9 +68,9 @@ public class ParserRegistry implements NamespaceMappingParser {
    }
 
    public ParserRegistry(ClassLoader classLoader, boolean defaultOnly, Properties properties) {
-      this.parserMappings = new ConcurrentHashMap<>();
       this.cl = classLoader;
       this.properties = properties;
+      Map<QName, NamespaceParserPair> mappings = new HashMap<>();
       Collection<ConfigurationParser> parsers = ServiceFinder.load(ConfigurationParser.class, cl, ParserRegistry.class.getClassLoader());
       for (ConfigurationParser parser : parsers) {
 
@@ -94,13 +93,14 @@ public class ParserRegistry implements NamespaceMappingParser {
          if (!skipParser) {
             for (Namespace ns : namespaces) {
                QName qName = new QName(ns.uri(), ns.root());
-               NamespaceParserPair existing = parserMappings.putIfAbsent(qName, new NamespaceParserPair(ns, parser));
+               NamespaceParserPair existing = mappings.putIfAbsent(qName, new NamespaceParserPair(ns, parser));
                if (existing != null && !parser.getClass().equals(existing.parser.getClass())) {
                   CONFIG.parserRootElementAlreadyRegistered(qName.toString(), parser.getClass().getName(), existing.parser.getClass().getName());
                }
             }
          }
       }
+      parserMappings = Map.copyOf(mappings);
    }
 
    public ConfigurationBuilderHolder parse(Path path) throws IOException {

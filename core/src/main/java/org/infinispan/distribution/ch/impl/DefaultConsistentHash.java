@@ -60,7 +60,7 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
          if (segmentOwners[s] == null || segmentOwners[s].isEmpty()) {
             throw new IllegalArgumentException("Segment owner list cannot be null or empty");
          }
-         this.segmentOwners[s] = Immutables.immutableListCopy(segmentOwners[s]);
+         this.segmentOwners[s] = List.copyOf(segmentOwners[s]);
       }
    }
 

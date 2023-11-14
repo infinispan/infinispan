@@ -9,6 +9,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -37,8 +38,6 @@ public class Reflections {
     public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
 
     public static final Type[] EMPTY_TYPES = {};
-
-    public static final Class<?>[] EMPTY_CLASSES = new Class<?>[0];
 
     /**
      * <p>
@@ -111,24 +110,6 @@ public class Reflections {
 
     /**
      * <p>
-     * Invoke the specified method on the provided instance, passing any additional
-     * arguments included in this method as arguments to the specified method.
-     * </p>
-     * <p/>
-     * <p>This method provides the same functionality and throws the same exceptions as
-     * {@link Reflections#invokeMethod(boolean, Method, Class, Object, Object...)}, with the
-     * expected return type set to {@link Object} and honoring the accessibility of
-     * the method.</p>
-     *
-     * @see Reflections#invokeMethod(boolean, Method, Class, Object, Object...)
-     * @see Method#invoke(Object, Object...)
-     */
-    public static <T> T invokeMethod(Method method, Class<T> expectedReturnType, Object instance, Object... args) {
-        return invokeMethod(false, method, expectedReturnType, instance, args);
-    }
-
-    /**
-     * <p>
      * Invoke the method on the instance, with any arguments specified, casting
      * the result of invoking the method to the expected return type.
      * </p>
@@ -189,51 +170,6 @@ public class Reflections {
             throw ex2;
         } catch (ExceptionInInitializerError e) {
             ExceptionInInitializerError e2 = new ExceptionInInitializerError(buildInvokeMethodErrorMessage(method, instance, args));
-            e2.initCause(e.getCause());
-            throw e2;
-        }
-    }
-
-    private static String buildGetFieldValueErrorMessage(Field field, Object obj) {
-        return String.format("Exception reading [%s] field from object [%s].", field.getName(), obj);
-    }
-
-    /**
-     * <p>
-     * Get the value of the field, on the specified instance, casting the value
-     * of the field to the expected type.
-     * </p>
-     * <p/>
-     * <p>
-     * This method wraps {@link Field#get(Object)}, converting the checked
-     * exceptions that {@link Field#get(Object)} specifies to runtime exceptions.
-     * </p>
-     *
-     * @param <T>          the type of the field's value
-     * @param field        the field to operate on
-     * @param instance     the instance from which to retrieve the value
-     * @param expectedType the expected type of the field's value
-     * @return the value of the field
-     * @throws RuntimeException            if the underlying field is inaccessible.
-     * @throws IllegalArgumentException    if the specified <code>instance</code> is not an
-     *                                     instance of the class or interface declaring the underlying
-     *                                     field (or a subclass or implementor thereof).
-     * @throws NullPointerException        if the specified <code>instance</code> is null and the field
-     *                                     is an instance field.
-     * @throws ExceptionInInitializerError if the initialization provoked by this
-     *                                     method fails.
-     */
-   public static <T> T getFieldValue(Field field, Object instance, Class<T> expectedType) {
-        try {
-            return Reflections.cast(field.get(instance));
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(buildGetFieldValueErrorMessage(field, instance), e);
-        } catch (NullPointerException ex) {
-            NullPointerException ex2 = new NullPointerException(buildGetFieldValueErrorMessage(field, instance));
-            ex2.initCause(ex.getCause());
-            throw ex2;
-        } catch (ExceptionInInitializerError e) {
-            ExceptionInInitializerError e2 = new ExceptionInInitializerError(buildGetFieldValueErrorMessage(field, instance));
             e2.initCause(e.getCause());
             throw e2;
         }
@@ -444,15 +380,11 @@ public class Reflections {
         if (type2 instanceof ParameterizedType) {
             ParameterizedType parameterizedType = (ParameterizedType) type2;
             if (parameterizedType.getRawType() instanceof Class<?>) {
-                if (matches(rawType1, actualTypeArguments1, (Class<?>) parameterizedType.getRawType(), parameterizedType.getActualTypeArguments())) {
-                    return true;
-                }
+               return matches(rawType1, actualTypeArguments1, (Class<?>) parameterizedType.getRawType(), parameterizedType.getActualTypeArguments());
             }
         } else if (type2 instanceof Class<?>) {
             Class<?> clazz = (Class<?>) type2;
-            if (matches(rawType1, actualTypeArguments1, clazz, EMPTY_TYPES)) {
-                return true;
-            }
+           return matches(rawType1, actualTypeArguments1, clazz, EMPTY_TYPES);
         }
         return false;
     }
@@ -527,7 +459,7 @@ public class Reflections {
      * @return any qualifiers present in <code>annotations</code>
      */
     public static Set<Annotation> getQualifiers(BeanManager beanManager, Iterable<Annotation>... annotations) {
-        Set<Annotation> qualifiers = new HashSet<Annotation>();
+        Set<Annotation> qualifiers = new HashSet<>();
         for (Iterable<Annotation> annotationSet : annotations) {
             for (Annotation annotation : annotationSet) {
                 if (beanManager.isQualifier(annotation.annotationType())) {
@@ -548,9 +480,7 @@ public class Reflections {
     public static Set<Field> getAllDeclaredFields(Class<?> clazz) {
         HashSet<Field> fields = new HashSet<Field>();
         for (Class<?> c = clazz; c != null && c != Object.class; c = c.getSuperclass()) {
-            for (Field a : c.getDeclaredFields()) {
-                fields.add(a);
-            }
+           Collections.addAll(fields, c.getDeclaredFields());
         }
         return fields;
     }

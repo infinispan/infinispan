@@ -59,13 +59,14 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
    public AttributeSet(Class<?> klass, String name, AttributeSet attributeSet, AttributeDefinition<?>[] attributeDefinitions, RemovedAttribute[] removedAttributes) {
       this.klass = klass;
       this.name = name;
+      Map<String, Attribute<?>> attributes;
       if (attributeSet != null) {
-         this.attributes = new LinkedHashMap<>(attributeDefinitions.length + attributeSet.attributes.size());
+         attributes = new LinkedHashMap<>(attributeDefinitions.length + attributeSet.attributes.size());
          for (Attribute<?> attribute : attributeSet.attributes.values()) {
-            this.attributes.put(attribute.name(), attribute.getAttributeDefinition().toAttribute());
+            attributes.put(attribute.name(), attribute.getAttributeDefinition().toAttribute());
          }
       } else {
-         this.attributes = new LinkedHashMap<>(attributeDefinitions.length);
+         attributes = new LinkedHashMap<>(attributeDefinitions.length);
       }
       for (AttributeDefinition<?> def : attributeDefinitions) {
          if (attributes.containsKey(def.name())) {
@@ -74,15 +75,17 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
          Attribute<Object> attribute = (Attribute<Object>) def.toAttribute();
          if (!attribute.isImmutable())
             attribute.addListener(this);
-         this.attributes.put(def.name(), attribute);
+         attributes.put(def.name(), attribute);
       }
+      this.attributes = Collections.unmodifiableMap(attributes);
       if (removedAttributes == null) {
          this.removed = Collections.emptyMap();
       } else {
-         this.removed = new HashMap<>(removedAttributes.length);
+         var removed = new HashMap<String, RemovedAttribute>(removedAttributes.length);
          for (RemovedAttribute i : removedAttributes) {
             removed.put(i.name, i);
          }
+         this.removed = Map.copyOf(removed);
       }
    }
 
@@ -275,13 +278,15 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
    /**
     * Writes the specified attributes in this attributeset to the specified ConfigurationWriter as an element
     *
-    * @param writer
+    * @param writer the {@link ConfigurationWriter}
+    * @param persistentName the name the attribute should have in its persistent form
+    * @param defs the attributes that should be written
     */
    public void write(ConfigurationWriter writer, String persistentName, AttributeDefinition<?>... defs) {
       if (Arrays.stream(defs).anyMatch(def -> attribute(def).isModified())) {
          writer.writeStartElement(persistentName);
-         for (AttributeDefinition def : defs) {
-            Attribute attr = attribute(def);
+         for (AttributeDefinition<?> def : defs) {
+            Attribute<?> attr = attribute(def);
             attr.write(writer, attr.getAttributeDefinition().name());
          }
          writer.writeEndElement();
