@@ -1,12 +1,12 @@
 package org.infinispan.functional;
 
+import static org.infinispan.functional.FunctionalTestUtils.rw;
+import static org.infinispan.functional.FunctionalTestUtils.supplyIntKey;
+import static org.infinispan.functional.FunctionalTestUtils.wo;
 import static org.infinispan.marshall.core.MarshallableFunctions.removeConsumer;
 import static org.infinispan.marshall.core.MarshallableFunctions.removeReturnPrevOrNull;
 import static org.infinispan.marshall.core.MarshallableFunctions.setValueConsumer;
 import static org.infinispan.marshall.core.MarshallableFunctions.setValueReturnPrevOrNull;
-import static org.infinispan.functional.FunctionalTestUtils.rw;
-import static org.infinispan.functional.FunctionalTestUtils.supplyIntKey;
-import static org.infinispan.functional.FunctionalTestUtils.wo;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;

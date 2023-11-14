@@ -103,8 +103,7 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
    @Override
    public RemoteCacheManagerAdmin withFlags(AdminFlag... flags) {
       EnumSet<AdminFlag> newFlags = EnumSet.copyOf(this.flags);
-      for(AdminFlag flag : flags)
-         newFlags.add(flag);
+      Collections.addAll(newFlags, flags);
       return new RemoteCacheManagerAdminImpl(cacheManager, operationsFactory, newFlags, remover);
    }
 

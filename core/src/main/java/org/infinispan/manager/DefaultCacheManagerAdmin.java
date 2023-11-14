@@ -2,6 +2,7 @@ package org.infinispan.manager;
 
 import static org.infinispan.util.concurrent.CompletionStages.join;
 
+import java.util.Collections;
 import java.util.EnumSet;
 
 import javax.security.auth.Subject;
@@ -91,7 +92,7 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
    @Override
    public EmbeddedCacheManagerAdmin withFlags(AdminFlag... flags) {
       EnumSet<AdminFlag> newFlags = EnumSet.copyOf(this.flags);
-      for (AdminFlag flag : flags) newFlags.add(flag);
+      Collections.addAll(newFlags, flags);
       return new DefaultCacheManagerAdmin(cacheManager, authorizer, newFlags, subject, clusterConfigurationManager);
    }
 

@@ -3,6 +3,7 @@ package org.infinispan.cdi.common.util;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -121,9 +122,7 @@ public class BeanBuilder<T> {
         for (Class<?> c = type.getJavaClass(); c != Object.class && c != null; c = c.getSuperclass()) {
             this.types.add(c);
         }
-        for (Class<?> i : type.getJavaClass().getInterfaces()) {
-            this.types.add(i);
-        }
+       Collections.addAll(this.types, type.getJavaClass().getInterfaces());
         if (qualifiers.isEmpty()) {
             qualifiers.add(DefaultLiteral.INSTANCE);
         }

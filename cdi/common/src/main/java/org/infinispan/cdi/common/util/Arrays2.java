@@ -1,5 +1,6 @@
 package org.infinispan.cdi.common.util;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -24,9 +25,7 @@ public class Arrays2 {
      */
     public static <T> Set<T> asSet(T... array) {
         Set<T> result = new HashSet<T>();
-        for (T a : array) {
-            result.add(a);
-        }
+        Collections.addAll(result, array);
         return result;
     }
 

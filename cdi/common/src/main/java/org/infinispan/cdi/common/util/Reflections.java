@@ -70,9 +70,7 @@ public class Reflections {
     public static Set<Method> getAllDeclaredMethods(Class<?> clazz) {
         HashSet<Method> methods = new HashSet<Method>();
         for (Class<?> c = clazz; c != null && c != Object.class; c = c.getSuperclass()) {
-            for (Method a : c.getDeclaredMethods()) {
-                methods.add(a);
-            }
+           Collections.addAll(methods, c.getDeclaredMethods());
         }
         return methods;
     }

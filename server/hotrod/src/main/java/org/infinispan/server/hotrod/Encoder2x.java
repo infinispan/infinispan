@@ -729,9 +729,9 @@ class Encoder2x implements VersionedEncoder {
       // will have the topology id of the server - 1, so it won't prevent a regular topology update if/when
       // the topology cache is updated.
       List<Address> cacheMembers = cacheTopology.getActualMembers();
-      Map<Address, ServerAddress> serverEndpoints = new HashMap<>();
+      Map<Address, ServerAddress> serverEndpoints;
       try {
-         serverEndpoints.putAll(addressCache);
+         serverEndpoints = new HashMap<>(addressCache);
       } catch (IllegalLifecycleStateException e) {
          // Address cache has been shut down, ignore the exception and don't send a topology update
          return Optional.empty();
