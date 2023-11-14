@@ -120,9 +120,7 @@ public class Parser extends CacheParser {
                break;
             }
             case VERSION: {
-               if (reader.getSchema().since(11, 0)) {
-                  throw ParseUtils.attributeRemoved(reader, i);
-               }
+               ParseUtils.removedSince(reader, 11, 0);
                ignoreAttribute(reader, i);
                break;
             }
@@ -166,19 +164,13 @@ public class Parser extends CacheParser {
                break;
             }
             case WHITE_LIST:
-               if (reader.getSchema().since(12, 0)) {
-                  throw ParseUtils.elementRemoved(reader, Element.ALLOW_LIST.getLocalName());
-               }
+               ParseUtils.removedSince(reader, 12, 0);
                CONFIG.configDeprecatedUseOther(Element.WHITE_LIST, Element.ALLOW_LIST, reader.getLocation());
                parseAllowList(reader, builder.serialization().allowList(), Element.WHITE_LIST);
                break;
             case ALLOW_LIST: {
-               if (reader.getSchema().since(10, 0)) {
-                  parseAllowList(reader, builder.serialization().allowList(), Element.ALLOW_LIST);
-                  break;
-               } else {
-                  throw ParseUtils.unexpectedElement(reader);
-               }
+               parseAllowList(reader, builder.serialization().allowList(), Element.ALLOW_LIST);
+               break;
             }
             default: {
                throw ParseUtils.unexpectedElement(reader);
@@ -512,9 +504,6 @@ public class Parser extends CacheParser {
                parseJGroupsStacks(reader, holder);
                break;
             case STACK:
-               if (!reader.getSchema().since(10, 0)) {
-                  throw ParseUtils.unexpectedElement(reader);
-               }
                parseJGroupsStack(reader, holder, ParseUtils.requireAttributes(reader, Attribute.NAME)[0]);
                break;
             default: {
@@ -684,11 +673,8 @@ public class Parser extends CacheParser {
             case ASYNC_EXECUTOR:
             case PERSISTENCE_EXECUTOR:
             case STATE_TRANSFER_EXECUTOR: {
-               if (reader.getSchema().since(11, 0)) {
-                  throw ParseUtils.attributeRemoved(reader, i);
-               } else {
-                  ignoreAttribute(reader, i);
-               }
+               ParseUtils.removedSince(reader, 11, 0);
+               ignoreAttribute(reader, i);
                break;
             }
             case LISTENER_EXECUTOR: {
@@ -697,23 +683,13 @@ public class Parser extends CacheParser {
                break;
             }
             case EVICTION_EXECUTOR:
-               if (reader.getSchema().since(11, 0)) {
-                  throw ParseUtils.attributeRemoved(reader, i);
-               } else {
-                  CONFIG.evictionExecutorDeprecated();
-               }
+               ParseUtils.removedSince(reader, 11, 0);
+               CONFIG.evictionExecutorDeprecated();
+
                // fallthrough
             case EXPIRATION_EXECUTOR: {
                builder.expirationThreadPoolName(value);
                builder.expirationThreadPool().read(createThreadPoolConfiguration(value, EXPIRATION_SCHEDULED_EXECUTOR, holder), holder.getCombine());
-               break;
-            }
-            case REPLICATION_QUEUE_EXECUTOR: {
-               if (reader.getSchema().since(9, 0)) {
-                  throw ParseUtils.attributeRemoved(reader, i);
-               } else {
-                  CONFIG.ignoredReplicationQueueAttribute(attribute.getLocalName(), reader.getLocation().getLineNumber());
-               }
                break;
             }
             case NON_BLOCKING_EXECUTOR: {
@@ -794,23 +770,12 @@ public class Parser extends CacheParser {
             }
             case SCATTERED_CACHE:
             case SCATTERED_CACHE_CONFIGURATION: {
-               if (reader.getSchema().since(15, 0)) {
-                  throw ParseUtils.unexpectedElement(reader);
-               } else {
-                  parseScatteredCache(reader, holder, element);
-               }
+               ParseUtils.removedSince(reader, 15, 0);
+               parseScatteredCache(reader, holder, element);
                break;
             }
             case SERIALIZATION: {
                parseSerialization(reader, holder);
-               break;
-            }
-            case MODULES: {
-               if (reader.getSchema().since(9, 0)) {
-                  throw ParseUtils.elementRemoved(reader);
-               } else {
-                  parseModules(reader, holder);
-               }
                break;
             }
             case METRICS: {
@@ -826,11 +791,7 @@ public class Parser extends CacheParser {
                break;
             }
             case GLOBAL_STATE: {
-               if (reader.getSchema().since(8, 1)) {
-                  parseGlobalState(reader, holder);
-               } else {
-                  throw ParseUtils.unexpectedElement(reader);
-               }
+               parseGlobalState(reader, holder);
                break;
             }
             default: {
@@ -1207,28 +1168,9 @@ public class Parser extends CacheParser {
                   transport.clusterName(value);
                   break;
                }
-               case EXECUTOR: {
-                  if (reader.getSchema().since(11, 0)) {
-                     throw ParseUtils.attributeRemoved(reader, i);
-                  } else {
-                     CONFIG.ignoredAttribute("transport executor", "11.0", attribute.getLocalName(), reader.getLocation().getLineNumber());
-                  }
-                  break;
-               }
-               case TOTAL_ORDER_EXECUTOR: {
-                  if (reader.getSchema().since(9, 0)) {
-                     throw ParseUtils.attributeRemoved(reader, i);
-                  } else {
-                     CONFIG.ignoredAttribute("total order executor", "9.0", attribute.getLocalName(), reader.getLocation().getLineNumber());
-                  }
-                  break;
-               }
+               case EXECUTOR:
                case REMOTE_COMMAND_EXECUTOR: {
-                  if (reader.getSchema().since(11, 0)) {
-                     throw ParseUtils.attributeRemoved(reader, i);
-                  } else {
-                     CONFIG.ignoredAttribute("remote command executor", "11.0", attribute.getLocalName(), reader.getLocation().getLineNumber());
-                  }
+                  ParseUtils.removedSince(reader, 11, 0);
                   break;
                }
                case LOCK_TIMEOUT: {
@@ -1255,19 +1197,11 @@ public class Parser extends CacheParser {
                   break;
                }
                case INITIAL_CLUSTER_SIZE: {
-                  if (reader.getSchema().since(8, 2)) {
-                     transport.initialClusterSize(ParseUtils.parseInt(reader, i, value));
-                  } else {
-                     throw ParseUtils.unexpectedAttribute(reader, i);
-                  }
-                  break;
+                 transport.initialClusterSize(ParseUtils.parseInt(reader, i, value));
+                 break;
                }
                case INITIAL_CLUSTER_TIMEOUT: {
-                  if (reader.getSchema().since(8, 2)) {
-                     transport.initialClusterTimeout(ParseUtils.parseLong(reader, i, value), TimeUnit.MILLISECONDS);
-                  } else {
-                     throw ParseUtils.unexpectedAttribute(reader, i);
-                  }
+                  transport.initialClusterTimeout(ParseUtils.parseLong(reader, i, value), TimeUnit.MILLISECONDS);
                   break;
                }
                case RAFT_MEMBERS:

@@ -428,4 +428,16 @@ public final class ParseUtils {
             throw CONFIG.invalidAttributeValue(reader.getLocalName(), reader.getAttributeName(i), value, reader.getLocation(), e.getLocalizedMessage());
         }
     }
+
+    public static void introducedFrom(ConfigurationReader reader, int major, int minor) {
+        if (!reader.getSchema().since(major, minor)) {
+            throw ParseUtils.unexpectedElement(reader);
+        }
+    }
+
+    public static void removedSince(ConfigurationReader reader, int major, int minor) {
+        if (reader.getSchema().since(major, minor)) {
+            throw ParseUtils.elementRemoved(reader);
+        }
+    }
 }
