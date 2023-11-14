@@ -48,7 +48,7 @@ public class ClusterListenerLocalTest extends SingleCacheManagerTest {
    }
 
    @Listener(clustered = true)
-   protected class ClusterListener {
+   protected static class ClusterListener {
       List<CacheEntryEvent> events = Collections.synchronizedList(new ArrayList<CacheEntryEvent>());
 
       @CacheEntryCreated

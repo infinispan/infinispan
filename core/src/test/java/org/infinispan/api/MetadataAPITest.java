@@ -298,7 +298,7 @@ public class MetadataAPITest extends SingleCacheManagerTest {
       return new EmbeddedMetadata.Builder().lifespan(lifespan).build();
    }
 
-   private class CustomMetadata implements Metadata, Metadata.Builder {
+   private static class CustomMetadata implements Metadata, Metadata.Builder {
 
       private final long lifespan;
       private final long maxIdle;

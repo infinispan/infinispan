@@ -147,7 +147,7 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 			Thread reader = new Thread() {
 				@Override
 				public void run() {
-					GetBlocker blocker = new GetBlocker( blockerLatch, KEY );
+					GetBlocker blocker = new GetBlocker(blockerLatch, KEY);
 					try {
 						cache.addListener( blocker );
 						withSession(sessionFactory, session -> TEST_SESSION_ACCESS.fromRegion(region).get(session, KEY ));
@@ -376,7 +376,7 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 	}
 
 	@Listener
-	public class GetBlocker {
+	public static class GetBlocker {
 		private final CountDownLatch latch;
 		private final Object key;
 
@@ -399,7 +399,7 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 	}
 
 	@Listener
-	public class PutBlocker {
+	public static class PutBlocker {
 		private final CountDownLatch blockLatch, triggerLatch;
 		private final Object key;
 		private boolean enabled = true;
@@ -430,7 +430,7 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 		}
 	}
 
-	private class ExceptionHolder {
+	private static class ExceptionHolder {
 		private final List<Exception> exceptions = Collections.synchronizedList(new ArrayList<>());
 		private final List<AssertionFailedError> assertionFailures = Collections.synchronizedList(new ArrayList<>());
 

@@ -302,7 +302,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       try {
          manager.addListener(new MyListener(CACHE_NAME, cacheStartBlocked, cacheStartResumed));
          replaceComponent(manager, GlobalMarshaller.class,
-                          new LatchGlobalMarshaller(managerStopBlocked, managerStopResumed), true);
+               new LatchGlobalMarshaller(managerStopBlocked, managerStopResumed), true);
          // Need to start after replacing the global marshaller because we can't delegate to the old GlobalMarshaller
          manager.start();
 
@@ -631,7 +631,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    }
 
    @Listener
-   private class MyListener {
+   private static class MyListener {
       private final String cacheName;
       private final CompletableFuture<Void> cacheStartBlocked;
       private final CompletableFuture<Void> cacheStartResumed;
@@ -674,7 +674,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       }
    }
 
-   class LatchGlobalMarshaller extends GlobalMarshaller {
+   static class LatchGlobalMarshaller extends GlobalMarshaller {
       private final CompletableFuture<Void> managerStopBlocked;
       private final CompletableFuture<Void> managerStopResumed;
 

@@ -239,7 +239,7 @@ public class DualNodeJtaTransactionImpl implements Transaction {
       }
    }
 
-   private class WrappedXaResource implements XAResource {
+   private static class WrappedXaResource implements XAResource {
       private final XAResource xaResource;
       private int prepareResult;
 

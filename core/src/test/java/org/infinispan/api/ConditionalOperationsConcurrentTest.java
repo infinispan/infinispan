@@ -440,7 +440,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       }
    }
 
-   class PutIfAbsentOperation extends CacheOperation {
+   static class PutIfAbsentOperation extends CacheOperation {
 
       PutIfAbsentOperation(boolean cas) {
          super(cas);
@@ -466,7 +466,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
       }
    }
 
-   class ConditionalRemoveOperation extends CacheOperation {
+   static class ConditionalRemoveOperation extends CacheOperation {
 
       ConditionalRemoveOperation(boolean cas) {
          super(cas);

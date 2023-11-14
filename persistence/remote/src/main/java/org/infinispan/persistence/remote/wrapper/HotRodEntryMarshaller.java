@@ -67,7 +67,7 @@ public class HotRodEntryMarshaller implements Marshaller {
       return MediaType.APPLICATION_JBOSS_MARSHALLING;
    }
 
-   class IdentityBufferSizePredictor implements BufferSizePredictor {
+   static class IdentityBufferSizePredictor implements BufferSizePredictor {
 
       @Override
       public int nextSize(Object obj) {

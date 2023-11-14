@@ -333,7 +333,7 @@ public class ZeroCapacityNodeTest extends MultipleCacheManagersTest {
    }
 
    @Listener(clustered = true)
-   private class ClusteredListener {
+   private static class ClusteredListener {
       AtomicInteger events = new AtomicInteger();
 
       @CacheEntryCreated

@@ -138,7 +138,7 @@ public class CrashedNodeDuringConflictResolutionTest extends BaseMergePolicyTest
       return future;
    }
 
-   private class CompleteFutureOnStateRequestHandler extends AbstractDelegatingHandler {
+   private static class CompleteFutureOnStateRequestHandler extends AbstractDelegatingHandler {
       final int segment;
       final EmbeddedCacheManager manager;
       final CompletableFuture<ConflictResolutionStartCommand> future;

@@ -1088,7 +1088,7 @@ public abstract class CorrectnessTestCase {
       }
    }
 
-   private class Log<T> {
+   private static class Log<T> {
       int before;
       int after;
       T value;

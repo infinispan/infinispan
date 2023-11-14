@@ -139,7 +139,7 @@ public abstract class AbstractCounterTest<T extends TestCounter> extends BaseCou
       }
    }
 
-   class TestContext {
+   static class TestContext {
       final Random random;
       private final long seed;
 

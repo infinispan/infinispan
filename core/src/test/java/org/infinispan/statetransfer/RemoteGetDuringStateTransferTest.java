@@ -877,7 +877,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       }
    }
 
-   private class NewNode {
+   private static class NewNode {
       Future<Void> joinerFuture;
       BlockingLocalTopologyManager topologyManager;
    }

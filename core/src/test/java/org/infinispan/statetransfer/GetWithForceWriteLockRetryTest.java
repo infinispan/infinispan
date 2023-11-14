@@ -99,7 +99,7 @@ public class GetWithForceWriteLockRetryTest extends MultipleCacheManagersTest {
       di3.unblock(1);
    }
 
-   class DelayInterceptor extends DDAsyncInterceptor {
+   static class DelayInterceptor extends DDAsyncInterceptor {
       private final AtomicInteger counter = new AtomicInteger(0);
       private final CheckPoint checkPoint = new CheckPoint();
       private final Class<?> commandToBlock;

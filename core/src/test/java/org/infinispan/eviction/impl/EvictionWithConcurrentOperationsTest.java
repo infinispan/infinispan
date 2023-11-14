@@ -615,7 +615,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       }
    }
 
-   protected class ControlledPassivationManager implements PassivationManager {
+   protected static class ControlledPassivationManager implements PassivationManager {
       protected final PassivationManager delegate;
       protected volatile Runnable beforePassivate;
       protected volatile Runnable afterPassivate;
@@ -676,12 +676,12 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
    }
 
    @Listener(sync = true)
-   protected abstract class SyncEvictionListener {
+   protected abstract static class SyncEvictionListener {
       @CacheEntriesEvicted
       public abstract void evicted(CacheEntriesEvictedEvent event);
    }
 
-   protected abstract class ControlledCommandInterceptor extends DDAsyncInterceptor {
+   protected abstract static class ControlledCommandInterceptor extends DDAsyncInterceptor {
       volatile Runnable beforeGet;
       volatile Runnable afterGet;
       volatile Runnable beforePut;
@@ -737,7 +737,7 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
 
    }
 
-   protected class Latch {
+   protected static class Latch {
 
       private boolean enabled = false;
       private boolean blocked = false;

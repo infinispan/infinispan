@@ -292,7 +292,7 @@ public class JdbcStringBasedStore<K, V> extends BaseJdbcStore<K, V, JdbcStringBa
       return connectionFactory;
    }
 
-   class PossibleExpirationNotification {
+   static class PossibleExpirationNotification {
       private final String key;
       private final MarshalledValue is;
 

@@ -476,7 +476,7 @@ public abstract class AbstractInfinispanTest {
       return testExecutor;
    }
 
-   private class ThreadCleaner extends TestResourceTracker.Cleaner<Thread> {
+   private static class ThreadCleaner extends TestResourceTracker.Cleaner<Thread> {
       public ThreadCleaner(Thread thread) {
          super(thread);
       }
@@ -496,7 +496,7 @@ public abstract class AbstractInfinispanTest {
     * This is useful to have a better attempt at multiple threads ran at the same time, but still is
     * no guarantee since this is controlled by the thread scheduler.
     */
-   public final class ConcurrentCallable implements Callable<Void> {
+   public static final class ConcurrentCallable implements Callable<Void> {
       private final ExceptionRunnable task;
       private final CyclicBarrier barrier;
 
@@ -521,7 +521,7 @@ public abstract class AbstractInfinispanTest {
       }
    }
 
-   public final class RunnableWrapper implements Runnable {
+   public static final class RunnableWrapper implements Runnable {
       final Runnable realOne;
 
       RunnableWrapper(Runnable realOne) {
@@ -541,7 +541,7 @@ public abstract class AbstractInfinispanTest {
       }
    }
 
-   private class CallableWrapper<T> implements Callable<T> {
+   private static class CallableWrapper<T> implements Callable<T> {
       private final Callable<? extends T> c;
 
       CallableWrapper(Callable<? extends T> c) {

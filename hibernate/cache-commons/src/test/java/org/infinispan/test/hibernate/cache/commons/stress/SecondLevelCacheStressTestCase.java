@@ -486,7 +486,7 @@ public class SecondLevelCacheStressTestCase {
 
    }
 
-   private class WorkerThread implements Callable<Void> {
+   private static class WorkerThread implements Callable<Void> {
       private final long runningTimeout;
       private final TotalStats perf;
       private final Operation op;

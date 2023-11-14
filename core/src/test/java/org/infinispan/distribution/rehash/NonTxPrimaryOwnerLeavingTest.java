@@ -127,7 +127,7 @@ public class NonTxPrimaryOwnerLeavingTest extends MultipleCacheManagersTest {
    }
 
    @Listener
-   public class TopologyUpdateListener {
+   public static class TopologyUpdateListener {
       private final ReclosableLatch preLatch = new ReclosableLatch();
       private final ReclosableLatch postLatch = new ReclosableLatch();
       private volatile boolean broken = false;

@@ -470,6 +470,7 @@ public class InternalCacheFactory<K, V> {
    }
 
    @SurvivesRestarts
+   static
    class SimpleComponentRegistry<K, V> extends ComponentRegistry {
       public SimpleComponentRegistry(String cacheName, Configuration configuration, AdvancedCache<K, V> cache,
                                      GlobalComponentRegistry globalComponentRegistry) {

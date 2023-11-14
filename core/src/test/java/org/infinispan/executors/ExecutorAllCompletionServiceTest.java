@@ -117,7 +117,7 @@ public class ExecutorAllCompletionServiceTest extends AbstractInfinispanTest {
       return new ExecutorAllCompletionService(lastExecutorService);
    }
 
-   private class WaitRunnable implements Runnable {
+   private static class WaitRunnable implements Runnable {
       private long period;
 
       private WaitRunnable(long period) {
@@ -130,7 +130,7 @@ public class ExecutorAllCompletionServiceTest extends AbstractInfinispanTest {
       }
    }
 
-   private class ExceptionRunnable implements Runnable {
+   private static class ExceptionRunnable implements Runnable {
       private final String message;
 
       public ExceptionRunnable(String message) {

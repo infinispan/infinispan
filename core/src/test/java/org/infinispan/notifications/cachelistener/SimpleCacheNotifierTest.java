@@ -43,7 +43,7 @@ public class SimpleCacheNotifierTest extends CacheNotifierTest {
    }
 
    @Listener
-   private class DummyListener {
+   private static class DummyListener {
       @CacheEntryVisited
       public void onVisited(CacheEntryVisitedEvent e) {}
    }

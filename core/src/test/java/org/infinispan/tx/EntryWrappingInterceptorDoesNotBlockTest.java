@@ -238,7 +238,7 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
    }
 
    @Listener(observation = Listener.Observation.POST)
-   private class TopologyChangeListener {
+   private static class TopologyChangeListener {
       private final CountDownLatch latch;
 
       TopologyChangeListener(CountDownLatch latch) {
@@ -251,7 +251,7 @@ public class EntryWrappingInterceptorDoesNotBlockTest extends MultipleCacheManag
       }
    }
 
-   class PrepareExpectingInterceptor extends DDAsyncInterceptor {
+   static class PrepareExpectingInterceptor extends DDAsyncInterceptor {
       private final CountDownLatch latch = new CountDownLatch(1);
 
       @Override

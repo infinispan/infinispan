@@ -209,7 +209,7 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
     * If the response is being processed in sync block, running completeExceptionally and the related callbacks
     * will be blocked until we finish the processing.
     */
-   protected class ClusteredGetAllFuture extends CompletableFuture<Void> {
+   protected static class ClusteredGetAllFuture extends CompletableFuture<Void> {
       public int counter;
 
       public ClusteredGetAllFuture(int counter) {

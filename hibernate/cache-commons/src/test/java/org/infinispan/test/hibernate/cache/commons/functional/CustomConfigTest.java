@@ -54,7 +54,7 @@ public class CustomConfigTest extends AbstractFunctionalTest {
    @Entity
    @Cacheable
    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "myregion")
-   public class TestEntity {
+   public static class TestEntity {
       @Id
       long id;
       String foobar;
@@ -63,7 +63,7 @@ public class CustomConfigTest extends AbstractFunctionalTest {
    @Entity
    @Cacheable
    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "otherregion")
-   public class OtherTestEntity {
+   public static class OtherTestEntity {
       @Id
       long id;
       String foobar;

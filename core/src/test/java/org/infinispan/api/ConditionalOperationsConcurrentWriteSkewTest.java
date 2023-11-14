@@ -149,7 +149,7 @@ public class ConditionalOperationsConcurrentWriteSkewTest extends MultipleCacheM
       PUT, REPLACE, REMOVE
    }
 
-   class CommandInterceptorController extends DDAsyncInterceptor {
+   static class CommandInterceptorController extends DDAsyncInterceptor {
       private final ReclosableLatch blockRemoteGet = new ReclosableLatch(true);
       private final ReclosableLatch blockCommit = new ReclosableLatch(true);
       private final ReclosableLatch awaitPrepare = new ReclosableLatch(true);

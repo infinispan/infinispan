@@ -88,7 +88,7 @@ public abstract class AutoCommitExpiryTest extends SingleCacheManagerTest {
    }
 
    @Listener(primaryOnly = true, observation = Listener.Observation.POST)
-   public class ExpiryListener {
+   public static class ExpiryListener {
 
       private final AtomicInteger counter = new AtomicInteger();
 

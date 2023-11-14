@@ -178,7 +178,7 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
       Assert.assertFalse(executorToUse.hasExecutedCommand, "Command " + command.getClass() + " dispatched wrongly.");
    }
 
-   private class DummyTaskCountExecutorService extends AbstractExecutorService {
+   private static class DummyTaskCountExecutorService extends AbstractExecutorService {
 
       private final ExecutorService realExecutor;
       private volatile boolean hasExecutedCommand;

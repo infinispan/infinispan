@@ -173,7 +173,7 @@ public class ReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
       }
    }
 
-   public class Listener implements StateConsumerImpl.KeyInvalidationListener {
+   public static class Listener implements StateConsumerImpl.KeyInvalidationListener {
 
       public final CountDownLatch notifier = new CountDownLatch(1);
       final CountDownLatch wait = new CountDownLatch(1);

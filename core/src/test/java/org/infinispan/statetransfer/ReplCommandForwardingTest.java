@@ -134,7 +134,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       }
    }
 
-   class DelayInterceptor extends BaseCustomAsyncInterceptor {
+   static class DelayInterceptor extends BaseCustomAsyncInterceptor {
       private final AtomicInteger counter = new AtomicInteger(0);
       private final CheckPoint checkPoint = new CheckPoint();
       private final Class<?> commandToBlock;

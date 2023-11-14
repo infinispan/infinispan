@@ -94,7 +94,7 @@ public class PessimistTxFailureAfterLockingTest extends MultipleCacheManagersTes
     * this RpcManager simulates a reply lost from LockControlCommand by throwing a TimeoutException. However, it is
     * expected the command to acquire the remote lock.
     */
-   private class TestControllerRpcManager extends AbstractDelegatingRpcManager {
+   private static class TestControllerRpcManager extends AbstractDelegatingRpcManager {
 
       public TestControllerRpcManager(RpcManager realOne) {
          super(realOne);
