@@ -735,18 +735,12 @@ public class ServerConfigurationParser implements ConfigurationParser {
                ldapRealmConfigBuilder.pageSize(ParseUtils.parseInt(reader, i, value));
                break;
             case SEARCH_DN:
-               if (reader.getSchema().since(13, 0)) {
-                  throw ParseUtils.unexpectedAttribute(reader, i);
-               } else {
-                  ldapRealmConfigBuilder.identityMapping().searchBaseDn(value);
-               }
+               ParseUtils.removedSince(reader, 13, 0);
+               ldapRealmConfigBuilder.identityMapping().searchBaseDn(value);
                break;
             case RDN_IDENTIFIER:
-               if (reader.getSchema().since(13, 0)) {
-                  throw ParseUtils.unexpectedAttribute(reader, i);
-               } else {
-                  ldapRealmConfigBuilder.identityMapping().rdnIdentifier(value);
-               }
+               ParseUtils.removedSince(reader, 13, 0);
+               ldapRealmConfigBuilder.identityMapping().rdnIdentifier(value);
                break;
             case CONNECTION_POOLING:
                ldapRealmConfigBuilder.connectionPooling(ParseUtils.parseBoolean(reader, i, value));
@@ -895,11 +889,8 @@ public class ServerConfigurationParser implements ConfigurationParser {
                userMapperBuilder.from(value);
                break;
             case WRITABLE:
-               if (reader.getSchema().since(13, 0)) {
-                  throw ParseUtils.unexpectedAttribute(reader, i);
-               } else {
-                  ignoreAttribute(reader, i);
-               }
+               ParseUtils.removedSince(reader, 13, 0);
+               ignoreAttribute(reader, i);
                break;
             case VERIFIABLE:
                userMapperBuilder.verifiable(ParseUtils.parseBoolean(reader, i, value));
@@ -1723,11 +1714,8 @@ public class ServerConfigurationParser implements ConfigurationParser {
                break;
             }
             case WORKER_THREADS: {
-               if (reader.getSchema().since(14, 0)) {
-                  throw ParseUtils.attributeRemoved(reader, i);
-               } else {
-                  CONFIG.ignoredAttribute(attribute.toString(), "14.0", attribute.name(), reader.getLocation().getLineNumber());
-               }
+               ParseUtils.removedSince(reader, 14, 0);
+               CONFIG.ignoredAttribute(attribute.toString(), "14.0", attribute.name(), reader.getLocation().getLineNumber());
                break;
             }
             default:

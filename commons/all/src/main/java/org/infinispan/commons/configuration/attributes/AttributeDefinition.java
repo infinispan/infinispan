@@ -39,28 +39,25 @@ public final class AttributeDefinition<T> {
    private final Class<T> type;
    private final int deprecatedMajor;
    private final int deprecatedMinor;
+   private final int sinceMajor;
+   private final int sinceMinor;
 
-   AttributeDefinition(String name, T initialValue, Class<T> type,
-                       boolean immutable, boolean autoPersist, boolean global,
-                       AttributeCopier<T> copier,
-                       AttributeValidator<? super T> validator,
-                       AttributeInitializer<? extends T> initializer,
-                       AttributeSerializer<? super T> serializer,
-                       AttributeParser<? super T> parser,
-                       int deprecatedMajor, int deprecatedMinor) {
-      this.name = name;
-      this.defaultValue = initialValue;
-      this.immutable = immutable;
-      this.autoPersist = autoPersist;
-      this.global = global;
-      this.copier = copier;
-      this.initializer = initializer;
-      this.validator = validator;
-      this.serializer = serializer;
-      this.parser = parser;
-      this.type = type;
-      this.deprecatedMajor = deprecatedMajor;
-      this.deprecatedMinor = deprecatedMinor;
+   private AttributeDefinition(Builder<T> builder) {
+      this.name = builder.name;
+      this.defaultValue = builder.defaultValue;
+      this.immutable = builder.immutable;
+      this.autoPersist = builder.autoPersist;
+      this.global = builder.global;
+      this.copier = builder.copier;
+      this.initializer = builder.initializer;
+      this.validator = builder.validator;
+      this.serializer = builder.serializer;
+      this.parser = builder.parser;
+      this.type = builder.type;
+      this.deprecatedMajor = builder.deprecatedMajor;
+      this.deprecatedMinor = builder.deprecatedMinor;
+      this.sinceMajor = builder.sinceMajor;
+      this.sinceMinor = builder.sinceMinor;
    }
 
    public String name() {
@@ -93,6 +90,10 @@ public final class AttributeDefinition<T> {
 
    public boolean isDeprecated(int major, int minor) {
       return (major > deprecatedMajor || (major == deprecatedMajor && minor > deprecatedMinor));
+   }
+
+   public boolean isSince(int major, int minor) {
+      return major > sinceMajor || (major == sinceMajor && minor >= sinceMinor);
    }
 
    public AttributeCopier<T> copier() {
@@ -202,6 +203,10 @@ public final class AttributeDefinition<T> {
       private AttributeParser<? super T> parser = AttributeParser.DEFAULT;
       private int deprecatedMajor = Integer.MAX_VALUE;
       private int deprecatedMinor = Integer.MAX_VALUE;
+      // We started with Infinispan 4.0
+      private int sinceMajor = 4;
+      private int sinceMinor = 0;
+
 
       private Builder(String name, T defaultValue, Class<T> type) {
          this.name = name;
@@ -249,14 +254,20 @@ public final class AttributeDefinition<T> {
          return this;
       }
 
-      public Builder<T> deprecatedSince(int major, int minor) {
+      public Builder<T> deprecated(int major, int minor) {
          this.deprecatedMajor = major;
          this.deprecatedMinor = minor;
          return this;
       }
 
+      public Builder<T> since(int major, int minor) {
+         this.sinceMajor = major;
+         this.sinceMinor = minor;
+         return this;
+      }
+
       public AttributeDefinition<T> build() {
-         return new AttributeDefinition<>(name, defaultValue, type, immutable, autoPersist, global, copier, validator, initializer, serializer, parser, deprecatedMajor, deprecatedMinor);
+         return new AttributeDefinition<>(this);
       }
    }
 }

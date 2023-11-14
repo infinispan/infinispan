@@ -23,19 +23,6 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "configuration.module.ExtendedParserTest")
 public class ExtendedParserTest extends AbstractInfinispanTest {
 
-   public void testExtendedParserModulesElement() throws IOException {
-      String config = TestingUtil.wrapXMLWithSchema("8.2",
-            "<cache-container name=\"container-extra-modules\" default-cache=\"extra-module\">" +
-            "   <local-cache name=\"extra-module\">\n" +
-            "     <modules>\n" +
-            "       <sample-element xmlns=\"urn:infinispan:config:mymodule\" sample-attribute=\"test-value\" />\n" +
-            "     </modules>\n" +
-            "   </local-cache>\n" +
-            "</cache-container>"
-      );
-      assertCacheConfiguration(config);
-   }
-
    public void testExtendedParserBareExtension() throws IOException {
       String config = TestingUtil.wrapXMLWithSchema(
             "<cache-container name=\"container-extra-modules\" default-cache=\"extra-module\">" +

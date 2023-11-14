@@ -127,11 +127,8 @@ public class CacheParser implements ConfigurationParser {
          }
          case SCATTERED_CACHE:
          case SCATTERED_CACHE_CONFIGURATION: {
-            if (reader.getSchema().since(15, 0)) {
-               throw ParseUtils.unexpectedElement(reader);
-            } else {
-               parseScatteredCache(reader, holder, element);
-            }
+            ParseUtils.removedSince(reader, 15, 0);
+            parseScatteredCache(reader, holder, element);
             break;
          }
          default:
@@ -189,14 +186,6 @@ public class CacheParser implements ConfigurationParser {
             builder.statistics().available(ParseUtils.parseBoolean(reader, index, value));
             break;
          }
-         case SPIN_DURATION: {
-            if (reader.getSchema().since(10, 0)) {
-               throw ParseUtils.attributeRemoved(reader, index);
-            } else {
-               ignoreAttribute(reader, index);
-            }
-            break;
-         }
          case UNRELIABLE_RETURN_VALUES: {
             builder.unsafe().unreliableReturnValues(ParseUtils.parseBoolean(reader, index, value));
             break;
@@ -245,8 +234,7 @@ public class CacheParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case ENABLED: {
-               if (reader.getSchema().since(11, 0))
-                  throw ParseUtils.attributeRemoved(reader, i, Attribute.WHEN_SPLIT.getLocalName());
+               ParseUtils.removedSince(reader, 11, 0);
                ignoreAttribute(reader, i);
                break;
             }
@@ -359,14 +347,6 @@ public class CacheParser implements ConfigurationParser {
             this.parseTransaction(reader, builder, holder);
             break;
          }
-         case EVICTION: {
-            if (reader.getSchema().since(10, 0)) {
-               throw ParseUtils.elementRemoved(reader, Element.MEMORY.getLocalName());
-            } else {
-               this.parseEviction(reader, builder);
-            }
-            break;
-         }
          case EXPIRATION: {
             this.parseExpiration(reader, builder);
             break;
@@ -392,34 +372,8 @@ public class CacheParser implements ConfigurationParser {
             this.parseCustomInterceptors(reader, holder);
             break;
          }
-         case VERSIONING: {
-            parseVersioning(reader, holder);
-            break;
-         }
-         case COMPATIBILITY: {
-            if (!reader.getSchema().since(10, 0)) {
-               parseCompatibility(reader, holder);
-            }
-            break;
-         }
          case STORE_AS_BINARY: {
             parseStoreAsBinary(reader, holder);
-            break;
-         }
-         case MODULES: {
-            if (reader.getSchema().since(9, 0)) {
-               throw ParseUtils.elementRemoved(reader);
-            } else {
-               parseModules(reader, holder);
-            }
-            break;
-         }
-         case DATA_CONTAINER: {
-            if (reader.getSchema().since(10, 0)) {
-               throw ParseUtils.elementRemoved(reader);
-            } else {
-               parseDataContainer(reader);
-            }
             break;
          }
          case MEMORY: {
@@ -444,38 +398,6 @@ public class CacheParser implements ConfigurationParser {
          }
          default: {
             reader.handleAny(holder);
-         }
-      }
-   }
-
-   private void parseDataContainer(final ConfigurationReader reader) {
-      ignoreElement(reader, Element.DATA_CONTAINER);
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         ParseUtils.requireNoNamespaceAttribute(reader, i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case CLASS:
-            case KEY_EQUIVALENCE:
-            case VALUE_EQUIVALENCE:
-               ignoreAttribute(reader, i);
-               break;
-            default:
-               throw ParseUtils.unexpectedAttribute(reader, i);
-         }
-      }
-
-      Properties properties = new Properties();
-      while (reader.inTag()) {
-         Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            case PROPERTY: {
-               ignoreElement(reader, element);
-               parseProperty(reader, properties);
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedElement(reader);
-            }
          }
       }
    }
@@ -523,13 +445,6 @@ public class CacheParser implements ConfigurationParser {
                break;
             case EVICTION:
                memoryBuilder.evictionType(ParseUtils.parseEnum(reader, i, EvictionType.class, value));
-               break;
-            case ADDRESS_COUNT:
-               if (reader.getSchema().since(10, 0)) {
-                  throw ParseUtils.attributeRemoved(reader, i);
-               } else {
-                  ignoreAttribute(reader, i);
-               }
                break;
             case STRATEGY:
                memoryBuilder.evictionStrategy(ParseUtils.parseEnum(reader, i, EvictionStrategy.class, value));
@@ -620,26 +535,6 @@ public class CacheParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseVersioning(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         ParseUtils.requireNoNamespaceAttribute(reader, i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case VERSIONING_SCHEME:
-               if (reader.getSchema().since(10, 0)) {
-                  throw ParseUtils.attributeRemoved(reader, i);
-               } else {
-                  CONFIG.ignoredAttribute("versioning", "9.0", attribute.getLocalName(), reader.getLocation().getLineNumber());
-               }
-               break;
-            default:
-               throw ParseUtils.unexpectedAttribute(reader, i);
-         }
-      }
-
-      ParseUtils.requireNoContent(reader);
-   }
-
    private void parseCustomInterceptors(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
       ParseUtils.requireNoAttributes(reader);
       while (reader.inTag()) {
@@ -696,13 +591,6 @@ public class CacheParser implements ConfigurationParser {
    }
 
    private void parseTransaction(ConfigurationReader reader, ConfigurationBuilder builder, ConfigurationBuilderHolder holder) {
-      if (!reader.getSchema().since(9, 0)) {
-         CacheMode cacheMode = builder.clustering().cacheMode();
-         if (!cacheMode.isSynchronous()) {
-            CONFIG.unsupportedAsyncCacheMode(cacheMode, cacheMode.toSync());
-            builder.clustering().cacheMode(cacheMode.toSync());
-         }
-      }
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
@@ -736,11 +624,7 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case TRANSACTION_PROTOCOL: {
-               if (reader.getSchema().since(11, 0)) {
-                  throw ParseUtils.attributeRemoved(reader, i);
-               } else {
-                  CONFIG.ignoredAttribute("transaction protocol", "11.0", attribute.getLocalName(), reader.getLocation().getLineNumber());
-               }
+               ParseUtils.removedSince(reader, 11, 0);
                break;
             }
             case AUTO_COMMIT: {
@@ -810,32 +694,6 @@ public class CacheParser implements ConfigurationParser {
       }
    }
 
-   private void parseEviction(ConfigurationReader reader, ConfigurationBuilder builder) {
-      CONFIG.configDeprecatedUseOther(Element.EVICTION, Element.MEMORY, reader.getLocation());
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case STRATEGY:
-            case THREAD_POLICY:
-            case TYPE:
-               ignoreAttribute(reader, i);
-               break;
-            case MAX_ENTRIES:
-            case SIZE:
-               long size = ParseUtils.parseLong(reader, i, value);
-               if (size >= 0) {
-                  builder.memory().size(size);
-               }
-               break;
-            default: {
-               throw ParseUtils.unexpectedAttribute(reader, i);
-            }
-         }
-      }
-      ParseUtils.requireNoContent(reader);
-   }
-
    private void parseExpiration(ConfigurationReader reader, ConfigurationBuilder builder) {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = reader.getAttributeValue(i);
@@ -854,11 +712,8 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case TOUCH: {
-               if (reader.getSchema().since(12, 1)) {
-                  builder.expiration().touch(ParseUtils.parseEnum(reader, i, TouchMode.class, value));
-               } else {
-                  throw ParseUtils.unexpectedAttribute(reader, i);
-               }
+               ParseUtils.introducedFrom(reader, 12, 1);
+               builder.expiration().touch(ParseUtils.parseEnum(reader, i, TouchMode.class, value));
                break;
             }
             default: {
@@ -933,14 +788,6 @@ public class CacheParser implements ConfigurationParser {
    private void parseClusteredCacheAttribute(ConfigurationReader reader, int index, Attribute attribute, String value,
                                              ConfigurationBuilder builder) {
       switch (attribute) {
-         case ASYNC_MARSHALLING: {
-            if (reader.getSchema().since(9, 0)) {
-               throw ParseUtils.attributeRemoved(reader, index);
-            } else {
-               CONFIG.ignoredReplicationQueueAttribute(attribute.getLocalName(), reader.getLocation().getLineNumber());
-            }
-            break;
-         }
          case MODE: {
             Mode mode = ParseUtils.parseEnum(reader, index, Mode.class, value);
             builder.clustering().cacheSync(mode.isSynchronous());
@@ -948,11 +795,7 @@ public class CacheParser implements ConfigurationParser {
          }
          case QUEUE_SIZE:
          case QUEUE_FLUSH_INTERVAL: {
-            if (reader.getSchema().since(11, 0)) {
-               throw ParseUtils.attributeRemoved(reader, index);
-            } else {
-               CONFIG.ignoredReplicationQueueAttribute(attribute.getLocalName(), reader.getLocation().getLineNumber());
-            }
+            ParseUtils.removedSince(reader, 11, 0);
             break;
          }
          case REMOTE_TIMEOUT: {
@@ -1046,10 +889,9 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case CAPACITY:
-               if (reader.getSchema().since(13, 0)) {
-                  throw CONFIG.attributeRemoved(Attribute.CAPACITY.getLocalName(), reader.getLocation());
-               }
+               ParseUtils.removedSince(reader, 13, 0);
                CONFIG.configDeprecatedUseOther(Attribute.CAPACITY, Attribute.CAPACITY_FACTOR, reader.getLocation());
+               break;
             case CAPACITY_FACTOR: {
                builder.clustering().hash().capacityFactor(Float.parseFloat(value));
                break;
@@ -1212,8 +1054,7 @@ public class CacheParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case RELATIVE_TO: {
-               if (reader.getSchema().since(11, 0))
-                  throw ParseUtils.attributeRemoved(reader, i);
+               ParseUtils.removedSince(reader, 11, 0);
                ignoreAttribute(reader, i);
                break;
             }
@@ -1287,8 +1128,7 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case RELATIVE_TO: {
-               if (reader.getSchema().since(13, 0))
-                  throw ParseUtils.attributeRemoved(reader, i);
+               ParseUtils.removedSince(reader, 13, 0);
                ignoreAttribute(reader, i);
                break;
             }
@@ -1315,8 +1155,7 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case RELATIVE_TO: {
-               if (reader.getSchema().since(13, 0))
-                  throw ParseUtils.attributeRemoved(reader, i);
+               ParseUtils.removedSince(reader, 13, 0);
                ignoreAttribute(reader, i);
                break;
             }
@@ -1346,8 +1185,7 @@ public class CacheParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case RELATIVE_TO: {
-               if (reader.getSchema().since(11, 0))
-                  throw ParseUtils.attributeRemoved(reader, i);
+               ParseUtils.removedSince(reader, 11, 0);
                ignoreAttribute(reader, i);
                break;
             }
@@ -1375,10 +1213,6 @@ public class CacheParser implements ConfigurationParser {
     * This method is public static so that it can be reused by custom cache store/loader configuration parsers
     */
    public static void parseStoreAttribute(ConfigurationReader reader, int index, AbstractStoreConfigurationBuilder<?, ?> storeBuilder) {
-      // Stores before 10.0 were non segmented by default
-      if (reader.getSchema().getMajor() < 10) {
-         storeBuilder.segmented(false);
-      }
       String value = reader.getAttributeValue(index);
       Attribute attribute = Attribute.forName(reader.getAttributeName(index));
       switch (attribute) {
@@ -1395,23 +1229,12 @@ public class CacheParser implements ConfigurationParser {
             break;
          }
          case FETCH_STATE: {
-            if (reader.getSchema().since(14, 0)) {
-               throw ParseUtils.attributeRemoved(reader, index);
-            } else {
-               ignoreAttribute(reader, index);
-            }
+            ParseUtils.removedSince(reader, 14, 0);
+            ignoreAttribute(reader, index);
             break;
          }
          case PURGE: {
             storeBuilder.purgeOnStartup(ParseUtils.parseBoolean(reader, index, value));
-            break;
-         }
-         case SINGLETON: {
-            if (reader.getSchema().since(10, 0)) {
-               throw ParseUtils.attributeRemoved(reader, index);
-            } else {
-               ignoreAttribute(reader, index);
-            }
             break;
          }
          case TRANSACTIONAL: {
@@ -1464,15 +1287,6 @@ public class CacheParser implements ConfigurationParser {
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
-            case FLUSH_LOCK_TIMEOUT:
-            case SHUTDOWN_TIMEOUT: {
-               if (reader.getSchema().since(9, 0)) {
-                  throw ParseUtils.attributeRemoved(reader, i);
-               } else {
-                  ignoreAttribute(reader, i);
-               }
-               break;
-            }
             case MODIFICATION_QUEUE_SIZE: {
                storeBuilder.modificationQueueSize(ParseUtils.parseInt(reader, i, value));
                break;
@@ -1481,11 +1295,8 @@ public class CacheParser implements ConfigurationParser {
                storeBuilder.failSilently(ParseUtils.parseBoolean(reader, i, value));
                break;
             case THREAD_POOL_SIZE: {
-               if (reader.getSchema().since(11, 0)) {
-                  throw ParseUtils.attributeRemoved(reader, i);
-               } else {
-                  ignoreAttribute(reader, i);
-               }
+               ParseUtils.removedSince(reader, 11, 0);
+               ignoreAttribute(reader, i);
                break;
             }
             default:
@@ -1548,13 +1359,6 @@ public class CacheParser implements ConfigurationParser {
                break;
             case SHARED:
                shared = ParseUtils.parseBoolean(reader, i, value);
-               break;
-            case SINGLETON:
-               if (reader.getSchema().since(10, 0)) {
-                  throw ParseUtils.attributeRemoved(reader, i);
-               } else {
-                  ignoreAttribute(reader, i);
-               }
                break;
             case TRANSACTIONAL:
                transactional = ParseUtils.parseBoolean(reader, i, value);
@@ -1661,19 +1465,16 @@ public class CacheParser implements ConfigurationParser {
       ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
       boolean selfEnable = reader.getSchema().since(11, 0);
       IndexingConfigurationBuilder indexing = builder.indexing();
-      indexing.attributes().touch(); //  To handle inheritance corrrectly
+      indexing.attributes().touch(); //  To handle inheritance correctly
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case ENABLED:
-               if (reader.getSchema().since(11, 0)) {
-                  indexing.enabled(ParseUtils.parseBoolean(reader, i, value));
-                  selfEnable = false;
-               } else {
-                  throw ParseUtils.unexpectedAttribute(reader, i);
-               }
+               ParseUtils.introducedFrom(reader, 11, 0);
+               indexing.enabled(ParseUtils.parseBoolean(reader, i, value));
+               selfEnable = false;
                break;
             case STORAGE:
                indexing.storage(IndexStorage.requireValid(value, CONFIG));
