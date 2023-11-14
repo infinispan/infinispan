@@ -82,7 +82,7 @@ public final class MarshallableTypeHints {
       MarshallingType marshallingType = typeHints.get(type);
       if (marshallingType != null) {
          Boolean marshallable = marshallingType.isMarshallable;
-         return marshallable != null ? marshallable.booleanValue() : false;
+         return marshallable != null ? marshallable : false;
       }
 
       return false;
@@ -98,7 +98,7 @@ public final class MarshallableTypeHints {
       MarshallingType marshallType = typeHints.get(type);
       if (marshallableUpdateRequired(isMarshallable, marshallType)) {
          boolean replaced = typeHints.replace(type, marshallType, new MarshallingType(
-               Boolean.valueOf(isMarshallable), marshallType.sizePredictor));
+               isMarshallable, marshallType.sizePredictor));
          if (replaced && log.isTraceEnabled()) {
             log.tracef("Replacing '%s' type to be marshallable=%b",
                   type.getName(), isMarshallable);
@@ -110,7 +110,7 @@ public final class MarshallableTypeHints {
          }
 
          typeHints.put(type, new MarshallingType(
-               Boolean.valueOf(isMarshallable), new AdaptiveBufferSizePredictor()));
+               isMarshallable, new AdaptiveBufferSizePredictor()));
       }
    }
 
@@ -125,7 +125,7 @@ public final class MarshallableTypeHints {
          MarshallingType marshallType) {
       return marshallType != null &&
             (marshallType.isMarshallable == null ||
-                   marshallType.isMarshallable.booleanValue() != isMarshallable);
+                  marshallType.isMarshallable != isMarshallable);
    }
 
    private static class MarshallingType {

@@ -13,7 +13,7 @@ import org.infinispan.commons.util.TypedProperties;
 
 public abstract class AbstractTypedPropertiesConfiguration {
    public static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition.builder("properties", null, TypedProperties.class)
-         .copier(TypedPropertiesAttributeCopier.INSTANCE).initializer(() -> new TypedProperties()).serializer(PropertiesAttributeSerializer.PROPERTIES).build();
+         .copier(TypedPropertiesAttributeCopier.INSTANCE).initializer(TypedProperties::new).serializer(PropertiesAttributeSerializer.PROPERTIES).build();
    public static AttributeSet attributeSet() {
       return new AttributeSet(AbstractTypedPropertiesConfiguration.class, PROPERTIES);
    };

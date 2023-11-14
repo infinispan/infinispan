@@ -46,8 +46,7 @@ public abstract class ArrayMap<K, V> extends java.util.AbstractMap<K, V> {
    @Override
    public boolean containsValue(Object value) {
       Objects.requireNonNull(value);
-      for (int i = 0; i < values.length; ++i) {
-         Object v = values[i];
+      for (Object v : values) {
          if (v != null && v.equals(value)) return true;
       }
       return false;

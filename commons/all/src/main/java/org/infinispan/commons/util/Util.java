@@ -420,7 +420,7 @@ public final class Util {
     * @throws java.io.IOException in case of stream read errors
     */
    public static String read(InputStream is) throws IOException {
-      try {
+      try (is) {
          final Reader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
          StringWriter writer = new StringWriter();
          char[] buf = new char[1024];
@@ -429,8 +429,6 @@ public final class Util {
             writer.write(buf, 0, len);
          }
          return writer.toString();
-      } finally {
-         is.close();
       }
    }
 
@@ -439,6 +437,7 @@ public final class Util {
       try {
          cl.close();
       } catch (Exception e) {
+         //Ignore
       }
    }
 
