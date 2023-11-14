@@ -474,7 +474,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       }
    }
 
-   private class StopOnExceptionTask implements Callable<Object> {
+   private static class StopOnExceptionTask implements Callable<Object> {
       final CountDownLatch stopLatch;
       final Callable<Object> delegate;
 

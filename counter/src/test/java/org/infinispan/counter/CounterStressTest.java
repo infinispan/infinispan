@@ -234,7 +234,7 @@ public class CounterStressTest extends MultipleCacheManagersTest {
       }
    }
 
-   private class StressCallable implements Callable<Long> {
+   private static class StressCallable implements Callable<Long> {
 
       private final TestCounter counter;
       private final CyclicBarrier barrier;

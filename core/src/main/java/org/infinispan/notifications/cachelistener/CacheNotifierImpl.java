@@ -1688,7 +1688,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
       }
    }
 
-   protected class BaseCacheEntryListenerInvocation<K, V> implements CacheEntryListenerInvocation<K, V> {
+   protected static class BaseCacheEntryListenerInvocation<K, V> implements CacheEntryListenerInvocation<K, V> {
 
       private final EncoderRegistry encoderRegistry;
       protected final ListenerInvocation<Event<K, V>> invocation;

@@ -98,7 +98,7 @@ public class ReadOnlyTxTest extends SingleCacheManagerTest {
       return TestingUtil.getTransactionTable(cache);
    }
 
-   class CommitCommandCounterInterceptor extends DDAsyncInterceptor {
+   static class CommitCommandCounterInterceptor extends DDAsyncInterceptor {
 
       public final AtomicInteger counter = new AtomicInteger(0);
 

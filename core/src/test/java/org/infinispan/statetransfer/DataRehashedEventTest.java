@@ -138,7 +138,7 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
    }
 
    @Listener
-   public class DataRehashedListener {
+   public static class DataRehashedListener {
       private volatile List<DataRehashedEvent<Object, Object>> events = new CopyOnWriteArrayList<DataRehashedEvent<Object, Object>>();
 
       @DataRehashed

@@ -106,7 +106,7 @@ public class HotRodCustomEventsTest extends HotRodSingleNodeTest {
       }
    }
 
-   class DynamicConverterFactory implements CacheEventConverterFactory {
+   static class DynamicConverterFactory implements CacheEventConverterFactory {
       @Override
       public <K, V, C> CacheEventConverter<K, V, C> getConverter(Object[] params) {
          return (CacheEventConverter<K, V, C>) (CacheEventConverter<byte[], byte[], byte[]>) (key, oldValue, oldMetadata, newValue, newMetadata, eventType) -> {

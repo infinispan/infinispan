@@ -63,7 +63,7 @@ public class InternalMetadataTest {
       assertEquals("Wrong lastUsed value.", lastUsed, metadata.lastUsed());
    }
 
-   private class TestMetadata implements Metadata, Metadata.Builder {
+   private static class TestMetadata implements Metadata, Metadata.Builder {
 
       private final long lifespan;
       private final long maxIdle;
@@ -156,7 +156,7 @@ public class InternalMetadataTest {
    }
 
    //Dummy class
-   private class TestInternalCacheEntry extends AbstractInternalCacheEntry {
+   private static class TestInternalCacheEntry extends AbstractInternalCacheEntry {
 
       private final Metadata metadata;
       private final long created;

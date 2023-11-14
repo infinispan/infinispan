@@ -35,7 +35,7 @@ public class Company {
       return address;
    }
 
-   public class Address {
+   public static class Address {
 
       public Long id;
 

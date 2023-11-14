@@ -68,7 +68,7 @@ public class AbstractProtocolServerTest extends AbstractInfinispanTest {
       }
    }
 
-   class MockProtocolServer extends AbstractProtocolServer {
+   static class MockProtocolServer extends AbstractProtocolServer {
       protected MockProtocolServer() {
          super(null);
       }

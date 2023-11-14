@@ -73,7 +73,7 @@ public class TransactionalLocalWriteSkewTest extends SingleCacheManagerTest {
       }
    }
 
-   private class IncrementCounterTask implements ExceptionRunnable {
+   private static class IncrementCounterTask implements ExceptionRunnable {
       private Cache<String, Integer> cache;
       private ConcurrentSkipListSet<Integer> uniqueValuesSet;
       private TransactionManager transactionManager;

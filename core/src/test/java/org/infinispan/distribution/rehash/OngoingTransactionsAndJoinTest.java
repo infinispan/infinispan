@@ -255,7 +255,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       }
    }
 
-   class ListeningHandler extends AbstractDelegatingHandler {
+   static class ListeningHandler extends AbstractDelegatingHandler {
       final CountDownLatch txsReady, joinEnded, rehashStarted;
 
       public ListeningHandler(PerCacheInboundInvocationHandler delegate, CountDownLatch txsReady, CountDownLatch joinEnded, CountDownLatch rehashStarted) {

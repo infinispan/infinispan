@@ -511,7 +511,7 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
 		}
 	}
 
-	private class IdContainer {
+	private static class IdContainer {
 		Integer customerId;
 		Set<Integer> contactIds;
 	}

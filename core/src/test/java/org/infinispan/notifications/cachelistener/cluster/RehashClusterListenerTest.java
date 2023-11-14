@@ -177,7 +177,7 @@ public class RehashClusterListenerTest extends MultipleCacheManagersTest {
    }
 
    @Listener(clustered = true)
-   protected class ClusterListener {
+   protected static class ClusterListener {
       List<CacheEntryEvent> events = Collections.synchronizedList(new ArrayList<CacheEntryEvent>());
 
       @CacheEntryCreated

@@ -290,7 +290,7 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
       }
    }
 
-   class CheckOTEInterceptor extends DDAsyncInterceptor {
+   static class CheckOTEInterceptor extends DDAsyncInterceptor {
       private final AtomicInteger thrown;
       private final AtomicInteger retried;
 

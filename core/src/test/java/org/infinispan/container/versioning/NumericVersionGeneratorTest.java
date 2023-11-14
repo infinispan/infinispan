@@ -45,7 +45,7 @@ public class NumericVersionGeneratorTest {
       assertEquals(new NumericVersion(0x2000100000003L), vg.generateNew());
    }
 
-   class TestAddress implements Address {
+   static class TestAddress implements Address {
       int addressNum;
 
       TestAddress(int addressNum) {

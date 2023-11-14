@@ -341,7 +341,7 @@ public class VersionedTest extends AbstractNonInvalidationTest {
       }
    }
 
-   class AnotherCollectionUpdateTestInterceptor extends DDAsyncInterceptor {
+   static class AnotherCollectionUpdateTestInterceptor extends DDAsyncInterceptor {
       final CountDownLatch putFromLoadLatch;
       final AtomicBoolean committing;
 

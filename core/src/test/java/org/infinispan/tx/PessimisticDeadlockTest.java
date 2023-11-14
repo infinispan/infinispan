@@ -128,7 +128,7 @@ public class PessimisticDeadlockTest extends MultipleCacheManagersTest {
       }
    }
 
-   private class DropLockCommandHandler extends AbstractDelegatingHandler {
+   private static class DropLockCommandHandler extends AbstractDelegatingHandler {
       DropLockCommandHandler(PerCacheInboundInvocationHandler delegate) {
          super(delegate);
       }

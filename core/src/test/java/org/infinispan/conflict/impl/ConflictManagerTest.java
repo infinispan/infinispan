@@ -294,7 +294,7 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
       IntStream.range(0, numMembersInCluster).forEach(i -> wrapInboundInvocationHandler(getCache(i), delegate -> new StateTransferCancellation(latch, delegate)));
    }
 
-   public class DelayStateResponseCommandHandler extends AbstractDelegatingHandler {
+   public static class DelayStateResponseCommandHandler extends AbstractDelegatingHandler {
       final CountDownLatch latch;
 
       DelayStateResponseCommandHandler(CountDownLatch latch, PerCacheInboundInvocationHandler delegate) {
@@ -346,7 +346,7 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
       }
    }
 
-   private class DropClusteredGetCommandHandler extends AbstractDelegatingHandler {
+   private static class DropClusteredGetCommandHandler extends AbstractDelegatingHandler {
       DropClusteredGetCommandHandler(PerCacheInboundInvocationHandler delegate) {
          super(delegate);
       }
@@ -360,7 +360,7 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
    }
 
    @Listener
-   private class RehashListener {
+   private static class RehashListener {
       final CountDownLatch latch = new CountDownLatch(1);
 
       @DataRehashed

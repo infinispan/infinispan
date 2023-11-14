@@ -28,7 +28,7 @@ public class RequestExpirationScheduler {
       this.scheduledExecutorService = scheduledExecutorService;
    }
 
-   class ScheduledRequest {
+   static class ScheduledRequest {
       private CompletableFuture<Boolean> request;
       private ScheduledFuture<?> scheduledFuture;
 
