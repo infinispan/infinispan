@@ -182,8 +182,8 @@ public class Annotateds {
         builder.append("{");
 
         // now deal with the fields
-       List<AnnotatedField<? super X>> sortedFields = new ArrayList<>(fields);
-        Collections.sort(sortedFields, AnnotatedFieldComparator.<X>instance());
+        List<AnnotatedField<? super X>> sortedFields = new ArrayList<>(fields);
+        sortedFields.sort(AnnotatedFieldComparator.<X>instance());
         for (AnnotatedField<? super X> field : sortedFields) {
             if (!field.getAnnotations().isEmpty()) {
                 builder.append(createFieldId(field));
@@ -192,8 +192,8 @@ public class Annotateds {
         }
 
         // methods
-       List<AnnotatedMethod<? super X>> sortedMethods = new ArrayList<>(methods);
-        Collections.sort(sortedMethods, AnnotatedMethodComparator.<X>instance());
+        List<AnnotatedMethod<? super X>> sortedMethods = new ArrayList<>(methods);
+        sortedMethods.sort(AnnotatedMethodComparator.<X>instance());
         for (AnnotatedMethod<? super X> method : sortedMethods) {
             if (!method.getAnnotations().isEmpty() || hasMethodParameters(method)) {
                 builder.append(createCallableId(method));
@@ -202,8 +202,8 @@ public class Annotateds {
         }
 
         // constructors
-       List<AnnotatedConstructor<? super X>> sortedConstructors = new ArrayList<>(constructors);
-        Collections.sort(sortedConstructors, AnnotatedConstructorComparator.<X>instance());
+        List<AnnotatedConstructor<? super X>> sortedConstructors = new ArrayList<>(constructors);
+        sortedConstructors.sort(AnnotatedConstructorComparator.<X>instance());
         for (AnnotatedConstructor<? super X> constructor : sortedConstructors) {
             if (!constructor.getAnnotations().isEmpty() || hasMethodParameters(constructor)) {
                 builder.append(createCallableId(constructor));
