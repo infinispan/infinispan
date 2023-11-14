@@ -383,24 +383,29 @@ public class MXParser implements XmlPullParser {
    public void setFeature(String name,
                           boolean state) throws XmlPullParserException {
       if (name == null) throw new IllegalArgumentException("feature name should not be null");
-      if (FEATURE_PROCESS_NAMESPACES.equals(name)) {
-         if (eventType != START_DOCUMENT) throw new XmlPullParserException(
-               "namespace processing feature can only be changed before parsing", this, null);
-         processNamespaces = state;
-      } else if (FEATURE_NAMES_INTERNED.equals(name)) {
-         if (state != false) {
-            throw new XmlPullParserException(
-                  "interning names in this implementation is not supported");
-         }
-      } else if (FEATURE_PROCESS_DOCDECL.equals(name)) {
-         if (state != false) {
-            throw new XmlPullParserException(
-                  "processing DOCDECL is not supported");
-         }
-      } else if (FEATURE_XML_ROUNDTRIP.equals(name)) {
-         roundtripSupported = state;
-      } else {
-         throw new XmlPullParserException("unsupported feature " + name);
+      switch (name) {
+         case FEATURE_PROCESS_NAMESPACES:
+            if (eventType != START_DOCUMENT) throw new XmlPullParserException(
+                  "namespace processing feature can only be changed before parsing", this, null);
+            processNamespaces = state;
+            break;
+         case FEATURE_NAMES_INTERNED:
+            if (state) {
+               throw new XmlPullParserException(
+                     "interning names in this implementation is not supported");
+            }
+            break;
+         case FEATURE_PROCESS_DOCDECL:
+            if (state) {
+               throw new XmlPullParserException(
+                     "processing DOCDECL is not supported");
+            }
+            break;
+         case FEATURE_XML_ROUNDTRIP:
+            roundtripSupported = state;
+            break;
+         default:
+            throw new XmlPullParserException("unsupported feature " + name);
       }
    }
 
@@ -409,14 +414,14 @@ public class MXParser implements XmlPullParser {
     */
    public boolean getFeature(String name) {
       if (name == null) throw new IllegalArgumentException("feature name should not be null");
-      if (FEATURE_PROCESS_NAMESPACES.equals(name)) {
-         return processNamespaces;
-      } else if (FEATURE_NAMES_INTERNED.equals(name)) {
-         return false;
-      } else if (FEATURE_PROCESS_DOCDECL.equals(name)) {
-         return false;
-      } else if (FEATURE_XML_ROUNDTRIP.equals(name)) {
-         return roundtripSupported;
+      switch (name) {
+         case FEATURE_PROCESS_NAMESPACES:
+            return processNamespaces;
+         case FEATURE_NAMES_INTERNED:
+         case FEATURE_PROCESS_DOCDECL:
+            return false;
+         case FEATURE_XML_ROUNDTRIP:
+            return roundtripSupported;
       }
       return false;
    }
@@ -434,14 +439,15 @@ public class MXParser implements XmlPullParser {
 
    public Object getProperty(String name) {
       if (name == null) throw new IllegalArgumentException("property name should not be null");
-      if (PROPERTY_XMLDECL_VERSION.equals(name)) {
-         return xmlDeclVersion;
-      } else if (PROPERTY_XMLDECL_STANDALONE.equals(name)) {
-         return xmlDeclStandalone;
-      } else if (PROPERTY_XMLDECL_CONTENT.equals(name)) {
-         return xmlDeclContent;
-      } else if (PROPERTY_LOCATION.equals(name)) {
-         return location;
+      switch (name) {
+         case PROPERTY_XMLDECL_VERSION:
+            return xmlDeclVersion;
+         case PROPERTY_XMLDECL_STANDALONE:
+            return xmlDeclStandalone;
+         case PROPERTY_XMLDECL_CONTENT:
+            return xmlDeclContent;
+         case PROPERTY_LOCATION:
+            return location;
       }
       return null;
    }
@@ -1060,9 +1066,9 @@ public class MXParser implements XmlPullParser {
                      pcStart = pcEnd = 0;
                   }
                }
-               for (int i = 0; i < resolvedEntity.length; i++) {
+               for (char c : resolvedEntity) {
                   if (pcEnd >= pc.length) ensurePC(pcEnd);
-                  pc[pcEnd++] = resolvedEntity[i];
+                  pc[pcEnd++] = c;
 
                }
                hadCharData = true;
@@ -1076,7 +1082,7 @@ public class MXParser implements XmlPullParser {
                hadCharData = true;
 
                boolean normalizedCR = false;
-               final boolean normalizeInput = tokenize == false || roundtripSupported == false;
+               final boolean normalizeInput = !tokenize || !roundtripSupported;
                boolean seenBracket = false;
                boolean seenBracketBracket = false;
                do {
@@ -1805,9 +1811,9 @@ public class MXParser implements XmlPullParser {
                      this, null);
             }
             // write into PC replacement text - do merge for replacement text!!!!
-            for (int i = 0; i < resolvedEntity.length; i++) {
+            for (char c : resolvedEntity) {
                if (pcEnd >= pc.length) ensurePC(pcEnd);
-               pc[pcEnd++] = resolvedEntity[i];
+               pc[pcEnd++] = c;
             }
          } else if (ch == '\t' || ch == '\n' || ch == '\r') {
             // do attribute value normalization
@@ -2799,10 +2805,10 @@ public class MXParser implements XmlPullParser {
 
    protected char requireInput(char ch, char[] input)
          throws XmlPullParserException, IOException {
-      for (int i = 0; i < input.length; i++) {
-         if (ch != input[i]) {
+      for (char c : input) {
+         if (ch != c) {
             throw new XmlPullParserException(
-                  "expected " + printable(input[i]) + " in " + new String(input)
+                  "expected " + printable(c) + " in " + new String(input)
                         + " and not " + printable(ch), this, null);
          }
          ch = more();

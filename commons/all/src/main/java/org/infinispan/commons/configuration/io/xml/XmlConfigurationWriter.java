@@ -63,7 +63,7 @@ public class XmlConfigurationWriter extends AbstractConfigurationWriter {
 
          if (standalone.isPresent()) {
             writer.write("\" standalone=\"");
-            if (standalone.get().booleanValue()) {
+            if (standalone.get()) {
                writer.write("yes");
             } else {
                writer.write("no");

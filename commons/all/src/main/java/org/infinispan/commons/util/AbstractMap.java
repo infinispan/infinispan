@@ -1,7 +1,6 @@
 package org.infinispan.commons.util;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -21,9 +20,7 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
    @Override
    public int hashCode() {
       int h = 0;
-      Iterator<Entry<K,V>> i = entrySet().iterator();
-      while (i.hasNext())
-         h += i.next().hashCode();
+      for (Entry<K, V> kvEntry : entrySet()) h += kvEntry.hashCode();
       return h;
    }
 
@@ -49,11 +46,6 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
       SimpleEntry(K key, V value) {
          this.key = key;
          this.value = value;
-      }
-
-      SimpleEntry(Map.Entry<K, V> entry) {
-         this.key = entry.getKey();
-         this.value = entry.getValue();
       }
 
       @Override

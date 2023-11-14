@@ -58,7 +58,7 @@ public class CacheConfigurationException extends CacheException {
          }
          default: {
             CacheConfigurationException exception = log.multipleConfigurationValidationErrors();
-            exceptions.forEach(e -> exception.addSuppressed(e));
+            exceptions.forEach(exception::addSuppressed);
             return Optional.of(exception);
          }
       }

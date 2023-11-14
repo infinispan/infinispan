@@ -579,11 +579,7 @@ public class Json implements java.io.Serializable {
       }
 
       // Anything is valid schema
-      static Instruction any = new Instruction() {
-         public Json apply(Json param) {
-            return null;
-         }
-      };
+      static Instruction any = param -> null;
 
       // Type validation
       class IsObject implements Instruction {
@@ -1074,13 +1070,11 @@ public class Json implements java.io.Serializable {
          try {
             this.uri = uri == null ? new URI("") : uri;
             if (relativeReferenceResolver == null)
-               relativeReferenceResolver = new Function<URI, Json>() {
-                  public Json apply(URI docuri) {
-                     try {
-                        return Json.read(fetchContent(docuri.toURL()));
-                     } catch (Exception ex) {
-                        throw new RuntimeException(ex);
-                     }
+               relativeReferenceResolver = docuri -> {
+                  try {
+                     return Json.read(fetchContent(docuri.toURL()));
+                  } catch (Exception ex) {
+                     throw new RuntimeException(ex);
                   }
                };
             this.theschema = theschema.dup();
@@ -2710,7 +2704,7 @@ public class Json implements java.io.Serializable {
 
          for (Iterator<Map.Entry<String, Json>> i = object.entrySet().iterator(); i.hasNext(); ) {
             Map.Entry<String, Json> x = i.next();
-            for (int j = 0; j < ident; j++) sb.append("  ");
+            sb.append("  ".repeat(Math.max(0, ident)));
             sb.append('"');
             sb.append(escaper.escapeJsonString(x.getKey()));
             sb.append('"');
@@ -2729,7 +2723,7 @@ public class Json implements java.io.Serializable {
 
          sb.append("\n");
          ident -= 1;
-         for (int j = 0; j < ident; j++) sb.append("  ");
+         sb.append("  ".repeat(Math.max(0, ident)));
 
          sb.append("}");
          return sb.toString();

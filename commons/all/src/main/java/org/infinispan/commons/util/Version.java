@@ -63,13 +63,13 @@ public class Version {
       brandVersion = properties.getProperty(INFINISPAN_BRAND_VERSION, version);
       codename = properties.getProperty(INFINISPAN_CODENAME, "N/A");
       schemaVersion = properties.getProperty(INFINISPAN_CORE_SCHEMA_VERSION, "0.0");
-      String parts[] = getParts(version);
+      String[] parts = getParts(version);
       versionId = readVersionBytes(parts[0], parts[1], parts[2], parts[3]);
       versionShort = getVersionShort(version);
       String modulePrefix = properties.getProperty(INFINISPAN_MODULE_SLOT_PREFIX, "ispn");
       String moduleVersion = properties.getProperty(INFINISPAN_MODULE_SLOT_VERSION, parts[0] + "." + parts[1]);
       moduleSlot = String.format("%s-%s", modulePrefix, moduleVersion);
-      marshallVersion = Short.valueOf(parts[0] + parts[1]);
+      marshallVersion = Short.parseShort(parts[0] + parts[1]);
       majorMinor = String.format("%s.%s", parts[0], parts[1]);
       major = parts[0];
       minor = parts[1];
