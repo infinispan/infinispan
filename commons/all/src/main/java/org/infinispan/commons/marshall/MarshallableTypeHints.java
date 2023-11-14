@@ -1,5 +1,6 @@
 package org.infinispan.commons.marshall;
 
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -145,12 +146,9 @@ public final class MarshallableTypeHints {
 
          MarshallingType that = (MarshallingType) o;
 
-         if (isMarshallable != null ? !isMarshallable.equals(that.isMarshallable) : that.isMarshallable != null)
+         if (!Objects.equals(isMarshallable, that.isMarshallable))
             return false;
-         if (sizePredictor != null ? !sizePredictor.equals(that.sizePredictor) : that.sizePredictor != null)
-            return false;
-
-         return true;
+         return Objects.equals(sizePredictor, that.sizePredictor);
       }
 
       @Override

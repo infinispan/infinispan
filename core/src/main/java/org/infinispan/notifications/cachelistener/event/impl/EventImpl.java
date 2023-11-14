@@ -3,9 +3,9 @@ package org.infinispan.notifications.cachelistener.event.impl;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
@@ -269,21 +269,21 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       if (originLocal != event.originLocal) return false;
       if (pre != event.pre) return false;
       if (transactionSuccessful != event.transactionSuccessful) return false;
-      if (cache != null ? !cache.equals(event.cache) : event.cache != null) return false;
-      if (key != null ? !key.equals(event.key) : event.key != null) return false;
-      if (source != null ? !source.equals(event.source) : event.source != null) return false;
+      if (!Objects.equals(cache, event.cache)) return false;
+      if (!Objects.equals(key, event.key)) return false;
+      if (!Objects.equals(source, event.source)) return false;
       if (type != event.type) return false;
-      if (value != null ? !value.equals(event.value) : event.value != null) return false;
-      if (!Util.safeEquals(readConsistentHashAtStart, event.readConsistentHashAtStart)) return false;
-      if (!Util.safeEquals(writeConsistentHashAtStart, event.writeConsistentHashAtStart)) return false;
-      if (!Util.safeEquals(readConsistentHashAtEnd, event.readConsistentHashAtEnd)) return false;
-      if (!Util.safeEquals(writeConsistentHashAtEnd, event.writeConsistentHashAtEnd)) return false;
-      if (!Util.safeEquals(unionConsistentHash, event.unionConsistentHash)) return false;
+      if (!Objects.equals(value, event.value)) return false;
+      if (!Objects.equals(readConsistentHashAtStart, event.readConsistentHashAtStart)) return false;
+      if (!Objects.equals(writeConsistentHashAtStart, event.writeConsistentHashAtStart)) return false;
+      if (!Objects.equals(readConsistentHashAtEnd, event.readConsistentHashAtEnd)) return false;
+      if (!Objects.equals(writeConsistentHashAtEnd, event.writeConsistentHashAtEnd)) return false;
+      if (!Objects.equals(unionConsistentHash, event.unionConsistentHash)) return false;
       if (newTopologyId != event.newTopologyId) return false;
       if (created != event.created) return false;
       if (isCurrentState != event.isCurrentState) return false;
-      if (oldValue != null ? !oldValue.equals(event.oldValue) : event.oldValue != null) return false;
-      if (newValue != null ? !newValue.equals(event.newValue) : event.newValue != null) return false;
+      if (!Objects.equals(oldValue, event.oldValue)) return false;
+      if (!Objects.equals(newValue, event.newValue)) return false;
 
       return available == event.available;
    }
