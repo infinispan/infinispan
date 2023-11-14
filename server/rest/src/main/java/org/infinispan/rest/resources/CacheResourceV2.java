@@ -1030,12 +1030,12 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
          return invocationHelper.newResponse(request, NOT_FOUND).toFuture();
 
       Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
-      Map<String, Attribute> attributes = new LinkedHashMap<>();
+      Map<String, Attribute<?>> attributes = new LinkedHashMap<>();
       mutableAttributes(cacheConfiguration, attributes, null);
       if (full) {
          Json all = Json.object();
-         for (Map.Entry<String, Attribute> entry : attributes.entrySet()) {
-            Attribute attribute = entry.getValue();
+         for (Map.Entry<String, Attribute<?>> entry : attributes.entrySet()) {
+            Attribute<?> attribute = entry.getValue();
             Class<?> type = attribute.getAttributeDefinition().getType();
             Json object = Json.object("value", attribute.get(), "type", type.getSimpleName().toLowerCase());
             if (type.isEnum()) {
@@ -1049,13 +1049,13 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       }
    }
 
-   private static void mutableAttributes(ConfigurationElement<?> element, Map<String, Attribute> attributes, String prefix) {
+   private static void mutableAttributes(ConfigurationElement<?> element, Map<String, Attribute<?>> attributes, String prefix) {
       if (prefix == null) {
          prefix = "";
       } else if (prefix.isEmpty()) {
-         prefix = element.elementName();
+         prefix = element.elementName() + '.';
       } else {
-         prefix = prefix + '.' + element.elementName();
+         prefix = prefix + element.elementName() + '.';
       }
       for (Attribute<?> attribute : element.attributes().attributes()) {
          if (!attribute.isImmutable()) {
@@ -1064,7 +1064,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
             if (AbstractTypedPropertiesConfiguration.PROPERTIES.equals(definition)) {
                continue;
             }
-            attributes.put(prefix + '.' + definition.name(), attribute);
+            attributes.put(prefix + definition.name(), attribute);
          }
       }
       for (ConfigurationElement<?> child : element.children()) {
@@ -1091,7 +1091,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
    private CompletionStage<RestResponse> setCacheConfigMutableAttribute(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
       String attributeName = request.getParameter("attribute-name");
-      String attributeValue = request.getParameter("attribute-value");
+      String attributeValue = String.join(" ", request.parameters().get("attribute-value"));
       String cacheName = request.variables().get("cacheName");
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
       if (cache == null) {
