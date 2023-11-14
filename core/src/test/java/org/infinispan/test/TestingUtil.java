@@ -967,8 +967,8 @@ public class TestingUtil {
       CompletionStages.join(persistenceManager.clearAllStores(BOTH));
    }
 
-   public static <K, V> List<DummyInMemoryStore> cachestores(List<Cache<K, V>> caches) {
-      List<DummyInMemoryStore> l = new LinkedList<>();
+   public static <K, V> List<DummyInMemoryStore<K, V>> cachestores(List<Cache<K, V>> caches) {
+      List<DummyInMemoryStore<K, V>> l = new LinkedList<>();
       for (Cache<K, V> c : caches)
          l.add(TestingUtil.getFirstStore(c));
       return l;

@@ -17,7 +17,7 @@ import org.infinispan.test.TestingUtil;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public abstract class BaseDistStoreTest<K, V, C extends BaseDistStoreTest> extends BaseDistFunctionalTest<K, V> {
+public abstract class BaseDistStoreTest<K, V, C extends BaseDistStoreTest<K, V, C>> extends BaseDistFunctionalTest<K, V> {
    protected boolean shared;
    protected boolean preload;
    protected boolean segmented;
@@ -69,17 +69,17 @@ public abstract class BaseDistStoreTest<K, V, C extends BaseDistStoreTest> exten
       }
    }
 
-   protected int getCacheStoreStats(Cache<?, ?> cache, String cacheStoreMethod) {
-      DummyInMemoryStore dummyInMemoryStore = TestingUtil.getFirstStore(cache);
+   protected int getCacheStoreStats(Cache<K, V> cache, String cacheStoreMethod) {
+      DummyInMemoryStore<K, V> dummyInMemoryStore = TestingUtil.getFirstStore(cache);
       return dummyInMemoryStore.stats().get(cacheStoreMethod);
    }
 
-   protected void assertNumberOfInvocations(DummyInMemoryStore dims, String method, int expected) {
+   protected void assertNumberOfInvocations(DummyInMemoryStore<K, V> dims, String method, int expected) {
       assertEquals(expected, dims.stats().get(method).intValue());
    }
 
-   protected void clearStats(Cache<?, ?> cache) {
-      DummyInMemoryStore store = TestingUtil.getFirstStore(cache);
+   protected void clearStats(Cache<K, V> cache) {
+      DummyInMemoryStore<K, V> store = TestingUtil.getFirstStore(cache);
       store.clearStats();
 
       CacheWriterInterceptor cacheWriterInterceptor = getCacheWriterInterceptor(cache);

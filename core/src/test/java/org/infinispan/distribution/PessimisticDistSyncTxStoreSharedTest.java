@@ -28,7 +28,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "distribution.PessimisticDistSyncTxStoreSharedTest")
 public class PessimisticDistSyncTxStoreSharedTest extends MultipleCacheManagersTest {
 
-   private ConfigurationBuilder getCB(){
+   private ConfigurationBuilder getCB() {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering()
             .cacheMode(CacheMode.DIST_SYNC)
@@ -48,7 +48,7 @@ public class PessimisticDistSyncTxStoreSharedTest extends MultipleCacheManagersT
       // Make it really shared by adding the test's name as store name
       cb.persistence()
             .addStore(DummyInMemoryStoreConfigurationBuilder.class).preload(true).shared(true)
-               .storeName(getClass().getSimpleName()).async()
+            .storeName(getClass().getSimpleName()).async()
             .disable();
       return cb;
    }
@@ -61,18 +61,18 @@ public class PessimisticDistSyncTxStoreSharedTest extends MultipleCacheManagersT
    }
 
    @Test
-   public void testInvalidPut() throws Exception {
+   public void testInvalidPut() {
       Cache<String, String> cache = cacheManagers.get(0).getCache("P006");
       IntSet allSegments = IntSets.immutableRangeSet(cache.getCacheConfiguration().clustering().hash().numSegments());
 
       // add 1st 4 elements
-      for(int i = 0; i < 4; i++){
-         cache.put(cacheManagers.get(0).getAddress().toString()+"-"+i, "42");
+      for (int i = 0; i < 4; i++) {
+         cache.put(cacheManagers.get(0).getAddress().toString() + "-" + i, "42");
       }
 
       // lets check if all elements arrived
-      DummyInMemoryStore cs1 = TestingUtil.getFirstStore(cache);
-      Set<Object> keys = PersistenceUtil.toKeySet(cs1, allSegments, null);
+      DummyInMemoryStore<String, String> cs1 = TestingUtil.getFirstStore(cache);
+      Set<String> keys = PersistenceUtil.toKeySet(cs1, allSegments, null);
 
       Assert.assertEquals(keys.size(), 4);
 
@@ -83,18 +83,16 @@ public class PessimisticDistSyncTxStoreSharedTest extends MultipleCacheManagersT
       cache = cacheManagers.get(1).getCache("P006");
 
       // add next 4 elements
-      for(int i = 0; i < 4; i++){
-         cache.put(cacheManagers.get(1).getAddress().toString()+"-"+i, "42");
+      for (int i = 0; i < 4; i++) {
+         cache.put(cacheManagers.get(1).getAddress().toString() + "-" + i, "42");
       }
 
-      Set mergedKeys = new HashSet();
       // add keys from all cache stores
-      DummyInMemoryStore cs2 = TestingUtil.getFirstStore(cache);
+      DummyInMemoryStore<String, String> cs2 = TestingUtil.getFirstStore(cache);
       log.debugf("Load from cache store via cache 1");
-      mergedKeys.addAll(PersistenceUtil.toKeySet(cs1, allSegments, null));
+      Set<String> mergedKeys = new HashSet<>(PersistenceUtil.toKeySet(cs1, allSegments, null));
       log.debugf("Load from cache store via cache 2");
       mergedKeys.addAll(PersistenceUtil.toKeySet(cs2, allSegments, null));
-
       Assert.assertEquals(mergedKeys.size(), 8);
    }
 }

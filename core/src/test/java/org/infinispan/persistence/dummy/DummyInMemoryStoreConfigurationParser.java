@@ -15,8 +15,7 @@ import org.kohsuke.MetaInfServices;
  * @author William Burns
  * @since 14.0
  */
-@MetaInfServices
-
+@MetaInfServices(ConfigurationParser.class)
 @Namespace(root = "dummy-store")
 @Namespace(uri = NAMESPACE + "*", root = "dummy-store")
 public class DummyInMemoryStoreConfigurationParser implements ConfigurationParser {
@@ -47,7 +46,7 @@ public class DummyInMemoryStoreConfigurationParser implements ConfigurationParse
 
          switch (attribute) {
             case SLOW:
-               builder.slow(Boolean.valueOf(value));
+               builder.slow(Boolean.parseBoolean(value));
                break;
             case START_FAILURES:
                builder.startFailures(Integer.parseInt(value));

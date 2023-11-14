@@ -114,7 +114,7 @@ public class HotRodUpgradeWithStoreTest extends AbstractInfinispanTest {
 
    }
 
-   private DummyInMemoryStore getDummyStore(TestCluster testCluster) {
+   private DummyInMemoryStore<?, ?> getDummyStore(TestCluster testCluster) {
       PersistenceManager pm = extractComponent(testCluster.getEmbeddedCache(CACHE_NAME), PersistenceManager.class);
       return pm.getStores(DummyInMemoryStore.class).iterator().next();
    }

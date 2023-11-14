@@ -27,7 +27,7 @@ import org.testng.annotations.Test;
  * @since 4.0
  */
 @Test(groups = "functional", testName = "distribution.DistSyncStoreSharedTest")
-public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest> extends BaseDistStoreTest<Object, String, D> {
+public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest<D>> extends BaseDistStoreTest<Object, String, D> {
 
    public DistSyncStoreSharedTest() {
       testRetVals = true;
@@ -47,7 +47,7 @@ public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest> extends 
    protected void clearContent() throws Throwable {
       super.clearContent();
       // Make sure to clear stats after clearing content
-      for (Cache<?, ?> c: caches) {
+      for (Cache<Object, String> c: caches) {
          log.trace("Clearing stats for cache store on cache "+ c);
          clearStats(c);
       }
@@ -56,8 +56,8 @@ public class DistSyncStoreSharedTest<D extends DistSyncStoreSharedTest> extends 
    @Override
    public Object[] factory() {
       return new Object[] {
-            new DistSyncStoreSharedTest().segmented(true),
-            new DistSyncStoreSharedTest().segmented(false),
+            new DistSyncStoreSharedTest<>().segmented(true),
+            new DistSyncStoreSharedTest<>().segmented(false),
       };
    }
 
