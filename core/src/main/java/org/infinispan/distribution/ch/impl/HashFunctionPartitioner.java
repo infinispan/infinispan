@@ -16,7 +16,7 @@ import org.infinispan.distribution.ch.KeyPartitioner;
  * @author Dan Berindei
  * @since 8.2
  */
-public class HashFunctionPartitioner implements KeyPartitioner, Cloneable {
+public class HashFunctionPartitioner implements KeyPartitioner {
    protected Hash hashFunction;
    protected int numSegments;
    private int segmentSize;
