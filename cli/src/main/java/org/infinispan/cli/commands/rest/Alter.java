@@ -1,6 +1,7 @@
 package org.infinispan.cli.commands.rest;
 
 import java.io.File;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
@@ -11,6 +12,7 @@ import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
+import org.aesh.command.option.OptionList;
 import org.aesh.command.parser.RequiredOptionException;
 import org.aesh.io.Resource;
 import org.infinispan.cli.activators.ConnectionActivator;
@@ -58,8 +60,8 @@ public class Alter extends CliCommand {
       @Option(description = "The configuration attribute", completer = CacheConfigurationAttributeCompleter.class)
       String attribute;
 
-      @Option(description = "The value for the configuration attribute")
-      String value;
+      @OptionList(description = "The value for the configuration attribute. If the attribute supports multiple values, separate them with commas")
+      List<String> value;
 
       @Option(completer = FileOptionCompleter.class, shortName = 'f')
       Resource file;
@@ -83,11 +85,11 @@ public class Alter extends CliCommand {
          if (attribute != null && value == null) {
             throw Messages.MSG.requiresAllOf("attribute", "value");
          }
-         String n = getCacheName(resource).orElseThrow(() -> Messages.MSG.missingCacheName());
+         String n = getCacheName(resource).orElseThrow(Messages.MSG::missingCacheName);
          if (file != null) {
             return client.cache(n).updateWithConfiguration(RestEntity.create(new File(file.getAbsolutePath())));
          } else {
-            return client.cache(n).updateConfigurationAttribute(attribute, value);
+            return client.cache(n).updateConfigurationAttribute(attribute, value.toArray(new String[0]));
          }
       }
 
