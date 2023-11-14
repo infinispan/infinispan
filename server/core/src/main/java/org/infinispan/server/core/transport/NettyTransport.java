@@ -324,7 +324,8 @@ public class NettyTransport implements Transport {
          description = "Returns a count of active connections in the cluster. " +
                "This operation will make remote calls to aggregate results, " +
                "so latency might have an impact on the speed of calculation of this attribute.",
-         displayName = "Cluster-wide number of active connections"
+         displayName = "Cluster-wide number of active connections",
+         clusterWide = true
    )
    @Override
    public int getNumberOfGlobalConnections() {
