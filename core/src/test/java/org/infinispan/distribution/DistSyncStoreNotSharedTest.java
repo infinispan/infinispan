@@ -32,7 +32,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "distribution.DistSyncStoreNotSharedTest")
 @CleanupAfterMethod
-public class DistSyncStoreNotSharedTest<D extends DistSyncStoreNotSharedTest> extends BaseDistStoreTest<Object, String, D> {
+public class DistSyncStoreNotSharedTest<D extends DistSyncStoreNotSharedTest<D>> extends BaseDistStoreTest<Object, String, D> {
 
    private static final String k1 = "1", v1 = "one", k2 = "2", v2 = "two", k3 = "3", v3 = "three", k4 = "4", v4 = "four";
    private static final String[] keys = new String[]{k1, k2, k3, k4};
@@ -46,8 +46,8 @@ public class DistSyncStoreNotSharedTest<D extends DistSyncStoreNotSharedTest> ex
    @Override
    public Object[] factory() {
       return new Object[] {
-            new DistSyncStoreNotSharedTest().segmented(true),
-            new DistSyncStoreNotSharedTest().segmented(false),
+            new DistSyncStoreNotSharedTest<>().segmented(true),
+            new DistSyncStoreNotSharedTest<>().segmented(false),
       };
    }
 

@@ -43,14 +43,14 @@ public class SharedStoreTest extends MultipleCacheManagersTest {
    @AfterMethod
    @Override
    protected void clearContent() throws Throwable {
-      List<DummyInMemoryStore> cachestores = TestingUtil.cachestores(caches());
+      List<DummyInMemoryStore<String, String>> cachestores = TestingUtil.cachestores(caches());
       super.clearContent();
       // Because the store is shared, the stats are not cleared between methods
       // In particular, the clear between methods is added to the statistics
       clearStoreStats(cachestores);
    }
 
-   private void clearStoreStats(List<DummyInMemoryStore> cachestores) {
+   private void clearStoreStats(List<DummyInMemoryStore<String, String>> cachestores) {
       cachestores.forEach(DummyInMemoryStore::clearStats);
    }
 
@@ -65,8 +65,8 @@ public class SharedStoreTest extends MultipleCacheManagersTest {
          assertEquals("value", c.get("key"));
       }
 
-      List<DummyInMemoryStore> cacheStores = TestingUtil.cachestores(caches());
-      for (DummyInMemoryStore dimcs: cacheStores) {
+      List<DummyInMemoryStore<String, String>> cacheStores = TestingUtil.cachestores(caches());
+      for (DummyInMemoryStore<String, String> dimcs: cacheStores) {
          assertTrue(dimcs.contains("key"));
          assertEquals(0, dimcs.stats().get("clear").intValue());
          assertEquals(0,  dimcs.stats().get("clear").intValue());
@@ -79,7 +79,7 @@ public class SharedStoreTest extends MultipleCacheManagersTest {
          assertNull(c.get("key"));
       }
 
-      for (DummyInMemoryStore dimcs: cacheStores) {
+      for (DummyInMemoryStore<String, String> dimcs: cacheStores) {
          assert !dimcs.contains("key");
          assertEquals("Entry should have been removed from the cache store just once", Integer.valueOf(1), dimcs.stats().get("delete"));
       }
@@ -89,8 +89,8 @@ public class SharedStoreTest extends MultipleCacheManagersTest {
       cache(0).getAdvancedCache().withFlags(Flag.SKIP_SHARED_CACHE_STORE).put("key", "value");
       assert cache(0).get("key").equals("value");
 
-      List<DummyInMemoryStore> cacheStores = TestingUtil.cachestores(caches());
-      for (DummyInMemoryStore dimcs: cacheStores) {
+      List<DummyInMemoryStore<String, String>> cacheStores = TestingUtil.cachestores(caches());
+      for (DummyInMemoryStore<String, String> dimcs: cacheStores) {
          assert !dimcs.contains("key");
          assert dimcs.stats().get("write") == 0 : "Cache store should NOT contain any entry. Put was with SKIP_SHARED_CACHE_STORE flag.";
       }
@@ -111,13 +111,13 @@ public class SharedStoreTest extends MultipleCacheManagersTest {
       assertStoreStatInvocationEquals(cache0, "size", 1);
    }
 
-   private void assertStoreStatInvocationEquals(Cache<?, ?> cache, String invocationName, int invocationCount) {
-      DummyInMemoryStore dims = TestingUtil.getFirstStore(cache);
+   private void assertStoreStatInvocationEquals(Cache<String, String> cache, String invocationName, int invocationCount) {
+      DummyInMemoryStore<String, String> dims = TestingUtil.getFirstStore(cache);
       assertEquals(invocationCount, dims.stats().get(invocationName).intValue());
    }
 
-   private void assertStoreDistinctInvocationAmount(Cache<?, ?> cache, int distinctInvocations) {
-      DummyInMemoryStore dims = TestingUtil.getFirstStore(cache);
+   private void assertStoreDistinctInvocationAmount(Cache<String, String> cache, int distinctInvocations) {
+      DummyInMemoryStore<String, String> dims = TestingUtil.getFirstStore(cache);
       assertEquals(distinctInvocations, dims.stats().values().stream().filter(i -> i > 0).count());
    }
 }

@@ -36,8 +36,8 @@ public class SharedCacheLoaderQueryIndexTest extends BaseReIndexingTest {
    public void testPreloadIndexingAfterAddingNewNode() {
       loadCacheEntries(this.<String, Person>caches().get(0));
 
-      List<DummyInMemoryStore> cacheStores = TestingUtil.cachestores(caches());
-      for (DummyInMemoryStore dimcs: cacheStores) {
+      List<DummyInMemoryStore<String, Person>> cacheStores = TestingUtil.cachestores(caches());
+      for (DummyInMemoryStore<String, Person> dimcs: cacheStores) {
          assertTrue("Cache misconfigured, maybe cache store not pointing to same place, maybe passivation on...etc", dimcs.contains(persons[0].getName()));
 
          int clear = dimcs.stats().get("clear");

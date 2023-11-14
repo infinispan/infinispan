@@ -26,7 +26,7 @@ import org.testng.annotations.Test;
  * @since 5.1
  */
 @Test(groups = "functional", testName = "distribution.DistStorePreloadTest")
-public class DistStorePreloadTest<D extends DistStorePreloadTest<?>> extends BaseDistStoreTest<String, String, D> {
+public class DistStorePreloadTest<D extends DistStorePreloadTest<D>> extends BaseDistStoreTest<String, String, D> {
 
    public static final int NUM_KEYS = 10;
 
@@ -52,7 +52,7 @@ public class DistStorePreloadTest<D extends DistStorePreloadTest<?>> extends Bas
    public void clearStats() {
       for (Cache<String, String> c: caches) {
          log.trace("Clearing stats for cache store on cache "+ c);
-         DummyInMemoryStore store = TestingUtil.getFirstStore(c);
+         DummyInMemoryStore<String, String> store = TestingUtil.getFirstStore(c);
          store.clear();
       }
 
@@ -69,7 +69,7 @@ public class DistStorePreloadTest<D extends DistStorePreloadTest<?>> extends Bas
       DataContainer<String, String> dc1 = c1.getAdvancedCache().getDataContainer();
       assert dc1.size() == NUM_KEYS;
 
-      DummyInMemoryStore store = TestingUtil.getFirstStore(c1);
+      DummyInMemoryStore<String, String> store = TestingUtil.getFirstStore(c1);
       assertEquals(NUM_KEYS, store.size());
 
       addClusterEnabledCacheManager(TestDataSCI.INSTANCE, null, new TransportFlags().withFD(false));

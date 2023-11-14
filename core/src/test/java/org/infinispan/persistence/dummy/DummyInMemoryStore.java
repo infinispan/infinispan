@@ -53,7 +53,7 @@ import io.reactivex.rxjava3.core.Flowable;
  */
 @ConfiguredBy(DummyInMemoryStoreConfiguration.class)
 @Store(shared = true)
-public class DummyInMemoryStore implements WaitNonBlockingStore {
+public class DummyInMemoryStore<K, V> implements WaitNonBlockingStore<K, V> {
    public static final int SLOW_STORE_WAIT = 100;
 
    private static final Log log = LogFactory.getLog(DummyInMemoryStore.class);
@@ -67,7 +67,6 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
    private int segmentCount;
    private AtomicInteger initCount = new AtomicInteger();
    private TimeService timeService;
-   private Cache<?, ?> cache;
    private PersistenceMarshaller marshaller;
    private DummyInMemoryStoreConfiguration configuration;
    private KeyPartitioner keyPartitioner;
@@ -82,7 +81,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
       this.ctx = ctx;
       this.configuration = ctx.getConfiguration();
       this.keyPartitioner = ctx.getKeyPartitioner();
-      this.cache = ctx.getCache();
+      Cache<?, ?> cache = ctx.getCache();
       this.marshaller = ctx.getPersistenceMarshaller();
       this.storeName = makeStoreName(configuration, cache);
       this.initCount.incrementAndGet();
@@ -94,6 +93,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
       if (configuration.startFailures() > startAttempts.incrementAndGet())
          throw new PersistenceException();
 
+      int segmentCount;
       if (configuration.segmented()) {
          ClusteringConfiguration clusteringConfiguration = cache.getCacheConfiguration().clustering();
          segmentCount = clusteringConfiguration.hash().numSegments();
@@ -232,7 +232,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
    }
 
    @Override
-   public Publisher<MarshallableEntry> purgeExpired() {
+   public Publisher<MarshallableEntry<K, V>> purgeExpired() {
       assertRunning();
       record("purgeExpired");
       return Flowable.defer(() -> {
@@ -253,12 +253,12 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
    }
 
    @Override
-   public CompletionStage<MarshallableEntry> load(int segment, Object key) {
+   public CompletionStage<MarshallableEntry<K, V>> load(int segment, Object key) {
       assertRunning();
       record("load");
       if (key == null) return null;
       Map<Object, byte[]> map = mapForSegment(segment);
-      MarshallableEntry me = deserialize(key, map.get(key));
+      MarshallableEntry<K, V> me = deserialize(key, map.get(key));
       if (me == null) return CompletableFutures.completedNull();
       long now = timeService.wallClockTime();
       if (isExpired(me, now)) {
@@ -367,10 +367,6 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
       stores.remove(storeName);
    }
 
-   public static void removeStatData(String storeName) {
-      storeStats.remove(storeName);
-   }
-
    public static AtomicReferenceArray<Map<Object, byte[]>> getStoreDataForName(String storeName) {
       return stores.get(storeName);
    }
@@ -464,7 +460,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
       record("containsKey");
       if (key == null) return CompletableFutures.completedFalse();
       Map<Object, byte[]> map = mapForSegment(segment);
-      MarshallableEntry me = deserialize(key, map.get(key));
+      MarshallableEntry<K, V>  me = deserialize(key, map.get(key));
       if (me == null) return CompletableFutures.completedFalse();
       long now = timeService.wallClockTime();
       if (isExpired(me, now)) {
@@ -485,14 +481,14 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
       }
    }
 
-   private MarshallableEntry deserialize(Object key, byte[] b) {
+   private MarshallableEntry<K, V> deserialize(Object key, byte[] b) {
       try {
          if (b == null)
             return null;
          // We have to fetch metadata to tell if a key or entry is expired. Note this can be changed
          // after API changes
          MarshalledValue value = (MarshalledValue) marshaller.objectFromByteBuffer(b);
-         return ctx.getMarshallableEntryFactory().create(key, value);
+         return (MarshallableEntry<K, V>) ctx.getMarshallableEntryFactory().create(key, value);
       } catch (ClassNotFoundException | IOException e) {
          throw new CacheException(e);
       }
