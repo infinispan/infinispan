@@ -1,5 +1,6 @@
 package org.infinispan.query.logging;
 
+import static org.infinispan.query.core.impl.Log.LOG_ROOT;
 import static org.jboss.logging.Logger.Level.DEBUG;
 import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.INFO;
@@ -10,6 +11,7 @@ import org.hibernate.search.util.common.SearchException;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.objectfilter.ParsingException;
+import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
@@ -29,7 +31,7 @@ import jakarta.transaction.Transaction;
  */
 @MessageLogger(projectCode = "ISPN")
 //@ValidIdRange(min = 14001, max = 14500)
-public interface Log extends org.infinispan.query.core.impl.Log {
+public interface Log extends BasicLogger {
 
    Log CONTAINER = Logger.getMessageLogger(Log.class, LOG_ROOT + "CONTAINER");
 
@@ -48,9 +50,9 @@ public interface Log extends org.infinispan.query.core.impl.Log {
    @Message(value = "Registering Query interceptor for cache %s", id = 14003)
    void registeringQueryInterceptor(String cacheName);
 
-   @LogMessage(level = DEBUG)
-   @Message(value = "Custom commands backend initialized backing index %s", id = 14004)
-   void commandsBackendInitialized(String indexName);
+//   @LogMessage(level = DEBUG)
+//   @Message(value = "Custom commands backend initialized backing index %s", id = 14004)
+//   void commandsBackendInitialized(String indexName);
 
 //   @LogMessage(level = TRACE)
 //   @Message(value = "Sent list of LuceneWork %s to node %s", id = 14005)
@@ -76,8 +78,8 @@ public interface Log extends org.infinispan.query.core.impl.Log {
 //   @Message(value = "Waiting for index lock was successful: '%1$s'", id = 14012)
 //   void waitingForLockAcquired(boolean waitForAvailabilityInternal);
 
-   @Message(value = "Cache named '%1$s' is being shut down. No longer accepting remote commands.", id = 14013)
-   CacheException cacheIsStoppingNoCommandAllowed(String cacheName);
+//   @Message(value = "Cache named '%1$s' is being shut down. No longer accepting remote commands.", id = 14013)
+//   CacheException cacheIsStoppingNoCommandAllowed(String cacheName);
 
    @LogMessage(level = INFO)
    @Message(value = "Reindexed %1$d entities in %2$d ms", id = 14014)
@@ -127,11 +129,11 @@ public interface Log extends org.infinispan.query.core.impl.Log {
 //   @Message(value = "infinispan-query.jar module is in the classpath but has not been properly initialised!", id = 14038)
 //   CacheException queryModuleNotInitialised();
 
-   @Message(value = "Queries containing groups or aggregations cannot be converted to an indexed query", id = 14039)
-   CacheException groupAggregationsNotSupported();
+//   @Message(value = "Queries containing groups or aggregations cannot be converted to an indexed query", id = 14039)
+//   CacheException groupAggregationsNotSupported();
 
-   @Message(value = "Unable to define filters, please use filters in the query string instead.", id = 14040)
-   CacheException filterNotSupportedWithQueryString();
+//   @Message(value = "Unable to define filters, please use filters in the query string instead.", id = 14040)
+//   CacheException filterNotSupportedWithQueryString();
 
 //   @Message(value = "Unable to define sort, please use sorting in the query string instead.", id = 14041)
 //   CacheException sortNotSupportedWithQueryString();
@@ -142,9 +144,9 @@ public interface Log extends org.infinispan.query.core.impl.Log {
          "org.infinispan.query.spi.SearchManagerImplementor.registerKeyTransformer.", id = 14043)
    CacheException noTransformerForKey(String keyClassName);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Failed to parse system property %s", id = 14044)
-   void failedToParseSystemProperty(String propertyName, @Cause Exception e);
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Failed to parse system property %s", id = 14044)
+//   void failedToParseSystemProperty(String propertyName, @Cause Exception e);
 
 //   @LogMessage(level = DEBUG)
 //   @Message(value = "Overriding org.apache.lucene.search.BooleanQuery.setMaxClauseCount to value %d to be able to deserialize a larger BooleanQuery", id = 14045)

@@ -174,8 +174,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Error while writing entries in batch to the database:", id = 8037)
    PersistenceException sqlFailureWritingBatch(@Cause Throwable e);
 
-   @Message(value = "Error whilst removing keys in batch from the database. Keys: %s", id = 8038)
-   PersistenceException sqlFailureDeletingBatch(Iterable<Object> keys, @Cause Exception e);
+//   @Message(value = "Error whilst removing keys in batch from the database. Keys: %s", id = 8038)
+//   PersistenceException sqlFailureDeletingBatch(Iterable<Object> keys, @Cause Exception e);
 
    @Message(value = "The existing store was created without segmentation enabled", id = 8039)
    CacheConfigurationException existingStoreNoSegmentation();

@@ -1,6 +1,6 @@
 package org.infinispan.query.clustered.commandworkers;
 
-import static org.infinispan.query.logging.Log.CONTAINER;
+import static org.infinispan.query.core.impl.Log.CONTAINER;
 
 import java.util.BitSet;
 import java.util.concurrent.CompletionStage;

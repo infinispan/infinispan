@@ -49,8 +49,8 @@ public interface Log extends BasicLogger {
    @Message(value = "The key must be a String ending with \".proto\" : %s", id = 28009)
    CacheException keyMustBeStringEndingWithProto(Object key);
 
-   @Message(value = "Failed to parse proto file.", id = 28010)
-   CacheException failedToParseProtoFile(@Cause Throwable cause);
+//   @Message(value = "Failed to parse proto file.", id = 28010)
+//   CacheException failedToParseProtoFile(@Cause Throwable cause);
 
    @Message(value = "Failed to parse proto file : %s", id = 28011)
    CacheException failedToParseProtoFile(String fileName, @Cause Throwable cause);

@@ -68,8 +68,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Invalid counter type. Expected=%s but got %s", id = 29514)
    CounterException invalidCounterType(String expected, String actual);
 
-   @Message(value = "Unable to fetch counter manager caches.", id = 29515)
-   CounterException unableToFetchCaches();
+//   @Message(value = "Unable to fetch counter manager caches.", id = 29515)
+//   CounterException unableToFetchCaches();
 
    @Message(value = "Counter '%s' is not defined.", id = 29516)
    CounterNotFoundException undefinedCounter(String name);

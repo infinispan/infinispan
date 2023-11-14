@@ -1,7 +1,7 @@
 package org.infinispan.query.impl;
 
+import static org.infinispan.query.core.impl.Log.CONTAINER;
 import static org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder.INFINISPAN_AGGREGATION_KEY_NAME;
-import static org.infinispan.query.logging.Log.CONTAINER;
 
 import java.util.ArrayList;
 import java.util.Collections;

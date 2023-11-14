@@ -2,8 +2,7 @@ package org.infinispan.query.clustered;
 
 import static java.util.Spliterators.spliteratorUnknownSize;
 import static java.util.stream.StreamSupport.stream;
-
-import static org.infinispan.query.logging.Log.CONTAINER;
+import static org.infinispan.query.core.impl.Log.CONTAINER;
 
 import java.util.Collections;
 import java.util.HashMap;
