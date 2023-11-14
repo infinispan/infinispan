@@ -869,7 +869,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          while (status == ComponentStatus.STOPPING) {
             lifecycleCondition.await();
          }
-         if (status != ComponentStatus.RUNNING && status != ComponentStatus.FAILED) {
+         if (!status.stopAllowed()) {
             log.trace("Ignore call to stop as the cache manager is not running");
             return;
          }
@@ -884,8 +884,20 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       }
 
       try {
+         log.debugf("Starting shutdown of caches at %s", identifierString);
          stopCaches();
+      } catch (Throwable t) {
+         log.errorf(t, "Exception during shutdown of caches. Proceeding...");
+      }
+
+      try {
+         log.debugf("Starting JMX shutdown at %s", identifierString);
          globalComponentRegistry.getComponent(CacheManagerJmxRegistration.class).stop();
+      } catch (Throwable t) {
+         log.errorf(t, "Exception during JMX shutdown. Proceeding...");
+      }
+
+      try {
          globalComponentRegistry.stop();
          log.debugf("Stopped cache manager %s", identifierString);
       } finally {

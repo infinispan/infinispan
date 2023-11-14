@@ -63,6 +63,15 @@ public final class TestModuleLifecycle implements ModuleLifecycle, DynamicModule
    }
 
    @Override
+   public void cacheManagerStarted(GlobalComponentRegistry gcr) {
+      if (testGlobalConfiguration == null)
+         return;
+
+      if (testGlobalConfiguration.cacheManagerStartedCallback() != null)
+         testGlobalConfiguration.cacheManagerStartedCallback().run();
+   }
+
+   @Override
    public void cacheStarting(ComponentRegistry cr, Configuration configuration, String cacheName) {
       if (testGlobalConfiguration == null)
          return;
