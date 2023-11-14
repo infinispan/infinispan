@@ -91,7 +91,7 @@ public class TestNameVerifier {
       classNamePart = classNamePart.substring("public class ".length());
       String packagePart = getPackagePart(javaString, filename);
       //if the test is in org.infinispan package then make sure no . is prepended
-      String packagePrepend = ((packagePart != null) && (packagePart.length() > 0)) ? packagePart + "." : "";
+      String packagePrepend = ((packagePart != null) && (!packagePart.isEmpty())) ? packagePart + "." : "";
       return packagePrepend + classNamePart;
    }
 
@@ -126,7 +126,7 @@ public class TestNameVerifier {
       BufferedReader fileReader = new BufferedReader(new FileReader(file));
       String line;
       while ((line = fileReader.readLine()) != null) {
-         builder.append(line + "\n");
+         builder.append(line).append("\n");
       }
       this.fileCache = builder.toString();
       return fileCache;
