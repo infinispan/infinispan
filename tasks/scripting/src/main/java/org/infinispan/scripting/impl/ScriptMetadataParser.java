@@ -3,6 +3,7 @@ package org.infinispan.scripting.impl;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -79,9 +80,7 @@ public class ScriptMetadataParser {
       if (s.charAt(0) == '[') {
          String[] ps = s.substring(1, s.length() - 1).split("\\s*,\\s*");
          Set<String> parameters = new HashSet<>();
-         for (String p : ps) {
-            parameters.add(p);
-         }
+         Collections.addAll(parameters, ps);
          return parameters;
       } else {
          throw log.parametersNotArray();

@@ -1,5 +1,6 @@
 package org.infinispan.configuration.global;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -73,10 +74,7 @@ public class GlobalRoleConfigurationBuilder extends AbstractGlobalConfigurationB
     * @param permissions the permissions to add to the role. See {@link AuthorizationPermission}
     */
    public GlobalRoleConfigurationBuilder permission(AuthorizationPermission... permissions) {
-      for (AuthorizationPermission permission : permissions) {
-         this.permissions.add(permission);
-      }
-
+      Collections.addAll(this.permissions, permissions);
       return this;
    }
 

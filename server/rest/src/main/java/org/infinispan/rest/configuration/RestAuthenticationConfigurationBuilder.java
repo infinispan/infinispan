@@ -4,6 +4,7 @@ import static org.infinispan.rest.configuration.RestAuthenticationConfiguration.
 import static org.infinispan.rest.configuration.RestAuthenticationConfiguration.METRICS_AUTH;
 import static org.infinispan.rest.configuration.RestAuthenticationConfiguration.SECURITY_REALM;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.infinispan.commons.configuration.Builder;
@@ -73,9 +74,7 @@ public class RestAuthenticationConfigurationBuilder extends AbstractProtocolServ
 
    public RestAuthenticationConfigurationBuilder addMechanisms(String... mechanisms) {
       List<String> mechs = attributes.attribute(MECHANISMS).get();
-      for (int i = 0; i < mechanisms.length; i++) {
-         mechs.add(mechanisms[i]);
-      }
+      Collections.addAll(mechs, mechanisms);
       attributes.attribute(MECHANISMS).set(mechs);
       return this.enable();
    }

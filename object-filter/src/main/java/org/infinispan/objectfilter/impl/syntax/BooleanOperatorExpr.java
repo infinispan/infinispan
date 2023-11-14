@@ -1,6 +1,7 @@
 package org.infinispan.objectfilter.impl.syntax;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -14,15 +15,11 @@ public abstract class BooleanOperatorExpr implements BooleanExpr {
    protected final List<BooleanExpr> children = new ArrayList<>();
 
    protected BooleanOperatorExpr(BooleanExpr... children) {
-      for (BooleanExpr child : children) {
-         this.children.add(child);
-      }
+      Collections.addAll(this.children, children);
    }
 
    protected BooleanOperatorExpr(List<BooleanExpr> children) {
-      for (BooleanExpr child : children) {
-         this.children.add(child);
-      }
+      this.children.addAll(children);
    }
 
    public List<BooleanExpr> getChildren() {

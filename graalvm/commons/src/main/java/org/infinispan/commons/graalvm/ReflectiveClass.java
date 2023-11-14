@@ -3,7 +3,6 @@ package org.infinispan.commons.graalvm;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,14 +30,12 @@ public class ReflectiveClass implements JsonSerialization {
    }
 
    private static Field[] getAllFields(Class<?> type) {
-      List<Field> fields = new ArrayList<>();
-      fields.addAll(Arrays.asList(type.getDeclaredFields()));
+      List<Field> fields = Arrays.asList(type.getDeclaredFields());
       return fields.toArray(new Field[0]);
    }
 
    private static Method[] getAllMethods(Class<?> type) {
-      List<Method> methods = new ArrayList<>();
-      methods.addAll(Arrays.asList(type.getDeclaredMethods()));
+      List<Method> methods = Arrays.asList(type.getDeclaredMethods());
       return methods.toArray(new Method[0]);
    }
 

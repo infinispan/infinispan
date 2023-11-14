@@ -182,8 +182,7 @@ public class Annotateds {
         builder.append("{");
 
         // now deal with the fields
-        List<AnnotatedField<? super X>> sortedFields = new ArrayList<AnnotatedField<? super X>>();
-        sortedFields.addAll(fields);
+       List<AnnotatedField<? super X>> sortedFields = new ArrayList<>(fields);
         Collections.sort(sortedFields, AnnotatedFieldComparator.<X>instance());
         for (AnnotatedField<? super X> field : sortedFields) {
             if (!field.getAnnotations().isEmpty()) {
@@ -193,8 +192,7 @@ public class Annotateds {
         }
 
         // methods
-        List<AnnotatedMethod<? super X>> sortedMethods = new ArrayList<AnnotatedMethod<? super X>>();
-        sortedMethods.addAll(methods);
+       List<AnnotatedMethod<? super X>> sortedMethods = new ArrayList<>(methods);
         Collections.sort(sortedMethods, AnnotatedMethodComparator.<X>instance());
         for (AnnotatedMethod<? super X> method : sortedMethods) {
             if (!method.getAnnotations().isEmpty() || hasMethodParameters(method)) {
@@ -204,8 +202,7 @@ public class Annotateds {
         }
 
         // constructors
-        List<AnnotatedConstructor<? super X>> sortedConstructors = new ArrayList<AnnotatedConstructor<? super X>>();
-        sortedConstructors.addAll(constructors);
+       List<AnnotatedConstructor<? super X>> sortedConstructors = new ArrayList<>(constructors);
         Collections.sort(sortedConstructors, AnnotatedConstructorComparator.<X>instance());
         for (AnnotatedConstructor<? super X> constructor : sortedConstructors) {
             if (!constructor.getAnnotations().isEmpty() || hasMethodParameters(constructor)) {
@@ -316,7 +313,7 @@ public class Annotateds {
 
         List<Annotation> annotationList = new ArrayList<Annotation>(annotations.size());
         annotationList.addAll(annotations);
-        Collections.sort(annotationList, AnnotationComparator.INSTANCE);
+        annotationList.sort(AnnotationComparator.INSTANCE);
 
         for (Annotation a : annotationList) {
             builder.append('@');
@@ -324,10 +321,8 @@ public class Annotateds {
             builder.append('(');
             Method[] declaredMethods = a.annotationType().getDeclaredMethods();
             List<Method> methods = new ArrayList<Method>(declaredMethods.length);
-            for (Method m : declaredMethods) {
-                methods.add(m);
-            }
-            Collections.sort(methods, MethodComparator.INSTANCE);
+            Collections.addAll(methods, declaredMethods);
+            methods.sort(MethodComparator.INSTANCE);
 
             for (int i = 0; i < methods.size(); ++i) {
                 Method method = methods.get(i);
