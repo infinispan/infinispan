@@ -31,7 +31,7 @@ Must be used in combination with the `--value` option.
 Mutually exclusive with the `--file` option.
 
 *--value*='VALUE'::
-Specifies the new value for a configuration attribute.
+Specifies one or more new values for a configuration attribute. Separate multiple values with a comma.
 Must be used in combination with the `--attribute` option.
 
 

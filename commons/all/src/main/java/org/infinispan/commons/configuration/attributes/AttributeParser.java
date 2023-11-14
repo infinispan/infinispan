@@ -8,7 +8,7 @@ import org.infinispan.commons.util.Util;
  * @since 15.0
  */
 public interface AttributeParser<T> {
-   AttributeParser<Object> DEFAULT = (klass, value) -> Util.fromString(klass, value);
+   AttributeParser<Object> DEFAULT = Util::fromString;
 
-   T parse(Class klass, String value);
+   T parse(Class<?> klass, String value);
 }
