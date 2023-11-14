@@ -563,13 +563,10 @@ public abstract class CorrectnessTestCase {
 
    private <T> NavigableMap<Integer, List<Log<T>>> getWritesAtTime(List<Log<T>> list) {
       NavigableMap<Integer, List<Log<T>>> writes = new TreeMap<>();
-      for (Log log : list) {
+      for (Log<T> log : list) {
          if (log.type != LogType.WRITE) continue;
          for (int time = log.before; time <= log.after; ++time) {
-            List<Log<T>> onTime = writes.get(time);
-            if (onTime == null) {
-               writes.put(time, onTime = new ArrayList<>());
-            }
+            List<Log<T>> onTime = writes.computeIfAbsent(time, k -> new ArrayList<>());
             onTime.add(log);
          }
       }
@@ -577,9 +574,9 @@ public abstract class CorrectnessTestCase {
    }
 
    private <T> void checkCorrectness(String dumpPrefix, List<Log<T>> logs, NavigableMap<Integer, List<Log<T>>> writesByTime) {
-      Collections.sort(logs, WALL_CLOCK_TIME_COMPARATOR);
+      logs.sort(WALL_CLOCK_TIME_COMPARATOR);
       int nullReads = 0, reads = 0, writes = 0;
-      for (Log read : logs) {
+      for (Log<T> read : logs) {
          if (read.type != LogType.READ) {
             writes++;
             continue;
