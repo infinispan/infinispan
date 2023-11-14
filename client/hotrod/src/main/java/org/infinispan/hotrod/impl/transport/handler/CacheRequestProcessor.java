@@ -114,8 +114,7 @@ public class CacheRequestProcessor {
    }
 
    public Object parseToObject(HotRodOperation<?> operation, byte[] data) {
-      assert operation.header() instanceof HeaderParams : "Unknown header type";
-      HeaderParams params = (HeaderParams) operation.header();
+      HeaderParams params = operation.header();
       return params.dataFormat().valueToObj(data, configuration.getClassAllowList());
    }
 }
