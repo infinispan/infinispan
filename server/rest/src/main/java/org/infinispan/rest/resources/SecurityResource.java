@@ -29,6 +29,7 @@ import org.infinispan.security.mappers.ClusterRoleMapper;
 import org.infinispan.server.core.ServerManagement;
 
 import javax.security.auth.Subject;
+import java.security.Principal;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -269,16 +270,33 @@ public class SecurityResource implements ResourceHandler {
       }
 
       String principal = request.variables().get("principal");
-      if (newAccess  && principalRoleMapper.listPrincipalsAndRoleSet().contains(principal)) {
-         return completedFuture(invocationHelper.newResponse(request).status(CONFLICT).build());
-      }
-
       List<String> roles = request.parameters().get("role");
       if (roles == null) {
          return completedFuture(builder.status(HttpResponseStatus.BAD_REQUEST).build());
       }
+
+      if (newAccess  && principalRoleMapper.listPrincipalsAndRoleSet().contains(principal)) {
+         return completedFuture(invocationHelper.newResponse(request).status(CONFLICT).build());
+      }
+
+      if (newAccess && containsPrincipalName(principal)) {
+         return completedFuture(invocationHelper.newResponse(request).status(CONFLICT).build());
+      }
+
       roles.forEach(r -> principalRoleMapper.grant(r, principal));
       return aclCacheFlush(request);
+   }
+
+   private boolean containsPrincipalName(String principal) {
+      Map<String, List<Principal>> users = invocationHelper.getServer().getUsers();
+      for (List<Principal> principals: users.values()) {
+         for (Principal p : principals) {
+           if (p.getName().equals(principal)) {
+              return true;
+           }
+         }
+      }
+      return false;
    }
 
    private CompletionStage<RestResponse> listAllRoles(RestRequest request, boolean detailed) {
