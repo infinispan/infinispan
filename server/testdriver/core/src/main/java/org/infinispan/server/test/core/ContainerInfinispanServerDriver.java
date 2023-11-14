@@ -420,16 +420,20 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
 
    @Override
    public void restart(int server) {
+      CountdownLatchLoggingConsumer startupLatch = new CountdownLatchLoggingConsumer(1, STARTUP_MESSAGE_REGEX);
+      restart(server, startupLatch);
+      Exceptions.unchecked(() -> startupLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+   }
+
+   public void restart(int server, Consumer<OutputFrame> consumer) {
       if (isRunning(server)) {
          throw new IllegalStateException("Server " + server + " is still running");
       }
-      CountdownLatchLoggingConsumer startupLatch = new CountdownLatchLoggingConsumer(1, STARTUP_MESSAGE_REGEX);
       // We can stop the server by doing a rest call. TestContainers has a state about each container. We clean that state
       stop(server);
 
       log.infof("Restarting container %d", server);
-      createContainer(server, startupLatch);
-      Exceptions.unchecked(() -> startupLatch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+      createContainer(server, consumer);
    }
 
    @Override
