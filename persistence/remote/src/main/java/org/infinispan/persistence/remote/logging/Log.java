@@ -2,7 +2,6 @@ package org.infinispan.persistence.remote.logging;
 
 import static org.infinispan.util.logging.Log.LOG_ROOT;
 import static org.jboss.logging.Logger.Level.INFO;
-import static org.jboss.logging.Logger.Level.WARN;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.commons.CacheConfigurationException;
@@ -11,7 +10,6 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.Marshaller;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
-import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
@@ -27,12 +25,12 @@ import org.jboss.logging.annotations.MessageLogger;
 public interface Log extends BasicLogger {
    Log CONFIG = Logger.getMessageLogger(Log.class, LOG_ROOT + "CONFIG");
 
-   @Message(value = "Could not find migration data in cache %s", id = 276)
-   CacheException missingMigrationData(String name);
+//   @Message(value = "Could not find migration data in cache %s", id = 276)
+//   CacheException missingMigrationData(String name);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Could not migrate key %s", id = 277)
-   void keyMigrationFailed(String key, @Cause Throwable cause);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Could not migrate key %s", id = 277)
+//   void keyMigrationFailed(String key, @Cause Throwable cause);
 
    @LogMessage(level = INFO)
    @Message(value = "Ignoring XML attribute %s, please remove from configuration file", id = 293)
@@ -44,8 +42,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot enable HotRod wrapping if a marshaller and/or an entryWrapper have already been set", id = 10005)
    CacheConfigurationException cannotEnableHotRodWrapping();
 
-   @Message(value = "The RemoteCacheStore for cache %s should be configured with hotRodWrapping enabled", id = 10007)
-   CacheException remoteStoreNoHotRodWrapping(String cacheName);
+//   @Message(value = "The RemoteCacheStore for cache %s should be configured with hotRodWrapping enabled", id = 10007)
+//   CacheException remoteStoreNoHotRodWrapping(String cacheName);
 
    @Message(value = "RemoteStore only supports segmentation when using at least protocol version %s or higher", id = 10008)
    CacheConfigurationException segmentationNotSupportedInThisVersion(ProtocolVersion version);

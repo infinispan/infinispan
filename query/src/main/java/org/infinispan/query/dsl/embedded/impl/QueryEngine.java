@@ -1,6 +1,6 @@
 package org.infinispan.query.dsl.embedded.impl;
 
-import static org.infinispan.query.logging.Log.CONTAINER;
+import static org.infinispan.query.core.impl.Log.CONTAINER;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -658,7 +658,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       }
 
       if (!isIndexed) {
-         throw CONTAINER.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
+         throw Log.CONTAINER.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
       }
       return transformParsingResult(parse(queryString), namedParameters);
    }
@@ -670,7 +670,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       }
 
       if (!isIndexed) {
-         throw CONTAINER.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
+         throw Log.CONTAINER.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
       }
 
       SearchQueryBuilder searchQuery = transformParsingResult(parsingResult, namedParameters);
@@ -719,7 +719,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
    protected IndexedQuery<?> makeCacheQuery(IckleParsingResult<TypeMetadata> ickleParsingResult,
                                             SearchQueryBuilder searchQuery, Map<String, Object> namedParameters, boolean local) {
       if (!isIndexed) {
-         throw CONTAINER.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
+         throw Log.CONTAINER.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
       }
       String queryString = ickleParsingResult.getQueryString();
       if (broadcastQuery && !local) {

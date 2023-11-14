@@ -168,8 +168,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Invalid media type '%s': invalid param '%s'", id = 931)
    EncodingException invalidMediaTypeParam(String mediaType, String param);
 
-   @Message(value = "Invalid media type list '%s': comma expected", id = 932)
-   EncodingException invalidMediaTypeListCommaMissing(String mediaType);
+//   @Message(value = "Invalid media type list '%s': comma expected", id = 932)
+//   EncodingException invalidMediaTypeListCommaMissing(String mediaType);
 
    @Message(value = "Invalid media type list '%s': type expected after comma", id = 933)
    EncodingException invalidMediaTypeListCommaAtEnd(String mediaType);

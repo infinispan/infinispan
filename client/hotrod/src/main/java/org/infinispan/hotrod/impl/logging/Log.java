@@ -159,15 +159,15 @@ public interface Log extends BasicLogger {
    @Message(value = "Unable to complete reading event from server %s", id = 4039)
    void unableToReadEventFromServer(@Cause Throwable t, SocketAddress server);
 
-   @Message(value = "Cache listener class %s must be annotated with org.infinispan.hotrod.annotation.ClientListener", id = 4040)
-   IncorrectClientListenerException missingClientListenerAnnotation(String className);
+//   @Message(value = "Cache listener class %s must be annotated with org.infinispan.hotrod.annotation.ClientListener", id = 4040)
+//   IncorrectClientListenerException missingClientListenerAnnotation(String className);
 
    @Message(value = "Unknown event type %s received", id = 4041)
    HotRodClientException unknownEvent(short eventTypeId);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Unable to set method %s accessible", id = 4042)
-   void unableToSetAccesible(Method m, @Cause Exception e);
+//   @LogMessage(level = ERROR)
+//   @Message(value = "Unable to set method %s accessible", id = 4042)
+//   void unableToSetAccesible(Method m, @Cause Exception e);
 
 //   @LogMessage(level = ERROR)
 //   @Message(value = "Unrecoverable error reading event from server %s, exiting listener %s", id = 4043)
@@ -209,8 +209,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Name of the failover cluster needs to be specified", id = 4054)
    CacheConfigurationException missingClusterNameDefinition();
 
-   @Message(value = "Host needs to be specified in server definition of failover cluster", id = 4055)
-   CacheConfigurationException missingHostDefinition();
+//   @Message(value = "Host needs to be specified in server definition of failover cluster", id = 4055)
+//   CacheConfigurationException missingHostDefinition();
 
    @Message(value = "At least one server address needs to be specified for failover cluster %s", id = 4056)
    CacheConfigurationException missingClusterServersDefinition(String siteName);
@@ -218,11 +218,11 @@ public interface Log extends BasicLogger {
    @Message(value = "Duplicate failover cluster %s has been specified", id = 4057)
    CacheConfigurationException duplicateClusterDefinition(String siteName);
 
-   @Message(value = "The client listener must use raw data when it uses a query as a filter: %s", id = 4058)
-   IncorrectClientListenerException clientListenerMustUseRawData(String className);
+//   @Message(value = "The client listener must use raw data when it uses a query as a filter: %s", id = 4058)
+//   IncorrectClientListenerException clientListenerMustUseRawData(String className);
 
-   @Message(value = "The client listener must use the '%s' filter/converter factory", id = 4059)
-   IncorrectClientListenerException clientListenerMustUseDesignatedFilterConverterFactory(String filterConverterFactoryName);
+//   @Message(value = "The client listener must use the '%s' filter/converter factory", id = 4059)
+//   IncorrectClientListenerException clientListenerMustUseDesignatedFilterConverterFactory(String filterConverterFactoryName);
 
    @LogMessage(level = WARN)
    @Message(value = "Ignoring error when closing iteration '%s'", id = 4061)
@@ -275,8 +275,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Native Epoll transport not available, using NIO instead: %s", id = 4074)
    void epollNotAvailable(String cause);
 
-   @Message(value = "TrustStoreFileName and TrustStorePath are mutually exclusive", id = 4075)
-   CacheConfigurationException trustStoreFileAndPathExclusive();
+//   @Message(value = "TrustStoreFileName and TrustStorePath are mutually exclusive", id = 4075)
+//   CacheConfigurationException trustStoreFileAndPathExclusive();
 
    @Message(value = "Unknown message id %d; cannot find matching request", id = 4076)
    IllegalStateException unknownMessageId(long messageId);
@@ -314,8 +314,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Use of maxIdle expiration with a near cache is unsupported.", id = 4087)
    void nearCacheMaxIdleUnsupported();
 
-   @Message(value = "Transactions timeout must be positive", id = 4088)
-   HotRodClientException invalidTransactionTimeout();
+//   @Message(value = "Transactions timeout must be positive", id = 4088)
+//   HotRodClientException invalidTransactionTimeout();
 
    @Message(value = "TransactionTable is not started!", id = 4089)
    HotRodClientException transactionTableNotStarted();
@@ -348,17 +348,17 @@ public interface Log extends BasicLogger {
    @Message(value = "Closing connection %s due to transport error", id = 4098)
    void closingChannelAfterError(Channel channel, @Cause Throwable t);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Remote iteration over the entire result set of query '%s' without using pagination options is inefficient for large result sets. Please consider using 'startOffset' and 'maxResults' options.", id = 4099)
-   void warnPerfRemoteIterationWithoutPagination(String query);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Remote iteration over the entire result set of query '%s' without using pagination options is inefficient for large result sets. Please consider using 'startOffset' and 'maxResults' options.", id = 4099)
+//   void warnPerfRemoteIterationWithoutPagination(String query);
 
    @LogMessage(level = WARN)
    @Message(value = "Error reaching the server during iteration", id = 4100)
    void throwableDuringPublisher(@Cause Throwable t);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Configuration property '%s' has been deprecated", id = 4101)
-   void deprecatedConfigurationProperty(String property);
+//   @LogMessage(level = WARN)
+//   @Message(value = "Configuration property '%s' has been deprecated", id = 4101)
+//   void deprecatedConfigurationProperty(String property);
 
    @Message(value = "Near cache number of max entries must be a positive number when using bloom filter optimization, it was %d", id = 4102)
    CacheConfigurationException nearCacheMaxEntriesPositiveWithBloom(int maxEntries);

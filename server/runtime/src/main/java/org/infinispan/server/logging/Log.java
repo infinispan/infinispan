@@ -93,8 +93,8 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Protocol Router listening on %s:%d", id = 80019)
 //   void routerStarted(String host, int port);
 
-   @Message(value = "Cannot use a trust store without a server identity", id = 80020)
-   CacheConfigurationException trustStoreWithoutServerIdentity();
+//   @Message(value = "Cannot use a trust store without a server identity", id = 80020)
+//   CacheConfigurationException trustStoreWithoutServerIdentity();
 
    @Message(value = "Authentication cannot be configured without a security realm", id = 80021)
    CacheConfigurationException authenticationWithoutSecurityRealm();

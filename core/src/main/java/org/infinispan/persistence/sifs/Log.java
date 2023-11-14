@@ -23,8 +23,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Min size of index node (%d) must be less or equal to max size (%d).", id = 29002)
    CacheConfigurationException minNodeSizeMustBeLessOrEqualToMax(int minNodeSize, int maxNodeSize);
 
-   @Message(value = "Calculation of size has been interrupted.", id = 29003)
-   PersistenceException sizeCalculationInterrupted(@Cause InterruptedException e);
+//   @Message(value = "Calculation of size has been interrupted.", id = 29003)
+//   PersistenceException sizeCalculationInterrupted(@Cause InterruptedException e);
 
 //   @LogMessage(level = Logger.Level.ERROR)
 //   @Message(value = "Failed processing task for key %s", id = 29004)
@@ -38,17 +38,17 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot truncate index", id = 29006)
    void cannotTruncateIndex(@Cause IOException e);
 
-   @LogMessage(level = Logger.Level.ERROR)
-   @Message(value = "Unexpected error in index updater thread.", id = 29007)
-   void errorInIndexUpdater(@Cause Throwable e);
+//   @LogMessage(level = Logger.Level.ERROR)
+//   @Message(value = "Unexpected error in index updater thread.", id = 29007)
+//   void errorInIndexUpdater(@Cause Throwable e);
 
-   @LogMessage(level = Logger.Level.ERROR)
-   @Message(value = "Failed to close the index file.", id = 29008)
-   void failedToCloseIndex(@Cause IOException e);
+//   @LogMessage(level = Logger.Level.ERROR)
+//   @Message(value = "Failed to close the index file.", id = 29008)
+//   void failedToCloseIndex(@Cause IOException e);
 
-   @LogMessage(level = Logger.Level.ERROR)
-   @Message(value = "Unexpected error in data compactor.", id = 29009)
-   void compactorFailed(@Cause Throwable e);
+//   @LogMessage(level = Logger.Level.ERROR)
+//   @Message(value = "Unexpected error in data compactor.", id = 29009)
+//   void compactorFailed(@Cause Throwable e);
 
    @LogMessage(level = Logger.Level.ERROR)
    @Message(value = "Cannot close/delete data file %d.", id = 290010)
@@ -67,11 +67,11 @@ public interface Log extends BasicLogger {
    @Message(value = "Interrupted while stopping the store", id = 29014)
    PersistenceException interruptedWhileStopping(@Cause InterruptedException e);
 
-   @Message(value = "Interrupted while pausing the index for clear.", id = 29015)
-   PersistenceException interruptedWhileClearing(@Cause InterruptedException e);
+//   @Message(value = "Interrupted while pausing the index for clear.", id = 29015)
+//   PersistenceException interruptedWhileClearing(@Cause InterruptedException e);
 
-   @Message(value = "Cannot clear/reopen index.", id = 29016)
-   PersistenceException cannotClearIndex(@Cause IOException e);
+//   @Message(value = "Cannot clear/reopen index.", id = 29016)
+//   PersistenceException cannotClearIndex(@Cause IOException e);
 
    @Message(value = "Cannot clear data directory.", id = 29017)
    PersistenceException cannotClearData(@Cause IOException e);
