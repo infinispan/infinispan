@@ -388,6 +388,14 @@ public class Server extends BaseServerManagement implements AutoCloseable {
       if (status == ComponentStatus.RUNNING) {
          return r;
       }
+      CompletableFuture<ExitStatus> exit = r.handle((status, t) -> {
+         if (t != null) {
+            Server.log.serverFailedToStart(Version.getBrandName(), t);
+         }
+         localShutdown(status);
+         return null;
+      });
+
       protocolServers = new ConcurrentHashMap<>(4);
       try {
          // Load any server extensions
@@ -487,14 +495,7 @@ public class Server extends BaseServerManagement implements AutoCloseable {
       } catch (Exception e) {
          r.completeExceptionally(e);
       }
-      r = r.handle((status, t) -> {
-         if (t != null) {
-            Server.log.serverFailedToStart(Version.getBrandName(), t);
-         }
-         localShutdown(status);
-         return null;
-      });
-      return r;
+      return exit;
    }
 
    @Override

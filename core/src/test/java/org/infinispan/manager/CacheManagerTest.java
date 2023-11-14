@@ -1,6 +1,7 @@
 package org.infinispan.manager;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.extractGlobalComponentRegistry;
@@ -15,6 +16,7 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.infinispan.test.TestingUtil.withCacheManagers;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -74,6 +76,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.TestException;
+import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -326,6 +329,38 @@ public class CacheManagerTest extends AbstractInfinispanTest {
 
          killCacheManagers(manager);
       }
+   }
+
+   public void testConcurrentStopDuringStart() throws Exception {
+      CheckPoint checkPoint = new CheckPoint();
+      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder();
+      globalBuilder.addModule(TestGlobalConfigurationBuilder.class)
+            .cacheManagerStartedCallback(() -> {
+               checkPoint.trigger("cache_manager_starting");
+               try {
+                  checkPoint.awaitStrict("cache_manager_proceed", 15, SECONDS);
+               } catch (InterruptedException | TimeoutException e) {
+                  fail(e);
+               }
+            });
+      EmbeddedCacheManager manager = createCacheManager(globalBuilder, new ConfigurationBuilder(), false);
+
+      Future<Void> starting = fork(manager::start);
+      checkPoint.awaitStrict("cache_manager_starting", 10, SECONDS);
+      assertThat(manager.getStatus() == ComponentStatus.INITIALIZING).isTrue();
+
+      // Stop while in INITIALIZING status.
+      manager.stop();
+
+      // Cache manager is able to TERMINATE.
+      eventually(() -> manager.getStatus() == ComponentStatus.TERMINATED);
+      checkPoint.trigger("cache_manager_proceed");
+
+      // And start future does not throw.
+      starting.get(10, SECONDS);
+
+      // And after going to terminated, it doesn't come back.
+      assertThat(manager.getStatus() == ComponentStatus.TERMINATED).isTrue();
    }
 
    public void testRemoveNonExistentCache(Method m) {

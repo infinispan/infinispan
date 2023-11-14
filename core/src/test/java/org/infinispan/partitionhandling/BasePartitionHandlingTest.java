@@ -528,7 +528,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       return channel(cache.getCacheManager());
    }
 
-   private JChannel channel(EmbeddedCacheManager manager) {
+   protected JChannel channel(EmbeddedCacheManager manager) {
       return extractJChannel(manager);
    }
 

@@ -37,6 +37,13 @@ public class ExitStatus implements Serializable {
       this.status = status;
    }
 
+   @Override
+   public String toString() {
+      return "ExitStatus{" +
+            "mode=" + mode +
+            ", status=" + status +
+            '}';
+   }
 
    public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<ExitStatus> {
       @Override
