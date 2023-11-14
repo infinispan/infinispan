@@ -82,11 +82,11 @@ public class JdbcConfigurationUtil {
 
       String prop;
       if ((prop = props.get(DB, MAJOR_VERSION)) != null) {
-         builder.dbMajorVersion(new Integer(prop));
+         builder.dbMajorVersion(Integer.parseInt(prop));
       }
 
       if ((prop = props.get(DB, MINOR_VERSION)) != null) {
-         builder.dbMinorVersion(new Integer(prop));
+         builder.dbMinorVersion(Integer.parseInt(prop));
       }
 
       String disableUpsert = props.get(DB, DISABLE_UPSERT);

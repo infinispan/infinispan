@@ -163,7 +163,7 @@ public class SerializationConfigUtil {
             String[] extArray = ext.split(":");
             String className = extArray.length > 1 ? extArray[1] : extArray[0];
             AdvancedExternalizer<?> instance = Util.getInstance(className, SerializationConfigUtil.class.getClassLoader());
-            int id = extArray.length > 1 ? new Integer(extArray[0]) : instance.getId();
+            int id = extArray.length > 1 ? Integer.parseInt(extArray[0]) : instance.getId();
             map.put(id, instance);
          }
       }
