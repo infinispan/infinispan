@@ -131,5 +131,8 @@ public interface AvailabilityStrategyContext {
     */
    boolean restartConflictResolution(List<Address> newMembers);
 
+   /**
+    * @return true if manually set to {@link AvailabilityMode#DEGRADED_MODE}, and false, otherwise.
+    */
    boolean isManuallyDegraded();
 }

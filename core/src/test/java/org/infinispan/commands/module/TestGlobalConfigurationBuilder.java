@@ -51,6 +51,11 @@ public class TestGlobalConfigurationBuilder implements Builder<TestGlobalConfigu
       return this;
    }
 
+   public TestGlobalConfigurationBuilder cacheManagerStartedCallback(Runnable callback) {
+      this.attributes.attribute(TestGlobalConfiguration.CACHE_MANAGER_STARTED_CALLBACK).set(callback);
+      return this;
+   }
+
    @Override
    public void validate() {
       //nothing

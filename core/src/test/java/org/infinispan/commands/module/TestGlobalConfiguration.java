@@ -39,6 +39,10 @@ public class TestGlobalConfiguration {
                .initializer(ArrayList::new)
                .copier(identityCopier()).build();
 
+   static final AttributeDefinition<Runnable> CACHE_MANAGER_STARTED_CALLBACK =
+         AttributeDefinition.<Runnable>builder("cacheManagerStartedCallback", () -> {})
+               .copier(identityCopier()).build();
+
    private final AttributeSet attributes;
 
    TestGlobalConfiguration(AttributeSet attributeSet) {
@@ -47,7 +51,7 @@ public class TestGlobalConfiguration {
 
    static AttributeSet attributeSet() {
       return new AttributeSet(TestGlobalConfiguration.class, GLOBAL_TEST_COMPONENTS, CACHE_TEST_COMPONENTS,
-            CACHE_STARTING_CALLBACKS);
+            CACHE_STARTING_CALLBACKS, CACHE_MANAGER_STARTED_CALLBACK);
    }
 
    public AttributeSet attributes() {
@@ -90,5 +94,9 @@ public class TestGlobalConfiguration {
 
    public List<Consumer<ComponentRegistry>> cacheStartCallbacks() {
       return attributes.attribute(CACHE_STARTING_CALLBACKS).get();
+   }
+
+   public Runnable cacheManagerStartedCallback() {
+      return attributes.attribute(CACHE_MANAGER_STARTED_CALLBACK).get();
    }
 }
