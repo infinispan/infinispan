@@ -2,6 +2,7 @@ package org.infinispan.commons.util;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -32,7 +33,7 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
    }
 
    protected static boolean eq(Object o1, Object o2) {
-      return o1 == o2 || (o1 != null && o1.equals(o2));
+      return Objects.equals(o1, o2);
    }
 
    protected static void assertKeyNotNull(Object key) {

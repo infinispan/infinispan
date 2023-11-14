@@ -1,6 +1,7 @@
 package org.infinispan.commons.util;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -63,11 +64,9 @@ public class KeyValueWithPrevious<K, V> implements Serializable {
 
       KeyValueWithPrevious keyValueWithPrevious = (KeyValueWithPrevious) o;
 
-      if (key != null ? !key.equals(keyValueWithPrevious.key) : keyValueWithPrevious.key != null) return false;
-      if (prev != null ? !prev.equals(keyValueWithPrevious.prev) : keyValueWithPrevious.prev != null) return false;
-      if (value != null ? !value.equals(keyValueWithPrevious.value) : keyValueWithPrevious.value != null) return false;
-
-      return true;
+      if (!Objects.equals(key, keyValueWithPrevious.key)) return false;
+      if (!Objects.equals(prev, keyValueWithPrevious.prev)) return false;
+      return Objects.equals(value, keyValueWithPrevious.value);
    }
 
    @Override

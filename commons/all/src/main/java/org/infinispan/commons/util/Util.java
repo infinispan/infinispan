@@ -360,17 +360,6 @@ public final class Util {
    private Util() {
    }
 
-   /**
-    * Null-safe equality test.
-    *
-    * @param a first object to compare
-    * @param b second object to compare
-    * @return true if the objects are equals or both null, false otherwise.
-    */
-   public static boolean safeEquals(Object a, Object b) {
-      return (a == b) || (a != null && a.equals(b));
-   }
-
    public static String prettyPrintTime(long time, TimeUnit unit) {
       return prettyPrintTime(unit.toMillis(time));
    }
