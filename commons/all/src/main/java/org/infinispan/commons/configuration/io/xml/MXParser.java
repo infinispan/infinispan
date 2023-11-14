@@ -2738,8 +2738,8 @@ public class MXParser implements XmlPullParser {
                         expectedTagStack.append(" and"); //more than one end tag
                      }
                      String tagName = new String(elRawName[i], 0, elRawNameEnd[i]);
-                     expectedTagStack.append(" start tag <" + tagName + ">");
-                     expectedTagStack.append(" from line " + elRawNameLine[i]);
+                     expectedTagStack.append(" start tag <").append(tagName).append(">");
+                     expectedTagStack.append(" from line ").append(elRawNameLine[i]);
                   }
                   expectedTagStack.append(", parser stopped on");
                }
