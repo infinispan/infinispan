@@ -13,7 +13,7 @@ import java.util.concurrent.TimeoutException;
  * @since 5.0
  */
 public class ValueFuture<V> implements Future<V> {
-   private CountDownLatch setLatch = new CountDownLatch(1);
+   private final CountDownLatch setLatch = new CountDownLatch(1);
    private V value;
    private Throwable exception;
 

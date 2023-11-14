@@ -16,12 +16,12 @@ import org.infinispan.protostream.types.java.math.BigIntegerAdapter;
 @Indexed
 public class Product {
 
-   private String name;
-   private Long code;
-   private Double price;
-   private String description;
-   private BigInteger purchases;
-   private Instant moment;
+   private final String name;
+   private final Long code;
+   private final Double price;
+   private final String description;
+   private final BigInteger purchases;
+   private final Instant moment;
 
    @ProtoFactory
    public Product(String name, Long code, Double price, String description, BigInteger purchases, Instant moment) {

@@ -20,8 +20,8 @@ public abstract class InstanceReusingAdvancedExternalizer<T> extends AbstractExt
       Map<Object, Integer> map = new HashMap<>();
       int offset;
    }
-   private static ThreadLocal<ReusableData> cachedWriteObjects = new ThreadLocal<ReusableData>();
-   private static ThreadLocal<List<Object>> cachedReadObjects = new ThreadLocal<List<Object>>();
+   private static final ThreadLocal<ReusableData> cachedWriteObjects = new ThreadLocal<ReusableData>();
+   private static final ThreadLocal<List<Object>> cachedReadObjects = new ThreadLocal<List<Object>>();
 
    private static final int ID_NO_REPEAT                 = 0x01;
    private static final int ID_REPEAT_OBJECT_NEAR        = 0x02;

@@ -66,11 +66,11 @@ public class DomainDataRegionImpl
    private final AdvancedCache<Object, Object> localCache;
    private final Map<String, Comparator<Object>> comparatorsByType = new HashMap<>();
 
-   private long tombstoneExpiration;
+   private final long tombstoneExpiration;
    private PutFromLoadValidator validator;
 
    private Strategy strategy;
-   private MetaParam.MetaLifespan expiringMetaParam;
+   private final MetaParam.MetaLifespan expiringMetaParam;
 
    protected enum Strategy {
       NONE, VALIDATION, TOMBSTONES, VERSIONED_ENTRIES

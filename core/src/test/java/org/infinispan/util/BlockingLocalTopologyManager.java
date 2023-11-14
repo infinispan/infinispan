@@ -292,7 +292,7 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
    }
 
    public class BlockedTopology {
-      private Event event;
+      private final Event event;
 
       BlockedTopology(Event event) {
          this.event = event;
@@ -320,7 +320,7 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
    }
 
    public class BlockedConfirmation {
-      private Event event;
+      private final Event event;
 
       BlockedConfirmation(Event event) {
          this.event = event;

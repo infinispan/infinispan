@@ -38,7 +38,7 @@ public class BoundedPurgePolicy extends AbstractLifeCycle implements PurgePolicy
    public static final String VALUE = "";
    private final int maxSize;
    private final Map<String, String> appendersUsage;
-   private String excludePrefix;
+   private final String excludePrefix;
    private RoutingAppender routingAppender;
 
    public BoundedPurgePolicy(final int maxSize, String excludePrefix) {

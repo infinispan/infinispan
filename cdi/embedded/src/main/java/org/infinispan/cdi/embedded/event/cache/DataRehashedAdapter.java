@@ -29,7 +29,7 @@ public class DataRehashedAdapter<K, V> extends AbstractAdapter<DataRehashedEvent
     * be static).
     */
    private class CDIDataRehashedEvent implements DataRehashedEvent<K, V> {
-      private DataRehashedEvent<K, V> decoratedEvent;
+      private final DataRehashedEvent<K, V> decoratedEvent;
 
       private CDIDataRehashedEvent(DataRehashedEvent<K, V> decoratedEvent) {
          this.decoratedEvent = decoratedEvent;

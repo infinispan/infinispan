@@ -126,7 +126,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private ClusterManagerStatus clusterManagerStatus = ClusterManagerStatus.INITIALIZING;
    @GuardedBy("updateLock")
    private final ConcurrentMap<String, ClusterCacheStatus> cacheStatusMap = new ConcurrentHashMap<>();
-   private AtomicInteger recoveryAttemptCount = new AtomicInteger();
+   private final AtomicInteger recoveryAttemptCount = new AtomicInteger();
 
    // The global rebalancing status
    private boolean globalRebalancingEnabled = true;

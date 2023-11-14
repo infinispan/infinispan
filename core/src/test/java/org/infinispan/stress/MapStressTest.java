@@ -35,7 +35,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
  */
 @Test(testName = "stress.MapStressTest", groups = "profiling")
 public class MapStressTest extends SingleCacheManagerTest {
-   private static Log log = LogFactory.getLog(MapStressTest.class);
+   private static final Log log = LogFactory.getLog(MapStressTest.class);
 
    static final float MAP_LOAD_FACTOR = 0.75f;
    static final int LOOP_FACTOR = 10;
@@ -434,7 +434,7 @@ public class MapStressTest extends SingleCacheManagerTest {
    private class WorkerThread extends Thread {
       private final long runningTimeout;
       private final TotalStats perf;
-      private Operation<String, Integer> op;
+      private final Operation<String, Integer> op;
 
       public WorkerThread(long runningTimeout, TotalStats perf, Operation<String, Integer> op) {
          this.runningTimeout = runningTimeout;
@@ -483,7 +483,7 @@ public class MapStressTest extends SingleCacheManagerTest {
    }
 
    private static class TotalStats {
-      private ConcurrentHashMap<String, OpStats> statsMap = new ConcurrentHashMap<String, OpStats>();
+      private final ConcurrentHashMap<String, OpStats> statsMap = new ConcurrentHashMap<String, OpStats>();
 
       public void addStats(String opName, long opCount, long runningTime, long missCount) {
          OpStats s = new OpStats(opName, opCount, runningTime, missCount);

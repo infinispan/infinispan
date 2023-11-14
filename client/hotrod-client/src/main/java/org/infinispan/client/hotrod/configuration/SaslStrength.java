@@ -9,7 +9,7 @@ package org.infinispan.client.hotrod.configuration;
 public enum SaslStrength {
    LOW("low"), MEDIUM("medium"), HIGH("high");
 
-   private String v;
+   private final String v;
 
    SaslStrength(String v) {
       this.v = v;

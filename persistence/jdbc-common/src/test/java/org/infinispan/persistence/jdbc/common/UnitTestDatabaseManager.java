@@ -19,7 +19,7 @@ import org.infinispan.persistence.jdbc.common.impl.connectionfactory.SimpleConne
  */
 
 public class UnitTestDatabaseManager {
-   private static AtomicInteger userIndex = new AtomicInteger(0);
+   private static final AtomicInteger userIndex = new AtomicInteger(0);
    private static final String DB_TYPE = System.getProperty("infinispan.test.jdbc.db", "H2");
    private static final String H2_DRIVER = org.h2.Driver.class.getName();
    private static final String NON_EXISTENT_DRIVER = "non.existent.Driver";

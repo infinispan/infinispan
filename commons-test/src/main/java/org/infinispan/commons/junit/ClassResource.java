@@ -16,7 +16,7 @@ public class ClassResource<T> extends ExternalResource {
    private static final Logger log = Logger.getLogger(ClassResource.class);
    // TODO Do we need a reference to the test so we can differentiate between resources of subclasses?
    private T resource;
-   private Consumer<T> closer;
+   private final Consumer<T> closer;
 
    public ClassResource() {
       this.closer = r -> {

@@ -90,8 +90,8 @@ public class ProjectionTest extends SingleCacheManagerTest {
 
    @Indexed(index = "FooIndex")
    public static class Foo {
-      private String bar;
-      private String baz;
+      private final String bar;
+      private final String baz;
 
       public Foo(String bar, String baz) {
          this.bar = bar;

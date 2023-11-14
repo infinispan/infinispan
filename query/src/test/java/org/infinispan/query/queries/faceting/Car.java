@@ -12,13 +12,13 @@ import org.infinispan.protostream.annotations.ProtoField;
 @Indexed(index = "car")
 public class Car {
 
-   private String color;
+   private final String color;
 
-   private String make;
+   private final String make;
 
    // the Search6's aggregation is the new HS5's faceting
    @Basic(aggregable = true)
-   private int cubicCapacity;
+   private final int cubicCapacity;
 
    @ProtoFactory
    public Car(String make, String color, int cubicCapacity) {

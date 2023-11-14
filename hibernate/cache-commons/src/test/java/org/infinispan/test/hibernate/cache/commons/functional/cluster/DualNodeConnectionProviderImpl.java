@@ -24,7 +24,7 @@ import org.hibernate.testing.env.ConnectionProviderBuilder;
  * @author Brian Stansberry
  */
 public class DualNodeConnectionProviderImpl implements ConnectionProvider, Configurable {
-   private static ConnectionProvider actualConnectionProvider = ConnectionProviderBuilder.buildConnectionProvider();
+   private static final ConnectionProvider actualConnectionProvider = ConnectionProviderBuilder.buildConnectionProvider();
    private String nodeId;
    private boolean isTransactional;
 

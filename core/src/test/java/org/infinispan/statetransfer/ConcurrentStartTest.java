@@ -141,7 +141,7 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
    }
 
    private static class BlockingInboundInvocationHandler implements InboundInvocationHandler {
-      private Log log = LogFactory.getLog(ConcurrentStartTest.class);
+      private final Log log = LogFactory.getLog(ConcurrentStartTest.class);
       private final CheckPoint checkPoint;
       private final InboundInvocationHandler delegate;
       private final int index;

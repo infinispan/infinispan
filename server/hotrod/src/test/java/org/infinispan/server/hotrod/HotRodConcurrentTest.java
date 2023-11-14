@@ -61,7 +61,7 @@ public class HotRodConcurrentTest extends HotRodSingleNodeTest {
          this.numOpsPerClient = numOpsPerClient;
       }
 
-      private HotRodClient client = new HotRodClient("127.0.0.1", server().getPort(), cacheName, (byte) 20);
+      private final HotRodClient client = new HotRodClient("127.0.0.1", server().getPort(), cacheName, (byte) 20);
 
       @Override
       public Void call() throws Exception {

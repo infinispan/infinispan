@@ -38,7 +38,7 @@ public class SelectedClassnameClassLoader extends ClassLoader {
     private String[] excludedClasses = null;
     private String[] notFoundClasses = null;
 
-    private Map<String, Class> classes = new java.util.HashMap<String, Class>();
+    private final Map<String, Class> classes = new java.util.HashMap<String, Class>();
 
     /**
      * Creates a new classloader that loads the given classes.

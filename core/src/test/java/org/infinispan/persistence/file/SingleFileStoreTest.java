@@ -27,7 +27,7 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "persistence.SingleFile.SingleFileStoreTest")
 public class SingleFileStoreTest extends BaseNonBlockingStoreTest {
 
-   private String tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
+   private final String tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
    private boolean segmented;
 
    @AfterClass(alwaysRun = true)

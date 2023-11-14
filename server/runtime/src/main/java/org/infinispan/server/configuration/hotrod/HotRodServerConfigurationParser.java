@@ -34,7 +34,7 @@ import org.wildfly.security.sasl.WildFlySasl;
       @Namespace(uri = "urn:infinispan:server:*", root = "hotrod-connector"),
 })
 public class HotRodServerConfigurationParser implements ConfigurationParser {
-   private static org.infinispan.util.logging.Log coreLog = org.infinispan.util.logging.LogFactory.getLog(ServerConfigurationParser.class);
+   private static final org.infinispan.util.logging.Log coreLog = org.infinispan.util.logging.LogFactory.getLog(ServerConfigurationParser.class);
 
    @Override
    public void readElement(ConfigurationReader reader, ConfigurationBuilderHolder holder) {

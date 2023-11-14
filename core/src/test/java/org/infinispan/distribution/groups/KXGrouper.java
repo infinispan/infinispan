@@ -12,7 +12,7 @@ import org.infinispan.distribution.group.Grouper;
  */
 public class KXGrouper implements Grouper<String> {
 
-    private static Pattern kPattern = Pattern.compile("(^k)(\\d)$");
+    private static final Pattern kPattern = Pattern.compile("(^k)(\\d)$");
 
     @Override
     public Object computeGroup(String key, Object group) {

@@ -8,13 +8,13 @@ import org.infinispan.protostream.annotations.ProtoField;
 @Indexed(index = "indexA")
 public class TestEntity {
 
-   private String name;
+   private final String name;
 
-   private String surname;
+   private final String surname;
 
-   private long id;
+   private final long id;
 
-   private String note;
+   private final String note;
 
    public TestEntity(TestEntity e) {
       this.id = e.getId();

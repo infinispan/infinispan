@@ -468,9 +468,9 @@ public final class MavenSettings {
 
       private String password;
 
-      private Set<NonProxyHost> nonProxyHosts = new HashSet<>();
+      private final Set<NonProxyHost> nonProxyHosts = new HashSet<>();
 
-      private AtomicReference<java.net.Proxy> netProxy = new AtomicReference<>();
+      private final AtomicReference<java.net.Proxy> netProxy = new AtomicReference<>();
 
       public String getId() {
          return id;

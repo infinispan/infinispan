@@ -14,7 +14,7 @@ import org.wildfly.security.WildFlyElytronBaseProvider;
 @MetaInfServices(Provider.class)
 public final class WildFlyElytronHttpLocalUserProvider extends WildFlyElytronBaseProvider {
 
-   private static WildFlyElytronHttpLocalUserProvider INSTANCE = new WildFlyElytronHttpLocalUserProvider();
+   private static final WildFlyElytronHttpLocalUserProvider INSTANCE = new WildFlyElytronHttpLocalUserProvider();
 
    /**
     * Construct a new instance.

@@ -14,8 +14,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -37,6 +35,8 @@ import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.Transaction;
 
 @Test(groups = "functional", testName = "functional.distribution.rehash.FunctionalTxTest")
 @CleanupAfterMethod
@@ -189,8 +189,8 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
    }
 
    private static class BlockingStateConsumer extends DelegatingStateConsumer {
-      private CountDownLatch expectLatch = new CountDownLatch(1);
-      private CountDownLatch blockLatch = new CountDownLatch(1);
+      private final CountDownLatch expectLatch = new CountDownLatch(1);
+      private final CountDownLatch blockLatch = new CountDownLatch(1);
 
       public BlockingStateConsumer(StateConsumer delegate) {
          super(delegate);

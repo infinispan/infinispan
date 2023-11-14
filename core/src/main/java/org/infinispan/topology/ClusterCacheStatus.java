@@ -68,10 +68,10 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    private final AvailabilityStrategy availabilityStrategy;
    private final ClusterTopologyManagerImpl clusterTopologyManager;
    private final PersistentUUIDManager persistentUUIDManager;
-   private EventLogger eventLogger;
+   private final EventLogger eventLogger;
    private final boolean resolveConflictsOnMerge;
    private final RebalanceType rebalanceType;
-   private Transport transport;
+   private final Transport transport;
 
    private int initialTopologyId = INITIAL_TOPOLOGY_ID;
    // Minimal cache clustering configuration

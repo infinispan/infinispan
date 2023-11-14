@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
 public class RequestExpirationSchedulerTest {
 
    private RequestExpirationScheduler expirationScheduler;
-   private ScheduledExecutorService scheduledExecutorService = mock(ScheduledExecutorService.class);
+   private final ScheduledExecutorService scheduledExecutorService = mock(ScheduledExecutorService.class);
    private ScheduledFuture scheduledFutureMock;
    private CompletableFuture<Boolean> booleanCompletableFuture;
 

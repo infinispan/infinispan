@@ -17,8 +17,8 @@ import com.github.dockerjava.api.model.ContainerNetwork;
  */
 public class InfinispanGenericContainer {
 
-   private GenericContainer genericContainer;
-   private String containerId;
+   private final GenericContainer genericContainer;
+   private final String containerId;
 
    public InfinispanGenericContainer(GenericContainer genericContainer) {
       this.containerId = genericContainer.getContainerId();

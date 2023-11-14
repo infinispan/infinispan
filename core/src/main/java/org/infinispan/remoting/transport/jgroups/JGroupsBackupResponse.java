@@ -34,7 +34,7 @@ import org.jgroups.UnreachableException;
  */
 public class JGroupsBackupResponse implements BackupResponse {
 
-   private static Log log = LogFactory.getLog(JGroupsBackupResponse.class);
+   private static final Log log = LogFactory.getLog(JGroupsBackupResponse.class);
 
    private final Map<XSiteBackup, CompletableFuture<ValidResponse>> backupCalls;
    private Map<String, Throwable> errors;

@@ -10,7 +10,7 @@ import org.infinispan.protostream.annotations.ProtoName;
 @ProtoName("Model")
 public class ModelA implements Model {
 
-   private String original;
+   private final String original;
 
    @ProtoFactory
    public ModelA(String original) {

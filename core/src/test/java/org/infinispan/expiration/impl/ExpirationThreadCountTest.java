@@ -21,7 +21,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "eviction.ExpirationThreadCountTest")
 public class ExpirationThreadCountTest extends SingleCacheManagerTest {
 
-   private static String EXPIRATION_THREAD_NAME_PREFIX = ExpirationThreadCountTest.class.getSimpleName() + "-thread";
+   private static final String EXPIRATION_THREAD_NAME_PREFIX = ExpirationThreadCountTest.class.getSimpleName() + "-thread";
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {

@@ -70,12 +70,12 @@ public class PutFromLoadValidatorUnitTest {
 
    private static ServiceRegistryTestingImpl serviceRegistry;
 
-   private Object KEY1 = "KEY1";
+   private final Object KEY1 = "KEY1";
 
 	private TransactionManager tm;
 	private EmbeddedCacheManager cm;
 	private AdvancedCache<Object, Object> cache;
-	private List<Runnable> cleanup = new ArrayList<>();
+	private final List<Runnable> cleanup = new ArrayList<>();
    private PutFromLoadValidator testee;
 
    @BeforeClassOnce
@@ -403,8 +403,8 @@ public class PutFromLoadValidatorUnitTest {
 	}
 
 	private class Invalidation implements Callable<Void> {
-		private PutFromLoadValidator putFromLoadValidator;
-		private boolean removeRegion;
+		private final PutFromLoadValidator putFromLoadValidator;
+		private final boolean removeRegion;
 
 		public Invalidation(PutFromLoadValidator putFromLoadValidator, boolean removeRegion) {
 			this.putFromLoadValidator = putFromLoadValidator;
@@ -432,7 +432,7 @@ public class PutFromLoadValidatorUnitTest {
 	}
 
 	private class RegularPut implements Callable<Void> {
-		private PutFromLoadValidator putFromLoadValidator;
+		private final PutFromLoadValidator putFromLoadValidator;
 
 		public RegularPut(PutFromLoadValidator putFromLoadValidator) {
 			this.putFromLoadValidator = putFromLoadValidator;

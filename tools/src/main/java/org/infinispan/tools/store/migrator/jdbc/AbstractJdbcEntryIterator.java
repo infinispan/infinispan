@@ -22,7 +22,7 @@ abstract class AbstractJdbcEntryIterator implements Iterator<MarshallableEntry>,
    final ConnectionFactory connectionFactory;
    final TableManager tableManager;
    final Marshaller marshaller;
-   private Connection conn;
+   private final Connection conn;
    private PreparedStatement ps;
    ResultSet rs;
    long numberOfRows = 0;

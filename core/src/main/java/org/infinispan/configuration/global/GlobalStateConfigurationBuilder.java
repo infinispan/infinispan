@@ -22,10 +22,10 @@ import org.infinispan.globalstate.LocalConfigurationStorage;
 public class GlobalStateConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<GlobalStateConfiguration> {
    private final AttributeSet attributes;
 
-   private GlobalStatePathConfigurationBuilder persistentLocation;
-   private GlobalStatePathConfigurationBuilder sharedPersistentLocation;
-   private TemporaryGlobalStatePathConfigurationBuilder temporaryLocation;
-   private GlobalStorageConfigurationBuilder storageConfiguration;
+   private final GlobalStatePathConfigurationBuilder persistentLocation;
+   private final GlobalStatePathConfigurationBuilder sharedPersistentLocation;
+   private final TemporaryGlobalStatePathConfigurationBuilder temporaryLocation;
+   private final GlobalStorageConfigurationBuilder storageConfiguration;
 
    GlobalStateConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);

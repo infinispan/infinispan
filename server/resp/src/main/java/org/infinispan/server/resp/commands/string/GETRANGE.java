@@ -30,6 +30,7 @@ import io.netty.channel.ChannelHandlerContext;
  * @since 15.0
  */
 public class GETRANGE extends RespCommand implements Resp3Command {
+
    public GETRANGE() {
       super(4, 1, 1, 1);
    }

@@ -111,7 +111,7 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
 
    public static class ConstantDelayTransportInterceptor extends BaseAsyncInterceptor {
 
-      private int millis;
+      private final int millis;
 
       public ConstantDelayTransportInterceptor(int millis) {
          this.millis = millis;

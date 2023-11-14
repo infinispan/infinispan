@@ -14,7 +14,7 @@ import org.infinispan.objectfilter.impl.FilterSubscriptionImpl;
  */
 final class Projections {
 
-   private List<ProjectionSubscription> subscriptions = new ArrayList<>();
+   private final List<ProjectionSubscription> subscriptions = new ArrayList<>();
 
    private static class ProjectionSubscription {
 

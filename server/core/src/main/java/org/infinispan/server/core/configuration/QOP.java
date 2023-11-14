@@ -10,7 +10,7 @@ public enum QOP {
    AUTH_INT("auth-int"),
    AUTH_CONF("auth-conf");
 
-   private String v;
+   private final String v;
 
    QOP(String v) {
       this.v = v;

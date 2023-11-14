@@ -24,7 +24,7 @@ public class ExpectingInterceptor extends BaseCustomAsyncInterceptor {
    private final static Log log = LogFactory.getLog(ExpectingInterceptor.class);
    private final List<Condition> conditions = new LinkedList<>();
 
-   private InvocationFinallyAction assertCondition = this::assertCondition;
+   private final InvocationFinallyAction assertCondition = this::assertCondition;
 
    public static ExpectingInterceptor get(AdvancedCache cache) {
       ExpectingInterceptor self = extractInterceptorChain(cache).findInterceptorWithClass(ExpectingInterceptor.class);

@@ -23,7 +23,7 @@ public final class PerCacheExecutorThread extends Thread {
 
    private static final Log log = LogFactory.getLog(PerCacheExecutorThread.class);
 
-   private Cache<Object, Object> cache;
+   private final Cache<Object, Object> cache;
    private BlockingQueue<Object> toExecute = new ArrayBlockingQueue<Object>(1);
    private volatile Object response;
    private CountDownLatch responseLatch = new CountDownLatch(1);

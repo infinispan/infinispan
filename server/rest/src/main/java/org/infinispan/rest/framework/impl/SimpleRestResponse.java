@@ -31,7 +31,7 @@ public class SimpleRestResponse implements RestResponse {
 
    public static class Builder implements RestResponseBuilder<Builder> {
 
-      private Map<String, Object> headers = new HashMap<>();
+      private final Map<String, Object> headers = new HashMap<>();
       private int status;
       private Object entity;
 

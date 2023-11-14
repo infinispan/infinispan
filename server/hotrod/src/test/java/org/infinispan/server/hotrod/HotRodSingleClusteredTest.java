@@ -35,7 +35,7 @@ public class HotRodSingleClusteredTest extends MultipleCacheManagersTest {
 
    private HotRodServer hotRodServer;
    private HotRodClient hotRodClient;
-   private String cacheName = "HotRodCache";
+   private final String cacheName = "HotRodCache";
 
    @Override
    protected void createCacheManagers() {

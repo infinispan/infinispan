@@ -42,8 +42,8 @@ public class DualNodeJtaTransactionImpl implements Transaction {
    private LinkedList synchronizations;
    private Connection connection; // the only resource we care about is jdbc connection
    private final DualNodeJtaTransactionManagerImpl jtaTransactionManager;
-   private List<XAResource> enlistedResources = new ArrayList<XAResource>();
-   private Xid xid = new DualNodeJtaTransactionXid();
+   private final List<XAResource> enlistedResources = new ArrayList<XAResource>();
+   private final Xid xid = new DualNodeJtaTransactionXid();
 
    public DualNodeJtaTransactionImpl(DualNodeJtaTransactionManagerImpl jtaTransactionManager) {
       this.jtaTransactionManager = jtaTransactionManager;
@@ -216,8 +216,8 @@ public class DualNodeJtaTransactionImpl implements Transaction {
    }
 
    private static class DualNodeJtaTransactionXid implements Xid {
-      private static AtomicInteger txIdCounter = new AtomicInteger(0);
-      private int id = txIdCounter.incrementAndGet();
+      private static final AtomicInteger txIdCounter = new AtomicInteger(0);
+      private final int id = txIdCounter.incrementAndGet();
 
       public int getFormatId() {
          return id;

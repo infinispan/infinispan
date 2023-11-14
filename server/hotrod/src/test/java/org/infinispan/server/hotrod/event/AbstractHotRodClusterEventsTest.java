@@ -44,8 +44,8 @@ import org.testng.annotations.Test;
 @Test(groups = "functional")
 public abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTest {
 
-   private ArrayList<AcceptedKeyFilterFactory> filters = new ArrayList<>();
-   private ArrayList<AcceptedKeyValueConverterFactory> converters = new ArrayList<>();
+   private final ArrayList<AcceptedKeyFilterFactory> filters = new ArrayList<>();
+   private final ArrayList<AcceptedKeyValueConverterFactory> converters = new ArrayList<>();
 
    @Override
    protected String cacheName() {

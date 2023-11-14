@@ -26,7 +26,7 @@ public class TransactionCompletedAdapter<K, V> extends AbstractAdapter<Transacti
     * be static).
     */
    private class CDITransactionCompletedEvent implements TransactionCompletedEvent<K, V> {
-      private TransactionCompletedEvent<K, V> decoratedEvent;
+      private final TransactionCompletedEvent<K, V> decoratedEvent;
 
       private CDITransactionCompletedEvent(TransactionCompletedEvent<K, V> decoratedEvent) {
          this.decoratedEvent = decoratedEvent;

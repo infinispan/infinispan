@@ -16,7 +16,7 @@ import org.infinispan.remoting.transport.Address;
  */
 public class ClusteredGetResponseValidityFilter implements ResponseFilter {
 
-   private Collection<Address> targets;
+   private final Collection<Address> targets;
    private int acceptableResponses;
    private int missingResponses;
 

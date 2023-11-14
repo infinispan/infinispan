@@ -74,7 +74,7 @@ public class BulkOperationsTest extends MultipleCacheManagersTest {
          }
       };
 
-      private Function<RemoteCache<?, ?>, CloseableIteratorCollection<?>> function;
+      private final Function<RemoteCache<?, ?>, CloseableIteratorCollection<?>> function;
 
       abstract ProtocolVersion minimumVersionForIteration();
       boolean isSet() {

@@ -85,7 +85,7 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
    private final Map<DataType, Configuration> dataTypeConfigurations = new HashMap<>();
    private EmbeddedCacheManager manager;
 
-   private List<InfinispanBaseRegion> regions = new ArrayList<>();
+   private final List<InfinispanBaseRegion> regions = new ArrayList<>();
    private SessionFactoryOptions settings;
 
    private Boolean globalStats;

@@ -3,13 +3,12 @@ package org.infinispan.query.impl.massindex;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 
+import org.hibernate.search.engine.common.EntityReference;
 import org.hibernate.search.engine.reporting.EntityIndexingFailureContext;
 import org.hibernate.search.engine.reporting.FailureHandler;
 import org.hibernate.search.util.common.SearchException;
-
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.query.logging.Log;
-import org.hibernate.search.engine.common.EntityReference;
 import org.infinispan.search.mapper.common.impl.EntityReferenceImpl;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.util.logging.LogFactory;
@@ -79,7 +78,7 @@ class MassIndexerProgressNotifier {
    }
 
    private static class RecordedEntityIndexingFailure {
-      private Throwable throwable;
+      private final Throwable throwable;
       private EntityReference entityReference;
 
       RecordedEntityIndexingFailure(Throwable throwable) {

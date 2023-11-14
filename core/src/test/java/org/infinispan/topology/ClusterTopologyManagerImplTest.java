@@ -50,8 +50,8 @@ import org.testng.annotations.Test;
 public class ClusterTopologyManagerImplTest extends AbstractInfinispanTest {
    private static final String CACHE_NAME = "testCache";
 
-   private ExecutorService executor = Executors.newFixedThreadPool(2, getTestThreadFactory("Executor"));
-   private ExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor(getTestThreadFactory("Executor"));
+   private final ExecutorService executor = Executors.newFixedThreadPool(2, getTestThreadFactory("Executor"));
+   private final ExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor(getTestThreadFactory("Executor"));
 
    private static final Address A = new TestAddress(0, "A");
    private static final Address B = new TestAddress(1, "B");

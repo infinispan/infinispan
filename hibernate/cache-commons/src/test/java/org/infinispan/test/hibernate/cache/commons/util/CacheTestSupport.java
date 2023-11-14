@@ -20,8 +20,8 @@ import org.infinispan.Cache;
 public class CacheTestSupport {
 	private static final String PREFER_IPV4STACK = "java.net.preferIPv4Stack";
 
-    private Set<Cache> caches = new HashSet<>();
-    private Set<TestRegionFactory> factories = new HashSet<>();
+    private final Set<Cache> caches = new HashSet<>();
+    private final Set<TestRegionFactory> factories = new HashSet<>();
     private Exception exception;
     private String preferIPv4Stack;
 

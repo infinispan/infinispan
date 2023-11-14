@@ -26,7 +26,7 @@ public abstract class HotRodSingleNodeTest extends SingleCacheManagerTest {
    protected HotRodServer hotRodServer;
    protected HotRodClient hotRodClient;
    protected AdvancedCache<byte[], byte[]> advancedCache;
-   private String hotRodJmxDomain = getClass().getSimpleName();
+   private final String hotRodJmxDomain = getClass().getSimpleName();
 
    @Override
    protected EmbeddedCacheManager createCacheManager() {

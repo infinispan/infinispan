@@ -14,7 +14,7 @@ public class SocketBindingsConfigurationBuilder implements Builder<SocketBinding
    private final AttributeSet attributes;
    private final ServerConfigurationBuilder server;
 
-   private Map<String, SocketBindingConfigurationBuilder> socketBindings = new LinkedHashMap<>(2);
+   private final Map<String, SocketBindingConfigurationBuilder> socketBindings = new LinkedHashMap<>(2);
 
    SocketBindingsConfigurationBuilder(ServerConfigurationBuilder server) {
       this.server = server;

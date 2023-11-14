@@ -20,7 +20,7 @@ public abstract class Either<A, B> {
    public abstract B right();
 
    private static class Left<A, B> extends Either<A, B> {
-      private A leftValue;
+      private final A leftValue;
       Left(A a) { leftValue = a; }
       @Override public Type type() { return Type.LEFT; }
       @Override public A left() { return leftValue; }
@@ -34,7 +34,7 @@ public abstract class Either<A, B> {
    }
 
    private static class Right<A, B> extends Either<A, B> {
-      private B rightValue;
+      private final B rightValue;
       Right(B b) { rightValue = b; }
       @Override public Type type() { return Type.RIGHT; }
       @Override public A left() { throw new NoSuchElementException("Either.left() called on Right"); }

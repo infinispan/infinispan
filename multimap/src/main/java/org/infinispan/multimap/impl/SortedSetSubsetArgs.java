@@ -11,8 +11,8 @@ public class SortedSetSubsetArgs<T> {
    private final T stop;
    private final boolean includeStart;
    private final boolean includeStop;
-   private Long offset;
-   private Long count;
+   private final Long offset;
+   private final Long count;
 
    private SortedSetSubsetArgs(SortedSetSubsetArgs.Builder<T> builder) {
       this.isRev = builder.isRev;

@@ -10,7 +10,7 @@ import org.infinispan.protostream.annotations.ProtoName;
 @ProtoName("Image")
 public class Image {
 
-   private String name;
+   private final String name;
 
    @ProtoFactory
    public Image(String name) {

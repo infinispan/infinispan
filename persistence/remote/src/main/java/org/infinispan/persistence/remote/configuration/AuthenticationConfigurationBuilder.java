@@ -23,7 +23,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @since 9.1
  */
 public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<AuthenticationConfiguration> {
-   private MechanismConfigurationBuilder mechanismConfigurationBuilder;
+   private final MechanismConfigurationBuilder mechanismConfigurationBuilder;
 
    public AuthenticationConfigurationBuilder(SecurityConfigurationBuilder builder) {
       super(builder, AuthenticationConfiguration.attributeDefinitionSet());

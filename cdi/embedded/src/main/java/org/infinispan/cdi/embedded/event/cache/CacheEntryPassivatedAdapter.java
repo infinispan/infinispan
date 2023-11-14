@@ -27,7 +27,7 @@ public class CacheEntryPassivatedAdapter<K, V> extends AbstractAdapter<CacheEntr
     * be static).
     */
    private class CDICacheEntryPassivatedEvent implements CacheEntryPassivatedEvent<K, V> {
-      private CacheEntryPassivatedEvent<K, V> decoratedEvent;
+      private final CacheEntryPassivatedEvent<K, V> decoratedEvent;
 
       private CDICacheEntryPassivatedEvent(CacheEntryPassivatedEvent<K, V> decoratedEvent) {
          this.decoratedEvent = decoratedEvent;

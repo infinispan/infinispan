@@ -27,8 +27,8 @@ import org.infinispan.commons.api.Lifecycle;
  * @since 4.0
  */
 public class SynchronizedRestarter {
-   private AtomicBoolean restartInProgress = new AtomicBoolean(false);
-   private Set<Thread> restartWaiters = ConcurrentHashMap.newKeySet();
+   private final AtomicBoolean restartInProgress = new AtomicBoolean(false);
+   private final Set<Thread> restartWaiters = ConcurrentHashMap.newKeySet();
 
    public void restartComponent(Lifecycle component) throws Exception {
       // will only enter this block if no one else is restarting the socket

@@ -20,11 +20,11 @@ public class CherryPickClassLoader extends ClassLoader {
 
    private static final Logger log = Logger.getLogger(CherryPickClassLoader.class);
 
-   private String[] includedClasses;
-   private String[] excludedClasses;
-   private String[] notFoundClasses;
+   private final String[] includedClasses;
+   private final String[] excludedClasses;
+   private final String[] notFoundClasses;
 
-   private Map<String, Class> classes = new HashMap<String, Class>();
+   private final Map<String, Class> classes = new HashMap<String, Class>();
 
    public CherryPickClassLoader(String[] includedClasses,
                                 String[] excludedClasses, ClassLoader parent) {

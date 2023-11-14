@@ -27,9 +27,9 @@ import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "persistence.rocksdb.configuration.ConfigurationTest")
 public class ConfigurationTest extends AbstractInfinispanTest {
-   private String tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
-   private String tmpDataDirectory = tmpDirectory + "/data";
-   private String tmpExpiredDirectory = tmpDirectory + "/expired";
+   private final String tmpDirectory = CommonsTestingUtil.tmpDirectory(this.getClass());
+   private final String tmpDataDirectory = tmpDirectory + "/data";
+   private final String tmpExpiredDirectory = tmpDirectory + "/expired";
 
    @AfterClass(alwaysRun = true)
    protected void clearTempDir() {

@@ -14,11 +14,11 @@ import org.infinispan.protostream.annotations.ProtoField;
 @Indexed(index = "legacy-game")
 public class LegacyGame {
 
-   private String name;
+   private final String name;
 
-   private String description;
+   private final String description;
 
-   private Integer releaseYear;
+   private final Integer releaseYear;
 
    @ProtoFactory
    public LegacyGame(String name, String description, Integer releaseYear) {

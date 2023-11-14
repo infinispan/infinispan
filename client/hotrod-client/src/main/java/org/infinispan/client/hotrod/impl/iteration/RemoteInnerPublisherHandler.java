@@ -30,7 +30,7 @@ class RemoteInnerPublisherHandler<K, E> extends AbstractAsyncPublisherHandler<Ma
    // Need to be volatile since cancel can come on a different thread
    protected volatile Channel channel;
    private volatile byte[] iterationId;
-   private AtomicBoolean cancelled = new AtomicBoolean();
+   private final AtomicBoolean cancelled = new AtomicBoolean();
 
    protected RemoteInnerPublisherHandler(RemotePublisher<K, E> parent, int batchSize,
          Supplier<Map.Entry<SocketAddress, IntSet>> supplier, Map.Entry<SocketAddress, IntSet> firstTarget) {

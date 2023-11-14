@@ -62,7 +62,7 @@ public class Annotateds {
             return new AnnotatedMethodComparator<T>();
         }
 
-        private AnnotatedCallableComparator<T> callableComparator = new AnnotatedCallableComparator<T>();
+        private final AnnotatedCallableComparator<T> callableComparator = new AnnotatedCallableComparator<T>();
 
         public int compare(AnnotatedMethod<? super T> arg0, AnnotatedMethod<? super T> arg1) {
             int result = callableComparator.compare(arg0, arg1);
@@ -88,7 +88,7 @@ public class Annotateds {
             return new AnnotatedConstructorComparator<T>();
         }
 
-        private AnnotatedCallableComparator<T> callableComparator = new AnnotatedCallableComparator<T>();
+        private final AnnotatedCallableComparator<T> callableComparator = new AnnotatedCallableComparator<T>();
 
         public int compare(AnnotatedConstructor<? super T> arg0, AnnotatedConstructor<? super T> arg1) {
             int result = callableComparator.compare(arg0, arg1);

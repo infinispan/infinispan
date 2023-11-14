@@ -4,14 +4,15 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.spi.AfterBeanDiscovery;
 import jakarta.enterprise.inject.spi.AfterDeploymentValidation;
 import jakarta.enterprise.inject.spi.BeanManager;
 import jakarta.enterprise.inject.spi.BeforeShutdown;
 import jakarta.enterprise.inject.spi.Extension;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 
 
 /**
@@ -74,7 +75,7 @@ public class BeanManagerProvider implements Extension
      * <p>The BeanManagerInfo for the current ClassLoader.</p>
      * <p><b>Attention:</b> This instance must only be used through the {@link #bmpSingleton} singleton!</p>
      */
-    private volatile Map<ClassLoader, BeanManagerInfo> bmInfos = new ConcurrentHashMap<ClassLoader, BeanManagerInfo>();
+    private final Map<ClassLoader, BeanManagerInfo> bmInfos = new ConcurrentHashMap<ClassLoader, BeanManagerInfo>();
 
     /**
      * Returns if the {@link BeanManagerProvider} has been initialized.

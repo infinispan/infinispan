@@ -114,7 +114,7 @@ public class RemoteApplicationPublishedBridgeTest extends InfinispanApplicationP
 
    class TestEvent implements ClientCacheEntryCustomEvent<byte[]> {
 
-      private String sessionId;
+      private final String sessionId;
 
       public TestEvent(String sessionId) {
          this.sessionId = sessionId;

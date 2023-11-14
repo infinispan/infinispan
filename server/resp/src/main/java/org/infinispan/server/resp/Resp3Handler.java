@@ -29,7 +29,7 @@ import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.ChannelHandlerContext;
 
 public class Resp3Handler extends Resp3AuthHandler {
-   private static byte[] CRLF_BYTES = CRLF_STRING.getBytes();
+   private static final byte[] CRLF_BYTES = CRLF_STRING.getBytes();
    protected AdvancedCache<byte[], byte[]> ignorePreviousValueCache;
    protected EmbeddedMultimapListCache<byte[], byte[]> listMultimap;
    protected EmbeddedMultimapPairCache<byte[], byte[], byte[]> mapMultimap;

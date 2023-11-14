@@ -92,8 +92,8 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
 
    private volatile CountDownLatch latch;
    private List<String> keys = new ArrayList<>();
-   private InternalEntryFactory entryFactory = new InternalEntryFactoryImpl();
-   private Map<Object, InternalCacheEntry> expectedState = new ConcurrentHashMap<Object, InternalCacheEntry>();
+   private final InternalEntryFactory entryFactory = new InternalEntryFactoryImpl();
+   private final Map<Object, InternalCacheEntry> expectedState = new ConcurrentHashMap<Object, InternalCacheEntry>();
    private TestObjectStreamMarshaller marshaller;
    private ExecutorService nonBlockingExecutor;
    private ExecutorService blockingExecutor;
@@ -405,7 +405,7 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
    private class WorkerThread extends Thread {
       private final long runningTimeout;
       private final TotalStats perf;
-      private Operation<String, Integer> op;
+      private final Operation<String, Integer> op;
 
       public WorkerThread(String name, long runningTimeout, TotalStats perf, Operation<String, Integer> op) {
          super(name);
@@ -452,7 +452,7 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
    }
 
    private static class TotalStats {
-      private ConcurrentHashMap<String, OpStats> statsMap = new ConcurrentHashMap<String, OpStats>();
+      private final ConcurrentHashMap<String, OpStats> statsMap = new ConcurrentHashMap<String, OpStats>();
 
       public void addStats(String opName, long opCount, long runningTime, long missCount) {
          OpStats s = new OpStats(opName, opCount, runningTime, missCount);

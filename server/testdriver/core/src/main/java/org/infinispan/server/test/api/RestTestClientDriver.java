@@ -25,8 +25,8 @@ public class RestTestClientDriver extends BaseTestClientDriver<RestTestClientDri
    public static final int TIMEOUT = Integer.getInteger("org.infinispan.test.server.http.timeout", 10);
 
    private RestClientConfigurationBuilder clientConfiguration = new RestClientConfigurationBuilder();
-   private TestServer testServer;
-   private TestClient testClient;
+   private final TestServer testServer;
+   private final TestClient testClient;
    private int port = 11222;
 
    public RestTestClientDriver(TestServer testServer, TestClient testClient) {

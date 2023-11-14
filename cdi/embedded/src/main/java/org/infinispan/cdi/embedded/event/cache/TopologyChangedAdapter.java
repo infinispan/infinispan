@@ -23,7 +23,7 @@ public class TopologyChangedAdapter<K, V> extends AbstractAdapter<TopologyChange
     * be static).
     */
    private class CDITopologyChangedEvent implements TopologyChangedEvent<K, V> {
-      private TopologyChangedEvent<K, V> decoratedEvent;
+      private final TopologyChangedEvent<K, V> decoratedEvent;
 
       private CDITopologyChangedEvent(TopologyChangedEvent<K, V> decoratedEvent) {
          this.decoratedEvent = decoratedEvent;

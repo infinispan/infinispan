@@ -16,13 +16,13 @@ import org.infinispan.protostream.types.java.CommonTypes;
 @Indexed
 public class CalculusIndexed {
 
-   private String name;
+   private final String name;
 
-   private BigInteger purchases;
+   private final BigInteger purchases;
 
-   private BigDecimal prospect;
+   private final BigDecimal prospect;
 
-   private BigDecimal decimal;
+   private final BigDecimal decimal;
 
    @ProtoFactory
    public CalculusIndexed(String name, BigInteger purchases, BigDecimal prospect, BigDecimal decimal) {

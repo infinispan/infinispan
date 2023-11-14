@@ -32,8 +32,8 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "unit", testName = "interceptors.AsyncInterceptorChainInvocationTest")
 public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest {
-   private VisitableCommand testCommand = new GetKeyValueCommand("k", 0, 0);
-   private VisitableCommand testSubCommand = new LockControlCommand("k", null, 0, null);
+   private final VisitableCommand testCommand = new GetKeyValueCommand("k", 0, 0);
+   private final VisitableCommand testSubCommand = new LockControlCommand("k", null, 0, null);
 
    private final AtomicReference<String> sideEffects = new AtomicReference<>("");
 

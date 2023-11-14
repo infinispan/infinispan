@@ -118,7 +118,7 @@ public class ExecutorAllCompletionServiceTest extends AbstractInfinispanTest {
    }
 
    private static class WaitRunnable implements Runnable {
-      private long period;
+      private final long period;
 
       private WaitRunnable(long period) {
          this.period = period;

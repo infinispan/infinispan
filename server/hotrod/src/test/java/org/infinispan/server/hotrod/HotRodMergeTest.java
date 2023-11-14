@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
 @Test(groups = {"functional", "unstable"}, description = "ISPN-11566", testName = "server.hotrod.HotRodMergeTest")
 public class HotRodMergeTest extends BasePartitionHandlingTest {
 
-   private List<HotRodServer> servers = new ArrayList<>();
+   private final List<HotRodServer> servers = new ArrayList<>();
    private HotRodClient client;
 
    public Object[] factory() {

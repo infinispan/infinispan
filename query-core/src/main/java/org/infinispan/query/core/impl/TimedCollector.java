@@ -38,7 +38,7 @@ class TimedCollector<U, A, R> implements Collector<U, A, R> {
 
       return new BiConsumer<A, U>() {
          int index = 0;
-         long limit = TIME_SERVICE.time() + timeout;
+         final long limit = TIME_SERVICE.time() + timeout;
 
          boolean divBy32(int i) {
             return (i & ((1 << 5) - 1)) == 0;

@@ -34,7 +34,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "partitionhandling.NumOwnersNodeCrashInSequenceTest")
 public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest {
 
-   private static Log log = LogFactory.getLog(NumOwnersNodeCrashInSequenceTest.class);
+   private static final Log log = LogFactory.getLog(NumOwnersNodeCrashInSequenceTest.class);
 
    ControlledConsistentHashFactory cchf;
    private ConfigurationBuilder configBuilder;

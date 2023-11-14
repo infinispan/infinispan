@@ -21,7 +21,7 @@ import org.infinispan.persistence.keymappers.Key2StringMapper;
  * @since 5.2
  */
 public class JdbcStringBasedStoreConfigurationBuilder extends AbstractJdbcStoreConfigurationBuilder<JdbcStringBasedStoreConfiguration, JdbcStringBasedStoreConfigurationBuilder> {
-   private StringTableManipulationConfigurationBuilder table;
+   private final StringTableManipulationConfigurationBuilder table;
 
    public JdbcStringBasedStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder, JdbcStringBasedStoreConfiguration.attributeDefinitionSet());

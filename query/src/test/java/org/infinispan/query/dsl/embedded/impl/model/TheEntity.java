@@ -14,9 +14,9 @@ public class TheEntity {
    /**
     * Set a different name to demonstrate field mapping.
     */
-   private String fieldX;
+   private final String fieldX;
 
-   private TheEmbeddedEntity embeddedEntity;
+   private final TheEmbeddedEntity embeddedEntity;
 
    public TheEntity(String fieldX, TheEmbeddedEntity embeddedEntity) {
       this.fieldX = fieldX;
@@ -35,7 +35,7 @@ public class TheEntity {
 
    public static class TheEmbeddedEntity {
 
-      private String fieldY;
+      private final String fieldY;
 
       public TheEmbeddedEntity(String fieldY) {
          this.fieldY = fieldY;

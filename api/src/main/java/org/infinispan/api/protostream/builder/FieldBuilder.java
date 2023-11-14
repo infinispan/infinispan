@@ -3,7 +3,7 @@ package org.infinispan.api.protostream.builder;
 public class FieldBuilder {
 
    private final MessageBuilder parent;
-   private String name;
+   private final String name;
    private final int number;
    private final boolean required;
    private final String type;

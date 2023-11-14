@@ -102,7 +102,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
       withCacheManager(new CacheManagerCallable(
             createCacheManager(TestDataSCI.INSTANCE, cfg)) {
 
-         String charset = "UTF-8";
+         final String charset = "UTF-8";
 
          private byte[] asUTF8Bytes(String value) throws UnsupportedEncodingException {
             return value.getBytes(charset);
@@ -324,7 +324,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
    public void testSerialization() {
       withCacheManager(new CacheManagerCallable(createCacheManager(TestDataSCI.INSTANCE, new ConfigurationBuilder())) {
 
-         GlobalMarshaller marshaller = TestingUtil.extractGlobalMarshaller(cm);
+         final GlobalMarshaller marshaller = TestingUtil.extractGlobalMarshaller(cm);
 
          private void testWith(DataConversion dataConversion, ComponentRegistry registry) throws Exception {
             byte[] marshalled = marshaller.objectToByteBuffer(dataConversion);
@@ -401,7 +401,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
    @SuppressWarnings("unused")
    private static class SimpleListener {
 
-      private List<CacheEntryEvent> events = new ArrayList<>();
+      private final List<CacheEntryEvent> events = new ArrayList<>();
 
       @CacheEntryCreated
       public void cacheEntryCreated(CacheEntryEvent ev) {

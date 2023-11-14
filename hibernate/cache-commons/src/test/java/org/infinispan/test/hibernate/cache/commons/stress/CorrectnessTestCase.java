@@ -166,7 +166,7 @@ public abstract class CorrectnessTestCase {
          return new HashMap<>();
       }
    };
-   private BlockingDeque<Exception> exceptions = new LinkedBlockingDeque<>();
+   private final BlockingDeque<Exception> exceptions = new LinkedBlockingDeque<>();
 
    public String getDbName() {
       return getClass().getName().replaceAll("\\W", "_");
@@ -1151,7 +1151,7 @@ public abstract class CorrectnessTestCase {
    }
 
    private static class Ref<T> {
-      private static Ref EMPTY = new Ref() {
+      private static final Ref EMPTY = new Ref() {
          @Override
          public void set(Object value) {
             throw new UnsupportedOperationException();

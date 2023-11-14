@@ -40,7 +40,7 @@ import org.testng.annotations.Test;
 @Test (groups = "functional", testName = "tx.recovery.PostCommitRecoveryStateTest")
 public class PostCommitRecoveryStateTest extends MultipleCacheManagersTest {
 
-   private static Log log = LogFactory.getLog(PostCommitRecoveryStateTest.class);
+   private static final Log log = LogFactory.getLog(PostCommitRecoveryStateTest.class);
 
    @Override
    protected void createCacheManagers() throws Throwable {

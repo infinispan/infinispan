@@ -47,10 +47,10 @@ import org.testng.Assert;
 
 class TestCluster {
 
-   private List<HotRodServer> hotRodServers;
-   private List<EmbeddedCacheManager> embeddedCacheManagers;
+   private final List<HotRodServer> hotRodServers;
+   private final List<EmbeddedCacheManager> embeddedCacheManagers;
    private RemoteCacheManager remoteCacheManager;
-   private EmbeddedTransactionManager transactionManager = EmbeddedTransactionManager.getInstance();
+   private final EmbeddedTransactionManager transactionManager = EmbeddedTransactionManager.getInstance();
 
    private TestCluster(List<HotRodServer> hotRodServers, List<EmbeddedCacheManager> embeddedCacheManagers,
                        RemoteCacheManager remoteCacheManager) {
@@ -155,7 +155,7 @@ class TestCluster {
    static class Builder {
       private String name = "cluster1";
       private int numMembers = 1;
-      private Map<String, ConfigurationBuilder> caches = new HashMap<>();
+      private final Map<String, ConfigurationBuilder> caches = new HashMap<>();
       private HotRodServerConfigurationBuilder hotRodBuilder = new HotRodServerConfigurationBuilder();
       private String trustStoreFileName;
       private char[] trustStorePassword;

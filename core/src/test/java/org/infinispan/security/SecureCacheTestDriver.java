@@ -28,11 +28,11 @@ import jakarta.transaction.SystemException;
 
 public class SecureCacheTestDriver {
 
-   private Metadata metadata;
-   private NullListener listener;
-   private FooInterceptor interceptor;
-   private CacheEventConverter<String, String, String> converter;
-   private CacheEventFilter<String, String> keyValueFilter;
+   private final Metadata metadata;
+   private final NullListener listener;
+   private final FooInterceptor interceptor;
+   private final CacheEventConverter<String, String, String> converter;
+   private final CacheEventFilter<String, String> keyValueFilter;
 
    public SecureCacheTestDriver() {
       interceptor = new FooInterceptor();

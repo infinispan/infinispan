@@ -34,7 +34,7 @@ import org.infinispan.util.logging.LogFactory;
 
 public abstract class BaseMergePolicyTest extends BasePartitionHandlingTest {
 
-   private static Log log = LogFactory.getLog(BaseMergePolicyTest.class);
+   private static final Log log = LogFactory.getLog(BaseMergePolicyTest.class);
 
    protected MagicKey conflictKey;
    protected Object valueAfterMerge;

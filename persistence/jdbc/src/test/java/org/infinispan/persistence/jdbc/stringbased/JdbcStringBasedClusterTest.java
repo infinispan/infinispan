@@ -30,7 +30,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "persistence.jdbc.JdbcStringBasedClusterTest")
 public class JdbcStringBasedClusterTest extends BaseDistStoreTest<Integer, String, JdbcStringBasedClusterTest> {
 
-   private ControlledTimeService controlledTimeService = new ControlledTimeService();
+   private final ControlledTimeService controlledTimeService = new ControlledTimeService();
 
    {
       INIT_CLUSTER_SIZE = 2;

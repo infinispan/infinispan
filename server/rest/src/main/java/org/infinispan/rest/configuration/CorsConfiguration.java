@@ -15,7 +15,7 @@ import io.netty.handler.codec.http.cors.CorsConfig;
 public class CorsConfiguration extends ConfigurationElement<CorsConfiguration> {
    private final List<CorsConfig> nettyCorsConfigs;
 
-   private List<CorsRuleConfiguration> corsConfigurations;
+   private final List<CorsRuleConfiguration> corsConfigurations;
 
    CorsConfiguration(List<CorsRuleConfiguration> corsConfigurations, List<CorsConfig> extraConfigs) {
       super("cors-rules", AttributeSet.EMPTY, children(corsConfigurations));

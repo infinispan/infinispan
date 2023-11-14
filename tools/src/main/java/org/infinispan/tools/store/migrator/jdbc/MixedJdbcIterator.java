@@ -13,8 +13,8 @@ import org.infinispan.persistence.keymappers.TwoWayKey2StringMapper;
  * @since 9.0
  */
 class MixedJdbcIterator implements Iterator<MarshallableEntry>, AutoCloseable {
-   private BinaryJdbcIterator binaryIt;
-   private StringJdbcIterator stringIt;
+   private final BinaryJdbcIterator binaryIt;
+   private final StringJdbcIterator stringIt;
 
    MixedJdbcIterator(ConnectionFactory connectionFactory, TableManager binaryTm, TableManager stringTm,
                      Marshaller marshaller, TwoWayKey2StringMapper key2StringMapper) {

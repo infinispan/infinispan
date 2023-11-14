@@ -25,12 +25,12 @@ public final class WeakValueHashMap<K, V> extends java.util.AbstractMap<K, V> {
    /**
     * Hash table mapping keys to ref values
     */
-   private Map<K, ValueRef<K, V>> map;
+   private final Map<K, ValueRef<K, V>> map;
 
    /**
     * Reference queue for cleared RefKeys
     */
-   private ReferenceQueue<V> queue = new ReferenceQueue<V>();
+   private final ReferenceQueue<V> queue = new ReferenceQueue<V>();
 
    /**
     * Constructs a new, empty <code>WeakValueHashMap</code> with the given
@@ -221,7 +221,7 @@ public final class WeakValueHashMap<K, V> extends java.util.AbstractMap<K, V> {
       /**
        * The delegate
        */
-      private Iterator<Entry<K, ValueRef<K, V>>> delegate;
+      private final Iterator<Entry<K, ValueRef<K, V>>> delegate;
 
       /**
        * Create a new EntrySetIterator.

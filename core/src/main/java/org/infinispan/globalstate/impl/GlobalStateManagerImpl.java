@@ -52,7 +52,7 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
    @Inject
    TimeService timeService;
 
-   private List<GlobalStateProvider> stateProviders = new ArrayList<>();
+   private final List<GlobalStateProvider> stateProviders = new ArrayList<>();
    private boolean persistentState;
    FileOutputStream globalLockFile;
    private FileLock globalLock;

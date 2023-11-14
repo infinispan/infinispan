@@ -297,7 +297,7 @@ class RangeSet implements IntSet {
    }
 
    private static class RangeSetIterator implements PrimitiveIterator.OfInt {
-      private int size;
+      private final int size;
       private int next;
 
       public RangeSetIterator(int size) {

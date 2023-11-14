@@ -23,7 +23,7 @@ public class SecureTypeIdResolver implements TypeIdResolver {
 
    protected final static Log logger = LogFactory.getLog(SecureTypeIdResolver.class, Log.class);
 
-   private TypeIdResolver internalTypeIdResolver;
+   private final TypeIdResolver internalTypeIdResolver;
    private final ClassAllowList classAllowList;
 
    SecureTypeIdResolver(TypeIdResolver typeIdResolver, ClassAllowList classAllowList) {

@@ -41,7 +41,7 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
    }
 
    protected static class SimpleEntry<K, V> implements Map.Entry<K, V> {
-      private K key;
+      private final K key;
       private V value;
 
       SimpleEntry(K key, V value) {

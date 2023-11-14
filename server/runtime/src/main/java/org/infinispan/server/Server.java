@@ -225,7 +225,7 @@ public class Server extends BaseServerManagement implements AutoCloseable {
    private BlockingManager blockingManager;
    private BackupManager backupManager;
    private Map<String, DataSource> dataSources;
-   private Path dataPath;
+   private final Path dataPath;
 
    /**
     * Initializes a server with the default server root, the default configuration file and system properties

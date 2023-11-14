@@ -66,7 +66,7 @@ public @interface Synthetic {
         private final Map<Object, Synthetic> synthetics;
         private final String namespace;
 
-        private AtomicLong count;
+        private final AtomicLong count;
 
         public Provider(String namespace) {
             this.synthetics = new HashMap<Object, Synthetic>();

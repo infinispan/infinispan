@@ -33,9 +33,9 @@ import org.testng.annotations.Test;
 @Test(testName = "remoting.jgroups.ChannelLookupTest", groups = "functional")
 public class ChannelLookupTest extends AbstractInfinispanTest {
    static JChannel mockChannel = mock(JChannel.class);
-   private ProtocolStack ps = mock(ProtocolStack.class);
-   private Address a = new UUID(1, 1);
-   private View v = new View(a, 1, Collections.singletonList(a));
+   private final ProtocolStack ps = mock(ProtocolStack.class);
+   private final Address a = new UUID(1, 1);
+   private final View v = new View(a, 1, Collections.singletonList(a));
 
    public void channelLookupTest() {
 

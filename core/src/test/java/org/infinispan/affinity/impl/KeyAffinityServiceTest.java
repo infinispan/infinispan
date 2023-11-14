@@ -103,7 +103,7 @@ public class KeyAffinityServiceTest extends BaseKeyAffinityServiceTest {
 
 
       private final int keysToConsume;
-      private CountDownLatch consumersStart;
+      private final CountDownLatch consumersStart;
       private final List<Address> topology = topology();
       private final Random rnd = new Random();
 

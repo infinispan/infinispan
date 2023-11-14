@@ -34,7 +34,7 @@ public class InfinispanServerTestConfiguration {
    private final boolean jmx;
    private final boolean parallelStartup;
    private final List<InfinispanServerListener> listeners;
-   private boolean defaultFile;
+   private final boolean defaultFile;
    private final String site;
    private final int portOffset;
    private final String[] features;

@@ -14,7 +14,7 @@ import org.springframework.util.Assert;
  */
 public class ContainerRemoteCacheManagerFactoryBean implements FactoryBean<CacheManager> {
 
-   private RemoteCacheManager cacheContainer;
+   private final RemoteCacheManager cacheContainer;
 
    public ContainerRemoteCacheManagerFactoryBean(RemoteCacheManager cacheContainer) {
       Assert.notNull(cacheContainer, "CacheContainer cannot be null");

@@ -48,7 +48,7 @@ public class LimitedExecutor implements Executor {
    @GuardedBy("lock")
    private int availablePermits;
    @GuardedBy("lock")
-   private Map<Thread, Object> threads;
+   private final Map<Thread, Object> threads;
    @GuardedBy("lock")
    private final Deque<Runnable> queue = new ArrayDeque<>();
 

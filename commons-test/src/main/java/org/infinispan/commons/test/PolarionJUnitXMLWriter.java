@@ -52,7 +52,7 @@ public class PolarionJUnitXMLWriter implements AutoCloseable {
 
    private static final char UNICODE_REPLACEMENT = 0xFFFD;
 
-   private static XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newFactory();
+   private static final XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newFactory();
 
    private XMLStreamWriter xmlWriter;
 

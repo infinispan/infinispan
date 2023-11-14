@@ -34,8 +34,8 @@ public class DualNodeJtaTransactionManagerImpl implements TransactionManager {
 
    private static final Hashtable INSTANCES = new Hashtable();
 
-   private ThreadLocal currentTransaction = new ThreadLocal();
-   private String nodeId;
+   private final ThreadLocal currentTransaction = new ThreadLocal();
+   private final String nodeId;
 
    public synchronized static DualNodeJtaTransactionManagerImpl getInstance(String nodeId) {
       DualNodeJtaTransactionManagerImpl tm = (DualNodeJtaTransactionManagerImpl) INSTANCES

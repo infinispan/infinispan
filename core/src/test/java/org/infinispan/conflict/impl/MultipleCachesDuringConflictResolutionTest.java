@@ -21,10 +21,10 @@ import org.testng.annotations.Test;
 public class MultipleCachesDuringConflictResolutionTest extends BasePartitionHandlingTest {
 
    // Does not include the org.infinispan.CONFIG and ___defaultCache, so total caches = numberOfCaches + 2
-   private int numberOfCaches = 10;
-   private int numMembersInCluster;
-   private PartitionDescriptor p0;
-   private PartitionDescriptor p1;
+   private final int numberOfCaches = 10;
+   private final int numMembersInCluster;
+   private final PartitionDescriptor p0;
+   private final PartitionDescriptor p1;
 
    public MultipleCachesDuringConflictResolutionTest() {
       this.p0 = new PartitionDescriptor(0);

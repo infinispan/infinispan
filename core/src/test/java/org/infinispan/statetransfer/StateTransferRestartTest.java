@@ -67,7 +67,7 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
       }
    }
 
-   private MockTransport mockTransport = new MockTransport();
+   private final MockTransport mockTransport = new MockTransport();
 
    @Override
    protected void createCacheManagers() throws Throwable {

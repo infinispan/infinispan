@@ -38,7 +38,7 @@ public class RehashStressTest extends AbstractInfinispanTest {
         }
     }
 
-    private static Logger log = Logger.getLogger(RehashStressTest.class.getName());
+    private static final Logger log = Logger.getLogger(RehashStressTest.class.getName());
    /*
     * This test simulates concurrent threads submitting executor
     * tasks to ISPN, at the same time a rehash occurs.. You should see that

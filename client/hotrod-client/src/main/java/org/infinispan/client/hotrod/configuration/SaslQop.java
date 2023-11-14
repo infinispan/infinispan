@@ -9,7 +9,7 @@ package org.infinispan.client.hotrod.configuration;
 public enum SaslQop {
    AUTH("auth"), AUTH_INT("auth-int"), AUTH_CONF("auth-conf");
 
-   private String v;
+   private final String v;
 
    SaslQop(String v) {
       this.v = v;

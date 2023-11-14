@@ -39,7 +39,7 @@ import org.testng.annotations.Test;
 public class AsyncAPITest extends SingleCacheManagerTest {
 
    private Cache<String, String> c;
-   private ControlledTimeService timeService = new ControlledTimeService();
+   private final ControlledTimeService timeService = new ControlledTimeService();
    private Long startTime;
 
    @BeforeMethod

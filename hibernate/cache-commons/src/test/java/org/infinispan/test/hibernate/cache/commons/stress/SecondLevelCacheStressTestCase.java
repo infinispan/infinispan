@@ -534,7 +534,7 @@ public class SecondLevelCacheStressTestCase {
    }
 
    private static class TotalStats {
-      private ConcurrentHashMap<String, OpStats> statsMap =
+      private final ConcurrentHashMap<String, OpStats> statsMap =
             new ConcurrentHashMap<String, OpStats>();
 
       public void addStats(String opName, long opCount,

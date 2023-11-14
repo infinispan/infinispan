@@ -69,7 +69,7 @@ public final class IntervalTree<K extends Comparable<K>, V> {
    /**
     * The root of the tree.
     */
-   private Node<K, V> root;
+   private final Node<K, V> root;
 
    public IntervalTree() {
       sentinel = new Node<>();

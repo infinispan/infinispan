@@ -79,7 +79,7 @@ import jakarta.transaction.TransactionManager;
 @Scope(Scopes.NAMED_CACHE)
 public class DefaultConflictManager<K, V> implements InternalConflictManager<K, V> {
 
-   private static Log log = LogFactory.getLog(DefaultConflictManager.class);
+   private static final Log log = LogFactory.getLog(DefaultConflictManager.class);
 
    private static final long localFlags = FlagBitSets.CACHE_MODE_LOCAL| FlagBitSets.SKIP_OWNERSHIP_CHECK| FlagBitSets.SKIP_LOCKING;
    private static final long userMergeFlags = FlagBitSets.IGNORE_RETURN_VALUES;

@@ -48,7 +48,7 @@ public class Proxies {
 
         private static final Log log = LogFactory.getLog(CatchThrowableProxy.class);
 
-        private Object obj;
+        private final Object obj;
 
         public static Object newInstance(Object obj) {
             return java.lang.reflect.Proxy.newProxyInstance(obj.getClass().getClassLoader(),

@@ -59,7 +59,7 @@ public class ConcurrentWriteTest extends SingleNodeTest {
 	/**
 	 * collection of IDs of all customers participating in this test
 	 */
-	private Set<Integer> customerIDs = new HashSet<Integer>();
+	private final Set<Integer> customerIDs = new HashSet<Integer>();
 
 	@Override
 	public List<Object[]> getParameters() {

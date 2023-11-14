@@ -34,7 +34,7 @@ public class ProfileTest extends AbstractProfileTest {
    protected static final boolean USE_SLEEP = false; // throttle generation a bit
    protected static final boolean SKIP_WARMUP = true;
 
-   private List<Object> keys = new ArrayList<Object>(MAX_OVERALL_KEYS);
+   private final List<Object> keys = new ArrayList<Object>(MAX_OVERALL_KEYS);
    protected static boolean USE_TRANSACTIONS = false;
 
    public static void main(String[] args) throws Exception {

@@ -42,7 +42,7 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
 
    protected final MBeanServerLookup mBeanServerLookup = TestMBeanServerLookup.create();
 
-   private Map<String, List<HotRodServer>> siteServers = new HashMap<>();
+   private final Map<String, List<HotRodServer>> siteServers = new HashMap<>();
 
    RemoteCacheManager client(String siteName, Optional<String> backupSiteName) {
       HotRodServer server = siteServers.get(siteName).get(0);

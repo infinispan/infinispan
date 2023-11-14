@@ -123,7 +123,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    private IterationManager iterationManager;
    private RemoveCacheListener removeCacheListener;
    private ClientCounterManagerNotificationManager clientCounterNotificationManager;
-   private HotRodAccessLogging accessLogging = new HotRodAccessLogging();
+   private final HotRodAccessLogging accessLogging = new HotRodAccessLogging();
    private ScheduledExecutorService scheduledExecutor;
    private TimeService timeService;
 

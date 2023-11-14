@@ -85,10 +85,10 @@ public class CustomMemcachedHotRodTest extends AbstractInfinispanTest {
       private static final int DEFAULT_TIMEOUT = 10000;
       private static final String DEFAULT_ENCODING = "UTF-8";
 
-      private String encoding;
-      private Socket socket;
-      private PrintWriter out;
-      private InputStream input;
+      private final String encoding;
+      private final Socket socket;
+      private final PrintWriter out;
+      private final InputStream input;
 
       public MemcachedClient(String host, int port) throws IOException {
          this(DEFAULT_ENCODING, host, port, DEFAULT_TIMEOUT);

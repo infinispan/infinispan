@@ -22,7 +22,7 @@ import io.netty.handler.codec.http.QueryStringDecoder;
 public class SimpleRequest implements RestRequest {
    private final Method method;
    private final String path;
-   private Map<String, String> headers;
+   private final Map<String, String> headers;
    private final ContentSource contents;
    private Map<String, String> variables;
    private String action;

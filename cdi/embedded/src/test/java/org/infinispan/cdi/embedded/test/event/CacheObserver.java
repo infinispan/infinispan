@@ -32,7 +32,7 @@ import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 @ApplicationScoped
 public class CacheObserver {
 
-   private CacheEventHolder eventsMap = new CacheEventHolder();
+   private final CacheEventHolder eventsMap = new CacheEventHolder();
 
    private void observeCache1CacheStatedEvent(@Observes @Cache1 CacheStartedEvent event) {
       eventsMap.addEvent(Cache1.class, CacheStartedEvent.class, event);

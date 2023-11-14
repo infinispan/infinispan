@@ -393,7 +393,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
       return CompletableFuture.completedFuture(invocationHelper.running().invoke(ctx, command));
    }
 
-   private static Function<Object, PublisherResult<Object>> ignoreSegmentsFunction = value ->
+   private static final Function<Object, PublisherResult<Object>> ignoreSegmentsFunction = value ->
          new SegmentPublisherResult<>(IntSets.immutableEmptySet(), value);
 
    static <R> Function<R, PublisherResult<R>> ignoreSegmentsFunction() {

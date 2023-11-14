@@ -28,7 +28,7 @@ public class NotAuthorizedRemoteCacheMetricBinderTest {
    private RemoteCache<String, String> cacheAdminConnection;
    private RemoteCache<String, String> cacheObserverConnection;
 
-   private MeterRegistry registry = new SimpleMeterRegistry();
+   private final MeterRegistry registry = new SimpleMeterRegistry();
    private CacheMeterBinder binder;
 
    @BeforeEach

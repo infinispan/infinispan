@@ -35,7 +35,7 @@ import org.infinispan.test.hibernate.cache.commons.util.CacheTestUtil;
  */
 public class ClusterAwareRegionFactory implements RegionFactory {
 
-   private InfinispanRegionFactory delegate;
+   private final InfinispanRegionFactory delegate;
    private String cacheManagerName;
    private boolean locallyAdded;
 

@@ -9,7 +9,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.jgroups.View;
 
 public final class DelayedViewJGroupsTransport extends JGroupsTransport {
-   private static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    private final CompletableFuture<Void> waitLatch;
 

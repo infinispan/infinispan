@@ -31,9 +31,9 @@ public class QueryPhrasesTest extends SingleCacheManagerTest {
    private Person person3;
    private Person person4;
 
-   private String key1 = "test1";
-   private String key2 = "test2";
-   private String key3 = "test3";
+   private final String key1 = "test1";
+   private final String key2 = "test2";
+   private final String key3 = "test3";
 
    private NumericType type1;
    private NumericType type2;

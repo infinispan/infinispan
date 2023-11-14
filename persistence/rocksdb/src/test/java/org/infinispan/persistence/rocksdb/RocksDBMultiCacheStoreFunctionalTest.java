@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "persistence.rocksdb.RocksDBMultiCacheStoreFunctionalTest")
 public class RocksDBMultiCacheStoreFunctionalTest extends MultiStoresFunctionalTest<RocksDBStoreConfigurationBuilder> {
 
-   private File tmpDir = new File(CommonsTestingUtil.tmpDirectory(this.getClass()));
+   private final File tmpDir = new File(CommonsTestingUtil.tmpDirectory(this.getClass()));
 
    @BeforeMethod
    protected void cleanDataFiles() {

@@ -18,8 +18,8 @@ public class ComparisonFailure extends AssertionError {
     * serialization compatibility.
     * See https://github.com/junit-team/junit4/issues/976
     */
-   private String fExpected;
-   private String fActual;
+   private final String fExpected;
+   private final String fActual;
 
    /**
     * Constructs a comparison failure.

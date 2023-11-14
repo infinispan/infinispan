@@ -26,7 +26,7 @@ public class CacheEntryExpiredAdapter<K, V> extends AbstractAdapter<CacheEntryEx
     * be static).
     */
    private class CDICacheEntriesEvictedEvent implements CacheEntryExpiredEvent<K, V> {
-      private CacheEntryExpiredEvent<K, V> decoratedEvent;
+      private final CacheEntryExpiredEvent<K, V> decoratedEvent;
 
       private CDICacheEntriesEvictedEvent(CacheEntryExpiredEvent<K, V> decoratedEvent) {
          this.decoratedEvent = decoratedEvent;

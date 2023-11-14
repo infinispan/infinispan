@@ -42,7 +42,7 @@ import org.testng.annotations.Test;
 @Test(groups = {"functional", "smoke"}, testName = "manager.AllClusterExecutorTest")
 public class AllClusterExecutorTest extends AbstractInfinispanTest {
    static AtomicInteger atomicInteger = new AtomicInteger();
-   private TestClassLocal<CheckPoint> checkPoint = new TestClassLocal<>("checkpoint", this, CheckPoint::new, c -> {});
+   private final TestClassLocal<CheckPoint> checkPoint = new TestClassLocal<>("checkpoint", this, CheckPoint::new, c -> {});
 
    ClusterExecutor executor(EmbeddedCacheManager cm) {
       return cm.executor();

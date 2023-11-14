@@ -8,7 +8,7 @@ public class VersionedOperationResponse<V> {
 
    public enum RspCode {
       SUCCESS(true), NO_SUCH_KEY(false), MODIFIED_KEY(false);
-      private boolean isModified;
+      private final boolean isModified;
 
       RspCode(boolean modified) {
          isModified = modified;
@@ -19,9 +19,9 @@ public class VersionedOperationResponse<V> {
       }
    }
 
-   private V value;
+   private final V value;
 
-   private RspCode code;
+   private final RspCode code;
 
 
    public VersionedOperationResponse(V value, RspCode code) {

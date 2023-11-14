@@ -42,7 +42,7 @@ public class XaTransactionImpl implements Transaction {
    private LinkedList synchronizations;
    private Connection connection; // the only resource we care about is jdbc connection
    private final XaTransactionManagerImpl jtaTransactionManager;
-   private List<XAResource> enlistedResources = new ArrayList<XAResource>();
+   private final List<XAResource> enlistedResources = new ArrayList<XAResource>();
    private Xid xid = new XaResourceCapableTransactionXid();
    private ConnectionProvider connectionProvider;
 
@@ -225,8 +225,8 @@ public class XaTransactionImpl implements Transaction {
    }
 
    private static class XaResourceCapableTransactionXid implements Xid {
-      private static AtomicInteger txIdCounter = new AtomicInteger(0);
-      private int id = txIdCounter.incrementAndGet();
+      private static final AtomicInteger txIdCounter = new AtomicInteger(0);
+      private final int id = txIdCounter.incrementAndGet();
 
       public int getFormatId() {
          return id;

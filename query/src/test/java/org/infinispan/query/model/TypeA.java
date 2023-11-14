@@ -8,7 +8,7 @@ import org.infinispan.protostream.annotations.ProtoField;
 @Indexed(index = "index-A")
 public class TypeA {
 
-   private String value;
+   private final String value;
 
    @ProtoFactory
    public TypeA(String value) {

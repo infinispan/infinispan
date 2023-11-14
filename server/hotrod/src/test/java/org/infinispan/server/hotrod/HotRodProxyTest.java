@@ -27,10 +27,10 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "server.hotrod.HotRodProxyTest")
 public class HotRodProxyTest extends HotRodMultiNodeTest {
 
-   private String proxyHost1 = "1.2.3.4";
-   private String proxyHost2 = "2.3.4.5";
-   private int proxyPort1 = 8123;
-   private int proxyPort2 = 9123;
+   private final String proxyHost1 = "1.2.3.4";
+   private final String proxyHost2 = "2.3.4.5";
+   private final int proxyPort1 = 8123;
+   private final int proxyPort2 = 9123;
 
    @Override
    protected String cacheName() {

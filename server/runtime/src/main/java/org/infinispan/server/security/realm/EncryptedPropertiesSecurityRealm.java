@@ -74,7 +74,7 @@ public class EncryptedPropertiesSecurityRealm implements CacheableSecurityRealm,
    private final boolean plainText;
    private final String groupsAttribute;
    private final AtomicReference<LoadedState> loadedState = new AtomicReference<>();
-   private Set<Consumer<Principal>> listeners = new LinkedHashSet<>();
+   private final Set<Consumer<Principal>> listeners = new LinkedHashSet<>();
 
    private EncryptedPropertiesSecurityRealm(Builder builder) {
       plainText = builder.plainText;

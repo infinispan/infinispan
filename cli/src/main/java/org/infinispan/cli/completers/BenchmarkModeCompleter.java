@@ -13,7 +13,7 @@ import org.openjdk.jmh.annotations.Mode;
  * @since 12.0
  **/
 public class BenchmarkModeCompleter extends ListCompleter {
-   private static List<String> VALUES = Arrays.stream(Mode.values()).map(Mode::name).collect(Collectors.toList());
+   private static final List<String> VALUES = Arrays.stream(Mode.values()).map(Mode::name).collect(Collectors.toList());
 
    @Override
    Collection<String> getAvailableItems(Context context) {

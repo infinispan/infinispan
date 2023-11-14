@@ -29,7 +29,7 @@ public class ReflectionHelperTest {
          return 0;
       }
 
-      private Base prop3 = null;
+      private final Base prop3 = null;
    }
 
    private abstract static class X {

@@ -7,7 +7,7 @@ import java.util.function.Function;
 
 public class ModelUtils {
 
-    private static int ID_VERSION_OFFSET = 100000;
+    private static final int ID_VERSION_OFFSET = 100000;
 
     public static Function<Integer, Model> createBaseModelEntity(int version) {
         return i -> {

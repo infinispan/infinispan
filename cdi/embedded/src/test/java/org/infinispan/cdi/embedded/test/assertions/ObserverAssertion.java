@@ -33,8 +33,8 @@ import org.infinispan.remoting.transport.Address;
  */
 public class ObserverAssertion {
 
-   private CacheObserver observer;
-   private Class<?> cacheAnnotation;
+   private final CacheObserver observer;
+   private final Class<?> cacheAnnotation;
 
    private ObserverAssertion(CacheObserver observer, Class<?> cacheAnnotation) {
       this.cacheAnnotation = cacheAnnotation;

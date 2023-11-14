@@ -63,7 +63,7 @@ public class TransactionalExceptionEvictionInterceptor extends DDAsyncIntercepto
    private KeyValueMetadataSizeCalculator<Object, Object> calculator;
    private InternalExpirationManager<Object, Object> expirationManager;
 
-   private InvocationSuccessAction<RemoveExpiredCommand> removeExpiredAccept = this::removeExpiredAccept;
+   private final InvocationSuccessAction<RemoveExpiredCommand> removeExpiredAccept = this::removeExpiredAccept;
 
    public long getCurrentSize() {
       return currentSize.get();

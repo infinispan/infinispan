@@ -10,13 +10,13 @@ import org.infinispan.protostream.annotations.ProtoField;
 @Indexed
 public class Sale {
 
-   private String id;
+   private final String id;
 
-   private String code;
+   private final String code;
 
-   private String status;
+   private final String status;
 
-   private Integer day;
+   private final Integer day;
 
    @ProtoFactory
    public Sale(String id, String code, String status, Integer day) {

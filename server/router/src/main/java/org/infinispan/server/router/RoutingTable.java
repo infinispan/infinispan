@@ -15,7 +15,7 @@ import org.infinispan.server.router.routes.RouteSource;
  */
 public class RoutingTable {
 
-    private Set<Route<? extends RouteSource, ? extends RouteDestination>> routes = new HashSet<>();
+    private final Set<Route<? extends RouteSource, ? extends RouteDestination>> routes = new HashSet<>();
 
     /**
      * Creates new {@link RoutingTable}.

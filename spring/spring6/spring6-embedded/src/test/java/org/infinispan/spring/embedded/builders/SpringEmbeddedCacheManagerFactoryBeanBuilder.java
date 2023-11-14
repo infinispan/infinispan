@@ -12,7 +12,7 @@ import org.springframework.core.io.ClassPathResource;
  */
 public class SpringEmbeddedCacheManagerFactoryBeanBuilder {
 
-   private SpringEmbeddedCacheManagerFactoryBean buildingBean = new SpringEmbeddedCacheManagerFactoryBean();
+   private final SpringEmbeddedCacheManagerFactoryBean buildingBean = new SpringEmbeddedCacheManagerFactoryBean();
 
    private SpringEmbeddedCacheManagerFactoryBeanBuilder() {
 

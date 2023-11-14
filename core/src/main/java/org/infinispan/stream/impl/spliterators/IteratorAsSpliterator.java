@@ -18,7 +18,7 @@ import org.infinispan.commons.util.Closeables;
  * split size.  The batch size will never become higher than the configured max batch size
  */
 public class IteratorAsSpliterator<T> implements CloseableSpliterator<T> {
-   private CloseableIterator<? extends T> iterator;
+   private final CloseableIterator<? extends T> iterator;
    private final int characteristics;
    private final int batchIncrease;
    private final int maxBatchSize;

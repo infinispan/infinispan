@@ -15,7 +15,7 @@ public abstract class MemcachedResponse {
    private final CompletionStage<?> response;
    private final Throwable failure;
    protected final Header header;
-   private GenericFutureListener<? extends Future<? super Void>> listener;
+   private final GenericFutureListener<? extends Future<? super Void>> listener;
    protected int responseBytes = 0;
 
    private String errorMessage;

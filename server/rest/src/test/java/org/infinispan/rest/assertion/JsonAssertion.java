@@ -15,7 +15,7 @@ import org.infinispan.commons.dataconversion.internal.Json;
  */
 public class JsonAssertion {
    String path;
-   private Json node;
+   private final Json node;
 
    public JsonAssertion(Json node) {
       this(node, "");

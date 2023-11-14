@@ -112,8 +112,8 @@ public abstract class DualNodeTest extends AbstractFunctionalTest {
 	}
 
 	public class SecondNodeEnvironment {
-		private StandardServiceRegistry serviceRegistry;
-		private SessionFactoryImplementor sessionFactory;
+		private final StandardServiceRegistry serviceRegistry;
+		private final SessionFactoryImplementor sessionFactory;
 
 		public SecondNodeEnvironment() {
 			StandardServiceRegistryBuilder ssrb = constructStandardServiceRegistryBuilder();

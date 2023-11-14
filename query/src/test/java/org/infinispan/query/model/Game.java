@@ -11,9 +11,9 @@ import org.infinispan.protostream.annotations.ProtoField;
 @Indexed(index = "play")
 public class Game {
 
-   private String name;
+   private final String name;
 
-   private String description;
+   private final String description;
 
    @ProtoFactory
    public Game(String name, String description) {

@@ -82,7 +82,7 @@ public class DefaultsExtractorMojo extends AbstractMojo {
    private String xsdTargetPath;
 
    @Parameter
-   private List<String> jars = new ArrayList<>();
+   private final List<String> jars = new ArrayList<>();
 
    @Parameter(defaultValue = "${project}")
    private MavenProject mavenProject;
@@ -93,7 +93,7 @@ public class DefaultsExtractorMojo extends AbstractMojo {
    @Component
    private BuildPluginManager pluginManager;
 
-   private DefaultsResolver ispnResolver = new InfinispanDefaultsResolver();
+   private final DefaultsResolver ispnResolver = new InfinispanDefaultsResolver();
    private List<String> classPaths;
    private ClassLoader classLoader;
 

@@ -15,9 +15,9 @@ import org.infinispan.commons.dataconversion.Transcoder;
  */
 class ObjectXMLTranscoder implements Transcoder {
 
-   private Set<MediaType> supported;
+   private final Set<MediaType> supported;
 
-   private TestXMLParser parser = new TestXMLParser();
+   private final TestXMLParser parser = new TestXMLParser();
 
    ObjectXMLTranscoder() {
       supported = new HashSet<>();
