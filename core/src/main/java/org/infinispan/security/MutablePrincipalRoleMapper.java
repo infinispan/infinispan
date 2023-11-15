@@ -23,4 +23,6 @@ public interface MutablePrincipalRoleMapper extends PrincipalRoleMapper {
    Set<Map.Entry<String, ClusterRoleMapper.RoleSet>> listPrincipalsAndRoleSet();
 
    Set<String> listPrincipalsByRole(String role);
+
+   void denyAll(String principal);
 }

@@ -252,7 +252,7 @@ public class SecurityResource implements ResourceHandler {
       }
       String principal = request.variables().get("principal");
       if (all) {
-         principalRoleMapper.listPrincipalsAndRoleSet().remove(principal);
+         principalRoleMapper.denyAll(principal);
          return aclCacheFlush(request);
       }
       List<String> roles = request.parameters().get("role");
