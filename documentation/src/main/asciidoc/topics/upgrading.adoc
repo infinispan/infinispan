@@ -5,8 +5,7 @@
 The JGroups and cross-site metrics name changed when `names-as-tags` is set to `true`,
 where the cluster's name and the site's name are no longer present in the metrics name but as a tag.
 
-As an example, when `names-as-tags` is set to `false`,
-we got 2 different metrics with the channel name distinguishing between them.
+As an example, when you set `names-as-tags` to `false`, metrics are named based on the channel, resulting in multiple metrics for the same purpose:
 
 [source]
 ----
@@ -18,7 +17,7 @@ vendor_jgroups_xsite_frag4_get_number_of_sent_fragments{cluster="xsite",node="..
 vendor_jgroups_cluster_frag4_get_number_of_sent_fragments{cluster="cluster",node="..."} 2.0
 ----
 
-When `names-as-tags` is set to `true`, we got a single metric:
+When you set `names-as-tags` to `true`, metrics are simplified, and cluster and site names appear as tags:
 
 [source]
 ----
@@ -34,10 +33,9 @@ Aligning with the deprecation for removal of the SecurityManager since JDK 17, w
 SecurityManager.
 
 == Jakarta and Java EE
-
-* Infinispan has been updated to use `jakarta.*` packages.
+* Infinispan has been updated to use `jakarta.*` packages only.
 * If you require the legacy `javax.*` packages, you should utilise Infinispan 14.0.x.
-* The old `*-jakarta` jars have been removed.
+* The transitional `*-jakarta` jars, which included both `jakarta.*` and `javax.*` packages, have been removed.
 
 == Removals
 
@@ -48,14 +46,35 @@ SecurityManager.
 * Wildfly modules are no longer provided.
 
 == Hot Rod client defaults
+{brandname} introduced changes to the properties of the Hot Rod client.
 
-The following defaults have changed for the Hot Rod client:
+.`ssl_hostname_validation`
+A new property, `ssl_hostname_validation` with a default value of `true`.
+This property enables TLS hostname validation based on RFC 2818 rules.
+Additionally, setting the `sni_hostname` is now required when hostname validation is enabled.
 
-* `connection_timeout` is now 2000 ms / 2 seconds (previously 60000 ms / 60 seconds)
-* `socket_timeout` is now 2000 ms / 2 seconds (previously 60000 ms / 60 seconds)
-* `max_retries` is now 3 (was 10)
-* `min_evictable_idle_time` is now 180000 ms / 3 minutes (previously 1800000 ms / 30 minutes)
-* `ssl_hostname_validation` is a new property and defaults to `true`. This also requires setting the `sni_hostname`.
+.Default property changes
+
+[cols="2,1,1"]
+|===
+|Property |{brandname} 14 |Previous versions
+
+| `connection_timeout`
+| *2000 ms / 2 seconds*
+| 60000 ms / 60 seconds
+
+| `socket_timeout`
+| *2000 ms / 2 seconds*
+| 60000 ms / 60 seconds
+
+| `max_retries`
+| *3*
+| 10
+
+| `min_evictable_idle_time`
+| *180000 ms / 3 minutes*
+| 1800000 ms / 30 minutes
+|===
 
 == RESP Endpoint
 
@@ -84,7 +103,7 @@ Use the `cache-manager.security.authorization.group-only-mapping=false` configur
 
 == Scattered cache removal
 
-The scattered cache mode have been removed a bit earlier. Please use Distributed caches instead.
+The scattered cache mode have been removed. Use Distributed caches instead.
 
 == Global State
 
@@ -104,8 +123,6 @@ application/octet-stream.
 Client listeners remove events will now be propagated even if the remove did not remove a value.
 This is required to properly support new changes around the new `includeOldValue` method on `CacheEventConverter`.
 NOTE: Remote events do not include any values by default
-
-= Upgrading to 14.0.14 or newer
 
 == NearCache SPI
 
@@ -259,7 +276,7 @@ The following table summarizes the mapping of fields between Hibernate Search 5 
 == Query efficiency
 
 The default for maximum results returned by a query that was present in Infinispan 12.1.5.Final and earlier versions has been restored.
-You can now change the default limit by setting the default-max-results cache property.
+You can now change the default limit by setting the `default-max-results` cache property.
 The default value of default-max-results is 100.
 Limiting the number of results returned by a query significantly improves performance of queries that don't have an explicit limit set.
 
