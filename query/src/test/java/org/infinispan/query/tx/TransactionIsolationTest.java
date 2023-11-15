@@ -137,7 +137,7 @@ public class TransactionIsolationTest extends MultipleCacheManagersTest {
       return cache.query(q).execute().list();
    }
 
-   private String getStringKeyForCache(Cache cache) {
+   protected String getStringKeyForCache(Cache cache) {
       LocalizedCacheTopology topology = cache.getAdvancedCache().getDistributionManager().getCacheTopology();
       return IntStream.generate(ThreadLocalRandom.current()::nextInt).mapToObj(i -> "key" + i)
             .filter(key -> topology.getDistribution(key).isPrimary()).findAny().get();

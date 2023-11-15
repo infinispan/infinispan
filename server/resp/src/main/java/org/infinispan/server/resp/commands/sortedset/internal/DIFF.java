@@ -1,10 +1,18 @@
 package org.infinispan.server.resp.commands.sortedset.internal;
 
-import io.netty.channel.ChannelHandlerContext;
+import static org.infinispan.server.resp.Consumers.LONG_ELSE_COLLECTION;
+import static org.infinispan.server.resp.commands.sortedset.ZSetCommonUtils.isWithScoresArg;
+import static org.infinispan.server.resp.commands.sortedset.ZSetCommonUtils.mapResultsToArrayList;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
+
 import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
 import org.infinispan.multimap.impl.ScoredValue;
 import org.infinispan.multimap.impl.SortedSetAddArgs;
-import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
@@ -13,14 +21,7 @@ import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.util.concurrent.CompletionStages;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.stream.Collectors;
-
-import static org.infinispan.server.resp.commands.sortedset.ZSetCommonUtils.isWithScoresArg;
-import static org.infinispan.server.resp.commands.sortedset.ZSetCommonUtils.mapResultsToArrayList;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Common implementation for ZDIFF commands
@@ -89,17 +90,13 @@ public abstract class DIFF extends RespCommand implements Resp3Command {
                });
       }
 
-      return CompletionStages.handleAndCompose(diffScoreValues, (result, t) -> {
-         if (t != null) {
-            return handleException(handler, t);
-         }
+      CompletionStage<?> cs = diffScoreValues
+            .thenCompose(result -> (CompletionStage<?>)
+                  (destination != null
+                        ? sortedSetCache.addMany(destination, result, SortedSetAddArgs.create().replace().build())
+                        : CompletableFuture.completedFuture(mapResultsToArrayList(result, withScores))));
 
-         if (destination != null) {
-            return handler.stageToReturn(sortedSetCache.addMany(destination, result, SortedSetAddArgs.create().replace().build()), ctx, Consumers.LONG_BICONSUMER);
-         }
-
-         return handler.stageToReturn(CompletableFuture.completedFuture(mapResultsToArrayList(result, withScores)), ctx, Consumers.GET_ARRAY_BICONSUMER);
-      });
+      return handler.stageToReturn(cs, ctx, LONG_ELSE_COLLECTION);
    }
 
    private boolean invalidNumberOfKeys(List<byte[]> arguments, int numberOfKeys, boolean withScores) {

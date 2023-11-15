@@ -1,7 +1,12 @@
 package org.infinispan.server.resp.commands.list.internal;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.function.BiConsumer;
+
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
+import org.infinispan.server.resp.ByteBufPool;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
@@ -9,12 +14,8 @@ import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.util.concurrent.CompletionStages;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Abstract class for common code on POP operations
@@ -22,6 +23,12 @@ import java.util.concurrent.CompletionStage;
  * @since 15.0
  */
 public abstract class POP extends RespCommand implements Resp3Command {
+
+   private static final BiConsumer<Object, ByteBufPool> RESPONSE_HANDLER = (res, buff) -> {
+      if (res == null || res instanceof byte[]) Consumers.GET_BICONSUMER.accept((byte[]) res, buff);
+      else Consumers.GET_ARRAY_BICONSUMER.accept((Collection<byte[]>) res, buff);
+   };
+
    protected boolean first;
 
    public POP(boolean first) {
@@ -37,7 +44,7 @@ public abstract class POP extends RespCommand implements Resp3Command {
       return popAndReturn(handler, ctx, arguments);
    }
 
-   protected CompletionStage<RespRequestHandler> popAndReturn(Resp3Handler handler,
+   private CompletionStage<RespRequestHandler> popAndReturn(Resp3Handler handler,
                                                                ChannelHandlerContext ctx,
                                                                List<byte[]> arguments) {
       byte[] key = arguments.get(0);
@@ -56,22 +63,19 @@ public abstract class POP extends RespCommand implements Resp3Command {
       CompletionStage<Collection<byte[]>> pollValues = first ?
             listMultimap.pollFirst(key, count) :
             listMultimap.pollLast(key, count);
-      return CompletionStages.handleAndCompose(pollValues ,(c, t) -> {
-         if (t != null) {
-            return handleException(handler, t);
-         }
 
-         if (c == null) {
-            return handler.stageToReturn(CompletableFuture.completedFuture(null), ctx, Consumers.GET_BICONSUMER);
-         }
+      CompletionStage<Object> cs = pollValues
+            .thenApply(c -> {
+               if (c == null) return null;
 
-         if (c.size() == 1 && arguments.size() == 1) {
-            // one single element and count argument was not present, return the value as string
-            return handler.stageToReturn(CompletableFuture.completedFuture(c.iterator().next()), ctx, Consumers.GET_BICONSUMER);
-         }
+               // one single element and count argument was not present, return the value as string
+               if (c.size() == 1 && arguments.size() == 1)
+                  return c.iterator().next();
 
-         // return an array of strings
-         return handler.stageToReturn(CompletableFuture.completedFuture(c), ctx, Consumers.GET_ARRAY_BICONSUMER);
-      });
+               // return an array of strings
+               return c;
+            });
+
+      return handler.stageToReturn(cs, ctx, RESPONSE_HANDLER);
    }
 }

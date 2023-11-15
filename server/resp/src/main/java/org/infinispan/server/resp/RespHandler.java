@@ -40,6 +40,7 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
    }
 
    protected ByteBuf allocateBuffer(ChannelHandlerContext ctx, int size) {
+      assert ctx.channel().eventLoop().inEventLoop() : "Buffer allocation should occur in event loop, it was " + Thread.currentThread().getName();
       if (traceAccess) accessLogger.accept(size);
       if (outboundBuffer != null) {
          if (outboundBuffer.writableBytes() > size) {
@@ -163,7 +164,7 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
       // Disable reading any more from socket - until command is complete
       ctx.channel().config().setAutoRead(false);
       stage.whenComplete((handler, t) -> {
-         assert ctx.channel().eventLoop().inEventLoop();
+         assert ctx.channel().eventLoop().inEventLoop() : "Command should complete only in event loop thread, it was " + Thread.currentThread().getName();
          if (t != null) {
             exceptionCaught(ctx, t);
             return;

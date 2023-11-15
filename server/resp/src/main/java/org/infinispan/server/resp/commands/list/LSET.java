@@ -1,7 +1,11 @@
 package org.infinispan.server.resp.commands.list;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.function.BiConsumer;
+
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
+import org.infinispan.server.resp.ByteBufPool;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
@@ -9,11 +13,8 @@ import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.util.concurrent.CompletionStages;
-import org.jgroups.util.CompletableFutures;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @link https://redis.io/commands/lset/
@@ -24,6 +25,12 @@ import java.util.concurrent.CompletionStage;
  * @since 15.0
  */
 public class LSET extends RespCommand implements Resp3Command {
+
+   private static final BiConsumer<Boolean, ByteBufPool> RESPONSE_HANDLER = (result, buf) -> {
+      if (!result) RespErrorUtil.noSuchKey(buf);
+      else Consumers.OK_BICONSUMER.accept(null, buf);
+   };
+
    public LSET() {
       super(4, 1, 1, 1);
    }
@@ -38,18 +45,6 @@ public class LSET extends RespCommand implements Resp3Command {
       byte[] value = arguments.get(2);
 
       EmbeddedMultimapListCache<byte[], byte[]> listMultimap = handler.getListMultimap();
-
-      return CompletionStages.handleAndCompose(listMultimap.set(key, index, value) ,(result, t) -> {
-         if (t != null) {
-            return handleException(handler, t);
-         }
-
-         if (!result) {
-            RespErrorUtil.noSuchKey(handler.allocator());
-            return handler.myStage();
-         }
-
-         return handler.stageToReturn(CompletableFutures.completedNull(), ctx, Consumers.OK_BICONSUMER);
-      });
+      return handler.stageToReturn(listMultimap.set(key, index, value), ctx, RESPONSE_HANDLER);
    }
 }

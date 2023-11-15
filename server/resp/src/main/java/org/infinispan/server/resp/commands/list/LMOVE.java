@@ -1,6 +1,10 @@
 package org.infinispan.server.resp.commands.list;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.server.resp.Consumers;
@@ -11,10 +15,7 @@ import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.logging.Log;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @link https://redis.io/commands/lmove/
@@ -111,10 +112,9 @@ public class LMOVE extends RespCommand implements Resp3Command {
          pollCall = listMultimap.pollLast(source, 1);
       }
 
-      return pollCall.thenCompose( pollResult -> {
-               if (pollResult == null) {
-                  return handler.stageToReturn(CompletableFutures.completedNull(), ctx, Consumers.GET_BICONSUMER);
-               }
+      CompletionStage<byte[]> cs = pollCall
+            .thenCompose(pollResult -> {
+               if (pollResult == null) return CompletableFutures.completedNull();
 
                final byte[] element = pollResult.iterator().next();
 
@@ -125,7 +125,9 @@ public class LMOVE extends RespCommand implements Resp3Command {
                   offerCall = listMultimap.offerLast(destination, element);
                }
 
-               return handler.stageToReturn(offerCall.thenApply(r -> element), ctx, Consumers.GET_BICONSUMER);
+               return offerCall.thenApply(r -> element);
             });
+
+      return handler.stageToReturn(cs, ctx, Consumers.GET_BICONSUMER);
    }
 }

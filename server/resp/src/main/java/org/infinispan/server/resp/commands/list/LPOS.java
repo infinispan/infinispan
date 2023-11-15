@@ -1,6 +1,10 @@
 package org.infinispan.server.resp.commands.list;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
@@ -9,12 +13,8 @@ import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.util.concurrent.CompletionStages;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @link https://redis.io/commands/lpos/
@@ -49,12 +49,18 @@ public class LPOS extends RespCommand implements Resp3Command {
          return handler.myStage();
       }
 
-      return lposAndReturn(handler, ctx, arguments);
+      CompletionStage<?> cs = lposAndReturn(handler, ctx, arguments);
+      return handler.stageToReturn(cs, ctx, (res, buff) -> {
+         if (res == handler) return;
+
+         if (res == null || res instanceof Long) Consumers.LONG_BICONSUMER.accept((Long) res, buff);
+         else Consumers.COLLECTION_LONG_BICONSUMER.accept((Collection<Long>) res, buff);
+      });
    }
 
-   protected CompletionStage<RespRequestHandler> lposAndReturn(Resp3Handler handler,
-                                                                ChannelHandlerContext ctx,
-                                                                List<byte[]> arguments) {
+   private CompletionStage<?> lposAndReturn(Resp3Handler handler,
+                                            ChannelHandlerContext ctx,
+                                            List<byte[]> arguments) {
       byte[] key = arguments.get(0);
       byte[] element = arguments.get(1);
       Long count = null;
@@ -96,18 +102,14 @@ public class LPOS extends RespCommand implements Resp3Command {
 
       EmbeddedMultimapListCache<byte[], byte[]> listMultimap = handler.getListMultimap();
       final boolean returnSingleElement = count == null;
-      return CompletionStages.handleAndCompose(listMultimap.indexOf(key, element, count, rank, maxLen), (indexes, t) -> {
-         if (t != null) {
-            return handleException(handler, t);
-         }
+      return listMultimap.indexOf(key, element, count, rank, maxLen)
+            .thenApply(indexes -> {
+               if (returnSingleElement) {
+                  return indexes == null || indexes.isEmpty() ? null : indexes.iterator().next();
+               }
 
-         if (returnSingleElement) {
-            Long singleIndex = indexes == null || indexes.isEmpty() ? null : indexes.iterator().next();
-            return handler.stageToReturn(CompletableFuture.completedFuture(singleIndex), ctx, Consumers.LONG_BICONSUMER);
-         }
-
-         return handler.stageToReturn(CompletableFuture.completedFuture(indexes == null ? Collections.emptyList() : indexes), ctx, Consumers.COLLECTION_LONG_BICONSUMER);
-      });
+               return indexes == null ? Collections.emptyList() : indexes;
+            });
    }
 
 }

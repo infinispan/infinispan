@@ -1,18 +1,7 @@
 package org.infinispan.server.resp.commands.sortedset.internal;
 
-import io.netty.channel.ChannelHandlerContext;
-import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
-import org.infinispan.multimap.impl.ScoredValue;
-import org.infinispan.multimap.impl.SortedSetAddArgs;
-import org.infinispan.multimap.impl.SortedSetBucket;
-import org.infinispan.server.resp.Consumers;
-import org.infinispan.server.resp.Resp3Handler;
-import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
-import org.infinispan.server.resp.RespRequestHandler;
-import org.infinispan.server.resp.commands.ArgumentUtils;
-import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.util.concurrent.CompletionStages;
+import static org.infinispan.server.resp.Consumers.LONG_ELSE_COLLECTION;
+import static org.infinispan.server.resp.commands.sortedset.ZSetCommonUtils.mapResultsToArrayList;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,7 +9,18 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-import static org.infinispan.server.resp.commands.sortedset.ZSetCommonUtils.mapResultsToArrayList;
+import org.infinispan.multimap.impl.EmbeddedMultimapSortedSetCache;
+import org.infinispan.multimap.impl.ScoredValue;
+import org.infinispan.multimap.impl.SortedSetAddArgs;
+import org.infinispan.multimap.impl.SortedSetBucket;
+import org.infinispan.server.resp.Resp3Handler;
+import org.infinispan.server.resp.RespCommand;
+import org.infinispan.server.resp.RespErrorUtil;
+import org.infinispan.server.resp.RespRequestHandler;
+import org.infinispan.server.resp.commands.ArgumentUtils;
+import org.infinispan.server.resp.commands.Resp3Command;
+
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Common implementation for UNION and INTER commands
@@ -144,17 +144,15 @@ public abstract class AGGCommand extends RespCommand implements Resp3Command {
          });
       }
       final boolean finalWithScores = withScores;
-      return CompletionStages.handleAndCompose(aggValues, (result, t) -> {
-         if (t != null) {
-            return handleException(handler, t);
-         }
+      CompletionStage<?> cs = aggValues
+            .thenCompose(result -> {
+               CompletionStage<?> n = destination != null
+                     ? sortedSetCache.addMany(destination, result, SortedSetAddArgs.create().replace().build())
+                     : CompletableFuture.completedFuture(mapResultsToArrayList(result, finalWithScores));
+               return n;
+            });
 
-         if (destination != null) {
-            return handler.stageToReturn(sortedSetCache.addMany(destination, result, SortedSetAddArgs.create().replace().build()), ctx, Consumers.LONG_BICONSUMER);
-         }
-
-         return handler.stageToReturn(CompletableFuture.completedFuture(mapResultsToArrayList(result, finalWithScores)), ctx, Consumers.GET_ARRAY_BICONSUMER);
-      });
+      return handler.stageToReturn(cs, ctx, LONG_ELSE_COLLECTION);
    }
 
    private static double computeWeight(List<Double> weights, int index) {

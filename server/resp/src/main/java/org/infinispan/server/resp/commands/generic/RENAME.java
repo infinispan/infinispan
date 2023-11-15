@@ -8,6 +8,7 @@ import java.util.function.BiConsumer;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.server.resp.ByteBufPool;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
@@ -44,38 +45,39 @@ public class RENAME extends RespCommand implements Resp3Command {
 
    public static CompletionStage<RespRequestHandler> rename(Resp3Handler handler, byte[] srcKey, byte[] dstKey,
          ChannelHandlerContext ctx, BiConsumer<?, ByteBufPool> consumer) {
+      BiConsumer<Object, ByteBufPool> bc = (BiConsumer<Object, ByteBufPool>) consumer;
       MediaType vmt = handler.cache().getValueDataConversion().getStorageMediaType();
-      final AdvancedCache<byte[], Object> acm = handler.cache()
-            .<byte[], Object>withMediaType(MediaType.APPLICATION_OCTET_STREAM, vmt);
-      return acm.removeAsyncEntry(srcKey).thenCompose(e -> {
-         if (e == null) {
-            RespErrorUtil.noSuchKey(handler.allocator());
-            return handler.myStage();
-         }
-         CompletableFuture<Long> myStage;
-         if (Arrays.equals(srcKey, dstKey)) {
-            // If src = dest ...
-            myStage = CompletableFuture.completedFuture(1L);
-         } else {
-            var timeService = handler.respServer().getTimeService();
-            // ... else if Immortal entry case: copy metadata...
-            if (e.getLifespan() <= 0) {
-               var newMeta = e.getMetadata().builder();
-               myStage = acm.putAsyncEntry(dstKey, e.getValue(), newMeta.build()).thenApply(ignore -> 1L);
-            } else {
-               long newLifespan = e.getLifespan() + e.getCreated() - timeService.wallClockTime();
-               if (newLifespan > 0) {
-                  // ... else if not expired copy metadata and preserve lifespan...
-                  var newMeta = e.getMetadata().builder().lifespan(newLifespan);
-                  myStage = acm.putAsyncEntry(dstKey, e.getValue(), newMeta.build()).thenApply(ignore -> 1L);
+      final AdvancedCache<byte[], Object> acm = handler.typedCache(vmt);
+      CompletionStage<?> cs = acm.removeAsyncEntry(srcKey)
+            .thenCompose(e -> {
+               if (e == null) return CompletableFutures.completedNull();
+
+               if (Arrays.equals(srcKey, dstKey)) {
+                  // If src = dest ...
+                  return CompletableFuture.completedFuture(1L);
                } else {
-                  // ... or do nothing if expired
-                  myStage = CompletableFuture.completedFuture(1L);
+                  var timeService = handler.respServer().getTimeService();
+                  // ... else if Immortal entry case: copy metadata...
+                  if (e.getLifespan() <= 0) {
+                     var newMeta = e.getMetadata().builder();
+                     return acm.putAsyncEntry(dstKey, e.getValue(), newMeta.build()).thenApply(ignore -> 1L);
+                  } else {
+                     long newLifespan = e.getLifespan() + e.getCreated() - timeService.wallClockTime();
+                     if (newLifespan > 0) {
+                        // ... else if not expired copy metadata and preserve lifespan...
+                        var newMeta = e.getMetadata().builder().lifespan(newLifespan);
+                        return acm.putAsyncEntry(dstKey, e.getValue(), newMeta.build()).thenApply(ignore -> 1L);
+                     } else {
+                        // ... or do nothing if expired
+                        return CompletableFuture.completedFuture(1L);
+                     }
+                  }
                }
-            }
-         }
-         return handler.stageToReturn(myStage, ctx,
-               (BiConsumer<Object, ByteBufPool>) consumer);
+            });
+
+      return handler.stageToReturn(cs, ctx, (l, bbp) -> {
+         if (l != null) bc.accept(l, bbp);
+         else RespErrorUtil.noSuchKey(handler.allocator());
       });
    }
 }

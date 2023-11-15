@@ -44,7 +44,7 @@ public abstract class BaseIterationCommand extends RespCommand implements Resp3C
       if (INITIAL_CURSOR.equals(cursor)) {
          CompletionStage<IterationInitializationContext> initialization = initializeIteration(handler, arguments);
          if (initialization != null) {
-            return initialization.thenCompose(iic -> initializeAndIterate(handler, ctx, manager, args, iic));
+            return handler.stageToReturn(initialization.thenCompose(iic -> initializeAndIterate(handler, ctx, manager, args, iic)), ctx);
          }
          return initializeAndIterate(handler, ctx, manager, args, null);
       }
