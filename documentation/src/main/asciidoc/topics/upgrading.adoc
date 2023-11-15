@@ -13,8 +13,7 @@ The following defaults have changed for the Hot Rod client:
 The JGroups and cross-site metrics name changed when `names-as-tags` is set to `true`,
 where the cluster's name and the site's name are no longer present in the metrics name but as a tag.
 
-As an example, when `names-as-tags` is set to `false`,
-we got 2 different metrics with the channel name distinguishing between them.
+As an example, when you set `names-as-tags` to `false`, metrics are named based on the channel, resulting in multiple metrics for the same purpose:
 
 [source]
 ----
@@ -26,7 +25,7 @@ vendor_jgroups_xsite_frag4_get_number_of_sent_fragments{cluster="xsite",node="..
 vendor_jgroups_cluster_frag4_get_number_of_sent_fragments{cluster="cluster",node="..."} 2.0
 ----
 
-When `names-as-tags` is set to `true`, we got a single metric:
+When you set `names-as-tags` to `true`, metrics are simplified, and cluster and site names appear as tags:
 
 [source]
 ----
@@ -37,21 +36,102 @@ vendor_jgroups_frag4_get_number_of_sent_fragments{cache_manager="default",cluste
 ----
 
 
-= Upgrading to 14.0.14 or newer
+Aligning with the deprecation for removal of the SecurityManager since JDK 17, we no longer support integration with a
+SecurityManager.
 
-== NearCache SPI
+== Jakarta and Java EE
+* Infinispan has been updated to use `jakarta.*` packages only.
+* If you require the legacy `javax.*` packages, you should utilise Infinispan 14.0.x.
+* The transitional `*-jakarta` jars, which included both `jakarta.*` and `javax.*` packages, have been removed.
 
-Due to incosistency issues with concurrent updates the NearCache SPI needed to be updated to have concurrent
-based methods to prevent an issue where a stale entry may have been saved in the near cache.
-For more information please see link:https://issues.jboss.org/browse/ISPN-13612[ISPN-13612]
+== Removals
 
-= Upgrading to 14.0.7 or newer
+* The Kryo and Protostuff marshallers have been removed.
+* Extended Statistics module have been removed.
+* JCache support.
+* Spring 5.x and Spring Boot 2.x support.
+* Wildfly modules are no longer provided.
+
+== Hot Rod client defaults
+{brandname} introduced changes to the properties of the Hot Rod client.
+
+.`ssl_hostname_validation`
+A new property, `ssl_hostname_validation` with a default value of `true`.
+This property enables TLS hostname validation based on RFC 2818 rules.
+Additionally, setting the `sni_hostname` is now required when hostname validation is enabled.
+
+.Default property changes
+
+[cols="2,1,1"]
+|===
+|Property |{brandname} 14 |Previous versions
+
+| `connection_timeout`
+| *2000 ms / 2 seconds*
+| 60000 ms / 60 seconds
+
+| `socket_timeout`
+| *2000 ms / 2 seconds*
+| 60000 ms / 60 seconds
+
+| `max_retries`
+| *3*
+| 10
+
+| `min_evictable_idle_time`
+| *180000 ms / 3 minutes*
+| 1800000 ms / 30 minutes
+|===
 
 == RESP Endpoint
 
 * Default expiration may be applied to the cache configuration used by the RESP endpoint
 
-== RESP Endpoint
+== Search
+
+=== Indexing
+
+* The `property` attribute has been removed.
+
+* The `auto-config` attribute has been removed.
+
+* The `index` attribute has been removed.
+
+== Indexing annotations
+
+* The support for the old Hibernate Search 5 annotations have been removed
+
+* `@ProtoDoc`, no longer required since 14.0, is now deprecated
+
+== Security
+
+The principal role mapper now applies only to groups instead of both groups and user principals.
+Use the `cache-manager.security.authorization.group-only-mapping=false` configuration to use the old behavior.
+
+== Scattered cache removal
+
+The scattered cache mode have been removed. Use Distributed caches instead.
+
+== Global State
+
+Infinispan will now refuse to start if a dangling lock file is found in the persistent global state, indicating
+an unclean shutdown. The behavior can be changed by configuring the global state `unclean-shutdown-action` setting.
+
+== Persistence
+The default `availability-interval` has been increased to 30 seconds. The previous default was 1 second.
+
+== RESP endpoint
+
+The RESP endpoint cache now requires the key storage media type to be
+application/octet-stream.
+
+== Client listeners remove events
+
+Client listeners remove events will now be propagated even if the remove did not remove a value.
+This is required to properly support new changes around the new `includeOldValue` method on `CacheEventConverter`.
+NOTE: Remote events do not include any values by default
+
+== NearCache SPI
 
 * Default expiration may be applied to the cache configuration used by the RESP endpoint
 
@@ -201,7 +281,7 @@ The following table summarizes the mapping of fields between Hibernate Search 5 
 == Query efficiency
 
 The default for maximum results returned by a query that was present in Infinispan 12.1.5.Final and earlier versions has been restored.
-You can now change the default limit by setting the default-max-results cache property.
+You can now change the default limit by setting the `default-max-results` cache property.
 The default value of default-max-results is 100.
 Limiting the number of results returned by a query significantly improves performance of queries that don't have an explicit limit set.
 
