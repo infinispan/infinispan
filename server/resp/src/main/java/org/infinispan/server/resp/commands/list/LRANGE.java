@@ -1,6 +1,10 @@
 package org.infinispan.server.resp.commands.list;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
@@ -8,12 +12,8 @@ import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.util.concurrent.CompletionStages;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * https://redis.io/commands/lrange/
@@ -48,13 +48,8 @@ public class LRANGE extends RespCommand implements Resp3Command {
       int stop = ArgumentUtils.toInt(arguments.get(2));
 
       EmbeddedMultimapListCache<byte[], byte[]> listMultimap = handler.getListMultimap();
-
-      return CompletionStages.handleAndCompose(listMultimap.subList(key, start, stop) ,(c, t) -> {
-         if (t != null) {
-            return handleException(handler, t);
-         }
-
-         return handler.stageToReturn(CompletableFuture.completedFuture(c == null ? Collections.emptyList() : c), ctx, Consumers.GET_ARRAY_BICONSUMER);
-      });
+      CompletionStage<Collection<byte[]>> cs = listMultimap.subList(key, start, stop)
+            .thenApply(c -> c == null ? Collections.emptyList() : c);
+      return handler.stageToReturn(cs, ctx, Consumers.GET_ARRAY_BICONSUMER);
    }
 }

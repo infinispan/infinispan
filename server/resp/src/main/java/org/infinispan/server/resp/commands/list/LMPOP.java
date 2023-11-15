@@ -1,6 +1,14 @@
 package org.infinispan.server.resp.commands.list;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.function.BiConsumer;
+
+import org.infinispan.server.resp.ByteBufPool;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
@@ -8,15 +16,9 @@ import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.util.concurrent.CompletionStages;
 import org.jgroups.util.CompletableFutures;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Pops one or more elements from the first non-empty list key from the list of provided key names.
@@ -35,6 +37,12 @@ import java.util.concurrent.CompletionStage;
  * @see <a href="https://redis.io/commands/lmpop">Redis Documentation</a>
  */
 public class LMPOP extends RespCommand implements Resp3Command {
+
+   private static final BiConsumer<List<?>, ByteBufPool> RESPONSE_HANDLER = (res, buff) -> {
+      if (res == null) Consumers.GET_ARRAY_BICONSUMER.accept(null, buff);
+      else Consumers.LMPOP_BICONSUMER.accept(res, buff);
+   };
+
    public static final String COUNT = "COUNT";
    public static final String LEFT = "LEFT";
    public static final String RIGHT = "RIGHT";
@@ -108,30 +116,27 @@ public class LMPOP extends RespCommand implements Resp3Command {
          }
       }
 
-      return asyncCalls(CompletableFutures.completedNull(), null, listNames.iterator(), count, isLeft, ctx, handler);
+      CompletionStage<List<Object>> cs = asyncCalls(CompletableFutures.completedNull(), null, listNames.iterator(), count, isLeft, ctx, handler);
+      return handler.stageToReturn(cs, ctx, RESPONSE_HANDLER);
    }
 
-   private CompletionStage<RespRequestHandler> asyncCalls(CompletionStage<Collection<byte[]>> pollValues,
+   private CompletionStage<List<Object>> asyncCalls(CompletionStage<Collection<byte[]>> pollValues,
                                                           byte[] prevName,
                                                           Iterator<byte[]> iteNames,
                                                           long count,
                                                           boolean isleft,
                                                           ChannelHandlerContext ctx,
                                                           Resp3Handler handler) {
-      return CompletionStages.handleAndCompose(pollValues, (c, t) -> {
-         if (t != null) {
-            return handleException(handler, t);
-         }
-
+      return pollValues.thenCompose(c -> {
          if (c != null){
-            List result = new ArrayList<>(2);
+            List<Object> result = new ArrayList<>(2);
             result.add(prevName);
             result.add(c);
-            return handler.stageToReturn(CompletableFuture.completedFuture(result), ctx, Consumers.LMPOP_BICONSUMER);
+            return CompletableFuture.completedFuture(result);
          }
 
-         if (!iteNames.hasNext() && c == null) {
-            return handler.stageToReturn(CompletableFutures.completedNull(), ctx, Consumers.GET_ARRAY_BICONSUMER);
+         if (!iteNames.hasNext()) {
+            return CompletableFutures.completedNull();
          }
 
          byte[] nextName = iteNames.next();

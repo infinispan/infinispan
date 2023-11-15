@@ -15,12 +15,14 @@ import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
@@ -824,6 +826,16 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    protected MagicKey getKeyForCache(Cache<?, ?> cache) {
       return new MagicKey(cache);
+   }
+
+   protected String getStringKeyForCache(Cache<?, ?> primary) {
+      return getStringKeyForCache("key", primary);
+   }
+
+   protected String getStringKeyForCache(String prefix, Cache<?, ?> primary) {
+      LocalizedCacheTopology topology = primary.getAdvancedCache().getDistributionManager().getCacheTopology();
+      return IntStream.generate(ThreadLocalRandom.current()::nextInt).mapToObj(i -> prefix + i)
+            .filter(key -> topology.getDistribution(key).isPrimary()).findAny().orElseThrow();
    }
 
    protected MagicKey getKeyForCache(Cache<?, ?> primary, Cache<?, ?>... backup) {

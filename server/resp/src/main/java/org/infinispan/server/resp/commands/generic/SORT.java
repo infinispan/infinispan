@@ -1,6 +1,13 @@
 package org.infinispan.server.resp.commands.generic;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -17,13 +24,7 @@ import org.infinispan.server.resp.commands.LimitArgument;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.util.concurrent.CompletionStages;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Returns or stores the elements contained in the list, set or sorted set at key.
@@ -224,13 +225,8 @@ public class SORT extends RespCommand implements Resp3Command {
                                                      byte[] destination,
                                                      CompletionStage<List<byte[]>> resultingList) {
       EmbeddedMultimapListCache<byte[], byte[]> listMultimap = handler.getListMultimap();
-      return CompletionStages.handleAndCompose(resultingList, (values, t1) -> {
-         if (t1 != null) {
-            return handleException(handler, t1);
-         }
-         CompletionStage<Long> size = listMultimap.replace(destination, values);
-         return handler.stageToReturn(size, ctx, Consumers.LONG_BICONSUMER);
-      });
+      CompletionStage<Long> cs = resultingList.thenCompose(values -> listMultimap.replace(destination, values));
+      return handler.stageToReturn(cs, ctx, Consumers.LONG_BICONSUMER);
    }
 
    private CompletionStage<RespRequestHandler> store(Resp3Handler handler,
@@ -238,13 +234,8 @@ public class SORT extends RespCommand implements Resp3Command {
                                                      byte[] destination,
                                                      CompletionStage<List<ScoredValue<byte[]>>> sortedList) {
       EmbeddedMultimapListCache<byte[], byte[]> listMultimap = handler.getListMultimap();
-      return CompletionStages.handleAndCompose(sortedList, (values, t1) -> {
-         if (t1 != null) {
-            return handleException(handler, t1);
-         }
-         CompletionStage<Long> size = listMultimap.replace(destination,
-               values.stream().map(ScoredValue::getValue).collect(Collectors.toList()));
-         return handler.stageToReturn(size, ctx, Consumers.LONG_BICONSUMER);
-      });
+      CompletionStage<Long> cs = sortedList.thenCompose(values ->
+            listMultimap.replace(destination, values.stream().map(ScoredValue::getValue).collect(Collectors.toList())));
+      return handler.stageToReturn(cs, ctx, Consumers.LONG_BICONSUMER);
    }
 }

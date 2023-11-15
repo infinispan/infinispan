@@ -72,14 +72,18 @@ public class EXEC extends RespCommand implements Resp3Command, TransactionResp3C
 
       // Redis has a serializable isolation. Without batching we have read-uncomitted.
       // Using the batching API we have a few more useful features.
-      if (!cache.getCacheConfiguration().invocationBatching().enabled()) {
+      boolean batchEnabled = cache.getCacheConfiguration().invocationBatching().enabled();
+      if (!batchEnabled) {
          log.multiKeyOperationUseBatching();
       } else {
          cache.startBatch();
       }
       Resp3Handler.writeArrayPrefix(commands.size(), curr.allocator());
       return orderlyExecution(next, ctx, commands, 0, CompletableFutures.completedNull())
-            .whenComplete((ignore, t) -> cache.endBatch(true));
+            .whenComplete((ignore, t) -> {
+               if (batchEnabled)
+                  cache.endBatch(true);
+            });
    }
 
    private CompletionStage<?> orderlyExecution(Resp3Handler handler, ChannelHandlerContext ctx,

@@ -10,7 +10,6 @@ import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.util.concurrent.CompletionStages;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -112,13 +111,8 @@ public class ZINTERCARD extends RespCommand implements Resp3Command {
                : sortedSetCache.inter(setName, c1, 1, SUM));
       }
 
-      return CompletionStages.handleAndCompose(aggValues, (interResult, t) -> {
-         if (t != null) {
-            return handleException(handler, t);
-         }
-
-         return handler.stageToReturn(completedFuture(cardinalityResult(interResult.size(), finalLimit)),
-               ctx, Consumers.LONG_BICONSUMER);
+      return handler.stageToReturn(aggValues, ctx, (res, alloc) -> {
+         Consumers.LONG_BICONSUMER.accept(cardinalityResult(res.size(), finalLimit), alloc);
       });
    }
 

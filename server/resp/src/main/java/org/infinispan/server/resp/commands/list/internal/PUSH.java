@@ -30,16 +30,13 @@ public abstract class PUSH extends RespCommand implements Resp3Command {
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
 
-      return pushAndReturn(handler, ctx, arguments);
+      return handler.stageToReturn(pushAndReturn(handler, arguments), ctx, Consumers.LONG_BICONSUMER);
    }
 
-   protected CompletionStage<RespRequestHandler> pushAndReturn(Resp3Handler handler,
-                                                               ChannelHandlerContext ctx,
-                                                               List<byte[]> arguments) {
+   protected CompletionStage<Long> pushAndReturn(Resp3Handler handler, List<byte[]> arguments) {
       byte[] key = arguments.get(0);
       EmbeddedMultimapListCache<byte[], byte[]> listMultimap = handler.getListMultimap();
       CompletionStage<Void> push = first ? listMultimap.offerFirst(key, arguments.subList(1, arguments.size())) : listMultimap.offerLast(key, arguments.subList(1, arguments.size()));
-      CompletionStage<Long> cs = push.thenCompose(ignore -> listMultimap.size(key));
-      return handler.stageToReturn(cs, ctx, Consumers.LONG_BICONSUMER);
+      return push.thenCompose(ignore -> listMultimap.size(key));
    }
 }

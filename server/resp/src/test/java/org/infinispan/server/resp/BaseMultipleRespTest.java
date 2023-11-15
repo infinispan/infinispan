@@ -1,13 +1,18 @@
 package org.infinispan.server.resp;
 
+import static org.infinispan.server.resp.configuration.RespServerConfiguration.DEFAULT_RESP_CACHE;
 import static org.infinispan.server.resp.test.RespTestingUtil.createClient;
 import static org.infinispan.server.resp.test.RespTestingUtil.killClient;
 import static org.infinispan.server.resp.test.RespTestingUtil.killServer;
 
+import org.infinispan.Cache;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
 import org.infinispan.server.resp.test.RespTestingUtil;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -30,8 +35,12 @@ public abstract class BaseMultipleRespTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() {
       ConfigurationBuilder cacheBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       amendCacheConfiguration(cacheBuilder);
-      cacheBuilder.clustering().hash().keyPartitioner(new RESPHashFunctionPartitioner()).numSegments(256);
+      cacheBuilder
+            .encoding().key().mediaType(MediaType.APPLICATION_OCTET_STREAM)
+            .clustering().cacheMode(CacheMode.DIST_SYNC)
+            .clustering().hash().keyPartitioner(new RESPHashFunctionPartitioner()).numSegments(256);
       createCluster(cacheBuilder, 2);
+      defineRespConfiguration(cacheBuilder.build());
       waitForClusterToForm();
 
       server1 = RespTestingUtil.startServer(cacheManagers.get(0), serverConfiguration(0).build());
@@ -40,6 +49,16 @@ public abstract class BaseMultipleRespTest extends MultipleCacheManagersTest {
       client2 = createClient(30000, server2.getPort());
       redisConnection1 = client1.connect();
       redisConnection2 = client2.connect();
+   }
+
+   protected void defineRespConfiguration(Configuration configuration) {
+      for (EmbeddedCacheManager ecm : managers()) {
+         ecm.defineConfiguration(DEFAULT_RESP_CACHE, configuration);
+      }
+   }
+
+   protected Cache<String, String> respCache(int index) {
+      return manager(index).getCache(DEFAULT_RESP_CACHE);
    }
 
    @AfterClass(alwaysRun = true)

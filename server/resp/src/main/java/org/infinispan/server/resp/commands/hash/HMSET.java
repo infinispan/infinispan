@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.multimap.impl.EmbeddedMultimapPairCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
@@ -12,7 +11,6 @@ import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.util.concurrent.CompletionStages;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -41,13 +39,7 @@ public class HMSET extends RespCommand implements Resp3Command {
          return handler.myStage();
       }
 
-      return CompletionStages.handleAndCompose(setEntries(handler, arguments), (ignore, t) -> {
-         if (t != null) {
-            return handleException(handler, t);
-         }
-
-         return handler.stageToReturn(CompletableFutures.completedNull(), ctx, Consumers.OK_BICONSUMER);
-      });
+      return handler.stageToReturn(setEntries(handler, arguments), ctx, Consumers.OK_BICONSUMER);
    }
 
    protected CompletionStage<Integer> setEntries(Resp3Handler handler, List<byte[]> arguments) {

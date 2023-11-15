@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.infinispan.server.resp.commands.connection.QUIT;
@@ -19,8 +20,17 @@ public abstract class RespRequestHandler {
    protected final RespServer respServer;
 
    public static final AttributeKey<ByteBufPool> BYTE_BUF_POOL_ATTRIBUTE_KEY = AttributeKey.newInstance("buffer-pool");
+   private final BiFunction<RespRequestHandler, Throwable, RespRequestHandler> HANDLE_FAILURE = (h, t) -> {
+      if (t != null) {
+         Resp3Handler.handleThrowable(h.allocator(), t);
+         // If exception, never use handler
+         return this;
+      }
+      return h;
+   };
 
    ByteBufPool allocatorToUse;
+   ChannelHandlerContext ctx;
 
    protected RespRequestHandler(RespServer server) {
       this.respServer = server;
@@ -32,6 +42,7 @@ public abstract class RespRequestHandler {
             throw new IllegalStateException("BufferPool was not initialized in the context " + ctx);
          }
          allocatorToUse = ctx.channel().attr(BYTE_BUF_POOL_ATTRIBUTE_KEY).get();
+         this.ctx = ctx;
       }
    }
 
@@ -43,7 +54,19 @@ public abstract class RespRequestHandler {
       return myStage;
    }
 
+   /**
+    * Acquire the buffer allocator in the current context.
+    * <p>
+    * The {@link ByteBufPool} provides the means to allocate a {@link io.netty.buffer.ByteBuf} with the required
+    * free size. <b>All</b> the writes must utilize the {@link ByteBufPool} instead of manually allocating buffers.
+    * </p>
+    * <b>Thread-safety</b>: The allocator and the {@link io.netty.buffer.ByteBuf} must be utilized only from the
+    * event loop thread. Use the {@link ChannelHandlerContext} to verify.
+    *
+    * @return A {@link io.netty.buffer.ByteBuf} allocator.
+    */
    public ByteBufPool allocator() {
+      assert ctx.channel().eventLoop().inEventLoop() : "Buffer allocation should occur in event loop, it was " + Thread.currentThread().getName();
       return allocatorToUse;
    }
 
@@ -98,6 +121,15 @@ public abstract class RespRequestHandler {
    public  <E> CompletionStage<RespRequestHandler> stageToReturn(CompletionStage<E> stage, ChannelHandlerContext ctx,
          Function<E, RespRequestHandler> handlerWhenComplete) {
       return stageToReturn(stage, ctx, null, Objects.requireNonNull(handlerWhenComplete));
+   }
+
+   public CompletionStage<RespRequestHandler> stageToReturn(CompletionStage<RespRequestHandler> stage, ChannelHandlerContext ctx) {
+      assert ctx.channel().eventLoop().inEventLoop();
+      if (CompletionStages.isCompletedSuccessfully(stage)) {
+         RespRequestHandler rrh = CompletionStages.join(stage);
+         return rrh.myStage();
+      }
+      return stage.handleAsync(HANDLE_FAILURE, ctx.channel().eventLoop());
    }
 
    /**
@@ -160,6 +192,7 @@ public abstract class RespRequestHandler {
       }
       return stage.handleAsync((value, t) -> {
          if (t != null) {
+            Resp3Handler.handleThrowable(allocatorToUse, t);
             // If exception, never use handler
             return this;
          }

@@ -59,6 +59,11 @@ public final class Consumers {
       }
    };
 
+   public static final BiConsumer<Object, ByteBufPool> LONG_ELSE_COLLECTION = (res, alloc) -> {
+      if (res instanceof Long) Consumers.LONG_BICONSUMER.accept((Long) res, alloc);
+      else Consumers.GET_ARRAY_BICONSUMER.accept((Collection<byte[]>) res, alloc);
+   };
+
    public static final BiConsumer<Collection<ScoredValue<byte[]>>, ByteBufPool> GET_OBJ_WRAPPER_ARRAY_BICONSUMER = (innerValueBytes, alloc) -> {
       if (innerValueBytes != null) {
          ByteBufferUtils.bytesToResultWrapped(innerValueBytes, alloc);

@@ -13,7 +13,6 @@ import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.LimitArgument;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.util.concurrent.CompletionStages;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -212,13 +211,8 @@ public class ZRANGE extends RespCommand implements Resp3Command {
                                                             byte[] destination,
                                                             EmbeddedMultimapSortedSetCache<byte[], byte[]> sortedSetCache,
                                                             CompletionStage<Collection<ScoredValue<byte[]>>> getSortedSetCall) {
-      return CompletionStages.handleAndCompose(getSortedSetCall, (scoredValues, t1) -> {
-         if (t1 != null) {
-            return handleException(handler, t1);
-         }
-
-         CompletionStage<Long> sortedSetSize = sortedSetCache.addMany(destination, scoredValues, SortedSetAddArgs.create().replace().build());
-         return handler.stageToReturn(sortedSetSize, ctx, Consumers.LONG_BICONSUMER);
-      });
+      CompletionStage<Long> cs = getSortedSetCall
+            .thenCompose(scoredValues -> sortedSetCache.addMany(destination, scoredValues, SortedSetAddArgs.create().replace().build()));
+      return handler.stageToReturn(cs, ctx, Consumers.LONG_BICONSUMER);
    }
 }
