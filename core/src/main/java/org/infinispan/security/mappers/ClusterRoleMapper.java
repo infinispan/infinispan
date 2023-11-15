@@ -91,6 +91,11 @@ public class ClusterRoleMapper implements MutablePrincipalRoleMapper {
    }
 
    @Override
+   public void denyAll(String principal) {
+      clusterRoleMap.remove(principal);
+   }
+
+   @Override
    public Set<String> list(String principalName) {
       RoleSet roleSet = clusterRoleReadMap.get(principalName);
       if (roleSet != null) {
