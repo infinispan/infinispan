@@ -1,11 +1,8 @@
 package org.infinispan.server.resp.test;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
-import java.time.Duration;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicInteger;
-
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisCommandExecutionException;
+import io.lettuce.core.RedisURI;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.test.TestResourceTracker;
@@ -15,8 +12,11 @@ import org.infinispan.server.resp.RespServer;
 import org.infinispan.server.resp.configuration.RespServerConfiguration;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
 
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisCommandExecutionException;
+import java.time.Duration;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Utils for RESP tests.
@@ -32,7 +32,8 @@ public class RespTestingUtil {
    public static final String HOST = "127.0.0.1";
 
    public static RedisClient createClient(long timeout, int port) {
-      RedisClient client = RedisClient.create("redis://" + HOST + ":" + port);
+      RedisClient client = RedisClient.create(RedisURI.Builder.redis(HOST).withPort(port)
+            .build());
       client.setDefaultTimeout(Duration.ofMillis(timeout));
       return client;
    }
