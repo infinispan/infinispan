@@ -6,6 +6,7 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.lettuce.core.RedisURI;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.server.test.core.category.Security;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
@@ -35,7 +36,8 @@ public class RespAuthentication {
    @Test
    public void testRestReadWrite() {
       InetSocketAddress serverSocket = SERVERS.getServerDriver().getServerSocket(0, 11222);
-      RedisClient client = RedisClient.create(String.format("redis://all_user:all@%s:%d", serverSocket.getHostString(), serverSocket.getPort()));
+      RedisClient client = RedisClient.create(
+            RedisURI.Builder.redis(serverSocket.getHostString()).withPort(serverSocket.getPort()).withAuthentication("all_user", "all").build());
       try (StatefulRedisConnection<String, String> redisConnection = client.connect()) {
          RedisCommands<String, String> redis = redisConnection.sync();
          redis.set("k1", "v1");
