@@ -214,17 +214,17 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
       }
    }
 
-   static final class ToHexConverterFactory implements KeyValueFilterConverterFactory<Object, Integer, String>, Serializable {
+   static final class ToHexConverterFactory implements KeyValueFilterConverterFactory<Object, Object, String>, Serializable {
       @Override
-      public KeyValueFilterConverter<Object, Integer, String> getFilterConverter() {
+      public KeyValueFilterConverter<Object, Object, String> getFilterConverter() {
          return new HexFilterConverter();
       }
 
       @ProtoName("HexFilterConverter")
-      static class HexFilterConverter extends AbstractKeyValueFilterConverter<Object, Integer, String> {
+      static class HexFilterConverter extends AbstractKeyValueFilterConverter<Object, Object, String> {
          @Override
-         public String filterAndConvert(Object key, Integer value, Metadata metadata) {
-            return Integer.toHexString(value);
+         public String filterAndConvert(Object key, Object value, Metadata metadata) {
+            return Integer.toHexString(Integer.parseInt(value.toString()));
          }
       }
    }

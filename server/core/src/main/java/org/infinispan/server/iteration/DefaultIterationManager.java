@@ -151,7 +151,10 @@ public class DefaultIterationManager implements IterationManager {
       DataConversion valueDataConversion = cache.getValueDataConversion();
       Function<Object, Object> unmarshaller = p -> encoderRegistry.convert(p, requestValueType, APPLICATION_OBJECT);
 
-      MediaType storageMediaType = cache.getValueDataConversion().getStorageMediaType();
+      // The iterator converts from the request type to the storage type. The filter will receive the data already converted.
+      MediaType storageMediaType = valueDataConversion.getRequestMediaType() != null && valueDataConversion.getRequestMediaType() != MediaType.APPLICATION_UNKNOWN
+            ? valueDataConversion.getRequestMediaType()
+            : valueDataConversion.getStorageMediaType();
 
       IterationSegmentsListener segmentListener = new IterationSegmentsListener();
       CacheStream<CacheEntry<Object, Object>> stream;
