@@ -192,7 +192,8 @@
          --add-modules=java.se
       </testjvm.jigsawArgs>
       <testjvm.blockHoundRedefinitionArgs/>
-      <testjvm.jdkSpecificArgs>${testjvm.jigsawArgs} -Dnet.bytebuddy.experimental=true ${testjvm.blockHoundRedefinitionArgs}</testjvm.jdkSpecificArgs>
+      <testjvm.dynamicAgentLoading/>
+      <testjvm.jdkSpecificArgs>${testjvm.jigsawArgs} -Dnet.bytebuddy.experimental=true ${testjvm.blockHoundRedefinitionArgs} ${testjvm.dynamicAgentLoading}</testjvm.jdkSpecificArgs>
       <testjvm.extraArgs/>
       <forkJvmArgs>-Xmx1G ${testjvm.commonArgs} ${testjvm.jdkSpecificArgs} ${testjvm.extraArgs}</forkJvmArgs>
       <server.jvm>${env.JAVA_HOME}</server.jvm>
@@ -2823,6 +2824,15 @@
          </activation>
          <properties>
             <testjvm.blockHoundRedefinitionArgs>-XX:+AllowRedefinitionToAddDeleteMethods</testjvm.blockHoundRedefinitionArgs>
+         </properties>
+      </profile>
+      <profile>
+         <id>java21-test</id>
+         <activation>
+            <jdk>[21,)</jdk>
+         </activation>
+         <properties>
+            <testjvm.dynamicAgentLoading>-XX:+EnableDynamicAgentLoading</testjvm.dynamicAgentLoading>
          </properties>
       </profile>
       <profile>
