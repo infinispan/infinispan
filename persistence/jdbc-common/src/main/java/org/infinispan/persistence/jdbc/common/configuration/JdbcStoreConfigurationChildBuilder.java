@@ -21,6 +21,8 @@ public interface JdbcStoreConfigurationChildBuilder<S extends AbstractJdbcStoreC
    ManagedConnectionFactoryConfigurationBuilder<S> dataSource();
 
 
+   CDIConnectionFactoryConfigurationBuilder<S> cdiDataSource();
+
    /**
     * Configures this JDBC Cache Store to use a single connection to the database
     */

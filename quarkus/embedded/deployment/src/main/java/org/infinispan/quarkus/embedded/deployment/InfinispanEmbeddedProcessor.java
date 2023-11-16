@@ -11,7 +11,11 @@ import java.util.Set;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.configuration.cache.AbstractModuleConfigurationBuilder;
+import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationParser;
+import org.infinispan.configuration.serializing.ConfigurationSerializer;
 import org.infinispan.factories.impl.ModuleMetadataBuilder;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.notifications.Listener;
@@ -37,6 +41,7 @@ import io.quarkus.deployment.annotations.Record;
 import io.quarkus.deployment.builditem.ApplicationIndexBuildItem;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.IndexDependencyBuildItem;
+import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ServiceProviderBuildItem;
 
@@ -47,14 +52,17 @@ class InfinispanEmbeddedProcessor {
         indexDependency.produce(new IndexDependencyBuildItem("org.jgroups", "jgroups"));
         indexDependency.produce(new IndexDependencyBuildItem("org.infinispan", "infinispan-commons"));
         indexDependency.produce(new IndexDependencyBuildItem("org.infinispan", "infinispan-core"));
+        indexDependency.produce(new IndexDependencyBuildItem("org.infinispan", "infinispan-cachestore-jdbc-common"));
+        indexDependency.produce(new IndexDependencyBuildItem("org.infinispan", "infinispan-cachestore-jdbc"));
+        indexDependency.produce(new IndexDependencyBuildItem("org.infinispan", "infinispan-cachestore-sql"));
     }
 
     @BuildStep
     void setup(BuildProducer<ReflectiveClassBuildItem> reflectiveClass,
-            BuildProducer<ServiceProviderBuildItem> serviceProvider, BuildProducer<AdditionalBeanBuildItem> additionalBeans,
-            CombinedIndexBuildItem combinedIndexBuildItem,
-            List<InfinispanReflectionExcludedBuildItem> excludedReflectionClasses,
-            ApplicationIndexBuildItem applicationIndexBuildItem) {
+               BuildProducer<ServiceProviderBuildItem> serviceProvider, BuildProducer<AdditionalBeanBuildItem> additionalBeans,
+               BuildProducer<NativeImageResourceBuildItem> resources, CombinedIndexBuildItem combinedIndexBuildItem,
+               List<InfinispanReflectionExcludedBuildItem> excludedReflectionClasses,
+               ApplicationIndexBuildItem applicationIndexBuildItem) {
 
         additionalBeans.produce(AdditionalBeanBuildItem.unremovableOf(InfinispanEmbeddedProducer.class));
 
@@ -109,12 +117,34 @@ class InfinispanEmbeddedProcessor {
         // Due to the index not containing AbstractExternalizer it doesn't know that it implements AdvancedExternalizer
         // thus we also have to include classes that extend AbstractExternalizer
         addReflectionForClass(AbstractExternalizer.class, appOnlyIndex, reflectiveClass, Collections.emptySet());
+
+        // Add optional SQL classes. These will only be included if the optional jars are present on the classpath and indexed by Jandex.
+        addReflectionForName("org.infinispan.persistence.jdbc.common.configuration.ConnectionFactoryConfiguration", true, combinedIndex, reflectiveClass, true, false, excludedClasses);
+        addReflectionForName("org.infinispan.persistence.jdbc.common.configuration.ConnectionFactoryConfigurationBuilder", true, combinedIndex, reflectiveClass, true, false, excludedClasses);
+        addReflectionForName("org.infinispan.persistence.jdbc.common.configuration.AbstractSchemaJdbcConfigurationBuilder", false, combinedIndex, reflectiveClass, true, false, excludedClasses);
+        addReflectionForName("org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory", false, combinedIndex, reflectiveClass, false, false, excludedClasses);
+        addReflectionForName("org.infinispan.persistence.keymappers.Key2StringMapper", true, combinedIndex, reflectiveClass, false, false, excludedClasses);
+
+        resources.produce(new NativeImageResourceBuildItem(
+              "proto/generated/persistence.jdbc.proto"
+        ));
+
+        // Ensure that optional store implementations not included in core-graalvm are still detected
+        addReflectionForClass(StoreConfigurationBuilder.class, combinedIndex, reflectiveClass, excludedClasses);
+        addReflectionForClass(StoreConfiguration.class, combinedIndex, reflectiveClass, true, excludedClasses);
+        addReflectionForClass(ConfigurationSerializer.class, combinedIndex, reflectiveClass, excludedClasses);
+        addReflectionForClass(AbstractModuleConfigurationBuilder.class, combinedIndex, reflectiveClass, excludedClasses);
+    }
+
+    private void addReflectionForClass(Class<?> classToUse, IndexView indexView,
+                                       BuildProducer<ReflectiveClassBuildItem> reflectiveClass, boolean methods, Set<DotName> excludedClasses) {
+        addReflectionForName(classToUse.getName(), classToUse.isInterface(), indexView, reflectiveClass, methods, false,
+              excludedClasses);
     }
 
     private void addReflectionForClass(Class<?> classToUse, IndexView indexView,
                                        BuildProducer<ReflectiveClassBuildItem> reflectiveClass, Set<DotName> excludedClasses) {
-        addReflectionForName(classToUse.getName(), classToUse.isInterface(), indexView, reflectiveClass, false, false,
-                excludedClasses);
+        addReflectionForClass(classToUse, indexView, reflectiveClass, false, excludedClasses);
     }
 
     private void addReflectionForName(String className, boolean isInterface, IndexView indexView,

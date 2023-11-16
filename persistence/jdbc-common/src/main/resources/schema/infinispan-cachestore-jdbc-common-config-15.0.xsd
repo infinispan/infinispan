@@ -13,6 +13,7 @@
           <xs:choice minOccurs="1" maxOccurs="1">
             <xs:element name="connection-pool" type="tns:connection-pool" />
             <xs:element name="data-source" type="tns:data-source" />
+            <xs:element name="cdi-data-source" type="tns:cdi-data-source" />
             <xs:element name="simple-connection" type="tns:simple-connection" />
           </xs:choice>
         </xs:sequence>
@@ -88,6 +89,23 @@
       <xs:annotation>
         <xs:documentation>
           Specifies the address of a datasource for the JDBC connection.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="cdi-data-source">
+    <xs:attribute name="name" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>
+          Specifies the name address of a datasource for the JDBC connection.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="annotation" type="xs:string" default="io.quarkus.agroal.DataSource.DataSourceLiteral">
+      <xs:annotation>
+        <xs:documentation>
+          Specifies the name of the annotation to use as qualifier to lookup a named data source.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

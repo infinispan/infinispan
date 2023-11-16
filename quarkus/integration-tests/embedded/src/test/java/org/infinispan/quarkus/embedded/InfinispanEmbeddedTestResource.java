@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -15,8 +14,9 @@ import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
 public class InfinispanEmbeddedTestResource implements QuarkusTestResourceLifecycleManager {
     @Override
     public Map<String, String> start() {
-        String xmlLocation = Paths.get("src", "main", "resources", "embedded.xml").toString();
-        return Collections.singletonMap("quarkus.infinispan-embedded.xml-config", xmlLocation);
+        return Map.of(
+              "quarkus.infinispan-embedded.xml-config", "embedded.xml"
+        );
     }
 
     @Override

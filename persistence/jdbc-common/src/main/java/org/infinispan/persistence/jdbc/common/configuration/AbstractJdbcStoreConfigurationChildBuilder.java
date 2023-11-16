@@ -12,7 +12,7 @@ import org.infinispan.configuration.cache.AbstractStoreConfigurationChildBuilder
 public abstract class AbstractJdbcStoreConfigurationChildBuilder<S extends AbstractJdbcStoreConfigurationBuilder<?, S>>
       extends AbstractStoreConfigurationChildBuilder<S> implements JdbcStoreConfigurationChildBuilder<S> {
 
-   private AbstractJdbcStoreConfigurationBuilder<?, S> builder;
+   private final AbstractJdbcStoreConfigurationBuilder<?, S> builder;
 
    protected AbstractJdbcStoreConfigurationChildBuilder(AbstractJdbcStoreConfigurationBuilder<?, S> builder) {
       super(builder);
@@ -27,6 +27,11 @@ public abstract class AbstractJdbcStoreConfigurationChildBuilder<S extends Abstr
    @Override
    public ManagedConnectionFactoryConfigurationBuilder<S> dataSource() {
       return builder.dataSource();
+   }
+
+   @Override
+   public CDIConnectionFactoryConfigurationBuilder<S> cdiDataSource() {
+      return builder.cdiDataSource();
    }
 
    @Override

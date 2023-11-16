@@ -8,7 +8,7 @@ public abstract class AbstractUnmanagedConnectionFactoryConfiguration implements
 
    public static final AttributeDefinition<String> USERNAME = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.USERNAME, null, String.class).immutable().build();
    public static final AttributeDefinition<String> PASSWORD = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.PASSWORD, null, String.class).immutable().build();
-   public static final AttributeDefinition<String> DRIVER_CLASS = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.DRIVER_CLASS, null, String.class).immutable().build();
+   public static final AttributeDefinition<String> DRIVER_CLASS = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.DRIVER, null, String.class).immutable().build();
    public static final AttributeDefinition<String> CONNECTION_URL = AttributeDefinition.builder(org.infinispan.persistence.jdbc.common.configuration.Attribute.CONNECTION_URL, null, String.class).immutable().build();
 
    private final Attribute<String> connectionUrl;

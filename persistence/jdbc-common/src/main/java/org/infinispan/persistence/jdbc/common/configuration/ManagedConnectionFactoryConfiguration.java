@@ -1,5 +1,7 @@
 package org.infinispan.persistence.jdbc.common.configuration;
 
+import java.util.Objects;
+
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
@@ -46,7 +48,7 @@ public class ManagedConnectionFactoryConfiguration implements ConnectionFactoryC
 
       ManagedConnectionFactoryConfiguration that = (ManagedConnectionFactoryConfiguration) o;
 
-      return attributes != null ? attributes.equals(that.attributes) : that.attributes == null;
+      return Objects.equals(attributes, that.attributes);
    }
 
    @Override

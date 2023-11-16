@@ -33,6 +33,11 @@ public abstract class AbstractJdbcStoreConfigurationBuilder<T extends AbstractJd
    }
 
    @Override
+   public CDIConnectionFactoryConfigurationBuilder<S> cdiDataSource() {
+      return connectionFactory(CDIConnectionFactoryConfigurationBuilder.class);
+   }
+
+   @Override
    public SimpleConnectionFactoryConfigurationBuilder<S> simpleConnection() {
       return connectionFactory(SimpleConnectionFactoryConfigurationBuilder.class);
    }
