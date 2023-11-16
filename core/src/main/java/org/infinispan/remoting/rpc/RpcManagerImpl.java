@@ -150,7 +150,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
       return attributes;
    }
 
-   @Start(priority = 9)
+   @Start
    void start() {
       statisticsEnabled = configuration.statistics().enabled();
 

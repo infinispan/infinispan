@@ -41,7 +41,7 @@ public final class CacheJmxRegistration extends AbstractJmxRegistration {
       super(CacheImpl.OBJECT_NAME);
    }
 
-   @Start(priority = 14)
+   @Start
    @Override
    public void start() {
       // prevent double lookup of MBeanServer on eventual restart

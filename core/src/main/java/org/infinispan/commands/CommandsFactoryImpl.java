@@ -175,7 +175,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private ByteString cacheName;
    private boolean transactional;
 
-   @Start(priority = 1)
+   @Start
    // needs to happen early on
    public void start() {
       cacheName = ByteString.fromString(cache.wired().getName());

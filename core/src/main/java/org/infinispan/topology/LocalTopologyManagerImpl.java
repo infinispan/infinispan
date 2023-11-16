@@ -121,7 +121,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    private EventLoggerViewListener viewListener;
 
    // This must be invoked before GlobalStateManagerImpl.start
-   @Start(priority = 0)
+   @Start
    public void preStart() {
       helper = new TopologyManagementHelper(gcr);
       actionSequencer = new ActionSequencer(nonBlockingExecutor, true, timeService);
@@ -132,7 +132,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    }
 
    // Arbitrary value, only need to start after the (optional) GlobalStateManager and JGroupsTransport
-   @Start(priority = 100)
+   @Start
    public void start() {
       if (log.isTraceEnabled()) {
          log.tracef("Starting LocalTopologyManager on %s", transport.getAddress());
@@ -155,7 +155,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    }
 
    // Need to stop after ClusterTopologyManagerImpl and before the JGroupsTransport
-   @Stop(priority = 110)
+   @Stop
    public void stop() {
       if (log.isTraceEnabled()) {
          log.tracef("Stopping LocalTopologyManager on %s", transport.getAddress());

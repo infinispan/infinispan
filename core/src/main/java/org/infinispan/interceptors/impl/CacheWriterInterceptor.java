@@ -96,7 +96,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       return log;
    }
 
-   @Start(priority = 15)
+   @Start
    protected void start() {
       this.setStatisticsEnabled(cacheConfiguration.statistics().enabled());
 

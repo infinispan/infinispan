@@ -121,7 +121,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
    /**
     * Removes all listeners from the notifier
     */
-   @Stop(priority = 99)
+   @Stop
    public void stop() {
       for (List<L> list : listenersMap.values()) {
          if (list != null) list.clear();

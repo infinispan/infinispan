@@ -27,8 +27,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.cache.impl.InvocationHelper;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
@@ -72,6 +70,8 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import jakarta.transaction.TransactionManager;
 
 /**
  * @author Ryan Emerson
@@ -130,7 +130,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       if (log.isTraceEnabled()) log.tracef("Cache %s starting %s. isRunning=%s", cacheName, getClass().getSimpleName(), !running);
    }
 
-   @Stop(priority = 0)
+   @Stop
    public void stop() {
       this.running = false;
       synchronized (versionRequestMap) {

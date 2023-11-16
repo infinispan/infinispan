@@ -6,6 +6,7 @@ import static org.infinispan.util.logging.Log.CONTAINER;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.LongAdder;
 
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -21,7 +22,6 @@ import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManager.StoreChangeListener;
 import org.infinispan.persistence.manager.PersistenceStatus;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -50,7 +50,7 @@ public class ActivationManagerImpl implements ActivationManager, StoreChangeList
 
    private boolean statisticsEnabled = false;
 
-   @Start(priority = 11) // After the cache loader manager, before the passivation manager
+   @Start
    public void start() {
       statisticsEnabled = cfg.statistics().enabled();
       passivation = cfg.persistence().usingStores() && cfg.persistence().passivation();

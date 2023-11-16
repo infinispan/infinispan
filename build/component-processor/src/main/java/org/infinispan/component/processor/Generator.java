@@ -9,7 +9,6 @@ import java.time.Instant;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -192,15 +191,9 @@ public class Generator {
    }
 
    private void writeLifecycleMethodInvocations(PrintWriter writer, List<Model.LifecycleMethod> methods) {
-      for (Model.LifecycleMethod method : sortByPriority(methods)) {
+      for (Model.LifecycleMethod method : methods) {
          writer.printf("            instance.%s();%n", method.name);
       }
-   }
-
-   private List<Model.LifecycleMethod> sortByPriority(List<Model.LifecycleMethod> methods) {
-      List<Model.LifecycleMethod> result = new ArrayList<>(methods);
-      result.sort(Comparator.comparing(method -> method.priority));
-      return result;
    }
 
    private List<CharSequence> getEagerDependencies(Model.Component c) {

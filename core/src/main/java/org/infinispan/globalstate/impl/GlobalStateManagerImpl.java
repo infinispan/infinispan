@@ -58,7 +58,7 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
    private FileLock globalLock;
    private ScopedPersistentState globalState;
 
-   @Start(priority = 1) // Must start before everything else
+   @Start // Must start before everything else
    public void start() {
       persistentState = globalConfiguration.globalState().enabled();
       if (persistentState) {
@@ -67,7 +67,7 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
       }
    }
 
-   @Stop(priority = 1) // Must write global state before other global components shut down
+   @Stop // Must write global state before other global components shut down
    public void stop() {
       if (persistentState) {
          writeGlobalState();

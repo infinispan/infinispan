@@ -132,7 +132,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    protected boolean clustered = false;
    protected volatile boolean running = false;
 
-   @Start(priority = 9) // Start before cache loader manager
+   @Start // Start before cache loader manager
    public void start() {
       this.clustered = configuration.clustering().cacheMode().isClustered();
       this.isPessimisticLocking = configuration.transaction().lockingMode() == LockingMode.PESSIMISTIC;

@@ -65,7 +65,7 @@ public class EmbeddedCounterManager implements CounterManager {
       stopped = false;
    }
 
-   @Stop(priority = 9) //lower than default priority to avoid creating the counters cache.
+   @Stop //lower than default priority to avoid creating the counters cache.
    public void stop() {
       if (log.isTraceEnabled()) {
          log.trace("Stopping EmbeddedCounterManager");

@@ -59,7 +59,7 @@ public class L1ManagerImpl implements L1Manager, RemoteValueRetrievedListener {
       synchronizers = new ConcurrentHashMap<>();
    }
 
-   @Start (priority = 3)
+   @Start
    public void start() {
       this.threshold = configuration.clustering().l1().invalidationThreshold();
       this.l1Lifespan = configuration.clustering().l1().lifespan();
@@ -74,7 +74,7 @@ public class L1ManagerImpl implements L1Manager, RemoteValueRetrievedListener {
       }
    }
 
-   @Stop (priority = 3)
+   @Stop
    public void stop() {
       if (scheduledRequestorsCleanupTask != null) scheduledRequestorsCleanupTask.cancel(true);
    }

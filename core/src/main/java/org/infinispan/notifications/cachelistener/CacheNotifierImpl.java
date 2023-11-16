@@ -262,7 +262,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
       listenersMap.put(PersistenceAvailabilityChanged.class, persistenceChangedListeners);
    }
 
-   @Start(priority = 9)
+   @Start
    public void start() {
       if (!config.simpleCache()) {
          clusterExecutor = SecurityActions.getClusterExecutor(cache.wired());

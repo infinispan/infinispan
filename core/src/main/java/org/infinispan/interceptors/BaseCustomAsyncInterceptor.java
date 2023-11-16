@@ -28,7 +28,7 @@ public class BaseCustomAsyncInterceptor extends DDAsyncInterceptor {
 
    protected Cache<?, ?> cache;
 
-   @Start(priority = 1)
+   @Start
    void setup() {
       // Needed for backwards compatibility
       this.cache = cacheRef.wired();

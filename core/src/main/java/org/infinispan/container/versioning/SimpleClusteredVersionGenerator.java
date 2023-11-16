@@ -27,7 +27,7 @@ public class SimpleClusteredVersionGenerator implements VersionGenerator {
 
    @Inject CacheNotifier<?, ?> cacheNotifier;
 
-   @Start(priority = 11)
+   @Start
    public void start() {
       cacheNotifier.addListener(new TopologyIdUpdater());
    }
