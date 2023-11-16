@@ -813,7 +813,7 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    // Must run after the PersistenceManager
-   @Start(priority = 20)
+   @Start
    public void start() {
       cacheName = cache.wired().getName();
       isInvalidationMode = configuration.clustering().cacheMode().isInvalidation();
@@ -836,7 +836,7 @@ public class StateConsumerImpl implements StateConsumer {
             configuration.clustering().stateTransfer().fetchInMemoryState();
    }
 
-   @Stop(priority = 0)
+   @Stop
    @Override
    public void stop() {
       if (log.isTraceEnabled()) {

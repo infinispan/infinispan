@@ -1,6 +1,5 @@
 package org.infinispan.eviction.impl;
 
-import net.jcip.annotations.ThreadSafe;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -9,6 +8,8 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.persistence.spi.PersistenceException;
+
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * A passivation manager
@@ -24,7 +25,7 @@ public abstract class AbstractPassivationManager implements PassivationManager {
     * Passivates all entries that are in memory. This method does not notify listeners of passivation.
     * @throws PersistenceException
     */
-   @Stop(priority = 9)
+   @Stop
    @ManagedOperation(
          description = "Passivate all entries to the CacheStore",
          displayName = "Passivate all")

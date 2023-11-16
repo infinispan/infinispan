@@ -2,6 +2,7 @@ package org.infinispan.util;
 
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -20,7 +21,6 @@ import org.infinispan.topology.LocalTopologyManagerImpl;
 import org.infinispan.topology.ManagerStatusResponse;
 import org.infinispan.topology.PersistentUUID;
 import org.infinispan.topology.RebalancingStatus;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.events.EventLogManager;
 
 /**
@@ -147,7 +147,7 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
    }
 
    // Arbitrary value, only need to start after JGroupsTransport
-   @Start(priority = 100)
+   @Start
    public final void startDelegate() {
       if (delegate instanceof LocalTopologyManagerImpl) {
          ((LocalTopologyManagerImpl) delegate).start();
@@ -155,7 +155,7 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
    }
 
    // Need to stop before the JGroupsTransport
-   @Stop(priority = 9)
+   @Stop
    public final void stopDelegate() {
       if (delegate instanceof LocalTopologyManagerImpl) {
          ((LocalTopologyManagerImpl) delegate).stop();

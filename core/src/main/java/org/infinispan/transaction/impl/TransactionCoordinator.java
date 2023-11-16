@@ -9,7 +9,6 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
-import jakarta.transaction.Transaction;
 import javax.transaction.xa.XAException;
 
 import org.infinispan.commands.CommandsFactory;
@@ -17,6 +16,7 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.context.InvocationContextFactory;
@@ -30,10 +30,11 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import jakarta.transaction.Transaction;
 
 /**
  * Coordinates transaction prepare/commits as received from the {@link javax.transaction.TransactionManager}.
@@ -64,12 +65,12 @@ public class TransactionCoordinator {
    private static final CompletableFuture<Integer> XA_OKAY_STAGE = CompletableFuture.completedFuture(XA_OK);
    private static final Function<Object, Integer> XA_RDONLY_APPLY = ignore -> XA_RDONLY;
 
-   @Start(priority = 1)
+   @Start
    void setStartStatus() {
       shuttingDown = false;
    }
 
-   @Stop(priority = 1)
+   @Stop
    void setStopStatus() {
       shuttingDown = true;
    }

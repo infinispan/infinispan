@@ -78,7 +78,7 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
       dataContainer.start();
    }
 
-   @Stop(priority = 999)
+   @Stop
    public void stop() {
       dataContainer.stop();
    }

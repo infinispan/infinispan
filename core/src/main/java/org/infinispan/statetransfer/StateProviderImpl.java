@@ -136,14 +136,14 @@ public class StateProviderImpl implements StateProvider {
    }
 
    // Must start before StateTransferManager sends the join request
-   @Start(priority = 50)
+   @Start
    @Override
    public void start() {
       timeout = configuration.clustering().stateTransfer().timeout();
       chunkSize = configuration.clustering().stateTransfer().chunkSize();
    }
 
-   @Stop(priority = 0)
+   @Stop
    @Override
    public void stop() {
       if (log.isTraceEnabled()) {

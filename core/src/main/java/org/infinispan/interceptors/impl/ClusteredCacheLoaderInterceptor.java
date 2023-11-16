@@ -29,7 +29,7 @@ public class ClusteredCacheLoaderInterceptor<K, V> extends CacheLoaderIntercepto
 
    private boolean transactional;
 
-   @Start(priority = 15)
+   @Start
    void startClusteredCacheLoaderInterceptor() {
       transactional = cacheConfiguration.transaction().transactionMode().isTransactional();
    }

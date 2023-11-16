@@ -111,11 +111,9 @@ public class Model {
 
    static class LifecycleMethod {
       final String name;
-      final int priority;
 
-      LifecycleMethod(String name, int priority) {
+      LifecycleMethod(String name) {
          this.name = name;
-         this.priority = priority;
       }
    }
 

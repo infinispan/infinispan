@@ -52,7 +52,7 @@ public class EntryFactoryImpl implements EntryFactory {
    private boolean useVersioning;
    private PrivateMetadata nonExistingPrivateMetadata;
 
-   @Start (priority = 8)
+   @Start
    public void init() {
       // Scattered mode needs repeatable-read entries to properly retry half-committed multi-key operations
       // (see RetryingEntryWrappingInterceptor for details).

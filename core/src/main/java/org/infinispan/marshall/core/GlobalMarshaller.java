@@ -121,7 +121,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
    }
 
    @Override
-   @Start(priority = 8) // Should start after the externalizer table and before transport
+   @Start // Should start after the externalizer table and before transport
    public void start() {
       GlobalConfiguration globalCfg = gcr.getGlobalConfiguration();
       classLoader = globalCfg.classLoader();
@@ -143,7 +143,7 @@ public class GlobalMarshaller implements StreamingMarshaller {
    }
 
    @Override
-   @Stop(priority = 130) // Stop after transport to avoid send/receive and marshaller not being ready
+   @Stop // Stop after transport to avoid send/receive and marshaller not being ready
    public void stop() {
       internalExts = null;
       reverseInternalExts = null;

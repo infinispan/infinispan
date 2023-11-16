@@ -56,7 +56,7 @@ public class PassivationManagerImpl extends AbstractPassivationManager {
 
    private final StoreChangeListener listener = pm -> updateEnabledStatus(pm.isEnabled(), pm.usingReadOnly());
 
-   @Start(priority = 12)
+   @Start
    public void start() {
       updateEnabledStatus(cfg.persistence().usingStores(), persistenceManager.isReadOnly());
       persistenceManager.addStoreListener(listener);

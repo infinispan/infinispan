@@ -38,7 +38,7 @@ public class XaTransactionTable extends TransactionTable {
 
    protected ConcurrentMap<XidImpl, LocalXaTransaction> xid2LocalTx;
 
-   @Start(priority = 9) // Start before cache loader manager
+   @Start // Start before cache loader manager
    @SuppressWarnings("unused")
    public void startXidMapping() {
       final int concurrencyLevel = configuration.locking().concurrencyLevel();

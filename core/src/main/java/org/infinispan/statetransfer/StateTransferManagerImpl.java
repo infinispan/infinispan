@@ -81,7 +81,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
    private final CompletableFuture<Void> initialStateTransferComplete = new CompletableFuture<>();
 
-   @Start(priority = 60)
+   @Start
    @Override
    public void start() throws Exception {
       if (log.isTraceEnabled()) {
@@ -241,7 +241,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       }
    }
 
-   @Stop(priority = 0)
+   @Stop
    @Override
    public void stop() {
       if (log.isTraceEnabled()) {

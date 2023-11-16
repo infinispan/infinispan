@@ -133,7 +133,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    private EventLoggerViewListener viewListener;
 
-   @Start(priority = 100)
+   @Start
    public void start() {
       helper = new TopologyManagementHelper(gcr);
       joinViewFuture = new ConditionFuture<>(timeoutScheduledExecutor);
@@ -169,7 +169,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                    }).thenCompose(Function.identity());
    }
 
-   @Stop(priority = 100)
+   @Stop
    public void stop() {
       // Stop blocking cache topology commands.
       acquireUpdateLock();

@@ -370,8 +370,8 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
                currentType.component.injectMethods.add(new Model.InjectMethod(methodName, parameters));
             }
          }
-         addLifecycleMethod(e, Start.class, c -> c.startMethods, Start::priority);
-         addLifecycleMethod(e, Stop.class, c -> c.stopMethods, Stop::priority);
+         addLifecycleMethod(e, Start.class, c -> c.startMethods);
+         addLifecycleMethod(e, Stop.class, c -> c.stopMethods);
 
          if (getAnnotation(e, ManagedAttribute.class) != null && isValidMComponent(e, ManagedAttribute.class)) {
             ManagedAttribute attribute = getAnnotation(e, ManagedAttribute.class);
@@ -427,8 +427,7 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
 
       private <A extends Annotation>
       void addLifecycleMethod(ExecutableElement e, Class<A> annotationType,
-                              Function<Model.Component, List<Model.LifecycleMethod>> methodsExtractor,
-                              Function<A, Integer> priorityExtractor) {
+                              Function<Model.Component, List<Model.LifecycleMethod>> methodsExtractor) {
          A annotation = getAnnotation(e, annotationType);
          if (annotation == null)
             return;
@@ -437,8 +436,7 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
             validateLifecycleMethod(e, annotationType);
 
             List<Model.LifecycleMethod> methodList = methodsExtractor.apply(currentType.component);
-            Integer priority = priorityExtractor.apply(annotation);
-            methodList.add(new Model.LifecycleMethod(e.getSimpleName().toString(), priority));
+            methodList.add(new Model.LifecycleMethod(e.getSimpleName().toString()));
          }
       }
 

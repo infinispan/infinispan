@@ -52,7 +52,7 @@ public class DistributionManagerImpl implements DistributionManager {
    private volatile LocalizedCacheTopology extendedTopology;
 
    // Start before RpcManagerImpl
-   @Start(priority = 8)
+   @Start
    @SuppressWarnings("unused")
    void start() throws Exception {
       if (log.isTraceEnabled()) log.tracef("starting distribution manager on %s", getAddress());

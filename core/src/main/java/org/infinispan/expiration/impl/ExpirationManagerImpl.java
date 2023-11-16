@@ -74,7 +74,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
 
    private final List<ExpirationConsumer<K, V>> listeners = new CopyOnWriteArrayList<>();
 
-   @Start(priority = 55)
+   @Start
    // make sure this starts after the PersistenceManager
    public void start() {
       // first check if eviction is enabled!
@@ -259,7 +259,7 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
       return future.thenApply(touched -> !touched);
    }
 
-   @Stop(priority = 5)
+   @Stop
    public void stop() {
       if (expirationTask != null) {
          expirationTask.cancel(true);

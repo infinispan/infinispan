@@ -6,10 +6,6 @@ import static org.infinispan.util.logging.Log.CONTAINER;
 import java.util.Collection;
 import java.util.Collections;
 
-import jakarta.transaction.Status;
-import jakarta.transaction.SystemException;
-import jakarta.transaction.Transaction;
-
 import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
@@ -35,6 +31,10 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.UserRaisedFunctionalException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import jakarta.transaction.Status;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -65,12 +65,12 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
       return rCommand instanceof LockControlCommand ? Boolean.FALSE : null;
    };
 
-   @Start(priority = 1)
+   @Start
    void setStartStatus() {
       shuttingDown = false;
    }
 
-   @Stop(priority = 1)
+   @Stop
    void setStopStatus() {
       shuttingDown = true;
    }
