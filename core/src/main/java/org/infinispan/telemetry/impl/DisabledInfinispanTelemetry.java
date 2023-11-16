@@ -8,12 +8,12 @@ import org.infinispan.telemetry.InfinispanTelemetry;
 public class DisabledInfinispanTelemetry implements InfinispanTelemetry {
 
    @Override
-   public InfinispanSpan startTraceRequest(String operationName, InfinispanSpanAttributes attributes) {
+   public <T> InfinispanSpan<T> startTraceRequest(String operationName, InfinispanSpanAttributes attributes) {
       return DisabledInfinispanSpan.instance();
    }
 
    @Override
-   public InfinispanSpan startTraceRequest(String operationName, InfinispanSpanAttributes attributes, InfinispanSpanContext context) {
+   public <T> InfinispanSpan<T> startTraceRequest(String operationName, InfinispanSpanAttributes attributes, InfinispanSpanContext context) {
       return DisabledInfinispanSpan.instance();
    }
 }

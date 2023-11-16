@@ -37,7 +37,6 @@ import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.telemetry.InfinispanSpan;
 import org.infinispan.telemetry.InfinispanSpanAttributes;
 import org.infinispan.telemetry.InfinispanTelemetry;
-import org.infinispan.telemetry.SafeAutoClosable;
 import org.infinispan.telemetry.SpanCategory;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -70,35 +69,30 @@ public class BaseCacheResource {
       MediaType keyContentType = request.keyContentType();
       RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
       AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, keyContentType, MediaType.MATCH_ALL, request);
-      InfinispanSpan span = requestStart("deleteCacheValue", cache, request);
-      try (SafeAutoClosable closeable = span.makeCurrent()) {
-      CompletionStage<RestResponse> response = restCacheManager.getPrivilegedInternalEntry(cache, key, true).thenCompose(entry -> {
-         NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
-         responseBuilder.status(HttpResponseStatus.NOT_FOUND);
+      var span = requestStart("deleteCacheValue", cache, request);
+      try (var ignored = span.makeCurrent()) {
+         CompletionStage<RestResponse> response = restCacheManager.getPrivilegedInternalEntry(cache, key, true)
+               .thenCompose(entry -> {
+                  NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
+                  responseBuilder.status(HttpResponseStatus.NOT_FOUND);
 
-            if (entry instanceof InternalCacheEntry) {
-               InternalCacheEntry<Object, Object> ice = (InternalCacheEntry<Object, Object>) entry;
-               String etag = calcETAG(ice.getValue());
-               String clientEtag = request.getEtagIfNoneMatchHeader();
-               if (clientEtag == null || clientEtag.equals(etag)) {
-                  responseBuilder.status(HttpResponseStatus.NO_CONTENT);
-                  return restCacheManager.remove(cacheName, key, keyContentType, request).thenApply(v -> responseBuilder.build());
-               } else {
-                  //ETags don't match, so preconditions failed
-                  responseBuilder.status(HttpResponseStatus.PRECONDITION_FAILED);
-               }
-            }
-            return CompletableFuture.completedFuture(responseBuilder.build());
-         });
+                  if (entry instanceof InternalCacheEntry) {
+                     InternalCacheEntry<Object, Object> ice = (InternalCacheEntry<Object, Object>) entry;
+                     String etag = calcETAG(ice.getValue());
+                     String clientEtag = request.getEtagIfNoneMatchHeader();
+                     if (clientEtag == null || clientEtag.equals(etag)) {
+                        responseBuilder.status(HttpResponseStatus.NO_CONTENT);
+                        return restCacheManager.remove(cacheName, key, keyContentType, request).thenApply(v -> responseBuilder.build());
+                     } else {
+                        //ETags don't match, so preconditions failed
+                        responseBuilder.status(HttpResponseStatus.PRECONDITION_FAILED);
+                     }
+                  }
+                  return CompletableFuture.completedFuture(responseBuilder.build());
+               });
 
          // Attach span events
-         response.whenComplete((result, exception) -> {
-            if (exception != null) {
-               span.recordException(exception);
-            }
-            span.complete();
-         });
-
+         response.whenComplete(span);
          return response;
       }
    }
@@ -111,8 +105,8 @@ public class BaseCacheResource {
       RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
       AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, keyContentType, contentType, request);
 
-      InfinispanSpan span = requestStart("putValueToCache", cache, request);
-      try (SafeAutoClosable closeable = span.makeCurrent()) {
+      var span = requestStart("putValueToCache", cache, request);
+      try (var ignored = span.makeCurrent()) {
          Object key = getKey(request);
 
          NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request).status(HttpResponseStatus.NO_CONTENT);
@@ -129,7 +123,7 @@ public class BaseCacheResource {
                return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.CONFLICT).entity("An entry already exists").build());
             }
             if (entry instanceof InternalCacheEntry) {
-               InternalCacheEntry ice = (InternalCacheEntry) entry;
+               InternalCacheEntry<?,?> ice = (InternalCacheEntry<?,?>) entry;
                String etagNoneMatch = request.getEtagIfNoneMatchHeader();
                if (etagNoneMatch != null) {
                   String etag = calcETAG(ice.getValue());
@@ -144,13 +138,7 @@ public class BaseCacheResource {
          });
 
          // Attach span events
-         response.whenComplete((result, exception) -> {
-            if (exception != null) {
-               span.recordException(exception);
-            }
-            span.complete();
-         });
-
+         response.whenComplete(span);
          return response;
       }
    }
@@ -163,18 +151,11 @@ public class BaseCacheResource {
       responseBuilder.status(HttpResponseStatus.NO_CONTENT);
 
       Cache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
-      InfinispanSpan span = requestStart("clearEntireCache", cache, request);
-      try (SafeAutoClosable closeable = span.makeCurrent()) {
+      var span = requestStart("clearEntireCache", cache, request);
+      try (var ignored = span.makeCurrent()) {
          CompletableFuture<RestResponse> response = cache.clearAsync().thenApply(v -> responseBuilder.build());
-
          // Attach span events
-         response.whenComplete((result, exception) -> {
-            if (exception != null) {
-               span.recordException(exception);
-            }
-            span.complete();
-         });
-
+         response.whenComplete(span);
          return response;
       }
    }
@@ -303,7 +284,7 @@ public class BaseCacheResource {
       return stage.thenApply(o -> responseBuilder.build());
    }
 
-   private InfinispanSpan requestStart(String operationName, Cache<Object, Object> cache, RestRequest request) {
+   private <T> InfinispanSpan<T> requestStart(String operationName, Cache<Object, Object> cache, RestRequest request) {
       var attributes = new InfinispanSpanAttributes.Builder(SpanCategory.CONTAINER)
             .withCache(cache.getName(), SecurityActions.getCacheConfiguration(cache.getAdvancedCache()))
             .build();

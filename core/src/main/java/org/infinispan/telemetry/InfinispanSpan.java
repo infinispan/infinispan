@@ -1,6 +1,8 @@
 package org.infinispan.telemetry;
 
-public interface InfinispanSpan {
+import java.util.function.BiConsumer;
+
+public interface InfinispanSpan<T> extends BiConsumer<T, Throwable> {
 
    SafeAutoClosable makeCurrent();
 
@@ -8,4 +10,11 @@ public interface InfinispanSpan {
 
    void recordException(Throwable throwable);
 
+   @Override
+   default void accept(T ignored, Throwable throwable) {
+      if (throwable != null) {
+         recordException(throwable);
+      }
+      complete();
+   }
 }
