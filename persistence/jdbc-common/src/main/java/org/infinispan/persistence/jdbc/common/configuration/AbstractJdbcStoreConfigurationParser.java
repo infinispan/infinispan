@@ -41,6 +41,10 @@ public abstract class AbstractJdbcStoreConfigurationParser implements Configurat
             parseDataSourceAttributes(reader, builder.dataSource());
             break;
          }
+         case CDI_DATA_SOURCE: {
+            parseCDIDataSourceAttributes(reader, builder.cdiDataSource());
+            break;
+         }
          case SIMPLE_CONNECTION: {
             parseSimpleConnectionAttributes(reader, builder.simpleConnection());
             break;
@@ -55,6 +59,12 @@ public abstract class AbstractJdbcStoreConfigurationParser implements Configurat
          ManagedConnectionFactoryConfigurationBuilder<?> builder) {
       String jndiUrl = ParseUtils.requireSingleAttribute(reader, Attribute.JNDI_URL.getLocalName());
       builder.jndiUrl(jndiUrl);
+      ParseUtils.requireNoContent(reader);
+   }
+
+   protected void parseCDIDataSourceAttributes(ConfigurationReader reader,
+                                               CDIConnectionFactoryConfigurationBuilder<?> builder) {
+      ParseUtils.parseAttributes(reader, builder);
       ParseUtils.requireNoContent(reader);
    }
 
@@ -73,7 +83,7 @@ public abstract class AbstractJdbcStoreConfigurationParser implements Configurat
                builder.connectionUrl(value);
                break;
             }
-            case DRIVER_CLASS: {
+            case DRIVER: {
                builder.driverClass(value);
                break;
             }
@@ -104,7 +114,7 @@ public abstract class AbstractJdbcStoreConfigurationParser implements Configurat
                builder.connectionUrl(value);
                break;
             }
-            case DRIVER_CLASS: {
+            case DRIVER: {
                builder.driverClass(value);
                break;
             }

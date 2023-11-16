@@ -13,39 +13,43 @@ public enum Element {
    // must be first
    UNKNOWN(null),
 
-   STRING_KEYED_JDBC_STORE("string-keyed-jdbc-store"),
-   BINARY_KEYED_JDBC_STORE("binary-keyed-jdbc-store"),
-   MIXED_KEYED_JDBC_STORE("mixed-keyed-jdbc-store"),
-   TABLE_JDBC_STORE("table-jdbc-store"),
-   QUERY_JDBC_STORE("query-jdbc-store"),
+   STRING_KEYED_JDBC_STORE,
+   BINARY_KEYED_JDBC_STORE,
+   MIXED_KEYED_JDBC_STORE,
+   TABLE_JDBC_STORE,
+   QUERY_JDBC_STORE,
 
-   CONNECTION_POOL("connection-pool"),
-   DATA_SOURCE("data-source"),
-   SIMPLE_CONNECTION("simple-connection"),
+   CONNECTION_POOL,
+   CDI_DATA_SOURCE,
+   DATA_SOURCE,
+   SIMPLE_CONNECTION,
 
-   STRING_KEYED_TABLE("string-keyed-table"),
+   STRING_KEYED_TABLE,
 
-   DATA_COLUMN("data-column"),
-   ID_COLUMN("id-column"),
-   TIMESTAMP_COLUMN("timestamp-column"),
-   SEGMENT_COLUMN("segment-column"),
+   DATA_COLUMN,
+   ID_COLUMN,
+   TIMESTAMP_COLUMN,
+   SEGMENT_COLUMN,
 
-   SCHEMA("schema"),
+   SCHEMA,
 
-   QUERIES("queries"),
-   SELECT_SINGLE("select-single"),
-   SELECT_ALL("select-all"),
-   DELETE_SINGLE("delete-single"),
-   DELETE_ALL("delete-all"),
-   UPSERT("upsert"),
-   SIZE("size"),
-
+   QUERIES,
+   SELECT_SINGLE,
+   SELECT_ALL,
+   DELETE_SINGLE,
+   DELETE_ALL,
+   UPSERT,
+   SIZE,
    ;
 
    private final String name;
 
    Element(final String name) {
       this.name = name;
+   }
+
+   Element() {
+      this.name = name().toLowerCase().replace('_', '-');
    }
 
    /**

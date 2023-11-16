@@ -10,8 +10,8 @@ import javax.naming.NamingException;
 import javax.sql.DataSource;
 
 import org.infinispan.persistence.jdbc.common.configuration.ConnectionFactoryConfiguration;
-import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.common.configuration.ManagedConnectionFactoryConfiguration;
+import org.infinispan.persistence.jdbc.common.connectionfactory.ConnectionFactory;
 import org.infinispan.persistence.jdbc.common.logging.Log;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.LogFactory;
@@ -55,7 +55,7 @@ public class ManagedConnectionFactory extends ConnectionFactory {
             log.tracef("Datasource lookup for %s succeeded: %b", datasourceName, dataSource);
          }
          if (dataSource == null) {
-            PERSISTENCE.connectionInJndiNotFound(datasourceName);
+            PERSISTENCE.connectionNotFound("JNDI", datasourceName);
             throw new PersistenceException(String.format("Could not find a connection in jndi under the name '%s'", datasourceName));
          }
       } catch (NamingException e) {
@@ -85,8 +85,7 @@ public class ManagedConnectionFactory extends ConnectionFactory {
       try {
          connection = dataSource.getConnection();
       } catch (SQLException e) {
-         PERSISTENCE.sqlFailureRetrievingConnection(e);
-         throw new PersistenceException("This might be related to https://jira.jboss.org/browse/ISPN-604", e);
+         throw PERSISTENCE.sqlFailureRetrievingConnection(e);
       }
       if (log.isTraceEnabled()) {
          log.tracef("Connection checked out: %s", connection);

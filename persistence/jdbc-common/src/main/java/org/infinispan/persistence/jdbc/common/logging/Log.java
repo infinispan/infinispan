@@ -83,9 +83,8 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Sql failure while loading key: %s", id = 8014)
 //   void sqlFailureLoadingKey(String keyHashCode, @Cause SQLException e);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Could not find a connection in jndi under the name '%s'", id = 8015)
-   void connectionInJndiNotFound(String dataSourceName);
+   @Message(value = "Could not find a connection in %s under the name '%s'", id = 8015)
+   IllegalStateException connectionNotFound(String where, String dataSourceName);
 
    @LogMessage(level = ERROR)
    @Message(value = "Could not lookup connection with datasource %s", id = 8016)
@@ -95,9 +94,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Failed to close naming context.", id = 8017)
    void failedClosingNamingCtx(@Cause NamingException e);
 
-   @LogMessage(level = ERROR)
    @Message(value = "Sql failure retrieving connection from datasource", id = 8018)
-   void sqlFailureRetrievingConnection(@Cause SQLException e);
+   PersistenceException sqlFailureRetrievingConnection(@Cause SQLException e);
 
    @LogMessage(level = ERROR)
    @Message(value = "Issues while closing connection %s", id = 8019)

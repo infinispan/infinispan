@@ -2,20 +2,9 @@ package org.infinispan.quarkus.embedded;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import jakarta.enterprise.event.Observes;
-import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.core.MediaType;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -26,6 +15,15 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import io.quarkus.runtime.StartupEvent;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
 
 @Path("/test")
 public class TestServlet {
@@ -86,8 +84,7 @@ public class TestServlet {
             // Force TCP to connect to loopback, which our TCPPING in dist.xml connects to for discovery
             String oldProperty = System.setProperty("jgroups.tcp.address", "127.0.0.1");
             for (int i = 0; i < 3; i++) {
-                EmbeddedCacheManager ecm = new DefaultCacheManager(
-                        Paths.get("src", "main", "resources", "dist.xml").toString());
+                EmbeddedCacheManager ecm = new DefaultCacheManager("dist.xml");
                 ecm.start();
                 managers.add(ecm);
                 // Start the default cache
