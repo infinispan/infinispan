@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.impl.iteration;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
+import java.util.Arrays;
 import java.util.Map;
 
 import org.infinispan.commons.dataconversion.MediaType;
@@ -15,9 +16,15 @@ public class MediaTypeMultiServerRemoteIteratorTest extends BaseMultiServerRemot
    private static final int NUM_SERVERS = 3;
 
    private MediaType key = null;
+   private MediaType value = null;
 
-   public MediaTypeMultiServerRemoteIteratorTest withKeyType(MediaType key) {
+   private MediaTypeMultiServerRemoteIteratorTest withKeyType(MediaType key) {
       this.key = key;
+      return this;
+   }
+
+   private MediaTypeMultiServerRemoteIteratorTest withValueType(MediaType value) {
+      this.value = value;
       return this;
    }
 
@@ -29,6 +36,7 @@ public class MediaTypeMultiServerRemoteIteratorTest extends BaseMultiServerRemot
    private ConfigurationBuilder getCacheConfiguration() {
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       if (key != null) builder.encoding().key().mediaType(key);
+      if (value != null) builder.encoding().value().mediaType(value);
       return builder;
    }
 
@@ -44,16 +52,21 @@ public class MediaTypeMultiServerRemoteIteratorTest extends BaseMultiServerRemot
 
    @Override
    public Object[] factory() {
-      return new Object[] {
-            new MediaTypeMultiServerRemoteIteratorTest(),
-            new MediaTypeMultiServerRemoteIteratorTest().withKeyType(MediaType.APPLICATION_PROTOSTREAM),
-            new MediaTypeMultiServerRemoteIteratorTest().withKeyType(MediaType.TEXT_PLAIN),
-            new MediaTypeMultiServerRemoteIteratorTest().withKeyType(MediaType.APPLICATION_OBJECT),
+      MediaType[] types = new MediaType[] {
+            null,
+            MediaType.APPLICATION_PROTOSTREAM,
+            MediaType.TEXT_PLAIN,
+            MediaType.APPLICATION_OBJECT,
       };
+
+      return Arrays.stream(types)
+            .flatMap(k -> Arrays.stream(types)
+                  .map(v -> new MediaTypeMultiServerRemoteIteratorTest().withKeyType(k).withValueType(v)))
+            .toArray();
    }
 
    @Override
    protected String parameters() {
-      return "[key_type=" + key + "]";
+      return String.format("[key=%s, value=%s]", key, value);
    }
 }
