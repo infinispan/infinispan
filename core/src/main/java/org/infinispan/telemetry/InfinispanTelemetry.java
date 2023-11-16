@@ -2,8 +2,8 @@ package org.infinispan.telemetry;
 
 public interface InfinispanTelemetry {
 
-   InfinispanSpan startTraceRequest(String operationName, InfinispanSpanAttributes attributes);
+   <T> InfinispanSpan<T> startTraceRequest(String operationName, InfinispanSpanAttributes attributes);
 
-   InfinispanSpan startTraceRequest(String operationName, InfinispanSpanAttributes attributes, InfinispanSpanContext context);
+   <T> InfinispanSpan<T> startTraceRequest(String operationName, InfinispanSpanAttributes attributes, InfinispanSpanContext context);
 
 }

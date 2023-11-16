@@ -3,12 +3,13 @@ package org.infinispan.telemetry.impl;
 import org.infinispan.telemetry.InfinispanSpan;
 import org.infinispan.telemetry.SafeAutoClosable;
 
-public class DisabledInfinispanSpan implements InfinispanSpan {
+public class DisabledInfinispanSpan<T> implements InfinispanSpan<T>, SafeAutoClosable {
 
-   private static final InfinispanSpan INSTANCE = new DisabledInfinispanSpan();
+   private static final InfinispanSpan<?> INSTANCE = new DisabledInfinispanSpan<>();
 
-   public static InfinispanSpan instance() {
-      return INSTANCE;
+   public static <E> InfinispanSpan<E> instance() {
+      //noinspection unchecked
+      return (InfinispanSpan<E>) INSTANCE;
    }
 
    private DisabledInfinispanSpan() {
@@ -16,9 +17,7 @@ public class DisabledInfinispanSpan implements InfinispanSpan {
 
    @Override
    public SafeAutoClosable makeCurrent() {
-      return () -> {
-         // nothing to close
-      };
+      return this;
    }
 
    @Override
@@ -29,5 +28,10 @@ public class DisabledInfinispanSpan implements InfinispanSpan {
    @Override
    public void recordException(Throwable throwable) {
       // no-op
+   }
+
+   @Override
+   public void close() {
+      //no-op
    }
 }

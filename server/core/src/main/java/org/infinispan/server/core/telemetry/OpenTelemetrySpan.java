@@ -9,7 +9,7 @@ import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Scope;
 
-public class OpenTelemetrySpan implements InfinispanSpan {
+public class OpenTelemetrySpan<T> implements InfinispanSpan<T> {
 
    private final Span span;
 
@@ -19,8 +19,9 @@ public class OpenTelemetrySpan implements InfinispanSpan {
 
    @Override
    public SafeAutoClosable makeCurrent() {
+      //noinspection resource
       Scope scope = span.makeCurrent();
-      return () -> scope.close();
+      return scope::close;
    }
 
    @Override

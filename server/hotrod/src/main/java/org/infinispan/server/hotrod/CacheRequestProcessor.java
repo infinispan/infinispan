@@ -1,5 +1,6 @@
 package org.infinispan.server.hotrod;
 
+import javax.security.auth.Subject;
 import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
@@ -11,13 +12,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 
-import javax.security.auth.Subject;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.BloomFilter;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.MurmurHash3BloomFilter;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.Flag;
@@ -34,7 +34,6 @@ import org.infinispan.stats.Stats;
 import org.infinispan.telemetry.InfinispanSpan;
 import org.infinispan.telemetry.InfinispanSpanAttributes;
 import org.infinispan.telemetry.InfinispanTelemetry;
-import org.infinispan.telemetry.SafeAutoClosable;
 import org.infinispan.telemetry.SpanCategory;
 
 import io.netty.buffer.ByteBuf;
@@ -178,13 +177,13 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       addToFilter(header.cacheName, key);
       CompletableFuture<CacheEntry<byte[], byte[]>> get = cache.getCacheEntryAsync(key);
       if (get.isDone() && !get.isCompletedExceptionally()) {
-         handleGetWithMetadata(header, offset, key, get.join(), null);
+         handleGetWithMetadata(header, offset, get.join(), null);
       } else {
-         get.whenComplete((ce, throwable) -> handleGetWithMetadata(header, offset, key, ce, throwable));
+         get.whenComplete((ce, throwable) -> handleGetWithMetadata(header, offset, ce, throwable));
       }
    }
 
-   private void handleGetWithMetadata(HotRodHeader header, int offset, byte[] key, CacheEntry<byte[], byte[]> entry, Throwable throwable) {
+   private void handleGetWithMetadata(HotRodHeader header, int offset, CacheEntry<byte[], byte[]> entry, Throwable throwable) {
       if (throwable != null) {
          writeException(header, throwable);
          return;
@@ -195,9 +194,6 @@ class CacheRequestProcessor extends BaseRequestProcessor {
          assert offset == 0;
          writeResponse(header, header.encoder().getWithMetadataResponse(header, server, channel, entry));
       } else {
-         if (entry == null) {
-            offset = 0;
-         }
          writeResponse(header, header.encoder().getStreamResponse(header, server, channel, offset, entry));
       }
    }
@@ -230,265 +226,237 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    void put(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata.Builder metadata) {
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
-      InfinispanSpan span = requestStart(header, cache);
-      try (SafeAutoClosable scope = span.makeCurrent()) {
+      InfinispanSpan<CacheEntry<?, ?>> span = requestStart(header, cache);
+      try (var ignored = span.makeCurrent()) {
          metadata.version(cacheInfo.versionGenerator.generateNew());
          putInternal(header, cache, key, value, metadata.build(), span);
       }
    }
 
    private void putInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] value,
-                            Metadata metadata, InfinispanSpan span) {
+                            Metadata metadata, InfinispanSpan<CacheEntry<?, ?>> span) {
       cache.putAsyncEntry(key, value, metadata)
-            .whenComplete((ce, throwable) -> handlePut(header, ce, throwable, span));
+            .whenComplete((ce, throwable) -> handlePut(header, ce, throwable))
+            .whenComplete(span);
    }
 
-   private void handlePut(HotRodHeader header, CacheEntry<byte[], byte[]> ce, Throwable throwable, InfinispanSpan span) {
+   private void handlePut(HotRodHeader header, CacheEntry<byte[], byte[]> ce, Throwable throwable) {
       if (throwable != null) {
-         writeException(header, span, throwable);
+         writeException(header, throwable);
       } else {
          writeSuccess(header, ce);
       }
-      span.complete();
    }
 
    void replaceIfUnmodified(HotRodHeader header, Subject subject, byte[] key, long version, byte[] value, Metadata.Builder metadata) {
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
-      InfinispanSpan span = requestStart(header, cache);
-      try (SafeAutoClosable scope = span.makeCurrent()) {
+      InfinispanSpan<ConditionalResponse> span = requestStart(header, cache);
+      try (var ignored = span.makeCurrent()) {
          metadata.version(cacheInfo.versionGenerator.generateNew());
          replaceIfUnmodifiedInternal(header, cache, key, version, value, metadata.build(), span);
       }
    }
 
    private void replaceIfUnmodifiedInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key,
-                                            long version, byte[] value, Metadata metadata, InfinispanSpan span) {
+                                            long version, byte[] value, Metadata metadata, InfinispanSpan<ConditionalResponse> span) {
       cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).getCacheEntryAsync(key)
-            .whenComplete((entry, throwable) -> {
-               handleGetForReplaceIfUnmodified(header, cache, entry, version, value, metadata, throwable, span);
-            });
+            .thenCompose(entry -> replaceIfUnmodifiedAfterGet(cache, entry, version, value, metadata))
+            .whenComplete((response, throwable) -> handleConditionalResponse(header, response, throwable))
+            .whenComplete(span);
    }
 
-   private void handleGetForReplaceIfUnmodified(HotRodHeader header, AdvancedCache<byte[], byte[]> cache,
-                                                CacheEntry<byte[], byte[]> entry, long version, byte[] value,
-                                                Metadata metadata, Throwable throwable, InfinispanSpan span) {
+   private CompletionStage<ConditionalResponse> replaceIfUnmodifiedAfterGet(AdvancedCache<byte[], byte[]> cache,
+                                                                            CacheEntry<byte[], byte[]> entry,
+                                                                            long version, byte[] value,
+                                                                            Metadata metadata) {
+      if (entry == null) {
+         //entry does not exist, replace fails
+         return CompletableFuture.completedFuture(new ConditionalResponse(false, null));
+      }
+      NumericVersion streamVersion = new NumericVersion(version);
+      if (!streamVersion.equals(entry.getMetadata().version())) {
+         //version does not match, replace fails
+         return CompletableFuture.completedFuture(new ConditionalResponse(false, entry));
+      }
+      return cache.replaceAsync(entry.getKey(), entry.getValue(), value, metadata)
+            .thenApply(replaced -> new ConditionalResponse(replaced, entry));
+   }
+
+   private void handleConditionalResponse(HotRodHeader header, ConditionalResponse response, Throwable throwable) {
       if (throwable != null) {
-         writeException(header, span, throwable);
-         span.complete();
-      } else if (entry != null) {
-         NumericVersion streamVersion = new NumericVersion(version);
-         if (streamVersion.equals(entry.getMetadata().version())) {
-            cache.replaceAsync(entry.getKey(), entry.getValue(), value, metadata)
-                  .whenComplete((replaced, throwable2) -> {
-                     if (throwable2 != null) {
-                        writeException(header, span, throwable2);
-                     } else if (replaced) {
-                        writeSuccess(header, entry);
-                     } else {
-                        writeNotExecuted(header, entry);
-                     }
-                     span.complete();
-                  });
-         } else {
-            writeNotExecuted(header, entry);
-            span.complete();
-         }
+         writeException(header, throwable);
+      } else if (response.result) {
+         assert response.entry != null;
+         writeSuccess(header, response.entry);
       } else {
-         writeNotExist(header);
-         span.complete();
+         if (response.entry == null) {
+            writeNotExist(header);
+         } else {
+            writeNotExecuted(header, response.entry);
+         }
       }
    }
 
    void replace(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata.Builder metadata) {
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
-      InfinispanSpan span = requestStart(header, cache);
-      try (SafeAutoClosable scope = span.makeCurrent()) {
+      InfinispanSpan<CacheEntry<?, ?>> span = requestStart(header, cache);
+      try (var ignored = span.makeCurrent()) {
          metadata.version(cacheInfo.versionGenerator.generateNew());
          replaceInternal(header, cache, key, value, metadata.build(), span);
       }
    }
 
    private void replaceInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] value,
-                                Metadata metadata, InfinispanSpan span) {
+                                Metadata metadata, InfinispanSpan<CacheEntry<?, ?>> span) {
       // Avoid listener notification for a simple optimization
       // on whether a new version should be calculated or not.
       cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).getAsync(key)
-            .whenComplete((prev, throwable) -> {
-               handleGetForReplace(header, cache, key, prev, value, metadata, throwable, span);
-            });
+            .thenCompose(prev -> replaceAfterGet(cache, prev != null, key, value, metadata))
+            .whenComplete((cacheEntry, throwable) -> handleReplaceIfExists(header, cacheEntry, throwable))
+            .whenComplete(span);
    }
 
-   private void handleGetForReplace(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] prev,
-                                    byte[] value, Metadata metadata, Throwable throwable, InfinispanSpan span) {
-      if (throwable != null) {
-         writeException(header, span, throwable);
-         span.complete();
-      } else if (prev != null) {
-         // Generate new version only if key present
-         cache.replaceAsyncEntry(key, value, metadata)
-               .whenComplete((ce, throwable1) -> handleReplace(header, ce, throwable1, span));
-      } else {
-         writeNotExecuted(header);
-         span.complete();
-      }
+   private CompletionStage<CacheEntry<byte[], byte[]>> replaceAfterGet(AdvancedCache<byte[], byte[]> cache, boolean exists, byte[] key, byte[] value, Metadata metadata) {
+      return exists ?
+            cache.replaceAsyncEntry(key, value, metadata) :
+            CompletableFutures.completedNull();
    }
 
-   private void handleReplace(HotRodHeader header, CacheEntry<byte[], byte[]> result, Throwable throwable, InfinispanSpan span) {
+   private void handleReplaceIfExists(HotRodHeader header, CacheEntry<byte[], byte[]> cacheEntry, Throwable throwable) {
       if (throwable != null) {
-         writeException(header, span, throwable);
-      } else if (result != null) {
-         writeSuccess(header, result);
-      } else {
+         writeException(header, throwable);
+      } else if (cacheEntry == null) {
          writeNotExecuted(header);
+      } else {
+         writeSuccess(header, cacheEntry);
       }
-      span.complete();
    }
 
    void putIfAbsent(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata.Builder metadata) {
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
-      InfinispanSpan span = requestStart(header, cache);
-      try (SafeAutoClosable scope = span.makeCurrent()) {
+      InfinispanSpan<CacheEntry<?, ?>> span = requestStart(header, cache);
+      try (var ignored = span.makeCurrent()) {
          metadata.version(cacheInfo.versionGenerator.generateNew());
          putIfAbsentInternal(header, cache, key, value, metadata.build(), span);
       }
    }
 
    private void putIfAbsentInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key, byte[] value,
-                                    Metadata metadata, InfinispanSpan span) {
-      cache.putIfAbsentAsyncEntry(key, value, metadata).whenComplete((prev, throwable) -> {
-         handlePutIfAbsent(header, prev, throwable, span);
-      });
+                                    Metadata metadata, InfinispanSpan<CacheEntry<?, ?>> span) {
+      cache.putIfAbsentAsyncEntry(key, value, metadata)
+            .whenComplete((prev, throwable) -> handlePutIfAbsent(header, prev, throwable))
+            .whenComplete(span);
    }
 
-   private void handlePutIfAbsent(HotRodHeader header, CacheEntry<byte[], byte[]> result, Throwable throwable, InfinispanSpan span) {
+   private void handlePutIfAbsent(HotRodHeader header, CacheEntry<byte[], byte[]> result, Throwable throwable) {
       if (throwable != null) {
-         writeException(header, span, throwable);
-         span.complete();
+         writeException(header, throwable);
       } else if (result == null) {
          writeSuccess(header);
       } else {
          writeNotExecuted(header, result);
       }
-      span.complete();
    }
 
    void remove(HotRodHeader header, Subject subject, byte[] key) {
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
-      InfinispanSpan span = requestStart(header, cache);
-      try (SafeAutoClosable scope = span.makeCurrent()) {
+      InfinispanSpan<CacheEntry<?, ?>> span = requestStart(header, cache);
+      try (var ignored = span.makeCurrent()) {
          removeInternal(header, cache, key, span);
       }
    }
 
    private void removeInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key,
-                               InfinispanSpan span) {
-      cache.removeAsyncEntry(key).whenComplete((ce, throwable) -> handleRemove(header, ce, throwable, span));
+                               InfinispanSpan<CacheEntry<?, ?>> span) {
+      cache.removeAsyncEntry(key)
+            .whenComplete((ce, throwable) -> handleRemove(header, ce, throwable))
+            .whenComplete(span);
    }
 
-   private void handleRemove(HotRodHeader header, CacheEntry<byte[], byte[]> ce, Throwable throwable, InfinispanSpan span) {
+   private void handleRemove(HotRodHeader header, CacheEntry<byte[], byte[]> ce, Throwable throwable) {
       if (throwable != null) {
-         writeException(header, span, throwable);
+         writeException(header, throwable);
       } else if (ce != null) {
          writeSuccess(header, ce);
       } else {
          writeNotExist(header);
       }
-      span.complete();
    }
 
    void removeIfUnmodified(HotRodHeader header, Subject subject, byte[] key, long version) {
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
-      InfinispanSpan span = requestStart(header, cache);
-      try (SafeAutoClosable scope = span.makeCurrent()) {
+      InfinispanSpan<ConditionalResponse> span = requestStart(header, cache);
+      try (var ignored = span.makeCurrent()) {
          removeIfUnmodifiedInternal(header, cache, key, version, span);
       }
    }
 
    private void removeIfUnmodifiedInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key,
-                                           long version, InfinispanSpan span) {
+                                           long version, InfinispanSpan<ConditionalResponse> span) {
       cache.getCacheEntryAsync(key)
-            .whenComplete((entry, throwable) -> {
-               handleGetForRemoveIfUnmodified(header, cache, entry, key, version, throwable, span);
-            });
+            .thenCompose(cacheEntry -> removeIfUnmodifiedAfterGet(cache, cacheEntry, version))
+            .whenComplete((response, throwable) -> handleConditionalResponse(header, response, throwable))
+            .whenComplete(span);
    }
 
-   private void handleGetForRemoveIfUnmodified(HotRodHeader header, AdvancedCache<byte[], byte[]> cache,
-                                               CacheEntry<byte[], byte[]> entry, byte[] key, long version,
-                                               Throwable throwable, InfinispanSpan span) {
-      if (throwable != null) {
-         writeException(header, span, throwable);
-         span.complete();
-      } else if (entry != null) {
-         byte[] prev = entry.getValue();
-         NumericVersion streamVersion = new NumericVersion(version);
-         if (streamVersion.equals(entry.getMetadata().version())) {
-            cache.removeAsync(key, prev).whenComplete((removed, throwable2) -> {
-               if (throwable2 != null) {
-                  writeException(header, span, throwable2);
-               } else if (removed) {
-                  writeSuccess(header, entry);
-               } else {
-                  writeNotExecuted(header, entry);
-               }
-               span.complete();
-            });
-         } else {
-            writeNotExecuted(header, entry);
-            span.complete();
-         }
-      } else {
-         writeNotExist(header);
-         span.complete();
+   private CompletionStage<ConditionalResponse> removeIfUnmodifiedAfterGet(AdvancedCache<byte[], byte[]> cache,
+                                                                           CacheEntry<byte[], byte[]> entry,
+                                                                           long version) {
+      if (entry == null) {
+         return CompletableFuture.completedFuture(new ConditionalResponse(false, null));
       }
+      NumericVersion streamVersion = new NumericVersion(version);
+      if (!streamVersion.equals(entry.getMetadata().version())) {
+         //version does not match, replace fails
+         return CompletableFuture.completedFuture(new ConditionalResponse(false, entry));
+      }
+      return cache.removeAsync(entry.getKey(), entry.getValue())
+            .thenApply(removed -> new ConditionalResponse(removed, entry));
    }
 
    void clear(HotRodHeader header, Subject subject) {
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
-      InfinispanSpan span = requestStart(header, cache);
-      try (SafeAutoClosable scope = span.makeCurrent()) {
+      InfinispanSpan<Void> span = requestStart(header, cache);
+      try (var ignored = span.makeCurrent()) {
          clearInternal(header, cache, span);
       }
    }
 
-   private void clearInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, InfinispanSpan span) {
-      cache.clearAsync().whenComplete((nil, throwable) -> {
-         if (throwable != null) {
-            writeException(header, span, throwable);
-         } else {
-            writeSuccess(header);
-         }
-         span.complete();
-      });
+   private void clearInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, InfinispanSpan<Void> span) {
+      cache.clearAsync()
+            .whenComplete((unused, throwable) -> handleGenericResponse(header, throwable))
+            .whenComplete(span);
    }
 
    void putAll(HotRodHeader header, Subject subject, Map<byte[], byte[]> entries, Metadata.Builder metadata) {
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
-      InfinispanSpan span = requestStart(header, cache);
-      try (SafeAutoClosable scope = span.makeCurrent()) {
+      InfinispanSpan<Void> span = requestStart(header, cache);
+      try (var ignored = span.makeCurrent()) {
          metadata.version(cacheInfo.versionGenerator.generateNew());
          putAllInternal(header, cache, entries, metadata.build(), span);
       }
    }
 
    private void putAllInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, Map<byte[], byte[]> entries,
-                               Metadata metadata, InfinispanSpan span) {
-      cache.putAllAsync(entries, metadata).whenComplete((nil, throwable) -> handlePutAll(header, throwable, span));
+                               Metadata metadata, InfinispanSpan<Void> span) {
+      cache.putAllAsync(entries, metadata)
+            .whenComplete((nil, throwable) -> handleGenericResponse(header, throwable))
+            .whenComplete(span);
    }
 
-   private void handlePutAll(HotRodHeader header, Throwable throwable, InfinispanSpan span) {
+   private void handleGenericResponse(HotRodHeader header, Throwable throwable) {
       if (throwable != null) {
-         writeException(header, span, throwable);
+         writeException(header, throwable);
       } else {
          writeSuccess(header);
       }
-      span.complete();
    }
 
    void getAll(HotRodHeader header, Subject subject, Set<?> keys) {
@@ -512,24 +480,24 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    void size(HotRodHeader header, Subject subject) {
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
-      InfinispanSpan span = requestStart(header, cache);
-      try (SafeAutoClosable scope = span.makeCurrent()) {
+      InfinispanSpan<Long> span = requestStart(header, cache);
+      try (var ignored = span.makeCurrent()) {
          sizeInternal(header, cache, span);
       }
    }
 
-   private void sizeInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, InfinispanSpan span) {
+   private void sizeInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, InfinispanSpan<Long> span) {
       cache.sizeAsync()
-            .whenComplete((size, throwable) -> handleSize(header, size, throwable, span));
+            .whenComplete((size, throwable) -> handleSize(header, size, throwable))
+            .whenComplete(span);
    }
 
-   private void handleSize(HotRodHeader header, Long size, Throwable throwable, InfinispanSpan span) {
+   private void handleSize(HotRodHeader header, Long size, Throwable throwable) {
       if (throwable != null) {
-         writeException(header, span, throwable);
+         writeException(header, throwable);
       } else {
          writeResponse(header, header.encoder().unsignedLongResponse(header, server, channel, size));
       }
-      span.complete();
    }
 
    void bulkGet(HotRodHeader header, Subject subject, int size) {
@@ -582,8 +550,8 @@ class CacheRequestProcessor extends BaseRequestProcessor {
                           String filterFactory, List<byte[]> filterParams, String converterFactory,
                           List<byte[]> converterParams, boolean useRawData, int listenerInterests, int bloomBits) {
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
-      InfinispanSpan span = requestStart(header, cache);
-      try (SafeAutoClosable scope = span.makeCurrent()) {
+      var span = requestStart(header, cache);
+      try (var ignored = span.makeCurrent()) {
          BloomFilter<byte[]> bloomFilter = null;
          if (bloomBits > 0) {
             bloomFilter = MurmurHash3BloomFilter.createConcurrentFilter(bloomBits);
@@ -597,32 +565,31 @@ class CacheRequestProcessor extends BaseRequestProcessor {
             if (cause != null) {
                log.trace("Failed to add listener", cause);
                if (cause instanceof CompletionException) {
-                  writeException(header, span, cause.getCause());
+                  writeException(header, cause.getCause());
                } else {
-                  writeException(header, span, cause);
+                  writeException(header, cause);
                }
             } else {
                writeSuccess(header);
             }
-            span.complete();
-         });
+         }).whenComplete(span);
       }
    }
 
    void removeClientListener(HotRodHeader header, Subject subject, byte[] listenerId) {
       AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
-      InfinispanSpan span = requestStart(header, cache);
-      try (SafeAutoClosable scope = span.makeCurrent()) {
+      InfinispanSpan<Boolean> span = requestStart(header, cache);
+      try (var ignored = span.makeCurrent()) {
          removeClientListenerInternal(header, cache, listenerId, span);
       }
    }
 
    private void removeClientListenerInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache,
-                                             byte[] listenerId, InfinispanSpan span) {
+                                             byte[] listenerId, InfinispanSpan<Boolean> span) {
       server.getClientListenerRegistry().removeClientListener(listenerId, cache)
             .whenComplete((success, throwable) -> {
                if (throwable != null) {
-                  writeException(header, span, throwable);
+                  writeException(header, throwable);
                } else {
                   if (success == Boolean.TRUE) {
                      writeSuccess(header);
@@ -630,8 +597,8 @@ class CacheRequestProcessor extends BaseRequestProcessor {
                      writeNotExecuted(header);
                   }
                }
-               span.complete();
-            });
+            })
+            .whenComplete(span);
    }
 
    void iterationStart(HotRodHeader header, Subject subject, byte[] segmentMask, String filterConverterFactory,
@@ -687,18 +654,20 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       }
    }
 
-   void writeException(HotRodHeader header, InfinispanSpan span, Throwable cause) {
-      try {
-         span.recordException(cause);
-      } finally {
-         writeException(header, cause);
-      }
-   }
-
-   private InfinispanSpan requestStart(HotRodHeader header, AdvancedCache<?, ?> cache) {
+   private <T> InfinispanSpan<T> requestStart(HotRodHeader header, AdvancedCache<?, ?> cache) {
       var attributes = new InfinispanSpanAttributes.Builder(SpanCategory.CONTAINER)
             .withCache(header.cacheName, SecurityActions.getCacheConfiguration(cache))
             .build();
       return telemetryService.startTraceRequest(header.op.name(), attributes, header);
+   }
+
+   private static class ConditionalResponse {
+      final boolean result;
+      final CacheEntry<byte[], byte[]> entry;
+
+      ConditionalResponse(boolean result, CacheEntry<byte[], byte[]> entry) {
+         this.result = result;
+         this.entry = entry;
+      }
    }
 }

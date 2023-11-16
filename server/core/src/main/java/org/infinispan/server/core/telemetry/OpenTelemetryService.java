@@ -27,7 +27,7 @@ public class OpenTelemetryService implements InfinispanTelemetry, TextMapGetter<
    }
 
    @Override
-   public InfinispanSpan startTraceRequest(String operationName, InfinispanSpanAttributes attributes) {
+   public <T> InfinispanSpan<T> startTraceRequest(String operationName, InfinispanSpanAttributes attributes) {
       if (attributes.isCategoryDisabled()) {
          return DisabledInfinispanSpan.instance();
       }
@@ -41,7 +41,7 @@ public class OpenTelemetryService implements InfinispanTelemetry, TextMapGetter<
    }
 
    @Override
-   public InfinispanSpan startTraceRequest(String operationName, InfinispanSpanAttributes attributes, InfinispanSpanContext context) {
+   public <T> InfinispanSpan<T> startTraceRequest(String operationName, InfinispanSpanAttributes attributes, InfinispanSpanContext context) {
       if (attributes.isCategoryDisabled()) {
          return DisabledInfinispanSpan.instance();
       }
@@ -56,10 +56,10 @@ public class OpenTelemetryService implements InfinispanTelemetry, TextMapGetter<
       return createOpenTelemetrySpan(builder, attributes);
    }
 
-   private InfinispanSpan createOpenTelemetrySpan(SpanBuilder builder, InfinispanSpanAttributes attributes) {
+   private <T> InfinispanSpan<T> createOpenTelemetrySpan(SpanBuilder builder, InfinispanSpanAttributes attributes) {
       attributes.cacheName().ifPresent(cacheName -> builder.setAttribute("cache", cacheName));
       builder.setAttribute("category", attributes.category().toString());
-      return new OpenTelemetrySpan(builder.startSpan());
+      return new OpenTelemetrySpan<>(builder.startSpan());
    }
 
    @Override
