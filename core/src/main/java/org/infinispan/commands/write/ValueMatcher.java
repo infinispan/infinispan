@@ -26,11 +26,6 @@ public enum ValueMatcher {
       }
 
       @Override
-      public boolean nonExistentEntryCanMatch() {
-         return true;
-      }
-
-      @Override
       public ValueMatcher matcherForRetry() {
          return MATCH_ALWAYS;
       }
@@ -44,11 +39,6 @@ public enum ValueMatcher {
       @Override
       public boolean matches(Object existingValue, Object expectedValue, Object newValue) {
          return existingValue == null ? expectedValue == null : existingValue.equals(expectedValue);
-      }
-
-      @Override
-      public boolean nonExistentEntryCanMatch() {
-         return true;
       }
 
       @Override
@@ -70,11 +60,6 @@ public enum ValueMatcher {
       }
 
       @Override
-      public boolean nonExistentEntryCanMatch() {
-         return true;
-      }
-
-      @Override
       public ValueMatcher matcherForRetry() {
          return MATCH_EXPECTED_OR_NEW;
       }
@@ -84,11 +69,6 @@ public enum ValueMatcher {
       @Override
       public boolean matches(Object existingValue, Object expectedValue, Object newValue) {
          return existingValue == null || existingValue.equals(expectedValue);
-      }
-
-      @Override
-      public boolean nonExistentEntryCanMatch() {
-         return true;
       }
 
       @Override
@@ -103,11 +83,6 @@ public enum ValueMatcher {
       @Override
       public boolean matches(Object existingValue, Object expectedValue, Object newValue) {
          return existingValue != null;
-      }
-
-      @Override
-      public boolean nonExistentEntryCanMatch() {
-         return false;
       }
 
       @Override
@@ -126,23 +101,12 @@ public enum ValueMatcher {
       }
 
       @Override
-      public boolean nonExistentEntryCanMatch() {
-         return false;
-      }
-
-      @Override
       public ValueMatcher matcherForRetry() {
          return MATCH_NEVER;
       }
    },;
 
    public abstract boolean matches(Object existingValue, Object expectedValue, Object newValue);
-
-   /**
-    * @deprecated Since 9.0, no longer used.
-    */
-   @Deprecated
-   public abstract boolean nonExistentEntryCanMatch();
 
    public abstract ValueMatcher matcherForRetry();
 
