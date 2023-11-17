@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.context.Flag;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -89,9 +89,6 @@ public abstract class BaseInvalidationInterceptor extends BaseRpcInterceptor imp
 	}
 
 	protected boolean isPutForExternalRead(FlagAffectedCommand command) {
-		if (command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
-			return true;
-		}
-		return false;
-	}
+      return command.hasAnyFlag(FlagBitSets.PUT_FOR_EXTERNAL_READ);
+   }
 }
