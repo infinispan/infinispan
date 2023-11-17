@@ -6,25 +6,24 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import jakarta.transaction.SystemException;
-import jakarta.transaction.Transaction;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.Cache;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.functional.FunctionalMap;
-import org.infinispan.functional.Param;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 /**
  * Abstract functional map, providing implementations for some of the shared methods.
@@ -54,7 +53,7 @@ abstract class AbstractFunctionalMap<K, V> implements FunctionalMap<K, V> {
       autoCommit = config.transaction().autoCommit();
       transactionManager = transactional ? fmap.cache.getTransactionManager() : null;
       batchContainer = transactional && config.invocationBatching().enabled() ? fmap.cache.getBatchContainer() : null;
-      this.params = config.statistics().available() ? params : params.addAll(Param.StatisticsMode.SKIP);
+      this.params = params;
       this.keyDataConversion = fmap.cache.getKeyDataConversion();
       this.valueDataConversion = fmap.cache.getValueDataConversion();
       this.blockingManager = fmap.cache.getComponentRegistry().getComponent(BlockingManager.class);

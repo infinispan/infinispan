@@ -1,14 +1,5 @@
 package org.infinispan.stats.impl;
 
-import net.jcip.annotations.Immutable;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
-import org.infinispan.stats.Stats;
-
-import java.util.HashMap;
-import java.util.Map;
-
 import static org.infinispan.stats.impl.StatKeys.APPROXIMATE_ENTRIES;
 import static org.infinispan.stats.impl.StatKeys.APPROXIMATE_ENTRIES_IN_MEMORY;
 import static org.infinispan.stats.impl.StatKeys.APPROXIMATE_ENTRIES_UNIQUE;
@@ -32,6 +23,16 @@ import static org.infinispan.stats.impl.StatKeys.RETRIEVALS;
 import static org.infinispan.stats.impl.StatKeys.STORES;
 import static org.infinispan.stats.impl.StatKeys.TIME_SINCE_RESET;
 import static org.infinispan.stats.impl.StatKeys.TIME_SINCE_START;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
+import org.infinispan.stats.Stats;
+
+import net.jcip.annotations.Immutable;
 
 /**
  * StatsImpl.
@@ -64,9 +65,6 @@ public class StatsImpl implements Stats {
     * @return Stats object
     */
    public static Stats create(Configuration configuration, AsyncInterceptorChain chain) {
-      if (!configuration.statistics().available()) {
-         return new StatsImpl();
-      }
       return new StatsImpl(chain.findInterceptorExtending(CacheMgmtInterceptor.class));
    }
 

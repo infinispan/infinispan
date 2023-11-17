@@ -438,13 +438,13 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
             builder.read(override.build(false));
          }
          if (globalStats != null) {
-            builder.statistics().enabled(globalStats).available(globalStats);
+            builder.statistics().enabled(globalStats);
          }
          configuration = builder.template(false).build();
          type.validate(configuration);
          manager.defineConfiguration(cacheName, configuration);
       }
-      final AdvancedCache cache = manager.getCache(cacheName).getAdvancedCache();
+      final AdvancedCache<?, ?> cache = manager.getCache(cacheName).getAdvancedCache();
       // TODO: not sure if this is needed in recent Infinispan
       if (!cache.getStatus().allowInvocations()) {
          cache.start();

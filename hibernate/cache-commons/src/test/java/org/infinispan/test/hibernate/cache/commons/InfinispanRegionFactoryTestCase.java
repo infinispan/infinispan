@@ -27,6 +27,7 @@ import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cfg.Environment;
 import org.hibernate.testing.boot.ServiceRegistryTestingImpl;
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusteringConfigurationBuilder;
@@ -40,7 +41,6 @@ import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.hibernate.cache.spi.InfinispanProperties;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.hibernate.cache.commons.util.InfinispanTestingSetup;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
@@ -553,7 +553,6 @@ public class InfinispanRegionFactoryTestCase  {
 			assertEquals(TransactionMode.NON_TRANSACTIONAL, ppConfig.transaction().transactionMode());
 			assertEquals(60000, ppConfig.expiration().maxIdle());
 			assertFalse(ppConfig.statistics().enabled());
-			assertFalse(ppConfig.statistics().available());
 		} finally {
 			factory.stop();
 		}

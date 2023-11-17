@@ -16,7 +16,7 @@
       <local-cache-configuration name="the-default-cache" statistics="false" />
 
       <!-- Default configuration is appropriate for entity/collection caching. -->
-      <local-cache-configuration name="entity" simple-cache="true" statistics="false" statistics-available="false">
+      <local-cache-configuration name="entity" simple-cache="true" statistics="false">
          <encoding media-type="application/x-java-object"/>
          <transaction mode="NONE" />
          <expiration max-idle="100000" interval="5000"/>
@@ -24,14 +24,14 @@
       </local-cache-configuration>
 
       <!-- A config appropriate for query caching. Does not replicate queries. -->
-      <local-cache-configuration name="local-query" simple-cache="true" statistics="false" statistics-available="false">
+      <local-cache-configuration name="local-query" simple-cache="true" statistics="false">
          <encoding media-type="application/x-java-object"/>
          <transaction mode="NONE"/>
          <expiration max-idle="100000" interval="5000"/>
          <memory max-count="10000"/>
       </local-cache-configuration>
 
-      <local-cache-configuration name="timestamps" simple-cache="true" statistics="false" statistics-available="false">
+      <local-cache-configuration name="timestamps" simple-cache="true" statistics="false">
          <encoding media-type="application/x-java-object"/>
          <locking concurrency-level="1000" acquire-timeout="15000"/>
          <!-- Explicitly non transactional -->
@@ -43,7 +43,7 @@
 
       <!-- When providing custom configuration, always make this cache local and non-transactional.
            To avoid possible leaks, use expiration (max idle time). Optimize for speed.-->
-      <local-cache-configuration name="pending-puts" simple-cache="true" statistics="false" statistics-available="false">
+      <local-cache-configuration name="pending-puts" simple-cache="true" statistics="false">
          <encoding media-type="application/x-java-object"/>
          <transaction mode="NONE"/>
          <expiration max-idle="60000" />

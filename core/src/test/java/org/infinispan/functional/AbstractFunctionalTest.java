@@ -51,12 +51,12 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
       ConfigurationBuilder distBuilder = new ConfigurationBuilder();
       distBuilder.clustering().cacheMode(isSync ? CacheMode.DIST_SYNC : CacheMode.DIST_ASYNC).hash().numOwners(numDistOwners);
       configureCache(distBuilder);
-      cacheManagers.stream().forEach(cm -> cm.defineConfiguration(DIST, distBuilder.build()));
+      cacheManagers.forEach(cm -> cm.defineConfiguration(DIST, distBuilder.build()));
       // Create replicated caches
       ConfigurationBuilder replBuilder = new ConfigurationBuilder();
       replBuilder.clustering().cacheMode(isSync ? CacheMode.REPL_SYNC : CacheMode.REPL_ASYNC);
       configureCache(replBuilder);
-      cacheManagers.stream().forEach(cm -> cm.defineConfiguration(REPL, replBuilder.build()));
+      cacheManagers.forEach(cm -> cm.defineConfiguration(REPL, replBuilder.build()));
 
       // Wait for cluster to form
       waitForClusterToForm(DIST, REPL);
@@ -77,7 +77,7 @@ abstract class AbstractFunctionalTest extends MultipleCacheManagersTest {
    }
 
    protected void configureCache(ConfigurationBuilder builder) {
-      builder.statistics().available(false);
+      builder.statistics().disable();
       if (transactional != null) {
          builder.transaction().transactionMode(transactionMode());
          if (lockingMode != null) {

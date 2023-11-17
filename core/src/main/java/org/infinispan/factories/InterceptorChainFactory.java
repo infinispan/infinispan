@@ -123,9 +123,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          interceptorChain.appendInterceptor(createInterceptor(new IsMarshallableInterceptor(), IsMarshallableInterceptor.class), false);
 
       // load the cache management interceptor next
-      if (configuration.statistics().available()) {
-         interceptorChain.appendInterceptor(createInterceptor(new CacheMgmtInterceptor(), CacheMgmtInterceptor.class), false);
-      }
+      interceptorChain.appendInterceptor(createInterceptor(new CacheMgmtInterceptor(), CacheMgmtInterceptor.class), false);
 
       // the state transfer interceptor sets the topology id and retries on topology changes
       // so it's necessary even if there is no state transfer
