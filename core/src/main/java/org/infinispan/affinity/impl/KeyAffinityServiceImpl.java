@@ -192,7 +192,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
       long stamp = maxNumberInvariant.writeLock();
       try {
          address2key.clear(); //we need to drop everything as key-mapping data is stale due to view change
-         addQueuesForAddresses(vce.getConsistentHashAtEnd().getMembers());
+         addQueuesForAddresses(vce.getWriteConsistentHashAtEnd().getMembers());
          resetNumberOfKeys();
          keyProducerStartLatch.open();
       } finally {
