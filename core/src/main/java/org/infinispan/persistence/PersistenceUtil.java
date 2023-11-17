@@ -8,21 +8,16 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.attributes.Attribute;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalStateConfiguration;
-import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
@@ -39,8 +34,6 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
  * @since 6.0
  */
 public class PersistenceUtil {
-
-   private static final int SEGMENT_NOT_PROVIDED = -1;
 
    public static <K, V> int count(AdvancedCacheLoader<K, V> acl, Predicate<? super K> filter) {
 
@@ -94,49 +87,6 @@ public class PersistenceUtil {
       return singleToValue(Flowable.fromPublisher(acl.entryPublisher(filter, true, true))
             .map(me -> ief.create(me.getKey(), me.getValue(), me.getMetadata()))
             .collectInto(new HashSet<>(), Set::add));
-   }
-
-   /**
-    * @deprecated since 9.4 This method references PersistenceManager, which isn't a public class
-    */
-   @Deprecated
-   public static <K, V> InternalCacheEntry<K,V> loadAndStoreInDataContainer(DataContainer<K, V> dataContainer,
-         final PersistenceManager persistenceManager, K key, final InvocationContext ctx, final TimeService timeService,
-         final AtomicReference<Boolean> isLoaded) {
-      return org.infinispan.persistence.internal.PersistenceUtil.loadAndStoreInDataContainer(dataContainer,
-            persistenceManager, key, ctx, timeService, isLoaded);
-   }
-
-   /**
-    * @deprecated since 9.4 This method references PersistenceManager, which isn't a public class
-    */
-   @Deprecated
-   public static <K, V> InternalCacheEntry<K,V> loadAndStoreInDataContainer(DataContainer<K, V> dataContainer, int segment,
-         final PersistenceManager persistenceManager, K key, final InvocationContext ctx, final TimeService timeService,
-                                                         final AtomicReference<Boolean> isLoaded) {
-      return org.infinispan.persistence.internal.PersistenceUtil.loadAndStoreInDataContainer(dataContainer, segment,
-            persistenceManager, key, ctx, timeService, isLoaded);
-   }
-
-   /**
-    * @deprecated since 9.4 This method references PersistenceManager, which isn't a public class
-    */
-   @Deprecated
-   public static <K, V> InternalCacheEntry<K,V> loadAndComputeInDataContainer(DataContainer<K, V> dataContainer,
-         int segment, final PersistenceManager persistenceManager, K key, final InvocationContext ctx,
-         final TimeService timeService, DataContainer.ComputeAction<K, V> action) {
-      return org.infinispan.persistence.internal.PersistenceUtil.loadAndComputeInDataContainer(dataContainer, segment,
-            persistenceManager, key, ctx, timeService, action);
-   }
-
-   /**
-    * @deprecated since 9.4 This method references PersistenceManager, which isn't a public class
-    */
-   @Deprecated
-   public static <K, V> MarshallableEntry<K, V> loadAndCheckExpiration(PersistenceManager persistenceManager, Object key,
-                                                                       InvocationContext context, TimeService timeService) {
-      return org.infinispan.persistence.internal.PersistenceUtil.loadAndCheckExpiration(persistenceManager, key,
-            SEGMENT_NOT_PROVIDED, context);
    }
 
    public static <K, V> InternalCacheEntry<K, V> convert(MarshallableEntry<K, V> loaded, InternalEntryFactory factory) {
