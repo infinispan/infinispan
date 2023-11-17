@@ -266,12 +266,6 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    ClassLoader getClassLoader();
 
    /**
-    * @deprecated Since 9.4, unmarshalling always uses the classloader from the global configuration.
-    */
-   @Deprecated
-   AdvancedCache<K, V> with(ClassLoader classLoader);
-
-   /**
     * An overloaded form of {@link #put(K, V)}, which takes in an instance of {@link org.infinispan.metadata.Metadata}
     * which can be used to provide metadata information for the entry being stored, such as lifespan, version of
     * value...etc.

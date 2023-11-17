@@ -382,11 +382,6 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    }
 
    @Override
-   public AdvancedCache<K, V> with(ClassLoader classLoader) {
-      return null;  // TODO: Customise this generated block
-   }
-
-   @Override
    public V put(K key, V value, Metadata metadata) {
       return null;  // TODO: Customise this generated block
    }

@@ -1867,11 +1867,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
-   public AdvancedCache<K, V> with(ClassLoader classLoader) {
-      return this;
-   }
-
-   @Override
    public V put(K key, V value, Metadata metadata) {
       return put(key, value, metadata, EnumUtil.EMPTY_BIT_SET, defaultContextBuilderForWrite());
    }
