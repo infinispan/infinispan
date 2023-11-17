@@ -314,7 +314,7 @@ public class GlobalXSiteAdminOpsTest extends AbstractMultipleSitesTest {
       List<EmbeddedCacheManager> cacheManagerList = site(0).cacheManagers();
       List<BlockingTransport> blockingTransportList = new ArrayList<>(cacheManagerList.size());
       cacheManagerList.forEach(cacheManager -> {
-         Transport transport = cacheManager.getTransport();
+         Transport transport = cacheManager.getGlobalComponentRegistry().getComponent(Transport.class);
          if (transport instanceof BlockingTransport) {
             blockingTransportList.add((BlockingTransport) transport);
          } else if (createIfAbsent) {

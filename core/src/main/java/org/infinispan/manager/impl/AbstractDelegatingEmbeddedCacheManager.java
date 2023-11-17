@@ -19,7 +19,6 @@ import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerAdmin;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.stats.CacheContainerStats;
 
 /**
@@ -184,11 +183,6 @@ public class AbstractDelegatingEmbeddedCacheManager implements EmbeddedCacheMana
    }
 
    @Override
-   public Transport getTransport() {
-      return cm.getTransport();
-   }
-
-   @Override
    public <K, V> Cache<K, V> getCache() {
       return cm.getCache();
    }
@@ -236,12 +230,6 @@ public class AbstractDelegatingEmbeddedCacheManager implements EmbeddedCacheMana
    @Override
    public CompletionStage<Void> removeListenerAsync(Object listener) {
       return cm.removeListenerAsync(listener);
-   }
-
-   @Deprecated
-   @Override
-   public Set<Object> getListeners() {
-      return cm.getListeners();
    }
 
    @Override

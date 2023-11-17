@@ -182,7 +182,7 @@ public class RestCacheManager<V> {
    }
 
    public String getServerAddress() {
-      Transport transport = instance.getTransport();
+      Transport transport = SecurityActions.getGlobalComponentRegistry(instance).getComponent(Transport.class);
       if (transport instanceof JGroupsTransport) {
          return transport.getPhysicalAddresses().toString();
       }

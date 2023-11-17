@@ -1179,8 +1179,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
                "Cache container has been stopped and cannot be reused. Recreate the cache container.");
    }
 
-   @Override
-   public Transport getTransport() {
+   private Transport getTransport() {
       if (transport == null) {
          lifecycleLock.lock();
          try {

@@ -10,14 +10,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.topology.LocalTopologyManager;
 
 /**
@@ -42,12 +43,17 @@ public class CacheManagerInfo implements JsonSerialization {
    }
 
    public String getCoordinatorAddress() {
-      Transport t = cacheManager.getTransport();
-      return t == null ? "N/A" : t.getCoordinator().toString();
+      Transport transport = getTransport();
+      return transport == null ? "N/A" : transport.getCoordinator().toString();
    }
 
    public boolean isCoordinator() {
-      return cacheManager.getTransport() != null && cacheManager.getTransport().isCoordinator();
+      Transport transport = getTransport();
+      return transport != null && transport.isCoordinator();
+   }
+
+   private Transport getTransport() {
+      return SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(Transport.class);
    }
 
    public String getCacheManagerStatus() {
@@ -97,8 +103,9 @@ public class CacheManagerInfo implements JsonSerialization {
    }
 
    public String getNodeName() {
-      if (cacheManager.getTransport() == null) return getNodeAddress();
-      return cacheManager.getTransport().localNodeName();
+      Transport transport = getTransport();
+      if (transport == null) return getNodeAddress();
+      return transport.localNodeName();
    }
 
    public String getNodeAddress() {
@@ -106,33 +113,38 @@ public class CacheManagerInfo implements JsonSerialization {
    }
 
    public String getPhysicalAddresses() {
-      if (cacheManager.getTransport() == null) return "local";
-      List<Address> address = cacheManager.getTransport().getPhysicalAddresses();
+      Transport transport = getTransport();
+      if (transport == null) return "local";
+      List<Address> address = transport.getPhysicalAddresses();
       return address == null ? "local" : address.toString();
    }
 
    public List<String> getPhysicalAddressesRaw() {
-      if (cacheManager.getTransport() == null) return LOCAL_NODE;
-      List<Address> address = cacheManager.getTransport().getPhysicalAddresses();
+      Transport transport = getTransport();
+      if (transport == null) return LOCAL_NODE;
+      List<Address> address = transport.getPhysicalAddresses();
       return address == null
             ? LOCAL_NODE
             : address.stream().map(Object::toString).collect(Collectors.toList());
    }
 
    public List<String> getClusterMembers() {
-      if (cacheManager.getTransport() == null) return LOCAL_NODE;
-      return cacheManager.getTransport().getMembers().stream().map(Objects::toString).collect(Collectors.toList());
+      Transport transport = getTransport();
+      if (transport == null) return LOCAL_NODE;
+      return transport.getMembers().stream().map(Objects::toString).collect(Collectors.toList());
    }
 
    public List<String> getClusterMembersPhysicalAddresses() {
-      if (cacheManager.getTransport() == null) return LOCAL_NODE;
-      List<Address> addressList = cacheManager.getTransport().getMembersPhysicalAddresses();
+      Transport transport = getTransport();
+      if (transport == null) return LOCAL_NODE;
+      List<Address> addressList = transport.getMembersPhysicalAddresses();
       return addressList.stream().map(Objects::toString).collect(Collectors.toList());
    }
 
    public int getClusterSize() {
-      if (cacheManager.getTransport() == null) return 1;
-      return cacheManager.getTransport().getMembers().size();
+      Transport transport = getTransport();
+      if (transport == null) return 1;
+      return transport.getMembers().size();
    }
 
    public String getClusterName() {
@@ -140,18 +152,20 @@ public class CacheManagerInfo implements JsonSerialization {
    }
 
    public String getLocalSite() {
-      if (cacheManager.getTransport() == null) return "local";
-      return cacheManager.getTransport().localSiteName();
+      Transport transport = getTransport();
+      if (transport == null) return "local";
+      return transport.localSiteName();
    }
 
    public Collection<String> getSites() {
-      return Optional.ofNullable(cacheManager.getTransport())
+      Transport transport = getTransport();
+      return Optional.ofNullable(transport)
             .map(Transport::getSitesView)
             .orElseGet(Collections::emptySet);
    }
 
    public boolean isRelayNode() {
-      Transport transport = cacheManager.getTransport();
+      Transport transport = getTransport();
       return transport != null && transport.isSiteCoordinator();
    }
 
@@ -165,7 +179,7 @@ public class CacheManagerInfo implements JsonSerialization {
    }
 
    public Collection<String> getRelayNodesAddress() {
-      Transport transport = cacheManager.getTransport();
+      Transport transport = getTransport();
       if (transport == null) {
          return LOCAL_NODE;
       }

@@ -24,6 +24,7 @@ import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestException;
@@ -276,7 +277,6 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       if (mergeCoordIndex == 1) d2.discardAll(false);
       if (mergeCoordIndex == 2) d3.discardAll(false);
 
-      int viewIdAfterSplit = mergeCoordManager.getTransport().getViewId();
       final CheckPoint checkpoint = new CheckPoint();
       blockRebalanceStart(mergeCoordManager, checkpoint, 2);
 
@@ -388,7 +388,8 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       killNode(manager(0), new EmbeddedCacheManager[]{manager(1), manager(2)});
 
       // Wait for the GET_STATUS command and stop node 3 abruptly
-      int viewId = manager(1).getTransport().getViewId();
+      Transport transport = manager(1).getGlobalComponentRegistry().getComponent(Transport.class);
+      int viewId = transport.getViewId();
       checkpoint.awaitStrict("GET_STATUS_" + viewId, 10, SECONDS);
       killNode(manager(2), new EmbeddedCacheManager[]{manager(1)});
       checkpoint.triggerForever("3 left");

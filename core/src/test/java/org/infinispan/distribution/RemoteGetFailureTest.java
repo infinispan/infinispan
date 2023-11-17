@@ -1,6 +1,7 @@
 package org.infinispan.distribution;
 
 import static org.infinispan.commons.test.Exceptions.expectException;
+import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
@@ -23,6 +24,7 @@ import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.ImmortalCacheValue;
@@ -37,11 +39,11 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.statetransfer.StateTransferInterceptor;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
@@ -252,7 +254,7 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
    }
 
    private void installNewView(Cache installing, Cache... cachesInView) {
-      JGroupsTransport transport = (JGroupsTransport) installing.getCacheManager().getTransport();
+      JGroupsTransport transport = (JGroupsTransport) extractGlobalComponent(installing.getCacheManager(), Transport.class);
       JChannel channel = transport.getChannel();
 
       org.jgroups.Address[] members = Stream.of(cachesInView)

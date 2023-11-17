@@ -1,5 +1,6 @@
 package org.infinispan.remoting.transport.jgroups;
 
+import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Arrays;
@@ -20,6 +21,7 @@ import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -48,7 +50,7 @@ public class JGroupsTransportTest extends MultipleCacheManagersTest {
       UUID randomUuid = UUID.randomUUID();
       Address randomAddress = JGroupsAddressCache.fromJGroupsAddress(randomUuid);
 
-      JGroupsTransport transport = (JGroupsTransport) manager(0).getTransport();
+      JGroupsTransport transport = (JGroupsTransport) extractGlobalComponent(manager(0), Transport.class);
       long initialMessages = transport.getChannel().getProtocolStack().getTransport().getMessageStats().getNumMsgsSent();
       ReplicableCommand command = new ClusteredGetCommand("key", CACHE_NAME, 0, 0);
       CompletableFuture<Map<Address, Response>> future = transport
@@ -63,7 +65,7 @@ public class JGroupsTransportTest extends MultipleCacheManagersTest {
       Address randomAddress = JGroupsAddressCache.fromJGroupsAddress(randomUuid);
 
       // Send message only to non-member
-      JGroupsTransport transport = (JGroupsTransport) manager(0).getTransport();
+      JGroupsTransport transport = (JGroupsTransport) extractGlobalComponent(manager(0), Transport.class);
       ReplicableCommand command = new ClusteredGetCommand("key", CACHE_NAME, 0, 0);
       CompletionStage<Map<Address, Response>> future =
          transport.invokeCommandStaggered(Collections.singletonList(randomAddress), command,
@@ -100,7 +102,7 @@ public class JGroupsTransportTest extends MultipleCacheManagersTest {
 
    private CompletableFuture<Void> blockRemoteGets() {
       CompletableFuture<Void> blocker = new CompletableFuture<>();
-      InboundInvocationHandler oldInvocationHandler = TestingUtil.extractGlobalComponent(manager(1),
+      InboundInvocationHandler oldInvocationHandler = extractGlobalComponent(manager(1),
                                                                                          InboundInvocationHandler
                                                                                             .class);
       InboundInvocationHandler blockingInvocationHandler = new InboundInvocationHandler() {

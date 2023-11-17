@@ -49,8 +49,8 @@ public abstract class BaseServerManagement implements ServerManagement {
 
       Json clusterMembers = Json.array();
       boolean showClusterMembers = true;
-      if (cacheManager.getTransport() != null) {
-         for (Address address : cacheManager.getTransport().getMembers()) {
+      if (cacheManager.getAddress() != null) {
+         for (Address address : cacheManager.getMembers()) {
             PersistentUUID uuid = uuidManager.getPersistentUuid(address);
             if (uuid == null) {
                showClusterMembers = false;
