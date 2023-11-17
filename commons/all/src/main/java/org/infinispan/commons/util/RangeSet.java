@@ -16,10 +16,8 @@ import java.util.stream.IntStream;
  *
  * @author Dan Berindei
  * @since 9.0
- * @deprecated since 9.3 This class will no longer be public. Please use {@link IntSets#immutableRangeSet(int)} instead.
  */
-@Deprecated
-public class RangeSet implements IntSet {
+class RangeSet implements IntSet {
    final int size;
 
    public RangeSet(int size) {

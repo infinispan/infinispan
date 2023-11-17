@@ -28,7 +28,6 @@ import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
-import org.infinispan.commons.util.SmallIntSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -184,7 +183,7 @@ public class StateProviderTest {
 
       CompletionStage<List<TransactionInfo>> transactionsStage2 =
          stateProvider.getTransactionsForSegments(members1.get(0), 1,
-                                                  SmallIntSet.of(2, StateProviderTest.NUM_SEGMENTS));
+                                                  IntSets.mutableSet(2, StateProviderTest.NUM_SEGMENTS));
       Exceptions.expectExecutionException(IllegalArgumentException.class, transactionsStage2.toCompletableFuture());
 
       verifyNoMoreInteractions(stateTransferLock);
@@ -288,7 +287,7 @@ public class StateProviderTest {
 
       CompletionStage<List<TransactionInfo>> transactionsStage2 =
          stateProvider.getTransactionsForSegments(members1.get(0), 1,
-                                                  SmallIntSet.of(2, StateProviderTest.NUM_SEGMENTS));
+                                                  IntSets.mutableSet(2, StateProviderTest.NUM_SEGMENTS));
       Exceptions.expectExecutionException(IllegalArgumentException.class, transactionsStage2.toCompletableFuture());
 
       verifyNoMoreInteractions(stateTransferLock);

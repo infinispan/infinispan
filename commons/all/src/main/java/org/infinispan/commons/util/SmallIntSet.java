@@ -19,33 +19,29 @@ import java.util.stream.IntStream;
 
 /**
  * Represent a set of integers (e.g. segments) as a {@code BitSet}.
- *
  * Memory usage depends on the highest element, as in {@link BitSet} and unlike in other collections such as
  * {@link java.util.HashSet}.
  *
  * @author Dan Berindei
  * @since 9.0
- * @deprecated since 9.3 This class will no longer be public. Please use {@link IntSets} methods such as
- * {@link IntSets#mutableEmptySet()}, {@link IntSets#mutableCopyFrom(Set)}
  */
-@Deprecated
-public class SmallIntSet implements IntSet {
+class SmallIntSet implements IntSet {
    private final BitSet bitSet;
 
-   public static SmallIntSet of(int i1) {
+   static SmallIntSet of(int i1) {
       SmallIntSet set = new SmallIntSet(i1 + 1);
       set.set(i1);
       return set;
    }
 
-   public static SmallIntSet of(int i1, int i2) {
+   static SmallIntSet of(int i1, int i2) {
       SmallIntSet set = new SmallIntSet(Math.max(i1, i2) + 1);
       set.set(i1);
       set.set(i2);
       return set;
    }
 
-   public static SmallIntSet of(int i1, int i2, int i3) {
+   static SmallIntSet of(int i1, int i2, int i3) {
       SmallIntSet set = new SmallIntSet();
       set.set(i1);
       set.set(i2);
@@ -53,7 +49,7 @@ public class SmallIntSet implements IntSet {
       return set;
    }
 
-   public static SmallIntSet of(int... elements) {
+   static SmallIntSet of(int... elements) {
       SmallIntSet set = new SmallIntSet(elements.length);
       for (int i : elements) {
          set.set(i);
@@ -61,13 +57,13 @@ public class SmallIntSet implements IntSet {
       return set;
    }
 
-   public static SmallIntSet of(PrimitiveIterator.OfInt iterator) {
+   static SmallIntSet of(PrimitiveIterator.OfInt iterator) {
       SmallIntSet set = new SmallIntSet();
       iterator.forEachRemaining((IntConsumer) set::set);
       return set;
    }
 
-   public static SmallIntSet from(byte[] bytes) {
+   static SmallIntSet from(byte[] bytes) {
       BitSet bitSet = BitSet.valueOf(bytes);
       return new SmallIntSet(bitSet);
    }
@@ -77,7 +73,7 @@ public class SmallIntSet implements IntSet {
     * @param set
     * @return
     */
-   public static SmallIntSet from(Set<Integer> set) {
+   static SmallIntSet from(Set<Integer> set) {
       if (set instanceof SmallIntSet) {
          return (SmallIntSet) set;
       } else {
@@ -85,18 +81,18 @@ public class SmallIntSet implements IntSet {
       }
    }
 
-   public SmallIntSet() {
+   SmallIntSet() {
       this(new BitSet());
    }
 
    /**
     * Create a new {@code IntSet} and pre-allocate space for elements {@code 0..initialRange-1}.
     */
-   public SmallIntSet(int initialRange) {
+   SmallIntSet(int initialRange) {
       this(new BitSet(initialRange));
    }
 
-   public SmallIntSet(Set<Integer> set) {
+   SmallIntSet(Set<Integer> set) {
       if (set instanceof SmallIntSet) {
          BitSet bitSet = ((SmallIntSet) set).bitSet;
          this.bitSet = new BitSet(bitSet.size());
@@ -119,7 +115,7 @@ public class SmallIntSet implements IntSet {
       return bitSet.cardinality();
    }
 
-   public int capacity() {
+   int capacity() {
       return bitSet.size();
    }
 
@@ -133,7 +129,7 @@ public class SmallIntSet implements IntSet {
       return (o instanceof Integer) && contains((Integer) o);
    }
 
-   public boolean contains(Integer o) {
+   boolean contains(Integer o) {
       return bitSet.get(o);
    }
 

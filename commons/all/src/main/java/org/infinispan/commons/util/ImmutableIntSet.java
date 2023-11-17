@@ -12,24 +12,17 @@ import java.util.stream.IntStream;
  *
  * @author Dan Berindei
  * @since 9.2
- * @deprecated since 9.3 This class will no longer be public, please use {@link IntSets#immutableSet(IntSet)}
  */
-@Deprecated
-public class ImmutableIntSet extends AbstractImmutableIntSet {
+class ImmutableIntSet extends AbstractImmutableIntSet {
    private final IntSet set;
 
-   public ImmutableIntSet(IntSet set) {
+   ImmutableIntSet(IntSet set) {
       this.set = set;
    }
 
    @Override
    public boolean contains(int i) {
       return set.contains(i);
-   }
-
-   @Override
-   public boolean addAll(IntSet set) {
-      throw new UnsupportedOperationException();
    }
 
    @Override
@@ -108,7 +101,7 @@ public class ImmutableIntSet extends AbstractImmutableIntSet {
    }
 
    private static class ImmutableIterator implements PrimitiveIterator.OfInt {
-      private OfInt iterator;
+      private final OfInt iterator;
 
       ImmutableIterator(OfInt iterator) {
          this.iterator = iterator;
