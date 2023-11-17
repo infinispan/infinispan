@@ -51,31 +51,6 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfi
    }
 
    /**
-    * Sets a global limit on the number persistent connections that can be in circulation within the
-    * combined set of servers. When non-positive, there is no limit to the total number of
-    * persistent connections in circulation. When maxTotal is exceeded, all connections pools are
-    * exhausted. The default setting for this parameter is -1 (no limit).
-    *
-    * @deprecated since 10.0. This method has no effect
-    */
-   @Deprecated
-   public ConnectionPoolConfigurationBuilder maxTotal(int maxTotal) {
-      return this;
-   }
-
-   /**
-    * Controls the maximum number of idle persistent connections, per server, at any time. When
-    * negative, there is no limit to the number of connections that may be idle per server. The
-    * default setting for this parameter is -1.
-    *
-    * @deprecated since 10.0. This method has no effect
-    */
-   @Deprecated
-   public ConnectionPoolConfigurationBuilder maxIdle(int maxIdle) {
-      return this;
-   }
-
-   /**
     * The amount of time in milliseconds to wait for a connection to become available when the
     * exhausted action is {@link org.infinispan.client.hotrod.configuration.ExhaustedAction#WAIT}, after which a {@link java.util.NoSuchElementException}
     * will be thrown. If a negative value is supplied, the pool will block indefinitely.
@@ -98,18 +73,6 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfi
    }
 
    /**
-    * Indicates how long the eviction thread should sleep before "runs" of examining idle
-    * connections. When non-positive, no eviction thread will be launched. The default setting for
-    * this parameter is 2 minutes.
-    *
-    * @deprecated since 10.0. This method has no effect
-    */
-   @Deprecated
-   public ConnectionPoolConfigurationBuilder timeBetweenEvictionRuns(long timeBetweenEvictionRuns) {
-      return this;
-   }
-
-   /**
     * Specifies the minimum amount of time that an connection may sit idle in the pool before it is
     * eligible for eviction due to idle time. When non-positive, no connection will be dropped from
     * the pool due to idle time alone. This setting has no effect unless
@@ -118,19 +81,6 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfi
     */
    public ConnectionPoolConfigurationBuilder minEvictableIdleTime(long minEvictableIdleTime) {
       this.attributes.attribute(MIN_EVICTABLE_IDLE_TIME).set(minEvictableIdleTime);
-      return this;
-   }
-
-   /**
-    * Indicates whether or not idle connections should be validated by sending an TCP packet to the
-    * server, during idle connection eviction runs. Connections that fail to validate will be
-    * dropped from the pool. This setting has no effect unless timeBetweenEvictionRunsMillis > 0.
-    * The default setting for this parameter is true.
-    *
-    * @deprecated since 10.0. This method has no effect
-    */
-   @Deprecated
-   public ConnectionPoolConfigurationBuilder testWhileIdle(boolean testWhileIdle) {
       return this;
    }
 

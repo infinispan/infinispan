@@ -1,11 +1,9 @@
 package org.infinispan.persistence.remote.configuration;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationChildBuilder;
-import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * AbstractRemoteStoreConfigurationChildBuilder.
@@ -112,16 +110,6 @@ public abstract class AbstractRemoteStoreConfigurationChildBuilder<S> extends Ab
       return builder.tcpNoDelay(tcpNoDelay);
    }
 
-   @Override
-   public RemoteStoreConfigurationBuilder transportFactory(String transportFactory) {
-      return builder.transportFactory(transportFactory);
-   }
-
-   @Override
-   public RemoteStoreConfigurationBuilder transportFactory(Class<? extends ChannelFactory> transportFactory) {
-      return builder.transportFactory(transportFactory);
-   }
-
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
@@ -129,10 +117,6 @@ public abstract class AbstractRemoteStoreConfigurationChildBuilder<S> extends Ab
    @Override
    public RemoteStoreConfigurationBuilder valueSizeEstimate(int valueSizeEstimate) {
       return builder.valueSizeEstimate(valueSizeEstimate);
-   }
-
-   @Override
-   public void validate(GlobalConfiguration globalConfig) {
    }
 
    public RemoteStoreConfigurationBuilder getRemoteStoreBuilder() {

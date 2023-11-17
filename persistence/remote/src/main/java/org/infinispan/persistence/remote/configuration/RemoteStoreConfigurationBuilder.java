@@ -24,7 +24,6 @@ import java.util.Properties;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.TypedProperties;
@@ -161,17 +160,6 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
    @Override
    public RemoteStoreConfigurationBuilder tcpNoDelay(boolean tcpNoDelay) {
       attributes.attribute(TCP_NO_DELAY).set(tcpNoDelay);
-      return this;
-   }
-
-   @Override
-   public RemoteStoreConfigurationBuilder transportFactory(String transportFactory) {
-      return this;
-   }
-
-   @Override
-   public RemoteStoreConfigurationBuilder transportFactory(Class<? extends ChannelFactory> transportFactory) {
-      transportFactory(transportFactory.getName());
       return this;
    }
 

@@ -37,14 +37,6 @@ public class ConnectionPoolConfiguration extends ConfigurationElement<Connection
       return attributes.attribute(MAX_WAIT).get();
    }
 
-   /*
-    * deprecated since 10.0. Always returns -1
-    */
-   @Deprecated
-   public int maxIdle() {
-      return -1;
-   }
-
    public int minIdle() {
       return attributes.attribute(MIN_IDLE).get();
    }
