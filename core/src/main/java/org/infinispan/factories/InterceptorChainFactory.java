@@ -374,15 +374,4 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          throw new CacheConfigurationException("Unable to build interceptor chain", e);
       }
    }
-
-   /**
-    * @deprecated Since 9.4, not used.
-    */
-   @Deprecated
-   public static InterceptorChainFactory getInstance(ComponentRegistry componentRegistry, Configuration configuration) {
-      InterceptorChainFactory icf = new InterceptorChainFactory();
-      icf.componentRegistry = componentRegistry;
-      icf.configuration = configuration;
-      return icf;
-   }
 }
