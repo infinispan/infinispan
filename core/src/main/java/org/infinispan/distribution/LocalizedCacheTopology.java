@@ -180,15 +180,6 @@ public class LocalizedCacheTopology extends CacheTopology {
       return keyPartitioner.getSegment(key);
    }
 
-   /**
-    * @return Information about the ownership of segment {@code segment}, including the primary owner.
-    * @deprecated since 9.3 please use {@link #getSegmentDistribution(int)} instead.
-    */
-   @Deprecated
-   public DistributionInfo getDistributionForSegment(int segmentId) {
-      return getSegmentDistribution(segmentId);
-   }
-
    public DistributionInfo getSegmentDistribution(int segmentId) {
       return distributionInfos[segmentId];
    }

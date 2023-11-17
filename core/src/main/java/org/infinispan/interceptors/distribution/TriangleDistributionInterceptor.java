@@ -47,6 +47,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -67,7 +68,6 @@ import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.util.CacheTopologyUtil;
 import org.infinispan.util.TriangleFunctionsUtil;
 import org.infinispan.util.concurrent.CommandAckCollector;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -407,7 +407,7 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
          return invokeNext(context, command);
       }
       LocalizedCacheTopology topology = CacheTopologyUtil.checkTopology(command, getCacheTopology());
-      DistributionInfo distributionInfo = topology.getDistributionForSegment(command.getSegment());
+      DistributionInfo distributionInfo = topology.getSegmentDistribution(command.getSegment());
 
       if (distributionInfo.isPrimary()) {
          assert context.lookupEntry(command.getKey()) != null;
@@ -642,7 +642,7 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
 
       private void check(Object key) {
          int segment = cacheTopology.getSegment(key);
-         DistributionInfo distributionInfo = cacheTopology.getDistributionForSegment(segment);
+         DistributionInfo distributionInfo = cacheTopology.getSegmentDistribution(segment);
          final Address primaryOwner = distributionInfo.primary();
          primaries.computeIfAbsent(primaryOwner, address -> new HashSet<>(entryCount))
                .add(key);
