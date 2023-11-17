@@ -66,7 +66,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.jdkspecific.CallerId;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
-import org.infinispan.commons.marshall.StreamAwareMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.IntSet;
@@ -105,6 +104,10 @@ import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.marshall.persistence.impl.PersistenceMarshallerImpl;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.notifications.cachelistener.CacheNotifierImpl;
+import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
+import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
@@ -1975,15 +1978,6 @@ public class TestingUtil {
       dataContainer.cleanUp();
    }
 
-   // The first call to JbossMarshall::isMarshallable results in an object actually being serialized, the additional
-   // call to PersistenceMarshaller::isMarshallable in the GlobalMarshaller may break stats on test Externalizer implementations
-   // this is simply a convenience method to initialise MarshallableTypeHints
-   public static void initJbossMarshallerTypeHints(EmbeddedCacheManager cm, Object... objects) {
-      StreamAwareMarshaller marshaller = extractPersistenceMarshaller(cm);
-      for (Object o : objects)
-         marshaller.isMarshallable(o);
-   }
-
    public static void copy(InputStream is, OutputStream os) throws IOException {
       byte[] buffer = new byte[1024];
       int length;
@@ -2012,5 +2006,15 @@ public class TestingUtil {
 
    public static void defineConfiguration(EmbeddedCacheManager cacheManager, String cacheName, Configuration configuration) {
       SecurityActions.defineConfiguration(cacheManager, cacheName, configuration);
+   }
+
+   public static Set<Object> getListeners(Cache<?, ?> cache) {
+      CacheNotifierImpl<?, ?> notifier = (CacheNotifierImpl<?, ?>) extractComponent(cache, CacheNotifier.class);
+      return notifier.getListeners();
+   }
+
+   public static Set<Object> getListeners(EmbeddedCacheManager cacheManager) {
+      CacheManagerNotifierImpl notifier = (CacheManagerNotifierImpl) extractGlobalComponent(cacheManager, CacheManagerNotifier.class);
+      return notifier.getListeners();
    }
 }

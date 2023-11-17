@@ -1,5 +1,6 @@
 package org.infinispan.notifications;
 
+import static org.infinispan.test.TestingUtil.getListeners;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -39,18 +40,18 @@ public class CacheListenerRemovalTest extends AbstractInfinispanTest {
    public void testListenerRemoval() {
       cache.put("x", "y");
       AtomicInteger i = new AtomicInteger(0);
-      int listenerSize = cache.getListeners().size();
+      int listenerSize = getListeners(cache).size();
       CacheListener l = new CacheListener(i);
       cache.addListener(l);
-      assertEquals(listenerSize + 1, cache.getListeners().size());
-      assert cache.getListeners().contains(l);
+      assertEquals(listenerSize + 1, getListeners(cache).size());
+      assert getListeners(cache).contains(l);
       assert 0 == i.get();
       cache.get("x");
       assert 1 == i.get();
 
       // remove the replListener
       cache.removeListener(l);
-      assertEquals(listenerSize, cache.getListeners().size());
+      assertEquals(listenerSize, getListeners(cache).size());
       i.set(0);
       assert 0 == i.get();
       cache.get("x");

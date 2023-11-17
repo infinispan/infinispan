@@ -182,15 +182,8 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
       }
       started = false;
       EmbeddedCacheManager cacheManager = cache.getCacheManager();
-      if (cacheManager.getListeners().contains(listenerRegistration)) {
-         cacheManager.removeListener(listenerRegistration);
-      } else {
-         throw new IllegalStateException("Listener must have been registered!");
-      }
-      //most likely the listeners collection is shared between CacheManager and the Cache
-      if (cache.getListeners().contains(listenerRegistration)) {
-         cache.removeListener(listenerRegistration);
-      }
+      cacheManager.removeListener(listenerRegistration);
+      cache.removeListener(listenerRegistration);
       keyGenWorker.stop();
    }
 

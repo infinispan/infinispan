@@ -622,11 +622,6 @@ public class SecureCacheTestDriver {
       cache.getLockManager();
    }
 
-   @TestCachePermission(AuthorizationPermission.LISTEN)
-   public void testGetListeners(SecureCache<String, String> cache) {
-      cache.getListeners();
-   }
-
    @TestCachePermission(AuthorizationPermission.WRITE)
    public void testPutAllAsync_Map_long_TimeUnit_long_TimeUnit(SecureCache<String, String> cache) {
       cache.putAllAsync(Collections.singletonMap("a", "a"), 1000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);

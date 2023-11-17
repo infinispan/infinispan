@@ -2,6 +2,7 @@ package org.infinispan.server.functional.hotrod;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.server.test.core.Common.createQueryableCache;
+import static org.infinispan.test.TestingUtil.extractField;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -19,6 +20,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.event.ClientEvent;
+import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
@@ -217,18 +219,23 @@ public class HotRodCacheEvents {
    public void testSetListeners(ProtocolVersion protocolVersion) {
       final RemoteCache<Integer, String> rcache = remoteCache(protocolVersion);
       new EventLogListener<>(rcache).accept((l1, remote1) -> {
-         Set<?> listeners1 = remote1.getListeners();
+         Set<?> listeners1 = getListeners(remote1);
          assertEquals(1, listeners1.size());
          assertEquals(l1, listeners1.iterator().next());
          new EventLogListener<>(rcache).accept((l2, remote2) -> {
-            Set<?> listeners2 = remote2.getListeners();
+            Set<?> listeners2 = getListeners(remote2);
             assertEquals(2, listeners2.size());
             assertTrue(listeners2.contains(l1));
             assertTrue(listeners2.contains(l2));
          });
       });
-      Set<Object> listeners = rcache.getListeners();
+      Set<Object> listeners = getListeners(rcache);
       assertEquals(0, listeners.size());
+   }
+
+   public static Set<Object> getListeners(RemoteCache<?, ?> cache) {
+      ClientListenerNotifier notifier = extractField(cache.getRemoteCacheContainer(), "listenerNotifier");
+      return notifier.getListeners(cache.getName());
    }
 
    @ParameterizedTest

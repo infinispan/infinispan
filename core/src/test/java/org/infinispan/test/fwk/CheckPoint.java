@@ -14,8 +14,8 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.infinispan.test.TestingUtil;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -60,10 +60,6 @@ public class CheckPoint {
             CompletableFutures.rethrowExceptionIfPresent(e);
          }
       }, executor);
-   }
-
-   private boolean await(String event, long timeout, TimeUnit unit) throws InterruptedException {
-      return await(event, 1, timeout, unit);
    }
 
    public void awaitStrict(String event, int count, long timeout, TimeUnit unit)
@@ -149,11 +145,7 @@ public class CheckPoint {
       log.tracef("%sWaiting for event %s * %d", id, event, count);
       lock.lock();
       try {
-         EventStatus status = events.get(event);
-         if (status == null) {
-            status = new EventStatus();
-            events.put(event, status);
-         }
+         EventStatus status = events.computeIfAbsent(event, k -> new EventStatus());
          if (status.available >= count) {
             status.available -= count;
             return CompletableFutures.completedNull();

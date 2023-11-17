@@ -25,9 +25,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import javax.security.auth.Subject;
-import jakarta.transaction.SystemException;
-import jakarta.transaction.Transaction;
-import jakarta.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.AdvancedCache;
@@ -128,6 +125,10 @@ import org.infinispan.transaction.xa.XaTransactionTable;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -950,12 +951,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public CompletionStage<Void> removeListenerAsync(Object listener) {
       return notifier.removeListenerAsync(listener);
-   }
-
-   @Deprecated
-   @Override
-   public Set<Object> getListeners() {
-      return notifier.getListeners();
    }
 
    @Override

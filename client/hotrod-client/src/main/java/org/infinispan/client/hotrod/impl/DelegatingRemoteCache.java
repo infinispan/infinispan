@@ -115,11 +115,6 @@ public abstract class DelegatingRemoteCache<K, V> extends RemoteCacheSupport<K, 
    }
 
    @Override
-   public Set<Object> getListeners() {
-      return delegate.getListeners();
-   }
-
-   @Override
    public <T> T execute(String taskName, Map<String, ?> params) {
       return delegate.execute(taskName, params);
    }

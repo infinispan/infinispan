@@ -5,7 +5,6 @@ import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.ClientListener;
-import org.infinispan.client.hotrod.event.impl.ClientEventDispatcher;
 import org.infinispan.client.hotrod.filter.Filters;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.query.dsl.Query;
@@ -14,15 +13,6 @@ public class ClientEvents {
 
    private ClientEvents() {
       // Static helper class, cannot be constructed
-   }
-
-   /**
-    * @deprecated since 10.1.2. Will be removed in 11 without replacement.
-    */
-   @Deprecated
-   public static ClientCacheFailoverEvent mkCachefailoverEvent() {
-      //todo make ClientEventDispatcher.FAILOVER_EVENT_SINGLETON private after removing this deprecated method in 11
-      return ClientEventDispatcher.FAILOVER_EVENT_SINGLETON;
    }
 
    /**

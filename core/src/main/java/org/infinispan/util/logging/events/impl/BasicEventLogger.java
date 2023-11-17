@@ -4,7 +4,6 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.time.TimeService;
@@ -75,10 +74,5 @@ public class BasicEventLogger implements EventLogger {
    @Override
    public CompletionStage<Void> removeListenerAsync(Object listener) {
       return notifier.removeListenerAsync(listener);
-   }
-
-   @Override
-   public Set<Object> getListeners() {
-      return notifier.getListeners();
    }
 }

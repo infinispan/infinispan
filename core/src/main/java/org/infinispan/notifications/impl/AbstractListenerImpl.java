@@ -5,7 +5,6 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -16,7 +15,6 @@ import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
 import javax.security.auth.Subject;
-import jakarta.transaction.Transaction;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.ReflectionUtil;
@@ -38,6 +36,8 @@ import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
+
+import jakarta.transaction.Transaction;
 
 /**
  * Functionality common to both {@link org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl} and
@@ -141,6 +141,10 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
       return annotations != null && !annotations.isEmpty();
    }
 
+   public boolean hasListeners() {
+      return !listenersMap.isEmpty();
+   }
+
    protected List<L> getListenerCollectionForAnnotation(Class<? extends Annotation> annotation) {
       List<L> list = listenersMap.get(annotation);
       if (list == null) throw new CacheException("Unknown listener annotation: " + annotation);
@@ -186,11 +190,11 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
    }
 
    public Set<Object> getListeners() {
-      Set<Object> result = new HashSet<Object>(listenersMap.size());
+      Set<Object> result = new HashSet<>(listenersMap.size());
       for (List<L> list : listenersMap.values()) {
-         for (ListenerInvocation li : list) result.add(li.getTarget());
+         for (ListenerInvocation<?> li : list) result.add(li.getTarget());
       }
-      return Collections.unmodifiableSet(result);
+      return Set.copyOf(result);
    }
 
    /**

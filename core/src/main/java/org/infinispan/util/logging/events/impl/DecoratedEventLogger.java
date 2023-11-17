@@ -5,7 +5,6 @@ import static org.infinispan.util.logging.events.Messages.MESSAGES;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.remoting.transport.Address;
@@ -91,10 +90,5 @@ public class DecoratedEventLogger implements EventLogger {
    @Override
    public CompletionStage<Void> removeListenerAsync(Object listener) {
       return delegate.removeListenerAsync(listener);
-   }
-
-   @Override
-   public Set<Object> getListeners() {
-      return delegate.getListeners();
    }
 }

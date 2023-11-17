@@ -1,5 +1,6 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
+import static org.infinispan.test.TestingUtil.getListeners;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
@@ -33,6 +34,12 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional")
 public abstract class AbstractClusterListenerDistAddListenerTest extends AbstractClusterListenerUtilTest {
+
+   public static final String PRE_CLUSTER_LISTENERS_RELEASE = "pre_cluster_listeners_release_";
+   public static final String POST_CLUSTER_LISTENERS_INVOKED = "post_cluster_listeners_invoked_";
+   public static final String POST_CLUSTER_LISTENERS_RELEASE = "post_cluster_listeners_release_";
+   public static final String PRE_CLUSTER_LISTENERS_INVOKED = "pre_cluster_listeners_invoked_";
+
    protected AbstractClusterListenerDistAddListenerTest(boolean tx) {
       super(tx, CacheMode.DIST_SYNC);
    }
@@ -66,13 +73,13 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
    @Test
    public void testMemberJoinsWhileClusterListenerInstalled() throws TimeoutException, InterruptedException,
                                                                      ExecutionException {
-      Cache<Object, String> cache0 = cache(0, CACHE_NAME);
+      final Cache<Object, String> cache0 = cache(0, CACHE_NAME);
       final Cache<Object, String> cache1 = cache(1, CACHE_NAME);
 
       CheckPoint checkPoint = new CheckPoint();
       waitUntilListenerInstalled(cache0, checkPoint);
       // We don't want this blocking
-      checkPoint.triggerForever("post_add_listener_release_" + cache0);
+      checkPoint.triggerForever(POST_ADD_LISTENER_RELEASE + cache0);
 
       final ClusterListener clusterListener = new ClusterListener();
       Future<Void> future = fork(() -> {
@@ -81,17 +88,17 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
       });
 
       // Now wait until the listener is about to be installed on cache1
-      checkPoint.awaitStrict("pre_add_listener_invoked_" + cache0, 10, TimeUnit.SECONDS);
+      checkPoint.awaitStrict(PRE_ADD_LISTENER_INVOKED + cache0, 10, TimeUnit.SECONDS);
 
       addClusteredCacheManager();
 
       // Now wait for cache3 to come up fully
       waitForClusterToForm(CACHE_NAME);
 
-      Cache<Object, String> cache3 = cache(3, CACHE_NAME);
+      final Cache<Object, String> cache3 = cache(3, CACHE_NAME);
 
       // Finally let the listener be added
-      checkPoint.triggerForever("pre_add_listener_release_" + cache0);
+      checkPoint.triggerForever(PRE_ADD_LISTENER_RELEASE + cache0);
       future.get(10, TimeUnit.SECONDS);
 
       MagicKey key = new MagicKey(cache3);
@@ -112,7 +119,7 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
       CheckPoint checkPoint = new CheckPoint();
       waitUntilListenerInstalled(cache0, checkPoint);
       // We want the listener to be able to be added
-      checkPoint.triggerForever("pre_add_listener_release_" + cache0);
+      checkPoint.triggerForever(PRE_ADD_LISTENER_RELEASE + cache0);
 
       final ClusterListener clusterListener = new ClusterListener();
       Future<Void> future = fork(() -> {
@@ -121,7 +128,7 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
       });
 
       // Now wait until the listener is about to be installed on cache1
-      checkPoint.awaitStrict("post_add_listener_invoked_" + cache0, 10, TimeUnit.SECONDS);
+      checkPoint.awaitStrict(POST_ADD_LISTENER_INVOKED + cache0, 10, TimeUnit.SECONDS);
 
       addClusteredCacheManager();
 
@@ -131,7 +138,7 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
       Cache<Object, String> cache3 = cache(3, CACHE_NAME);
 
       // Finally let the listener be added
-      checkPoint.triggerForever("post_add_listener_release_" + cache0);
+      checkPoint.triggerForever(POST_ADD_LISTENER_RELEASE + cache0);
       future.get(10, TimeUnit.SECONDS);
 
       MagicKey key = new MagicKey(cache3);
@@ -158,13 +165,13 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
 
       CheckPoint checkPoint = new CheckPoint();
       waitUntilRequestingListeners(cache0, checkPoint);
-      checkPoint.triggerForever("pre_cluster_listeners_release_" + cache0);
+      checkPoint.triggerForever(PRE_CLUSTER_LISTENERS_RELEASE + cache0);
 
       addClusteredCacheManager();
 
       Future<Cache<Object, String>> future = fork(() -> cache(3, CACHE_NAME));
 
-      checkPoint.awaitStrict("post_cluster_listeners_invoked_" + cache0, 10, TimeUnit.SECONDS);
+      checkPoint.awaitStrict(POST_CLUSTER_LISTENERS_INVOKED + cache0, 10, TimeUnit.SECONDS);
 
       log.info("Killing node 1 ..");
       // Notice we are killing the manager that doesn't have a cache with the cluster listener
@@ -172,15 +179,14 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
       cacheManagers.remove(1);
       log.info("Node 1 killed");
 
-      checkPoint.triggerForever("post_cluster_listeners_release_" + cache0);
+      checkPoint.triggerForever(POST_CLUSTER_LISTENERS_RELEASE + cache0);
 
       // Now wait for cache3 to come up fully
       TestingUtil.blockUntilViewsReceived(10000, false, cacheManagers);
       TestingUtil.waitForNoRebalance(caches(CACHE_NAME));
 
       Cache<Object, String> cache3 = future.get(10, TimeUnit.SECONDS);
-
-      for (Object listener : cache3.getAdvancedCache().getListeners()) {
+      for (Object listener : getListeners(cache3)) {
          assertFalse(listener instanceof RemoteClusterListener);
       }
    }
@@ -196,31 +202,31 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
       Cache<Object, String> cache1 = cache(1, CACHE_NAME);
       Cache<Object, String> cache2 = cache(2, CACHE_NAME);
 
-      int initialCache0ListenerSize = cache0.getAdvancedCache().getListeners().size();
-      int initialCache1ListenerSize = cache1.getAdvancedCache().getListeners().size();
-      int initialCache2ListenerSize = cache2.getAdvancedCache().getListeners().size();
+      int initialCache0ListenerSize = getListeners(cache0).size();
+      int initialCache1ListenerSize = getListeners(cache1).size();
+      int initialCache2ListenerSize = getListeners(cache2).size();
 
       ClusterListener clusterListener = new ClusterListener();
       cache2.addListener(clusterListener);
 
-      assertEquals(cache0.getAdvancedCache().getListeners().size(), initialCache0ListenerSize +
+      assertEquals(getListeners(cache0).size(), initialCache0ListenerSize +
             (cacheMode.isDistributed() ? 1 : 0));
-      assertEquals(cache1.getAdvancedCache().getListeners().size(), initialCache1ListenerSize +
+      assertEquals(getListeners(cache1).size(), initialCache1ListenerSize +
             (cacheMode.isDistributed() ? 1 : 0));
-      assertEquals(cache2.getAdvancedCache().getListeners().size(), initialCache2ListenerSize + 1);
+      assertEquals(getListeners(cache2).size(), initialCache2ListenerSize + 1);
 
       assertEquals(manager(0).getAddress(), manager(0).getMembers().get(0));
 
       CheckPoint checkPoint = new CheckPoint();
 
       waitUntilRequestingListeners(cache0, checkPoint);
-      checkPoint.triggerForever("post_cluster_listeners_release_" + cache0);
+      checkPoint.triggerForever(POST_CLUSTER_LISTENERS_RELEASE + cache0);
 
       addClusteredCacheManager();
 
       Future<Cache<Object, String>> future = fork(() -> cache(3, CACHE_NAME));
 
-      checkPoint.awaitStrict("pre_cluster_listeners_invoked_" + cache0, 10, TimeUnit.SECONDS);
+      checkPoint.awaitStrict(PRE_CLUSTER_LISTENERS_INVOKED + cache0, 10, TimeUnit.SECONDS);
 
       log.info("Killing node 0 ..");
       // Notice we are killing the manager that doesn't have a cache with the cluster listener
@@ -231,7 +237,7 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
       TestingUtil.blockUntilViewsReceived(10000, false, cacheManagers);
       TestingUtil.waitForNoRebalance(caches(CACHE_NAME));
 
-      checkPoint.triggerForever("pre_cluster_listeners_invoked_" + cache0);
+      checkPoint.triggerForever(PRE_CLUSTER_LISTENERS_INVOKED + cache0);
 
       Cache<Object, String> cache3 = future.get(10, TimeUnit.SECONDS);
 
@@ -254,16 +260,16 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
       Cache<Object, String> cache1 = cache(1, CACHE_NAME);
       Cache<Object, String> cache2 = cache(2, CACHE_NAME);
 
-      int initialCache0ListenerSize = cache0.getAdvancedCache().getListeners().size();
-      int initialCache1ListenerSize = cache1.getAdvancedCache().getListeners().size();
-      int initialCache2ListenerSize = cache2.getAdvancedCache().getListeners().size();
+      int initialCache0ListenerSize = getListeners(cache0).size();
+      int initialCache1ListenerSize = getListeners(cache1).size();
+      int initialCache2ListenerSize = getListeners(cache2).size();
 
       ClusterListener clusterListener = new ClusterListener();
       cache0.addListener(clusterListener);
 
-      assertEquals(cache0.getAdvancedCache().getListeners().size(), initialCache0ListenerSize + 1);
-      assertEquals(cache1.getAdvancedCache().getListeners().size(), initialCache1ListenerSize + 1);
-      assertEquals(cache2.getAdvancedCache().getListeners().size(), initialCache2ListenerSize + 1);
+      assertEquals(getListeners(cache0).size(), initialCache0ListenerSize + 1);
+      assertEquals(getListeners(cache1).size(), initialCache1ListenerSize + 1);
+      assertEquals(getListeners(cache2).size(), initialCache2ListenerSize + 1);
 
       // Make sure cache0 will  be the one will get the cluster listener request
       assertEquals(manager(0).getAddress(), manager(0).getMembers().get(0));
@@ -271,26 +277,26 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
       CheckPoint checkPoint = new CheckPoint();
 
       waitUntilRequestingListeners(cache0, checkPoint);
-      checkPoint.triggerForever("post_cluster_listeners_release_" + cache0);
+      checkPoint.triggerForever(POST_CLUSTER_LISTENERS_RELEASE + cache0);
       waitUntilViewChangeOccurs(manager(1), "manager1", checkPoint);
 
       // We let the first view change occur just fine on cache1 (this will be the addition of cache3).
       // What we want to block is the second one which is the removal of cache0
-      checkPoint.trigger("pre_view_listener_release_" + "manager1");
+      checkPoint.trigger(PRE_VIEW_LISTENER_RELEASE + "manager1");
 
       addClusteredCacheManager();
 
       waitUntilViewChangeOccurs(manager(3), "manager3", checkPoint);
       // We don't want to block the view listener change on cache3
-      checkPoint.trigger("pre_view_listener_release_" + "manager3");
+      checkPoint.trigger(PRE_VIEW_LISTENER_RELEASE + "manager3");
 
       Future<Cache<Object, String>> future = fork(() -> cache(3, CACHE_NAME));
 
       // Wait for view change to occur on cache1 for the addition of cache3
       // Note we haven't triggered the view change for cache1 for the following removal yet
-      checkPoint.awaitStrict("post_view_listener_invoked_" + "manager1", 10, TimeUnit.SECONDS);
+      checkPoint.awaitStrict(POST_VIEW_LISTENER_INVOKED + "manager1", 10, TimeUnit.SECONDS);
       // Wait for the cluster listener request to come into cache0 which is from cache3
-      checkPoint.awaitStrict("pre_cluster_listeners_invoked_" + cache0, 10, TimeUnit.SECONDS);
+      checkPoint.awaitStrict(PRE_CLUSTER_LISTENERS_INVOKED + cache0, 10, TimeUnit.SECONDS);
 
       // Now we kill cache0 while it is processing the request from cache3, which will in turn force it to ask cache1
       log.info("Killing node 0 ..");
@@ -303,7 +309,7 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
       Cache<Object, String> cache3 = future.get(10, TimeUnit.SECONDS);
 
       // Now we can finally let the view change complete on cache1
-      checkPoint.triggerForever("pre_view_listener_release_" + "manager1");
+      checkPoint.triggerForever(PRE_VIEW_LISTENER_RELEASE + "manager1");
 
       // Now wait for cache3 to come up fully
       TestingUtil.blockUntilViewsReceived(60000, false, cache1, cache2);
@@ -312,12 +318,12 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
       MagicKey key = new MagicKey(cache3);
       cache3.put(key, FIRST_VALUE);
 
-      assertEquals(cache1.getAdvancedCache().getListeners().size(), initialCache1ListenerSize);
-      assertEquals(cache2.getAdvancedCache().getListeners().size(), initialCache2ListenerSize);
+      assertEquals(getListeners(cache1).size(), initialCache1ListenerSize);
+      assertEquals(getListeners(cache2).size(), initialCache2ListenerSize);
 
       // Since we can't get a reliable start count, make sure no RemoteClusterListener is present which is added for
       // a cluster listener
-      for (Object listener : cache3.getAdvancedCache().getListeners()) {
+      for (Object listener : getListeners(cache3)) {
          assertFalse(listener instanceof RemoteClusterListener);
       }
    }
@@ -328,17 +334,17 @@ public abstract class AbstractClusterListenerDistAddListenerTest extends Abstrac
       StateProvider mockProvider = mock(StateProvider.class, withSettings().defaultAnswer(forwardedAnswer));
       doAnswer(invocation -> {
          // Wait for main thread to sync up
-         checkPoint.trigger("pre_cluster_listeners_invoked_" + cache);
+         checkPoint.trigger(PRE_CLUSTER_LISTENERS_INVOKED + cache);
          // Now wait until main thread lets us through
-         checkPoint.awaitStrict("pre_cluster_listeners_release_" + cache, 10, TimeUnit.SECONDS);
+         checkPoint.awaitStrict(PRE_CLUSTER_LISTENERS_RELEASE + cache, 10, TimeUnit.SECONDS);
 
          try {
             return forwardedAnswer.answer(invocation);
          } finally {
             // Wait for main thread to sync up
-            checkPoint.trigger("post_cluster_listeners_invoked_" + cache);
+            checkPoint.trigger(POST_CLUSTER_LISTENERS_INVOKED + cache);
             // Now wait until main thread lets us through
-            checkPoint.awaitStrict("post_cluster_listeners_release_" + cache, 10, TimeUnit.SECONDS);
+            checkPoint.awaitStrict(POST_CLUSTER_LISTENERS_RELEASE + cache, 10, TimeUnit.SECONDS);
          }
       }).when(mockProvider).getClusterListenersToInstall();
       TestingUtil.replaceComponent(cache, StateProvider.class, mockProvider, true);

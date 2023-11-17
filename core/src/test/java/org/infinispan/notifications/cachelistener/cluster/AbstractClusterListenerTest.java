@@ -1,5 +1,6 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
+import static org.infinispan.test.TestingUtil.getListeners;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
@@ -211,8 +212,8 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       ClusterListener clusterListener = listener();
       cache0.addListener(clusterListener);
 
-      int cache1ListenerSize = cache1.getAdvancedCache().getListeners().size();
-      int cache2ListenerSize = cache2.getAdvancedCache().getListeners().size();
+      int cache1ListenerSize = getListeners(cache1).size();
+      int cache2ListenerSize = getListeners(cache2).size();
 
       log.info("Killing node 0 ..");
       TestingUtil.killCacheManagers(manager(0));
@@ -222,9 +223,9 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       TestingUtil.blockUntilViewsReceived(60000, false, cache1, cache2);
       TestingUtil.waitForNoRebalance(cache1, cache2);
 
-      assertEquals(cache1.getAdvancedCache().getListeners().size(), cache1ListenerSize -
+      assertEquals(getListeners(cache1).size(), cache1ListenerSize -
             (cacheMode.isDistributed() ? 1 : 0));
-      assertEquals(cache2.getAdvancedCache().getListeners().size(), cache2ListenerSize -
+      assertEquals(getListeners(cache2).size(), cache2ListenerSize -
               (cacheMode.isDistributed() ? 1 : 0));
    }
 
@@ -271,25 +272,25 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       Cache<Object, String> cache1 = cache(1, CACHE_NAME);
       Cache<Object, String> cache2 = cache(2, CACHE_NAME);
 
-      int initialCache0ListenerSize = cache0.getAdvancedCache().getListeners().size();
-      int initialCache1ListenerSize = cache1.getAdvancedCache().getListeners().size();
-      int initialCache2ListenerSize = cache2.getAdvancedCache().getListeners().size();
+      int initialCache0ListenerSize = getListeners(cache0).size();
+      int initialCache1ListenerSize = getListeners(cache1).size();
+      int initialCache2ListenerSize = getListeners(cache2).size();
 
       ClusterListener clusterListener = listener();
       cache0.addListener(clusterListener);
 
       // Adding a cluster listener should add to each node in cluster
-      assertEquals(cache0.getAdvancedCache().getListeners().size(), initialCache0ListenerSize + 1);
-      assertEquals(cache1.getAdvancedCache().getListeners().size(), initialCache1ListenerSize +
+      assertEquals(getListeners(cache0).size(), initialCache0ListenerSize + 1);
+      assertEquals(getListeners(cache1).size(), initialCache1ListenerSize +
               (cacheMode.isDistributed() ? 1 : 0));
-      assertEquals(cache2.getAdvancedCache().getListeners().size(), initialCache2ListenerSize +
+      assertEquals(getListeners(cache2).size(), initialCache2ListenerSize +
               (cacheMode.isDistributed() ? 1 : 0));
 
       cache0.removeListener(clusterListener);
 
-      assertEquals(cache0.getAdvancedCache().getListeners().size(), initialCache0ListenerSize);
-      assertEquals(cache1.getAdvancedCache().getListeners().size(), initialCache1ListenerSize);
-      assertEquals(cache2.getAdvancedCache().getListeners().size(), initialCache2ListenerSize);
+      assertEquals(getListeners(cache0).size(), initialCache0ListenerSize);
+      assertEquals(getListeners(cache1).size(), initialCache1ListenerSize);
+      assertEquals(getListeners(cache2).size(), initialCache2ListenerSize);
    }
 
    @Test
@@ -298,28 +299,28 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       Cache<Object, String> cache1 = cache(1, CACHE_NAME);
       Cache<Object, String> cache2 = cache(2, CACHE_NAME);
 
-      int initialCache0ListenerSize = cache0.getAdvancedCache().getListeners().size();
-      int initialCache1ListenerSize = cache1.getAdvancedCache().getListeners().size();
-      int initialCache2ListenerSize = cache2.getAdvancedCache().getListeners().size();
+      int initialCache0ListenerSize = getListeners(cache0).size();
+      int initialCache1ListenerSize = getListeners(cache1).size();
+      int initialCache2ListenerSize = getListeners(cache2).size();
 
       ClusterListener clusterListener = listener();
       cache0.addListener(clusterListener);
 
       // Adding a cluster listener should add to each node in cluster
-      assertEquals(cache0.getAdvancedCache().getListeners().size(), initialCache0ListenerSize + 1);
-      assertEquals(cache1.getAdvancedCache().getListeners().size(), initialCache1ListenerSize +
+      assertEquals(getListeners(cache0).size(), initialCache0ListenerSize + 1);
+      assertEquals(getListeners(cache1).size(), initialCache1ListenerSize +
             (cacheMode.isDistributed() ? 1 : 0));
-      assertEquals(cache2.getAdvancedCache().getListeners().size(), initialCache2ListenerSize +
+      assertEquals(getListeners(cache2).size(), initialCache2ListenerSize +
             (cacheMode.isDistributed() ? 1 : 0));
 
       ClusterListener clusterListener2 = listener();
       cache0.addListener(clusterListener2);
 
       // Adding a second cluster listener should add to each node in cluster as well
-      assertEquals(cache0.getAdvancedCache().getListeners().size(), initialCache0ListenerSize + 2);
-      assertEquals(cache1.getAdvancedCache().getListeners().size(), initialCache1ListenerSize +
+      assertEquals(getListeners(cache0).size(), initialCache0ListenerSize + 2);
+      assertEquals(getListeners(cache1).size(), initialCache1ListenerSize +
             (cacheMode.isDistributed() ? 2 : 0));
-      assertEquals(cache2.getAdvancedCache().getListeners().size(), initialCache2ListenerSize +
+      assertEquals(getListeners(cache2).size(), initialCache2ListenerSize +
             (cacheMode.isDistributed() ? 2 : 0));
 
       MagicKey key = new MagicKey(cache2, cache1);
@@ -334,10 +335,10 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
 
       cache0.removeListener(clusterListener);
 
-      assertEquals(cache0.getAdvancedCache().getListeners().size(), initialCache0ListenerSize + 1);
-      assertEquals(cache1.getAdvancedCache().getListeners().size(), initialCache1ListenerSize +
+      assertEquals(getListeners(cache0).size(), initialCache0ListenerSize + 1);
+      assertEquals(getListeners(cache1).size(), initialCache1ListenerSize +
             (cacheMode.isDistributed() ? 1 : 0));
-      assertEquals(cache2.getAdvancedCache().getListeners().size(), initialCache2ListenerSize +
+      assertEquals(getListeners(cache2).size(), initialCache2ListenerSize +
             (cacheMode.isDistributed() ? 1 : 0));
 
       // Change the value again to make sure other listener is still working properly
@@ -349,7 +350,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
 
       assertEquals(Event.Type.CACHE_ENTRY_MODIFIED, event.getType());
       assertEquals(key, event.getKey());
-      assertEquals(SECOND_VALUE, ((CacheEntryModifiedEvent)event).getValue());
+      assertEquals(SECOND_VALUE, ((CacheEntryModifiedEvent<?, ?>)event).getValue());
    }
 
    @Test

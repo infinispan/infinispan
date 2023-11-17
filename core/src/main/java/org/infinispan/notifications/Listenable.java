@@ -1,6 +1,5 @@
 package org.infinispan.notifications;
 
-import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.IllegalLifecycleStateException;
@@ -50,12 +49,4 @@ public interface Listenable {
     * @return CompletionStage that when complete the listener is fully removed
     */
    CompletionStage<Void> removeListenerAsync(Object listener);
-
-   /**
-    * @return a set of all listeners registered on this component.
-    *
-    * @deprecated Since 10.0, with no replacement
-    */
-   @Deprecated
-   Set<Object> getListeners();
 }
