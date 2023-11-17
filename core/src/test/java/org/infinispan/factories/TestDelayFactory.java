@@ -20,22 +20,24 @@ import org.infinispan.factories.scopes.Scopes;
 @Scope(Scopes.GLOBAL)
 @DefaultFactoryFor(classes = TestDelayFactory.Component.class)
 public class TestDelayFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
-   private boolean injectionDone = false;
-   private Control control;
+   private boolean injectionDone;
 
    @Inject
    public void inject(Control control) {
-      this.control = control;
       control.await();
       injectionDone = true;
    }
 
-   // Implement the old construct method for testing
-   public <T> T construct(Class<T> componentType) {
+   @Override
+   public Object construct(String componentName) {
       if (!injectionDone) {
          throw new IllegalStateException("GlobalConfiguration reference is null");
       }
-      return componentType.cast(new Component());
+      if (Component.class.getName().equals(componentName)) {
+         return new Component();
+      } else {
+         return null;
+      }
    }
 
    @Scope(Scopes.GLOBAL)

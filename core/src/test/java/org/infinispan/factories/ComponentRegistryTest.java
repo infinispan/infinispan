@@ -30,7 +30,6 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "unit", testName = "factories.ComponentRegistryTest")
 public class ComponentRegistryTest extends AbstractInfinispanTest {
-   private GlobalComponentRegistry gcr;
    private ComponentRegistry cr1;
    private ComponentRegistry cr2;
    private TestDelayFactory.Control control;
@@ -43,8 +42,8 @@ public class ComponentRegistryTest extends AbstractInfinispanTest {
       EmbeddedCacheManager cm = mock(EmbeddedCacheManager.class);
       AdvancedCache cache = mock(AdvancedCache.class);
 
-      gcr = new GlobalComponentRegistry(gc, cm, cachesSet, TestModuleRepository.defaultModuleRepository(),
-                                        mock(ConfigurationManager.class));
+      GlobalComponentRegistry gcr = new GlobalComponentRegistry(gc, cm, cachesSet, TestModuleRepository.defaultModuleRepository(),
+            mock(ConfigurationManager.class));
       cr1 = new ComponentRegistry("cache", c, cache, gcr, ComponentRegistryTest.class.getClassLoader());
       cr2 = new ComponentRegistry("cache", c, cache, gcr, ComponentRegistryTest.class.getClassLoader());
 
