@@ -66,12 +66,6 @@ public class IntermediateIntCacheStream implements IntCacheStream {
    }
 
    @Override
-   public IntCacheStream filterKeySegments(Set<Integer> segments) {
-      remoteStream = remoteStream.filterKeySegments(segments);
-      return this;
-   }
-
-   @Override
    public IntCacheStream filterKeySegments(IntSet segments) {
       remoteStream = remoteStream.filterKeySegments(segments);
       return this;

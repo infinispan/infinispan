@@ -17,6 +17,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.StressTest;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -135,7 +136,7 @@ public class DistributedStreamRehashStressTest extends StressTest {
                  .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
          Iterator<Map.Entry<Integer, Integer>> iterator = cache.entrySet().stream()
                  .distributedBatchSize(50000)
-                 .filterKeySegments(targetSegments)
+                 .filterKeySegments(IntSets.from(targetSegments))
                  .iterator();
          while (iterator.hasNext()) {
             Map.Entry<Integer, Integer> entry = iterator.next();

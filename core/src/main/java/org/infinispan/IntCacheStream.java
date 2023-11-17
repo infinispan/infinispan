@@ -49,12 +49,6 @@ public interface IntCacheStream extends IntStream, BaseCacheStream<Integer, IntS
 
    /**
     * {@inheritDoc}
-    * @return a stream with the segments filtered.
-    */
-   IntCacheStream filterKeySegments(Set<Integer> segments);
-
-   /**
-    * {@inheritDoc}
     * @return a stream with the keys filtered.
     */
    IntCacheStream filterKeys(Set<?> keys);

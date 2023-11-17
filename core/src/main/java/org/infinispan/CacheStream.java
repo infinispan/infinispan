@@ -101,13 +101,6 @@ public interface CacheStream<R> extends Stream<R>, BaseCacheStream<R, Stream<R>>
    /**
     * {@inheritDoc}
     * @return a stream with the segments filtered.
-    * @deprecated This is to be replaced by {@link #filterKeySegments(IntSet)}
-    */
-   CacheStream<R> filterKeySegments(Set<Integer> segments);
-
-   /**
-    * {@inheritDoc}
-    * @return a stream with the segments filtered.
     */
    CacheStream<R> filterKeySegments(IntSet segments);
 

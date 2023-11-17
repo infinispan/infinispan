@@ -24,7 +24,6 @@ import org.infinispan.CacheStream;
 import org.infinispan.DoubleCacheStream;
 import org.infinispan.LongCacheStream;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.IntSets;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.stream.CacheAware;
 import org.infinispan.stream.impl.intops.primitive.l.BoxedLongOperation;
@@ -296,11 +295,6 @@ public class LocalLongCacheStream extends AbstractLocalCacheStream<Long, LongStr
    @Override
    public LocalLongCacheStream parallelDistribution() {
       return this;
-   }
-
-   @Override
-   public LocalLongCacheStream filterKeySegments(Set<Integer> segments) {
-      return filterKeySegments(IntSets.from(segments));
    }
 
    @Override

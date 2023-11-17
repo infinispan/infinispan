@@ -86,12 +86,6 @@ class AbstractDelegatingDoubleCacheStream implements DoubleCacheStream {
    }
 
    @Override
-   public DoubleCacheStream filterKeySegments(Set<Integer> segments) {
-      delegateCacheStream = delegateCacheStream.filterKeySegments(segments);
-      return this;
-   }
-
-   @Override
    public BaseCacheStream filterKeySegments(IntSet segments) {
       delegateCacheStream = delegateCacheStream.filterKeySegments(segments);
       return this;

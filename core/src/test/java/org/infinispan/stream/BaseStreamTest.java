@@ -2296,9 +2296,8 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
             realCount.incrementAndGet();
          }
       });
-
-      assertEquals(realCount.get(), createStream(entrySet).filterKeySegments(
-            IntStream.range(0, segments).boxed().collect(Collectors.toSet())).count());
+      IntSet intSet = IntSets.from(IntStream.range(0, segments).boxed().collect(Collectors.toSet()));
+      assertEquals(realCount.get(), createStream(entrySet).filterKeySegments(intSet).count());
    }
 
    public void testKeyFilter() {

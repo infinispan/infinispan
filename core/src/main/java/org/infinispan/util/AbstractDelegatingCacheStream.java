@@ -91,12 +91,6 @@ public class AbstractDelegatingCacheStream<R> implements CacheStream<R> {
    }
 
    @Override
-   public AbstractDelegatingCacheStream<R> filterKeySegments(Set<Integer> segments) {
-      underlyingStream = underlyingStream.filterKeySegments(segments);
-      return this;
-   }
-
-   @Override
    public AbstractDelegatingCacheStream<R> filterKeySegments(IntSet segments) {
       underlyingStream = underlyingStream.filterKeySegments(segments);
       return this;

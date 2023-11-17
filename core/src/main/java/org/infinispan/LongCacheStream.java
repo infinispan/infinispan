@@ -49,12 +49,6 @@ public interface LongCacheStream extends LongStream, BaseCacheStream<Long, LongS
 
    /**
     * {@inheritDoc}
-    * @return a stream with the segments filtered.
-    */
-   LongCacheStream filterKeySegments(Set<Integer> segments);
-
-   /**
-    * {@inheritDoc}
     * @return a stream with the keys filtered.
     */
    LongCacheStream filterKeys(Set<?> keys);

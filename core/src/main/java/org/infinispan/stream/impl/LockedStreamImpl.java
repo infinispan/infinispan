@@ -126,11 +126,6 @@ public class LockedStreamImpl<K, V> implements LockedStream<K, V> {
    }
 
    @Override
-   public LockedStream<K, V> filterKeySegments(Set<Integer> segments) {
-      return newOrReuse(realStream.filterKeySegments(segments));
-   }
-
-   @Override
    public LockedStream<K, V> filterKeySegments(IntSet segments) {
       return newOrReuse(realStream.filterKeySegments(segments));
    }

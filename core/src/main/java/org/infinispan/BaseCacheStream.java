@@ -46,16 +46,6 @@ public interface BaseCacheStream<T, S extends BaseStream<T, S>> extends BaseStre
     * asked for data and what entries are read from the underlying CacheStore if present.
     * @param segments The segments to use for this stream operation.  Any segments not in this set will be ignored.
     * @return a stream with the segments filtered.
-    * @deprecated since 9.3 This is to be replaced by {@link #filterKeySegments(IntSet)}
-    */
-   BaseCacheStream filterKeySegments(Set<Integer> segments);
-
-   /**
-    * Filters which entries are returned by what segment they are present in.  This method can be substantially more
-    * efficient than using a regular {@link CacheStream#filter(Predicate)} method as this can control what nodes are
-    * asked for data and what entries are read from the underlying CacheStore if present.
-    * @param segments The segments to use for this stream operation.  Any segments not in this set will be ignored.
-    * @return a stream with the segments filtered.
     * @since 9.3
     */
    BaseCacheStream filterKeySegments(IntSet segments);
