@@ -9,6 +9,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.commands.FamilyCommand;
 import org.jgroups.stack.IpAddress;
@@ -36,7 +37,7 @@ public class CLUSTER extends FamilyCommand {
    }
 
    public static Address findPhysicalAddress(EmbeddedCacheManager ecm) {
-      Transport transport = ecm.getTransport();
+      Transport transport = SecurityActions.getGlobalComponentRegistry(ecm).getComponent(Transport.class);
       if (transport == null) {
          return null;
       }

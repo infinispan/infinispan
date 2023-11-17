@@ -20,7 +20,6 @@ import org.infinispan.health.Health;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.Listenable;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.stats.CacheContainerStats;
 
 /**
@@ -278,11 +277,6 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
     */
    @Deprecated
    void removeCache(String cacheName);
-
-   /**
-    * @deprecated Since 10.0, please use {@link #getAddress()}, {@link #getMembers()}, {@link #getCoordinator()}
-    */
-   Transport getTransport();
 
    /**
     * @deprecated Since 10.0, with no public API replacement
