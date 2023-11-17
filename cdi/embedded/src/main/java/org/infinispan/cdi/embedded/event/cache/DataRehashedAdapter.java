@@ -2,15 +2,15 @@ package org.infinispan.cdi.embedded.event.cache;
 
 import java.util.Collection;
 
-import jakarta.enterprise.event.Event;
-import jakarta.enterprise.util.TypeLiteral;
-
 import org.infinispan.Cache;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.DataRehashed;
 import org.infinispan.notifications.cachelistener.event.DataRehashedEvent;
 import org.infinispan.remoting.transport.Address;
+
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.util.TypeLiteral;
 
 /**
  * Event bridge for {@link org.infinispan.notifications.cachelistener.annotation.DataRehashed}.
@@ -56,11 +56,6 @@ public class DataRehashedAdapter<K, V> extends AbstractAdapter<DataRehashedEvent
       }
 
       @Override
-      public ConsistentHash getUnionConsistentHash() {
-         return decoratedEvent.getUnionConsistentHash();
-      }
-
-      @Override
       public int getNewTopologyId() {
          return decoratedEvent.getNewTopologyId();
       }
@@ -100,11 +95,6 @@ public class DataRehashedAdapter<K, V> extends AbstractAdapter<DataRehashedEvent
 
       @Override
       public ConsistentHash getConsistentHashAtEnd() {
-         return null;
-      }
-
-      @Override
-      public ConsistentHash getUnionConsistentHash() {
          return null;
       }
 
