@@ -21,7 +21,6 @@ import java.util.stream.DoubleStream;
 import org.infinispan.Cache;
 import org.infinispan.DoubleCacheStream;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.IntSets;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.stream.CacheAware;
 import org.infinispan.stream.impl.intops.primitive.d.BoxedDoubleOperation;
@@ -287,11 +286,6 @@ public class LocalDoubleCacheStream extends AbstractLocalCacheStream<Double, Dou
    @Override
    public LocalDoubleCacheStream parallelDistribution() {
       return this;
-   }
-
-   @Override
-   public LocalDoubleCacheStream filterKeySegments(Set<Integer> segments) {
-      return filterKeySegments(IntSets.from(segments));
    }
 
    @Override

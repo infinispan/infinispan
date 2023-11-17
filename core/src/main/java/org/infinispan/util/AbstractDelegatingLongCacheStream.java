@@ -91,12 +91,6 @@ class AbstractDelegatingLongCacheStream implements LongCacheStream {
    }
 
    @Override
-   public LongCacheStream filterKeySegments(Set<Integer> segments) {
-      delegateCacheStream = delegateCacheStream.filterKeySegments(segments);
-      return this;
-   }
-
-   @Override
    public LongCacheStream filterKeySegments(IntSet segments) {
       delegateCacheStream = delegateCacheStream.filterKeySegments(segments);
       return this;

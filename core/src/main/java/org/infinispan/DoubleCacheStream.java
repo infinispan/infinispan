@@ -49,12 +49,6 @@ public interface DoubleCacheStream extends DoubleStream, BaseCacheStream<Double,
 
    /**
     * {@inheritDoc}
-    * @return a stream with the segments filtered.
-    */
-   DoubleCacheStream filterKeySegments(Set<Integer> segments);
-
-   /**
-    * {@inheritDoc}
     * @return a stream with the keys filtered.
     */
    DoubleCacheStream filterKeys(Set<?> keys);

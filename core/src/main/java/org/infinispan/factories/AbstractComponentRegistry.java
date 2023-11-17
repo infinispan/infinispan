@@ -204,15 +204,6 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
    }
 
    /**
-    * @deprecated Since 9.4, not used
-    */
-   protected ClassLoader registerDefaultClassLoader(ClassLoader loader) {
-      ClassLoader loaderToUse = loader == null ? getClass().getClassLoader() : loader;
-      registerComponent(loaderToUse, ClassLoader.class);
-      return loaderToUse;
-   }
-
-   /**
     * Rewires components.  Used to rewire components in the CR if a cache has been stopped (moved to state TERMINATED),
     * which would (almost) empty the registry of components.  Rewiring will re-inject all dependencies so that the cache
     * can be started again.

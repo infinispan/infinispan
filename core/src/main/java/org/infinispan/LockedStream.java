@@ -151,13 +151,6 @@ public interface LockedStream<K, V> extends BaseCacheStream<CacheEntry<K, V>, Lo
 
    /**
     * {@inheritDoc}
-    * @deprecated This is to be replaced by {@link #filterKeySegments(IntSet)}
-    */
-   @Override
-   LockedStream<K, V> filterKeySegments(Set<Integer> segments);
-
-   /**
-    * {@inheritDoc}
     */
    @Override
    LockedStream<K, V> filterKeySegments(IntSet segments);

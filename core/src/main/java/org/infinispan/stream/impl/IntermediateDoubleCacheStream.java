@@ -65,12 +65,6 @@ public class IntermediateDoubleCacheStream implements DoubleCacheStream {
    }
 
    @Override
-   public DoubleCacheStream filterKeySegments(Set<Integer> segments) {
-      remoteStream = remoteStream.filterKeySegments(segments);
-      return this;
-   }
-
-   @Override
    public DoubleCacheStream filterKeySegments(IntSet segments) {
       remoteStream = remoteStream.filterKeySegments(segments);
       return this;

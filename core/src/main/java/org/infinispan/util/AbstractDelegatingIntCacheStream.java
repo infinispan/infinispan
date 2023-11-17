@@ -96,12 +96,6 @@ class AbstractDelegatingIntCacheStream implements IntCacheStream {
    }
 
    @Override
-   public IntCacheStream filterKeySegments(Set<Integer> segments) {
-      delegateCacheStream = delegateCacheStream.filterKeySegments(segments);
-      return this;
-   }
-
-   @Override
    public IntCacheStream filterKeySegments(IntSet segments) {
       delegateCacheStream = delegateCacheStream.filterKeySegments(segments);
       return this;

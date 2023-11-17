@@ -31,7 +31,6 @@ import org.infinispan.DoubleCacheStream;
 import org.infinispan.IntCacheStream;
 import org.infinispan.LongCacheStream;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.IntSets;
 import org.infinispan.reactive.publisher.PublisherReducers;
 import org.infinispan.stream.impl.intops.primitive.i.AsDoubleIntOperation;
 import org.infinispan.stream.impl.intops.primitive.i.AsLongIntOperation;
@@ -424,11 +423,6 @@ public class DistributedIntCacheStream<Original> extends AbstractCacheStream<Ori
    public IntCacheStream parallelDistribution() {
       parallelDistribution = true;
       return this;
-   }
-
-   @Override
-   public IntCacheStream filterKeySegments(Set<Integer> segments) {
-      return filterKeySegments(IntSets.from(segments));
    }
 
    @Override

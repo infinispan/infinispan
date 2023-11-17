@@ -72,12 +72,6 @@ public class IntermediateCacheStream<Original, R> implements CacheStream<R> {
    }
 
    @Override
-   public CacheStream<R> filterKeySegments(Set<Integer> segments) {
-      remoteStream = remoteStream.filterKeySegments(segments);
-      return this;
-   }
-
-   @Override
    public CacheStream<R> filterKeySegments(IntSet segments) {
       remoteStream = remoteStream.filterKeySegments(segments);
       return this;

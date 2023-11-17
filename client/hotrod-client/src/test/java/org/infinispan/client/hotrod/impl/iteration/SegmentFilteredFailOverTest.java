@@ -11,6 +11,7 @@ import java.util.stream.IntStream;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
 import org.testng.annotations.Test;
 
@@ -32,8 +33,7 @@ public class SegmentFilteredFailOverTest extends DistFailOverRemoteIteratorTest 
       int totalSegments = cache.getCacheConfiguration().clustering().hash().numSegments();
 
       Set<Integer> segments = IntStream.rangeClosed(0, totalSegments / 2).boxed().collect(Collectors.toSet());
-
-      long expectedCount = cache.keySet().stream().filterKeySegments(segments).count();
+      long expectedCount = cache.keySet().stream().filterKeySegments(IntSets.from(segments)).count();
 
       int actualCount = 0;
       try (CloseableIterator<Entry<Object, Object>> iterator = remoteCache.retrieveEntries(null, segments, 10)) {
