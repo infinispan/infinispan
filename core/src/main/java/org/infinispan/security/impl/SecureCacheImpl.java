@@ -29,7 +29,6 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.encoding.DataConversion;
-import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
@@ -307,12 +306,6 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    public V replace(K key, V value) {
       authzManager.checkPermission(subject, writePermission);
       return delegate.replace(key, value);
-   }
-
-   @Override
-   public EvictionManager getEvictionManager() {
-      authzManager.checkPermission(subject, AuthorizationPermission.ADMIN);
-      return delegate.getEvictionManager();
    }
 
    @Override

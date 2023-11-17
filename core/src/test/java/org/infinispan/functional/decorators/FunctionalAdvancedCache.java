@@ -43,7 +43,6 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.encoding.DataConversion;
-import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.FunctionalMap.ReadWriteMap;
@@ -309,11 +308,6 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    @Override
    public AsyncInterceptorChain getAsyncInterceptorChain() {
       return cache.getAsyncInterceptorChain();
-   }
-
-   @Override
-   public EvictionManager getEvictionManager() {
-      return null;  // TODO: Customise this generated block
    }
 
    @Override

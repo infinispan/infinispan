@@ -25,7 +25,6 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.encoding.DataConversion;
-import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
@@ -71,11 +70,6 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
       //We need to override the super implementation which returns to the decorated cache;
       //otherwise the current operation breaks out of the selected ClassLoader.
       return this;
-   }
-
-   @Override
-   public EvictionManager getEvictionManager() {
-      return cache.getEvictionManager();
    }
 
    @Override

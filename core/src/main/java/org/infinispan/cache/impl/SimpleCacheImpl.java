@@ -62,7 +62,6 @@ import org.infinispan.context.impl.ImmutableContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
-import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
@@ -1242,11 +1241,6 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public AsyncInterceptorChain getAsyncInterceptorChain() {
       return EmptyAsyncInterceptorChain.INSTANCE;
-   }
-
-   @Override
-   public EvictionManager getEvictionManager() {
-      return getComponentRegistry().getComponent(EvictionManager.class);
    }
 
    @Override
