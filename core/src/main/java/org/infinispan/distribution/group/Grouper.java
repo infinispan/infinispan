@@ -58,15 +58,7 @@ public interface Grouper<T> {
      * @return the group, or null if no group is defined
      */
     default Object computeGroup(T key, Object group) {
-        return computeGroup(key, String.valueOf(group));
-    }
-
-    /**
-     * @deprecated Since 9.1
-     */
-    @Deprecated
-    default String computeGroup(T key, String group) {
-        throw new UnsupportedOperationException("This operation should not be invoked.");
+        return group;
     }
 
     Class<T> getKeyType();
