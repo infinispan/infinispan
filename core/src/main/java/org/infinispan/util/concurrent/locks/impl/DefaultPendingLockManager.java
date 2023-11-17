@@ -15,6 +15,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.ComponentName;
@@ -28,7 +29,6 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.KeyValuePair;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.PendingLockListener;
 import org.infinispan.util.concurrent.locks.PendingLockManager;
@@ -86,28 +86,6 @@ public class DefaultPendingLockManager implements PendingLockManager {
       }
       return createPromise(getTransactionWithAnyLockedKey(txTopologyId, keys, globalTransaction), globalTransaction,
                            time, unit);
-   }
-
-   @Override
-   public long awaitPendingTransactionsForKey(TxInvocationContext<?> ctx, Object key,
-                                              long time, TimeUnit unit) throws InterruptedException {
-      final GlobalTransaction gtx = ctx.getGlobalTransaction();
-      PendingLockPromise pendingLockPromise = checkPendingTransactionsForKey(ctx, key, time, unit);
-      if (log.isTraceEnabled()) {
-         log.tracef("Await for pending transactions for transaction %s using %s", gtx, pendingLockPromise);
-      }
-      return awaitOn(pendingLockPromise, gtx, time, unit);
-   }
-
-   @Override
-   public long awaitPendingTransactionsForAllKeys(TxInvocationContext<?> ctx, Collection<Object> keys,
-                                                  long time, TimeUnit unit) throws InterruptedException {
-      final GlobalTransaction gtx = ctx.getGlobalTransaction();
-      PendingLockPromise pendingLockPromise = checkPendingTransactionsForKeys(ctx, keys, time, unit);
-      if (log.isTraceEnabled()) {
-         log.tracef("Await for pending transactions for transaction %s using %s", gtx, pendingLockPromise);
-      }
-      return awaitOn(pendingLockPromise, gtx, time, unit);
    }
 
    private PendingLockPromise createPromise(Collection<PendingTransaction> transactions,

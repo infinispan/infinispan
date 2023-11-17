@@ -32,16 +32,6 @@ public class NoOpPendingLockManager implements PendingLockManager {
       return PendingLockPromise.NO_OP;
    }
 
-   @Override
-   public long awaitPendingTransactionsForKey(TxInvocationContext<?> ctx, Object key, long time, TimeUnit unit) throws InterruptedException {
-      return unit.toMillis(time);
-   }
-
-   @Override
-   public long awaitPendingTransactionsForAllKeys(TxInvocationContext<?> ctx, Collection<Object> keys, long time, TimeUnit unit) throws InterruptedException {
-      return unit.toMillis(time);
-   }
-
    private static class Wrapper {
       private static final NoOpPendingLockManager INSTANCE = new NoOpPendingLockManager();
    }
