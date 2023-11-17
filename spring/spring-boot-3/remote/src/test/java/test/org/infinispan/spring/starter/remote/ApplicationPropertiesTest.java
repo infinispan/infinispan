@@ -1,5 +1,13 @@
 package test.org.infinispan.spring.starter.remote;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.groups.Tuple.tuple;
+
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.NameCallback;
+import javax.security.auth.callback.PasswordCallback;
+import javax.security.sasl.RealmCallback;
+
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
@@ -17,14 +25,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
-
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.NameCallback;
-import javax.security.auth.callback.PasswordCallback;
-import javax.security.sasl.RealmCallback;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.groups.Tuple.tuple;
 
 @SpringBootTest(
       classes = {
@@ -88,7 +88,6 @@ public class ApplicationPropertiesTest {
       assertThat(configuration.security().ssl().keyStoreType()).isEqualTo("SKL");
       assertThat(configuration.security().ssl().keyStorePassword().length).isEqualTo(17);
       assertThat(configuration.security().ssl().keyAlias()).isEqualTo("superAliasKey");
-      assertThat(configuration.security().ssl().keyStoreCertificatePassword()).hasSize(13);
       assertThat(configuration.security().ssl().trustStoreFileName()).isEqualTo("superTrustFileName");
       assertThat(configuration.security().ssl().trustStorePath()).isNull();
       assertThat(configuration.security().ssl().trustStoreType()).isEqualTo("CKO");

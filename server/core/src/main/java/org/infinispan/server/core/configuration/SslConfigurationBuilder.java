@@ -130,17 +130,6 @@ public class SslConfigurationBuilder<T extends ProtocolServerConfiguration<T, A>
    }
 
    /**
-    * Specifies the password needed to access private key associated with certificate stored in specified
-    * {@link #keyStoreFileName(String)}. If password is not specified, the password provided in
-    * {@link #keyStorePassword(char[])} will be used.
-    */
-   public SslConfigurationBuilder keyStoreCertificatePassword(char[] keyStoreCertificatePassword) {
-      defaultDomainConfigurationBuilder.keyStoreCertificatePassword(keyStoreCertificatePassword);
-      return this;
-   }
-
-
-   /**
     * Selects a specific key to choose from the keystore
     */
    public SslConfigurationBuilder keyAlias(String keyAlias) {

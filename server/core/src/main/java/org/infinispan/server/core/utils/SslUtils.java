@@ -35,7 +35,6 @@ public class SslUtils {
             .keyStoreFileName(sslEngineConfiguration.keyStoreFileName())
             .keyStoreType(sslEngineConfiguration.keyStoreType())
             .keyStorePassword(sslEngineConfiguration.keyStorePassword())
-            .keyStoreCertificatePassword(sslEngineConfiguration.keyStoreCertificatePassword())
             .keyAlias(sslEngineConfiguration.keyAlias())
             .trustStoreFileName(sslEngineConfiguration.trustStoreFileName())
             .trustStoreType(sslEngineConfiguration.trustStoreType())

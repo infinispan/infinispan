@@ -27,8 +27,6 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
    private Supplier<SSLContext> sslContextSupplier;
    private String trustStoreFileName;
    private char[] trustStorePassword;
-   private char[] keyStoreCertificatePassword;
-   private String domain = SslConfiguration.DEFAULT_SNI_DOMAIN;
    private String keyStoreType;
    private String trustStoreType;
 
@@ -110,16 +108,6 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
    }
 
    /**
-    * Specifies the password needed to access private key associated with certificate stored in specified
-    * {@link #keyStoreFileName(String)}. If password is not specified, the password provided in
-    * {@link #keyStorePassword(char[])} will be used.
-    */
-   public SslEngineConfigurationBuilder keyStoreCertificatePassword(char[] keyStoreCertificatePassword) {
-      this.keyStoreCertificatePassword = keyStoreCertificatePassword;
-      return this;
-   }
-
-   /**
     * Selects a specific key to choose from the keystore
     */
    public SslEngineConfigurationBuilder keyAlias(String keyAlias) {
@@ -140,6 +128,7 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
 
    @Override
    public void validate() {
+      String domain = SslConfiguration.DEFAULT_SNI_DOMAIN;
       if(domain == null) {
          throw log.noSniDomainConfigured();
       }
@@ -162,7 +151,7 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
 
    @Override
    public SslEngineConfiguration create() {
-      return new SslEngineConfiguration(keyStoreFileName, keyStoreType, keyStorePassword, keyStoreCertificatePassword, keyAlias, sslContextSupplier, trustStoreFileName, trustStoreType, trustStorePassword, protocol);
+      return new SslEngineConfiguration(keyStoreFileName, keyStoreType, keyStorePassword, keyAlias, sslContextSupplier, trustStoreFileName, trustStoreType, trustStorePassword, protocol);
    }
 
    @Override

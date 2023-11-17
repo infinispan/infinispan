@@ -142,7 +142,6 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
                      .keyStoreType(ssl.keyStoreType())
                      .keyStorePassword(ssl.keyStorePassword())
                      .keyAlias(ssl.keyAlias())
-                     .keyStoreCertificatePassword(ssl.keyStoreCertificatePassword())
                      .classLoader(configuration.classLoader())
                      .provider(ssl.provider())
                      .getKeyManagerFactory());

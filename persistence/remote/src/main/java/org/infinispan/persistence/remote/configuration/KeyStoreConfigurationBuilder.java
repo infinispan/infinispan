@@ -1,6 +1,5 @@
 package org.infinispan.persistence.remote.configuration;
 
-import static org.infinispan.persistence.remote.configuration.KeyStoreConfiguration.KEYSTORE_CERTIFICATE_PASSWORD;
 import static org.infinispan.persistence.remote.configuration.KeyStoreConfiguration.KEYSTORE_FILENAME;
 import static org.infinispan.persistence.remote.configuration.KeyStoreConfiguration.KEYSTORE_PASSWORD;
 import static org.infinispan.persistence.remote.configuration.KeyStoreConfiguration.KEYSTORE_TYPE;
@@ -38,11 +37,6 @@ public class KeyStoreConfigurationBuilder extends AbstractSecurityConfigurationC
 
    public KeyStoreConfigurationBuilder keyStorePassword(char[] keyStorePassword) {
       this.attributes.attribute(KEYSTORE_PASSWORD).set(new String(keyStorePassword));
-      return this;
-   }
-
-   public KeyStoreConfigurationBuilder keyStoreCertificatePassword(char[] keyStoreCertificatePassword) {
-      this.attributes.attribute(KEYSTORE_CERTIFICATE_PASSWORD).set(new String(keyStoreCertificatePassword));
       return this;
    }
 
