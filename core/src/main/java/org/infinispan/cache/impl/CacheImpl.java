@@ -1078,11 +1078,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
-   public EvictionManager<K, V> getEvictionManager() {
-      return evictionManager;
-   }
-
-   @Override
    public ExpirationManager<K, V> getExpirationManager() {
       return expirationManager;
    }

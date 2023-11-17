@@ -658,11 +658,6 @@ public class SecureCacheTestDriver {
    }
 
    @TestCachePermission(AuthorizationPermission.ADMIN)
-   public void testGetEvictionManager(SecureCache<String, String> cache) {
-      cache.getEvictionManager();
-   }
-
-   @TestCachePermission(AuthorizationPermission.ADMIN)
    public void testGetExpirationManager(SecureCache<String, String> cache) {
       cache.getExpirationManager();
    }

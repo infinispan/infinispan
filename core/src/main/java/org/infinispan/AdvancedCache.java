@@ -26,7 +26,6 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.encoding.DataConversion;
-import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
@@ -134,14 +133,6 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     */
    @Deprecated
    AsyncInterceptorChain getAsyncInterceptorChain();
-
-   /**
-    * @return the eviction manager - if one is configured - for this cache instance
-    *
-    * @deprecated Since 10.1, will be removed without a replacement
-    */
-   @Deprecated
-   EvictionManager getEvictionManager();
 
    /**
     * @return the expiration manager - if one is configured - for this cache instance
