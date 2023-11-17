@@ -40,16 +40,6 @@ public interface StateTransferManager {
     */
    long getInflightTransactionalSegmentCount();
 
-   /**
-    * Checks if an inbound state transfer is in progress for a given key.
-    *
-    * @deprecated since 10.0; to be removed in next major version
-    */
-   @Deprecated
-   default boolean isStateTransferInProgressForKey(Object key) {
-      return getStateConsumer().isStateTransferInProgressForKey(key);
-   }
-
    void start() throws Exception;
 
    /**

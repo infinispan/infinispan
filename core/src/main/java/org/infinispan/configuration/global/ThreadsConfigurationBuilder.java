@@ -100,15 +100,6 @@ public class ThreadsConfigurationBuilder extends AbstractGlobalConfigurationBuil
    }
 
    /**
-    * @deprecated Since 10.1, no longer used.
-    */
-   @Deprecated
-   @Override
-   public ThreadPoolConfigurationBuilder stateTransferThreadPool() {
-      return stateTransferThreadPool;
-   }
-
-   /**
     * @deprecated Since 11.0, no longer used.
     */
    @Deprecated
@@ -133,7 +124,6 @@ public class ThreadsConfigurationBuilder extends AbstractGlobalConfigurationBuil
       this.listenerThreadPool.read(template.listenerThreadPool(), combine);
       this.persistenceThreadPool.read(template.persistenceThreadPool(), combine);
       this.remoteCommandThreadPool.read(template.remoteThreadPool(), combine);
-      this.stateTransferThreadPool.read(template.stateTransferThreadPool(), combine);
       this.transportThreadPool.read(template.transportThreadPool(), combine);
       this.nonBlockingThreadPool.read(template.nonBlockingThreadPool(), combine);
       this.blockingThreadPool.read(template.blockingThreadPool(), combine);
@@ -166,7 +156,6 @@ public class ThreadsConfigurationBuilder extends AbstractGlobalConfigurationBuil
             listenerThreadPool.create(),
             persistenceThreadPool.create(),
             remoteCommandThreadPool.create(),
-            stateTransferThreadPool.create(),
             transportThreadPool.create(),
             nonBlockingThreadPool.create(),
             blockingThreadPool.create());

@@ -189,15 +189,6 @@ class CacheContainerConfiguration {
       return threads.persistenceThreadPool();
    }
 
-   /**
-    * @return An empty {@code ThreadPoolConfiguration}.
-    * @deprecated Since 10.1, no longer used.
-    */
-   @Deprecated
-   public ThreadPoolConfiguration stateTransferThreadPool() {
-      return threads.stateTransferThreadPool();
-   }
-
    @Deprecated
    public ThreadPoolConfiguration asyncThreadPool() {
       return threads.asyncThreadPool();

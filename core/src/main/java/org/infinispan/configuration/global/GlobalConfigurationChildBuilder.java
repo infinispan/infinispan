@@ -43,11 +43,6 @@ public interface GlobalConfigurationChildBuilder {
    ThreadPoolConfigurationBuilder persistenceThreadPool();
 
    /**
-    * Configuration for the state-transfer thread pool
-    */
-   ThreadPoolConfigurationBuilder stateTransferThreadPool();
-
-   /**
     * Configuration for the asynchronous operations thread pool
     */
    ThreadPoolConfigurationBuilder asyncThreadPool();

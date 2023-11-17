@@ -424,11 +424,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             threadPool = getGlobalConfiguration(holder).asyncThreadPool().threadPoolFactory();
             assertNull(threadPool);
 
-            threadFactory = getGlobalConfiguration(holder).stateTransferThreadPool().threadFactory();
-            assertNull(threadFactory);
-            threadPool = getGlobalConfiguration(holder).stateTransferThreadPool().threadPoolFactory();
-            assertNull(threadPool);
-
             assertTemplateConfiguration(holder, "local-template");
             assertTemplateConfiguration(holder, "invalidation-template");
             assertTemplateConfiguration(holder, "repl-template");

@@ -14,7 +14,6 @@ public class ThreadsConfiguration {
    private final ThreadPoolConfiguration listenerThreadPool;
    private final ThreadPoolConfiguration persistenceThreadPool;
    private final ThreadPoolConfiguration remoteThreadPool;
-   private final ThreadPoolConfiguration stateTransferThreadPool;
    private final ThreadPoolConfiguration transportThreadPool;
    private final ThreadPoolConfiguration nonBlockingThreadPool;
    private final ThreadPoolConfiguration blockingThreadPool;
@@ -28,7 +27,6 @@ public class ThreadsConfiguration {
                         ThreadPoolConfiguration listenerThreadPool,
                         ThreadPoolConfiguration persistenceThreadPool,
                         ThreadPoolConfiguration remoteThreadPool,
-                        ThreadPoolConfiguration stateTransferThreadPool,
                         ThreadPoolConfiguration transportThreadPool,
                         ThreadPoolConfiguration nonBlockingThreadPool,
                         ThreadPoolConfiguration blockingThreadPool) {
@@ -37,7 +35,6 @@ public class ThreadsConfiguration {
       this.listenerThreadPool = listenerThreadPool;
       this.persistenceThreadPool = persistenceThreadPool;
       this.remoteThreadPool = remoteThreadPool;
-      this.stateTransferThreadPool = stateTransferThreadPool;
       this.transportThreadPool = transportThreadPool;
       this.nonBlockingThreadPool = nonBlockingThreadPool;
       this.blockingThreadPool = blockingThreadPool;
@@ -65,15 +62,6 @@ public class ThreadsConfiguration {
 
    public ThreadPoolConfiguration remoteThreadPool() {
       return remoteThreadPool;
-   }
-
-   /**
-    * @return An empty {@code ThreadPoolConfiguration}.
-    * @deprecated Since 10.1, no longer used.
-    */
-   @Deprecated
-   public ThreadPoolConfiguration stateTransferThreadPool() {
-      return stateTransferThreadPool;
    }
 
    /**
@@ -120,7 +108,6 @@ public class ThreadsConfiguration {
             ", listenerThreadPool=" + listenerThreadPool +
             ", persistenceThreadPool=" + persistenceThreadPool +
             ", remoteThreadPool=" + remoteThreadPool +
-            ", stateTransferThreadPool=" + stateTransferThreadPool +
             ", transportThreadPool=" + transportThreadPool +
             '}';
    }

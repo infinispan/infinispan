@@ -458,10 +458,6 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             gc.transport().remoteCommandThreadPool().threadPoolFactory();
       assertNull(remoteCommandThreadPool);
 
-      AbstractThreadPoolExecutorFactory stateTransferThreadPool =
-            gc.stateTransferThreadPool().threadPoolFactory();
-      assertNull(stateTransferThreadPool);
-
       DefaultThreadFactory evictionThreadFactory =
             gc.expirationThreadPool().threadFactory();
       assertEquals("ExpirationThread", evictionThreadFactory.threadNamePattern());

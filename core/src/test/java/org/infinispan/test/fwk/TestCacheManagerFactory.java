@@ -161,7 +161,6 @@ public class TestCacheManagerFactory {
       updateNodeName(testShortName, gc.listenerThreadPool());
       updateNodeName(testShortName, gc.expirationThreadPool());
       updateNodeName(testShortName, gc.persistenceThreadPool());
-      updateNodeName(testShortName, gc.stateTransferThreadPool());
       updateNodeName(testShortName, gc.asyncThreadPool());
       updateNodeName(testShortName, gc.transport().transportThreadPool());
       return holder;
