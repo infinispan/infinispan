@@ -136,12 +136,6 @@ public class CacheParser implements ConfigurationParser {
       }
    }
 
-   private void parseModules(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
-      while (reader.inTag()) {
-         reader.handleAny(holder);
-      }
-   }
-
    protected void parseLocalCache(ConfigurationReader reader, ConfigurationBuilderHolder holder, String name, boolean template) {
       holder.pushScope(template ? ParserScope.CACHE_TEMPLATE : ParserScope.CACHE);
       if (!template && GlobUtils.isGlob(name))

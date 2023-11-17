@@ -180,20 +180,6 @@ public enum Flag {
    SKIP_STATISTICS,
 
    /**
-    * Flag to identify cache operations coming from the Hot Rod server.
-    * @deprecated Since 10.0, not in use.
-    */
-   @Deprecated
-   OPERATION_HOTROD,
-
-   /**
-    * Flag to identify cache operations coming from the Memcached server.
-    * @deprecated Since 10.0, not in use.
-    */
-   @Deprecated
-   OPERATION_MEMCACHED,
-
-   /**
     * Any time a new indexed entry is inserted, a delete statement is issued on the indexes
     * to remove previous values. This delete statement is executed even if there is no known
     * entry having the same key. Enable this flag when you know for sure there is no existing
