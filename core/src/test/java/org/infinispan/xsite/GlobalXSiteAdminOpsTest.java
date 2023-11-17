@@ -9,7 +9,6 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -18,7 +17,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.AbstractDelegatingTransport;
-import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.test.TestingUtil;
@@ -361,15 +359,6 @@ public class GlobalXSiteAdminOpsTest extends AbstractMultipleSitesTest {
             notifierLatch.blockIfNeeded();
          }
          return super.backupRemotely(backup, rpcCommand);
-      }
-
-      @Override
-      public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteRequest<?> rpcCommand)
-            throws Exception {
-         if (rpcCommand instanceof XSiteStatePushRequest) {
-            notifierLatch.blockIfNeeded();
-         }
-         return super.backupRemotely(backups, rpcCommand);
       }
 
       @Override

@@ -5,7 +5,6 @@ import static org.infinispan.util.logging.Log.CLUSTER;
 import static org.infinispan.util.logging.Log.CONTAINER;
 import static org.infinispan.util.logging.Log.XSITE;
 
-import javax.management.ObjectName;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +33,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import javax.management.ObjectName;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheConfigurationException;
@@ -75,7 +75,6 @@ import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.AbstractRequest;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
@@ -329,36 +328,6 @@ public class JGroupsTransport implements Transport, ChannelListener {
                });
          return Collections.emptyMap();
       }
-   }
-
-   @Override
-   public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteRequest<?> command) {
-      if (log.isTraceEnabled())
-         log.tracef("About to send to backups %s, command %s", backups, command);
-      Map<XSiteBackup, CompletableFuture<ValidResponse>> backupCalls = new HashMap<>(backups.size());
-      for (XSiteBackup xsb : backups) {
-         assert !localSite.equals(xsb.getSiteName()) : "sending to local site";
-         Address recipient = JGroupsAddressCache.fromJGroupsAddress(new SiteMaster(xsb.getSiteName()));
-         long requestId = requests.newRequestId();
-         logRequest(requestId, command, recipient, "backup");
-         SingleSiteRequest<ValidResponse> request =
-               new SingleSiteRequest<>(SingleResponseCollector.validOnly(), requestId, requests, xsb.getSiteName());
-         addRequest(request);
-         backupCalls.put(xsb, request);
-
-         DeliverOrder order = xsb.isSync() ? DeliverOrder.NONE : DeliverOrder.PER_SENDER;
-         long timeout = xsb.getTimeout();
-         try {
-            sendCommand(recipient, command, request.getRequestId(), order, false, false);
-            if (timeout > 0) {
-               request.setTimeout(timeoutExecutor, timeout, TimeUnit.MILLISECONDS);
-            }
-         } catch (Throwable t) {
-            request.cancel(true);
-            throw t;
-         }
-      }
-      return new JGroupsBackupResponse(backupCalls, timeService);
    }
 
    @Override
@@ -954,23 +923,6 @@ public class JGroupsTransport implements Transport, ChannelListener {
             return CompletableFutures.completedNull();
          } else {
             return nextViewFuture.thenCompose(nil -> withView(expectedViewId));
-         }
-      } finally {
-         viewUpdateLock.unlock();
-      }
-   }
-
-   @Override
-   public void waitForView(int viewId) throws InterruptedException {
-      if (channel == null)
-         return;
-
-      long remainingNanos = Long.MAX_VALUE;
-      viewUpdateLock.lock();
-      try {
-         while (channel != null && getViewId() < viewId && remainingNanos > 0) {
-            log.tracef("Waiting for view %d, current view is %d", viewId, clusterView.getViewId());
-            remainingNanos = viewUpdateCondition.awaitNanos(remainingNanos);
          }
       } finally {
          viewUpdateLock.unlock();

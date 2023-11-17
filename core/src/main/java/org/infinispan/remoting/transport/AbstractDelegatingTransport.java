@@ -41,12 +41,6 @@ public abstract class AbstractDelegatingTransport implements Transport {
 
    @Deprecated
    @Override
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, ResponseFilter responseFilter, DeliverOrder deliverOrder, boolean anycast) throws Exception {
-      return actual.invokeRemotely(recipients, rpcCommand, mode, timeout, responseFilter, deliverOrder, anycast);
-   }
-
-   @Deprecated
-   @Override
    public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter, boolean totalOrder, boolean anycast) throws Exception {
       return actual.invokeRemotely(rpcCommands, mode, timeout, usePriorityQueue, responseFilter, totalOrder, anycast);
    }
@@ -80,11 +74,6 @@ public abstract class AbstractDelegatingTransport implements Transport {
    @Override
    public void sendToAll(ReplicableCommand rpcCommand, DeliverOrder deliverOrder) throws Exception {
       actual.sendToAll(rpcCommand, deliverOrder);
-   }
-
-   @Override
-   public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteRequest<?> rpcCommand) throws Exception {
-      return actual.backupRemotely(backups, rpcCommand);
    }
 
    @Override
@@ -157,12 +146,6 @@ public abstract class AbstractDelegatingTransport implements Transport {
    @Override
    public CompletableFuture<Void> withView(int expectedViewId) {
       return actual.withView(expectedViewId);
-   }
-
-   @Deprecated
-   @Override
-   public void waitForView(int viewId) throws InterruptedException {
-      actual.waitForView(viewId);
    }
 
    @Override

@@ -33,7 +33,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import net.jcip.annotations.GuardedBy;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -57,7 +56,6 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.AbstractDelegatingTransport;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.SiteAddress;
 import org.infinispan.remoting.transport.Transport;
@@ -72,6 +70,8 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.commands.remote.XSiteRequest;
+
+import net.jcip.annotations.GuardedBy;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -206,13 +206,6 @@ public class ControlledTransport extends AbstractDelegatingTransport {
    }
 
    @Override
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand,
-                                                ResponseMode mode, long timeout, ResponseFilter responseFilter,
-                                                DeliverOrder deliverOrder, boolean anycast) throws Exception {
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
    public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode,
                                                 long timeout, boolean usePriorityQueue, ResponseFilter responseFilter,
                                                 boolean totalOrder, boolean anycast) throws Exception {
@@ -270,12 +263,6 @@ public class ControlledTransport extends AbstractDelegatingTransport {
          }
          return null;
       });
-   }
-
-   @Override
-   public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteRequest<?> rpcCommand)
-         throws Exception {
-      throw new UnsupportedOperationException();
    }
 
    @Override
