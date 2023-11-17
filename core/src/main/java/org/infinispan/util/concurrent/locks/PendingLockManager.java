@@ -14,11 +14,10 @@ import org.infinispan.context.impl.TxInvocationContext;
 public interface PendingLockManager {
 
    /**
-    * Same as {@link #awaitPendingTransactionsForKey(TxInvocationContext, Object, long, TimeUnit)} but non-blocking.
+    * Check for any transaction with older topology id to complete that may have the lock for any key in {@code keys}
+    * acquired.
     * <p>
-    * Multiple invocations with the same transaction returns the same {@link PendingLockPromise}. For cleanup purposes,
-    * {@link #awaitPendingTransactionsForKey(TxInvocationContext, Object, long, TimeUnit)} must be invoked
-    * afterwards.
+    * Multiple invocations with the same transaction returns the same {@link PendingLockPromise}.
     *
     * @param ctx  the {@link TxInvocationContext}.
     * @param key  the key to check.
@@ -29,12 +28,10 @@ public interface PendingLockManager {
    PendingLockPromise checkPendingTransactionsForKey(TxInvocationContext<?> ctx, Object key, long time, TimeUnit unit);
 
    /**
-    * Same as {@link #awaitPendingTransactionsForAllKeys(TxInvocationContext, Collection, long, TimeUnit)} but
-    * non-blocking.
+    * Check for any transaction with older topology id to complete that may have the lock for any key in {@code keys}
+    * acquired.
     * <p>
-    * Multiple invocations with the same transaction returns the same {@link PendingLockPromise}. For cleanup purposes,
-    * {@link #awaitPendingTransactionsForAllKeys(TxInvocationContext, Collection, long, TimeUnit)} must be invoked
-    * afterwards.
+    * Multiple invocations with the same transaction returns the same {@link PendingLockPromise}.
     *
     * @param ctx  the {@link TxInvocationContext}.
     * @param keys the keys to check.
@@ -44,34 +41,4 @@ public interface PendingLockManager {
     */
    PendingLockPromise checkPendingTransactionsForKeys(TxInvocationContext<?> ctx, Collection<Object> keys, long time, TimeUnit unit);
 
-   /**
-    * It waits for any transaction with older topology id to complete that may have the lock for {@code key} acquired.
-    *
-    * @param ctx  the {@link TxInvocationContext}.
-    * @param key  the key to check.
-    * @param time timeout.
-    * @param unit {@link TimeUnit} of {@code time}.
-    * @return the remaining timeout.
-    * @throws InterruptedException if the thread is interrupted while waiting.
-    * @deprecated Since 10.0, the blocking variants will be removed
-    */
-   @Deprecated
-   long awaitPendingTransactionsForKey(TxInvocationContext<?> ctx, Object key, long time, TimeUnit unit)
-         throws InterruptedException;
-
-   /**
-    * It waits for any transaction with older topology id to complete that may have the lock for any key in {@code keys}
-    * acquired.
-    *
-    * @param ctx  the {@link TxInvocationContext}.
-    * @param keys the keys to check.
-    * @param time timeout.
-    * @param unit {@link TimeUnit} of {@code time}.
-    * @return the remaining timeout.
-    * @throws InterruptedException if the thread is interrupted while waiting.
-    * @deprecated Since 10.0, the blocking variants will be removed
-    */
-   @Deprecated
-   long awaitPendingTransactionsForAllKeys(TxInvocationContext<?> ctx, Collection<Object> keys, long time, TimeUnit unit)
-         throws InterruptedException;
 }
