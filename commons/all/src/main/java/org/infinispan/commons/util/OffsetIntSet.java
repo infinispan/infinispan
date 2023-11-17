@@ -16,12 +16,12 @@ import java.util.stream.IntStream;
  * @since 15.0
  * @see RangeSet
  */
-public class OffsetIntSet extends AbstractImmutableIntSet {
+class OffsetIntSet extends AbstractImmutableIntSet {
 
    private final int start;
    private final int end;
 
-   public OffsetIntSet(int start, int exclusiveEnd) {
+   OffsetIntSet(int start, int exclusiveEnd) {
       assert exclusiveEnd >= start : "End should be greater or equal than start";
 
       this.start = start;
