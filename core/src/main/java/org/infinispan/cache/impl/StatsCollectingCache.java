@@ -35,11 +35,6 @@ public class StatsCollectingCache<K, V> extends SimpleCacheImpl<K, V> {
    }
 
    @Override
-   public AdvancedCache<K, V> with(ClassLoader classLoader) {
-      return this;
-   }
-
-   @Override
    public Stats getStats() {
       return StatsImpl.create(statsCollector);
    }

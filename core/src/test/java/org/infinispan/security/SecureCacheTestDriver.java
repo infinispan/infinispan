@@ -8,9 +8,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import jakarta.transaction.NotSupportedException;
-import jakarta.transaction.SystemException;
-
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.IdentityEncoder;
@@ -26,6 +23,9 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.util.concurrent.CompletionStages;
+
+import jakarta.transaction.NotSupportedException;
+import jakarta.transaction.SystemException;
 
 public class SecureCacheTestDriver {
 
@@ -363,11 +363,6 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.ADMIN)
    public void testTransform_Function(SecureCache<String, String> cache) {
       cache.transform(Function.identity());
-   }
-
-   @TestCachePermission(AuthorizationPermission.NONE)
-   public void testWith_ClassLoader(SecureCache<String, String> cache) {
-      cache.with(this.getClass().getClassLoader());
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)

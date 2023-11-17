@@ -1338,11 +1338,6 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
-   public AdvancedCache<K, V> with(ClassLoader classLoader) {
-      return this;
-   }
-
-   @Override
    public V put(K key, V value, Metadata metadata) {
       return getAndPutInternal(key, value, applyDefaultMetadata(metadata));
    }

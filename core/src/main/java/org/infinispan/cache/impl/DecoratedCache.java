@@ -70,12 +70,6 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    @Override
-   public AdvancedCache<K, V> with(final ClassLoader classLoader) {
-      if (classLoader == null) throw new IllegalArgumentException("ClassLoader cannot be null!");
-      return this;
-   }
-
-   @Override
    public AdvancedCache<K, V> withFlags(final Flag... flags) {
       return withFlags(EnumUtil.bitSetOf(flags));
    }

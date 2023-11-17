@@ -934,11 +934,6 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
-   public AdvancedCache<K, V> with(ClassLoader classLoader) {
-      return this;
-   }
-
-   @Override
    public CompletableFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit,
                                                   long maxIdle, TimeUnit maxIdleUnit) {
       authzManager.checkPermission(subject, writePermission);

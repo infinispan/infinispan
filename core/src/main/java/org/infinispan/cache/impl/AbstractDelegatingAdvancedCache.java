@@ -10,7 +10,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import javax.security.auth.Subject;
-import jakarta.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.AdvancedCache;
@@ -39,6 +38,8 @@ import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.concurrent.locks.LockManager;
+
+import jakarta.transaction.TransactionManager;
 
 /**
  * Similar to {@link org.infinispan.cache.impl.AbstractDelegatingCache}, but for {@link AdvancedCache}.
@@ -276,11 +277,6 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
    @Override
    public ClassLoader getClassLoader() {
       return cache.getClassLoader();
-   }
-
-   @Override
-   public AdvancedCache<K, V> with(ClassLoader classLoader) {
-      return this;
    }
 
    @Override
