@@ -108,14 +108,6 @@ class CacheContainerConfiguration {
       return jmx;
    }
 
-   /**
-    * @deprecated Since 10.1.3. Use {@link #jmx()} instead. This will be removed in next major version.
-    */
-   @Deprecated
-   public GlobalJmxConfiguration globalJmxStatistics() {
-      return jmx();
-   }
-
    public TransportConfiguration transport() {
       return transport;
    }
