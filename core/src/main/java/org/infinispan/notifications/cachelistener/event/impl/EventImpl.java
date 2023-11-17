@@ -384,11 +384,6 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    }
 
    @Override
-   public ConsistentHash getUnionConsistentHash() {
-      return unionConsistentHash;
-   }
-
-   @Override
    public int getNewTopologyId() {
       return newTopologyId;
    }

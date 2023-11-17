@@ -42,14 +42,6 @@ public interface DataRehashedEvent<K, V> extends Event<K, V> {
    ConsistentHash getConsistentHashAtEnd();
 
    /**
-    * @return The union of the current and future consistent hashes.
-    *
-    * @deprecated Since 9.0
-    */
-   @Deprecated
-   ConsistentHash getUnionConsistentHash();
-
-   /**
     * @return Retrieves the new topology id after rehashing was triggered.
     */
    int getNewTopologyId();
