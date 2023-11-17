@@ -17,13 +17,13 @@ import javax.management.ObjectName;
 
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerStartupException;
 import org.infinispan.test.CacheManagerCallable;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -146,7 +146,7 @@ public class CacheMBeanTest extends MultipleCacheManagersTest {
         .domain(otherJmxDomain)
         .mBeanServerLookup(mBeanServerLookup);
       ConfigurationBuilder c = new ConfigurationBuilder();
-      c.statistics().available(false);
+      c.statistics().enabled(false);
 
       withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(gc, c)) {
          @Override

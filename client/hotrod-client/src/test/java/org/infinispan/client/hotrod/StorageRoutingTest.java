@@ -65,7 +65,7 @@ public class StorageRoutingTest extends MultiHotRodServersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfgBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      cfgBuilder.jmxStatistics().enable();
+      cfgBuilder.statistics().enable();
       cfgBuilder.clustering().hash().numOwners(1);
       cfgBuilder.memory().storage(storageType);
       createHotRodServers(CLUSTER_SIZE, cfgBuilder);

@@ -19,7 +19,7 @@ import org.infinispan.commons.util.TypedProperties;
  *
  * @since 10.1.3
  */
-public class GlobalJmxConfigurationBuilder extends GlobalJmxStatisticsConfigurationBuilder implements Builder<GlobalJmxConfiguration> {
+public class GlobalJmxConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<GlobalJmxConfiguration> {
 
    private final AttributeSet attributes;
 

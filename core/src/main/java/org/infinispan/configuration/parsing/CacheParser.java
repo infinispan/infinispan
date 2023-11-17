@@ -182,10 +182,6 @@ public class CacheParser implements ConfigurationParser {
             builder.statistics().enabled(ParseUtils.parseBoolean(reader, index, value));
             break;
          }
-         case STATISTICS_AVAILABLE: {
-            builder.statistics().available(ParseUtils.parseBoolean(reader, index, value));
-            break;
-         }
          case UNRELIABLE_RETURN_VALUES: {
             builder.unsafe().unreliableReturnValues(ParseUtils.parseBoolean(reader, index, value));
             break;

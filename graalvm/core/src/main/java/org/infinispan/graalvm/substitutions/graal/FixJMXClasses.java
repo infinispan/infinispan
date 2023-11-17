@@ -5,7 +5,6 @@ import javax.management.ObjectName;
 
 import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration;
 import org.infinispan.configuration.parsing.CacheParser;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.Element;
@@ -44,14 +43,6 @@ final class SubstituteParser {
 final class SubstituteGlobalConfiguration {
     @Substitute
     public boolean statistics() {
-        return false;
-    }
-}
-
-@TargetClass(GlobalJmxStatisticsConfiguration.class)
-final class SubstituteGlobalJmxStatisticsConfiguration {
-    @Substitute
-    public boolean enabled() {
         return false;
     }
 }

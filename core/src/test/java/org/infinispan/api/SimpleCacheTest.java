@@ -120,7 +120,7 @@ public class SimpleCacheTest extends APINonTxTest {
    }
 
    public void testStatistics() {
-      Configuration cfg = new ConfigurationBuilder().simpleCache(true).jmxStatistics().enabled(true).build();
+      Configuration cfg = new ConfigurationBuilder().simpleCache(true).statistics().enabled(true).build();
       String name = "statsCache";
       cacheManager.defineConfiguration(name, cfg);
       Cache<Object, Object> cache = cacheManager.getCache(name);
@@ -134,7 +134,7 @@ public class SimpleCacheTest extends APINonTxTest {
       Configuration cfg = new ConfigurationBuilder()
             .simpleCache(true)
             .memory().size(1)
-            .jmxStatistics().enable()
+            .statistics().enable()
             .build();
       String name = "evictionCache";
       cacheManager.defineConfiguration(name, cfg);

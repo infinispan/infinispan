@@ -23,14 +23,6 @@ public interface GlobalConfigurationChildBuilder {
    GlobalJmxConfigurationBuilder jmx();
 
    /**
-    * @deprecated Since 10.1.3. Use {@link #jmx()} instead. This will be removed in next major version.
-    */
-   @Deprecated
-   default GlobalJmxConfigurationBuilder globalJmxStatistics() {
-      return jmx();
-   }
-
-   /**
     * Global serialization (i.e. marshalling) configuration
     */
    SerializationConfigurationBuilder serialization();

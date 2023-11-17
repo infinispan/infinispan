@@ -14,7 +14,6 @@ import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingAdvancedCache;
 import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.cache.impl.EncoderCache;
-import org.infinispan.cache.impl.SimpleCacheImpl;
 import org.infinispan.cache.impl.StatsCollectingCache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.marshall.StreamingMarshaller;
@@ -105,9 +104,7 @@ public class InternalCacheFactory<K, V> {
           configuration.clustering().hash().capacityFactor() != 0f &&
           !globalComponentRegistry.getGlobalConfiguration().isZeroCapacityNode()) {
          cache = new GetReplCache<>(new CacheImpl<>(cacheName));
-         if (configuration.statistics().available()) {
-            cache = new StatsCache<>(cache);
-         }
+         cache = new StatsCache<>(cache);
          if (configuration.clustering().partitionHandling().whenSplit() != PartitionHandling.ALLOW_READ_WRITES) {
             cache = new PartitionHandlingCache<>(cache);
          }
@@ -133,12 +130,7 @@ public class InternalCacheFactory<K, V> {
    private AdvancedCache<K, V> createSimpleCache(Configuration configuration,
                                                  GlobalComponentRegistry globalComponentRegistry,
                                                  String cacheName) {
-      AdvancedCache<K, V> cache;
-      if (configuration.statistics().available()) {
-         cache = buildEncodingCache(new StatsCollectingCache<>(cacheName));
-      } else {
-         cache = buildEncodingCache(new SimpleCacheImpl<>(cacheName));
-      }
+      AdvancedCache<K, V> cache = buildEncodingCache(new StatsCollectingCache<>(cacheName));
 
       componentRegistry = new SimpleComponentRegistry<>(cacheName, configuration, cache, globalComponentRegistry);
 

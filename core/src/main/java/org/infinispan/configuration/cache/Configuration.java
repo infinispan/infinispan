@@ -136,14 +136,6 @@ public class Configuration extends ConfigurationElement<Configuration> implement
       return statisticsConfiguration;
    }
 
-   /**
-    * @deprecated since 10.1.3 use {@link #statistics} instead. This will be removed in next major version.
-    */
-   @Deprecated
-   public JMXStatisticsConfiguration jmxStatistics() {
-      return statistics();
-   }
-
    public PersistenceConfiguration persistence() {
       return persistenceConfiguration;
    }

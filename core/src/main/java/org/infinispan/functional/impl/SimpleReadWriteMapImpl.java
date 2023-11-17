@@ -19,7 +19,6 @@ import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.impl.ImmutableContext;
 import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.functional.EntryView;
-import org.infinispan.functional.Param;
 import org.infinispan.functional.Traversable;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
@@ -103,10 +102,6 @@ public class SimpleReadWriteMapImpl<K, V> extends ReadWriteMapImpl<K, V> impleme
    @Override
    public <R> Traversable<R> evalAll(Function<EntryView.ReadWriteEntryView<K, V>, R> f) {
       return evalMany(fmap.cache.keySet(), f);
-   }
-
-   private boolean isStatisticsEnabled() {
-      return !params.containsAll(Param.StatisticsMode.SKIP);
    }
 
    private <R, T> R evalInternal(K key, T argument, BiFunction<T, EntryView.ReadWriteEntryView<K, V>, R> f, InternalCacheEntry<K, V> override) {

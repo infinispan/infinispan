@@ -182,7 +182,6 @@ public enum Attribute {
     @Deprecated
     SPIN_DURATION("deadlock-detection-spin"),
     STATISTICS,
-    STATISTICS_AVAILABLE,
     START,
     STARTUP_MODE,
     @Deprecated

@@ -1,5 +1,8 @@
 package org.infinispan.notifications.cachelistener;
 
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.mockito.ArgumentMatchers.isNull;
+
 import org.hamcrest.Matcher;
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
@@ -11,9 +14,6 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
 import org.testng.annotations.Test;
 
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.mockito.ArgumentMatchers.isNull;
-
 /**
  * @author Mircea Markus
  * @since 5.1
@@ -24,7 +24,7 @@ public class SimpleCacheNotifierTest extends CacheNotifierTest {
    protected Cache<Object, Object> getCache() {
       cm.defineConfiguration("simple", new ConfigurationBuilder().read(cm.getDefaultCacheConfiguration(), Combine.DEFAULT)
             .clustering().simpleCache(true)
-            .statistics().available(false)
+            .statistics().disable()
             .build());
       Cache cache = cm.getCache("simple");
       // without any listeners the notifications are ignored

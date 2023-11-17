@@ -16,7 +16,7 @@ import org.infinispan.configuration.parsing.Element;
 /**
  * @since 10.1.3
  */
-public class GlobalJmxConfiguration extends GlobalJmxStatisticsConfiguration {
+public class GlobalJmxConfiguration {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ENABLED, false).immutable().build();
    public static final AttributeDefinition<String> DOMAIN = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.DOMAIN, "org.infinispan").immutable().build();
    public static final AttributeDefinition<MBeanServerLookup> MBEAN_SERVER_LOOKUP = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MBEAN_SERVER_LOOKUP, null, MBeanServerLookup.class)
@@ -58,15 +58,6 @@ public class GlobalJmxConfiguration extends GlobalJmxStatisticsConfiguration {
 
    public TypedProperties properties() {
       return properties.get();
-   }
-
-   /**
-    * @return the cache manager name
-    * @deprecated Since 10.1. please use {@link GlobalConfiguration#cacheManagerName()} instead.
-    */
-   @Deprecated
-   public String cacheManagerName() {
-      return cacheManagerName;
    }
 
    public MBeanServerLookup mbeanServerLookup() {

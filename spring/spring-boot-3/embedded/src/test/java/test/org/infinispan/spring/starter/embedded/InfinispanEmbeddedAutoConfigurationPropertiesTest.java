@@ -35,8 +35,8 @@ public class InfinispanEmbeddedAutoConfigurationPropertiesTest {
       assertThat(defaultCacheManager.getCacheNames()).isEqualTo(Collections.singleton("default-local"));
 
       final GlobalConfiguration globalConfiguration = defaultCacheManager.getCacheManagerConfiguration();
-      assertThat(globalConfiguration.globalJmxStatistics().enabled()).isTrue();
-      assertThat(globalConfiguration.globalJmxStatistics().domain()).isEqualTo("properties.test.spring.infinispan");
+      assertThat(globalConfiguration.statistics()).isTrue();
+      assertThat(globalConfiguration.jmx().domain()).isEqualTo("properties.test.spring.infinispan");
       assertThat(globalConfiguration.serialization().marshaller()).isInstanceOf(JavaSerializationMarshaller.class);
 
       final Configuration defaultCacheConfiguration = defaultCacheManager.getDefaultCacheConfiguration();
