@@ -487,7 +487,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
       Long connectionTimeout = configuration.connectionTimeout();
       Long socketTimeout = configuration.socketTimeout();
 
-      builder.classLoader(configuration.getClass().getClassLoader())
+      builder
             .balancingStrategy(configuration.balancingStrategy())
             .connectionPool()
             .exhaustedAction(ExhaustedAction.valueOf(poolConfiguration.exhaustedAction().toString()))

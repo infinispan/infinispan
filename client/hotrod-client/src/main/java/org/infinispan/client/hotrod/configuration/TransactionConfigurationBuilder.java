@@ -10,8 +10,6 @@ import static org.infinispan.commons.util.Util.loadClass;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.transaction.Synchronization;
-import jakarta.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.client.hotrod.RemoteCache;
@@ -21,6 +19,9 @@ import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.commons.util.TypedProperties;
+
+import jakarta.transaction.Synchronization;
+import jakarta.transaction.TransactionManager;
 
 /**
  * Configures a transactional {@link RemoteCache}.
@@ -128,7 +129,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    private TransactionManagerLookup tlmFromString(String lookupClass) {
       return lookupClass == null || tlmClass().equals(lookupClass) ?
             transactionManagerLookup :
-            getInstance(loadClass(lookupClass, builder.classLoader()));
+            getInstance(loadClass(lookupClass, TransactionConfigurationBuilder.class.getClassLoader()));
    }
 
    private String tlmClass() {

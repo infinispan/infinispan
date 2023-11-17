@@ -61,11 +61,6 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    }
 
    @Override
-   public ConfigurationBuilder classLoader(ClassLoader classLoader) {
-      return builder.classLoader(classLoader);
-   }
-
-   @Override
    public ConfigurationBuilder clientIntelligence(ClientIntelligence clientIntelligence) {
       return builder.clientIntelligence(clientIntelligence);
    }
