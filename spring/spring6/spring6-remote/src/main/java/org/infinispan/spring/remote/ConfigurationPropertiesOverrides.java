@@ -48,14 +48,6 @@ public class ConfigurationPropertiesOverrides {
    }
 
    /**
-    * @param TransportFactory
-    * @deprecated since 10.0. This method has no effect
-    */
-   @Deprecated
-   public void setTransportFactory(final String TransportFactory) {
-   }
-
-   /**
     * @param serverList
     */
    public void setServerList(final Collection<InetSocketAddress> serverList) {

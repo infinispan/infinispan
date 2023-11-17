@@ -28,7 +28,6 @@ public enum Attribute {
    TYPE("type"),
    MARSHALLER("marshaller"),
    MAX_ACTIVE("max-active"),
-   MAX_IDLE("max-idle"),
    MAX_PENDING_REQUESTS("max-pending-requests"),
    MAX_TOTAL("max-total"),
    MAX_WAIT("max-wait"),
@@ -57,7 +56,6 @@ public enum Attribute {
    TCP_NO_DELAY("tcp-no-delay"),
    TEST_WHILE_IDLE("test-idle"),
    TIME_BETWEEN_EVICTION_RUNS("eviction-interval"),
-   TRANSPORT_FACTORY("transport-factory"),
    URI("uri"),
    USERNAME("username"),
    /**

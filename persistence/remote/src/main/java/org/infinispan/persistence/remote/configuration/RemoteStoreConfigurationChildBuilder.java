@@ -2,7 +2,6 @@ package org.infinispan.persistence.remote.configuration;
 
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.StoreConfigurationChildBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -104,22 +103,6 @@ public interface RemoteStoreConfigurationChildBuilder<S> extends StoreConfigurat
     * Affects TCP NODELAY on the TCP stack. Defaults to enabled
     */
    RemoteStoreConfigurationBuilder tcpNoDelay(boolean tcpNoDelay);
-
-   /**
-    * Controls which transport to use. Currently only the TcpTransport is supported.
-    *
-    * @deprecated since 10.0. This method has no effect
-    */
-   @Deprecated
-   RemoteStoreConfigurationBuilder transportFactory(String transportFactory);
-
-   /**
-    * Controls which transport to use. Currently only the TcpTransport is supported.
-    *
-    * @deprecated since 10.0. This method has no effect
-    */
-   @Deprecated
-   RemoteStoreConfigurationBuilder transportFactory(Class<? extends ChannelFactory> transportFactory);
 
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0

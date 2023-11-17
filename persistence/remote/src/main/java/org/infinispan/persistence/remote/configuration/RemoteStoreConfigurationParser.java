@@ -30,8 +30,6 @@ import org.kohsuke.MetaInfServices;
 @Namespace(uri = NAMESPACE + "*", root = "remote-store")
 @Namespace(uri = NAMESPACE + "*", root = "remote-cache-containers")
 public class RemoteStoreConfigurationParser implements ConfigurationParser {
-   private static final org.infinispan.util.logging.Log coreLog = org.infinispan.util.logging.LogFactory.getLog(RemoteStoreConfigurationParser.class);
-
    public static final String PREFIX = "store:remote";
    public static final String NAMESPACE = Parser.NAMESPACE + PREFIX + ":";
 
@@ -375,7 +373,6 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
                builder.maxWait(Integer.parseInt(value));
                break;
             }
-            case MAX_IDLE:
             case MAX_TOTAL:
             case TEST_WHILE_IDLE:
             case TIME_BETWEEN_EVICTION_RUNS: {
@@ -477,10 +474,6 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
             }
             case TCP_NO_DELAY: {
                builder.tcpNoDelay(Boolean.parseBoolean(value));
-               break;
-            }
-            case TRANSPORT_FACTORY: {
-               builder.transportFactory(value);
                break;
             }
             case VALUE_SIZE_ESTIMATE: {

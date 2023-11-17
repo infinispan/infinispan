@@ -142,14 +142,6 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration<RemoteS
    }
 
    /**
-    * @deprecated since 10.0. This method always returns null
-    */
-   @Deprecated
-   public String transportFactory() {
-      return null;
-   }
-
-   /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
    @Deprecated
