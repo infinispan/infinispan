@@ -1,7 +1,6 @@
 package org.infinispan.persistence.rocksdb.configuration;
 
 import static org.infinispan.persistence.rocksdb.configuration.RocksDBExpirationConfiguration.EXPIRED_LOCATION;
-import static org.infinispan.persistence.rocksdb.configuration.RocksDBExpirationConfiguration.EXPIRY_QUEUE_SIZE;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
@@ -24,15 +23,6 @@ public class RocksDBExpirationConfigurationBuilder implements Builder<RocksDBExp
 
    public RocksDBExpirationConfigurationBuilder expiredLocation(String expiredLocation) {
       attributes.attribute(EXPIRED_LOCATION).set(expiredLocation);
-      return this;
-   }
-
-   /**
-    * @deprecated Since 10.1, there is no more queue in {@link org.infinispan.persistence.rocksdb.RocksDBStore}
-    */
-   @Deprecated
-   RocksDBExpirationConfigurationBuilder expiryQueueSize(int expiryQueueSize) {
-      attributes.attribute(EXPIRY_QUEUE_SIZE).set(expiryQueueSize);
       return this;
    }
 

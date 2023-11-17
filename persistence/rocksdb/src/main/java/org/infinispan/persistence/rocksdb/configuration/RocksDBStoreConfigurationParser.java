@@ -113,14 +113,6 @@ public class RocksDBStoreConfigurationParser implements ConfigurationParser {
                builder.expiredLocation(value);
                break;
             }
-            case QUEUE_SIZE: {
-               if (!reader.getSchema().since(12, 0)) {
-                  ignoreAttribute(reader, i);
-                  break;
-               } else {
-                  throw ParseUtils.attributeRemoved(reader, i);
-               }
-            }
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }

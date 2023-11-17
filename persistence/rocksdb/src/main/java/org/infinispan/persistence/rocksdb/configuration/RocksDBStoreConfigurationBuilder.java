@@ -48,15 +48,6 @@ public class RocksDBStoreConfigurationBuilder extends AbstractStoreConfiguration
    }
 
    /**
-    * @deprecated Since 10.1, there is no more queue in {@link org.infinispan.persistence.rocksdb.RocksDBStore}
-    */
-   @Deprecated
-   public RocksDBStoreConfigurationBuilder expiryQueueSize(int expiryQueueSize) {
-      expiration.expiryQueueSize(expiryQueueSize);
-      return self();
-   }
-
-   /**
     * @deprecated Since 12.0, no longer used. Will be removed in 15.0
     */
    @Deprecated
