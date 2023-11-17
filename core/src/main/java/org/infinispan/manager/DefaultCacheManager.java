@@ -621,11 +621,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       return this;
    }
 
-   @Override
-   public void removeCache(String cacheName) {
-      cacheManagerAdmin.removeCache(cacheName);
-   }
-
    /**
     * {@inheritDoc}
     */

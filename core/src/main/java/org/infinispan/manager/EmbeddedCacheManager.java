@@ -191,7 +191,7 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
    /**
     * A cache is considered to exist if it has been created and started via
     * one of the {@link #getCache()} methods and has not yet been removed via
-    * {@link #removeCache(String)}. </p>
+    * {@link org.infinispan.commons.api.CacheContainerAdmin#removeCache(String)}. </p>
     *
     * In environments when caches are continuously created and removed, this
     * method offers the possibility to find out whether a cache has either,
@@ -265,18 +265,6 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
     * @since 5.0
     */
    EmbeddedCacheManager startCaches(String... cacheNames);
-
-   /**
-    * Removes a cache with the given name from the system. This is a cluster
-    * wide operation that results not only in stopping the cache with the given
-    * name in all nodes in the cluster, but also deletes its contents both in
-    * memory and in any backing cache store.
-    *
-    * @param cacheName name of cache to remove
-    * @deprecated Since 9.2, obtain a {@link org.infinispan.commons.api.CacheContainerAdmin} instance using {@link #administration()} and invoke the {@link org.infinispan.commons.api.CacheContainerAdmin#removeCache(String)} method
-    */
-   @Deprecated
-   void removeCache(String cacheName);
 
    /**
     * @deprecated Since 10.0, with no public API replacement

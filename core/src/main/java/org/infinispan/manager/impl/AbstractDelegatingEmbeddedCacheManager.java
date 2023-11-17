@@ -178,11 +178,6 @@ public class AbstractDelegatingEmbeddedCacheManager implements EmbeddedCacheMana
    }
 
    @Override
-   public void removeCache(String cacheName) {
-      cm.removeCache(cacheName);
-   }
-
-   @Override
    public <K, V> Cache<K, V> getCache() {
       return cm.getCache();
    }
