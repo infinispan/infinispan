@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -56,7 +57,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.mockito.AdditionalAnswers;
 import org.mockito.stubbing.Answer;
@@ -71,6 +71,17 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
    protected final static String CACHE_NAME = "cluster-listener";
    protected final static String FIRST_VALUE = "first-value";
    protected final static String SECOND_VALUE = "second-value";
+   public static final String PRE_ADD_LISTENER_INVOKED = "pre_add_listener_invoked_";
+   public static final String PRE_ADD_LISTENER_RELEASE = "pre_add_listener_release_";
+   public static final String POST_ADD_LISTENER_INVOKED = "post_add_listener_invoked_";
+   public static final String POST_ADD_LISTENER_RELEASE = "post_add_listener_release_";
+   public static final String PRE_RAISE_NOTIFICATION_INVOKED = "pre_raise_notification_invoked";
+   public static final String PRE_RAISE_NOTIFICATION_RELEASE = "pre_raise_notification_release";
+   public static final String POST_RAISE_NOTIFICATION_INVOKED = "post_raise_notification_invoked";
+   public static final String POST_RAISE_NOTIFICATION_RELEASE = "post_raise_notification_release";
+   public static final String PRE_VIEW_LISTENER_INVOKED = "pre_view_listener_invoked_";
+   public static final String PRE_VIEW_LISTENER_RELEASE = "pre_view_listener_release_";
+   public static final String POST_VIEW_LISTENER_INVOKED = "post_view_listener_invoked_";
 
    protected ConfigurationBuilder builderUsed;
    protected SerializationContextInitializer sci;
@@ -162,7 +173,7 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
    }
 
    @Listener(clustered = true, includeCurrentState = true)
-   protected class ClusterListenerWithIncludeCurrentState extends ClusterListener {
+   protected static class ClusterListenerWithIncludeCurrentState extends ClusterListener {
       protected boolean hasIncludeState() {
          return true;
       }
@@ -372,46 +383,46 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
    }
 
    protected void waitUntilListenerInstalled(final Cache<?, ?> cache, final CheckPoint checkPoint) {
-      CacheNotifier cn = TestingUtil.extractComponent(cache, CacheNotifier.class);
+      CacheNotifier<?, ?> cn = TestingUtil.extractComponent(cache, CacheNotifier.class);
       final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(cn);
-      ClusterCacheNotifier mockNotifier = mock(ClusterCacheNotifier.class, withSettings().defaultAnswer(forwardedAnswer));
+      ClusterCacheNotifier<?, ?> mockNotifier = mock(ClusterCacheNotifier.class, withSettings().defaultAnswer(forwardedAnswer));
       doAnswer(invocation -> {
          // Wait for main thread to sync up
-         checkPoint.trigger("pre_add_listener_invoked_" + cache);
+         checkPoint.trigger(PRE_ADD_LISTENER_INVOKED + cache);
          // Now wait until main thread lets us through
-         checkPoint.awaitStrict("pre_add_listener_release_" + cache, 10, TimeUnit.SECONDS);
+         checkPoint.awaitStrict(PRE_ADD_LISTENER_RELEASE + cache, 10, TimeUnit.SECONDS);
 
          try {
             return forwardedAnswer.answer(invocation);
          } finally {
             // Wait for main thread to sync up
-            checkPoint.trigger("post_add_listener_invoked_" + cache);
+            checkPoint.trigger(POST_ADD_LISTENER_INVOKED + cache);
             // Now wait until main thread lets us through
-            checkPoint.awaitStrict("post_add_listener_release_" + cache, 10, TimeUnit.SECONDS);
+            checkPoint.awaitStrict(POST_ADD_LISTENER_RELEASE + cache, 10, TimeUnit.SECONDS);
          }
       }).when(mockNotifier).addFilteredListener(notNull(), nullable(CacheEventFilter.class), nullable(CacheEventConverter.class), any(Set.class));
       TestingUtil.replaceComponent(cache, CacheNotifier.class, mockNotifier, true);
    }
 
    protected void waitUntilNotificationRaised(final Cache<?, ?> cache, final CheckPoint checkPoint) {
-      CacheNotifier cn = TestingUtil.extractComponent(cache, CacheNotifier.class);
+      CacheNotifier<?, ?> cn = TestingUtil.extractComponent(cache, CacheNotifier.class);
       final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(cn);
-      CacheNotifier mockNotifier = mock(CacheNotifier.class,
+      CacheNotifier<?, ?> mockNotifier = mock(CacheNotifier.class,
                                         withSettings().extraInterfaces(ClusterCacheNotifier.class)
                                                       .defaultAnswer(forwardedAnswer));
-      Answer answer = invocation -> {
+      Answer<?> answer = invocation -> {
          // Wait for main thread to sync up
-         checkPoint.trigger("pre_raise_notification_invoked");
+         checkPoint.trigger(PRE_RAISE_NOTIFICATION_INVOKED);
          // Now wait until main thread lets us through
-         checkPoint.awaitStrict("pre_raise_notification_release", 10, TimeUnit.SECONDS);
+         checkPoint.awaitStrict(PRE_RAISE_NOTIFICATION_RELEASE, 10, TimeUnit.SECONDS);
 
          try {
             return forwardedAnswer.answer(invocation);
          } finally {
             // Wait for main thread to sync up
-            checkPoint.trigger("post_raise_notification_invoked");
+            checkPoint.trigger(POST_RAISE_NOTIFICATION_INVOKED);
             // Now wait until main thread lets us through
-            checkPoint.awaitStrict("post_raise_notification_release", 10, TimeUnit.SECONDS);
+            checkPoint.awaitStrict(POST_RAISE_NOTIFICATION_RELEASE, 10, TimeUnit.SECONDS);
          }
       };
       doAnswer(answer).when(mockNotifier).notifyCacheEntryCreated(any(), any(), any(Metadata.class), eq(false),
@@ -431,14 +442,14 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
       CacheManagerNotifier mockNotifier = mock(CacheManagerNotifier.class, withSettings().defaultAnswer(forwardedAnswer));
       doAnswer(invocation -> {
          // Wait for main thread to sync up
-         checkPoint.trigger("pre_view_listener_invoked_" + uniqueId);
+         checkPoint.trigger(PRE_VIEW_LISTENER_INVOKED + uniqueId);
          // Now wait until main thread lets us through
-         checkPoint.awaitStrict("pre_view_listener_release_" + uniqueId, 10, TimeUnit.SECONDS);
+         checkPoint.awaitStrict(PRE_VIEW_LISTENER_RELEASE + uniqueId, 10, TimeUnit.SECONDS);
 
          try {
             return forwardedAnswer.answer(invocation);
          } finally {
-            checkPoint.trigger("post_view_listener_invoked_" + uniqueId);
+            checkPoint.trigger(POST_VIEW_LISTENER_INVOKED + uniqueId);
          }
       }).when(mockNotifier).notifyViewChange(anyList(), anyList(), any(Address.class), anyInt());
       TestingUtil.replaceComponent(cacheContainer, CacheManagerNotifier.class, mockNotifier, true);

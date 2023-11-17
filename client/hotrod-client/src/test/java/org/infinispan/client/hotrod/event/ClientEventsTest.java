@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.event;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.getListeners;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
@@ -169,20 +170,20 @@ public class ClientEventsTest extends SingleHotRodServerTest {
 
    public void testSetListeners() {
       final RemoteCache<Integer, String> rcache = remoteCacheManager.getCache();
-      final EventLogListener l1 = new EventLogListener<>(rcache);
+      final EventLogListener<?> l1 = new EventLogListener<>(rcache);
       withClientListener(l1, remote1 -> {
-         Set<?> listeners1 = remote1.getListeners();
+         Set<?> listeners1 = getListeners(remote1);
          assertEquals(1, listeners1.size());
          assertEquals(l1, listeners1.iterator().next());
-         final EventLogListener l2 = new EventLogListener<>(rcache);
+         final EventLogListener<?> l2 = new EventLogListener<>(rcache);
          withClientListener(l2, remote2 -> {
-            Set<?> listeners2 = remote2.getListeners();
+            Set<?> listeners2 = getListeners(remote2);
             assertEquals(2, listeners2.size());
             assertTrue(listeners2.contains(l1));
             assertTrue(listeners2.contains(l2));
          });
       });
-      Set<Object> listeners = rcache.getListeners();
+      Set<Object> listeners = getListeners(rcache);
       assertEquals(0, listeners.size());
    }
 

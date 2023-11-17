@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
@@ -170,10 +169,5 @@ public class ServerEventLogger implements EventLogger {
    @Override
    public CompletionStage<Void> removeListenerAsync(Object listener) {
       return notifier.removeListenerAsync(listener);
-   }
-
-   @Override
-   public Set<Object> getListeners() {
-      return notifier.getListeners();
    }
 }

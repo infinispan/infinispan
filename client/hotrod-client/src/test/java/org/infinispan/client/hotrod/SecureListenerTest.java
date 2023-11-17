@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
+import static org.infinispan.test.TestingUtil.getListeners;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Collections;
@@ -18,7 +19,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.security.mappers.IdentityRoleMapper;
@@ -112,8 +112,7 @@ public class SecureListenerTest extends AbstractAuthenticationTest {
       clientCache.addClientListener(listener);
 
       Cache<Object, Object> serverCache = cacheManager.getCache(CACHE_NAME);
-      CacheNotifier cacheNotifier = TestingUtil.extractComponent(serverCache, CacheNotifier.class);
-      assertEquals(1, cacheNotifier.getListeners().size());
+      assertEquals(1, getListeners(serverCache).size());
 
       clientCache.put("key", "value");
 
@@ -121,7 +120,7 @@ public class SecureListenerTest extends AbstractAuthenticationTest {
 
       remoteCacheManager.close();
 
-      eventuallyEquals(0, () -> cacheNotifier.getListeners().size());
+      eventuallyEquals(0, () -> getListeners(serverCache).size());
    }
 
    public void testAddListenerWithoutPermission() {
@@ -135,11 +134,10 @@ public class SecureListenerTest extends AbstractAuthenticationTest {
       Exceptions.expectException(HotRodClientException.class, () -> clientCache.addClientListener(listener));
 
       Cache<Object, Object> serverCache = cacheManager.getCache(CACHE_NAME);
-      CacheNotifier cacheNotifier = TestingUtil.extractComponent(serverCache, CacheNotifier.class);
-      assertEquals(0, cacheNotifier.getListeners().size());
+      assertEquals(0, getListeners(serverCache).size());
 
       remoteCacheManager.close();
 
-      assertEquals(0, cacheNotifier.getListeners().size());
+      assertEquals(0, getListeners(serverCache).size());
    }
 }

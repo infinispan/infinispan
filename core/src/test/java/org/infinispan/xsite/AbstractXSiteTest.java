@@ -1,5 +1,6 @@
 package org.infinispan.xsite;
 
+import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.ArrayList;
@@ -159,18 +160,18 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       Set<String> expectedSites = new HashSet<>(Arrays.asList(siteNames));
       sites.forEach(site -> {
          site.cacheManagers.forEach(manager -> {
-            RELAY2 relay2 = ((JGroupsTransport) manager.getTransport()).getChannel().getProtocolStack()
-                                                                           .findProtocol(RELAY2.class);
+            JGroupsTransport transport = (JGroupsTransport) extractGlobalComponent(manager, Transport.class);
+            RELAY2 relay2 = transport.getChannel().getProtocolStack().findProtocol(RELAY2.class);
             if (!relay2.isSiteMaster())
                return;
             while (System.nanoTime() - deadlineNanos < 0) {
-               if (expectedSites.equals(manager.getTransport().getSitesView()))
+               if (expectedSites.equals(transport.getSitesView()))
                   break;
 
                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(100));
             }
 
-            Set<String> currentSitesView = manager.getTransport().getSitesView();
+            Set<String> currentSitesView = transport.getSitesView();
             if (!expectedSites.equals(currentSitesView)) {
                throw new AssertionError(String.format("Timed out waiting for bridge view %s on %s after %d %s. Current bridge view is %s", expectedSites, manager.getAddress(), timeout, unit, currentSitesView));
             }
@@ -269,11 +270,6 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
          }
          return true;
       }, timeUnit.toMillis(timeout));
-   }
-
-   protected RELAY2 getRELAY2(EmbeddedCacheManager cacheManager) {
-      JGroupsTransport transport = (JGroupsTransport) cacheManager.getTransport();
-      return transport.getChannel().getProtocolStack().findProtocol(RELAY2.class);
    }
 
    protected interface AssertCondition<K, V> {

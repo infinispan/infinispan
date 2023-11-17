@@ -1,5 +1,6 @@
 package org.infinispan.affinity.impl;
 
+import static org.infinispan.test.TestingUtil.getListeners;
 import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.affinity.KeyAffinityServiceFactory;
@@ -67,7 +68,7 @@ public class KeyAffinityServiceShutdownTest extends BaseKeyAffinityServiceTest {
 
    private void assertListenerRegistered(boolean registered) {
       boolean isRegistered = false;
-      for (Object o : cacheManager.getListeners()) {
+      for (Object o : getListeners(cacheManager)) {
          if (o instanceof ListenerRegistration) {
             isRegistered = true;
             break;

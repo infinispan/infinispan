@@ -4,12 +4,11 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogLevel;
@@ -114,10 +113,5 @@ public class MemoryEventLogger implements EventLogger {
     @Override
     public CompletionStage<Void> removeListenerAsync(Object listener) {
         return CompletableFutures.completedNull();
-    }
-
-    @Override
-    public Set<Object> getListeners() {
-        return Collections.emptySet();
     }
 }

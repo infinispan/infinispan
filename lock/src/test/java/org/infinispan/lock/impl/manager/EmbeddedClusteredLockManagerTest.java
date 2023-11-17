@@ -1,7 +1,8 @@
 package org.infinispan.lock.impl.manager;
 
-import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.commons.test.Exceptions.expectException;
+import static org.infinispan.functional.FunctionalTestUtils.await;
+import static org.infinispan.test.TestingUtil.getListeners;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -101,14 +102,14 @@ public class EmbeddedClusteredLockManagerTest extends BaseClusteredLockTest {
    public void testRemove() {
       ClusteredLockManager clusteredLockManager = clusteredLockManager(0);
       Cache<Object, Object> clusteredLocksCache = cache(0, ClusteredLockModuleLifecycle.CLUSTERED_LOCK_CACHE_NAME);
-      int beforeSize = clusteredLocksCache.getListeners().size();
+      int beforeSize = getListeners(clusteredLocksCache).size();
       clusteredLockManager.defineLock(LOCK_NAME);
       clusteredLockManager.get(LOCK_NAME);
-      int afterSize = clusteredLocksCache.getListeners().size();
+      int afterSize = getListeners(clusteredLocksCache).size();
       assertTrue(beforeSize < afterSize);
       await(clusteredLockManager.remove(LOCK_NAME));
-      int afterRemoveSize = clusteredLocksCache.getListeners().size();
+      int afterRemoveSize = getListeners(clusteredLocksCache).size();
       assertFalse(clusteredLockManager.isDefined(LOCK_NAME));
-      assertTrue(beforeSize == afterRemoveSize);
+      assertEquals(beforeSize, afterRemoveSize);
    }
 }

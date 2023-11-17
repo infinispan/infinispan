@@ -84,6 +84,6 @@ public class SimpleReadOnlyMapImpl<K, V> extends ReadOnlyMapImpl<K, V> implement
    }
 
    private boolean hasListeners() {
-      return !notifier.getListeners().isEmpty();
+      return notifier.hasListeners();
    }
 }

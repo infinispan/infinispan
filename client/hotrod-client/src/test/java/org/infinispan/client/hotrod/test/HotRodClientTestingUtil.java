@@ -4,6 +4,7 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.DEFAULT_
 import static org.infinispan.commons.test.CommonsTestingUtil.loadFileAsString;
 import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
 import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
+import static org.infinispan.test.TestingUtil.extractField;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,6 +13,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import javax.management.ObjectName;
@@ -24,6 +26,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.StatisticsConfiguration;
 import org.infinispan.client.hotrod.event.RemoteCacheSupplier;
+import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transaction.TransactionTable;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
@@ -388,6 +391,11 @@ public class HotRodClientTestingUtil {
    public static ObjectName remoteCacheObjectName(RemoteCacheManager rcm, String cacheName) throws Exception {
       StatisticsConfiguration cfg = rcm.getConfiguration().statistics();
       return new ObjectName(String.format("%s:type=HotRodClient,name=%s,cache=%s", cfg.jmxDomain(), cfg.jmxName(), cacheName));
+   }
+
+   public static Set<Object> getListeners(RemoteCache<?, ?> cache) {
+      ClientListenerNotifier notifier = extractField(cache.getRemoteCacheContainer(), "listenerNotifier");
+      return notifier.getListeners(cache.getName());
    }
 
 }

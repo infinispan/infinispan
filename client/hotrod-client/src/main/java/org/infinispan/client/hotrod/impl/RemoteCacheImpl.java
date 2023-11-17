@@ -31,7 +31,6 @@ import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.StreamingRemoteCache;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.StatisticsConfiguration;
-import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.RemoteCacheManagerNotStartedException;
 import org.infinispan.client.hotrod.filter.Filters;
 import org.infinispan.client.hotrod.impl.iteration.RemotePublisher;
@@ -580,13 +579,6 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       assertRemoteCacheManagerIsStarted();
       RemoveClientListenerOperation op = operationsFactory.newRemoveClientListenerOperation(listener);
       await(op.execute());
-   }
-
-   @Deprecated
-   @Override
-   public Set<Object> getListeners() {
-      ClientListenerNotifier listenerNotifier = operationsFactory.getListenerNotifier();
-      return listenerNotifier.getListeners(operationsFactory.getCacheName());
    }
 
    @Override

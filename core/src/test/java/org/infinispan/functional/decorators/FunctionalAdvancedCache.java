@@ -20,7 +20,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import javax.security.auth.Subject;
-import jakarta.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.AdvancedCache;
@@ -66,6 +65,8 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
 import org.infinispan.util.concurrent.locks.LockManager;
+
+import jakarta.transaction.TransactionManager;
 
 public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> {
 
@@ -865,12 +866,6 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    public CompletionStage<Void> removeListenerAsync(Object listener) {
       // TODO: Customise this generated block
       return null;
-   }
-
-   @Deprecated
-   @Override
-   public Set<Object> getListeners() {
-      return null;  // TODO: Customise this generated block
    }
 
    @Override

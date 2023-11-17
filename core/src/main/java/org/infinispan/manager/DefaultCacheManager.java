@@ -932,14 +932,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       }
    }
 
-   @Deprecated
-   @Override
-   public Set<Object> getListeners() {
-      authorizer.checkPermission(getSubject(), AuthorizationPermission.LISTEN);
-      CacheManagerNotifier notifier = globalComponentRegistry.getComponent(CacheManagerNotifier.class);
-      return notifier.getListeners();
-   }
-
    @Override
    public ComponentStatus getStatus() {
       return status;

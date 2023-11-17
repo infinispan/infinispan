@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.infinispan.server.resp.test.RespTestingUtil.OK;
 import static org.infinispan.server.resp.test.RespTestingUtil.PONG;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
+import static org.infinispan.test.TestingUtil.getListeners;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 import static org.testng.AssertJUnit.assertEquals;
@@ -316,7 +317,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
 
    @Test(dataProvider = "booleans")
    public void testPubSubUnsubscribe(boolean quit) throws InterruptedException {
-      int listenersBefore = cache.getAdvancedCache().getListeners().size();
+      int listenersBefore = getListeners(cache).size();
 
       RedisPubSubCommands<String, String> connection = createPubSubConnection();
       BlockingQueue<String> handOffQueue = addPubSubListener(connection);
@@ -329,7 +330,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       assertThat(value).isEqualTo("subscribed-test-2");
 
       // 2 listeners, one for each sub above
-      assertThat(cache.getAdvancedCache().getListeners()).hasSize(listenersBefore + 2);
+      assertThat(getListeners(cache)).hasSize(listenersBefore + 2);
       // Unsubscribe to all channels
       if (quit) {
          // Originally wanted to use reset or quit, but they don't do what we expect from
@@ -337,8 +338,8 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
          connection.getStatefulConnection().close();
 
          // Have to use eventually as they are removed asynchronously
-         eventually(() -> cache.getAdvancedCache().getListeners().size() == listenersBefore);
-         assertThat(cache.getAdvancedCache().getListeners()).hasSize(listenersBefore);
+         eventually(() -> getListeners(cache).size() == listenersBefore);
+         assertThat(getListeners(cache)).hasSize(listenersBefore);
 
          assertThat(handOffQueue).isEmpty();
       } else {
@@ -354,7 +355,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
             }
          }
 
-         assertThat(cache.getAdvancedCache().getListeners()).hasSize(listenersBefore);
+         assertThat(getListeners(cache)).hasSize(listenersBefore);
          assertThat(connection.ping()).isEqualTo(PONG);
       }
    }

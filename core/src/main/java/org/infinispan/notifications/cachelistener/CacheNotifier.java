@@ -3,6 +3,7 @@ package org.infinispan.notifications.cachelistener;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.FlagAffectedCommand;
@@ -129,4 +130,8 @@ public interface CacheNotifier<K, V> extends DataConversionAwareListenable<K, V>
     * @return true if there is a listener mapped to the annotation, otherwise false
     */
    boolean hasListener(Class<? extends Annotation> annotationClass);
+
+   boolean hasListeners();
+
+   Set<Object> getListeners();
 }

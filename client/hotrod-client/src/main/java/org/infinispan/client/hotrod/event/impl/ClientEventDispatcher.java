@@ -33,7 +33,7 @@ import org.infinispan.commons.util.Util;
 
 public final class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
 
-   public static final ClientCacheFailoverEvent FAILOVER_EVENT_SINGLETON = () -> ClientEvent.Type.CLIENT_CACHE_FAILOVER;
+   private static final ClientCacheFailoverEvent FAILOVER_EVENT_SINGLETON = () -> ClientEvent.Type.CLIENT_CACHE_FAILOVER;
 
    private static final Map<Class<? extends Annotation>, Class<?>[]> allowedListeners = new HashMap<>(5);
 

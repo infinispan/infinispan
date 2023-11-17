@@ -1,5 +1,6 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
+import static org.infinispan.test.TestingUtil.getListeners;
 import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.configuration.cache.CacheMode;
@@ -36,8 +37,8 @@ public class ClusteredListenerJoinsTest extends MultipleCacheManagersTest {
    }
 
    public void testJoins() {
-      int cache0Size = cache(0).getListeners().size();
-      int cache1Size = cache(1).getListeners().size();
+      int cache0Size = getListeners(cache(0)).size();
+      int cache1Size = getListeners(cache(1)).size();
 
       cache(0).addListener(new NoOpListener());
 
@@ -49,7 +50,7 @@ public class ClusteredListenerJoinsTest extends MultipleCacheManagersTest {
 
       // Now we verify the listener was actually added - since this is a DIST cache we also have the local listener
       // that sends remote and we added 2 of them
-      assertEquals(cache0Size + 2, cache(0).getListeners().size());
-      assertEquals(cache1Size + 2, cache(1).getListeners().size());
+      assertEquals(cache0Size + 2, getListeners(cache(0)).size());
+      assertEquals(cache1Size + 2, getListeners(cache(1)).size());
    }
 }
