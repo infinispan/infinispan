@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.infinispan.commons.util.Features;
-import org.infinispan.commons.util.Version;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -31,14 +30,6 @@ import org.infinispan.factories.scopes.Scopes;
 @Scope(Scopes.GLOBAL)
 @SurvivesRestarts
 public class GlobalConfiguration {
-
-   /**
-    * Default replication version, from {@link org.infinispan.commons.util.Version#getVersionShort}.
-    *
-    * @deprecated Since 9.4, use {@code Version.getVersionShort()} instead.
-    */
-   @Deprecated
-   public static final short DEFAULT_MARSHALL_VERSION = Version.getVersionShort();
 
    private final Map<Class<?>, ?> modules;
    private final SiteConfiguration site;
