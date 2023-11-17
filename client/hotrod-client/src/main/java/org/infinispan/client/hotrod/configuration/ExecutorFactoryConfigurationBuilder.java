@@ -47,7 +47,7 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractConfigurationCh
    }
 
    public ExecutorFactoryConfigurationBuilder factoryClass(String factoryClass) {
-      this.factoryClass = Util.loadClass(factoryClass, builder.classLoader());
+      this.factoryClass = Util.loadClass(factoryClass, ExecutorFactoryConfigurationBuilder.class.getClassLoader());
       return this;
    }
 

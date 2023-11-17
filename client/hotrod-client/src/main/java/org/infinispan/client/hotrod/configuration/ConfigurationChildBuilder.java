@@ -5,7 +5,6 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import jakarta.transaction.Synchronization;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
@@ -15,6 +14,8 @@ import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashV2;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.protostream.SerializationContextInitializer;
+
+import jakarta.transaction.Synchronization;
 
 /**
  * ConfigurationChildBuilder.
@@ -62,16 +63,6 @@ public interface ConfigurationChildBuilder {
     * servers according to this strategy.
     */
    ConfigurationBuilder balancingStrategy(Class<? extends FailoverRequestBalancingStrategy> balancingStrategy);
-
-   /**
-    * Specifies the {@link ClassLoader} used to find certain resources used by configuration when specified by name
-    * (e.g. certificate stores). Infinispan will search through the classloader which loaded this class, the system
-    * classloader and the TCCL classloader.
-    * @deprecated since 9.0. To be removed in 12.0. If you need to load configuration resources from other locations, you will need to do so
-    * yourself and use the appropriate configuration methods (e.g. {@link SslConfigurationBuilder#sslContext(javax.net.ssl.SSLContext)})
-    */
-   @Deprecated
-   ConfigurationBuilder classLoader(ClassLoader classLoader);
 
    /**
     * Specifies the level of "intelligence" the client should have

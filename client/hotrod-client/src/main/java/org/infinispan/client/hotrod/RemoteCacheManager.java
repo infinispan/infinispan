@@ -26,7 +26,6 @@ import java.util.regex.Pattern;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-import jakarta.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
@@ -79,6 +78,8 @@ import org.infinispan.commons.util.Version;
 import org.infinispan.counter.api.CounterManager;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
+
+import jakarta.transaction.TransactionManager;
 
 /**
  * <p>Factory for {@link RemoteCache}s.</p>
@@ -195,7 +196,6 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    public RemoteCacheManager(boolean start) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       ClassLoader cl = Thread.currentThread().getContextClassLoader();
-      builder.classLoader(cl);
       InputStream stream = FileLookupFactory.newInstance().lookupFile(HOTROD_CLIENT_PROPERTIES, cl);
       if (stream == null) {
          HOTROD.couldNotFindPropertiesFile(HOTROD_CLIENT_PROPERTIES);

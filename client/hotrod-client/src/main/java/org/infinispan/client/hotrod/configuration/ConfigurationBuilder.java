@@ -166,7 +166,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
    @Override
    public ConfigurationBuilder balancingStrategy(String balancingStrategy) {
-      this.balancingStrategyFactory = () -> Util.getInstance(balancingStrategy, this.classLoader());
+      this.balancingStrategyFactory = () -> Util.getInstance(balancingStrategy, ExecutorFactoryConfigurationBuilder.class.getClassLoader());
       return this;
    }
 
@@ -180,16 +180,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    public ConfigurationBuilder balancingStrategy(Class<? extends FailoverRequestBalancingStrategy> balancingStrategy) {
       this.balancingStrategyFactory = () -> Util.getInstance(balancingStrategy);
       return this;
-   }
-
-   @Override
-   public ConfigurationBuilder classLoader(ClassLoader cl) {
-      this.classLoader = new WeakReference<>(cl);
-      return this;
-   }
-
-   ClassLoader classLoader() {
-      return classLoader != null ? classLoader.get() : null;
    }
 
    @Override
@@ -224,7 +214,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       if (version == 1) {
          log.warn("Hash function version 1 is no longer supported.");
       } else {
-         this.consistentHashImpl[version - 1] = Util.loadClass(consistentHashClass, classLoader());
+         this.consistentHashImpl[version - 1] = Util.loadClass(consistentHashClass, ConfigurationBuilder.class.getClassLoader());
       }
       return this;
    }
@@ -265,7 +255,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
    @Override
    public ConfigurationBuilder marshaller(String marshallerClassName) {
-      return marshaller(marshallerClassName == null ? null : Util.loadClass(marshallerClassName, classLoader()));
+      return marshaller(marshallerClassName == null ? null : Util.loadClass(marshallerClassName, ConfigurationBuilder.class.getClassLoader()));
    }
 
    @Override
@@ -284,7 +274,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
 
    @Override
    public ConfigurationBuilder addContextInitializer(String contextInitializer) {
-      SerializationContextInitializer sci = Util.getInstance(contextInitializer, this.classLoader());
+      SerializationContextInitializer sci = Util.getInstance(contextInitializer, ConfigurationBuilder.class.getClassLoader());
       return addContextInitializers(sci);
    }
 

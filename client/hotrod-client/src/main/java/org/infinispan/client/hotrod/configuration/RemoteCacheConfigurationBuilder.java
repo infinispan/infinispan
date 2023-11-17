@@ -23,8 +23,6 @@ import java.util.Properties;
 import java.util.Scanner;
 import java.util.function.Consumer;
 
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.client.hotrod.DefaultTemplate;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
@@ -39,6 +37,8 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.TypedProperties;
+
+import jakarta.transaction.TransactionManager;
 
 /**
  * Per-cache configuration.
@@ -272,7 +272,7 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
       findCacheProperty(typed, ConfigurationProperties.CACHE_NEAR_CACHE_MODE_SUFFIX, v -> this.nearCacheMode(NearCacheMode.valueOf(v)));
       findCacheProperty(typed, ConfigurationProperties.CACHE_NEAR_CACHE_MAX_ENTRIES_SUFFIX, v -> this.nearCacheMaxEntries(Integer.parseInt(v)));
       findCacheProperty(typed, ConfigurationProperties.CACHE_NEAR_CACHE_BLOOM_FILTER_SUFFIX, v -> this.nearCacheUseBloomFilter(Boolean.parseBoolean(v)));
-      findCacheProperty(typed, ConfigurationProperties.CACHE_NEAR_CACHE_FACTORY_SUFFIX, v -> this.nearCacheFactory(getInstance(loadClass(v, builder.classLoader()))));
+      findCacheProperty(typed, ConfigurationProperties.CACHE_NEAR_CACHE_FACTORY_SUFFIX, v -> this.nearCacheFactory(getInstance(loadClass(v, RemoteCacheConfigurationBuilder.class.getClassLoader()))));
       findCacheProperty(typed, ConfigurationProperties.CACHE_TRANSACTION_MODE_SUFFIX, v -> this.transactionMode(TransactionMode.valueOf(v)));
       findCacheProperty(typed, ConfigurationProperties.CACHE_TRANSACTION_MANAGER_LOOKUP_SUFFIX, this::transactionManagerLookupClass);
       findCacheProperty(typed, ConfigurationProperties.CACHE_MARSHALLER, this::marshaller);
@@ -282,7 +282,7 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
    private void transactionManagerLookupClass(String lookupClass) {
       TransactionManagerLookup lookup = lookupClass == null || GenericTransactionManagerLookup.class.getName().equals(lookupClass) ?
             GenericTransactionManagerLookup.getInstance() :
-            getInstance(loadClass(lookupClass, builder.classLoader()));
+            getInstance(loadClass(lookupClass, RemoteCacheConfigurationBuilder.class.getClassLoader()));
       transactionManagerLookup(lookup);
    }
 

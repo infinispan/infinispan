@@ -252,7 +252,7 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
       Object prop = typed.get(ConfigurationProperties.AUTH_CALLBACK_HANDLER);
       if (prop instanceof String) {
          String cbhClassName = StringPropertyReplacer.replaceProperties((String) prop);
-         CallbackHandler handler = Util.getInstance(cbhClassName, builder.getBuilder().classLoader());
+         CallbackHandler handler = Util.getInstance(cbhClassName, AuthenticationConfigurationBuilder.class.getClassLoader());
          this.callbackHandler(handler);
       } else if (prop instanceof CallbackHandler) {
          this.callbackHandler((CallbackHandler) prop);
