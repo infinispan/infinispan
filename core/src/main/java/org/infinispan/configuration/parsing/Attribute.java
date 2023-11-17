@@ -184,8 +184,6 @@ public enum Attribute {
     STATISTICS,
     START,
     STARTUP_MODE,
-    @Deprecated
-    STATE_TRANSFER_EXECUTOR,
     STORAGE,
     STORE_KEYS_AS_BINARY("keys"),
     STORE_VALUES_AS_BINARY("values"),

@@ -88,9 +88,6 @@
       <!-- transport.executor -->
       <blocking-bounded-queue-thread-pool name="infinispan-transport" thread-factory="infinispan-factory"
             core-threads="5" max-threads="10" queue-length="100" keepalive-time="10000"/>
-      <!-- state-transfer-executor -->
-      <blocking-bounded-queue-thread-pool name="infinispan-state-transfer" thread-factory="infinispan-factory"
-            core-threads="1" max-threads="60" queue-length="0" keepalive-time="0"/>
       <!-- transport.remote-command-executor, persistence-executor -->
       <cached-thread-pool name="infinispan-cached" thread-factory="infinispan-factory" />
       <!-- expiration-executor -->
@@ -98,7 +95,7 @@
    </threads>
 
    <cache-container name="maximal" aliases="alias1 alias2" default-cache="local" async-executor="infinispan-async" expiration-executor="infinispan-expiration"
-                    jndi-name="java:global/infinispan/maximal"  state-transfer-executor="infinispan-state-transfer" listener-executor="infinispan-listener"
+                    jndi-name="java:global/infinispan/maximal"  listener-executor="infinispan-listener"
                     persistence-executor="infinispan-cached" module="org.infinispan" statistics="true" shutdown-hook="DONT_REGISTER" zero-capacity-node="false">
       <transport cluster="maximal-cluster" executor="infinispan-transport" remote-command-executor="infinispan-cached" lock-timeout="120000" stack="tcp" node-name="a-node" machine="a" rack="b" site="c"
                  initial-cluster-size="4" initial-cluster-timeout="30000" />

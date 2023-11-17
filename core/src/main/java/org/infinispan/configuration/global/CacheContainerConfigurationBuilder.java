@@ -115,15 +115,6 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
       return threads.persistenceThreadPool();
    }
 
-   /**
-    * @deprecated Since 10.1, no longer used.
-    */
-   @Deprecated
-   @Override
-   public ThreadPoolConfigurationBuilder stateTransferThreadPool() {
-      return threads.stateTransferThreadPool();
-   }
-
    @Override
    public ThreadPoolConfigurationBuilder listenerThreadPool() {
       return threads.listenerThreadPool();

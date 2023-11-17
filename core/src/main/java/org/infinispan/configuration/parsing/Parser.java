@@ -671,8 +671,7 @@ public class Parser extends CacheParser {
             case MODULE:
             case START:
             case ASYNC_EXECUTOR:
-            case PERSISTENCE_EXECUTOR:
-            case STATE_TRANSFER_EXECUTOR: {
+            case PERSISTENCE_EXECUTOR: {
                ParseUtils.removedSince(reader, 11, 0);
                ignoreAttribute(reader, i);
                break;

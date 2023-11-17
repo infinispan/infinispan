@@ -87,15 +87,6 @@ public class GlobalConfiguration {
 
    /**
     * @return An empty {@code ThreadPoolConfiguration}.
-    * @deprecated Since 10.1, no longer used.
-    */
-   @Deprecated
-   public ThreadPoolConfiguration stateTransferThreadPool() {
-      return cacheContainerConfiguration.stateTransferThreadPool();
-   }
-
-   /**
-    * @return An empty {@code ThreadPoolConfiguration}.
     * @deprecated Since 11.0, no longer used.
     */
    @Deprecated
@@ -117,14 +108,6 @@ public class GlobalConfiguration {
 
    public GlobalJmxConfiguration jmx() {
       return cacheContainerConfiguration.jmx();
-   }
-
-   /**
-    * @deprecated Since 10.1.3. Use {@link #jmx()} instead. This will be removed in next major version.
-    */
-   @Deprecated
-   public GlobalJmxConfiguration globalJmxStatistics() {
-      return jmx();
    }
 
    public String cacheManagerName() {
@@ -181,14 +164,6 @@ public class GlobalConfiguration {
 
    public String blockingThreadPoolName() {
       return cacheContainer().blockingExecutor();
-   }
-
-   /**
-    * @deprecated Since 10.1, no longer used.
-    */
-   @Deprecated
-   public String stateTransferThreadPoolName() {
-      return cacheContainer().stateTransferExecutor();
    }
 
    @SuppressWarnings("unchecked")
