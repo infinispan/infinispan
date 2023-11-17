@@ -21,14 +21,12 @@ public class SslEngineConfiguration {
    private final String trustStoreFileName;
    private final String trustStoreType;
    private final char[] trustStorePassword;
-   private final char[] keyStoreCertificatePassword;
 
-   SslEngineConfiguration(String keyStoreFileName, String keyStoreType, char[] keyStorePassword, char[] keyStoreCertificatePassword, String keyAlias,
+   SslEngineConfiguration(String keyStoreFileName, String keyStoreType, char[] keyStorePassword, String keyAlias,
                           Supplier<SSLContext> sslContext, String trustStoreFileName, String trustStoreType, char[] trustStorePassword, String protocol) {
       this.keyStoreFileName = keyStoreFileName;
       this.keyStoreType = keyStoreType;
       this.keyStorePassword = keyStorePassword;
-      this.keyStoreCertificatePassword = keyStoreCertificatePassword;
       this.keyAlias = keyAlias;
       this.sslContext = sslContext;
       this.trustStoreFileName = trustStoreFileName;
@@ -47,10 +45,6 @@ public class SslEngineConfiguration {
 
    public char[] keyStorePassword() {
       return keyStorePassword;
-   }
-
-   public char[] keyStoreCertificatePassword() {
-      return keyStoreCertificatePassword;
    }
 
    public String keyAlias() {

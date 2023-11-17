@@ -114,9 +114,6 @@ public class RestClientConfiguration {
       if (security.ssl().keyStorePassword() != null)
          properties.setProperty(RestClientConfigurationProperties.KEY_STORE_PASSWORD, new String(security.ssl().keyStorePassword()));
 
-      if (security.ssl().keyStoreCertificatePassword() != null)
-         properties.setProperty(RestClientConfigurationProperties.KEY_STORE_CERTIFICATE_PASSWORD, new String(security.ssl().keyStoreCertificatePassword()));
-
       if (security.ssl().trustStoreFileName() != null)
          properties.setProperty(RestClientConfigurationProperties.TRUST_STORE_FILE_NAME, security.ssl().trustStoreFileName());
 

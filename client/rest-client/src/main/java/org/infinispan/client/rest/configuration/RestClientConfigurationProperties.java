@@ -1,9 +1,9 @@
 package org.infinispan.client.rest.configuration;
 
+import java.util.Properties;
+
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Version;
-
-import java.util.Properties;
 
 /**
  * Encapsulate all config properties here
@@ -155,10 +155,6 @@ public class RestClientConfigurationProperties {
 
    public void setKeyStorePassword(String keyStorePassword) {
       props.setProperty(KEY_STORE_PASSWORD, keyStorePassword);
-   }
-
-   public void setKeyStoreCertificatePassword(String keyStoreCertificatePassword) {
-      props.setProperty(KEY_STORE_CERTIFICATE_PASSWORD, keyStoreCertificatePassword);
    }
 
    public String getKeyAlias() {

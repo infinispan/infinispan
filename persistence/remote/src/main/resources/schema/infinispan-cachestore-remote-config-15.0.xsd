@@ -359,13 +359,6 @@
   <xs:complexType name="keystore" >
     <xs:complexContent>
       <xs:extension base="tns:basekeystore">
-        <xs:attribute name="certificate-password" type="xs:string">
-          <xs:annotation>
-            <xs:documentation>
-              The password to use when obtaining the certificate from the key store. If not specified, the password will be used.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:attribute>
         <xs:attribute name="key-alias" type="xs:string">
           <xs:annotation>
             <xs:documentation>

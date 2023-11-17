@@ -60,7 +60,6 @@ public class ConfigurationProperties {
    public static final String KEY_STORE_PASSWORD = ICH + "key_store_password";
    public static final String SNI_HOST_NAME = ICH + "sni_host_name";
    public static final String KEY_ALIAS = ICH + "key_alias";
-   public static final String KEY_STORE_CERTIFICATE_PASSWORD = ICH + "key_store_certificate_password";
    public static final String TRUST_STORE_FILE_NAME = ICH + "trust_store_file_name";
    public static final String TRUST_STORE_PATH = ICH + "trust_store_path";
    public static final String TRUST_STORE_TYPE = ICH + "trust_store_type";
@@ -367,10 +366,6 @@ public class ConfigurationProperties {
 
    public void setKeyStorePassword(String keyStorePassword) {
       props.setProperty(KEY_STORE_PASSWORD, keyStorePassword);
-   }
-
-   public void setKeyStoreCertificatePassword(String keyStoreCertificatePassword) {
-      props.setProperty(KEY_STORE_CERTIFICATE_PASSWORD, keyStoreCertificatePassword);
    }
 
    public String getKeyAlias() {

@@ -275,10 +275,6 @@ public class RemoteStoreConfigurationParser implements ConfigurationParser {
             case PASSWORD:
                // already processed
                break;
-            case CERTIFICATE_PASSWORD: {
-               ssl.keyStoreCertificatePassword(value.toCharArray());
-               break;
-            }
             case KEY_ALIAS: {
                ssl.keyAlias(value);
                break;

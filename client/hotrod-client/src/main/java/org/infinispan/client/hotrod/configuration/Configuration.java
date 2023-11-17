@@ -27,7 +27,6 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.FORCE_RE
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.HASH_FUNCTION_PREFIX;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JAVA_SERIAL_ALLOWLIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_SIZE_ESTIMATE;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_CERTIFICATE_PASSWORD;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_FILE_NAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_PASSWORD;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.MARSHALLER;
@@ -466,9 +465,6 @@ public class Configuration {
 
       if (security.ssl().keyStorePassword() != null)
          properties.setProperty(KEY_STORE_PASSWORD, new String(security.ssl().keyStorePassword()));
-
-      if (security.ssl().keyStoreCertificatePassword() != null)
-         properties.setProperty(KEY_STORE_CERTIFICATE_PASSWORD, new String(security.ssl().keyStoreCertificatePassword()));
 
       if (security.ssl().trustStoreFileName() != null)
          properties.setProperty(TRUST_STORE_FILE_NAME, security.ssl().trustStoreFileName());

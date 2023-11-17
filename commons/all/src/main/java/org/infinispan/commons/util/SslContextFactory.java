@@ -54,7 +54,6 @@ public class SslContextFactory {
 
    private String keyStoreFileName;
    private char[] keyStorePassword;
-   private char[] keyStoreCertificatePassword;
    private String keyStoreType = DEFAULT_KEYSTORE_TYPE;
    private String keyAlias;
    private String trustStoreFileName;
@@ -75,11 +74,6 @@ public class SslContextFactory {
 
    public SslContextFactory keyStorePassword(char[] keyStorePassword) {
       this.keyStorePassword = keyStorePassword;
-      return this;
-   }
-
-   public SslContextFactory keyStoreCertificatePassword(char[] keyStoreCertificatePassword) {
-      this.keyStoreCertificatePassword = keyStoreCertificatePassword;
       return this;
    }
 
@@ -171,10 +165,9 @@ public class SslContextFactory {
       Provider provider = findProvider(this.provider, KeyManagerFactory.class.getSimpleName(), type);
       KeyStore ks = provider != null ? KeyStore.getInstance(type, provider) : KeyStore.getInstance(type);
       loadKeyStore(ks, keyStoreFileName, keyStorePassword, classLoader);
-      char[] keyPassword = keyStoreCertificatePassword == null ? keyStorePassword : keyStoreCertificatePassword;
       if (keyAlias != null) {
          if (ks.containsAlias(keyAlias) && ks.isKeyEntry(keyAlias)) {
-            KeyStore.PasswordProtection passParam = new KeyStore.PasswordProtection(keyPassword);
+            KeyStore.PasswordProtection passParam = new KeyStore.PasswordProtection(keyStorePassword);
             KeyStore.Entry entry = ks.getEntry(keyAlias, passParam);
             // Recreate the keystore with just one key
             ks = provider != null ? KeyStore.getInstance(type, provider) : KeyStore.getInstance(type);
@@ -187,7 +180,7 @@ public class SslContextFactory {
       String algorithm = KeyManagerFactory.getDefaultAlgorithm();
       provider = findProvider(this.provider, KeyManagerFactory.class.getSimpleName(), algorithm);
       KeyManagerFactory kmf = provider != null ? KeyManagerFactory.getInstance(algorithm, provider) : KeyManagerFactory.getInstance(algorithm);
-      kmf.init(ks, keyPassword);
+      kmf.init(ks, keyStorePassword);
       return kmf;
    }
 

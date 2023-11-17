@@ -513,7 +513,6 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
                .keyAlias(ssl.keyAlias())
                .keyStoreFileName(ssl.keyStoreFileName())
                .keyStorePassword(ssl.keyStorePassword())
-               .keyStoreCertificatePassword(ssl.keyStoreCertificatePassword())
                .trustStoreFileName(ssl.trustStoreFileName())
                .trustStorePassword(ssl.trustStorePassword())
                .trustStoreType(ssl.trustStoreType())

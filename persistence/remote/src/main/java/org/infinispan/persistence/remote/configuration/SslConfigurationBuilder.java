@@ -22,8 +22,8 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @since 9.1
  */
 public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<SslConfiguration> {
-   private KeyStoreConfigurationBuilder keyStoreConfigurationBuilder;
-   private TrustStoreConfigurationBuilder trustStoreConfigurationBuilder;
+   private final KeyStoreConfigurationBuilder keyStoreConfigurationBuilder;
+   private final TrustStoreConfigurationBuilder trustStoreConfigurationBuilder;
 
    SslConfigurationBuilder(SecurityConfigurationBuilder builder) {
       super(builder, SslConfiguration.attributeDefinitionSet());
@@ -90,16 +90,6 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
     */
    public SslConfigurationBuilder keyStorePassword(char[] keyStorePassword) {
       keyStoreConfigurationBuilder.keyStorePassword(keyStorePassword);
-      return this;
-   }
-
-   /**
-    * Specifies the password needed to access private key associated with certificate stored in specified
-    * {@link #keyStoreFileName(String)}. If password is not specified, password provided in
-    * {@link #keyStorePassword(char[])} will be used.
-    */
-   public SslConfigurationBuilder keyStoreCertificatePassword(char[] keyStoreCertificatePassword) {
-      keyStoreConfigurationBuilder.keyStoreCertificatePassword(keyStoreCertificatePassword);
       return this;
    }
 

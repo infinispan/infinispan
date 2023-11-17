@@ -266,12 +266,6 @@
  *          <td>The {@link org.infinispan.client.hotrod.configuration.SslConfigurationBuilder#keyAlias(String) alias} of the </td>
  *       </tr>
  *       <tr>
- *          <td><b>infinispan.client.hotrod.key_store_certificate_password</b></td>
- *          <td>String</td>
- *          <td>N/A</td>
- *          <td>The {@link org.infinispan.client.hotrod.configuration.SslConfigurationBuilder#keyStoreCertificatePassword(char[]) certificate&nbsp;password} in the keystore.</td>
- *       </tr>
- *       <tr>
  *          <td><b>infinispan.client.hotrod.trust_store_file_name</b></td>
  *          <td>String</td>
  *          <td>N/A</td>

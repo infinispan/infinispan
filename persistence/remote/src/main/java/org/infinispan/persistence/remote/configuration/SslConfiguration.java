@@ -56,10 +56,6 @@ public class SslConfiguration extends ConfigurationElement<SslConfiguration> {
       return keyStoreConfiguration.keyStorePassword();
    }
 
-   public char[] keyStoreCertificatePassword() {
-      return keyStoreConfiguration.keyStoreCertificatePassword();
-   }
-
    public String keyAlias() {
       return keyStoreConfiguration.keyAlias();
    }

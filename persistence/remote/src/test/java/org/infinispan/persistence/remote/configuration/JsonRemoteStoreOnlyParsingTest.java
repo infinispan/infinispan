@@ -67,7 +67,6 @@ public class JsonRemoteStoreOnlyParsingTest {
             "                \"keystore\":{\n" +
             "                    \"filename\":\"${project.build.testOutputDirectory}/keystore_client.jks\",\n" +
             "                    \"password\":\"secret\",\n" +
-            "                    \"certificate-password\":\"secret\",\n" +
             "                    \"key-alias\":\"hotrod\",\n" +
             "                    \"type\":\"JKS\"\n" +
             "                },\n" +

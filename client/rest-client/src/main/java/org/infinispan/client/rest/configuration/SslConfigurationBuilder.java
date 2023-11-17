@@ -99,20 +99,6 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    }
 
    /**
-    * Specifies the password needed to access private key associated with certificate stored in specified {@link
-    * #keyStoreFileName(String)}. If password is not specified, password provided in {@link #keyStorePassword(char[])}
-    * will be used. Setting this property also implicitly enables SSL/TLS (see {@link #enable()}<br>
-    * <b>Note:</b> this only works with some keystore types
-    *
-    * @deprecated since 9.3
-    */
-   @Deprecated
-   public SslConfigurationBuilder keyStoreCertificatePassword(char[] keyStoreCertificatePassword) {
-      this.keyStoreCertificatePassword = keyStoreCertificatePassword;
-      return enable();
-   }
-
-   /**
     * Sets the alias of the key to use, in case the keyStore contains multiple certificates. Setting this property also
     * implicitly enables SSL/TLS (see {@link #enable()}
     */
@@ -288,9 +274,6 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
 
       if (typed.containsKey(RestClientConfigurationProperties.KEY_STORE_PASSWORD))
          this.keyStorePassword(typed.getProperty(RestClientConfigurationProperties.KEY_STORE_PASSWORD, null, true).toCharArray());
-
-      if (typed.containsKey(RestClientConfigurationProperties.KEY_STORE_CERTIFICATE_PASSWORD))
-         this.keyStoreCertificatePassword(typed.getProperty(RestClientConfigurationProperties.KEY_STORE_CERTIFICATE_PASSWORD, null, true).toCharArray());
 
       if (typed.containsKey(RestClientConfigurationProperties.KEY_ALIAS))
          this.keyAlias(typed.getProperty(RestClientConfigurationProperties.KEY_ALIAS, null, true));

@@ -21,7 +21,6 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JMX;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JMX_DOMAIN;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JMX_NAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_SIZE_ESTIMATE;
-import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_CERTIFICATE_PASSWORD;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_FILE_NAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_PASSWORD;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.MAX_RETRIES;
@@ -122,7 +121,6 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       OPTIONS.put(KEY_STORE_FILE_NAME, c -> c.security().ssl().keyStoreFileName());
       OPTIONS.put(SNI_HOST_NAME, c -> c.security().ssl().sniHostName());
       OPTIONS.put(KEY_STORE_PASSWORD, c -> new String(c.security().ssl().keyStorePassword()));
-      OPTIONS.put(KEY_STORE_CERTIFICATE_PASSWORD, c -> new String(c.security().ssl().keyStoreCertificatePassword()));
       OPTIONS.put(TRUST_STORE_FILE_NAME, c -> c.security().ssl().trustStoreFileName());
       OPTIONS.put(TRUST_STORE_PASSWORD, c -> new String(c.security().ssl().trustStorePassword()));
       OPTIONS.put(SSL_PROTOCOL, c -> c.security().ssl().protocol());
@@ -213,7 +211,6 @@ public class ConfigurationTest extends AbstractInfinispanTest {
             .sniHostName("infinispan.test")
             .keyStoreFileName("my-key-store.file")
             .keyStorePassword("my-key-store.password".toCharArray())
-            .keyStoreCertificatePassword("my-key-store-certificate.password".toCharArray())
             .trustStoreFileName("my-trust-store.file")
             .trustStorePassword("my-trust-store.password".toCharArray())
             .protocol("TLSv1.1")
@@ -276,7 +273,6 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       p.setProperty(USE_SSL, "true");
       p.setProperty(KEY_STORE_FILE_NAME, "my-key-store.file");
       p.setProperty(KEY_STORE_PASSWORD, "my-key-store.password");
-      p.setProperty(KEY_STORE_CERTIFICATE_PASSWORD, "my-key-store-certificate.password");
       p.setProperty(TRUST_STORE_FILE_NAME, "my-trust-store.file");
       p.setProperty(TRUST_STORE_PASSWORD, "my-trust-store.password");
       p.setProperty(SSL_PROTOCOL, "TLSv1.1");
@@ -598,7 +594,6 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       assertEqualsConfig(true, USE_SSL, configuration);
       assertEqualsConfig("my-key-store.file", KEY_STORE_FILE_NAME, configuration);
       assertEqualsConfig("my-key-store.password", KEY_STORE_PASSWORD, configuration);
-      assertEqualsConfig("my-key-store-certificate.password", KEY_STORE_CERTIFICATE_PASSWORD, configuration);
       assertEqualsConfig("my-trust-store.file", TRUST_STORE_FILE_NAME, configuration);
       assertEqualsConfig("my-trust-store.password", TRUST_STORE_PASSWORD, configuration);
       assertEqualsConfig("TLSv1.1", SSL_PROTOCOL, configuration);

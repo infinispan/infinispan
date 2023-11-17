@@ -28,7 +28,6 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    private String keyStoreFileName;
    private String keyStoreType;
    private char[] keyStorePassword;
-   private char[] keyStoreCertificatePassword;
    private String keyAlias;
    private String trustStorePath;
    private String trustStoreFileName;
@@ -100,21 +99,6 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
     */
    public SslConfigurationBuilder keyStorePassword(char[] keyStorePassword) {
       this.keyStorePassword = keyStorePassword;
-      return enable();
-   }
-
-   /**
-    * Specifies the password needed to access private key associated with certificate stored in specified
-    * {@link #keyStoreFileName(String)}. If password is not specified, password provided in
-    * {@link #keyStorePassword(char[])} will be used.
-    * Setting this property also implicitly enables SSL/TLS (see {@link #enable()}<br>
-    * <b>Note:</b> this only works with some keystore types
-    *
-    * @deprecated since 9.3
-    */
-   @Deprecated
-   public SslConfigurationBuilder keyStoreCertificatePassword(char[] keyStoreCertificatePassword) {
-      this.keyStoreCertificatePassword = keyStoreCertificatePassword;
       return enable();
    }
 
@@ -265,7 +249,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    @Override
    public SslConfiguration create() {
       return new SslConfiguration(enabled,
-            keyStoreFileName, keyStoreType, keyStorePassword, keyStoreCertificatePassword, keyAlias,
+            keyStoreFileName, keyStoreType, keyStorePassword, keyAlias,
             sslContext,
             trustStoreFileName, trustStorePath, trustStoreType, trustStorePassword,
             sniHostName, provider, protocol, ciphers, hostnameValidation);
@@ -277,7 +261,6 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
       this.keyStoreFileName = template.keyStoreFileName();
       this.keyStoreType = template.keyStoreType();
       this.keyStorePassword = template.keyStorePassword();
-      this.keyStoreCertificatePassword = template.keyStoreCertificatePassword();
       this.keyAlias = template.keyAlias();
       this.sslContext = template.sslContext();
       this.trustStoreFileName = template.trustStoreFileName();
@@ -304,9 +287,6 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
 
       if (typed.containsKey(ConfigurationProperties.KEY_STORE_PASSWORD))
          this.keyStorePassword(typed.getProperty(ConfigurationProperties.KEY_STORE_PASSWORD, null, true).toCharArray());
-
-      if (typed.containsKey(ConfigurationProperties.KEY_STORE_CERTIFICATE_PASSWORD))
-         this.keyStoreCertificatePassword(typed.getProperty(ConfigurationProperties.KEY_STORE_CERTIFICATE_PASSWORD, null, true).toCharArray());
 
       if (typed.containsKey(ConfigurationProperties.KEY_ALIAS))
          this.keyAlias(typed.getProperty(ConfigurationProperties.KEY_ALIAS, null, true));

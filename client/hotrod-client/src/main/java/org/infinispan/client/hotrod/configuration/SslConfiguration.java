@@ -15,7 +15,6 @@ public class SslConfiguration {
    private final String keyStoreFileName;
    private final String keyStoreType;
    private final char[] keyStorePassword;
-   private final char[] keyStoreCertificatePassword;
    private final String keyAlias;
    private final SSLContext sslContext;
    private final String trustStoreFileName;
@@ -28,7 +27,7 @@ public class SslConfiguration {
    private final String provider;
    private final boolean hostnameValidation;
 
-   SslConfiguration(boolean enabled, String keyStoreFileName, String keyStoreType, char[] keyStorePassword, char[] keyStoreCertificatePassword, String keyAlias,
+   SslConfiguration(boolean enabled, String keyStoreFileName, String keyStoreType, char[] keyStorePassword, String keyAlias,
                     SSLContext sslContext,
                     String trustStoreFileName, String trustStorePath, String trustStoreType, char[] trustStorePassword, String sniHostName, String provider, String protocol, Collection<String> ciphers,
                     boolean hostnameValidation) {
@@ -36,7 +35,6 @@ public class SslConfiguration {
       this.keyStoreFileName = keyStoreFileName;
       this.keyStoreType = keyStoreType;
       this.keyStorePassword = keyStorePassword;
-      this.keyStoreCertificatePassword = keyStoreCertificatePassword;
       this.keyAlias = keyAlias;
       this.sslContext = sslContext;
       this.trustStoreFileName = trustStoreFileName;
@@ -64,10 +62,6 @@ public class SslConfiguration {
 
    public char[] keyStorePassword() {
       return keyStorePassword;
-   }
-
-   public char[] keyStoreCertificatePassword() {
-      return keyStoreCertificatePassword;
    }
 
    public String keyAlias() {

@@ -47,10 +47,6 @@ public class SslConfiguration extends ConfigurationElement<SslConfiguration> {
       return sniDomainsConfiguration.get(DEFAULT_SNI_DOMAIN).keyStorePassword();
    }
 
-   public char[] keyStoreCertificatePassword() {
-      return sniDomainsConfiguration.get(DEFAULT_SNI_DOMAIN).keyStoreCertificatePassword();
-   }
-
    public SSLContext sslContext() {
       return sniDomainsConfiguration.get(DEFAULT_SNI_DOMAIN).sslContext();
    }
