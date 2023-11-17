@@ -231,6 +231,7 @@ public class GlobalStateTest extends AbstractInfinispanTest {
 
       // Remove the lock file, this should allow the cache manager to start
       globalLockFile.delete();
+      global.transport().defaultTransport();
       cm = TestCacheManagerFactory.createClusteredCacheManager(false, global, null, new TransportFlags());
       try {
          cm.start();

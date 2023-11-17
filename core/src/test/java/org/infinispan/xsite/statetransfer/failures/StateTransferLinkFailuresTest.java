@@ -11,7 +11,6 @@ import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -22,7 +21,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.transport.AbstractDelegatingTransport;
-import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.remoting.transport.impl.XSiteResponseImpl;
@@ -147,11 +145,6 @@ public class StateTransferLinkFailuresTest extends AbstractTopologyChangeTest {
       @Override
       public void start() {
          //no-op; avoid re-start the transport again...
-      }
-
-      @Override
-      public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteRequest<?> rpcCommand) {
-         throw new UnsupportedOperationException();
       }
 
       @Override

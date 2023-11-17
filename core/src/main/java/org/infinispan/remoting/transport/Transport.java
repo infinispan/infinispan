@@ -19,6 +19,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.logging.TraceException;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -28,7 +29,6 @@ import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.raft.RaftManager;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.xsite.XSiteBackup;
@@ -44,40 +44,6 @@ import org.infinispan.xsite.commands.remote.XSiteRequest;
  */
 @Scope(Scopes.GLOBAL)
 public interface Transport extends Lifecycle {
-   /**
-    * Invokes an RPC call on other caches in the cluster.
-    *
-    * @param recipients     a list of Addresses to invoke the call on.  If this is null, the call is broadcast to the
-    *                       entire cluster.
-    * @param rpcCommand     the cache command to invoke
-    * @param mode           the response mode to use
-    * @param timeout        a timeout after which to throw a replication exception. implementations.
-    * @param responseFilter a response filter with which to filter out failed/unwanted/invalid responses.
-    * @param deliverOrder   the {@link org.infinispan.remoting.inboundhandler.DeliverOrder}.
-    * @param anycast        used when {@param totalOrder} is {@code true}, it means that it must use TOA instead of
-    *                       TOB.
-    * @return a map of responses from each member contacted.
-    * @throws Exception in the event of problems.
-    * @deprecated Since 9.2, please use {@link #invokeCommand(Collection, ReplicableCommand, ResponseCollector, DeliverOrder, long, TimeUnit)} instead.
-    */
-   @Deprecated
-   default Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand,
-                                                 ResponseMode mode, long timeout,
-                                                 ResponseFilter responseFilter, DeliverOrder deliverOrder,
-                                                 boolean anycast) throws Exception {
-      CompletableFuture<Map<Address, Response>> future = invokeRemotelyAsync(recipients, rpcCommand, mode,
-                                                                             timeout, responseFilter, deliverOrder,
-                                                                             anycast);
-      try {
-         //no need to set a timeout for the future. The rpc invocation is guaranteed to complete within the timeout
-         // milliseconds
-         return CompletableFutures.await(future);
-      } catch (ExecutionException e) {
-         Throwable cause = e.getCause();
-         cause.addSuppressed(new TraceException());
-         throw Util.rewrapAsCacheException(cause);
-      }
-   }
 
    CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
                                                                  ReplicableCommand rpcCommand,
@@ -178,12 +144,6 @@ public interface Transport extends Lifecycle {
 
 
    /**
-    * @deprecated since 10.0. Use {@link #backupRemotely(XSiteBackup, XSiteRequest)} instead.
-    */
-   @Deprecated
-   BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteRequest<?> rpcCommand) throws Exception;
-
-   /**
     * Sends a cross-site request to a remote site.
     * <p>
     * Currently, no reply values are supported. Or the request completes successfully or it throws an {@link
@@ -281,12 +241,6 @@ public interface Transport extends Lifecycle {
     * @return A {@link CompletableFuture} that completes when the transport has installed the expected view.
     */
    CompletableFuture<Void> withView(int expectedViewId);
-
-   /**
-    * @deprecated Since 9.0, please use {@link #withView(int)} instead.
-    */
-   @Deprecated
-   void waitForView(int viewId) throws InterruptedException;
 
    Log getLog();
 

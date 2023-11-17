@@ -1,11 +1,9 @@
 package org.infinispan.xsite.offline;
 
-import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.remoting.transport.AbstractDelegatingTransport;
-import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.util.logging.Log;
@@ -23,11 +21,6 @@ public class DelegatingTransport extends AbstractDelegatingTransport {
    @Override
    public void start() {
       //no-op; avoid re-start the transport again...
-   }
-
-   @Override
-   public BackupResponse backupRemotely(final Collection<XSiteBackup> backups, XSiteRequest<?> rpcCommand) {
-      throw new UnsupportedOperationException();
    }
 
    @Override
