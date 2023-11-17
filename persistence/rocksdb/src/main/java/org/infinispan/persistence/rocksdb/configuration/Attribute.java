@@ -22,7 +22,6 @@ public enum Attribute {
    LOCATION("location"),
    PATH("path"),
    RELATIVE_TO("relative-to"),
-   QUEUE_SIZE("queue-size"),
    TYPE("type"),
    ;
 

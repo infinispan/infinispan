@@ -10,10 +10,9 @@ import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 public class RocksDBExpirationConfiguration extends ConfigurationElement<RocksDBExpirationConfiguration> {
 
    final static AttributeDefinition<String> EXPIRED_LOCATION = AttributeDefinition.builder(org.infinispan.persistence.rocksdb.configuration.Attribute.PATH, null, String.class).immutable().autoPersist(false).build();
-   final static AttributeDefinition<Integer> EXPIRY_QUEUE_SIZE = AttributeDefinition.builder(org.infinispan.persistence.rocksdb.configuration.Attribute.EXPIRY_QUEUE_SIZE, 10000).immutable().autoPersist(false).build();
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(RocksDBExpirationConfiguration.class, EXPIRED_LOCATION, EXPIRY_QUEUE_SIZE);
+      return new AttributeSet(RocksDBExpirationConfiguration.class, EXPIRED_LOCATION);
    }
 
    RocksDBExpirationConfiguration(AttributeSet attributes) {
@@ -23,13 +22,5 @@ public class RocksDBExpirationConfiguration extends ConfigurationElement<RocksDB
 
    public String expiredLocation() {
       return attributes.attribute(EXPIRED_LOCATION).get();
-   }
-
-   /**
-    * @deprecated Since 10.1, there is no more queue in {@link org.infinispan.persistence.rocksdb.RocksDBStore}
-    */
-   @Deprecated
-   int expiryQueueSize() {
-      return attributes.attribute(EXPIRY_QUEUE_SIZE).get();
    }
 }

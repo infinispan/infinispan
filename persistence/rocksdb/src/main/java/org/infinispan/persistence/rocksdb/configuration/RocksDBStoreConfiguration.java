@@ -48,12 +48,4 @@ public class RocksDBStoreConfiguration extends AbstractStoreConfiguration<RocksD
    public CompressionType compressionType() {
       return attributes.attribute(COMPRESSION_TYPE).get();
    }
-
-   /**
-    * @deprecated There is no more queue in {@link org.infinispan.persistence.rocksdb.RocksDBStore}
-    */
-   @Deprecated
-   public int expiryQueueSize() {
-      return expiration.expiryQueueSize();
-   }
 }
