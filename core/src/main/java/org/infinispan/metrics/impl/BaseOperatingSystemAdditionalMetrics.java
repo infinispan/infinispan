@@ -30,20 +30,9 @@ public class BaseOperatingSystemAdditionalMetrics implements MeterBinder {
 
    private static final Log log = LogFactory.getLog(BaseOperatingSystemAdditionalMetrics.class);
 
-   static {
-      operatingSystemBean = ManagementFactory.getOperatingSystemMXBean();
-
-      Class<?> operatingSystemBeanClass = getOperatingSystemMXBeanImpl();
-      processCpuLoadMethod = detectMethod(operatingSystemBeanClass, "getProcessCpuLoad");
-      processCpuTimeMethod = detectMethod(operatingSystemBeanClass, "getProcessCpuTime");
-   }
-
-   private static final OperatingSystemMXBean operatingSystemBean;
-   private static final Method processCpuLoadMethod;
-   private static final Method processCpuTimeMethod;
-
    @Override
    public void bindTo(MeterRegistry registry) {
+      OperatingSystemMXBean operatingSystemBean = ManagementFactory.getOperatingSystemMXBean();
       Gauge.builder(PREFIX + "cpu.availableProcessors", operatingSystemBean, OperatingSystemMXBean::getAvailableProcessors)
             .description("Displays the number of processors available to the Java virtual machine. This value may change during a particular invocation of the virtual machine.")
             .register(registry);
@@ -52,30 +41,44 @@ public class BaseOperatingSystemAdditionalMetrics implements MeterBinder {
             .description("Displays the system load average for the last minute. The system load average is the sum of the number of runnable entities queued to the available processors and the number of runnable entities running on the available processors averaged over a period of time. The way in which the load average is calculated is operating system specific but is typically a damped time-dependent average. If the load average is not available, a negative value is displayed. This attribute is designed to provide a hint about the system load and may be queried frequently. The load average might be unavailable on some platforms where it is expensive to implement this method.")
             .register(registry);
 
+      Method processCpuLoadMethod = getProcessCpuLoad(operatingSystemBean);
       if (processCpuLoadMethod != null) {
-         Gauge.builder(PREFIX + "cpu.processCpuLoad", () -> invoke(processCpuLoadMethod))
+         Gauge.builder(PREFIX + "cpu.processCpuLoad", () -> invoke(operatingSystemBean, processCpuLoadMethod))
                .description("Displays the \"recent cpu usage\" for the Java virtual machine process.")
                .register(registry);
       }
 
+      Method processCpuTimeMethod = getProcessCpuTime(operatingSystemBean);
       if (processCpuTimeMethod != null) {
-         Gauge.builder(PREFIX + "cpu.processCpuTime", () -> invoke(processCpuTimeMethod))
+         Gauge.builder(PREFIX + "cpu.processCpuTime", () -> invoke(operatingSystemBean, processCpuTimeMethod))
                .description("Displays the CPU time, in nanoseconds, used by the process on which the Java virtual machine is running.")
                .register(registry);
       }
    }
 
    public Json cpuReport() {
+      OperatingSystemMXBean operatingSystemBean = ManagementFactory.getOperatingSystemMXBean();
       Json report = Json.object("system-load-average", operatingSystemBean.getSystemLoadAverage());
 
+      Method processCpuLoadMethod = getProcessCpuLoad(operatingSystemBean);
       if (processCpuLoadMethod != null) {
-         report.set("process-cpu-load", invoke(processCpuLoadMethod));
+         report.set("process-cpu-load", invoke(operatingSystemBean, processCpuLoadMethod));
       }
+
+      Method processCpuTimeMethod = getProcessCpuTime(operatingSystemBean);
       if (processCpuTimeMethod != null) {
-         report.set("process-cpu-time", invoke(processCpuTimeMethod));
+         report.set("process-cpu-time", invoke(operatingSystemBean, processCpuTimeMethod));
       }
 
       return report;
+   }
+
+   private static Method getProcessCpuLoad(OperatingSystemMXBean operatingSystemBean) {
+      return detectMethod(operatingSystemBean, getOperatingSystemMXBeanImpl(), "getProcessCpuLoad");
+   }
+
+   private static Method getProcessCpuTime(OperatingSystemMXBean operatingSystemBean) {
+      return detectMethod(operatingSystemBean, getOperatingSystemMXBeanImpl(), "getProcessCpuTime");
    }
 
    private static Class<?> getOperatingSystemMXBeanImpl() {
@@ -93,7 +96,7 @@ public class BaseOperatingSystemAdditionalMetrics implements MeterBinder {
       return null;
    }
 
-   private static Method detectMethod(Class<?> operatingSystemBeanClass, String name) {
+   private static Method detectMethod(OperatingSystemMXBean operatingSystemBean, Class<?> operatingSystemBeanClass, String name) {
       if (operatingSystemBeanClass == null) {
          return null;
       }
@@ -106,7 +109,7 @@ public class BaseOperatingSystemAdditionalMetrics implements MeterBinder {
       }
    }
 
-   private double invoke(Method method) {
+   private double invoke(OperatingSystemMXBean operatingSystemBean, Method method) {
       try {
          Object returnedValue = method.invoke(operatingSystemBean);
          if (returnedValue instanceof Long) {
