@@ -1,4 +1,4 @@
-package org.infinispan.server.logging;
+package org.infinispan.commons.logging.log4j;
 
 import static org.junit.Assert.assertEquals;
 
@@ -10,7 +10,6 @@ import java.nio.file.Paths;
 
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.ConfigurationSource;
-import org.infinispan.server.logging.log4j.XmlConfiguration;
 import org.junit.Test;
 
 /**
@@ -21,17 +20,17 @@ public class XmlConfigurationTest {
 
    @Test
    public void testXmlConfiguration() throws IOException {
-      Path path = getConfigPath().resolve("log4j2.xml");
+      Path path = getConfigPath().resolve("log4j2-test.xml");
       try (InputStream is = Files.newInputStream(path)) {
          ConfigurationSource configurationSource = new ConfigurationSource(is, path.toFile());
          LoggerContext context = new LoggerContext("test");
          XmlConfiguration xmlConfiguration = new XmlConfiguration(context, configurationSource);
          xmlConfiguration.initialize();
-         assertEquals("InfinispanServerConfig", xmlConfiguration.getName());
+         assertEquals("InfinispanTestConfig", xmlConfiguration.getName());
       }
    }
 
    public static Path getConfigPath() {
-      return Paths.get(System.getProperty("build.directory"), "test-classes", "configuration");
+      return Paths.get(System.getProperty("build.directory"), "test-classes");
    }
 }

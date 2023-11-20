@@ -28,10 +28,6 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
             ReflectiveClass.of(org.infinispan.cli.logging.Messages_$bundle.class),
             ReflectiveClass.of(org.infinispan.commons.logging.Log_$logger.class),
             ReflectiveClass.of(org.aesh.command.impl.parser.AeshOptionParser.class),
-            ReflectiveClass.of(org.apache.logging.log4j.core.impl.Log4jContextFactory.class),
-            ReflectiveClass.of(org.apache.logging.log4j.core.util.ExecutorServices.class),
-            ReflectiveClass.of(org.apache.logging.log4j.message.ParameterizedMessageFactory.class),
-            ReflectiveClass.of(org.apache.logging.log4j.message.DefaultFlowMessageFactory.class),
             ReflectiveClass.of(org.wildfly.security.password.impl.PasswordFactorySpiImpl.class)
       ));
    }
