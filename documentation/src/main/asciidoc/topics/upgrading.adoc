@@ -1,5 +1,36 @@
 = Upgrading from 14.0 to 15.0
 
+== Deprecation removals
+
+Removed the following deprecated elements:
+
+* All: Parsing of configuration files with schema < 10.0
+* Commons: `Start.priority` and `Stop.priority`
+* Core: `AdvancedCache.with(ClassLoader)`, `AdvancedCache.getEvictionManager()`, `AdvancedCache.getAsyncInterceptorChain()`
+* Core: `AnyScopeComponentFactory.construct(Class)`
+* Core: `Cache.getListeners()`
+* Core: `ConfigurationBuilder.classLoader()`, `ConfigurationBuilder.customInterceptors()`
+* Core: `DataRehashedEvent.getUnionConsistentHash()`
+* Core: `EmbeddedCacheManager.getListeners()`, `EmbeddedCacheManager.getTransport()`, `EmbeddedCacheManager.removeCache(String)`
+* Core: `FlagAffectedCommand.setFlags`, `FlagAffedctedCommand.addFlags`, `FlagAffectedCommand.hasFlag`
+* Core: `IntCacheStream.filterKeySegments(Set<Integer>)`
+* Core: `JMXStatisticsConfiguration`
+* Core: `GlobalConfiguration.DEFAULT_MARSHALL_VERSION`
+* Core; `LocalizedCacheTopology.getDistributionForSegment(int)`
+* Core: `NamedComponentFactory`
+* Core: `PersistenceUtil.loadAndStoreInDataContainer`
+* Core: `TopologyChangedEvent.getConsistentHashAtStart()` and `TopologyChangedEvent.getConsistentHashAtEnd()`
+* Core: `Transport.invokeRemotely()` `Transport.waitForView()` `Transport.backupRemotely()` `AbstractTransport`
+* Core: `ValueMatcher.nonExistentEntryCanMatch`
+* Core: `WriteCommand.updateStatusFromRemoteResponse`
+* Core: state transfer pool
+* Counters: `SyncStrongCounter` and `SyncWeakCounter`
+* Hot Rod client: `org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller`
+* Server and clients: keystore certificate password
+* RocksDB Store: expiry queue size
+* Remote Store: transport factory and maxIdle
+
+
 == Metrics
 
 The JGroups and cross-site metrics name changed when `names-as-tags` is set to `true`,
