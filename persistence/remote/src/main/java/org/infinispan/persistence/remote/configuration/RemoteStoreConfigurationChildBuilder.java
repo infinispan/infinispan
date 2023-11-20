@@ -50,7 +50,7 @@ public interface RemoteStoreConfigurationChildBuilder<S> extends StoreConfigurat
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    RemoteStoreConfigurationBuilder keySizeEstimate(int keySizeEstimate);
 
    /**
@@ -107,7 +107,7 @@ public interface RemoteStoreConfigurationChildBuilder<S> extends StoreConfigurat
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    RemoteStoreConfigurationBuilder valueSizeEstimate(int valueSizeEstimate);
 
 }

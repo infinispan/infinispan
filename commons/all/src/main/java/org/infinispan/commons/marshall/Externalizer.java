@@ -79,7 +79,7 @@ import java.io.Serializable;
  * org.infinispan.protostream.SerializationContextInitializer} and utilise ProtoStream annotations on Java objects instead, or
  * specify a custom {@link Marshaller} implementation via the SerializationConfiguration.
  */
-@Deprecated
+@Deprecated(forRemoval=true)
 public interface Externalizer<T> extends Serializable {
 
    /**

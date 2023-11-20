@@ -56,7 +56,7 @@ public interface InfinispanProperties {
     *
     * @see #DEF_USE_SYNCHRONIZATION
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    String INFINISPAN_USE_SYNCHRONIZATION_PROP = "hibernate.cache.infinispan.use_synchronization";
 
    /**
@@ -149,7 +149,7 @@ public interface InfinispanProperties {
    /**
     * @deprecated Use {@link #DEF_PENDING_PUTS_RESOURCE} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    String PENDING_PUTS_CACHE_NAME = DEF_PENDING_PUTS_RESOURCE;
 
    /**

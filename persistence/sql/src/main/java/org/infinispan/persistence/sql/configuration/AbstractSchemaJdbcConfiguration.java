@@ -24,7 +24,7 @@ public class AbstractSchemaJdbcConfiguration<T extends AbstractSchemaJdbcConfigu
    /**
     * @deprecated use {@link #schema()} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public SchemaJdbcConfiguration getSchemaJdbcConfiguration() {
       return schemaJdbcConfiguration;
    }

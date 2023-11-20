@@ -11,7 +11,7 @@ import org.infinispan.configuration.cache.MemoryConfiguration;
  * {@link MemoryConfiguration#maxSize()} should be used to differentiate between
  * the eviction thresholds.
  */
-@Deprecated
+@Deprecated(forRemoval=true)
 public enum EvictionType {
    COUNT,
    MEMORY,

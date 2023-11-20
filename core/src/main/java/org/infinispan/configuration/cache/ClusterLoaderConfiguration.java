@@ -19,7 +19,7 @@ import org.infinispan.persistence.cluster.ClusterLoader;
  */
 @BuiltBy(ClusterLoaderConfigurationBuilder.class)
 @ConfigurationFor(ClusterLoader.class)
-@Deprecated
+@Deprecated(forRemoval=true)
 public class ClusterLoaderConfiguration extends AbstractStoreConfiguration<ClusterLoaderConfiguration> {
 
    static final AttributeDefinition<Long> REMOTE_CALL_TIMEOUT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.REMOTE_TIMEOUT, TimeUnit.SECONDS.toMillis(15)).immutable().build();

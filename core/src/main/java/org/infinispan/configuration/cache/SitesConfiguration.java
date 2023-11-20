@@ -61,7 +61,7 @@ public class SitesConfiguration extends ConfigurationElement<SitesConfiguration>
     *
     * @deprecated since 14.0. To be removed without replacement.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public boolean disableBackups() {
       return false;
    }
@@ -83,7 +83,7 @@ public class SitesConfiguration extends ConfigurationElement<SitesConfiguration>
     *
     * @deprecated Since 14.0. To be removed without replacement. Use {@link #allBackups()} or {@link #allBackupsStream()}.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public List<BackupConfiguration> enabledBackups() {
       return allBackups();
    }
@@ -91,7 +91,7 @@ public class SitesConfiguration extends ConfigurationElement<SitesConfiguration>
    /**
     * @deprecated Since 14.0. To be removed without replacement. Use {@link #allBackups()} or {@link #allBackupsStream()}.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public Stream<BackupConfiguration> enabledBackupStream() {
       return allBackupsStream();
    }
@@ -115,7 +115,7 @@ public class SitesConfiguration extends ConfigurationElement<SitesConfiguration>
    /**
     * @deprecated since 14.0. To be removed without replacement
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public boolean hasInUseBackup(String siteName) {
       return allBackups.stream().anyMatch(bc -> bc.site().equals(siteName));
    }
@@ -123,7 +123,7 @@ public class SitesConfiguration extends ConfigurationElement<SitesConfiguration>
    /**
     * @deprecated since 14.0. To be removed without replacement. Use {@link #hasBackups()} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public boolean hasEnabledBackups() {
       return hasBackups();
    }
@@ -151,7 +151,7 @@ public class SitesConfiguration extends ConfigurationElement<SitesConfiguration>
    /**
     * @deprecated since 14.0. To be removed without replacement.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public Set<String> inUseBackupSites() {
       return allBackups.stream().map(BackupConfiguration::site).collect(Collectors.toSet());
    }

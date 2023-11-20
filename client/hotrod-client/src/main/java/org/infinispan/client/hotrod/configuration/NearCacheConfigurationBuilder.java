@@ -72,7 +72,7 @@ public class NearCacheConfigurationBuilder extends AbstractConfigurationChildBui
     * @return an instance of the builder
     * @deprecated use {@link RemoteCacheConfigurationBuilder#nearCacheMode(NearCacheMode)} to enable near-caching per-cache
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public NearCacheConfigurationBuilder cacheNamePattern(String pattern) {
       this.cacheNamePattern = Pattern.compile(pattern);
       return this;
@@ -85,7 +85,7 @@ public class NearCacheConfigurationBuilder extends AbstractConfigurationChildBui
     * @return an instance of the builder
     * @deprecated use {@link RemoteCacheConfigurationBuilder#nearCacheMode(NearCacheMode)} to enable near-caching per-cache
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public NearCacheConfigurationBuilder cacheNamePattern(Pattern pattern) {
       this.cacheNamePattern = pattern;
       return this;

@@ -28,6 +28,7 @@ import org.infinispan.commons.configuration.attributes.AttributeListener;
 import org.infinispan.commons.stat.MetricInfo;
 import org.infinispan.commons.stat.TimerTracker;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.logging.TraceException;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
@@ -57,7 +58,6 @@ import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
@@ -507,7 +507,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
     * @deprecated We already have an attribute, we shouldn't have an operation for the same thing.
     */
    @Override
-   @Deprecated
+   @Deprecated(forRemoval=true)
    @ManagedOperation(displayName = "Enable/disable statistics. Deprecated, use the statisticsEnabled attribute instead.")
    public void setStatisticsEnabled(@Parameter(name = "enabled", description = "Whether statistics should be enabled or disabled (true/false)") boolean statisticsEnabled) {
       this.statisticsEnabled = statisticsEnabled;

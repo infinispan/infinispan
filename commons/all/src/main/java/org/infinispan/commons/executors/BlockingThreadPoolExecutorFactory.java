@@ -17,7 +17,7 @@ import org.infinispan.commons.util.concurrent.NonBlockingRejectedExecutionHandle
  * @author Galder Zamarreño
  * @deprecated since 12.0 with no replacement
  */
-@Deprecated
+@Deprecated(forRemoval=true)
 public class BlockingThreadPoolExecutorFactory implements ThreadPoolExecutorFactory<ExecutorService> {
    public static final int DEFAULT_KEEP_ALIVE_MILLIS = 60000;
 

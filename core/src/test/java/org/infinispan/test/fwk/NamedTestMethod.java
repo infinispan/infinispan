@@ -37,7 +37,7 @@ public class NamedTestMethod implements ITestNGMethod {
    }
 
    @Override
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public Method getMethod() {
       return method.getMethod();
    }
@@ -48,7 +48,7 @@ public class NamedTestMethod implements ITestNGMethod {
    }
 
    @Override
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public Object[] getInstances() {
       return method.getInstances();
    }

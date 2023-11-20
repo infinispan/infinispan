@@ -24,7 +24,7 @@ public abstract class AbstractTypedPropertiesConfiguration {
    /**
     * @deprecated use {@link AbstractTypedPropertiesConfiguration#AbstractTypedPropertiesConfiguration(AttributeSet)} instead
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    protected AbstractTypedPropertiesConfiguration(Properties properties) {
       this.attributes = attributeSet();
       this.attributes = attributes.protect();

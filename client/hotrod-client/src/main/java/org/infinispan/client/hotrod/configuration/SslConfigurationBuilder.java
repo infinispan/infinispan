@@ -136,7 +136,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
     *
     * @deprecated since 12.0 to be removed in 15.0. Use {@link #trustStoreFileName(String)} and pass <tt>pem</tt> to {@link #trustStoreType(String)}.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public SslConfigurationBuilder trustStorePath(String trustStorePath) {
       HOTROD.deprecatedConfigurationProperty(ConfigurationProperties.TRUST_STORE_PATH);
       this.trustStorePath = trustStorePath;

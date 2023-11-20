@@ -8,7 +8,7 @@ import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 
-@Deprecated
+@Deprecated(forRemoval=true)
 @BuiltBy(WhiteListConfigurationBuilder.class)
 public class WhiteListConfiguration {
 

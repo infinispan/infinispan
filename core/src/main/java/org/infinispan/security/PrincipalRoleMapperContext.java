@@ -7,6 +7,6 @@ package org.infinispan.security;
  * @since 7.0
  * @deprecated since 14.0. To be removed in 17.0. Use {@link AuthorizationMapperContext} instead
  */
-@Deprecated
+@Deprecated(forRemoval=true)
 public interface PrincipalRoleMapperContext extends AuthorizationMapperContext {
 }

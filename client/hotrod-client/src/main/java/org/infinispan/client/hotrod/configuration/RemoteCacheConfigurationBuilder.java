@@ -222,7 +222,7 @@ public class RemoteCacheConfigurationBuilder implements Builder<RemoteCacheConfi
     * @deprecated since 12.0. To be removed in Infinispan 14. Use {@link #transactionManagerLookup(TransactionManagerLookup)}
     * instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public RemoteCacheConfigurationBuilder transactionManager(TransactionManager manager) {
       return transactionManagerLookup(() -> manager);
    }

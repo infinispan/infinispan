@@ -35,6 +35,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.entries.ReadCommittedEntry;
@@ -58,7 +59,6 @@ import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.work.SearchIndexer;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -384,7 +384,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     *
     * @deprecated since 11
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public Map<String, Class<?>> indexedEntities() {
       return indexedClasses;
    }

@@ -5,7 +5,7 @@ package org.infinispan.metadata;
  * @since 6.0
  * @deprecated since 10.0
  */
-@Deprecated
+@Deprecated(forRemoval=true)
 public interface InternalMetadata extends Metadata {
 
    long created();

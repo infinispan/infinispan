@@ -21,7 +21,7 @@ public class BaseModelWithNameAnalyzedAndNameNonAnalyzedFieldEntity implements M
     public String id;
 
     @ProtoField(number = 3)
-    @Deprecated
+    @Deprecated(forRemoval=true)
     @Text()
     public String nameAnalyzed;
 

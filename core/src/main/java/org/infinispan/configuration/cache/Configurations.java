@@ -57,7 +57,7 @@ public class Configurations {
     * @return if the store config can be used for state transfer
     * @deprecated since 14.0. Returns true if the store is not shared.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public static boolean isStateTransferStore(StoreConfiguration storeConfiguration) {
       return !storeConfiguration.shared();
    }

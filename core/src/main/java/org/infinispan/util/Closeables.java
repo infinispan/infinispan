@@ -21,7 +21,7 @@ public class Closeables {
     * @return an iterator that when closed will cancel the subscription
     * @deprecated since 11.0 Please use {@link org.infinispan.commons.util.Closeables#iterator(Publisher, int)} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public static <E> CloseableIterator<E> iterator(Publisher<E> publisher, int fetchSize) {
      return org.infinispan.commons.util.Closeables.iterator(publisher, fetchSize);
    }

@@ -14,14 +14,14 @@ public class ExecutorFactoryConfiguration extends AbstractTypedPropertiesConfigu
    private final Class<? extends ExecutorFactory> factoryClass;
    private final ExecutorFactory factory;
 
-   @Deprecated
+   @Deprecated(forRemoval=true)
    ExecutorFactoryConfiguration(Class<? extends ExecutorFactory> factoryClass, TypedProperties properties) {
       super(properties);
       this.factoryClass = factoryClass;
       this.factory = null;
    }
 
-   @Deprecated
+   @Deprecated(forRemoval=true)
    ExecutorFactoryConfiguration(ExecutorFactory factory, TypedProperties properties) {
       super(properties);
       this.factory = factory;

@@ -106,7 +106,7 @@ public interface ConfigurationChildBuilder {
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    ConfigurationBuilder keySizeEstimate(int keySizeEstimate);
 
    /**
@@ -152,7 +152,7 @@ public interface ConfigurationChildBuilder {
     *
     * @deprecated since 9.0. To be removed in 12.0. Use {@link ConfigurationChildBuilder#version(ProtocolVersion)} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    ConfigurationBuilder protocolVersion(String protocolVersion);
 
    /**
@@ -195,7 +195,7 @@ public interface ConfigurationChildBuilder {
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    ConfigurationBuilder valueSizeEstimate(int valueSizeEstimate);
 
    /**
@@ -213,7 +213,7 @@ public interface ConfigurationChildBuilder {
    /**
     * @deprecated Use {@link #addJavaSerialAllowList(String...)} instead. To be removed in 14.0.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    ConfigurationBuilder addJavaSerialWhiteList(String... regEx);
 
    /**

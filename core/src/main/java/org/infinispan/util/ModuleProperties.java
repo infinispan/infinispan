@@ -24,7 +24,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 4.0
  * @deprecated Since 10.0, without replacement. To be removed very soon.
  */
-@Deprecated
+@Deprecated(forRemoval=true)
 public final class ModuleProperties {
 
    private static final Log log = LogFactory.getLog(ModuleProperties.class);

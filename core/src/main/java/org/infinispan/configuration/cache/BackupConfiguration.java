@@ -74,7 +74,7 @@ public class BackupConfiguration extends ConfigurationElement<BackupConfiguratio
    /**
     * @deprecated Since 14.0. To be removed without replacement
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public BackupConfiguration replicationTimeout(long timeout) {
       return this;
    }
@@ -95,7 +95,7 @@ public class BackupConfiguration extends ConfigurationElement<BackupConfiguratio
     * @see BackupConfigurationBuilder#enabled(boolean).
     * @deprecated Since 14.0. To be removed without replacement.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public boolean enabled() {
       return true;
    }

@@ -2,7 +2,7 @@ package org.infinispan.spring.starter.embedded;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 
-@Deprecated
+@Deprecated(forRemoval=true)
 // Will be removed in future releases
 @FunctionalInterface
 public interface InfinispanConfigurationCustomizer {

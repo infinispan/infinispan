@@ -57,7 +57,7 @@ public enum Attribute {
    ISSUER,
    JKU_TIMEOUT,
    JNDI_NAME,
-   @Deprecated
+   @Deprecated(forRemoval=true)
    KEYSTORE_PASSWORD,
    KEYTAB_PATH,
    KEY_PASSWORD,

@@ -44,7 +44,7 @@ public interface RemoteCacheContainer extends BasicCacheContainer {
     * @see #getCache(String, boolean, TransactionMode, TransactionManager)
     * @deprecated since 11.0. Use {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#remoteCache(String)} to configure the cache and then {@link #getCache(String)} to obtain it.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    default <K, V> RemoteCache<K, V> getCache(String cacheName, boolean forceReturnValue) {
       return getCache(cacheName, forceReturnValue, null, null);
    }
@@ -55,7 +55,7 @@ public interface RemoteCacheContainer extends BasicCacheContainer {
     * @see #getCache(String, boolean, TransactionMode, TransactionManager)
     * @deprecated since 11.0. Use {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#remoteCache(String)} to configure the cache and then {@link #getCache(String)} to obtain it.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    default <K, V> RemoteCache<K, V> getCache(boolean forceReturnValue) {
       return getCache("", forceReturnValue, null, null);
    }
@@ -66,7 +66,7 @@ public interface RemoteCacheContainer extends BasicCacheContainer {
     * @see #getCache(String, TransactionMode, TransactionManager)
     * @deprecated since 11.0. Use {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#remoteCache(String)} to configure the cache and then {@link #getCache(String)} to obtain it.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    default <K, V> RemoteCache<K, V> getCache(String cacheName, TransactionMode transactionMode) {
       return getCache(cacheName, transactionMode, null);
    }
@@ -77,7 +77,7 @@ public interface RemoteCacheContainer extends BasicCacheContainer {
     * @see #getCache(String, boolean, TransactionMode, TransactionManager)
     * @deprecated since 11.0. Use {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#remoteCache(String)} to configure the cache and then {@link #getCache(String)} to obtain it.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    default <K, V> RemoteCache<K, V> getCache(String cacheName, boolean forceReturnValue,
          TransactionMode transactionMode) {
       return getCache(cacheName, forceReturnValue, transactionMode, null);
@@ -89,7 +89,7 @@ public interface RemoteCacheContainer extends BasicCacheContainer {
     * @see #getCache(String, TransactionMode, TransactionManager)
     * @deprecated since 11.0. Use {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#remoteCache(String)} to configure the cache and then {@link #getCache(String)} to obtain it.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    default <K, V> RemoteCache<K, V> getCache(String cacheName, TransactionManager transactionManager) {
       return getCache(cacheName, null, transactionManager);
    }
@@ -100,7 +100,7 @@ public interface RemoteCacheContainer extends BasicCacheContainer {
     * @see #getCache(String, boolean, TransactionMode, TransactionManager)
     * @deprecated since 11.0. Use {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#remoteCache(String)} to configure the cache and then {@link #getCache(String)} to obtain it.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    default <K, V> RemoteCache<K, V> getCache(String cacheName, boolean forceReturnValue,
          TransactionManager transactionManager) {
       return getCache(cacheName, forceReturnValue, null, transactionManager);
@@ -114,7 +114,7 @@ public interface RemoteCacheContainer extends BasicCacheContainer {
     * @return the {@link RemoteCache} implementation.
     * @deprecated since 11.0. Use {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#remoteCache(String)} to configure the cache and then {@link #getCache(String)} to obtain it.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    <K, V> RemoteCache<K, V> getCache(String cacheName, TransactionMode transactionMode,
          TransactionManager transactionManager);
 
@@ -127,7 +127,7 @@ public interface RemoteCacheContainer extends BasicCacheContainer {
     * @return the {@link RemoteCache} implementation.
     * @deprecated since 11.0. Use {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#remoteCache(String)} to configure the cache and then {@link #getCache(String)} to obtain it.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    <K, V> RemoteCache<K, V> getCache(String cacheName, boolean forceReturnValue, TransactionMode transactionMode,
          TransactionManager transactionManager);
 

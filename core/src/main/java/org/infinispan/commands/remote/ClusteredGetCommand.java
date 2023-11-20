@@ -115,7 +115,7 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand implements Seg
             });
    }
 
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public GlobalTransaction getGlobalTransaction() {
       return null;
    }

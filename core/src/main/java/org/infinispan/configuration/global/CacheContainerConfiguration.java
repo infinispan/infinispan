@@ -124,7 +124,7 @@ class CacheContainerConfiguration {
       return shutdown;
    }
 
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public String asyncExecutor() {
       return attributes.attribute(ASYNC_EXECUTOR).get();
    }
@@ -144,7 +144,7 @@ class CacheContainerConfiguration {
    /**
     * @deprecated Since 10.1, no longer used.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public String stateTransferExecutor() {
       return attributes.attribute(STATE_TRANSFER_EXECUTOR).get();
    }
@@ -181,7 +181,7 @@ class CacheContainerConfiguration {
       return threads.persistenceThreadPool();
    }
 
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public ThreadPoolConfiguration asyncThreadPool() {
       return threads.asyncThreadPool();
    }
