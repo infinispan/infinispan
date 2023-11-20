@@ -394,6 +394,8 @@ public class CLI extends CliCommand {
    }
 
    public static void main(String[] args) throws IOException {
+      System.setProperty("log4j2.disable.jmx", "true");
+      System.setProperty("log4j.configurationFactory", "org.infinispan.commons.logging.log4j.XmlConfigurationFactory");
       Shell shell = null;
       for (int i = 0; i < args.length - 1; i++) {
          if (args[i].equals("-f") && args[i + 1].equals("-")) {

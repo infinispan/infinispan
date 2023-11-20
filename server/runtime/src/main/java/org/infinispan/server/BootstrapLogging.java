@@ -3,7 +3,7 @@ package org.infinispan.server;
 import java.nio.file.Path;
 import java.util.logging.LogManager;
 
-import org.infinispan.server.logging.log4j.XmlConfigurationFactory;
+import org.infinispan.commons.logging.log4j.XmlConfigurationFactory;
 
 /**
  * Methods used to bootstrap logging in a JVM environment. This class is here for replacement with Quarkus and if it
@@ -17,6 +17,7 @@ public class BootstrapLogging {
    }
 
    static void configureLogging(Path loggingFile) {
+      System.setProperty("log4j2.disable.jmx", "true");
       System.setProperty("log4j.configurationFactory", XmlConfigurationFactory.class.getName());
       System.setProperty("log4j.configurationFile", loggingFile.toAbsolutePath().toString());
       LogManager logManager = LogManager.getLogManager();
