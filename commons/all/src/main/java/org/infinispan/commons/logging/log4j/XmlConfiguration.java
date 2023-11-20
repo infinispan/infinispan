@@ -1,4 +1,4 @@
-package org.infinispan.server.logging.log4j;
+package org.infinispan.commons.logging.log4j;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,8 +21,8 @@ import org.apache.logging.log4j.core.config.status.StatusConfiguration;
 import org.apache.logging.log4j.core.util.Patterns;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.io.ConfigurationReader;
+import org.infinispan.commons.configuration.io.ConfigurationReaderException;
 import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.configuration.parsing.ParseUtils;
 
 public class XmlConfiguration extends AbstractConfiguration implements Reconfigurable {
 
@@ -72,7 +72,8 @@ public class XmlConfiguration extends AbstractConfiguration implements Reconfigu
                //createAdvertiser(value, getConfigurationSource(), buffer, "text/xml");
                break;
             default:
-               throw ParseUtils.unexpectedAttribute(reader, i);
+               throw new ConfigurationReaderException("Unexpected attribute '" + reader.getAttributeName(i) + "' encountered",
+                  reader.getLocation());
          }
       }
       initializeWatchers(this, getConfigurationSource(), monitorIntervalSeconds);
@@ -98,7 +99,7 @@ public class XmlConfiguration extends AbstractConfiguration implements Reconfigu
       } catch (IOException e) {
          throw new CacheConfigurationException(e);
       }
-      if (status.size() > 0) {
+      if (!status.isEmpty()) {
          for (final Status s : status) {
             LOGGER.error("Error processing element {} ({}): {}", s.name, s.element, s.errorType);
          }

@@ -1,4 +1,4 @@
-package org.infinispan.server.logging.log4j;
+package org.infinispan.commons.logging.log4j;
 
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
