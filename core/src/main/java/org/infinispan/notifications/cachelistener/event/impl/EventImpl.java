@@ -129,7 +129,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    /**
     * @deprecated Since 12.0, will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public void setTransactionId(GlobalTransaction transaction) {
       setSource(transaction);
    }

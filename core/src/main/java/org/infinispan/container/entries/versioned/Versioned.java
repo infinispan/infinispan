@@ -9,7 +9,7 @@ import org.infinispan.container.versioning.EntryVersion;
  * @since 5.1
  * @deprecated since 11.0 (no longer used).
  */
-@Deprecated
+@Deprecated(forRemoval=true)
 public interface Versioned {
 
    /**

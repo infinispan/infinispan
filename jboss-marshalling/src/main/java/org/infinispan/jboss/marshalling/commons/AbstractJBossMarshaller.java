@@ -39,7 +39,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
  * @since 5.0
  * @deprecated since 11.0. To be removed in 14.0 ISPN-11947.
  */
-@Deprecated
+@Deprecated(forRemoval=true)
 public abstract class AbstractJBossMarshaller extends AbstractMarshaller implements StreamingMarshaller {
 
    protected static final Log log = LogFactory.getLog(AbstractJBossMarshaller.class);

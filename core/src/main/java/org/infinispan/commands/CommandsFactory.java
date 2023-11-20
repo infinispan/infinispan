@@ -26,17 +26,13 @@ import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.irac.IracCleanupKeysCommand;
-import org.infinispan.xsite.commands.remote.IracClearKeysRequest;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
-import org.infinispan.xsite.commands.remote.IracPutManyRequest;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
 import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneRemoteSiteCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
-import org.infinispan.xsite.commands.remote.IracTombstoneCheckRequest;
-import org.infinispan.xsite.commands.remote.IracTouchKeyRequest;
 import org.infinispan.commands.irac.IracUpdateVersionCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetAllCommand;
@@ -127,6 +123,10 @@ import org.infinispan.xsite.commands.XSiteStateTransferStartSendCommand;
 import org.infinispan.xsite.commands.XSiteStateTransferStatusRequestCommand;
 import org.infinispan.xsite.commands.XSiteStatusCommand;
 import org.infinispan.xsite.commands.XSiteTakeOfflineCommand;
+import org.infinispan.xsite.commands.remote.IracClearKeysRequest;
+import org.infinispan.xsite.commands.remote.IracPutManyRequest;
+import org.infinispan.xsite.commands.remote.IracTombstoneCheckRequest;
+import org.infinispan.xsite.commands.remote.IracTouchKeyRequest;
 import org.infinispan.xsite.commands.remote.XSiteStatePushRequest;
 import org.infinispan.xsite.commands.remote.XSiteStateTransferControlRequest;
 import org.infinispan.xsite.irac.IracManagerKeyInfo;
@@ -413,7 +413,7 @@ public interface CommandsFactory {
     * or {@link GlobalRpcCommand#invokeAsync(GlobalComponentRegistry)} instead.
     * to access any components required at invocation time.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    void initializeReplicableCommand(ReplicableCommand command, boolean isRemote);
 
    /**
@@ -422,7 +422,7 @@ public interface CommandsFactory {
     * @return a SingleRpcCommand
     * @deprecated since 11.0 use {@link #buildSingleRpcCommand(VisitableCommand)} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    default SingleRpcCommand buildSingleRpcCommand(ReplicableCommand call) {
       return buildSingleRpcCommand((VisitableCommand) call);
    }

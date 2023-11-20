@@ -86,7 +86,7 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
       return this;
    }
 
-   @Deprecated
+   @Deprecated(forRemoval=true)
    @Override
    public RemoteStoreConfigurationBuilder hotRodWrapping(boolean hotRodWrapping) {
       attributes.attribute(HOTROD_WRAPPING).set(hotRodWrapping);
@@ -97,7 +97,7 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    @Override
    public RemoteStoreConfigurationBuilder keySizeEstimate(int keySizeEstimate) {
       attributes.attribute(KEY_SIZE_ESTIMATE).set(keySizeEstimate);
@@ -122,7 +122,7 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
       return this;
    }
 
-   @Deprecated
+   @Deprecated(forRemoval=true)
    @Override
    public RemoteStoreConfigurationBuilder rawValues(boolean rawValues) {
       attributes.attribute(RAW_VALUES).set(rawValues);
@@ -166,7 +166,7 @@ public class RemoteStoreConfigurationBuilder extends AbstractStoreConfigurationB
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public RemoteStoreConfigurationBuilder valueSizeEstimate(int valueSizeEstimate) {
       attributes.attribute(VALUE_SIZE_ESTIMATE).set(valueSizeEstimate);
       return this;

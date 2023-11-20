@@ -1,8 +1,8 @@
 package org.infinispan.persistence.spi;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.persistence.support.BatchModification;
+
+import jakarta.transaction.Transaction;
 
 /**
  * Defines the functionality of a transactional store.  This interface allows the implementing store to participate in the
@@ -20,7 +20,7 @@ import org.infinispan.persistence.support.BatchModification;
  * @since 9.0
  * @deprecated since 11.0 replaced by {@link NonBlockingStore}
  */
-@Deprecated
+@Deprecated(forRemoval=true)
 public interface TransactionalCacheWriter<K, V> extends AdvancedCacheWriter<K, V> {
 
    /**

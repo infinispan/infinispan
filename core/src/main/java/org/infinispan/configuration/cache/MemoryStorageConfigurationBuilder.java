@@ -8,7 +8,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @since 10.0
  * @deprecated since 11.0, use {@link MemoryConfigurationBuilder} instead.
  */
-@Deprecated
+@Deprecated(forRemoval=true)
 public class MemoryStorageConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<MemoryStorageConfiguration> {
    AttributeSet attributes;
 

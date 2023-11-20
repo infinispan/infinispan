@@ -41,7 +41,7 @@ import org.infinispan.remoting.transport.impl.MapResponseCollector;
  * @deprecated since 11.0. To be removed in 14.0 ISPN-11864 with no direct replacement.
  */
 @ConfiguredBy(ClusterLoaderConfiguration.class)
-@Deprecated
+@Deprecated(forRemoval=true)
 public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader, StoreChangeListener {
 
    private RpcManager rpcManager;

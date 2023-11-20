@@ -16,7 +16,7 @@ package org.infinispan.xsite;
  * @since 5.2
  * @deprecated since 11.0. Use {@link org.infinispan.configuration.cache.CustomFailurePolicy} instead.
  */
-@Deprecated
+@Deprecated(forRemoval=true)
 public interface CustomFailurePolicy<K, V> extends org.infinispan.configuration.cache.CustomFailurePolicy<K, V> {
 
 }

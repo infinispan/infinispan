@@ -6,10 +6,10 @@ import java.io.ObjectOutput;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * The core of the command-based cache framework.  Commands correspond to specific areas of functionality in the cache,
@@ -28,7 +28,7 @@ public interface ReplicableCommand {
     * @deprecated since 11.0, please use {@link org.infinispan.commands.remote.CacheRpcCommand#invokeAsync(ComponentRegistry)}
     * or {@link GlobalRpcCommand#invokeAsync(GlobalComponentRegistry)} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    default CompletableFuture<Object> invokeAsync() throws Throwable {
       return CompletableFuture.completedFuture(invoke());
    }
@@ -40,7 +40,7 @@ public interface ReplicableCommand {
     * @deprecated since 11.0, please use {@link org.infinispan.commands.remote.CacheRpcCommand#invokeAsync(ComponentRegistry)}
     * or {@link GlobalRpcCommand#invokeAsync(GlobalComponentRegistry)} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    default Object invoke() throws Throwable {
       try {
          return invokeAsync().join();
@@ -84,7 +84,7 @@ public interface ReplicableCommand {
     * @return {@code true} if the command can block/wait, {@code false} otherwise
     * @deprecated since 11.0 - All commands will be required to be non blocking!
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    default boolean canBlock() {
       return false;
    }

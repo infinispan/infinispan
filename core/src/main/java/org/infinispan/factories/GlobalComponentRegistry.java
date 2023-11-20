@@ -51,10 +51,10 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogManager;
 import org.infinispan.xsite.GlobalXSiteAdminOperations;
-
-import net.jcip.annotations.ThreadSafe;
 import org.infinispan.xsite.XSiteCacheMapper;
 import org.infinispan.xsite.events.XSiteEventsManager;
+
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * A global component registry where shared components are stored.
@@ -371,7 +371,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       return createdCaches.remove(cacheName);
    }
 
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public ModuleProperties getModuleProperties() {
       return moduleProperties;
    }

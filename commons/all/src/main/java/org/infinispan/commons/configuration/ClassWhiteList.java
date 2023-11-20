@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * @deprecated since 12.0. Will be removed in 14.0. Use {@link ClassAllowList}.
  **/
-@Deprecated
+@Deprecated(forRemoval=true)
 public final class ClassWhiteList extends ClassAllowList {
    public ClassWhiteList() {
    }

@@ -11,7 +11,7 @@ public interface ConfigurationResourceResolver {
 
    // ISPN-15004 Lazily resolve URLConfigurationResourceResolver instance to prevent circular dependency
    // Replaced by ConfigurationResourceResolvers.DEFAULT instead. Variable only retained for backwards-compatibility.
-   @Deprecated
+   @Deprecated(forRemoval=true)
    ConfigurationResourceResolver DEFAULT = href -> new URLConfigurationResourceResolver(null).resolveResource(href);
 
    URL resolveResource(String href) throws IOException;

@@ -39,12 +39,12 @@ public class ConfigurationProperties {
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public static final String KEY_SIZE_ESTIMATE = ICH + "key_size_estimate";
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public static final String VALUE_SIZE_ESTIMATE = ICH + "value_size_estimate";
    public static final String FORCE_RETURN_VALUES = ICH + "force_return_values";
    public static final String HASH_FUNCTION_PREFIX = ICH + "hash_function_impl";
@@ -84,7 +84,7 @@ public class ConfigurationProperties {
    public static final Pattern SASL_PROPERTIES_PREFIX_REGEX =
          Pattern.compile('^' + ConfigurationProperties.SASL_PROPERTIES_PREFIX + '.');
    public static final String JAVA_SERIAL_ALLOWLIST = ICH + "java_serial_allowlist";
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public static final String JAVA_SERIAL_WHITELIST = ICH + "java_serial_whitelist";
    public static final String BATCH_SIZE = ICH + "batch_size";
    // Statistics properties
@@ -137,12 +137,12 @@ public class ConfigurationProperties {
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public static final int DEFAULT_KEY_SIZE = 64;
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public static final int DEFAULT_VALUE_SIZE = 512;
    public static final int DEFAULT_HOTROD_PORT = 11222;
    public static final int DEFAULT_SO_TIMEOUT = 2_000;
@@ -263,7 +263,7 @@ public class ConfigurationProperties {
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public int getKeySizeEstimate() {
       return props.getIntProperty(KEY_SIZE_ESTIMATE, DEFAULT_KEY_SIZE);
    }
@@ -271,7 +271,7 @@ public class ConfigurationProperties {
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public void setKeySizeEstimate(int keySizeEstimate) {
       props.setProperty(KEY_SIZE_ESTIMATE, keySizeEstimate);
    }
@@ -279,7 +279,7 @@ public class ConfigurationProperties {
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public int getValueSizeEstimate() {
       return props.getIntProperty(VALUE_SIZE_ESTIMATE, DEFAULT_VALUE_SIZE);
    }
@@ -287,7 +287,7 @@ public class ConfigurationProperties {
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public void setValueSizeEstimate(int valueSizeEstimate) {
       props.setProperty(VALUE_SIZE_ESTIMATE, valueSizeEstimate);
    }
@@ -403,7 +403,7 @@ public class ConfigurationProperties {
    /**
     * @deprecated Since 12.0 and will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public String getTrustStorePath() {
       return props.getProperty(TRUST_STORE_PATH);
    }
@@ -411,7 +411,7 @@ public class ConfigurationProperties {
    /**
     * @deprecated Since 12.0 and will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public void setTrustStorePath(String trustStorePath) {
       props.setProperty(TRUST_STORE_PATH, trustStorePath);
    }
@@ -552,12 +552,12 @@ public class ConfigurationProperties {
       props.setProperty(NEAR_CACHE_MAX_ENTRIES, nearCacheMaxEntries);
    }
 
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public String getNearCacheNamePattern() {
       return props.getProperty(NEAR_CACHE_NAME_PATTERN);
    }
 
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public void setNearCacheNamePattern(String nearCacheNamePattern) {
       props.setProperty(NEAR_CACHE_NAME_PATTERN, nearCacheNamePattern);
    }
@@ -634,7 +634,7 @@ public class ConfigurationProperties {
     * @deprecated Use {@link #setJavaSerialAllowList(String)} instead. To be removed in 14.0.
     * @param javaSerialWhitelist
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public void setJavaSerialWhitelist(String javaSerialWhitelist) {
       setJavaSerialAllowList(javaSerialWhitelist);
    }

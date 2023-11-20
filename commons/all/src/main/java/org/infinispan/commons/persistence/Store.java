@@ -15,7 +15,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-@Deprecated
+@Deprecated(forRemoval=true)
 public @interface Store {
    /**
     * Whether the store can be shared amongst nodes in a distributed/replicated cache

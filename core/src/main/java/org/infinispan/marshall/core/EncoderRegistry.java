@@ -13,28 +13,28 @@ import org.infinispan.encoding.DataConversion;
  */
 public interface EncoderRegistry {
 
-   @Deprecated
+   @Deprecated(forRemoval=true)
    Encoder getEncoder(Class<? extends Encoder> encoderClass, short encoderId);
 
-   @Deprecated
+   @Deprecated(forRemoval=true)
    boolean isRegistered(Class<? extends Encoder> encoderClass);
 
    /**
     * @deprecated Since 11.0. To be removed in 14.0, with {@link DataConversion#getWrapper()}
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    Wrapper getWrapper(Class<? extends Wrapper> wrapperClass, byte wrapperId);
 
    /**
     * @param encoder {@link Encoder to be registered}.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    void registerEncoder(Encoder encoder);
 
    /**
     * @deprecated Since 11.0. To be removed in 14.0, with {@link DataConversion#getWrapper()}
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    void registerWrapper(Wrapper wrapper);
 
    void registerTranscoder(Transcoder transcoder);

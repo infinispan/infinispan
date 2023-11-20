@@ -55,7 +55,7 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
     *
     * @deprecated Deprecated since 14.0. There is no replacement. First non shared store is picked instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    @Override
    public S fetchPersistentState(boolean b) {
       return self();

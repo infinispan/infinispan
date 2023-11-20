@@ -6,7 +6,7 @@ package org.infinispan.commons.dataconversion;
  * @since 9.1
  * @deprecated Since 12.1, without replacement. To be removed in a future version.
  */
-@Deprecated
+@Deprecated(forRemoval=true)
 public interface Encoder {
 
    /**

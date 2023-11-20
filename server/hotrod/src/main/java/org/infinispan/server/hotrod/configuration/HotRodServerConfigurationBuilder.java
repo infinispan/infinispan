@@ -116,7 +116,7 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
     * @deprecated since 11.0. To be removed in 14.0 ISPN-11864 with no direct replacement.
     */
    @Override
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public HotRodServerConfigurationBuilder topologyStateTransfer(boolean topologyStateTransfer) {
       topologyCache.lazyRetrieval(!topologyStateTransfer);
       return this;

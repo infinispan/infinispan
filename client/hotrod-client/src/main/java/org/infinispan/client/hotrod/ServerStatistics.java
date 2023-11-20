@@ -20,7 +20,7 @@ public interface ServerStatistics {
     * Number of entries currently in the Hot Rod server
     * @deprecated Since 14.0, please use {@link #APPROXIMATE_ENTRIES}
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    String CURRENT_NR_OF_ENTRIES = "currentNumberOfEntries";
 
    /**

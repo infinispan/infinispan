@@ -20,7 +20,7 @@ public class SingleFileStoreConfiguration extends AbstractStoreConfiguration<Sin
    /**
     * @deprecated Since 13.0, will be removed in 16.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public static final AttributeDefinition<Integer> MAX_ENTRIES = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MAX_ENTRIES, -1).immutable().build();
    public static final AttributeDefinition<Float> FRAGMENTATION_FACTOR = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.FRAGMENTATION_FACTOR, 0.75f).immutable().build();
 
@@ -39,7 +39,7 @@ public class SingleFileStoreConfiguration extends AbstractStoreConfiguration<Sin
    /**
     * @deprecated Since 13.0, will be removed in 16.0.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public int maxEntries() {
       return attributes.attribute(MAX_ENTRIES).get();
    }

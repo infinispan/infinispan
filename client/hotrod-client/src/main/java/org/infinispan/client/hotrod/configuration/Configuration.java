@@ -109,7 +109,7 @@ public class Configuration {
    private final int batchSize;
    private final ClassAllowList classAllowList;
    private final StatisticsConfiguration statistics;
-   @Deprecated
+   @Deprecated(forRemoval=true)
    private final TransactionConfiguration transaction;
    private final Features features;
    private final List<SerializationContextInitializer> contextInitializers;
@@ -176,7 +176,7 @@ public class Configuration {
       return balancingStrategyFactory;
    }
 
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public ClassLoader classLoader() {
       return classLoader.get();
    }
@@ -220,7 +220,7 @@ public class Configuration {
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public int keySizeEstimate() {
       return keySizeEstimate;
    }
@@ -233,7 +233,7 @@ public class Configuration {
       return marshallerClass;
    }
 
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public NearCacheConfiguration nearCache() {
       return nearCache;
    }
@@ -269,7 +269,7 @@ public class Configuration {
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public int valueSizeEstimate() {
       return valueSizeEstimate;
    }
@@ -281,7 +281,7 @@ public class Configuration {
    /**
     * @deprecated Use {@link #serialAllowList()} instead. To be removed in 14.0.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public List<String> serialWhitelist() {
       return serialAllowList();
    }
@@ -293,7 +293,7 @@ public class Configuration {
    /**
     * @deprecated Use {@link #getClassAllowList()} instead. To be removed in 14.0.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public ClassAllowList getClassWhiteList() {
       return getClassAllowList();
    }
@@ -348,7 +348,7 @@ public class Configuration {
    /**
     * @deprecated since 12.0. To be removed in Infinispan 14.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public TransactionConfiguration transaction() {
       return transaction;
    }

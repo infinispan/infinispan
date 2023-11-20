@@ -21,7 +21,7 @@ public interface CacheEntryModifiedEvent<K, V> extends CacheEntryEvent<K, V> {
     * @return the previous or new value of the entry, depending on whether isPre() is true or false.
     * @deprecated use {@link #getOldValue()} or {@link #getNewValue()} instead
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    V getValue();
 
    /**

@@ -37,12 +37,12 @@ public class RocksDBStoreConfigurationBuilder extends AbstractStoreConfiguration
       return self();
    }
 
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public RocksDBStoreConfigurationBuilder blockSize(int blockSize) {
       return self();
    }
 
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public RocksDBStoreConfigurationBuilder cacheSize(long cacheSize) {
       return self();
    }
@@ -50,7 +50,7 @@ public class RocksDBStoreConfigurationBuilder extends AbstractStoreConfiguration
    /**
     * @deprecated Since 12.0, no longer used. Will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public RocksDBStoreConfigurationBuilder clearThreshold(int clearThreshold) {
       return self();
    }

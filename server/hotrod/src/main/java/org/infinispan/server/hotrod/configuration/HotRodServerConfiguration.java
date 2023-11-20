@@ -78,7 +78,7 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration<HotRo
    /**
     * @deprecated since 11.0. To be removed in 14.0 ISPN-11864 with no direct replacement.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public boolean topologyStateTransfer() {
       return !topologyCache.lazyRetrieval();
    }

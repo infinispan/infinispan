@@ -17,7 +17,7 @@ import org.infinispan.protostream.sampledomain.User;
  * @author anistor@redhat.com
  * @deprecated This marshalling mechanism will be removed in 5. Please switch to annotation based marshalling.
  */
-@Deprecated
+@Deprecated(forRemoval=true)
 public class UserMarshaller implements MessageMarshaller<User>, UnknownFieldSetHandler<User> {
 
    @Override

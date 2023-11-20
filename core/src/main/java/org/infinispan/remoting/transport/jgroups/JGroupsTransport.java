@@ -297,7 +297,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
    }
 
    @Override
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> commands, ResponseMode mode,
                                                 long timeout, ResponseFilter responseFilter, DeliverOrder deliverOrder,
                                                 boolean anycast)

@@ -21,7 +21,7 @@ public class BaseModelWithNameIndexedAndNameFieldEntity implements Model {
     public String id;
 
     @ProtoField(number = 3)
-    @Deprecated
+    @Deprecated(forRemoval=true)
     public String name;
 
     @ProtoField(number = 4)

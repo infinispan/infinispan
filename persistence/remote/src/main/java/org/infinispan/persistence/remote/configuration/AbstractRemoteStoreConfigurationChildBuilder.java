@@ -59,7 +59,7 @@ public abstract class AbstractRemoteStoreConfigurationChildBuilder<S> extends Ab
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    @Override
    public RemoteStoreConfigurationBuilder keySizeEstimate(int keySizeEstimate) {
       return builder.keySizeEstimate(keySizeEstimate);
@@ -113,7 +113,7 @@ public abstract class AbstractRemoteStoreConfigurationChildBuilder<S> extends Ab
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    @Override
    public RemoteStoreConfigurationBuilder valueSizeEstimate(int valueSizeEstimate) {
       return builder.valueSizeEstimate(valueSizeEstimate);

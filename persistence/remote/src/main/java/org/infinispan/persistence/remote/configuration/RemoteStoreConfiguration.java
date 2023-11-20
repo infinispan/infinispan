@@ -26,12 +26,12 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration<RemoteS
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    static final AttributeDefinition<Integer> KEY_SIZE_ESTIMATE = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.KEY_SIZE_ESTIMATE, ConfigurationProperties.DEFAULT_KEY_SIZE).immutable().build();
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    static final AttributeDefinition<Integer> VALUE_SIZE_ESTIMATE = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.VALUE_SIZE_ESTIMATE, ConfigurationProperties.DEFAULT_VALUE_SIZE).immutable().build();
    static final AttributeDefinition<String> MARSHALLER = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.MARSHALLER, null, String.class).immutable().build();
    static final AttributeDefinition<ProtocolVersion> PROTOCOL_VERSION = AttributeDefinition.builder(org.infinispan.persistence.remote.configuration.Attribute.PROTOCOL_VERSION, ProtocolVersion.DEFAULT_PROTOCOL_VERSION)
@@ -92,7 +92,7 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration<RemoteS
    /**
     * @deprecated since 12.0 - Automatic media type detection in remote store makes this option redundant
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public boolean hotRodWrapping() {
       return attributes.attribute(RAW_VALUES).get();
    }
@@ -100,7 +100,7 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration<RemoteS
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public int keySizeEstimate() {
       return attributes.attribute(KEY_SIZE_ESTIMATE).get();
    }
@@ -116,7 +116,7 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration<RemoteS
    /**
     * @deprecated since 12.0 - This option can still be needed when retrieving from a preexisting remote cache
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public boolean rawValues() {
       return attributes.attribute(RAW_VALUES).get();
    }
@@ -144,7 +144,7 @@ public class RemoteStoreConfiguration extends AbstractStoreConfiguration<RemoteS
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public int valueSizeEstimate() {
       return attributes.attribute(VALUE_SIZE_ESTIMATE).get();
    }

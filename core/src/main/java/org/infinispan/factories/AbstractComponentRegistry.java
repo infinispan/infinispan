@@ -50,7 +50,7 @@ import org.infinispan.util.logging.Log;
  * @since 4.0
  * @deprecated Since 9.4, please use {@link BasicComponentRegistry} instead.
  */
-@Deprecated
+@Deprecated(forRemoval=true)
 public abstract class AbstractComponentRegistry implements Lifecycle {
 
    final ModuleRepository moduleRepository;

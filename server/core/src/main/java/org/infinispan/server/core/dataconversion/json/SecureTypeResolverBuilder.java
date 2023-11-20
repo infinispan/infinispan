@@ -19,7 +19,7 @@ import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator
  *
  * @deprecated JSON to POJO conversion is deprecated and will be removed in a future version.
  */
-@Deprecated
+@Deprecated(forRemoval=true)
 public class SecureTypeResolverBuilder extends ObjectMapper.DefaultTypeResolverBuilder {
 
    private final ClassAllowList allowList;

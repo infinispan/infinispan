@@ -518,7 +518,7 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
       }
    }
 
-   @Deprecated
+   @Deprecated(forRemoval=true)
    @Override
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapper) {
       AdvancedCache<K, V> encoderCache = cache.withWrapping(wrapper);
@@ -559,7 +559,7 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
       }
    }
 
-   @Deprecated
+   @Deprecated(forRemoval=true)
    @Override
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapper, Class<? extends Wrapper> valueWrapper) {
       AdvancedCache<K, V> encoderCache = cache.withWrapping(keyWrapper, valueWrapper);

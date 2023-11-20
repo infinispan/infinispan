@@ -37,7 +37,7 @@ public class NearCacheConfiguration {
       return bloomFilter;
    }
 
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public Pattern cacheNamePattern() {
       return cacheNamePattern;
    }

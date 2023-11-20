@@ -269,7 +269,7 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
    /**
     * @deprecated Since 10.0, with no public API replacement
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    GlobalComponentRegistry getGlobalComponentRegistry();
 
    /**
@@ -290,7 +290,7 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
     * @deprecated Since 10.1.3. This mixes statistics across unrelated caches so the reported numbers don't have too much
     * relevance.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    CacheContainerStats getStats();
 
    /**
@@ -328,7 +328,7 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
       throw new UnsupportedOperationException();
    }
 
-   @Deprecated
+   @Deprecated(forRemoval=true)
    ClassAllowList getClassWhiteList();
 
    ClassAllowList getClassAllowList();

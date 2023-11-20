@@ -14,7 +14,7 @@ public class RemoteIllegalLifecycleStateException extends HotRodClientException 
 
    private final SocketAddress serverAddress;
 
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public RemoteIllegalLifecycleStateException(String msgFromServer, long messageId, short status) {
       super(msgFromServer, messageId, status);
       this.serverAddress = null;

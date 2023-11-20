@@ -80,7 +80,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
       return attributes;
    }
 
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public MemoryStorageConfigurationBuilder legacyBuilder() {
       return legacyBuilder;
    }
@@ -104,7 +104,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     * @return this configuration builder
     * @deprecated Since 11.0, use {@link #storage(StorageType)} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public MemoryConfigurationBuilder storageType(StorageType storageType) {
       return storage(storageType);
    }
@@ -139,7 +139,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     * @return the configured storage type
     * @deprecated Since 11.0, use {@link #storage()} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public StorageType storageType() {
       return storage();
    }
@@ -159,7 +159,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     * @deprecated Since 11.0, use {@link #maxSize(String)} to define the size in bytes or {@link #maxCount(long)}
     * to define the number of entries.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public MemoryConfigurationBuilder size(long size) {
       legacyAttributesUsed.add(MemoryStorageConfiguration.SIZE.name());
       memoryStorageAttribute(MemoryStorageConfiguration.SIZE).set(size);
@@ -171,7 +171,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     * @return the configured evicted size
     * @deprecated Since 11.0, use either {@link #maxSize()} or {@link #maxCount()}.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public long size() {
       return memoryStorageAttribute(MemoryStorageConfiguration.SIZE).get();
    }
@@ -190,7 +190,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     * @deprecated since 11.0, use {@link #maxCount(long)} or {@link #maxSize(String)} to define data container bounds
     * by size or by count.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public MemoryConfigurationBuilder evictionType(EvictionType type) {
       legacyAttributesUsed.add(MemoryStorageConfiguration.EVICTION_TYPE.name());
       memoryStorageAttribute(MemoryStorageConfiguration.EVICTION_TYPE).set(type);
@@ -207,7 +207,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     * @return the configured eviction type
     * @deprecated since 11.0, @see {@link #evictionType(EvictionType)}
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public EvictionType evictionType() {
       return memoryStorageAttribute(MemoryStorageConfiguration.EVICTION_TYPE).get();
    }
@@ -227,7 +227,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     * @return this
     * @deprecated Since 11.0, use {@link #whenFull(EvictionStrategy)} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public MemoryConfigurationBuilder evictionStrategy(EvictionStrategy strategy) {
       return whenFull(strategy);
    }
@@ -246,7 +246,7 @@ public class MemoryConfigurationBuilder extends AbstractConfigurationChildBuilde
     * @return the configured eviction stategy
     * @deprecated Since 11.0, use {@link #whenFull()} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval=true)
    public EvictionStrategy evictionStrategy() {
       return whenFull();
    }

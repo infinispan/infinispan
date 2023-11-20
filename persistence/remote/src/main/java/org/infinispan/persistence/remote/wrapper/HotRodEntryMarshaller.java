@@ -16,7 +16,7 @@ import org.infinispan.commons.marshall.Marshaller;
  * @since 5.2
  * @deprecated Use {@link org.infinispan.commons.marshall.IdentityMarshaller} instead.
  */
-@Deprecated
+@Deprecated(forRemoval=true)
 public class HotRodEntryMarshaller implements Marshaller {
 
    private final ByteBufferFactory byteBufferFactory;

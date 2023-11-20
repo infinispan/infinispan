@@ -25,7 +25,7 @@ public interface CacheContainerAdmin<C extends CacheContainerAdmin, A extends Ba
        * If the server cannot honor this flag an error will be returned
        * @deprecated configurations are now always permanent by default. Use the {@link #VOLATILE} flag to obtain the opposite behaviour.
        */
-      @Deprecated
+      @Deprecated(forRemoval=true)
       PERMANENT,
       /**
        * Configuration changes will not be persisted to the global state.
