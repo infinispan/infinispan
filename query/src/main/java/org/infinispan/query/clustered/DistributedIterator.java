@@ -63,9 +63,9 @@ class DistributedIterator<T> implements CloseableIterator<T> {
          i++;
       }
       if (isFieldDocs) {
-         mergedResults = TopDocs.merge(sort, firstResult, maxResults, (TopFieldDocs[]) partialTopDocs, true);
+         mergedResults = TopDocs.merge(sort, firstResult, maxResults, (TopFieldDocs[]) partialTopDocs);
       } else {
-         mergedResults = TopDocs.merge(firstResult, maxResults, partialTopDocs, true);
+         mergedResults = TopDocs.merge(firstResult, maxResults, partialTopDocs);
       }
    }
 

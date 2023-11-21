@@ -232,7 +232,7 @@ public class HotRodCacheQueries {
 
       if (indexed) {
          Exception expectedException = assertThrows(HotRodClientException.class, query::execute);
-         assertTrue(expectedException.getMessage().contains("org.apache.lucene.search.BooleanQuery$TooManyClauses: maxClauseCount is set to 1025"));
+         assertTrue(expectedException.getMessage().contains("maxClauseCount is set to 1025"));
       } else {
          query.execute();
       }

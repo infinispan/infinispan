@@ -67,7 +67,7 @@ public class InfinispanBootstrapIntrospector extends AbstractPojoHCAnnBootstrapI
       return valueReadHandleFactory;
    }
 
-   ValueReadHandle<?> createValueReadHandle(Member member) throws IllegalAccessException {
+   protected ValueReadHandle<?> createValueReadHandle(Member member) throws IllegalAccessException {
       if (member instanceof Method) {
          Method method = (Method) member;
          setAccessible(method);
