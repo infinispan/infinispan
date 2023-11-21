@@ -1,6 +1,11 @@
 package org.infinispan.test.hibernate.cache.commons.util;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
+
+import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
+import org.hibernate.testing.env.ConnectionProviderBuilder;
 
 import jakarta.transaction.Status;
 import jakarta.transaction.TransactionManager;
@@ -46,5 +51,32 @@ public class TestingUtil {
             else tm.rollback();
          }
       };
+   }
+
+   public static ConnectionProvider buildConnectionProvider() {
+      try {
+         Method method = ConnectionProviderBuilder.class.getMethod("buildConnectionProvider");
+         return (ConnectionProvider) method.invoke(null);
+      } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+         throw new RuntimeException(e);
+      }
+   }
+
+   public static ConnectionProvider buildConnectionProvider(boolean allowAggressiveRelease) {
+      try {
+         Method method = ConnectionProviderBuilder.class.getMethod("buildConnectionProvider", boolean.class);
+         return (ConnectionProvider) method.invoke(null, allowAggressiveRelease);
+      } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+         throw new RuntimeException(e);
+      }
+   }
+
+   public static ConnectionProvider buildConnectionProvider(String dbName) {
+      try {
+         Method method = ConnectionProviderBuilder.class.getMethod("buildConnectionProvider", String.class);
+         return (ConnectionProvider) method.invoke(null, dbName);
+      } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+         throw new RuntimeException(e);
+      }
    }
 }

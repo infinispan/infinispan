@@ -14,7 +14,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
 import org.hibernate.service.UnknownUnwrapTypeException;
 import org.hibernate.service.spi.Stoppable;
-import org.hibernate.testing.env.ConnectionProviderBuilder;
+import org.infinispan.test.hibernate.cache.commons.util.TestingUtil;
 
 /**
  * XaConnectionProvider.
@@ -27,7 +27,7 @@ public class XaConnectionProvider implements ConnectionProvider, Stoppable {
 	private boolean isTransactional;
 
 	public XaConnectionProvider() {
-		this(ConnectionProviderBuilder.buildConnectionProvider());
+		this(TestingUtil.buildConnectionProvider());
 	}
 
 	public XaConnectionProvider(ConnectionProvider connectionProvider) {
