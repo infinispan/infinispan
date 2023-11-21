@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.commons.util.MemoryUnit;
+import org.infinispan.commons.util.ByteQuantity;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.DataContainer;
@@ -50,7 +50,7 @@ public class OffHeapBoundedMemoryTest extends AbstractInfinispanTest {
    public void testAllocatedAmountEqual() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.memory()
-            .size(MemoryUnit.MEGABYTES.toBytes(20))
+            .size(ByteQuantity.Unit.MB.toBytes(20))
             .evictionType(EvictionType.MEMORY)
             .storageType(StorageType.OFF_HEAP);
       EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(builder);
@@ -73,7 +73,7 @@ public class OffHeapBoundedMemoryTest extends AbstractInfinispanTest {
    public void testAllocatedAmountEqualWithVersion() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.memory()
-            .size(MemoryUnit.MEGABYTES.toBytes(20))
+            .size(ByteQuantity.Unit.MB.toBytes(20))
             .evictionType(EvictionType.MEMORY)
             .storageType(StorageType.OFF_HEAP);
       EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(builder);
@@ -94,7 +94,7 @@ public class OffHeapBoundedMemoryTest extends AbstractInfinispanTest {
    public void testAllocatedAmountEqualWithExpiration() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.memory()
-            .size(MemoryUnit.MEGABYTES.toBytes(20))
+            .size(ByteQuantity.Unit.MB.toBytes(20))
             .evictionType(EvictionType.MEMORY)
             .storageType(StorageType.OFF_HEAP);
       EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(builder);
@@ -117,7 +117,7 @@ public class OffHeapBoundedMemoryTest extends AbstractInfinispanTest {
    public void testAllocatedAmountEqualWithVersionAndExpiration() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.memory()
-            .size(MemoryUnit.MEGABYTES.toBytes(20))
+            .size(ByteQuantity.Unit.MB.toBytes(20))
             .evictionType(EvictionType.MEMORY)
             .storageType(StorageType.OFF_HEAP);
       EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(builder);

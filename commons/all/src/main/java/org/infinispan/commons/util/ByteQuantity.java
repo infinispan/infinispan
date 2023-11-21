@@ -62,7 +62,7 @@ public final class ByteQuantity {
       }
    }
 
-   private enum Unit {
+   public enum Unit {
       B(KILO, 0),
       KB(KILO, 1),
       MB(KILO, 2),
@@ -81,8 +81,12 @@ public final class ByteQuantity {
          this.exp = exp;
       }
 
-      long toBytes(BigDecimal quantity) {
+      public long toBytes(BigDecimal quantity) {
          return quantity.multiply(base.pow(exp)).longValueExact();
+      }
+
+      public long toBytes(long quantity) {
+         return toBytes(BigDecimal.valueOf(quantity));
       }
    }
 }
