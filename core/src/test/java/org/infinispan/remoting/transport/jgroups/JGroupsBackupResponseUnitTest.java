@@ -28,7 +28,7 @@ import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.XSiteAsyncAckListener;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.util.ControlledTimeService;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.xsite.XSiteBackup;
 import org.testng.annotations.Test;
 

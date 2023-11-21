@@ -54,7 +54,7 @@ import org.infinispan.test.hibernate.cache.commons.functional.entities.Customer;
 import org.infinispan.test.hibernate.cache.commons.util.ExpectingInterceptor;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
-import org.infinispan.util.ControlledTimeService;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;

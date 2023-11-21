@@ -31,7 +31,7 @@ import org.infinispan.server.hotrod.tx.table.GlobalTxTable;
 import org.infinispan.commons.test.ExceptionRunnable;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
-import org.infinispan.util.ControlledTimeService;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 

@@ -26,7 +26,7 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.util.ControlledTimeService;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.testng.annotations.Test;
 
 /**

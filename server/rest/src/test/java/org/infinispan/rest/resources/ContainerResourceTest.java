@@ -25,7 +25,7 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.LocalTopologyManager;
-import org.infinispan.util.ControlledTimeService;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.util.KeyValuePair;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;

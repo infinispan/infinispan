@@ -24,7 +24,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.ControlledTimeService;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

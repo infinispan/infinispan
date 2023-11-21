@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.configuration.cache.TakeOfflineConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.util.ControlledTimeService;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.xsite.OfflineStatus;
 import org.infinispan.xsite.notification.SiteStatusListener;
 import org.testng.annotations.Test;

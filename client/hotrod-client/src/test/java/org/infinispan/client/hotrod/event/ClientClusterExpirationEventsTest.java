@@ -23,7 +23,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.ControlledTimeService;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "client.hotrod.event.ClientClusterExpirationEventsTest")

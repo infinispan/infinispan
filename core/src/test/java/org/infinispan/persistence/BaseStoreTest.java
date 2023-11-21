@@ -44,7 +44,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Key;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
-import org.infinispan.util.ControlledTimeService;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.util.PersistenceMockUtil;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.AfterMethod;

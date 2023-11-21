@@ -28,7 +28,7 @@ import org.infinispan.expiration.impl.InternalExpirationManager;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.ControlledTimeService;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.util.CoreImmutables;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.mockito.Mockito;

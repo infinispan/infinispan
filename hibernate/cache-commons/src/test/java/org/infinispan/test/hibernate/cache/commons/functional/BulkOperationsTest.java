@@ -23,7 +23,7 @@ import org.infinispan.test.hibernate.cache.commons.functional.entities.Contact;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Customer;
 import org.infinispan.test.hibernate.cache.commons.util.InfinispanTestingSetup;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
-import org.infinispan.util.ControlledTimeService;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
