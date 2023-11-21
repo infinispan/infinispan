@@ -14,13 +14,13 @@ import org.hibernate.cfg.Environment;
 import org.hibernate.engine.jdbc.connections.spi.AbstractMultiTenantConnectionProvider;
 import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
 import org.hibernate.engine.jdbc.connections.spi.MultiTenantConnectionProvider;
-import org.hibernate.testing.env.ConnectionProviderBuilder;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.context.Flag;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
 import org.infinispan.test.hibernate.cache.commons.tm.XaConnectionProvider;
+import org.infinispan.test.hibernate.cache.commons.util.TestingUtil;
 import org.junit.Test;
 
 /**
@@ -31,9 +31,9 @@ public class MultiTenancyTest extends SingleNodeTest {
 	 private static final String DB1 = "db1";
 	 private static final String DB2 = "db2";
 	 private final XaConnectionProvider db1
-			 = new XaConnectionProvider(ConnectionProviderBuilder.buildConnectionProvider(DB1));
+			 = new XaConnectionProvider(TestingUtil.buildConnectionProvider(DB1));
 	 private final XaConnectionProvider db2
-			 = new XaConnectionProvider(ConnectionProviderBuilder.buildConnectionProvider(DB2));
+			 = new XaConnectionProvider(TestingUtil.buildConnectionProvider(DB2));
 
 	 @Override
 	 public List<Object[]> getParameters() {
@@ -62,6 +62,10 @@ public class MultiTenancyTest extends SingleNodeTest {
 					 if (DB2.equals(tenantIdentifier)) return db2;
 					 throw new IllegalArgumentException();
 				}
+
+			  ConnectionProvider selectConnectionProvider(Object tenantIdentifier) {
+					return selectConnectionProvider((String) tenantIdentifier);
+			  }
 		  });
 	 }
 

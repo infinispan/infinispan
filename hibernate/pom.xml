@@ -131,46 +131,6 @@
             </plugin>
          </plugins>
       </pluginManagement>
-      <plugins>
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>${version.maven.surefire}</version>
-            <configuration>
-               <dependenciesToScan>
-                  <dependency>${project.groupId}:infinispan-hibernate-cache-commons</dependency>
-               </dependenciesToScan>
-               <groups combine.self="override">${defaultJUnitGroups}</groups> 
-               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Djdk.attach.allowAttachSelf=true</argLine>
-               <parallel>classes</parallel>
-               <groups combine.self="override"/>
-               <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
-               <testNGArtifactName>none:none</testNGArtifactName>
-               <disableXmlReport>false</disableXmlReport>
-               <properties combine.self="override">
-                  <usedefaultlisteners>false</usedefaultlisteners>
-                  <listener>${junitListener}</listener>
-                  <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
-               </properties>
-               <systemPropertyVariables>
-                  <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
-                  <jgroups.ping.timeout>500</jgroups.ping.timeout>
-                  <jgroups.ping.num_initial_members>1</jgroups.ping.num_initial_members>
-                  <jgroups.udp.enable_bundling>false</jgroups.udp.enable_bundling>
-                  <jgroups.bind_addr>localhost</jgroups.bind_addr>
-                  <hibernate.cache.infinispan.jgroups_cfg>2lc-test-tcp.xml</hibernate.cache.infinispan.jgroups_cfg>
-                  <infinispan.test.checkThreadLeaks>false</infinispan.test.checkThreadLeaks>
-               </systemPropertyVariables>
-            </configuration>
-            <dependencies>
-               <dependency>
-                  <groupId>org.junit.vintage</groupId>
-                  <artifactId>junit-vintage-engine</artifactId>
-                  <version>5.6.3</version>
-               </dependency>
-            </dependencies>
-         </plugin>
-      </plugins>
    </build>
 
    <profiles>

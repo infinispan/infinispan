@@ -32,11 +32,6 @@
          <artifactId>jakarta.persistence-api</artifactId>
       </dependency>
       <dependency>
-         <groupId>org.jboss.narayana.jta</groupId>
-         <artifactId>narayana-jta</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
          <groupId>jakarta.transaction</groupId>
          <artifactId>jakarta.transaction-api</artifactId>
          <version>${version.jakarta.transaction}</version>
@@ -69,7 +64,141 @@
                <configLocation>checkstyle.xml</configLocation>
             </configuration>
          </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>${version.maven.surefire}</version>
+            <configuration>
+               <dependenciesToScan>
+                  <dependency>${project.groupId}:infinispan-hibernate-cache-commons</dependency>
+               </dependenciesToScan>
+               <groups combine.self="override">${defaultJUnitGroups}</groups>
+               <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} -Djdk.attach.allowAttachSelf=true</argLine>
+               <parallel>none</parallel>
+               <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
+               <testNGArtifactName>none:none</testNGArtifactName>
+               <properties combine.self="override">
+                  <usedefaultlisteners>false</usedefaultlisteners>
+                  <listener>${junitListener}</listener>
+                  <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
+               </properties>
+               <systemPropertyVariables>
+                  <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
+                  <jgroups.ping.timeout>500</jgroups.ping.timeout>
+                  <jgroups.ping.num_initial_members>1</jgroups.ping.num_initial_members>
+                  <jgroups.udp.enable_bundling>false</jgroups.udp.enable_bundling>
+                  <jgroups.bind_addr>localhost</jgroups.bind_addr>
+                  <hibernate.cache.infinispan.jgroups_cfg>2lc-test-tcp.xml</hibernate.cache.infinispan.jgroups_cfg>
+                  <infinispan.test.checkThreadLeaks>false</infinispan.test.checkThreadLeaks>
+               </systemPropertyVariables>
+            </configuration>
+            <dependencies>
+               <dependency>
+                  <groupId>org.junit.vintage</groupId>
+                  <artifactId>junit-vintage-engine</artifactId>
+                  <version>${version.junit5}</version>
+               </dependency>
+            </dependencies>
+            <executions>
+               <execution>
+                  <id>hibernate-6.2</id>
+                  <goals>
+                     <goal>test</goal>
+                  </goals>
+                  <phase>test</phase>
+                  <configuration>
+                     <reportNameSuffix>6.2</reportNameSuffix>
+                     <classpathDependencyExcludes>
+                        <classpathDependencyExclude>org.hibernate.orm:hibernate-core</classpathDependencyExclude>
+                        <classpathDependencyExclude>org.hibernate.orm:hibernate-testing</classpathDependencyExclude>
+                        <!-- org.hibernate.orm:hibernate-core transitives -->
+                        <classpathDependencyExclude>org.glassfish.jaxb:jaxb-runtime</classpathDependencyExclude>
+                        <classpathDependencyExclude>com.sun.istack:istack-commons-runtime</classpathDependencyExclude>
+                        <classpathDependencyExclude>io.smallrye:jandex</classpathDependencyExclude>
+                        <classpathDependencyExclude>org.glassfish.jaxb:jaxb-core</classpathDependencyExclude>
+                        <classpathDependencyExclude>org.glassfish.jaxb:txw2</classpathDependencyExclude>
+                        </classpathDependencyExcludes>
+                     <additionalClasspathDependencies>
+                        <additionalClasspathDependency>
+                           <groupId>org.hibernate.orm</groupId>
+                           <artifactId>hibernate-core</artifactId>
+                           <version>6.2.9.Final</version>
+                        </additionalClasspathDependency>
+                        <additionalClasspathDependency>
+                           <groupId>org.hibernate.orm</groupId>
+                           <artifactId>hibernate-testing</artifactId>
+                           <version>6.2.9.Final</version>
+                           <exclusions>
+                              <exclusion>
+                                 <groupId>*</groupId>
+                                 <artifactId>*</artifactId>
+                              </exclusion>
+                           </exclusions>
+                        </additionalClasspathDependency>
+                     </additionalClasspathDependencies>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
       </plugins>
    </build>
+
+   <profiles>
+      <profile>
+         <id>hibernate-devel</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>hibernate-6.4</id>
+                        <goals>
+                           <goal>test</goal>
+                        </goals>
+                        <phase>test</phase>
+                        <configuration>
+                           <reportNameSuffix>6.4</reportNameSuffix>
+                           <classpathDependencyExcludes>
+                              <classpathDependencyExclude>org.hibernate.orm:hibernate-core</classpathDependencyExclude>
+                              <classpathDependencyExclude>org.hibernate.orm:hibernate-testing</classpathDependencyExclude>
+                              <!-- org.hibernate.orm:hibernate-core transitives -->
+                              <classpathDependencyExclude>org.antlr:antlr4-runtime</classpathDependencyExclude>
+                              <classpathDependencyExclude>org.glassfish.jaxb:jaxb-runtime</classpathDependencyExclude>
+                              <classpathDependencyExclude>com.sun.istack:istack-commons-runtime</classpathDependencyExclude>
+                              <classpathDependencyExclude>io.smallrye:jandex</classpathDependencyExclude>
+                              <classpathDependencyExclude>org.glassfish.jaxb:jaxb-core</classpathDependencyExclude>
+                              <classpathDependencyExclude>org.glassfish.jaxb:txw2</classpathDependencyExclude>
+                           </classpathDependencyExcludes>
+                           <additionalClasspathDependencies>
+                              <additionalClasspathDependency>
+                                 <groupId>org.hibernate.orm</groupId>
+                                 <artifactId>hibernate-core</artifactId>
+                                 <version>6.4.0.CR1</version>
+                              </additionalClasspathDependency>
+                              <additionalClasspathDependency>
+                                 <groupId>org.hibernate.orm</groupId>
+                                 <artifactId>hibernate-testing</artifactId>
+                                 <version>6.4.0.CR1</version>
+                                 <exclusions>
+                                    <exclusion>
+                                       <groupId>*</groupId>
+                                       <artifactId>*</artifactId>
+                                    </exclusion>
+                                 </exclusions>
+                              </additionalClasspathDependency>
+                           </additionalClasspathDependencies>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+   </profiles>
 
 </project>

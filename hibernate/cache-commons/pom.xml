@@ -43,11 +43,6 @@
          <version>${version.jakarta.transaction}</version>
       </dependency>
       <dependency>
-         <groupId>org.jboss.narayana.jta</groupId>
-         <artifactId>narayana-jta</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
          <groupId>org.hibernate.orm</groupId>
          <artifactId>hibernate-testing</artifactId>
          <scope>test</scope>
