@@ -13,7 +13,7 @@ import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Person;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
-import org.infinispan.util.ControlledTimeService;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 

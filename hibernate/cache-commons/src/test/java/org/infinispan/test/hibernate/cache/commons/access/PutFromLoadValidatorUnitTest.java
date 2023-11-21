@@ -46,7 +46,7 @@ import org.infinispan.test.hibernate.cache.commons.functional.cluster.DualNodeJt
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactoryProvider;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
-import org.infinispan.util.ControlledTimeService;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;

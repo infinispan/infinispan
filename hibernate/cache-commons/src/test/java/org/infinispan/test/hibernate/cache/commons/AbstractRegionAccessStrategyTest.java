@@ -43,7 +43,7 @@ import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess.TestRegionAccessStrategy;
 import org.infinispan.test.hibernate.cache.commons.util.TestSynchronization;
-import org.infinispan.util.ControlledTimeService;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.jboss.logging.Logger;
 import org.junit.After;
 import org.junit.Rule;

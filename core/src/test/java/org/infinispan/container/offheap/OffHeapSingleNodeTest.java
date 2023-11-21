@@ -17,7 +17,7 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.DataContainer;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.ControlledTimeService;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.testng.annotations.Test;
 
 /**

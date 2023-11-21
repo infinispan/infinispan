@@ -31,7 +31,7 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.ControlledTimeService;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

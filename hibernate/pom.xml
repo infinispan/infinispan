@@ -39,18 +39,6 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-jboss-marshalling</artifactId>
-         <exclusions>
-           <exclusion>
-               <!-- Exclude the non jakarta core -->
-               <groupId>org.infinispan</groupId>
-               <artifactId>infinispan-core</artifactId>
-           </exclusion>
-           <exclusion>
-               <!-- Exclude the non jakarta core -->
-               <groupId>org.infinispan</groupId>
-               <artifactId>infinispan-commons</artifactId>
-           </exclusion>
-         </exclusions>
       </dependency>
       <dependency>
          <groupId>org.hibernate.orm</groupId>
@@ -61,20 +49,18 @@
          <groupId>org.kohsuke.metainf-services</groupId>
          <artifactId>metainf-services</artifactId>
       </dependency>
-
+      <!-- Test -->
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-commons</artifactId>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-core</artifactId>
          <type>test-jar</type>
          <scope>test</scope>
-         <exclusions>
-           <exclusion>
-               <!-- Exclude the non jakarta commons -->
-               <groupId>org.infinispan</groupId>
-               <artifactId>infinispan-commons</artifactId>
-           </exclusion>
-         </exclusions>
-
       </dependency>
       <dependency>
          <groupId>org.hibernate.orm</groupId>

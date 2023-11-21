@@ -16,7 +16,7 @@ import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Item;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
-import org.infinispan.util.ControlledTimeService;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.junit.Test;
 
 /**

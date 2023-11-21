@@ -59,6 +59,7 @@ import org.hibernate.service.StandardServiceInitiators;
 import org.hibernate.service.internal.ProvidedService;
 import org.hibernate.testing.boot.DialectFactoryTestingImpl;
 import org.hibernate.testing.boot.ServiceRegistryTestingImpl;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.hibernate.cache.v62.impl.DomainDataRegionImpl;
 import org.infinispan.hibernate.cache.v62.impl.Sync;
@@ -66,7 +67,6 @@ import org.infinispan.test.hibernate.cache.commons.util.BatchModeJtaPlatform;
 import org.infinispan.test.hibernate.cache.commons.util.JdbcResourceTransactionMock;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
 import org.infinispan.test.hibernate.cache.commons.util.TestingUtil;
-import org.infinispan.util.ControlledTimeService;
 import org.kohsuke.MetaInfServices;
 import org.mockito.Mockito;
 
