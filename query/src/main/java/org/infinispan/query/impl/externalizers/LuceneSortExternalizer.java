@@ -26,8 +26,7 @@ public class LuceneSortExternalizer extends AbstractExternalizer<Sort> {
       for (int i = 0; i < count; i++) {
          sortfields[i] = LuceneSortFieldExternalizer.readObjectStatic(input);
       }
-      Sort sort = new Sort();
-      sort.setSort(sortfields);
+      Sort sort = new Sort(sortfields);
       return sort;
    }
 

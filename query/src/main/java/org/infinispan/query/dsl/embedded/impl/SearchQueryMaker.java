@@ -261,7 +261,7 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
 
          return predicateFactory.regexp().field(propertyValueExpr.getPropertyPath().asStringPath())
                .matching(fullTextRegexpExpr.getRegexp())
-               .flags(RegexpQueryFlag.COMPLEMENT, RegexpQueryFlag.INTERVAL,
+               .flags(RegexpQueryFlag.INTERVAL,
                      RegexpQueryFlag.INTERSECTION, RegexpQueryFlag.ANY_STRING)
                .boost(boost);
       }
