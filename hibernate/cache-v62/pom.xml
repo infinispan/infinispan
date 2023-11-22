@@ -107,7 +107,7 @@
                   </goals>
                   <phase>test</phase>
                   <configuration>
-                     <reportNameSuffix>6.2</reportNameSuffix>
+                     <reportNameSuffix>6_2</reportNameSuffix>
                      <classpathDependencyExcludes>
                         <classpathDependencyExclude>org.hibernate.orm:hibernate-core</classpathDependencyExclude>
                         <classpathDependencyExclude>org.hibernate.orm:hibernate-testing</classpathDependencyExclude>
@@ -162,7 +162,7 @@
                         </goals>
                         <phase>test</phase>
                         <configuration>
-                           <reportNameSuffix>6.4</reportNameSuffix>
+                           <reportNameSuffix>6_4</reportNameSuffix>
                            <classpathDependencyExcludes>
                               <classpathDependencyExclude>org.hibernate.orm:hibernate-core</classpathDependencyExclude>
                               <classpathDependencyExclude>org.hibernate.orm:hibernate-testing</classpathDependencyExclude>
