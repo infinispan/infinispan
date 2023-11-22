@@ -158,13 +158,13 @@ public abstract class RespRequestHandler {
             return myStage;
          }, ctx.channel().eventLoop());
       }
-      return stage.handle((value, t) -> {
+      return stage.handleAsync((value, t) -> {
          if (t != null) {
             // If exception, never use handler
             return this;
          }
          return handlerWhenComplete.apply(value);
-      });
+      }, ctx.channel().eventLoop());
    }
 
 }

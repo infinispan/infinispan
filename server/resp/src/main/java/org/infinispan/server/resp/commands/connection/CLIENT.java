@@ -7,6 +7,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
+import java.util.regex.Pattern;
 
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
@@ -29,6 +30,10 @@ import io.netty.channel.group.ChannelMatcher;
  * @since 15.0
  */
 public class CLIENT extends RespCommand implements Resp3Command {
+
+   // We accept a String that matches from the start to end, only contains ASCII characters that are not blank.
+   private static final Pattern CLIENT_SETINFO_PATTERN = Pattern.compile("^(?:(?=\\p{ASCII})[^\\s\\t\\n\\x0B\\f\\r])*$");
+
    public CLIENT() {
       super(-2, 0, 0, 0);
    }
@@ -55,16 +60,27 @@ public class CLIENT extends RespCommand implements Resp3Command {
                String name = utf8(arguments.get(i));
                switch (name.toUpperCase()) {
                   case "LIB-NAME":
-                     metadata.clientLibraryName(utf8(arguments.get(++i)));
+                     String libName = utf8(arguments.get(++i));
+                     if (!CLIENT_SETINFO_PATTERN.matcher(libName).matches()) {
+                        ByteBufferUtils.stringToByteBuf("-ERR lib-name cannot contain spaces, newlines or special characters.\r\n", handler.allocator());
+                        return handler.myStage();
+                     }
+                     metadata.clientLibraryName(libName);
                      break;
                   case "LIB-VER":
-                     metadata.clientLibraryVersion(utf8(arguments.get(++i)));
+                     String libVer = utf8(arguments.get(++i));
+                     if (!CLIENT_SETINFO_PATTERN.matcher(libVer).matches()) {
+                        ByteBufferUtils.stringToByteBuf("-ERR lib-ver cannot contain spaces, newlines or special characters.\r\n", handler.allocator());
+                        return handler.myStage();
+                     }
+                     metadata.clientLibraryVersion(libVer);
                      break;
                   default:
                      ByteBufferUtils.stringToByteBuf("-ERR unsupported attribute " + name + "\r\n", handler.allocator());
                      return handler.myStage();
                }
             }
+            Consumers.OK_BICONSUMER.accept(null, handler.allocator());
             break;
          case "SETNAME":
             metadata.clientName(utf8(arguments.get(1)));
@@ -123,10 +139,16 @@ public class CLIENT extends RespCommand implements Resp3Command {
       if (name != null) {
          sb.append(name);
       }
+      String libName = metadata.clientLibraryName();
+      sb.append(" lib-name=").append(libName != null ? libName : "");
+
+      String libVer = metadata.clientLibraryVersion();
+      sb.append(" lib-ver=").append(libVer != null ? libVer : "");
       sb.append(" age=");
       sb.append(Duration.between(metadata.created(), Instant.now()).getSeconds());
       sb.append(" user=");
       sb.append(Security.getSubjectUserPrincipalName(metadata.subject()));
+      sb.append(" resp=3");
       sb.append("\n");
    }
 }

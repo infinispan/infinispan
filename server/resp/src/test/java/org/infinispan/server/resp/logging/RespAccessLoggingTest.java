@@ -42,6 +42,9 @@ public class RespAccessLoggingTest extends SingleNodeRespBaseTest {
    @Test
    public void testAccessLogg() {
       int size = 10;
+      // This will send the HELLO command.
+      // Based on the response, Lettuce will send two CLIENT SETINFO requests.
+      // So, creating the connection issues 3 requests in total.
       RedisCommands<String, String> redis = redisConnection.sync();
 
       for (int i = 0; i < size; i ++) {
@@ -62,7 +65,15 @@ public class RespAccessLoggingTest extends SingleNodeRespBaseTest {
       assertThat(logAppender.getLog(0))
             .matches("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"HELLO /\\[] RESP\" OK \\d+ \\d+ \\d+$");
 
-      for (int i = 1; i <= size; i ++) {
+      assertThat(logAppender.getLog(1))
+            .matches("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"CLIENT /\\[] RESP\" OK \\d+ \\d+ \\d+$");
+      assertThat(logAppender.getLog(2))
+            .matches("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"CLIENT /\\[] RESP\" OK \\d+ \\d+ \\d+$");
+
+      size += 2;
+      int i = 3;
+
+      for (; i <= size; i ++) {
          String logLine = logAppender.getLog(i);
          assertThat(logLine)
                .matches("^127\\.0\\.0\\.1 - \\[\\d+/\\w+/\\d+:\\d+:\\d+:\\d+ [+-]?\\d*] \"SET /\\[\\[B0x\\w+] RESP\" OK \\d+ \\d+ \\d+$");

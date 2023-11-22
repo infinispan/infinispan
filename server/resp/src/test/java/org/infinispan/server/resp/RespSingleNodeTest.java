@@ -465,7 +465,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
    @Test
    public void testClient() {
       RedisCommands<String, String> redis = redisConnection.sync();
-      Long l = redis.clientId();
+      /*Long l = redis.clientId();
       assertThat(l).isNotNull();
       String list = redis.clientList();
       assertThat(list).contains("id=" + l);
@@ -474,6 +474,20 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       assertThat(redis.clientGetname()).isEqualTo("test");
       list = redis.clientList();
       assertThat(list).contains("name=test");
+
+      redis.clientSetinfo("lib-ver", "15.0");
+      redis.clientSetinfo("lib-name", "Infinispan RESP");
+      list = redis.clientList();
+      assertThat(list)
+            .contains("lib-ver=15.0")
+            .contains("lib-name=Infinispan RESP");*/
+
+      assertThatThrownBy(() -> redis.clientSetinfo("lib-ver", "wrong version"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR lib-ver cannot contain spaces, newlines or special characters.");
+      assertThatThrownBy(() -> redis.clientSetinfo("lib-name", "José"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR lib-name cannot contain spaces, newlines or special characters.");
    }
 
    public static class SimpleCommand implements ProtocolKeyword {

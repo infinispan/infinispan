@@ -66,28 +66,23 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
       return authentication
             // Note we have to write to our variables in the event loop (in this case cache)
             .thenApplyAsync(r -> handleAuthResponse(ctx, r), ctx.channel().eventLoop())
-            .exceptionally(t -> {
-               handleUnauthorized(ctx);
-               return false;
-            });
+            .exceptionally(t -> false);
    }
 
    private boolean handleAuthResponse(ChannelHandlerContext ctx, Subject subject) {
       assert ctx.channel().eventLoop().inEventLoop();
       if (subject == null) {
-         ByteBufferUtils.stringToByteBufAscii("-WRONGPASS invalid username-password pair or user is disabled.\r\n", allocatorToUse);
          return false;
       }
       ConnectionMetadata metadata = ConnectionMetadata.getInstance(ctx.channel());
       metadata.subject(subject);
       setCache(cache.withSubject(subject));
-      Consumers.OK_BICONSUMER.accept(null, allocatorToUse);
       return true;
    }
 
    private void handleUnauthorized(ChannelHandlerContext ctx) {
       assert ctx.channel().eventLoop().inEventLoop();
-      ByteBufferUtils.stringToByteBufAscii("-WRONGPASS invalid username-password pair or user is disabled.\r\n", allocatorToUse);
+      RespErrorUtil.unauthorized(allocatorToUse);
    }
 
    public boolean isAuthorized() {

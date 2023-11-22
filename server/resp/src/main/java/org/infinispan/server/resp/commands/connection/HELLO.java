@@ -10,6 +10,7 @@ import org.infinispan.server.resp.ByteBufPool;
 import org.infinispan.server.resp.ByteBufferUtils;
 import org.infinispan.server.resp.Resp3AuthHandler;
 import org.infinispan.server.resp.RespCommand;
+import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.AuthResp3Command;
 
@@ -17,8 +18,21 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.CharsetUtil;
 
 /**
- * @link https://redis.io/commands/hello/
+ * `<code>HELLO [protover [AUTH username password] [SETNAME clientname]]</code>` command.
+ * <p>
+ * Issued by the client when establishing a new connection. This implementation only allows for RESP3 version. Any
+ * other version receives an error reply.
+ * </p>
+ * <p>
+ * If authentication is enabled in Infinispan, this command <b>must</b> be accompanied by the `<code>AUTH</code>` operation.
+ * Otherwise, an error is returned.
+ * </p>
+ * <p>
+ * The `<code>SETNAME</code>` operation is ignored.
+ * </p>
+ *
  * @since 14.0
+ * @see <a href="https://redis.io/commands/hello/">Redis Documentation</a>
  */
 public class HELLO extends RespCommand implements AuthResp3Command {
    public HELLO() {
@@ -35,25 +49,39 @@ public class HELLO extends RespCommand implements AuthResp3Command {
       String version = new String(respProtocolBytes, CharsetUtil.UTF_8);
       if (!version.equals("3")) {
          ByteBufferUtils.stringToByteBufAscii("-NOPROTO sorry this protocol version is not supported\r\n", handler.allocator());
+         return handler.myStage();
+      }
+
+      if (arguments.size() == 4) {
+         successStage = handler.performAuth(ctx, arguments.get(2), arguments.get(3));
+      } else if (!handler.isAuthorized() && handler.canUseCertAuth()) {
+         successStage = handler.performAuth(ctx);
       } else {
-         if (arguments.size() == 4) {
-            successStage = handler.performAuth(ctx, arguments.get(2), arguments.get(3));
-         } else if (!handler.isAuthorized() && handler.canUseCertAuth()) {
-            successStage = handler.performAuth(ctx);
+         // In case authentication is enabled, HELLO must provide the additional arguments to perform the authentication.
+         // A similar behavior of running with `--requirepass <password>`.
+         if (!handler.isAuthorized()) {
+            ByteBufferUtils.stringToByteBufAscii("-NOAUTH HELLO must be called with the client already authenticated, otherwise the HELLO <proto> AUTH <user> <pass> option can be used to authenticate the client and select the RESP protocol version at the same time\r\n", handler.allocator());
          } else {
             helloResponse(handler.allocator());
          }
       }
 
       if (successStage != null) {
-         return handler.stageToReturn(successStage, ctx, success -> AUTH.createAfterAuthentication(success, handler));
+         return handler.stageToReturn(successStage, ctx, success -> {
+            if (success) helloResponse(handler.allocator());
+            else RespErrorUtil.unauthorized(handler.allocator());
+
+            return AUTH.silentCreateAfterAuthentication(success, handler);
+         });
       }
 
       return handler.myStage();
    }
 
    private static void helloResponse(ByteBufPool alloc) {
-      String versionString = Version.getBrandVersion();
+      // For better compatibility with different clients, we stick the version to returning only numbers and dots.
+      // Returning only X.Y or X.Y.Z
+      String versionString = Version.getMajorMinor();
       ByteBufferUtils.stringToByteBufAscii("%7\r\n" +
             "$6\r\nserver\r\n$15\r\nInfinispan RESP\r\n" +
             "$7\r\nversion\r\n$" + versionString.length() + CRLF_STRING + versionString + CRLF_STRING +
