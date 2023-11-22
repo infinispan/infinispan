@@ -10,6 +10,10 @@ public final class RespErrorUtil {
    private RespErrorUtil() {
    }
 
+   public static void unauthorized(ByteBufPool allocator) {
+      ByteBufferUtils.stringToByteBufAscii("-WRONGPASS invalid username-password pair or user is disabled.\r\n", allocator);
+   }
+
    public static void noSuchKey(ByteBufPool allocatorToUse) {
       ByteBufferUtils.stringToByteBufAscii(
             "-ERR no such key\r\n", allocatorToUse);

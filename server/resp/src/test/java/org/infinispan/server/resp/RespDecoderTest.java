@@ -1,5 +1,7 @@
 package org.infinispan.server.resp;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
@@ -10,6 +12,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.time.ControlledTimeService;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -45,8 +48,10 @@ public class RespDecoderTest {
 
    @BeforeClass
    public void beforeClass() {
+      RespServer server = mock();
+      when(server.getTimeService()).thenReturn(new ControlledTimeService());
       queuedCommands = new ArrayDeque<>();
-      RespRequestHandler myRespRequestHandler = new RespRequestHandler(null) {
+      RespRequestHandler myRespRequestHandler = new RespRequestHandler(server) {
          @Override
          protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, RespCommand type, List<byte[]> arguments) {
             queuedCommands.add(new Request(type, arguments));

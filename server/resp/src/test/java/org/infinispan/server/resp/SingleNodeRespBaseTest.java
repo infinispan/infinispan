@@ -29,7 +29,7 @@ public abstract class SingleNodeRespBaseTest extends SingleCacheManagerTest {
    protected RedisClient client;
    protected RespServer server;
    protected StatefulRedisConnection<String, String> redisConnection;
-   protected static final int timeout = 60;
+   protected static final int timeout = 30_000;
    protected final TimeService timeService = new ControlledTimeService();
 
    @Override
@@ -37,10 +37,14 @@ public abstract class SingleNodeRespBaseTest extends SingleCacheManagerTest {
       cacheManager = createTestCacheManager();
       RespServerConfiguration serverConfiguration = serverConfiguration().build();
       server = startServer(cacheManager, serverConfiguration);
-      client = createClient(30000, server.getPort());
+      client = createRedisClient(server.getPort());
       redisConnection = client.connect();
       cache = cacheManager.getCache(server.getConfiguration().defaultCacheName());
       return cacheManager;
+   }
+
+   protected RedisClient createRedisClient(int port) {
+      return createClient(timeout, port);
    }
 
    protected EmbeddedCacheManager createTestCacheManager() {

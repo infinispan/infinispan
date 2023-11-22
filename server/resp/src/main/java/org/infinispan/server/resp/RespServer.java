@@ -102,6 +102,7 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
                !(explicitConfiguration.clustering().hash().keyPartitioner() instanceof RESPHashFunctionPartitioner)) {
             throw CONFIG.respCacheUseDefineConsistentHash(cacheName, explicitConfiguration.clustering().hash().keyPartitioner().getClass().getName());
          }
+         segmentSlots = new SegmentSlotRelation(explicitConfiguration.clustering().hash().numSegments());
       }
       super.startInternal();
    }

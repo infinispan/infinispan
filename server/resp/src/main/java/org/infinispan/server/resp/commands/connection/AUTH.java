@@ -3,8 +3,10 @@ package org.infinispan.server.resp.commands.connection;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3AuthHandler;
 import org.infinispan.server.resp.RespCommand;
+import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.AuthResp3Command;
 
@@ -29,7 +31,13 @@ public class AUTH extends RespCommand implements AuthResp3Command {
    }
 
    static RespRequestHandler createAfterAuthentication(boolean success, Resp3AuthHandler prev) {
-      if (!success) return prev;
-      return prev.respServer().newHandler();
+      if (!success) RespErrorUtil.unauthorized(prev.allocator());
+      else Consumers.OK_BICONSUMER.accept(null, prev.allocator());
+
+      return silentCreateAfterAuthentication(success, prev);
+   }
+
+   static RespRequestHandler silentCreateAfterAuthentication(boolean success, Resp3AuthHandler prev) {
+      return success ? prev.respServer().newHandler() : prev;
    }
 }
