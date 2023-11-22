@@ -59,13 +59,24 @@ class DistributedIterator<T> implements CloseableIterator<T> {
       int i = 0;
       for (Entry<Address, NodeTopDocs> entry : topDocsResponses.entrySet()) {
          partialResults[i] = entry.getValue();
-         partialTopDocs[i] = partialResults[i].topDocs;
+         TopDocs topDocs = partialResults[i].topDocs;
+         setShardIndex(topDocs, i);
+         partialTopDocs[i] = topDocs;
          i++;
       }
       if (isFieldDocs) {
          mergedResults = TopDocs.merge(sort, firstResult, maxResults, (TopFieldDocs[]) partialTopDocs);
       } else {
          mergedResults = TopDocs.merge(firstResult, maxResults, partialTopDocs);
+      }
+   }
+
+   // Inspired by org.opensearch.action.search.SearchPhaseController
+   // from project https://github.com/opensearch-project/
+   static void setShardIndex(TopDocs topDocs, int shardIndex) {
+      assert topDocs.scoreDocs.length == 0 || topDocs.scoreDocs[0].shardIndex == -1 : "shardIndex is already set";
+      for (ScoreDoc doc : topDocs.scoreDocs) {
+         doc.shardIndex = shardIndex;
       }
    }
 
