@@ -13,6 +13,12 @@ The {brandname} RESP endpoint implements the following Redis commands:
 | link:https://redis.io/commands/auth[AUTH]
 |
 
+| link:https://redis.io/commands/blpop[BLPOP]
+|
+
+| link:https://redis.io/commands/brpop[BRPOP]
+|
+
 | link:https://redis.io/commands/client-getinfo[CLIENT GETINFO]
 |
 

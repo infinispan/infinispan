@@ -72,6 +72,7 @@ import org.infinispan.server.resp.commands.list.RPOPLPUSH;
 import org.infinispan.server.resp.commands.list.RPUSH;
 import org.infinispan.server.resp.commands.list.RPUSHX;
 import org.infinispan.server.resp.commands.list.blocking.BLPOP;
+import org.infinispan.server.resp.commands.list.blocking.BRPOP;
 import org.infinispan.server.resp.commands.pubsub.PSUBSCRIBE;
 import org.infinispan.server.resp.commands.pubsub.PUBLISH;
 import org.infinispan.server.resp.commands.pubsub.PUNSUBSCRIBE;
@@ -161,7 +162,7 @@ public final class Commands {
       // NOTE that the order within the sub array matters, commands we want to have the lowest latency should be first
       // in this array as they are looked up sequentially for matches
       ALL_COMMANDS[0] = new RespCommand[]{new APPEND(), new AUTH()};
-      ALL_COMMANDS[1] = new RespCommand[]{new BLPOP()};
+      ALL_COMMANDS[1] = new RespCommand[]{new BLPOP(), new BRPOP()};
       ALL_COMMANDS[2] = new RespCommand[]{new CONFIG(), new COMMAND(), new CLUSTER(), new CLIENT() };
       // DEL should always be first here
       ALL_COMMANDS[3] = new RespCommand[]{new DEL(), new DECR(), new DECRBY(), new DBSIZE(), new DISCARD()};
