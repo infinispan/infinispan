@@ -15,7 +15,7 @@ import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "server.resp.RespBlockingMediaTypesTest")
-public class RespBlockingMediaTypesTest extends RespBlockingCommandsTest {
+public class RespBlockingMediaTypesTest extends RespBxPOPTest {
 
    private MediaType valueType;
 
