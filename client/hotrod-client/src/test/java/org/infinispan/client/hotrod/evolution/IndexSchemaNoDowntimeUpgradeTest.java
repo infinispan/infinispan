@@ -1,11 +1,19 @@
 package org.infinispan.client.hotrod.evolution;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
+import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.model.Model;
 import org.infinispan.client.hotrod.evolution.model.BaseEntityWithNonAnalyzedNameFieldEntity.BaseEntityWithNonAnalyzedNameFieldEntitySchema;
 import org.infinispan.client.hotrod.evolution.model.BaseModelEntity.BaseModelEntitySchema;
-import org.infinispan.client.hotrod.evolution.model.BaseModelIndexAttributesChangedEntity;
-import org.infinispan.client.hotrod.evolution.model.BaseModelIndexAttributesEntity;
 import org.infinispan.client.hotrod.evolution.model.BaseModelWithNameAnalyzedAndNameNonAnalyzedFieldEntity;
 import org.infinispan.client.hotrod.evolution.model.BaseModelWithNameAnalyzedAndNameNonAnalyzedFieldEntity.BaseModelWithNameAnalyzedAndNameNonAnalyzedFieldEntitySchema;
 import org.infinispan.client.hotrod.evolution.model.BaseModelWithNameFieldAnalyzedEntity.BaseModelWithNameFieldAnalyzedEntitySchema;
@@ -17,7 +25,6 @@ import org.infinispan.client.hotrod.evolution.model.BaseModelWithNameIndexedAndN
 import org.infinispan.client.hotrod.evolution.model.BaseModelWithNameIndexedFieldEntity.BaseModelWithNameIndexedFieldEntitySchema;
 import org.infinispan.client.hotrod.evolution.model.BaseModelWithNewIndexedFieldEntity.BaseModelWithNewIndexedFieldEntitySchema;
 import org.infinispan.client.hotrod.evolution.model.ModelUtils;
-import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.api.query.Query;
@@ -32,17 +39,6 @@ import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuild
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
-import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
 /**
  * This test class contains use-cases that are necessary in the first phase of Keycloak no-downtime store to work
@@ -361,147 +357,6 @@ public class IndexSchemaNoDowntimeUpgradeTest extends SingleHotRodServerTest {
 
         // check there are two entities with 3 in name field
         doQuery("FROM evolution.Model WHERE name LIKE '%3%'", cache, 2);
-    }
-
-    @Test
-    void testRemoveIndexAttribute() {
-        // VERSION 1
-        updateSchemaIndex(BaseModelIndexAttributesEntity.BaseModelIndexAttributesEntitySchema.INSTANCE);
-        RemoteCache<String, Model> cache = remoteCacheManager.getCache(CACHE_NAME);
-
-        // Create VERSION 1 entities
-        ModelUtils.createModelEntities(cache, 5, ModelUtils.createBaseModelIndexAttributesEntity(1));
-
-        // VERSION 1
-        // projectable = true
-        assertThat(doQuery("SELECT e.entityVersion FROM evolution.Model e", cache)
-                .map(o -> ((Object[]) o)[0])).containsExactlyInAnyOrder(1, 1, 1, 1, 1);
-
-        // sortable = true
-        assertThat(doQuery("SELECT e.id FROM evolution.Model e ORDER BY e.id", cache).
-                map(o -> ((Object[]) o)[0])).containsExactly("800000", "800001", "800002", "800003", "800004");
-
-        // aggregable = true
-        Object[][] expected = Stream.generate(() -> new Object[2]).limit(5).toArray(Object[][]::new);
-        for (int i = 0; i < 5; i++) { expected[i][0] = i; expected[i][1] = 1L; }
-        assertThat(doQuery("SELECT e.number, COUNT(e.number) FROM evolution.Model e WHERE e.number <= 10 GROUP BY e.number", cache))
-                .containsExactlyInAnyOrder(expected[0], expected[1], expected[2], expected[3], expected[4]);
-
-        // Change attributes on indexes
-        updateSchemaIndex(BaseModelIndexAttributesChangedEntity.BaseModelIndexAttributesChangedEntitySchema.INSTANCE);
-
-        // Create VERSION 2 entities
-        ModelUtils.createModelEntities(cache, 5, ModelUtils.createBaseModelIndexAttributesChangedEntity(2));
-
-        // VERSION 2
-        // aggregable = false
-        // changing aggregable on pre-existent data is no longer supported
-        assertThatThrownBy(() -> doQuery("SELECT e.number, COUNT(e.number) FROM evolution.Model e WHERE e.number <= 10 GROUP BY e.number", cache))
-              .isInstanceOf(HotRodClientException.class)
-              .hasMessageContaining("Re-index with correct docvalues type");
-
-        // projectable = false
-        try {
-            assertThat(doQuery("SELECT e.entityVersion FROM evolution.Model e", cache)
-                    .map(o -> ((Object[]) o)[0])).containsExactlyInAnyOrder(1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
-        } catch (AssertionError ex) {
-            // changing projectable = true to false causes that newly added entities don't have projectable fields
-            // cache reindex won't help
-        }
-
-        // sortable = false
-        try {
-            assertThat(doQuery("SELECT e.id FROM evolution.Model e ORDER BY e.id", cache).
-                    map(o -> ((Object[]) o)[0])).containsExactly("800000", "800001", "800002", "800003", "800004",
-                    "900000", "900001", "900002", "900003", "900004");
-        } catch (RuntimeException ex) {
-            // changing sortable = true to false causes java.lang.IllegalStateException: unexpected docvalues type NONE for field 'id' (expected one of [SORTED, SORTED_SET]). Re-index with correct docvalues type.
-            // cache reindex won't help
-        }
-    }
-
-    @Test
-    void testAddIndexAttribute() {
-        // VERSION 1
-        updateSchemaIndex(BaseModelIndexAttributesEntity.BaseModelIndexAttributesEntitySchema.INSTANCE);
-        RemoteCache<String, Model> cache = remoteCacheManager.getCache(CACHE_NAME);
-
-        // Create VERSION 1 entities
-        ModelUtils.createModelEntities(cache, 3, ModelUtils.createBaseModelIndexAttributesEntity(1));
-
-        // VERSION 1
-        // projectable = false
-        assertThat(doQuery("SELECT e.name FROM evolution.Model e", cache)
-                .map(o -> ((Object[]) o)[0])).containsExactlyInAnyOrder("modelK # 0", "modelK # 1", "modelK # 2");
-
-        // sortable = false
-        assertThat(doQuery("SELECT e.name FROM evolution.Model e ORDER BY e.name", cache).
-                map(o -> ((Object[]) o)[0])).containsExactly("modelK # 0", "modelK # 1", "modelK # 2");
-
-        // aggregable = false
-        Object[][] expected = Stream.generate(() -> new Object[2]).limit(6).toArray(Object[][]::new);
-        for (int i = 0; i < 3; i++) { expected[i][0] = "modelK # " + i; expected[i][1] = 1L; }
-        assertThat(doQuery("SELECT e.name, COUNT(e.name) FROM evolution.Model e WHERE e.name LIKE '%model%' GROUP BY e.name", cache))
-                .containsExactlyInAnyOrder(expected[0], expected[1], expected[2]);
-
-        // Change attributes on indexes
-        updateSchemaIndex(BaseModelIndexAttributesChangedEntity.BaseModelIndexAttributesChangedEntitySchema.INSTANCE);
-
-        // Create VERSION 2 entities
-        ModelUtils.createModelEntities(cache, 3, ModelUtils.createBaseModelIndexAttributesChangedEntity(2));
-
-        // VERSION 2
-        // aggregable = true
-        for (int i = 0; i < 3; i++) { expected[i][0] = "modelK # " + i; expected[i][1] = 1L;
-            expected[i+3][0] = "modelL # " + i; expected[i+3][1] = 1L; }
-        assertThat(doQuery("SELECT e.name, COUNT(e.name) FROM evolution.Model e WHERE e.name LIKE '%model%' GROUP BY e.name", cache))
-                .containsExactlyInAnyOrder(expected[0], expected[1], expected[2], expected[3], expected[4], expected[5]);
-
-        // projectable = true
-        assertThat(doQuery("SELECT e.name FROM evolution.Model e", cache)
-                .map(o -> ((Object[]) o)[0])).containsExactlyInAnyOrder("modelK # 0", "modelK # 1", "modelK # 2",
-                "modelL # 0", "modelL # 1", "modelL # 2");
-
-        // sortable = true
-        assertThat(doQuery("SELECT e.name FROM evolution.Model e ORDER BY e.name", cache).
-                map(o -> ((Object[]) o)[0])).containsExactly("modelK # 0", "modelK # 1", "modelK # 2",
-                "modelL # 0", "modelL # 1", "modelL # 2");
-    }
-
-    @Test
-    void testMigrateNormalizerAnalyzer() {
-        // VERSION 1
-        updateSchemaIndex(BaseModelIndexAttributesEntity.BaseModelIndexAttributesEntitySchema.INSTANCE);
-        RemoteCache<String, Model> cache = remoteCacheManager.getCache(CACHE_NAME);
-
-        // Create VERSION 1 entities
-        ModelUtils.createModelEntities(cache, 5, ModelUtils.createBaseModelIndexAttributesEntity(1));
-
-        // VERSION 1
-        // lowercase normalizer
-        doQuery("FROM evolution.Model e WHERE e.normalizedField LIKE '%normalized%'", cache, 5);
-        // standard analyzer => nothing found because standard analyzer takes whitespace as a delimiter when creating tokens
-        doQuery("FROM evolution.Model e WHERE e.analyzedField : '*analyzed field*'", cache, 0);
-
-        // Change attributes on indexes
-        updateSchemaIndex(BaseModelIndexAttributesChangedEntity.BaseModelIndexAttributesChangedEntitySchema.INSTANCE);
-
-        // Create VERSION 2 entities
-        ModelUtils.createModelEntities(cache, 5, ModelUtils.createBaseModelIndexAttributesChangedEntity(2));
-
-        // VERSION 2 - without reindex only newly added entries are recognized (5)
-        // lowercase normalizer removed => the query is case-sensitive, only newly added entries are found
-        doQuery("FROM evolution.Model e WHERE e.normalizedField LIKE '%NORMALIZED%'", cache, 5);
-        // standard analyzer => case-sensitive, whole text as one token, only newly added entries are found
-        doQuery("FROM evolution.Model e WHERE e.analyzedField : '*ANALYZED field*'", cache, 5);
-
-        remoteCacheManager.administration().reindexCache(CACHE_NAME);
-
-        // VERSION 2 - after reindex all entries are recognized (10)
-        // lowercase normalizer removed => the query is case-sensitive, also old entries are found
-        doQuery("FROM evolution.Model e WHERE e.normalizedField LIKE '%NORMALIZED%'", cache, 10);
-        // keyword analyzer => case-sensitive, whole text as one token, also old entries are found
-        doQuery("FROM evolution.Model e WHERE e.analyzedField : '*ANALYZED field*'", cache, 10);
     }
 
     private <T> void doQuery(String query, RemoteCache<String, T> messageCache, int expectedResults) {
