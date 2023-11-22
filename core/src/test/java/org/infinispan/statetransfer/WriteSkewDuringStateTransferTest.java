@@ -44,6 +44,7 @@ import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
@@ -193,12 +194,11 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
       ConfigurationBuilder builder = configuration();
       newNode.controller = new NodeController();
       newNode.controller.interceptor = new ControlledCommandInterceptor();
-      //noinspection deprecation
-      builder.customInterceptors().addInterceptor().index(0).interceptor(newNode.controller.interceptor);
+      GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      global.serialization().addContextInitializer(WriteSkewDuringStateTransferSCI.INSTANCE);
+      TestCacheManagerFactory.addInterceptor(global, TestCacheManagerFactory.DEFAULT_CACHE_NAME::equals, newNode.controller.interceptor, TestCacheManagerFactory.InterceptorPosition.FIRST, null);
 
-      GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      globalBuilder.serialization().addContextInitializer(WriteSkewDuringStateTransferSCI.INSTANCE);
-      EmbeddedCacheManager embeddedCacheManager = createClusteredCacheManager(false, globalBuilder, builder, new TransportFlags());
+      EmbeddedCacheManager embeddedCacheManager = createClusteredCacheManager(false, global, builder, new TransportFlags());
       registerCacheManager(embeddedCacheManager);
       newNode.controller.topologyManager = replaceTopologyManager(embeddedCacheManager);
 

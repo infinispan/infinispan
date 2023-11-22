@@ -15,7 +15,6 @@ import org.infinispan.conflict.ConflictManagerFactory;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
 import org.infinispan.interceptors.FooInterceptor;
-import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
@@ -88,12 +87,6 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.WRITE)
    public void testPut_Object_Object_Metadata(SecureCache<String, String> cache) {
       cache.put("a", "a", metadata);
-   }
-
-   @TestCachePermission(AuthorizationPermission.ADMIN)
-   public void testAddInterceptor_CommandInterceptor_int(SecureCache<String, String> cache) {
-      cache.getAsyncInterceptorChain().addInterceptor(interceptor, 0);
-      cache.getAsyncInterceptorChain().removeInterceptor(0);
    }
 
    @TestCachePermission(AuthorizationPermission.LISTEN)
@@ -251,12 +244,6 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.WRITE)
    public void testReplaceAsync_Object_Object_Object_long_TimeUnit(SecureCache<String, String> cache) {
       cache.replaceAsync("a", "a", "b", 1000, TimeUnit.MILLISECONDS);
-   }
-
-   @TestCachePermission(AuthorizationPermission.ADMIN)
-   public void testAddInterceptorAfter_CommandInterceptor_Class(SecureCache<String, String> cache) {
-      cache.getAsyncInterceptorChain().addInterceptorAfter(interceptor, InvocationContextInterceptor.class);
-      cache.getAsyncInterceptorChain().removeInterceptor(interceptor.getClass());
    }
 
    @TestCachePermission(AuthorizationPermission.WRITE)
@@ -470,11 +457,6 @@ public class SecureCacheTestDriver {
       cache.clearAsync();
    }
 
-   @TestCachePermission(AuthorizationPermission.ADMIN)
-   public void testRemoveInterceptor_Class(SecureCache<String, String> cache) {
-      cache.getAsyncInterceptorChain().removeInterceptor(interceptor.getClass());
-   }
-
    @TestCachePermission(AuthorizationPermission.WRITE)
    public void testReplace_Object_Object_Object_long_TimeUnit_long_TimeUnit(SecureCache<String, String> cache) {
       cache.replace("a", "a", "b", 1000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
@@ -533,12 +515,6 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.WRITE)
    public void testPutIfAbsent_Object_Object_Metadata(SecureCache<String, String> cache) {
       cache.putIfAbsent("a", "a", metadata);
-   }
-
-   @TestCachePermission(AuthorizationPermission.ADMIN)
-   public void testRemoveInterceptor_int(SecureCache<String, String> cache) {
-      cache.getAsyncInterceptorChain().addInterceptor(interceptor, 0);
-      cache.getAsyncInterceptorChain().removeInterceptor(0);
    }
 
    @TestCachePermission(AuthorizationPermission.ADMIN)
@@ -647,11 +623,6 @@ public class SecureCacheTestDriver {
       ConflictManagerFactory.get(cache);
    }
 
-   @TestCachePermission(AuthorizationPermission.ADMIN)
-   public void testGetAsyncInterceptorChain(SecureCache<String, String> cache) {
-      cache.getAsyncInterceptorChain();
-   }
-
    @TestCachePermission(AuthorizationPermission.WRITE)
    public void testRemoveAsync_Object_Object(SecureCache<String, String> cache) {
       cache.removeAsync("a", "a");
@@ -660,12 +631,6 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.ADMIN)
    public void testGetExpirationManager(SecureCache<String, String> cache) {
       cache.getExpirationManager();
-   }
-
-   @TestCachePermission(AuthorizationPermission.ADMIN)
-   public void testAddInterceptorBefore_CommandInterceptor_Class(SecureCache<String, String> cache) {
-      cache.getAsyncInterceptorChain().addInterceptorBefore(interceptor, InvocationContextInterceptor.class);
-      cache.getAsyncInterceptorChain().removeInterceptor(interceptor.getClass());
    }
 
    @TestCachePermission(AuthorizationPermission.READ)

@@ -1,5 +1,6 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
@@ -92,7 +93,7 @@ public class NonTxStateTransferInvalidationTest extends MultipleCacheManagersTes
       EmbeddedCacheManager node2 = manager(1);
       Cache<String, Object> node2Cache = node2.getCache();
       CountDownLatch latch = new CountDownLatch(1);
-      node2Cache.getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new BaseCustomAsyncInterceptor() {
+      extractInterceptorChain(node2Cache).addInterceptor(new BaseCustomAsyncInterceptor() {
          @Override
          public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws
                Throwable {

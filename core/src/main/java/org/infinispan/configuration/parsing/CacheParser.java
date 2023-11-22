@@ -34,8 +34,6 @@ import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.configuration.cache.IndexWriterConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexingConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexingMode;
-import org.infinispan.configuration.cache.InterceptorConfiguration;
-import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
 import org.infinispan.configuration.cache.MemoryConfigurationBuilder;
 import org.infinispan.configuration.cache.PartitionHandlingConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
@@ -358,8 +356,11 @@ public class CacheParser implements ConfigurationParser {
             break;
          }
          case CUSTOM_INTERCEPTORS: {
-            CONFIG.customInterceptorsDeprecated();
-            this.parseCustomInterceptors(reader, holder);
+            ParseUtils.removedSince(reader, 15, 0);
+            CONFIG.customInterceptorsIgnored();
+            while (reader.inTag(Element.CUSTOM_INTERCEPTORS)) {
+               // Skip interceptors
+            }
             break;
          }
          case STORE_AS_BINARY: {
@@ -523,56 +524,6 @@ public class CacheParser implements ConfigurationParser {
       }
 
       ParseUtils.requireNoContent(reader);
-   }
-
-   private void parseCustomInterceptors(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
-      ParseUtils.requireNoAttributes(reader);
-      while (reader.inTag()) {
-         Map.Entry<String, String> item = reader.getMapItem(Attribute.CLASS);
-         Element element = Element.forName(item.getValue());
-         switch (element) {
-            case INTERCEPTOR: {
-               parseInterceptor(reader, holder, item.getKey());
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedElement(reader);
-            }
-         }
-         reader.endMapItem();
-      }
-   }
-
-   private void parseInterceptor(ConfigurationReader reader, ConfigurationBuilderHolder holder, String klass) {
-      ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
-      InterceptorConfigurationBuilder interceptorBuilder = builder.customInterceptors().addInterceptor();
-      interceptorBuilder.interceptorClass(Util.loadClass(klass, holder.getClassLoader()));
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case AFTER:
-               interceptorBuilder.after(Util.loadClass(value, holder.getClassLoader()));
-               break;
-            case BEFORE:
-               interceptorBuilder.before(Util.loadClass(value, holder.getClassLoader()));
-               break;
-            case CLASS:
-               // Already seen
-               break;
-            case INDEX:
-               interceptorBuilder.index(ParseUtils.parseInt(reader, i, value));
-               break;
-            case POSITION:
-               interceptorBuilder.position(InterceptorConfiguration.Position.valueOf(value.toUpperCase()));
-               break;
-            default:
-               throw ParseUtils.unexpectedAttribute(reader, i);
-         }
-      }
-
-      interceptorBuilder.withProperties(parseProperties(reader, Element.INTERCEPTOR));
    }
 
    private void parseLocking(ConfigurationReader reader, ConfigurationBuilder builder) {

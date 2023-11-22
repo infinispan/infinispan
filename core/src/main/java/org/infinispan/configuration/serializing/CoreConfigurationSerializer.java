@@ -35,14 +35,12 @@ import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.CustomInterceptorsConfiguration;
 import org.infinispan.configuration.cache.CustomStoreConfiguration;
 import org.infinispan.configuration.cache.GroupsConfiguration;
 import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.configuration.cache.IndexMergeConfiguration;
 import org.infinispan.configuration.cache.IndexWriterConfiguration;
 import org.infinispan.configuration.cache.IndexingConfiguration;
-import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
@@ -634,7 +632,6 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       writePersistence(writer, configuration);
       writeQuery(writer, configuration);
       writeIndexing(writer, configuration);
-      writeCustomInterceptors(writer, configuration);
       writeSecurity(writer, configuration);
       if (configuration.clustering().cacheMode().needsStateTransfer()) {
          configuration.clustering().stateTransfer().attributes().write(writer, Element.STATE_TRANSFER.getLocalName());
@@ -657,26 +654,6 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
          String output = policy == MergePolicy.CUSTOM ? policyImpl.getClass().getName() : policy.toString();
          writer.writeAttribute(Attribute.MERGE_POLICY, output);
          writer.writeEndElement();
-      }
-   }
-
-   private void writeCustomInterceptors(ConfigurationWriter writer, Configuration configuration) {
-      CustomInterceptorsConfiguration customInterceptors = configuration.customInterceptors();
-      if (customInterceptors.interceptors().size() > 0) {
-         writer.writeStartMap(Element.CUSTOM_INTERCEPTORS);
-         for (InterceptorConfiguration interceptor : customInterceptors.interceptors()) {
-            AttributeSet attributes = interceptor.attributes();
-            if (!attributes.attribute(InterceptorConfiguration.INTERCEPTOR_CLASS).isNull()) {
-               writer.writeMapItem(Element.INTERCEPTOR, Attribute.CLASS, attributes.attribute(InterceptorConfiguration.INTERCEPTOR_CLASS).get().getName());
-               attributes.write(writer, InterceptorConfiguration.AFTER, Attribute.AFTER);
-               attributes.write(writer, InterceptorConfiguration.BEFORE, Attribute.BEFORE);
-               attributes.write(writer, InterceptorConfiguration.INDEX, Attribute.INDEX);
-               attributes.write(writer, InterceptorConfiguration.POSITION, Attribute.POSITION);
-               attributes.write(writer, InterceptorConfiguration.PROPERTIES);
-               writer.writeEndMapItem();
-            }
-         }
-         writer.writeEndMap();
       }
    }
 

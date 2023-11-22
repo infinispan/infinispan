@@ -1,6 +1,8 @@
 package org.infinispan.statetransfer;
 
 import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.DEFAULT_CACHE_NAME;
 import static org.infinispan.util.BlockingLocalTopologyManager.confirmTopologyUpdate;
 import static org.infinispan.util.BlockingLocalTopologyManager.finishRebalance;
 import static org.testng.AssertJUnit.assertEquals;
@@ -23,7 +25,7 @@ import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.InterceptorConfiguration;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.BlockingInterceptor;
@@ -41,6 +43,7 @@ import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.topology.CacheTopology.Phase;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
 import org.infinispan.util.BlockingLocalTopologyManager;
@@ -180,16 +183,14 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       final BlockingLocalTopologyManager topologyManager1 = replaceTopologyManager(manager(1));
       final int currentTopologyId = currentTopologyId(cache(0));
 
-      cache(0).getAdvancedCache().getAsyncInterceptorChain()
-            .addInterceptorAfter(new AssertNoRetryInterceptor(), StateTransferInterceptor.class);
+      extractInterceptorChain(cache(0)).addInterceptorAfter(new AssertNoRetryInterceptor(), StateTransferInterceptor.class);
 
       //remote get is sent in topology T0
       Future<Object> remoteGetFuture = remoteGet(cache(0), key);
       ControlledRpcManager.BlockedRequest blockedGet = rpcManager0.expectCommand(ClusteredGetCommand.class);
 
       FailReadsInterceptor fri = new FailReadsInterceptor();
-      NewNode joiner = addNode(cb -> cb.customInterceptors().addInterceptor()
-                                       .position(InterceptorConfiguration.Position.FIRST).interceptor(fri));
+      NewNode joiner = addNode(g -> TestCacheManagerFactory.addInterceptor(g, DEFAULT_CACHE_NAME::equals, fri, TestCacheManagerFactory.InterceptorPosition.FIRST, null), null);
 
       // Install topology T1 on node 1 and unblock the remote get
       confirmTopologyUpdate(Phase.READ_OLD_WRITE_ALL, topologyManager1);
@@ -221,7 +222,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       final BlockingLocalTopologyManager topologyManager1 = replaceTopologyManager(manager(1));
       final int currentTopologyId = currentTopologyId(cache(0));
 
-      cache(0).getAdvancedCache().getAsyncInterceptorChain()
+      extractInterceptorChain(cache(0))
             .addInterceptorAfter(new AssertNoRetryInterceptor(), StateTransferInterceptor.class);
 
       //the remote get is triggered in the current topology id.
@@ -229,8 +230,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       ControlledRpcManager.BlockedRequest blockedGet = rpcManager0.expectCommand(ClusteredGetCommand.class);
 
       FailReadsInterceptor fri = new FailReadsInterceptor();
-      NewNode joiner = addNode(cb -> cb.customInterceptors().addInterceptor()
-                                       .position(InterceptorConfiguration.Position.FIRST).interceptor(fri));
+      NewNode joiner = addNode(g -> TestCacheManagerFactory.addInterceptor(g, DEFAULT_CACHE_NAME::equals, fri, TestCacheManagerFactory.InterceptorPosition.FIRST, null), null);
 
       confirmTopologyUpdate(Phase.READ_OLD_WRITE_ALL, topologyManager0, topologyManager1);
 
@@ -270,12 +270,11 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       final BlockingLocalTopologyManager topologyManager1 = replaceTopologyManager(manager(1));
       final int currentTopologyId = currentTopologyId(cache(0));
 
-      cache(0).getAdvancedCache().getAsyncInterceptorChain()
+      extractInterceptorChain(cache(0))
               .addInterceptorAfter(new AssertNoRetryInterceptor(), StateTransferInterceptor.class);
 
       FailReadsInterceptor fri = new FailReadsInterceptor();
-      NewNode joiner = addNode(cb -> cb.customInterceptors().addInterceptor()
-                                       .position(InterceptorConfiguration.Position.FIRST).interceptor(fri));
+      NewNode joiner = addNode(g -> TestCacheManagerFactory.addInterceptor(g, DEFAULT_CACHE_NAME::equals, fri, TestCacheManagerFactory.InterceptorPosition.FIRST, null), null);
 
       // Install topology T1 on node 0 and maybe on node 1 as well
       topologyManager0.confirmTopologyUpdate(Phase.READ_OLD_WRITE_ALL);
@@ -336,11 +335,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       assertTopologyId(currentTopologyId, cache(0));
       Future<Object> remoteGetFuture = remoteGet(cache(0), key);
       ControlledRpcManager.BlockedRequest blockedGet = rpcManager0.expectCommand(ClusteredGetCommand.class);
-
-      NewNode joiner = addNode(cb -> cb.customInterceptors().addInterceptor()
-                                       .position(InterceptorConfiguration.Position.FIRST)
-                                       .interceptor(
-                                          new WaitForTopologyInterceptor(currentTopologyId + topologyOnNode2)));
+      NewNode joiner = addNode(g -> TestCacheManagerFactory.addInterceptor(g, DEFAULT_CACHE_NAME::equals, new WaitForTopologyInterceptor(currentTopologyId + topologyOnNode2), TestCacheManagerFactory.InterceptorPosition.FIRST, null), null);
 
       confirmTopologyUpdate(Phase.READ_OLD_WRITE_ALL, topologyManager0, topologyManager1, joiner.topologyManager);
       confirmTopologyUpdate(Phase.READ_ALL_WRITE_ALL, topologyManager0, topologyManager1, joiner.topologyManager);
@@ -405,11 +400,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       final BlockingLocalTopologyManager topologyManager0 = replaceTopologyManager(manager(0));
       final BlockingLocalTopologyManager topologyManager1 = replaceTopologyManager(manager(1));
       final int currentTopologyId = currentTopologyId(cache(0));
-
-      NewNode joiner = addNode(cb -> cb.customInterceptors().addInterceptor()
-                                       .position(InterceptorConfiguration.Position.FIRST)
-                                       .interceptor(
-                                          new WaitForTopologyInterceptor(currentTopologyId + topologyOnNode2)));
+      NewNode joiner = addNode(g -> TestCacheManagerFactory.addInterceptor(g, DEFAULT_CACHE_NAME::equals, new WaitForTopologyInterceptor(currentTopologyId + topologyOnNode2), TestCacheManagerFactory.InterceptorPosition.FIRST, null), null);
 
       // Install topology T1 everywhere
       confirmTopologyUpdate(Phase.READ_OLD_WRITE_ALL, topologyManager0, topologyManager1, joiner.topologyManager);
@@ -502,11 +493,10 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       final BlockingLocalTopologyManager topologyManager1 = replaceTopologyManager(manager(1));
       final int currentTopologyId = currentTopologyId(cache(0));
 
-      cache(0).getAdvancedCache().getAsyncInterceptorChain()
+      extractInterceptorChain(cache(0))
             .addInterceptorAfter(new AssertNoRetryInterceptor(), StateTransferInterceptor.class);
       WaitForTopologyInterceptor wfti = new WaitForTopologyInterceptor(currentTopologyId + topologyOnNode2);
-      NewNode joiner = addNode(cb -> cb.customInterceptors().addInterceptor()
-                                       .position(InterceptorConfiguration.Position.FIRST).interceptor(wfti));
+      NewNode joiner = addNode(g -> TestCacheManagerFactory.addInterceptor(g, DEFAULT_CACHE_NAME::equals, wfti, TestCacheManagerFactory.InterceptorPosition.FIRST, null), null);
 
       // Install topology T1 everywhere and T2 on the originator
       confirmTopologyUpdate(Phase.READ_OLD_WRITE_ALL, topologyManager0, topologyManager1, joiner.topologyManager);
@@ -605,10 +595,9 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       CyclicBarrier barrier1 = new CyclicBarrier(2);
       CyclicBarrier barrier2 = new CyclicBarrier(2);
 
-      NewNode joiner = addNode(cb -> cb.customInterceptors().addInterceptor()
-                                       .position(InterceptorConfiguration.Position.FIRST)
-                                       .interceptor(new BlockingInterceptor<>(barrier2, GetCacheEntryCommand.class,
-                                                                              true, false)));
+      NewNode joiner = addNode(g -> TestCacheManagerFactory.addInterceptor(g, DEFAULT_CACHE_NAME::equals,
+            new BlockingInterceptor<>(barrier2, GetCacheEntryCommand.class,true, false),
+            TestCacheManagerFactory.InterceptorPosition.FIRST, null), null);
 
       // Install T1 everywhere and T2 on node 0
       confirmTopologyUpdate(Phase.READ_OLD_WRITE_ALL, topologyManager0, topologyManager1, joiner.topologyManager);
@@ -616,7 +605,7 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       awaitForTopology(currentTopologyId + 2, cache(0));
 
       // Block the command on node 1 so we can install T3 first
-      cache(1).getAdvancedCache().getAsyncInterceptorChain()
+      extractInterceptorChain(cache(1))
               .addInterceptor(new BlockingInterceptor<>(barrier1, GetCacheEntryCommand.class, false, false), 0);
 
       // Send the remote get and wait for the reply from node 2
@@ -689,15 +678,13 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       final BlockingLocalTopologyManager topologyManager1 = replaceTopologyManager(manager(1));
       final int currentTopologyId = currentTopologyId(cache(0));
 
-      cache(0).getAdvancedCache().getAsyncInterceptorChain()
+      extractInterceptorChain(cache(0))
             .addInterceptorAfter(new AssertNoRetryInterceptor(), StateTransferInterceptor.class);
       FailReadsInterceptor fri = new FailReadsInterceptor();
-      cache(1).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(fri, 0);
-
-      NewNode joiner = addNode(cb -> cb.customInterceptors().addInterceptor()
-                                       .position(InterceptorConfiguration.Position.FIRST)
-                                       .interceptor(new WaitForTopologyInterceptor(currentTopologyId +
-                                                                                      topologyOnNode2)));
+      extractInterceptorChain(cache(1)).addInterceptor(fri, 0);
+      NewNode joiner = addNode(g -> TestCacheManagerFactory.addInterceptor(g, DEFAULT_CACHE_NAME::equals,
+            new WaitForTopologyInterceptor(currentTopologyId + topologyOnNode2),
+            TestCacheManagerFactory.InterceptorPosition.FIRST, null), null);
 
       // Install topology T2 everywhere
       confirmTopologyUpdate(Phase.READ_OLD_WRITE_ALL, topologyManager0, topologyManager1, joiner.topologyManager);
@@ -768,13 +755,18 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       eventually(() -> !cache.getAdvancedCache().getDataContainer().containsKey(key));
    }
 
-   private NewNode addNode(Consumer<ConfigurationBuilder> modifyConfiguration) {
+   private NewNode addNode(Consumer<GlobalConfigurationBuilder> modifyGlobal, Consumer<ConfigurationBuilder> modifyConfiguration) {
       NewNode newNode = new NewNode();
+      GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      global.serialization().addContextInitializer(RemoteGetDuringStateTransferSCI.INSTANCE);
+      if (modifyGlobal != null) {
+         modifyGlobal.accept(global);
+      }
       ConfigurationBuilder configurationBuilder = configuration();
       if (modifyConfiguration != null) {
          modifyConfiguration.accept(configurationBuilder);
       }
-      EmbeddedCacheManager embeddedCacheManager = addClusterEnabledCacheManager(RemoteGetDuringStateTransferSCI.INSTANCE, configurationBuilder);
+      EmbeddedCacheManager embeddedCacheManager = addClusterEnabledCacheManager(global, configurationBuilder);
       newNode.topologyManager = replaceTopologyManager(embeddedCacheManager);
       newNode.joinerFuture = fork(() -> {
          waitForClusterToForm();

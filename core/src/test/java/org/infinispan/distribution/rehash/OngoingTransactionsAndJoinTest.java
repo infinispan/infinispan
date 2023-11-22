@@ -2,6 +2,7 @@ package org.infinispan.distribution.rehash;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.test.TestingUtil.replaceComponent;
 import static org.infinispan.test.TestingUtil.wrapInboundInvocationHandler;
 
@@ -14,12 +15,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.transaction.Transaction;
-
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commands.topology.TopologyUpdateCommand;
 import org.infinispan.commands.topology.RebalanceStartCommand;
+import org.infinispan.commands.topology.TopologyUpdateCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -38,6 +37,8 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.Transaction;
 
 /**
  * This tests the following scenario:
@@ -72,7 +73,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       PrepareDuringRehashTask pt = new PrepareDuringRehashTask(firstNode, txsStarted, txsReady, joinEnded, rehashStarted);
       CommitDuringRehashTask ct = new CommitDuringRehashTask(firstNode, txsStarted, txsReady, joinEnded, rehashStarted);
 
-      AsyncInterceptorChain ic = firstNode.getAdvancedCache().getAsyncInterceptorChain();
+      AsyncInterceptorChain ic = extractInterceptorChain(firstNode);
       ic.addInterceptorAfter(pt, TxInterceptor.class);
       ic.addInterceptorAfter(ct, TxInterceptor.class);
 

@@ -36,6 +36,7 @@ import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -363,7 +364,7 @@ public class InternalCacheFactory<K, V> {
 
       private void interceptorStart() {
          // This has to be done after the cache is wired - otherwise we can get a circular dependency
-         interceptor = cache.getAsyncInterceptorChain().findInterceptorWithClass(CacheMgmtInterceptor.class);
+         interceptor = cache.getComponentRegistry().getComponent(AsyncInterceptorChain.class).findInterceptorWithClass(CacheMgmtInterceptor.class);
       }
 
       @Override

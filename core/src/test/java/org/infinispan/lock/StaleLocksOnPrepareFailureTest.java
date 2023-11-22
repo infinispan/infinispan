@@ -1,5 +1,7 @@
 package org.infinispan.lock;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -39,7 +41,7 @@ public class StaleLocksOnPrepareFailureTest extends MultipleCacheManagersTest {
       // force the prepare command to fail on c2
       FailInterceptor interceptor = new FailInterceptor();
       interceptor.failFor(VersionedPrepareCommand.class);
-      AsyncInterceptorChain ic = c2.getAdvancedCache().getAsyncInterceptorChain();
+      AsyncInterceptorChain ic = extractInterceptorChain(c2);
       ic.addInterceptorBefore(interceptor, VersionedDistributionInterceptor.class);
 
       MagicKey k1 = new MagicKey("k1", c1);

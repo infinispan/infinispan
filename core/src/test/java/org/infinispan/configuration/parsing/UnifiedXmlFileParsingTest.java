@@ -39,7 +39,6 @@ import org.infinispan.configuration.cache.IndexStartupMode;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.cache.IndexingMode;
-import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
@@ -63,7 +62,6 @@ import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.factories.threads.EnhancedQueueExecutorFactory;
 import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
-import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.jmx.CustomMBeanServerPropertiesTest;
 import org.infinispan.marshall.AdvancedExternalizerTest;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
@@ -720,22 +718,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertTrue(c.transaction().useSynchronization()); // Non XA
             assertFalse(c.transaction().recovery().enabled()); // Non XA
             assertEquals(-1, c.memory().size());
-
-            c = getConfiguration(holder, "custom-interceptors");
-            List<InterceptorConfiguration> interceptors = c.customInterceptors().interceptors();
-            InterceptorConfiguration interceptor = interceptors.get(0);
-            assertTrue(interceptor.asyncInterceptor() instanceof CustomInterceptor1);
-            assertEquals(InvocationContextInterceptor.class, interceptor.after());
-            interceptor = interceptors.get(1);
-            assertEquals(InvocationContextInterceptor.class, interceptor.before());
-            assertTrue(interceptor.asyncInterceptor() instanceof CustomInterceptor2);
-            interceptor = interceptors.get(2);
-            assertTrue(interceptor.asyncInterceptor() instanceof CustomInterceptor3);
-            assertEquals(1, interceptor.index());
-            interceptor = interceptors.get(3);
-            assertTrue(interceptor.asyncInterceptor() instanceof CustomInterceptor4);
-            assertEquals(InterceptorConfiguration.Position.LAST, interceptor.position());
-            assertTrue(c.unsafe().unreliableReturnValues());
 
             c = getConfiguration(holder, "write-skew");
             assertEquals(IsolationLevel.REPEATABLE_READ, c.locking().isolationLevel());

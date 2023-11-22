@@ -1,5 +1,6 @@
 package org.infinispan.persistence;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.infinispan.util.concurrent.CompletionStages.join;
@@ -204,13 +205,13 @@ public class AddStoreTest extends AbstractInfinispanTest {
 
 
    private void checkStore(Cache<?, ?> cache) {
-      AsyncInterceptorChain asyncInterceptorChain = cache.getAdvancedCache().getAdvancedCache().getAsyncInterceptorChain();
+      AsyncInterceptorChain asyncInterceptorChain = extractInterceptorChain(cache);
       assertNotNull(asyncInterceptorChain.findInterceptorWithClass(CacheLoaderInterceptor.class));
       assertNotNull(asyncInterceptorChain.findInterceptorWithClass(CacheWriterInterceptor.class));
    }
 
    private void checkPassivation(Cache<?, ?> cache) {
-      AsyncInterceptorChain asyncInterceptorChain = cache.getAdvancedCache().getAdvancedCache().getAsyncInterceptorChain();
+      AsyncInterceptorChain asyncInterceptorChain = extractInterceptorChain(cache);
       assertNotNull(asyncInterceptorChain.findInterceptorWithClass(PassivationWriterInterceptor.class));
 
       if (cache.getAdvancedCache().getCacheConfiguration().clustering().cacheMode().isClustered()) {
@@ -221,7 +222,7 @@ public class AddStoreTest extends AbstractInfinispanTest {
    }
 
    private void checkClustered(Cache<?, ?> cache) {
-      AsyncInterceptorChain asyncInterceptorChain = cache.getAdvancedCache().getAdvancedCache().getAsyncInterceptorChain();
+      AsyncInterceptorChain asyncInterceptorChain = extractInterceptorChain(cache);
       assertNotNull(asyncInterceptorChain.findInterceptorWithClass(ClusteredCacheLoaderInterceptor.class));
    }
 

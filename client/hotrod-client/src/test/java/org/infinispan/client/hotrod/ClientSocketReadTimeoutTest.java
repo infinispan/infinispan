@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 
@@ -15,11 +16,11 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.distribution.BlockingInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -44,7 +45,7 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
       cacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
       BlockingInterceptor<PutKeyValueCommand> blockingInterceptor =
          new BlockingInterceptor<>(barrier, PutKeyValueCommand.class, true, true);
-      cacheManager.getCache().getAdvancedCache().getAsyncInterceptorChain()
+      extractInterceptorChain(cacheManager.getCache())
                   .addInterceptorBefore(blockingInterceptor, EntryWrappingInterceptor.class);
       // cacheManager = TestCacheManagerFactory.createLocalCacheManager();
       // pass the config file to the cache

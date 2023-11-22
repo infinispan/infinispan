@@ -1,6 +1,7 @@
 package org.infinispan.api.mvcc;
 
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 import static org.testng.AssertJUnit.assertEquals;
@@ -85,7 +86,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       final Cache<MagicKey, String> cache2 = cache(1, CACHE_NAME);
 
       final CyclicBarrier barrier = new CyclicBarrier(2);
-      cache1.getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new BaseAsyncInterceptor() {
+      extractInterceptorChain(cache1).addInterceptor(new BaseAsyncInterceptor() {
          @Override
          public Object visitCommand(InvocationContext ctx, VisitableCommand command)
                throws Throwable {
@@ -163,7 +164,7 @@ public class PutForExternalReadTest extends MultipleCacheManagersTest {
       Cache<String, String> cache1 = cache(0, CACHE_NAME);
       Cache<String, String> cache2 = cache(1, CACHE_NAME);
 
-      assertTrue(cache1.getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(new BaseAsyncInterceptor() {
+      assertTrue(extractInterceptorChain(cache1).addInterceptorBefore(new BaseAsyncInterceptor() {
          @Override
          public Object visitCommand(InvocationContext ctx, VisitableCommand command)
                throws Throwable {

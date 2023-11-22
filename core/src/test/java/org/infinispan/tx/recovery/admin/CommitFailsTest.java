@@ -1,5 +1,6 @@
 package org.infinispan.tx.recovery.admin;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.commitTransaction;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
 import static org.testng.Assert.assertEquals;
@@ -44,8 +45,8 @@ public class CommitFailsTest extends AbstractRecoveryTest {
 
       failureInterceptor0 = new InDoubtWithCommitFailsTest.ForceFailureInterceptor();
       failureInterceptor1 = new InDoubtWithCommitFailsTest.ForceFailureInterceptor();
-      advancedCache(0).getAsyncInterceptorChain().addInterceptorAfter(failureInterceptor0, InvocationContextInterceptor.class);
-      advancedCache(1).getAsyncInterceptorChain().addInterceptorAfter(failureInterceptor1, InvocationContextInterceptor.class);
+      extractInterceptorChain(advancedCache(0)).addInterceptorAfter(failureInterceptor0, InvocationContextInterceptor.class);
+      extractInterceptorChain(advancedCache(1)).addInterceptorAfter(failureInterceptor1, InvocationContextInterceptor.class);
    }
 
    @BeforeMethod

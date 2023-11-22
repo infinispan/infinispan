@@ -13,6 +13,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -23,6 +24,7 @@ import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
@@ -65,12 +67,14 @@ public class InitialStateTransferCompletionTest extends MultipleCacheManagersTes
 
       final AtomicBoolean ignoreFurtherStateTransfer = new AtomicBoolean();
       final AtomicInteger transferredKeys = new AtomicInteger();
-      cacheConfigBuilder.customInterceptors().addInterceptor().before(InvocationContextInterceptor.class)
-                        .interceptor(new CountInterceptor(ignoreFurtherStateTransfer, transferredKeys));
+
+      GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      TestCacheManagerFactory.addInterceptor(global, TestCacheManagerFactory.DEFAULT_CACHE_NAME::equals,
+            new CountInterceptor(ignoreFurtherStateTransfer, transferredKeys), TestCacheManagerFactory.InterceptorPosition.BEFORE, InvocationContextInterceptor.class);
 
       // add the third member
       log.trace("Adding new member ...");
-      addClusterEnabledCacheManager(cacheConfigBuilder);
+      addClusterEnabledCacheManager(global, cacheConfigBuilder);
       Cache<String, String> cache2 = cache(2);  //this must return only when all state was received
       ignoreFurtherStateTransfer.set(true);
       log.trace("Successfully added a new member");

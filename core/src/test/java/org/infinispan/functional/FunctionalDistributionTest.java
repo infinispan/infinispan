@@ -1,5 +1,7 @@
 package org.infinispan.functional;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CyclicBarrier;
@@ -90,7 +92,7 @@ public class FunctionalDistributionTest extends AbstractFunctionalTest {
       CyclicBarrier barrier = new CyclicBarrier(numDistOwners + 1);
       for (AdvancedCache cache : owners) {
          BlockingInterceptor bi = new BlockingInterceptor<>(barrier, ReadWriteKeyCommand.class, true, false);
-         cache.getAsyncInterceptorChain().addInterceptorBefore(bi, EntryWrappingInterceptor.class);
+         extractInterceptorChain(cache).addInterceptorBefore(bi, EntryWrappingInterceptor.class);
       }
 
       // While the command execution could be async the BlockingInterceptor would block us on primary owner == originator
@@ -99,12 +101,12 @@ public class FunctionalDistributionTest extends AbstractFunctionalTest {
 
       barrier.await(10, TimeUnit.SECONDS);
       for (AdvancedCache cache : owners) {
-         cache.getAsyncInterceptorChain().findInterceptorWithClass(BlockingInterceptor.class).suspend(true);
+         extractInterceptorChain(cache).findInterceptorWithClass(BlockingInterceptor.class).suspend(true);
       }
       barrier.await(10, TimeUnit.SECONDS);
 
       for (AdvancedCache cache : owners) {
-         cache.getAsyncInterceptorChain().removeInterceptor(BlockingInterceptor.class);
+         extractInterceptorChain(cache).removeInterceptor(BlockingInterceptor.class);
       }
 
       f.get(10, TimeUnit.SECONDS);

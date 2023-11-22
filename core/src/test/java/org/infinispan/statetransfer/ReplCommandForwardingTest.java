@@ -19,6 +19,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -28,6 +29,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
 import org.testng.annotations.Test;
@@ -48,32 +50,42 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       // do nothing, each test will create its own cache managers
    }
 
-   private ConfigurationBuilder buildConfig(Class<?> commandToBlock) {
+   private ConfigurationBuilder buildConfig() {
       ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig( CacheMode.REPL_ASYNC, false);
       configurationBuilder.clustering().remoteTimeout(15000);
       // The coordinator will always be the primary owner
       configurationBuilder.clustering().hash().numSegments(1).consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
       configurationBuilder.clustering().stateTransfer().fetchInMemoryState(true);
-      // We must block after the commit was replicated, but before the entries are committed
-      configurationBuilder.customInterceptors()
-            .addInterceptor().after(EntryWrappingInterceptor.class).interceptor(new DelayInterceptor(commandToBlock));
       return configurationBuilder;
    }
 
    public void testForwardToJoinerNonTransactional() throws Exception {
-      EmbeddedCacheManager cm1 = addClusterEnabledCacheManager();
-      final Cache<Object, Object> c1 = cm1.createCache(CACHE_NAME, buildConfig(PutKeyValueCommand.class).build());
+      GlobalConfigurationBuilder gc1 = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      // We must block after the commit was replicated, but before the entries are committed
+      TestCacheManagerFactory.addInterceptor(gc1, CACHE_NAME::equals, new DelayInterceptor(PutKeyValueCommand.class), TestCacheManagerFactory.InterceptorPosition.AFTER, EntryWrappingInterceptor.class);
+
+      EmbeddedCacheManager cm1 = addClusterEnabledCacheManager(gc1, null);
+      final Cache<Object, Object> c1 = cm1.createCache(CACHE_NAME, buildConfig().build());
       DelayInterceptor di1 = findInterceptor(c1, DelayInterceptor.class);
       int initialTopologyId = c1.getAdvancedCache().getDistributionManager().getCacheTopology().getTopologyId();
 
-      EmbeddedCacheManager cm2 = addClusterEnabledCacheManager();
-      Cache<Object, Object> c2 = cm2.createCache(CACHE_NAME, buildConfig(PutKeyValueCommand.class).build());
+      GlobalConfigurationBuilder gc2 = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      // We must block after the commit was replicated, but before the entries are committed
+      TestCacheManagerFactory.addInterceptor(gc2, CACHE_NAME::equals, new DelayInterceptor(PutKeyValueCommand.class), TestCacheManagerFactory.InterceptorPosition.AFTER, EntryWrappingInterceptor.class);
+
+      EmbeddedCacheManager cm2 = addClusterEnabledCacheManager(gc2, null);
+      Cache<Object, Object> c2 = cm2.createCache(CACHE_NAME, buildConfig().build());
       DelayInterceptor di2 = findInterceptor(c2, DelayInterceptor.class);
       waitForStateTransfer(initialTopologyId + 4, c1, c2);
 
+
+
       // Start a 3rd node, but start a different cache there so that the topology stays the same.
       // Otherwise the put command blocked on node 1 could block the view message (as both are broadcast by node 0).
-      EmbeddedCacheManager cm3 = addClusterEnabledCacheManager();
+      GlobalConfigurationBuilder gc3 = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      // We must block after the commit was replicated, but before the entries are committed
+      TestCacheManagerFactory.addInterceptor(gc3, CACHE_NAME::equals, new DelayInterceptor(PutKeyValueCommand.class), TestCacheManagerFactory.InterceptorPosition.AFTER, EntryWrappingInterceptor.class);
+      EmbeddedCacheManager cm3 = addClusterEnabledCacheManager(gc3, null);
       cm3.createCache("differentCache", getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC).build());
 
       Future<Object> f = fork(() -> {
@@ -87,7 +99,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       di2.waitUntilBlocked(1);
 
       // c3 joins the cache, topology id changes
-      Cache<Object, Object> c3 = cm3.createCache(CACHE_NAME, buildConfig(PutKeyValueCommand.class).build());
+      Cache<Object, Object> c3 = cm3.createCache(CACHE_NAME, buildConfig().build());
       DelayInterceptor di3 = findInterceptor(c3, DelayInterceptor.class);
       waitForStateTransfer(initialTopologyId + 8, c1, c2, c3);
 

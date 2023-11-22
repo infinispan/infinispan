@@ -1,5 +1,6 @@
 package org.infinispan.test.hibernate.cache.commons.functional;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -289,7 +290,7 @@ public class VersionedTest extends AbstractNonInvalidationTest {
       AtomicBoolean committing = new AtomicBoolean(false);
       CollectionUpdateTestInterceptor collectionUpdateTestInterceptor = new CollectionUpdateTestInterceptor(putFromLoadLatch);
       AnotherCollectionUpdateTestInterceptor anotherInterceptor = new AnotherCollectionUpdateTestInterceptor(putFromLoadLatch, committing);
-      AsyncInterceptorChain interceptorChain = collectionCache.getAsyncInterceptorChain();
+      AsyncInterceptorChain interceptorChain = extractInterceptorChain(collectionCache);
       interceptorChain.addInterceptorBefore( collectionUpdateTestInterceptor, CallInterceptor.class );
       interceptorChain.addInterceptor(anotherInterceptor, 0);
 

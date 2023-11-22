@@ -1,11 +1,33 @@
 package org.infinispan.tx;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.infinispan.Cache;
+import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commons.tx.TransactionImpl;
+import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.LocalTxInvocationContext;
+import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
+import org.infinispan.interceptors.impl.TxInterceptor;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.impl.LocalTransaction;
+import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
+import org.infinispan.transaction.tm.EmbeddedBaseTransactionManager;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 import jakarta.transaction.InvalidTransactionException;
 import jakarta.transaction.RollbackException;
@@ -14,25 +36,6 @@ import jakarta.transaction.SystemException;
 import jakarta.transaction.Transaction;
 import jakarta.transaction.TransactionManager;
 import jakarta.transaction.TransactionSynchronizationRegistry;
-
-import org.infinispan.Cache;
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commons.tx.TransactionImpl;
-import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.LocalTxInvocationContext;
-import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
-import org.infinispan.interceptors.impl.TxInterceptor;
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.transaction.impl.LocalTransaction;
-import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
-import org.infinispan.transaction.tm.EmbeddedBaseTransactionManager;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
 
 /**
  * Reproducer for ISPN-12798
@@ -62,6 +65,13 @@ public class StateTransferTransactionTest extends MultipleCacheManagersTest {
       };
    }
 
+   @Override
+   protected GlobalConfigurationBuilder defaultGlobalConfigurationBuilder() {
+      GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      TestCacheManagerFactory.addInterceptor(global, n -> n.startsWith("cache-"), CollectTxInterceptor::new, TestCacheManagerFactory.InterceptorPosition.AFTER, TxInterceptor.class);
+      return global;
+   }
+
    @Test(dataProvider = "data")
    public void testStateTransferTransactionNotEnlisted(boolean useSync, boolean useRegistry) {
       final String cacheName = String.format("cache-%s", suffix(useSync, useRegistry));
@@ -79,7 +89,7 @@ public class StateTransferTransactionTest extends MultipleCacheManagersTest {
 
       waitForClusterToForm(cacheName);
 
-      CollectTxInterceptor interceptor = cache1.getAdvancedCache().getAsyncInterceptorChain().findInterceptorWithClass(CollectTxInterceptor.class);
+      CollectTxInterceptor interceptor = extractInterceptorChain(cache1).findInterceptorWithClass(CollectTxInterceptor.class);
       assertEquals(1, interceptor.stateTransferTransactions.size());
       TransactionImpl stateTransferTx = interceptor.stateTransferTransactions.iterator().next();
 
@@ -104,7 +114,6 @@ public class StateTransferTransactionTest extends MultipleCacheManagersTest {
       if (useRegistry) {
          builder.transaction().transactionSynchronizationRegistryLookup(new DummyTransactionSynchronizationRegistryLookup());
       }
-      builder.customInterceptors().addInterceptor().interceptor(new CollectTxInterceptor()).after(TxInterceptor.class);
       builder.clustering().hash().numSegments(1);
       return builder;
    }

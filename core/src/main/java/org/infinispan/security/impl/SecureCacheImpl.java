@@ -31,7 +31,6 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
@@ -235,16 +234,6 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    public CompletableFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
       authzManager.checkPermission(subject, writePermission);
       return delegate.putAllAsync(data, lifespan, unit);
-   }
-
-   /**
-    * @deprecated Since 10.0, will be removed without a replacement
-    */
-   @Deprecated
-   @Override
-   public AsyncInterceptorChain getAsyncInterceptorChain() {
-      authzManager.checkPermission(subject, AuthorizationPermission.ADMIN);
-      return delegate.getAsyncInterceptorChain();
    }
 
    @Override

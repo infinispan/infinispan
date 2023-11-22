@@ -1,6 +1,7 @@
 package org.infinispan.api;
 
 import static org.infinispan.functional.FunctionalTestUtils.await;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
@@ -14,14 +15,12 @@ import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingCache;
 import org.infinispan.cache.impl.SimpleCacheImpl;
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.configuration.CustomInterceptorConfigTest;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.EmbeddedMetadata;
@@ -48,14 +47,8 @@ public class SimpleCacheTest extends APINonTxTest {
       return cm;
    }
 
-   @Test(expectedExceptions = UnsupportedOperationException.class)
-   public void testAddInterceptor() {
-      cache().getAdvancedCache().getAsyncInterceptorChain()
-             .addInterceptor(new CustomInterceptorConfigTest.DummyInterceptor(), 0);
-   }
-
    public void testFindInterceptor() {
-      AsyncInterceptorChain interceptorChain = cache().getAdvancedCache().getAsyncInterceptorChain();
+      AsyncInterceptorChain interceptorChain = extractInterceptorChain(cache());
       assertNotNull(interceptorChain);
       assertNull(interceptorChain.findInterceptorExtending(InvocationContextInterceptor.class));
    }
@@ -64,13 +57,6 @@ public class SimpleCacheTest extends APINonTxTest {
    public void testTransactions() {
       new ConfigurationBuilder().simpleCache(true)
             .transaction().transactionMode(TransactionMode.TRANSACTIONAL).build();
-   }
-
-   @Test(expectedExceptions = CacheConfigurationException.class)
-   public void testCustomInterceptors() {
-      new ConfigurationBuilder().simpleCache(true)
-                                .customInterceptors().addInterceptor().interceptor(new BaseCustomAsyncInterceptor())
-                                .build();
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class)

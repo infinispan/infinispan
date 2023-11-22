@@ -1,5 +1,15 @@
 package org.infinispan.tx;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+import static org.infinispan.test.TestingUtil.waitForNoRebalance;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.configuration.cache.CacheMode;
@@ -15,15 +25,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.test.TestingUtil.waitForNoRebalance;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * This test reproduces following scenario in Infinispan:
@@ -78,7 +79,7 @@ public class InfinispanNodeFailureTest extends MultipleCacheManagersTest {
       final CountDownLatch beforeKill = new CountDownLatch(1);
       final CountDownLatch afterKill = new CountDownLatch(1);
 
-      advancedCache(1, TEST_CACHE).getAsyncInterceptorChain().addInterceptor(new BaseCustomAsyncInterceptor() {
+      extractInterceptorChain(advancedCache(1, TEST_CACHE)).addInterceptor(new BaseCustomAsyncInterceptor() {
 
          @Override
          public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {

@@ -203,7 +203,7 @@ public class DomainDataRegionImpl
    private void prepareCommon(CacheMode cacheMode) {
       BasicComponentRegistry registry = cache.getComponentRegistry().getComponent(BasicComponentRegistry.class);
       if (cacheMode.isReplicated() || cacheMode.isDistributed()) {
-         AsyncInterceptorChain chain = cache.getAsyncInterceptorChain();
+         AsyncInterceptorChain chain = cache.getComponentRegistry().getComponent(AsyncInterceptorChain.class);
 
          LockingInterceptor lockingInterceptor = new LockingInterceptor();
          registry.registerComponent(LockingInterceptor.class, lockingInterceptor, true);

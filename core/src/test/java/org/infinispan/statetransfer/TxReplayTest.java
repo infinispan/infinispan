@@ -1,12 +1,11 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import java.util.concurrent.atomic.AtomicInteger;
-
-import jakarta.transaction.Status;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.CommitCommand;
@@ -29,6 +28,8 @@ import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.Status;
 
 /**
  * Tests the prepare replay.
@@ -130,7 +131,7 @@ public class TxReplayTest extends MultipleCacheManagersTest {
       }
 
       public static TxCommandInterceptor inject(Cache cache) {
-         AsyncInterceptorChain chain = cache.getAdvancedCache().getAsyncInterceptorChain();
+         AsyncInterceptorChain chain = extractInterceptorChain(cache);
          if (chain.containsInterceptorType(TxCommandInterceptor.class)) {
             return chain.findInterceptorWithClass(TxCommandInterceptor.class);
          }

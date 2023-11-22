@@ -1,5 +1,6 @@
 package org.infinispan.distribution;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.concurrent.CyclicBarrier;
@@ -25,7 +26,7 @@ public class CacheStoppedDuringReadTest extends MultipleCacheManagersTest {
       cache(2).put(key, "value");
 
       CyclicBarrier barrier0 = new CyclicBarrier(2);
-      cache(0).getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(
+      extractInterceptorChain(cache(0)).addInterceptorBefore(
             new BlockingInterceptor<>(barrier0, GetCacheEntryCommand.class, false, false),
             EntryWrappingInterceptor.class);
 

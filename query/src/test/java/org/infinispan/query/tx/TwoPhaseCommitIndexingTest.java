@@ -9,6 +9,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
@@ -30,12 +31,11 @@ public class TwoPhaseCommitIndexingTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
+      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder().nonClusteredDefault();
+      global.serialization().addContextInitializer(QueryTestSCI.INSTANCE);
+      TestCacheManagerFactory.addInterceptor(global, TestCacheManagerFactory.DEFAULT_CACHE_NAME::equals, nastyInterceptor, TestCacheManagerFactory.InterceptorPosition.AFTER, EntryWrappingInterceptor.class);
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg
-         .customInterceptors()
-            .addInterceptor()
-               .after(EntryWrappingInterceptor.class)
-               .interceptor(nastyInterceptor)
          .transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .use1PcForAutoCommitTransactions(false)
@@ -44,7 +44,7 @@ public class TwoPhaseCommitIndexingTest extends SingleCacheManagerTest {
             .storage(LOCAL_HEAP)
             .addIndexedEntity(Person.class)
          .locking().isolationLevel(IsolationLevel.READ_COMMITTED);
-      return TestCacheManagerFactory.createCacheManager(QueryTestSCI.INSTANCE, cfg);
+      return TestCacheManagerFactory.createCacheManager(global, cfg);
    }
 
    public void testQueryAfterAddingNewNode() throws Exception {

@@ -1,5 +1,6 @@
 package org.infinispan.expiration.impl;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.concurrent.BrokenBarrierException;
@@ -14,6 +15,7 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
@@ -35,7 +37,6 @@ import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.commons.time.ControlledTimeService;
 import org.testng.annotations.Test;
 
 /**
@@ -141,7 +142,7 @@ public class CustomLoaderNonNullWithExpirationTest extends SingleCacheManagerTes
 
    public void testExpireAfterWrapping() {
       // Every time a get is invoked it increases time by 2 seconds - causing entry to expire
-      cache.getAdvancedCache().getAsyncInterceptorChain().addInterceptorAfter(new BaseCustomAsyncInterceptor() {
+      extractInterceptorChain(cache).addInterceptorAfter(new BaseCustomAsyncInterceptor() {
          @Override
          public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
             timeService.advance(TimeUnit.SECONDS.toMillis(2));
@@ -166,7 +167,7 @@ public class CustomLoaderNonNullWithExpirationTest extends SingleCacheManagerTes
 
       // We block the first get attempt, which will have no entry in data container in EntryWrappingInterceptor
       // But after we unblock it, the data container will have an expired entry
-      cache.getAdvancedCache().getAsyncInterceptorChain().addInterceptorAfter(new BaseCustomAsyncInterceptor() {
+      extractInterceptorChain(cache).addInterceptorAfter(new BaseCustomAsyncInterceptor() {
          @Override
          public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
             if (blockFirst.getAndSet(false)) {

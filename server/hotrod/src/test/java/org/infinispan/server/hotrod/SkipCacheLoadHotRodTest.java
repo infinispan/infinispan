@@ -3,6 +3,7 @@ package org.infinispan.server.hotrod;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertStatus;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.k;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.v;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 
 import java.lang.reflect.Method;
 
@@ -155,7 +156,7 @@ public class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
 
    private FlagCheckCommandInterceptor init() {
       AsyncInterceptorChain interceptorChain =
-            cacheManager.getCache(cacheName).getAdvancedCache().getAsyncInterceptorChain();
+            extractInterceptorChain(cacheManager.getCache(cacheName));
       FlagCheckCommandInterceptor interceptor =
             interceptorChain.findInterceptorExtending(FlagCheckCommandInterceptor.class);
       if (interceptor != null)

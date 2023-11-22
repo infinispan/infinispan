@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -39,18 +40,16 @@ public class ConcurrentInterceptorVisibilityTest extends AbstractInfinispanTest 
       updateCache(Visibility.GET);
    }
 
-   private void updateCache(final Visibility visibility) throws Exception {
+   private void updateCache(final Visibility visibility) {
       final String key = "k-" + visibility;
       final String value = "k-" + visibility;
       final CountDownLatch entryCreatedLatch = new CountDownLatch(1);
       final EntryCreatedInterceptor interceptor = new EntryCreatedInterceptor(entryCreatedLatch);
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.customInterceptors().addInterceptor()
-            .interceptor(interceptor)
-            .before(EntryWrappingInterceptor.class);
-
+      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder().nonClusteredDefault();
+      TestCacheManagerFactory.addInterceptor(global, TestCacheManagerFactory.DEFAULT_CACHE_NAME::equals, interceptor, TestCacheManagerFactory.InterceptorPosition.BEFORE, EntryWrappingInterceptor.class);
       withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.createCacheManager(builder)) {
+            TestCacheManagerFactory.createCacheManager(global, builder)) {
          @Override
          public void call() throws Exception {
             final Cache<Object,Object> cache = cm.getCache();

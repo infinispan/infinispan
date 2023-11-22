@@ -24,7 +24,6 @@ public class Configuration extends ConfigurationElement<Configuration> implement
 
    private final Attribute<Boolean> simpleCache;
    private final ClusteringConfiguration clusteringConfiguration;
-   private final CustomInterceptorsConfiguration customInterceptorsConfiguration;
    private final EncodingConfiguration encodingConfiguration;
    private final ExpirationConfiguration expirationConfiguration;
    private final IndexingConfiguration indexingConfiguration;
@@ -43,7 +42,6 @@ public class Configuration extends ConfigurationElement<Configuration> implement
 
    Configuration(boolean template, AttributeSet attributes,
                  ClusteringConfiguration clusteringConfiguration,
-                 CustomInterceptorsConfiguration customInterceptorsConfiguration,
                  ExpirationConfiguration expirationConfiguration,
                  EncodingConfiguration encodingConfiguration,
                  QueryConfiguration queryConfiguration,
@@ -75,7 +73,6 @@ public class Configuration extends ConfigurationElement<Configuration> implement
       this.template = template;
       this.simpleCache = attributes.attribute(SIMPLE_CACHE);
       this.clusteringConfiguration = clusteringConfiguration;
-      this.customInterceptorsConfiguration = customInterceptorsConfiguration;
       this.encodingConfiguration = encodingConfiguration;
       this.expirationConfiguration = expirationConfiguration;
       this.queryConfiguration = queryConfiguration;
@@ -102,14 +99,6 @@ public class Configuration extends ConfigurationElement<Configuration> implement
 
    public ClusteringConfiguration clustering() {
       return clusteringConfiguration;
-   }
-
-   /**
-    * @deprecated Since 10.0, custom interceptors support will be removed and only modules will be able to define interceptors
-    */
-   @Deprecated
-   public CustomInterceptorsConfiguration customInterceptors() {
-      return customInterceptorsConfiguration;
    }
 
    public EncodingConfiguration encoding() {
@@ -180,7 +169,6 @@ public class Configuration extends ConfigurationElement<Configuration> implement
       return "Configuration{" +
             "simpleCache=" + simpleCache.get() +
             ", clustering=" + clusteringConfiguration +
-            ", customInterceptors=" + customInterceptorsConfiguration +
             ", encoding=" + encodingConfiguration +
             ", expiration=" + expirationConfiguration +
             ", query=" + queryConfiguration +
@@ -208,7 +196,6 @@ public class Configuration extends ConfigurationElement<Configuration> implement
       return template == that.template
             && Objects.equals(simpleCache.get(), that.simpleCache.get())
             && Objects.equals(clusteringConfiguration, that.clusteringConfiguration)
-            && Objects.equals(customInterceptorsConfiguration, that.customInterceptorsConfiguration)
             && Objects.equals(encodingConfiguration, that.encodingConfiguration)
             && Objects.equals(expirationConfiguration, that.expirationConfiguration)
             && Objects.equals(indexingConfiguration, that.indexingConfiguration)
@@ -229,7 +216,6 @@ public class Configuration extends ConfigurationElement<Configuration> implement
    public int hashCode() {
       return Objects.hash(super.hashCode(), simpleCache.get(),
             clusteringConfiguration,
-            customInterceptorsConfiguration,
             encodingConfiguration,
             expirationConfiguration,
             indexingConfiguration,
@@ -253,8 +239,6 @@ public class Configuration extends ConfigurationElement<Configuration> implement
       if (!simpleCache.get().equals(other.simpleCache.get()))
          return false;
       if (!clusteringConfiguration.matches(other.clusteringConfiguration))
-         return false;
-      if (!customInterceptorsConfiguration.matches(other.customInterceptorsConfiguration))
          return false;
       if (!encodingConfiguration.matches(other.encodingConfiguration))
          return false;

@@ -1,5 +1,6 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -85,7 +86,7 @@ public class StateTransferPessimisticTest extends MultipleCacheManagersTest {
 
       // Unblock the stale entries invalidation
       barrier.await(10, TimeUnit.SECONDS);
-      cache(0).getAdvancedCache().getAsyncInterceptorChain().removeInterceptor(BlockingInterceptor.class);
+      extractInterceptorChain(cache(0)).removeInterceptor(BlockingInterceptor.class);
 
       for (Object key : keys) {
          // Check that the stale entries on the old nodes are eventually deleted

@@ -1,5 +1,6 @@
 package org.infinispan.query.remote.impl;
 
+import static org.infinispan.test.fwk.TestCacheManagerFactory.DEFAULT_CACHE_NAME;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -13,6 +14,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
@@ -22,6 +24,7 @@ import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -35,9 +38,14 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
    @Override
    protected void createCacheManagers() throws Throwable {
       //todo [anistor] test with ST, with store , test with manual TX, with batching, with HotRod
-      addClusterEnabledCacheManager(makeCfg());
-      addClusterEnabledCacheManager(makeCfg());
+      addClusterEnabledCacheManager(globalCfg(), makeCfg());
+      addClusterEnabledCacheManager(globalCfg(), makeCfg());
       waitForClusterToForm();
+   }
+
+   private GlobalConfigurationBuilder globalCfg() {
+      GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      return TestCacheManagerFactory.addInterceptor(global, DEFAULT_CACHE_NAME::equals, new ProtobufMetadataManagerInterceptor(), TestCacheManagerFactory.InterceptorPosition.AFTER, PessimisticLockingInterceptor.class);
    }
 
    private ConfigurationBuilder makeCfg() {
@@ -48,9 +56,7 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
             .clustering()
             .stateTransfer().fetchInMemoryState(true)
             .transaction().lockingMode(LockingMode.PESSIMISTIC)
-            .locking().isolationLevel(IsolationLevel.READ_COMMITTED).useLockStriping(false)
-            .customInterceptors().addInterceptor()
-            .interceptor(new ProtobufMetadataManagerInterceptor()).after(PessimisticLockingInterceptor.class);
+            .locking().isolationLevel(IsolationLevel.READ_COMMITTED).useLockStriping(false);
       return cfg;
    }
 

@@ -7,7 +7,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
+import org.infinispan.commands.module.TestGlobalConfigurationBuilder;
 import org.infinispan.commons.configuration.io.ConfigurationResourceResolvers;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
@@ -16,6 +19,7 @@ import org.infinispan.commons.jmx.PlatformMBeanServerLookup;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.FileLookupFactory;
+import org.infinispan.commons.util.InstanceSupplier;
 import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -27,8 +31,12 @@ import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.threads.CoreExecutorFactory;
 import org.infinispan.factories.threads.DefaultThreadFactory;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
@@ -454,6 +462,50 @@ public class TestCacheManagerFactory {
    private static void checkJmx(GlobalConfiguration gc) {
       assert !(gc.jmx().enabled() && gc.jmx().mbeanServerLookup() instanceof PlatformMBeanServerLookup)
             : "Tests must configure a MBeanServerLookup other than the default PlatformMBeanServerLookup or not enable JMX";
+   }
+
+   public static GlobalConfigurationBuilder addInterceptor(GlobalConfigurationBuilder global, Predicate<String> namePredicate, AsyncInterceptor interceptor,
+                                                           InterceptorPosition position, Class<? extends AsyncInterceptor> otherClass) {
+      return addInterceptor(global, namePredicate, new InstanceSupplier<>(interceptor), position, otherClass);
+   }
+
+   public static GlobalConfigurationBuilder addInterceptor(GlobalConfigurationBuilder global, Predicate<String> namePredicate, Supplier<AsyncInterceptor> interceptorSupplier,
+                                                           InterceptorPosition position, Class<? extends AsyncInterceptor> otherClass) {
+      global.addModule(TestGlobalConfigurationBuilder.class).addCacheStartingCallback(cr -> {
+         if (namePredicate.test(cr.getCacheName())) {
+            AsyncInterceptor interceptor = interceptorSupplier.get();
+            BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
+            bcr.registerComponent(interceptor.getClass(), interceptor, true);
+            bcr.addDynamicDependency(AsyncInterceptorChain.class.getName(), interceptor.getClass().getName());
+            AsyncInterceptorChain chain = bcr.getComponent(AsyncInterceptorChain.class).wired();
+            switch (position) {
+               case FIRST:
+                  chain.addInterceptor(interceptor, 0);
+                  break;
+               case BEFORE:
+                  chain.addInterceptorBefore(interceptor, otherClass);
+                  break;
+               case REPLACE:
+                  chain.replaceInterceptor(interceptor, otherClass);
+                  break;
+               case AFTER:
+                  chain.addInterceptorAfter(interceptor, otherClass);
+                  break;
+               case LAST:
+                  chain.addInterceptorBefore(interceptor, CallInterceptor.class);
+                  break;
+            }
+         }
+      });
+      return global;
+   }
+
+   public enum InterceptorPosition {
+      FIRST,
+      BEFORE,
+      REPLACE,
+      AFTER,
+      LAST
    }
 
    public static class CacheManagerCleaner extends TestResourceTracker.Cleaner<EmbeddedCacheManager> {

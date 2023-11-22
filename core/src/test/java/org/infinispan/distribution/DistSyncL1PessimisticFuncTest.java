@@ -1,5 +1,6 @@
 package org.infinispan.distribution;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
 
@@ -8,13 +9,13 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.TransactionManager;
 
 @Test(groups = "functional", testName = "distribution.DistSyncL1PessimisticFuncTest")
 public class DistSyncL1PessimisticFuncTest extends BaseDistFunctionalTest {
@@ -75,7 +76,7 @@ public class DistSyncL1PessimisticFuncTest extends BaseDistFunctionalTest {
 
          assertIsInL1(nonOwner, key);
       } finally {
-         nonOwner.getAdvancedCache().getAsyncInterceptorChain().removeInterceptor(BlockingInterceptor.class);
+         extractInterceptorChain(nonOwner).removeInterceptor(BlockingInterceptor.class);
       }
    }
 
@@ -137,7 +138,7 @@ public class DistSyncL1PessimisticFuncTest extends BaseDistFunctionalTest {
 
          assertIsNotInL1(nonOwner, key);
       } finally {
-         nonOwner.getAdvancedCache().getAsyncInterceptorChain().removeInterceptor(BlockingInterceptor.class);
+         extractInterceptorChain(nonOwner).removeInterceptor(BlockingInterceptor.class);
       }
    }
 }

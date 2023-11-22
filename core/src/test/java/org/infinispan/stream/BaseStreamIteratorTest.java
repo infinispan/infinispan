@@ -59,7 +59,7 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
 
    @AfterMethod
    public void removeInterceptor() {
-      advancedCache(0, CACHE_NAME).getAsyncInterceptorChain().removeInterceptor(AssertSkipCacheStoreInterceptor.class);
+      extractInterceptorChain(advancedCache(0, CACHE_NAME)).removeInterceptor(AssertSkipCacheStoreInterceptor.class);
    }
 
    @Test

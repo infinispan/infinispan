@@ -1,5 +1,6 @@
 package org.infinispan.tx.recovery.admin;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.beginAndSuspendTx;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.commitTransaction;
 import static org.infinispan.tx.recovery.RecoveryTestUtil.prepareTransaction;
@@ -41,7 +42,7 @@ public class InDoubtWithCommitFailsTest extends AbstractRecoveryTest {
             .clustering().l1().disable().stateTransfer().fetchInMemoryState(false);
       createCluster(configuration, 2);
       waitForClusterToForm();
-      advancedCache(1).getAsyncInterceptorChain().addInterceptorBefore(new ForceFailureInterceptor(), InvocationContextInterceptor.class);
+      extractInterceptorChain(advancedCache(1)).addInterceptorBefore(new ForceFailureInterceptor(), InvocationContextInterceptor.class);
    }
 
    public void testRecoveryInfoListCommit() throws Exception {

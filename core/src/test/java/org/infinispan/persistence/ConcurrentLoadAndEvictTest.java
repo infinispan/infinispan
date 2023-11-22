@@ -12,6 +12,7 @@ import java.util.concurrent.TimeoutException;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.DDAsyncInterceptor;
@@ -42,18 +43,18 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       sdi = new SlowDownInterceptor();
+      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder().nonClusteredDefault();
       // we need a loader and a custom interceptor to intercept get() calls
       // after the CLI, to slow it down so an evict goes through first
+      TestCacheManagerFactory.addInterceptor(global, TestCacheManagerFactory.DEFAULT_CACHE_NAME::equals,
+            sdi, TestCacheManagerFactory.InterceptorPosition.AFTER, InvocationContextInterceptor.class);
       ConfigurationBuilder config = new ConfigurationBuilder();
       config
          .persistence()
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)
-         .customInterceptors()
-            .addInterceptor()
-               .interceptor(sdi).after(InvocationContextInterceptor.class)
          .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
 
-      return TestCacheManagerFactory.createCacheManager(config);
+      return TestCacheManagerFactory.createCacheManager(global, config);
    }
 
    public void testEvictBeforeRead() throws PersistenceException, ExecutionException, InterruptedException {

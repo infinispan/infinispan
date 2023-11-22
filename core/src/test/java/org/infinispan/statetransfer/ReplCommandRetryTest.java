@@ -3,6 +3,8 @@ package org.infinispan.statetransfer;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.test.TestingUtil.findInterceptor;
 import static org.infinispan.test.TestingUtil.waitForNoRebalance;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.DEFAULT_CACHE_NAME;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.addInterceptor;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
@@ -20,6 +22,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -30,6 +33,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
@@ -51,7 +55,7 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
       // do nothing, each test will create its own cache managers
    }
 
-   private ConfigurationBuilder buildConfig(LockingMode lockingMode, Class<?> commandToBlock, boolean isOriginator) {
+   private ConfigurationBuilder buildConfig(LockingMode lockingMode) {
       ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, lockingMode != null);
       configurationBuilder.transaction().lockingMode(lockingMode);
       // The coordinator will always be the primary owner
@@ -59,24 +63,19 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
             .consistentHashFactory(new ReplicatedControlledConsistentHashFactory(0));
       configurationBuilder.clustering().remoteTimeout(15000);
       configurationBuilder.clustering().stateTransfer().fetchInMemoryState(true);
-      if (commandToBlock == LockControlCommand.class && !isOriginator) {
-         configurationBuilder.customInterceptors().addInterceptor()
-               .before(PessimisticLockingInterceptor.class).interceptor(new DelayInterceptor(commandToBlock));
-      } else {
-         configurationBuilder.customInterceptors().addInterceptor()
-               .after(EntryWrappingInterceptor.class).interceptor(new DelayInterceptor(commandToBlock));
-      }
       configurationBuilder.locking().isolationLevel(IsolationLevel.READ_COMMITTED);
       return configurationBuilder;
    }
 
    public void testRetryAfterJoinNonTransactional() throws Exception {
-      EmbeddedCacheManager cm1 = addClusterEnabledCacheManager(buildConfig(null, PutKeyValueCommand.class, true));
+      GlobalConfigurationBuilder gc1 = globalConfiguration(PutKeyValueCommand.class, true);
+      EmbeddedCacheManager cm1 = addClusterEnabledCacheManager(gc1, buildConfig(null));
       final Cache<Object, Object> c1 = cm1.getCache();
       DelayInterceptor di1 = findInterceptor(c1, DelayInterceptor.class);
       int initialTopologyId = c1.getAdvancedCache().getDistributionManager().getCacheTopology().getTopologyId();
 
-      EmbeddedCacheManager cm2 = addClusterEnabledCacheManager(buildConfig(null, PutKeyValueCommand.class, false));
+      GlobalConfigurationBuilder gc2 = globalConfiguration(PutKeyValueCommand.class, true);
+      EmbeddedCacheManager cm2 = addClusterEnabledCacheManager(gc2, buildConfig(null));
       final Cache<Object, Object> c2 = cm2.getCache();
       DelayInterceptor di2 = findInterceptor(c2, DelayInterceptor.class);
       waitForStateTransfer(initialTopologyId + 4, c1, c2);
@@ -90,8 +89,10 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
       // The command is replicated to c2, and blocks in the DelayInterceptor on c2
       di2.waitUntilBlocked(1);
 
+      GlobalConfigurationBuilder gc3 = globalConfiguration(PutKeyValueCommand.class, false);
+
       // c3 joins, topology id changes
-      EmbeddedCacheManager cm3 = addClusterEnabledCacheManager(buildConfig(null, PutKeyValueCommand.class, false));
+      EmbeddedCacheManager cm3 = addClusterEnabledCacheManager(gc3, buildConfig(null));
       Cache<Object, Object> c3 = cm3.getCache();
       DelayInterceptor di3 = findInterceptor(c3, DelayInterceptor.class);
       waitForStateTransfer(initialTopologyId + 8, c1, c2, c3);
@@ -108,8 +109,9 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
       // Unblock the command with the new topology id on c2
       di2.unblock(2);
 
+      GlobalConfigurationBuilder gc4 = globalConfiguration(PutKeyValueCommand.class, false);
       // c4 joins, topology id changes
-      EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(buildConfig(null, PutKeyValueCommand.class, false));
+      EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(gc4, buildConfig(null));
       Cache<Object, Object> c4 = cm4.getCache();
       DelayInterceptor di4 = findInterceptor(c4, DelayInterceptor.class);
       waitForStateTransfer(initialTopologyId + 12, c1, c2, c3, c4);
@@ -160,13 +162,25 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
       testRetryAfterJoinTransactional(LockingMode.OPTIMISTIC, CommitCommand.class);
    }
 
+   private GlobalConfigurationBuilder globalConfiguration(Class<?> commandClass, boolean isOriginator) {
+      GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      if (commandClass == LockControlCommand.class && !isOriginator) {
+         addInterceptor(global, DEFAULT_CACHE_NAME::equals, new DelayInterceptor(commandClass), TestCacheManagerFactory.InterceptorPosition.BEFORE, PessimisticLockingInterceptor.class);
+      } else {
+         addInterceptor(global, DEFAULT_CACHE_NAME::equals, new DelayInterceptor(commandClass), TestCacheManagerFactory.InterceptorPosition.AFTER, EntryWrappingInterceptor.class);
+      }
+      return global;
+   }
+
    private void testRetryAfterJoinTransactional(LockingMode lockingMode, Class<?> commandClass) throws Exception {
-      EmbeddedCacheManager cm1 = addClusterEnabledCacheManager(buildConfig(lockingMode, commandClass, false));
+      GlobalConfigurationBuilder gc1 = globalConfiguration(commandClass, false);
+      EmbeddedCacheManager cm1 = addClusterEnabledCacheManager(gc1, buildConfig(lockingMode));
       final Cache<Object, Object> c1 = cm1.getCache();
       DelayInterceptor di1 = findInterceptor(c1, DelayInterceptor.class);
       int initialTopologyId = c1.getAdvancedCache().getDistributionManager().getCacheTopology().getTopologyId();
 
-      EmbeddedCacheManager cm2 = addClusterEnabledCacheManager(buildConfig(lockingMode, commandClass, true));
+      GlobalConfigurationBuilder gc2 = globalConfiguration(commandClass, true);
+      EmbeddedCacheManager cm2 = addClusterEnabledCacheManager(gc2, buildConfig(lockingMode));
       final Cache<String, String> c2 = cm2.getCache();
       DelayInterceptor di2 = findInterceptor(c2, DelayInterceptor.class);
       waitForStateTransfer(initialTopologyId + 4, c1, c2);
@@ -182,7 +196,8 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
       di1.waitUntilBlocked(1);
 
       // c3 joins, topology id changes
-      EmbeddedCacheManager cm3 = addClusterEnabledCacheManager(buildConfig(lockingMode, commandClass, false));
+      GlobalConfigurationBuilder gc3 = globalConfiguration(commandClass, false);
+      EmbeddedCacheManager cm3 = addClusterEnabledCacheManager(gc3, buildConfig(lockingMode));
       Cache c3 = cm3.getCache();
       DelayInterceptor di3 = findInterceptor(c3, DelayInterceptor.class);
       waitForStateTransfer(initialTopologyId + 8, c1, c2, c3);
@@ -197,7 +212,8 @@ public class ReplCommandRetryTest extends MultipleCacheManagersTest {
       di3.waitUntilBlocked(1);
 
       // c4 joins, topology id changes
-      EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(buildConfig(lockingMode, commandClass, false));
+      GlobalConfigurationBuilder gc4 = globalConfiguration(commandClass, false);
+      EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(gc4, buildConfig(lockingMode));
       Cache c4 = cm4.getCache();
       DelayInterceptor di4 = findInterceptor(c4, DelayInterceptor.class);
       waitForStateTransfer(initialTopologyId + 12, c1, c2, c3, c4);

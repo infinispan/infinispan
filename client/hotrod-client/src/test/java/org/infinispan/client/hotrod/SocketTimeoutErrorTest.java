@@ -14,14 +14,15 @@ import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -37,10 +38,10 @@ public class SocketTimeoutErrorTest extends SingleHotRodServerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
+      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder().nonClusteredDefault();
+      TestCacheManagerFactory.addInterceptor(global, TestCacheManagerFactory.DEFAULT_CACHE_NAME::equals, new TimeoutInducingInterceptor(), TestCacheManagerFactory.InterceptorPosition.AFTER, EntryWrappingInterceptor.class);
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.customInterceptors().addInterceptor().interceptor(
-            new TimeoutInducingInterceptor()).after(EntryWrappingInterceptor.class);
-      return TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration(builder));
+      return TestCacheManagerFactory.createCacheManager(global, hotRodCacheConfiguration(builder));
    }
 
    @Override

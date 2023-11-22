@@ -19,6 +19,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Configurations;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -26,11 +27,11 @@ import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
-import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.interceptors.impl.VersionedEntryWrappingInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.transaction.LockingMode;
@@ -92,15 +93,16 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       // add an interceptor on second node that will block REMOVE commands right after EntryWrappingInterceptor until we are ready
       final CountDownLatch removeStartedLatch = new CountDownLatch(1);
       final CountDownLatch removeProceedLatch = new CountDownLatch(1);
-      cacheConfigBuilder.customInterceptors().addInterceptor().after(ewi())
-                        .interceptor(new RemoveLatchInterceptor(removeStartedLatch, removeProceedLatch));
 
       // do not allow coordinator to send topology updates to node B
       final ClusterTopologyManager ctm0 = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
       ctm0.setRebalancingEnabled(false);
 
+      GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      TestCacheManagerFactory.addInterceptor(global, TestCacheManagerFactory.DEFAULT_CACHE_NAME::equals, new RemoveLatchInterceptor(removeStartedLatch, removeProceedLatch), TestCacheManagerFactory.InterceptorPosition.AFTER, ewi());
+
       log.info("Adding a new node ..");
-      addClusterEnabledCacheManager(cacheConfigBuilder);
+      addClusterEnabledCacheManager(global, cacheConfigBuilder);
       log.info("Added a new node");
 
       // node B is not a member yet and rebalance has not started yet
@@ -168,15 +170,15 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       // add an interceptor on second node that will block PUT commands right after EntryWrappingInterceptor until we are ready
       final CountDownLatch putStartedLatch = new CountDownLatch(1);
       final CountDownLatch putProceedLatch = new CountDownLatch(1);
-      cacheConfigBuilder.customInterceptors().addInterceptor().after(ewi())
-                        .interceptor(new PutLatchInterceptor(putStartedLatch, putProceedLatch));
+      GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      TestCacheManagerFactory.addInterceptor(global, TestCacheManagerFactory.DEFAULT_CACHE_NAME::equals, new PutLatchInterceptor(putStartedLatch, putProceedLatch), TestCacheManagerFactory.InterceptorPosition.AFTER, ewi());
 
       // do not allow coordinator to send topology updates to node B
       final ClusterTopologyManager ctm0 = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
       ctm0.setRebalancingEnabled(false);
 
       log.info("Adding a new node ..");
-      addClusterEnabledCacheManager(cacheConfigBuilder);
+      addClusterEnabledCacheManager(global, cacheConfigBuilder);
       log.info("Added a new node");
 
       // node B is not a member yet and rebalance has not started yet
@@ -234,15 +236,15 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       // add an interceptor on second node that will block REPLACE commands right after EntryWrappingInterceptor until we are ready
       final CountDownLatch replaceStartedLatch = new CountDownLatch(1);
       final CountDownLatch replaceProceedLatch = new CountDownLatch(1);
-      cacheConfigBuilder.customInterceptors().addInterceptor().after(ewi())
-                        .interceptor(new ReplaceLatchInterceptor(replaceStartedLatch, replaceProceedLatch));
+      GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      TestCacheManagerFactory.addInterceptor(global, TestCacheManagerFactory.DEFAULT_CACHE_NAME::equals, new ReplaceLatchInterceptor(replaceStartedLatch, replaceProceedLatch), TestCacheManagerFactory.InterceptorPosition.AFTER, ewi());
 
       // do not allow coordinator to send topology updates to node B
       final ClusterTopologyManager ctm0 = TestingUtil.extractGlobalComponent(manager(0), ClusterTopologyManager.class);
       ctm0.setRebalancingEnabled(false);
 
       log.info("Adding a new node ..");
-      addClusterEnabledCacheManager(cacheConfigBuilder);
+      addClusterEnabledCacheManager(global, cacheConfigBuilder);
       log.info("Added a new node");
 
       // node B is not a member yet and rebalance has not started yet
@@ -300,17 +302,16 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       // add an interceptor on node B that will block state transfer until we are ready
       final CountDownLatch applyStateProceedLatch = new CountDownLatch(1);
       final CountDownLatch applyStateStartedLatch = new CountDownLatch(1);
-      cacheConfigBuilder.customInterceptors().addInterceptor().before(InvocationContextInterceptor.class)
-                        .interceptor(new StateTransferLatchInterceptor(applyStateStartedLatch, applyStateProceedLatch));
+      GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      TestCacheManagerFactory.addInterceptor(global, TestCacheManagerFactory.DEFAULT_CACHE_NAME::equals, new StateTransferLatchInterceptor(applyStateStartedLatch, applyStateProceedLatch), TestCacheManagerFactory.InterceptorPosition.AFTER, ewi());
 
       // add an interceptor on node B that will block GET commands until we are ready
       final CountDownLatch getKeyStartedLatch = new CountDownLatch(1);
       final CountDownLatch getKeyProceedLatch = new CountDownLatch(1);
-      cacheConfigBuilder.customInterceptors().addInterceptor().before(CallInterceptor.class)
-                        .interceptor(new GetLatchInterceptor(getKeyStartedLatch, getKeyProceedLatch));
+      TestCacheManagerFactory.addInterceptor(global, TestCacheManagerFactory.DEFAULT_CACHE_NAME::equals, new GetLatchInterceptor(getKeyStartedLatch, getKeyProceedLatch), TestCacheManagerFactory.InterceptorPosition.BEFORE, CallInterceptor.class);
 
       log.info("Adding a new node ..");
-      addClusterEnabledCacheManager(cacheConfigBuilder);
+      addClusterEnabledCacheManager(global, cacheConfigBuilder);
       log.info("Added a new node");
 
       // Note: We have to access DC instead of cache with LOCAL_MODE flag

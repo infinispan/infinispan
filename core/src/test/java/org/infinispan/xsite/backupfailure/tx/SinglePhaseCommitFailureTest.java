@@ -1,6 +1,7 @@
 package org.infinispan.xsite.backupfailure.tx;
 
 import static org.infinispan.commons.test.Exceptions.expectException;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
@@ -24,7 +25,7 @@ public class SinglePhaseCommitFailureTest extends AbstractTwoSitesTest {
    protected void createSites() {
       super.createSites();
       failureInterceptor = new BaseBackupFailureTest.FailureInterceptor();
-      backup(LON).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(failureInterceptor, 1);
+      extractInterceptorChain(backup(LON)).addInterceptor(failureInterceptor, 1);
    }
 
    public void testPrepareFailure() {

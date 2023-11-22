@@ -1,5 +1,6 @@
 package org.infinispan.persistence;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
@@ -116,10 +117,10 @@ public class ClassLoaderManagerDisablingTest extends AbstractInfinispanTest {
 
       clm.disableStore(DummyInMemoryStore.class.getName());
       stores.forEach(store -> assertFalse(store.isRunning()));
-      AsyncInterceptor interceptor = cache.getAdvancedCache().getAsyncInterceptorChain()
+      AsyncInterceptor interceptor = extractInterceptorChain(cache)
             .findInterceptorExtending(CacheLoaderInterceptor.class);
       assertNull(interceptor);
-      interceptor = cache.getAdvancedCache().getAsyncInterceptorChain()
+      interceptor = extractInterceptorChain(cache)
             .findInterceptorExtending(CacheWriterInterceptor.class);
       assertNull(interceptor);
    }

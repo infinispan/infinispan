@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -71,7 +72,7 @@ public class ConsistentHashV2IntegrationTest extends MultipleCacheManagersTest {
             ex, new DistributionRetryTest.ByteKeyGenerator(), 2, true);
 
       for (int i = 0; i < 4; i++) {
-         advancedCache(i).getAsyncInterceptorChain()
+         extractInterceptorChain(advancedCache(i))
                          .addInterceptor(new HitsAwareCacheManagersTest.HitCountInterceptor(), 1);
       }
    }
@@ -185,7 +186,7 @@ public class ConsistentHashV2IntegrationTest extends MultipleCacheManagersTest {
    }
 
    private HitsAwareCacheManagersTest.HitCountInterceptor hitCountInterceptor(int i) {
-      AsyncInterceptorChain ic = advancedCache(i).getAsyncInterceptorChain();
+      AsyncInterceptorChain ic = extractInterceptorChain(advancedCache(i));
       return ic.findInterceptorWithClass(HitsAwareCacheManagersTest.HitCountInterceptor.class);
    }
 }

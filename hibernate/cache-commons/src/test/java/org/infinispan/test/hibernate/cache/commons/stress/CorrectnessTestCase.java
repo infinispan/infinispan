@@ -87,7 +87,8 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.InterceptorConfiguration;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.hibernate.cache.commons.access.InvalidationCacheAccessDelegate;
 import org.infinispan.hibernate.cache.commons.access.PutFromLoadValidator;
@@ -95,6 +96,7 @@ import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
 import org.infinispan.hibernate.cache.spi.InfinispanProperties;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.remoting.RemoteException;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Address;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Family;
 import org.infinispan.test.hibernate.cache.commons.stress.entities.Family_;
@@ -323,20 +325,18 @@ public abstract class CorrectnessTestCase {
       }
 
       @Override
+      public void amendConfiguration(ConfigurationBuilderHolder holder) {
+         super.amendConfiguration(holder);
+         GlobalConfigurationBuilder global = holder.getGlobalConfigurationBuilder();
+         if (INJECT_FAILURES) {
+            TestCacheManagerFactory.addInterceptor(global, n -> !"timestamps".equals(n) && !n.endsWith(InfinispanProperties.DEF_PENDING_PUTS_RESOURCE), new FailureInducingInterceptor(), TestCacheManagerFactory.InterceptorPosition.FIRST, null);
+         }
+      }
+
+      @Override
       public void amendCacheConfiguration(String cacheName, ConfigurationBuilder configurationBuilder) {
          super.amendCacheConfiguration(cacheName, configurationBuilder);
          configurationBuilder.transaction().cacheStopTimeout(1, TimeUnit.SECONDS);
-         if (INJECT_FAILURES) {
-            // failure to write into timestamps would cause failure even though both DB and cache has been updated
-            if (!cacheName.equals("timestamps") && !cacheName.endsWith(InfinispanProperties.DEF_PENDING_PUTS_RESOURCE)) {
-               configurationBuilder.customInterceptors().addInterceptor()
-                  .interceptorClass(FailureInducingInterceptor.class)
-                  .position(InterceptorConfiguration.Position.FIRST);
-               log.trace("Injecting FailureInducingInterceptor into " + cacheName);
-            } else {
-               log.trace("Not injecting into " + cacheName);
-            }
-         }
       }
    }
 

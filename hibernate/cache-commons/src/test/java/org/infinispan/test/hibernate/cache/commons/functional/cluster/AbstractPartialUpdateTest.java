@@ -1,5 +1,15 @@
 package org.infinispan.test.hibernate.cache.commons.functional.cluster;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+import static org.infinispan.test.hibernate.cache.commons.util.TxUtil.withSession;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.stat.Statistics;
 import org.infinispan.AdvancedCache;
@@ -9,16 +19,6 @@ import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.Customer;
 import org.infinispan.test.hibernate.cache.commons.util.ExpectingInterceptor;
 import org.junit.Test;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.configuration.cache.InterceptorConfiguration.Position.FIRST;
-import static org.infinispan.test.hibernate.cache.commons.util.TxUtil.withSession;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public abstract class AbstractPartialUpdateTest extends DualNodeTest {
 
@@ -99,14 +99,14 @@ public abstract class AbstractPartialUpdateTest extends DualNodeTest {
             });
          }
       } finally {
-         remoteCustomerCache.getAsyncInterceptorChain()
+         extractInterceptorChain(remoteCustomerCache)
             .removeInterceptor(failureInterceptor.getClass());
       }
    }
 
    private AsyncInterceptor addFailureInducingInterceptor(AdvancedCache<?, ?> cache) {
       final AsyncInterceptor interceptor = getFailureInducingInterceptor();
-      cache.getAsyncInterceptorChain().addInterceptor(interceptor, FIRST.ordinal());
+      extractInterceptorChain(cache).addInterceptor(interceptor, 0);
       log.trace("Injecting FailureInducingInterceptor into " + cache.getName());
       return interceptor;
    }

@@ -128,7 +128,6 @@ public abstract class AbstractConfigurationSerializerTest extends AbstractInfini
       compareAttributeSets(name, configurationBefore.sites().attributes(), configurationAfter.sites().attributes());
       compareSites(name, configurationBefore.sites().allBackups(), configurationAfter.sites().allBackups());
       compareAttributeSets(name, configurationBefore.invocationBatching().attributes(), configurationAfter.invocationBatching().attributes());
-      compareAttributeSets(name, configurationBefore.customInterceptors().attributes(), configurationAfter.customInterceptors().attributes());
       compareAttributeSets(name, configurationBefore.unsafe().attributes(), configurationAfter.unsafe().attributes());
       compareAttributeSets(name, configurationBefore.persistence().attributes(), configurationAfter.persistence().attributes());
       compareStores(name, configurationBefore.persistence().stores(), configurationAfter.persistence().stores());

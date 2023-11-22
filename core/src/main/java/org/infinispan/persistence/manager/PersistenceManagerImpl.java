@@ -497,7 +497,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             .concatMapCompletable(v -> Completable.using(this::acquireWriteLock, lock ->
                         startManagerAndStores(singletonList(storeConfiguration))
                               .doOnComplete(() -> {
-                                 AsyncInterceptorChain chain = cache.wired().getAsyncInterceptorChain();
+                                 AsyncInterceptorChain chain = cache.wired().getComponentRegistry().getComponent(AsyncInterceptorChain.class);
                                  interceptorChainFactory.addPersistenceInterceptors(chain, configuration, singletonList(storeConfiguration));
                                  listeners.forEach(l -> l.storeChanged(createStatus()));
                               })
@@ -573,7 +573,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          listeners.forEach(l -> l.storeChanged(createStatus()));
 
          if (!stillHasAStore) {
-            AsyncInterceptorChain chain = cache.wired().getAsyncInterceptorChain();
+            AsyncInterceptorChain chain = cache.wired().getComponentRegistry().getComponent(AsyncInterceptorChain.class);
             AsyncInterceptor loaderInterceptor = chain.findInterceptorExtending(CacheLoaderInterceptor.class);
             if (loaderInterceptor == null) {
                PERSISTENCE.persistenceWithoutCacheLoaderInterceptor();

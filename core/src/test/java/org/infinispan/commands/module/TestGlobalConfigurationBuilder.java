@@ -46,8 +46,8 @@ public class TestGlobalConfigurationBuilder implements Builder<TestGlobalConfigu
       return this;
    }
 
-   public TestGlobalConfigurationBuilder cacheStartingCallback(Consumer<ComponentRegistry> callback) {
-      this.attributes.attribute(TestGlobalConfiguration.CACHE_STARTING_CALLBACK).set(callback);
+   public TestGlobalConfigurationBuilder addCacheStartingCallback(Consumer<ComponentRegistry> callback) {
+      this.attributes.attribute(TestGlobalConfiguration.CACHE_STARTING_CALLBACKS).get().add(callback);
       return this;
    }
 
