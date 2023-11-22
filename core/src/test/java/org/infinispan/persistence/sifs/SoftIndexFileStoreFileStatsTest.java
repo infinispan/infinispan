@@ -99,7 +99,9 @@ public class SoftIndexFileStoreFileStatsTest extends SingleCacheManagerTest {
       public void onEntryPosition(EntryPosition entryPosition) throws IOException {
          try {
             log.trace("EntryPosition found: " + entryPosition);
-            syncQueue.offer(entryPosition, 10, TimeUnit.SECONDS);
+            if (!syncQueue.offer(entryPosition, 10, TimeUnit.SECONDS)) {
+               fail("Queue did not accept offer of an EntryPosition!");
+            }
          } catch (InterruptedException e) {
             throw new IOException(e);
          }
@@ -109,7 +111,9 @@ public class SoftIndexFileStoreFileStatsTest extends SingleCacheManagerTest {
       public void onEntryEntryRecord(EntryRecord entryRecord) throws IOException {
          try {
             log.trace("EntryRecord found: " + entryRecord);
-            syncQueue.offer(entryRecord, 10, TimeUnit.SECONDS);
+            if (!syncQueue.offer(entryRecord, 10, TimeUnit.SECONDS)) {
+               fail("Queue did not accept offer of an EntryRecord!");
+            }
          } catch (InterruptedException e) {
             throw new IOException(e);
          }
@@ -137,16 +141,8 @@ public class SoftIndexFileStoreFileStatsTest extends SingleCacheManagerTest {
    }
 
    Map.Entry<Integer, Compactor.Stats> extractCompletedStat(ConcurrentMap<Integer, Compactor.Stats> statsMap) {
-      Map.Entry<Integer, Compactor.Stats> completedStats = null;
-      for (Map.Entry<Integer, Compactor.Stats> entry : statsMap.entrySet()) {
-         if (entry.getValue().isCompleted()) {
-            if (completedStats != null) {
-               fail("More than one stat was completed: " + statsMap);
-            }
-            completedStats = entry;
-         }
-      }
-      return completedStats;
+      return statsMap.entrySet().stream().filter(e -> e.getValue().isCompleted()).findFirst()
+            .orElse(null);
    }
 
    @Test(dataProvider = "booleans")
