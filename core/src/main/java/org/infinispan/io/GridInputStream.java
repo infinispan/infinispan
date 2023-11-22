@@ -11,7 +11,7 @@ import org.infinispan.Cache;
  * @author Manik Surtani
  * @deprecated since 10.0
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class GridInputStream extends InputStream {
 
    private int index = 0;                // index into the file for writing

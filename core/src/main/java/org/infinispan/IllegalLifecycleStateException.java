@@ -9,7 +9,7 @@ package org.infinispan;
  * @since 7.0
  * @deprecated since 10.1 please use {@link org.infinispan.commons.IllegalLifecycleStateException} instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class IllegalLifecycleStateException extends org.infinispan.commons.IllegalLifecycleStateException {
    public IllegalLifecycleStateException() {
    }

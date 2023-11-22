@@ -8,6 +8,6 @@ package org.infinispan.jmx;
  * @since 4.0
  * @deprecated Use {@link org.infinispan.commons.jmx.MBeanServerLookup} instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface MBeanServerLookup extends org.infinispan.commons.jmx.MBeanServerLookup {
 }

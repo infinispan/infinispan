@@ -32,6 +32,6 @@ public @interface Stop {
     * @since 4.0
     * @deprecated Since 10.0, will be removed in a future version.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    int priority() default 10;
 }

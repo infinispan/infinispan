@@ -11,7 +11,7 @@ import net.jcip.annotations.ThreadSafe;
  * @since 5.1
  * @deprecated since 10.0
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 @ThreadSafe
 public final class ImmutableMarshalledValueByteStream extends MarshalledValueByteStream {
    private final byte[] bytes;

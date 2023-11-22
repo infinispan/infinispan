@@ -84,7 +84,7 @@ public class InitializationContextImpl implements InitializationContext {
       return marshallableEntryFactory;
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public ExecutorService getExecutor() {
       return new WithinThreadExecutor();

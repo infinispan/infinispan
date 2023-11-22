@@ -10,7 +10,7 @@ import net.jcip.annotations.Immutable;
  * @deprecated Use {@link org.infinispan.commons.util.Version} instead
  */
 @Immutable
-@Deprecated
+@Deprecated(forRemoval = true)
 public class Version {
 
    public static String getVersion() {

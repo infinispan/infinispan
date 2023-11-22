@@ -8,7 +8,7 @@ package org.infinispan.commons.configuration;
  */
 
 public interface BasicConfiguration {
-   @Deprecated
+   @Deprecated(forRemoval = true)
    default String toXMLString() {
       return toXMLString("configuration");
    }
@@ -18,7 +18,7 @@ public interface BasicConfiguration {
     *
     * @return a String containing the XML representation of an Infinispan configuration using the Infinispan schema.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    default String toXMLString(String name) {
       return toStringConfiguration(name);
    }

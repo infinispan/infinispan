@@ -409,7 +409,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
    /**
     * @deprecated Since 9.4, not used.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static InterceptorChainFactory getInstance(ComponentRegistry componentRegistry, Configuration configuration) {
       InterceptorChainFactory icf = new InterceptorChainFactory();
       icf.componentRegistry = componentRegistry;

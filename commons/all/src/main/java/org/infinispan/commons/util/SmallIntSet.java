@@ -28,7 +28,7 @@ import java.util.stream.IntStream;
  * @deprecated since 9.3 This class will no longer be public. Please use {@link IntSets} methods such as
  * {@link IntSets#mutableEmptySet()}, {@link IntSets#mutableCopyFrom(Set)}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class SmallIntSet implements IntSet {
    private final BitSet bitSet;
 

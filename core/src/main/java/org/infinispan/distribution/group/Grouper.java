@@ -64,7 +64,7 @@ public interface Grouper<T> {
     /**
      * @deprecated Since 9.1
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     default String computeGroup(T key, String group) {
         throw new UnsupportedOperationException("This operation should not be invoked.");
     }

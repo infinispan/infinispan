@@ -57,7 +57,7 @@ public class RocksDBStoreConfigurationBuilder extends AbstractStoreConfiguration
    /**
     * @deprecated Since 10.1, there is no more queue in {@link org.infinispan.persistence.rocksdb.RocksDBStore}
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public RocksDBStoreConfigurationBuilder expiryQueueSize(int expiryQueueSize) {
       expiration.expiryQueueSize(expiryQueueSize);
       return self();
@@ -66,7 +66,7 @@ public class RocksDBStoreConfigurationBuilder extends AbstractStoreConfiguration
    /**
     * @deprecated Since 12.0, no longer used. Will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public RocksDBStoreConfigurationBuilder clearThreshold(int clearThreshold) {
       attributes.attribute(CLEAR_THRESHOLD).set(clearThreshold);
       return self();

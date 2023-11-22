@@ -117,7 +117,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
     * Configures whether this site is used for backing up data or not (defaults to true).
     * @deprecated Since 14.0. To be removed without replacement.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public BackupConfigurationBuilder enabled(boolean isEnabled) {
       return this;
    }

@@ -19,7 +19,7 @@ public class ClientEvents {
    /**
     * @deprecated since 10.1.2. Will be removed in 11 without replacement.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static ClientCacheFailoverEvent mkCachefailoverEvent() {
       //todo make ClientEventDispatcher.FAILOVER_EVENT_SINGLETON private after removing this deprecated method in 11
       return ClientEventDispatcher.FAILOVER_EVENT_SINGLETON;

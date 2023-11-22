@@ -6,7 +6,7 @@ import org.infinispan.commons.util.TypedProperties;
 /**
  * @deprecated since 10.1.3 Use {@link GlobalJmxConfiguration} instead. This will be removed in next major version.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class GlobalJmxStatisticsConfiguration {
 
    /**
@@ -22,7 +22,7 @@ public abstract class GlobalJmxStatisticsConfiguration {
     * @return the cache manager name
     * @deprecated Since 10.1. please use {@link GlobalConfiguration#cacheManagerName()} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public abstract String cacheManagerName();
 
    public abstract MBeanServerLookup mbeanServerLookup();

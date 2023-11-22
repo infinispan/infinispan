@@ -46,7 +46,7 @@ public interface DataRehashedEvent<K, V> extends Event<K, V> {
     *
     * @deprecated Since 9.0
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    ConsistentHash getUnionConsistentHash();
 
    /**

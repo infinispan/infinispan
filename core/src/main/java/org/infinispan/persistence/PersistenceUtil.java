@@ -99,7 +99,7 @@ public class PersistenceUtil {
    /**
     * @deprecated since 9.4 This method references PersistenceManager, which isn't a public class
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static <K, V> InternalCacheEntry<K,V> loadAndStoreInDataContainer(DataContainer<K, V> dataContainer,
          final PersistenceManager persistenceManager, K key, final InvocationContext ctx, final TimeService timeService,
          final AtomicReference<Boolean> isLoaded) {
@@ -110,7 +110,7 @@ public class PersistenceUtil {
    /**
     * @deprecated since 9.4 This method references PersistenceManager, which isn't a public class
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static <K, V> InternalCacheEntry<K,V> loadAndStoreInDataContainer(DataContainer<K, V> dataContainer, int segment,
          final PersistenceManager persistenceManager, K key, final InvocationContext ctx, final TimeService timeService,
                                                          final AtomicReference<Boolean> isLoaded) {
@@ -121,7 +121,7 @@ public class PersistenceUtil {
    /**
     * @deprecated since 9.4 This method references PersistenceManager, which isn't a public class
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static <K, V> InternalCacheEntry<K,V> loadAndComputeInDataContainer(DataContainer<K, V> dataContainer,
          int segment, final PersistenceManager persistenceManager, K key, final InvocationContext ctx,
          final TimeService timeService, DataContainer.ComputeAction<K, V> action) {
@@ -132,7 +132,7 @@ public class PersistenceUtil {
    /**
     * @deprecated since 9.4 This method references PersistenceManager, which isn't a public class
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static <K, V> MarshallableEntry<K, V> loadAndCheckExpiration(PersistenceManager persistenceManager, Object key,
                                                                        InvocationContext context, TimeService timeService) {
       return org.infinispan.persistence.internal.PersistenceUtil.loadAndCheckExpiration(persistenceManager, key,

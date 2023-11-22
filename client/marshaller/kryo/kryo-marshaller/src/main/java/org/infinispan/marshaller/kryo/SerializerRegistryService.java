@@ -13,7 +13,7 @@ import com.esotericsoftware.kryo.Kryo;
  * @since 9.0
  * @deprecated since 12.0 without a direct replacement, will be removed in 15.0 ISPN-12152
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface SerializerRegistryService {
 
    /**

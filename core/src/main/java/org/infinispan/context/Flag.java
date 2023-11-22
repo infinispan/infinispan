@@ -183,14 +183,14 @@ public enum Flag {
     * Flag to identify cache operations coming from the Hot Rod server.
     * @deprecated Since 10.0, not in use.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    OPERATION_HOTROD,
 
    /**
     * Flag to identify cache operations coming from the Memcached server.
     * @deprecated Since 10.0, not in use.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    OPERATION_MEMCACHED,
 
    /**
@@ -219,7 +219,7 @@ public enum Flag {
     * Flag to identify that this iteration is done on a remote node and thus no additional wrappings are required
     * @deprecated Since 14.0, no longer does anything. Will be removed in 17.0.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    REMOTE_ITERATION,
 
    /**

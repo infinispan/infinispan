@@ -22,7 +22,7 @@ public abstract class AbstractSegmentedStoreConfiguration<T extends AbstractStor
     * @return the newly created configuration
     * @deprecated since 10.0 - please implement {@link #newConfigurationFrom(int, InitializationContext)}.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public T newConfigurationFrom(int segment) {
       throw new UnsupportedOperationException("Please make sure you are implementing newConfigurationFrom(int, InitializationContext)");
    }

@@ -37,7 +37,7 @@ import org.infinispan.util.logging.LogFactory;
  */
 @MBean(objectName = CacheContainerStats.OBJECT_NAME, description = "General cache container statistics such as timings, hit/miss ratio, etc. for a single node.")
 @Scope(Scopes.GLOBAL)
-@Deprecated
+@Deprecated(forRemoval = true)
 public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisticsExposer {
 
    private static final Log log = LogFactory.getLog(CacheContainerStatsImpl.class);
@@ -605,7 +605,7 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
       return getNumberOfEntries();
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public long getTotalNumberOfEntries() {
       return getStores();

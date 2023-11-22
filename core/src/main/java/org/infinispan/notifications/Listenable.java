@@ -56,6 +56,6 @@ public interface Listenable {
     *
     * @deprecated Since 10.0, with no replacement
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    Set<Object> getListeners();
 }

@@ -33,7 +33,7 @@ public class MemcachedServerConfigurationBuilder extends ProtocolServerConfigura
    /**
     * Use {@link ProtocolServerConfigurationBuilder#defaultCacheName(String)} instead
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public MemcachedServerConfigurationBuilder cache(String cache) {
       this.defaultCacheName(cache);
       return this;

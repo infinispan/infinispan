@@ -51,7 +51,7 @@ public interface FlagAffectedCommand extends VisitableCommand {
     *
     * @deprecated Since 9.0, please use {@link #addFlags(long)} with a {@link FlagBitSets} constant instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    default void addFlag(Flag flag) {
       setFlagsBitSet(EnumUtil.setEnum(getFlagsBitSet(), flag));
    }
@@ -63,7 +63,7 @@ public interface FlagAffectedCommand extends VisitableCommand {
     *
     * @deprecated Since 9.0, please use {@link #addFlags(long)} with a {@link FlagBitSets} constant instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    default void addFlags(Set<Flag> flags) {
       setFlagsBitSet(EnumUtil.setEnums(getFlagsBitSet(), flags));
    }
@@ -85,7 +85,7 @@ public interface FlagAffectedCommand extends VisitableCommand {
     *
     * @deprecated Since 9.0, please use {@link #hasAnyFlag(long)} with a {@link FlagBitSets} constant instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    default boolean hasFlag(Flag flag) {
       return EnumUtil.hasEnum(getFlagsBitSet(), flag);
    }

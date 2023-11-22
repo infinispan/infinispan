@@ -25,7 +25,7 @@ public interface GlobalConfigurationChildBuilder {
    /**
     * @deprecated Since 10.1.3. Use {@link #jmx()} instead. This will be removed in next major version.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    default GlobalJmxConfigurationBuilder globalJmxStatistics() {
       return jmx();
    }

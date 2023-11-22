@@ -9,7 +9,7 @@ import org.infinispan.commons.jmx.MBeanServerLookup;
  *
  * @deprecated since 10.1.3. Use {@link GlobalJmxConfigurationBuilder} instead. This will be removed in next major version.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfigurationBuilder {
 
    GlobalJmxStatisticsConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
@@ -39,7 +39,7 @@ public abstract class GlobalJmxStatisticsConfigurationBuilder extends AbstractGl
     *
     * @deprecated Since 10.1.3, please use {@link #domain(String)} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public GlobalJmxStatisticsConfigurationBuilder jmxDomain(String domain) {
       return domain(domain);
    }
@@ -52,7 +52,7 @@ public abstract class GlobalJmxStatisticsConfigurationBuilder extends AbstractGl
     *
     * @deprecated Use {@link GlobalConfigurationBuilder#cacheManagerName(String)} instead
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public abstract GlobalJmxStatisticsConfigurationBuilder cacheManagerName(String cacheManagerName);
 
    /**

@@ -10,7 +10,7 @@ import org.infinispan.remoting.transport.Transport;
  * @since 5.2
  * @deprecated since 11.0. The local site name is fetched via {@link Transport#localSiteName()}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class SiteConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<SiteConfiguration> {
 
    private String localSite;
@@ -27,7 +27,7 @@ public class SiteConfigurationBuilder extends AbstractGlobalConfigurationBuilder
    /**
     * Sets the name of the local site. Must be a valid name from the list of sites defined.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public SiteConfigurationBuilder localSite(String localSite) {
       this.localSite = localSite;
       return this;

@@ -18,7 +18,7 @@ import com.fasterxml.jackson.databind.jsontype.TypeIdResolver;
  *
  * @deprecated JSON to POJO conversion is deprecated and will be removed in a future version.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class SecureTypeIdResolver implements TypeIdResolver {
 
    protected final static Log logger = LogFactory.getLog(SecureTypeIdResolver.class, Log.class);

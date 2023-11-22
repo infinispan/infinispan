@@ -942,7 +942,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       return notifier.removeListenerAsync(listener);
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public Set<Object> getListeners() {
       return notifier.getListeners();
@@ -1065,7 +1065,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    /**
     * @deprecated Since 10.0, will be removed without a replacement
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public AsyncInterceptorChain getAsyncInterceptorChain() {
       return invoker;

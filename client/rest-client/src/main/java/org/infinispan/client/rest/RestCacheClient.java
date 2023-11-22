@@ -465,7 +465,7 @@ public interface RestCacheClient {
     *
     * @deprecated Use {@link #searchStats()} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    CompletionStage<RestResponse> queryStats();
 
    /**
@@ -473,7 +473,7 @@ public interface RestCacheClient {
     *
     * @deprecated Use {@link #searchStats()} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    CompletionStage<RestResponse> indexStats();
 
    /**
@@ -481,7 +481,7 @@ public interface RestCacheClient {
     *
     * @deprecated Use {@link #searchStats()} and {@link #clearSearchStats()}.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    CompletionStage<RestResponse> clearQueryStats();
 
 

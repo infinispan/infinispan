@@ -77,7 +77,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    /**
     * @deprecated Since 10.0, custom interceptors support will be removed and only modules will be able to define interceptors
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public CustomInterceptorsConfigurationBuilder customInterceptors() {
       return customInterceptors;

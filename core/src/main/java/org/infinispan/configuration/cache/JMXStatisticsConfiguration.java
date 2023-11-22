@@ -6,7 +6,7 @@ package org.infinispan.configuration.cache;
  * @author pmuir
  * @deprecated since 10.1.3. Use {@link StatisticsConfiguration} instead. This will be removed in next major version.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface JMXStatisticsConfiguration {
 
    boolean enabled();
@@ -16,6 +16,6 @@ public interface JMXStatisticsConfiguration {
     *
     * @deprecated since 10.1.3. This method will be removed in a future version.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    boolean available();
 }

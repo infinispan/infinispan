@@ -153,7 +153,7 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
       return delegate.removeListenerAsync(listener);
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public Set<Object> getListeners() {
       authzManager.checkPermission(subject, AuthorizationPermission.LISTEN);
@@ -246,7 +246,7 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    /**
     * @deprecated Since 10.0, will be removed without a replacement
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public AsyncInterceptorChain getAsyncInterceptorChain() {
       authzManager.checkPermission(subject, AuthorizationPermission.ADMIN);

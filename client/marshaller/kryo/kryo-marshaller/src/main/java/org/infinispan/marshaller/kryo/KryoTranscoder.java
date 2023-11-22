@@ -8,7 +8,7 @@ import net.spy.memcached.transcoders.Transcoder;
  * @since 9.0
  * @deprecated since 12.0 without a direct replacement, will be removed in 15.0 ISPN-12152
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class KryoTranscoder implements Transcoder<Object> {
 
    private KryoMarshaller marshaller;

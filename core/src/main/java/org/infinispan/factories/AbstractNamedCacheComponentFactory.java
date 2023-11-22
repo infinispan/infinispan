@@ -15,7 +15,7 @@ import org.infinispan.factories.scopes.Scopes;
 @Scope(Scopes.NAMED_CACHE)
 public abstract class AbstractNamedCacheComponentFactory extends AnyScopeComponentFactory {
    @Inject protected Configuration configuration;
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Inject protected ComponentRegistry componentRegistry;
    @Inject protected BasicComponentRegistry basicComponentRegistry;
 }

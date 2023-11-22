@@ -11,7 +11,7 @@ import org.infinispan.eviction.EvictionType;
  * @deprecated Since 11.0, {@link MemoryConfiguration} is used to defined the data container memory
  * eviction and sizing.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class MemoryStorageConfiguration {
 
    public static final AttributeDefinition<Long> SIZE = AttributeDefinition.builder(Attribute.SIZE, -1L).build();

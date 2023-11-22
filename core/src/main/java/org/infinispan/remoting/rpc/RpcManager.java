@@ -100,7 +100,7 @@ public interface RpcManager {
     * @deprecated since 11.0, use {@link #sendToMany(Collection, ReplicableCommand, DeliverOrder)} or
     * {@link #invokeCommand(Collection, ReplicableCommand, ResponseCollector, RpcOptions)} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    default CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
                                                                  ReplicableCommand rpc, RpcOptions options) {
       // Always perform with ResponseMode.SYNCHRONOUS as RpcOptions no longer allows ResponseMode to be passed

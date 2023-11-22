@@ -7,7 +7,7 @@ package org.infinispan.configuration.cache;
  * @deprecated since 10.1.3. Use {@link StatisticsConfigurationBuilder} instead. This will be removed in next major
  * version.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class JMXStatisticsConfigurationBuilder extends AbstractConfigurationChildBuilder {
 
    JMXStatisticsConfigurationBuilder(ConfigurationBuilder builder) {
@@ -34,6 +34,6 @@ public abstract class JMXStatisticsConfigurationBuilder extends AbstractConfigur
     *
     * @deprecated since 10.1.3. This method will be removed in a future version.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public abstract JMXStatisticsConfigurationBuilder available(boolean available);
 }

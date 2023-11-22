@@ -52,7 +52,7 @@ public class SerializationConfiguration {
    /**
     * @deprecated since 10.0, {@link AdvancedExternalizer}'s will be removed in a future release.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public Map<Integer, AdvancedExternalizer<?>> advancedExternalizers() {
       return advancedExternalizers.get();
    }
@@ -69,7 +69,7 @@ public class SerializationConfiguration {
       return allowListConfig;
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public WhiteListConfiguration whiteList() {
       return new WhiteListConfiguration(allowListConfig);
    }

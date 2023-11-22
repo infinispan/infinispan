@@ -55,7 +55,7 @@ public interface PendingLockManager {
     * @throws InterruptedException if the thread is interrupted while waiting.
     * @deprecated Since 10.0, the blocking variants will be removed
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    long awaitPendingTransactionsForKey(TxInvocationContext<?> ctx, Object key, long time, TimeUnit unit)
          throws InterruptedException;
 
@@ -71,7 +71,7 @@ public interface PendingLockManager {
     * @throws InterruptedException if the thread is interrupted while waiting.
     * @deprecated Since 10.0, the blocking variants will be removed
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    long awaitPendingTransactionsForAllKeys(TxInvocationContext<?> ctx, Collection<Object> keys, long time, TimeUnit unit)
          throws InterruptedException;
 }

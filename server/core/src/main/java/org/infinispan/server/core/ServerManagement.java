@@ -33,7 +33,7 @@ public interface ServerManagement {
    /**
     * @deprecated Multiple Cache Managers are not supported in the server
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    default Set<String> cacheManagerNames() {
       return Collections.singleton(getCacheManager().getName());
    }
@@ -41,7 +41,7 @@ public interface ServerManagement {
    /**
     * @deprecated Multiple Cache Managers are not supported in the server. Use {@link #getCacheManager()} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    default DefaultCacheManager getCacheManager(String name) {
       DefaultCacheManager cm = getCacheManager();
       return cm.getName().equals(name) ? cm : null;

@@ -168,21 +168,21 @@ public interface HotRodConstants {
     * @deprecated use {@link org.infinispan.client.hotrod.configuration.ClientIntelligence#BASIC}
     * instead
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    byte CLIENT_INTELLIGENCE_BASIC = 0x01;
 
    /**
     * @deprecated use {@link org.infinispan.client.hotrod.configuration.ClientIntelligence#TOPOLOGY_AWARE}
     * instead
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    byte CLIENT_INTELLIGENCE_TOPOLOGY_AWARE = 0x02;
 
    /**
     * @deprecated use {@link org.infinispan.client.hotrod.configuration.ClientIntelligence#HASH_DISTRIBUTION_AWARE}
     * instead
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    byte CLIENT_INTELLIGENCE_HASH_DISTRIBUTION_AWARE = 0x03;
    Charset HOTROD_STRING_CHARSET = StandardCharsets.UTF_8;
 

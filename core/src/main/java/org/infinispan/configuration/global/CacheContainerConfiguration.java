@@ -111,7 +111,7 @@ class CacheContainerConfiguration {
    /**
     * @deprecated Since 10.1.3. Use {@link #jmx()} instead. This will be removed in next major version.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public GlobalJmxConfiguration globalJmxStatistics() {
       return jmx();
    }
@@ -132,7 +132,7 @@ class CacheContainerConfiguration {
       return shutdown;
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public String asyncExecutor() {
       return attributes.attribute(ASYNC_EXECUTOR).get();
    }
@@ -152,7 +152,7 @@ class CacheContainerConfiguration {
    /**
     * @deprecated Since 10.1, no longer used.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public String stateTransferExecutor() {
       return attributes.attribute(STATE_TRANSFER_EXECUTOR).get();
    }
@@ -193,12 +193,12 @@ class CacheContainerConfiguration {
     * @return An empty {@code ThreadPoolConfiguration}.
     * @deprecated Since 10.1, no longer used.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public ThreadPoolConfiguration stateTransferThreadPool() {
       return threads.stateTransferThreadPool();
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public ThreadPoolConfiguration asyncThreadPool() {
       return threads.asyncThreadPool();
    }

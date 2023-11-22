@@ -38,7 +38,7 @@ public interface InternalDataContainer<K, V> extends DataContainer<K, V> {
     * We should only ever be using the non blocking variant {@link #peek(int, Object)} in Infinispan
     * @deprecated since 10.1
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    InternalCacheEntry<K, V> get(Object k);
 
@@ -50,7 +50,7 @@ public interface InternalDataContainer<K, V> extends DataContainer<K, V> {
     * @return entry, if it exists and has not expired, or null if not
     * @deprecated since 10.1
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    InternalCacheEntry<K, V> get(int segment, Object k);
 
    /**

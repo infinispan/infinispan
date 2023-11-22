@@ -507,7 +507,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
     * @deprecated We already have an attribute, we shouldn't have an operation for the same thing.
     */
    @Override
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @ManagedOperation(displayName = "Enable/disable statistics. Deprecated, use the statisticsEnabled attribute instead.")
    public void setStatisticsEnabled(@Parameter(name = "enabled", description = "Whether statistics should be enabled or disabled (true/false)") boolean statisticsEnabled) {
       this.statisticsEnabled = statisticsEnabled;

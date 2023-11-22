@@ -12,7 +12,7 @@ import org.infinispan.commons.configuration.attributes.Matchable;
  * @author pmuir
  * @deprecated Since 10.0, custom interceptors support will be removed and only modules will be able to define interceptors
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class CustomInterceptorsConfiguration implements Matchable<CustomInterceptorsConfiguration> {
 
    private List<InterceptorConfiguration> interceptors;

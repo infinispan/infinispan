@@ -10,7 +10,7 @@ import org.infinispan.util.logging.LogFactory;
  * TimeService that allows for wall clock time to be adjust manually.
  * @deprecated Use {@link org.infinispan.commons.time.ControlledTimeService} instead.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class ControlledTimeService extends EmbeddedTimeService {
    private static final Log log = LogFactory.getLog(ControlledTimeService.class);
 

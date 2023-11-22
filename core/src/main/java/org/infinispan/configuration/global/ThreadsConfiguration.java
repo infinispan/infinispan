@@ -71,7 +71,7 @@ public class ThreadsConfiguration {
     * @return An empty {@code ThreadPoolConfiguration}.
     * @deprecated Since 10.1, no longer used.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public ThreadPoolConfiguration stateTransferThreadPool() {
       return stateTransferThreadPool;
    }

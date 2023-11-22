@@ -100,7 +100,7 @@ public interface Visitor {
     * @deprecated since 11.0 will be removed in the next major version with no direct replacement. There is no reason
     * that a unknown command should be passed through the interceptor chain.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    Object visitUnknownCommand(InvocationContext ctx, VisitableCommand command) throws Throwable;
 
    Object visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) throws Throwable;

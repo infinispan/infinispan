@@ -57,7 +57,7 @@ public class StatisticsConfigurationBuilder extends JMXStatisticsConfigurationBu
     * If set to false, statistics gathering cannot be enabled during runtime. Performance optimization.
     * @deprecated since 10.1.3. This method will be removed in a future version.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public StatisticsConfigurationBuilder available(boolean available) {
       attributes.attribute(AVAILABLE).set(available);
       return this;

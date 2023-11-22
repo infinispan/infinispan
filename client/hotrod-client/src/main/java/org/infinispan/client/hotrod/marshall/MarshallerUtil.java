@@ -99,7 +99,7 @@ public final class MarshallerUtil {
    /**
     * @deprecated Since 12.0, will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static byte[] obj2bytes(Marshaller marshaller, Object o, boolean isKey, int estimateKeySize, int estimateValueSize) {
       try {
          return marshaller.objectToByteBuffer(o, isKey ? estimateKeySize : estimateValueSize);

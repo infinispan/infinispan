@@ -194,7 +194,7 @@ public class StatsImpl implements Stats {
       return Math.toIntExact(statsMap.get(NUMBER_OF_ENTRIES_IN_MEMORY));
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public long getTotalNumberOfEntries() {
       return statsMap.get(STORES);

@@ -128,12 +128,12 @@ public class TransportConfiguration {
       return siteId() != null || rackId() != null || machineId() != null;
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public ThreadPoolConfiguration transportThreadPool() {
       return transportThreadPool;
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public ThreadPoolConfiguration remoteCommandThreadPool() {
       return remoteCommandThreadPool;
    }

@@ -12,7 +12,7 @@ import org.infinispan.protostream.SerializationContext;
  * @deprecated since 10.0, will be removed in the future. org.infinispan.commons.marshall.ProtoStreamMarshaller
  * should be used instead.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class ProtoStreamMarshaller extends org.infinispan.commons.marshall.ProtoStreamMarshaller {
 
    /**
@@ -24,7 +24,7 @@ public class ProtoStreamMarshaller extends org.infinispan.commons.marshall.Proto
     * @deprecated since 10.0 and will be removed in the future. Use {@link MarshallerUtil#getSerializationContext(RemoteCacheManager)}
     * instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static SerializationContext getSerializationContext(RemoteCacheManager remoteCacheManager) {
       return MarshallerUtil.getSerializationContext(remoteCacheManager);
    }

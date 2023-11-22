@@ -11,7 +11,7 @@ import org.infinispan.counter.impl.SyncStrongCounterAdapter;
  * @since 9.0
  * @deprecated since 9.2. Use {@link StrongCounter#sync()} instead. It will be removed in 10.0
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class SyncStrongCounter extends SyncStrongCounterAdapter {
 
    public SyncStrongCounter(StrongCounter counter) {

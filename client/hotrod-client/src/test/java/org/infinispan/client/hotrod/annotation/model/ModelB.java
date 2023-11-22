@@ -10,7 +10,7 @@ import org.infinispan.protostream.annotations.ProtoName;
 @ProtoName("Model")
 public class ModelB implements Model {
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public String original;
 
    public String different;
@@ -21,7 +21,7 @@ public class ModelB implements Model {
       this.different = different;
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @ProtoField(value = 1)
    @Basic
    public String getOriginal() {

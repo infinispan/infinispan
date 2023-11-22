@@ -187,7 +187,7 @@ public class LocalizedCacheTopology extends CacheTopology {
     * @return Information about the ownership of segment {@code segment}, including the primary owner.
     * @deprecated since 9.3 please use {@link #getSegmentDistribution(int)} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public DistributionInfo getDistributionForSegment(int segmentId) {
       return getSegmentDistribution(segmentId);
    }

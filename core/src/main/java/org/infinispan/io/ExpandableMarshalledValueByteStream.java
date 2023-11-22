@@ -8,7 +8,7 @@ package org.infinispan.io;
  * @since 5.1
  * @deprecated since 10.0
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class ExpandableMarshalledValueByteStream extends MarshalledValueByteStream {
    /**
     * The buffer where data is stored.

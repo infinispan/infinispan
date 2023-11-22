@@ -268,7 +268,7 @@ public class ParserRegistry implements NamespaceMappingParser {
     * @param configurations a map of named configurations
     * @deprecated use {@link #serialize(ConfigurationWriter, GlobalConfiguration, Map)} instead
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public void serialize(OutputStream os, GlobalConfiguration globalConfiguration, Map<String, Configuration> configurations) {
       ConfigurationWriter writer = ConfigurationWriter.to(os).build();
       serialize(writer, globalConfiguration, configurations);
@@ -303,7 +303,7 @@ public class ParserRegistry implements NamespaceMappingParser {
     * @param configuration
     * @deprecated use {@link #serialize(ConfigurationWriter, GlobalConfiguration, Map)} instead
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public void serialize(OutputStream os, String name, Configuration configuration) {
       serialize(os, null, Collections.singletonMap(name, configuration));
    }
@@ -315,7 +315,7 @@ public class ParserRegistry implements NamespaceMappingParser {
     * @return the XML representation of the specified configuration
     * @deprecated use {@link #serialize(ConfigurationWriter, GlobalConfiguration, Map)} instead
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public String serialize(String name, Configuration configuration) {
       try {
          ByteArrayOutputStream os = new ByteArrayOutputStream();

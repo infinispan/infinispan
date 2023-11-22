@@ -23,13 +23,13 @@ public class IndexingConfiguration extends ConfigurationElement<IndexingConfigur
    /**
     * @deprecated since 11.0
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static final AttributeDefinition<Index> INDEX = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.INDEX, null, Index.class).immutable().build();
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ENABLED, false).immutable().build();
    /**
     * @deprecated since 11.0
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static final AttributeDefinition<Boolean> AUTO_CONFIG = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.AUTO_CONFIG, false).immutable().build();
    public static final AttributeDefinition<Map<Class<?>, Class<?>>> KEY_TRANSFORMERS = AttributeDefinition.builder(Element.KEY_TRANSFORMERS, null, (Class<Map<Class<?>, Class<?>>>) (Class<?>) Map.class)
          .copier(collectionCopier())
@@ -76,7 +76,7 @@ public class IndexingConfiguration extends ConfigurationElement<IndexingConfigur
     *      Search</a>
     * @deprecated Since 12.0, indexing behaviour is defined by {@link #writer()} and {@link #reader()}.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public TypedProperties properties() {
       return properties.get();
    }
@@ -87,7 +87,7 @@ public class IndexingConfiguration extends ConfigurationElement<IndexingConfigur
     * @deprecated Since 11. This configuration will be removed in next major version as the index mode is calculated
     * automatically.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public Index index() {
       return attributes.attribute(INDEX).get();
    }
@@ -103,7 +103,7 @@ public class IndexingConfiguration extends ConfigurationElement<IndexingConfigur
     * Determines if autoconfig is enabled for this IndexingConfiguration.
     * @deprecated Since 11.0, with no replacement.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public boolean autoConfig() {
       return attributes.attribute(AUTO_CONFIG).get();
    }
@@ -136,7 +136,7 @@ public class IndexingConfiguration extends ConfigurationElement<IndexingConfigur
     * @deprecated since 11. Usages should be converted to {@link #indexedEntityTypes()} as this method will be removed
     * in next major version.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public Set<Class<?>> indexedEntities() {
       return resolvedIndexedClasses;
    }
@@ -155,7 +155,7 @@ public class IndexingConfiguration extends ConfigurationElement<IndexingConfigur
     * @return always false, starting with version 11.0
     * @deprecated Since 11.0 with no replacement; to be removed in next major version.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public final boolean indexShareable() {
       return false;
    }

@@ -18,7 +18,7 @@ import org.infinispan.jcache.logging.Log;
  * @author Galder Zamarreño
  * @deprecated Since 13.0, please use {@link InjectedCacheResolverFactory} instead.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 @Interceptor
 @CacheRemove
 public class InjectedCacheRemoveEntryInterceptor extends AbstractCacheRemoveEntryInterceptor {

@@ -18,15 +18,15 @@ public enum Attribute {
     ADDRESS_COUNT,
     AFTER,
     ALIASES,
-    @Deprecated
+    @Deprecated(forRemoval = true)
     ALLOW_DUPLICATE_DOMAINS("duplicate-domains"),
-    @Deprecated
+    @Deprecated(forRemoval = true)
     ASYNC_EXECUTOR,
-    @Deprecated
+    @Deprecated(forRemoval = true)
     ASYNC_MARSHALLING,
     AUDIT_LOGGER,
     AUTO_COMMIT,
-    @Deprecated
+    @Deprecated(forRemoval = true)
     AUTO_CONFIG,
     AVAILABILITY_INTERVAL,
     AWAIT_INITIAL_TRANSFER,
@@ -38,7 +38,7 @@ public enum Attribute {
     CACHE_SIZE,
     CACHE_TIMEOUT,
     CALIBRATE_BY_DELETES,
-    @Deprecated
+    @Deprecated(forRemoval = true)
     CAPACITY,
     CAPACITY_FACTOR,
     CHUNK_SIZE,
@@ -63,9 +63,9 @@ public enum Attribute {
     ENCODER,
     EXECUTOR,
     EVICTION,
-    @Deprecated
+    @Deprecated(forRemoval = true)
     EVICTION_EXECUTOR,
-    @Deprecated
+    @Deprecated(forRemoval = true)
     EVICTION_STRATEGY,
     EXPIRATION_EXECUTOR,
     EXTENDS,
@@ -73,14 +73,14 @@ public enum Attribute {
     FAIL_SILENTLY,
     FAILURE_POLICY_CLASS,
     FETCH_STATE,
-    @Deprecated
+    @Deprecated(forRemoval = true)
     FLUSH_LOCK_TIMEOUT,
     FRAGMENTATION_FACTOR,
     GAUGES,
     GROUP_NAME,
     HISTOGRAMS,
     ID,
-    @Deprecated
+    @Deprecated(forRemoval = true)
     INDEX,
     INDEX_QUEUE_LENGTH("max-queue-length"),
     INDEXED_ENTITIES,
@@ -138,7 +138,7 @@ public enum Attribute {
     PATH,
     PASSIVATION,
     PERMISSIONS,
-    @Deprecated
+    @Deprecated(forRemoval = true)
     PERSISTENCE_EXECUTOR,
     POSITION,
     PREFIX,
@@ -147,7 +147,7 @@ public enum Attribute {
     PROPERTIES,
     PURGE,
     QUEUE_COUNT,
-    @Deprecated
+    @Deprecated(forRemoval = true)
     QUEUE_FLUSH_INTERVAL,
     QUEUE_LENGTH,
     QUEUE_SIZE,
@@ -163,27 +163,27 @@ public enum Attribute {
     REMOTE_COMMAND_EXECUTOR,
     REMOTE_SITE,
     REMOTE_TIMEOUT,
-    @Deprecated
+    @Deprecated(forRemoval = true)
     REPLICATION_QUEUE_EXECUTOR,
     ROLES,
     SEGMENTED,
     SEGMENTS,
     SHARED,
     SHUTDOWN_HOOK,
-    @Deprecated
+    @Deprecated(forRemoval = true)
     SHUTDOWN_TIMEOUT,
     SIMPLE_CACHE,
-    @Deprecated
+    @Deprecated(forRemoval = true)
     SINGLETON,
     SITE,
     SIZE,
-    @Deprecated
+    @Deprecated(forRemoval = true)
     SPIN_DURATION("deadlock-detection-spin"),
     STATISTICS,
     STATISTICS_AVAILABLE,
     START,
     STARTUP_MODE,
-    @Deprecated
+    @Deprecated(forRemoval = true)
     STATE_TRANSFER_EXECUTOR,
     STORAGE,
     STORE_KEYS_AS_BINARY("keys"),

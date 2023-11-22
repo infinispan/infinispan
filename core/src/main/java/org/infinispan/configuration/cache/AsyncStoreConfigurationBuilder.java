@@ -68,7 +68,7 @@ public class AsyncStoreConfigurationBuilder<S> extends AbstractStoreConfiguratio
     * Configures the number of threads in the thread pool that is responsible for applying modifications.
     * @deprecated since 11.0 with no replacement as the thread pool is no longer used
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public AsyncStoreConfigurationBuilder<S> threadPoolSize(int i) {
       attributes.attribute(THREAD_POOL_SIZE).set(i);
       return this;

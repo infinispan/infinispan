@@ -369,7 +369,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       return createdCaches.remove(cacheName);
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public ModuleProperties getModuleProperties() {
       return moduleProperties;
    }

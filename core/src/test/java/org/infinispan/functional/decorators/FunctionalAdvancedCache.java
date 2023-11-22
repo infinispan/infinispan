@@ -298,7 +298,7 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    /**
     * @deprecated Since 10.0, will be removed without a replacement
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public AsyncInterceptorChain getAsyncInterceptorChain() {
       return cache.getAsyncInterceptorChain();
@@ -861,7 +861,7 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
       return null;
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public Set<Object> getListeners() {
       return null;  // TODO: Customise this generated block

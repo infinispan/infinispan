@@ -19,7 +19,7 @@ import net.jcip.annotations.NotThreadSafe;
  * @deprecated Since 13.0, please use {@link LazyByteArrayOutputStream} instead.
  */
 @NotThreadSafe
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
    /**
     * Default buffer size after which if more buffer capacity is needed the buffer will grow by 25% rather than 100%

@@ -40,7 +40,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     * The consistent hash factory in use.
     * @deprecated Since 11.0. Will be removed in 14.0, the segment allocation will no longer be customizable.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public HashConfigurationBuilder consistentHashFactory(ConsistentHashFactory<? extends ConsistentHash> consistentHashFactory) {
       attributes.attribute(CONSISTENT_HASH_FACTORY).set(consistentHashFactory);
       return this;
