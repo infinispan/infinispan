@@ -43,7 +43,7 @@ public class StatisticsConfiguration extends ConfigurationElement<StatisticsConf
     *
     * @deprecated since 10.1.3. This method will be removed in a future version.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public boolean available() {
       return available.get();
    }

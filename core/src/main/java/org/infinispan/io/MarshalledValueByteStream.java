@@ -14,7 +14,7 @@ import java.io.OutputStream;
  * @since 5.1
  * @deprecated since 10.0 requires jboss-marshalling-osgi artifact to be provided at runtime.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class MarshalledValueByteStream extends OutputStream {
 
    public abstract int size();

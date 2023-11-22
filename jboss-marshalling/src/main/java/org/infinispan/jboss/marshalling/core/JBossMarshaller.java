@@ -27,7 +27,7 @@ import org.jboss.marshalling.ObjectTable;
  * @since 4.0
  * @deprecated since 11.0. To be removed in 14.0 ISPN-11947.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class JBossMarshaller extends AbstractJBossMarshaller implements StreamingMarshaller {
 
    GlobalConfiguration globalCfg;

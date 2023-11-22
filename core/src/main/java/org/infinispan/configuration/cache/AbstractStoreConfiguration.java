@@ -98,7 +98,7 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
     *
     * @deprecated since 14.0. Always returns false. The first non shared store is used instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public boolean fetchPersistentState() {
       return false;

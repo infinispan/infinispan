@@ -318,7 +318,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       return cacheName;
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public StreamingMarshaller getCacheMarshaller() {
       return internalMarshaller.wired();
    }

@@ -12,7 +12,7 @@ import org.infinispan.Cache;
  * @author Marko Luksa
  * @deprecated since 10.0
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class ReadableGridFileChannel implements ReadableByteChannel {
 
    private final GridInputStream gridInputStream;

@@ -18,7 +18,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 4.2
  * @deprecated Since 10.0. This will be removed in next major version.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class Streams {
 
    private static final Log log = LogFactory.getLog(Streams.class);

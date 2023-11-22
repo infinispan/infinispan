@@ -21,7 +21,7 @@ import com.esotericsoftware.kryo.pool.KryoPool;
  * @since 9.0
  * @deprecated since 12.0 without replacement, will be removed in 15.0 ISPN-12152
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class KryoMarshaller extends AbstractMarshaller {
 
    private static final List<SerializerRegistryService> serializerServices = new ArrayList<>();

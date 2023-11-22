@@ -12,7 +12,7 @@ import org.jgroups.logging.LogFactory;
  * @author Marko Luksa
  * @deprecated since 10.0
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 class FileChunkMapper {
 
    private static final Log log = LogFactory.getLog(FileChunkMapper.class);

@@ -39,19 +39,19 @@ public abstract class AbstractDelegatingTransport implements Transport {
       this.actual = actual;
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, ResponseFilter responseFilter, DeliverOrder deliverOrder, boolean anycast) throws Exception {
       return actual.invokeRemotely(recipients, rpcCommand, mode, timeout, responseFilter, deliverOrder, anycast);
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter, boolean totalOrder, boolean anycast) throws Exception {
       return actual.invokeRemotely(rpcCommands, mode, timeout, usePriorityQueue, responseFilter, totalOrder, anycast);
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode, long timeout, ResponseFilter responseFilter, DeliverOrder deliverOrder, boolean anycast) throws Exception {
       return actual.invokeRemotely(rpcCommands, mode, timeout, responseFilter, deliverOrder, anycast);
@@ -159,7 +159,7 @@ public abstract class AbstractDelegatingTransport implements Transport {
       return actual.withView(expectedViewId);
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public void waitForView(int viewId) throws InterruptedException {
       actual.waitForView(viewId);

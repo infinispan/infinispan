@@ -58,7 +58,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfi
     *
     * @deprecated since 10.0. This method has no effect
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public ConnectionPoolConfigurationBuilder maxTotal(int maxTotal) {
       return this;
    }
@@ -70,7 +70,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfi
     *
     * @deprecated since 10.0. This method has no effect
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public ConnectionPoolConfigurationBuilder maxIdle(int maxIdle) {
       return this;
    }
@@ -104,7 +104,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfi
     *
     * @deprecated since 10.0. This method has no effect
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public ConnectionPoolConfigurationBuilder timeBetweenEvictionRuns(long timeBetweenEvictionRuns) {
       return this;
    }
@@ -129,7 +129,7 @@ public class ConnectionPoolConfigurationBuilder extends AbstractRemoteStoreConfi
     *
     * @deprecated since 10.0. This method has no effect
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public ConnectionPoolConfigurationBuilder testWhileIdle(boolean testWhileIdle) {
       return this;
    }

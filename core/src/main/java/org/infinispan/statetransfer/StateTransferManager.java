@@ -45,7 +45,7 @@ public interface StateTransferManager {
     *
     * @deprecated since 10.0; to be removed in next major version
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    default boolean isStateTransferInProgressForKey(Object key) {
       return getStateConsumer().isStateTransferInProgressForKey(key);
    }
@@ -67,7 +67,7 @@ public interface StateTransferManager {
     *
     * @deprecated Since 14.0. To be removed without replacement.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    default Map<Address, Response> forwardCommandIfNeeded(TopologyAffectedCommand command, Set<Object> affectedKeys, Address origin) {
       return Collections.emptyMap();
    }

@@ -56,7 +56,7 @@ public interface WriteCommand extends VisitableCommand, FlagAffectedCommand, Top
     *
     * @deprecated since 9.1
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    default void updateStatusFromRemoteResponse(Object remoteResponse) {}
 
    /**

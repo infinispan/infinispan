@@ -66,7 +66,7 @@ public enum CacheMode {
     *
     * @deprecated Since 14.0, will be removed in 16.0. Please use {@link #DIST_SYNC} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @ProtoEnumValue(number = 7)
    SCATTERED_SYNC;
 
@@ -118,7 +118,7 @@ public enum CacheMode {
    /**
     * @deprecated Since 14.0, will be removed in 16.0.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public boolean isScattered() { return this == SCATTERED_SYNC; }
 
    public boolean needsStateTransfer() {

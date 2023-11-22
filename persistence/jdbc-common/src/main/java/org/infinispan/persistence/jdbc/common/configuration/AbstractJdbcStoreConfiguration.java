@@ -56,7 +56,7 @@ public abstract class AbstractJdbcStoreConfiguration extends AbstractStoreConfig
    /**
     * @deprecated since 14.0, always returns <b>null</b>
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public Integer dbMinorVersion() {
       return null;
    }

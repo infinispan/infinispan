@@ -141,7 +141,7 @@ public enum ValueMatcher {
    /**
     * @deprecated Since 9.0, no longer used.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public abstract boolean nonExistentEntryCanMatch();
 
    public abstract ValueMatcher matcherForRetry();

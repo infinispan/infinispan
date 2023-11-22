@@ -7,7 +7,7 @@ package org.infinispan.commons.configuration;
  * @since 9.2
  * @deprecated Use {@link StringConfiguration} instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class XMLStringConfiguration extends StringConfiguration {
    public XMLStringConfiguration(String xml) {
       super(xml);

@@ -19,7 +19,7 @@ public enum StorageType {
     * deserialized instances of the object. Equality is defined by the equals method of the implementation class.
     * @deprecated since 11.0, use {@link StorageType#HEAP} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    OBJECT(Element.OBJECT),
 
    /**
@@ -35,7 +35,7 @@ public enum StorageType {
     * @deprecated since 11.0, with no replacement. Use {@link #HEAP} and the cache's {@link EncodingConfiguration} to
     * define a {@link MediaType} that is byte[] or primitive based.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    BINARY(Element.BINARY),
 
    /**

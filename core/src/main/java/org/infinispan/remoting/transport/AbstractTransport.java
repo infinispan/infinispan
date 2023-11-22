@@ -23,7 +23,7 @@ import org.infinispan.util.logging.Log;
  * @version 4.2
  * @deprecated Since 9.1, please implement {@link Transport} directly.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 @Scope(Scopes.GLOBAL)
 public abstract class AbstractTransport implements Transport {
 

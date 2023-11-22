@@ -20,14 +20,14 @@ public interface ServerStatistics {
     * Number of entries currently in the Hot Rod server
     * @deprecated Since 14.0, please use {@link #APPROXIMATE_ENTRIES}
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    String CURRENT_NR_OF_ENTRIES = "currentNumberOfEntries";
 
    /**
     * Number of entries stored in the cache by the server that receives the request since the cache started running.
     * @deprecated Since 13.0, please use {@link #STORES} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    String TOTAL_NR_OF_ENTRIES = "totalNumberOfEntries";
 
    /**

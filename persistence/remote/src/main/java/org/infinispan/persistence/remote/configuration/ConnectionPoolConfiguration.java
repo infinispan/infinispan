@@ -44,7 +44,7 @@ public class ConnectionPoolConfiguration {
    /*
     * deprecated since 10.0. Always returns -1
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public int maxIdle() {
       return -1;
    }

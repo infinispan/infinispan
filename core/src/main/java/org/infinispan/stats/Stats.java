@@ -83,21 +83,21 @@ public interface Stats extends JsonSerialization {
     * @return Number of entries currently in the cache, including passivated entries.
     * @deprecated Since 14.0, please use {@link #getApproximateEntries()} or {@link #getApproximateEntriesUnique()} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    int getCurrentNumberOfEntries();
 
    /**
     * The same as {@link #getCurrentNumberOfEntries()}, however passivated entries are not included.
     * @deprecated Since 14.0, please use {@link #getApproximateEntriesInMemory()} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    int getCurrentNumberOfEntriesInMemory();
 
    /**
     * Number of entries stored in cache since the cache started running.
     * @deprecated Since 13.0, please use {@link #getStores()} instead
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    long getTotalNumberOfEntries();
 
    /**
@@ -161,7 +161,7 @@ public interface Stats extends JsonSerialization {
     * @return Average number of milliseconds for a cache put on the cache
     * @deprecated Since 14.0, please use {@link #getAverageReadTimeNanos()} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    long getAverageWriteTime();
 
    /**
@@ -173,7 +173,7 @@ public interface Stats extends JsonSerialization {
     * @return Average number of milliseconds for a cache remove on the cache
     * @deprecated Since 14.0, please use {@link #getAverageWriteTimeNanos()} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    long getAverageRemoveTime();
 
    /**

@@ -14,7 +14,7 @@ import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
  * @since 9.3
  * @deprecated since 12.0. To be removed in Infinispan 14
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class TransactionConfiguration {
 
    private final TransactionMode transactionMode;
@@ -28,12 +28,12 @@ public class TransactionConfiguration {
       this.timeout = timeout;
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public TransactionMode transactionMode() {
       return transactionMode;
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public TransactionManagerLookup transactionManagerLookup() {
       return transactionManagerLookup;
    }
@@ -41,7 +41,7 @@ public class TransactionConfiguration {
    /**
     * @see TransactionConfigurationBuilder#timeout(long, TimeUnit)
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public long timeout() {
       return timeout;
    }

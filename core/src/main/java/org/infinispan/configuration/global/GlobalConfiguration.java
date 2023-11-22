@@ -37,7 +37,7 @@ public class GlobalConfiguration {
     *
     * @deprecated Since 9.4, use {@code Version.getVersionShort()} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static final short DEFAULT_MARSHALL_VERSION = Version.getVersionShort();
 
    private final Map<Class<?>, ?> modules;
@@ -80,7 +80,7 @@ public class GlobalConfiguration {
     * @return An empty {@code ThreadPoolConfiguration}.
     * @deprecated Since 11.0, no longer used.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public ThreadPoolConfiguration persistenceThreadPool() {
       return cacheContainerConfiguration.persistenceThreadPool();
    }
@@ -89,7 +89,7 @@ public class GlobalConfiguration {
     * @return An empty {@code ThreadPoolConfiguration}.
     * @deprecated Since 10.1, no longer used.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public ThreadPoolConfiguration stateTransferThreadPool() {
       return cacheContainerConfiguration.stateTransferThreadPool();
    }
@@ -98,7 +98,7 @@ public class GlobalConfiguration {
     * @return An empty {@code ThreadPoolConfiguration}.
     * @deprecated Since 11.0, no longer used.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public ThreadPoolConfiguration asyncThreadPool() {
       return cacheContainerConfiguration.asyncThreadPool();
    }
@@ -122,7 +122,7 @@ public class GlobalConfiguration {
    /**
     * @deprecated Since 10.1.3. Use {@link #jmx()} instead. This will be removed in next major version.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public GlobalJmxConfiguration globalJmxStatistics() {
       return jmx();
    }
@@ -154,7 +154,7 @@ public class GlobalConfiguration {
    /**
     * @deprecated Since 11.0, no longer used.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public String asyncThreadPoolName() {
       return cacheContainer().asyncExecutor();
    }
@@ -174,7 +174,7 @@ public class GlobalConfiguration {
    /**
     * @deprecated Since 11.0, no longer used.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public String persistenceThreadPoolName() {
       return cacheContainer().persistenceExecutor();
    }
@@ -186,7 +186,7 @@ public class GlobalConfiguration {
    /**
     * @deprecated Since 10.1, no longer used.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public String stateTransferThreadPoolName() {
       return cacheContainer().stateTransferExecutor();
    }

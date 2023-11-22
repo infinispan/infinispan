@@ -27,7 +27,7 @@ import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
  *
  * @deprecated Since 10.0, custom interceptors support will be removed and only modules will be able to define interceptors
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsConfigurationChildBuilder implements Builder<InterceptorConfiguration> {
    private final AttributeSet attributes;
 

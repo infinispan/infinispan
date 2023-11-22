@@ -9,7 +9,7 @@ import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
  * @since 9.1
  * @deprecated Since 11.0, will be removed in 14.0. Set the storage media type and use transcoding instead.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class GenericJbossMarshallerEncoder extends MarshallerEncoder {
 
    public GenericJbossMarshallerEncoder(GenericJBossMarshaller marshaller) {

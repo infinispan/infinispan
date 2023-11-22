@@ -1161,7 +1161,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       return cacheNotifier.removeListenerAsync(listener);
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public Set<Object> getListeners() {
       return cacheNotifier.getListeners();
@@ -1238,7 +1238,7 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    /**
     * @deprecated Since 10.0, will be removed without a replacement
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public AsyncInterceptorChain getAsyncInterceptorChain() {
       return EmptyAsyncInterceptorChain.INSTANCE;

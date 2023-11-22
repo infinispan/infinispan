@@ -68,7 +68,7 @@ public class GlobalJmxConfigurationBuilder extends GlobalJmxStatisticsConfigurat
     *
     * @deprecated Use {@link GlobalConfigurationBuilder#cacheManagerName(String)} instead
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public GlobalJmxConfigurationBuilder cacheManagerName(String cacheManagerName) {
       getGlobalConfig().cacheContainer().name(cacheManagerName);
       return this;

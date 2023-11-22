@@ -55,7 +55,7 @@ public class KeyStoreConfigurationBuilder implements Builder<KeyStoreConfigurati
       return this;
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public KeyStoreConfigurationBuilder keyPassword(char[] keyPassword) {
       attributes.attribute(KEY_PASSWORD).set(new PasswordCredentialSource(keyPassword));
       return this;

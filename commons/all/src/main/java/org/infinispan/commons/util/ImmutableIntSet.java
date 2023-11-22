@@ -14,7 +14,7 @@ import java.util.stream.IntStream;
  * @since 9.2
  * @deprecated since 9.3 This class will no longer be public, please use {@link IntSets#immutableSet(IntSet)}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class ImmutableIntSet extends AbstractImmutableIntSet {
    private final IntSet set;
 

@@ -106,7 +106,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
     *
     * @deprecated since 9.3
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public SslConfigurationBuilder keyStoreCertificatePassword(char[] keyStoreCertificatePassword) {
       this.keyStoreCertificatePassword = keyStoreCertificatePassword;
       return enable();

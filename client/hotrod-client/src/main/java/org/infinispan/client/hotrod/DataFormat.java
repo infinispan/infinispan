@@ -67,7 +67,7 @@ public final class DataFormat {
    /**
     * @deprecated Replaced by {@link #initialize(RemoteCacheManager, String, boolean)}.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public void initialize(RemoteCacheManager remoteCacheManager, boolean serverObjectStorage) {
       this.marshallerRegistry = remoteCacheManager.getMarshallerRegistry();
       this.defaultMarshaller = remoteCacheManager.getMarshaller();
@@ -122,7 +122,7 @@ public final class DataFormat {
    /**
     * @deprecated Since 12.0, will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public byte[] keyToBytes(Object key, int estimateKeySize, int estimateValueSize) {
       return keyToBytes(key);
    }
@@ -135,7 +135,7 @@ public final class DataFormat {
    /**
     * @deprecated Since 12.0, will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public byte[] valueToBytes(Object value, int estimateKeySize, int estimateValueSize) {
       return valueToBytes(value);
    }

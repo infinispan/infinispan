@@ -72,7 +72,7 @@ public class PersistenceConfiguration implements Matchable<PersistenceConfigurat
     *
     * @deprecated since 14.0. This will always return false
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public Boolean fetchPersistentState() {
       return false;
    }

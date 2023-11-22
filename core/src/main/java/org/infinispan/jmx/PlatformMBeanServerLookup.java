@@ -10,6 +10,6 @@ package org.infinispan.jmx;
  * @since 4.0
  * @deprecated Use {@link org.infinispan.commons.jmx.PlatformMBeanServerLookup} instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class PlatformMBeanServerLookup extends org.infinispan.commons.jmx.PlatformMBeanServerLookup implements MBeanServerLookup {
 }

@@ -238,7 +238,7 @@ public class AbstractDelegatingEmbeddedCacheManager implements EmbeddedCacheMana
       return cm.removeListenerAsync(listener);
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public Set<Object> getListeners() {
       return cm.getListeners();

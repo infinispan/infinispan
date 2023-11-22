@@ -33,7 +33,7 @@ public class AnyScopeComponentFactory implements ComponentFactory {
     * @return a component
     * @deprecated Since 9.4, please override {@link ComponentFactory#construct(String)} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public <T> T construct(Class<T> componentType) {
       throw new UnsupportedOperationException();
    }

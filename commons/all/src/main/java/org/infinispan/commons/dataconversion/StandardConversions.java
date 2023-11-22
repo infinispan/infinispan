@@ -69,7 +69,7 @@ public final class StandardConversions {
     *
     * @deprecated Since 13.0, without replacement.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static byte[] convertTextToOctetStream(Object source, MediaType sourceType) {
       if (source == null) return null;
       if (sourceType == null) {
@@ -107,7 +107,7 @@ public final class StandardConversions {
     *
     * @deprecated Since 13.0, without replacement.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static String convertTextToUrlEncoded(Object source, MediaType sourceType) {
       return urlEncode(source, sourceType);
    }
@@ -121,7 +121,7 @@ public final class StandardConversions {
     *
     * @deprecated Since 13.0, without replacment.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static byte[] convertOctetStreamToText(byte[] source, MediaType destination) {
       if (source == null) return null;
       return convertCharset(source, UTF_8, destination.getCharset());
@@ -136,7 +136,7 @@ public final class StandardConversions {
     *
     * @deprecated Since 13.0, without replacement.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static Object convertOctetStreamToJava(byte[] source, MediaType destination, Marshaller marshaller) {
       if (source == null) return null;
       if (!destination.match(MediaType.APPLICATION_OBJECT)) {
@@ -169,7 +169,7 @@ public final class StandardConversions {
     *
     * @deprecated Since 13.0, with no replacement.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static byte[] convertJavaToOctetStream(Object source, MediaType sourceMediaType, Marshaller marshaller) throws IOException, InterruptedException {
       if (source == null) return null;
       if (!sourceMediaType.match(MediaType.APPLICATION_OBJECT)) {
@@ -213,7 +213,7 @@ public final class StandardConversions {
     *
     * @deprecated Since 13.0 without replacement.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static byte[] convertJavaToText(Object source, MediaType sourceMediaType, MediaType destinationMediaType) {
       if (source == null) return null;
       if (sourceMediaType == null || destinationMediaType == null) {
@@ -242,7 +242,7 @@ public final class StandardConversions {
     *
     * @deprecated Since 13.0, without replacement.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static Object decodeObjectContent(Object content, MediaType contentMediaType) {
       if (content == null) return null;
       if (contentMediaType == null) {
@@ -327,7 +327,7 @@ public final class StandardConversions {
     *
     * @deprecated Since 13.0, without replacement.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static byte[] decodeOctetStream(Object input, MediaType octetStream) {
       if (input == null) {
          throw new NullPointerException("input must not be null");
@@ -346,7 +346,7 @@ public final class StandardConversions {
    /**
     * @deprecated Use {@link Base16Codec#encode(byte[])}
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static String bytesToHex(byte[] bytes) {
       if (bytes == null) return null;
       if (bytes.length == 0) return "";
@@ -372,7 +372,7 @@ public final class StandardConversions {
    /**
     * @deprecated Use {@link Base16Codec#decode(String)} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static byte[] hexToBytes(String hex) {
       if (hex == null) return null;
       if (hex.isEmpty()) return new byte[]{};
@@ -396,7 +396,7 @@ public final class StandardConversions {
     *
     * @deprecated since 13.0 without replacement.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static Object convertUrlEncodedToObject(Object content) {
       Object decoded = urlDecode(content);
       return convertTextToObject(decoded, TEXT_PLAIN);
@@ -405,7 +405,7 @@ public final class StandardConversions {
    /**
     * @deprecated Since 13.0 without replacement.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static Object convertUrlEncodedToText(Object content, MediaType destinationType) {
       return convertTextToText(urlDecode(content), TEXT_PLAIN, destinationType);
    }
@@ -413,7 +413,7 @@ public final class StandardConversions {
    /**
     * @deprecated Since 13.0 without replacement.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static Object convertUrlEncodedToOctetStream(Object content) {
       return convertTextToOctetStream(urlDecode(content), TEXT_PLAIN);
    }
@@ -421,7 +421,7 @@ public final class StandardConversions {
    /**
     * @deprecated Since 13.0 without replacement.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static String urlEncode(Object content, MediaType mediaType) {
       if (content == null) return null;
       try {
@@ -440,7 +440,7 @@ public final class StandardConversions {
    /**
     * @deprecated Since 13.0, without replacement.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static Object urlDecode(Object content) {
       try {
          if (content == null) return null;
@@ -457,7 +457,7 @@ public final class StandardConversions {
    /**
     * @deprecated Since 13.0 without replacement.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static Object convertOctetStreamToUrlEncoded(Object content, MediaType contentType) {
       byte[] decoded = decodeOctetStream(content, contentType);
       return urlEncode(decoded, MediaType.TEXT_PLAIN);

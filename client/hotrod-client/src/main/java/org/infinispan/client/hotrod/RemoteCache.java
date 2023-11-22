@@ -447,7 +447,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     * Returns server-side statistics for this cache.
     * @deprecated use {@link #serverStatistics()} instead
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    default ServerStatistics stats() {
       return serverStatistics();
    }
@@ -489,7 +489,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     * Returns the {@link org.infinispan.client.hotrod.RemoteCacheManager} that created this cache.
     * @deprecated Since 14.0. Use {@link #getRemoteCacheContainer()} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    default RemoteCacheManager getRemoteCacheManager() {
       return (RemoteCacheManager) this.getRemoteCacheContainer();
    }
@@ -531,7 +531,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     *
     * @deprecated Since 10.0, with no replacement
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    Set<Object> getListeners();
 
    /**

@@ -3,7 +3,7 @@ package org.infinispan.commons.util;
 /**
  * @deprecated since 11.0, use {@link ByteQuantity} instead.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public enum MemoryUnit {
    BYTES("B") {
 

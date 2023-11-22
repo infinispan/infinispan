@@ -64,7 +64,7 @@ public class GlobalJmxConfiguration extends GlobalJmxStatisticsConfiguration {
     * @return the cache manager name
     * @deprecated Since 10.1. please use {@link GlobalConfiguration#cacheManagerName()} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public String cacheManagerName() {
       return cacheManagerName;
    }

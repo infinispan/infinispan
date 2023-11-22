@@ -126,7 +126,7 @@ public class MockTransport implements Transport {
                  blockedRequests.isEmpty());
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand,
                                                 ResponseMode mode, long timeout, ResponseFilter responseFilter,
@@ -171,21 +171,21 @@ public class MockTransport implements Transport {
       blockRequest(members, rpcCommand, null);
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode, long
       timeout, boolean usePriorityQueue, ResponseFilter responseFilter, boolean totalOrder, boolean anycast) {
       throw new UnsupportedOperationException();
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode, long
       timeout, ResponseFilter responseFilter, DeliverOrder deliverOrder, boolean anycast) {
       throw new UnsupportedOperationException();
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteRequest<?> rpcCommand) {
       throw new UnsupportedOperationException();
@@ -281,7 +281,7 @@ public class MockTransport implements Transport {
       throw new UnsupportedOperationException();
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public void checkTotalOrderSupported() {
    }

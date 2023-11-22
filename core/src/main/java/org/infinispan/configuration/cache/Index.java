@@ -9,7 +9,7 @@ package org.infinispan.configuration.cache;
  * @deprecated since 11.0. The indexing mode is automatically detected and not configurable anymore (ignored) and will be
  * completely removed in next major version.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public enum Index {
 
    /**
@@ -27,7 +27,7 @@ public enum Index {
     *
     * @deprecated This mode is no longer supported since version 11.0. A configuration error will be raised if encountered.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    PRIMARY_OWNER;
 
    /**

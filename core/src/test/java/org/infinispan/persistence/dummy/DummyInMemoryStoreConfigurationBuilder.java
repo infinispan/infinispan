@@ -24,7 +24,7 @@ public class DummyInMemoryStoreConfigurationBuilder extends
     * If true, then writes to this store are artificially slowed by {@value DummyInMemoryStore#SLOW_STORE_WAIT} milliseconds.
     * @deprecated Use {@link org.infinispan.persistence.support.DelayStore} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public DummyInMemoryStoreConfigurationBuilder slow(boolean slow) {
       attributes.attribute(SLOW).set(slow);
       return this;

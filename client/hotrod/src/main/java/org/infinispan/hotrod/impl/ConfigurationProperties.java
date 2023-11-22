@@ -553,7 +553,7 @@ public class ConfigurationProperties {
     * @deprecated Use {@link #setJavaSerialAllowList(String)} instead. To be removed in 14.0.
     * @param javaSerialWhitelist
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public void setJavaSerialWhitelist(String javaSerialWhitelist) {
       setJavaSerialAllowList(javaSerialWhitelist);
    }

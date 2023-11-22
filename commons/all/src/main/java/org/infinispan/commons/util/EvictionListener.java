@@ -9,7 +9,7 @@ import java.util.Map;
  * @since 9.0
  * @deprecated since 10.0 - This class is not used internally anymore
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface EvictionListener<K, V> {
 
    /**

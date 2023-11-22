@@ -102,9 +102,9 @@ public enum Element {
     ROLE,
     ROLES,
     ROOT,
-    @Deprecated
+    @Deprecated(forRemoval = true)
     SCATTERED_CACHE,
-    @Deprecated
+    @Deprecated(forRemoval = true)
     SCATTERED_CACHE_CONFIGURATION,
     SERIALIZATION_CONTEXT_INITIALIZER("context-initializer"),
     SERIALIZATION_CONTEXT_INITIALIZERS("context-initializers"),
@@ -136,7 +136,7 @@ public enum Element {
     VALUE_DATA_TYPE("value"),
     VERSIONING,
     VOLATILE_CONFIGURATION_STORAGE,
-    @Deprecated
+    @Deprecated(forRemoval = true)
     WHITE_LIST,
     WRITE_BEHIND,
     ;

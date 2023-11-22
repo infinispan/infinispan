@@ -10,10 +10,10 @@ import org.infinispan.protostream.annotations.ProtoName;
 @ProtoName("Model")
 public class ModelC implements Model {
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public String original;
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public String different;
 
    public String divergent;
@@ -25,14 +25,14 @@ public class ModelC implements Model {
       this.divergent = divergent;
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @ProtoField(value = 1)
    @Basic
    public String getOriginal() {
       return original;
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @ProtoField(value = 2)
    @Basic
    public String getDifferent() {

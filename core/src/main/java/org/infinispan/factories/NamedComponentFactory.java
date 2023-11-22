@@ -12,7 +12,7 @@ import org.infinispan.commons.util.ReflectionUtil;
  * @since 4.0
  * @deprecated Since 9.4, please implement {@link AbstractComponentFactory#construct(String)} directly.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class NamedComponentFactory extends AbstractComponentFactory {
 
    @Override

@@ -201,7 +201,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
     * @param defaultConfiguration configuration to use as a template for all caches created
     * @deprecated Since 11.0, please use {@link #DefaultCacheManager(ConfigurationBuilderHolder, boolean)} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public DefaultCacheManager(Configuration defaultConfiguration) {
       this(null, defaultConfiguration, true);
    }
@@ -214,7 +214,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
     * @param start                if true, the cache manager is started
     * @deprecated Since 11.0, please use {@link #DefaultCacheManager(ConfigurationBuilderHolder, boolean)} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public DefaultCacheManager(Configuration defaultConfiguration, boolean start) {
       this(null, defaultConfiguration, start);
    }
@@ -250,7 +250,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
     * @param defaultConfiguration default configuration to use. If null, a default instance is created.
     * @deprecated Since 11.0, please use {@link #DefaultCacheManager(ConfigurationBuilderHolder, boolean)} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public DefaultCacheManager(GlobalConfiguration globalConfiguration, Configuration defaultConfiguration) {
       this(globalConfiguration, defaultConfiguration, true);
    }
@@ -264,7 +264,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
     * @param start                if true, the cache manager is started
     * @deprecated Since 11.0, please use {@link #DefaultCacheManager(ConfigurationBuilderHolder, boolean)} instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public DefaultCacheManager(GlobalConfiguration globalConfiguration, Configuration defaultConfiguration,
                               boolean start) {
       globalConfiguration = globalConfiguration == null ? new GlobalConfigurationBuilder().build() : globalConfiguration;
@@ -934,7 +934,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       }
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public Set<Object> getListeners() {
       authorizer.checkPermission(getSubject(), AuthorizationPermission.LISTEN);

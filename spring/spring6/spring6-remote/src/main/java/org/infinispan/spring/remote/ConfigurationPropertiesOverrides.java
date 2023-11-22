@@ -51,7 +51,7 @@ public class ConfigurationPropertiesOverrides {
     * @param TransportFactory
     * @deprecated since 10.0. This method has no effect
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public void setTransportFactory(final String TransportFactory) {
    }
 
@@ -110,7 +110,7 @@ public class ConfigurationPropertiesOverrides {
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public void setKeySizeEstimate(final int keySizeEstimate) {
       this.overridingProperties.setProperty(KEY_SIZE_ESTIMATE, Integer.toString(keySizeEstimate));
    }
@@ -118,7 +118,7 @@ public class ConfigurationPropertiesOverrides {
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public void setValueSizeEstimate(final int valueSizeEstimate) {
       this.overridingProperties.setProperty(VALUE_SIZE_ESTIMATE,
                                             Integer.toString(valueSizeEstimate));

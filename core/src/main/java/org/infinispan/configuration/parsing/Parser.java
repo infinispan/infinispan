@@ -1338,7 +1338,7 @@ public class Parser extends CacheParser {
    /**
     * @deprecated use {@link CacheParser#parseStoreAttribute(ConfigurationReader, int, AbstractStoreConfigurationBuilder)}
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static void parseStoreAttribute(ConfigurationReader reader, int index, AbstractStoreConfigurationBuilder<?, ?> storeBuilder) {
       CacheParser.parseStoreAttribute(reader, index, storeBuilder);
    }
@@ -1346,7 +1346,7 @@ public class Parser extends CacheParser {
    /**
     * @deprecated use {@link CacheParser#parseStoreElement(ConfigurationReader, StoreConfigurationBuilder)}
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static void parseStoreElement(ConfigurationReader reader, StoreConfigurationBuilder<?, ?> storeBuilder) {
       CacheParser.parseStoreElement(reader, storeBuilder);
    }
@@ -1354,7 +1354,7 @@ public class Parser extends CacheParser {
    /**
     * @deprecated use {@link CacheParser#parseStoreWriteBehind(ConfigurationReader, AsyncStoreConfigurationBuilder)}
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static void parseStoreWriteBehind(ConfigurationReader reader, AsyncStoreConfigurationBuilder<?> storeBuilder) {
       CacheParser.parseStoreWriteBehind(reader, storeBuilder);
    }
@@ -1362,7 +1362,7 @@ public class Parser extends CacheParser {
    /**
     * @deprecated use {@link CacheParser#parseStoreProperty(ConfigurationReader, StoreConfigurationBuilder)}
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public static void parseStoreProperty(ConfigurationReader reader, StoreConfigurationBuilder<?, ?> storeBuilder) {
       String property = ParseUtils.requireSingleAttribute(reader, Attribute.NAME.getLocalName());
       String value = reader.getElementText();

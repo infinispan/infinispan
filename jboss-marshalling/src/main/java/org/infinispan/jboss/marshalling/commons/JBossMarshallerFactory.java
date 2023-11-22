@@ -19,7 +19,7 @@ import org.jboss.marshalling.river.RiverMarshallerFactory;
  * @since 5.1
  * @deprecated since 11.0. To be removed in 14.0 ISPN-11947.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class JBossMarshallerFactory extends AbstractMarshallerFactory {
 
    private final SerializableClassRegistry registry;

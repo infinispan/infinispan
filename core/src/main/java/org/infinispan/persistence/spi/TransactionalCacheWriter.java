@@ -20,7 +20,7 @@ import org.infinispan.persistence.support.BatchModification;
  * @since 9.0
  * @deprecated since 11.0 replaced by {@link NonBlockingStore}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface TransactionalCacheWriter<K, V> extends AdvancedCacheWriter<K, V> {
 
    /**

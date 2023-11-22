@@ -13,7 +13,7 @@ public interface ConfigurationChildBuilder {
    /**
     * @deprecated Since 10.0, custom interceptors support will be removed and only modules will be able to define interceptors
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    CustomInterceptorsConfigurationBuilder customInterceptors();
 
    EncodingConfigurationBuilder encoding();
@@ -31,7 +31,7 @@ public interface ConfigurationChildBuilder {
    /**
     * @deprecated since 10.1.3 use {@link #statistics} instead. This will be removed in next major version.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    default JMXStatisticsConfigurationBuilder jmxStatistics() {
       return statistics();
    }

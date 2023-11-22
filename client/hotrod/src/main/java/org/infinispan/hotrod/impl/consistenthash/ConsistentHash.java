@@ -12,7 +12,7 @@ import java.util.Set;
 public interface ConsistentHash {
    Class<? extends ConsistentHash>[] DEFAULT = new Class[] {null, ConsistentHashV2.class, SegmentConsistentHash.class};
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    void init(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, int hashSpace);
 
    SocketAddress getServer(Object key);

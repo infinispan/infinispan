@@ -12,7 +12,7 @@ import org.infinispan.factories.scopes.Scopes;
  * relevance. Please use {@link org.infinispan.stats.Stats} or {@link org.infinispan.stats.ClusterCacheStats} instead.
  */
 @Scope(Scopes.GLOBAL)
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface CacheContainerStats extends Stats {
 
    String OBJECT_NAME = "CacheContainerStats";

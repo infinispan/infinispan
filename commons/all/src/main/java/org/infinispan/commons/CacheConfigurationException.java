@@ -29,7 +29,7 @@ public class CacheConfigurationException extends CacheException {
       super(string);
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public CacheConfigurationException(String string, String erroneousAttribute) {
       super(string);
    }
@@ -38,12 +38,12 @@ public class CacheConfigurationException extends CacheException {
       super(string, throwable);
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public List<String> getErroneousAttributes() {
       return Collections.emptyList();
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public void addErroneousAttribute(String s) {
       // Do nothing
    }

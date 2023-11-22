@@ -102,7 +102,7 @@ public class TableManipulationConfiguration {
     * @deprecated please use {@link org.infinispan.configuration.cache.AbstractStoreConfiguration#maxBatchSize()} instead.
     * @return the size of batches to process.  Guaranteed to be a power of two.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public int batchSize() {
       return batchSize.get();
    }

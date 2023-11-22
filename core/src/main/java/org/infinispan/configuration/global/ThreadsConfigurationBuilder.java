@@ -102,7 +102,7 @@ public class ThreadsConfigurationBuilder extends AbstractGlobalConfigurationBuil
    /**
     * @deprecated Since 10.1, no longer used.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public ThreadPoolConfigurationBuilder stateTransferThreadPool() {
       return stateTransferThreadPool;
@@ -111,7 +111,7 @@ public class ThreadsConfigurationBuilder extends AbstractGlobalConfigurationBuil
    /**
     * @deprecated Since 11.0, no longer used.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public ThreadPoolConfigurationBuilder transportThreadPool() {
       return transportThreadPool;
    }

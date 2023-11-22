@@ -8,7 +8,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 /**
  * @deprecated since 12.0. Use {@link AllowListConfigurationBuilder} through @{@link SerializationConfigurationBuilder#allowList()}. Will be removed in 14.0.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class WhiteListConfigurationBuilder implements Builder<WhiteListConfiguration> {
    private final AllowListConfigurationBuilder delegate;
 

@@ -6,7 +6,7 @@ package org.infinispan.commons.dataconversion;
  * @since 9.1
  * @deprecated since 12.1. to be removed in a future version.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class IdentityEncoder implements Encoder {
 
    public static final IdentityEncoder INSTANCE = new IdentityEncoder();

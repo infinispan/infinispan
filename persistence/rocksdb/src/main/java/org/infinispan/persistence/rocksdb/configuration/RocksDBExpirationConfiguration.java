@@ -37,7 +37,7 @@ public class RocksDBExpirationConfiguration {
    /**
     * @deprecated Since 10.1, there is no more queue in {@link org.infinispan.persistence.rocksdb.RocksDBStore}
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    int expiryQueueSize() {
       return expiryQueueSize.get();
    }

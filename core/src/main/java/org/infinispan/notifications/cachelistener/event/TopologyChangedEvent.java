@@ -16,7 +16,7 @@ public interface TopologyChangedEvent<K, V> extends Event<K, V> {
     *
     * @deprecated since 9.0 use {@link #getReadConsistentHashAtStart()} or {@link #getWriteConsistentHashAtStart()}
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    default ConsistentHash getConsistentHashAtStart() {
       return getReadConsistentHashAtStart();
    }
@@ -30,7 +30,7 @@ public interface TopologyChangedEvent<K, V> extends Event<K, V> {
     *
     * @deprecated since 9.0 use {@link #getReadConsistentHashAtEnd()} or {@link #getWriteConsistentHashAtEnd()}
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    default ConsistentHash getConsistentHashAtEnd() {
       return getWriteConsistentHashAtEnd();
    }

@@ -51,7 +51,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * @deprecated To be removed after migration to hibernate search 6, if the version no longer supports this legacy
     * name.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    private static final String RAM_DIRECTORY_PROVIDER = "ram";
 
    private static final String LOCAL_HEAP_DIRECTORY_PROVIDER = "local-heap";
@@ -174,7 +174,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * @return <code>this</code>, for method chaining
     * @deprecated Since 12.0, please use {@link #writer()} and {@link #reader()} to define indexing behavior.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public IndexingConfigurationBuilder addProperty(String key, String value) {
       return setProperty(key, value);
    }
@@ -193,7 +193,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * @return <code>this</code>, for method chaining
     * @deprecated Since 12.0, please {@link #writer()} and {@link #reader()} to define indexing behavior.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public IndexingConfigurationBuilder setProperty(String key, Object value) {
       TypedProperties properties = attributes.attribute(PROPERTIES).get();
       properties.put(key, value);
@@ -213,7 +213,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * @return <code>this</code>, for method chaining
     * @deprecated Since 12.0, please {@link #writer()} and {@link #reader()} to define indexing behavior.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public IndexingConfigurationBuilder withProperties(Properties props) {
       attributes.attribute(PROPERTIES).set(TypedProperties.toTypedProperties(props));
       return this;
@@ -225,7 +225,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * @deprecated Since 11.0. This configuration will be removed in next major version as the index mode is calculated
     * automatically.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public IndexingConfigurationBuilder index(Index index) {
       if (attributes.attribute(ENABLED).isModified()) {
          throw CONFIG.indexEnabledAndIndexModeAreExclusive();
@@ -243,7 +243,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * @return <code>this</code>, for method chaining
     * @deprecated Since 11.0 with no replacement.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public IndexingConfigurationBuilder autoConfig(boolean autoConfig) {
       if (autoConfig && !attributes.attribute(ENABLED).isModified()) {
          enable();
@@ -255,7 +255,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    /**
     * @deprecated Since 11.0, with no replacement.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public boolean autoConfig() {
       return attributes.attribute(AUTO_CONFIG).get();
    }

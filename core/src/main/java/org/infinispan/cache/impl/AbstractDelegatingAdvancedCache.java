@@ -59,7 +59,7 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
    /**
     * @deprecated Since 10.0, will be removed without a replacement
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public AsyncInterceptorChain getAsyncInterceptorChain() {
       return cache.getAsyncInterceptorChain();
@@ -538,7 +538,7 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
       }
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapper) {
       AdvancedCache<K, V> encoderCache = cache.withWrapping(wrapper);
@@ -579,7 +579,7 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
       }
    }
 
-   @Deprecated
+   @Deprecated(forRemoval = true)
    @Override
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapper, Class<? extends Wrapper> valueWrapper) {
       AdvancedCache<K, V> encoderCache = cache.withWrapping(keyWrapper, valueWrapper);

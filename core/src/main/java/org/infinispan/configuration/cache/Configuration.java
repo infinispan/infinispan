@@ -105,7 +105,7 @@ public class Configuration extends ConfigurationElement<Configuration> implement
    /**
     * @deprecated Since 10.0, custom interceptors support will be removed and only modules will be able to define interceptors
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public CustomInterceptorsConfiguration customInterceptors() {
       return customInterceptorsConfiguration;
    }
@@ -137,7 +137,7 @@ public class Configuration extends ConfigurationElement<Configuration> implement
    /**
     * @deprecated since 10.1.3 use {@link #statistics} instead. This will be removed in next major version.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    public JMXStatisticsConfiguration jmxStatistics() {
       return statistics();
    }

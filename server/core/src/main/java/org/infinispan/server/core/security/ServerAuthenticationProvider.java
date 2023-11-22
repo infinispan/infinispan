@@ -33,7 +33,7 @@ public interface ServerAuthenticationProvider {
     * @deprecated This method will no longer be invoked directly. Implement the {@link #createSaslServer(String, List,
     * String, String, Map, ClassLoader)} method instead.
     */
-   @Deprecated
+   @Deprecated(forRemoval = true)
    default AuthorizingCallbackHandler getCallbackHandler(String mechanismName, Map<String, String> mechanismProperties) {
       return null;
    }
