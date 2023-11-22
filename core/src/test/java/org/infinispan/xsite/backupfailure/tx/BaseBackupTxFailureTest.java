@@ -1,16 +1,17 @@
 package org.infinispan.xsite.backupfailure.tx;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
-import jakarta.transaction.RollbackException;
-
 import org.infinispan.commons.CacheException;
-import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.xsite.AbstractTwoSitesTest;
 import org.infinispan.xsite.backupfailure.BaseBackupFailureTest;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.RollbackException;
 
 /**
  * @author Mircea Markus
@@ -31,7 +32,7 @@ public abstract class BaseBackupTxFailureTest extends AbstractTwoSitesTest {
    protected void createSites() {
       super.createSites();
       failureInterceptor = new BaseBackupFailureTest.FailureInterceptor();
-      backup(LON).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(failureInterceptor, 1);
+      extractInterceptorChain(backup(LON)).addInterceptor(failureInterceptor, 1);
    }
 
    public void testPrepareFailure() {

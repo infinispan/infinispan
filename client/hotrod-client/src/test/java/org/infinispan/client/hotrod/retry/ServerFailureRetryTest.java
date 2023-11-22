@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.retry;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -42,13 +43,13 @@ public class ServerFailureRetryTest extends AbstractRetryTest {
    private void retryExceptions(boolean throwJGroupsException) {
       AdvancedCache<?, ?> nextCache = cacheToHit(1);
       ErrorInducingInterceptor interceptor = new ErrorInducingInterceptor(throwJGroupsException);
-      nextCache.getAsyncInterceptorChain().addInterceptor(interceptor, 1);
+      extractInterceptorChain(nextCache).addInterceptor(interceptor, 1);
       try {
          remoteCache.put(1, "v1");
          assertTrue(interceptor.suspectExceptionThrown);
          assertEquals("v1", remoteCache.get(1));
       } finally {
-         nextCache.getAsyncInterceptorChain().removeInterceptor(ErrorInducingInterceptor.class);
+         extractInterceptorChain(nextCache).removeInterceptor(ErrorInducingInterceptor.class);
       }
    }
 

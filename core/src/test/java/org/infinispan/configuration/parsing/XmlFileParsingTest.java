@@ -27,7 +27,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.EncodingConfiguration;
-import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfiguration;
@@ -39,7 +38,6 @@ import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.threads.AbstractThreadPoolExecutorFactory;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.factories.threads.EnhancedQueueExecutorFactory;
-import org.infinispan.interceptors.FooInterceptor;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.marshall.AdvancedExternalizerTest;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
@@ -599,15 +597,6 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(c.clustering().stateTransfer().fetchInMemoryState());
       assertEquals(120000, c.clustering().stateTransfer().timeout());
       assertEquals(1000, c.clustering().stateTransfer().chunkSize());
-
-      c = getCacheConfiguration(holder, "cacheWithCustomInterceptors");
-      assertFalse(c.customInterceptors().interceptors().isEmpty());
-      assertEquals(6, c.customInterceptors().interceptors().size());
-      for (InterceptorConfiguration i : c.customInterceptors().interceptors()) {
-         if (i.asyncInterceptor() instanceof FooInterceptor) {
-            assertEquals(i.properties().getProperty("foo"), "bar");
-         }
-      }
 
       c = getCacheConfiguration(holder, "evictionCache");
       assertEquals(5000, c.memory().size());

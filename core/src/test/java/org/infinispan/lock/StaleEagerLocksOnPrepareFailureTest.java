@@ -1,5 +1,6 @@
 package org.infinispan.lock;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.Assert.assertNull;
 
 import org.infinispan.Cache;
@@ -51,7 +52,7 @@ public class StaleEagerLocksOnPrepareFailureTest extends MultipleCacheManagersTe
       // force the prepare command to fail on c2
       FailInterceptor interceptor = new FailInterceptor();
       interceptor.failFor(PrepareCommand.class);
-      AsyncInterceptorChain ic = c2.getAdvancedCache().getAsyncInterceptorChain();
+      AsyncInterceptorChain ic = extractInterceptorChain(c2);
       ic.addInterceptorBefore(interceptor, TxDistributionInterceptor.class);
 
       MagicKey k1 = new MagicKey("k1", c1);

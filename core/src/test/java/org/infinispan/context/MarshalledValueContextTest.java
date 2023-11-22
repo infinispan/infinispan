@@ -1,9 +1,8 @@
 package org.infinispan.context;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
-
-import jakarta.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
@@ -21,6 +20,8 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.TransactionManager;
 
 /**
  * This is to test that contexts are properly constructed and cleaned up wven when using marshalled values and the
@@ -43,7 +44,7 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
    public void testContentsOfContext() throws Exception {
       Cache<Key, String> c = cacheManager.getCache();
       ContextExtractingInterceptor cex = new ContextExtractingInterceptor();
-      assertTrue(c.getAdvancedCache().getAsyncInterceptorChain().addInterceptorAfter(cex, InvocationContextInterceptor.class));
+      assertTrue(extractInterceptorChain(c).addInterceptorAfter(cex, InvocationContextInterceptor.class));
 
       c.put(new Key("k"), "v");
 

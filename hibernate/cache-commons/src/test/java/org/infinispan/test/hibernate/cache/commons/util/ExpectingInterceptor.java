@@ -1,13 +1,7 @@
 package org.infinispan.test.hibernate.cache.commons.util;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
-import org.infinispan.interceptors.InvocationFinallyAction;
-import org.infinispan.interceptors.impl.InvocationContextInterceptor;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -17,7 +11,14 @@ import java.util.concurrent.CountDownLatch;
 import java.util.function.BiPredicate;
 import java.util.function.BooleanSupplier;
 
-import static org.junit.Assert.assertTrue;
+import org.infinispan.AdvancedCache;
+import org.infinispan.commands.VisitableCommand;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
+import org.infinispan.interceptors.InvocationFinallyAction;
+import org.infinispan.interceptors.impl.InvocationContextInterceptor;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 public class ExpectingInterceptor extends BaseCustomAsyncInterceptor {
    private final static Log log = LogFactory.getLog(ExpectingInterceptor.class);
@@ -26,18 +27,18 @@ public class ExpectingInterceptor extends BaseCustomAsyncInterceptor {
    private InvocationFinallyAction assertCondition = this::assertCondition;
 
    public static ExpectingInterceptor get(AdvancedCache cache) {
-      ExpectingInterceptor self = cache.getAsyncInterceptorChain().findInterceptorWithClass(ExpectingInterceptor.class);
+      ExpectingInterceptor self = extractInterceptorChain(cache).findInterceptorWithClass(ExpectingInterceptor.class);
       if (self != null) {
          return self;
       }
       ExpectingInterceptor ei = new ExpectingInterceptor();
       // We are adding this after ICI because we want to handle silent failures, too
-      assertTrue(cache.getAsyncInterceptorChain().addInterceptorAfter(ei, InvocationContextInterceptor.class));
+      assertTrue(extractInterceptorChain(cache).addInterceptorAfter(ei, InvocationContextInterceptor.class));
       return ei;
    }
 
    public static void cleanup(AdvancedCache... caches) {
-      for (AdvancedCache c : caches) c.getAsyncInterceptorChain().removeInterceptor(ExpectingInterceptor.class);
+      for (AdvancedCache c : caches) extractInterceptorChain(c).removeInterceptor(ExpectingInterceptor.class);
    }
 
    public synchronized Condition when(BiPredicate<InvocationContext, VisitableCommand> predicate) {

@@ -1,5 +1,7 @@
 package org.infinispan.tx;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
@@ -30,7 +32,7 @@ public class ExceptionDuringGetTest extends MultipleCacheManagersTest {
 
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = "Induced!")
    public void testExceptionDuringGet() {
-      advancedCache(0).getAsyncInterceptorChain().addInterceptorAfter(new ExceptionInterceptor(), PessimisticLockingInterceptor.class);
+      extractInterceptorChain(advancedCache(0)).addInterceptorAfter(new ExceptionInterceptor(), PessimisticLockingInterceptor.class);
       cache(0).get("k");
       assert false;
    }

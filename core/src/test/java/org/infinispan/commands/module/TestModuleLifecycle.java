@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -67,8 +68,8 @@ public final class TestModuleLifecycle implements ModuleLifecycle, DynamicModule
       if (testGlobalConfiguration == null)
          return;
 
-      if (testGlobalConfiguration.cacheStartCallback() != null) {
-         testGlobalConfiguration.cacheStartCallback().accept(cr);
+      for (Consumer<ComponentRegistry> callback : testGlobalConfiguration.cacheStartCallbacks()) {
+         callback.accept(cr);
       }
 
       Map<String, Object> testCacheComponents = testGlobalConfiguration.cacheTestComponents(cacheName);

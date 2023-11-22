@@ -1,5 +1,6 @@
 package org.infinispan.distribution;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
@@ -20,6 +21,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
@@ -28,7 +30,6 @@ import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.distribution.L1WriteSynchronizer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.statetransfer.StateTransferLock;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.transaction.TransactionMode;
@@ -81,7 +82,7 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
                                                         Class<? extends AsyncInterceptor> interceptorPosition,
                                                         boolean blockAfterCommand) {
       BlockingInterceptor bi = new BlockingInterceptor<>(barrier, commandClass, blockAfterCommand, false);
-      AsyncInterceptorChain interceptorChain = cache.getAdvancedCache().getAsyncInterceptorChain();
+      AsyncInterceptorChain interceptorChain = extractInterceptorChain(cache);
       assertTrue(interceptorChain.addInterceptorBefore(bi, interceptorPosition));
       return bi;
    }

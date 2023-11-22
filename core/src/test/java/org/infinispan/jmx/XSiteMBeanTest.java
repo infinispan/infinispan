@@ -1,6 +1,7 @@
 package org.infinispan.jmx;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.replaceComponent;
@@ -370,7 +371,7 @@ public class XSiteMBeanTest extends AbstractMultipleSitesTest {
             interceptor.suspend(true);
             blockingInterceptorList.add(interceptor);
             //noinspection deprecation
-            cache.getAdvancedCache().getAsyncInterceptorChain().addInterceptor(interceptor, 0);
+            extractInterceptorChain(cache).addInterceptor(interceptor, 0);
          }
       }
    }

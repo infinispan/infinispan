@@ -1,6 +1,7 @@
 package org.infinispan.spring.remote.provider;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.concurrent.CountDownLatch;
@@ -12,6 +13,7 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -20,7 +22,6 @@ import org.infinispan.server.core.test.ServerTestingUtil;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.springframework.cache.Cache;
@@ -85,7 +86,7 @@ public class SpringRemoteCacheManagerWithReadWriteTimeoutTest extends SingleCach
 
       defaultCache.put("k1", "v1");
       CountDownLatch latch = new CountDownLatch(1);
-      cacheManager.getCache(TEST_CACHE_NAME).getAdvancedCache().getAsyncInterceptorChain()
+      extractInterceptorChain(cacheManager.getCache(TEST_CACHE_NAME))
             .addInterceptor(new DelayingInterceptor(latch, 700, 800), 0);
       Exceptions.expectException(CacheException.class, TimeoutException.class, () -> defaultCache.get("k1"));
 

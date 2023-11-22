@@ -1068,15 +1068,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       componentRegistry.stop();
    }
 
-   /**
-    * @deprecated Since 10.0, will be removed without a replacement
-    */
-   @Deprecated
-   @Override
-   public AsyncInterceptorChain getAsyncInterceptorChain() {
-      return invoker;
-   }
-
    @Override
    public ExpirationManager<K, V> getExpirationManager() {
       return expirationManager;

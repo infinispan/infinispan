@@ -1,54 +1,5 @@
 package org.infinispan.stats.impl;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.IllegalLifecycleStateException;
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.context.Flag;
-import org.infinispan.eviction.impl.ActivationManager;
-import org.infinispan.eviction.impl.PassivationManager;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.scopes.Scope;
-import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.interceptors.AsyncInterceptor;
-import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
-import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
-import org.infinispan.interceptors.impl.CacheWriterInterceptor;
-import org.infinispan.interceptors.impl.InvalidationInterceptor;
-import org.infinispan.jmx.annotations.MBean;
-import org.infinispan.jmx.annotations.ManagedAttribute;
-import org.infinispan.jmx.annotations.MeasurementType;
-import org.infinispan.jmx.annotations.Units;
-import org.infinispan.manager.ClusterExecutor;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.Ids;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.LocalModeAddress;
-import org.infinispan.security.actions.SecurityActions;
-import org.infinispan.stats.ClusterCacheStats;
-import org.infinispan.util.concurrent.locks.LockManager;
-import org.infinispan.util.function.TriConsumer;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.function.Function;
-
 import static org.infinispan.stats.impl.StatKeys.ACTIVATIONS;
 import static org.infinispan.stats.impl.StatKeys.APPROXIMATE_ENTRIES;
 import static org.infinispan.stats.impl.StatKeys.APPROXIMATE_ENTRIES_IN_MEMORY;
@@ -78,6 +29,56 @@ import static org.infinispan.stats.impl.StatKeys.REMOVE_MISSES;
 import static org.infinispan.stats.impl.StatKeys.REQUIRED_MIN_NODES;
 import static org.infinispan.stats.impl.StatKeys.STORES;
 import static org.infinispan.stats.impl.StatKeys.TIME_SINCE_START;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
+
+import org.infinispan.AdvancedCache;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.IllegalLifecycleStateException;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.context.Flag;
+import org.infinispan.eviction.impl.ActivationManager;
+import org.infinispan.eviction.impl.PassivationManager;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.interceptors.AsyncInterceptor;
+import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
+import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
+import org.infinispan.interceptors.impl.CacheWriterInterceptor;
+import org.infinispan.interceptors.impl.InvalidationInterceptor;
+import org.infinispan.jmx.annotations.MBean;
+import org.infinispan.jmx.annotations.ManagedAttribute;
+import org.infinispan.jmx.annotations.MeasurementType;
+import org.infinispan.jmx.annotations.Units;
+import org.infinispan.manager.ClusterExecutor;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.marshall.core.Ids;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.LocalModeAddress;
+import org.infinispan.security.actions.SecurityActions;
+import org.infinispan.stats.ClusterCacheStats;
+import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.function.TriConsumer;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 @MBean(objectName = ClusterCacheStats.OBJECT_NAME, description = "General cluster statistics such as timings, hit/miss ratio, etc. for a cache.")
 @Scope(Scopes.NAMED_CACHE)
@@ -533,7 +534,7 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
    private static <T extends AsyncInterceptor> T getFirstInterceptorWhichExtends(AdvancedCache<?, ?> cache,
                                                                                  Class<T> interceptorClass) {
-      return cache.getAsyncInterceptorChain().findInterceptorExtending(interceptorClass);
+      return cache.getComponentRegistry().getComponent(AsyncInterceptorChain.class).findInterceptorExtending(interceptorClass);
    }
 
    private static class DistributedCacheStatsCallable implements Function<EmbeddedCacheManager, Map<String, Number>> {

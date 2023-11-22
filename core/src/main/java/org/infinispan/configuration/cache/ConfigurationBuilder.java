@@ -20,7 +20,6 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 
 public class ConfigurationBuilder implements ConfigurationChildBuilder {
    private final ClusteringConfigurationBuilder clustering;
-   private final CustomInterceptorsConfigurationBuilder customInterceptors;
    private final EncodingConfigurationBuilder encoding;
    private final ExpirationConfigurationBuilder expiration;
    private final QueryConfigurationBuilder query;
@@ -42,7 +41,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    public ConfigurationBuilder() {
       this.attributes = Configuration.attributeDefinitionSet();
       this.clustering = new ClusteringConfigurationBuilder(this);
-      this.customInterceptors = new CustomInterceptorsConfigurationBuilder(this);
       this.encoding = new EncodingConfigurationBuilder(this);
       this.expiration = new ExpirationConfigurationBuilder(this);
       this.query = new QueryConfigurationBuilder(this);
@@ -72,15 +70,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    @Override
    public ClusteringConfigurationBuilder clustering() {
       return clustering;
-   }
-
-   /**
-    * @deprecated Since 10.0, custom interceptors support will be removed and only modules will be able to define interceptors
-    */
-   @Deprecated
-   @Override
-   public CustomInterceptorsConfigurationBuilder customInterceptors() {
-      return customInterceptors;
    }
 
    @Override
@@ -191,7 +180,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       }
       List<RuntimeException> validationExceptions = new ArrayList<>();
       for (Builder<?> validatable:
-            asList(clustering, customInterceptors, expiration, indexing, encoding,
+            asList(clustering, expiration, indexing, encoding,
                    invocationBatching, statistics, persistence, locking, transaction,
                    unsafe, sites, memory)) {
          try {
@@ -213,7 +202,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    private void validateSimpleCacheConfiguration() {
       if (clustering().cacheMode().isClustered()
             || (transaction.transactionMode() != null && transaction.transactionMode().isTransactional())
-            || !customInterceptors.create().interceptors().isEmpty()
             || !persistence.stores().isEmpty()
             || invocationBatching.isEnabled()
             || indexing.enabled()
@@ -226,7 +214,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    public void validate(GlobalConfiguration globalConfig) {
       List<RuntimeException> validationExceptions = new ArrayList<>();
       for (ConfigurationChildBuilder validatable:
-            asList(clustering, customInterceptors, expiration, indexing,
+            asList(clustering, expiration, indexing,
                    invocationBatching, statistics, persistence, locking, transaction,
                    unsafe, sites, security, memory)) {
          try {
@@ -256,7 +244,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       List<Object> modulesConfig = new LinkedList<>();
       for (Builder<?> module : modules)
          modulesConfig.add(module.create());
-      return new Configuration(template, attributes.protect(), clustering.create(), customInterceptors.create(),
+      return new Configuration(template, attributes.protect(), clustering.create(),
                                expiration.create(), encoding.create(), query.create(), indexing.create(), invocationBatching.create(),
                                statistics.create(), persistence.create(), locking.create(), security.create(),
                                transaction.create(), unsafe.create(), sites.create(), memory.create(), modulesConfig);
@@ -269,7 +257,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    public ConfigurationBuilder read(Configuration template, Combine combine) {
       this.attributes.read(template.attributes(), combine);
       this.clustering.read(template.clustering(), combine);
-      this.customInterceptors.read(template.customInterceptors(), combine);
       this.expiration.read(template.expiration(), combine);
       this.query.read(template.query(), combine);
       this.indexing.read(template.indexing(), combine);
@@ -297,7 +284,6 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    public String toString() {
       return "ConfigurationBuilder{" +
             "clustering=" + clustering +
-            ", customInterceptors=" + customInterceptors +
             ", expiration=" + expiration +
             ", query=" + query +
             ", indexing=" + indexing +

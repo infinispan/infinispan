@@ -1,6 +1,6 @@
 package org.infinispan.manager;
 
-import jakarta.transaction.TransactionManager;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -17,6 +17,8 @@ import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.TransactionManager;
 
 /**
  * @author Manik Surtani
@@ -97,9 +99,9 @@ public class CacheManagerComponentRegistryTest extends AbstractCacheTest {
       Cache overridden = cm.getCache("overridden");
 
       // assert components.
-      AsyncInterceptorChain initialChain = c.getAdvancedCache().getAsyncInterceptorChain();
+      AsyncInterceptorChain initialChain = extractInterceptorChain(c);
       assert !initialChain.containsInterceptorType(BatchingInterceptor.class);
-      AsyncInterceptorChain overriddenChain = overridden.getAdvancedCache().getAsyncInterceptorChain();
+      AsyncInterceptorChain overriddenChain = extractInterceptorChain(overridden);
       assert overriddenChain.containsInterceptorType(BatchingInterceptor.class);
    }
 }

@@ -53,7 +53,6 @@ import org.infinispan.functional.Param.PersistenceMode;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
-import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
@@ -300,16 +299,6 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    }
 
    ////////////////////////////////////////////////////////////////////////////
-
-   /**
-    * @deprecated Since 10.0, will be removed without a replacement
-    */
-   @Deprecated
-   @Override
-   public AsyncInterceptorChain getAsyncInterceptorChain() {
-      return cache.getAsyncInterceptorChain();
-   }
-
    @Override
    public ExpirationManager<K, V> getExpirationManager() {
       return null;  // TODO: Customise this generated block

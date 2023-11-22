@@ -1,5 +1,7 @@
 package org.infinispan.context.impl;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -30,9 +32,9 @@ public class SingleKeyNonTxInvocationContextTest extends MultipleCacheManagersTe
       createCluster(c, 2);
       waitForClusterToForm();
       ci0 = new CheckInterceptor();
-      advancedCache(0).getAsyncInterceptorChain().addInterceptor(ci0, 1);
+      extractInterceptorChain(advancedCache(0)).addInterceptor(ci0, 1);
       ci1 = new CheckInterceptor();
-      advancedCache(1).getAsyncInterceptorChain().addInterceptor(ci1, 1);
+      extractInterceptorChain(advancedCache(1)).addInterceptor(ci1, 1);
    }
 
 

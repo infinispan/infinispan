@@ -12,6 +12,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.DDAsyncInterceptor;
@@ -48,12 +49,10 @@ public class ActivationDuringEvictTest extends SingleCacheManagerTest {
          .persistence()
             .passivation(true)
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)
-         .customInterceptors()
-            .addInterceptor()
-               .interceptor(sdi).after(PassivationCacheLoaderInterceptor.class)
          .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
-
-      return TestCacheManagerFactory.createCacheManager(config);
+      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder().nonClusteredDefault();
+      TestCacheManagerFactory.addInterceptor(global, TestCacheManagerFactory.DEFAULT_CACHE_NAME::equals, sdi, TestCacheManagerFactory.InterceptorPosition.AFTER, PassivationCacheLoaderInterceptor.class);
+      return TestCacheManagerFactory.createCacheManager(global, config);
    }
 
    public void testActivationDuringEvict() throws Exception {

@@ -27,7 +27,6 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.metadata.Metadata;
@@ -54,15 +53,6 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
    protected AbstractDelegatingAdvancedCache(AdvancedCache<K, V> cache) {
       super(cache);
       this.cache = cache;
-   }
-
-   /**
-    * @deprecated Since 10.0, will be removed without a replacement
-    */
-   @Deprecated
-   @Override
-   public AsyncInterceptorChain getAsyncInterceptorChain() {
-      return cache.getAsyncInterceptorChain();
    }
 
    @Override

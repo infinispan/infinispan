@@ -17,6 +17,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -26,6 +27,7 @@ import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
@@ -144,11 +146,12 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
 
       final CountDownLatch applyStateProceedLatch = new CountDownLatch(1);
       final CountDownLatch applyStateStartedLatch = new CountDownLatch(1);
-      builder.customInterceptors().addInterceptor().before(InvocationContextInterceptor.class)
-             .interceptor(new LatchInterceptor(applyStateStartedLatch, applyStateProceedLatch));
+      GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
+      TestCacheManagerFactory.addInterceptor(global, TestCacheManagerFactory.DEFAULT_CACHE_NAME::equals,
+            new LatchInterceptor(applyStateStartedLatch, applyStateProceedLatch), TestCacheManagerFactory.InterceptorPosition.BEFORE, InvocationContextInterceptor.class);
 
       log.info("Adding a new node ..");
-      addClusterEnabledCacheManager(builder);
+      addClusterEnabledCacheManager(global, builder);
       log.info("Added a new node");
 
       DataContainer<Object, Object> dc0 = advancedCache(0).getDataContainer();

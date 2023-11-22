@@ -7,8 +7,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
-import org.infinispan.configuration.cache.CustomInterceptorsConfiguration;
-import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.impl.ComponentRef;
@@ -254,7 +252,6 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       AsyncInterceptor callInterceptor = createInterceptor(new CallInterceptor(), CallInterceptor.class);
       interceptorChain.appendInterceptor(callInterceptor, false);
       log.trace("Finished building default interceptor chain.");
-      buildCustomInterceptors(interceptorChain, configuration.customInterceptors());
       return interceptorChain;
    }
 
@@ -318,38 +315,6 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
                break;
          }
       }
-   }
-
-   private void buildCustomInterceptors(AsyncInterceptorChain interceptorChain, CustomInterceptorsConfiguration customInterceptors) {
-      for (InterceptorConfiguration config : customInterceptors.interceptors()) {
-         if (interceptorChain.containsInterceptorType(config.asyncInterceptor().getClass())) continue;
-
-         AsyncInterceptor customInterceptor = config.asyncInterceptor();
-         SecurityActions.applyProperties(customInterceptor, config.properties());
-         register(customInterceptor.getClass(), customInterceptor);
-         if (config.first())
-            interceptorChain.addInterceptor(customInterceptor, 0);
-         else if (config.last())
-            interceptorChain.addInterceptorBefore(customInterceptor, CallInterceptor.class);
-         else if (config.index() >= 0)
-            interceptorChain.addInterceptor(customInterceptor, config.index());
-         else if (config.after() != null) {
-            boolean added = interceptorChain.addInterceptorAfter(customInterceptor, config.after());
-            if (!added) {
-               throw new CacheConfigurationException("Cannot add after class: " + config.after()
-                                                      + " as no such interceptor exists in the default chain");
-            }
-         } else if (config.before() != null) {
-            boolean added = interceptorChain.addInterceptorBefore(customInterceptor, config.before());
-            if (!added) {
-               throw new CacheConfigurationException("Cannot add before class: " + config.before()
-                                                      + " as no such interceptor exists in the default chain");
-            }
-         } else if (config.position() == InterceptorConfiguration.Position.OTHER_THAN_FIRST_OR_LAST) {
-            interceptorChain.addInterceptor(customInterceptor, 1);
-         }
-      }
-
    }
 
    private boolean hasAsyncStore() {

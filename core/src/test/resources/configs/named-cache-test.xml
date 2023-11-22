@@ -119,18 +119,6 @@
          <memory storage="BINARY" when-full="EXCEPTION" max-size="5000"/>
       </local-cache>
       <replicated-cache name="withouthJmxEnabled" mode="ASYNC" statistics="false"/>
-      <local-cache name="cacheWithCustomInterceptors">
-         <custom-interceptors>
-            <interceptor position="FIRST" class="org.infinispan.interceptors.impl.CallInterceptor" />
-            <interceptor position="LAST" class="org.infinispan.interceptors.impl.CallInterceptor"/>
-            <interceptor index="3" class="org.infinispan.interceptors.impl.CallInterceptor"/>
-            <interceptor before="org.infinispan.interceptors.impl.CallInterceptor" class="org.infinispan.interceptors.impl.CallInterceptor"/>
-            <interceptor after="org.infinispan.interceptors.impl.CallInterceptor" class="org.infinispan.interceptors.impl.CallInterceptor"/>
-            <interceptor position="FIRST" class="org.infinispan.interceptors.FooInterceptor">
-               <property name="foo">bar</property>
-            </interceptor>
-         </custom-interceptors>
-      </local-cache>
       <local-cache name="storeKeyValueBinary">
          <store-as-binary keys="true" values="false"/>
       </local-cache>

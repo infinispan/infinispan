@@ -6,6 +6,7 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOS
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.notifications.Listener.Observation.POST;
 import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.DEFAULT_CACHE_NAME;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -50,6 +51,7 @@ import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.data.Person;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 /**
@@ -130,21 +132,19 @@ public class DataConversionTest extends AbstractInfinispanTest {
 
    @Test
    public void testExtractIndexable() {
-      ConfigurationBuilder cfg = new ConfigurationBuilder();
-
-      cfg.customInterceptors().addInterceptor().after(EntryWrappingInterceptor.class).interceptor(new TestInterceptor(1));
-
+      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder().nonClusteredDefault();
+      TestCacheManagerFactory.addInterceptor(global, DEFAULT_CACHE_NAME::equals, new TestInterceptor(1), TestCacheManagerFactory.InterceptorPosition.AFTER, EntryWrappingInterceptor.class);
+      TestCacheManagerFactory.addInterceptor(global, "offheap"::equals, new TestInterceptor(1), TestCacheManagerFactory.InterceptorPosition.AFTER, EntryWrappingInterceptor.class);
+      TestCacheManagerFactory.addInterceptor(global, "compat"::equals, new TestInterceptor(1), TestCacheManagerFactory.InterceptorPosition.AFTER, EntryWrappingInterceptor.class);
       withCacheManager(new CacheManagerCallable(
-            createCacheManager(TestDataSCI.INSTANCE, cfg)) {
+            createCacheManager(TestDataSCI.INSTANCE, new ConfigurationBuilder())) {
 
          @Override
          public void call() {
             ConfigurationBuilder offHeapConfig = new ConfigurationBuilder();
             offHeapConfig.memory().storage(StorageType.OFF_HEAP);
-            offHeapConfig.customInterceptors().addInterceptor().after(EntryWrappingInterceptor.class).interceptor(new TestInterceptor(1));
 
             ConfigurationBuilder compatConfig = new ConfigurationBuilder();
-            compatConfig.customInterceptors().addInterceptor().after(EntryWrappingInterceptor.class).interceptor(new TestInterceptor(1));
 
             cm.defineConfiguration("offheap", offHeapConfig.build());
             cm.defineConfiguration("compat", compatConfig.build());

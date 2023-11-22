@@ -10,12 +10,6 @@ public interface ConfigurationChildBuilder {
 
    ClusteringConfigurationBuilder clustering();
 
-   /**
-    * @deprecated Since 10.0, custom interceptors support will be removed and only modules will be able to define interceptors
-    */
-   @Deprecated
-   CustomInterceptorsConfigurationBuilder customInterceptors();
-
    EncodingConfigurationBuilder encoding();
 
    ExpirationConfigurationBuilder expiration();

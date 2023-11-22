@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.test.TestingUtil.blockUntilCacheStatusAchieved;
 import static org.infinispan.test.TestingUtil.blockUntilViewReceived;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
 
 import java.net.InetSocketAddress;
@@ -120,7 +121,7 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
    }
 
    protected HitCountInterceptor getHitCountInterceptor(Cache<?, ?> cache) {
-      return cache.getAdvancedCache().getAsyncInterceptorChain().findInterceptorWithClass(HitCountInterceptor.class);
+      return extractInterceptorChain(cache).findInterceptorWithClass(HitCountInterceptor.class);
    }
 
    protected void assertOnlyServerHit(SocketAddress serverAddress) {
@@ -182,7 +183,7 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
 
    private void addHitCountInterceptor(Cache<?, ?> cache) {
       HitCountInterceptor interceptor = new HitCountInterceptor();
-      cache.getAdvancedCache().getAsyncInterceptorChain().addInterceptor(interceptor, 1);
+      extractInterceptorChain(cache).addInterceptor(interceptor, 1);
    }
 
    @AfterClass(alwaysRun = true)

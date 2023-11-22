@@ -41,7 +41,7 @@ public class HotRodConcurrentStartTest extends MultipleCacheManagersTest {
          GlobalConfigurationBuilder globalConfig = GlobalConfigurationBuilder.defaultClusteredBuilder();
          if (i == 0) {
             // Delay the start of the first server's address cache
-            globalConfig.addModule(TestGlobalConfigurationBuilder.class).cacheStartingCallback(cr -> {
+            globalConfig.addModule(TestGlobalConfigurationBuilder.class).addCacheStartingCallback(cr -> {
                if (cr.getCacheName().startsWith(HotRodServerConfiguration.TOPOLOGY_CACHE_NAME_PREFIX)) {
                   log.tracef("Delaying start of cache %s on %s", cr.getCacheName(),
                              cr.getComponent(Transport.class).getAddress());

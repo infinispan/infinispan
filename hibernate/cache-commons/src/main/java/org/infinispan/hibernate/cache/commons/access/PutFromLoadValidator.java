@@ -23,6 +23,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.hibernate.cache.commons.TimeSource;
 import org.infinispan.hibernate.cache.commons.util.InfinispanMessageLogger;
@@ -176,7 +177,7 @@ public class PutFromLoadValidator {
 	 * Besides the call from constructor, this should be called only from tests when mocking the validator.
 	 */
 	public static void addToCache(AdvancedCache cache, PutFromLoadValidator validator) {
-      AsyncInterceptorChain chain = cache.getAsyncInterceptorChain();
+      AsyncInterceptorChain chain = cache.getComponentRegistry().getComponent(AsyncInterceptorChain.class);
       List<AsyncInterceptor> interceptors = chain.getInterceptors();
       log.debugf("Interceptor chain was: ", interceptors);
       int position = 0;
@@ -222,7 +223,7 @@ public class PutFromLoadValidator {
          componentRegistry.getComponent(LockingInterceptor.class).running();
 			chain.replaceInterceptor(lockingInterceptor, NonTransactionalLockingInterceptor.class);
 		}
-		log.debugf("New interceptor chain is: ", cache.getAsyncInterceptorChain());
+		log.debugf("New interceptor chain is: ", cache.getComponentRegistry().getComponent(AsyncInterceptorChain.class));
 
 		if (componentRegistry.getComponent(PutFromLoadValidator.class) == null) {
 			componentRegistry.registerComponent(PutFromLoadValidator.class, validator, false);
@@ -238,8 +239,9 @@ public class PutFromLoadValidator {
 	 * @param cache
 	 */
 	public static PutFromLoadValidator removeFromCache(AdvancedCache cache) {
-      AsyncInterceptorChain chain = cache.getAsyncInterceptorChain();
-      BasicComponentRegistry cr = cache.getComponentRegistry().getComponent(BasicComponentRegistry.class);
+		ComponentRegistry ccr = cache.getComponentRegistry();
+		AsyncInterceptorChain chain = ccr.getComponent(AsyncInterceptorChain.class);
+      BasicComponentRegistry cr = ccr.getComponent(BasicComponentRegistry.class);
 
 		chain.removeInterceptor(TxPutFromLoadInterceptor.class);
 		chain.removeInterceptor(NonTxPutFromLoadInterceptor.class);

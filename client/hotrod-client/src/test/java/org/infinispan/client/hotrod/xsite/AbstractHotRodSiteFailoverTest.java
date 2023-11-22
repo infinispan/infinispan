@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.xsite;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Collection;
@@ -125,7 +126,7 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
       siteServers.forEach((name, servers) ->
          servers.forEach(server -> {
             HitCountInterceptor interceptor = new HitCountInterceptor();
-            server.getCacheManager().getCache(CACHE_NAME).getAdvancedCache().getAsyncInterceptorChain()
+            extractInterceptorChain(server.getCacheManager().getCache(CACHE_NAME))
                   .addInterceptor(interceptor, 1);
          })
       );
@@ -169,6 +170,6 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
    }
 
    protected HitCountInterceptor getHitCountInterceptor(Cache<?, ?> cache) {
-      return cache.getAdvancedCache().getAsyncInterceptorChain().findInterceptorWithClass(HitCountInterceptor.class);
+      return extractInterceptorChain(cache).findInterceptorWithClass(HitCountInterceptor.class);
    }
 }

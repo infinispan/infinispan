@@ -1,5 +1,7 @@
 package org.infinispan.util;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -44,7 +46,7 @@ public class TransactionTrackInterceptor extends BaseCustomAsyncInterceptor {
    }
 
    public static TransactionTrackInterceptor injectInCache(Cache<?, ?> cache) {
-      AsyncInterceptorChain chain = cache.getAdvancedCache().getAsyncInterceptorChain();
+      AsyncInterceptorChain chain = extractInterceptorChain(cache);
       if (chain.containsInterceptorType(TransactionTrackInterceptor.class)) {
          return chain.findInterceptorWithClass(TransactionTrackInterceptor.class);
       }

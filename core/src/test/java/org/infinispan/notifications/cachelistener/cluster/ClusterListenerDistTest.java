@@ -1,5 +1,6 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -44,7 +45,7 @@ public class ClusterListenerDistTest extends AbstractClusterListenerNonTxTest {
 
       CyclicBarrier barrier = new CyclicBarrier(2);
       BlockingInterceptor blockingInterceptor = new BlockingInterceptor<>(barrier, PutKeyValueCommand.class, true, false);
-      cache1.getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(blockingInterceptor, TriangleDistributionInterceptor.class);
+      extractInterceptorChain(cache1).addInterceptorBefore(blockingInterceptor, TriangleDistributionInterceptor.class);
 
       final MagicKey key = new MagicKey(cache1, cache2);
       Future<String> future = fork(() -> cache0.put(key, FIRST_VALUE));

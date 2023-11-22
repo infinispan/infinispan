@@ -1,5 +1,7 @@
 package org.infinispan.statetransfer;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -156,7 +158,7 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
       CompletionStages.join(txCoordinator.prepare(localTx));
 
       // Delay the commit on the remote node. Can't used blockNewTransactions because we don't want a StateTransferInProgressException
-      AsyncInterceptorChain c2ic = c2.getAdvancedCache().getAsyncInterceptorChain();
+      AsyncInterceptorChain c2ic = extractInterceptorChain(c2);
       c2ic.addInterceptorBefore(new DelayCommandInterceptor(), StateTransferInterceptor.class);
 
       // Schedule the remote node to stop on another thread since the main thread will be busy with the commit call

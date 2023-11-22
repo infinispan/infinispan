@@ -2,6 +2,7 @@ package org.infinispan.distribution;
 
 import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
@@ -86,7 +87,7 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
       initAndCheck(m);
 
       CountDownLatch release = new CountDownLatch(1);
-      cache(1).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new DelayingInterceptor(null, release), 0);
+      extractInterceptorChain(cache(1)).addInterceptor(new DelayingInterceptor(null, release), 0);
 
       long requestStart = System.nanoTime();
       assertEquals(m.getName(), cache(0).get(key));
@@ -101,8 +102,8 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
    public void testExceptionFromBothOwners(Method m) {
       initAndCheck(m);
 
-      cache(1).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new FailingInterceptor(), 0);
-      cache(2).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new FailingInterceptor(), 0);
+      extractInterceptorChain(cache(1)).addInterceptor(new FailingInterceptor(), 0);
+      extractInterceptorChain(cache(2)).addInterceptor(new FailingInterceptor(), 0);
 
       expectException(RemoteException.class, CacheException.class, "Injected", () -> cache(0).get(key));
    }
@@ -111,8 +112,8 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
       initAndCheck(m);
 
       CountDownLatch release = new CountDownLatch(1);
-      cache(1).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new FailingInterceptor(), 0);
-      cache(2).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new DelayingInterceptor(null, release), 0);
+      extractInterceptorChain(cache(1)).addInterceptor(new FailingInterceptor(), 0);
+      extractInterceptorChain(cache(2)).addInterceptor(new DelayingInterceptor(null, release), 0);
 
       // It's not enough to test if the exception is TimeoutException as we want the remote get fail immediately
       // upon exception.
@@ -138,9 +139,9 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
       CountDownLatch release = new CountDownLatch(1);
       AtomicInteger thrown = new AtomicInteger();
       AtomicInteger retried = new AtomicInteger();
-      cache(0).getAdvancedCache().getAsyncInterceptorChain().addInterceptorAfter(new CheckOTEInterceptor(thrown, retried), StateTransferInterceptor.class);
-      cache(1).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new DelayingInterceptor(arrival, release), 0);
-      cache(2).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new DelayingInterceptor(arrival, release), 0);
+      extractInterceptorChain(cache(0)).addInterceptorAfter(new CheckOTEInterceptor(thrown, retried), StateTransferInterceptor.class);
+      extractInterceptorChain(cache(1)).addInterceptor(new DelayingInterceptor(arrival, release), 0);
+      extractInterceptorChain(cache(2)).addInterceptor(new DelayingInterceptor(arrival, release), 0);
 
       Future<Object> future = fork(() -> cache(0).get(key));
       assertTrue(arrival.await(10, TimeUnit.SECONDS));
@@ -161,8 +162,8 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
       CountDownLatch arrival = new CountDownLatch(2);
       CountDownLatch release1 = new CountDownLatch(1);
       CountDownLatch release2 = new CountDownLatch(1);
-      cache(1).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new DelayingInterceptor(arrival, release1), 0);
-      cache(2).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new DelayingInterceptor(arrival, release2), 0);
+      extractInterceptorChain(cache(1)).addInterceptor(new DelayingInterceptor(arrival, release1), 0);
+      extractInterceptorChain(cache(2)).addInterceptor(new DelayingInterceptor(arrival, release2), 0);
 
       Future<?> future = fork(() -> {
          assertEquals(cache(0).get(key), m.getName());
@@ -184,8 +185,8 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
       CountDownLatch arrival = new CountDownLatch(2);
       CountDownLatch release1 = new CountDownLatch(1);
       CountDownLatch release2 = new CountDownLatch(1);
-      cache(1).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new DelayingInterceptor(arrival, release1), 0);
-      cache(2).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new DelayingInterceptor(arrival, release2), 0);
+      extractInterceptorChain(cache(1)).addInterceptor(new DelayingInterceptor(arrival, release1), 0);
+      extractInterceptorChain(cache(2)).addInterceptor(new DelayingInterceptor(arrival, release2), 0);
 
       Address address1 = address(1);
       Address address2 = address(2);
@@ -226,8 +227,8 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
 
       CountDownLatch arrival = new CountDownLatch(2);
       CountDownLatch release = new CountDownLatch(1);
-      cache(1).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new DelayingInterceptor(arrival, release), 0);
-      cache(2).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new DelayingInterceptor(arrival, release), 0);
+      extractInterceptorChain(cache(1)).addInterceptor(new DelayingInterceptor(arrival, release), 0);
+      extractInterceptorChain(cache(2)).addInterceptor(new DelayingInterceptor(arrival, release), 0);
 
       Future<?> future = fork(() -> {
          long start = System.nanoTime();

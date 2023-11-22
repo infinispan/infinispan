@@ -2,6 +2,7 @@ package org.infinispan.query.tx;
 
 import static org.infinispan.commons.test.Exceptions.assertException;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
 
@@ -9,9 +10,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
-
-import jakarta.transaction.RollbackException;
-import jakarta.transaction.Transaction;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -31,6 +29,9 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.LockingMode;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Transaction;
 
 @Test(groups = "functional", testName = "query.tx.TransactionIsolationTest")
 @CleanupAfterMethod
@@ -100,7 +101,7 @@ public class TransactionIsolationTest extends MultipleCacheManagersTest {
       Cache<Object, Object> cache0 = cache(0);
       assertEquals(Collections.singletonList(RADIM), getYoungerThan(cache0, 30));
 
-      cache(0).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(new FailPrepare(), 0);
+      extractInterceptorChain(cache(0)).addInterceptor(new FailPrepare(), 0);
 
       tm(0).begin();
       cache(0).put(key, TRISTAN);
@@ -128,7 +129,7 @@ public class TransactionIsolationTest extends MultipleCacheManagersTest {
 
    @AfterMethod
    public void dropFailPrepare() {
-      cache(0).getAdvancedCache().getAsyncInterceptorChain().removeInterceptor(FailPrepare.class);
+      extractInterceptorChain(cache(0)).removeInterceptor(FailPrepare.class);
    }
 
    private List<Object> getYoungerThan(Cache<?, ?> cache, int age) {

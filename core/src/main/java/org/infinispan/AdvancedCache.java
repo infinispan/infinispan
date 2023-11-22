@@ -28,7 +28,6 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
@@ -126,13 +125,6 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     */
    AdvancedCache<K, V> withSubject(Subject subject);
 
-   /**
-    * Allows the modification of the interceptor chain.
-    *
-    * @deprecated Since 10.0, will be removed without a replacement
-    */
-   @Deprecated
-   AsyncInterceptorChain getAsyncInterceptorChain();
 
    /**
     * @return the expiration manager - if one is configured - for this cache instance

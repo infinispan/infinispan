@@ -4,6 +4,7 @@ import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.distribution.Ownership.BACKUP;
 import static org.infinispan.distribution.Ownership.NON_OWNER;
 import static org.infinispan.distribution.Ownership.PRIMARY;
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -17,8 +18,6 @@ import java.util.concurrent.Future;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
-
-import jakarta.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.query.Query;
@@ -40,6 +39,8 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.TransactionManager;
 
 /**
  * @author Navin Surtani
@@ -169,7 +170,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
    private void assertQueryInterceptorPresent(Cache<?, ?> c) {
       QueryInterceptor i = TestingUtil.findInterceptor(c, QueryInterceptor.class);
       assert i != null : "Expected to find a QueryInterceptor, only found " +
-            c.getAdvancedCache().getAsyncInterceptorChain().getInterceptors();
+            extractInterceptorChain(c).getInterceptors();
    }
 
    public void testModified() throws Exception {

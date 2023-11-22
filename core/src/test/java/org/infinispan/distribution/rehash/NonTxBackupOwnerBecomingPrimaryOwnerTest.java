@@ -4,6 +4,7 @@ import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.test.TestingUtil.replaceComponent;
 import static org.infinispan.test.TestingUtil.waitForNoRebalance;
+import static org.infinispan.test.fwk.TestCacheManagerFactory.DEFAULT_CACHE_NAME;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -42,6 +43,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.test.op.TestOperation;
 import org.infinispan.test.op.TestWriteOperation;
@@ -126,17 +128,16 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       ConfigurationBuilder c = getConfigurationBuilder();
       c.clustering().stateTransfer().awaitInitialTransfer(false);
       CountDownLatch stateTransferLatch = new CountDownLatch(1);
-      if (op.getPreviousValue() != null) {
-         c.customInterceptors().addInterceptor()
-               .before(EntryWrappingInterceptor.class)
-               .interceptor(new StateTransferLatchInterceptor(stateTransferLatch));
-      } else {
-         stateTransferLatch.countDown();
-      }
 
       // Add a new cache manager, but don't start it yet
       GlobalConfigurationBuilder globalBuilder = GlobalConfigurationBuilder.defaultClusteredBuilder();
       globalBuilder.serialization().addContextInitializer(DistributionRehashSCI.INSTANCE);
+      if (op.getPreviousValue() != null) {
+         TestCacheManagerFactory.addInterceptor(globalBuilder, DEFAULT_CACHE_NAME::equals, new StateTransferLatchInterceptor(stateTransferLatch), TestCacheManagerFactory.InterceptorPosition.BEFORE, EntryWrappingInterceptor.class);
+      } else {
+         stateTransferLatch.countDown();
+      }
+
       EmbeddedCacheManager cm = createClusteredCacheManager(false, globalBuilder, c, new TransportFlags());
       registerCacheManager(cm);
       addBlockingLocalTopologyManager(manager(2), checkPoint, joinTopologyId, stateReceivedTopologyId);

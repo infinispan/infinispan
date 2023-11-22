@@ -1,5 +1,6 @@
 package org.infinispan.persistence;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL;
 import static org.infinispan.transaction.TransactionMode.TRANSACTIONAL;
 import static org.testng.AssertJUnit.assertEquals;
@@ -12,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.InvocationContext;
@@ -54,7 +56,9 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager();
+      GlobalConfigurationBuilder global = new GlobalConfigurationBuilder().clusteredDefault();
+      TestCacheManagerFactory.addInterceptor(global, name -> name.contains("TX"), new ExceptionTrackerInterceptor(), TestCacheManagerFactory.InterceptorPosition.FIRST, null);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(global, new ConfigurationBuilder());
 
       for (CacheType cacheType : CacheType.values()) {
          ConfigurationBuilder builder = new ConfigurationBuilder();
@@ -64,7 +68,6 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
                .storeName(this.getClass().getName()).async().enable();
          builder.transaction().transactionMode(cacheType.transactionMode).useSynchronization(cacheType.useSynchronization)
                .recovery().enabled(cacheType.useRecovery);
-         builder.customInterceptors().addInterceptor().index(0).interceptor(new ExceptionTrackerInterceptor());
          cm.defineConfiguration(cacheType.cacheName, builder.build());
       }
 
@@ -133,7 +136,7 @@ public class PreloadWithAsyncStoreTest extends SingleCacheManagerTest {
    }
 
    private ExceptionTrackerInterceptor getInterceptor(Cache<Object, Object> cache) {
-      return cache.getAdvancedCache().getAsyncInterceptorChain()
+      return extractInterceptorChain(cache)
             .findInterceptorWithClass(ExceptionTrackerInterceptor.class);
    }
 

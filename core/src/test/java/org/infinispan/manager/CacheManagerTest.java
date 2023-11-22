@@ -45,7 +45,6 @@ import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -367,15 +366,14 @@ public class CacheManagerTest extends AbstractInfinispanTest {
    public void testStartCachesFailed() {
       EmbeddedCacheManager cacheManager = null;
       try {
-         cacheManager = createCacheManager();
+         GlobalConfigurationBuilder global = new GlobalConfigurationBuilder().nonClusteredDefault();
+         TestCacheManagerFactory.addInterceptor(global, "incorrect"::equals, new ExceptionInterceptor(), TestCacheManagerFactory.InterceptorPosition.FIRST, null);
+         cacheManager = createCacheManager(global, null);
          Configuration configuration = new ConfigurationBuilder().build();
          cacheManager.defineConfiguration("correct-cache-1", configuration);
          cacheManager.defineConfiguration("correct-cache-2", configuration);
          cacheManager.defineConfiguration("correct-cache-3", configuration);
-         ConfigurationBuilder incorrectBuilder = new ConfigurationBuilder();
-         incorrectBuilder.customInterceptors().addInterceptor().position(InterceptorConfiguration.Position.FIRST)
-               .interceptor(new ExceptionInterceptor());
-         cacheManager.defineConfiguration("incorrect", incorrectBuilder.build());
+         cacheManager.defineConfiguration("incorrect", configuration);
          cacheManager.startCaches("correct-cache-1", "correct-cache-2", "correct-cache-3", "incorrect");
       } finally {
          if (cacheManager != null) {

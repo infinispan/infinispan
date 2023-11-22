@@ -68,8 +68,6 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.interceptors.AsyncInterceptorChain;
-import org.infinispan.interceptors.EmptyAsyncInterceptorChain;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -1232,15 +1230,6 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public AdvancedCache<K, V> withSubject(Subject subject) {
       return this; // NO-OP
-   }
-
-   /**
-    * @deprecated Since 10.0, will be removed without a replacement
-    */
-   @Deprecated
-   @Override
-   public AsyncInterceptorChain getAsyncInterceptorChain() {
-      return EmptyAsyncInterceptorChain.INSTANCE;
    }
 
    @Override

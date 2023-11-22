@@ -1,5 +1,7 @@
 package org.infinispan.test.concurrent;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+
 import java.util.List;
 
 import org.infinispan.Cache;
@@ -43,9 +45,9 @@ public class InterceptorSequencerAction {
 
    private void initOurInterceptor() {
       if (ourInterceptor == null) {
-         ourInterceptor = SequencerInterceptor.createUniqueInterceptor(cache.getAdvancedCache().getAsyncInterceptorChain());
+         ourInterceptor = SequencerInterceptor.createUniqueInterceptor(extractInterceptorChain(cache));
          ourInterceptor.init(stateSequencer, matcher);
-         cache.getAdvancedCache().getAsyncInterceptorChain().addInterceptorBefore(ourInterceptor, interceptorClass);
+         extractInterceptorChain(cache).addInterceptorBefore(ourInterceptor, interceptorClass);
       }
    }
 

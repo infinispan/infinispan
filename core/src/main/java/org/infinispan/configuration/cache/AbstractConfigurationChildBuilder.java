@@ -27,16 +27,6 @@ abstract class AbstractConfigurationChildBuilder implements ConfigurationChildBu
       return builder.clustering();
    }
 
-   /**
-    * @deprecated Since 10.0, custom interceptors support will be removed and only modules will be able to define interceptors
-    */
-   @Deprecated
-   @Override
-   public CustomInterceptorsConfigurationBuilder customInterceptors() {
-      return builder.customInterceptors();
-   }
-
-   @Override
    public EncodingConfigurationBuilder encoding() {
       return builder.encoding();
    }

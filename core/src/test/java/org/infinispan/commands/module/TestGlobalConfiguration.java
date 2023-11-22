@@ -2,7 +2,9 @@ package org.infinispan.commands.module;
 
 import static org.infinispan.commons.configuration.attributes.IdentityAttributeCopier.identityCopier;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -32,8 +34,9 @@ public class TestGlobalConfiguration {
          AttributeDefinition.<Map<String, Map<String, Object>>>builder("cacheTestComponents", new HashMap<>())
                .initializer(HashMap::new)
                .copier(identityCopier()).build();
-   static final AttributeDefinition<Consumer<ComponentRegistry>> CACHE_STARTING_CALLBACK =
-         AttributeDefinition.<Consumer<ComponentRegistry>>builder("cacheStartingCallback", cr -> {})
+   static final AttributeDefinition<List<Consumer<ComponentRegistry>>> CACHE_STARTING_CALLBACKS =
+         AttributeDefinition.<List<Consumer<ComponentRegistry>>>builder("cacheStartingCallbacks", new ArrayList<>())
+               .initializer(ArrayList::new)
                .copier(identityCopier()).build();
 
    private final AttributeSet attributes;
@@ -44,7 +47,7 @@ public class TestGlobalConfiguration {
 
    static AttributeSet attributeSet() {
       return new AttributeSet(TestGlobalConfiguration.class, GLOBAL_TEST_COMPONENTS, CACHE_TEST_COMPONENTS,
-                              CACHE_STARTING_CALLBACK);
+            CACHE_STARTING_CALLBACKS);
    }
 
    public AttributeSet attributes() {
@@ -85,7 +88,7 @@ public class TestGlobalConfiguration {
       return attributes.hashCode();
    }
 
-   public Consumer<ComponentRegistry> cacheStartCallback() {
-      return attributes.attribute(CACHE_STARTING_CALLBACK).get();
+   public List<Consumer<ComponentRegistry>> cacheStartCallbacks() {
+      return attributes.attribute(CACHE_STARTING_CALLBACKS).get();
    }
 }

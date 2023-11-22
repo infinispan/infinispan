@@ -1,5 +1,7 @@
 package org.infinispan.xsite.backupfailure;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
+
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -28,7 +30,7 @@ public abstract class BaseBackupFailureTest extends AbstractTwoSitesTest {
    protected void createSites() {
       super.createSites();
       failureInterceptor = new FailureInterceptor();
-      backup(LON).getAdvancedCache().getAsyncInterceptorChain().addInterceptor(failureInterceptor, 1);
+      extractInterceptorChain(backup(LON)).addInterceptor(failureInterceptor, 1);
    }
 
    @BeforeMethod

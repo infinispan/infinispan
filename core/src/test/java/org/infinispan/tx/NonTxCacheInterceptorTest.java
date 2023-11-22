@@ -1,5 +1,6 @@
 package org.infinispan.tx;
 
+import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.testng.AssertJUnit.assertFalse;
 
 import org.infinispan.interceptors.AsyncInterceptorChain;
@@ -22,7 +23,7 @@ public class NonTxCacheInterceptorTest extends SingleCacheManagerTest {
    }
 
    public void testNoTxInterceptor() {
-      final AsyncInterceptorChain interceptorChain = cache.getAdvancedCache().getAsyncInterceptorChain();
+      final AsyncInterceptorChain interceptorChain = extractInterceptorChain(cache);
       log.trace(interceptorChain);
       assertFalse(interceptorChain.containsInterceptorType(TxInterceptor.class));
    }

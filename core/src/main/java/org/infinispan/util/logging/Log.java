@@ -1862,8 +1862,8 @@ public interface Log extends BasicLogger {
    CacheConfigurationException invalidationPartitionHandlingNotSuported();
 
    @LogMessage(level = WARN)
-   @Message(value = "The custom interceptors configuration has been deprecated and will be ignored in the future", id = 551)
-   void customInterceptorsDeprecated();
+   @Message(value = "The custom interceptors configuration has been deprecated and are ignored", id = 551)
+   void customInterceptorsIgnored();
 
 //   @LogMessage(level = WARN)
 //   @Message(value = "Module '%s' provides an instance of the deprecated ModuleCommandInitializer. Commands that require initialization should implement the InitializableCommand interface", id = 552)
