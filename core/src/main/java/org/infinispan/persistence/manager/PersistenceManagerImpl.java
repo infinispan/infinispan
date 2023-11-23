@@ -49,6 +49,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.expiration.impl.InternalExpirationManager;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.InterceptorChainFactory;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -497,7 +498,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
             .concatMapCompletable(v -> Completable.using(this::acquireWriteLock, lock ->
                         startManagerAndStores(singletonList(storeConfiguration))
                               .doOnComplete(() -> {
-                                 AsyncInterceptorChain chain = cache.wired().getComponentRegistry().getComponent(AsyncInterceptorChain.class);
+                                 AsyncInterceptorChain chain = ComponentRegistry.componentOf(cache.wired(), AsyncInterceptorChain.class);
                                  interceptorChainFactory.addPersistenceInterceptors(chain, configuration, singletonList(storeConfiguration));
                                  listeners.forEach(l -> l.storeChanged(createStatus()));
                               })
@@ -573,7 +574,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
          listeners.forEach(l -> l.storeChanged(createStatus()));
 
          if (!stillHasAStore) {
-            AsyncInterceptorChain chain = cache.wired().getComponentRegistry().getComponent(AsyncInterceptorChain.class);
+            AsyncInterceptorChain chain = ComponentRegistry.componentOf(cache.wired(), AsyncInterceptorChain.class);
             AsyncInterceptor loaderInterceptor = chain.findInterceptorExtending(CacheLoaderInterceptor.class);
             if (loaderInterceptor == null) {
                PERSISTENCE.persistenceWithoutCacheLoaderInterceptor();

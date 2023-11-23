@@ -1,10 +1,10 @@
 package org.infinispan.tools.store.migrator.marshaller;
 
 import static org.infinispan.commons.util.Util.EMPTY_STRING_ARRAY;
+import static org.infinispan.tools.store.migrator.Element.ALLOW_LIST;
 import static org.infinispan.tools.store.migrator.Element.CLASS;
 import static org.infinispan.tools.store.migrator.Element.CLASSES;
 import static org.infinispan.tools.store.migrator.Element.CONTEXT_INITIALIZERS;
-import static org.infinispan.tools.store.migrator.Element.ALLOW_LIST;
 import static org.infinispan.tools.store.migrator.Element.EXTERNALIZERS;
 import static org.infinispan.tools.store.migrator.Element.MARSHALLER;
 import static org.infinispan.tools.store.migrator.Element.REGEXPS;
@@ -27,6 +27,7 @@ import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.SerializationConfigurationBuilder;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -99,8 +100,7 @@ public class SerializationConfigUtil {
       EmbeddedCacheManager manager = new DefaultCacheManager(globalConfig.build());
       try {
          Cache<Object, Object> cache = manager.createCache(props.cacheName(), new ConfigurationBuilder().build());
-         return cache.getAdvancedCache().getComponentRegistry()
-               .getComponent(PersistenceMarshaller.class, KnownComponentNames.PERSISTENCE_MARSHALLER);
+         return ComponentRegistry.componentOf(cache, PersistenceMarshaller.class, KnownComponentNames.PERSISTENCE_MARSHALLER);
       } finally {
          manager.stop();
       }

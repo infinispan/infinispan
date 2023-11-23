@@ -517,11 +517,6 @@ public class SecureCacheTestDriver {
       cache.putIfAbsent("a", "a", metadata);
    }
 
-   @TestCachePermission(AuthorizationPermission.ADMIN)
-   public void testGetComponentRegistry(SecureCache<String, String> cache) {
-      cache.getComponentRegistry();
-   }
-
    @TestCachePermission(AuthorizationPermission.LISTEN)
    public void testAddListener_Object(SecureCache<String, String> cache) {
       cache.addListener(listener);

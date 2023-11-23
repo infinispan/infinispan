@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.protostream.descriptors.Descriptor;
@@ -20,7 +21,7 @@ import org.infinispan.util.function.SerializableFunction;
  */
 final class RemoteQueryEngine extends ObjectRemoteQueryEngine {
 
-   private static final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider = c -> c.getComponentRegistry().getComponent(RemoteQueryManager.class).getQueryEngine(c);
+   private static final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider = c -> ComponentRegistry.componentOf(c, RemoteQueryManager.class).getQueryEngine(c);
 
    RemoteQueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed) {
       super(isIndexed ? cache.withStorageMediaType().withWrapping(ByteArrayWrapper.class, ProtobufWrapper.class) : cache.withStorageMediaType(), isIndexed, ProtobufMatcher.class);

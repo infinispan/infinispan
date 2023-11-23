@@ -2,6 +2,7 @@ package org.infinispan.conflict;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.conflict.impl.InternalConflictManager;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 
@@ -20,8 +21,6 @@ final public class ConflictManagerFactory {
          authzManager.checkPermission(AuthorizationPermission.ALL_WRITE);
       }
 
-      return cache
-            .getComponentRegistry()
-            .getComponent(InternalConflictManager.class);
+      return ComponentRegistry.componentOf(cache, InternalConflictManager.class);
    }
 }

@@ -335,7 +335,7 @@ public class DataConversionTest extends AbstractInfinispanTest {
 
          @Override
          public void call() throws Exception {
-            ComponentRegistry registry = cm.getCache().getAdvancedCache().getComponentRegistry();
+            ComponentRegistry registry = ComponentRegistry.of(cm.getCache());
             testWith(DataConversion.DEFAULT_KEY, registry);
             testWith(DataConversion.DEFAULT_VALUE, registry);
             testWith(DataConversion.IDENTITY_KEY, registry);
@@ -344,12 +344,12 @@ public class DataConversionTest extends AbstractInfinispanTest {
             ConfigurationBuilder builder = new ConfigurationBuilder();
             cm.defineConfiguration("compat", builder.build());
             AdvancedCache<?, ?> compat = cm.getCache("compat").getAdvancedCache();
-            ComponentRegistry compatRegistry = compat.getComponentRegistry();
+            ComponentRegistry compatRegistry = ComponentRegistry.of(compat);
             testWith(compat.getKeyDataConversion(), compatRegistry);
             testWith(compat.getValueDataConversion(), compatRegistry);
 
             AdvancedCache<?, ?> wrapped = compat.withEncoding(IdentityEncoder.class).withWrapping(IdentityWrapper.class);
-            ComponentRegistry wrappedRegistry = wrapped.getComponentRegistry();
+            ComponentRegistry wrappedRegistry = ComponentRegistry.of(wrapped);
             testWith(wrapped.getKeyDataConversion(), wrappedRegistry);
             testWith(wrapped.getValueDataConversion(), wrappedRegistry);
          }

@@ -14,6 +14,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.objectfilter.Matcher;
@@ -37,7 +38,7 @@ public final class IckleContinuousQueryProtobufCacheEventFilterConverter extends
 
    @Override
    protected void injectDependencies(Cache<?, ?> cache) {
-      remoteQueryManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RemoteQueryManager.class);
+      remoteQueryManager = ComponentRegistry.componentOf(cache, RemoteQueryManager.class);
       matcherImplClass = remoteQueryManager.getMatcherClass(APPLICATION_PROTOSTREAM);
       super.injectDependencies(cache);
    }

@@ -20,17 +20,18 @@ import org.hamcrest.Matcher;
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -78,7 +79,7 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
 
 
    private CacheNotifier getMockNotifier(Cache cache) {
-      return cache.getAdvancedCache().getComponentRegistry().getComponent(CacheNotifier.class);
+      return ComponentRegistry.componentOf(cache, CacheNotifier.class);
    }
 
    protected Matcher<FlagAffectedCommand> getFlagMatcher() {

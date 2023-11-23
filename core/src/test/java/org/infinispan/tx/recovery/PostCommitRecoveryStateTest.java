@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.tx.XidImpl;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.ComponentRegistry;
@@ -27,7 +28,6 @@ import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.transaction.xa.recovery.RecoveryManagerImpl;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -54,7 +54,7 @@ public class PostCommitRecoveryStateTest extends MultipleCacheManagersTest {
          .clustering().stateTransfer().fetchInMemoryState(false);
       createCluster(configuration, 2);
       waitForClusterToForm();
-      ComponentRegistry componentRegistry = this.cache(0).getAdvancedCache().getComponentRegistry();
+      ComponentRegistry componentRegistry = ComponentRegistry.of(this.cache(0));
       XaTransactionTable txTable =
             (XaTransactionTable) componentRegistry.getComponent(TransactionTable.class);
       TestingUtil.replaceField(
@@ -64,8 +64,8 @@ public class PostCommitRecoveryStateTest extends MultipleCacheManagersTest {
 
    public void testState() throws Exception {
 
-      RecoveryManagerImpl rm1 = (RecoveryManagerImpl) advancedCache(1).getComponentRegistry().getComponent(RecoveryManager.class);
-      TransactionTable tt1 = advancedCache(1).getComponentRegistry().getComponent(TransactionTable.class);
+      RecoveryManagerImpl rm1 = (RecoveryManagerImpl) ComponentRegistry.componentOf(advancedCache(1), RecoveryManager.class);
+      TransactionTable tt1 = ComponentRegistry.componentOf(advancedCache(1), TransactionTable.class);
       assertEquals(rm1.getInDoubtTransactionsMap().size(), 0);
       assertEquals(tt1.getRemoteTxCount(), 0);
 

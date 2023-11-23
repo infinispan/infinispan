@@ -47,7 +47,7 @@ public class OutboundRpcSequencerAction {
 
    private void replaceRpcManager() {
       if (ourRpcManager == null) {
-         ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
+         ComponentRegistry componentRegistry =  ComponentRegistry.of(cache);
          RpcManager rpcManager = componentRegistry.getComponent(RpcManager.class);
          ourRpcManager = new SequencerRpcManager(rpcManager, stateSequencer, matcher);
          TestingUtil.replaceComponent(cache, RpcManager.class, ourRpcManager, true);

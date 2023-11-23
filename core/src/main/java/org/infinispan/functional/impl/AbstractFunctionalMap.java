@@ -15,6 +15,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.encoding.DataConversion;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.util.concurrent.BlockingManager;
@@ -56,7 +57,7 @@ abstract class AbstractFunctionalMap<K, V> implements FunctionalMap<K, V> {
       this.params = params;
       this.keyDataConversion = fmap.cache.getKeyDataConversion();
       this.valueDataConversion = fmap.cache.getValueDataConversion();
-      this.blockingManager = fmap.cache.getComponentRegistry().getComponent(BlockingManager.class);
+      this.blockingManager = ComponentRegistry.componentOf(fmap.cache, BlockingManager.class);
    }
 
    @Override

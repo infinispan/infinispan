@@ -1,9 +1,28 @@
 package org.infinispan.multimap.impl;
 
+import static java.util.Objects.requireNonNull;
+import static org.infinispan.multimap.impl.function.sortedset.SortedSetAggregateFunction.AggregateType.INTER;
+import static org.infinispan.multimap.impl.function.sortedset.SortedSetAggregateFunction.AggregateType.UNION;
+import static org.infinispan.multimap.impl.function.sortedset.SortedSetOperationType.INDEX;
+import static org.infinispan.multimap.impl.function.sortedset.SortedSetOperationType.LEX;
+import static org.infinispan.multimap.impl.function.sortedset.SortedSetOperationType.OTHER;
+import static org.infinispan.multimap.impl.function.sortedset.SortedSetOperationType.SCORE;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
@@ -19,24 +38,6 @@ import org.infinispan.multimap.impl.function.sortedset.SortedSetOperationType;
 import org.infinispan.multimap.impl.function.sortedset.SortedSetRandomFunction;
 import org.infinispan.multimap.impl.function.sortedset.SubsetFunction;
 import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.stream.Collectors;
-
-import static java.util.Objects.requireNonNull;
-import static org.infinispan.multimap.impl.function.sortedset.SortedSetAggregateFunction.AggregateType.INTER;
-import static org.infinispan.multimap.impl.function.sortedset.SortedSetAggregateFunction.AggregateType.UNION;
-import static org.infinispan.multimap.impl.function.sortedset.SortedSetOperationType.INDEX;
-import static org.infinispan.multimap.impl.function.sortedset.SortedSetOperationType.LEX;
-import static org.infinispan.multimap.impl.function.sortedset.SortedSetOperationType.OTHER;
-import static org.infinispan.multimap.impl.function.sortedset.SortedSetOperationType.SCORE;
 
 /**
  * Multimap with Sorted Map Implementation methods
@@ -61,7 +62,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
       this.cache = cache.getAdvancedCache();
       FunctionalMapImpl<K, SortedSetBucket<V>> functionalMap = FunctionalMapImpl.create(this.cache);
       this.readWriteMap = ReadWriteMapImpl.create(functionalMap);
-      this.entryFactory = this.cache.getComponentRegistry().getInternalEntryFactory().running();
+      this.entryFactory = ComponentRegistry.of(cache).getInternalEntryFactory().running();
    }
 
    /**

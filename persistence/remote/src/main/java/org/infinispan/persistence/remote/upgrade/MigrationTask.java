@@ -86,7 +86,7 @@ public class MigrationTask implements Function<EmbeddedCacheManager, Integer> {
       AdvancedCache<Object, Object> advancedCache = embeddedCacheManager.getCache(cacheName).getAdvancedCache();
       Cache cache = advancedCache.withStorageMediaType();
       try {
-         ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
+         ComponentRegistry cr =  ComponentRegistry.of(cache);
          invocationHelper = cr.getComponent(InvocationHelper.class);
          commandsFactory = cr.getCommandsFactory();
          keyPartitioner = cr.getComponent(KeyPartitioner.class);

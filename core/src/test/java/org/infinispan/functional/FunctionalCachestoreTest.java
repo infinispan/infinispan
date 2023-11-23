@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.test.TestingUtil;
@@ -124,7 +125,7 @@ public class FunctionalCachestoreTest extends AbstractFunctionalOpTest {
       caches(DIST).forEach(cache -> cache.evict(key));
       caches(DIST).forEach(cache -> assertFalse(cache.getAdvancedCache().getDataContainer().containsKey(key), getAddress(cache).toString()));
       owners.forEach(cache -> {
-         Set<DummyInMemoryStore> stores = cache.getAdvancedCache().getComponentRegistry().getComponent(PersistenceManager.class).getStores(DummyInMemoryStore.class);
+         Set<DummyInMemoryStore> stores = ComponentRegistry.componentOf(cache, PersistenceManager.class).getStores(DummyInMemoryStore.class);
          DummyInMemoryStore store = stores.iterator().next();
          assertTrue(store.contains(key), getAddress(cache).toString());
       });

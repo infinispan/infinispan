@@ -12,6 +12,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.container.impl.InternalEntryFactory;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
@@ -38,7 +39,7 @@ public class EmbeddedSetCache<K, V> {
       this.cache = cache.getAdvancedCache();
       FunctionalMapImpl<K, SetBucket<V>> functionalMap = FunctionalMapImpl.create(this.cache);
       this.readWriteMap = ReadWriteMapImpl.create(functionalMap);
-      this.entryFactory = this.cache.getComponentRegistry().getInternalEntryFactory().running();
+      this.entryFactory = ComponentRegistry.of(this.cache).getInternalEntryFactory().running();
    }
 
    /**

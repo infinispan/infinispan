@@ -31,8 +31,7 @@ public class CheckRemoteStoreTask implements Function<EmbeddedCacheManager, Bool
    @Override
    @SuppressWarnings("rawtypes")
    public Boolean apply(EmbeddedCacheManager embeddedCacheManager) {
-      ComponentRegistry cr = embeddedCacheManager.getCache(cacheName).getAdvancedCache().getComponentRegistry();
-      PersistenceManager persistenceManager = cr.getComponent(PersistenceManager.class);
+      PersistenceManager persistenceManager = ComponentRegistry.componentOf(embeddedCacheManager.getCache(cacheName), PersistenceManager.class);
       try {
          List<RemoteStore> stores = new ArrayList<>(persistenceManager.getStores(RemoteStore.class));
          return stores.size() == 1;

@@ -24,6 +24,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.versioning.irac.DefaultIracTombstoneManager;
 import org.infinispan.container.versioning.irac.IracTombstoneManager;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
@@ -436,19 +437,15 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
    }
 
    protected  TransactionTable txTable(Cache cache) {
-      return cache.getAdvancedCache().getComponentRegistry().getComponent(TransactionTable.class);
+      return ComponentRegistry.componentOf(cache, TransactionTable.class);
    }
 
    protected DefaultTakeOfflineManager takeOfflineManager(String site, String cacheName, int index) {
-      return (DefaultTakeOfflineManager) cache(site, cacheName, index).getAdvancedCache()
-            .getComponentRegistry()
-            .getComponent(TakeOfflineManager.class);
+      return (DefaultTakeOfflineManager) ComponentRegistry.componentOf(cache(site, cacheName, index), TakeOfflineManager.class);
    }
 
    protected DefaultTakeOfflineManager takeOfflineManager(String site, int index) {
-      return (DefaultTakeOfflineManager) cache(site, index).getAdvancedCache()
-            .getComponentRegistry()
-            .getComponent(TakeOfflineManager.class);
+      return (DefaultTakeOfflineManager) ComponentRegistry.componentOf(cache(site, index), TakeOfflineManager.class);
    }
 
    protected DefaultIracManager iracManager(String site, String cacheName, int index) {

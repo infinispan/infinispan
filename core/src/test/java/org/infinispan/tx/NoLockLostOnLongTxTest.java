@@ -10,16 +10,16 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.CheckTransactionRpcCommand;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
@@ -33,9 +33,10 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.commons.time.ControlledTimeService;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.TransactionManager;
 
 /**
  * Tests if long running transactions from members which are alive, are not rolled-back by mistake.
@@ -70,8 +71,8 @@ public class NoLockLostOnLongTxTest extends MultipleCacheManagersTest {
 
       AdvancedCache<MagicKey, String> cache = this.<MagicKey, String>cache(0, cacheName).getAdvancedCache();
       AdvancedCache<MagicKey, String> owner = this.<MagicKey, String>cache(1, cacheName).getAdvancedCache();
-      TransactionTable ownerTxTable = owner.getComponentRegistry().getTransactionTable();
-      TransactionTable cacheTxTable = cache.getComponentRegistry().getTransactionTable();
+      TransactionTable ownerTxTable = ComponentRegistry.of(owner).getTransactionTable();
+      TransactionTable cacheTxTable = ComponentRegistry.of(cache).getTransactionTable();
       Method cleanupMethod = extractCleanupMethod();
 
       final MagicKey key = new MagicKey("key", owner);
@@ -112,14 +113,14 @@ public class NoLockLostOnLongTxTest extends MultipleCacheManagersTest {
       Cache<String, String> cache0 = cache(0);
       Cache<String, String> cache1 = cache(1);
 
-      CommandsFactory factory = cache0.getAdvancedCache().getComponentRegistry().getCommandsFactory();
+      CommandsFactory factory = ComponentRegistry.of(cache0).getCommandsFactory();
 
       RpcManager rpcManager = cache0.getAdvancedCache().getRpcManager();
       RpcOptions rpcOptions = rpcManager.getSyncRpcOptions();
       ResponseCollector<Collection<GlobalTransaction>> collector = CheckTransactionRpcCommand.responseCollector();
 
       Address remoteAddress = cache1.getAdvancedCache().getRpcManager().getAddress();
-      TransactionTable transactionTable = cache1.getAdvancedCache().getComponentRegistry().getTransactionTable();
+      TransactionTable transactionTable = ComponentRegistry.of(cache1).getTransactionTable();
 
       CheckTransactionRpcCommand rpcCommand = factory.buildCheckTransactionRpcCommand(Collections.emptyList());
       Collection<GlobalTransaction> result = rpcManager.invokeCommand(remoteAddress, rpcCommand, collector, rpcOptions)

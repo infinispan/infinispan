@@ -38,6 +38,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
@@ -215,7 +216,7 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
                //from node B, i.e, it is forwarded. it needs to wait until the topology changes
                try {
                   //noinspection deprecation
-                  cache.getAdvancedCache().getComponentRegistry().getStateTransferLock().waitForTopology(currentTopologyId + 2,
+                  ComponentRegistry.of(cache).getStateTransferLock().waitForTopology(currentTopologyId + 2,
                                                                                                          10, TimeUnit.SECONDS);
                } catch (InterruptedException e) {
                   Thread.currentThread().interrupt();
@@ -283,7 +284,7 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
          public void before(InvocationContext context, VisitableCommand command, Cache<?, ?> cache) {
             try {
                //noinspection deprecation
-               cache.getAdvancedCache().getComponentRegistry().getStateTransferLock().waitForTopology(currentTopology + 1, 10, TimeUnit.SECONDS);
+               ComponentRegistry.of(cache).getStateTransferLock().waitForTopology(currentTopology + 1, 10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                Thread.currentThread().interrupt();
             } catch (TimeoutException e) {
@@ -311,7 +312,7 @@ public class WriteSkewDuringStateTransferTest extends MultipleCacheManagersTest 
          public void before(InvocationContext context, VisitableCommand command, Cache<?, ?> cache) {
             try {
                //noinspection deprecation
-               cache.getAdvancedCache().getComponentRegistry().getStateTransferLock().waitForTopology(currentTopology + 2,
+               ComponentRegistry.of(cache).getStateTransferLock().waitForTopology(currentTopology + 2,
                                                                                                       10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                Thread.currentThread().interrupt();

@@ -89,7 +89,7 @@ public class IckleContinuousQueryCacheEventFilterConverter<K, V, C> extends Abst
    @Inject
    protected void injectDependencies(Cache<?, ?> cache) {
       cacheName = cache.getName();
-      ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
+      ComponentRegistry componentRegistry =  ComponentRegistry.of(cache);
       queryCache = componentRegistry.getComponent(QueryCache.class);
       matcher = componentRegistry.getComponent(matcherImplClass);
       if (matcher == null) {

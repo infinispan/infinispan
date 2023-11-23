@@ -11,6 +11,7 @@ import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.impl.ImmutableContext;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.Traversable;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -33,7 +34,7 @@ public class SimpleReadOnlyMapImpl<K, V> extends ReadOnlyMapImpl<K, V> implement
 
    SimpleReadOnlyMapImpl(Params params, FunctionalMapImpl<K, V> functionalMap) {
       super(params, functionalMap);
-      this.notifier = functionalMap.cache.getComponentRegistry().getComponent(CacheNotifier.class);
+      this.notifier = ComponentRegistry.componentOf(functionalMap. cache, CacheNotifier.class);
    }
 
    @Override

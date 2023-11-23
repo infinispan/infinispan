@@ -42,6 +42,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
@@ -557,7 +558,7 @@ class Encoder2x implements VersionedEncoder {
    private CacheTopology getCounterCacheTopology(EmbeddedCacheManager cacheManager) {
       AdvancedCache<?, ?> cache = cacheManager.getCache(CounterModuleLifecycle.COUNTER_CACHE_NAME).getAdvancedCache();
       return cache.getCacheConfiguration().clustering().cacheMode().isClustered() ?
-            cache.getComponentRegistry().getDistributionManager().getCacheTopology() :
+            ComponentRegistry.of(cache).getDistributionManager().getCacheTopology() :
             null; //local cache
    }
 

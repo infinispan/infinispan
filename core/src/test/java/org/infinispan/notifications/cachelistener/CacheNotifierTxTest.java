@@ -1,11 +1,11 @@
 package org.infinispan.notifications.cachelistener;
 
-import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doReturn;
@@ -16,27 +16,28 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.TransactionManager;
 
 @Test(groups = "functional", testName = "notifications.cachelistener.CacheNotifierTxTest")
 public class CacheNotifierTxTest extends AbstractInfinispanTest {
@@ -72,7 +73,7 @@ public class CacheNotifierTxTest extends AbstractInfinispanTest {
    }
 
    private CacheNotifier getMockNotifier(Cache cache) {
-      return cache.getAdvancedCache().getComponentRegistry().getComponent(CacheNotifier.class);
+      return ComponentRegistry.componentOf(cache, CacheNotifier.class);
    }
 
    private void initCacheData(Object key, Object value) {

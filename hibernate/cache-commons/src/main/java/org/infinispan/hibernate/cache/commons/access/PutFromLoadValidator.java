@@ -177,7 +177,7 @@ public class PutFromLoadValidator {
 	 * Besides the call from constructor, this should be called only from tests when mocking the validator.
 	 */
 	public static void addToCache(AdvancedCache cache, PutFromLoadValidator validator) {
-      AsyncInterceptorChain chain = cache.getComponentRegistry().getComponent(AsyncInterceptorChain.class);
+      AsyncInterceptorChain chain = ComponentRegistry.componentOf(cache, AsyncInterceptorChain.class);
       List<AsyncInterceptor> interceptors = chain.getInterceptors();
       log.debugf("Interceptor chain was: ", interceptors);
       int position = 0;
@@ -190,8 +190,7 @@ public class PutFromLoadValidator {
 			position++;
 		}
 		boolean transactional = cache.getCacheConfiguration().transaction().transactionMode().isTransactional();
-      BasicComponentRegistry componentRegistry =
-         cache.getComponentRegistry().getComponent(BasicComponentRegistry.class);
+      BasicComponentRegistry componentRegistry = ComponentRegistry.componentOf(cache, BasicComponentRegistry.class);
       if (transactional) {
 			TxInvalidationInterceptor txInvalidationInterceptor = new TxInvalidationInterceptor();
 			// We have to use replaceComponent because tests call addToCache more than once
@@ -223,7 +222,7 @@ public class PutFromLoadValidator {
          componentRegistry.getComponent(LockingInterceptor.class).running();
 			chain.replaceInterceptor(lockingInterceptor, NonTransactionalLockingInterceptor.class);
 		}
-		log.debugf("New interceptor chain is: ", cache.getComponentRegistry().getComponent(AsyncInterceptorChain.class));
+		log.debugf("New interceptor chain is: ",  ComponentRegistry.componentOf(cache, AsyncInterceptorChain.class));
 
 		if (componentRegistry.getComponent(PutFromLoadValidator.class) == null) {
 			componentRegistry.registerComponent(PutFromLoadValidator.class, validator, false);
@@ -239,7 +238,7 @@ public class PutFromLoadValidator {
 	 * @param cache
 	 */
 	public static PutFromLoadValidator removeFromCache(AdvancedCache cache) {
-		ComponentRegistry ccr = cache.getComponentRegistry();
+		ComponentRegistry ccr = ComponentRegistry.of(cache);
 		AsyncInterceptorChain chain = ccr.getComponent(AsyncInterceptorChain.class);
       BasicComponentRegistry cr = ccr.getComponent(BasicComponentRegistry.class);
 

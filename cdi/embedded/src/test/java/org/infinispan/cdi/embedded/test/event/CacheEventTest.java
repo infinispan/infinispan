@@ -5,13 +5,12 @@ import static org.mockito.Mockito.mock;
 
 import java.util.Arrays;
 
-import jakarta.inject.Inject;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.cdi.embedded.test.DefaultTestEmbeddedCacheManagerProducer;
 import org.infinispan.cdi.embedded.test.assertions.ObserverAssertion;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.transport.Address;
@@ -24,6 +23,8 @@ import org.jboss.shrinkwrap.api.Archive;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import jakarta.inject.Inject;
 
 /**
  * Tests if event mechanism works correctly in Weld implementation (with Arquillian).
@@ -72,8 +73,8 @@ public class CacheEventTest extends Arquillian {
 
    @BeforeMethod
    public void beforeMethod() {
-      cache1Notifier =  cache1.getComponentRegistry().getComponent(CacheNotifier.class);
-      cache1ManagerNotifier = cache1.getComponentRegistry().getComponent(CacheManagerNotifier.class);
+      cache1Notifier = ComponentRegistry.componentOf(cache1, CacheNotifier.class);
+      cache1ManagerNotifier = ComponentRegistry.componentOf(cache1, CacheManagerNotifier.class);
    }
 
    public void testFiringStartedEventOnNewlyStartedCache() throws Exception {

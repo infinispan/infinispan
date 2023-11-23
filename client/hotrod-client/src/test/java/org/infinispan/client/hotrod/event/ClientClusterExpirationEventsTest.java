@@ -16,14 +16,15 @@ import org.infinispan.client.hotrod.event.EventLogListener.StaticCacheEventFilte
 import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLogListener;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.commons.time.ControlledTimeService;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "client.hotrod.event.ClientClusterExpirationEventsTest")
@@ -164,7 +165,7 @@ public class ClientClusterExpirationEventsTest extends MultiHotRodServersTest {
       final EventLogListener<Integer> l = new EventLogListener<>(client(0).getCache());
       withClientListener(l, remote -> {
          Cache<Integer, String> cache0 = cache(0);
-         CacheNotifier notifier = cache0.getAdvancedCache().getComponentRegistry().getComponent(CacheNotifier.class);
+         CacheNotifier notifier = ComponentRegistry.componentOf(cache0, CacheNotifier.class);
          byte[] keyBytes = HotRodClientTestingUtil.toBytes(key);
          // Note we are manually forcing an expiration event with a null value and metadata
          notifier.notifyCacheEntryExpired(keyBytes, null, null, null);

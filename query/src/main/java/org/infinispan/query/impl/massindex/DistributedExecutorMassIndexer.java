@@ -10,6 +10,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.annotations.MBean;
@@ -20,7 +22,6 @@ import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.Authorizer;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.LogFactory;
@@ -55,7 +56,7 @@ public class DistributedExecutorMassIndexer implements Indexer {
       this.indexUpdater = new IndexUpdater(cache);
       this.executor = cache.getCacheManager().executor();
       this.lock = MassIndexerLockFactory.buildLock(cache);
-      this.authorizer = cache.getComponentRegistry().getComponent(Authorizer.class);
+      this.authorizer = ComponentRegistry.componentOf(cache, Authorizer.class);
    }
 
    @ManagedOperation(description = "Starts rebuilding the index", displayName = "Rebuild index")

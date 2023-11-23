@@ -110,7 +110,7 @@ import jakarta.transaction.TransactionManager;
  */
 @MBean(objectName = CacheImpl.OBJECT_NAME, description = "Component that represents a simplified cache instance.")
 @Scope(Scopes.NAMED_CACHE)
-public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
+public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache<K, V> {
    private final static Log log = LogFactory.getLog(SimpleCacheImpl.class);
 
    private final static String NULL_KEYS_NOT_SUPPORTED = "Null keys are not supported!";

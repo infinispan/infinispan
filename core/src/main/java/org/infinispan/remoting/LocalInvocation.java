@@ -8,13 +8,13 @@ import java.util.function.Function;
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 
 /**
  * Simulates a remote invocation on the local node. This is needed because the transport does not redirect to itself the
@@ -48,7 +48,7 @@ public class LocalInvocation implements Callable<Response>, Function<Object, Res
    }
 
    public static LocalInvocation newInstanceFromCache(Cache<?, ?> cache, CacheRpcCommand command) {
-      return newInstance(cache.getAdvancedCache().getComponentRegistry(), command);
+      return newInstance(ComponentRegistry.of(cache), command);
    }
 
    public static LocalInvocation newInstance(ComponentRegistry componentRegistry, CacheRpcCommand command) {

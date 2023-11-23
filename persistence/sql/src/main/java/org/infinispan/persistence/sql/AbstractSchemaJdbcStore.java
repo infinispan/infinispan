@@ -54,7 +54,7 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
       DataConversion valueDataConversion = advancedCache.getValueDataConversion()
             .withRequestMediaType(jsonStringType);
 
-      ComponentRegistry componentRegistry = advancedCache.getComponentRegistry();
+      ComponentRegistry componentRegistry = ComponentRegistry.of(advancedCache);
       componentRegistry.wireDependencies(keyDataConversion, true);
       componentRegistry.wireDependencies(valueDataConversion, true);
 

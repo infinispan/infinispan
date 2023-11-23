@@ -35,6 +35,7 @@ import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ExpirationConfiguration;
 import org.infinispan.context.Flag;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.functional.Param;
@@ -100,12 +101,12 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       this.stats = new RICacheStatistics(this.cache);
 
       jmxRegistration = cache.getCacheManager().getCacheManagerConfiguration().jmx().enabled() ?
-            cache.getComponentRegistry().getComponent(CacheJmxRegistration.class) : null;
+            ComponentRegistry.componentOf(cache, CacheJmxRegistration.class) : null;
 
       addConfigurationListeners();
 
-      if (cache.getComponentRegistry().getComponent(ExpiryPolicy.class) == null) {
-         cache.getComponentRegistry().registerComponent(expiryPolicy, ExpiryPolicy.class);
+      if (ComponentRegistry.componentOf(cache, ExpiryPolicy.class) == null) {
+         ComponentRegistry.of(cache).registerComponent(expiryPolicy, ExpiryPolicy.class);
       }
 
       setCacheLoader(configuration);
@@ -131,7 +132,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
    protected void addCacheLoaderAdapter(CacheLoader<K, V> cacheLoader) {
       PersistenceManagerImpl persistenceManager =
-            (PersistenceManagerImpl) cache.getComponentRegistry().getComponent(PersistenceManager.class);
+            (PersistenceManagerImpl) ComponentRegistry.componentOf(cache, PersistenceManager.class);
       JCacheLoaderAdapter<K, V> adapter = getCacheLoaderAdapter(persistenceManager);
       adapter.setDataConversion(cache.getKeyDataConversion(), cache.getValueDataConversion());
       adapter.setCacheLoader(jcacheLoader);
@@ -141,7 +142,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    @Override
    protected void addCacheWriterAdapter(CacheWriter<? super K, ? super V> cacheWriter) {
       PersistenceManagerImpl persistenceManager =
-            (PersistenceManagerImpl) cache.getComponentRegistry().getComponent(PersistenceManager.class);
+            (PersistenceManagerImpl) ComponentRegistry.componentOf(cache, PersistenceManager.class);
       JCacheWriterAdapter<K, V> ispnCacheStore = getCacheWriterAdapter(persistenceManager);
       ispnCacheStore.setDataConversion(cache.getKeyDataConversion(), cache.getValueDataConversion());
       ispnCacheStore.setCacheWriter(jcacheWriter);

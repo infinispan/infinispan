@@ -7,6 +7,7 @@
 package org.infinispan.hibernate.cache.commons.access;
 
 import org.hibernate.cache.CacheException;
+import org.hibernate.cache.spi.access.SoftLock;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.context.InvocationContext;
@@ -14,7 +15,6 @@ import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
-import org.hibernate.cache.spi.access.SoftLock;
 import org.infinispan.hibernate.cache.commons.InfinispanDataRegion;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 
@@ -39,7 +39,7 @@ public class NonTxInvalidationCacheAccessDelegate extends InvalidationCacheAcces
 	public NonTxInvalidationCacheAccessDelegate(InfinispanDataRegion region, PutFromLoadValidator validator) {
 		super(region, validator);
 		isLocal = !region.getCache().getCacheConfiguration().clustering().cacheMode().isClustered();
-		ComponentRegistry cr = region.getCache().getComponentRegistry();
+		ComponentRegistry cr = ComponentRegistry.of(region.getCache());
 		invoker = cr.getComponent(AsyncInterceptorChain.class);
 		commandsFactory = cr.getComponent(CommandsFactory.class);
       keyPartitioner = cr.getComponent(KeyPartitioner.class);

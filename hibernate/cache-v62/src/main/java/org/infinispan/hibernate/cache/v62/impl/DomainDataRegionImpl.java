@@ -33,6 +33,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.expiration.impl.ClusterExpirationManager;
 import org.infinispan.expiration.impl.ExpirationManagerImpl;
 import org.infinispan.expiration.impl.InternalExpirationManager;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.functional.MetaParam;
@@ -201,9 +202,9 @@ public class DomainDataRegionImpl
    }
 
    private void prepareCommon(CacheMode cacheMode) {
-      BasicComponentRegistry registry = cache.getComponentRegistry().getComponent(BasicComponentRegistry.class);
+      BasicComponentRegistry registry = ComponentRegistry.componentOf(cache, BasicComponentRegistry.class);
       if (cacheMode.isReplicated() || cacheMode.isDistributed()) {
-         AsyncInterceptorChain chain = cache.getComponentRegistry().getComponent(AsyncInterceptorChain.class);
+         AsyncInterceptorChain chain = ComponentRegistry.componentOf(cache, AsyncInterceptorChain.class);
 
          LockingInterceptor lockingInterceptor = new LockingInterceptor();
          registry.registerComponent(LockingInterceptor.class, lockingInterceptor, true);

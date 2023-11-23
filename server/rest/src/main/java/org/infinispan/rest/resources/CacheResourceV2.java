@@ -273,7 +273,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       String cacheName = request.variables().get("cacheName");
 
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
-      RollingUpgradeManager upgradeManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+      RollingUpgradeManager upgradeManager = ComponentRegistry.componentOf(cache, RollingUpgradeManager.class);
 
       return CompletableFuture.supplyAsync(() -> {
          if (!upgradeManager.isConnected(MIGRATOR_NAME)) {
@@ -290,7 +290,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       String cacheName = request.variables().get("cacheName");
 
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
-      RollingUpgradeManager upgradeManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+      RollingUpgradeManager upgradeManager = ComponentRegistry.componentOf(cache, RollingUpgradeManager.class);
 
       if (upgradeManager.isConnected(MIGRATOR_NAME)) {
          upgradeManager.disconnectSource(MIGRATOR_NAME);
@@ -327,7 +327,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       }
 
       return CompletableFuture.supplyAsync(() -> {
-         RollingUpgradeManager upgradeManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+         RollingUpgradeManager upgradeManager = ComponentRegistry.componentOf(cache, RollingUpgradeManager.class);
          try {
             RemoteStoreConfiguration storeConfiguration = SerializationUtils.fromJson(read.toString());
             if (!upgradeManager.isConnected(MIGRATOR_NAME)) {
@@ -358,7 +358,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       }
 
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
-      RollingUpgradeManager upgradeManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+      RollingUpgradeManager upgradeManager = ComponentRegistry.componentOf(cache, RollingUpgradeManager.class);
 
       return CompletableFuture.supplyAsync(() -> {
          long hotrod = upgradeManager.synchronizeData(MIGRATOR_NAME, readBatch, threads);

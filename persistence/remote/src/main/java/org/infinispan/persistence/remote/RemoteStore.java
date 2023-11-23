@@ -39,6 +39,7 @@ import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.encoding.impl.StorageConfigurationManager;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
@@ -122,14 +123,12 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
       }
 
       if (configuration.rawValues() && iceFactory == null) {
-         iceFactory = ctx.getCache().getAdvancedCache().getComponentRegistry().getComponent(InternalEntryFactory.class);
+         iceFactory = ComponentRegistry.componentOf(ctx.getCache(), InternalEntryFactory.class);
       }
 
       CompletionStage<RemoteCacheManager> rcmStage;
       if (isManagedRemoteCacheManager()) {
-         BasicComponentRegistry bcr = ctx.getCache().getAdvancedCache().getComponentRegistry()
-               .getGlobalComponentRegistry()
-               .getComponent(BasicComponentRegistry.class);
+         BasicComponentRegistry bcr = ComponentRegistry.componentOf(ctx.getCache(), BasicComponentRegistry.class);
          GlobalRemoteContainers containers = bcr.getComponent(GlobalRemoteContainers.class).running();
          rcmStage = containers.cacheContainer(configuration.remoteCacheContainer(), marshaller);
       } else {
@@ -171,8 +170,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
                if (!segmentsMatch && configuration.segmented()) {
                   throw log.segmentationRequiresEqualSegments(this.segmentCount, numSegments);
                }
-               StorageConfigurationManager storageConfigurationManager = ctx.getCache().getAdvancedCache().getComponentRegistry()
-                     .getComponent(StorageConfigurationManager.class);
+               StorageConfigurationManager storageConfigurationManager =ComponentRegistry.componentOf(ctx.getCache(), StorageConfigurationManager.class);
 
                MediaType localKeyStorageType = storageConfigurationManager.getKeyStorageMediaType();
                // When it isn't raw values we store as a Marshalled entry, so we have object storage for the value

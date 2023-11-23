@@ -715,7 +715,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
                cache = new SecureCacheImpl<>(cache.getAdvancedCache());
             }
          }
-         ComponentRegistry cr = SecurityActions.getUnwrappedCache(cache).getAdvancedCache().getComponentRegistry();
+         ComponentRegistry cr = ComponentRegistry.of(SecurityActions.getUnwrappedCache(cache));
 
          boolean notStartedYet =
                cr.getStatus() != ComponentStatus.RUNNING && cr.getStatus() != ComponentStatus.INITIALIZING;

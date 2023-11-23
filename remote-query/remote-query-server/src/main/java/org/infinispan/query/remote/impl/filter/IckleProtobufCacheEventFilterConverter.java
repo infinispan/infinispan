@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.EventType;
@@ -32,7 +33,7 @@ public final class IckleProtobufCacheEventFilterConverter extends IckleCacheEven
 
    @Inject
    void injectDependencies(Cache cache) {
-      remoteQueryManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RemoteQueryManager.class);
+      remoteQueryManager = ComponentRegistry.componentOf(cache, RemoteQueryManager.class);
    }
 
    @Override

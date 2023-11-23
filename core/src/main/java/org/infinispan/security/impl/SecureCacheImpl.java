@@ -19,6 +19,7 @@ import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
 import org.infinispan.LockedStream;
 import org.infinispan.batch.BatchContainer;
+import org.infinispan.cache.impl.InternalCache;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -52,7 +53,7 @@ import jakarta.transaction.TransactionManager;
  * @author Tristan Tarrant
  * @since 7.0
  */
-public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
+public final class SecureCacheImpl<K, V> implements SecureCache<K, V>, InternalCache<K, V> {
 
    private final AuthorizationManager authzManager;
    private final AdvancedCache<K, V> delegate;
@@ -528,7 +529,7 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    @Override
    public ComponentRegistry getComponentRegistry() {
       authzManager.checkPermission(subject, AuthorizationPermission.ADMIN);
-      return delegate.getComponentRegistry();
+      return ComponentRegistry.of(delegate);
    }
 
    @Override

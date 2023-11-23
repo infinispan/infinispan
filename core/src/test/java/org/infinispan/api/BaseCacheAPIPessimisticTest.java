@@ -9,15 +9,16 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.LockedStream;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.TransactionManager;
 
 /**
  * @author wburns
@@ -70,7 +71,7 @@ public abstract class BaseCacheAPIPessimisticTest extends CacheAPITest {
       assertEquals("value" + key + "-new-other", cache.get(key));
 
       // Make sure the locks were cleaned up properly
-      LockManager lockManager = cache.getAdvancedCache().getComponentRegistry().getComponent(LockManager.class);
+      LockManager lockManager = ComponentRegistry.componentOf(cache, LockManager.class);
       assertEquals(0, lockManager.getNumberOfLocksHeld());
    }
 

@@ -12,6 +12,7 @@ import java.util.Set;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.remote.RemoteStore;
@@ -75,8 +76,7 @@ public class RemoteStoreSharedCacheManagerTest extends AbstractInfinispanTest {
    }
 
    private Set<RemoteStore> extractRemoteStore(Cache<Object, Object> cache) {
-      PersistenceManager pm = cache.getAdvancedCache().getComponentRegistry()
-            .getComponent(PersistenceManager.class);
+      PersistenceManager pm = ComponentRegistry.componentOf(cache, PersistenceManager.class);
       return pm.getStores(RemoteStore.class);
    }
 }

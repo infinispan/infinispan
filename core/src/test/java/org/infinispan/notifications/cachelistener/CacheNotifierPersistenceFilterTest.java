@@ -12,6 +12,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.eviction.impl.PassivationManager;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated;
@@ -113,8 +114,7 @@ public class CacheNotifierPersistenceFilterTest extends MultipleCacheManagersTes
       AllCacheEntryListener listener = new AllCacheEntryListener();
       cache0.addListener(listener, new EventKeyFilter(Event.Type.CACHE_ENTRY_PASSIVATED, key), null);
 
-      PassivationManager passivationManager = cache0.getAdvancedCache().getComponentRegistry().getComponent(
-            PassivationManager.class);
+      PassivationManager passivationManager = ComponentRegistry.componentOf(cache0, PassivationManager.class);
 
       CompletionStages.join(passivationManager.passivateAsync(new ImmortalCacheEntry(key, value)));
 
@@ -138,8 +138,7 @@ public class CacheNotifierPersistenceFilterTest extends MultipleCacheManagersTes
       String value = "value";
       Cache<String, String> cache0 = cache(0, CACHE_NAME);
 
-      PassivationManager passivationManager = cache0.getAdvancedCache().getComponentRegistry().getComponent(
-            PassivationManager.class);
+      PassivationManager passivationManager = ComponentRegistry.componentOf(cache0, PassivationManager.class);
 
       // Passivate 2 entries to resurrect
       CompletionStages.join(passivationManager.passivateAsync(new ImmortalCacheEntry(key, value)));

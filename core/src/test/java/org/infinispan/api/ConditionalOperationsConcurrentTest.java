@@ -21,6 +21,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
@@ -351,7 +352,7 @@ public class ConditionalOperationsConcurrentTest extends MultipleCacheManagersTe
 
       private void checkNoLocks() {
          for (Cache c : caches) {
-            LockManager lockManager = c.getAdvancedCache().getComponentRegistry().getComponent(LockManager.class);
+            LockManager lockManager = ComponentRegistry.componentOf(c, LockManager.class);
             //locks might be released async, so give it some time
             boolean isLocked = true;
             for (int i = 0; i < 30; i++) {

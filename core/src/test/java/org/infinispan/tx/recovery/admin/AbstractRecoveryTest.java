@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -46,7 +47,7 @@ public abstract class AbstractRecoveryTest extends MultipleCacheManagersTest {
    }
 
    protected RecoveryAdminOperations recoveryOps(int cacheIndex) {
-      return advancedCache(cacheIndex).getComponentRegistry().getComponent(RecoveryAdminOperations.class);
+      return ComponentRegistry.componentOf(advancedCache(cacheIndex), RecoveryAdminOperations.class);
    }
 
    protected List<Long> getInternalIds(String inDoubt) {
@@ -66,7 +67,7 @@ public abstract class AbstractRecoveryTest extends MultipleCacheManagersTest {
    }
 
    public RecoveryAwareTransactionTable tt(int index) {
-      return (RecoveryAwareTransactionTable) advancedCache(index).getComponentRegistry().getComponent(TransactionTable.class);
+      return (RecoveryAwareTransactionTable) ComponentRegistry.componentOf(advancedCache(index), TransactionTable.class);
    }
 
    protected void checkProperlyCleanup(final int managerIndex) {

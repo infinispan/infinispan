@@ -2,11 +2,10 @@ package org.infinispan.api;
 
 import static org.testng.AssertJUnit.assertTrue;
 
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -15,6 +14,8 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.TransactionManager;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -40,7 +41,7 @@ public class ForceWriteLockTest extends SingleCacheManagerTest {
       tm.begin();
       advancedCache.withFlags(Flag.FORCE_WRITE_LOCK).get("k");
 
-      TransactionTable txTable = advancedCache.getComponentRegistry().getComponent(TransactionTable.class);
+      TransactionTable txTable = ComponentRegistry.componentOf(advancedCache, TransactionTable.class);
       LocalTransaction tx = txTable.getLocalTransaction(tm.getTransaction());
       assertTrue(tx.ownsLock("k"));
       assertLocked(advancedCache,"k");

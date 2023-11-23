@@ -35,7 +35,7 @@ public class AddSourceRemoteStoreTask implements Function<EmbeddedCacheManager, 
 
    @Override
    public Void apply(EmbeddedCacheManager embeddedCacheManager) {
-      ComponentRegistry cr = embeddedCacheManager.getCache(cacheName).getAdvancedCache().getComponentRegistry();
+      ComponentRegistry cr = ComponentRegistry.of(embeddedCacheManager.getCache(cacheName));
       PersistenceManager persistenceManager = cr.getComponent(PersistenceManager.class);
       try {
          if (persistenceManager.getStores(RemoteStore.class).isEmpty()) {

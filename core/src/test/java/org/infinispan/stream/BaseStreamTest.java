@@ -53,6 +53,7 @@ import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -2290,7 +2291,7 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
       int segments = cache.getCacheConfiguration().clustering().hash().numSegments() / 2;
       AtomicInteger realCount = new AtomicInteger();
 
-      KeyPartitioner keyPartitioner = cache.getAdvancedCache().getComponentRegistry().getComponent(KeyPartitioner.class);
+      KeyPartitioner keyPartitioner = ComponentRegistry.componentOf(cache, KeyPartitioner.class);
       cache.forEach((k, v) -> {
          if (segments >= keyPartitioner.getSegment(k)) {
             realCount.incrementAndGet();

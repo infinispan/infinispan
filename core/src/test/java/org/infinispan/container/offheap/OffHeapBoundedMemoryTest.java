@@ -13,6 +13,7 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.eviction.EvictionType;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -56,8 +57,7 @@ public class OffHeapBoundedMemoryTest extends AbstractInfinispanTest {
       EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(builder);
       AdvancedCache<Object, Object> cache = manager.getCache().getAdvancedCache();
 
-      OffHeapMemoryAllocator allocator = cache.getComponentRegistry().getComponent(
-            OffHeapMemoryAllocator.class);
+      OffHeapMemoryAllocator allocator =  ComponentRegistry.componentOf(cache, OffHeapMemoryAllocator.class);
       BoundedOffHeapDataContainer container = (BoundedOffHeapDataContainer) getContainer(cache);
       assertEquals(allocator.getAllocatedAmount(), container.currentSize);
 
@@ -81,8 +81,7 @@ public class OffHeapBoundedMemoryTest extends AbstractInfinispanTest {
 
       cache.put(1, 2, new EmbeddedMetadata.Builder().version(new NumericVersion(23)).build());
 
-      OffHeapMemoryAllocator allocator = cache.getComponentRegistry().getComponent(
-            OffHeapMemoryAllocator.class);
+      OffHeapMemoryAllocator allocator =  ComponentRegistry.componentOf(cache, OffHeapMemoryAllocator.class);
       BoundedOffHeapDataContainer container = (BoundedOffHeapDataContainer) getContainer(cache);
       assertEquals(allocator.getAllocatedAmount(), container.currentSize);
 
@@ -104,8 +103,7 @@ public class OffHeapBoundedMemoryTest extends AbstractInfinispanTest {
       cache.put("both", "value", 1, TimeUnit.MINUTES, 1, TimeUnit.MINUTES);
       cache.put("maxidle", "value", -1, TimeUnit.MINUTES, 1, TimeUnit.MINUTES);
 
-      OffHeapMemoryAllocator allocator = cache.getComponentRegistry().getComponent(
-            OffHeapMemoryAllocator.class);
+      OffHeapMemoryAllocator allocator =  ComponentRegistry.componentOf(cache, OffHeapMemoryAllocator.class);
       BoundedOffHeapDataContainer container = (BoundedOffHeapDataContainer) getContainer(cache);
       assertEquals(allocator.getAllocatedAmount(), container.currentSize);
 
@@ -134,8 +132,7 @@ public class OffHeapBoundedMemoryTest extends AbstractInfinispanTest {
             .maxIdle(1, TimeUnit.MINUTES)
             .version(new NumericVersion(23)).build());
 
-      OffHeapMemoryAllocator allocator = cache.getComponentRegistry().getComponent(
-            OffHeapMemoryAllocator.class);
+      OffHeapMemoryAllocator allocator =  ComponentRegistry.componentOf(cache, OffHeapMemoryAllocator.class);
       BoundedOffHeapDataContainer container = (BoundedOffHeapDataContainer) getContainer(cache);
       assertEquals(allocator.getAllocatedAmount(), container.currentSize);
 

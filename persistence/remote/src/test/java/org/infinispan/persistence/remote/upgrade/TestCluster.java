@@ -32,6 +32,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
@@ -108,8 +109,7 @@ class TestCluster {
 
 
    RollingUpgradeManager getRollingUpgradeManager(String cacheName) {
-      return embeddedCacheManagers.get(0).getCache(cacheName).getAdvancedCache().getComponentRegistry()
-            .getComponent(RollingUpgradeManager.class);
+      return ComponentRegistry.componentOf(embeddedCacheManagers.get(0).getCache(cacheName), RollingUpgradeManager.class);
    }
 
    int getHotRodPort() {
@@ -133,7 +133,7 @@ class TestCluster {
 
    public void connectSource(String cacheName, StoreConfiguration configuration) {
       EmbeddedCacheManager cacheManager = embeddedCacheManagers.iterator().next();
-      RollingUpgradeManager rum = cacheManager.getCache(cacheName).getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+      RollingUpgradeManager rum = ComponentRegistry.componentOf(cacheManager.getCache(cacheName), RollingUpgradeManager.class);
       try {
          rum.connectSource("hotrod", configuration);
       } catch (Exception e) {
@@ -143,7 +143,7 @@ class TestCluster {
 
    public void disconnectSource(String cacheName) {
       embeddedCacheManagers.forEach(c -> {
-         RollingUpgradeManager rum = c.getCache(cacheName).getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
+         RollingUpgradeManager rum = ComponentRegistry.componentOf(c.getCache(cacheName), RollingUpgradeManager.class);
          try {
             rum.disconnectSource("hotrod");
          } catch (Exception e) {

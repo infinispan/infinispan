@@ -42,7 +42,7 @@ public class TestQueryHelperFactory {
    }
 
    public static SearchMapping extractSearchMapping(Cache<?, ?> cache) {
-      ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
+      ComponentRegistry componentRegistry =  ComponentRegistry.of(cache);
       SearchMapping searchMapping = componentRegistry.getComponent(SearchMapping.class);
       assertNotNull(searchMapping);
       return searchMapping;

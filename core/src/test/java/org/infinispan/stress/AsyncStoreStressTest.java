@@ -38,6 +38,7 @@ import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.container.impl.InternalEntryFactoryImpl;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.SingleSegmentKeyPartitioner;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.impl.TestComponentAccessors;
 import org.infinispan.factories.threads.DefaultThreadFactory;
@@ -186,7 +187,7 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
             new TestComponentAccessors.NamedComponent(KnownComponentNames.BLOCKING_EXECUTOR, blockingExecutor));
       TestingUtil.startComponent(blockingManager);
       Cache cacheMock = Mockito.mock(Cache.class, Mockito.RETURNS_DEEP_STUBS);
-      Mockito.when(cacheMock.getAdvancedCache().getComponentRegistry().getComponent(KeyPartitioner.class))
+      Mockito.when(ComponentRegistry.componentOf(cacheMock, KeyPartitioner.class))
             .thenReturn(SingleSegmentKeyPartitioner.getInstance());
       CompletionStages.join(store.start(new DummyInitializationContext(storeConfiguration, cacheMock, marshaller, new ByteBufferFactoryImpl(),
             new MarshalledEntryFactoryImpl(marshaller), nonBlockingExecutor,
