@@ -27,7 +27,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.expiration.ExpirationManager;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
@@ -129,13 +128,6 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @return the expiration manager - if one is configured - for this cache instance
     */
    ExpirationManager<K, V> getExpirationManager();
-
-   /**
-    * @return the component registry for this cache instance
-    * @deprecated Since 10.0, with no public API replacement
-    */
-   @Deprecated(forRemoval=true)
-   ComponentRegistry getComponentRegistry();
 
    /**
     * Retrieves a reference to the {@link org.infinispan.distribution.DistributionManager} if the cache is configured to

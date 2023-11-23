@@ -38,7 +38,7 @@
 //   }
 //
 //   private void ensureEncoders(AdvancedCache<?, ?> cache) {
-//      EncoderRegistry encoderRegistry = cache.getComponentRegistry().getComponent(EncoderRegistry.class);
+//      EncoderRegistry encoderRegistry =  ComponentRegistry.componentOf(cache, EncoderRegistry);
 //      if (!encoderRegistry.isRegistered(TestKeyEncoder.class)) {
 //         encoderRegistry.registerEncoder(new TestKeyEncoder());
 //         encoderRegistry.registerEncoder(new TestValueEncoder());

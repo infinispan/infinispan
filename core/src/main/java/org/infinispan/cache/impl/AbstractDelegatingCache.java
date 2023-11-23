@@ -17,6 +17,7 @@ import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.format.PropertyFormatter;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
@@ -36,13 +37,18 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
  * @see org.infinispan.cache.impl.AbstractDelegatingAdvancedCache
  */
 @MBean(objectName = CacheImpl.OBJECT_NAME, description = "Component that represents an individual cache instance.")
-public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
+public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V>, InternalCache<K, V> {
 
    protected final Cache<K, V> cache;
 
    public AbstractDelegatingCache(Cache<K, V> cache) {
       this.cache = cache;
       if (cache == null) throw new IllegalArgumentException("Delegate cache cannot be null!");
+   }
+
+   @Override
+   public ComponentRegistry getComponentRegistry() {
+      return ComponentRegistry.of(cache);
    }
 
    @Override

@@ -6,6 +6,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.cache.impl.InternalCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.entries.CacheEntry;
@@ -80,8 +81,8 @@ public class SecurityActions {
       authorizer.checkPermission(permission);
    }
 
-   public static ComponentRegistry getCacheComponentRegistry(AdvancedCache<?, ?> advancedCache) {
-      return doPrivileged(advancedCache::getComponentRegistry);
+   public static ComponentRegistry getCacheComponentRegistry(AdvancedCache<?, ?> cache) {
+      return doPrivileged(() -> ((InternalCache<?, ?>)cache).getComponentRegistry());
    }
 
    public static void undefineConfiguration(EmbeddedCacheManager cacheManager, String name) {

@@ -28,6 +28,7 @@ import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
 import org.infinispan.LockedStream;
 import org.infinispan.batch.BatchContainer;
+import org.infinispan.cache.impl.InternalCache;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -66,7 +67,7 @@ import org.infinispan.util.concurrent.locks.LockManager;
 
 import jakarta.transaction.TransactionManager;
 
-public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> {
+public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V>, InternalCache<K, V> {
 
    final AdvancedCache<K, V> cache;
 
@@ -250,7 +251,7 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
 
    @Override
    public ComponentRegistry getComponentRegistry() {
-      return cache.getComponentRegistry();
+      return ComponentRegistry.of(cache);
    }
 
    @Override

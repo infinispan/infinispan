@@ -17,6 +17,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.expiration.impl.TouchCommand;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCIImpl;
@@ -53,8 +54,7 @@ public class RemoteShutdownDuringOperationTest extends MultipleCacheManagersTest
       EncoderCache<MagicKey, String> c0 = cache(0);
       EncoderCache<MagicKey, String> c1 = cache(1);
 
-      assertThat(c1.getAdvancedCache().getComponentRegistry().getStatus().isTerminated())
-            .isFalse();
+      assertThat(ComponentRegistry.of(c1).getStatus().isTerminated()).isFalse();
 
       MagicKey key = new MagicKey("remote-key", c1);
 
@@ -71,7 +71,7 @@ public class RemoteShutdownDuringOperationTest extends MultipleCacheManagersTest
       // Wait for the remote node to receive the command and shutdown it.
       checkPoint.awaitStrict(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS);
       c1.stop();
-      assertThat(c1.getAdvancedCache().getComponentRegistry().getStatus().isTerminated()).isTrue();
+      assertThat(ComponentRegistry.of(c1).getStatus().isTerminated()).isTrue();
 
       // Proceed handling the command, which will fail with a CacheNotFoundResponse.
       checkPoint.trigger(Mocks.BEFORE_RELEASE, 1);

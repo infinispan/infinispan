@@ -17,7 +17,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
-import jakarta.transaction.TransactionManager;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.InvocationHelper;
@@ -81,6 +80,8 @@ import org.infinispan.xsite.irac.DiscardUpdateException;
 import org.infinispan.xsite.statetransfer.XSiteState;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 
+import jakarta.transaction.TransactionManager;
+
 /**
  * {@link org.infinispan.xsite.BackupReceiver} implementation for clustered caches.
  *
@@ -121,7 +122,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
    public void start() {
       //it would be nice if we could inject bootstrap component
       //this feels kind hacky but saves 3 fields in this class
-      ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
+      ComponentRegistry cr =  ComponentRegistry.of(cache);
       TransactionHandler txHandler = new TransactionHandler(cache, cr.getTransactionTable());
       defaultHandler = new DefaultHandler(txHandler, cr.getComponent(BlockingManager.class));
    }

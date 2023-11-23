@@ -12,6 +12,7 @@ import java.util.function.Function;
 import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.RowMatcher;
@@ -80,7 +81,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
     */
    private SearchMapping searchMapping;
 
-   private static final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider = c -> c.getComponentRegistry().getComponent(QueryEngine.class);
+   private static final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider = c -> ComponentRegistry.componentOf(c, QueryEngine.class);
 
    private final boolean broadcastQuery;
    private final int defaultMaxResults;

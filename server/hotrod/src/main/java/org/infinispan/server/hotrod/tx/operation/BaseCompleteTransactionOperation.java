@@ -19,6 +19,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -210,7 +211,7 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
             .invokeCommandOnAll(command, validOnly(), rpcManager.getSyncRpcOptions())
             .handle(handler())
             .toCompletableFuture();
-      CompletableFuture<Void> local = command.invokeAsync(cache.getComponentRegistry()).handle(handler()).toCompletableFuture();
+      CompletableFuture<Void> local = command.invokeAsync(ComponentRegistry.of(cache)).handle(handler()).toCompletableFuture();
       return CompletableFuture.allOf(remote, local);
    }
 

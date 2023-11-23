@@ -1,30 +1,31 @@
 package org.infinispan.multimap.impl;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.Cache;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.impl.InternalEntryFactory;
-import org.infinispan.functional.FunctionalMap;
-import org.infinispan.functional.impl.FunctionalMapImpl;
-import org.infinispan.functional.impl.ReadWriteMapImpl;
-import org.infinispan.multimap.impl.function.list.ReplaceListFunction;
-import org.infinispan.multimap.impl.function.list.RotateFunction;
-import org.infinispan.multimap.impl.function.list.IndexFunction;
-import org.infinispan.multimap.impl.function.list.IndexOfFunction;
-import org.infinispan.multimap.impl.function.list.InsertFunction;
-import org.infinispan.multimap.impl.function.list.OfferFunction;
-import org.infinispan.multimap.impl.function.list.PollFunction;
-import org.infinispan.multimap.impl.function.list.RemoveCountFunction;
-import org.infinispan.multimap.impl.function.list.SetFunction;
-import org.infinispan.multimap.impl.function.list.SubListFunction;
-import org.infinispan.multimap.impl.function.list.TrimFunction;
+import static java.util.Objects.requireNonNull;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-import static java.util.Objects.requireNonNull;
+import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.impl.InternalEntryFactory;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.functional.FunctionalMap;
+import org.infinispan.functional.impl.FunctionalMapImpl;
+import org.infinispan.functional.impl.ReadWriteMapImpl;
+import org.infinispan.multimap.impl.function.list.IndexFunction;
+import org.infinispan.multimap.impl.function.list.IndexOfFunction;
+import org.infinispan.multimap.impl.function.list.InsertFunction;
+import org.infinispan.multimap.impl.function.list.OfferFunction;
+import org.infinispan.multimap.impl.function.list.PollFunction;
+import org.infinispan.multimap.impl.function.list.RemoveCountFunction;
+import org.infinispan.multimap.impl.function.list.ReplaceListFunction;
+import org.infinispan.multimap.impl.function.list.RotateFunction;
+import org.infinispan.multimap.impl.function.list.SetFunction;
+import org.infinispan.multimap.impl.function.list.SubListFunction;
+import org.infinispan.multimap.impl.function.list.TrimFunction;
 
 /**
  * Multimap with Linked List Implementation methods
@@ -45,7 +46,7 @@ public class EmbeddedMultimapListCache<K, V> {
       this.cache = cache.getAdvancedCache();
       FunctionalMapImpl<K, ListBucket<V>> functionalMap = FunctionalMapImpl.create(this.cache);
       this.readWriteMap = ReadWriteMapImpl.create(functionalMap);
-      this.entryFactory = this.cache.getComponentRegistry().getInternalEntryFactory().running();
+      this.entryFactory = ComponentRegistry.of(this.cache).getInternalEntryFactory().running();
    }
 
    /**

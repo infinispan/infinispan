@@ -10,6 +10,7 @@ import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -38,7 +39,7 @@ public class ClusterListenerRemoveCallable implements Function<EmbeddedCacheMana
    @Override
    public Void apply(EmbeddedCacheManager embeddedCacheManager) {
       Cache<Object, Object> cache = embeddedCacheManager.getCache(cacheName);
-      CacheNotifierImpl<?, ?> notifier = (CacheNotifierImpl<?, ?>) cache.getAdvancedCache().getComponentRegistry().getComponent(CacheNotifier.class);
+      CacheNotifierImpl<?, ?> notifier = (CacheNotifierImpl<?, ?>) ComponentRegistry.componentOf(cache, CacheNotifier.class);
       // Remove the listener from the cache now
       Set<Object> listeners = notifier.getListeners();
       for (Object listener : listeners) {

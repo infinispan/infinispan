@@ -9,6 +9,7 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.persistence.spi.InitializationContext;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
@@ -64,7 +65,7 @@ public class DummyInitializationContext implements InitializationContext {
 
    @Override
    public KeyPartitioner getKeyPartitioner() {
-      return cache.getAdvancedCache().getComponentRegistry().getComponent(KeyPartitioner.class);
+      return ComponentRegistry.componentOf(cache, KeyPartitioner.class);
    }
 
    @Override

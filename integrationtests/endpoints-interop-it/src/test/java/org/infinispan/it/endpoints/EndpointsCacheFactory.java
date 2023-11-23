@@ -30,6 +30,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.protostream.SerializationContextInitializer;
@@ -140,7 +141,7 @@ public class EndpointsCacheFactory<K, V> {
 
       embeddedCache = cacheManager.getCache(cacheName);
 
-      EncoderRegistry encoderRegistry = embeddedCache.getAdvancedCache().getComponentRegistry().getGlobalComponentRegistry().getComponent(EncoderRegistry.class);
+      EncoderRegistry encoderRegistry = ComponentRegistry.of(embeddedCache).getGlobalComponentRegistry().getComponent(EncoderRegistry.class);
 
       if (marshaller != null) {
          boolean isConversionSupported = encoderRegistry.isConversionSupported(marshaller.mediaType(), APPLICATION_OBJECT);

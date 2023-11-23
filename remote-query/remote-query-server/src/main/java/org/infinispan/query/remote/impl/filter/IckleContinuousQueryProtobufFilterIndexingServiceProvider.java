@@ -2,6 +2,7 @@ package org.infinispan.query.remote.impl.filter;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.notifications.cachelistener.filter.FilterIndexingServiceProvider;
 import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
@@ -28,7 +29,7 @@ public final class IckleContinuousQueryProtobufFilterIndexingServiceProvider ext
 
    private RemoteQueryManager getRemoteQueryManager() {
       if (remoteQueryManager == null) {
-         remoteQueryManager = cache.getAdvancedCache().getComponentRegistry().getComponent(RemoteQueryManager.class);
+         remoteQueryManager = ComponentRegistry.componentOf(cache, RemoteQueryManager.class);
       }
       return remoteQueryManager;
    }

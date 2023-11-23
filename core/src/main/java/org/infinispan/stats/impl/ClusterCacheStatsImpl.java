@@ -55,11 +55,11 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.context.Flag;
 import org.infinispan.eviction.impl.ActivationManager;
 import org.infinispan.eviction.impl.PassivationManager;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.AsyncInterceptor;
-import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.CacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.CacheMgmtInterceptor;
 import org.infinispan.interceptors.impl.CacheWriterInterceptor;
@@ -534,7 +534,7 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
 
    private static <T extends AsyncInterceptor> T getFirstInterceptorWhichExtends(AdvancedCache<?, ?> cache,
                                                                                  Class<T> interceptorClass) {
-      return cache.getComponentRegistry().getComponent(AsyncInterceptorChain.class).findInterceptorExtending(interceptorClass);
+      return ComponentRegistry.of(cache).getInterceptorChain().wired().findInterceptorExtending(interceptorClass);
    }
 
    private static class DistributedCacheStatsCallable implements Function<EmbeddedCacheManager, Map<String, Number>> {
@@ -595,7 +595,7 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
          }
 
          //passivations
-         PassivationManager pManager = remoteCache.getComponentRegistry().getComponent(PassivationManager.class);
+         PassivationManager pManager =  ComponentRegistry.componentOf(remoteCache, PassivationManager.class);
          if (pManager != null) {
             map.put(PASSIVATIONS, pManager.getPassivations());
          } else {
@@ -603,7 +603,7 @@ public class ClusterCacheStatsImpl extends AbstractClusterStats implements Clust
          }
 
          //activations
-         ActivationManager aManager = remoteCache.getComponentRegistry().getComponent(ActivationManager.class);
+         ActivationManager aManager =  ComponentRegistry.componentOf(remoteCache, ActivationManager.class);
          if (aManager != null) {
             map.put(ACTIVATIONS, aManager.getActivationCount());
          } else {

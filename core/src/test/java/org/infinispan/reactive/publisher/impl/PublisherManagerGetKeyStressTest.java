@@ -17,6 +17,7 @@ import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.test.fwk.InCacheMode;
 import org.reactivestreams.Publisher;
 import org.testng.annotations.Test;
@@ -29,7 +30,7 @@ public class PublisherManagerGetKeyStressTest extends GetAllCommandStressTest {
 
    @Override
    protected void workerLogic(Cache<Integer, Integer> cache, Set<Integer> threadKeys, int iteration) {
-      ClusterPublisherManager<Integer, Integer> cpm = cache.getAdvancedCache().getComponentRegistry().getComponent(ClusterPublisherManager.class);
+      ClusterPublisherManager<Integer, Integer> cpm = ComponentRegistry.componentOf(cache, ClusterPublisherManager.class);
       CompletionStage<Map<Integer, Integer>> stage = cpm.entryReduction(false, null, threadKeys, null, EnumUtil.EMPTY_BIT_SET, DeliveryGuarantee.EXACTLY_ONCE,
                                                                         MapReducer.getInstance(), FINALZER);
       Map<Integer, Integer> results = stage.toCompletableFuture().join();

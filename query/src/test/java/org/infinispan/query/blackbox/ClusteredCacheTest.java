@@ -28,6 +28,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.Ownership;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
@@ -253,7 +254,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
    private Optional<Cache<Object, Person>> findCache(Ownership ownership, Object key) {
       List<Cache<Object, Person>> caches = caches();
-      ClusteringDependentLogic cdl = cache1.getAdvancedCache().getComponentRegistry().getComponent(ClusteringDependentLogic.class);
+      ClusteringDependentLogic cdl = ComponentRegistry.componentOf(cache1, ClusteringDependentLogic.class);
       DistributionInfo distribution = cdl.getCacheTopology().getDistribution(key);
 
       Predicate<Cache<?, ?>> predicate = null;

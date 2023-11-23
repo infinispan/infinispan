@@ -10,13 +10,12 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
-import jakarta.transaction.SystemException;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
@@ -26,7 +25,9 @@ import org.infinispan.multimap.impl.function.multimap.ContainsFunction;
 import org.infinispan.multimap.impl.function.multimap.GetFunction;
 import org.infinispan.multimap.impl.function.multimap.PutFunction;
 import org.infinispan.multimap.impl.function.multimap.RemoveFunction;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
+
+import jakarta.transaction.SystemException;
+import jakarta.transaction.TransactionManager;
 
 /**
  * Embedded implementation of {@link MultimapCache}
@@ -74,7 +75,7 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
       this.cache = cache.getAdvancedCache();
       FunctionalMapImpl<K, Bucket<V>> functionalMap = FunctionalMapImpl.create(this.cache);
       this.readWriteMap = ReadWriteMapImpl.create(functionalMap);
-      this.entryFactory = this.cache.getComponentRegistry().getInternalEntryFactory().running();
+      this.entryFactory = ComponentRegistry.of(this.cache).getInternalEntryFactory().running();
       this.supportsDuplicates = supportsDuplicates;
    }
 

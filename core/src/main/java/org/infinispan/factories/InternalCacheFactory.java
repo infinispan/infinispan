@@ -364,7 +364,7 @@ public class InternalCacheFactory<K, V> {
 
       private void interceptorStart() {
          // This has to be done after the cache is wired - otherwise we can get a circular dependency
-         interceptor = cache.getComponentRegistry().getComponent(AsyncInterceptorChain.class).findInterceptorWithClass(CacheMgmtInterceptor.class);
+         interceptor =  ComponentRegistry.componentOf(cache, AsyncInterceptorChain.class).findInterceptorWithClass(CacheMgmtInterceptor.class);
       }
 
       @Override

@@ -18,6 +18,7 @@ import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManager.StoreChangeListener;
@@ -57,10 +58,10 @@ public class ClusterLoader implements CacheLoader, LocalOnlyCacheLoader, StoreCh
    public void init(InitializationContext ctx) {
       this.ctx = ctx;
       cache = ctx.getCache().getAdvancedCache();
-      commandsFactory = cache.getComponentRegistry().getCommandsFactory();
+      commandsFactory = ComponentRegistry.of(cache).getCommandsFactory();
       rpcManager = cache.getRpcManager();
-      keyPartitioner = cache.getComponentRegistry().getComponent(KeyPartitioner.class);
-      persistenceManager = cache.getComponentRegistry().getComponent(PersistenceManager.class);
+      keyPartitioner =  ComponentRegistry.componentOf(cache, KeyPartitioner.class);
+      persistenceManager =  ComponentRegistry.componentOf(cache, PersistenceManager.class);
       needsSegments = Configurations.needSegments(cache.getCacheConfiguration());
    }
 

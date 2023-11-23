@@ -229,7 +229,7 @@ public class ComposedSegmentedLoadWriteStore<K, V, T extends AbstractSegmentedSt
 
    @Override
    public void start() {
-      ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
+      ComponentRegistry componentRegistry =  ComponentRegistry.of(cache);
       HashConfiguration hashConfiguration = cache.getCacheConfiguration().clustering().hash();
       keyPartitioner = componentRegistry.getComponent(KeyPartitioner.class);
       stores = new AtomicReferenceArray<>(hashConfiguration.numSegments());

@@ -47,6 +47,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.EvictionType;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.manager.PersistenceManager;
@@ -292,7 +293,7 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
          cache.put("1", wrap("1", "v1"));
          assertCacheEntry(cache, "1", "v1", -1, -1);
          ByRef<Boolean> passivate = new ByRef<>(false);
-         PersistenceManager actual = cache.getAdvancedCache().getComponentRegistry().getComponent(PersistenceManager.class);
+         PersistenceManager actual = ComponentRegistry.componentOf(cache, PersistenceManager.class);
          PersistenceManager stub = new TrackingPersistenceManager(actual, passivate);
          TestingUtil.replaceComponent(cache, PersistenceManager.class, stub, true);
          local.administration().removeCache(cacheName);

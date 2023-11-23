@@ -46,7 +46,7 @@ import jakarta.transaction.TransactionManager;
  * @author Tristan Tarrant
  * @see org.infinispan.cache.impl.AbstractDelegatingCache
  */
-public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCache<K, V> implements AdvancedCache<K, V> {
+public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCache<K, V> implements AdvancedCache<K, V>, InternalCache<K, V> {
 
    protected final AdvancedCache<K, V> cache;
 
@@ -69,7 +69,7 @@ public abstract class AbstractDelegatingAdvancedCache<K, V> extends AbstractDele
 
    @Override
    public ComponentRegistry getComponentRegistry() {
-      return cache.getComponentRegistry();
+      return ComponentRegistry.of(cache);
    }
 
    @Override

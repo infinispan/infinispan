@@ -13,6 +13,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -55,7 +56,7 @@ public class InDoubtWithCommitFailsTest extends AbstractRecoveryTest {
 
    private void test(boolean commit) {
       assert recoveryOps(0).showInDoubtTransactions().isEmpty();
-      TransactionTable tt0 = cache(0).getAdvancedCache().getComponentRegistry().getComponent(TransactionTable.class);
+      TransactionTable tt0 = ComponentRegistry.componentOf(cache(0), TransactionTable.class);
 
       EmbeddedTransaction dummyTransaction = beginAndSuspendTx(cache(0));
       prepareTransaction(dummyTransaction);

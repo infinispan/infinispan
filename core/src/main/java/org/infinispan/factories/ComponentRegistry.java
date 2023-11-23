@@ -3,7 +3,9 @@ package org.infinispan.factories;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.cache.impl.CacheConfigurationMBean;
+import org.infinispan.cache.impl.InternalCache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
@@ -77,11 +79,13 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private final Configuration configuration;
    private final GlobalComponentRegistry globalComponents;
 
-   @Inject CacheManagerNotifier cacheManagerNotifier;
+   @Inject
+   CacheManagerNotifier cacheManagerNotifier;
 
    // All modules must be initialized before the first cache starts
    @SuppressWarnings("unused")
-   @Inject GlobalComponentRegistry.ModuleInitializer moduleInitializer;
+   @Inject
+   GlobalComponentRegistry.ModuleInitializer moduleInitializer;
 
    //Cached fields:
    private ComponentRef<AdvancedCache> cache;
@@ -314,7 +318,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       return cacheName;
    }
 
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval = true)
    public StreamingMarshaller getCacheMarshaller() {
       return internalMarshaller.wired();
    }
@@ -552,6 +556,18 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    public ComponentRef<BackupReceiver> getBackupReceiver() {
       return backupReceiver;
+   }
+
+   public static <K, V> ComponentRegistry of(Cache<K, V> cache) {
+      return ((InternalCache<K, V>) cache).getComponentRegistry();
+   }
+
+   public static <T> T componentOf(Cache<?, ?> cache, Class<T> type) {
+      return of(cache).getComponent(type);
+   }
+
+   public static <T> T componentOf(Cache<?, ?> cache, Class<T> type, String name) {
+      return of(cache).getComponent(type, name);
    }
 
 }

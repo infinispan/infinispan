@@ -11,6 +11,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -60,7 +61,7 @@ public class IterationFilter<K, V, C> extends AbstractKeyValueFilterConverter<K,
    @Inject
    public void injectDependencies(Cache cache, EncoderRegistry encoderRegistry) {
       providedFilter.ifPresent(kvfc -> {
-         cache.getAdvancedCache().getComponentRegistry().wireDependencies(kvfc);
+         ComponentRegistry.of(cache).wireDependencies(kvfc);
          MediaType filterFormat = kvfc.format();
          if (filterFormat != null && !filterFormat.equals(storageMediaType)) {
             applyBefore = encoderRegistry.getTranscoder(filterFormat, storageMediaType);

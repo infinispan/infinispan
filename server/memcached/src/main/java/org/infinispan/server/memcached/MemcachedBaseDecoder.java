@@ -66,7 +66,7 @@ public abstract class MemcachedBaseDecoder extends ByteToMessageDecoder {
       this.subject = subject;
       this.principalName = Security.getSubjectUserPrincipalName(subject);
       this.cache = cache.withSubject(subject);
-      ComponentRegistry registry = cache.getComponentRegistry();
+      ComponentRegistry registry = ComponentRegistry.of(cache);
       VersionGenerator versionGenerator = registry.getComponent(VersionGenerator.class);
       if (versionGenerator == null) {
          versionGenerator = new NumericVersionGenerator();

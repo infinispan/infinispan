@@ -17,7 +17,7 @@ public class MarshalledEntryUtil {
    }
 
    public static <K, V> MarshallableEntry<K, V> createWithVersion(K key, V value, Cache cache) {
-      ComponentRegistry registry = cache.getAdvancedCache().getComponentRegistry();
+      ComponentRegistry registry =  ComponentRegistry.of(cache);
       MarshallableEntryFactory<K, V> entryFactory = registry.getComponent(MarshallableEntryFactory.class);
       VersionGenerator versionGenerator = registry.getVersionGenerator();
       PrivateMetadata metadata = new PrivateMetadata.Builder().entryVersion(versionGenerator.generateNew()).build();
@@ -29,7 +29,7 @@ public class MarshalledEntryUtil {
    }
 
    public static <K,V> MarshallableEntry<K,V> create(K key, V value, Metadata metadata, long created, long lastUsed, Cache cache) {
-      MarshallableEntryFactory entryFactory = cache.getAdvancedCache().getComponentRegistry().getComponent(MarshallableEntryFactory.class);
+      MarshallableEntryFactory entryFactory = ComponentRegistry.componentOf(cache, MarshallableEntryFactory.class);
       return entryFactory.create(key, value, metadata, null, created, lastUsed);
    }
 

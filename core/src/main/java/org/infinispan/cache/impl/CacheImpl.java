@@ -140,7 +140,7 @@ import jakarta.transaction.TransactionManager;
 @Scope(Scopes.NAMED_CACHE)
 @SurvivesRestarts
 @MBean(objectName = CacheImpl.OBJECT_NAME, description = "Component that represents an individual cache instance.")
-public class CacheImpl<K, V> implements AdvancedCache<K, V> {
+public class CacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache<K, V> {
    private static final Log log = LogFactory.getLog(CacheImpl.class);
    public static final String OBJECT_NAME = "Cache";
    private static final long PFER_FLAGS = EnumUtil.bitSetOf(FAIL_SILENTLY, FORCE_ASYNCHRONOUS, ZERO_LOCK_ACQUISITION_TIMEOUT, PUT_FOR_EXTERNAL_READ, IGNORE_RETURN_VALUES);
@@ -198,6 +198,11 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       defaultMetadata = Configurations.newDefaultMetadata(config);
       transactional = config.transaction().transactionMode().isTransactional();
       batchingEnabled = config.invocationBatching().enabled();
+   }
+
+   @Override
+   public ComponentRegistry getComponentRegistry() {
+      return componentRegistry;
    }
 
    private void assertKeyNotNull(Object key) {
@@ -1071,11 +1076,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public ExpirationManager<K, V> getExpirationManager() {
       return expirationManager;
-   }
-
-   @Override
-   public ComponentRegistry getComponentRegistry() {
-      return componentRegistry;
    }
 
    @Override

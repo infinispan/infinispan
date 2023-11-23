@@ -1,11 +1,8 @@
 package org.infinispan.server.hotrod.tx.operation;
 
-import jakarta.transaction.HeuristicMixedException;
-import jakarta.transaction.HeuristicRollbackException;
-import jakarta.transaction.RollbackException;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.tx.XidImpl;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.server.hotrod.tx.table.CacheXid;
 import org.infinispan.server.hotrod.tx.table.GlobalTxTable;
 import org.infinispan.server.hotrod.tx.table.PerCacheTxTable;
@@ -13,6 +10,10 @@ import org.infinispan.server.hotrod.tx.table.functions.SetCompletedTransactionFu
 import org.infinispan.server.hotrod.tx.table.functions.TxFunction;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.util.ByteString;
+
+import jakarta.transaction.HeuristicMixedException;
+import jakarta.transaction.HeuristicRollbackException;
+import jakarta.transaction.RollbackException;
 
 /**
  * Util operations to handle client transactions in Hot Rod server.
@@ -38,9 +39,8 @@ public class Util {
 
    private static void completeLocalTransaction(AdvancedCache<?, ?> cache, XidImpl xid, long timeout, boolean commit)
          throws HeuristicRollbackException, HeuristicMixedException, RollbackException {
-      PerCacheTxTable perCacheTxTable = cache.getComponentRegistry().getComponent(PerCacheTxTable.class);
-      GlobalTxTable globalTxTable = cache.getComponentRegistry().getGlobalComponentRegistry()
-            .getComponent(GlobalTxTable.class);
+      PerCacheTxTable perCacheTxTable =  ComponentRegistry.componentOf(cache, PerCacheTxTable.class);
+      GlobalTxTable globalTxTable = ComponentRegistry.componentOf(cache, GlobalTxTable.class);
       try {
          //local transaction
          EmbeddedTransaction tx = perCacheTxTable.getLocalTx(xid);

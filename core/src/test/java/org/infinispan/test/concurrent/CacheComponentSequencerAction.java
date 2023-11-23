@@ -1,6 +1,7 @@
 package org.infinispan.test.concurrent;
 
 import org.infinispan.Cache;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.test.TestingUtil;
 
 /**
@@ -22,7 +23,7 @@ public class CacheComponentSequencerAction<T> extends GlobalComponentSequencerAc
    @Override
    protected void replaceComponent() {
       if (ourHandler == null) {
-         T component = cache.getAdvancedCache().getComponentRegistry().getComponent(componentClass);
+         T component = ComponentRegistry.componentOf(cache, componentClass);
          if (component == null) {
             throw new IllegalStateException("Attempting to wrap a non-existing component: " + componentClass);
          }

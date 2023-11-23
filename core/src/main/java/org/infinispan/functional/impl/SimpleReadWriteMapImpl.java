@@ -18,6 +18,7 @@ import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.impl.ImmutableContext;
 import org.infinispan.expiration.impl.InternalExpirationManager;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.Traversable;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -41,8 +42,8 @@ public class SimpleReadWriteMapImpl<K, V> extends ReadWriteMapImpl<K, V> impleme
 
    public SimpleReadWriteMapImpl(Params params, FunctionalMapImpl<K, V> functionalMap) {
       super(params, functionalMap);
-      this.expirationManager = functionalMap.cache.getComponentRegistry().getComponent(InternalExpirationManager.class);
-      this.notifier = functionalMap.cache.getComponentRegistry().getComponent(CacheNotifier.class);
+      this.expirationManager = ComponentRegistry.componentOf(functionalMap.cache, InternalExpirationManager.class);
+      this.notifier = ComponentRegistry.componentOf(functionalMap.cache, CacheNotifier.class);
    }
 
    @Override

@@ -6,10 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import jakarta.transaction.HeuristicMixedException;
-import jakarta.transaction.HeuristicRollbackException;
-import jakarta.transaction.RollbackException;
-import jakarta.transaction.SystemException;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 
@@ -49,6 +45,11 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.ByteString;
 
+import jakarta.transaction.HeuristicMixedException;
+import jakarta.transaction.HeuristicRollbackException;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.SystemException;
+
 /**
  * A class that handles the prepare request from the Hot Rod clients.
  *
@@ -74,7 +75,7 @@ public class PrepareCoordinator {
       this.recoverable = recoverable;
       this.transactionTimeout = transactionTimeout;
       this.cache = cache;
-      ComponentRegistry registry = cache.getComponentRegistry();
+      ComponentRegistry registry = ComponentRegistry.of(cache);
       this.transactionTable = registry.getComponent(TransactionTable.class);
       this.perCacheTxTable = registry.getComponent(PerCacheTxTable.class);
       this.globalTxTable = registry.getGlobalComponentRegistry().getComponent(GlobalTxTable.class);
@@ -101,7 +102,7 @@ public class PrepareCoordinator {
     */
    public final void rollbackRemoteTransaction(GlobalTransaction gtx) {
       RpcManager rpcManager = cache.getRpcManager();
-      ComponentRegistry componentRegistry = cache.getComponentRegistry();
+      ComponentRegistry componentRegistry = ComponentRegistry.of(cache);
       CommandsFactory factory = componentRegistry.getCommandsFactory();
       try {
          RollbackCommand rollbackCommand = factory.buildRollbackCommand(gtx);
@@ -211,7 +212,7 @@ public class PrepareCoordinator {
     */
    public int onePhaseCommitRemoteTransaction(GlobalTransaction gtx, List<WriteCommand> modifications) {
       RpcManager rpcManager = cache.getRpcManager();
-      ComponentRegistry componentRegistry = cache.getComponentRegistry();
+      ComponentRegistry componentRegistry = ComponentRegistry.of(cache);
       CommandsFactory factory = componentRegistry.getCommandsFactory();
       try {
          //only pessimistic tx are committed in 1PC and it doesn't use versions.
@@ -314,7 +315,7 @@ public class PrepareCoordinator {
    }
 
    private GlobalTransaction newGlobalTransaction() {
-      TransactionFactory factory = cache.getComponentRegistry().getComponent(TransactionFactory.class);
+      TransactionFactory factory =  ComponentRegistry.componentOf(cache, TransactionFactory.class);
       return factory.newGlobalTransaction(perCacheTxTable.getClientAddress(), false);
    }
 }

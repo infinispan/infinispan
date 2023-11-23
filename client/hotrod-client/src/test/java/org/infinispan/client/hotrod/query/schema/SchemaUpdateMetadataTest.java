@@ -15,6 +15,7 @@ import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.commons.test.annotation.TestForIssue;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
@@ -106,8 +107,7 @@ public class SchemaUpdateMetadataTest extends SingleHotRodServerTest {
    }
 
    private QueryCache getGlobalQueryCache() {
-      return cache.getAdvancedCache().getComponentRegistry().getGlobalComponentRegistry()
-            .getComponent(QueryCache.class);
+      return ComponentRegistry.componentOf(cache, QueryCache.class);
    }
 
    private void updateTheSchemaAndReindex() {
@@ -129,8 +129,7 @@ public class SchemaUpdateMetadataTest extends SingleHotRodServerTest {
    }
 
    private Descriptor descriptor() {
-      ProtobufMatcher matcher = cache.getAdvancedCache().getComponentRegistry()
-            .getComponent(ProtobufMatcher.class);
+      ProtobufMatcher matcher = ComponentRegistry.componentOf(cache, ProtobufMatcher.class);
       assertThat(matcher).isNotNull();
 
       ObjectPropertyHelper<Descriptor> propertyHelper = matcher.getPropertyHelper();

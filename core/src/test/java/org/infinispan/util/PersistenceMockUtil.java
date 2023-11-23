@@ -8,8 +8,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
-import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.commons.test.BlockHoundHelper;
@@ -139,7 +139,7 @@ public class PersistenceMockUtil {
    private static Cache mockCache(String nodeName, Configuration configuration, TimeService timeService,
                                   ClassAllowList allowList, ScheduledExecutorService timeoutScheduledExecutor) {
       String cacheName = "mock-cache";
-      AdvancedCache cache = mock(AdvancedCache.class, RETURNS_DEEP_STUBS);
+      CacheImpl cache = mock(CacheImpl.class, RETURNS_DEEP_STUBS);
 
       GlobalConfiguration gc = new GlobalConfigurationBuilder()
                                   .transport().nodeName(nodeName)
@@ -157,7 +157,7 @@ public class PersistenceMockUtil {
       ComponentRegistry registry = new ComponentRegistry(cacheName, configuration, cache, gcr,
                                                          configuration.getClass().getClassLoader());
 
-      when (cache.getCacheManager().getGlobalComponentRegistry()).thenReturn(gcr);
+      when(cache.getCacheManager().getGlobalComponentRegistry()).thenReturn(gcr);
       when(cache.getClassLoader()).thenReturn(PersistenceMockUtil.class.getClassLoader());
       when(cache.getCacheManager().getCacheManagerConfiguration()).thenReturn(gc);
       when(cache.getCacheManager().getClassAllowList()).thenReturn(allowList);

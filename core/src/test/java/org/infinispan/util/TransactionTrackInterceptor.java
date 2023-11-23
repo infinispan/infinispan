@@ -17,6 +17,7 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.test.TestingUtil;
@@ -51,7 +52,7 @@ public class TransactionTrackInterceptor extends BaseCustomAsyncInterceptor {
          return chain.findInterceptorWithClass(TransactionTrackInterceptor.class);
       }
       TransactionTrackInterceptor interceptor = new TransactionTrackInterceptor();
-      cache.getAdvancedCache().getComponentRegistry().wireDependencies(interceptor);
+      ComponentRegistry.of(cache).wireDependencies(interceptor);
       TestingUtil.startComponent(interceptor);
       chain.addInterceptor(interceptor, 0);
       return interceptor;
@@ -216,7 +217,7 @@ public class TransactionTrackInterceptor extends BaseCustomAsyncInterceptor {
    }
 
    private TransactionTable getTransactionTable() {
-      return cache.getAdvancedCache().getComponentRegistry().getComponent(TransactionTable.class);
+      return ComponentRegistry.componentOf(cache, TransactionTable.class);
    }
 
    private static class ClearGlobalTransaction extends GlobalTransaction {

@@ -76,7 +76,7 @@ public final class FunctionalMapImpl<K, V> implements FunctionalMap<K, V> {
    private FunctionalMapImpl(Params params, AdvancedCache<K, V> cache) {
       this.params = params;
       this.cache = cache;
-      ComponentRegistry componentRegistry = cache.getComponentRegistry();
+      ComponentRegistry componentRegistry = ComponentRegistry.of(cache);
       chain = componentRegistry.getComponent(AsyncInterceptorChain.class);
       invCtxFactory = componentRegistry.getComponent(InvocationContextFactory.class);
       DecoratedCache<K, V> decoratedCache = findDecoratedCache(cache);
