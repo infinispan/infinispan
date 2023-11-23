@@ -58,7 +58,15 @@ public class QueriesJdbcStoreFunctionalTest extends AbstractSQLStoreFunctionalTe
             .deleteAll("DELETE FROM " + tableName)
             .size("SELECT COUNT(*) FROM " + tableName);
       storeBuilder.keyColumns(KEY_COLUMN);
-      if (cacheName.equalsIgnoreCase("testPreloadStoredAsBinary")) {
+      if (cacheName.equalsIgnoreCase("testKeyWithNullFields")) {
+         String upsert = manager.getUpsertStatement(Arrays.asList("street", "city"), Arrays.asList("name", "street", "city", "zip"));
+         storeBuilder.keyColumns("street, city");
+         storeBuilder.queries()
+               .select("SELECT name, street, city, zip FROM " + tableName + " WHERE (street = :street OR :street IS NULL) AND city = :city")
+               .selectAll("SELECT name, street, city, zip FROM " + tableName)
+               .upsert(upsert)
+               .delete("DELETE FROM " + tableName + " WHERE (street = :street OR :street IS NULL) AND city = :city");
+      } else if (cacheName.equalsIgnoreCase("testPreloadStoredAsBinary")) {
          storeBuilder.queries()
                .select("SELECT " + KEY_COLUMN + ", name, STREET, city, ZIP, picture, sex, birthdate, accepted_tos, moneyOwned, moneyOwed, decimalField, realField FROM " + tableName + " WHERE " + KEY_COLUMN + " = :" + KEY_COLUMN)
                .selectAll("SELECT " + KEY_COLUMN + ", name, street, city, zip, picture, sex, birthdate, accepted_tos, moneyOwned, moneyOwed, decimalField, realField FROM " + tableName)

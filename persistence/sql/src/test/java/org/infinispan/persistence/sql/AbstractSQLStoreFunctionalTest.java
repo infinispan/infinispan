@@ -2,6 +2,7 @@ package org.infinispan.persistence.sql;
 
 import static org.infinispan.persistence.jdbc.common.DatabaseType.H2;
 import static org.infinispan.persistence.jdbc.common.DatabaseType.SQLITE;
+import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.fail;
@@ -33,6 +34,7 @@ import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.context.Flag;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.persistence.jdbc.common.DatabaseType;
@@ -197,6 +199,34 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
       manager.rollback();
 
       assertNull(cache.get(key));
+   }
+
+   public void testKeyWithNullFields(Method m) {
+      schemaConsumer = builder ->
+            builder.schema()
+                  .embeddedKey(true)
+                  .keyMessageName("Address")
+                  .messageName("Person")
+                  .packageName("org.infinispan.test.core");
+
+      ConfigurationBuilder cb = getDefaultCacheConfiguration();
+      String cacheName = m.getName();
+      createCacheStoreConfig(cb.persistence(), cacheName, false);
+      TestingUtil.defineConfiguration(cacheManager, cacheName, cb.build());
+
+      Cache<Object, Object> cache = cacheManager.getCache(cacheName);
+      Address key1 = new Address(null, "Newcastle", 1);
+      Address key2 = new Address("", "Newcastle", 2);
+      Person value1 = new Person("Alan", key1);
+      Person value2 = new Person("Bobby", key2);
+      assertNull(cache.get(key1));
+      cache.put(key1, value1);
+      cache.put(key2, value2);
+      assertEquals(value1, cache.get(key1));
+      cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).clear();
+      assertTrue(cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).isEmpty());
+      assertEquals(value1, cache.get(key1));
+      assertEquals(value2, cache.get(key2));
    }
 
    public void testDBHasMoreKeyColumnsWithKeySchema(Method m) {
@@ -441,7 +471,14 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
    protected void createTable(String cacheName, String tableName, ConnectionFactoryConfigurationBuilder<ConnectionFactoryConfiguration> builder) {
       String tableCreation;
       String upperCaseCacheName = cacheName.toUpperCase();
-      if (cacheName.equalsIgnoreCase("testPreloadStoredAsBinary")) {
+      if (cacheName.equalsIgnoreCase("testKeyWithNullFields")) {
+         tableCreation = "CREATE TABLE " + tableName + " (" +
+               "NAME VARCHAR(255) NOT NULL, " +
+               "street VARCHAR(255), " +
+               "city VARCHAR(255), " +
+               "zip INT, " +
+               "PRIMARY KEY (zip))";
+      } else if (cacheName.equalsIgnoreCase("testPreloadStoredAsBinary")) {
          tableCreation = "CREATE TABLE " + tableName + " (" +
                "keycolumn VARCHAR(255) NOT NULL, " +
                "NAME VARCHAR(255) NOT NULL, " +
