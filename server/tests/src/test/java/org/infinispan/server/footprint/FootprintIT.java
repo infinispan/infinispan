@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.stream.Stream;
 
 import javax.management.JMException;
@@ -25,12 +26,13 @@ import org.junit.jupiter.api.extension.RegisterExtension;
  * @since 15.0
  **/
 public class FootprintIT {
-   private static final int LOADED_CLASS_COUNT_LOWER_BOUND = 10_900;
-   private static final int LOADED_CLASS_COUNT_UPPER_BOUND = 11_100;
-   private static final long HEAP_USAGE_LOWER_BOUND = 24_000_000L;
+   private static final int LOADED_CLASS_COUNT_LOWER_BOUND = 11_100;
+   private static final int LOADED_CLASS_COUNT_UPPER_BOUND = 11_200;
+   private static final long HEAP_USAGE_LOWER_BOUND = 23_000_000L;
    private static final long HEAP_USAGE_UPPER_BOUND = 25_000_000L;
-   private static final long DISK_USAGE_LOWER_BOUND = 85_000_000L;
-   private static final long DISK_USAGE_UPPER_BOUND = 87_000_000L;
+   private static final long DISK_USAGE_LOWER_BOUND = 87_000_000L;
+   private static final long DISK_USAGE_UPPER_BOUND = 88_000_000L;
+   public static final String HEAP_DUMP = "footprint.hprof";
 
    @RegisterExtension
    public static InfinispanServerExtension SERVERS =
@@ -48,14 +50,16 @@ public class FootprintIT {
       jmxConnection.invoke(memory, "gc", new Object[0], new String[0]);
       CompositeData heapMemoryUsage = (CompositeData) jmxConnection.getAttribute(memory, "HeapMemoryUsage");
       Long used = (Long) heapMemoryUsage.get("used");
-      if (System.getProperty("infinispan.footprint.heapdump") != null) {
+      try {
+         assertThat(loadedClassCount).as("Loaded class count").isBetween(LOADED_CLASS_COUNT_LOWER_BOUND, LOADED_CLASS_COUNT_UPPER_BOUND);
+         assertThat(used).as("Heap memory usage").isBetween(HEAP_USAGE_LOWER_BOUND, HEAP_USAGE_UPPER_BOUND);
+      } catch (AssertionError e) {
          ObjectName hotSpot = new ObjectName("com.sun.management:type=HotSpotDiagnostic");
-         jmxConnection.invoke(hotSpot, "dumpHeap", new Object[]{"footprint.hprof", true}, new String[]{"java.lang.String", "boolean"});
-         String s = SERVERS.getServerDriver().syncFilesFromServer(0, "/opt/infinispan/footprint.hprof");
-         System.out.println("Synced heap dump to " + s);
+         jmxConnection.invoke(hotSpot, "dumpHeap", new Object[]{HEAP_DUMP, true}, new String[]{"java.lang.String", "boolean"});
+         String s = SERVERS.getServerDriver().syncFilesFromServer(0, "/opt/infinispan/" + HEAP_DUMP);
+         Files.move(Paths.get(s, HEAP_DUMP), Paths.get(System.getProperty("build.directory"), HEAP_DUMP), StandardCopyOption.REPLACE_EXISTING);
+         throw e;
       }
-      assertThat(loadedClassCount).as("Loaded class count").isBetween(LOADED_CLASS_COUNT_LOWER_BOUND, LOADED_CLASS_COUNT_UPPER_BOUND);
-      assertThat(used).as("Heap memory usage").isBetween(HEAP_USAGE_LOWER_BOUND, HEAP_USAGE_UPPER_BOUND);
    }
 
    @Test
