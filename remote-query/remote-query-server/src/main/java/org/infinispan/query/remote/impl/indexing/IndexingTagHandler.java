@@ -6,9 +6,11 @@ import org.hibernate.search.engine.backend.document.IndexObjectFieldReference;
 import org.infinispan.protostream.TagHandler;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.query.remote.impl.indexing.aggregator.BigDecimalAggregator;
 import org.infinispan.query.remote.impl.indexing.aggregator.BigIntegerAggregator;
 import org.infinispan.query.remote.impl.indexing.aggregator.TypeAggregator;
+import org.infinispan.query.remote.impl.indexing.infinispan.InfinispanAnnotations;
 import org.infinispan.query.remote.impl.mapping.reference.FieldReferenceProvider;
 import org.infinispan.query.remote.impl.mapping.reference.IndexReferenceHolder;
 
@@ -52,6 +54,23 @@ public final class IndexingTagHandler implements TagHandler {
       // different entity types to have different field types or different indexing options in the same index.
       String fieldPath = messageContext.getFieldPath();
       fieldPath = fieldPath != null ? fieldPath + '.' + fieldDescriptor.getName() : fieldDescriptor.getName();
+
+      if (fieldDescriptor.getAnnotations().containsKey(InfinispanAnnotations.VECTOR_ANNOTATION) && Type.FLOAT.equals(fieldDescriptor.getType())) {
+         messageContext.addArrayItem(fieldPath, (Float)value);
+         return;
+      }
+      IndexFieldReference<?> fieldReference = indexReferenceHolder.getFieldReference(fieldPath);
+      if (fieldReference != null) {
+         messageContext.addValue(fieldReference, value);
+      }
+   }
+
+   private void addDefaultFieldToDocument(FieldDescriptor fieldDescriptor, Object value) {
+      // We always use fully qualified field names because Lucene does not allow two identically named fields defined by
+      // different entity types to have different field types or different indexing options in the same index.
+      String fieldPath = messageContext.getFieldPath();
+      fieldPath = fieldPath != null ? fieldPath + '.' + fieldDescriptor.getName() : fieldDescriptor.getName();
+
       IndexFieldReference<?> fieldReference = indexReferenceHolder.getFieldReference(fieldPath);
       if (fieldReference != null) {
          messageContext.addValue(fieldReference, value);
@@ -133,10 +152,11 @@ public final class IndexingTagHandler implements TagHandler {
          return;
       }
 
+      messageContext.writeVectorAggregators(indexReferenceHolder);
       for (FieldDescriptor fieldDescriptor : messageContext.getMessageDescriptor().getFields()) {
          if (!messageContext.isFieldMarked(fieldDescriptor.getNumber())) {
             Object defaultValue = fieldDescriptor.hasDefaultValue() ? fieldDescriptor.getDefaultValue() : null;
-            addFieldToDocument(fieldDescriptor, defaultValue);
+            addDefaultFieldToDocument(fieldDescriptor, defaultValue);
          }
       }
    }

@@ -65,6 +65,7 @@ tokens {
   FT_TERM;
   FT_REGEXP;
   FT_RANGE;
+  KNN_TERM;
 
 //SOFT KEYWORDS
   ALL;
@@ -242,3 +243,5 @@ HASH: '#' ;
 TILDE: '~' ;
 
 CARAT: '^' ;
+
+ARROW: '<->' ;

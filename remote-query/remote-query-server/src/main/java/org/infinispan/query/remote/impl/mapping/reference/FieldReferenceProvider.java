@@ -14,13 +14,16 @@ import org.hibernate.search.engine.backend.types.Projectable;
 import org.hibernate.search.engine.backend.types.Searchable;
 import org.hibernate.search.engine.backend.types.Sortable;
 import org.hibernate.search.engine.backend.types.TermVector;
+import org.hibernate.search.engine.backend.types.VectorSimilarity;
 import org.hibernate.search.engine.backend.types.dsl.IndexFieldTypeFactory;
 import org.hibernate.search.engine.backend.types.dsl.IndexFieldTypeFinalStep;
 import org.hibernate.search.engine.backend.types.dsl.ScaledNumberIndexFieldTypeOptionsStep;
 import org.hibernate.search.engine.backend.types.dsl.StandardIndexFieldTypeOptionsStep;
 import org.hibernate.search.engine.backend.types.dsl.StringIndexFieldTypeOptionsStep;
+import org.hibernate.search.engine.backend.types.dsl.VectorFieldTypeOptionsStep;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.query.remote.impl.indexing.FieldMapping;
 import org.infinispan.query.remote.impl.logging.Log;
@@ -48,11 +51,14 @@ public class FieldReferenceProvider {
    private final String analyzer;
    private final String normalizer;
    private final Object indexNullAs;
-
    private final Norms norms;
    private final String searchAnalyzer;
    private final TermVector termVector;
    private final Integer decimalScale;
+   private final Integer dimension;
+   private final VectorSimilarity similarity;
+   private final Integer beamWidth;
+   private final Integer maxConnection;
 
    public FieldReferenceProvider(FieldDescriptor fieldDescriptor, FieldMapping fieldMapping) {
       // the property name and type are taken from the model
@@ -72,6 +78,10 @@ public class FieldReferenceProvider {
       searchAnalyzer = fieldMapping.searchAnalyzer();
       termVector = termVector(fieldMapping.termVector());
       decimalScale = fieldMapping.decimalScale();
+      dimension = fieldMapping.dimension();
+      similarity = vectorSimilarity(fieldMapping.similarity());
+      beamWidth = fieldMapping.beamWidth();
+      maxConnection = fieldMapping.maxConnection();
    }
 
    private static TermVector termVector(org.infinispan.api.annotations.indexing.option.TermVector termVector) {
@@ -98,6 +108,22 @@ public class FieldReferenceProvider {
       return null;
    }
 
+   private static VectorSimilarity vectorSimilarity(org.infinispan.api.annotations.indexing.option.VectorSimilarity vectorSimilarity) {
+      if (vectorSimilarity == null) {
+         return null;
+      }
+
+      switch (vectorSimilarity) {
+         case L2:
+            return VectorSimilarity.L2;
+         case INNER_PRODUCT:
+            return VectorSimilarity.INNER_PRODUCT;
+         case COSINE:
+            return VectorSimilarity.COSINE;
+      }
+      return null;
+   }
+
    public String getName() {
       return name;
    }
@@ -108,7 +134,7 @@ public class FieldReferenceProvider {
       }
 
       IndexSchemaFieldOptionsStep<?, IndexFieldReference<Object>> step = indexSchemaElement.field(name, this::bind);
-      if (repeated) {
+      if (repeated && dimension == null) {
          step.multiValued();
       }
       return step.toReference();
@@ -120,6 +146,10 @@ public class FieldReferenceProvider {
    }
 
    private <F> IndexFieldTypeFinalStep<F> bind(IndexFieldTypeFactory typeFactory) {
+      if (dimension != null) {
+         return bindVector(typeFactory);
+      }
+
       StandardIndexFieldTypeOptionsStep<?, F> optionsStep = (StandardIndexFieldTypeOptionsStep<?, F>) bindType(typeFactory);
       optionsStep.searchable(searchable).sortable(sortable).projectable(projectable).aggregable(aggregable);
       if (indexNullAs != null) {
@@ -127,6 +157,32 @@ public class FieldReferenceProvider {
       }
 
       return optionsStep;
+   }
+
+   private <F> IndexFieldTypeFinalStep<F> bindVector(IndexFieldTypeFactory typeFactory) {
+      VectorFieldTypeOptionsStep<?, F> step;
+
+      switch (type.getJavaType()) {
+         case BYTE_STRING:
+            step = (VectorFieldTypeOptionsStep<?, F>) typeFactory.asByteVector(dimension);
+            break;
+         case FLOAT:
+            step = (VectorFieldTypeOptionsStep<?, F>) typeFactory.asFloatVector(dimension);
+            break;
+         default:
+            throw log.wrongTypeForVector(type.toString(), name, JavaType.BYTE_STRING, JavaType.FLOAT);
+      }
+
+      step.vectorSimilarity(similarity);
+      step.beamWidth(beamWidth);
+      step.maxConnections(maxConnection);
+      step.searchable(searchable);
+      step.projectable(projectable);
+      if (indexNullAs != null) {
+         step.indexNullAs((F) indexNullAs);
+      }
+
+      return step;
    }
 
    private StandardIndexFieldTypeOptionsStep<?, ?> bindType(IndexFieldTypeFactory typeFactory) {

@@ -2,6 +2,7 @@ package org.infinispan.api.common.annotations.indexing._private;
 
 import org.hibernate.search.util.common.AssertionFailure;
 import org.infinispan.api.annotations.indexing.option.TermVector;
+import org.infinispan.api.annotations.indexing.option.VectorSimilarity;
 
 public final class Options {
 
@@ -56,6 +57,19 @@ public final class Options {
             return org.hibernate.search.engine.backend.types.TermVector.WITH_POSITIONS_OFFSETS_PAYLOADS;
          default:
             throw new AssertionFailure("Unexpected value for TermVector: " + termVector);
+      }
+   }
+
+   public static org.hibernate.search.engine.backend.types.VectorSimilarity vectorSimilarity(VectorSimilarity vectorSimilarity) {
+      switch (vectorSimilarity) {
+         case L2:
+            return org.hibernate.search.engine.backend.types.VectorSimilarity.L2;
+         case INNER_PRODUCT:
+            return org.hibernate.search.engine.backend.types.VectorSimilarity.INNER_PRODUCT;
+         case COSINE:
+            return org.hibernate.search.engine.backend.types.VectorSimilarity.COSINE;
+         default:
+            throw new AssertionFailure("Unexpected value for VectorSimilarity: " + vectorSimilarity);
       }
    }
 }

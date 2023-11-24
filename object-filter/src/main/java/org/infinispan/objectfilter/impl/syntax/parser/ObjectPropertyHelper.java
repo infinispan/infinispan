@@ -150,6 +150,10 @@ public abstract class ObjectPropertyHelper<TypeMetadata> {
     */
    public abstract Class<?> getPrimitivePropertyType(TypeMetadata entityType, String[] propertyPath);
 
+   public Class<?> getIndexedPropertyType(TypeMetadata entityType, String[] propertyPath) {
+      return null; // non-indexed
+   }
+
    public abstract boolean hasProperty(TypeMetadata entityType, String[] propertyPath);
 
    public abstract boolean hasEmbeddedProperty(TypeMetadata entityType, String[] propertyPath);

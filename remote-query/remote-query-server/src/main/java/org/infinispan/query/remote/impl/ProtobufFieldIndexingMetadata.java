@@ -60,6 +60,11 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
    }
 
    @Override
+   public boolean isVector(String[] propertyPath) {
+      return getFlag(propertyPath, IndexingMetadata::isVectorField);
+   }
+
+   @Override
    public Object getNullMarker(String[] propertyPath) {
       Descriptor md = messageDescriptor;
       int i = 0;

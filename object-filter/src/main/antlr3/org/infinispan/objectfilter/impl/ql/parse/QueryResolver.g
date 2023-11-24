@@ -144,6 +144,7 @@ searchCondition
 
 predicate
    :  fullTextExpression
+   |  knnExpression
    |  ^( EQUALS rowValueConstructor comparativePredicateValue )
 	|	^( NOT_EQUAL rowValueConstructor comparativePredicateValue )
 	|	^( LESS rowValueConstructor comparativePredicateValue )
@@ -196,6 +197,10 @@ characterValueExpression
 datetimeValueExpression
 	:	valueExpression
 	;
+
+vectorExpression
+   : ^(VECTOR_EXPR valueExpression+)
+   ;
 
 valueExpression
    :  ^( MINUS numericValueExpression )
@@ -381,8 +386,14 @@ fullTextExpression
    :  ^(COLON propertyReferenceExpression ftClause)
    ;
 
+knnExpression
+   :  ^(ARROW propertyReferenceExpression ftClause)
+   ;
+
 ftClause
    :  ^(FT_TERM ftLiteralOrParameter TILDE?)
+   |  ^(KNN_TERM vectorExpression TILDE?)
+   |  ^(KNN_TERM vectorParameter TILDE?)
    |  ^(FT_REGEXP REGEXP_LITERAL)
    |  ^(FT_RANGE (LSQUARE | LCURLY) ftRangeBound ftRangeBound (RSQUARE | RCURLY))
    |  ^(OR ftClause ftClause)
@@ -406,6 +417,10 @@ ftLiteralOrParameter
    |  ^(MINUS numericLiteral)
    |  ^(PLUS numericLiteral)
    |  numericLiteral
+   ;
+
+vectorParameter
+   :  NAMED_PARAM
    ;
 
 numericLiteral

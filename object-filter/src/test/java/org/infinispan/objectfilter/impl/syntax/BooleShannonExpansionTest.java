@@ -53,6 +53,11 @@ public class BooleShannonExpansionTest {
       }
 
       @Override
+      public boolean isVector(String[] propertyPath) {
+         return false;
+      }
+
+      @Override
       public Object getNullMarker(String[] propertyPath) {
          return null;
       }

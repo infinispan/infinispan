@@ -54,6 +54,7 @@ import org.infinispan.objectfilter.impl.syntax.FullTextRangeExpr;
 import org.infinispan.objectfilter.impl.syntax.FullTextRegexpExpr;
 import org.infinispan.objectfilter.impl.syntax.FullTextTermExpr;
 import org.infinispan.objectfilter.impl.syntax.IsNullExpr;
+import org.infinispan.objectfilter.impl.syntax.KnnPredicate;
 import org.infinispan.objectfilter.impl.syntax.LikeExpr;
 import org.infinispan.objectfilter.impl.syntax.NotExpr;
 import org.infinispan.objectfilter.impl.syntax.OrExpr;
@@ -90,15 +91,18 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
 
    private final SearchMapping searchMapping;
    private final ObjectPropertyHelper<TypeMetadata> propertyHelper;
+   private final int maxResults;
    private final int hitCountAccuracy;
 
    private Map<String, Object> namedParameters;
    private LuceneSearchPredicateFactory predicateFactory;
    private SearchIndexedEntity indexedEntity;
+   private Integer knn;
 
-   SearchQueryMaker(SearchMapping searchMapping, ObjectPropertyHelper<TypeMetadata> propertyHelper, int hitCountAccuracy) {
+   SearchQueryMaker(SearchMapping searchMapping, ObjectPropertyHelper<TypeMetadata> propertyHelper, int maxResults, int hitCountAccuracy) {
       this.searchMapping = searchMapping;
       this.propertyHelper = propertyHelper;
+      this.maxResults = maxResults;
       this.hitCountAccuracy = hitCountAccuracy;
    }
 
@@ -125,7 +129,7 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
             parsingResult.getProjectedTypes(), aggregation);
       SearchSort sort = makeSort(scope.sort(), parsingResult.getSortFields());
 
-      return new SearchQueryParsingResult(targetedType, targetedTypeName, projection, aggregation, predicate, sort, hitCountAccuracy);
+      return new SearchQueryParsingResult(targetedType, targetedTypeName, projection, aggregation, predicate, sort, hitCountAccuracy, knn);
    }
 
    private <T> InfinispanAggregation makeAggregation(SearchScope<?> scope, IckleParsingResult<TypeMetadata> parsingResult) {
@@ -226,6 +230,9 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
 
       PredicateFinalStep predicateFinalStep = expr.acceptVisitor(this);
       if (aggregation == null || aggregation.propertyPath() == null || aggregation.propertyPath() instanceof CacheValueAggregationPropertyPath) {
+         if (knn != null && !(expr instanceof KnnPredicate)) {
+            throw log.booleanKnnPredicates();
+         }
          return predicateFinalStep;
       }
 
@@ -394,6 +401,26 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
       return range.between(
             lower, includeLower ? RangeBoundInclusion.INCLUDED : RangeBoundInclusion.EXCLUDED,
             upper, includeUpper ? RangeBoundInclusion.INCLUDED : RangeBoundInclusion.EXCLUDED);
+   }
+
+   @Override
+   public PredicateFinalStep visit(KnnPredicate knnPredicate) {
+      PropertyValueExpr propertyValueExpr = (PropertyValueExpr) knnPredicate.getChild();
+      String absoluteFieldPath = propertyValueExpr.getPropertyPath().asStringPath();
+
+      if (knn != null) {
+         throw log.multipleKnnPredicates();
+      }
+
+      knn = knnPredicate.knn(namedParameters);
+      if (knn == null) {
+         knn = maxResults;
+      }
+
+      if (knnPredicate.floats()) {
+         return predicateFactory.knn(knn).field(absoluteFieldPath).matching(knnPredicate.floatsArray(namedParameters));
+      }
+      return predicateFactory.knn(knn).field(absoluteFieldPath).matching(knnPredicate.bytesArray(namedParameters));
    }
 
    @Override

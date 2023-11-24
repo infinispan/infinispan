@@ -125,10 +125,11 @@ final class Search5MetadataCreator implements AnnotationMetadataCreator<Indexing
       }
 
       String analyzer = analyzer(fd.getType(), isAnalyzed, fieldLevelAnalyzer);
-      FieldMapping fieldMapping = new FieldMapping(
-            fieldName,
-            isIndexed, isStored, false, sortable(analyzer, isStored, isSortable),
-            analyzer, null, indexNullAs, fd);
+      boolean sortable = sortable(analyzer, isStored, isSortable);
+      FieldMapping fieldMapping = FieldMapping.make(fd, fieldName, isIndexed, isStored, false, sortable)
+            .indexNullAs(indexNullAs)
+            .analyzer(analyzer)
+            .build();
 
       if (log.isDebugEnabled()) {
          log.debugf("fieldName=%s fieldMapping=%s", fieldName, fieldMapping);

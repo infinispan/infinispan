@@ -35,6 +35,11 @@ public class ExprVisitor implements Visitor<BooleanExpr, ValueExpr> {
    }
 
    @Override
+   public BooleanExpr visit(KnnPredicate knnPredicate) {
+      return knnPredicate;
+   }
+
+   @Override
    public BooleanExpr visit(NotExpr notExpr) {
       return notExpr;
    }

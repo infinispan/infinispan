@@ -21,6 +21,7 @@ import org.infinispan.objectfilter.impl.syntax.FullTextRangeExpr;
 import org.infinispan.objectfilter.impl.syntax.FullTextRegexpExpr;
 import org.infinispan.objectfilter.impl.syntax.FullTextTermExpr;
 import org.infinispan.objectfilter.impl.syntax.IsNullExpr;
+import org.infinispan.objectfilter.impl.syntax.KnnPredicate;
 import org.infinispan.objectfilter.impl.syntax.LikeExpr;
 import org.infinispan.objectfilter.impl.syntax.NotExpr;
 import org.infinispan.objectfilter.impl.syntax.OrExpr;
@@ -69,6 +70,14 @@ final class ExpressionBuilder<TypeMetadata> {
 
    public void addFullTextRange(PropertyPath<?> propertyPath, boolean includeLower, Object lower, Object upper, boolean includeUpper) {
       push(new FullTextRangeExpr(makePropertyValueExpr(propertyPath), includeLower, lower, upper, includeUpper));
+   }
+
+   public void addKnnPredicate(PropertyPath<?> propertyPath, Class<?> expectedType, List<Object> vector, Object knn) {
+      push(new KnnPredicate(makePropertyValueExpr(propertyPath), expectedType, vector, knn));
+   }
+
+   public void addKnnPredicate(PropertyPath<?> propertyPath, Class<?> expectedType, ConstantValueExpr.ParamPlaceholder vector, Object knn) {
+      push(new KnnPredicate(makePropertyValueExpr(propertyPath), expectedType, vector, knn));
    }
 
    public void addComparison(PropertyPath<?> propertyPath, ComparisonExpr.Type comparisonType, Object value) {

@@ -88,6 +88,10 @@ public interface QueryRendererDelegate<TypeDescriptor> {
 
    void predicateFullTextRange(boolean includeLower, String lower, String upper, boolean includeUpper);
 
+   void predicateKNN(List<String> vector, String knn);
+
+   void predicateKNN(String vector, String knn);
+
    enum Occur {
       MUST("+"),
       FILTER("#"),

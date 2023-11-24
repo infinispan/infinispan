@@ -1,10 +1,12 @@
 package org.infinispan.query.remote.impl.indexing.infinispan;
 
 import java.util.ArrayList;
+import java.util.function.Function;
 
 import org.infinispan.api.annotations.indexing.model.Values;
 import org.infinispan.api.annotations.indexing.option.Structure;
 import org.infinispan.api.annotations.indexing.option.TermVector;
+import org.infinispan.api.annotations.indexing.option.VectorSimilarity;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 
@@ -36,6 +38,12 @@ public class InfinispanAnnotations {
    public static final String EMBEDDED_ANNOTATION = "Embedded";
    public static final String INCLUDE_DEPTH_ATTRIBUTE = "includeDepth";
    public static final String STRUCTURE_ATTRIBUTE = "structure";
+
+   public static final String VECTOR_ANNOTATION = "Vector";
+   public static final String DIMENSION_ATTRIBUTE = "dimension";
+   public static final String SIMILARITY_ATTRIBUTE = "similarity";
+   public static final String BEAM_WIDTH_ATTRIBUTE = "beamWidth";
+   public static final String MAX_CONNECTIONS_ATTRIBUTE = "maxConnections";
 
    public static void configure(Configuration.Builder builder) {
       builder.annotationsConfig()
@@ -135,46 +143,79 @@ public class InfinispanAnnotations {
                   .defaultValue("")
                .attribute(INCLUDE_DEPTH_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.INT)
-                  .defaultValue(3)
+                  .defaultValue(Values.DEFAULT_INCLUDE_DEPTH)
                .attribute(STRUCTURE_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.IDENTIFIER)
                   .packageName(ANNOTATIONS_OPTIONS_PACKAGE)
                   .allowedValues(structureAllowedValues())
-                  .defaultValue(Structure.NESTED.name());
+                  .defaultValue(Structure.NESTED.name())
+            .annotation(VECTOR_ANNOTATION, AnnotationElement.AnnotationTarget.FIELD)
+               .attribute(NAME_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.STRING)
+                  .defaultValue("")
+               .attribute(SEARCHABLE_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.BOOLEAN)
+                  .defaultValue(true)
+               .attribute(PROJECTABLE_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.BOOLEAN)
+                  .defaultValue(false)
+               .attribute(INDEX_NULL_AS_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.STRING)
+                  .defaultValue(Values.DO_NOT_INDEX_NULL)
+               .attribute(DIMENSION_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.INT)
+               .attribute(SIMILARITY_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.IDENTIFIER)
+                  .packageName(ANNOTATIONS_OPTIONS_PACKAGE)
+                  .allowedValues(similarityAllowedValues())
+                  .defaultValue(Values.DEFAULT_VECTOR_SIMILARITY.name())
+               .attribute(BEAM_WIDTH_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.INT)
+                  .defaultValue(Values.DEFAULT_BEAN_WIDTH)
+               .attribute(MAX_CONNECTIONS_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.INT)
+                  .defaultValue(Values.DEFAULT_MAX_CONNECTIONS)
+               ;
    }
 
-   public static final TermVector termVector(String value) {
+   public static TermVector termVector(String value) {
+      return value(value, TermVector::valueOf);
+   }
+
+   public static Structure structure(String value) {
+      return value(value, Structure::valueOf);
+   }
+
+   public static VectorSimilarity vectorSimilarity(String value) {
+      return value(value, VectorSimilarity::valueOf);
+   }
+
+   private static String[] termVectorAllowedValues() {
+      return allowedValues(TermVector.values());
+   }
+
+   private static String[] structureAllowedValues() {
+      return allowedValues(Structure.values());
+   }
+
+   private static String[] similarityAllowedValues() {
+      return allowedValues(VectorSimilarity.values());
+   }
+
+   private static <E extends Enum<E>> E value(String value, Function<String, E> valueOf) {
       int beginIndex = value.lastIndexOf(".");
       if (beginIndex >= 0) {
          value = value.substring(beginIndex + 1);
       }
-      return TermVector.valueOf(value);
+      return valueOf.apply(value);
    }
 
-   public static final Structure structure(String value) {
-      int beginIndex = value.lastIndexOf(".");
-      if (beginIndex >= 0) {
-         value = value.substring(beginIndex + 1);
-      }
-      return Structure.valueOf(value);
-   }
-
-   private static final String[] termVectorAllowedValues() {
-      int capacity = TermVector.values().length * 2;
+   private static <E extends Enum<E>> String[] allowedValues(E[] values) {
+      int capacity = values.length * 2;
       ArrayList<String> result = new ArrayList<>(capacity);
-      for (TermVector value : TermVector.values()) {
+      for (E value : values) {
          result.add(value.name());
-         result.add("TermVector." + value.name());
-      }
-      return result.toArray(new String[capacity]);
-   }
-
-   private static final String[] structureAllowedValues() {
-      int capacity = Structure.values().length * 2;
-      ArrayList<String> result = new ArrayList<>(capacity);
-      for (Structure value : Structure.values()) {
-         result.add(value.name());
-         result.add("Structure." + value.name());
+         result.add(value.getClass().getSimpleName() + "." + value.name());
       }
       return result.toArray(new String[capacity]);
    }

@@ -416,6 +416,60 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       }
    }
 
+   @Override
+   public void predicateKNN(List<String> vectorList, String knnString) {
+      ensureLeftSideIsAPropertyPath();
+      PropertyPath<TypeDescriptor<TypeMetadata>> property = resolveAlias(propertyPath);
+      if (property.isEmpty()) {
+         throw log.getPredicatesOnEntityAliasNotAllowedException(propertyPath.asStringPath());
+      }
+
+      if (phase == Phase.HAVING) {
+         throw log.knnQueryOnHavingClause();
+      } else if (phase != Phase.WHERE) {
+         throw new IllegalStateException();
+      }
+
+      checkIsVector(property);
+      Class<?> expectedType = getIndexedPropertyType();
+
+      List<Object> vector = new ArrayList<>(vectorList.size());
+      for (String string : vectorList) {
+         vector.add(parameterStringValue(string));
+      }
+      Object knn = parameterStringValue(knnString);
+      whereBuilder.addKnnPredicate(property, expectedType, vector, knn);
+   }
+
+   @Override
+   public void predicateKNN(String vectorString, String knnString) {
+      ensureLeftSideIsAPropertyPath();
+      PropertyPath<TypeDescriptor<TypeMetadata>> property = resolveAlias(propertyPath);
+      if (property.isEmpty()) {
+         throw log.getPredicatesOnEntityAliasNotAllowedException(propertyPath.asStringPath());
+      }
+
+      if (phase == Phase.HAVING) {
+         throw log.knnQueryOnHavingClause();
+      } else if (phase != Phase.WHERE) {
+         throw new IllegalStateException();
+      }
+
+      checkIsVector(property);
+
+      ConstantValueExpr.ParamPlaceholder vectorParam = null;
+      try {
+         vectorParam = (ConstantValueExpr.ParamPlaceholder)
+               parameterStringValue(vectorString.substring(1, vectorString.length() - 1));
+      } catch (Throwable throwable) {
+         throw log.knnVectorParameterNotValid();
+      }
+
+      Object knn = parameterStringValue(knnString);
+      Class<?> expectedType = getIndexedPropertyType();
+      whereBuilder.addKnnPredicate(property, expectedType, vectorParam, knn);
+   }
+
    private void checkAnalyzed(PropertyPath<?> propertyPath, boolean expectAnalyzed) {
       if (!expectAnalyzed) {
          if (fieldIndexingMetadata.isAnalyzed(propertyPath.asArrayPath())) {
@@ -427,6 +481,12 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       if (!fieldIndexingMetadata.isAnalyzed(propertyPath.asArrayPath()) &&
             !fieldIndexingMetadata.isNormalized(propertyPath.asArrayPath())) {
          throw log.getFullTextQueryOnNotAalyzedPropertyNotSupportedException(targetTypeName, propertyPath.asStringPath());
+      }
+   }
+
+   public void checkIsVector(PropertyPath<?> propertyPath) {
+      if (!fieldIndexingMetadata.isVector(propertyPath.asArrayPath())) {
+         throw log.knnQueryOnNotVectorField(targetTypeName, propertyPath.asStringPath());
       }
    }
 
@@ -638,6 +698,37 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
 
          return propertyHelper.convertToPropertyType(targetEntityMetadata, path.toArray(new String[path.size()]), value);
       }
+   }
+
+   private Object parameterStringValue(String value) {
+      if (value.startsWith(":")) {
+         // it's a named parameter
+         String paramName = value.substring(1).trim();  //todo [anistor] trim should not be required!
+         ConstantValueExpr.ParamPlaceholder namedParam = (ConstantValueExpr.ParamPlaceholder) namedParameters.get(paramName);
+         if (namedParam == null) {
+            namedParam = new ConstantValueExpr.ParamPlaceholder(paramName);
+            namedParameters.put(paramName, namedParam);
+         }
+         return namedParam;
+      } else {
+         return value;
+      }
+   }
+
+   public Class<?> getIndexedPropertyType() {
+      List<String> path = propertyPath.getNodeNamesWithoutAlias();
+      // create the complete path in case it's a join
+      PropertyPath<TypeDescriptor<TypeMetadata>> fullPath = propertyPath;
+      while (fullPath.isAlias()) {
+         PropertyPath<TypeDescriptor<TypeMetadata>> resolved = aliasToPropertyPath.get(fullPath.getFirst().getPropertyName());
+         if (resolved == null) {
+            break;
+         }
+         path.addAll(0, resolved.getNodeNamesWithoutAlias());
+         fullPath = resolved;
+      }
+
+      return propertyHelper.getIndexedPropertyType(targetEntityMetadata, path.toArray(new String[path.size()]));
    }
 
    @Override

@@ -36,6 +36,11 @@ public final class FullTextVisitor implements Visitor<Boolean, Boolean> {
    }
 
    @Override
+   public Boolean visit(KnnPredicate knnPredicate) {
+      return Boolean.TRUE;
+   }
+
+   @Override
    public Boolean visit(NotExpr notExpr) {
       return notExpr.getChild().acceptVisitor(this);
    }

@@ -37,26 +37,26 @@ import org.infinispan.remoting.transport.Address;
  */
 public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
 
+   private final ClusteredQueryInvoker invoker;
+   private final Integer knn;
+
    private Integer resultSize;
    private boolean countIsExact = true;
-
-   private final ClusteredQueryInvoker invoker;
-
    private int maxResults;
-
    private int firstResult = 0;
 
    public DistributedIndexedQueryImpl(QueryDefinition queryDefinition, AdvancedCache<?, ?> cache,
-                                      LocalQueryStatistics queryStatistics, int defaultMaxResults) {
+                                      LocalQueryStatistics queryStatistics, int defaultMaxResults, Integer knn) {
       super(queryDefinition, cache, queryStatistics);
       this.invoker = new ClusteredQueryInvoker(cache, queryStatistics);
-      this.maxResults = defaultMaxResults;
+      this.knn = knn;
+      this.maxResults = (knn == null) ? defaultMaxResults : knn;
    }
 
    @Override
    public IndexedQuery<E> maxResults(int maxResults) {
-      this.maxResults = maxResults;
-      return super.maxResults(maxResults);
+      this.maxResults = (knn == null) ? maxResults : Math.min(maxResults, knn);
+      return super.maxResults(this.maxResults);
    }
 
    @Override
