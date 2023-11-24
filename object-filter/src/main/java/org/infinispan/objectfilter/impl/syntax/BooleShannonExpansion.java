@@ -84,6 +84,13 @@ public final class BooleShannonExpansion {
       }
 
       @Override
+      public BooleanExpr visit(KnnPredicate knnPredicate) {
+         // index only feature
+         foundIndexed = true;
+         return knnPredicate;
+      }
+
+      @Override
       public BooleanExpr visit(NotExpr notExpr) {
          notExpr.getChild().acceptVisitor(this);
          return notExpr;

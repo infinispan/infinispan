@@ -699,7 +699,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
    }
 
    private SearchQueryParsingResult transformToSearchQueryParsingResult(IckleParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters) {
-      SearchQueryMaker<TypeMetadata> queryMaker = new SearchQueryMaker<>(getSearchMapping(), propertyHelper, defaultHitCountAccuracy);
+      SearchQueryMaker<TypeMetadata> queryMaker = new SearchQueryMaker<>(getSearchMapping(), propertyHelper, defaultMaxResults, defaultHitCountAccuracy);
       return queryMaker.transform(parsingResult, namedParameters, getTargetedClass(parsingResult), getTargetedNamedType(parsingResult));
    }
 
@@ -727,7 +727,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
          QueryDefinition queryDefinition = new QueryDefinition(queryString, ickleParsingResult.getStatementType(),
                getQueryEngineProvider(), defaultMaxResults);
          queryDefinition.setNamedParameters(namedParameters);
-         return new DistributedIndexedQueryImpl<>(queryDefinition, cache, queryStatistics, defaultMaxResults);
+         return new DistributedIndexedQueryImpl<>(queryDefinition, cache, queryStatistics, defaultMaxResults, searchQuery.knn());
       }
       return new IndexedQueryImpl<>(queryString, ickleParsingResult.getStatementType(), searchQuery, cache,
             queryStatistics, defaultMaxResults);

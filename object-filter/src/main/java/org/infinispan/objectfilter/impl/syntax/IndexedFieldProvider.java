@@ -59,6 +59,8 @@ public interface IndexedFieldProvider<TypeMetadata> {
        */
       boolean isSortable(String[] propertyPath);
 
+      boolean isVector(String[] propertyPath);
+
       Object getNullMarker(String[] propertyPath);
    }
 
@@ -90,6 +92,11 @@ public interface IndexedFieldProvider<TypeMetadata> {
 
       @Override
       public boolean isSortable(String[] propertyPath) {
+         return false;
+      }
+
+      @Override
+      public boolean isVector(String[] propertyPath) {
          return false;
       }
 

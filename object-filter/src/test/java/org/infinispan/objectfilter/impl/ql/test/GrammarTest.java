@@ -3698,6 +3698,46 @@ public class GrammarTest extends TestBase {
    }
 
    @Test
+   public void testASTParserLoadingTestComponentQueries_1346b() {
+      expectParserSuccess("from Human h where h.name = ['John', 'X', 'Doe']");
+   }
+
+   @Test
+   public void testASTParserLoadingTestComponentQueries_1347b() {
+      expectParserSuccess("from Human h where ['John', 'X', 'Doe'] = h.name");
+   }
+
+   @Test
+   public void testASTParserLoadingTestComponentQueries_1348b() {
+      expectParserSuccess("from Human h where ['John', 'X', 'Doe'] <> h.name");
+   }
+
+   @Test
+   public void testASTParserLoadingTestComponentQueries_1349b() {
+      expectParserSuccess("from Human h where ['John', 'X', 'Doe'] >= h.name");
+   }
+
+   @Test
+   public void testASTParserLoadingTestComponentQueries_1346c() {
+      expectParserSuccess("from Human h where h.name = [1, 2, 3]");
+   }
+
+   @Test
+   public void testASTParserLoadingTestComponentQueries_1347c() {
+      expectParserSuccess("from Human h where [1,2,3] = h.name");
+   }
+
+   @Test
+   public void testASTParserLoadingTestComponentQueries_1348c() {
+      expectParserSuccess("from Human h where [1.1,2.1,3.1] <> h.name");
+   }
+
+   @Test
+   public void testASTParserLoadingTestComponentQueries_1349c() {
+      expectParserSuccess("from Human h where [1.1, 2.1, 3.1] >= h.name");
+   }
+
+   @Test
    public void testASTParserLoadingTestComponentQueries_1350() {
       expectParserSuccess("from Human h order by h.name");
    }

@@ -204,5 +204,11 @@ public interface Log extends BasicLogger {
    @Message(value = "Reindexing starting.", id = 14063)
    void indexingStarting();
 
+   @Message(value = "Multiple knn predicates are not supported at the moment.", id = 14064)
+   ParsingException multipleKnnPredicates();
+
+   @Message(value = "Boolean predicates containing knn predicates are not supported at the moment.", id = 14065)
+   ParsingException booleanKnnPredicates();
+
    // !!!!!! When adding anything new here please check the last used id in org.infinispan.query.core.impl.Log !!!!!!
 }

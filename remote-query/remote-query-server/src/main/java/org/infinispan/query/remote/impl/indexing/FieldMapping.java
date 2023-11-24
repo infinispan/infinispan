@@ -2,6 +2,7 @@ package org.infinispan.query.remote.impl.indexing;
 
 import org.infinispan.api.annotations.indexing.option.Structure;
 import org.infinispan.api.annotations.indexing.option.TermVector;
+import org.infinispan.api.annotations.indexing.option.VectorSimilarity;
 import org.infinispan.protostream.descriptors.EnumValueDescriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 
@@ -13,20 +14,23 @@ import org.infinispan.protostream.descriptors.FieldDescriptor;
  */
 public final class FieldMapping {
 
-   private final String name;
    private final FieldDescriptor fieldDescriptor;
-
+   private final String name;
    private final boolean searchable;
    private final boolean projectable;
    private final boolean aggregable;
    private final boolean sortable;
+   private final String indexNullAs;
    private final String analyzer;
    private final String normalizer;
-   private final String indexNullAs;
-   private final Boolean norms;
    private final String searchAnalyzer;
+   private final Boolean norms;
    private final TermVector termVector;
    private final Integer decimalScale;
+   private final Integer dimension;
+   private final VectorSimilarity similarity;
+   private final Integer beamWidth;
+   private final Integer maxConnection;
    private final Integer includeDepth;
    private final Structure structure;
 
@@ -34,41 +38,44 @@ public final class FieldMapping {
     * Indicates if lazy initialization of {@link #indexNullAsObj}.
     */
    private volatile boolean isInitialized = false;
-
    private Object indexNullAsObj;
 
-   public FieldMapping(String name, boolean searchable, boolean projectable, boolean aggregable, boolean sortable,
-                       String analyzer, String normalizer, String indexNullAs, FieldDescriptor fieldDescriptor) {
-      this(name, searchable, projectable, aggregable, sortable, analyzer, normalizer, indexNullAs,
-            null, null, null, null, 3, null, fieldDescriptor);
-   }
-
-   public FieldMapping(String name, Boolean searchable, Boolean projectable, Boolean aggregable, Boolean sortable,
-                       String analyzer, String normalizer, String indexNullAs,
-                       Boolean norms, String searchAnalyzer, TermVector termVector, Integer decimalScale,
-                       Integer includeDepth, Structure structure,
-                       FieldDescriptor fieldDescriptor) {
+   private FieldMapping(FieldDescriptor fieldDescriptor, String name,
+                       boolean searchable, boolean projectable, boolean aggregable, boolean sortable,
+                       String indexNullAs, String analyzer, String normalizer,
+                       String searchAnalyzer, Boolean norms, TermVector termVector, Integer decimalScale,
+                       Integer dimension, VectorSimilarity similarity, Integer beamWidth, Integer maxConnection,
+                       Integer includeDepth, Structure structure) {
       if (name == null) {
          throw new IllegalArgumentException("name argument cannot be null");
       }
       if (fieldDescriptor == null) {
          throw new IllegalArgumentException("fieldDescriptor argument cannot be null");
       }
-      this.name = name;
       this.fieldDescriptor = fieldDescriptor;
+      this.name = name;
       this.searchable = searchable;
       this.projectable = projectable;
       this.aggregable = aggregable;
       this.sortable = sortable;
+      this.indexNullAs = indexNullAs;
       this.analyzer = analyzer;
       this.normalizer = normalizer;
-      this.indexNullAs = indexNullAs;
-      this.norms = norms;
       this.searchAnalyzer = searchAnalyzer;
+      this.norms = norms;
       this.termVector = termVector;
       this.decimalScale = decimalScale;
+      this.dimension = dimension;
+      this.similarity = similarity;
+      this.beamWidth = beamWidth;
+      this.maxConnection = maxConnection;
       this.includeDepth = includeDepth;
       this.structure = structure;
+   }
+
+   public static FieldMapping.Builder make(FieldDescriptor fieldDescriptor, String name,
+                                           boolean searchable, boolean projectable, boolean aggregable, boolean sortable) {
+      return new FieldMapping.Builder(fieldDescriptor, name, searchable, projectable, aggregable, sortable);
    }
 
    public String name() {
@@ -128,6 +135,22 @@ public final class FieldMapping {
       return decimalScale;
    }
 
+   public Integer dimension() {
+      return dimension;
+   }
+
+   public VectorSimilarity similarity() {
+      return similarity;
+   }
+
+   public Integer beamWidth() {
+      return beamWidth;
+   }
+
+   public Integer maxConnection() {
+      return maxConnection;
+   }
+
    public Integer includeDepth() {
       return includeDepth;
    }
@@ -182,21 +205,108 @@ public final class FieldMapping {
    @Override
    public String toString() {
       return "FieldMapping{" +
-            "name='" + name + '\'' +
-            ", fieldDescriptor=" + fieldDescriptor +
+            "fieldDescriptor=" + fieldDescriptor +
+            ", name='" + name + '\'' +
             ", searchable=" + searchable +
             ", projectable=" + projectable +
             ", aggregable=" + aggregable +
             ", sortable=" + sortable +
+            ", indexNullAs='" + indexNullAs + '\'' +
             ", analyzer='" + analyzer + '\'' +
             ", normalizer='" + normalizer + '\'' +
-            ", indexNullAs='" + indexNullAs + '\'' +
-            ", norms=" + norms +
             ", searchAnalyzer='" + searchAnalyzer + '\'' +
+            ", norms=" + norms +
             ", termVector=" + termVector +
             ", decimalScale=" + decimalScale +
+            ", dimension=" + dimension +
+            ", similarity=" + similarity +
+            ", beamWidth=" + beamWidth +
+            ", maxConnection=" + maxConnection +
             ", includeDepth=" + includeDepth +
             ", structure=" + structure +
             '}';
+   }
+
+   public static class Builder {
+      private final FieldDescriptor fieldDescriptor;
+      private final String name;
+      private final boolean searchable;
+      private final boolean projectable;
+      private final boolean aggregable;
+      private final boolean sortable;
+
+      private String indexNullAs;
+      private String analyzer;
+      private String normalizer;
+      private String searchAnalyzer;
+      private Boolean norms;
+      private TermVector termVector;
+      private Integer decimalScale;
+      private Integer dimension;
+      private VectorSimilarity similarity;
+      private Integer beamWidth;
+      private Integer maxConnection;
+      private Integer includeDepth;
+      private Structure structure;
+
+      private Builder(FieldDescriptor fieldDescriptor, String name,
+                      boolean searchable, boolean projectable, boolean aggregable, boolean sortable) {
+         this.fieldDescriptor = fieldDescriptor;
+         this.name = name;
+         this.searchable = searchable;
+         this.projectable = projectable;
+         this.aggregable = aggregable;
+         this.sortable = sortable;
+         this.indexNullAs = indexNullAs;
+      }
+
+      public Builder indexNullAs(String indexNullAs) {
+         this.indexNullAs = indexNullAs;
+         return this;
+      }
+
+      public Builder analyzer(String analyzer) {
+         this.analyzer = analyzer;
+         return this;
+      }
+
+      public Builder keyword(String normalizer, boolean norms) {
+         this.normalizer = normalizer;
+         this.norms = norms;
+         return this;
+      }
+
+      public Builder text(String analyzer, String searchAnalyzer, boolean norms, TermVector termVector) {
+         this.analyzer = analyzer;
+         this.searchAnalyzer = searchAnalyzer;
+         this.norms = norms;
+         this.termVector = termVector;
+         return this;
+      }
+
+      public Builder decimalScale(int decimalScale) {
+         this.decimalScale = decimalScale;
+         return this;
+      }
+
+      public Builder vector(int dimension, VectorSimilarity similarity, int beamWidth, int maxConnection) {
+         this.dimension = dimension;
+         this.similarity = similarity;
+         this.beamWidth = beamWidth;
+         this.maxConnection = maxConnection;
+         return this;
+      }
+
+      public Builder embedded(int includeDepth, Structure structure) {
+         this.includeDepth = includeDepth;
+         this.structure = structure;
+         return this;
+      }
+
+      public FieldMapping build() {
+         return new FieldMapping(fieldDescriptor, name, searchable, projectable, aggregable, sortable, indexNullAs,
+               analyzer, normalizer, searchAnalyzer, norms, termVector, decimalScale,
+               dimension, similarity, beamWidth, maxConnection, includeDepth, structure);
+      }
    }
 }

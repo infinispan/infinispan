@@ -24,10 +24,11 @@ public final class SearchQueryParsingResult {
    private final SearchPredicate predicate;
    private final SearchSort sort;
    private final int hitCountAccuracy;
+   private final Integer knn;
 
    public SearchQueryParsingResult(Class<?> targetedType, String targetedTypeName, SearchProjectionInfo projectionInfo,
                                    InfinispanAggregation<?> aggregation, SearchPredicate predicate, SearchSort sort,
-                                   int hitCountAccuracy) {
+                                   int hitCountAccuracy, Integer knn) {
       this.targetedType = targetedType;
       this.targetedTypeName = targetedTypeName;
       this.projectionInfo = projectionInfo;
@@ -35,11 +36,12 @@ public final class SearchQueryParsingResult {
       this.predicate = predicate;
       this.sort = sort;
       this.hitCountAccuracy = hitCountAccuracy;
+      this.knn = knn;
    }
 
    public SearchQueryBuilder builder(SearchSession querySession) {
       SearchScope<?> scope = getScope(querySession);
-      return new SearchQueryBuilder(querySession, scope, projectionInfo, aggregation, predicate, sort, hitCountAccuracy);
+      return new SearchQueryBuilder(querySession, scope, projectionInfo, aggregation, predicate, sort, hitCountAccuracy, knn);
    }
 
    private SearchScope<?> getScope(SearchSession querySession) {

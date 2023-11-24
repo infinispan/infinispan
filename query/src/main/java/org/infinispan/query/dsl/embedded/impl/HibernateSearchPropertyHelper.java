@@ -71,6 +71,16 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
    }
 
    @Override
+   public Class<?> getIndexedPropertyType(Class<?> entityType, String[] propertyPath) {
+      IndexValueFieldDescriptor fieldDescriptor = getValueFieldDescriptor(entityType, propertyPath);
+      if (fieldDescriptor == null) {
+         return null;
+      }
+
+      return fieldDescriptor.type().dslArgumentClass();
+   }
+
+   @Override
    public boolean isRepeatedProperty(Class<?> entityType, String[] propertyPath) {
       IndexFieldDescriptor fieldDescriptor = getFieldDescriptor(entityType, propertyPath);
       if (fieldDescriptor == null) {
@@ -186,6 +196,14 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
       public boolean isSortable(String[] propertyPath) {
          IndexValueFieldTypeDescriptor field = getField(propertyPath);
          return field != null && field.sortable();
+      }
+
+      @Override
+      public boolean isVector(String[] propertyPath) {
+         IndexValueFieldTypeDescriptor field = getField(propertyPath);
+
+         // TODO https://hibernate.atlassian.net/browse/HSEARCH-3909 check it
+         return true;
       }
 
       @Override

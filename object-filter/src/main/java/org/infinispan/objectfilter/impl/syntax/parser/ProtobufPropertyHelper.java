@@ -129,6 +129,11 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
       return null;
    }
 
+   @Override
+   public Class<?> getIndexedPropertyType(Descriptor entityType, String[] propertyPath) {
+      return getPrimitivePropertyType(entityType, propertyPath);
+   }
+
    /**
     * @param entityType
     * @param propertyPath

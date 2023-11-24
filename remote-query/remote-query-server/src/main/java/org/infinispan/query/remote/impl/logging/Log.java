@@ -4,6 +4,7 @@ import static org.jboss.logging.Logger.Level.WARN;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.protostream.descriptors.JavaType;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
@@ -89,5 +90,11 @@ public interface Log extends BasicLogger {
 
    @Message(id = 28022, value = "The declared indexed type '%s' is not known. Please register its proto schema file first")
    CacheConfigurationException unknownType(String typeName);
+
+   @Message(id = 28023, value = "Dimension attribute is required for the vector field '%s'")
+   CacheException dimensionAttributeRequired(String fieldName);
+
+   @Message(id = 28024, value = "The type '%s' is not valid for the vector field '%s'. Valid types are: '%s' or '%s'.")
+   CacheException wrongTypeForVector(String typeName, String fieldName, JavaType validType1, JavaType validType2);
 
 }

@@ -255,6 +255,7 @@ negatedExpression
 equalityExpression
 @init { boolean isNull = false; boolean isNegated = false; }
    :  (ftOccurrence? ftFieldPath COLON)=> fullTextExpression
+   |  (vectorFieldPath ARROW)=> knnExpression
    |  (relationalExpression -> relationalExpression)
       (is_key (not_key {isNegated = true;})? (NULL {isNull = true;} | empty_key)
          -> {isNull && isNegated}? ^(IS_NOT_NULL[$not_key.start, "is not null"] $equalityExpression)
@@ -353,6 +354,10 @@ collectionExpression
    :   (elements_key^ | indices_key^) LPAREN! propertyReference RPAREN!
    ;
 
+vectorSearch
+   : LSQUARE! expressionOrVector RSQUARE!
+   ;
+
 atom
    :  identPrimary -> ^(PATH identPrimary)
 	    //TODO  if ends with:
@@ -364,6 +369,7 @@ atom
    |  parameterSpecification { if (!isParameterUsageEnabled()) throw new RecognitionException(input); }
 	//validate using Scopes if it is enabled or not to use parameterSpecification.. if not generate an exception
    |  LPAREN! expressionOrVector RPAREN!
+   |  vectorSearch
    ;
 
 parameterSpecification
@@ -673,6 +679,10 @@ fullTextExpression
    |  ftFieldPath COLON^ ftBoostedQuery
    ;
 
+knnExpression
+   : vectorFieldPath ARROW^ knnTerm
+   ;
+
 ftOccurrence
    :  PLUS -> FT_OCCUR_MUST[$PLUS, $PLUS.text]
    |  MINUS -> FT_OCCUR_MUST_NOT[$MINUS, $MINUS.text]
@@ -682,6 +692,10 @@ ftOccurrence
    ;
 
 ftFieldPath
+   :  dotIdentifierPath -> ^(PATH dotIdentifierPath)
+   ;
+
+vectorFieldPath
    :  dotIdentifierPath -> ^(PATH dotIdentifierPath)
    ;
 
@@ -703,6 +717,10 @@ ftTermOrQuery
 ftTerm
    :  ftLiteralOrParameter ftFuzzySlop? -> ^(FT_TERM ftLiteralOrParameter ftFuzzySlop?)
    |  REGEXP_LITERAL -> ^(FT_REGEXP REGEXP_LITERAL)
+   ;
+
+knnTerm
+   :  vectorSearch knnDistance? -> ^(KNN_TERM vectorSearch knnDistance?)
    ;
 
 // TODO [anistor] maybe we should not accept space between TILDE and following number/param to get rid of syntactic ambiguity
@@ -751,4 +769,8 @@ ftLiteralOrParameter
 ftNumericLiteralOrParameter
    :  parameterSpecification
    |  numericLiteral
+   ;
+
+knnDistance
+   :  TILDE (options { greedy=true; } : ftNumericLiteralOrParameter)? -> TILDE[$TILDE, $ftNumericLiteralOrParameter.text]
    ;

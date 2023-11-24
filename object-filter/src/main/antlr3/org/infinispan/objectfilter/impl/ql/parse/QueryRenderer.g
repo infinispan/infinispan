@@ -144,6 +144,7 @@ searchCondition
 
 predicate
    :  fullTextExpression
+   |  knnExpression
    |  TRUE { delegate.predicateConstantBoolean(true); }
    |  FALSE { delegate.predicateConstantBoolean(false); }
    |  ^( EQUALS rowValueConstructor comparativePredicateValue ) { delegate.predicateEquals( $comparativePredicateValue.text); }
@@ -195,6 +196,11 @@ characterValueExpression
 datetimeValueExpression
 	:	valueExpression
 	;
+
+vectorExpression returns [List<String> elements]
+@init { $elements = new ArrayList<String>(); }
+   :	^(VECTOR_EXPR (valueExpression { $elements.add($valueExpression.text); })+)
+   ;
 
 valueExpression
    :  ^( MINUS numericValueExpression )
@@ -360,9 +366,17 @@ fullTextExpression
    :  ^(COLON propertyReferenceExpression ftClause)
    ;
 
+knnExpression
+   :  ^(ARROW propertyReferenceExpression ftClause)
+   ;
+
 ftClause
    :  ^(FT_TERM ftLiteralOrParameter fuzzyFlop=TILDE?)
          { delegate.predicateFullTextTerm($ftLiteralOrParameter.text, $fuzzyFlop.text); }
+   |  ^(KNN_TERM vectorExpression knnDistance=TILDE?)
+            { delegate.predicateKNN($vectorExpression.elements, $knnDistance.text); }
+   |  ^(KNN_TERM vectorParameter knnDistance=TILDE?)
+               { delegate.predicateKNN($vectorParameter.text, $knnDistance.text); }
    |  ^(FT_REGEXP REGEXP_LITERAL)
          { delegate.predicateFullTextRegexp($REGEXP_LITERAL.text); }
    |  ^(FT_RANGE startRange=(LSQUARE | LCURLY) lower=ftRangeBound upper=ftRangeBound endRange=(RSQUARE | RCURLY))
@@ -391,6 +405,10 @@ ftLiteralOrParameter
    |  ^(MINUS numericLiteral)
    |  ^(PLUS numericLiteral)
    |  numericLiteral
+   ;
+
+vectorParameter
+   :  NAMED_PARAM
    ;
 
 numericLiteral

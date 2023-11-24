@@ -37,6 +37,7 @@ public final class SearchQueryBuilder {
    private final InfinispanAggregation<?> aggregation;
    private final SearchPredicate predicate;
    private final SearchSort sort;
+   private final Integer knn;
 
    // target segment collection may mutate
    private Collection<String> routingKeys = Collections.emptySet();
@@ -46,7 +47,8 @@ public final class SearchQueryBuilder {
    private TimeUnit timeUnit;
 
    public SearchQueryBuilder(SearchSession querySession, SearchScope<?> scope, SearchProjectionInfo projectionInfo,
-                             InfinispanAggregation<?> aggregation, SearchPredicate predicate, SearchSort sort, int hitCountAccuracy) {
+                             InfinispanAggregation<?> aggregation, SearchPredicate predicate, SearchSort sort,
+                             int hitCountAccuracy, Integer knn) {
       this.querySession = querySession;
       this.scope = scope;
       this.projectionInfo = projectionInfo;
@@ -54,6 +56,7 @@ public final class SearchQueryBuilder {
       this.predicate = predicate;
       this.sort = sort;
       this.hitCountAccuracy = hitCountAccuracy;
+      this.knn = knn;
    }
 
    public LuceneSearchQuery<?> build() {
@@ -97,6 +100,10 @@ public final class SearchQueryBuilder {
 
    public Sort getLuceneSort() {
       return ids().luceneSort();
+   }
+
+   public Integer knn() {
+      return knn;
    }
 
    public InfinispanAggregation<?> aggregation() {

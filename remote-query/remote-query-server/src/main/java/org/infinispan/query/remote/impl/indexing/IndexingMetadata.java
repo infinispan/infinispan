@@ -105,6 +105,14 @@ public final class IndexingMetadata {
       return fieldMapping != null && fieldMapping.sortable();
    }
 
+   public Boolean isVectorField(String fieldName) {
+      if (fields == null) {
+         return isIndexed;
+      }
+      FieldMapping fieldMapping = fields.get(fieldName);
+      return fieldMapping != null && fieldMapping.dimension() != null;
+   }
+
    public Object getNullMarker(String fieldName) {
       if (fields == null) {
          return null;
