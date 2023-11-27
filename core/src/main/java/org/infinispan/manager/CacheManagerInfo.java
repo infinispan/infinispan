@@ -2,11 +2,11 @@ package org.infinispan.manager;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -68,7 +68,7 @@ public class CacheManagerInfo implements JsonSerialization {
    }
 
    public Set<String> getCacheConfigurationNames() {
-      Set<String> names = new HashSet<>(configurationManager.getDefinedConfigurations());
+      Set<String> names = new TreeSet<>(configurationManager.getDefinedConfigurations());
       internalCacheRegistry.filterPrivateCaches(names);
       if (names.isEmpty())
          return Collections.emptySet();

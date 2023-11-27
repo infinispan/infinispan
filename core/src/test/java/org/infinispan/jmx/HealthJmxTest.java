@@ -18,6 +18,7 @@ import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.commons.test.TestResourceTracker;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "jmx.HealthJmxTest")
@@ -72,7 +73,11 @@ public class HealthJmxTest extends MultipleCacheManagersTest {
         assertEquals((String) clusterHealth, HealthStatus.HEALTHY.toString());
         assertEquals((String) clusterName, TestResourceTracker.getCurrentTestName());
         assertEquals((int) numberOfNodes, 1);
-        assertEquals(((String[]) cacheHealth)[0], "test");
-        assertEquals(((String[]) cacheHealth)[1], HealthStatus.HEALTHY.toString());
+
+        var health = (String[]) cacheHealth;
+        assertEquals(health[0], TestCacheManagerFactory.DEFAULT_CACHE_NAME);
+        assertEquals(health[1], HealthStatus.HEALTHY.toString());
+        assertEquals(health[2], "test");
+        assertEquals(health[3], HealthStatus.HEALTHY.toString());
     }
 }
