@@ -23,8 +23,8 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.server.core.telemetry.OpenTelemetryService;
-import org.infinispan.telemetry.InfinispanTelemetry;
 import org.infinispan.server.core.telemetry.inmemory.InMemoryTelemetryClient;
+import org.infinispan.telemetry.InfinispanTelemetry;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -49,7 +49,7 @@ public class TracingPropagationTest extends SingleCacheManagerTest {
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager();
       cacheManager.createCache(CACHE_NAME, getDefaultClusteredCacheConfig(CacheMode.LOCAL).build());
 
-      GlobalComponentRegistry globalComponentRegistry = cacheManager.getGlobalComponentRegistry();
+      GlobalComponentRegistry globalComponentRegistry = GlobalComponentRegistry.of(cacheManager);
       globalComponentRegistry.registerComponent(
             new OpenTelemetryService(telemetryClient.telemetryService().openTelemetry()), InfinispanTelemetry.class);
 

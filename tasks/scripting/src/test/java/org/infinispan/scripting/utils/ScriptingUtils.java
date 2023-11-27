@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.api.BasicCache;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.security.Security;
@@ -19,7 +20,7 @@ import org.infinispan.security.Security;
 public class ScriptingUtils {
 
     public static ScriptingManager getScriptingManager(EmbeddedCacheManager manager) {
-       return Security.doPrivileged(() -> manager.getGlobalComponentRegistry().getComponent(ScriptingManager.class));
+       return Security.doPrivileged(() -> GlobalComponentRegistry.componentOf(manager, ScriptingManager.class));
     }
 
     public static void loadData(BasicCache<String, String> cache, String fileName) throws IOException {

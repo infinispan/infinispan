@@ -79,6 +79,7 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.impl.ClusterExecutors;
+import org.infinispan.manager.impl.InternalCacheManager;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.transport.Address;
@@ -147,7 +148,7 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.GLOBAL)
 @SurvivesRestarts
 @MBean(objectName = DefaultCacheManager.OBJECT_NAME, description = "Component that acts as a manager, factory and container for caches in the system.")
-public class DefaultCacheManager implements EmbeddedCacheManager {
+public class DefaultCacheManager extends InternalCacheManager {
    public static final String OBJECT_NAME = "CacheManager";
    private static final Log log = LogFactory.getLog(DefaultCacheManager.class);
 
@@ -159,6 +160,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    private final Health health;
    private final ConfigurationManager configurationManager;
    private final String defaultCacheName;
+
 
    private final Lock lifecycleLock = new ReentrantLock();
    private final Condition lifecycleCondition = lifecycleLock.newCondition();
@@ -414,14 +416,16 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    private DefaultCacheManager(DefaultCacheManager original) {
       this.authorizer = original.authorizer;
-      this.configurationManager = original.configurationManager;
-      this.health = original.health;
-      this.classAllowList = original.classAllowList;
       this.cacheManagerInfo = original.cacheManagerInfo;
       this.cacheManagerAdmin = original.cacheManagerAdmin;
+      this.classAllowList = original.classAllowList;
       this.defaultCacheName = original.defaultCacheName;
-      this.stats = original.stats;
+      this.configurationManager = original.configurationManager;
       this.globalComponentRegistry = original.globalComponentRegistry;
+      this.health = original.health;
+      this.stats = original.stats;
+      this.status = original.status;
+      this.transport = original.transport;
    }
 
    @Override
@@ -1202,12 +1206,6 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    }
 
    @Override
-   public GlobalComponentRegistry getGlobalComponentRegistry() {
-      authorizer.checkPermission(getSubject(), AuthorizationPermission.ADMIN);
-      return globalComponentRegistry;
-   }
-
-   @Override
    public void addCacheDependency(String from, String to) {
       authorizer.checkPermission(getSubject(), AuthorizationPermission.ADMIN);
       cacheDependencyGraph.addDependency(from, to);
@@ -1328,6 +1326,11 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
             }
          };
       }
+   }
+
+   protected GlobalComponentRegistry globalComponentRegistry() {
+      authorizer.checkPermission(getSubject(), AuthorizationPermission.ADMIN);
+      return globalComponentRegistry;
    }
 
    static void enableGetCacheBlockingCheck() {

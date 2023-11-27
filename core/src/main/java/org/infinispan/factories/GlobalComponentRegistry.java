@@ -35,6 +35,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.ModuleRepository;
+import org.infinispan.manager.impl.InternalCacheManager;
 import org.infinispan.metrics.impl.CacheManagerMetricsRegistration;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl;
@@ -408,4 +409,13 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
    public XSiteCacheMapper getXSiteCacheMapper() {
       return basicComponentRegistry.getComponent(XSiteCacheMapper.class).running();
    }
+
+   public static GlobalComponentRegistry of(EmbeddedCacheManager cacheManager) {
+      return InternalCacheManager.of(cacheManager);
+   }
+
+   public static <T> T componentOf(EmbeddedCacheManager cacheManager, Class<T> type) {
+      return of(cacheManager).getComponent(type);
+   }
+
 }

@@ -27,6 +27,7 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.BlockingInterceptor;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
@@ -221,7 +222,7 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
       ClusterTopologyManager ctm = TestingUtil.extractGlobalComponent(manager, ClusterTopologyManager.class);
       Answer<?> forwardedAnswer = AdditionalAnswers.delegatesTo(ctm);
       ClusterTopologyManager mock = mock(ClusterTopologyManager.class, withSettings().defaultAnswer(forwardedAnswer));
-      BlockingManager blockingManager = manager.getGlobalComponentRegistry().getComponent(BlockingManager.class);
+      BlockingManager blockingManager = GlobalComponentRegistry.componentOf(manager, BlockingManager.class);
       doAnswer(invocation -> {
          Object[] arguments = invocation.getArguments();
          Address source = (Address) arguments[1];

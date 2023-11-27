@@ -10,6 +10,7 @@ import java.util.Random;
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.query.core.impl.QueryCache;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
@@ -69,7 +70,7 @@ public class NamedParamsPerfTest extends AbstractQueryDslTest {
       }
       cache(0).put(1000, new Person(999, "Unnamed", "Unnamed"));
 
-      QueryCache queryCache = manager(0).getGlobalComponentRegistry().getComponent(QueryCache.class);
+      QueryCache queryCache = GlobalComponentRegistry.componentOf(manager(0), QueryCache.class);
       assertNotNull(queryCache);
 
       Query<Person> query = factory.create("FROM " + Person.class.getName() + " WHERE firstName = :nameParam1 OR lastName = :nameParam2 OR id >= :idParam1 OR id < :idParam2");

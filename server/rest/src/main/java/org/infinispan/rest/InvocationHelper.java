@@ -42,7 +42,7 @@ public class InvocationHelper {
       this.server = server;
       this.executor = executor;
 
-      GlobalComponentRegistry globalComponentRegistry = restCacheManager.getInstance().getGlobalComponentRegistry();
+      GlobalComponentRegistry globalComponentRegistry = GlobalComponentRegistry.of(restCacheManager.getInstance());
       this.encoderRegistry = globalComponentRegistry.getComponent(EncoderRegistry.class);
       this.metricsRegistry = globalComponentRegistry.getComponent(MetricsRegistry.class);
       this.protobufMetadataManager = globalComponentRegistry.getComponent(ProtobufMetadataManager.class);

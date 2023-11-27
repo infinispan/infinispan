@@ -28,7 +28,7 @@ public class TasksResourceTest extends AbstractRestResourceTest {
    @Override
    protected void defineCaches(EmbeddedCacheManager cm) {
       cm.defineConfiguration("default", getDefaultCacheBuilder().build());
-      GlobalComponentRegistry gcr = cm.getGlobalComponentRegistry();
+      GlobalComponentRegistry gcr = GlobalComponentRegistry.of(cm);
       TaskManager taskManager = gcr.getComponent(TaskManager.class);
       TaskEngine taskEngine = new DummyTaskEngine();
       taskManager.registerTaskEngine(taskEngine);

@@ -13,6 +13,7 @@ import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.scripting.impl.ScriptTask;
 import org.infinispan.security.AuthorizationPermission;
@@ -73,7 +74,7 @@ public class SecureScriptingTaskManagerTest extends SingleCacheManagerTest {
       Security.doAs(ADMIN, () -> {
          try {
             SecureScriptingTaskManagerTest.super.setup();
-            taskManager = cacheManager.getGlobalComponentRegistry().getComponent(TaskManager.class);
+            taskManager = GlobalComponentRegistry.componentOf(cacheManager, TaskManager.class);
             Cache<String, String> scriptCache = cacheManager.getCache(ScriptingManager.SCRIPT_CACHE);
             try (InputStream is = this.getClass().getResourceAsStream("/testRole.js")) {
                String script = loadFileAsString(is);

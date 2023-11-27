@@ -8,13 +8,14 @@ import java.util.function.Supplier;
 import javax.security.auth.Subject;
 
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.testng.annotations.Test;
 
 @Test(groups = {"functional", "smoke"}, testName = "security.CacheManagerAuthorizationTest")
 public class CacheManagerAuthorizationTest extends BaseAuthorizationTest {
 
    @TestCachePermission(AuthorizationPermission.ADMIN)
-   Runnable GET_GLOBAL_COMPONENT_REGISTRY = () -> cacheManager.getGlobalComponentRegistry();
+   Runnable GET_GLOBAL_COMPONENT_REGISTRY = () -> GlobalComponentRegistry.of(cacheManager);
 
    @TestCachePermission(AuthorizationPermission.ADMIN)
    Runnable GET_CACHE_MANAGER_CONFIGURATION = () -> cacheManager.getCacheManagerConfiguration();

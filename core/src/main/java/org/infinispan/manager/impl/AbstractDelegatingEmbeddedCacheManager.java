@@ -33,7 +33,7 @@ import org.infinispan.stats.CacheContainerStats;
  * @see org.infinispan.cache.impl.AbstractDelegatingAdvancedCache
  */
 @SurvivesRestarts
-public class AbstractDelegatingEmbeddedCacheManager implements EmbeddedCacheManager {
+public class AbstractDelegatingEmbeddedCacheManager extends InternalCacheManager {
 
    protected EmbeddedCacheManager cm;
 
@@ -198,11 +198,6 @@ public class AbstractDelegatingEmbeddedCacheManager implements EmbeddedCacheMana
    }
 
    @Override
-   public GlobalComponentRegistry getGlobalComponentRegistry() {
-      return cm.getGlobalComponentRegistry();
-   }
-
-   @Override
    public void addCacheDependency(String from, String to) {
       cm.addCacheDependency(from, to);
    }
@@ -245,5 +240,10 @@ public class AbstractDelegatingEmbeddedCacheManager implements EmbeddedCacheMana
    @Override
    public Subject getSubject() {
       return cm.getSubject();
+   }
+
+   @Override
+   protected GlobalComponentRegistry globalComponentRegistry() {
+      return InternalCacheManager.of(cm);
    }
 }

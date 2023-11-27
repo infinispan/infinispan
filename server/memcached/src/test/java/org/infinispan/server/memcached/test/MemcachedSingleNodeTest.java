@@ -22,6 +22,7 @@ import java.util.stream.Stream;
 
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.DummyServerStateManager;
 import org.infinispan.server.core.ServerStateManager;
@@ -53,7 +54,7 @@ public abstract class MemcachedSingleNodeTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = createTestCacheManager();
-      cacheManager.getGlobalComponentRegistry().registerComponent(new DummyServerStateManager(), ServerStateManager.class);
+      GlobalComponentRegistry.of(cacheManager).registerComponent(new DummyServerStateManager(), ServerStateManager.class);
       TestingUtil.replaceComponent(cacheManager, TimeService.class, timeService, true);
       MemcachedServerConfigurationBuilder builder = serverBuilder().protocol(getProtocol());
       if (withAuthentication()) {

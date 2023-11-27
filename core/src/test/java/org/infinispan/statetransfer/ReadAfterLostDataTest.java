@@ -23,6 +23,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.topology.TopologyUpdateCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.functional.EntryView.ReadEntryView;
 import org.infinispan.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.functional.FunctionalMap.ReadOnlyMap;
@@ -162,7 +163,7 @@ public class ReadAfterLostDataTest extends MultipleCacheManagersTest {
          controlledTransport.excludeCommands(HeartBeatCommand.class);
          cleanup.add(controlledTransport::stopBlocking);
 
-         InternalCacheRegistry icr = coordCache.getCacheManager().getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+         InternalCacheRegistry icr = GlobalComponentRegistry.componentOf(coordCache.getCacheManager(), InternalCacheRegistry.class);
          int cacheCount = icr.getInternalCacheNames().size() + 1; // include default
          List<CompletableFuture<ControlledTransport.BlockedRequest<TopologyUpdateCommand>>> topologyUpdateRequests = new ArrayList<>();
          // Block the sending of the TopologyUpdateCommand until a command asks for the transaction data future

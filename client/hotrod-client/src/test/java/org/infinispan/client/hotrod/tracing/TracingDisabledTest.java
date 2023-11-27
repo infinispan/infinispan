@@ -21,8 +21,8 @@ import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.server.core.telemetry.OpenTelemetryService;
-import org.infinispan.telemetry.InfinispanTelemetry;
 import org.infinispan.server.core.telemetry.inmemory.InMemoryTelemetryClient;
+import org.infinispan.telemetry.InfinispanTelemetry;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -44,7 +44,7 @@ public class TracingDisabledTest extends SingleHotRodServerTest {
       EmbeddedCacheManager manager = TestCacheManagerFactory.createServerModeCacheManager();
       manager.defineConfiguration("poems", builder.build());
 
-      GlobalComponentRegistry globalComponentRegistry = manager.getGlobalComponentRegistry();
+      GlobalComponentRegistry globalComponentRegistry = GlobalComponentRegistry.of(manager);
       globalComponentRegistry.registerComponent(
             new OpenTelemetryService(telemetryClient.telemetryService().openTelemetry()), InfinispanTelemetry.class);
       return manager;

@@ -4,6 +4,7 @@ import static org.infinispan.commons.test.CommonsTestingUtil.loadFileAsString;
 
 import java.io.InputStream;
 
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -25,7 +26,7 @@ public abstract class AbstractScriptingTest extends SingleCacheManagerTest {
     @Override
     protected void setup() throws Exception {
         super.setup();
-        scriptingManager = cacheManager.getGlobalComponentRegistry().getComponent(ScriptingManager.class);
+        scriptingManager = GlobalComponentRegistry.componentOf(cacheManager, ScriptingManager.class);
         for (String scriptName : getScripts()) {
             try (InputStream is = this.getClass().getResourceAsStream("/" + scriptName)) {
                 String script = loadFileAsString(is);

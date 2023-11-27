@@ -15,6 +15,7 @@ import java.util.List;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.AbstractDelegatingTransport;
 import org.infinispan.remoting.transport.Transport;
@@ -312,7 +313,7 @@ public class GlobalXSiteAdminOpsTest extends AbstractMultipleSitesTest {
       List<EmbeddedCacheManager> cacheManagerList = site(0).cacheManagers();
       List<BlockingTransport> blockingTransportList = new ArrayList<>(cacheManagerList.size());
       cacheManagerList.forEach(cacheManager -> {
-         Transport transport = cacheManager.getGlobalComponentRegistry().getComponent(Transport.class);
+         Transport transport = GlobalComponentRegistry.componentOf(cacheManager, Transport.class);
          if (transport instanceof BlockingTransport) {
             blockingTransportList.add((BlockingTransport) transport);
          } else if (createIfAbsent) {

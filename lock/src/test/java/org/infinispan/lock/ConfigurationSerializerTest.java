@@ -14,6 +14,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.configuration.serializer.AbstractConfigurationSerializerTest;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.lock.configuration.ClusteredLockConfiguration;
 import org.infinispan.lock.configuration.ClusteredLockManagerConfiguration;
 import org.infinispan.lock.configuration.Reliability;
@@ -35,7 +36,7 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
       ConfigurationBuilderHolder holder = new ParserRegistry().parseFile("configs/all/clustered-locks-dist.xml");
       withCacheManager(() -> createClusteredCacheManager(holder), cacheManager -> {
          cacheManager.getCache(ClusteredLockModuleLifecycle.CLUSTERED_LOCK_CACHE_NAME);
-         GlobalConfiguration globalConfiguration = cacheManager.getGlobalComponentRegistry().getGlobalConfiguration();
+         GlobalConfiguration globalConfiguration = GlobalComponentRegistry.of(cacheManager).getGlobalConfiguration();
          ClusteredLockManagerConfiguration clmConfig = globalConfiguration
                .module(ClusteredLockManagerConfiguration.class);
          assertNotNull(clmConfig);
@@ -50,7 +51,7 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
       ConfigurationBuilderHolder holder = new ParserRegistry().parseFile("configs/all/clustered-locks-repl.xml");
       withCacheManager(() -> createClusteredCacheManager(holder), cacheManager -> {
          cacheManager.getCache(ClusteredLockModuleLifecycle.CLUSTERED_LOCK_CACHE_NAME);
-         GlobalConfiguration globalConfiguration = cacheManager.getGlobalComponentRegistry().getGlobalConfiguration();
+         GlobalConfiguration globalConfiguration = GlobalComponentRegistry.of(cacheManager).getGlobalConfiguration();
          ClusteredLockManagerConfiguration clmConfig = globalConfiguration
                .module(ClusteredLockManagerConfiguration.class);
          assertNotNull(clmConfig);

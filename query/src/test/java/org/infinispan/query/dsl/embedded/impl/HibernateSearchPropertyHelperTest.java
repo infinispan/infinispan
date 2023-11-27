@@ -29,9 +29,7 @@ public class HibernateSearchPropertyHelperTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager();
-
-      GlobalComponentRegistry componentRegistry = cacheManager.getGlobalComponentRegistry();
-      BlockingManager blockingManager = componentRegistry.getComponent(BlockingManager.class);
+      BlockingManager blockingManager = GlobalComponentRegistry.componentOf(cacheManager, BlockingManager.class);
 
       // the cache manager is created only to provide manager instances to the search mapping
       searchMapping = SearchMappingHelper.createSearchMappingForTests(blockingManager, TestEntity.class);

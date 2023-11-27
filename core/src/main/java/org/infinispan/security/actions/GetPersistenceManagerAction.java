@@ -2,6 +2,7 @@ package org.infinispan.security.actions;
 
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 
@@ -16,7 +17,7 @@ public class GetPersistenceManagerAction extends AbstractEmbeddedCacheManagerAct
 
    @Override
    public PersistenceManager get() {
-      ComponentRegistry cr = cacheManager.getGlobalComponentRegistry().getNamedComponentRegistry(cacheName);
+      ComponentRegistry cr = GlobalComponentRegistry.of(cacheManager).getNamedComponentRegistry(cacheName);
       if (cr == null)
          throw new IllegalLifecycleStateException();
 

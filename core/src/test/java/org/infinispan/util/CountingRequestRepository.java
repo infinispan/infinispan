@@ -8,9 +8,9 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.Request;
 import org.infinispan.remoting.transport.impl.RequestRepository;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.TestingUtil;
 
@@ -23,8 +23,7 @@ public class CountingRequestRepository extends RequestRepository {
    private Map<Long, Map<Long, Request<?>>> requests = new ConcurrentHashMap<>();
 
    public static CountingRequestRepository replaceDispatcher(EmbeddedCacheManager cacheManager) {
-      GlobalComponentRegistry gcr = cacheManager.getGlobalComponentRegistry();
-      JGroupsTransport transport = (JGroupsTransport) gcr.getComponent(Transport.class);
+      JGroupsTransport transport = (JGroupsTransport) GlobalComponentRegistry.componentOf(cacheManager, Transport.class);
       RequestRepository requestRepository =
             (RequestRepository) TestingUtil.extractField(JGroupsTransport.class, transport, "requests");
       CountingRequestRepository instance = new CountingRequestRepository(requestRepository);
