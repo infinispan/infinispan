@@ -71,9 +71,9 @@ public class KeyCloakServerExtension implements AfterAllCallback, BeforeAllCallb
             .withFixedExposedPort(14568, 8443)
             .withEnv(environment)
             .withCopyFileToContainer(MountableFile.forHostPath(keycloakImport.getAbsolutePath()), keycloakImport.getPath())
-            .withFileSystemBind(keycloakDirectory.getPath(), "/etc/x509/https")
+            .withCopyFileToContainer(MountableFile.forHostPath(keycloakDirectory.getPath()), "/etc/x509/https")
             //.waitingFor(Wait.forHttp("/").forPort(14567))
-            .waitingFor(Wait.forLogMessage(".*WFLYSRV0051.*",1))
+            .waitingFor(Wait.forLogMessage(".*WFLYSRV0025.*",1))
             .withLogConsumer(new JBossLoggingConsumer(LogFactory.getLog(testClass)));
       container.start();
    }
