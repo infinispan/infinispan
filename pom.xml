@@ -124,6 +124,7 @@
       <module>cdi/embedded</module>
       <module>cdi/remote</module>
       <module>lock</module>
+      <module>jcache</module>
       <module>graalvm</module>
       <module>quarkus</module>
       <module>gridfs</module>
@@ -269,6 +270,8 @@
       <versionx.io.reactivex.rxjava3.rxjava>${version.rxjava}</versionx.io.reactivex.rxjava3.rxjava>
       <versionx.javax.activation.activation>1.1.1</versionx.javax.activation.activation>
       <versionx.javax.annotation.javax.annotation-api>1.3.2</versionx.javax.annotation.javax.annotation-api>
+      <versionx.javax.cache.cache-api>${version.javax.cache}</versionx.javax.cache.cache-api>
+      <versionx.javax.cache.cache-tests>${version.javax.cache}</versionx.javax.cache.cache-tests>
       <versionx.javax.inject.javax.inject>1</versionx.javax.inject.javax.inject>
       <versionx.junit.junit>${version.junit}</versionx.junit.junit>
       <versionx.junit.platform>${version.junit.platform}</versionx.junit.platform>
@@ -818,6 +821,24 @@
             <scope>provided</scope>
          </dependency>
          <dependency>
+            <groupId>javax.cache</groupId>
+            <artifactId>cache-api</artifactId>
+            <version>${versionx.javax.cache.cache-api}</version>
+         </dependency>
+         <dependency>
+            <groupId>javax.cache</groupId>
+            <artifactId>cache-tests</artifactId>
+            <version>${versionx.javax.cache.cache-tests}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>javax.cache</groupId>
+            <artifactId>cache-tests</artifactId>
+            <version>${versionx.javax.cache.cache-tests}</version>
+            <scope>test</scope>
+            <classifier>tests</classifier>
+         </dependency>
+         <dependency>
             <groupId>jakarta.enterprise</groupId>
             <artifactId>jakarta.enterprise.cdi-api</artifactId>
             <version>${version.jakarta.enterprise.cdi}</version>
@@ -1167,6 +1188,13 @@
             <type>test-jar</type>
             <scope>test</scope>
             <version>${version.infinispan}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-jcache-commons</artifactId>
+            <version>${version.infinispan}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
