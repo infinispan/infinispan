@@ -10,7 +10,6 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +17,7 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
@@ -973,7 +973,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    @Override
    public Set<String> getCacheNames() {
       // Get the XML/programmatically defined caches
-      Set<String> names = new HashSet<>(configurationManager.getDefinedCaches());
+      Set<String> names = new TreeSet<>(configurationManager.getDefinedCaches());
       // Add the caches created dynamically without explicit config
       names.addAll(caches.keySet());
       InternalCacheRegistry internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
@@ -987,7 +987,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    @Override
    public Set<String> getAccessibleCacheNames() {
       if (configurationManager.getGlobalConfiguration().security().authorization().enabled()) {
-         Set<String> names = new HashSet<>();
+         Set<String> names = new TreeSet<>();
          GlobalSecurityManager gsm = globalComponentRegistry.getComponent(GlobalSecurityManager.class);
          for (String name : configurationManager.getDefinedCaches()) {
             Configuration cfg = configurationManager.getConfiguration(name);

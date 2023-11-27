@@ -13,11 +13,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
@@ -265,7 +265,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
    public Set<String> getCacheNames() {
       OperationsFactory operationsFactory = new OperationsFactory(channelFactory, listenerNotifier, configuration);
       String names = await(operationsFactory.newAdminOperation("@@cache@names", Collections.emptyMap()).execute());
-      Set<String> cacheNames = new HashSet<>();
+      Set<String> cacheNames = new TreeSet<>();
       // Simple pattern that matches the result which is represented as a JSON string array, e.g. ["cache1","cache2"]
       Pattern pattern = Pattern.compile(JSON_STRING_ARRAY_ELEMENT_REGEX);
       Matcher matcher = pattern.matcher(names);
