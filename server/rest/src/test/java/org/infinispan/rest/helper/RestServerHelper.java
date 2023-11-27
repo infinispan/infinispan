@@ -1,9 +1,15 @@
 package org.infinispan.rest.helper;
 
+import java.net.URISyntaxException;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.rest.RestServer;
@@ -15,11 +21,6 @@ import org.infinispan.server.core.DummyServerManagement;
 import org.infinispan.server.core.MockProtocolServer;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-
-import java.net.URISyntaxException;
-import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * A small utility class which helps managing REST server.
@@ -73,8 +74,7 @@ public class RestServerHelper {
    }
 
    public void clear() {
-      InternalCacheRegistry registry = cacheManager.getGlobalComponentRegistry()
-            .getComponent(InternalCacheRegistry.class);
+      InternalCacheRegistry registry = GlobalComponentRegistry.componentOf(cacheManager, InternalCacheRegistry.class);
       cacheManager.getCacheNames().stream()
             .filter(cacheName -> !registry.isInternalCache(cacheName))
             .filter(cacheManager::isRunning)

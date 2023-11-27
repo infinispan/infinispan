@@ -32,7 +32,7 @@ public class SecurityActions {
       return doPrivileged(new GetEmbeddedCacheManagerAction(cache));
    }
    public static GlobalComponentRegistry getGlobalComponentRegistry(EmbeddedCacheManager cacheManager) {
-      return doPrivileged(cacheManager::getGlobalComponentRegistry);
+      return doPrivileged(() -> GlobalComponentRegistry.of(cacheManager));
    }
 
    public static GlobalConfiguration getCacheManagerConfiguration(EmbeddedCacheManager cacheManager) {

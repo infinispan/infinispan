@@ -13,6 +13,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.core.stats.IndexInfo;
@@ -46,7 +47,7 @@ public class DefaultIndexPathTest extends SingleCacheManagerTest {
       result.defineConfiguration(CACHE_1_NAME, config.build());
       result.defineConfiguration(CACHE_2_NAME, config.build());
 
-      GlobalConfiguration globalConfiguration = result.getGlobalComponentRegistry().getGlobalConfiguration();
+      GlobalConfiguration globalConfiguration = GlobalComponentRegistry.of(result).getGlobalConfiguration();
       indexLocation1 = SearchPropertyExtractor.getIndexLocation(globalConfiguration, null, CACHE_1_NAME);
       indexLocation2 = SearchPropertyExtractor.getIndexLocation(globalConfiguration, null, CACHE_2_NAME);
       return result;

@@ -53,6 +53,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.EncodingConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -278,7 +279,7 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
 
    private <T> T withBackupManager(BiFunction<DefaultCacheManager, BackupManager, CompletionStage<T>> function) {
       try (DefaultCacheManager cm = createManager()) {
-         BlockingManager blockingManager = cm.getGlobalComponentRegistry().getComponent(BlockingManager.class);
+         BlockingManager blockingManager = GlobalComponentRegistry.componentOf(cm, BlockingManager.class);
          BackupManager backupManager = new BackupManagerImpl(blockingManager, cm, workingDir.toPath());
          backupManager.init();
          return await(function.apply(cm, backupManager));
@@ -308,7 +309,7 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
          IntStream.range(0, numEntries).forEach(i -> sourceManager1.getCache("protostream-cache").put(i, i));
 
          ParserRegistry parserRegistry = new ParserRegistry();
-         BlockingManager blockingManager = writerManagers.values().iterator().next().getGlobalComponentRegistry().getComponent(BlockingManager.class);
+         BlockingManager blockingManager = GlobalComponentRegistry.componentOf(writerManagers.values().iterator().next(), BlockingManager.class);
          String name = "testBackupAndRestoreMultipleContainers";
          BackupWriter writer = new BackupWriter(name, blockingManager, writerManagers, parserRegistry, workingDir.toPath());
 

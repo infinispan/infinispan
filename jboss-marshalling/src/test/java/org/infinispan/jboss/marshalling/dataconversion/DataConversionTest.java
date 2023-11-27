@@ -37,8 +37,7 @@ public class DataConversionTest extends org.infinispan.dataconversion.DataConver
 
          @Override
          public void call() {
-            GlobalComponentRegistry registry = cm.getGlobalComponentRegistry();
-            EncoderRegistry encoderRegistry = registry.getComponent(EncoderRegistry.class);
+            EncoderRegistry encoderRegistry = GlobalComponentRegistry.componentOf(cm, EncoderRegistry.class);
             encoderRegistry.registerEncoder(encoder);
 
             cm.getClassAllowList().addClasses(Person.class);

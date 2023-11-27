@@ -37,6 +37,7 @@ import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.NumericVersion;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.scripting.ScriptingManager;
@@ -329,7 +330,7 @@ public class HotRodClientTestingUtil {
    }
 
    public static void withScript(EmbeddedCacheManager cm, String scriptPath, Consumer<String> f) {
-      ScriptingManager scriptingManager = cm.getGlobalComponentRegistry().getComponent(ScriptingManager.class);
+      ScriptingManager scriptingManager = GlobalComponentRegistry.componentOf(cm, ScriptingManager.class);
       String scriptName = scriptPath.replaceAll("\\/", "");
       try {
          loadScript(scriptName, scriptingManager, scriptPath);

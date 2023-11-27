@@ -8,6 +8,7 @@ import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.TestingUtil;
@@ -36,7 +37,7 @@ public class ResetOfflineStatusTest extends BaseSiteUnreachableTest {
    public void testPutWithFailures() {
       populateKeys(cache(LON, 0));
       EmbeddedCacheManager manager = cache(LON, 0).getCacheManager();
-      Transport transport = manager.getGlobalComponentRegistry().getComponent(Transport.class);
+      Transport transport = GlobalComponentRegistry.componentOf(manager, Transport.class);
       DelegatingTransport delegatingTransport = new DelegatingTransport(transport);
       TestingUtil.replaceComponent(manager, Transport.class, delegatingTransport, true);
 

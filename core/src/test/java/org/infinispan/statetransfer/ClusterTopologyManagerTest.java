@@ -20,6 +20,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.globalstate.NoOpGlobalConfigurationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -388,7 +389,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       killNode(manager(0), new EmbeddedCacheManager[]{manager(1), manager(2)});
 
       // Wait for the GET_STATUS command and stop node 3 abruptly
-      Transport transport = manager(1).getGlobalComponentRegistry().getComponent(Transport.class);
+      Transport transport = GlobalComponentRegistry.componentOf(manager(1), Transport.class);
       int viewId = transport.getViewId();
       checkpoint.awaitStrict("GET_STATUS_" + viewId, 10, SECONDS);
       killNode(manager(2), new EmbeddedCacheManager[]{manager(1)});

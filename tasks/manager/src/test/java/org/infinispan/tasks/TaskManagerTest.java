@@ -38,7 +38,7 @@ public class TaskManagerTest extends SingleCacheManagerTest {
    @Override
    protected void setup() throws Exception {
       super.setup();
-      GlobalComponentRegistry gcr = cacheManager.getGlobalComponentRegistry();
+      GlobalComponentRegistry gcr = GlobalComponentRegistry.of(cacheManager);
       taskManager = (TaskManagerImpl) gcr.getComponent(TaskManager.class);
       taskEngine = new DummyTaskEngine();
       taskManager.registerTaskEngine(taskEngine);

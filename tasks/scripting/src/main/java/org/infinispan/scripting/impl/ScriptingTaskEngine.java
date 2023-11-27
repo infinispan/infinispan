@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskExecutionMode;
@@ -42,7 +43,7 @@ public class ScriptingTaskEngine implements NonBlockingTaskEngine {
 
    @Override
    public CompletionStage<List<Task>> getTasksAsync() {
-      BlockingManager blockingManager = scriptingManager.cacheManager.getGlobalComponentRegistry().getComponent(BlockingManager.class);
+      BlockingManager blockingManager = GlobalComponentRegistry.componentOf(scriptingManager.cacheManager, BlockingManager.class);
       return blockingManager.supplyBlocking(this::getTasks, "ScriptingTaskEngine - getTasksAsync");
    }
 

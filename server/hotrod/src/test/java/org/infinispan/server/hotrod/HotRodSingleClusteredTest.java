@@ -18,6 +18,7 @@ import java.util.EnumSet;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.server.hotrod.test.HotRodClient;
@@ -78,8 +79,7 @@ public class HotRodSingleClusteredTest extends MultipleCacheManagersTest {
    }
 
    public void testLoopbackPutOnProtectedCache(Method m) {
-      InternalCacheRegistry internalCacheRegistry =
-            manager(0).getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+      InternalCacheRegistry internalCacheRegistry = GlobalComponentRegistry.componentOf(manager(0), InternalCacheRegistry.class);
       internalCacheRegistry.registerInternalCache("MyInternalCache",
                                                   hotRodCacheConfiguration().build(),
                                                   EnumSet.of(InternalCacheRegistry.Flag.USER,

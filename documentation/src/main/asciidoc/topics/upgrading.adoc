@@ -6,12 +6,12 @@ Removed the following deprecated elements:
 
 * All: Parsing of configuration files with schema < 10.0
 * Commons: `Start.priority` and `Stop.priority`
-* Core: `AdvancedCache.with(ClassLoader)`, `AdvancedCache.getEvictionManager()`, `AdvancedCache.getAsyncInterceptorChain()`
+* Core: `AdvancedCache.with(ClassLoader)`, `AdvancedCache.getEvictionManager()`, `AdvancedCache.getAsyncInterceptorChain()`, `AdvancedCache.getComponentRegistry()`
 * Core: `AnyScopeComponentFactory.construct(Class)`
 * Core: `Cache.getListeners()`
 * Core: `ConfigurationBuilder.classLoader()`, `ConfigurationBuilder.customInterceptors()`
 * Core: `DataRehashedEvent.getUnionConsistentHash()`
-* Core: `EmbeddedCacheManager.getListeners()`, `EmbeddedCacheManager.getTransport()`, `EmbeddedCacheManager.removeCache(String)`
+* Core: `EmbeddedCacheManager.getListeners()`, `EmbeddedCacheManager.getTransport()`, `EmbeddedCacheManager.removeCache(String)`, `EmbeddedCacheManager.getGlobalComponentRegistry()`
 * Core: `FlagAffectedCommand.setFlags`, `FlagAffedctedCommand.addFlags`, `FlagAffectedCommand.hasFlag`
 * Core: `IntCacheStream.filterKeySegments(Set<Integer>)`
 * Core: `JMXStatisticsConfiguration`

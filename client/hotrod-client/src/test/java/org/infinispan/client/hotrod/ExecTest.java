@@ -24,6 +24,7 @@ import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.scripting.utils.ScriptingUtils;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -151,7 +152,7 @@ public class ExecTest extends MultiHotRodServersTest {
 
       RemoteCache<String, String> cache = clients.get(0).getCache(cacheName);
       ScriptingUtils.loadData(cache, "/macbeth.txt");
-      ScriptingManager scriptingManager = manager(0).getGlobalComponentRegistry().getComponent(ScriptingManager.class);
+      ScriptingManager scriptingManager = GlobalComponentRegistry.componentOf(manager(0), ScriptingManager.class);
       loadScript("/wordCountStream_dist.js", scriptingManager, "wordCountStream_dist.js");
 
       ArrayList<Map<String, Long>> results = cache.execute("wordCountStream_dist.js", new HashMap<String, String>());

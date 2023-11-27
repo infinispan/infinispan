@@ -11,6 +11,7 @@ import javax.security.auth.Subject;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
@@ -58,7 +59,7 @@ public class SecurityTaskManagerTest extends SingleCacheManagerTest {
          } catch (Exception e) {
             throw new RuntimeException(e);
          }
-         taskManager = (TaskManagerImpl) cacheManager.getGlobalComponentRegistry().getComponent(TaskManager.class);
+         taskManager = (TaskManagerImpl) GlobalComponentRegistry.componentOf(cacheManager, TaskManager.class);
          taskEngine = new DummyTaskEngine();
          taskManager.registerTaskEngine(taskEngine);
       });

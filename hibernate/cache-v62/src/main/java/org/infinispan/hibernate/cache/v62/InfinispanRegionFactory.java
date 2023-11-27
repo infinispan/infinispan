@@ -461,7 +461,7 @@ public class InfinispanRegionFactory implements RegionFactory, TimeSource, Infin
 
 
    private CacheCommandFactory getCacheCommandFactory() {
-      final GlobalComponentRegistry globalCr = manager.getGlobalComponentRegistry();
+      final GlobalComponentRegistry globalCr = GlobalComponentRegistry.of(manager);
 
       final Map<Byte, ModuleCommandFactory> factories =
             globalCr.getComponent("org.infinispan.modules.command.factories");

@@ -23,6 +23,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalAuthorizationConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.BasicComponentRegistry;
@@ -305,7 +306,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
       if (cacheManager == null) {
          throw new IllegalArgumentException("cacheManager cannot be null");
       }
-      ProtobufMetadataManagerImpl metadataManager = (ProtobufMetadataManagerImpl) cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
+      ProtobufMetadataManagerImpl metadataManager = (ProtobufMetadataManagerImpl) GlobalComponentRegistry.componentOf(cacheManager, ProtobufMetadataManager.class);
       if (metadataManager == null) {
          throw new IllegalStateException("ProtobufMetadataManager not initialised yet!");
       }

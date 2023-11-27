@@ -4,8 +4,6 @@ import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.infinispan.Cache;
@@ -15,7 +13,6 @@ import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.commons.test.BlockHoundHelper;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -27,8 +24,8 @@ import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.factories.impl.TestComponentAccessors;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.manager.TestModuleRepository;
+import org.infinispan.manager.impl.InternalCacheManager;
+import org.infinispan.manager.impl.InternalCacheManagerMock;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryFactoryImpl;
 import org.infinispan.persistence.InitializationContextImpl;
@@ -145,22 +142,18 @@ public class PersistenceMockUtil {
                                   .transport().nodeName(nodeName)
                                   .build();
 
-      Set<String> cachesSet = new HashSet<>();
-      EmbeddedCacheManager cm = mock(EmbeddedCacheManager.class);
+      InternalCacheManager cm = InternalCacheManagerMock.mock(gc);
+      GlobalComponentRegistry gcr = GlobalComponentRegistry.of(cm);
       when(cm.getCacheManagerConfiguration()).thenReturn(gc);
       when(cm.getClassAllowList()).thenReturn(new ClassAllowList());
-      GlobalComponentRegistry gcr = new GlobalComponentRegistry(gc, cm, cachesSet, TestModuleRepository.defaultModuleRepository(),
-                                                                mock(ConfigurationManager.class));
+
       BasicComponentRegistry gbcr = gcr.getComponent(BasicComponentRegistry.class);
       gbcr.replaceComponent(TimeService.class.getName(), timeService, true);
       gbcr.replaceComponent(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR, timeoutScheduledExecutor, false);
       ComponentRegistry registry = new ComponentRegistry(cacheName, configuration, cache, gcr,
                                                          configuration.getClass().getClassLoader());
-
-      when(cache.getCacheManager().getGlobalComponentRegistry()).thenReturn(gcr);
       when(cache.getClassLoader()).thenReturn(PersistenceMockUtil.class.getClassLoader());
-      when(cache.getCacheManager().getCacheManagerConfiguration()).thenReturn(gc);
-      when(cache.getCacheManager().getClassAllowList()).thenReturn(allowList);
+      when(cache.getCacheManager()).thenReturn(cm);
       when(cache.getName()).thenReturn(cacheName);
       when(cache.getAdvancedCache()).thenReturn(cache);
       when(cache.getComponentRegistry()).thenReturn(registry);

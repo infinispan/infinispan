@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -51,9 +52,7 @@ public class HotRodServerUnregisterTopologyCacheTest extends MultipleCacheManage
    }
 
    private Set<String> getInternalCacheNames(HotRodServer server) {
-      return server.getCacheManager()
-            .getGlobalComponentRegistry()
-            .getComponent(InternalCacheRegistry.class)
+      return GlobalComponentRegistry.componentOf(server.getCacheManager(), InternalCacheRegistry.class)
             .getInternalCacheNames();
    }
 }
