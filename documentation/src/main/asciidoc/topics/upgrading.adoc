@@ -82,7 +82,7 @@ SecurityManager.
 .`ssl_hostname_validation`
 A new property, `ssl_hostname_validation` with a default value of `true`.
 This property enables TLS hostname validation based on RFC 2818 rules.
-Additionally, setting the `sni_hostname` is now required when hostname validation is enabled.
+Additionally, setting the `sni_host_name` is now required when hostname validation is enabled.
 
 .Default property changes
 
@@ -90,7 +90,7 @@ Additionally, setting the `sni_hostname` is now required when hostname validatio
 |===
 |Property |{brandname} 14 |Previous versions
 
-| `connection_timeout`
+| `connect_timeout`
 | *2000 ms / 2 seconds*
 | 60000 ms / 60 seconds
 
