@@ -6,7 +6,7 @@
  * or declaratively, by placing a properties file named <tt>hotrod-client.properties</tt> in the classpath.</p>
  *
  * <p>A Hot Rod URI follows the following format:
- *    <code>hotrod[s]://[user[:password]@]host[:port][,host2[:port]][?property=value[&property2=value2]]</code>
+ *    <code>hotrod[s]://[user[:password]@]host[:port][,host2[:port]][?property=value[&amp;property2=value2]]</code>
  * </p>
  * <ul>
  *    <li><b>hotrod</b> or <b>hotrods</b> specifies whether to use a plain connection or TLS/SSL encryption.</li>
