@@ -1,49 +1,5 @@
 package org.infinispan.server.resp;
 
-import static io.lettuce.core.ScoredValue.just;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.fail;
-import static org.infinispan.server.resp.test.RespTestingUtil.OK;
-import static org.infinispan.server.resp.test.RespTestingUtil.PONG;
-import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
-import static org.infinispan.test.TestingUtil.getListeners;
-import static org.infinispan.test.TestingUtil.k;
-import static org.infinispan.test.TestingUtil.v;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
-
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-
-import org.assertj.core.api.SoftAssertions;
-import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.test.Exceptions;
-import org.infinispan.commons.time.ControlledTimeService;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.server.resp.commands.Commands;
-import org.infinispan.server.resp.test.CommonRespTests;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Factory;
-import org.testng.annotations.Test;
-
 import io.lettuce.core.ExpireArgs;
 import io.lettuce.core.FlushMode;
 import io.lettuce.core.KeyScanArgs;
@@ -64,6 +20,48 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.pubsub.RedisPubSubAdapter;
 import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
+import org.assertj.core.api.SoftAssertions;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.time.ControlledTimeService;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.server.resp.commands.Commands;
+import org.infinispan.server.resp.test.CommonRespTests;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Factory;
+import org.testng.annotations.Test;
+
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
+import static io.lettuce.core.ScoredValue.just;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
+import static org.infinispan.server.resp.test.RespTestingUtil.OK;
+import static org.infinispan.server.resp.test.RespTestingUtil.PONG;
+import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
+import static org.infinispan.test.TestingUtil.getListeners;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Base class for single node tests.
@@ -574,7 +572,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
          if (cursor.isFinished())
             break;
       }
-      assertTrue(keys.containsAll(all));
+      assertThat(keys).containsExactlyInAnyOrderElementsOf(all);
    }
 
    @Test
@@ -587,17 +585,25 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
          redis.set(k, v(i));
          all.add(k);
       }
+      assertScanWithCount(all, 5);
+      assertScanWithCount(all, 14);
+      assertScanWithCount(all, Integer.MAX_VALUE - 100);
+   }
+
+   private void assertScanWithCount(Set<String> all, int count) {
+      RedisCommands<String, String> redis = redisConnection.sync();
       Set<String> keys = new HashSet<>();
-      ScanArgs args = ScanArgs.Builder.limit(5);
+      ScanArgs args = ScanArgs.Builder.limit(count);
       for (KeyScanCursor<String> cursor = redis.scan(args);; cursor = redis.scan(cursor, args)) {
          if (!cursor.isFinished()) {
-            assertEquals(5, cursor.getKeys().size());
+            assertThat(cursor.getKeys()).hasSize(count);
          }
          keys.addAll(cursor.getKeys());
          if (cursor.isFinished())
             break;
       }
-      assertTrue(keys.containsAll(all));
+      assertThat(keys).hasSize(all.size());
+      assertThat(keys).containsExactlyInAnyOrderElementsOf(all);
    }
 
    @Test
@@ -1202,5 +1208,28 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       // TODO: Verify cardinality ISPN-14676
 
       assertWrongType(() -> redis.set("plain", "string"), () -> redis.pfadd("plain", "el1"));
+   }
+
+   @Test
+   public void testKeys() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.flushdb();
+      assertThat(redis.keys("*")).isEmpty();
+
+      Set<String> all = new HashSet<>();
+      for (int i = 0; i < 15; i++) {
+         String k = "hello_" + i;
+         redis.set(k, "world_" + i);
+         all.add(k);
+      }
+
+      List<String> allKeysPatternResult = redis.keys("*");
+      assertThat(allKeysPatternResult).hasSize(all.size());
+      assertThat(allKeysPatternResult).containsExactlyInAnyOrderElementsOf(all);
+      assertThat(redis.keys("*1")).containsExactlyInAnyOrder("hello_1", "hello_11");
+      assertThat(redis.keys("hello_[2-4]")).containsExactlyInAnyOrder("hello_2", "hello_3", "hello_4");
+      assertThat(redis.keys("hello_[24]")).containsExactlyInAnyOrder("hello_2", "hello_4");
+      assertThat(redis.keys("hello_[^1]")).containsExactlyInAnyOrder("hello_0", "hello_2", "hello_3",
+            "hello_4", "hello_5", "hello_6", "hello_7", "hello_8", "hello_9");
    }
 }

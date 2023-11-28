@@ -148,6 +148,9 @@ The {brandname} RESP endpoint implements the following Redis commands:
 | link:https://redis.io/commands/info[INFO]
 | This implementation attempts to return all attributes that a real Redis server returns. However, in most cases, the values are set to 0, because they cannot be retrieved or don't make any sense in {{brandname}}.
 
+| link:https://redis.io/commands/keys[KEYS]
+|
+
 | link:https://redis.io/commands/lindex[LINDEX]
 |
 

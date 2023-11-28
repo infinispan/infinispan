@@ -225,10 +225,21 @@ public class DefaultIterationManager implements IterationManager {
       DefaultIterationState iterationState = iterationStateMap.getIfPresent(iterationId);
       if (iterationState != null) {
          int i = 0;
-         List<CacheEntry> entries = new ArrayList<>(batch > 0 ? batch : iterationState.batch);
-         while (i++ < iterationState.batch && iterationState.iterator.hasNext()) {
-            entries.add(iterationState.iterator.next());
+         List<CacheEntry> entries;
+         if (batch == Integer.MAX_VALUE) {
+            entries = new ArrayList<>();
+            while (iterationState.iterator.hasNext()) {
+               entries.add(iterationState.iterator.next());
+            }
+         } else {
+            // FIXME: if batch number is geant, OutOfMemory
+            entries = new ArrayList<>();
+            // FIXME: we are not using batch value here
+            while (i++ < iterationState.batch && iterationState.iterator.hasNext()) {
+               entries.add(iterationState.iterator.next());
+            }
          }
+
          return new IterableIterationResult(iterationState.listener.getFinished(entries.isEmpty()), iterationState.iterator.hasNext() ? IterableIterationResult.Status.Success : IterableIterationResult.Status.Finished,
                entries, iterationState.metadata, iterationState.resultFunction);
       } else {

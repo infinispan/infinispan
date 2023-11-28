@@ -26,6 +26,7 @@ import org.infinispan.server.resp.commands.generic.EXPIREAT;
 import org.infinispan.server.resp.commands.generic.EXPIRETIME;
 import org.infinispan.server.resp.commands.generic.FLUSHALL;
 import org.infinispan.server.resp.commands.generic.FLUSHDB;
+import org.infinispan.server.resp.commands.generic.KEYS;
 import org.infinispan.server.resp.commands.generic.PERSIST;
 import org.infinispan.server.resp.commands.generic.PEXPIRETIME;
 import org.infinispan.server.resp.commands.generic.PTTL;
@@ -169,6 +170,7 @@ public final class Commands {
       ALL_COMMANDS[6] = new RespCommand[]{new GET(), new GETDEL(), new GETEX(), new GETRANGE()};
       ALL_COMMANDS[7] = new RespCommand[]{new HELLO(), new HGET(), new HSET(), new HLEN(), new HEXISTS(), new HDEL(), new HMGET(), new HKEYS(), new HVALS(), new HSCAN(), new HGETALL(), new HMSET(), new HINCRBY(), new HINCRBYFLOAT(), new HRANDFIELD()};
       ALL_COMMANDS[8] = new RespCommand[]{new INCR(), new INCRBY(), new INCRBYFLOAT(), new INFO()};
+      ALL_COMMANDS[10] = new RespCommand[]{new KEYS()};
       ALL_COMMANDS[11] = new RespCommand[]{new LINDEX(), new LINSERT(), new LPUSH(), new LPUSHX(), new LPOP(), new LRANGE(), new LLEN(), new LPOS(), new LREM(), new LSET(), new LTRIM(), new LMOVE(), new LMPOP() };
       ALL_COMMANDS[12] = new RespCommand[]{new MGET(), new MSET(), new MSETNX(), new MULTI(), new MODULE(), new MEMORY()};
       ALL_COMMANDS[15] = new RespCommand[]{new PUBLISH(), new PING(), new PSUBSCRIBE(), new PUNSUBSCRIBE(), new PTTL(), new PEXPIRETIME(), new PERSIST(), new PFADD()};
