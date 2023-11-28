@@ -1,10 +1,13 @@
 package org.infinispan.server.resp;
 
+import io.lettuce.core.KeyValue;
 import io.lettuce.core.Limit;
 import io.lettuce.core.Range;
 import io.lettuce.core.ScanArgs;
+import io.lettuce.core.ScoredValue;
 import io.lettuce.core.ZAddArgs;
 import io.lettuce.core.ZAggregateArgs;
+import io.lettuce.core.ZPopArgs;
 import io.lettuce.core.ZStoreArgs;
 import io.lettuce.core.api.sync.RedisCommands;
 import org.testng.annotations.BeforeMethod;
@@ -1605,5 +1608,60 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
       // ZSCAN people 0 MATCH nonsense
       assertThat(redis.zscan("people", ScanArgs.Builder.matches("nonsense")).getValues())
             .isEmpty();
+
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zscan("another"));
+   }
+
+   public void testZMPOP() {
+      // ZMPOP 1 people MIN
+      assertThat(redis.zmpop(ZPopArgs.Builder.min(), "people")).isEqualTo(KeyValue.empty("people"));
+      // ZMPOP 2 people1 people2 MIN
+      assertThat(redis.zmpop(ZPopArgs.Builder.min(), "people1", "people2")).isEqualTo(KeyValue.empty("people1"));
+
+      // ZADD people2 1 galder 2 dan 3 adrian 3.5 radim 4 tristan 4 vittorio 5 pedro 5 fabio 6 jose 6 ryan 6 anna
+      redis.zadd("people2", ZAddArgs.Builder.ch(),
+            just(1, "galder"),
+            just(2, "dan"),
+            just(3, "adrian"),
+            just(3.5, "radim"),
+            just(4, "tristan"),
+            just(4, "vittorio"),
+            just(5, "pedro"),
+            just(5, "fabio"),
+            just(6, "jose"),
+            just(6, "ryan"),
+            just(6, "anna"));
+
+      // ZMPOP 2 people1 people2 MIN
+      assertThat(redis.zmpop(ZPopArgs.Builder.min(), "people1", "people2"))
+            .isEqualTo(KeyValue.just("people2", just(1, "galder")));
+      // ZMPOP 3 people1 people2 people3 MAX
+      assertThat(redis.zmpop(ZPopArgs.Builder.max(), "people1", "people2", "people3"))
+            .isEqualTo(KeyValue.just("people2", just(6, "ryan")));
+      // ZADD people3 1 maria 2 pepa 3 josefa 6 mariona
+      redis.zadd("people3", ZAddArgs.Builder.ch(),
+            just(1, "maria"),
+            just(2, "pepa"),
+            just(3, "josefa"),
+            just(6, "mariona"));
+      // ZMPOP 2 people1 people3 people2 MAX COUNT 2
+      KeyValue<String, List<ScoredValue<String>>> zmpopCount = redis.zmpop(2, ZPopArgs.Builder.max(),
+            "people1", "people3", "people2");
+      assertThat(zmpopCount.getKey()).isEqualTo("people3");
+      assertThat(zmpopCount.getValue()).containsExactly(just(6, "mariona"), just(3, "josefa"));
+
+      assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zmpop(ZPopArgs.Builder.min(), "another"));
+   }
+
+   public void testZRANGEWithInfinity() {
+      redis.zadd("people", ZAddArgs.Builder.ch(),
+            just(Double.POSITIVE_INFINITY, "galder"),
+            just(Double.NEGATIVE_INFINITY, "anna"));
+
+      assertThat(redis.zrangebyscoreWithScores("people", Range.unbounded()))
+            .containsExactly(
+                  just(Double.NEGATIVE_INFINITY, "anna"),
+                  just(Double.POSITIVE_INFINITY, "galder")
+            );
    }
 }

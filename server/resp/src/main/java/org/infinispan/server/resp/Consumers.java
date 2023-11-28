@@ -118,6 +118,20 @@ public final class Consumers {
       }
    };
 
+   public static final BiConsumer<List, ByteBufPool> ZMPOP_BICONSUMER = (res, alloc) -> {
+      Resp3Handler.writeArrayPrefix(2, alloc);
+      // name of the set
+      Resp3Handler.handleBulkResult((byte[])res.get(0), alloc);
+      // array of values
+      Collection<ScoredValue<byte[]>> values = (Collection<ScoredValue<byte[]>>)res.get(1);
+      Resp3Handler.writeArrayPrefix(values.size(), alloc);
+      for (ScoredValue<byte[]> val : values) {
+         Resp3Handler.writeArrayPrefix(2, alloc);
+         Resp3Handler.handleBulkResult(val.getValue(), alloc);
+         Resp3Handler.handleDoubleResult(val.score(), alloc);
+      }
+   };
+
    private static void handleIdxArray(LCSResponse res, ByteBufPool alloc) {
       // return idx. it's a 4 items array
       Resp3Handler.writeArrayPrefix(4, alloc);
