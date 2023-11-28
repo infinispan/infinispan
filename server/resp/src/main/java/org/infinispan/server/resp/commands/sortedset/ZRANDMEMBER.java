@@ -52,7 +52,7 @@ public class ZRANDMEMBER extends RespCommand implements Resp3Command {
                                                       List<byte[]> arguments) {
 
       byte[] name = arguments.get(0);
-      Integer count = null;
+      int count = 1;
       final boolean withScores;
       if (arguments.size() > 1) {
          // next argument must be count
@@ -75,10 +75,8 @@ public class ZRANDMEMBER extends RespCommand implements Resp3Command {
 
       EmbeddedMultimapSortedSetCache<byte[], byte[]> sortedSetCache = handler.getSortedSeMultimap();
 
-      CompletionStage<List<ScoredValue<byte[]>>> randomMembers =
-            sortedSetCache.randomMembers(
-            name, count == null ? 1 : count);
-      if (count == null) {
+      CompletionStage<List<ScoredValue<byte[]>>> randomMembers = sortedSetCache.randomMembers(name, count);
+      if (arguments.size() == 1) {
          return handler.stageToReturn(randomMembers.thenApply(r -> r.isEmpty() ? null : r.get(0).getValue()), ctx, Consumers.GET_BICONSUMER);
       }
 

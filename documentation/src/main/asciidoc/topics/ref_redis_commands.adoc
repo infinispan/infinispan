@@ -381,6 +381,9 @@ provides a read-uncommitted isolation.
 | link:https://redis.io/commands/zlexcount[ZLEXCOUNT]
 |
 
+| link:https://redis.io/commands/zmpop[ZMPOP]
+|
+
 | link:https://redis.io/commands/zpopmax[ZPOPMAX]
 |
 
