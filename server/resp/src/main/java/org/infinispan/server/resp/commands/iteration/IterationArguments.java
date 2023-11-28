@@ -49,11 +49,18 @@ public class IterationArguments {
       return type;
    }
 
-   public static IterationArguments parse(Resp3Handler handler, List<byte[]> arguments) {
+   public static IterationArguments parse(Resp3Handler handler, List<byte[]> arguments, byte[] match) {
       int argc = arguments.size();
       Map<Class<?>, List<byte[]>> filters = null;
       int count = DEFAULT_COUNT;
       RespTypes type = null;
+      if (match != null) {
+         return new IterationArguments(Integer.MAX_VALUE,
+               GlobMatchFilterConverterFactory.class.getName(),
+               Collections.singletonList(match),
+               RespTypes.unknown);
+      }
+
       if (argc > 1) {
          for (int i = 1; i < argc; i++) {
             byte[] arg = arguments.get(i);

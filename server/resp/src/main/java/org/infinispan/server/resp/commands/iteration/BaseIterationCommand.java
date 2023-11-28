@@ -29,9 +29,13 @@ public abstract class BaseIterationCommand extends RespCommand implements Resp3C
       super(arity, firstKeyPos, lastKeyPos, steps);
    }
 
+   protected byte[] getMatch(List<byte[]> arguments) {
+      return null;
+   }
+
    @Override
    public final CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
-      IterationArguments args = IterationArguments.parse(handler, arguments);
+      IterationArguments args = IterationArguments.parse(handler, arguments, getMatch(arguments));
       if (args == null) return handler.myStage();
 
       IterationManager manager = retrieveIterationManager(handler);
@@ -72,23 +76,29 @@ public abstract class BaseIterationCommand extends RespCommand implements Resp3C
          // Let's just return 0
          ByteBufferUtils.stringToByteBufAscii("*2\r\n$1\r\n0\r\n*0\r\n", handler.allocator());
       } else {
-         StringBuilder response = new StringBuilder();
-         response.append("*2\r\n");
-         if (status == IterableIterationResult.Status.Finished) {
-            // We've reached the end of iteration, return a 0 cursor
-            response.append("$1\r\n0\r\n");
-            manager.close(cursor);
-         } else {
-            response.append('$');
-            response.append(cursor.length());
-            response.append(CRLF_STRING);
-            response.append(cursor);
-            response.append(CRLF_STRING);
+         if (writeCursor()) {
+            StringBuilder response = new StringBuilder();
+            response.append("*2\r\n");
+            if (status == IterableIterationResult.Status.Finished) {
+               // We've reached the end of iteration, return a 0 cursor
+               response.append("$1\r\n0\r\n");
+               manager.close(cursor);
+            } else {
+               response.append('$');
+               response.append(cursor.length());
+               response.append(CRLF_STRING);
+               response.append(cursor);
+               response.append(CRLF_STRING);
+            }
+            ByteBufferUtils.stringToByteBufAscii(response, handler.allocator());
          }
-         ByteBufferUtils.stringToByteBufAscii(response, handler.allocator());
          ByteBufferUtils.bytesToResult(writeResponse(result.getEntries()), handler.allocator());
       }
       return handler.myStage();
+   }
+
+   protected boolean writeCursor() {
+      return true;
    }
 
    protected abstract IterationManager retrieveIterationManager(Resp3Handler handler);
