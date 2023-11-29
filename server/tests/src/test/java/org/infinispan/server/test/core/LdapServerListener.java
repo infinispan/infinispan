@@ -2,8 +2,8 @@ package org.infinispan.server.test.core;
 
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.ThreadLeakChecker;
-import org.infinispan.server.test.core.ldap.AbstractLdapServer;
 import org.infinispan.server.test.core.ldap.ApacheLdapServer;
+import org.infinispan.server.test.core.ldap.LdapServer;
 import org.infinispan.server.test.core.ldap.RemoteLdapServer;
 
 /**
@@ -15,7 +15,7 @@ public class LdapServerListener implements InfinispanServerListener {
    private static final String DEFAULT_LDIF = "ldif/infinispan.ldif";
    private static final String KERBEROS_LDIF = "ldif/infinispan-kerberos.ldif";
 
-   private final AbstractLdapServer ldapServer;
+   private final LdapServer ldapServer;
 
    public LdapServerListener() {
       this(false);
