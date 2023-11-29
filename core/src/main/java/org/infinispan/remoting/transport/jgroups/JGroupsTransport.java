@@ -605,10 +605,13 @@ public class JGroupsTransport implements Transport, ChannelListener {
             throw new CacheException("Unable to start JGroups Channel", e);
          }
       }
+      // make sure the fields 'address' and 'clusterView' are set
+      // for normal operation, receiveClusterView() is invoked during connect
+      // but with the UPGRADE protocol active, it isn't the case.
+      receiveClusterView(channel.getView(), true);
       registerMBeansIfNeeded(clusterName);
       if (!connectChannel) {
          // the channel was already started externally, we need to initialize our member list
-         receiveClusterView(channel.getView());
          metricsManager.onChannelConnected(channel, true);
       }
       if (!(channel instanceof ForkChannel)) {
@@ -764,7 +767,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
       }
    }
 
-   protected void receiveClusterView(View newView) {
+   protected void receiveClusterView(View newView, boolean installIfFirst) {
       // The first view is installed before returning from JChannel.connect
       // So we need to set the local address here
       if (address == null) {
@@ -775,6 +778,9 @@ public class JGroupsTransport implements Transport, ChannelListener {
                   ((org.jgroups.util.UUID) jgroupsAddress).toStringLong() : "N/A";
             log.tracef("Local address %s, uuid %s", jgroupsAddress, uuid);
          }
+      }
+      if (installIfFirst && clusterView.getViewId() != ClusterView.INITIAL_VIEW_ID) {
+         return;
       }
       List<List<Address>> subGroups;
       if (newView instanceof MergeView) {
@@ -1625,7 +1631,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
       public Object up(Event evt) {
          switch (evt.getType()) {
             case Event.VIEW_CHANGE:
-               receiveClusterView(evt.getArg());
+               receiveClusterView(evt.getArg(), false);
                break;
             case Event.SITE_UNREACHABLE:
                SiteMaster site_master = evt.getArg();
