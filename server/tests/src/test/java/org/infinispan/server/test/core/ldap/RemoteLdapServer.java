@@ -17,7 +17,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testcontainers.shaded.com.google.common.io.Files;
 
-public class RemoteLdapServer extends AbstractLdapServer {
+public class RemoteLdapServer implements LdapServer {
 
    private final String initLDIF;
 

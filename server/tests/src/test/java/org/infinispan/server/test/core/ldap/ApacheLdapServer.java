@@ -30,7 +30,6 @@ import org.apache.directory.server.kerberos.kdc.KdcServer;
 import org.apache.directory.server.kerberos.shared.crypto.encryption.KerberosKeyFactory;
 import org.apache.directory.server.kerberos.shared.keytab.Keytab;
 import org.apache.directory.server.kerberos.shared.keytab.KeytabEntry;
-import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 import org.apache.directory.server.protocol.shared.transport.Transport;
 import org.apache.directory.server.protocol.shared.transport.UdpTransport;
@@ -40,7 +39,7 @@ import org.apache.directory.shared.kerberos.components.EncryptionKey;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.test.core.AbstractInfinispanServerDriver;
 
-public class ApacheLdapServer extends AbstractLdapServer {
+public class ApacheLdapServer implements LdapServer {
 
    private static final String LDAP_HOST = "0.0.0.0";
    public static final int KDC_PORT = 6088;
@@ -50,7 +49,7 @@ public class ApacheLdapServer extends AbstractLdapServer {
    public static final String REALM = "INFINISPAN.ORG";
 
    private DirectoryService directoryService;
-   private LdapServer ldapServer;
+   private org.apache.directory.server.ldap.LdapServer ldapServer;
    private KdcServer kdcServer;
    private final boolean withKdc;
    private final String initLDIF;
