@@ -258,6 +258,29 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       assertThat(redis.get("something")).isNull();
    }
 
+   @Test
+   public void testDelNonStrings() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // DEL non string
+      redis.rpush("list1", "v1","v2","v3");
+      long c = redis.del("list1");
+      assertThat(c).isEqualTo(1);
+      // DEL non string and string
+      redis.sadd("set1", "v1", "v2", "v3");
+      redis.set("string1", "v1");
+      c = redis.del("set1","string1");
+      assertThat(c).isEqualTo(2);
+      // DEL non string and non string
+      redis.rpush("list1", "v1","v2","v3");
+      redis.sadd("set1", "v1", "v2", "v3");
+      c = redis.del("list1","set1");
+      assertThat(c).isEqualTo(2);
+      // DEL non string and non existent
+      redis.sadd("set1", "v1", "v2", "v3");
+      c = redis.del("set1","non-existent");
+      assertThat(c).isEqualTo(1);
+   }
+
    public void testSetGetBigValue() {
       RedisCommands<String, String> redis = redisConnection.sync();
       StringBuilder sb = new StringBuilder();
