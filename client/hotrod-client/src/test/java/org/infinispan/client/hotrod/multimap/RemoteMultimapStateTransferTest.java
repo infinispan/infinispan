@@ -4,9 +4,12 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -27,11 +30,44 @@ public class RemoteMultimapStateTransferTest extends MultiHotRodServersTest {
    private static final int VALUES = 4;
    private static final String CACHE_NAME = "multimap";
 
+   private ClientIntelligence clientIntelligence;
+
+   public RemoteMultimapStateTransferTest clientIntelligence(ClientIntelligence clientIntelligence) {
+      this.clientIntelligence = clientIntelligence;
+      return this;
+   }
+
+   @Override
+   public Object[] factory() {
+      return Arrays.stream(ClientIntelligence.values())
+            .flatMap(ci -> Stream.of(CacheMode.DIST_SYNC, CacheMode.DIST_ASYNC)
+                  .map(cm -> new RemoteMultimapStateTransferTest().clientIntelligence(ci).cacheMode(cm)))
+            .toArray();
+   }
+
+   @Override
+   protected Object[] parameterValues() {
+      return concat(super.parameterValues(), clientIntelligence);
+   }
+
+   @Override
+   protected String[] parameterNames() {
+      return concat(super.parameterNames(), "clientIntelligence");
+   }
+
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder cacheBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      ConfigurationBuilder cacheBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_ASYNC, false);
+      cacheBuilder.statistics().enable();
       createHotRodServers(NODES, new ConfigurationBuilder());
       defineInAll(CACHE_NAME, cacheBuilder);
+   }
+
+   @Override
+   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(String host, int serverPort) {
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder cb =  super.createHotRodClientConfigurationBuilder(host, serverPort);
+      cb.clientIntelligence(clientIntelligence);
+      return cb;
    }
 
    public void testStateTransfer() {
