@@ -255,6 +255,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          }
          // Switch to the retry policy, in case the primary owner changes before we commit locally
          command.setValueMatcher(originalMatcher.matcherForRetry());
+         // Need to unset flag in case if command is retried or if was not a locally invoked command to have a response generated
+         if (!hadIgnoreReturnValues) command.setFlagsBitSet(command.getFlagsBitSet() & ~FlagBitSets.IGNORE_RETURN_VALUES);
          return localResult;
       }
       VoidResponseCollector collector = VoidResponseCollector.ignoreLeavers();
@@ -267,7 +269,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return asyncValue(remoteInvocation.handle((ignored, t) -> {
          // Unset the backup write bit as the command will be retried
          command.setFlagsBitSet(command.getFlagsBitSet() & ~FlagBitSets.BACKUP_WRITE);
-         // Unset only if it didn't have ignore return values before
+         // Need to unset flag in case if command is retried or if was not a locally invoked command to have a response generated
          if (!hadIgnoreReturnValues) command.setFlagsBitSet(command.getFlagsBitSet() & ~FlagBitSets.IGNORE_RETURN_VALUES);
          // Switch to the retry policy, in case the primary owner changed and the write already succeeded on the new primary
          command.setValueMatcher(originalMatcher.matcherForRetry());
