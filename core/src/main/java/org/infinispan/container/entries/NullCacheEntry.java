@@ -100,7 +100,7 @@ public class NullCacheEntry<K, V> implements CacheEntry<K, V> {
    }
 
    @Override
-   public CacheEntry clone() {
+   public final CacheEntry clone() {
       return INSTANCE;
    }
 
