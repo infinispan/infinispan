@@ -217,7 +217,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
                assertEquals("scripts/test.js", tasks.iterator().next().at("name").asString());
 
                // Assert that no other content has been restored
-               assertStatusAndBodyEquals(OK, "[[\"___protobuf_metadata\",\"___script_cache\",\"memcachedCache\",\"respCache\"]", client.caches());
+               assertStatusAndBodyEquals(OK, "[\"___protobuf_metadata\",\"___script_cache\",\"memcachedCache\",\"respCache\"]", client.caches());
                assertStatusAndBodyEquals(OK, "[]", client.counters());
                assertStatus(NOT_FOUND, client.schemas().get("schema.proto"));
             },
