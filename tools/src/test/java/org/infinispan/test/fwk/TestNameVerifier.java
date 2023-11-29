@@ -26,7 +26,7 @@ public class TestNameVerifier {
    String dir = Paths.get("src", "test", "java", "org", "infinispan").toString();
 
    Pattern packageLinePattern = Pattern.compile("package org.infinispan[^;]*");
-   Pattern classLinePattern = Pattern.compile("(abstract\\s*)??(public\\s*)(abstract\\s*)??class [^\\s]*");
+   Pattern classLinePattern = Pattern.compile("(abstract\\s*)??(public\\s*)(abstract\\s*)??class \\S*");
    Pattern atAnnotationPattern = Pattern.compile("^\\s*@Test[^)]*");
    Pattern testNamePattern = Pattern.compile("testName\\s*=\\s*\"[^\"]*\"");
 

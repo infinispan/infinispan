@@ -10,7 +10,7 @@ final class NameUtils {
     * Replace illegal metric name chars with underscores.
     */
    public static String filterIllegalChars(String name) {
-      return name.replaceAll("[^\\w]+", "_");
+      return name.replaceAll("\\W+", "_");
    }
 
    /**
