@@ -16,21 +16,6 @@ abstract class AbstractTopologyResponse {
    }
 }
 
-abstract class AbstractHashDistAwareResponse extends AbstractTopologyResponse {
-
-   final int numOwners;
-   final byte hashFunction;
-   final int hashSpace;
-
-   protected AbstractHashDistAwareResponse(int topologyId, Map<Address, ServerAddress> serverEndpointsMap,
-                                           int numSegments, int numOwners, byte hashFunction, int hashSpace) {
-      super(topologyId, serverEndpointsMap, numSegments);
-      this.numOwners = numOwners;
-      this.hashFunction = hashFunction;
-      this.hashSpace = hashSpace;
-   }
-}
-
 class TopologyAwareResponse extends AbstractTopologyResponse {
 
    protected TopologyAwareResponse(int topologyId, Map<Address, ServerAddress> serverEndpointsMap, int numSegments) {
