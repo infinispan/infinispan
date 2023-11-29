@@ -47,7 +47,7 @@ public class JCacheTestingUtil {
 
    public static void sleep(long duration) {
       try {
-         Thread.currentThread().sleep(duration);
+         Thread.sleep(duration);
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
          throw new IllegalStateException(e);

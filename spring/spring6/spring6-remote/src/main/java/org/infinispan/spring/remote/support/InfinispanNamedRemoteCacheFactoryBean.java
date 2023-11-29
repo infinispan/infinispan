@@ -52,21 +52,21 @@ public class InfinispanNamedRemoteCacheFactoryBean<K, V> implements FactoryBean<
       if (this.infinispanRemoteCacheManager == null) {
          throw new IllegalStateException("No Infinispan RemoteCacheManager has been set");
       }
-      this.logger.info("Initializing named Infinispan remote cache ...");
+      logger.info("Initializing named Infinispan remote cache ...");
       final String effectiveCacheName = obtainEffectiveCacheName();
       this.infinispanCache = this.infinispanRemoteCacheManager.getCache(effectiveCacheName);
-      this.logger.info("New Infinispan remote cache [" + this.infinispanCache + "] initialized");
+      logger.info("New Infinispan remote cache [" + this.infinispanCache + "] initialized");
    }
 
    private String obtainEffectiveCacheName() {
       if (StringUtils.hasText(this.cacheName)) {
-         if (this.logger.isDebugEnabled()) {
-            this.logger.debug("Using custom cache name [" + this.cacheName + "]");
+         if (logger.isDebugEnabled()) {
+            logger.debug("Using custom cache name [" + this.cacheName + "]");
          }
          return this.cacheName;
       } else {
-         if (this.logger.isDebugEnabled()) {
-            this.logger.debug("Using bean name [" + this.beanName + "] as cache name");
+         if (logger.isDebugEnabled()) {
+            logger.debug("Using bean name [" + this.beanName + "] as cache name");
          }
          return this.beanName;
       }

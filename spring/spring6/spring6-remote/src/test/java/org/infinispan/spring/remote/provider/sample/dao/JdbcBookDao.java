@@ -49,7 +49,7 @@ public class JdbcBookDao implements BaseBookDao {
 
    public Book findBook(Integer bookId) {
       try {
-         this.log.infof("Loading book [ID = %d]", bookId);
+         log.infof("Loading book [ID = %d]", bookId);
          return this.jdbcTemplate.queryForObject("SELECT * FROM books WHERE id = :id",
                new MapSqlParameterSource("id", bookId), new BookRowMapper());
       } catch (EmptyResultDataAccessException e) {
@@ -73,7 +73,7 @@ public class JdbcBookDao implements BaseBookDao {
 
    @Override
    public void deleteBook(Integer bookId) {
-      this.log.infof("Deleting book [ID = %d]", bookId);
+      log.infof("Deleting book [ID = %d]", bookId);
       this.jdbcTemplate.update("DELETE FROM books WHERE id = :id", new MapSqlParameterSource("id", bookId));
    }
 
@@ -83,11 +83,11 @@ public class JdbcBookDao implements BaseBookDao {
 
    @Override
    public Book updateBook(Book bookToUpdate) {
-      this.log.infof("Updating book [%s]", bookToUpdate);
+      log.infof("Updating book [%s]", bookToUpdate);
       this.jdbcTemplate.update(
             "UPDATE books SET isbn = :isbn, author = :author, title = :title WHERE id = :id",
             createParameterSourceFor(bookToUpdate));
-      this.log.infof("Book [%s] updated", bookToUpdate);
+      log.infof("Book [%s] updated", bookToUpdate);
       return bookToUpdate;
    }
 
@@ -96,7 +96,7 @@ public class JdbcBookDao implements BaseBookDao {
       final Number newBookId = this.bookInsert
             .executeAndReturnKey(createParameterSourceFor(bookToCreate));
       bookToCreate.setId(newBookId.intValue());
-      this.log.infof("Book [%s] persisted for the first time", bookToCreate);
+      log.infof("Book [%s] persisted for the first time", bookToCreate);
       return bookToCreate;
    }
 

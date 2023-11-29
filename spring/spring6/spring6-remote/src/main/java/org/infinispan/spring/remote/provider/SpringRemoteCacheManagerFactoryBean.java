@@ -65,7 +65,7 @@ public class SpringRemoteCacheManagerFactoryBean extends AbstractRemoteCacheMana
    @Override
    public void afterPropertiesSet() throws Exception {
       assertCorrectlyConfigured();
-      this.logger.info("Creating new instance of RemoteCacheManager ...");
+      logger.info("Creating new instance of RemoteCacheManager ...");
       final Properties configurationPropertiesToUse = configurationProperties();
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder =
             new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
@@ -84,7 +84,7 @@ public class SpringRemoteCacheManagerFactoryBean extends AbstractRemoteCacheMana
       final RemoteCacheManager nativeRemoteCacheManager = new RemoteCacheManager(
             clientBuilder.build(), this.startAutomatically);
       this.springRemoteCacheManager = new SpringRemoteCacheManager(nativeRemoteCacheManager, readTimeout, writeTimeout);
-      this.logger.info("Finished creating new instance of RemoteCacheManager");
+      logger.info("Finished creating new instance of RemoteCacheManager");
    }
 
    // ------------------------------------------------------------------------

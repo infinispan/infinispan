@@ -155,16 +155,16 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
       if (this.infinispanEmbeddedCacheManager == null) {
          throw new IllegalStateException("No Infinispan EmbeddedCacheManager has been set");
       }
-      this.logger.info("Initializing named Infinispan embedded cache ...");
+      logger.info("Initializing named Infinispan embedded cache ...");
       final String effectiveCacheName = obtainEffectiveCacheName();
       this.infinispanCache = configureAndCreateNamedCache(effectiveCacheName);
-      this.logger.info("New Infinispan embedded cache [" + this.infinispanCache + "] initialized");
+      logger.info("New Infinispan embedded cache [" + this.infinispanCache + "] initialized");
    }
 
    private Cache<K, V> configureAndCreateNamedCache(final String cacheName) {
       switch (this.configurationTemplateMode) {
          case NONE:
-            this.logger.debug("ConfigurationTemplateMode is NONE: using a fresh Configuration");
+            logger.debug("ConfigurationTemplateMode is NONE: using a fresh Configuration");
             if (this.infinispanEmbeddedCacheManager.getCacheNames().contains(cacheName)) {
                throw new IllegalStateException("Cannot use ConfigurationTemplateMode NONE: a cache named [" + cacheName + "] has already been defined.");
             }
@@ -172,16 +172,16 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
             this.infinispanEmbeddedCacheManager.defineConfiguration(cacheName, builder.build());
             break;
          case NAMED:
-            this.logger.debug("ConfigurationTemplateMode is NAMED: using a named Configuration [" + cacheName + "]");
+            logger.debug("ConfigurationTemplateMode is NAMED: using a named Configuration [" + cacheName + "]");
             break;
          case DEFAULT:
-            this.logger.debug("ConfigurationTemplateMode is DEFAULT.");
+            logger.debug("ConfigurationTemplateMode is DEFAULT.");
             if (this.infinispanEmbeddedCacheManager.getCacheNames().contains(cacheName)) {
                throw new IllegalStateException("Cannot use ConfigurationTemplateMode DEFAULT: a cache named [" + cacheName + "] has already been defined.");
             }
             break;
          case CUSTOM:
-            this.logger.debug("ConfigurationTemplateMode is CUSTOM. Using the provided ConfigurationBuilder.");
+            logger.debug("ConfigurationTemplateMode is CUSTOM. Using the provided ConfigurationBuilder.");
             if (this.builder == null) {
                throw new IllegalStateException("There has not been a ConfigurationBuilder provided. There has to be one " +
                                                      "provided for ConfigurationTemplateMode CUSTOM.");
@@ -197,13 +197,13 @@ public class InfinispanNamedEmbeddedCacheFactoryBean<K, V> implements FactoryBea
 
    private String obtainEffectiveCacheName() {
       if (StringUtils.hasText(this.cacheName)) {
-         if (this.logger.isDebugEnabled()) {
-            this.logger.debug("Using custom cache name [" + this.cacheName + "]");
+         if (logger.isDebugEnabled()) {
+            logger.debug("Using custom cache name [" + this.cacheName + "]");
          }
          return this.cacheName;
       } else {
-         if (this.logger.isDebugEnabled()) {
-            this.logger.debug("Using bean name [" + this.beanName + "] as cache name");
+         if (logger.isDebugEnabled()) {
+            logger.debug("Using bean name [" + this.beanName + "] as cache name");
          }
          return this.beanName;
       }

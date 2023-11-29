@@ -67,9 +67,9 @@ public class InfinispanDefaultCacheFactoryBean<K, V> implements FactoryBean<Cach
       if (this.infinispanCacheContainer == null) {
          throw new IllegalStateException("No Infinispan CacheContainer has been set");
       }
-      this.logger.info("Initializing named Infinispan cache ...");
+      logger.info("Initializing named Infinispan cache ...");
       this.infinispanCache = this.infinispanCacheContainer.getCache();
-      this.logger.info("New Infinispan cache [" + this.infinispanCache + "] initialized");
+      logger.info("New Infinispan cache [" + this.infinispanCache + "] initialized");
    }
 
    /**
