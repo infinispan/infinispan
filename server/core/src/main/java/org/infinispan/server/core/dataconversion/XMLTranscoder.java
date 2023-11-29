@@ -59,11 +59,12 @@ public class XMLTranscoder extends OneToManyTranscoder {
       if (xstream == null) {
          synchronized (this) {
             if (xstream == null) {
-               xstream = new XStreamEngine();
-               xstream.addPermission(NoTypePermission.NONE);
-               xstream.addPermission(type -> allowList.isSafeClass(type.getName()));
-               xstream.setClassLoader(classLoader);
-               xstream.setMode(XStream.NO_REFERENCES);
+               XStreamEngine engine = new XStreamEngine();
+               engine.addPermission(NoTypePermission.NONE);
+               engine.addPermission(type -> allowList.isSafeClass(type.getName()));
+               engine.setClassLoader(classLoader);
+               engine.setMode(XStream.NO_REFERENCES);
+               xstream = engine;
             }
          }
       }
