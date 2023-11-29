@@ -109,9 +109,8 @@ public class ClearCacheEntry<K, V> implements CacheEntry<K, V> {
       /*no-op*/
    }
 
-   @SuppressWarnings("CloneDoesntCallSuperClone")
    @Override
-   public CacheEntry<K, V> clone() {
+   final public CacheEntry<K, V> clone() {
       return getInstance(); //no clone. singleton
    }
 
