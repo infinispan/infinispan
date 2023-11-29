@@ -18,16 +18,16 @@ public final class DelayedViewJGroupsTransport extends JGroupsTransport {
    }
 
    @Override
-   public void receiveClusterView(View newView) {
+   public void receiveClusterView(View newView, boolean installIfFirst) {
       // check if this is an event of node going down, and if so wait for a signal to apply new view
       if (getMembers().size() > newView.getMembers().size()) {
          log.debugf("Delaying view %s", newView);
          waitLatch.thenAccept(__ -> {
             log.debugf("Unblocking view %s", newView);
-            super.receiveClusterView(newView);
+            super.receiveClusterView(newView, installIfFirst);
          });
       } else {
-         super.receiveClusterView(newView);
+         super.receiveClusterView(newView, installIfFirst);
       }
    }
 
