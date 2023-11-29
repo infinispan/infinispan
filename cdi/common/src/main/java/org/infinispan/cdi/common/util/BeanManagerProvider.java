@@ -61,7 +61,7 @@ public class BeanManagerProvider implements Extension
          * After the container did finally boot, we first try to resolve them from JNDI,
          * and only if we don't find any BM there we take the ones picked up at startup.
          */
-        private BeanManager finalBm = null;
+        private volatile BeanManager finalBm = null;
 
         /**
          * Whether the CDI Application has finally booted.
@@ -153,17 +153,14 @@ public class BeanManagerProvider implements Extension
                     " non-portable behaviour results!");
         }
 
-        BeanManager result = bmi.finalBm;
-
-        if (result == null)
+        if (bmi.finalBm == null)
         {
             synchronized (this)
             {
-                result = bmi.finalBm;
-                if (result == null)
+                if (bmi.finalBm == null)
                 {
                     // first we look for a BeanManager from JNDI
-                    result = resolveBeanManagerViaJndi();
+                    BeanManager result = resolveBeanManagerViaJndi();
 
                     if (result == null)
                     {
@@ -184,7 +181,7 @@ public class BeanManagerProvider implements Extension
             }
         }
 
-        return result;
+        return bmi.finalBm;
     }
 
     /**
