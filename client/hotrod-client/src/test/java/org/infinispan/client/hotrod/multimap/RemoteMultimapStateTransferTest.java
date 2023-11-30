@@ -57,7 +57,7 @@ public class RemoteMultimapStateTransferTest extends MultiHotRodServersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder cacheBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_ASYNC, false);
+      ConfigurationBuilder cacheBuilder = getDefaultClusteredCacheConfig(cacheMode, false);
       cacheBuilder.statistics().enable();
       createHotRodServers(NODES, new ConfigurationBuilder());
       defineInAll(CACHE_NAME, cacheBuilder);
