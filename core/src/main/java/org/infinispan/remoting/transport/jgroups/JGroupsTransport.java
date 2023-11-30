@@ -102,7 +102,6 @@ import org.jgroups.Header;
 import org.jgroups.JChannel;
 import org.jgroups.MergeView;
 import org.jgroups.Message;
-import org.jgroups.PhysicalAddress;
 import org.jgroups.UpHandler;
 import org.jgroups.View;
 import org.jgroups.blocks.RequestCorrelator;
@@ -378,12 +377,11 @@ public class JGroupsTransport implements Transport, ChannelListener {
    @Override
    public List<Address> getPhysicalAddresses() {
       if (physicalAddress == null && channel != null) {
-         org.jgroups.Address addr =
-               (org.jgroups.Address) channel.down(new Event(Event.GET_PHYSICAL_ADDRESS, channel.getAddress()));
-         if (addr == null) {
+         var addr = findPhysicalAddress(channel.getAddress());
+         if (addr.isEmpty()) {
             return Collections.emptyList();
          }
-         physicalAddress = new JGroupsAddress(addr);
+         physicalAddress = new JGroupsAddress(addr.get());
       }
       return Collections.singletonList(physicalAddress);
    }
@@ -395,18 +393,15 @@ public class JGroupsTransport implements Transport, ChannelListener {
 
    @Override
    public List<Address> getMembersPhysicalAddresses() {
-      if (channel != null) {
-         View v = channel.getView();
-         org.jgroups.Address[] rawMembers = v.getMembersRaw();
-         List<Address> addresses = new ArrayList<>(rawMembers.length);
-         for (org.jgroups.Address rawMember : rawMembers) {
-            PhysicalAddress physical_addr = (PhysicalAddress) channel.down(new Event(Event.GET_PHYSICAL_ADDRESS, rawMember));
-            addresses.add(new JGroupsAddress(physical_addr));
-         }
-         return addresses;
-      } else {
+      if (channel == null) {
          return Collections.emptyList();
       }
+      return Arrays.stream(channel.getView().getMembersRaw())
+            .map(this::findPhysicalAddress)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .map(JGroupsAddress::new)
+            .collect(Collectors.toList());
    }
 
    @Override
@@ -1556,6 +1551,10 @@ public class JGroupsTransport implements Transport, ChannelListener {
    @Override
    public void channelClosed(JChannel channel) {
       // NO-OP
+   }
+
+   private Optional<org.jgroups.Address> findPhysicalAddress(org.jgroups.Address member) {
+      return  Optional.ofNullable((org.jgroups.Address) channel.down(new Event(Event.GET_PHYSICAL_ADDRESS, member)));
    }
 
    private class ChannelCallbacks implements RouteStatusListener, UpHandler {
