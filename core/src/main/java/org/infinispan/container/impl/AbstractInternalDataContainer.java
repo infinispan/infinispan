@@ -12,6 +12,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -32,6 +33,8 @@ import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.impl.PassivationManager;
 import org.infinispan.expiration.impl.InternalExpirationManager;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
@@ -67,6 +70,8 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
    @Inject protected Configuration configuration;
    @Inject protected KeyPartitioner keyPartitioner;
    @Inject protected DataOperationOrderer orderer;
+   @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
+   Executor nonBlockingExecutor;
 
    protected final List<Consumer<Iterable<InternalCacheEntry<K, V>>>> listeners = new CopyOnWriteArrayList<>();
 
@@ -232,7 +237,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
          // return the value somehow
          // - we don't need an orderer as it is handled in OrderedClusteringDependentLogic
          // - we don't need eviction manager either as it is handled in NotifyHelper
-         evictionStageRef.set(handleEviction(entry, null, passivator.running(), null, this, null));
+         evictionStageRef.set(handleEviction(entry, null, passivator.running(), null, this, nonBlockingExecutor, null));
          computeEntryRemoved(o, entry);
          entryRemoved(entry);
          return null;
@@ -441,6 +446,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
     * @param passivator Passivates the entry to the store if necessary
     * @param evictionManager Handles additional eviction logic. May be null if eviction is also not required
     * @param dataContainer container to check if the key has already been removed
+    * @param nonBlockingExecutor executor to use to run code that may not be able to be ran while holding the write lock
     * @param selfDelay if null, the entry was already removed;
     *                  if non-null, completes after the eviction finishes removing the entry
     * @param <K> key type of the entry
@@ -449,7 +455,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
     */
    public static <K, V> CompletionStage<Void> handleEviction(InternalCacheEntry<K, V> entry, DataOperationOrderer orderer,
          PassivationManager passivator, EvictionManager<K, V> evictionManager, DataContainer<K, V> dataContainer,
-         CompletionStage<Void> selfDelay) {
+         Executor nonBlockingExecutor, CompletionStage<Void> selfDelay) {
       K key = entry.getKey();
       if (log.isTraceEnabled()) {
          log.tracef("Entry for key %s was evicted", Util.toStr(key));
@@ -460,7 +466,9 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
          if (log.isTraceEnabled()) {
             log.tracef("Encountered concurrent operation during eviction of %s", key);
          }
-         return ordererStage.thenCompose(operation -> {
+         // We have to use thenComposeAsync here in case if the stage is completed between checking and passing
+         // this lambda to prevent running the following code while the write lock is held
+         return ordererStage.thenComposeAsync(operation -> {
             if (log.isTraceEnabled()) {
                log.tracef("Concurrent operation during eviction of %s was %s", key, operation);
             }
@@ -491,7 +499,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
                   // This is a concurrent regular read - in which case we passivate just as normal
                   return handleNotificationAndOrderer(key, entry, passivatedStage, orderer, evictionManager, future);
             }
-         });
+     }, nonBlockingExecutor);
       }
       return handleNotificationAndOrderer(key, entry, passivator.passivateAsync(entry), orderer, evictionManager, future);
    }
@@ -525,7 +533,7 @@ public abstract class AbstractInternalDataContainer<K, V> implements InternalDat
          CompletableFuture<Void> future = new CompletableFuture<>();
          ensureEvictionDone.put(key, future);
          handleEviction(value, orderer, passivator.running(), evictionManager, AbstractInternalDataContainer.this,
-               future);
+               nonBlockingExecutor, future);
       }
 
       // It is very important that the fact that this method is invoked AFTER the entry has been evicted outside of the
