@@ -1,6 +1,7 @@
 package org.infinispan.container.offheap;
 
 import java.lang.invoke.MethodHandles;
+import java.util.concurrent.Executor;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.StampedLock;
@@ -17,6 +18,8 @@ import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.eviction.impl.PassivationManager;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -47,6 +50,8 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
    @Inject protected EvictionManager evictionManager;
    @Inject protected ComponentRef<PassivationManager> passivator;
    @Inject protected DataOperationOrderer orderer;
+   @Inject @ComponentName(KnownComponentNames.NON_BLOCKING_EXECUTOR)
+   Executor nonBlockingExecutor;
 
    protected final long maxSize;
    protected final Lock lruLock;
@@ -237,7 +242,8 @@ public class SegmentedBoundedOffHeapDataContainer extends AbstractDelegatingInte
                map.remove(ice.getKey(), addressToRemove);
                // Note this is non blocking now - this MUST be invoked after removing the entry from the
                // underlying map
-               AbstractInternalDataContainer.handleEviction(ice, orderer, passivator.running(), evictionManager, this, null);
+               AbstractInternalDataContainer.handleEviction(ice, orderer, passivator.running(), evictionManager, this,
+                     nonBlockingExecutor, null);
             } finally {
                stampedLock.unlockWrite(writeStamp);
             }
