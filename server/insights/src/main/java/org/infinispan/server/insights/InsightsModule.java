@@ -15,6 +15,8 @@ public class InsightsModule implements ModuleLifecycle {
    public static final String REDHAT_INSIGHTS_ACTIVATION_PROPERTY_NAME = "infinispan.insights.activation";
    public static final String REPORT_VERSION = "1.0.0";
 
+   private static final String REDHAT_INSIGHTS_ACTIVATION_VARIABLE_NAME = "INFINISPAN_INSIGHTS_ACTIVATION";
+
    public static final Log log = Logger.getMessageLogger(Log.class, "org.infinispan.SERVER");
 
    private InsightsService service;
@@ -51,18 +53,21 @@ public class InsightsModule implements ModuleLifecycle {
 
    private static InsightsActivation activation() {
       String activation = System.getProperty(REDHAT_INSIGHTS_ACTIVATION_PROPERTY_NAME);
+      if (activation == null) {
+         activation = System.getenv(REDHAT_INSIGHTS_ACTIVATION_VARIABLE_NAME);
+      }
 
-      if (activation == null || activation.equalsIgnoreCase(InsightsActivation.LOCAL.name())) {
+      if (activation == null || activation.equalsIgnoreCase(InsightsActivation.ENABLED.name())) {
+         return InsightsActivation.ENABLED;
+      }
+      if (activation.equalsIgnoreCase(InsightsActivation.LOCAL.name())) {
          return InsightsActivation.LOCAL;
       }
       if (activation.equalsIgnoreCase(InsightsActivation.DISABLED.name())) {
          return InsightsActivation.DISABLED;
       }
-      if (activation.equalsIgnoreCase(InsightsActivation.ENABLED.name())) {
-         return InsightsActivation.ENABLED;
-      }
 
       log.insightsActivationNotValidValue(REDHAT_INSIGHTS_ACTIVATION_PROPERTY_NAME, activation);
-      return InsightsActivation.LOCAL;
+      return InsightsActivation.ENABLED;
    }
 }
