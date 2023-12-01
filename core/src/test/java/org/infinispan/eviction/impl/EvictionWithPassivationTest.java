@@ -6,16 +6,22 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 
 import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.cache.StorageType;
+import org.infinispan.container.DataContainer;
+import org.infinispan.container.impl.AbstractInternalDataContainer;
+import org.infinispan.container.offheap.SegmentedBoundedOffHeapDataContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
 import org.infinispan.notifications.Listener;
@@ -25,10 +31,15 @@ import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
+import org.infinispan.test.Mocks;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.util.concurrent.DataOperationOrderer;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
@@ -289,6 +300,44 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
       putIntoStore("key", "oldValue");
       testCache.put("key", "value");
       assertEntryInStore("key", false);
+   }
+
+   public void testConcurrentWriteWithEviction() throws InterruptedException, TimeoutException, ExecutionException {
+      Cache<String, String> testCache = cacheManager.getCache(CACHE_NAME);
+      testCache.clear();
+
+      DataContainer<String, String> dc = testCache.getAdvancedCache().getDataContainer();
+      Class dcClass = storage == StorageType.OFF_HEAP ? SegmentedBoundedOffHeapDataContainer.class : AbstractInternalDataContainer.class;
+      CheckPoint checkPoint = new CheckPoint();
+      // Need to capture the evicting key to register a concurrent operation before eviction
+      ArgumentCaptor<Object> argumentCaptor = ArgumentCaptor.forClass(Object.class);
+      DataOperationOrderer doo = Mocks.blockingFieldMock(checkPoint, DataOperationOrderer.class, dc, dcClass, "orderer", (stub, mock) ->
+         stub.when(mock).orderOn(argumentCaptor.capture(), Mockito.any()));
+      try {
+         Future<Void> future = fork(() -> {
+            for (int i = 0; i < 10; ++i) {
+               testCache.put("k" + i, "v" + i);
+            }
+         });
+         checkPoint.awaitStrict(Mocks.BEFORE_INVOCATION, 1000, TimeUnit.SECONDS);
+
+         CompletableFuture<DataOperationOrderer.Operation> stage = new CompletableFuture<>();
+         Object keyEvicting = argumentCaptor.getValue();
+         doo.orderOn(keyEvicting, stage);
+
+         checkPoint.triggerForever(Mocks.BEFORE_RELEASE);
+
+         // Wait for the orderer to respond but don't release it until we complete it
+         checkPoint.awaitStrict(Mocks.AFTER_INVOCATION, 10, TimeUnit.SECONDS);
+
+         doo.completeOperation(keyEvicting, stage, DataOperationOrderer.Operation.WRITE);
+
+         checkPoint.triggerForever(Mocks.AFTER_RELEASE);
+
+         future.get(10, TimeUnit.SECONDS);
+      } finally {
+         TestingUtil.replaceField(doo, "orderer", dc, dcClass);
+      }
    }
 
    private void assertEntryInStore(String key, boolean expectPresent) throws Exception {
