@@ -3,6 +3,7 @@ package org.infinispan.reactive;
 import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiFunction;
 
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
@@ -22,6 +23,18 @@ public class RxJavaInterop extends org.infinispan.commons.reactive.RxJavaInterop
    private RxJavaInterop() { }
 
    protected final static Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+
+   private static final BiFunction<Object, Object, Flowable<Object>> combineBiFunction = (v1, v2) -> {
+      if (v1 != null) {
+         if (v2 != null) {
+            return Flowable.just(v1, v2);
+         }
+         return Flowable.just(v1);
+      } else if (v2 != null) {
+         return Flowable.just(v2);
+      }
+      return Flowable.empty();
+   };
 
    public static <R> Flowable<R> voidCompletionStageToFlowable(CompletionStage<Void> stage) {
       if (CompletionStages.isCompletedSuccessfully(stage)) {
@@ -75,5 +88,17 @@ public class RxJavaInterop extends org.infinispan.commons.reactive.RxJavaInterop
       });
 
       return ap;
+   }
+
+   /**
+    * Provides a {@link BiFunction} to be used with methods like {@link CompletionStage#thenCombine(CompletionStage, java.util.function.BiFunction)}
+    * to convert the values to a {@link Flowable}. Note this is useful as Flowable does not allow <b>null</b> values
+    * and this function will handle this properly by not publishing a value if it is null. So it is possible to have
+    * an empty Flowable returned.
+    * @return a function to be used to combine the possible values as a returned Flowable
+    * @param <I> user value type
+    */
+   public static <I> BiFunction<I, I, Flowable<I>> combinedBiFunction() {
+      return (BiFunction) combineBiFunction;
    }
 }
