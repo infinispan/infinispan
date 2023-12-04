@@ -641,7 +641,7 @@ public interface CommandsFactory {
 
    IracClearKeysRequest buildIracClearKeysCommand();
 
-   IracCleanupKeysCommand buildIracCleanupKeyCommand(Collection<? extends IracManagerKeyInfo> state);
+   IracCleanupKeysCommand buildIracCleanupKeyCommand(Collection<IracManagerKeyInfo> state);
 
    IracTombstoneCleanupCommand buildIracTombstoneCleanupCommand(int maxCapacity);
 

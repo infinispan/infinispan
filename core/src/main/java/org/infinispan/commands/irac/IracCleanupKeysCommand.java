@@ -18,7 +18,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.irac.IracManager;
 import org.infinispan.xsite.irac.IracManagerKeyInfo;
-import org.infinispan.xsite.irac.IracManagerKeyInfoImpl;
 
 /**
  * Sends a cleanup request from the primary owner to the backup owners.
@@ -33,7 +32,7 @@ public class IracCleanupKeysCommand implements CacheRpcCommand {
    public static final byte COMMAND_ID = 122;
 
    private ByteString cacheName;
-   private Collection<? extends IracManagerKeyInfo> cleanup;
+   private Collection<IracManagerKeyInfo> cleanup;
 
    @SuppressWarnings("unused")
    public IracCleanupKeysCommand() {
@@ -43,7 +42,7 @@ public class IracCleanupKeysCommand implements CacheRpcCommand {
       this.cacheName = cacheName;
    }
 
-   public IracCleanupKeysCommand(ByteString cacheName, Collection<? extends IracManagerKeyInfo> cleanup) {
+   public IracCleanupKeysCommand(ByteString cacheName, Collection<IracManagerKeyInfo> cleanup) {
       this.cacheName = cacheName;
       this.cleanup = cleanup;
    }
@@ -72,12 +71,12 @@ public class IracCleanupKeysCommand implements CacheRpcCommand {
 
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
-      marshallCollection(cleanup, output, IracManagerKeyInfoImpl::writeTo);
+      marshallCollection(cleanup, output, IracManagerKeyInfo::writeTo);
    }
 
    @Override
    public void readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      cleanup = unmarshallCollection(input, ArrayList::new, IracManagerKeyInfoImpl::readFrom);
+      cleanup = unmarshallCollection(input, ArrayList::new, IracManagerKeyInfo::readFrom);
    }
 
    @Override

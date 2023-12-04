@@ -3,13 +3,13 @@ package org.infinispan.xsite.irac;
 import java.util.Collection;
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.xsite.commands.remote.IracClearKeysRequest;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.xsite.commands.remote.IracClearKeysRequest;
 import org.infinispan.xsite.statetransfer.XSiteState;
 
 /**

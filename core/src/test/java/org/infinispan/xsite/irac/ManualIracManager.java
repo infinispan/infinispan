@@ -150,31 +150,33 @@ public class ManualIracManager extends ControlledIracManager {
    }
 
    private static class PendingKeyRequest implements IracManagerKeyState {
-      private final Object key;
-      private final Object lockOwner;
-      private final int segment;
+
+      private final IracManagerKeyInfo keyInfo;
       private final boolean expiration;
 
       private PendingKeyRequest(Object key, Object lockOwner, int segment, boolean expiration) {
-         this.key = key;
-         this.lockOwner = lockOwner;
-         this.segment = segment;
+         this.keyInfo = new IracManagerKeyInfo(segment, key, lockOwner);
          this.expiration = expiration;
       }
 
       @Override
+      public IracManagerKeyInfo getKeyInfo() {
+         return keyInfo;
+      }
+
+      @Override
       public Object getKey() {
-         return key;
+         return keyInfo.key;
       }
 
       @Override
       public Object getOwner() {
-         return lockOwner;
+         return keyInfo.owner;
       }
 
       @Override
       public int getSegment() {
-         return segment;
+         return keyInfo.segment;
       }
 
       @Override

@@ -13,14 +13,13 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.xsite.irac.IracManager;
 import org.infinispan.xsite.irac.IracManagerKeyInfo;
-import org.infinispan.xsite.irac.IracManagerKeyInfoImpl;
 
 /**
  * The IRAC state for a given key.
@@ -106,12 +105,12 @@ public class IracStateResponseCommand implements CacheRpcCommand {
    }
 
    private static void writeStateTo(ObjectOutput output, State state) throws IOException {
-      IracManagerKeyInfoImpl.writeTo(output, state.keyInfo);
+      IracManagerKeyInfo.writeTo(output, state.keyInfo);
       IracMetadata.writeTo(output, state.tombstone);
    }
 
    private static State readStateFrom(ObjectInput input) throws IOException, ClassNotFoundException {
-      return new State(IracManagerKeyInfoImpl.readFrom(input), IracMetadata.readFrom(input));
+      return new State(IracManagerKeyInfo.readFrom(input), IracMetadata.readFrom(input));
    }
 
    private static class State {

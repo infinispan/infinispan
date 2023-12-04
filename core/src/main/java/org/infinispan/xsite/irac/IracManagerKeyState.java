@@ -15,7 +15,24 @@ package org.infinispan.xsite.irac;
  *
  * @since 14
  */
-interface IracManagerKeyState extends IracManagerKeyInfo {
+interface IracManagerKeyState {
+
+   IracManagerKeyInfo getKeyInfo();
+
+   /**
+    * @return The key.
+    */
+   Object getKey();
+
+   /**
+    * @return The owner who updated the key.
+    */
+   Object getOwner();
+
+   /**
+    * @return The key's segment.
+    */
+   int getSegment();
 
    /**
     * @return {@code true} if it is an expiration update.
