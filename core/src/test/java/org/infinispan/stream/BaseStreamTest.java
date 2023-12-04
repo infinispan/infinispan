@@ -258,11 +258,13 @@ public abstract class BaseStreamTest extends MultipleCacheManagersTest {
 
    public void testObjFindFirst() {
       Cache<Integer, String> cache = getCache(0);
+      CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
+
+      assertTrue(createStream(entrySet).findFirst().isEmpty());
+
       int range = 10;
       // First populate the cache with a bunch of values
       IntStream.range(0, range).boxed().forEach(i -> cache.put(i, i + "-value"));
-
-      CacheSet<Map.Entry<Integer, String>> entrySet = cache.entrySet();
 
       assertEquals(0, createStream(entrySet).sorted(
             (e1, e2) -> Integer.compare(e1.getKey(), e2.getKey())).findFirst().get().getKey().intValue());
