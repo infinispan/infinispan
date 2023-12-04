@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.entry;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -27,7 +28,7 @@ public class BasicInsightsTest extends SingleCacheManagerTest {
    }
 
    public void test() {
-      InsightsService service = cacheManager.getGlobalComponentRegistry().getComponent(InsightsService.class);
+      InsightsService service = GlobalComponentRegistry.of(cacheManager).getComponent(InsightsService.class);
       InsightsReport report = service.report();
       String json = report.serialize();
       assertThat(json).isNotEmpty();
