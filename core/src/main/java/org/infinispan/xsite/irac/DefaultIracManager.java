@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.PrimitiveIterator;
@@ -309,7 +310,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       IracStateResponseCommand cmd = commandsFactory.buildIracStateResponseCommand(batch.size());
       for (IracManagerKeyState state : batch) {
          IracMetadata tombstone = iracTombstoneManager.getTombstone(state.getKey());
-         cmd.add(state, tombstone);
+         cmd.add(state.getKeyInfo(), tombstone);
       }
       return Completable.fromCompletionStage(rpcManager.invokeCommand(dst, cmd, rspCollector, rpcOptions)
             .exceptionally(throwable -> {
@@ -370,7 +371,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       if (!dInfo.isWriteOwner() && !dInfo.isReadOwner()) {
          // topology changed! we no longer have the key; just drop it
          state.discard();
-         removeStateFromLocal(state);
+         removeStateFromLocal(state.getKeyInfo());
          return false;
       }
       return dInfo.isPrimary() && state.canSend();
@@ -522,7 +523,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       return rsp;
    }
 
-   private void removeStateFromCluster(Collection<? extends IracManagerKeyInfo> stateToCleanup) {
+   private void removeStateFromCluster(Collection<IracManagerKeyState> stateToCleanup) {
       if (stateToCleanup.isEmpty()) {
          return;
       }
@@ -533,25 +534,36 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       IntSet segments = mutableEmptySet();
       LocalizedCacheTopology cacheTopology = clusteringDependentLogic.getCacheTopology();
       Set<Address> owners = new HashSet<>(cacheTopology.getMembers().size());
-      for (IracManagerKeyInfo state : stateToCleanup) {
+      List<IracManagerKeyInfo> keysToCleanup = new ArrayList<>(stateToCleanup.size());
+      for (IracManagerKeyState state : stateToCleanup) {
+         keysToCleanup.add(state.getKeyInfo());
          if (segments.add(state.getSegment())) {
             owners.addAll(cacheTopology.getSegmentDistribution(state.getSegment()).writeOwners());
          }
       }
 
       if (!segments.isEmpty()) {
-         IracCleanupKeysCommand cmd = commandsFactory.buildIracCleanupKeyCommand(stateToCleanup);
+         IracCleanupKeysCommand cmd = commandsFactory.buildIracCleanupKeyCommand(keysToCleanup);
          rpcManager.sendToMany(owners, cmd, DeliverOrder.NONE);
-         stateToCleanup.forEach(this::removeStateFromLocal);
+         keysToCleanup.forEach(this::removeStateFromLocal);
       }
    }
 
    private void removeStateFromLocal(IracManagerKeyInfo state) {
-      //noinspection SuspiciousMethodCalls
-      boolean removed = updatedKeys.remove(state.getKey(), state);
-      if (log.isTraceEnabled()) {
-         log.tracef("[IRAC] State removed? %s, state=%s", removed, state);
-      }
+      updatedKeys.computeIfPresent(state.getKey(), (ignored, existingState) -> {
+         // remove if the same state
+         if (existingState.getKeyInfo().equals(state)) {
+            if (log.isTraceEnabled()) {
+               log.tracef("[IRAC] State removed? true, state=%s", existingState);
+            }
+            return null;
+         } else {
+            if (log.isTraceEnabled()) {
+               log.tracef("[IRAC] State removed? false, state=%s", existingState);
+            }
+            return existingState;
+         }
+      });
    }
 
    private void onBatchResponse(IracBatchSendResult result, Collection<? extends IracManagerKeyState> successfulSent) {

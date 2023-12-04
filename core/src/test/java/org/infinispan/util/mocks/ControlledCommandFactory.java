@@ -647,7 +647,7 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public IracCleanupKeysCommand buildIracCleanupKeyCommand(Collection<? extends IracManagerKeyInfo> state) {
+   public IracCleanupKeysCommand buildIracCleanupKeyCommand(Collection<IracManagerKeyInfo> state) {
       return actual.buildIracCleanupKeyCommand(state);
    }
 
