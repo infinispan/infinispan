@@ -2,6 +2,7 @@ package org.infinispan.server.insights;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.insights.config.InsightsActivation;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -18,7 +19,7 @@ public class InsightsActivationTest extends AbstractInfinispanTest {
    public void test() throws Exception {
       System.setProperty(InsightsModule.REDHAT_INSIGHTS_ACTIVATION_PROPERTY_NAME, InsightsActivation.LOCAL.name());
       try (EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createServerModeCacheManager()) {
-         InsightsService service = cacheManager.getGlobalComponentRegistry().getComponent(InsightsService.class);
+         InsightsService service = GlobalComponentRegistry.of(cacheManager).getComponent(InsightsService.class);
          assertThat(service).isNotNull();
          InsightsReport report = service.report();
          String json = report.serialize();
@@ -27,13 +28,13 @@ public class InsightsActivationTest extends AbstractInfinispanTest {
 
       System.setProperty(InsightsModule.REDHAT_INSIGHTS_ACTIVATION_PROPERTY_NAME, InsightsActivation.DISABLED.name());
       try (EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createServerModeCacheManager()) {
-         InsightsService service = cacheManager.getGlobalComponentRegistry().getComponent(InsightsService.class);
+         InsightsService service = GlobalComponentRegistry.of(cacheManager).getComponent(InsightsService.class);
          assertThat(service).isNull();
       }
 
       System.setProperty(InsightsModule.REDHAT_INSIGHTS_ACTIVATION_PROPERTY_NAME, InsightsActivation.ENABLED.name());
       try (EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createServerModeCacheManager()) {
-         InsightsService service = cacheManager.getGlobalComponentRegistry().getComponent(InsightsService.class);
+         InsightsService service = GlobalComponentRegistry.of(cacheManager).getComponent(InsightsService.class);
          assertThat(service).isNotNull();
          InsightsReport report = service.report();
          String json = report.serialize();
