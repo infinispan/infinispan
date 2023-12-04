@@ -94,7 +94,7 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
       Flowable<K> entryFlowable = entryPublisherFromContext(invocationContext, segments, keyPartitioner, keysToInclude)
             .map(RxJavaInterop.entryToKeyFunction());
       return transformer.apply(entryFlowable)
-            .thenCombine(stage, Flowable::just)
+            .thenCombine(stage, RxJavaInterop.combinedBiFunction())
             .thenCompose(finalizer);
    }
 
@@ -121,7 +121,7 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
       Flowable<CacheEntry<K, V>> entryFlowable = entryPublisherFromContext(invocationContext, segments, keyPartitioner,
             keysToInclude);
       return transformer.apply(entryFlowable)
-            .thenCombine(stage, Flowable::just)
+            .thenCombine(stage, RxJavaInterop.combinedBiFunction())
             .thenCompose(finalizer);
    }
 
