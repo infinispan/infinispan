@@ -1152,7 +1152,10 @@ public class JGroupsTransport implements Transport, ChannelListener {
       setMessageFlags(message, deliverOrder, noRelay);
 
       send(message);
-      metricsManager.recordMessageSent(target, message.size(), requestId == Request.NO_REQUEST_ID);
+      if (noRelay) {
+         // only record non cross-site messages
+         metricsManager.recordMessageSent(target, message.size(), requestId == Request.NO_REQUEST_ID);
+      }
    }
 
    private static org.jgroups.Address toJGroupsAddress(Address address) {
