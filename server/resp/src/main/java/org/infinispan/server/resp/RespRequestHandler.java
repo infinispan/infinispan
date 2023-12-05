@@ -22,7 +22,7 @@ public abstract class RespRequestHandler {
    public static final AttributeKey<ByteBufPool> BYTE_BUF_POOL_ATTRIBUTE_KEY = AttributeKey.newInstance("buffer-pool");
    private final BiFunction<RespRequestHandler, Throwable, RespRequestHandler> HANDLE_FAILURE = (h, t) -> {
       if (t != null) {
-         Resp3Handler.handleThrowable(h.allocator(), t);
+         Resp3Handler.handleThrowable(allocator(), t);
          // If exception, never use handler
          return this;
       }
