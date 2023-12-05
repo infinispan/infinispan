@@ -15,6 +15,8 @@ import org.infinispan.remoting.transport.jgroups.NoOpJGroupsMetricManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import net.jcip.annotations.GuardedBy;
+
 /**
  * Produces instances of {@link MetricsCollector}. MetricsCollector is optional, based on the presence of Micrometer in
  * classpath and the enabling of metrics in config.
@@ -35,19 +37,13 @@ public final class MetricsComponentFactory implements ComponentFactory, AutoInst
 
    @Inject
    GlobalConfiguration globalConfig;
+   @GuardedBy("this")
+   private MetricsRegistry registry;
 
    @Override
    public Object construct(String componentName) {
       if (componentName.equals(MetricsRegistry.class.getName())) {
-         if (isMetricsDisabled()) {
-            return NoMetricRegistry.NO_OP_INSTANCE;
-         }
-         try {
-            return new MetricsRegistryImpl();
-         } catch (Throwable t) {
-            logMissingDependencies(t);
-            return NoMetricRegistry.NO_OP_INSTANCE;
-         }
+         return createMetricRegistry();
       } else if (componentName.equals(MetricsCollector.class.getName())) {
          if (isMetricsDisabled()) {
             return null;
@@ -60,7 +56,8 @@ public final class MetricsComponentFactory implements ComponentFactory, AutoInst
             return null;
          }
       } else if (componentName.equals(JGroupsMetricsManager.class.getName())) {
-         if (isMetricsDisabled()) {
+         if (createMetricRegistry() == NoMetricRegistry.NO_OP_INSTANCE) {
+            // if no registry available in the classpath, do not try to register/collect metrics in there.
             return NoOpJGroupsMetricManager.INSTANCE;
          } else {
             return new JGroupsMetricsManagerImpl(globalConfig.metrics().histograms());
@@ -75,5 +72,22 @@ public final class MetricsComponentFactory implements ComponentFactory, AutoInst
 
    private static void logMissingDependencies(Throwable t) {
       log.debug("Micrometer metrics are not available because classpath dependencies are missing.", t);
+   }
+
+   private synchronized MetricsRegistry createMetricRegistry() {
+      if (registry != null) {
+         return registry;
+      }
+      if (isMetricsDisabled()) {
+         registry = NoMetricRegistry.NO_OP_INSTANCE;
+         return registry;
+      }
+      try {
+         registry = new MetricsRegistryImpl();
+      } catch (Throwable t) {
+         logMissingDependencies(t);
+         registry = NoMetricRegistry.NO_OP_INSTANCE;
+      }
+      return registry;
    }
 }
