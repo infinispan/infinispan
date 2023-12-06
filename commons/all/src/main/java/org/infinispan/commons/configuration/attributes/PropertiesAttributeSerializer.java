@@ -40,4 +40,9 @@ public class PropertiesAttributeSerializer implements AttributeSerializer<Map<?,
          }
       }
    }
+
+   @Override
+   public boolean defer() {
+      return true;
+   }
 }

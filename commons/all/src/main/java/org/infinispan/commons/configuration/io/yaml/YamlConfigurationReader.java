@@ -370,7 +370,7 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
          } else {
             next = null;
          }
-      } while (next != null && next.name == null && next.value == null);
+      } while (next != null && next.name == null && next.value == null && !next.list);
    }
 
    @Override
@@ -422,11 +422,17 @@ public class YamlConfigurationReader extends AbstractConfigurationReader {
          readNext();
          if (next != null && next.list) {
             if (next.name == null) {
-               // Bare value list
-               Parsed current = state.peek();
-               current.list = true;
-               current.value = next.value;
-               readNext();
+               if (next.value != null) {
+                  // Bare value list
+                  Parsed current = state.peek();
+                  current.list = true;
+                  current.value = next.value;
+                  readNext();
+               } else {
+                  // Nested array
+                  Parsed current = state.peek();
+                  next.name = current.name;
+               }
             }
          } else {
             // Read the attributes: they are indented relative to the element and have a value

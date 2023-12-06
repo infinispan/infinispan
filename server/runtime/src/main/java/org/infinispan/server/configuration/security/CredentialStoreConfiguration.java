@@ -1,5 +1,7 @@
 package org.infinispan.server.configuration.security;
 
+import static org.infinispan.server.configuration.ServerConfigurationSerializer.CREDENTIAL_PROXY;
+
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.spec.AlgorithmParameterSpec;
@@ -43,9 +45,7 @@ public class CredentialStoreConfiguration extends ConfigurationElement<Credentia
    public static final AttributeDefinition<String> RELATIVE_TO = AttributeDefinition.builder(Attribute.RELATIVE_TO, Server.INFINISPAN_SERVER_CONFIG_PATH, String.class).autoPersist(false).build();
    public static final AttributeDefinition<String> TYPE = AttributeDefinition.builder(Attribute.TYPE, "pkcs12", String.class).build();
    static final AttributeDefinition<Supplier<CredentialSource>> CREDENTIAL = AttributeDefinition.builder(Attribute.CREDENTIAL, null, (Class<Supplier<CredentialSource>>) (Class<?>) Supplier.class)
-         .serializer((writer, name, value) -> {
-            ((AttributeSerializer<CredentialSource>) value).serialize(writer, name, null);
-         }).build();
+         .serializer(CREDENTIAL_PROXY).build();
 
    static AttributeSet attributeDefinitionSet() {
       KeyStore.getDefaultType();

@@ -2,11 +2,13 @@ package org.infinispan.commons.configuration.attributes;
 
 import static org.infinispan.commons.logging.Log.CONFIG;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.infinispan.commons.configuration.Combine;
@@ -299,9 +301,18 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
     * @param writer
     */
    public void write(ConfigurationWriter writer) {
+      List<Attribute<?>> deferred = new ArrayList<>();
       for (Attribute<?> attr : attributes.values()) {
-         if (attr.isPersistent())
-            attr.write(writer, attr.getAttributeDefinition().name());
+         if (attr.isPersistent()) {
+            if (attr.getAttributeDefinition().serializer().defer()) {
+               deferred.add(attr);
+            } else {
+               attr.write(writer, attr.getAttributeDefinition().name());
+            }
+         }
+      }
+      for(Attribute<?> attr : deferred) {
+         attr.write(writer, attr.getAttributeDefinition().name());
       }
    }
 

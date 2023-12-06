@@ -2377,7 +2377,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot handle cross-site request from site '%s'. CacheManager isn't started yet.", id = 971)
    CrossSiteIllegalLifecycleStateException xsiteCacheManagerDoesNotAllowInvocations(String origin);
 
-   @Message(value = "Tracing collector endoint '%s' is not valid.", id = 972)
+   @Message(value = "Tracing collector endpoint '%s' is not valid.", id = 972)
    CacheConfigurationException invalidTracingCollectorEndpoint(String collectorEndpoint, @Cause Throwable e);
 
 }
