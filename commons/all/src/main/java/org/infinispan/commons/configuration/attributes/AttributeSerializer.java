@@ -33,4 +33,8 @@ public interface AttributeSerializer<T> {
    AttributeSerializer<Class> CLASS_NAME = ((writer, name, value) -> writer.writeAttribute(name, value.getName()));
 
    void serialize(ConfigurationWriter writer, String name, T value);
+
+   default boolean defer() {
+      return false;
+   }
 }

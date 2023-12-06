@@ -189,8 +189,8 @@ public class ServerConfigurationSerializer
       if (realm.name() != null) {
          writer.writeStartElement(Element.TOKEN_REALM);
          realm.attributes().write(writer);
-         realm.jwtConfiguration().attributes().write(writer, Element.JWT);
-         realm.oauth2Configuration().attributes().write(writer, Element.OAUTH2_INTROSPECTION);
+         realm.jwtConfiguration().write(writer);
+         realm.oauth2Configuration().write(writer);
          writer.writeEndElement();
       }
    }
@@ -333,18 +333,42 @@ public class ServerConfigurationSerializer
       connector.write(writer);
    }
 
-   public static AttributeSerializer<Supplier<CredentialSource>> CREDENTIAL = (writer, name, value) -> {
-      if (value instanceof PasswordCredentialSource) {
-         String credential = writer.clearTextSecrets() ? new String(resolvePassword(value)) : "***";
-         writer.writeAttribute(name, credential);
-      } else if (value instanceof CredentialStoresConfigurationBuilder.CredentialStoreSourceSupplier) {
-         CredentialStoresConfigurationBuilder.CredentialStoreSourceSupplier credentialSupplier = (CredentialStoresConfigurationBuilder.CredentialStoreSourceSupplier) value;
-         writer.writeStartElement(Element.CREDENTIAL_REFERENCE);
-         writer.writeAttribute(Attribute.STORE, credentialSupplier.getStore());
-         writer.writeAttribute(Attribute.ALIAS, credentialSupplier.getAlias());
-         writer.writeEndElement();
-      } else {
-         throw new IllegalArgumentException();
+   public static class CredentialSerializer implements AttributeSerializer<Supplier<CredentialSource>> {
+      @Override
+      public void serialize(ConfigurationWriter writer, String name, Supplier<CredentialSource> value) {
+         if (value instanceof PasswordCredentialSource) {
+            String credential = writer.clearTextSecrets() ? new String(resolvePassword(value)) : "***";
+            writer.writeAttribute(name, credential);
+         } else if (value instanceof CredentialStoresConfigurationBuilder.CredentialStoreSourceSupplier) {
+            CredentialStoresConfigurationBuilder.CredentialStoreSourceSupplier credentialSupplier = (CredentialStoresConfigurationBuilder.CredentialStoreSourceSupplier) value;
+            writer.writeStartElement(Element.CREDENTIAL_REFERENCE);
+            writer.writeAttribute(Attribute.STORE, credentialSupplier.getStore());
+            writer.writeAttribute(Attribute.ALIAS, credentialSupplier.getAlias());
+            writer.writeEndElement();
+         } else {
+            throw new IllegalArgumentException();
+         }
       }
-   };
+
+      @Override
+      public boolean defer() {
+         return true;
+      }
+   }
+
+   public static final CredentialSerializer CREDENTIAL = new CredentialSerializer();
+
+   public static class CredentialProxySerializer implements AttributeSerializer<Supplier<CredentialSource>> {
+      @Override
+      public void serialize(ConfigurationWriter writer, String name, Supplier<CredentialSource> value) {
+         ((AttributeSerializer<CredentialSource>) value).serialize(writer, name, null);
+      }
+
+      @Override
+      public boolean defer() {
+         return true;
+      }
+   }
+
+   public static final CredentialProxySerializer CREDENTIAL_PROXY = new CredentialProxySerializer();
 }
