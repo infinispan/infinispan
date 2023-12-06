@@ -25,9 +25,9 @@ public class NettyEventLoopFactory extends AbstractComponentFactory implements A
    public Object construct(String componentName) {
       ThreadFactory threadFactory = globalConfiguration.nonBlockingThreadPool().threadFactory();
       if (threadFactory == null) {
-         threadFactory = new NonBlockingThreadFactory("ISPN-non-blocking-thread-group",
-               getDefaultThreadPrio(KnownComponentNames.NON_BLOCKING_EXECUTOR), DefaultThreadFactory.DEFAULT_PATTERN,
-               globalConfiguration.transport().nodeName(), shortened(KnownComponentNames.NON_BLOCKING_EXECUTOR));
+         threadFactory = new NonBlockingThreadFactory(getDefaultThreadPrio(KnownComponentNames.NON_BLOCKING_EXECUTOR),
+               DefaultThreadFactory.DEFAULT_PATTERN, globalConfiguration.transport().nodeName(),
+               shortened(KnownComponentNames.NON_BLOCKING_EXECUTOR));
       }
 
       ThreadPoolExecutorFactory<?> tpef = globalConfiguration.nonBlockingThreadPool().threadPoolFactory();

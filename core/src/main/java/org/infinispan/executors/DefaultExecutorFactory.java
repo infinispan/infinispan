@@ -11,10 +11,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.commons.ThreadGroups;
 import org.infinispan.commons.executors.SecurityAwareExecutorFactory;
 import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.factories.threads.BlockingThreadFactory;
-import org.infinispan.factories.threads.NonBlockingThreadFactory;
 
 /**
  * Default executor factory that creates executors using the JDK Executors service.
@@ -46,8 +45,8 @@ public class DefaultExecutorFactory implements SecurityAwareExecutorFactory {
       if (blocking == null) {
          threadGroup = Thread.currentThread().getThreadGroup();
       } else {
-         threadGroup = Boolean.parseBoolean(blocking) ? new BlockingThreadFactory.ISPNBlockingThreadGroup(threadNamePrefix + "-group") :
-               new NonBlockingThreadFactory.ISPNNonBlockingThreadGroup(threadNamePrefix + "-group");
+         threadGroup = Boolean.parseBoolean(blocking) ? ThreadGroups.BLOCKING_GROUP :
+                 ThreadGroups.NON_BLOCKING_GROUP;
       }
       BlockingQueue<Runnable> queue = queueSize == 0 ? new SynchronousQueue<>()
             : new LinkedBlockingQueue<>(queueSize);
