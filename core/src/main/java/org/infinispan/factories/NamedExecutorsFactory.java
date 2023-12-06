@@ -108,10 +108,10 @@ public class NamedExecutorsFactory extends AbstractComponentFactory implements A
                                                          ExecutorServiceType type) {
       switch (type) {
          case BLOCKING:
-            return new BlockingThreadFactory("ISPN-blocking-thread-group", getDefaultThreadPrio(componentName),
-                  DefaultThreadFactory.DEFAULT_PATTERN, globalCfg.transport().nodeName(), shortened(componentName));
+            return new BlockingThreadFactory(getDefaultThreadPrio(componentName), DefaultThreadFactory.DEFAULT_PATTERN,
+                  globalCfg.transport().nodeName(), shortened(componentName));
          case NON_BLOCKING:
-            return new NonBlockingThreadFactory("ISPN-non-blocking-thread-group", getDefaultThreadPrio(componentName),
+            return new NonBlockingThreadFactory(getDefaultThreadPrio(componentName),
                   DefaultThreadFactory.DEFAULT_PATTERN, globalCfg.transport().nodeName(), shortened(componentName));
          default:
             // Use defaults
