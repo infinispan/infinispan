@@ -13,8 +13,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.ThreadGroups;
 import org.infinispan.commons.executors.ExecutorFactory;
-import org.infinispan.commons.executors.NonBlockingResource;
 
 /**
  * Default implementation for {@link org.infinispan.commons.executors.ExecutorFactory} based on an {@link
@@ -36,7 +36,7 @@ public class DefaultAsyncExecutorFactory implements ExecutorFactory {
       int factoryIndex = DefaultAsyncExecutorFactory.factoryCounter.incrementAndGet();
       String threadNamePrefix = cp.getDefaultExecutorFactoryThreadNamePrefix();
       String threadNameSuffix = cp.getDefaultExecutorFactoryThreadNameSuffix();
-      ISPNNonBlockingThreadGroup nonBlockingThreadGroup = new ISPNNonBlockingThreadGroup(threadNamePrefix + "-group");
+      ThreadGroups.ISPNNonBlockingThreadGroup nonBlockingThreadGroup = ThreadGroups.NON_BLOCKING_GROUP;
       ThreadFactory tf = r -> {
          int threadIndex = threadCounter.incrementAndGet();
          Thread th = new Thread(nonBlockingThreadGroup, r, threadNamePrefix + "-" + factoryIndex + "-" + threadIndex + threadNameSuffix);
@@ -53,9 +53,4 @@ public class DefaultAsyncExecutorFactory implements ExecutorFactory {
       });
    }
 
-   static final class ISPNNonBlockingThreadGroup extends ThreadGroup implements NonBlockingResource {
-      ISPNNonBlockingThreadGroup(String name) {
-         super(name);
-      }
-   }
 }

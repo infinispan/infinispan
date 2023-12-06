@@ -80,7 +80,7 @@ public class MigrationTask implements Function<EmbeddedCacheManager, Integer> {
    @Override
    public Integer apply(EmbeddedCacheManager embeddedCacheManager) {
       AtomicInteger counter = new AtomicInteger(0);
-      DefaultThreadFactory threadFactory = new BlockingThreadFactory(null, 1, THREAD_NAME + "-%t", null, null);
+      DefaultThreadFactory threadFactory = new BlockingThreadFactory(1, THREAD_NAME + "-%t", null, null);
       ExecutorService executorService = Executors.newFixedThreadPool(threads, threadFactory);
       RemoveListener listener = null;
       AdvancedCache<Object, Object> advancedCache = embeddedCacheManager.getCache(cacheName).getAdvancedCache();

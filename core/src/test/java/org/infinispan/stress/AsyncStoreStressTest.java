@@ -109,8 +109,7 @@ public class AsyncStoreStressTest extends AbstractInfinispanTest {
       nonBlockingExecutor = new ThreadPoolExecutor(0, ProcessorInfo.availableProcessors() * 2,
             60L, TimeUnit.SECONDS,
             new ArrayBlockingQueue<>(KnownComponentNames.getDefaultQueueSize(KnownComponentNames.NON_BLOCKING_EXECUTOR)),
-            new NonBlockingThreadFactory("ISPN-non-blocking-thread-group", Thread.NORM_PRIORITY,
-                  DefaultThreadFactory.DEFAULT_PATTERN, "Test", "non-blocking"),
+            new NonBlockingThreadFactory(Thread.NORM_PRIORITY, DefaultThreadFactory.DEFAULT_PATTERN, "Test", "non-blocking"),
             NonBlockingRejectedExecutionHandler.getInstance());
       blockingExecutor = new ThreadPoolExecutor(0, 150,
             60L, TimeUnit.SECONDS,
