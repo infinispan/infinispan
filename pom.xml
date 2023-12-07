@@ -3477,6 +3477,12 @@
       </profile>
       <profile>
          <id>insights</id>
+         <activation>
+            <property>
+               <name>release-mode</name>
+               <value>downstream</value>
+            </property>
+         </activation>
          <modules>
             <module>server/insights</module>
          </modules>
