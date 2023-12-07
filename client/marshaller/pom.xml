@@ -118,7 +118,10 @@
         <profile>
             <id>community</id>
             <activation>
-                <activeByDefault>true</activeByDefault>
+                <property>
+                    <name>release-mode</name>
+                    <value>!downstream</value>
+                </property>
             </activation>
             <modules>
                 <module>kryo/kryo-marshaller</module>

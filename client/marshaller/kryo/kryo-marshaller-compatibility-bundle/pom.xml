@@ -79,6 +79,12 @@
     <profiles>
         <profile>
             <id>community-release</id>
+            <activation>
+                <property>
+                    <name>release-mode</name>
+                    <value>upstream</value>
+                </property>
+            </activation>
             <build>
                 <plugins>
                     <plugin>

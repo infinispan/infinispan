@@ -513,9 +513,12 @@
 
     <profiles>
         <profile>
-            <id>community-release</id>
+            <id>community</id>
             <activation>
-               <activeByDefault>true</activeByDefault>
+                <property>
+                    <name>release-mode</name>
+                    <value>!downstream</value>
+                </property>
             </activation>
             <dependencyManagement>
                 <dependencies>
