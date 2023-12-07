@@ -261,6 +261,10 @@
 
       <!-- configuration properties -->
       <org.infinispan.attachServerZip>false</org.infinispan.attachServerZip>
+      <!-- empty by default, means no profiles for upstream or downstream release are enabled. -->
+      <!-- upstream: enables profiles for community release -->
+      <!-- downstream: enables profiles for downstream/product release -->
+      <release-mode/>
    </properties>
 
    <build>
@@ -332,7 +336,10 @@
       <profile>
          <id>community-release</id>
          <activation>
-            <activeByDefault>false</activeByDefault>
+            <property>
+               <name>release-mode</name>
+               <value>upstream</value>
+            </property>
          </activation>
          <build>
             <plugins>

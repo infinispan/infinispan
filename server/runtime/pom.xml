@@ -545,7 +545,10 @@
       <profile>
          <id>community</id>
          <activation>
-            <activeByDefault>true</activeByDefault>
+            <property>
+               <name>release-mode</name>
+               <value>!downstream</value>
+            </property>
          </activation>
          <dependencies>
             <dependency>
@@ -568,6 +571,12 @@
       </profile>
       <profile>
          <id>insights</id>
+         <activation>
+            <property>
+               <name>release-mode</name>
+               <value>downstream</value>
+            </property>
+         </activation>
          <dependencies>
             <dependency>
                <groupId>org.infinispan</groupId>
