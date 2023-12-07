@@ -67,7 +67,7 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                sh "$MAVEN_HOME/bin/mvn -B -V -Pcommunity-release -Pdistribution -DskipTests clean deploy -Dinfinispan.brand.version=${version}"
+                sh "$MAVEN_HOME/bin/mvn -B -V -Drelease-mode=upstream -Pdistribution -DskipTests clean deploy -Dinfinispan.brand.version=${version}"
             }
         }
 
