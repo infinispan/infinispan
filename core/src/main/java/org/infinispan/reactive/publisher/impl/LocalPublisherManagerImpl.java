@@ -34,7 +34,6 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.reactive.publisher.impl.commands.reduction.PublisherResult;
 import org.infinispan.reactive.publisher.impl.commands.reduction.SegmentPublisherResult;
 import org.infinispan.stream.StreamMarshalling;
@@ -242,19 +241,18 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
 
       @Override
       public void subscribe(Subscriber<? super R> s, IntConsumer completedSegmentConsumer, IntConsumer lostSegmentConsumer) {
-         Flowable<Publisher<R>> segmentPublishers;
+         Flowable<R> resultPublisher;
          switch (deliveryGuarantee) {
             case AT_MOST_ONCE:
-                segmentPublishers = new FlowableFromIntSetFunction<>(segments, segment -> {
-                   Publisher<I> publisher = set.localPublisher(segment);
-                   if (predicate != null) {
-                      publisher = Flowable.fromPublisher(publisher)
-                            .filter(predicate);
-                   }
+               resultPublisher = Flowable.fromIterable(segments).concatMap(segment -> {
+                  Publisher<I> publisher = set.localPublisher(segment);
+                  if (predicate != null) {
+                     publisher = Flowable.fromPublisher(publisher)
+                           .filter(predicate);
+                  }
                   return Flowable.fromPublisher(transformer.apply(publisher))
                         .doOnComplete(() -> completedSegmentConsumer.accept(segment));
-                });
-
+               });
                break;
             case AT_LEAST_ONCE:
             case EXACTLY_ONCE:
@@ -266,7 +264,7 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
                // Check topology before submitting
                listener.verifyTopology(distributionManager.getCacheTopology());
 
-               segmentPublishers = new FlowableFromIntSetFunction<>(segments, segment -> {
+               resultPublisher = Flowable.fromIterable(segments).concatMap(segment -> {
                   if (!concurrentSet.contains(segment)) {
                      return Flowable.empty();
                   }
@@ -283,13 +281,13 @@ public class LocalPublisherManagerImpl<K, V> implements LocalPublisherManager<K,
                               lostSegmentConsumer.accept(segment);
                            }
                         });
-               });
+               }).doFinally(() -> changeListener.remove(listener));
                break;
             default:
                throw new UnsupportedOperationException("Unsupported delivery guarantee: " + deliveryGuarantee);
          }
 
-         segmentPublishers.concatMap(Functions.identity()).subscribe(s);
+         resultPublisher.subscribe(s);
       }
    }
 
