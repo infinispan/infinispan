@@ -56,7 +56,8 @@ class IndexNode {
    // Prefix length (short) + keyNode length (short) + flag (byte)
    private static final int INNER_NODE_HEADER_SIZE = 5;
    private static final int INNER_NODE_REFERENCE_SIZE = 10;
-   private static final int LEAF_NODE_REFERENCE_SIZE = 14;
+   // File size (int), Offset (int), numRecords (int), Cache Segment (int)
+   private static final int LEAF_NODE_REFERENCE_SIZE = 16;
 
    public static final int RESERVED_SPACE
          = INNER_NODE_HEADER_SIZE + 2 * Math.max(INNER_NODE_REFERENCE_SIZE, LEAF_NODE_REFERENCE_SIZE);
@@ -105,7 +106,7 @@ class IndexNode {
       if ((flags & HAS_LEAVES) != 0) {
          leafNodes = new LeafNode[numKeyParts + 1];
          for (int i = 0; i < numKeyParts + 1; ++i) {
-            leafNodes[i] = new LeafNode(buffer.getInt(), buffer.getInt(), buffer.getShort(), buffer.getInt());
+            leafNodes[i] = new LeafNode(buffer.getInt(), buffer.getInt(), buffer.getInt(), buffer.getInt());
          }
       } else if ((flags & HAS_NODES) != 0) {
          innerNodes = new InnerNode[numKeyParts + 1];
@@ -217,7 +218,7 @@ class IndexNode {
          for (LeafNode leafNode : leafNodes) {
             buffer.putInt(leafNode.file);
             buffer.putInt(leafNode.offset);
-            buffer.putShort(leafNode.numRecords);
+            buffer.putInt(leafNode.numRecords);
             buffer.putInt(leafNode.cacheSegment);
          }
       }
@@ -377,17 +378,17 @@ class IndexNode {
       return maxSeqId;
    }
 
-   private void updateFileOffsetInFile(int leafOffset, int newFile, int newOffset, short numRecords) throws IOException {
+   private void updateFileOffsetInFile(int leafOffset, int newFile, int newOffset, int numRecords) throws IOException {
       // Root is -1, so that means the beginning of the file
       long offset = this.offset >= 0 ? this.offset : 0;
       offset += headerLength();
       offset += keyPartsLength();
       offset += (long) leafOffset * LEAF_NODE_REFERENCE_SIZE;
 
-      ByteBuffer buffer = ByteBuffer.allocate(10);
+      ByteBuffer buffer = ByteBuffer.allocate(12);
       buffer.putInt(newFile);
       buffer.putInt(newOffset);
-      buffer.putShort(numRecords);
+      buffer.putInt(numRecords);
 
       buffer.flip();
 
@@ -675,7 +676,7 @@ class IndexNode {
       if (leafNodes.length == 0) {
          overwriteHook.setOverwritten(request, cacheSegment, false, -1, -1);
          if (overwriteHook.check(request, -1, -1)) {
-            return new IndexNode(segment, prefix, keyParts, new LeafNode[]{new LeafNode(file, offset, (short) 1, cacheSegment)});
+            return new IndexNode(segment, prefix, keyParts, new LeafNode[]{new LeafNode(file, offset, 1, cacheSegment)});
          } else {
             segment.getCompactor().free(file, size);
             return this;
@@ -685,12 +686,12 @@ class IndexNode {
       int insertPart = getInsertionPoint(indexKey);
       LeafNode oldLeafNode = leafNodes[insertPart];
 
-      short numRecords = oldLeafNode.numRecords;
+      int numRecords = oldLeafNode.numRecords;
       switch (recordChange) {
          case INCREASE:
          case INCREASE_FOR_OLD:
-            if (numRecords == Short.MAX_VALUE) {
-               throw new IllegalStateException("Too many records for this key (short overflow)");
+            if (numRecords == Integer.MAX_VALUE) {
+               throw new IllegalStateException("Too many records for this key (int overflow)");
             }
             numRecords++;
             break;
@@ -798,13 +799,13 @@ class IndexNode {
             System.arraycopy(leafNodes, 0, newLeafNodes, 0, insertPart + 1);
             System.arraycopy(leafNodes, insertPart + 1, newLeafNodes, insertPart + 2, leafNodes.length - insertPart - 1);
             log.tracef("Creating new leafNode for %s at %d:%d", objectKey, file, offset);
-            newLeafNodes[insertPart + 1] = new LeafNode(file, offset, (short) 1, cacheSegment);
+            newLeafNodes[insertPart + 1] = new LeafNode(file, offset, 1, cacheSegment);
          } else {
             newKeyParts[insertPart] = substring(oldIndexKey, newPrefix.length, -keyComp);
             System.arraycopy(leafNodes, 0, newLeafNodes, 0, insertPart);
             System.arraycopy(leafNodes, insertPart, newLeafNodes, insertPart + 1, leafNodes.length - insertPart);
             log.tracef("Creating new leafNode for %s at %d:%d", objectKey, file, offset);
-            newLeafNodes[insertPart] = new LeafNode(file, offset, (short) 1, cacheSegment);
+            newLeafNodes[insertPart] = new LeafNode(file, offset, 1, cacheSegment);
          }
       }
       return new IndexNode(segment, newPrefix, newKeyParts, newLeafNodes);
@@ -1116,7 +1117,7 @@ class IndexNode {
       private static final LeafNode[] EMPTY_ARRAY = new LeafNode[0];
       private volatile SoftReference<EntryRecord> keyReference;
 
-      LeafNode(int file, int offset, short numRecords, int cacheSegment) {
+      LeafNode(int file, int offset, int numRecords, int cacheSegment) {
          super(file, offset, numRecords, cacheSegment);
       }
 
