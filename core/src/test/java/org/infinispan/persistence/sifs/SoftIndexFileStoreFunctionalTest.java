@@ -2,10 +2,13 @@ package org.infinispan.persistence.sifs;
 
 import java.nio.file.Paths;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -35,5 +38,20 @@ public class SoftIndexFileStoreFunctionalTest extends BaseStoreFunctionalTest {
             // Effectively disable reaper for tests
             .expiration().wakeUpInterval(Long.MAX_VALUE);
       return persistence;
+   }
+
+   public void testWritingSameKeyShortTimes() {
+      String cacheName = "testWritingSameKeyShortTimes";
+      ConfigurationBuilder cb = getDefaultCacheConfiguration();
+      createCacheStoreConfig(cb.persistence(), cacheName, false);
+      TestingUtil.defineConfiguration(cacheManager, cacheName, cb.build());
+
+      Cache<String, Object> cache = cacheManager.getCache(cacheName);
+
+      for (int i = 0; i < Short.MAX_VALUE + 1; ++i) {
+         cache.put("k", "v");
+      }
+
+      cache.remove("k");
    }
 }

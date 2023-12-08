@@ -48,8 +48,8 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
  */
 class Index {
    private static final Log log = LogFactory.getLog(Index.class, Log.class);
-   // PRE ISPN 13 GRACEFULLY VALUE = 0x512ACEF0;
-   private static final int GRACEFULLY = 0x512ACEF1;
+   // PRE ISPN 14.0.22 GRACEFULLY VALUE = 0x512ACEF1;
+   private static final int GRACEFULLY = 0x512ACEF2;
    private static final int DIRTY = 0xD112770C;
    // 4 bytes for graceful shutdown
    // 4 bytes for segment max (this way the index can be regenerated if number of segments change
