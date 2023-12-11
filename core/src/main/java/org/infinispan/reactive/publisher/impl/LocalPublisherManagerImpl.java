@@ -49,7 +49,6 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Scheduler;
 import io.reactivex.functions.Predicate;
-import io.reactivex.internal.functions.Functions;
 import io.reactivex.parallel.ParallelFlowable;
 import io.reactivex.processors.FlowableProcessor;
 import io.reactivex.processors.UnicastProcessor;
