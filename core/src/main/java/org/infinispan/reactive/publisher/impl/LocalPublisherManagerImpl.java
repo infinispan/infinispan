@@ -34,6 +34,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.reactive.publisher.impl.commands.reduction.PublisherResult;
 import org.infinispan.reactive.publisher.impl.commands.reduction.SegmentPublisherResult;
 import org.infinispan.stream.StreamMarshalling;
