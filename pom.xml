@@ -672,6 +672,11 @@
             <artifactId>opentelemetry-exporter-sender-jdk</artifactId>
             <version>${version.opentelemetry.alpha}</version>
          </dependency>
+         <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-sdk-common</artifactId>
+            <version>${version.opentelemetry}</version>
+         </dependency>
          <!-- OpenTelemetry runtime dependencies -->
          <dependency>
             <groupId>io.opentelemetry</groupId>
