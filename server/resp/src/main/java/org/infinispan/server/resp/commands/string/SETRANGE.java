@@ -1,7 +1,9 @@
 package org.infinispan.server.resp.commands.string;
 
-import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
+import org.infinispan.commons.util.Util;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
@@ -9,8 +11,8 @@ import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * SETRANGE Resp Command
@@ -36,7 +38,7 @@ public class SETRANGE extends RespCommand implements Resp3Command {
 
    private byte[] setrange(byte[] value, byte[] patch, int offset) {
       if (value==null) {
-         value = new byte[0];
+         value = Util.EMPTY_BYTE_ARRAY;
       }
       if (patch.length+offset < value.length) {
          var buf = Unpooled.wrappedBuffer(value);
