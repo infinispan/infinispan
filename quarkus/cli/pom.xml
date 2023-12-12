@@ -100,7 +100,6 @@
             <id>native</id>
             <properties>
                 <quarkus.package.type>native</quarkus.package.type>
-                <quarkus.native.additional-build-args>${native-build-args}</quarkus.native.additional-build-args>
             </properties>
             <build>
                 <plugins>
