@@ -1,7 +1,5 @@
 package org.infinispan.commons.jdkspecific;
 
-import sun.reflect.Reflection;
-
 public class CallerId {
    private static final boolean hasGetCallerClass;
    private static final int callerOffset;
@@ -11,8 +9,8 @@ public class CallerId {
       boolean result = false;
       int offset = 1;
       try {
-         result = Reflection.getCallerClass(1) == CallerId.class || Reflection.getCallerClass(2) == CallerId.class;
-         offset = Reflection.getCallerClass(1) == Reflection.class ? 2 : 1;
+         result = sun.reflect.Reflection.getCallerClass(1) == CallerId.class || sun.reflect.Reflection.getCallerClass(2) == CallerId.class;
+         offset = sun.reflect.Reflection.getCallerClass(1) == sun.reflect.Reflection.class ? 2 : 1;
       } catch (Throwable ignored) {
       }
       hasGetCallerClass = result;
@@ -32,7 +30,7 @@ public class CallerId {
 
    public static Class<?> getCallerClass(int n) {
       if (hasGetCallerClass) {
-         return Reflection.getCallerClass(n + callerOffset);
+         return sun.reflect.Reflection.getCallerClass(n + callerOffset);
       } else {
          return SECURITY_MANAGER.getClasses()[n + callerOffset];
       }

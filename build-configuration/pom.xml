@@ -236,12 +236,12 @@
       <version.maven.antlr3>${version.antlr3}</version.maven.antlr3>
       <version.maven.antrun>3.0.0</version.maven.antrun>
       <version.maven.buildhelper>3.1.0</version.maven.buildhelper>
-      <version.maven.bundle>4.2.1</version.maven.bundle>
+      <version.maven.bundle>5.1.9</version.maven.bundle>
       <version.maven.gpg>3.0.1</version.maven.gpg>
       <version.maven-compiler-plugin>3.10.1</version.maven-compiler-plugin>
       <version.maven.invoker>3.2.1</version.maven.invoker>
       <version.maven.jar>3.2.0</version.maven.jar>
-      <version.maven.javadoc>3.4.1</version.maven.javadoc>
+      <version.maven.javadoc>3.6.3</version.maven.javadoc>
       <version.maven-plugin-annotations>3.5.1</version.maven-plugin-annotations>
       <version.maven-plugin-api>3.5.3</version.maven-plugin-api>
       <version.maven-plugin-plugin>3.6.0</version.maven-plugin-plugin>
