@@ -43,6 +43,10 @@ public class SoftIndexFileStoreConfiguration extends AbstractStoreConfiguration<
       return index.indexLocation();
    }
 
+   /**
+    * This is no longer used as we create an index file per cache segment instead
+    */
+   @Deprecated(since = "15.0", forRemoval = true)
    public int indexSegments() {
       return index.indexSegments();
    }
@@ -67,6 +71,15 @@ public class SoftIndexFileStoreConfiguration extends AbstractStoreConfiguration<
       return data.syncWrites();
    }
 
+   /**
+    * The maximum number of files that will be open at a given time for all the data and index files, which does
+    * not include compactor and current log file (which will always be 2).
+    * Note that the number of data files is effectively unlimited, where as we have an index file per segment.
+    * <p>
+    * Index files will reserve 1/10th of the open files, with a minimum value of 1 and a maximum equal to the
+    * number of cache segments.
+    * @return How many open files SIFS will utilize
+    */
    public int openFilesLimit() {
       return attributes.attribute(OPEN_FILES_LIMIT).get();
    }
