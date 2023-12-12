@@ -1,6 +1,10 @@
 package org.infinispan.server.resp.commands.string;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
+import org.infinispan.commons.util.Util;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
@@ -8,9 +12,7 @@ import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * GETRANGE Resp Command
@@ -28,7 +30,6 @@ import java.util.concurrent.CompletionStage;
  * @since 15.0
  */
 public class GETRANGE extends RespCommand implements Resp3Command {
-   private static byte[] EMPTYBYTES = new byte[0];
    public GETRANGE() {
       super(4, 1, 1, 1);
    }
@@ -53,12 +54,12 @@ public class GETRANGE extends RespCommand implements Resp3Command {
       if (end < 0) {
          end = arr.length + end;
       } else {
-         end = Math.min(arr.length, end);
+         end = Math.min(arr.length - 1, end);
       }
       // Quick return for oo range
-      if (begin >= end || begin >= arr.length || end <= 0) {
-         return EMPTYBYTES;
+      if (begin >= end || begin >= arr.length) {
+         return Util.EMPTY_BYTE_ARRAY;
       }
-      return Arrays.copyOfRange(arr, begin, end+1);
+      return Arrays.copyOfRange(arr, begin, end + 1);
    }
 }
