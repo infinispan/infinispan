@@ -28,7 +28,6 @@ import org.infinispan.persistence.support.WaitDelegatingNonBlockingStore;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
-import org.infinispan.util.concurrent.CompletionStages;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -249,12 +248,15 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
 
       createCacheManagers();
 
+      assertEquals("value-" + (size - 1), cache(0, cacheName).get(key));
+
       WaitDelegatingNonBlockingStore store = TestingUtil.getFirstStoreWait(cache(0, cacheName));
 
       Compactor compactor = TestingUtil.extractField(store.delegate(), "compactor");
 
       // Force compaction for the previous file
-      CompletionStages.join(compactor.forceCompactionForAllNonLogFiles());
+      compactor.forceCompactionForAllNonLogFiles()
+            .toCompletableFuture().get(10, TimeUnit.SECONDS);
 
       assertEquals("value-" + (size - 1), cache(0, cacheName).get(key));
 

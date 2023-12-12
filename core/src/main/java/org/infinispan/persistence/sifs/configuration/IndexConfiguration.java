@@ -30,6 +30,10 @@ public class IndexConfiguration extends ConfigurationElement<IndexConfiguration>
       attributes.attribute(INDEX_LOCATION).set(location);
    }
 
+   /**
+    * This is no longer used as we create an index file per cache segment instead
+    */
+   @Deprecated(since = "15.0", forRemoval = true)
    public int indexSegments() {
       return attributes.attribute(INDEX_SEGMENTS).get();
    }
