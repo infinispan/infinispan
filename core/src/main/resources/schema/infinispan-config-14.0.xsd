@@ -2052,7 +2052,8 @@
         <xs:attribute name="open-files-limit" type="xs:int" default="${SoftIndexFileStore.open-files-limit}">
           <xs:annotation>
             <xs:documentation>
-              Max number of data files opened for reading (current log file, compaction output and index segments are not included here).
+              Max number of data and index files opened for reading (current log file and compaction output are not included here - always uses one each).
+              Index files will use 1/10th of list limit with a minimum of 1 and a maximum equal to the number of cache segments.
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
@@ -2112,7 +2113,8 @@
     <xs:attribute name="segments" type="xs:int" default="${Index.segments}">
       <xs:annotation>
         <xs:documentation>
-          Specifies the number of index segment files.
+          Deprecated since 15.0 which ignores the property.
+          This value is ignored as we create an index file per cache segment instead.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

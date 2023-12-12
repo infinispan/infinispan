@@ -62,11 +62,11 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
 
    @Override
    protected Configuration buildConfig(ConfigurationBuilder configurationBuilder) {
+      configurationBuilder.clustering().hash().numSegments(1);
       return configurationBuilder.persistence()
             .addSoftIndexFileStore()
             .dataLocation(Paths.get(tmpDirectory, "data").toString())
             .indexLocation(Paths.get(tmpDirectory, "index").toString())
-            .indexSegments(1)
             .maxFileSize(1000)
             .build();
    }
