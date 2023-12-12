@@ -62,6 +62,8 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.function.TriConsumer;
+import org.infinispan.util.logging.events.EventLogManager;
+import org.infinispan.util.logging.events.EventLogger;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -280,7 +282,8 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
    private <T> T withBackupManager(BiFunction<DefaultCacheManager, BackupManager, CompletionStage<T>> function) {
       try (DefaultCacheManager cm = createManager()) {
          BlockingManager blockingManager = GlobalComponentRegistry.componentOf(cm, BlockingManager.class);
-         BackupManager backupManager = new BackupManagerImpl(blockingManager, cm, workingDir.toPath());
+         EventLogger eventLogger = GlobalComponentRegistry.componentOf(cm, EventLogManager.class).getEventLogger();
+         BackupManager backupManager = new BackupManagerImpl(eventLogger, blockingManager, cm, workingDir.toPath());
          backupManager.init();
          return await(function.apply(cm, backupManager));
       } catch (IOException e) {
@@ -309,9 +312,10 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
          IntStream.range(0, numEntries).forEach(i -> sourceManager1.getCache("protostream-cache").put(i, i));
 
          ParserRegistry parserRegistry = new ParserRegistry();
-         BlockingManager blockingManager = GlobalComponentRegistry.componentOf(writerManagers.values().iterator().next(), BlockingManager.class);
+         BlockingManager blockingManager = GlobalComponentRegistry.componentOf(sourceManager1, BlockingManager.class);
+         EventLogger eventLogger = GlobalComponentRegistry.componentOf(sourceManager1, EventLogManager.class).getEventLogger();
          String name = "testBackupAndRestoreMultipleContainers";
-         BackupWriter writer = new BackupWriter(name, blockingManager, writerManagers, parserRegistry, workingDir.toPath());
+         BackupWriter writer = new BackupWriter(name, eventLogger, blockingManager, writerManagers, parserRegistry, workingDir.toPath());
 
          Map<String, BackupManager.Resources> paramMap = new HashMap<>(2);
          paramMap.put(container1,
