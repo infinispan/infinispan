@@ -117,6 +117,8 @@ import org.infinispan.tasks.TaskManager;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.function.SerializableFunction;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.util.logging.events.EventLogManager;
+import org.infinispan.util.logging.events.EventLogger;
 import org.wildfly.security.auth.server.ModifiableRealmIdentityIterator;
 import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.RealmUnavailableException;
@@ -442,7 +444,8 @@ public class Server extends BaseServerManagement implements AutoCloseable {
          // BlockingManager of single container used for writing the global manifest, but this will need to change
          // when multiple containers are supported by the server. Similarly, the default cache manager is used to create
          // the clustered locks.
-         backupManager = new BackupManagerImpl(blockingManager, cacheManager, dataPath);
+         EventLogger eventLogger = gcr.getComponent(EventLogManager.class).getEventLogger();
+         backupManager = new BackupManagerImpl(eventLogger, blockingManager, cacheManager, dataPath);
          backupManager.init();
 
          // Register the task manager

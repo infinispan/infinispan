@@ -1,6 +1,7 @@
 package org.infinispan.server.core.backup;
 
 import static org.infinispan.server.core.backup.Constants.WORKING_DIR;
+import static org.infinispan.server.core.logging.Messages.MESSAGES;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -32,6 +33,8 @@ import org.infinispan.server.core.logging.Log;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.util.logging.events.EventLogCategory;
+import org.infinispan.util.logging.events.EventLogger;
 
 /**
  * @author Ryan Emerson
@@ -42,6 +45,8 @@ public class BackupManagerImpl implements BackupManager {
    private static final Log log = LogFactory.getLog(BackupManagerImpl.class, Log.class);
 
    final ParserRegistry parserRegistry;
+
+   final EventLogger eventLogger;
    final BlockingManager blockingManager;
    final Path rootDir;
    final BackupReader reader;
@@ -52,7 +57,8 @@ public class BackupManagerImpl implements BackupManager {
    final Map<String, BackupRequest> backupMap;
    final Map<String, CompletionStage<Void>> restoreMap;
 
-   public BackupManagerImpl(BlockingManager blockingManager, DefaultCacheManager cm, Path dataRoot) {
+   public BackupManagerImpl(EventLogger eventLogger, BlockingManager blockingManager, DefaultCacheManager cm, Path dataRoot) {
+      this.eventLogger = eventLogger;
       this.blockingManager = blockingManager;
       this.rootDir = dataRoot.resolve(WORKING_DIR);
       this.cacheManager = cm;
@@ -157,7 +163,7 @@ public class BackupManagerImpl implements BackupManager {
       if (getBackupStatus(name) != Status.NOT_FOUND)
          return CompletableFuture.failedFuture(log.backupAlreadyExists(name));
 
-      BackupWriter writer = new BackupWriter(name, blockingManager, cacheManagers, parserRegistry, workingDir == null ? rootDir : workingDir);
+      BackupWriter writer = new BackupWriter(name, eventLogger, blockingManager, cacheManagers, parserRegistry, workingDir == null ? rootDir : workingDir);
       CompletionStage<Path> backupStage = backupLock.lock()
             .thenCompose(lockAcquired -> {
                log.tracef("Backup %s locked = %s", backupLock, lockAcquired);
@@ -179,6 +185,7 @@ public class BackupManagerImpl implements BackupManager {
                   );
                }
                log.backupComplete(path.getFileName().toString());
+               eventLogger.info(EventLogCategory.LIFECYCLE, MESSAGES.backupCreated(name));
                return unlock.thenCompose(ignore -> CompletableFuture.completedFuture(path));
             });
 
@@ -250,6 +257,7 @@ public class BackupManagerImpl implements BackupManager {
                   );
                }
                log.restoreComplete(name);
+               eventLogger.info(EventLogCategory.LIFECYCLE, MESSAGES.backupRestored(name));
                return unlock.thenCompose(ignore -> CompletableFuture.completedFuture(path));
             });
       restoreMap.put(name, restoreStage);

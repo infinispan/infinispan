@@ -5,6 +5,7 @@ import static org.infinispan.server.core.backup.Constants.CONTAINER_KEY;
 import static org.infinispan.server.core.backup.Constants.GLOBAL_CONFIG_FILE;
 import static org.infinispan.server.core.backup.Constants.MANIFEST_PROPERTIES_FILE;
 import static org.infinispan.server.core.backup.Constants.VERSION_KEY;
+import static org.infinispan.server.core.logging.Messages.MESSAGES;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -39,6 +40,8 @@ import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.util.logging.events.EventLogCategory;
+import org.infinispan.util.logging.events.EventLogger;
 
 /**
  * Responsible for creating backup files that can be used to restore a container/cache on a new cluster.
@@ -51,14 +54,16 @@ class BackupWriter {
    private static final Log log = LogFactory.getLog(BackupWriter.class, Log.class);
 
    private final String name;
+   private final EventLogger eventLogger;
    private final BlockingManager blockingManager;
    private final Map<String, DefaultCacheManager> cacheManagers;
    private final ParserRegistry parserRegistry;
    private final Path rootDir;
 
-   BackupWriter(String name, BlockingManager blockingManager, Map<String, DefaultCacheManager> cacheManagers,
+   BackupWriter(String name, EventLogger eventLogger, BlockingManager blockingManager, Map<String, DefaultCacheManager> cacheManagers,
                 ParserRegistry parserRegistry, Path rootDir) {
       this.name = name;
+      this.eventLogger = eventLogger;
       this.blockingManager = blockingManager;
       this.cacheManagers = cacheManagers;
       this.parserRegistry = parserRegistry;
@@ -66,8 +71,9 @@ class BackupWriter {
    }
 
    void cleanup() {
-      log.backupDeleted(name);
       Util.recursiveFileRemove(rootDir);
+      log.backupDeleted(name);
+      eventLogger.info(EventLogCategory.LIFECYCLE, MESSAGES.backupRemoved(name));
    }
 
    CompletionStage<Path> create(Map<String, BackupManager.Resources> params) {
