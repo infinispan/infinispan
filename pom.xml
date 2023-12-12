@@ -220,7 +220,6 @@
       <junitListener>org.infinispan.commons.test.JUnitTestListener</junitListener>
       <m2e.apt.activation>jdt_apt</m2e.apt.activation>
       <module.skipCopyDependencies>true</module.skipCopyDependencies>
-      <module.skipSupportModuleDeployment>true</module.skipSupportModuleDeployment>
       <packaging>jar</packaging>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
