@@ -1369,7 +1369,7 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case SEGMENTS:
-               builder.indexSegments(ParseUtils.parseInt(reader, i, value));
+               ignoreAttribute(reader, i);
                break;
             case INDEX_QUEUE_LENGTH:
                builder.indexQueueLength(ParseUtils.parseInt(reader, i, value));

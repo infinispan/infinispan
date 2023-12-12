@@ -40,7 +40,7 @@ public class FileProvider {
    private static final String REGEX_FORMAT = "^%s[0-9]+$";
    private static final boolean ATTEMPT_PMEM;
 
-   private final File dataDir;
+   private final File directoryFile;
    private final int openFileLimit;
    private final ArrayBlockingQueue<Record> recordQueue;
    private final ConcurrentMap<Integer, Record> openFiles = new ConcurrentHashMap<>();
@@ -65,14 +65,16 @@ public class FileProvider {
       ATTEMPT_PMEM = attemptPmem;
    }
 
-   public FileProvider(Path dataDir, int openFileLimit, String prefix, int maxFileSize) {
+   public FileProvider(Path fileDirectory, int openFileLimit, String prefix, int maxFileSize) {
       this.openFileLimit = openFileLimit;
       this.recordQueue = new ArrayBlockingQueue<>(openFileLimit);
-      this.dataDir = dataDir.toFile();
+      this.directoryFile = fileDirectory.toFile();
       this.prefix = prefix;
       this.maxFileSize = maxFileSize;
-      if (!SecurityActions.createDirectoryIfNeeded(this.dataDir)) {
-         throw PERSISTENCE.directoryCannotBeCreated(this.dataDir.getAbsolutePath());
+      try {
+         Files.createDirectories(fileDirectory);
+      } catch (IOException e) {
+         throw PERSISTENCE.directoryCannotBeCreated(this.directoryFile.getAbsolutePath());
       }
    }
 
@@ -80,6 +82,23 @@ public class FileProvider {
       lock.readLock().lock();
       try {
          return logFiles.contains(fileId);
+      } finally {
+         lock.readLock().unlock();
+      }
+   }
+
+   public Handle getFileIfOpen(int fileId) {
+      lock.readLock().lock();
+      try {
+         Record record = openFiles.get(fileId);
+         if (record != null) {
+            synchronized (record) {
+               if (record.isOpen()) {
+                  return new Handle(record);
+               }
+            }
+         }
+         return null;
       } finally {
          lock.readLock().unlock();
       }
@@ -101,6 +120,7 @@ public class FileProvider {
                         break;
                      }
                   }
+                  Thread.yield();
                }
                // now we have either removed some other opened file or incremented the value below limit
                for (;;) {
@@ -170,7 +190,7 @@ public class FileProvider {
 
    // Package private for tests
    File newFile(int fileId) {
-      return new File(dataDir, fileIdToString(fileId));
+      return new File(directoryFile, fileIdToString(fileId));
    }
 
    private boolean tryCloseFile() throws IOException {
@@ -255,7 +275,7 @@ public class FileProvider {
       lock.readLock().lock();
       try {
          Set<Integer> set = new HashSet<>();
-         for (String file : dataDir.list()) {
+         for (String file : directoryFile.list()) {
             if (file.matches(regex)) {
                set.add(Integer.parseInt(file.substring(prefix.length())));
             }
@@ -272,7 +292,7 @@ public class FileProvider {
       String regex = String.format(REGEX_FORMAT, prefix);
       lock.readLock().lock();
       try {
-         for (String file : dataDir.list()) {
+         for (String file : directoryFile.list()) {
             if (file.matches(regex)) {
                return true;
             }
@@ -296,7 +316,7 @@ public class FileProvider {
          }
          if (!recordQueue.isEmpty()) throw new IllegalStateException();
          if (!openFiles.isEmpty()) throw new IllegalStateException();
-         File[] files = dataDir.listFiles();
+         File[] files = directoryFile.listFiles();
          if (files != null) {
             for (File file : files) {
                Files.delete(file.toPath());
@@ -408,6 +428,21 @@ public class FileProvider {
 
       public int getFileId() {
          return record.getFileId();
+      }
+
+      public void truncate(long i) throws IOException {
+         if (!usable) throw new IllegalStateException();
+         record.getFileChannel().truncate(i);
+      }
+
+      public int write(ByteBuffer buffer, long l) throws IOException {
+         if (!usable) throw new IllegalStateException();
+         return record.getFileChannel().write(buffer, l);
+      }
+
+      public void force(boolean metaData) throws IOException {
+         if (!usable) throw new IllegalStateException();
+         record.getFileChannel().force(metaData);
       }
    }
 

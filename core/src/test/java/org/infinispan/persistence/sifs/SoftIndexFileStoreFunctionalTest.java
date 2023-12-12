@@ -1,21 +1,54 @@
 package org.infinispan.persistence.sifs;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
+
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "persistence.sifs.SoftIndexFileStoreFunctionalTest")
 public class SoftIndexFileStoreFunctionalTest extends BaseStoreFunctionalTest {
    protected String tmpDirectory;
+
+   protected int segmentCount;
+
+   public SoftIndexFileStoreFunctionalTest(int segmentCount) {
+      this.segmentCount = segmentCount;
+   }
+
+   @Factory
+   public static Object[] factory() {
+      return new Object[] {
+            new SoftIndexFileStoreFunctionalTest(1),
+            new SoftIndexFileStoreFunctionalTest(10),
+            new SoftIndexFileStoreFunctionalTest(256),
+            new SoftIndexFileStoreFunctionalTest(2048),
+      };
+   }
+
+   @Override
+   protected String parameters() {
+      return "[" + segmentCount + "]";
+   }
 
    @BeforeClass(alwaysRun = true)
    protected void setUpTempDir() {
@@ -25,6 +58,13 @@ public class SoftIndexFileStoreFunctionalTest extends BaseStoreFunctionalTest {
    @AfterClass(alwaysRun = true)
    protected void clearTempDir() {
       Util.recursiveFileRemove(tmpDirectory);
+   }
+
+   @Override
+   protected ConfigurationBuilder getDefaultCacheConfiguration() {
+      ConfigurationBuilder configurationBuilder = super.getDefaultCacheConfiguration();
+      configurationBuilder.clustering().hash().numSegments(segmentCount);
+      return configurationBuilder;
    }
 
    @Override
@@ -53,5 +93,47 @@ public class SoftIndexFileStoreFunctionalTest extends BaseStoreFunctionalTest {
       }
 
       cache.remove("k");
+   }
+
+   @DataProvider(name = "keyArgs")
+   public Object[][] keyConfiguration() {
+      return Stream.of(10, 10_000, 250_000)
+            .flatMap(keyCount ->
+                  Stream.of(Boolean.TRUE, Boolean.FALSE)
+                        .map(largeKey -> new Object[] {
+                              keyCount, largeKey
+                        })
+            ).toArray(Object[][]::new);
+   }
+
+   @Test(dataProvider = "keyArgs")
+   public void testWriteManyDifferentKeysAndIterate(int keyCount, boolean largeKey) {
+      String cacheName = "testWriteManyDifferentKeysAndIterate";
+      ConfigurationBuilder cb = getDefaultCacheConfiguration();
+      createCacheStoreConfig(cb.persistence(), cacheName, false);
+      TestingUtil.defineConfiguration(cacheManager, cacheName, cb.build());
+
+      Cache<String, Object> cache = cacheManager.getCache(cacheName);
+
+      for (int i = 0; i < keyCount; ++i) {
+         int anotherValue = i * 13 + (i-1) * 19;
+         String key = "k" + i + (largeKey ? "-" + anotherValue : "");
+         cache.put(key, "v" + i + "-" + anotherValue);
+      }
+
+      // Force to read from store
+      cache.getAdvancedCache().getDataContainer().clear();
+
+      var list = new ArrayList<>(cache.entrySet());
+      if (list.size() > keyCount) {
+         Set<String>  duplicateKeys = new HashSet<>();
+         var dupList = list.stream().map(Map.Entry::getKey)
+               .filter(k -> !duplicateKeys.add(k))
+               .map(k -> Map.entry(k, TestingUtil.extractComponent(cache, KeyPartitioner.class).getSegment(k)))
+               .collect(Collectors.toList());
+         fail("List contained a duplicate element" + dupList);
+      } else {
+         assertEquals(keyCount, list.size());
+      }
    }
 }

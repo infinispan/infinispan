@@ -163,13 +163,13 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
    @Override
    public CompletionStage<Void> addSegments(IntSet segments) {
       temporaryTable.addSegments(segments);
-      return CompletableFutures.completedNull();
+      return index.addSegments(segments);
    }
 
    @Override
    public CompletionStage<Void> removeSegments(IntSet segments) {
       temporaryTable.removeSegments(segments);
-      return CompletableFutures.completedNull();
+      return index.removeSegments(segments);
    }
 
    @Override
@@ -193,15 +193,20 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       temporaryTable = new TemporaryTable(cacheSegments);
       temporaryTable.addSegments(IntSets.immutableRangeSet(cacheConfig.clustering().hash().numSegments()));
 
-      fileProvider = new FileProvider(getDataLocation(), configuration.openFilesLimit(), PREFIX_LATEST,
+      int maxOpenFiles = configuration.openFilesLimit();
+      // Use index files between 1 and cacheSegments
+      int maxOpenIndexFiles = Math.min(Math.max(maxOpenFiles / 10, 1), cacheSegments);
+      int maxOpenDataFiles = maxOpenFiles - maxOpenIndexFiles;
+
+      fileProvider = new FileProvider(getDataLocation(), maxOpenDataFiles, PREFIX_LATEST,
             configuration.maxFileSize());
       compactor = new Compactor(ctx.getNonBlockingManager(), fileProvider, temporaryTable, marshaller, timeService,
             keyPartitioner, configuration.maxFileSize(), configuration.compactionThreshold(),
             blockingManager.asExecutor("sifs-compactor"));
       try {
-         index = new Index(ctx.getNonBlockingManager(), fileProvider, getIndexLocation(), configuration.indexSegments(),
-               cacheSegments, configuration.minNodeSize(), configuration.maxNodeSize(), temporaryTable, compactor,
-               timeService);
+         index = new Index(ctx.getNonBlockingManager(), fileProvider, getIndexLocation(), cacheSegments,
+               configuration.minNodeSize(), configuration.maxNodeSize(), temporaryTable, compactor,
+               timeService, blockingManager.asExecutor("sifs-index"), maxOpenIndexFiles);
       } catch (IOException e) {
          throw log.cannotOpenIndex(configuration.indexLocation(), e);
       }
@@ -446,7 +451,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
 
    protected void startIndex() {
       // this call is extracted for better testability
-      index.start(blockingManager.asExecutor("sifs-index"));
+      index.start();
    }
 
    @Override

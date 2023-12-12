@@ -570,7 +570,9 @@ class Compactor {
                      log.tracef("No index found for key %s, but it is a logFile, ignoring rest of the file", key);
                      break;
                   }
-                  throw new NullPointerException("No index info found for key: " + key + " when processing file " + scheduledFile);
+                  log.tracef("No index found for key %s, dropping - assuming lost due to segments removed", key);
+                  scheduledOffset += header.totalLength();
+                  continue;
                }
                if (info.numRecords <= 0) {
                   throw new IllegalArgumentException("Number of records " + info.numRecords + " for index of key " + key + " should be more than zero!");
@@ -583,6 +585,11 @@ class Compactor {
                      // We can only truncate expired entries if this was compacted with purge expire
                      if (expiredIndex != null) {
                         EntryRecord record = index.getRecordEvenIfExpired(key, segment, serializedKey);
+                        if (record == null) {
+                           log.tracef("Key %s is not in index to do expiration event - assuming lost due to segments removed", key);
+                           scheduledOffset += header.totalLength();
+                           continue;
+                        }
                         truncate = true;
                         expiredIndex.add(record);
                         // If there are more entries we cannot drop the index as we need a tombstone
@@ -669,8 +676,9 @@ class Compactor {
                   try {
                      EntryInfo info = index.getInfo(key, segment, serializedKey);
                      if (info == null) {
-                        throw new IllegalStateException(String.format(
-                              "%s was not found in index but it was not in temporary table and there's entry on %d:%d", key, scheduledFile, indexedOffset));
+                        log.tracef("Key %s was not found in index or temporary table assuming it is gone from removing segments, dropping", key);
+                        scheduledOffset += header.totalLength();
+                        continue;
                      } else {
                         update = info.file == scheduledFile && info.offset == indexedOffset;
                      }

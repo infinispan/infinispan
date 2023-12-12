@@ -5,15 +5,13 @@ package org.infinispan.persistence.sifs;
  */
 public class EntryInfo extends EntryPosition {
    public final int numRecords;
-   public final int cacheSegment;
 
-   public EntryInfo(int file, int offset, int numRecords, int cacheSegment) {
+   public EntryInfo(int file, int offset, int numRecords) {
       super(file, offset);
       this.numRecords = numRecords;
-      this.cacheSegment = cacheSegment;
    }
 
    public String toString() {
-      return String.format("[%d:%d] containing %d records in segment %d", file, offset, numRecords, cacheSegment);
+      return String.format("[%d:%d] containing %d records", file, offset, numRecords);
    }
 }
