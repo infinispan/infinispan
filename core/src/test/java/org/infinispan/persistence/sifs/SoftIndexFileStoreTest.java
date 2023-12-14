@@ -13,6 +13,7 @@ import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -22,6 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -62,7 +64,7 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
 
    @Override
    protected Configuration buildConfig(ConfigurationBuilder configurationBuilder) {
-      configurationBuilder.clustering().hash().numSegments(1);
+      configurationBuilder.clustering().hash().numSegments(2);
       return configurationBuilder.persistence()
             .addSoftIndexFileStore()
             .dataLocation(Paths.get(tmpDirectory, "data").toString())
@@ -72,7 +74,7 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
    }
 
    // test for ISPN-5753
-   public void testOverrideWithExpirableAndCompaction() throws InterruptedException {
+   public void testOverrideWithExpirableAndCompaction() {
       // write immortal entry
       store.write(marshalledEntry(internalCacheEntry("key", "value1", -1)));
       writeGibberish(-1, true); // make sure that compaction happens - value1 is compacted
@@ -113,13 +115,15 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
       Index index = TestingUtil.extractField(compactor, "index");
 
       FlowableProcessor<IndexRequest>[] processors = TestingUtil.extractField(index, "flowableProcessors");
-      assertEquals(1, processors.length);
+      assertEquals(2, processors.length);
 
       FlowableProcessor<IndexRequest> original = processors[0];
 
       Queue<IndexRequest> queue = new ArrayDeque<>();
-      processors[0] = UnicastProcessor.create();
-      processors[0].serialize().subscribe(queue::add);
+      UnicastProcessor<IndexRequest> unicastProcessor = UnicastProcessor.create();
+      unicastProcessor.serialize().subscribe(queue::add);
+
+      processors[0] = unicastProcessor;
 
       CountDownLatch latch = new CountDownLatch(1);
 
@@ -264,5 +268,108 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
 
       // Only a single entry was expired.
       assertThat(expired.get()).isEqualTo(1);
+   }
+
+   public void testRemoveSegmentsCleansUpProperly() throws ExecutionException, InterruptedException, TimeoutException {
+      Compactor compactor = TestingUtil.extractField(store.delegate(), "compactor");
+      var fileStats = compactor.getFileStats();
+      assertEquals(0, fileStats.size());
+      // We force the entry into segment 0
+      TestingUtil.join(store.write(0, marshalledEntry(internalCacheEntry("foo", "bar", 10))));
+
+      // Now remove the segment
+      TestingUtil.join(store.removeSegments(IntSets.immutableSet(0)));
+
+      assertNull(TestingUtil.join(store.load(0, "foo")));
+
+      verifyStatsHaveNoData(-77, fileStats);
+
+      // Add the segment back... the value should be gone still
+      TestingUtil.join(store.addSegments(IntSets.immutableSet(0)));
+
+      assertNull(TestingUtil.join(store.load(0, "foo")));
+
+      // Note this is -77 since we don't set the size of the file until we complete it or shutdown
+      verifyStatsHaveNoData(-77, fileStats);
+
+      // Stop the store so we can restart to test if the entry is still gone or not
+      store.stopAndWait();
+
+      // Restart to prevent other test failures
+      startStore(store);
+
+      // Technically this will fail if the index is deleted... however that is not an issue as this test is
+      // really for DIST Cache mode, and the store should ALWAYS have purgeOnStartup enabled which would prevent this from
+      // being an issue
+      assertNull(TestingUtil.join(store.load(0, "foo")));
+
+      compactor = TestingUtil.extractField(store.delegate(), "compactor");
+
+      // When the store restarted it compacted the file away
+      fileStats = compactor.getFileStats();
+      assertTrue("fileStats were: " + fileStats, fileStats.isEmpty());
+
+      assertEquals(0, SoftIndexFileStoreTestUtils.dataDirectorySize(tmpDirectory, "mock-cache"));
+   }
+
+   private void verifyStatsHaveNoData(long expected, ConcurrentMap<Integer, Compactor.Stats> fileStats) {
+      long sizeAfterAddingBack = 0;
+      // Note stats file still may be empty here
+      for (Compactor.Stats stats : fileStats.values()) {
+         sizeAfterAddingBack -= stats.getFree();
+         if (stats.getTotal() > 0) {
+            sizeAfterAddingBack += stats.getTotal();
+         }
+      }
+
+      assertEquals(expected, sizeAfterAddingBack);
+   }
+
+   public void testFileStatsWriteNotOwnedSegment() throws ExecutionException, InterruptedException, TimeoutException {
+      Compactor compactor = TestingUtil.extractField(store.delegate(), "compactor");
+      var fileStats = compactor.getFileStats();
+      assertEquals(0, fileStats.size());
+
+      TestingUtil.join(store.write(0, marshalledEntry(internalCacheEntry("foo-0", "bar-0", 10))));
+
+      assertTrue(fileStats.isEmpty());
+
+      TestingUtil.join(store.removeSegments(IntSets.immutableSet(1)));
+
+      TestingUtil.join(store.write(1, marshalledEntry(internalCacheEntry("foo-1", "bar-1", 10))));
+
+      // This should contain free data since we wrote an entry to a segment that we no longer own
+      verifyStatsHaveNoData(-81, fileStats);
+   }
+
+   public void testFileStatsAfterRemovingSegment() throws ExecutionException, InterruptedException, TimeoutException {
+      Compactor compactor = TestingUtil.extractField(store.delegate(), "compactor");
+      var fileStats = compactor.getFileStats();
+      assertEquals(0, fileStats.size());
+
+      TestingUtil.join(store.write(1, marshalledEntry(internalCacheEntry("foo-1", "bar-1", 10))));
+
+      TestingUtil.join(store.removeSegments(IntSets.immutableSet(1)));
+
+      // This should contain free data since we wrote an entry to a segment that we no longer own
+      verifyStatsHaveNoData(-81, fileStats);
+   }
+
+   public void testFileStatsAfterRemovingWithRemovedEntry() throws ExecutionException, InterruptedException, TimeoutException {
+      Compactor compactor = TestingUtil.extractField(store.delegate(), "compactor");
+      var fileStats = compactor.getFileStats();
+      assertEquals(0, fileStats.size());
+
+      TestingUtil.join(store.write(1, marshalledEntry(internalCacheEntry("foo-1", "bar-1", 10))));
+
+      TestingUtil.join(store.delete(1, "foo-1"));
+
+      // Removed entry information doesn't currently count towards free space see ISPN-15246
+      verifyStatsHaveNoData(-81, fileStats);
+
+      TestingUtil.join(store.removeSegments(IntSets.immutableSet(1)));
+
+      // After removing the segment even the removed entries are updated in stats
+      verifyStatsHaveNoData(-123, fileStats);
    }
 }

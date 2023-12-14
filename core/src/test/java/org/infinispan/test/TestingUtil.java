@@ -33,6 +33,7 @@ import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -208,6 +209,10 @@ public class TestingUtil {
 
    public static <T> CompletionStage<T> sequenceAsync(CompletionStage<?> first, Callable<CompletionStage<T>> second, Executor executor) {
       return first.thenComposeAsync(ignored -> Exceptions.unchecked(second), executor);
+   }
+
+   public static <T> T join(CompletionStage<? extends T> stage) throws ExecutionException, InterruptedException, java.util.concurrent.TimeoutException {
+      return stage.toCompletableFuture().get(10, TimeUnit.SECONDS);
    }
 
    /**

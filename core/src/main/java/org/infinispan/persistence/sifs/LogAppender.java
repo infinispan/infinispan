@@ -95,7 +95,7 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
                   Util.close(logFile);
                   // add the current appended file - note this method will fail if it is already present, which will
                   // happen if there are some free entries
-                  compactor.addFreeFile(logFile.fileId, (int) fileProvider.getFileSize(logFile.fileId), 0, nextExpirationTime);
+                  compactor.addLogFileOnShutdown(logFile.fileId, nextExpirationTime);
                   logFile = null;
                }
             });

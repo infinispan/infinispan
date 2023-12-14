@@ -35,6 +35,7 @@ public class IndexConfigurationBuilder implements Builder<IndexConfiguration> {
       return this;
    }
 
+   @Deprecated(since = "15.0")
    public IndexConfigurationBuilder indexSegments(int indexSegments) {
       attributes.attribute(INDEX_SEGMENTS).set(indexSegments);
       return this;
