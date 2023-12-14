@@ -42,7 +42,7 @@ import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.ControlledRpcManager;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.mockito.AdditionalAnswers;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;

@@ -52,7 +52,7 @@ import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.IMethodInstance;
 import org.testng.annotations.AfterClass;

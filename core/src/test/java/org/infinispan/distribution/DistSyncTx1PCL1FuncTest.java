@@ -6,7 +6,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.Test;
 
 

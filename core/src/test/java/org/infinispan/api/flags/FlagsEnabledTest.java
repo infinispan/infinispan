@@ -25,7 +25,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**

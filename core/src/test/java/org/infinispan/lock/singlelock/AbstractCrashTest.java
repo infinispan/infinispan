@@ -28,7 +28,7 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.util.AbstractDelegatingRpcManager;
-import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.configuration.cache.IsolationLevel;
 
 /**
  * @author Mircea Markus

@@ -39,6 +39,7 @@ import org.infinispan.configuration.cache.IndexStartupMode;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.configuration.cache.IndexingConfiguration;
 import org.infinispan.configuration.cache.IndexingMode;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
@@ -73,7 +74,6 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
-import org.infinispan.util.concurrent.IsolationLevel;
 import org.jgroups.conf.ProtocolConfiguration;
 import org.jgroups.conf.ProtocolStackConfigurator;
 import org.testng.annotations.DataProvider;
@@ -522,7 +522,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(CacheMode.LOCAL, c.clustering().cacheMode());
             assertEquals(30000, c.locking().lockAcquisitionTimeout());
             assertEquals(2000, c.locking().concurrencyLevel());
-            assertEquals(IsolationLevel.NONE, c.locking().isolationLevel());
+            assertEquals(IsolationLevel.NONE, c.locking().lockIsolationLevel());
             assertTrue(c.locking().useLockStriping());
             assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Full XA
             assertFalse(c.transaction().useSynchronization()); // Full XA
@@ -548,7 +548,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertTrue(c.statistics().enabled());
             assertEquals(30500, c.locking().lockAcquisitionTimeout());
             assertEquals(2500, c.locking().concurrencyLevel());
-            assertEquals(IsolationLevel.READ_COMMITTED, c.locking().isolationLevel()); // Converted to READ_COMMITTED by builder
+            assertEquals(IsolationLevel.READ_COMMITTED, c.locking().lockIsolationLevel()); // Converted to READ_COMMITTED by builder
             assertTrue(c.locking().useLockStriping());
             assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Non XA
             assertTrue(c.transaction().useSynchronization()); // Non XA
@@ -567,7 +567,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertTrue(c.statistics().enabled());
             assertEquals(31000, c.locking().lockAcquisitionTimeout());
             assertEquals(3000, c.locking().concurrencyLevel());
-            assertEquals(IsolationLevel.REPEATABLE_READ, c.locking().isolationLevel()); // Converted to REPEATABLE_READ by builder
+            assertEquals(IsolationLevel.REPEATABLE_READ, c.locking().lockIsolationLevel()); // Converted to REPEATABLE_READ by builder
             assertTrue(c.locking().useLockStriping());
             assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Batching, non XA
             assertTrue(c.transaction().useSynchronization()); // Batching, non XA
@@ -597,7 +597,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertTrue(c.statistics().enabled());
             assertEquals(31500, c.locking().lockAcquisitionTimeout());
             assertEquals(3500, c.locking().concurrencyLevel());
-            assertEquals(IsolationLevel.READ_COMMITTED, c.locking().isolationLevel());
+            assertEquals(IsolationLevel.READ_COMMITTED, c.locking().lockIsolationLevel());
             assertTrue(c.locking().useLockStriping());
             assertEquals(TransactionMode.TRANSACTIONAL, c.transaction().transactionMode()); // Full XA
             assertFalse(c.transaction().useSynchronization()); // Full XA
@@ -732,7 +732,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertEquals(-1, c.memory().size());
 
             c = getConfiguration(holder, "write-skew");
-            assertEquals(IsolationLevel.REPEATABLE_READ, c.locking().isolationLevel());
+            assertEquals(IsolationLevel.REPEATABLE_READ, c.locking().lockIsolationLevel());
 
             // Ignore custom-container (if present)
 

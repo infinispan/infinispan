@@ -22,7 +22,7 @@ import org.infinispan.multimap.api.embedded.EmbeddedMultimapCacheManagerFactory;
 import org.infinispan.multimap.api.embedded.MultimapCacheManager;
 import org.infinispan.test.data.Person;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.util.function.SerializablePredicate;
 import org.testng.annotations.Test;
 

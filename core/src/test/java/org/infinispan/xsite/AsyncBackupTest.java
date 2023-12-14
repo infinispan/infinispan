@@ -38,7 +38,7 @@ import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;

@@ -27,7 +27,7 @@ import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.ControlledConsistentHashFactory;
-import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.xsite.AbstractXSiteTest;
 import org.infinispan.xsite.irac.IracManager;
 import org.infinispan.xsite.irac.ManualIracManager;

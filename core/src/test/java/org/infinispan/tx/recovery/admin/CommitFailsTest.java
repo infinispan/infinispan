@@ -16,7 +16,7 @@ import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
-import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

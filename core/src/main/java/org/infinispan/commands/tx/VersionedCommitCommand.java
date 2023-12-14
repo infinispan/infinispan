@@ -7,13 +7,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.container.versioning.IncrementableEntryVersion;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
 
 /**
  * The same as a {@link CommitCommand} except that version information is also carried by this command, used by
- * optimistically transactional caches making use of write skew checking when using {@link org.infinispan.util.concurrent.IsolationLevel#REPEATABLE_READ}.
+ * optimistically transactional caches making use of write skew checking when using {@link IsolationLevel#REPEATABLE_READ}.
  *
  * @author Manik Surtani
  * @since 5.1

@@ -12,7 +12,6 @@ import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.util.concurrent.IsolationLevel;
 
 /**
  * Defines the local, in-VM locking and concurrency characteristics of the cache.
@@ -55,8 +54,21 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
       return this;
    }
 
-   public IsolationLevel isolationLevel() {
-      return attributes.attribute(ISOLATION_LEVEL).get();
+   /**
+    * @deprecated use {@link #isolationLevel(IsolationLevel)} instead
+    */
+   @Deprecated(forRemoval = true, since = "15.0")
+   public LockingConfigurationBuilder isolationLevel(org.infinispan.util.concurrent.IsolationLevel isolationLevel) {
+      attributes.attribute(ISOLATION_LEVEL).set(isolationLevel.to());
+      return this;
+   }
+
+   /**
+    * @deprecated with no replacement
+    */
+   @Deprecated(forRemoval = true, since = "15.0")
+   public org.infinispan.util.concurrent.IsolationLevel isolationLevel() {
+      return org.infinispan.util.concurrent.IsolationLevel.from(attributes.attribute(ISOLATION_LEVEL).get());
    }
 
    /**

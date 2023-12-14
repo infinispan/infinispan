@@ -36,7 +36,7 @@ import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.ControlledRpcManager;
-import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "distribution.DistSyncTxL1FuncTest")

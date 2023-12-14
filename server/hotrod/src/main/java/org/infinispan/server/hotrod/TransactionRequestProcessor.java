@@ -1,15 +1,17 @@
 package org.infinispan.server.hotrod;
 
-import javax.security.auth.Subject;
-import javax.transaction.xa.XAException;
-import javax.transaction.xa.XAResource;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Executor;
 
+import javax.security.auth.Subject;
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.security.actions.SecurityActions;
@@ -21,7 +23,6 @@ import org.infinispan.server.hotrod.tx.table.GlobalTxTable;
 import org.infinispan.server.hotrod.tx.table.TxState;
 import org.infinispan.telemetry.InfinispanTelemetry;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
-import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
@@ -171,7 +172,7 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
       if (!configuration.transaction().transactionMode().isTransactional()) {
          throw log.expectedTransactionalCache(cache.getName());
       }
-      if (configuration.locking().isolationLevel() != IsolationLevel.REPEATABLE_READ) {
+      if (configuration.locking().lockIsolationLevel() != IsolationLevel.REPEATABLE_READ) {
          throw log.unexpectedIsolationLevel(cache.getName());
       }
    }

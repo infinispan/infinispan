@@ -12,6 +12,7 @@ import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.api.BatchingCache;
 import org.infinispan.commons.util.CloseableIteratorCollection;
 import org.infinispan.commons.util.CloseableIteratorSet;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -185,10 +186,10 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * <p/>
     * If this method is used in a transactional context, note this method will not bring additional values into the
     * transaction context and thus objects that haven't yet been read will act in a
-    * {@link org.infinispan.util.concurrent.IsolationLevel#READ_COMMITTED} behavior irrespective of the configured
+    * {@link IsolationLevel#READ_COMMITTED} behavior irrespective of the configured
     * isolation level.  However values that have been previously modified or read that are in the context will be
     * adhered to. e.g. any write modification or any previous read when using
-    * {@link org.infinispan.util.concurrent.IsolationLevel#REPEATABLE_READ}
+    * {@link IsolationLevel#REPEATABLE_READ}
     * <p/>
     * This method should only be used for debugging purposes such as to verify that the cache contains all the keys
     * entered. Any other use involving execution of this method on a production system is not recommended.

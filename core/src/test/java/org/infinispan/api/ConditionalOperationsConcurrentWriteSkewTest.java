@@ -22,7 +22,7 @@ import org.infinispan.interceptors.distribution.VersionedDistributionInterceptor
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.util.concurrent.ReclosableLatch;
 import org.testng.annotations.Test;
 

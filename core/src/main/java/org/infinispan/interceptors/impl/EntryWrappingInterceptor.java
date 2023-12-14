@@ -51,6 +51,7 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configurations;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.impl.EntryFactory;
@@ -84,7 +85,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.WriteSkewHelper;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletionStages;
-import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.statetransfer.XSiteStateConsumer;
@@ -170,7 +170,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
       isSync = cacheConfiguration.clustering().cacheMode().isSynchronous();
       // isolation level makes no sense without transactions
       useRepeatableRead = cacheConfiguration.transaction().transactionMode().isTransactional()
-            && cacheConfiguration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
+            && cacheConfiguration.locking().lockIsolationLevel() == IsolationLevel.REPEATABLE_READ;
       isVersioned = Configurations.isTxVersioned(cacheConfiguration);
       isPessimistic = cacheConfiguration.transaction().transactionMode().isTransactional()
             && cacheConfiguration.transaction().lockingMode() == LockingMode.PESSIMISTIC;

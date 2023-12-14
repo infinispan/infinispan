@@ -5,7 +5,7 @@ import static org.testng.AssertJUnit.assertNull;
 
 import jakarta.transaction.Transaction;
 
-import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**

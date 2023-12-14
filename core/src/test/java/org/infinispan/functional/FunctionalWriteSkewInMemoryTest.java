@@ -18,7 +18,7 @@ import org.infinispan.Cache;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.WriteSkewException;
-import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 

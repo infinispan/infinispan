@@ -1,7 +1,7 @@
 package org.infinispan.persistence;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
