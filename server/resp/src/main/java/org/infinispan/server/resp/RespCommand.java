@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.server.resp.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -177,7 +178,7 @@ public abstract class RespCommand {
    public byte[][] extractKeys(List<byte[]> arguments) {
       // Position 0 is the command's name. This means no keys are present.
       if (getFirstKeyPos() == 0) {
-         return new byte[0][];
+         return Util.EMPTY_BYTE_ARRAY_ARRAY;
       }
 
       List<byte[]> keys = new ArrayList<>();
@@ -187,7 +188,7 @@ public abstract class RespCommand {
       for (int i = getFirstKeyPos() - 1; i < end; i += getSteps()) {
          keys.add(arguments.get(i));
       }
-      return keys.toArray(new byte[0][]);
+      return keys.toArray(Util.EMPTY_BYTE_ARRAY_ARRAY);
    }
 
 

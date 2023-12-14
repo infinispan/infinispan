@@ -9,6 +9,7 @@ import javax.security.auth.Subject;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.server.configuration.ServerConfiguration;
 import org.infinispan.server.core.security.sasl.SaslAuthenticator;
@@ -36,7 +37,7 @@ public class RespClientCertAuthenticator {
             return CompletableFutures.completedNull();
          }
 
-         server.evaluateResponse(new byte[0]);
+         server.evaluateResponse(Util.EMPTY_BYTE_ARRAY);
          return CompletableFuture.completedFuture((Subject) server.getNegotiatedProperty(SubjectSaslServer.SUBJECT));
       } catch (Throwable e) {
          throw new RuntimeException(e);

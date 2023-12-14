@@ -16,8 +16,9 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.MarshallUtil.CollectionBuilder;
+import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.commons.util.Util;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
@@ -42,7 +43,7 @@ public class EventListenerKeysFilter implements CacheEventFilter<Object, Object>
    }
 
    EventListenerKeysFilter(List<byte[]> keys) {
-      this(keys.toArray(new byte[0][]));
+      this(keys.toArray(Util.EMPTY_BYTE_ARRAY_ARRAY));
    }
 
    public EventListenerKeysFilter(byte[] key) {

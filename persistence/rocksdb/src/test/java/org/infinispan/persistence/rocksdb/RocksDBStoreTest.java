@@ -186,7 +186,7 @@ public class RocksDBStoreTest extends BaseNonBlockingStoreTest {
       int keySize = 10000;
       byte[] keyBytes = new byte[keySize];
       Arrays.fill(keyBytes, (byte) 0xff);
-      byte[] valueBytes = new byte[0];
+      byte[] valueBytes = Util.EMPTY_BYTE_ARRAY;
       MarshallableEntry me2 = marshallableEntryFactory.create(ByteBufferImpl.create(keyBytes), ByteBufferImpl.create(valueBytes));
       store.write(1, me2);
 
