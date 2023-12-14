@@ -15,6 +15,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
@@ -29,7 +30,6 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.KeyValuePair;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.PendingLockListener;
 import org.infinispan.util.concurrent.locks.PendingLockManager;
 import org.infinispan.util.concurrent.locks.PendingLockPromise;

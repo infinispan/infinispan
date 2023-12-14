@@ -51,6 +51,6 @@ public class FailOverClusterExecutorTest extends MultipleCacheManagersTest {
    public void testTimeoutOccursWithRetry() {
       CompletableFuture<Void> fut = cacheManagers.get(0).executor().timeout(10, TimeUnit.MILLISECONDS)
             .singleNodeSubmission(2).submit(() -> TestingUtil.sleepThread(TimeUnit.SECONDS.toMillis(2)));
-      Exceptions.expectExecutionException(org.infinispan.util.concurrent.TimeoutException.class, fut);
+      Exceptions.expectExecutionException(org.infinispan.commons.TimeoutException.class, fut);
    }
 }

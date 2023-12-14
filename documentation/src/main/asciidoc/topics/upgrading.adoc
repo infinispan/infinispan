@@ -1,6 +1,8 @@
 = Upgrading from 14.0 to 15.0
 
-== Deprecation removals
+== Deprecations, removals and moved classes
+
+The `org.infinispan.util.TimeoutException` has been moved to `org.infinispan.commons.TimeoutException`
 
 Removed the following deprecated elements:
 

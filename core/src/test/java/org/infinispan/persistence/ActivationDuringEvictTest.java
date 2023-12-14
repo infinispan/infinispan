@@ -82,7 +82,7 @@ public class ActivationDuringEvictTest extends SingleCacheManagerTest {
 
       // wait for the SlowDownInterceptor to intercept the evict
       if (!sdi.evictLatch.await(10, TimeUnit.SECONDS))
-         throw new org.infinispan.util.concurrent.TimeoutException();
+         throw new org.infinispan.commons.TimeoutException();
 
       log.info("doing the get");
       Object value = cache.get(KEY);

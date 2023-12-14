@@ -8,11 +8,8 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Collections;
 
-import jakarta.transaction.Status;
-import jakarta.transaction.Transaction;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -20,9 +17,12 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.Status;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 /**
  * Tester for https://jira.jboss.org/browse/ISPN-629.

@@ -18,10 +18,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
 import org.infinispan.util.concurrent.locks.ExtendedLockPromise;
 import org.infinispan.util.concurrent.locks.LockPromise;

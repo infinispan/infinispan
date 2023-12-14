@@ -18,6 +18,7 @@ import org.infinispan.commands.functional.ReadOnlyManyCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
@@ -37,7 +38,6 @@ import org.infinispan.statetransfer.AllOwnersLostException;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

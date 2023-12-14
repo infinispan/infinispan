@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.conflict.impl.InternalConflictManager;
@@ -40,7 +41,6 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.RebalanceType;
 import org.infinispan.util.concurrent.ConditionFuture;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogCategory;

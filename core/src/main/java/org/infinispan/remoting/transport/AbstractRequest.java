@@ -7,6 +7,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.remoting.transport.impl.Request;
 import org.infinispan.remoting.transport.impl.RequestRepository;
 
@@ -45,7 +46,7 @@ public abstract class AbstractRequest<T> extends CompletableFuture<T> implements
 
    /**
     * Schedule a timeout task on the given executor, and complete the request with a {@link
-    * org.infinispan.util.concurrent.TimeoutException}
+    * TimeoutException}
     * when the task runs.
     *
     * If a timeout task was already registered with this request, it is cancelled.

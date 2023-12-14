@@ -5,8 +5,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
-import jakarta.transaction.Transaction;
-
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
@@ -15,8 +14,9 @@ import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.Transaction;
 
 /**
  * @author Mircea Markus

@@ -1,10 +1,7 @@
 package org.infinispan.tx;
 
-import jakarta.transaction.NotSupportedException;
-import jakarta.transaction.SystemException;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.Cache;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -12,8 +9,11 @@ import org.infinispan.remoting.RemoteException;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.NotSupportedException;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.TransactionManager;
 
 /**
  * Tests what happens when a member acquires locks and then dies.

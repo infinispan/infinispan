@@ -5,11 +5,8 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import jakarta.transaction.NotSupportedException;
-import jakarta.transaction.SystemException;
-import jakarta.transaction.Transaction;
-
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.test.ExceptionRunnable;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -22,8 +19,11 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.ControlledConsistentHashFactory;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.NotSupportedException;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
 
 /**
  * Reproducer for ISPN-7140

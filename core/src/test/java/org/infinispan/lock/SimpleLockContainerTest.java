@@ -5,10 +5,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.concurrent.locks.impl.PerKeyLockContainer;
 import org.testng.annotations.Test;

@@ -26,10 +26,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.concurrent.locks.LockPromise;

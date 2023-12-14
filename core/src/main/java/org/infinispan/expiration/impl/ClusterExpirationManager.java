@@ -17,6 +17,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -32,7 +33,6 @@ import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -221,7 +221,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
             while (ce instanceof RemoteException) {
                ce = ce.getCause();
             }
-            if (ce instanceof org.infinispan.util.concurrent.TimeoutException) {
+            if (ce instanceof org.infinispan.commons.TimeoutException) {
                // Ignoring a TimeoutException as it could just be the entry was being updated concurrently
                log.tracef(e, "Encountered timeout exception, assuming it was due to a concurrent write. Entry will" +
                      " be attempted to be removed on the next purge if still expired.");
@@ -369,7 +369,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
             // spawned remove expired times out as it has a 0 lock acquisition timeout. We don't want to propagate
             // the TimeoutException to the caller of the write command as it is unrelated.
             // Note that the remove expired command is never "retried" itself.
-            if (cause instanceof org.infinispan.util.concurrent.TimeoutException) {
+            if (cause instanceof org.infinispan.commons.TimeoutException) {
                if (log.isTraceEnabled()) {
                   log.tracef("Encountered timeout exception in remove expired invocation - need to retry!");
                }

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -15,7 +16,6 @@ import org.infinispan.remoting.transport.impl.FilterMapResponseCollector;
 import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

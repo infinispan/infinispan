@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -25,7 +26,6 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.remoting.transport.impl.XSiteResponseImpl;
 import org.infinispan.statetransfer.CommitManager;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.xsite.XSiteAdminOperations;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.commands.remote.XSiteRequest;

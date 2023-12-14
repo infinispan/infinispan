@@ -2,16 +2,16 @@ package org.infinispan.lock;
 
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.TimeoutException;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.impl.LockContainer;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;

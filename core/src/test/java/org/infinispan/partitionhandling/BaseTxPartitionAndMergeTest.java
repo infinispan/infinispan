@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
@@ -21,7 +22,6 @@ import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.ReclosableLatch;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

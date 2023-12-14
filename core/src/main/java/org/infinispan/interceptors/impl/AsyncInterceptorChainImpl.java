@@ -12,6 +12,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.util.ImmutableListCopy;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.context.InvocationContext;
@@ -22,7 +23,6 @@ import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.ExceptionSyncInvocationStage;
 import org.infinispan.interceptors.InvocationStage;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

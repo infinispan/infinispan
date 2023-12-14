@@ -17,6 +17,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
@@ -37,7 +38,6 @@ import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;

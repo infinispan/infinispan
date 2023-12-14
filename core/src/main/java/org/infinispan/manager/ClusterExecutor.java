@@ -8,6 +8,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.function.SerializableFunction;
@@ -118,7 +119,7 @@ public interface ClusterExecutor extends Executor {
 
    /**
     * Sets a duration after which a command will timeout. This will cause the command to return a
-    * {@link org.infinispan.util.concurrent.TimeoutException} as the throwable.
+    * {@link TimeoutException} as the throwable.
     * <p>The timeout parameter is used for both local and remote nodes. There are no guarantees as to whether
     * the timed out command is interrupted.
     * @param time the duration for the timeout
@@ -141,7 +142,7 @@ public interface ClusterExecutor extends Executor {
     * requirements as to which node is chosen and is implementation specific. However if a command were to fail either
     * by the command itself or via network issues then the command will fail over, that is that it will retried up to
     * the provided number of times using an available node until an exception is not met or the number of fail over
-    * counts has been reached. If a {@link org.infinispan.util.concurrent.TimeoutException} is throwing, this will not
+    * counts has been reached. If a {@link TimeoutException} is throwing, this will not
     * be retried as this is the same exception that is thrown when using
     * {@link ClusterExecutor#timeout(long, TimeUnit)}. Each time the
     * fail over occurs any available node is chosen, there is no requirement as to which can be chosen and is left up
