@@ -21,6 +21,7 @@ import org.infinispan.commons.configuration.Combine;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Configurations;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
@@ -35,7 +36,6 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
@@ -549,7 +549,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
 
          // Now simulate that someone else wrote to the store while during our tx
          store.write(MarshalledEntryUtil.create("k1", "v1", cache));
-         IsolationLevel level = cache.getCacheConfiguration().locking().isolationLevel();
+         IsolationLevel level = cache.getCacheConfiguration().locking().lockIsolationLevel();
          switch(level) {
             case READ_COMMITTED:
                assertEquals("v1", cache.get("k1"));

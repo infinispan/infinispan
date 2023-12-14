@@ -56,7 +56,7 @@ import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.security.impl.CreatePermissionConfigurationBuilder;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.configuration.cache.IsolationLevel;
 
 /**
  * @author anistor@redhat.com

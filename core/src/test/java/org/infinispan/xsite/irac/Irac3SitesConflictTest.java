@@ -18,7 +18,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.TestOperation;
 import org.infinispan.util.concurrent.CompletionStages;
-import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;

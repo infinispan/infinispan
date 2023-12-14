@@ -5,13 +5,13 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.util.Properties;
 
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.factories.threads.EnhancedQueueExecutorFactory;
 import org.infinispan.remoting.transport.jgroups.FileJGroupsChannelConfigurator;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**
@@ -50,6 +50,6 @@ public class StringPropertyReplacementTest extends AbstractInfinispanTest {
       assertEquals("stacks/tcp.xml", transportConfigurator.getPath());
 
       Configuration configuration = holder.getDefaultConfigurationBuilder().build();
-      assertEquals(IsolationLevel.READ_COMMITTED, configuration.locking().isolationLevel());
+      assertEquals(IsolationLevel.READ_COMMITTED, configuration.locking().lockIsolationLevel());
    }
 }

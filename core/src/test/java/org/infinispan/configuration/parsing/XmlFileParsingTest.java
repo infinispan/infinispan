@@ -27,6 +27,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.EncodingConfiguration;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfiguration;
@@ -54,7 +55,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.tx.TestLookup;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
-import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "configuration.XmlFileParsingTest")
@@ -124,7 +124,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       ConfigurationBuilderHolder holder = parseStringConfiguration(config);
       Configuration cfg = holder.getDefaultConfigurationBuilder().build();
       assertEquals(10000, cfg.locking().concurrencyLevel());
-      assertEquals(IsolationLevel.REPEATABLE_READ, cfg.locking().isolationLevel());
+      assertEquals(IsolationLevel.REPEATABLE_READ, cfg.locking().lockIsolationLevel());
 
    }
 
@@ -489,7 +489,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       assertEquals(1000, defaultCfg.locking().lockAcquisitionTimeout());
       assertEquals(100, defaultCfg.locking().concurrencyLevel());
-      assertEquals(IsolationLevel.REPEATABLE_READ, defaultCfg.locking().isolationLevel());
+      assertEquals(IsolationLevel.REPEATABLE_READ, defaultCfg.locking().lockIsolationLevel());
       if (!deprecated) {
          assertReaperAndTimeoutInfo(defaultCfg);
       }
@@ -545,7 +545,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(CacheMode.LOCAL, c.clustering().cacheMode());
       assertEquals(20000, c.locking().lockAcquisitionTimeout());
       assertEquals(1000, c.locking().concurrencyLevel());
-      assertEquals(IsolationLevel.REPEATABLE_READ, c.locking().isolationLevel());
+      assertEquals(IsolationLevel.REPEATABLE_READ, c.locking().lockIsolationLevel());
       assertEquals(StorageType.HEAP, c.memory().storageType());
 
       c = getCacheConfiguration(holder, "storeAsBinary");

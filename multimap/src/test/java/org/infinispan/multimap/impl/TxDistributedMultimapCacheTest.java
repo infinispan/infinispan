@@ -21,7 +21,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.multimap.api.embedded.MultimapCache;
 import org.infinispan.test.data.Person;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "distribution.TxDistributedMultimapCacheTest")

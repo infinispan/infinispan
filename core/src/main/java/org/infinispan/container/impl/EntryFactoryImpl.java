@@ -7,6 +7,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
@@ -25,7 +26,6 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.util.concurrent.CompletionStages;
-import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -57,7 +57,7 @@ public class EntryFactoryImpl implements EntryFactory {
       // Scattered mode needs repeatable-read entries to properly retry half-committed multi-key operations
       // (see RetryingEntryWrappingInterceptor for details).
       useRepeatableRead = configuration.transaction().transactionMode().isTransactional()
-            && configuration.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ;
+            && configuration.locking().lockIsolationLevel() == IsolationLevel.REPEATABLE_READ;
       isL1Enabled = configuration.clustering().l1().enabled();
       // Write-skew check implies isolation level = REPEATABLE_READ && locking mode = OPTIMISTIC
       useVersioning = Configurations.isTxVersioned(configuration);

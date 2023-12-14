@@ -31,6 +31,7 @@ import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.configuration.cache.MemoryConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -42,7 +43,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
-import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
@@ -226,7 +226,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             Configuration cfg = cm.getCache().getCacheConfiguration();
-            assertEquals(IsolationLevel.NONE, cfg.locking().isolationLevel());
+            assertEquals(IsolationLevel.NONE, cfg.locking().lockIsolationLevel());
          }
       });
    }
@@ -241,7 +241,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
          public void call() {
             Configuration cfg = cm.getCache().getCacheConfiguration();
             assertEquals(IsolationLevel.READ_COMMITTED,
-                  cfg.locking().isolationLevel());
+                  cfg.locking().lockIsolationLevel());
          }
       });
    }

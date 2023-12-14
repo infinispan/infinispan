@@ -6,6 +6,12 @@
  */
 package org.infinispan.test.hibernate.cache.commons.query;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -17,32 +23,24 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.infinispan.commons.test.categories.Smoke;
-import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
-
 import org.hibernate.testing.TestForIssue;
-import org.infinispan.test.hibernate.cache.commons.AbstractGeneralDataRegionTest;
-import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
-import org.infinispan.test.hibernate.cache.commons.util.CacheTestUtil;
-import org.junit.Test;
-import junit.framework.AssertionFailedError;
-
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.test.categories.Smoke;
+import org.infinispan.configuration.cache.IsolationLevel;
+import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
-import org.infinispan.util.concurrent.IsolationLevel;
-
+import org.infinispan.test.hibernate.cache.commons.AbstractGeneralDataRegionTest;
+import org.infinispan.test.hibernate.cache.commons.util.CacheTestUtil;
+import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
 import org.jboss.logging.Logger;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import junit.framework.AssertionFailedError;
 
 /**
  * Tests of QueryResultRegionImpl.
@@ -195,7 +193,7 @@ public class QueryRegionImplTest extends AbstractGeneralDataRegionTest {
 				blockerLatch.countDown();
 				unblocked = true;
 
-				if ( IsolationLevel.REPEATABLE_READ.equals( cache.getCacheConfiguration().locking().isolationLevel() ) ) {
+				if ( IsolationLevel.REPEATABLE_READ.equals( cache.getCacheConfiguration().locking().lockIsolationLevel() ) ) {
 					assertEquals( VALUE1, callWithSession(sessionFactory, session -> TEST_SESSION_ACCESS.fromRegion(region).get( session, KEY )) );
 				}
 				else {

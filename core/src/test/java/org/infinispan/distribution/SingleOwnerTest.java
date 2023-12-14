@@ -14,7 +14,7 @@ import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.data.BrokenMarshallingPojo;
-import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**

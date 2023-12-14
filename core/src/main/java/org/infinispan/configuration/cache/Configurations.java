@@ -5,7 +5,6 @@ import org.infinispan.configuration.internal.PrivateGlobalConfiguration;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.util.concurrent.IsolationLevel;
 
 /**
  * Helper configuration methods.
@@ -36,7 +35,7 @@ public class Configurations {
    public static boolean isTxVersioned(Configuration cfg) {
       return cfg.transaction().transactionMode().isTransactional() &&
             cfg.transaction().lockingMode() == LockingMode.OPTIMISTIC &&
-            cfg.locking().isolationLevel() == IsolationLevel.REPEATABLE_READ &&
+            cfg.locking().lockIsolationLevel() == IsolationLevel.REPEATABLE_READ &&
             !cfg.clustering().cacheMode().isInvalidation(); //invalidation can't use versions
    }
 

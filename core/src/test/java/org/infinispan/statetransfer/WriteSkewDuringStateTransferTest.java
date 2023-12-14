@@ -51,7 +51,7 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.BaseControlledConsistentHashFactory;
 import org.infinispan.util.BlockingLocalTopologyManager;
 import org.infinispan.util.ControlledRpcManager;
-import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 

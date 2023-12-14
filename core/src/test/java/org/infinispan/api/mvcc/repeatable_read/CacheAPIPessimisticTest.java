@@ -1,7 +1,7 @@
 package org.infinispan.api.mvcc.repeatable_read;
 
 import org.infinispan.api.BaseCacheAPIPessimisticTest;
-import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**

@@ -24,7 +24,7 @@ import org.infinispan.container.versioning.irac.IracEntryVersion;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.xsite.AbstractMultipleSitesTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;

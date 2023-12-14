@@ -58,7 +58,7 @@ import org.infinispan.transaction.impl.TransactionOriginatorChecker;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.CompletionStages;
-import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.BeforeMethod;

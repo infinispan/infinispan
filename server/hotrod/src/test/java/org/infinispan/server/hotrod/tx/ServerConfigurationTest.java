@@ -21,7 +21,7 @@ import org.infinispan.server.hotrod.test.TxResponse;
 import org.infinispan.server.hotrod.tx.table.PerCacheTxTable;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.annotations.Test;
 
 /**
