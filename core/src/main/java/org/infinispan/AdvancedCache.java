@@ -15,6 +15,7 @@ import javax.transaction.xa.XAResource;
 
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.cache.impl.DecoratedCache;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.api.TransactionalCache;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -166,7 +167,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @param keys the keys to lock
     * @return true if the lock acquisition attempt was successful for <i>all</i> keys; false will only be returned if
     * the lock acquisition timed out and the operation has been called with {@link Flag#FAIL_SILENTLY}.
-    * @throws org.infinispan.util.concurrent.TimeoutException if the lock cannot be acquired within the configured lock
+    * @throws TimeoutException if the lock cannot be acquired within the configured lock
     *                                                         acquisition time.
     */
    boolean lock(K... keys);
@@ -179,7 +180,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @param keys collection of keys to lock
     * @return true if the lock acquisition attempt was successful for <i>all</i> keys; false will only be returned if
     * the lock acquisition timed out and the operation has been called with {@link Flag#FAIL_SILENTLY}.
-    * @throws org.infinispan.util.concurrent.TimeoutException if the lock cannot be acquired within the configured lock
+    * @throws TimeoutException if the lock cannot be acquired within the configured lock
     *                                                         acquisition time.
     */
    boolean lock(Collection<? extends K> keys);

@@ -48,7 +48,7 @@ public interface StateTransferLock {
    /**
     * @return a stage that completes successfully when topology {@code expectedTopologyId}
     *    has been installed and transaction data has been received,
-    *    or with a {@link org.infinispan.util.concurrent.TimeoutException}
+    *    or with a {@link org.infinispan.commons.TimeoutException}
     *    after {@link ClusteringConfiguration#remoteTimeout()} expires.
     */
    CompletionStage<Void> transactionDataFuture(int expectedTopologyId);
@@ -61,7 +61,7 @@ public interface StateTransferLock {
 
    /**
     * @return a stage that completes successfully when topology {@code expectedTopologyId}
-    *    has been installed, or with a {@link org.infinispan.util.concurrent.TimeoutException}
+    *    has been installed, or with a {@link org.infinispan.commons.TimeoutException}
     *    after {@link StateTransferConfiguration#timeout()} expires.
     */
    CompletionStage<Void> topologyFuture(int expectedTopologyId);

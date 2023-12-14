@@ -9,13 +9,13 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.server.hotrod.logging.HotRodAccessLogging;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.topology.MissingMembersException;
-import org.infinispan.util.concurrent.TimeoutException;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;

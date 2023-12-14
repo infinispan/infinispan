@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commands.statetransfer.StateTransferStartCommand;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
@@ -24,7 +25,6 @@ import org.infinispan.test.op.TestWriteOperation;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.ControlledRpcManager;
 import org.infinispan.util.concurrent.ReclosableLatch;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
 
 /**

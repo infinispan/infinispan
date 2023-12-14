@@ -11,11 +11,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 
-import jakarta.transaction.Status;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
@@ -28,8 +26,10 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.ReplicatedControlledConsistentHashFactory;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.Status;
+import jakarta.transaction.TransactionManager;
 
 
 @Test(testName = "lock.APITest", groups = "functional")

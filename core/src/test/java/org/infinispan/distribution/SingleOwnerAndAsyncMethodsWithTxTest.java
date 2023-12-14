@@ -15,14 +15,14 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import jakarta.transaction.Status;
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.Cache;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.context.Flag;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.Status;
+import jakarta.transaction.TransactionManager;
 
 /**
  * Transactional tests for asynchronous methods in a distributed

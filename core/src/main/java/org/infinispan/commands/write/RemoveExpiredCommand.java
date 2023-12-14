@@ -9,11 +9,11 @@ import java.util.Objects;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.metadata.impl.PrivateMetadata;
-import org.infinispan.util.concurrent.TimeoutException;
 
 
 /**

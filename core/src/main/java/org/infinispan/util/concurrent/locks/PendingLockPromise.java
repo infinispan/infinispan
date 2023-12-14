@@ -1,6 +1,7 @@
 package org.infinispan.util.concurrent.locks;
 
 
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.interceptors.InvocationStage;
 
 /**
@@ -75,7 +76,7 @@ public interface PendingLockPromise {
    /**
     * If successful, {@link #getRemainingTimeout()} will return the remaining timeout, in millis.
     *
-    * If timed out, the result {@code InvocationStage} will be completed with a {@link org.infinispan.util.concurrent.TimeoutException}.
+    * If timed out, the result {@code InvocationStage} will be completed with a {@link TimeoutException}.
     *
     * @return an {@link InvocationStage} for this lock.
     */

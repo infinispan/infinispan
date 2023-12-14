@@ -1,7 +1,7 @@
 package org.infinispan.util.concurrent.locks;
 
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.interceptors.InvocationStage;
-import org.infinispan.util.concurrent.TimeoutException;
 
 /**
  * A promise returned by {@link org.infinispan.util.concurrent.locks.impl.InfinispanLock}.

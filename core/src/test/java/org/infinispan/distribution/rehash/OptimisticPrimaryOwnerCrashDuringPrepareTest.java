@@ -7,14 +7,13 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.concurrent.Future;
 
-import jakarta.transaction.RollbackException;
-import jakarta.transaction.Status;
 import javax.transaction.xa.XAException;
 
 import org.infinispan.commands.tx.VersionedPrepareCommand;
+import org.infinispan.commons.TimeoutException;
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -22,8 +21,10 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.infinispan.util.ControlledConsistentHashFactory;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Status;
 
 /**
  * Test that if the primary owner crashes while two transactions are in the prepare phase, only one of them will be able

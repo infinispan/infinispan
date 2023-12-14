@@ -2,8 +2,8 @@ package org.infinispan.util.concurrent.locks;
 
 import java.util.function.Supplier;
 
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.interceptors.InvocationStage;
-import org.infinispan.util.concurrent.TimeoutException;
 
 /**
  * An extended {@link LockPromise} interface that allows a better control over it.

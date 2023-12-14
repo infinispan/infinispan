@@ -23,6 +23,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -45,7 +46,6 @@ import org.infinispan.test.op.TestOperation;
 import org.infinispan.test.op.TestWriteOperation;
 import org.infinispan.topology.CacheStatusResponse;
 import org.infinispan.topology.ClusterTopologyManager;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;

@@ -76,7 +76,7 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
          error = throwable.getCause();
       }
       return error instanceof TimeoutException ||
-            error instanceof org.infinispan.util.concurrent.TimeoutException ||
+            error instanceof org.infinispan.commons.TimeoutException ||
             error instanceof UnreachableException ||
             error instanceof CacheUnreachableException ||
             error instanceof SuspectException ||

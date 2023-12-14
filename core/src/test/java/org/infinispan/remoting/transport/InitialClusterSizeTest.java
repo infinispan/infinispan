@@ -71,7 +71,7 @@ public class InitialClusterSizeTest extends MultipleCacheManagersTest {
             fail("Should have thrown an exception");
          } catch (ExecutionException ee) {
             Exceptions.assertException(EmbeddedCacheManagerStartupException.class,
-                                       org.infinispan.util.concurrent.TimeoutException.class,
+                                       org.infinispan.commons.TimeoutException.class,
                                        "ISPN000399:.*", ee.getCause());
          }
       }

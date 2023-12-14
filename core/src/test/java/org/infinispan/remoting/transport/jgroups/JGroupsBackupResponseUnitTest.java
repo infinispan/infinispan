@@ -24,11 +24,11 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.LongConsumer;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.transport.BackupResponse;
 import org.infinispan.remoting.transport.XSiteAsyncAckListener;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.xsite.XSiteBackup;
 import org.testng.annotations.Test;
 
@@ -166,7 +166,7 @@ public class JGroupsBackupResponseUnitTest extends AbstractInfinispanTest {
       assertEquals(1, response.getFailedBackups().size());
       assertTrue(response.getCommunicationErrors().contains("sync-1"));
       assertTrue(response.getFailedBackups().containsKey("sync-1"));
-      assertException(org.infinispan.util.concurrent.TimeoutException.class, response.getFailedBackups().get("sync-1"));
+      assertException(org.infinispan.commons.TimeoutException.class, response.getFailedBackups().get("sync-1"));
    }
 
    public void testEmpty() {

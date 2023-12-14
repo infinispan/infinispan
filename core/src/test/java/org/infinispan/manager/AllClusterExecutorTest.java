@@ -19,11 +19,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
+import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.commons.test.Exceptions;
 import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.TestBlocking;
 import org.infinispan.test.TestException;
@@ -241,7 +241,7 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
                }
             });
             // This fails when local node is invoked since timeout is not adhered to
-            Exceptions.expectExecutionException(org.infinispan.util.concurrent.TimeoutException.class, future);
+            Exceptions.expectExecutionException(org.infinispan.commons.TimeoutException.class, future);
 
             checkPoint.get().trigger("resume_remote_execution");
          }
@@ -405,7 +405,7 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
                             .submitConsumer(blockingFunction, (a, i, t) -> {
                                log.tracef("Consumer invoked with %s, %s, %s", a, i, t);
                             });
-            Exceptions.expectExecutionException(org.infinispan.util.concurrent.TimeoutException.class, futureRemote);
+            Exceptions.expectExecutionException(org.infinispan.commons.TimeoutException.class, futureRemote);
             checkPoint.get().awaitStrict("block_execution", 10, TimeUnit.SECONDS);
             checkPoint.get().trigger("resume_execution");
             // Have to wait for callback to complete - otherwise a different thread could find the "resume_execution"
@@ -418,7 +418,7 @@ public class AllClusterExecutorTest extends AbstractInfinispanTest {
                             .submitConsumer(blockingFunction, (a, i, t) -> {
                                log.tracef("Consumer invoked with %s, %s, %s", a, i, t);
                             });
-            Exceptions.expectExecutionException(org.infinispan.util.concurrent.TimeoutException.class, futureLocal);
+            Exceptions.expectExecutionException(org.infinispan.commons.TimeoutException.class, futureLocal);
             checkPoint.get().awaitStrict("block_execution", 10, TimeUnit.SECONDS);
             checkPoint.get().trigger("resume_execution");
             checkPoint.get().awaitStrict("complete", 10, TimeUnit.SECONDS);

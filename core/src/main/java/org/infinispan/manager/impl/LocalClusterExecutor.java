@@ -12,12 +12,12 @@ import java.util.function.Predicate;
 
 import javax.security.auth.Subject;
 
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.manager.ClusterExecutionPolicy;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.Security;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.function.TriConsumer;
 
 /**

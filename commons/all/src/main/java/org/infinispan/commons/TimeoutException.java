@@ -1,7 +1,4 @@
-package org.infinispan.util.concurrent;
-
-import org.infinispan.commons.CacheException;
-
+package org.infinispan.commons;
 
 /**
  * Thrown when a timeout occurred. used by operations with timeouts, e.g. lock acquisition, or waiting for responses

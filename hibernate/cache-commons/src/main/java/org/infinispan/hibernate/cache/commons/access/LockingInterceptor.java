@@ -11,6 +11,7 @@ import java.util.function.Function;
 
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.write.DataWriteCommand;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.Ownership;
@@ -18,7 +19,6 @@ import org.infinispan.hibernate.cache.commons.util.CompletableFunction;
 import org.infinispan.interceptors.InvocationFinallyFunction;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

@@ -10,8 +10,8 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.infinispan.cloudevents.impl.KafkaEventSender;
 import org.infinispan.cloudevents.impl.Log;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.LogFactory;
 
 public class MockKafkaEventSender implements KafkaEventSender {
