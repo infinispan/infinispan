@@ -22,6 +22,7 @@
         <native-dev-args>-Ob,</native-dev-args>
         <!-- Additional native build args that are required for distriubtion and development should be added to the property below directly -->
         <quarkus.native.additional-build-args>${native-dev-args}</quarkus.native.additional-build-args>
+        <quarkus.native.native-image-xmx>5g</quarkus.native.native-image-xmx>
         <exe.suffix/>
     </properties>
 
