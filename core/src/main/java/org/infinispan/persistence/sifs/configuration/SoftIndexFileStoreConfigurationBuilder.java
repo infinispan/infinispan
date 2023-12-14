@@ -61,10 +61,9 @@ public class SoftIndexFileStoreConfigurationBuilder extends AbstractStoreConfigu
       }
 
       /**
-       * Number of index segment files. Increasing this value improves throughput but requires more threads to be spawned.
-       * <p>
-       * Defaults to <code>16</code>.
+       * No longer used, the number of index segments is determined solely by the number of cache segments.
        */
+      @Deprecated(since = "15.0")
       public SoftIndexFileStoreConfigurationBuilder indexSegments ( int indexSegments){
          index.indexSegments(indexSegments);
          return this;

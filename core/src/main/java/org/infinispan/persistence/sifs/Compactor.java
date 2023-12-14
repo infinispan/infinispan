@@ -120,8 +120,16 @@ class Compactor {
       return fileStats;
    }
 
-   boolean addFreeFile(int file, int expectedSize, int freeSize, long expirationTime) {
-      return addFreeFile(file, expectedSize, freeSize, expirationTime, true);
+   void addLogFileOnShutdown(int file, long expirationTime) {
+      int fileSize = (int) fileProvider.getFileSize(file);
+      // Note this doesn't have to be concurrent as this method is only invoked on shutdown when no additional
+      // files will be requested concurrently
+      Stats stats = new Stats(fileSize, 0, expirationTime);
+      Stats prevStats = fileStats.put(file, stats);
+      if (prevStats != null) {
+         stats.free.addAndGet(prevStats.getFree());
+      }
+      log.tracef("Added log file %s to compactor at shutdown with total size %s and free size %s", file, fileSize, stats.getFree());
    }
 
    boolean addFreeFile(int file, int expectedSize, int freeSize, long expirationTime, boolean canScheduleCompaction) {

@@ -21,6 +21,11 @@ When append-only files:
 * Reach their maximum size, {brandname} creates a new file and starts writing to it.
 * Reach the compaction threshold of less than 50% usage, {brandname} overwrites the entries to a new file and then deletes the old file.
 
+[NOTE]
+====
+SoftIndexFileStore should use purge on startup to ensure stale entries are not resurrected.
+====
+
 .B+ trees
 
 To improve performance, append-only files in a `SoftIndexFileStore` are indexed using a **B+ Tree** that can be stored both on disk and in memory.
@@ -29,23 +34,31 @@ The in-memory index uses Java soft references to ensure it can be rebuilt if rem
 Because `SoftIndexFileStore` uses Java soft references to keep indexes in memory, it helps prevent out-of-memory exceptions.
 GC removes indexes before they consume too much memory while still falling back to disk.
 
-You can configure any number of B+ trees with the `segments` attribute on the `index` element declaratively or with the `indexSegments()` method programmatically.
-By default {brandname} creates up to 16 B+ trees, which means there can be up to 16 indexes.
-Having multiple indexes prevents bottlenecks from concurrent writes to an index and reduces the number of entries that {brandname} needs to keep in memory.
-As it iterates over a soft-index file store, {brandname} reads all entries in an index at the same time.
+`SoftIndexFileStore` creates a B+ tree per configured cache segment.
+This provides an additional "index" as it only has so many elements and provides additional parallelism for index updates.
+Currently we allow for a parallel amount based on one sixteenth of the number of cache segments.
 
 Each entry in the B+ tree is a node.
 By default, the size of each node is limited to 4096 bytes.
 `SoftIndexFileStore` throws an exception if keys are longer after serialization occurs.
 
+.File limits
+
+`SoftIndexFileStore` will use two plus the configured openFilesLimit amount of files at a given time.
+The two additional file pointers are reserved for the log appender for newly updated data and another
+for the compactor which writes compacted entries into a new file.
+
+The amount of open allocated files allocated for indexing is one tenth of the total number of the configured openFilesLimit.
+This number has a minimum of 1 or the number of cache segments.
+Any number remaning from configured limit is allocated for open data files themselves.
+
 .Segmentation
 
-Soft-index file stores are always segmented.
+Soft-index file stores are always segmented. The append log(s) are not directly segmented and segmentation is handled directly by the index.
 
-[NOTE]
-====
-The `AdvancedStore.purgeExpired()` method is not implemented in `SoftIndexFileStore`.
-====
+.Expiration
+
+The SoftIndexFileStore has full support for expired entries and their requirements.
 
 [discrete]
 == Single File Cache Stores
