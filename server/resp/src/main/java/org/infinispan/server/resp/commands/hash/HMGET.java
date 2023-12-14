@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.multimap.impl.EmbeddedMultimapPairCache;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
@@ -34,7 +35,7 @@ public class HMGET extends RespCommand implements Resp3Command {
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
       EmbeddedMultimapPairCache<byte[], byte[], byte[]> multimap = handler.getHashMapMultimap();
-      CompletionStage<Collection<byte[]>> cs = multimap.get(arguments.get(0), arguments.subList(1, arguments.size()).toArray(new byte[0][]))
+      CompletionStage<Collection<byte[]>> cs = multimap.get(arguments.get(0), arguments.subList(1, arguments.size()).toArray(Util.EMPTY_BYTE_ARRAY_ARRAY))
             .thenApply(entries -> {
                List<byte[]> result = new ArrayList<>(arguments.size() - 1);
                for (byte[] argument : arguments.subList(1, arguments.size())) {

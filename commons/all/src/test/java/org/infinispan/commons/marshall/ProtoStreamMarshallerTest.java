@@ -8,6 +8,7 @@ import static org.junit.Assert.assertTrue;
 import java.time.Instant;
 import java.util.Date;
 
+import org.infinispan.commons.util.Util;
 import org.junit.Test;
 
 /**
@@ -31,7 +32,7 @@ public class ProtoStreamMarshallerTest {
       roundtrip(true);
       roundtrip(new Date(0));
       roundtrip(Instant.now());
-      roundtrip(new byte[0]);
+      roundtrip(Util.EMPTY_BYTE_ARRAY);
    }
 
    private void roundtrip(Object in) throws Exception {

@@ -10,11 +10,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.server.resp.response.LCSResponse;
 
 public class LCSOperation {
-
-   private static final byte[] EMPTY_ARRAY = new byte[0];
    private static final CompletionStage<LCSResponse> MISSING_ARGUMENTS = CompletableFuture
          .failedFuture(new IllegalStateException("Missing arguments"));
 
@@ -28,14 +27,14 @@ public class LCSOperation {
             .thenApply((m) -> {
                if (m.size() < 2) {
                   lcsCtx.result = new LCSResponse();
-                  lcsCtx.result.lcs = EMPTY_ARRAY;
+                  lcsCtx.result.lcs = Util.EMPTY_BYTE_ARRAY;
                }
 
                var v1 = findValue(m, lcsCtx.key1);
                var v2 = findValue(m, lcsCtx.key2);
                if (v1 == null || v2 == null) {
                   lcsCtx.result = new LCSResponse();
-                  lcsCtx.result.lcs = EMPTY_ARRAY;
+                  lcsCtx.result.lcs = Util.EMPTY_BYTE_ARRAY;
                }
 
                lcsCtx.lcsLength(v1, v2);

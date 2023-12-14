@@ -12,6 +12,7 @@ import java.math.BigInteger;
 import java.time.Instant;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.Util;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -21,8 +22,8 @@ public class JavaSerializationMarshallerTest {
    public void testPrimitiveArrays() throws Exception {
       JavaSerializationMarshaller marshaller = new JavaSerializationMarshaller();
 
-      byte[] bytes = marshaller.objectToByteBuffer(new byte[0]);
-      assertArrayEquals(new byte[0], (byte[]) marshaller.objectFromByteBuffer(bytes));
+      byte[] bytes = marshaller.objectToByteBuffer(Util.EMPTY_BYTE_ARRAY);
+      assertArrayEquals(Util.EMPTY_BYTE_ARRAY, (byte[]) marshaller.objectFromByteBuffer(bytes));
 
       bytes = marshaller.objectToByteBuffer(new short[0]);
       assertArrayEquals(new short[0], (short[]) marshaller.objectFromByteBuffer(bytes));

@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.infinispan.commons.marshall.ImmutableProtoStreamMarshaller;
 import org.infinispan.commons.marshall.MarshallingException;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.marshall.core.impl.DelegatingUserMarshaller;
@@ -54,7 +55,7 @@ public class ProtostreamUserMarshallerTest extends MultipleCacheManagersTest {
       objectsToTest.add(Double.MAX_VALUE);
       objectsToTest.add(Float.MAX_VALUE);
       objectsToTest.add(true);
-      objectsToTest.add(new byte[0]);
+      objectsToTest.add(Util.EMPTY_BYTE_ARRAY);
       objectsToTest.add(Byte.MAX_VALUE);
       objectsToTest.add(Short.MAX_VALUE);
       objectsToTest.add('c');
