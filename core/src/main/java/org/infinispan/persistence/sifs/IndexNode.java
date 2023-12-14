@@ -1094,7 +1094,7 @@ class IndexNode {
       }
    }
 
-   private static class LeafNode extends EntryInfo {
+   static class LeafNode extends EntryInfo {
       private static final LeafNode[] EMPTY_ARRAY = new LeafNode[0];
       private volatile SoftReference<EntryRecord> keyReference;
 
@@ -1178,11 +1178,26 @@ class IndexNode {
             handle.close();
          }
       }
-   }
 
-   private static class IndexNodeOutdatedException extends Exception {
-      IndexNodeOutdatedException(String message) {
-         super(message);
+      /**
+       * Loads the value and internal metadata for a given header an existing key entry record. Note this method will
+       * not cache the value in this EntryRecord if it isn't already present.
+       * This method will not check expiration or if the value was removed as it is the callers duty
+       * @param headerAndKey existing EntryRecord that contains at least the key and header
+       * @param fileProvider file provider to use to read the value as needed
+       * @return an EntryRecord that contains the key, metadata and value.
+       * @throws IOException if there was an issue reading the entry
+       * @throws IndexNodeOutdatedException if the file has changed since reading the header and key
+       */
+      public EntryRecord loadValue(EntryRecord headerAndKey, FileProvider fileProvider) throws IOException, IndexNodeOutdatedException {
+         FileProvider.Handle handle = fileProvider.getFile(file);
+         int readOffset = offset < 0 ? ~offset : offset;
+         if (handle == null) {
+            throw new IndexNodeOutdatedException(file + ":" + readOffset);
+         }
+         try (handle) {
+            return headerAndKey.loadMetadataAndValue(handle, readOffset, false);
+         }
       }
    }
 
@@ -1204,14 +1219,26 @@ class IndexNode {
       return sb.toString();
    }
 
-   Flowable<EntryRecord> publish(int cacheSegment, boolean loadValues) {
+   interface PublishFunction<R> {
+      /**
+       * Allows for a entry in the index to be converted to a desired value. This method is invoked for every
+       * entry in the index, which will include removed and expired values. This will only be invoked once per unique
+       * key in this index.
+       * @param keyAndMetadataRecord the record that is guaranteed to contain the key and index metadata
+       * @param leafNode the leafNode that points to the data file
+       * @param fileProvider the data fileProvider which can be used to read more information
+       * @param currentTime the current time to use for expiration
+       * @return converted value to return via the Publisher
+       */
+      R apply(EntryRecord keyAndMetadataRecord, LeafNode leafNode, FileProvider fileProvider, long currentTime)
+            throws IOException, IndexNodeOutdatedException;
+   }
+
+   <R> Flowable<R> publish(PublishFunction<R> publishFunction) {
       long currentTime = segment.getTimeService().wallClockTime();
 
-      // Needs defer as we mutate the lastRetrievedKey so inner publisher can be subscribed to multiple times
+      // Needs defer as we mutate the lastRetrievedKey so inner FlowableCreate can be subscribed to multiple times
       return Flowable.defer(() -> {
-         if (segment.index.sizePerSegment.get(cacheSegment) == 0) {
-            return Flowable.empty();
-         }
          ByRef<byte[]> lastRetrievedKey = new ByRef<>(Util.EMPTY_BYTE_ARRAY);
 
          return new FlowableCreate<>(emitter -> {
@@ -1220,7 +1247,8 @@ class IndexNode {
             do {
                // Reset so we can loop
                done.set(false);
-               recursiveNode(this, segment, lastRetrievedKey, emitter, loadValues, currentTime, new ByRef.Boolean(false), done);
+               recursiveNode(publishFunction, this, segment, lastRetrievedKey, emitter, currentTime,
+                     new ByRef.Boolean(false), done);
                // This handles two of the done cases - in which case we can't continue
                if (emitter.requested() == 0 || emitter.isCancelled()) {
                   return;
@@ -1231,8 +1259,8 @@ class IndexNode {
       });
    }
 
-   void recursiveNode(IndexNode node, Index.Segment segment, ByRef<byte[]> lastRetrievedKey, FlowableEmitter<EntryRecord> emitter,
-         boolean loadValues, long currentTime, ByRef.Boolean foundData, ByRef.Boolean done) throws IOException {
+   <R> void recursiveNode(PublishFunction<R> publishFunction, IndexNode node, Index.Segment segment, ByRef<byte[]> lastRetrievedKey, FlowableEmitter<R> emitter,
+         long currentTime, ByRef.Boolean foundData, ByRef.Boolean done) throws IOException {
       Lock readLock = node.lock.readLock();
       readLock.lock();
       try {
@@ -1242,7 +1270,7 @@ class IndexNode {
             final int point = foundData.get() ? 0 : node.getInsertionPoint(lastKey, false);
             // Need to search all inner nodes starting from that point until we hit the last entry for the segment
             for (int i = point; i < node.innerNodes.length && !done.get(); ++i) {
-               recursiveNode(node.innerNodes[i].getIndexNode(segment), segment, lastRetrievedKey, emitter, loadValues,
+               recursiveNode(publishFunction, node.innerNodes[i].getIndexNode(segment), segment, lastRetrievedKey, emitter,
                      currentTime, foundData, done);
             }
          } else if (node.leafNodes != null) {
@@ -1261,24 +1289,11 @@ class IndexNode {
 
                EntryRecord record;
                try {
-                  if (loadValues) {
-                     log.tracef("Loading record for leafNode: %s", leafNode);
-                     record = leafNode.loadRecord(segment.getFileProvider(), null, segment.getTimeService());
-                  } else {
-                     log.tracef("Loading header and key for leafNode: %s", leafNode);
-                     record = leafNode.getHeaderAndKey(segment.getFileProvider(), null);
-                  }
-               } catch (IndexNodeOutdatedException e) {
-                  // Current key was outdated, we have to try from the previous entry we saw (note it is skipped)
-                  if (previousKey != null) {
-                     lastRetrievedKey.set(previousKey);
-                  }
-                  done.set(true);
-                  return;
-               }
+                  // We load the header and key first only, just in case it is a duplicate
+                  log.tracef("Loading header and key for leafNode: %s", leafNode);
+                  record = leafNode.getHeaderAndKey(segment.getFileProvider(), null);
 
-               if (record != null && record.getHeader().valueLength() > 0) {
-                  // It is possible that the very first looked up entry was a previously seen value and if so
+                  // It is possible that the very first looked up entry was a previously seen key and if so
                   // we must skip it if it is equal to not return it twice.
                   if (firstData && i == suggestedIteration) {
                      int keyLength = record.getHeader().keyLength();
@@ -1290,9 +1305,11 @@ class IndexNode {
                         }
                      }
                   }
-                  long expiryTime = record.getHeader().expiryTime();
-                  if (expiryTime < 0 || expiryTime > currentTime) {
-                     emitter.onNext(record);
+
+                  R value = publishFunction.apply(record, leafNode, segment.getFileProvider(), currentTime);
+
+                  if (value != null) {
+                     emitter.onNext(value);
 
                      if (emitter.requested() == 0) {
                         // Store the current key as the next prefix when we can't retrieve more values, so
@@ -1305,8 +1322,14 @@ class IndexNode {
                         return;
                      }
                   }
-
                   previousKey = record.getKey();
+               } catch (IndexNodeOutdatedException e) {
+                  // Current key was outdated, we have to try from the previous entry we saw (note it is skipped)
+                  if (previousKey != null) {
+                     lastRetrievedKey.set(previousKey);
+                  }
+                  done.set(true);
+                  return;
                }
             }
 

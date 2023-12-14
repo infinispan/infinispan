@@ -34,12 +34,12 @@ public class SoftIndexFileStoreSplitInnerNodeTest extends MultipleCacheManagersT
    @Override
    protected void createCacheManagers() {
       ConfigurationBuilder cb = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      cb.clustering().hash().numSegments(1);
       cb.memory().maxCount((long) Math.ceil(MAX_ENTRIES * 0.2))
             .persistence().passivation(false)
             .addSoftIndexFileStore()
             .dataLocation(Paths.get(tmpDirectory, "data").toString())
             .indexLocation(Paths.get(tmpDirectory, "index").toString())
-            .indexSegments(1)
             .purgeOnStartup(true)
             .preload(false)
             .expiration().wakeUpInterval(Long.MAX_VALUE)

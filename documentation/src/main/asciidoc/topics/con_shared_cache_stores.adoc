@@ -6,7 +6,7 @@ By default, cache stores are local (`shared="false"`).
 
 * Local cache stores are unique to each node; for example, a file-based cache store that persists data to the host filesystem.
 +
-Local cache stores can use "purge on startup" to avoid loading stale entries from persistent storage.
+Local cache stores should use "purge on startup" to avoid loading stale entries from persistent storage.
 
 * Shared cache stores allow multiple nodes to use the same persistent storage; for example, a JDBC cache store that allows multiple nodes to access the same database.
 +

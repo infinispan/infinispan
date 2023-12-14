@@ -22,10 +22,8 @@ import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Function;
 
 import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
@@ -87,6 +85,10 @@ class Index {
    private final Throwable END_EARLY = new Throwable("SIFS Index stopping");
    // This is used to signal that a segment is not currently being used
    private final Segment emptySegment;
+   private final FlowableProcessor<IndexRequest> emptyFlowable;
+
+   @GuardedBy("lock")
+   private CompletionStage<Void> removeSegmentsStage = CompletableFutures.completedNull();
 
    private final IndexNode.OverwriteHook movedHook = new IndexNode.OverwriteHook() {
       @Override
@@ -147,6 +149,38 @@ class Index {
       this.executor = new LimitedExecutor("sifs-index", executor, concurrency);
       this.emptySegment = new Segment(this, -1, temporaryTable);
       this.emptySegment.complete(null);
+
+      this.emptyFlowable = UnicastProcessor.<IndexRequest>create()
+            .toSerialized();
+      emptyFlowable.subscribe(this::handleNonOwnedIndexRequest,
+            e -> log.fatal("Error encountered with index, SIFS may not operate properly.", e));
+   }
+
+   /**
+    * Method used to handle index requests where we do not own the given segment. In this case we just effectively
+    * discard the request when possible and update the compactor to have the data as free so it can remove the value
+    * later.
+    * @param ir request that was sent after we don't own the segment
+    */
+   private void handleNonOwnedIndexRequest(IndexRequest ir) {
+      switch (ir.getType()) {
+         case UPDATE:
+         case MOVED:
+            // We no longer own the segment so just treat the data as free for compactor purposes
+            // Note we leave the existing value alone as the removeSegments will take care of that
+            compactor.free(ir.getFile(), ir.getSize());
+            break;
+         case FOUND_OLD:
+            throw new IllegalStateException("This is only possible when building the index");
+         case SYNC_REQUEST:
+            Runnable runnable = (Runnable) ir.getKey();
+            runnable.run();
+            break;
+         case CLEAR:
+         case DROPPED:
+            // Both drop and clear do nothing as we are already removing the index
+      }
+      ir.complete(null);
    }
 
    private boolean checkForExistingIndexSizeFile() {
@@ -299,8 +333,8 @@ class Index {
       try {
          AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
          for (FlowableProcessor<IndexRequest> processor : flowableProcessors) {
-            // Ignore already completed as we used this to signal that we don't own that segment anymore
-            if (processor == RxJavaInterop.<IndexRequest>completedFlowableProcessor()) {
+            // Ignore emptyFlowable as we use this to signal that we don't own that segment anymore
+            if (processor == emptyFlowable) {
                continue;
             }
             IndexRequest clearRequest = IndexRequest.clearRequest();
@@ -343,13 +377,21 @@ class Index {
    }
 
    public CompletionStage<Void> stop() throws InterruptedException {
-      for (FlowableProcessor<IndexRequest> flowableProcessor : flowableProcessors) {
-         flowableProcessor.onComplete();
-      }
+      AggregateCompletionStage<Void> aggregateCompletionStage;
+      lock.readLock().lock();
+      try {
+         for (FlowableProcessor<IndexRequest> flowableProcessor : flowableProcessors) {
+            flowableProcessor.onComplete();
+         }
 
-      AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
-      for (Segment segment : segments) {
-         aggregateCompletionStage.dependsOn(segment);
+         aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
+         for (Segment segment : segments) {
+            aggregateCompletionStage.dependsOn(segment);
+         }
+
+         aggregateCompletionStage.dependsOn(removeSegmentsStage);
+      } finally {
+         lock.readLock().unlock();
       }
 
       // After all SIFS segments are complete we write the size
@@ -487,7 +529,21 @@ class Index {
       }, executor);
    }
 
+   private void traceSegmentsAdded(IntSet addedSegments) {
+      IntSet actualAddedSegments = IntSets.mutableEmptySet(segments.length);
+      for (PrimitiveIterator.OfInt segmentIter = addedSegments.iterator(); segmentIter.hasNext(); ) {
+         int i = segmentIter.nextInt();
+         if (segments[i] == null || segments[i] == emptySegment) {
+            actualAddedSegments.add(i);
+         }
+      }
+      log.tracef("Adding segments %s to SIFS index", actualAddedSegments);
+   }
+
    private void actualAddSegments(IntSet addedSegments) {
+      if (log.isTraceEnabled()) {
+         traceSegmentsAdded(addedSegments);
+      }
       for (PrimitiveIterator.OfInt segmentIter = addedSegments.iterator(); segmentIter.hasNext(); ) {
          int i = segmentIter.nextInt();
 
@@ -514,37 +570,84 @@ class Index {
                }, segment);
       }
    }
-   public CompletionStage<Void> removeSegments(IntSet addedSegments) {
-      return CompletableFuture.supplyAsync(() -> {
-         int addedCount = addedSegments.size();
-         List<Segment> removedSegments = new ArrayList<>(addedCount);
-         List<FlowableProcessor<IndexRequest>> removedFlowables = new ArrayList<>(addedCount);
-         // We hold the lock as short as possible just to swap the segments and processors to empty ones
-         lock.writeLock().lock();
+   public CompletionStage<Void> removeSegments(IntSet removedCacheSegments) {
+      // Use a try lock to avoid context switch if possible
+      if (lock.writeLock().tryLock()) {
          try {
-            for (PrimitiveIterator.OfInt iter = addedSegments.iterator(); iter.hasNext(); ) {
-               int i = iter.nextInt();
-               removedSegments.add(segments[i]);
-               segments[i] = emptySegment;
-               removedFlowables.add(flowableProcessors[i]);
-               flowableProcessors[i] = RxJavaInterop.completedFlowableProcessor();
-            }
+            // This method doesn't block if we can acquire lock immediately, just replaces segments and flowables
+            // and submits an async task
+            actualRemoveSegments(removedCacheSegments);
          } finally {
             lock.writeLock().unlock();
          }
-         // We would love to do this outside of this stage asynchronously but unfortunately we can't say we have
-         // removed the segments until the segment file is deleted
-         AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
-         // We need to iterate through the entire indexes to update free space for compactor
-         // Then we need to delete the segment
-         for (int i = 0; i < addedCount; i++) {
-            removedFlowables.get(i).onComplete();
-            Segment segment = removedSegments.get(i);
-            stage.dependsOn(segment
-                  .thenRun(segment::delete));
+         return CompletableFutures.completedNull();
+      }
+      return CompletableFuture.runAsync(() -> {
+         lock.writeLock().lock();
+         try {
+            actualRemoveSegments(removedCacheSegments);
+         } finally {
+            lock.writeLock().unlock();
          }
-         return stage.freeze();
-      }, executor).thenCompose(Function.identity());
+      }, executor);
+   }
+
+   private void actualRemoveSegments(IntSet removedCacheSegments) {
+      log.tracef("Removing segments %s from index", removedCacheSegments);
+      int addedCount = removedCacheSegments.size();
+      List<Segment> removedSegments = new ArrayList<>(addedCount);
+      List<FlowableProcessor<IndexRequest>> removedFlowables = new ArrayList<>(addedCount);
+      CompletableFuture<Void> stageWhenComplete = new CompletableFuture<>();
+
+      for (PrimitiveIterator.OfInt iter = removedCacheSegments.iterator(); iter.hasNext(); ) {
+         int i = iter.nextInt();
+         removedSegments.add(segments[i]);
+         segments[i] = emptySegment;
+         removedFlowables.add(flowableProcessors[i]);
+         flowableProcessors[i] = emptyFlowable;
+
+         sizePerSegment.set(i, 0);
+      }
+      // Technically this is an issue with sequential removeSegments being called and then shutdown, but
+      // we don't support data consistency with non-shared stores in a cluster (this method is only called in a cluster).
+      removeSegmentsStage = stageWhenComplete;
+
+      executor.execute(() -> {
+         try {
+            log.tracef("Cleaning old index information for segments: %s", removedCacheSegments);
+            // We would love to do this outside of this stage asynchronously but unfortunately we can't say we have
+            // removed the segments until the segment file is deleted
+            AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
+            // Then we need to delete the segment
+            for (int cacheSegment = 0; cacheSegment < addedCount; cacheSegment++) {
+               // We signal to complete the flowables, once complete the index is updated as we need to
+               // update the compactor
+               removedFlowables.get(cacheSegment).onComplete();
+               Segment segment = removedSegments.get(cacheSegment);
+               stage.dependsOn(
+                     segment.thenCompose(___ ->
+                                 // Now we free all entries in the index, this will include expired and removed entries
+                                 // Removed doesn't currently update free stats per ISPN-15246 - so we remove those as well
+                                 segment.root.publish((keyAndMetadataRecord, leafNode, fileProvider, timeService) -> {
+                                          compactor.free(leafNode.file, keyAndMetadataRecord.getHeader().totalLength());
+                                          return null;
+                                       }).ignoreElements()
+                                       .toCompletionStage(null)
+                           )
+                           .thenRun(segment::delete));
+            }
+            stage.freeze()
+                  .whenComplete((___, t) -> {
+                     if (t != null) {
+                        stageWhenComplete.completeExceptionally(t);
+                     } else {
+                        stageWhenComplete.complete(null);
+                     }
+                  });
+         } catch (Throwable t) {
+            stageWhenComplete.completeExceptionally(t);
+         }
+      });
    }
 
    static class Segment extends CompletableFuture<Void> implements Consumer<IndexRequest>, Action {
@@ -605,6 +708,7 @@ class Index {
       void delete() {
          // Empty segment is negative, so there is no file
          if (id >= 0) {
+            log.tracef("Deleting file for index %s", id);
             index.indexFileProvider.deleteFile(id);
          }
       }
@@ -898,6 +1002,26 @@ class Index {
 
    <V> Flowable<EntryRecord> publish(IntSet cacheSegments, boolean loadValues) {
       return Flowable.fromIterable(cacheSegments)
-            .concatMap(segment -> segments[segment].root.publish(segment, loadValues));
+            .concatMap(cacheSegment -> publish(cacheSegment, loadValues));
+   }
+
+   Flowable<EntryRecord> publish(int cacheSegment, boolean loadValues) {
+      var segment = segments[cacheSegment];
+      if (segment.index.sizePerSegment.get(cacheSegment) == 0) {
+         return Flowable.empty();
+      }
+      return segment.root.publish((keyAndMetadataRecord, leafNode, fileProvider, currentTime) -> {
+         long expiryTime = keyAndMetadataRecord.getHeader().expiryTime();
+         // Ignore any key or value if it is expired or was removed
+         if (expiryTime > 0 && expiryTime < currentTime || keyAndMetadataRecord.getHeader().valueLength() <= 0) {
+            return null;
+         }
+         if (loadValues) {
+            log.tracef("Loading value record for leafNode: %s", leafNode);
+
+            return leafNode.loadValue(keyAndMetadataRecord, fileProvider);
+         }
+         return keyAndMetadataRecord;
+      });
    }
 }
