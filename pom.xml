@@ -257,7 +257,7 @@
       <versionx.commons-logging.commons-logging>1.2</versionx.commons-logging.commons-logging>
       <versionx.io.fabric8.kubernetes-client>${version.fabric8.kubernetes-client}</versionx.io.fabric8.kubernetes-client>
       <versionx.io.netty.netty-buffer>${version.netty}</versionx.io.netty.netty-buffer>
-      <versionx.io.netty.netty-codec>${version.netty}</versionx.io.netty.netty-codec>
+      <versionx.io.netty.netty-codec>4.1.104.Final</versionx.io.netty.netty-codec>
       <versionx.io.netty.netty-codec-http>${version.netty}</versionx.io.netty.netty-codec-http>
       <versionx.io.netty.netty-codec-http2>${version.netty}</versionx.io.netty.netty-codec-http2>
       <versionx.io.netty.netty-common>${version.netty}</versionx.io.netty.netty-common>
