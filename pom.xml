@@ -275,7 +275,7 @@
       <versionx.javax.inject.javax.inject>1</versionx.javax.inject.javax.inject>
       <versionx.junit.junit>${version.junit}</versionx.junit.junit>
       <versionx.junit.platform>${version.junit.platform}</versionx.junit.platform>
-      <versionx.junit.junit5>${version.junit5}</versionx.junit.junit5>
+      <versionx.junit.junit5>5.10.1</versionx.junit.junit5>
       <versionx.net.spy.spymemcached>2.12.1</versionx.net.spy.spymemcached>
       <versionx.org.aesh.aesh>${version.aesh}</versionx.org.aesh.aesh>
       <versionx.org.aesh.readline>${version.aesh-readline}</versionx.org.aesh.readline>
