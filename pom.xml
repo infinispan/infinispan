@@ -283,7 +283,7 @@
       <versionx.org.apache.ant.ant>${version.ant}</versionx.org.apache.ant.ant>
       <versionx.org.apache.avro.avro>1.11.3</versionx.org.apache.avro.avro>
       <versionx.org.apache.commons.commons-compress>${version.commons.compress}</versionx.org.apache.commons.commons-compress>
-      <versionx.org.apache.commons.commons-lang3>3.9</versionx.org.apache.commons.commons-lang3>
+      <versionx.org.apache.commons.commons-lang3>3.14.0</versionx.org.apache.commons.commons-lang3>
       <versionx.org.apache.commons.commons-math>2.2</versionx.org.apache.commons.commons-math>
       <versionx.org.apache.directory.server.apacheds>2.0.0-M24</versionx.org.apache.directory.server.apacheds>
       <versionx.org.apache.mina.mina>2.0.22</versionx.org.apache.mina.mina>
