@@ -167,8 +167,8 @@
       <version.jgroups.raft>1.0.12.Final</version.jgroups.raft>
       <version.jsr107>1.1.0</version.jsr107>
       <version.junit>4.13.2</version.junit>
-      <version.junit.platform>1.9.3</version.junit.platform>
-      <version.junit5>5.9.3</version.junit5>
+      <version.junit.platform>1.10.1</version.junit.platform>
+      <version.junit5>5.10.1</version.junit5>
       <version.log4j>2.22.1</version.log4j>
       <version.lucene>9.8.0</version.lucene>
       <version.metainf-services>1.8</version.metainf-services>
@@ -194,7 +194,7 @@
       <version.rocksdb>7.1.2</version.rocksdb>
       <version.rxjava>3.1.4</version.rxjava>
       <version.sshd>2.10.0</version.sshd>
-      <version.testng.engine>1.0.4</version.testng.engine>
+      <version.testng.engine>1.0.5</version.testng.engine>
 
       <!-- these versions must be kept in sync with ${version.micrometer}: -->
       <version.io.prometheus>0.15.0</version.io.prometheus>
@@ -221,7 +221,7 @@
 
       <!-- Plugin dependencies -->
       <version.checkstyle.maven-plugin>3.3.1</version.checkstyle.maven-plugin>
-      <version.native.maven.plugin>0.9.22</version.native.maven.plugin>
+      <version.native.maven.plugin>0.9.28</version.native.maven.plugin>
       <version.maven>3.9.6</version.maven>
       <version.maven.antlr3>3.5.2</version.maven.antlr3>
       <version.maven.antrun>3.1.0</version.maven.antrun>
