@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
@@ -53,6 +54,7 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.globalstate.GlobalStateManager;
+import org.infinispan.globalstate.GlobalStateProvider;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
@@ -90,7 +92,9 @@ import net.jcip.annotations.GuardedBy;
  * @since 5.2
  */
 @Scope(Scopes.GLOBAL)
-public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
+public class ClusterTopologyManagerImpl implements ClusterTopologyManager, GlobalStateProvider {
+
+   private static final String GLOBAL_REBALANCE_STATE = "global_rebalance";
 
    public static final int INITIAL_CONNECTION_ATTEMPTS = 10;
    public static final int CLUSTER_RECOVERY_ATTEMPTS = 10;
@@ -114,6 +118,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    @Inject EventLogManager eventLogManager;
    @Inject PersistentUUIDManager persistentUUIDManager;
    @Inject TimeService timeService;
+   @Inject GlobalStateManager globalStateManager;
 
    private TopologyManagementHelper helper;
    private ConditionFuture<ClusterTopologyManagerImpl> joinViewFuture;
@@ -129,9 +134,33 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private AtomicInteger recoveryAttemptCount = new AtomicInteger();
 
    // The global rebalancing status
-   private boolean globalRebalancingEnabled = true;
+   // Initial state is NOT_RECOVERED, changing after reading from the local state or retrieving from the coordinator.
+   private final AtomicReference<GlobalRebalanceStatus> globalRebalancingEnabled = new AtomicReference<>(GlobalRebalanceStatus.NOT_RECOVERED);
 
    private EventLoggerViewListener viewListener;
+
+   private enum GlobalRebalanceStatus {
+      NOT_RECOVERED,
+      ENABLED,
+      DISABLED;
+
+      boolean isEnabled() {
+         return this != DISABLED;
+      }
+
+      static GlobalRebalanceStatus fromBoolean(boolean enabled) {
+         return enabled ? ENABLED : DISABLED;
+      }
+   }
+
+   @Start
+   public void preStart() {
+      // Registration must happen *before* global state start.
+      if (globalStateManager != null) {
+         globalStateManager.registerStateProvider(this);
+      }
+   }
+
 
    @Start(priority = 100)
    public void start() {
@@ -144,12 +173,13 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       // The listener already missed the initial view
       handleClusterView(false, transport.getViewId());
 
-      globalRebalancingEnabled = join(fetchRebalancingStatusFromCoordinator(INITIAL_CONNECTION_ATTEMPTS));
+      boolean coordinatorRebalance = join(fetchRebalancingStatusFromCoordinator(INITIAL_CONNECTION_ATTEMPTS));
+      globalRebalancingEnabled.set(GlobalRebalanceStatus.fromBoolean(coordinatorRebalance));
    }
 
    private CompletionStage<Boolean> fetchRebalancingStatusFromCoordinator(int attempts) {
       if (transport.isCoordinator()) {
-         return CompletableFutures.completedTrue();
+         return CompletableFuture.completedFuture(isRebalancingEnabled());
       }
       ReplicableCommand command = new RebalanceStatusRequestCommand();
       Address coordinator = transport.getCoordinator();
@@ -311,6 +341,19 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       return CompletableFutures.completedNull();
    }
 
+   @Override
+   public void prepareForPersist(ScopedPersistentState globalState) {
+      GlobalRebalanceStatus grs = globalRebalancingEnabled.get();
+      globalState.setProperty(GLOBAL_REBALANCE_STATE, String.valueOf(grs.isEnabled()));
+   }
+
+   @Override
+   public void prepareForRestore(ScopedPersistentState globalState) {
+      String status = globalState.getProperty(GLOBAL_REBALANCE_STATE);
+      GlobalRebalanceStatus grs = GlobalRebalanceStatus.fromBoolean(status == null || Boolean.parseBoolean(status));
+      globalRebalancingEnabled.compareAndExchange(GlobalRebalanceStatus.NOT_RECOVERED, grs);
+   }
+
    private static class CacheStatusResponseCollector extends ValidResponseCollector<CacheStatusResponseCollector> {
       private final Map<String, Map<Address, CacheStatusResponse>> responsesByCache = new HashMap<>();
       private final List<Address> suspectedMembers = new ArrayList<>();
@@ -443,7 +486,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                   return;
                }
                clusterManagerStatus = ClusterManagerStatus.COORDINATOR;
-               globalRebalancingEnabled = responseCollector.getRebalancingEnabled();
+               GlobalRebalanceStatus grs = GlobalRebalanceStatus.fromBoolean(responseCollector.getRebalancingEnabled());
+               globalRebalancingEnabled.set(grs);
             } finally {
                releaseUpdateLock();
             }
@@ -646,7 +690,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    @Override
    public boolean isRebalancingEnabled() {
-      return globalRebalancingEnabled;
+      return globalRebalancingEnabled.get().isEnabled();
    }
 
    @Override
@@ -677,15 +721,15 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    @Override
    public CompletionStage<Void> setRebalancingEnabled(boolean enabled) {
       if (enabled) {
-         if (!globalRebalancingEnabled) {
+         if (!isRebalancingEnabled()) {
             CLUSTER.rebalancingEnabled();
          }
       } else {
-         if (globalRebalancingEnabled) {
+         if (isRebalancingEnabled()) {
             CLUSTER.rebalancingSuspended();
          }
       }
-      globalRebalancingEnabled = enabled;
+      globalRebalancingEnabled.set(GlobalRebalanceStatus.fromBoolean(enabled));
       cacheStatusMap.values().forEach(ClusterCacheStatus::startQueuedRebalance);
       return CompletableFutures.completedNull();
    }
