@@ -386,7 +386,7 @@ public class ParserRegistry implements NamespaceMappingParser {
 
       @Override
       public String toString() {
-         return this.namespace.equals("") ? this.name : "{" + this.namespace + "}" + this.name;
+         return this.namespace.isEmpty() ? this.name : "{" + this.namespace + "}" + this.name;
       }
    }
 }
