@@ -1,6 +1,5 @@
 package org.infinispan.xsite;
 
-import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.xsite.spi.SiteEntry;
@@ -19,6 +18,6 @@ public class CustomXSiteEntryMergePolicy<K, V> implements XSiteEntryMergePolicy<
 
    @Override
    public boolean equals(Object obj) {
-      return obj != null && Objects.equals(obj.getClass(), getClass());
+      return obj != null && obj.getClass() == getClass();
    }
 }

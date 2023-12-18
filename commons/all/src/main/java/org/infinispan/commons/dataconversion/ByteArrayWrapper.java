@@ -20,7 +20,7 @@ public class ByteArrayWrapper implements Wrapper {
 
    @Override
    public Object unwrap(Object obj) {
-      if (obj != null && obj.getClass().equals(WrappedByteArray.class))
+      if (obj != null && obj.getClass() == WrappedByteArray.class)
          return WrappedByteArray.class.cast(obj).getBytes();
       return obj;
    }

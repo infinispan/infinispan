@@ -29,13 +29,13 @@ public class BlockingInterceptor<T extends VisitableCommand> extends DDAsyncInte
 
    public BlockingInterceptor(CyclicBarrier barrier, Class<T> commandClass,
          boolean blockAfter, boolean originLocalOnly) {
-      this(barrier, commandClass, blockAfter, originLocalOnly, t -> t != null && commandClass.equals(t.getClass()));
+      this(barrier, commandClass, blockAfter, originLocalOnly, t -> t != null && commandClass == t.getClass());
    }
 
    public BlockingInterceptor(CyclicBarrier barrier, Class<T> commandClass,
          boolean blockAfter, boolean originLocalOnly, Predicate<T> acceptCommand) {
       this(barrier, blockAfter, originLocalOnly,
-            t -> t != null && commandClass.equals(t.getClass()) && acceptCommand.test(commandClass.cast(t)));
+            t -> t != null && commandClass == t.getClass() && acceptCommand.test(commandClass.cast(t)));
    }
 
    public BlockingInterceptor(CyclicBarrier barrier, boolean blockAfter, boolean originLocalOnly,

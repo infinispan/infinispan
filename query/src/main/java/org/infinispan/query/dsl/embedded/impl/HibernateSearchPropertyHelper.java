@@ -41,7 +41,7 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
       }
 
       Class<?> type = fieldDescriptor.type().dslArgumentClass();
-      if (!(Date.class.equals(type))) {
+      if (Date.class != type) {
          return super.convertToPropertyType(entityType, propertyPath, value);
       }
 

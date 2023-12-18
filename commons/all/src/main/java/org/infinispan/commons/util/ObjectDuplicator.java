@@ -26,9 +26,9 @@ public class ObjectDuplicator {
          return (Map<K, V>) ((HashMap<K, V>) original).clone();
       if (original instanceof TreeMap)
          return (Map<K, V>) ((TreeMap<K, V>) original).clone();
-      if (original.getClass().equals(Collections.emptyMap().getClass()))
+      if (original.getClass() == Collections.emptyMap().getClass())
          return Collections.emptyMap();
-      if (original.getClass().equals(Collections.singletonMap("", "").getClass())) {
+      if (original.getClass() == Collections.singletonMap("", "").getClass()) {
          Map.Entry<K, V> e = original.entrySet().iterator().next();
          return Collections.singletonMap(e.getKey(), e.getValue());
       }
@@ -43,9 +43,9 @@ public class ObjectDuplicator {
          return (Set<E>) ((TreeSet<E>) original).clone();
       if (original instanceof FastCopyHashMap.EntrySet || original instanceof FastCopyHashMap.KeySet)
          return new HashSet<>(original);
-      if (original.getClass().equals(Collections.emptySet().getClass()))
+      if (original.getClass() == Collections.emptySet().getClass())
          return Collections.emptySet();
-      if (original.getClass().equals(Collections.singleton("").getClass()))
+      if (original.getClass() == Collections.singleton("").getClass())
          return Collections.singleton(original.iterator().next());
       if (original.getClass().getSimpleName().contains("$"))
          return new HashSet<>(original);

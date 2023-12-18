@@ -32,7 +32,7 @@ public class Proxies {
          }
       }
       Class<?> superclass = clazz.getSuperclass();
-      if (!superclass.equals(Object.class))
+      if (superclass != Object.class)
          return superclass.getInterfaces();
       return ReflectionUtil.EMPTY_CLASS_ARRAY;
    }

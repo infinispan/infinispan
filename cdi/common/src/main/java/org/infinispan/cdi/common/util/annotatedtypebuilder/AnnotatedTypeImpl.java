@@ -55,14 +55,14 @@ class AnnotatedTypeImpl<X> extends AnnotatedImpl implements AnnotatedType<X> {
       }
       this.methods = new HashSet<AnnotatedMethod<? super X>>();
       for (Method m : clazz.getMethods()) {
-         if (!m.getDeclaringClass().equals(Object.class)) {
+         if (m.getDeclaringClass() != Object.class) {
             AnnotatedMethodImpl<X> met = new AnnotatedMethodImpl<X>(this, m, methodAnnotations.get(m), methodParameterAnnotations.get(m), methodParameterTypes.get(m));
             methods.add(met);
             mset.add(m);
          }
       }
       for (Entry<Method, AnnotationStore> c : methodAnnotations.entrySet()) {
-         if (!c.getKey().getDeclaringClass().equals(Object.class) && !mset.contains(c.getKey())) {
+         if (c.getKey().getDeclaringClass() != Object.class && !mset.contains(c.getKey())) {
             AnnotatedMethodImpl<X> nc = new AnnotatedMethodImpl<X>(this, c.getKey(), c.getValue(), methodParameterAnnotations.get(c.getKey()), methodParameterTypes.get(c.getKey()));
             methods.add(nc);
          }

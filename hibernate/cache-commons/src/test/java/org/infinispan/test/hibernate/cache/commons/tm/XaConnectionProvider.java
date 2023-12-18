@@ -41,7 +41,7 @@ public class XaConnectionProvider implements ConnectionProvider, Stoppable {
 	@Override
 	public boolean isUnwrappableAs(Class unwrapType) {
 		return XaConnectionProvider.class.isAssignableFrom( unwrapType ) ||
-				ConnectionProvider.class.equals( unwrapType ) ||
+            ConnectionProvider.class == unwrapType ||
 				actualConnectionProvider.getClass().isAssignableFrom( unwrapType );
 	}
 

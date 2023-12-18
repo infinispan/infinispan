@@ -169,7 +169,7 @@ public class StateTransferOverwritingValueTest extends MultipleCacheManagersTest
       // Scattered cache mode uses only PKVC or RemoveCommands for backup
       BlockingInterceptor<?> blockingInterceptor1 =
             new BlockingInterceptor<>(beforeCommitCache1Barrier, true, false,
-                                      t -> t.getClass().equals(op.getCommandClass()));
+                                      t -> t.getClass() == op.getCommandClass());
 
       AsyncInterceptorChain interceptorChain1 = TestingUtil.extractInterceptorChain(cache1);
       Class<? extends EntryWrappingInterceptor> ewi =

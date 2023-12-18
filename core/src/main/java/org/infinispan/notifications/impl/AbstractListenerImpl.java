@@ -337,7 +337,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
       if (m.getParameterCount() != 1 || !m.getParameterTypes()[0].isAssignableFrom(allowedParameter))
          throw new IncorrectListenerException("Methods annotated with " + annotationName + " must accept exactly one parameter, of assignable from type " + allowedParameter.getName());
       Class<?> returnType = m.getReturnType();
-      if (!returnType.equals(void.class) && !CompletionStage.class.isAssignableFrom(returnType)) {
+      if (returnType != void.class && !CompletionStage.class.isAssignableFrom(returnType)) {
          throw new IncorrectListenerException("Methods annotated with " + annotationName + " should have a return type of void or CompletionStage.");
       }
    }

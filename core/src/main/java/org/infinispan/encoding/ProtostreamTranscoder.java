@@ -190,18 +190,18 @@ public class ProtostreamTranscoder extends OneToManyTranscoder {
    }
 
    private boolean isWrappedMessageClass(Class<?> c) {
-      return c.equals(String.class) ||
-            c.equals(Long.class) ||
-            c.equals(Integer.class) ||
-            c.equals(Double.class) ||
-            c.equals(Float.class) ||
-            c.equals(Boolean.class) ||
-            c.equals(byte[].class) ||
-            c.equals(Byte.class) ||
-            c.equals(Short.class) ||
-            c.equals(Character.class) ||
-            c.equals(java.util.Date.class) ||
-            c.equals(java.time.Instant.class);
+      return c == String.class ||
+            c == Long.class ||
+            c == Integer.class ||
+            c == Double.class ||
+            c == Float.class ||
+            c == Boolean.class ||
+            c == byte[].class ||
+            c == Byte.class ||
+            c == Short.class ||
+            c == Character.class ||
+            c == java.util.Date.class ||
+            c == java.time.Instant.class;
    }
 
    private Object addTypeIfNeeded(Object content) {

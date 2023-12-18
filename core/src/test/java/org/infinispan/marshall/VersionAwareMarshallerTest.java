@@ -328,7 +328,7 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       ExceptionResponse er = new ExceptionResponse(new TimeoutException());
       byte[] bytes = marshaller.objectToByteBuffer(er);
       ExceptionResponse rer = (ExceptionResponse) marshaller.objectFromByteBuffer(bytes);
-      assert rer.getException().getClass().equals(er.getException().getClass()) : "Writen[" + er.getException().getClass() + "] and read[" + rer.getException().getClass() + "] objects should be the same";
+      assert rer.getException().getClass() == er.getException().getClass() : "Writen[" + er.getException().getClass() + "] and read[" + rer.getException().getClass() + "] objects should be the same";
    }
 
    @Test(expectedExceptions = MarshallingException.class)

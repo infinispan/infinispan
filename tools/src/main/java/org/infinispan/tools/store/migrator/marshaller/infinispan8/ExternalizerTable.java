@@ -253,7 +253,7 @@ class ExternalizerTable implements ObjectTable {
          if (o == null || getClass() != o.getClass()) return false;
          ExternalizerAdapter that = (ExternalizerAdapter) o;
          if (id != that.id) return false;
-         if (externalizer != null ? !externalizer.getClass().equals(that.externalizer.getClass()) : that.externalizer != null)
+         if (externalizer != null ? externalizer.getClass() != that.externalizer.getClass() : that.externalizer != null)
             return false;
          return true;
       }

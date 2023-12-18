@@ -55,7 +55,7 @@ public final class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
 
       if (!isAllowed)
          throw HOTROD.incorrectClientListener(annotationName, Arrays.asList(allowedParameters));
-      if (!m.getReturnType().equals(void.class))
+      if (m.getReturnType() != void.class)
          throw HOTROD.incorrectClientListener(annotationName);
    }
 

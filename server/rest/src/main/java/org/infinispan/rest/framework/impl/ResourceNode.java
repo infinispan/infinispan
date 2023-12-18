@@ -145,7 +145,7 @@ class ResourceNode {
       for (Map.Entry<PathItem, ResourceNode> entry : children.entrySet()) {
          PathItem pathItem = entry.getKey();
          ResourceNode resourceNode = entry.getValue();
-         if (!pathItem.getClass().equals(candidate.getClass())) return resourceNode;
+         if (pathItem.getClass() != candidate.getClass()) return resourceNode;
       }
       return null;
    }

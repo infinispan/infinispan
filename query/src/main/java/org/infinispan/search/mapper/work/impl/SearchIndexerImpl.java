@@ -94,7 +94,7 @@ public class SearchIndexerImpl implements SearchIndexer {
          return null;
       }
 
-      if (entityConverter == null || !entity.getClass().equals(entityConverter.targetType())) {
+      if (entityConverter == null || entity.getClass() != entityConverter.targetType()) {
          InfinispanIndexedTypeContext<?> typeContext = typeContextProvider.indexedForExactType(entity.getClass());
          if (typeContext == null) {
             return null;

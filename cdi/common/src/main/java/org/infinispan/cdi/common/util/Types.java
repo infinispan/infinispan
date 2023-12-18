@@ -14,39 +14,39 @@ public class Types
       {
          return type;
       }
-      else if (type.equals(Boolean.TYPE))
+      else if (type == Boolean.TYPE)
       {
          return Boolean.class;
       }
-      else if (type.equals(Character.TYPE))
+      else if (type == Character.TYPE)
       {
          return Character.class;
       }
-      else if (type.equals(Byte.TYPE))
+      else if (type == Byte.TYPE)
       {
          return Byte.class;
       }
-      else if (type.equals(Short.TYPE))
+      else if (type == Short.TYPE)
       {
          return Short.class;
       }
-      else if (type.equals(Integer.TYPE))
+      else if (type == Integer.TYPE)
       {
          return Integer.class;
       }
-      else if (type.equals(Long.TYPE))
+      else if (type == Long.TYPE)
       {
          return Long.class;
       }
-      else if (type.equals(Float.TYPE))
+      else if (type == Float.TYPE)
       {
          return Float.class;
       }
-      else if (type.equals(Double.TYPE))
+      else if (type == Double.TYPE)
       {
          return Double.class;
       }
-      else if (type.equals(Void.TYPE))
+      else if (type == Void.TYPE)
       {
          return Void.class;
       }

@@ -24,7 +24,7 @@ final class SecurityActions {
       try {
          f = c.getDeclaredField(fieldName);
       } catch (NoSuchFieldException e) {
-         if (!c.equals(Object.class)) f = findFieldRecursively(c.getSuperclass(), fieldName);
+         if (c != Object.class) f = findFieldRecursively(c.getSuperclass(), fieldName);
       }
       return f;
    }

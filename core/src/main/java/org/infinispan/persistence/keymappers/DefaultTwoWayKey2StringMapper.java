@@ -34,27 +34,27 @@ public class DefaultTwoWayKey2StringMapper implements TwoWayKey2StringMapper {
    @Override
    public String getStringMapping(Object key) {
       char identifier;
-      if (key.getClass().equals(String.class)) {
+      if (key.getClass() == String.class) {
          return key.toString();
-      } else if (key.getClass().equals(Short.class)) {
+      } else if (key.getClass() == Short.class) {
          identifier = SHORT_IDENTIFIER;
-      } else if (key.getClass().equals(Byte.class)) {
+      } else if (key.getClass() == Byte.class) {
          identifier = BYTE_IDENTIFIER;
-      } else if (key.getClass().equals(Long.class)) {
+      } else if (key.getClass() == Long.class) {
          identifier = LONG_IDENTIFIER;
-      } else if (key.getClass().equals(Integer.class)) {
+      } else if (key.getClass() == Integer.class) {
          identifier = INTEGER_IDENTIFIER;
-      } else if (key.getClass().equals(Double.class)) {
+      } else if (key.getClass() == Double.class) {
          identifier = DOUBLE_IDENTIFIER;
-      } else if (key.getClass().equals(Float.class)) {
+      } else if (key.getClass() == Float.class) {
          identifier = FLOAT_IDENTIFIER;
-      } else if (key.getClass().equals(Boolean.class)) {
+      } else if (key.getClass() == Boolean.class) {
          identifier = BOOLEAN_IDENTIFIER;
-      } else if (key.getClass().equals(WrappedByteArray.class)) {
+      } else if (key.getClass() == WrappedByteArray.class) {
          return generateString(BYTEARRAYKEY_IDENTIFIER, Base64.getEncoder().encodeToString(((WrappedByteArray)key).getBytes()));
-      } else if (key.getClass().equals(byte[].class)) {
+      } else if (key.getClass() == byte[].class) {
          return generateString(NATIVE_BYTEARRAYKEY_IDENTIFIER, Base64.getEncoder().encodeToString((byte[]) key));
-      } else if (key.getClass().equals(UUID.class)) {
+      } else if (key.getClass() == UUID.class) {
          identifier = UUID_IDENTIFIER;
       } else {
          throw new IllegalArgumentException("Unsupported key type: " + key.getClass().getName());

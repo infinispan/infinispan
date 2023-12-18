@@ -42,7 +42,7 @@ public class CachePermissionCollection extends PermissionCollection {
 
    @Override
    public boolean implies(Permission permission) {
-      if (permission == null || !permission.getClass().equals(CachePermission.class))
+      if (permission == null || permission.getClass() != CachePermission.class)
          return false;
       CachePermission p = (CachePermission)permission;
       return p.getAuthorizationPermission().matches(mask);

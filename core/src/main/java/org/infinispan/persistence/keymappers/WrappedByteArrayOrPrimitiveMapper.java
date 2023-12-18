@@ -79,6 +79,6 @@ public class WrappedByteArrayOrPrimitiveMapper extends DefaultTwoWayKey2StringMa
 
    @Override
    public boolean isSupportedType(Class<?> keyType) {
-      return keyType.equals(WrappedByteArray.class) || super.isSupportedType(keyType);
+      return keyType == WrappedByteArray.class || super.isSupportedType(keyType);
    }
 }

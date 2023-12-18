@@ -57,7 +57,7 @@ public class ReflectionUtil {
       try {
          return type.getDeclaredMethod(methodName);
       } catch (NoSuchMethodException e) {
-         if (type.equals(Object.class) || type.isInterface()) {
+         if (type == Object.class || type.isInterface()) {
             throw new CacheException(e);
          }
          return findMethod(type.getSuperclass(), methodName);
@@ -68,7 +68,7 @@ public class ReflectionUtil {
       try {
          return type.getDeclaredMethod(methodName, parameters);
       } catch (NoSuchMethodException e) {
-         if (type.equals(Object.class) || type.isInterface()) {
+         if (type == Object.class || type.isInterface()) {
             throw new CacheException(e);
          }
          return findMethod(type.getSuperclass(), methodName, parameters);
@@ -88,7 +88,7 @@ public class ReflectionUtil {
          }
       }
 
-      if (!c.equals(Object.class)) {
+      if (c != Object.class) {
          if (!c.isInterface()) {
             inspectRecursively(c.getSuperclass(), s, annotationType);
          }
@@ -106,7 +106,7 @@ public class ReflectionUtil {
          }
       }
 
-      if (!c.equals(Object.class)) {
+      if (c != Object.class) {
          inspectFieldsRecursively(c.getSuperclass(), s, annotationType);
       }
    }
@@ -132,7 +132,7 @@ public class ReflectionUtil {
       try {
          f = c.getDeclaredField(fieldName);
       } catch (NoSuchFieldException e) {
-         if (!c.equals(Object.class)) f = findFieldRecursively(c.getSuperclass(), fieldName);
+         if (c != Object.class) f = findFieldRecursively(c.getSuperclass(), fieldName);
       }
       return f;
    }
@@ -189,7 +189,7 @@ public class ReflectionUtil {
    public static Method findGetterForField(Class<?> c, String fieldName) {
       Method retval = findGetterForFieldUsingReflection(c, fieldName);
       if (retval == null) {
-         if (!c.equals(Object.class)) {
+         if (c != Object.class) {
             if (!c.isInterface()) {
                retval = findGetterForField(c.getSuperclass(), fieldName);
                if (retval == null) {
@@ -352,7 +352,7 @@ public class ReflectionUtil {
       try {
          return objectClass.getDeclaredField(fieldName);
       } catch (NoSuchFieldException e) {
-         if (!objectClass.equals(Object.class)) {
+         if (objectClass != Object.class) {
             return getField(fieldName, objectClass.getSuperclass());
          } else {
             return null;

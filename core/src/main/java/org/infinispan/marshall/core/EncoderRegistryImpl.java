@@ -79,7 +79,7 @@ public class EncoderRegistryImpl implements EncoderRegistry {
    @Override
    public <T extends Transcoder> T getTranscoder(Class<T> clazz) {
       Transcoder transcoder = transcoders.stream()
-                                         .filter(p -> p.getClass().equals(clazz))
+                                         .filter(p -> p.getClass() == clazz)
                                          .findAny()
                                          .orElse(null);
       return clazz.cast(transcoder);
@@ -107,7 +107,7 @@ public class EncoderRegistryImpl implements EncoderRegistry {
          return encoder;
       } else {
          for (Encoder e : encoderMap.values()) {
-            if (e.getClass().equals(clazz)) {
+            if (e.getClass() == clazz) {
                return e;
             }
          }
@@ -117,7 +117,7 @@ public class EncoderRegistryImpl implements EncoderRegistry {
 
    @Override
    public boolean isRegistered(Class<? extends Encoder> encoderClass) {
-      return encoderMap.values().stream().anyMatch(e -> e.getClass().equals(encoderClass));
+      return encoderMap.values().stream().anyMatch(e -> e.getClass() == encoderClass);
    }
 
    @Override
@@ -134,7 +134,7 @@ public class EncoderRegistryImpl implements EncoderRegistry {
          }
       } else {
          wrapper = wrapperMap.values().stream()
-                             .filter(e -> e.getClass().equals(clazz))
+                             .filter(e -> e.getClass() == clazz)
                              .findAny()
                              .orElse(null);
          if (wrapper == null) {

@@ -273,13 +273,13 @@ public final class ReflectionHelper {
       // we need to find a no-arg public "getXyz" or "isXyz" method which has a suitable return type
       try {
          Method m = clazz.getDeclaredMethod("get" + propertyNameSuffix);
-         if (Modifier.isPublic(m.getModifiers()) && !m.getReturnType().equals(Void.class)) {
+         if (Modifier.isPublic(m.getModifiers()) && m.getReturnType() != Void.class) {
             return getMethodAccessor(m);
          }
       } catch (NoSuchMethodException e) {
          try {
             Method m = clazz.getDeclaredMethod("is" + propertyNameSuffix);
-            if (Modifier.isPublic(m.getModifiers()) && (boolean.class.equals(m.getReturnType()) || Boolean.class.equals(m.getReturnType()))) {
+            if (Modifier.isPublic(m.getModifiers()) && (boolean.class == m.getReturnType() || Boolean.class == m.getReturnType())) {
                return getMethodAccessor(m);
             }
          } catch (NoSuchMethodException e1) {

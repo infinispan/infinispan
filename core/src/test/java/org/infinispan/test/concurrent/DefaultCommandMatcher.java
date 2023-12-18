@@ -46,7 +46,7 @@ public class DefaultCommandMatcher implements CommandMatcher {
 
    @Override
    public boolean accept(ReplicableCommand command) {
-      if (commandClass != null && !commandClass.equals(command.getClass()))
+      if (commandClass != null && commandClass != command.getClass())
          return false;
 
       if (cacheName != null && !cacheName.equals(((CacheRpcCommand) command).getCacheName().toString())) {
