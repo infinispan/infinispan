@@ -799,7 +799,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       caches.remove(cacheIndex);
       manager(cacheIndex).stop();
       cacheManagers.remove(cacheIndex);
-      if (awaitRehash && caches.size() > 0) {
+      if (awaitRehash && !caches.isEmpty()) {
          TestingUtil.blockUntilViewsReceived(60000, false, caches);
          TestingUtil.waitForNoRebalance(caches);
       }

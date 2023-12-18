@@ -2,8 +2,6 @@ package org.infinispan.tx;
 
 import static org.testng.Assert.assertEquals;
 
-import jakarta.transaction.TransactionManager;
-
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -14,6 +12,8 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.TransactionManager;
 
 /**
  * @author Mircea Markus &lt;mircea.markus@jboss.com&gt; (C) 2011 Red Hat Inc.
@@ -40,7 +40,7 @@ public class BatchingAndEnlistmentTest extends SingleCacheManagerTest {
       cache.startBatch();
       cache.put("k", "v");
       assert getBatchTx(bc).getEnlistedSynchronization().size() == 1;
-      assert getBatchTx(bc).getEnlistedResources().size() == 0;
+      assert getBatchTx(bc).getEnlistedResources().isEmpty();
       cache.endBatch(true);
       assert getBatchTx(bc) == null;
    }

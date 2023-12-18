@@ -56,7 +56,7 @@ public class ConcurrentInterceptorVisibilityTest extends AbstractInfinispanTest 
 
             switch (visibility) {
                case SIZE:
-                  assert cache.size() == 0;
+                  assert cache.isEmpty();
                   break;
                case GET:
                   assert cache.get(key) == null;

@@ -15,6 +15,7 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -25,7 +26,6 @@ import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.locks.TransactionalRemoteLockCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -91,7 +91,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    }
 
    public Object getSingleKey() {
-      if (keys.size() == 0)
+      if (keys.isEmpty())
          return null;
 
       return keys.get(0);

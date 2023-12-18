@@ -60,7 +60,7 @@ public class ValueCacheCollection<K, V> extends AbstractCloseableIteratorCollect
    public boolean containsAll(Collection<?> c) {
       // The AbstractCollection implementation calls contains for each element.  Instead we want to call the iterator
       // only once so we have a special implementation.
-      if (c.size() > 0) {
+      if (!c.isEmpty()) {
          Set<?> set = new HashSet<>(c);
          try (CloseableIterator<V> it = iterator()) {
             while (!set.isEmpty() && it.hasNext()) {

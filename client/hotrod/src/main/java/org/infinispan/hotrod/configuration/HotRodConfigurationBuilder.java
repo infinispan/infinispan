@@ -373,7 +373,7 @@ public class HotRodConfigurationBuilder implements ConfigurationChildBuilder, Bu
    @Override
    public HotRodConfiguration create() {
       List<ServerConfiguration> servers = new ArrayList<>();
-      if (this.servers.size() > 0)
+      if (!this.servers.isEmpty())
          for (ServerConfigurationBuilder server : this.servers) {
             servers.add(server.create());
          }

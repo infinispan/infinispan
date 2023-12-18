@@ -107,7 +107,7 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
       }
 
       log.tracef("Number of migrated keys is %s", migratedKeys.size());
-      if (migratedKeys.size() == 0) return;
+      if (migratedKeys.isEmpty()) return;
 
       eventuallyEquals(1, () -> TestingUtil.getTransactionTable(cache(2)).getRemoteTxCount());
 

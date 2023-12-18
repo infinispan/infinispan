@@ -118,7 +118,7 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
       attributes.clear();
       List<Json> list = value.asJsonList();
       List<ElementEntry> array = new ArrayList<>(list.size() * 2 + 2);
-      boolean primitive = (list.size() > 0 && list.get(0).isPrimitive());
+      boolean primitive = (!list.isEmpty() && list.get(0).isPrimitive());
       if (!primitive) {
          array.add(new ElementEntry(name, null, ElementType.START_ELEMENT));
       }

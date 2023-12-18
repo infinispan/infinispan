@@ -136,7 +136,7 @@ public class LargeClusterStressTest extends MultipleCacheManagersTest {
          log.debugf("Killing coordinator %s", address(killIndex));
          manager(killIndex).stop();
          cacheManagers.remove(killIndex);
-         if (cacheManagers.size() > 0) {
+         if (!cacheManagers.isEmpty()) {
             TestingUtil.blockUntilViewsReceived(60000, false, cacheManagers);
             for (int j = 0; j < NUM_CACHES; j++) {
                for (CacheMode mode : cacheModes) {

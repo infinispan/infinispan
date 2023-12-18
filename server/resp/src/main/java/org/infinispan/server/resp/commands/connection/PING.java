@@ -27,7 +27,7 @@ public class PING extends RespCommand implements Resp3Command, PubSubResp3Comman
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx,
                                                                 List<byte[]> arguments) {
-      if (arguments.size() == 0) {
+      if (arguments.isEmpty()) {
          ByteBufferUtils.stringToByteBufAscii("$4\r\nPONG\r\n", handler.allocator());
          return handler.myStage();
       }

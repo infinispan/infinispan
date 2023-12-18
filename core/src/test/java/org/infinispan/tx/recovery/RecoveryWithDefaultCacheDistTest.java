@@ -83,14 +83,14 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
       assertPrepared(0, t1);
 
       eventually(() -> {
-         boolean noPrepTxOnFirstNode = cache(0, getRecoveryCacheName()).size() == 0;
-         boolean noPrepTxOnSecondNode = cache(1, getRecoveryCacheName()).size() == 0;
+         boolean noPrepTxOnFirstNode = cache(0, getRecoveryCacheName()).isEmpty();
+         boolean noPrepTxOnSecondNode = cache(1, getRecoveryCacheName()).isEmpty();
          return noPrepTxOnFirstNode & noPrepTxOnSecondNode;
       });
 
       eventually(() -> {
          final Set<InDoubtTxInfo> inDoubt = rm(cache(0)).getInDoubtTransactionInfo();
-         return inDoubt.size() == 0;
+         return inDoubt.isEmpty();
       });
    }
 
@@ -148,7 +148,7 @@ public class RecoveryWithDefaultCacheDistTest extends MultipleCacheManagersTest 
 
       t1_4.firstEnlistedResource().forget(t1_2.getXid());
       t1_4.firstEnlistedResource().forget(t1_3.getXid());
-      eventually(() -> rm(cache(0)).getInDoubtTransactionInfo().size() == 0);
+      eventually(() -> rm(cache(0)).getInDoubtTransactionInfo().isEmpty());
       assertEquals(0, rm(cache(0)).getInDoubtTransactionInfo().size());
    }
 

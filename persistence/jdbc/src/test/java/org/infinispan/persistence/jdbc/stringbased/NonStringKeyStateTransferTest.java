@@ -56,7 +56,7 @@ public class NonStringKeyStateTransferTest extends AbstractCacheTest {
 
          cm2 = createCacheManager(false, CacheMode.DIST_SYNC);
          Cache<Person, String> c2 = cm2.getCache();
-         assert c2.size() > 0;
+         assert !c2.isEmpty();
          for (InternalCacheEntry entry : c2.getAdvancedCache().getDataContainer()) {
             Object key = entry.getKey();
             assert key instanceof Person: "expected key to be person but obtained " + key;

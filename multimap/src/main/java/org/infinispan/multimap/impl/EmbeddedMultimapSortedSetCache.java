@@ -82,7 +82,7 @@ public class EmbeddedMultimapSortedSetCache<K, V> {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       requireNonNull(scoredValues, ERR_SCORES_CAN_T_BE_NULL);
       requireNonNull(args, ERR_ARGS_CAN_T_BE_NULL);
-      if (scoredValues.size() == 0 && !args.replace) {
+      if (scoredValues.isEmpty() && !args.replace) {
          return CompletableFuture.completedFuture(0L);
       }
       return readWriteMap.eval(key, new AddManyFunction<>(scoredValues, args));

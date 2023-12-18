@@ -237,7 +237,7 @@ public class BaseCacheResource {
 
                List<String> extended = request.parameters().get(EXTENDED_HEADER.getValue());
                RestServerConfiguration restServerConfiguration = invocationHelper.getConfiguration();
-               if (extended != null && extended.size() > 0 && CacheOperationsHelper.supportsExtendedHeaders(restServerConfiguration, extended.iterator().next())) {
+               if (extended != null && !extended.isEmpty() && CacheOperationsHelper.supportsExtendedHeaders(restServerConfiguration, extended.iterator().next())) {
                   responseBuilder.clusterPrimaryOwner(restCacheManager.getPrimaryOwner(cacheName, key, request))
                         .clusterBackupOwners(restCacheManager.getBackupOwners(cacheName, key, request))
                         .clusterNodeName(restCacheManager.getNodeName())

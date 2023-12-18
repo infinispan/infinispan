@@ -96,7 +96,7 @@ class EmptyIntSet extends AbstractImmutableIntSet {
    @Override
    public boolean equals(Object obj) {
       if (obj instanceof Set) {
-         return ((Set) obj).size() == 0;
+         return ((Set) obj).isEmpty();
       }
       return false;
    }

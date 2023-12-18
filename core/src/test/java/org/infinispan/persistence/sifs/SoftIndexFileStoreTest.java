@@ -106,7 +106,7 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
 
       Compactor compactor = TestingUtil.extractField(store.delegate(), "compactor");
 
-      if (compactor.getFiles().size() == 0) {
+      if (compactor.getFiles().isEmpty()) {
          fail("Compactor needs to have more than one file, had: " + compactor.getFileStats());
       }
 

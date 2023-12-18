@@ -42,7 +42,7 @@ public class Run extends CliCommand {
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
-      if (arguments != null && arguments.size() > 0) {
+      if (arguments != null && !arguments.isEmpty()) {
          for (Resource resource : arguments) {
             boolean stdin = "-".equals(resource.getName());
             if (stdin) {

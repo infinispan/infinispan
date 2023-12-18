@@ -51,7 +51,7 @@ public abstract class AbstractFileLookup implements FileLookup {
     */
    @Override
    public InputStream lookupFileStrict(String filename, ClassLoader cl) throws FileNotFoundException {
-      InputStream is = filename == null || filename.length() == 0 ? null : getAsInputStreamFromClassLoader(filename, cl);
+      InputStream is = filename == null || filename.isEmpty() ? null : getAsInputStreamFromClassLoader(filename, cl);
       if (is == null) {
          if (log.isDebugEnabled())
             log.debugf("Unable to find file %s in classpath; searching for this file on the filesystem instead.", filename);

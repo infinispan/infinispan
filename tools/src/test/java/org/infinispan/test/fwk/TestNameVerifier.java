@@ -108,7 +108,7 @@ public class TestNameVerifier {
       assert found : "Could not determine package name for file: " + filename;
       String theMatch = matcher.group();
       String partial = theMatch.substring("package org.infinispan".length());
-      if (partial.trim().length() == 0) return partial.trim();
+      if (partial.trim().isEmpty()) return partial.trim();
       return partial.substring(1);//drop the leading dot.
    }
 

@@ -114,7 +114,7 @@ public class EvictionFunctionalTest extends SingleCacheManagerTest {
       }
       timeService.advance(1000);
       cache.getAdvancedCache().getExpirationManager().processExpiration();
-      assert 0 == cache.size() : "cache size should be zero: " + cache.size();
+      assert cache.isEmpty() : "cache size should be zero: " + cache.size();
    }
 
    public void testEvictionNotificationSkipped() {

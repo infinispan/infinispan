@@ -59,7 +59,7 @@ public class SDIFF extends RespCommand implements Resp3Command {
       }
       for (var bucket : buckets.values()) {
          for (byte[] item : bucket.toList()) {
-            if (minuend.size() == 0) {
+            if (minuend.isEmpty()) {
                break;
             }
             minuend.removeIf(v -> Objects.deepEquals(v, item));
@@ -69,7 +69,7 @@ public class SDIFF extends RespCommand implements Resp3Command {
    }
 
    static byte[] getKeyForMap(byte[] key, Map<byte[], SetBucket<byte[]>> buckets) {
-      if (buckets.size() == 0)
+      if (buckets.isEmpty())
          return null;
       return buckets.keySet().stream().filter(item -> Arrays.equals(item, key)).findFirst().orElse(null);
    }

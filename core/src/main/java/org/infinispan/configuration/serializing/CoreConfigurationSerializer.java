@@ -190,7 +190,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
             threadFactories.putIfAbsent(tf.getName(), tf);
          }
       }
-      if (threadFactories.size() > 0) {
+      if (!threadFactories.isEmpty()) {
          writer.writeStartElement(Element.THREADS);
          writer.writeStartMap(Element.THREAD_FACTORIES);
          for (DefaultThreadFactory threadFactory : threadFactories.values()) {

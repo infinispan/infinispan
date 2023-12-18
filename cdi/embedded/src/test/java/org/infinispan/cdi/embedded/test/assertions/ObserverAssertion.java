@@ -47,7 +47,7 @@ public class ObserverAssertion {
 
    private <T> List<T> getNonEmptyListOfEvents(Class<T> eventClass) {
       List<T> events = observer.getEventsMap().getEvents(cacheAnnotation, eventClass);
-      assertTrue(events.size() > 0);
+      assertTrue(!events.isEmpty());
       return events;
    }
 

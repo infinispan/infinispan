@@ -204,7 +204,7 @@ public class TypedProperties extends Properties {
       }
       if (valueStr == null) return defaultValue;
       valueStr = valueStr.trim();
-      if (valueStr.length() == 0) return defaultValue;
+      if (valueStr.isEmpty()) return defaultValue;
 
       if (doStringReplace)
          valueStr = StringPropertyReplacer.replaceProperties(valueStr);

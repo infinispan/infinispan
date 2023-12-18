@@ -377,7 +377,7 @@ public abstract class CorrectnessTestCase {
                threadNode.set(NODE);
                while (running) {
                   Operation operation;
-                  if (familyIds.size() < NUM_FAMILIES) {
+                  if (familyIds.isEmpty()) {
                      operation = new InsertFamily(ThreadLocalRandom.current().nextInt(5) == 0);
                   } else {
                      operation = getOperation();

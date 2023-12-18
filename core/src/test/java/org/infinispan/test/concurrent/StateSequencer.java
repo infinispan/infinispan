@@ -164,7 +164,7 @@ public class StateSequencer {
             }
          }
          visitedStates.addAll(freeStates);
-         if (freeStates.size() != 0) {
+         if (!freeStates.isEmpty()) {
             visitor.visitStates(freeStates);
          } else {
             visitor.visitCycle(remainingStates);

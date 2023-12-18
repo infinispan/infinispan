@@ -63,7 +63,7 @@ public class ClusterListenerReplTest extends AbstractClusterListenerNonTxTest {
       assertTrue(returnValue == null || returnValue.equals(FIRST_VALUE));
 
       // We should have received an event that was marked as retried
-      assertTrue(clusterListener.events.size() >= 1);
+      assertTrue(!clusterListener.events.isEmpty());
       // Because a rebalance has 4 phases, the command may be retried 4 times
       assertTrue(clusterListener.events.size() <= 4);
       CacheEntryEvent firstEvent = clusterListener.events.remove(0);

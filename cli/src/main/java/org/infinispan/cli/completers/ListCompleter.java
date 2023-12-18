@@ -31,7 +31,7 @@ public abstract class ListCompleter implements OptionCompleter<ContextAwareCompl
 
    public void completeFromList(CompleterInvocation invocation, Collection<String> all) {
       String v = invocation.getGivenCompleteValue();
-      if (v == null || v.length() == 0) {
+      if (v == null || v.isEmpty()) {
          invocation.addAllCompleterValues(all);
       } else {
          for (String item : all) {

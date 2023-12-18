@@ -73,7 +73,7 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
 
       this.numOwners = numOwners;
       for (int i = 0; i < numSegments; i++) {
-         if (segmentOwners[i] == null || segmentOwners[i].size() == 0) {
+         if (segmentOwners[i] == null || segmentOwners[i].isEmpty()) {
             throw new IllegalArgumentException("Segment owner list cannot be null or empty");
          }
       }

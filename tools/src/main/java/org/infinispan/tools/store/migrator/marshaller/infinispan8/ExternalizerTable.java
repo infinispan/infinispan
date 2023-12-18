@@ -183,7 +183,7 @@ class ExternalizerTable implements ObjectTable {
 
    private void updateExtReadersWithTypes(ExternalizerAdapter adapter, int readerIndex) {
       Set<Class<?>> typeClasses = adapter.externalizer.getTypeClasses();
-      if (typeClasses.size() > 0) {
+      if (!typeClasses.isEmpty()) {
          for (Class<?> typeClass : typeClasses)
             updateExtReaders(adapter, typeClass, readerIndex);
       } else {

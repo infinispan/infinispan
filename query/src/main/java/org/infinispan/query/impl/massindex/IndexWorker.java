@@ -60,7 +60,7 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
       IndexUpdater indexUpdater = new IndexUpdater(searchMapping);
       KeyPartitioner keyPartitioner = ComponentRegistryUtils.getKeyPartitioner(cache);
 
-      if (keys == null || keys.size() == 0) {
+      if (keys == null || keys.isEmpty()) {
          preIndex(cache, indexUpdater, notifier);
          MassIndexerProgressState progressState = new MassIndexerProgressState(notifier);
          if (!skipIndex) {
