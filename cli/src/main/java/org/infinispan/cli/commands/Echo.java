@@ -31,7 +31,7 @@ public class Echo extends CliCommand {
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
-      if (arguments != null && arguments.size() > 0) {
+      if (arguments != null && !arguments.isEmpty()) {
          for (int i = 0; i < arguments.size(); i++) {
             if (i > 0)
                invocation.print(" ");

@@ -458,7 +458,7 @@ public class Json implements java.io.Serializable {
       Json result = top;
       for (String p : parts) {
          // TODO: unescaping and decoding
-         if (p.length() == 0)
+         if (p.isEmpty())
             continue;
          p = p.replace("~1", "/").replace("~0", "~");
          if (result.isArray())
@@ -1964,7 +1964,7 @@ public class Json implements java.io.Serializable {
     * just the stringified version of the object.
     */
    public String pad(String callback) {
-      return (callback != null && callback.length() > 0)
+      return (callback != null && !callback.isEmpty())
             ? callback + "(" + toString() + ");"
             : toString();
    }

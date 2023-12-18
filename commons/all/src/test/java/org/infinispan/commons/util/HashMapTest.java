@@ -54,7 +54,7 @@ public class HashMapTest {
       int[] keys = new int[10000];
       Arrays.fill(keys, -1);
       for (int i = 0; i < 10000; ++i) {
-         if (map.size() > 0 && random.nextInt(5) == 0) {
+         if (!map.isEmpty() && random.nextInt(5) == 0) {
             int ki, key;
             do {
                key = keys[ki = random.nextInt(i)];

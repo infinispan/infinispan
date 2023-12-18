@@ -48,7 +48,7 @@ public final class ModificationList {
    }
 
    public static ModificationList fromCollection(Collection<WriteCommand> mods) {
-      if (mods == null || mods.size() == 0) {
+      if (mods == null || mods.isEmpty()) {
          return new ModificationList();
       }
       ModificationList modificationList = new ModificationList(mods.size());

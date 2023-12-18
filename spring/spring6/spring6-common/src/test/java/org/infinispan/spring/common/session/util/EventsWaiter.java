@@ -53,7 +53,7 @@ public class EventsWaiter {
                .filter(e -> e.getSessionId().equals(sessionId))
                .map(e -> (Session) e.getSession())
                .collect(Collectors.toList());
-         if (sessions.size() > 0) {
+         if (!sessions.isEmpty()) {
             break;
          }
       }

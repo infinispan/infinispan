@@ -657,7 +657,7 @@ class Encoder extends MessageToByteEncoder<Object> {
             }
             if (startop.filterConverterFactory != null) {
                writeRangedBytes(startop.filterConverterFactory.getBytes(), buffer);
-               if (startop.filterConverterParams != null && startop.filterConverterParams.size() > 0) {
+               if (startop.filterConverterParams != null && !startop.filterConverterParams.isEmpty()) {
                   buffer.writeByte(startop.filterConverterParams.size());
                   startop.filterConverterParams.forEach(buffer::writeBytes);
                } else {

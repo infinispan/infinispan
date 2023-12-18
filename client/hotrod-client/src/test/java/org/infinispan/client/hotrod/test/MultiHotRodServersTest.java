@@ -150,11 +150,11 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
    }
 
    protected void killAll() {
-      while (clients.size() > 0) {
+      while (!clients.isEmpty()) {
          clients.get(0).stop();
          clients.remove(0);
       }
-      while (servers.size() > 0) {
+      while (!servers.isEmpty()) {
          killServer(0);
       }
    }

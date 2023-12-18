@@ -68,7 +68,7 @@ public class Help extends AeshFileDisplayer {
    @Override
    public CommandResult execute(CommandInvocation commandInvocation) throws CommandException, InterruptedException {
       Shell shell = commandInvocation.getShell();
-      if (manPages == null || manPages.size() == 0) {
+      if (manPages == null || manPages.isEmpty()) {
          shell.writeln("Call `help <command>` where command is one of:");
          List<TerminalString> commandNames = ((ContextAwareCommandInvocation) commandInvocation).getContext().getRegistry()
                .getAllCommandNames().stream().map(n -> new TerminalString(n)).collect(Collectors.toList());

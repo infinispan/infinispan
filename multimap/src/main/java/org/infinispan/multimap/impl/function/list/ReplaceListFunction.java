@@ -1,10 +1,6 @@
 package org.infinispan.multimap.impl.function.list;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
-import org.infinispan.commons.marshall.MarshallUtil;
-import org.infinispan.functional.EntryView;
-import org.infinispan.multimap.impl.ExternalizerIds;
-import org.infinispan.multimap.impl.ListBucket;
+import static org.infinispan.commons.marshall.MarshallUtil.unmarshallCollection;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -15,7 +11,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.infinispan.commons.marshall.MarshallUtil.unmarshallCollection;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.functional.EntryView;
+import org.infinispan.multimap.impl.ExternalizerIds;
+import org.infinispan.multimap.impl.ListBucket;
 
 /**
  * Serializable function used by
@@ -45,7 +45,7 @@ public final class ReplaceListFunction<K, V> implements ListBucketBaseFunction<K
 
       if (bucket != null) {
          bucket.replace(values);
-         if (bucket.size() == 0) {
+         if (bucket.isEmpty()) {
             entryView.remove();
          } else {
             entryView.set(bucket);

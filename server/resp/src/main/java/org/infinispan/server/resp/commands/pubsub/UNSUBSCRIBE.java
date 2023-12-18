@@ -1,18 +1,19 @@
 package org.infinispan.server.resp.commands.pubsub;
 
-import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.server.resp.Resp3Handler;
-import org.infinispan.server.resp.commands.PubSubResp3Command;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.SubscriberHandler;
+import org.infinispan.server.resp.commands.PubSubResp3Command;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.CompletionStages;
 
-import java.util.List;
-import java.util.concurrent.CompletionStage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * @link https://redis.io/commands/ubsubscribe/
@@ -30,7 +31,7 @@ public class UNSUBSCRIBE extends RespCommand implements Resp3Command, PubSubResp
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
       AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
-      if (arguments.size() == 0) {
+      if (arguments.isEmpty()) {
          return handler.unsubscribeAll(ctx);
       } else {
          for (byte[] keyChannel : arguments) {

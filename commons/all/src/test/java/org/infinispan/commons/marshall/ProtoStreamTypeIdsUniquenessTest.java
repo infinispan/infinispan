@@ -28,8 +28,8 @@ public class ProtoStreamTypeIdsUniquenessTest {
          else
             assertTrue(messageIds.add(f.getInt(clazz)));
       }
-      assertTrue(messageIds.size() > 0);
-      assertTrue(lowerBounds.size() > 0);
+      assertTrue(!messageIds.isEmpty());
+      assertTrue(!lowerBounds.isEmpty());
       assertEquals(fields.length - lowerBounds.size(), messageIds.size());
       assertEquals(fields.length - messageIds.size(), lowerBounds.size());
    }

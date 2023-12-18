@@ -64,7 +64,7 @@ public class DefaultTwoWayKey2StringMapper implements TwoWayKey2StringMapper {
 
    @Override
    public Object getKeyMapping(String key) {
-      if (key.length() > 0 && key.charAt(0) == NON_STRING_PREFIX) {
+      if (!key.isEmpty() && key.charAt(0) == NON_STRING_PREFIX) {
          char type = key.charAt(1);
          String value = key.substring(2);
          switch (type) {

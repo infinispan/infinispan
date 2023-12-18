@@ -18,7 +18,7 @@ public class BeanUtils {
     */
    public static String setterName(String fieldName) {
       StringBuilder sb = new StringBuilder("set");
-      if (fieldName != null && fieldName.length() > 0) {
+      if (fieldName != null && !fieldName.isEmpty()) {
          sb.append(fieldName.substring(0, 1).toUpperCase(Locale.ENGLISH));
          if (fieldName.length() > 1) {
             sb.append(fieldName.substring(1));
@@ -35,7 +35,7 @@ public class BeanUtils {
     */
    public static String fluentSetterName(String fieldName) {
       StringBuilder sb = new StringBuilder();
-      if (fieldName != null && fieldName.length() > 0) {
+      if (fieldName != null && !fieldName.isEmpty()) {
          sb.append(fieldName.substring(0, 1));
          if (fieldName.length() > 1) {
             sb.append(fieldName.substring(1));

@@ -9,11 +9,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.test.fwk.TransportFlags;
 
 /**
@@ -36,7 +36,7 @@ public abstract class StressTest extends MultipleCacheManagersTest {
                   log.trace("Killing cache to force rehash");
                   cacheToKill.getCacheManager().stop();
                   List<Cache<Object, Object>> caches = caches(CACHE_NAME);
-                  if (caches.size() > 0) {
+                  if (!caches.isEmpty()) {
                      TestingUtil.blockUntilViewsReceived(60000, false, caches);
                      TestingUtil.waitForNoRebalance(caches);
                   }

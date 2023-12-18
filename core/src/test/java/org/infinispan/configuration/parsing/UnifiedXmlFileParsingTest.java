@@ -193,7 +193,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
          @Override
          public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
             TransportConfiguration tc = getGlobalConfiguration(holder).transport();
-            assertTrue(tc.properties().size() >= 1);
+            assertTrue(!tc.properties().isEmpty());
             assertEquals("value", tc.properties().getProperty("key"));
          }
       },

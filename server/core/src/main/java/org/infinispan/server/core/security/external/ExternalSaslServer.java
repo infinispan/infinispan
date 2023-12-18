@@ -37,7 +37,7 @@ final class ExternalSaslServer implements SaslServer {
          throw new SaslException("Received response after complete");
       }
       String userName = new String(response, StandardCharsets.UTF_8);
-      if (userName.length() == 0) {
+      if (userName.isEmpty()) {
          userName = peerPrincipal.getName();
       }
       final AuthorizeCallback authorizeCallback = new AuthorizeCallback(peerPrincipal.getName(), userName);

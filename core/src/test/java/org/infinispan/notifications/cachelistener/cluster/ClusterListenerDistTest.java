@@ -70,7 +70,7 @@ public class ClusterListenerDistTest extends AbstractClusterListenerNonTxTest {
       // 4: top     READ_NEW_WRITE_ALL
       // 5: top     NO_REBALANCE
       assertTrue("Expected 1 - 5 events, but received " + clusterListener.events,
-            clusterListener.events.size() >= 1 && clusterListener.events.size() <= 5);
+            !clusterListener.events.isEmpty() && clusterListener.events.size() <= 5);
 
       Address cache0primary = cache0.getAdvancedCache().getDistributionManager().getCacheTopology().getDistribution(key).primary();
       Address cache2primary = cache2.getAdvancedCache().getDistributionManager().getCacheTopology().getDistribution(key).primary();

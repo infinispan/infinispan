@@ -248,7 +248,7 @@ public final class ReflectionHelper {
    }
 
    public static PropertyAccessor getAccessor(Class<?> clazz, String propertyName) throws ReflectiveOperationException {
-      if (propertyName == null || propertyName.length() == 0) {
+      if (propertyName == null || propertyName.isEmpty()) {
          throw new IllegalArgumentException("Property name cannot be null or empty");
       }
       if (propertyName.indexOf('.') != -1) {

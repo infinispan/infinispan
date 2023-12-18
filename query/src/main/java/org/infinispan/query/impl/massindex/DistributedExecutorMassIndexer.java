@@ -91,7 +91,7 @@ public class DistributedExecutorMassIndexer implements Indexer {
             throw new CacheException(t);
          }
       };
-      if (keySet.size() > 0) {
+      if (!keySet.isEmpty()) {
          IndexWorker indexWorker = new IndexWorker(cache.getName(), null, false, keySet);
          future = executor.submitConsumer(indexWorker, triConsumer);
       }

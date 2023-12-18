@@ -89,7 +89,7 @@ abstract class ParserBase extends Parser {
       Tree result = new CommonTree(new CommonToken(IckleLexer.SELECT_FROM, "SELECT_FROM"));
       result.addChild(fromClause);
       Tree selectTree;
-      if (selectClause == null && aliasList != null && aliasList.size() > 0) {
+      if (selectClause == null && aliasList != null && !aliasList.isEmpty()) {
          selectTree = new CommonTree(new CommonToken(IckleLexer.SELECT, "SELECT"));
          Tree selectList = new CommonTree(new CommonToken(IckleLexer.SELECT_LIST, "SELECT_LIST"));
          for (String aliasName : aliasList) {

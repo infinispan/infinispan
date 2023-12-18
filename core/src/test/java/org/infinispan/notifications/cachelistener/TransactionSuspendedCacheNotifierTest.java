@@ -64,7 +64,7 @@ public class TransactionSuspendedCacheNotifierTest extends SingleCacheManagerTes
       cache.clear();
       assertTrue(cache.isEmpty());
 
-      if (listener.list.size() > 0) {
+      if (!listener.list.isEmpty()) {
          for (Throwable throwable : listener.list) {
             log.error("Error in listener...", throwable);
          }

@@ -151,7 +151,7 @@ public class SimpleCacheRecoveryAdminTest extends AbstractRecoveryTest {
       eventuallyEquals(0, tt::getRemoteTxCount);
       eventuallyEquals(0, tt::getLocalTxCount);
       final RecoveryManager rm = TestingUtil.extractComponent(cache(managerIndex, "test"), RecoveryManager.class);
-      eventually(() -> rm.getInDoubtTransactions().size() == 0);
+      eventually(() -> rm.getInDoubtTransactions().isEmpty());
       eventually(() -> rm.getPreparedTransactionsFromCluster().all().length == 0);
    }
 

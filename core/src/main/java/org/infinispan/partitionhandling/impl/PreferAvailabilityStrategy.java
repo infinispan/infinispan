@@ -99,7 +99,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
 
       List<Partition> partitions = computePartitions(statusResponseMap, cacheName);
 
-      if (partitions.size() == 0) {
+      if (partitions.isEmpty()) {
          log.debugf("No current topology, recovered only joiners for cache %s", cacheName);
          context.updateCurrentTopology(newMembers);
 
@@ -246,7 +246,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
    public CacheTopology computePreferredTopology(Map<Address, CacheStatusResponse> statusResponseMap) {
       List<Partition> partitions = computePartitions(statusResponseMap, "");
 
-      return partitions.size() != 0 ? selectPreferredPartition(partitions).topology : null;
+      return !partitions.isEmpty() ? selectPreferredPartition(partitions).topology : null;
    }
 
    private List<Partition> computePartitions(Map<Address, CacheStatusResponse> statusResponseMap,

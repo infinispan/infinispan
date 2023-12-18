@@ -161,7 +161,7 @@ public final class DependencyGraph<T> {
       long stamp = lock.readLock();
       try {
          Set<T> ts = this.incomingEdges.get(element);
-         return ts != null && ts.size() > 0;
+         return ts != null && !ts.isEmpty();
       } finally {
          lock.unlockRead(stamp);
       }

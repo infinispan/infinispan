@@ -193,7 +193,7 @@ public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
 
    @Override
    public Object getAttribute(String name) throws AttributeNotFoundException {
-      if (name == null || name.length() == 0)
+      if (name == null || name.isEmpty())
          throw new NullPointerException("Invalid attribute requested " + name);
 
       Attribute attr = getNamedAttribute(name);
@@ -303,7 +303,7 @@ public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
       Attribute result = null;
 
       InvokableMBeanAttributeInfo i = atts.get(name);
-      if (i == null && name.length() > 0) {
+      if (i == null && !name.isEmpty()) {
          // This is legacy.  Earlier versions used an upper-case starting letter for *some* attributes.
          char firstChar = name.charAt(0);
          if (Character.isUpperCase(firstChar)) {
@@ -337,7 +337,7 @@ public final class ResourceDMBean implements DynamicMBean, MBeanRegistration {
 
       String name = attribute.getName();
       InvokableMBeanAttributeInfo i = atts.get(name);
-      if (i == null && name.length() > 0) {
+      if (i == null && !name.isEmpty()) {
          // This is legacy.  Earlier versions used an upper-case starting letter for *some* attributes.
          char firstChar = name.charAt(0);
          if (Character.isUpperCase(firstChar)) {

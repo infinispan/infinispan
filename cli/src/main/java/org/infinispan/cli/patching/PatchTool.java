@@ -123,7 +123,7 @@ public class PatchTool {
                   }
             }
          }
-         if (errors.size() > 0) {
+         if (!errors.isEmpty()) {
             throw MSG.patchValidationErrors(String.join("\n", errors));
          }
          // Scan the server files to ensure that the patch can be installed
@@ -143,7 +143,7 @@ public class PatchTool {
                   break;
             }
          }
-         if (errors.size() > 0) {
+         if (!errors.isEmpty()) {
             throw MSG.patchValidationErrors(String.join("\n", errors));
          }
          // We're good to go, backup the files being removed / replaced

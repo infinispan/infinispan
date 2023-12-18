@@ -47,7 +47,7 @@ public final class SRemoveFunction<K, V> implements SetBucketBaseFunction<K, V, 
       // don't change the cache if the value already exists. it avoids replicating a
       // no-op
       if (removed > 0) {
-         if (s.size() > 0) {
+         if (!s.isEmpty()) {
             entryView.set(s);
          } else {
             entryView.remove();

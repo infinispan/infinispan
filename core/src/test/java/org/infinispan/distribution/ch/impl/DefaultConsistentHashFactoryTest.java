@@ -149,7 +149,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       assertEquals(lfMap, updatedMembersCH.getCapacityFactors());
       if (nodesToRemove > 0) {
          for (int l = 0; l < updatedMembersCH.getNumSegments(); l++) {
-            assertTrue(updatedMembersCH.locateOwnersForSegment(l).size() > 0);
+            assertTrue(!updatedMembersCH.locateOwnersForSegment(l).isEmpty());
             assertTrue(updatedMembersCH.locateOwnersForSegment(l).size() <= actualNumOwners);
          }
       }

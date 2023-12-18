@@ -23,7 +23,7 @@ public class CdContextCompleter implements OptionCompleter<CompleterInvocation> 
       Context context = ((ContextAwareCompleterInvocation) invocation).context;
       Resource resource = context.getConnection().getActiveResource();
       String v = invocation.getGivenCompleteValue();
-      if (v == null || v.length() == 0) {
+      if (v == null || v.isEmpty()) {
          // no completions yet, add all of the local resource children
          invocation.addAllCompleterValues(getChildrenNames(resource));
          invocation.setAppendSpace(resource.isLeaf());

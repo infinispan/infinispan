@@ -37,12 +37,12 @@ public class QueriesJdbcStore<K, V> extends AbstractSchemaJdbcStore<K, V, Querie
       builder.delete(deleteResults.getSqlToUse());
 
       // Delete all should not have any parameters
-      if (QueryNamedParameterParser.parseSqlStatement(originalConfig.deleteAll()).getOrderedParameters().size() > 0) {
+      if (!QueryNamedParameterParser.parseSqlStatement(originalConfig.deleteAll()).getOrderedParameters().isEmpty()) {
          throw log.deleteAllCannotHaveParameters(config.getQueriesJdbcConfiguration().selectAll());
       }
 
       // Size should not have any parameters
-      if (QueryNamedParameterParser.parseSqlStatement(originalConfig.size()).getOrderedParameters().size() > 0) {
+      if (!QueryNamedParameterParser.parseSqlStatement(originalConfig.size()).getOrderedParameters().isEmpty()) {
          throw log.sizeCannotHaveParameters(config.getQueriesJdbcConfiguration().selectAll());
       }
 
@@ -78,7 +78,7 @@ public class QueriesJdbcStore<K, V> extends AbstractSchemaJdbcStore<K, V, Querie
          throws SQLException {
       QueryNamedParameterParser.ParserResults parserResults = QueryNamedParameterParser.parseSqlStatement(
             config.getQueriesJdbcConfiguration().selectAll());
-      if (parserResults.getOrderedParameters().size() > 0) {
+      if (!parserResults.getOrderedParameters().isEmpty()) {
          throw log.selectAllCannotHaveParameters(config.getQueriesJdbcConfiguration().selectAll());
       }
       String selectAllSql = parserResults.getSqlToUse();

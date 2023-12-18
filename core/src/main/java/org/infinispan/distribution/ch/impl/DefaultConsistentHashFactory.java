@@ -34,7 +34,7 @@ public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<
    @Override
    public DefaultConsistentHash create(int numOwners, int numSegments,
                                        List<Address> members, Map<Address, Float> capacityFactors) {
-      if (members.size() == 0)
+      if (members.isEmpty())
          throw new IllegalArgumentException("Can't construct a consistent hash without any members");
       if (numOwners <= 0)
          throw new IllegalArgumentException("The number of owners should be greater than 0");
@@ -67,7 +67,7 @@ public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<
    @Override
    public DefaultConsistentHash updateMembers(DefaultConsistentHash baseCH, List<Address> actualMembers,
                                               Map<Address, Float> actualCapacityFactors) {
-      if (actualMembers.size() == 0)
+      if (actualMembers.isEmpty())
          throw new IllegalArgumentException("Can't construct a consistent hash without any members");
       checkCapacityFactors(actualMembers, actualCapacityFactors);
 
@@ -143,7 +143,7 @@ public class DefaultConsistentHashFactory extends AbstractConsistentHashFactory<
 
    private void addFirstOwner(Builder builder) {
       for (int segment = 0; segment < builder.getNumSegments(); segment++) {
-         if (builder.getOwners(segment).size() > 0)
+         if (!builder.getOwners(segment).isEmpty())
             continue;
 
          Address newPrimary = findNewPrimaryOwner(builder, builder.getMembers(), null);

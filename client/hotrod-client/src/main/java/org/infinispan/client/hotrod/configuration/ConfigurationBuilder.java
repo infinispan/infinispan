@@ -603,7 +603,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    @Override
    public Configuration create() {
       List<ServerConfiguration> servers = new ArrayList<>();
-      if (this.servers.size() > 0)
+      if (!this.servers.isEmpty())
          for (ServerConfigurationBuilder server : this.servers) {
             servers.add(server.create());
          }

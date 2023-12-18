@@ -54,7 +54,7 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration<HotRo
 
    public String topologyCacheName() {
       String name = name();
-      return TOPOLOGY_CACHE_NAME_PREFIX + (name.length() > 0 ? "_" + name : name);
+      return TOPOLOGY_CACHE_NAME_PREFIX + (!name.isEmpty() ? "_" + name : name);
    }
 
    public long topologyLockTimeout() {

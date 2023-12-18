@@ -41,7 +41,7 @@ public final class ByteString implements Comparable<ByteString> {
    }
 
    public static ByteString fromString(String s) {
-      if (s.length() == 0)
+      if (s.isEmpty())
          return EMPTY;
       else
          return new ByteString(s.getBytes(CHARSET));

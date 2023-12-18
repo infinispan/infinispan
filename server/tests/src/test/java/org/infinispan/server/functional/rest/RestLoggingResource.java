@@ -29,7 +29,7 @@ public class RestLoggingResource {
    public void testListLoggers() {
       RestClient client = SERVERS.rest().create();
       Json loggers = Json.read(assertStatus(OK, client.server().logging().listLoggers()));
-      assertTrue(loggers.asJsonList().size() > 0);
+      assertTrue(!loggers.asJsonList().isEmpty());
    }
 
    @Test

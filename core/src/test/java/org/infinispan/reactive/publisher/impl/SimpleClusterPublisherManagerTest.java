@@ -353,7 +353,7 @@ public class SimpleClusterPublisherManagerTest extends MultipleCacheManagersTest
             .blockingGet();
 
       // We should have gotten a value at least...
-      assertTrue(results.size() > 0);
+      assertTrue(!results.isEmpty());
 
       int total = 0;
       for (int value : results) {
