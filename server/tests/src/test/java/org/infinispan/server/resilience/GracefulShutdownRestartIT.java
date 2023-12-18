@@ -1,7 +1,9 @@
 package org.infinispan.server.resilience;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.sync;
+import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.concurrent.TimeUnit;
@@ -41,26 +43,57 @@ public class GracefulShutdownRestartIT {
       builder.clustering().cacheMode(CacheMode.DIST_SYNC).persistence().addSingleFileStore().segmented(false);
       RemoteCache<Object, Object> hotRod = SERVER.hotrod().withServerConfiguration(builder).create();
 
-      for (int i = 0; i < 100; i++) {
-         hotRod.put(String.format("k%03d", i), String.format("v%03d", i));
-      }
+      populateCache(hotRod);
 
       RestClientConfigurationBuilder restClientBuilder = new RestClientConfigurationBuilder()
             .socketTimeout(RestClientConfigurationProperties.DEFAULT_SO_TIMEOUT * 60)
             .connectionTimeout(RestClientConfigurationProperties.DEFAULT_CONNECT_TIMEOUT * 60);
       RestClient rest = SERVER.rest().withClientConfiguration(restClientBuilder).get();
-      sync(rest.cluster().stop(), 5, TimeUnit.MINUTES).close();
-      ContainerInfinispanServerDriver serverDriver = (ContainerInfinispanServerDriver) SERVER.getServerDriver();
-      Eventually.eventually(
-            "Cluster did not shutdown within timeout",
-            () -> (!serverDriver.isRunning(0) && !serverDriver.isRunning(1)),
-            serverDriver.getTimeout(), 1, TimeUnit.SECONDS);
+      shutdownAndRestart(rest);
 
-      serverDriver.restartCluster();
+      assertCacheData(hotRod);
+   }
 
-      for (int i = 0; i < 100; i++) {
-         assertEquals(String.format("v%03d", i), hotRod.get(String.format("k%03d", i)));
+   @Test
+   public void testRebalanceAndRestart() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC).persistence().addSoftIndexFileStore();
+      RemoteCache<Object, Object> hotRod = SERVER.hotrod().withServerConfiguration(builder).create();
+
+      populateCache(hotRod);
+
+      // Create the REST client to issue admin commands.
+      RestClientConfigurationBuilder restClientBuilder = new RestClientConfigurationBuilder()
+            .socketTimeout(RestClientConfigurationProperties.DEFAULT_SO_TIMEOUT * 60)
+            .connectionTimeout(RestClientConfigurationProperties.DEFAULT_CONNECT_TIMEOUT * 60);
+      RestClient rest = SERVER.rest().withClientConfiguration(restClientBuilder).get();
+
+      // First, we disable rebalance cluster-wide.
+      assertStatus(204, rest.cacheManager("default").disableRebalancing());
+
+      // We get the cache details to assert it is in fact disabled.
+      try (RestResponse res = sync(rest.cache(hotRod.getName()).details())) {
+         Json body = Json.read(res.body());
+         assertThat(body.at("rebalancing_enabled").asBoolean()).isFalse();
       }
+
+      // Then we execute the graceful shutdown and restart the cluster.
+      shutdownAndRestart(rest);
+
+      // After the restart, rebalance is still disabled.
+      try (RestResponse res = sync(rest.cache(hotRod.getName()).details())) {
+         Json body = Json.read(res.body());
+         assertThat(body.at("rebalancing_enabled").asBoolean()).isFalse();
+      }
+
+      // We enable rebalance again after restart.
+      assertStatus(204, rest.cacheManager("default").enableRebalancing());
+
+      // Assert all nodes back.
+      assertHealthyCluster(rest);
+
+      // All data still available.
+      assertCacheData(hotRod);
    }
 
    @Test
@@ -69,9 +102,7 @@ public class GracefulShutdownRestartIT {
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       RemoteCache<Object, Object> hotRod = SERVER.hotrod().withServerConfiguration(builder).create();
 
-      for (int i = 0; i < 100; i++) {
-         hotRod.put(String.format("k%03d", i), String.format("v%03d", i));
-      }
+      populateCache(hotRod);
 
       ContainerInfinispanServerDriver serverDriver = (ContainerInfinispanServerDriver) SERVER.getServerDriver();
 
@@ -104,13 +135,41 @@ public class GracefulShutdownRestartIT {
       serverDriver.restart(1);
 
       // All data still available.
-      for (int i = 0; i < 100; i++) {
-         assertEquals(String.format("v%03d", i), hotRod.get(String.format("k%03d", i)));
-      }
+      assertCacheData(hotRod);
 
       // After the node joining again, it should be healthy.
+      assertHealthyCluster(rest);
+   }
+
+   private void shutdownAndRestart(RestClient rest) {
+      sync(rest.cluster().stop(), 5, TimeUnit.MINUTES).close();
+      ContainerInfinispanServerDriver serverDriver = (ContainerInfinispanServerDriver) SERVER.getServerDriver();
+      Eventually.eventually(
+            "Cluster did not shutdown within timeout",
+            () -> (!serverDriver.isRunning(0) && !serverDriver.isRunning(1)),
+            serverDriver.getTimeout(), 1, TimeUnit.SECONDS);
+
+      serverDriver.restartCluster();
+   }
+
+   private void populateCache(RemoteCache<Object, Object> hotRod) {
+      for (int i = 0; i < 100; i++) {
+         hotRod.put(String.format("k%03d", i), String.format("v%03d", i));
+      }
+   }
+
+   private void assertCacheData(RemoteCache<Object, Object> hotRod) {
+      for (int i = 0; i < 100; i++) {
+         assertThat(hotRod.get(String.format("k%03d", i)))
+               .isEqualTo(String.format("v%03d", i));
+      }
+   }
+
+   private void assertHealthyCluster(RestClient rest) {
       try (RestResponse res = sync(rest.cacheManager("default").health())) {
          Json body = Json.read(res.getBody());
+         assertThat(body.at("cluster_health")).isNotNull();
+
          Json clusterHealth = body.at("cluster_health");
          assertThat(clusterHealth.at("health_status").asString()).isEqualTo("HEALTHY");
          assertThat(clusterHealth.at("number_of_nodes").asInteger()).isEqualTo(2);
