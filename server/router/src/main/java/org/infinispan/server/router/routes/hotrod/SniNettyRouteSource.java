@@ -62,7 +62,7 @@ public class SniNettyRouteSource implements SniRouteSource {
 
    @Override
    public void validate() {
-      if (sniHostName == null || "".equals(sniHostName)) {
+      if (sniHostName == null || sniHostName.isEmpty()) {
          throw new IllegalArgumentException("SNI Host name can not be null");
       }
       if (jdkContext == null) {
