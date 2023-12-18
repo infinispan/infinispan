@@ -370,7 +370,7 @@
       <versionx.org.springframework.spring-beans>${version.spring}</versionx.org.springframework.spring-beans>
       <versionx.org.springframework.spring-context>${version.spring}</versionx.org.springframework.spring-context>
       <versionx.org.springframework.spring-context-support>${version.spring}</versionx.org.springframework.spring-context-support>
-      <versionx.org.springframework.spring-core>${version.spring}</versionx.org.springframework.spring-core>
+      <versionx.org.springframework.spring-core>6.1.2</versionx.org.springframework.spring-core>
       <versionx.org.springframework.spring-expression>${version.spring}</versionx.org.springframework.spring-expression>
       <versionx.org.springframework.spring-jdbc>${version.spring}</versionx.org.springframework.spring-jdbc>
       <versionx.org.springframework.spring-test>${version.spring}</versionx.org.springframework.spring-test>
