@@ -47,7 +47,7 @@ class FailInterceptor extends BaseAsyncInterceptor {
    @Override
    public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
       Action action = actions.peek();
-      if (action == null || !command.getClass().equals(action.commandClass))
+      if (action == null || command.getClass() != action.commandClass)
          return invokeNext(ctx, command);
 
       action.count--;

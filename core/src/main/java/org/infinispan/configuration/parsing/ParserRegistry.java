@@ -94,7 +94,7 @@ public class ParserRegistry implements NamespaceMappingParser {
             for (Namespace ns : namespaces) {
                QName qName = new QName(ns.uri(), ns.root());
                NamespaceParserPair existing = mappings.putIfAbsent(qName, new NamespaceParserPair(ns, parser));
-               if (existing != null && !parser.getClass().equals(existing.parser.getClass())) {
+               if (existing != null && parser.getClass() != existing.parser.getClass()) {
                   CONFIG.parserRootElementAlreadyRegistered(qName.toString(), parser.getClass().getName(), existing.parser.getClass().getName());
                }
             }

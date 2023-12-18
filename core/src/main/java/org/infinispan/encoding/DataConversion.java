@@ -115,7 +115,7 @@ public final class DataConversion {
     */
    @Deprecated(forRemoval=true)
    public DataConversion withEncoding(Class<? extends Encoder> encoderClass) {
-      if (Objects.equals(this.encoderClass, encoderClass)) return this;
+      if (this.encoderClass == encoderClass) return this;
       return new DataConversion(encoderClass, this.wrapperClass, this.requestMediaType, this.isKey);
    }
 
@@ -124,7 +124,7 @@ public final class DataConversion {
     */
    @Deprecated(forRemoval=true)
    public DataConversion withWrapping(Class<? extends Wrapper> wrapperClass) {
-      if (Objects.equals(this.wrapperClass, wrapperClass)) return this;
+      if (this.wrapperClass == wrapperClass) return this;
       return new DataConversion(this.encoderClass, wrapperClass, this.requestMediaType, this.isKey);
    }
 
@@ -234,7 +234,7 @@ public final class DataConversion {
 
       if (wrapper.isFilterable()) {
          // If the value wrapper is indexable, return the already wrapped value or wrap it otherwise
-         return stored.getClass().equals(wrapperClass) ? stored : wrapper.wrap(stored);
+         return stored.getClass() == wrapperClass ? stored : wrapper.wrap(stored);
       }
 
       // Otherwise convert to the request format

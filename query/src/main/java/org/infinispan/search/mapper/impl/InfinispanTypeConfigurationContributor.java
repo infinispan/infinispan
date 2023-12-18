@@ -40,13 +40,13 @@ class InfinispanTypeConfigurationContributor implements PojoMappingConfiguration
 
    void addEntityType(Class<?> type, String entityName) {
       Class<?> previousType = entityTypeByName.putIfAbsent(entityName, type);
-      if (previousType != null && !previousType.equals(type)) {
+      if (previousType != null && previousType != type) {
          throw log.multipleEntityTypesWithSameName(entityName, previousType, type);
       }
    }
 
    private boolean identifiedByName(Class<?> type) {
-      return byte[].class.equals(type);
+      return byte[].class == type;
    }
 
 }

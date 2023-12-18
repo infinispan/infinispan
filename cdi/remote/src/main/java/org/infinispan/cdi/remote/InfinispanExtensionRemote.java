@@ -50,7 +50,7 @@ public class InfinispanExtensionRemote implements Extension {
 
     void processProducers(@Observes ProcessProducer<?, ?> event) {
         AnnotatedMember<?> member = event.getAnnotatedMember();
-        if (RemoteCacheProducer.class.equals(member.getDeclaringType().getBaseType())) {
+        if (RemoteCacheProducer.class == member.getDeclaringType().getBaseType()) {
             remoteCacheProducer = (Producer<RemoteCache<?, ?>>) event.getProducer();
         }
     }
@@ -64,7 +64,7 @@ public class InfinispanExtensionRemote implements Extension {
             final Class<?> rawType = Reflections.getRawType(annotated.getBaseType());
             final Set<Annotation> qualifiers = Reflections.getQualifiers(beanManager, annotated.getAnnotations());
 
-            if (rawType.equals(RemoteCache.class) && qualifiers.isEmpty()) {
+            if (rawType == RemoteCache.class && qualifiers.isEmpty()) {
                 qualifiers.add(new AnnotationLiteral<Default>() {
                 });
                 addRemoteCacheInjectionPoint(type, qualifiers);

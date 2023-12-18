@@ -369,7 +369,7 @@ public class TestingUtil {
             field.setAccessible(true);
             return (T) field.get(target);
          } catch (Exception e) {
-            if (type.equals(Object.class)) {
+            if (type == Object.class) {
                throw new RuntimeException(e);
             } else {
                // try with superclass!!
@@ -1191,7 +1191,7 @@ public class TestingUtil {
     * Extracts a component of a given type from the cache's internal component registry
     */
    public static <T> T extractComponent(Cache<?, ?> cache, Class<T> componentType) {
-      if (componentType.equals(DataContainer.class)) {
+      if (componentType == DataContainer.class) {
          throw new UnsupportedOperationException("Should extract InternalDataContainer");
       }
       ComponentRegistry cr = extractComponentRegistry(cache.getAdvancedCache());
@@ -1225,7 +1225,7 @@ public class TestingUtil {
     * @return the original component that was replaced
     */
    public static <T> T replaceComponent(Cache<?, ?> cache, Class<? extends T> componentType, T replacementComponent, boolean rewire) {
-      if (componentType.equals(DataContainer.class)) {
+      if (componentType == DataContainer.class) {
          throw new UnsupportedOperationException();
       }
       ComponentRegistry cr = extractComponentRegistry(cache);

@@ -170,7 +170,7 @@ public final class AttributeDefinition<T> {
       if (!Objects.equals(initializer, that.initializer)) return false;
       if (!Objects.equals(validator, that.validator)) return false;
       if (!Objects.equals(serializer, that.serializer)) return false;
-      return Objects.equals(type, that.type);
+      return type == that.type;
    }
 
    @Override

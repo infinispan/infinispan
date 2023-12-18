@@ -93,7 +93,7 @@ public class RealmConfigurationBuilder implements Builder<RealmConfiguration> {
 
    private <T extends RealmProviderBuilder> T addBuilder(Enum<?> type, T builder) {
       for(RealmProviderBuilder<?> b : builders) {
-         if (b.getClass().equals(builder.getClass())) {
+         if (b.getClass() == builder.getClass()) {
             throw Server.log.duplicateRealmType(type.toString(), attributes.attribute(RealmConfiguration.NAME).get());
          }
       }

@@ -72,43 +72,43 @@ public class KeyTransformationHandlerTest {
 
    public void testStringToKeyWithStringAndPrimitives() {
       Object key = keyTransformationHandler.stringToKey("S:key1");
-      assert key.getClass().equals(String.class);
+      assert key.getClass() == String.class;
       assert key.equals("key1");
 
       key = keyTransformationHandler.stringToKey("I:2");
-      assert key.getClass().equals(Integer.class);
+      assert key.getClass() == Integer.class;
       assert key.equals(2);
 
       key = keyTransformationHandler.stringToKey("Y:3");
-      assert key.getClass().equals(Byte.class);
+      assert key.getClass() == Byte.class;
       assert key.equals((byte) 3);
 
       key = keyTransformationHandler.stringToKey("F:4.0");
-      assert key.getClass().equals(Float.class);
+      assert key.getClass() == Float.class;
       assert key.equals((float) 4.0);
 
       key = keyTransformationHandler.stringToKey("L:5");
-      assert key.getClass().equals(Long.class);
+      assert key.getClass() == Long.class;
       assert key.equals((long) 5);
 
       key = keyTransformationHandler.stringToKey("X:6");
-      assert key.getClass().equals(Short.class);
+      assert key.getClass() == Short.class;
       assert key.equals((short) 6);
 
       key = keyTransformationHandler.stringToKey("B:true");
-      assert key.getClass().equals(Boolean.class);
+      assert key.getClass() == Boolean.class;
       assert key.equals(true);
 
       key = keyTransformationHandler.stringToKey("D:8.0");
-      assert key.getClass().equals(Double.class);
+      assert key.getClass() == Double.class;
       assert key.equals(8.0);
 
       key = keyTransformationHandler.stringToKey("C:9");
-      assert key.getClass().equals(Character.class);
+      assert key.getClass() == Character.class;
       assert key.equals('9');
 
       key = keyTransformationHandler.stringToKey("U:" + randomUUID);
-      assert key.getClass().equals(UUID.class);
+      assert key.getClass() == UUID.class;
       assert key.equals(randomUUID);
 
       byte[] arr = new byte[]{1, 2, 3, 4, 5, 6};

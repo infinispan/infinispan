@@ -10,6 +10,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.hibernate.search.engine.backend.common.spi.EntityReferenceFactory;
+import org.hibernate.search.engine.common.EntityReference;
 import org.hibernate.search.engine.common.spi.SearchIntegration;
 import org.hibernate.search.engine.environment.thread.spi.ThreadPoolProvider;
 import org.hibernate.search.engine.reporting.FailureHandler;
@@ -25,7 +26,6 @@ import org.hibernate.search.util.common.AssertionFailure;
 import org.hibernate.search.util.common.impl.Closer;
 import org.hibernate.search.util.common.logging.impl.LoggerFactory;
 import org.infinispan.query.concurrent.FailureCounter;
-import org.hibernate.search.engine.common.EntityReference;
 import org.infinispan.search.mapper.common.impl.EntityReferenceImpl;
 import org.infinispan.search.mapper.log.impl.Log;
 import org.infinispan.search.mapper.mapping.EntityConverter;
@@ -142,7 +142,7 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
          return null;
       }
       Class<?> c = value.getClass();
-      if (entityConverter != null && c.equals(entityConverter.targetType())) {
+      if (entityConverter != null && c == entityConverter.targetType()) {
          return entityConverter.convertedTypeIdentifier().javaClass();
       } else {
          return c;
@@ -177,7 +177,7 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
       Class<?> converterTargetType = entityConverter == null ? null : entityConverter.targetType();
       List<PojoRawTypeIdentifier<? extends E>> typeIdentifiers = new ArrayList<>(classes.size());
       for (Class<? extends E> clazz : classes) {
-         if (clazz.equals(converterTargetType)) {
+         if (clazz == converterTargetType) {
             // Include all protobuf types
             typeIdentifiers.add((PojoRawTypeIdentifier<? extends E>) entityConverter.convertedTypeIdentifier());
          } else {

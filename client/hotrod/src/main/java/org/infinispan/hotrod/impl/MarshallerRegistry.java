@@ -3,10 +3,10 @@ package org.infinispan.hotrod.impl;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.infinispan.hotrod.impl.logging.Log;
-import org.infinispan.hotrod.impl.logging.LogFactory;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.hotrod.impl.logging.Log;
+import org.infinispan.hotrod.impl.logging.LogFactory;
 
 /**
  * A registry of {@link Marshaller} along with its {@link MediaType}.
@@ -29,7 +29,7 @@ public final class MarshallerRegistry {
 
    public Marshaller getMarshaller(Class<? extends Marshaller> marshallerClass) {
       return marshallerByMediaType.values().stream()
-            .filter(m -> m.getClass().equals(marshallerClass)).findFirst().orElse(null);
+            .filter(m -> m.getClass() == marshallerClass).findFirst().orElse(null);
    }
 
 }

@@ -274,6 +274,6 @@ public abstract class AbstractJCacheManager implements CacheManager {
    }
 
    private <K> boolean verifyType(Class<K> type, Class<?> cfgType) {
-      return cfgType != null && cfgType.equals(type);
+      return cfgType != null && cfgType == type;
    }
 }

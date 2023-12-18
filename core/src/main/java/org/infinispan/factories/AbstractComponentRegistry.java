@@ -114,7 +114,7 @@ public abstract class AbstractComponentRegistry implements Lifecycle {
     *         name, or if a dependency cannot be resolved
     */
    public final void registerComponent(Object component, Class<?> type) {
-      registerComponent(component, type.getName(), type.equals(component.getClass()));
+      registerComponent(component, type.getName(), type == component.getClass());
    }
 
    public final void registerComponent(Object component, String name) {

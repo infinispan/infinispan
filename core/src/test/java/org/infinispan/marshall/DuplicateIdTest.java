@@ -17,7 +17,7 @@ public class DuplicateIdTest extends AbstractInfinispanTest {
       Class idHolder = Ids.class;
       Map<Integer, Set<String>> dupes = new HashMap<>();
       for (Field f : idHolder.getDeclaredFields()) {
-         if (Modifier.isStatic(f.getModifiers()) && Modifier.isFinal(f.getModifiers()) && f.getType().equals(int.class)) {
+         if (Modifier.isStatic(f.getModifiers()) && Modifier.isFinal(f.getModifiers()) && f.getType() == int.class) {
             int val = (Integer) f.get(null);
             Set<String> names = dupes.get(val);
             if (names == null) names = new HashSet<String>();

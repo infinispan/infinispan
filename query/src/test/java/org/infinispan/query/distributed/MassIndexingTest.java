@@ -106,7 +106,7 @@ public class MassIndexingTest extends DistributedMassIndexingTest {
          FunctionalTestUtils.await(future);
          return false;
       } catch (Throwable e) {
-         return Util.getRootCause(e).getClass().equals(MassIndexerAlreadyStartedException.class);
+         return Util.getRootCause(e).getClass() == MassIndexerAlreadyStartedException.class;
       }
    }
 

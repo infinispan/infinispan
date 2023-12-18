@@ -26,7 +26,7 @@ public class CacheManagerAuthorizationTest extends BaseAuthorizationTest {
    public void testCombinations() throws Exception {
       Field[] fields = this.getClass().getDeclaredFields();
       for (Field f : fields) {
-         if (f.getType().equals(Runnable.class)) {
+         if (f.getType() == Runnable.class) {
             final Runnable fn = (Runnable) f.get(this);
             Supplier<Boolean> action = () -> {
                fn.run();

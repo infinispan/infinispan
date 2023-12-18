@@ -88,7 +88,7 @@ METHODS:
    private void findInterceptors(Class<?> clazz,
                                  Set<Class<? extends IMethodInterceptor>> interceptorSet,
                                  List<Class<? extends IMethodInterceptor>> interceptorList, Set<Class<? extends Predicate<IMethodInstance>>> filters) {
-      if (clazz == null || clazz.equals(Object.class)) return;
+      if (clazz == null || clazz == Object.class) return;
       findInterceptors(clazz.getSuperclass(), interceptorSet, interceptorList, filters);
       TestSelector annotation = clazz.getAnnotation(TestSelector.class);
       if (annotation != null) {

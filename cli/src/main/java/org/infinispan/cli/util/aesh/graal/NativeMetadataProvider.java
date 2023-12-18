@@ -96,7 +96,7 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
       try {
          return clazz.getDeclaredField(field);
       } catch (NoSuchFieldException e) {
-         if (clazz.getSuperclass().equals(Object.class))
+         if (clazz.getSuperclass() == Object.class)
             throw e;
          return getField(clazz.getSuperclass(), field);
       }

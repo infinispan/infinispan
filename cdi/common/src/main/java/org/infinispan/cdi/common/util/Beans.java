@@ -42,7 +42,7 @@ public class Beans {
     }
 
     public static void checkReturnValue(Object instance, Bean<?> bean, InjectionPoint injectionPoint, BeanManager beanManager) {
-        if (instance == null && !Dependent.class.equals(bean.getScope())) {
+        if (instance == null && Dependent.class != bean.getScope()) {
             throw new IllegalStateException("Cannot return null from a non-dependent producer method: " + bean);
         } else if (instance != null) {
             boolean passivating = beanManager.isPassivatingScope(bean.getScope());

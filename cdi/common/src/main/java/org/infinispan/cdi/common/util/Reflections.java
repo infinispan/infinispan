@@ -219,7 +219,7 @@ public class Reflections {
     }
 
     public static boolean matches(Class<?> rawType1, Type[] actualTypeArguments1, Class<?> rawType2, Type[] actualTypeArguments2) {
-        return Types.boxedClass(rawType1).equals(Types.boxedClass(rawType2)) && isAssignableFrom(actualTypeArguments1, actualTypeArguments2);
+        return Types.boxedClass(rawType1) == Types.boxedClass(rawType2) && isAssignableFrom(actualTypeArguments1, actualTypeArguments2);
     }
 
     public static boolean isAssignableFrom(Type[] actualTypeArguments1, Type[] actualTypeArguments2) {

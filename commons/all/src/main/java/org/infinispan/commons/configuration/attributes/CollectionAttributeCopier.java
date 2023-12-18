@@ -26,9 +26,9 @@ public class CollectionAttributeCopier<T> implements AttributeCopier<T> {
          return null;
       }
       Class<?> klass = attribute.getClass();
-      if (HashSet.class.equals(klass)) {
+      if (HashSet.class == klass) {
          return (T) new HashSet<>((HashSet<?>)attribute);
-      } else if (HashMap.class.equals(klass)) {
+      } else if (HashMap.class == klass) {
          return (T) new HashMap<>((HashMap<?, ?>)attribute);
       } else {
          throw CONFIG.noAttributeCopierForType(klass);
