@@ -160,6 +160,7 @@
                               -H:ServiceLoaderFeatureExcludeServiceProviders=org.infinispan.marshall.ServiceLoadedSciImpl
                               --enable-url-protocols=http
                               --no-fallback
+                              --trace-class-initialization=org.junit.platform.launcher.core.LauncherConfig
                            </buildArgs>
                         </configuration>
                      </execution>

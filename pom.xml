@@ -255,7 +255,7 @@
       <versionx.org.apache.mina.mina>2.0.22</versionx.org.apache.mina.mina>
       <versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>3.11.0</versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>
       <versionx.org.aspectj.aspectjweaver>1.8.1</versionx.org.aspectj.aspectjweaver>
-      <versionx.org.assertj.assertj-core>3.24.1</versionx.org.assertj.assertj-core>
+      <versionx.org.assertj.assertj-core>3.24.2</versionx.org.assertj.assertj-core>
       <versionx.org.codehaus.plexus.plexus-utils>3.5.1</versionx.org.codehaus.plexus.plexus-utils>
       <versionx.org.codehaus.mojo.versions-maven-plugin>2.7</versionx.org.codehaus.mojo.versions-maven-plugin>
       <versionx.org.codehaus.mojo.xml-maven-plugin>1.0.2</versionx.org.codehaus.mojo.xml-maven-plugin>
@@ -736,6 +736,24 @@
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
             <version>${version.junit5}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-commons</artifactId>
+            <version>${version.junit.platform}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-engine</artifactId>
+            <version>${version.junit.platform}</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-suite</artifactId>
+            <version>${version.junit.platform}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
