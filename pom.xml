@@ -230,7 +230,7 @@
 
       <!-- dependencies version -->
       <versionx.ant-contrib.ant-contrib>${version.ant-contrib}</versionx.ant-contrib.ant-contrib>
-      <versionx.com.amazonaws>1.12.619</versionx.com.amazonaws>
+      <versionx.com.amazonaws>1.12.621</versionx.com.amazonaws>
       <versionx.org.infinispan.memcached-client>1.2.1</versionx.org.infinispan.memcached-client>
       <versionx.org.bouncycastle>${version.bouncycastle}</versionx.org.bouncycastle>
       <versionx.com.clearspring.analytics.stream>2.2.0</versionx.com.clearspring.analytics.stream>
