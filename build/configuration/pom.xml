@@ -255,7 +255,7 @@
       <version.deploy.plugin>3.1.1</version.deploy.plugin>
 
       <!-- versionx -->
-      <versionx.com.puppycrawl.tools.checkstyle>10.12.1</versionx.com.puppycrawl.tools.checkstyle>
+      <versionx.com.puppycrawl.tools.checkstyle>10.12.6</versionx.com.puppycrawl.tools.checkstyle>
       <versionx.net.sourceforge.pmd>7.0.0-rc3</versionx.net.sourceforge.pmd>
 
       <!-- configuration properties -->
