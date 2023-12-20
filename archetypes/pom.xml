@@ -20,6 +20,7 @@
 
     <modules>
         <module>client</module>
+        <module>custom-module</module>
         <module>embedded</module>
         <module>store</module>
         <module>server-task</module>
