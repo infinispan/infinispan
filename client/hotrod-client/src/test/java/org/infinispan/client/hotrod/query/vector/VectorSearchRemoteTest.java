@@ -48,5 +48,17 @@ public class VectorSearchRemoteTest extends SingleHotRodServerTest {
       query = remoteCache.query("from Item i where i.floatVector <-> [7.1,7,3.1]~3");
       hits = query.list();
       assertThat(hits).extracting("code").containsExactly("c5", "c6", "c4");
+
+      query = remoteCache.query("from Item i where i.byteVector <-> [:a]~:b");
+      query.setParameter("a", new byte[]{7, 6, 7});
+      query.setParameter("b", 3);
+      hits = query.list();
+      assertThat(hits).extracting("code").containsExactly("c7", "c6", "c8");
+
+      query = remoteCache.query("from Item i where i.floatVector <-> [:a]~:b");
+      query.setParameter("a", new float[]{7.1f, 7.0f, 3.1f});
+      query.setParameter("b", 3);
+      hits = query.list();
+      assertThat(hits).extracting("code").containsExactly("c5", "c6", "c4");
    }
 }
