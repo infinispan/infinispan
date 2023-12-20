@@ -44,5 +44,16 @@ public class VectorSearchBroadcastTest extends MultipleCacheManagersTest {
       query = cache.query("from org.infinispan.query.model.Item i where i.byteVector <-> [7,6,7]~7");
       hits = query.list();
       assertThat(hits).extracting("code").containsExactly("c7", "c6", "c8", "c5", "c9", "c4", "c10");
+
+      query = cache.query("from org.infinispan.query.model.Item i where i.byteVector <-> [:a]~3");
+      query.setParameter("a", new byte[]{7, 7, 6});
+      hits = query.list();
+      assertThat(hits).extracting("code").containsExactly("c7", "c6", "c8");
+
+      query = cache.query("from org.infinispan.query.model.Item i where i.floatVector <-> [:a]~:b");
+      query.setParameter("a", new float[]{7.1f, 7.0f, 3.1f});
+      query.setParameter("b", 3);
+      hits = query.list();
+      assertThat(hits).extracting("code").containsExactly("c5", "c6", "c4");
    }
 }
