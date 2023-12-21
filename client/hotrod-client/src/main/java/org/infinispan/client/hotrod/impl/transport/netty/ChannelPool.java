@@ -110,7 +110,11 @@ class ChannelPool {
             // The channel was closed while idle but not removed - just forget it
             continue;
          }
-         if (!channel.isWritable() || channel.pipeline().get(HeaderDecoder.class).registeredOperations() >= maxPendingRequests) {
+         int capacity = 0;
+         if (!channel.isWritable() || (capacity = retrieveDecoderUtilization(channel)) >= maxPendingRequests || capacity < 0) {
+            // The HeaderDecoder was removed, the channel is in a shutdown process. We can forget it.
+            if (capacity < 0) continue;
+
             channels.addLast(channel);
             // prevent looping on non-writable channels
             if (++fullChannelsSeen < MAX_FULL_CHANNELS_SEEN) {
@@ -149,6 +153,13 @@ class ChannelPool {
       }
 
       return false;
+   }
+
+   private int retrieveDecoderUtilization(Channel channel) {
+      HeaderDecoder decoder = channel.pipeline().get(HeaderDecoder.class);
+      return decoder == null
+            ? -1
+            : decoder.registeredOperations();
    }
 
    private boolean executeOrEnqueue(ChannelOperation callback) {
