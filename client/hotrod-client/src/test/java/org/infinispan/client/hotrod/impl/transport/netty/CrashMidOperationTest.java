@@ -1,17 +1,15 @@
 package org.infinispan.client.hotrod.impl.transport.netty;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertTrue;
 
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.assertj.core.api.Assertions;
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.exceptions.TransportException;
@@ -51,11 +49,10 @@ public class CrashMidOperationTest extends AbstractRetryTest {
 
       CountDownLatch operationLatch = new CountDownLatch(1);
       AtomicReference<Channel> channelRef = new AtomicReference<>();
-      ExecutorService operationsExecutor = Executors.newFixedThreadPool(2);
 
       NoopRetryingOperation firstOperation = new NoopRetryingOperation(0, channelFactory, remoteCacheManager.getConfiguration(),
             channelRef, operationLatch);
-      operationsExecutor.submit(() -> channelFactory.fetchChannelAndInvoke(address, firstOperation));
+      fork(() -> channelFactory.fetchChannelAndInvoke(address, firstOperation));
 
       eventually(() -> channelRef.get() != null);
       Channel channel = channelRef.get();
@@ -72,11 +69,9 @@ public class CrashMidOperationTest extends AbstractRetryTest {
             channelRef, operationLatch);
       channelFactory.fetchChannelAndInvoke(address, remoteCache.getName().getBytes(StandardCharsets.UTF_8), secondOperation);
       eventually(secondOperation::isDone);
-      try {
-         secondOperation.get(10, TimeUnit.SECONDS);
-      } catch (Throwable t) {
-         assertTrue(t.getCause() instanceof ConnectException);
-      }
+      Assertions.assertThatThrownBy(() -> secondOperation.get(10, TimeUnit.SECONDS))
+            .cause()
+            .isInstanceOf(ConnectException.class);
 
       // We only release the latch now, but notice that all the other operations were able to finish.
       operationLatch.countDown();
@@ -87,10 +82,9 @@ public class CrashMidOperationTest extends AbstractRetryTest {
       channelFactory.fetchChannelAndInvoke(address, remoteCache.getName().getBytes(StandardCharsets.UTF_8), thirdOperation);
       eventually(thirdOperation::isDone);
       thirdOperation.get(10, TimeUnit.SECONDS);
-      operationsExecutor.shutdown();
    }
 
-   private static class NoopRetryingOperation extends RetryOnFailureOperation<Void> {
+   static class NoopRetryingOperation extends RetryOnFailureOperation<Void> {
       private final AtomicReference<Channel> channelRef;
       private final CountDownLatch firstOp;
       private final int id;
@@ -123,12 +117,7 @@ public class CrashMidOperationTest extends AbstractRetryTest {
             return;
          }
 
-         try {
-            firstOp.await();
-            complete(null);
-         } catch (InterruptedException e) {
-            completeExceptionally(e);
-         }
+         complete(null);
       }
 
       @Override

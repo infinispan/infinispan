@@ -88,4 +88,8 @@ public class ChannelRecord extends CompletableFuture<Channel> implements Generic
    public void release(Channel channel) {
       channelPool.release(channel, this);
    }
+
+   ChannelPool channelPool() {
+      return channelPool;
+   }
 }
