@@ -36,8 +36,6 @@ TIP: Maven places it's output in `target/`
 | `mvn install -P-extras` |Avoids the extras profile disables the enforce plugin and generation of source jars, hence making builds run faster. Clearly, this option should not be used when making a release or publishing a snapshot.
 |===============
 
-NOTE: For non-snapshot releases (e.g., alphas, betas, release candidates and final releases) you should use the `bin/release.py` script.
-
 === Publishing releases to Maven
 
 To be able to publish releases to Maven, you need to have the following in your `settings.xml` file:
@@ -54,9 +52,6 @@ Simply running
  $ mvn clean deploy -DskipTests
 
 in the {brandname} root directory will deploy a snapshot.
-
-==== Publishing releases
-Use the `bin/release.py` script.
 
 ==== Contributing tests back to {brandname}
 If you have written a functional, unit or stress test for {brandname} and want to contribute this back to {brandname}, your best bet is to link:https://github.com/infinispan/infinispan[fork the {brandname} sources on GitHub].
