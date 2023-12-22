@@ -2380,4 +2380,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Tracing collector endpoint '%s' is not valid.", id = 972)
    CacheConfigurationException invalidTracingCollectorEndpoint(String collectorEndpoint, @Cause Throwable e);
 
+   @Message(value = "Cannot use id %d for commands, as it is already in use by %s", id = 973)
+   IllegalArgumentException commandIdAlreadyInUse(byte id, String name);
 }

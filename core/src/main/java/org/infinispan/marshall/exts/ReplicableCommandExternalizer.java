@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
@@ -21,6 +23,7 @@ import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
+import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.topology.CacheAvailabilityUpdateCommand;
@@ -48,9 +51,9 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 import org.infinispan.expiration.impl.TouchCommand;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.manager.impl.ReplicableManagerFunctionCommand;
 import org.infinispan.manager.impl.ReplicableRunnableCommand;
 import org.infinispan.marshall.core.Ids;
@@ -66,11 +69,13 @@ import org.infinispan.xsite.commands.XSiteLocalEventCommand;
  */
 public class ReplicableCommandExternalizer extends AbstractExternalizer<ReplicableCommand> {
    private final RemoteCommandsFactory cmdFactory;
-   private final GlobalComponentRegistry globalComponentRegistry;
+   private final Collection<ModuleCommandFactory> moduleCommandFactories;
+   private final Collection<Class<? extends ReplicableCommand>> moduleCommands;
 
-   public ReplicableCommandExternalizer(RemoteCommandsFactory cmdFactory, GlobalComponentRegistry globalComponentRegistry) {
+   public ReplicableCommandExternalizer(RemoteCommandsFactory cmdFactory, GlobalComponentRegistry gcr) {
+      this.moduleCommandFactories = ((Map<Byte, ModuleCommandFactory>) gcr.getComponent(KnownComponentNames.MODULE_COMMAND_FACTORIES)).values();
+      this.moduleCommands = gcr.getComponent(KnownComponentNames.MODULE_COMMANDS);
       this.cmdFactory = cmdFactory;
-      this.globalComponentRegistry = globalComponentRegistry;
    }
 
    @Override
@@ -88,7 +93,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
 
    protected void writeCommandHeader(ObjectOutput output, ReplicableCommand command) throws IOException {
       // To decide whether it's a core or user defined command, load them all and check
-      Collection<Class<? extends ReplicableCommand>> moduleCommands = getModuleCommands();
+
       // Write an indexer to separate commands defined external to the
       // infinispan core module from the ones defined via module commands
       if (moduleCommands != null && moduleCommands.contains(command.getClass()))
@@ -130,7 +135,11 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
 
    @Override
    public Set<Class<? extends ReplicableCommand>> getTypeClasses() {
-      Set<Class<? extends ReplicableCommand>> coreCommands = Util.asSet(
+      Set<Class<? extends ReplicableCommand>> collect = moduleCommandFactories.stream()
+            .map(ModuleCommandFactory::getModuleCommands)
+            .flatMap(m -> m.values().stream())
+            .collect(Collectors.toSet());
+      collect.addAll(Set.of(
             GetKeyValueCommand.class,
             ClearCommand.class, EvictCommand.class,
             InvalidateCommand.class, InvalidateL1Command.class,
@@ -151,15 +160,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
             CacheShutdownCommand.class, CacheShutdownRequestCommand.class, TopologyUpdateStableCommand.class,
             CacheJoinCommand.class, CacheLeaveCommand.class, CacheAvailabilityUpdateCommand.class,
             IracPutKeyValueCommand.class, TouchCommand.class,
-            XSiteLocalEventCommand.class);
-      // Search only those commands that replicable and not cache specific replicable commands
-      Collection<Class<? extends ReplicableCommand>> moduleCommands = globalComponentRegistry.getModuleProperties().moduleOnlyReplicableCommands();
-      if (!moduleCommands.isEmpty()) coreCommands.addAll(moduleCommands);
-      return coreCommands;
+            XSiteLocalEventCommand.class));
+      return collect;
    }
-
-   private Collection<Class<? extends ReplicableCommand>> getModuleCommands() {
-      return globalComponentRegistry.getModuleProperties().moduleCommands();
-   }
-
 }
