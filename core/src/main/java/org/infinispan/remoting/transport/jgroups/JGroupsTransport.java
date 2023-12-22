@@ -115,6 +115,7 @@ import org.jgroups.protocols.relay.RELAY2;
 import org.jgroups.protocols.relay.RouteStatusListener;
 import org.jgroups.protocols.relay.SiteAddress;
 import org.jgroups.protocols.relay.SiteMaster;
+import org.jgroups.stack.AddressGenerator;
 import org.jgroups.stack.Protocol;
 import org.jgroups.stack.ProtocolStack;
 import org.jgroups.util.ExtendedUUID;
@@ -141,7 +142,7 @@ import org.jgroups.util.SocketFactory;
  */
 @Scope(Scopes.GLOBAL)
 @JGroupsProtocolComponent("JGroupsMetricsMetadata")
-public class JGroupsTransport implements Transport, ChannelListener {
+public class JGroupsTransport implements Transport, ChannelListener, AddressGenerator {
    public static final String CONFIGURATION_STRING = "configurationString";
    public static final String CONFIGURATION_XML = "configurationXml";
    public static final String CONFIGURATION_FILE = "configurationFile";
@@ -504,9 +505,7 @@ public class JGroupsTransport implements Transport, ChannelListener {
       if (transportCfg.hasTopologyInfo()) {
          // We can do this only if the channel hasn't been started already
          if (connectChannel) {
-            channel.addAddressGenerator(() -> JGroupsTopologyAwareAddress
-                  .randomUUID(channel.getName(), transportCfg.siteId(), transportCfg.rackId(),
-                        transportCfg.machineId()));
+            channel.addAddressGenerator(this);
          } else {
             org.jgroups.Address jgroupsAddress = channel.getAddress();
             if (jgroupsAddress instanceof ExtendedUUID) {
@@ -1600,6 +1599,20 @@ public class JGroupsTransport implements Transport, ChannelListener {
 
    private Optional<org.jgroups.Address> findPhysicalAddress(org.jgroups.Address member) {
       return  Optional.ofNullable((org.jgroups.Address) channel.down(new Event(Event.GET_PHYSICAL_ADDRESS, member)));
+   }
+
+   @Override
+   public org.jgroups.Address generateAddress() {
+      var transportCfg = configuration.transport();
+      return JGroupsTopologyAwareAddress.randomUUID(channel.getName(), transportCfg.siteId(), transportCfg.rackId(),
+                  transportCfg.machineId());
+   }
+
+   @Override
+   public org.jgroups.Address generateAddress(String name) {
+      var transportCfg = configuration.transport();
+      return JGroupsTopologyAwareAddress.randomUUID(name, transportCfg.siteId(), transportCfg.rackId(),
+            transportCfg.machineId());
    }
 
    private class ChannelCallbacks implements RouteStatusListener, UpHandler {
