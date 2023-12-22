@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
  * @author Dan Berindei
  * @since 8.1
  */
-@Test (testName = "client.hotrod.retry.ReplicationHitsTest", groups = "functional")
+@Test(testName = "client.hotrod.retry.ReplicationHitsTest", groups = "functional")
 public class ReplicationHitsTest extends AbstractRetryTest {
 
    public static final int NUM_WRITES = 100;
@@ -21,7 +21,7 @@ public class ReplicationHitsTest extends AbstractRetryTest {
       resetStats();
       assertNoHits();
 
-      for (Cache c : caches()) {
+      for (Cache<?, ?> c : caches()) {
          ((RpcManagerImpl) c.getAdvancedCache().getRpcManager()).setStatisticsEnabled(true);
       }
 
@@ -29,8 +29,8 @@ public class ReplicationHitsTest extends AbstractRetryTest {
          remoteCache.put("k" + i, "v1");
       }
 
-      int totalReplications = 0;
-      for (Cache c : caches()) {
+      long totalReplications = 0;
+      for (Cache<?, ?> c : caches()) {
          totalReplications += ((RpcManagerImpl) c.getAdvancedCache().getRpcManager()).getReplicationCount();
       }
       assertEquals(NUM_WRITES, totalReplications);
