@@ -129,16 +129,16 @@ public class JGroupsTopologyAwareAddress extends JGroupsAddress implements Topol
       @Override
       public void doWriteObject(ObjectOutput output, JGroupsTopologyAwareAddress address) throws IOException {
          try {
-            org.jgroups.util.Util.writeAddress(address.address, output);
+            Util.writeAddress(address.address, output);
          } catch (Exception e) {
             throw new IOException(e);
          }
       }
 
       @Override
-      public JGroupsTopologyAwareAddress doReadObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+      public JGroupsTopologyAwareAddress doReadObject(ObjectInput unmarshaller) throws IOException {
          try {
-            org.jgroups.Address jgroupsAddress = (org.jgroups.Address) org.jgroups.util.Util.readAddress(unmarshaller);
+            var jgroupsAddress = Util.readAddress(unmarshaller);
             // Note: Use org.jgroups.Address, not the concrete UUID class.
             // Otherwise applications that only use local caches would have to bundle the JGroups jar,
             // because the verifier needs to check the arguments of fromJGroupsAddress
