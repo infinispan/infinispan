@@ -25,7 +25,7 @@
                 xmlns="urn:org:jgroups"
          />
       </stack>
-      <stack name="xsite" extends="udp">
+      <stack name="local" extends="udp">
          <relay.RELAY2 site="${infinispan.site.name:site1}"
                        max_site_masters="${infinispan.site.max_relay_nodes:1}"
                        xmlns="urn:org:jgroups"/>
@@ -36,7 +36,7 @@
    </jgroups>
 
    <cache-container name="default" statistics="true">
-      <transport cluster="${infinispan.cluster.name:cluster}" stack="xsite"/>
+      <transport cluster="${infinispan.cluster.name:cluster}" stack="${infinispan.cluster.stack:local}" node-name="${infinispan.node.name:}"/>
       <security>
          <authorization/>
       </security>
@@ -54,6 +54,11 @@
       </socket-bindings>
 
       <security>
+         <credential-stores>
+            <credential-store name="credentials" path="credentials.pfx">
+               <clear-text-credential clear-text="secret"/>
+            </credential-store>
+         </credential-stores>
          <security-realms>
             <security-realm name="default">
                <!-- Uncomment to enable TLS on the realm -->
@@ -72,6 +77,6 @@
          </security-realms>
       </security>
 
-      <endpoints socket-binding="default" security-realm="default"/>
+      <endpoints socket-binding="default" security-realm="default" />
    </server>
 </infinispan>
