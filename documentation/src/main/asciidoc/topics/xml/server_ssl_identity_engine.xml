@@ -10,8 +10,8 @@
                       alias="server"/>
             <!-- Configures {brandname} Server to use specific TLS versions and cipher suites. -->
             <engine enabled-protocols="TLSv1.3 TLSv1.2"
-                    enabled-ciphersuites="TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256"
-                    enabled-ciphersuites-tls13="TLS_AES_256_GCM_SHA384"/>
+                    enabled-ciphersuites="TLS_DHE_RSA_WITH_AES_128_CBC_SHA,TLS_DHE_RSA_WITH_AES_128_CBC_SHA256"
+                    enabled-ciphersuites-tls13="TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256"/>
           </ssl>
         </server-identities>
       </security-realm>
