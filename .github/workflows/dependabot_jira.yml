@@ -1,0 +1,29 @@
+name: Dependabot Jira
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+
+jobs:
+  create_jira:
+    name: Dependabot Jira
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.user.id == 27856297 #id dependabot user
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract Jira Summary
+        run: echo SUMMARY=$(echo ${{ github.event.pull_request.title }} | grep -oP '(?<=Bump )(.*)(?=from)|(?<=to )(.*)' | tr -d '\n') >> $GITHUB_ENV
+
+      - name: Create Jira Ticket
+        uses: ./.github/actions/create-jira
+        with:
+          token: ${{ secrets.JIRA_API_TOKEN }}
+          project: ISPN
+          summary: ${{ env.SUMMARY }}
+          type: Component Upgrade
+          pullRequest: ${{ github.event.pull_request.html_url }}
