@@ -45,7 +45,7 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
     * It would still accept other sites backing up data on this site.
     * @deprecated Since 14.0. To be removed without replacement.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "14.0")
    public SitesConfigurationBuilder disableBackups(boolean disable) {
       //no-op
       return this;
@@ -56,7 +56,7 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
     * which this cache backups its data.
     * @deprecated Since 14.0. To be removed without replacement.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "14.0")
    public SitesConfigurationBuilder addInUseBackupSite(String site) {
       return this;
    }

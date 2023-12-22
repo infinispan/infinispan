@@ -108,7 +108,7 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.0")
    @Override
    public ConfigurationBuilder keySizeEstimate(int keySizeEstimate) {
       return builder.keySizeEstimate(keySizeEstimate);
@@ -144,15 +144,6 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
       return builder.addContextInitializers(contextInitializers);
    }
 
-   /**
-    * @deprecated Use {@link #version(ProtocolVersion)} instead.
-    */
-   @Deprecated(forRemoval=true)
-   @Override
-   public ConfigurationBuilder protocolVersion(String protocolVersion) {
-      return builder.version(ProtocolVersion.parseVersion(protocolVersion));
-   }
-
    @Override
    public ConfigurationBuilder version(ProtocolVersion protocolVersion) {
       return builder.version(protocolVersion);
@@ -181,7 +172,7 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.0")
    @Override
    public ConfigurationBuilder valueSizeEstimate(int valueSizeEstimate) {
       return builder.valueSizeEstimate(valueSizeEstimate);
@@ -198,7 +189,7 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    }
 
    @Override
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.0")
    public ConfigurationBuilder addJavaSerialWhiteList(String... regExs) {
       return builder.addJavaSerialAllowList(regExs);
    }

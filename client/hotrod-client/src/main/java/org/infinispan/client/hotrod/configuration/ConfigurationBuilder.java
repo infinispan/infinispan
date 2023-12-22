@@ -246,7 +246,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.0")
    @Override
    public ConfigurationBuilder keySizeEstimate(int keySizeEstimate) {
       this.keySizeEstimate = keySizeEstimate;
@@ -296,19 +296,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
     * {@link RemoteCacheConfigurationBuilder#nearCacheMode(NearCacheMode)} and
     * {@link RemoteCacheConfigurationBuilder#nearCacheMaxEntries(int)} instead.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.0")
    public NearCacheConfigurationBuilder nearCache() {
       return nearCache;
-   }
-
-   /**
-    * @deprecated Use {@link ConfigurationBuilder#version(ProtocolVersion)} instead.
-    */
-   @Deprecated(forRemoval=true)
-   @Override
-   public ConfigurationBuilder protocolVersion(String protocolVersion) {
-      this.protocolVersion = ProtocolVersion.parseVersion(protocolVersion);
-      return this;
    }
 
    @Override
@@ -354,7 +344,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.0")
    @Override
    public ConfigurationBuilder valueSizeEstimate(int valueSizeEstimate) {
       this.valueSizeEstimate = valueSizeEstimate;
@@ -374,7 +364,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    }
 
    @Override
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.0")
    public ConfigurationBuilder addJavaSerialWhiteList(String... regEx) {
       return addJavaSerialAllowList(regEx);
    }
@@ -701,5 +691,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    @Override
    public ConfigurationBuilder read(Configuration template) {
       return read(template, Combine.DEFAULT);
+   }
+
+   ClassLoader classLoader() {
+      return classLoader.get();
    }
 }

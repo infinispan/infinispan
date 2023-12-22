@@ -82,7 +82,7 @@ public class MemoryConfiguration extends ConfigurationElement<MemoryConfiguratio
     * Storage type to use for the data container
     * @deprecated Use {@link #storage()} instead.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    public StorageType storageType() {
       return storage();
    }
@@ -99,7 +99,7 @@ public class MemoryConfiguration extends ConfigurationElement<MemoryConfiguratio
     * @deprecated Since 11.0, use {@link #maxCount()} or {@link #maxSize()} to obtain
     * either the maximum number of entries or the maximum size of the data container.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    public long size() {
       return memoryStorageConfiguration.size();
    }
@@ -109,7 +109,7 @@ public class MemoryConfiguration extends ConfigurationElement<MemoryConfiguratio
     * {@link MemoryConfiguration#maxSize(String)} to dynamically configure the maximum number
     * of entries or the maximum size of the data container.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    public void size(long newSize) {
       memoryStorageConfiguration.size(newSize);
    }
@@ -128,7 +128,7 @@ public class MemoryConfiguration extends ConfigurationElement<MemoryConfiguratio
     * @deprecated Since 11.0, use {@link #maxCount()} or {@link #maxSize()} to obtain either the maximum number of
     *       entries or the maximum size of the data container.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    public EvictionType evictionType() {
       return memoryStorageConfiguration.evictionType();
    }
@@ -137,7 +137,7 @@ public class MemoryConfiguration extends ConfigurationElement<MemoryConfiguratio
     * The configured eviction strategy
     * @deprecated Since 11.0, use {@link #whenFull()}
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    public EvictionStrategy evictionStrategy() {
       return memoryStorageConfiguration.evictionStrategy();
    }
@@ -168,7 +168,7 @@ public class MemoryConfiguration extends ConfigurationElement<MemoryConfiguratio
     * @deprecated Since 11.0, use {@link #evictionStrategy()}, {@link #maxSize()},
     *       {@link #maxCount()}, {@link #isOffHeap()} instead
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    public MemoryStorageConfiguration heapConfiguration() {
       return memoryStorageConfiguration;
    }

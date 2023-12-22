@@ -208,7 +208,7 @@ public class ClientListenerNotifier {
    /**
     * @deprecated Use {@link #allowList()} instead. To be removed in 14.0.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.0")
    public ClassAllowList whitelist() {
       return allowList();
    }

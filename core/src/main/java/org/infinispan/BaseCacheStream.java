@@ -127,7 +127,7 @@ public interface BaseCacheStream<T, S extends BaseStream<T, S>> extends BaseStre
        * @param segments The segments that were completed
        * @deprecated This method requires boxing for each segment. Please use {@link SegmentCompletionListener#accept(Supplier)} instead
        */
-      @Deprecated(forRemoval=true)
+      @Deprecated(forRemoval=true, since = "9.2")
       void segmentCompleted(Set<Integer> segments);
 
       /**

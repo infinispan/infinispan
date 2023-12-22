@@ -9,7 +9,7 @@ import org.infinispan.commons.marshall.JavaSerializationMarshaller;
  * @since 9.1
  * @deprecated Since 11.0, will be removed in 14.0. Set the storage media type and use transcoding instead.
  */
-@Deprecated(forRemoval=true)
+@Deprecated(forRemoval=true, since = "11.0")
 public class JavaSerializationEncoder extends MarshallerEncoder {
 
    public JavaSerializationEncoder(ClassAllowList classAllowList) {

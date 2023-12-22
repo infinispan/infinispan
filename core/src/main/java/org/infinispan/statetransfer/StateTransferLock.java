@@ -66,7 +66,7 @@ public interface StateTransferLock {
     */
    CompletionStage<Void> topologyFuture(int expectedTopologyId);
 
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "9.0")
    default void waitForTopology(int expectedTopologyId, long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
       try {
          CompletionStage<Void> topologyFuture = topologyFuture(expectedTopologyId);

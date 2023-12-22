@@ -11,7 +11,7 @@ import org.infinispan.commons.util.Util;
  * @since 9.1
  * @deprecated Since 12.1, to be removed in a future version.
  */
-@Deprecated(forRemoval=true)
+@Deprecated(forRemoval=true, since = "12.1")
 public class UTF8Encoder implements Encoder {
 
    public static final UTF8Encoder INSTANCE = new UTF8Encoder();

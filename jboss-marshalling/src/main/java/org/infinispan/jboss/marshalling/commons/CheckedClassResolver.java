@@ -9,7 +9,7 @@ import org.jboss.marshalling.Unmarshaller;
 /*
  * @deprecated since 11.0. To be removed in 14.0 ISPN-11947.
  */
-@Deprecated(forRemoval=true)
+@Deprecated(forRemoval=true, since = "11.0")
 public final class CheckedClassResolver extends DefaultContextClassResolver {
 
    protected static final Log log = LogFactory.getLog(CheckedClassResolver.class);

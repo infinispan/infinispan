@@ -22,7 +22,7 @@ import org.infinispan.remoting.transport.Address;
  * @since 5.2
  * @deprecated Since 11.0. Will be removed in 14.0, the segment allocation will no longer be customizable.
  */
-@Deprecated(forRemoval=true)
+@Deprecated(forRemoval=true, since = "11.0")
 public interface ConsistentHashFactory<CH extends ConsistentHash> {
 
    /**
@@ -40,7 +40,7 @@ public interface ConsistentHashFactory<CH extends ConsistentHash> {
     *                        If {@code null}, all the members are assumed to have a capacity factor of 1.
     * @deprecated since 11.0. hashFunction is ignored, use {@link #create(int, int, List, Map)} instead.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    default CH create(Hash hashFunction, int numOwners, int numSegments, List<Address> members,
                      Map<Address, Float> capacityFactors) {
       return create(numOwners, numSegments, members, capacityFactors);

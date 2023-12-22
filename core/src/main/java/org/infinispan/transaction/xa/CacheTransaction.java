@@ -46,7 +46,7 @@ public interface CacheTransaction {
     * @return true if found, false otherwise
     * @deprecated since 14.0. To be removed without replacement.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "14.0")
    default boolean hasModification(Class<?> modificationClass) {
       return false;
    }

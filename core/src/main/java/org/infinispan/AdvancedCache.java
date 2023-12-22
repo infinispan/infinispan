@@ -829,7 +829,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @return an instance of {@link AdvancedCache} where all operations will use the supplied encoders.
     * @deprecated Since 12.1, to be removed in a future version.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.1")
    AdvancedCache<?, ?> withEncoding(Class<? extends Encoder> keyEncoder, Class<? extends Encoder> valueEncoder);
 
    /**
@@ -840,6 +840,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @return {@link AdvancedCache} where all operations will use the supplied wrappers.
     * @deprecated Since 11.0. To be removed in 14.0, with no replacement.
     */
+   @Deprecated(forRemoval = true, since = "11.0")
    AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapper, Class<? extends Wrapper> valueWrapper);
 
    /**
@@ -849,7 +850,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @return an instance of {@link AdvancedCache} where all operations will use the supplied encoder.
     * @deprecated Since 12.1, to be removed in a future version.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.1")
    AdvancedCache<?, ?> withEncoding(Class<? extends Encoder> encoder);
 
    /**
@@ -859,6 +860,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     * @return an instance of {@link AdvancedCache} where all operations will use the supplied wrapper.
     * @deprecated Since 11.0. To be removed in 14.0, with no replacement.
     */
+   @Deprecated(forRemoval = true, since = "11.0")
    AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapper);
 
    /**
@@ -871,7 +873,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
     *
     * @deprecated Use {@link #withMediaType(MediaType, MediaType)} instead.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.1")
    AdvancedCache<?, ?> withMediaType(String keyMediaType, String valueMediaType);
 
    /**
@@ -900,7 +902,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    /**
     * @deprecated Since 12.1, to be removed in a future version.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.1")
    AdvancedCache<?, ?> withKeyEncoding(Class<? extends Encoder> encoder);
 
    /**

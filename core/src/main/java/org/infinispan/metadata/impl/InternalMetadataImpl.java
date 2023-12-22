@@ -22,7 +22,7 @@ import org.infinispan.metadata.Metadata;
  * @author Mircea Markus
  * @since 6.0
  */
-@Deprecated(forRemoval=true)
+@Deprecated(forRemoval=true, since = "10.0")
 public class InternalMetadataImpl implements InternalMetadata {
    private final Metadata actual;
    private final long created;

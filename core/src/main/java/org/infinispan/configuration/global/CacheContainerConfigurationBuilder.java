@@ -174,7 +174,7 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
    /**
     * @deprecated Since 10.1.3. Use {@link #statistics(boolean)} instead.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "10.1")
    public CacheContainerConfigurationBuilder statistics(Boolean statistics) {
       return statistics(statistics.booleanValue());
    }
@@ -211,7 +211,7 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
    /**
     * @deprecated Since 10.1, no longer used.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "10.1")
    public CacheContainerConfigurationBuilder stateTransferExecutor(String name) {
       attributes.attribute(STATE_TRANSFER_EXECUTOR).set(name);
       return this;

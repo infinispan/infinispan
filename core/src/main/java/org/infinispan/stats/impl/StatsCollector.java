@@ -261,7 +261,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
          description = "Number of entries in the cache including passivated entries",
          displayName = "Number of current cache entries"
    )
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "14.0")
    public int getNumberOfEntries() {
       return cache.wired().withFlags(Flag.CACHE_MODE_LOCAL).size();
    }
@@ -271,7 +271,7 @@ public final class StatsCollector implements Stats, JmxStatisticsExposer {
          displayName = "Number of in-memory cache entries"
    )
    @Override
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "14.0")
    public int getCurrentNumberOfEntriesInMemory() {
       return dataContainer.running().size();
    }

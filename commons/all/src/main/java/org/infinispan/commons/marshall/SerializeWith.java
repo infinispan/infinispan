@@ -24,7 +24,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Inherited
 @Documented
-@Deprecated(forRemoval=true)
+@Deprecated(forRemoval=true, since = "10.0")
 public @interface SerializeWith {
 
    /**

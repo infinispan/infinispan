@@ -87,7 +87,7 @@ public interface Transport extends Lifecycle {
    /**
     * @deprecated Use {@link #invokeRemotely(Map, ResponseMode, long, ResponseFilter, DeliverOrder, boolean)} instead
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "8.0")
    default Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode,
                                                  long timeout,
                                                  boolean usePriorityQueue, ResponseFilter responseFilter,
@@ -103,7 +103,7 @@ public interface Transport extends Lifecycle {
    /**
     * @deprecated Since 9.2, please use {@link #invokeRemotelyAsync(Collection, ReplicableCommand, ResponseMode, long, ResponseFilter, DeliverOrder, boolean)} instead.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "9.2")
    default Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode,
                                                  long timeout, ResponseFilter responseFilter,
                                                  DeliverOrder deliverOrder, boolean anycast) throws Exception {
@@ -250,7 +250,7 @@ public interface Transport extends Lifecycle {
     *
     * @deprecated Total order support dropped
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    default void checkTotalOrderSupported() {
       //no-op
    }
@@ -417,7 +417,7 @@ public interface Transport extends Lifecycle {
     * @deprecated Introduced in 9.1, but replaced in 9.2 with
     * {@link #invokeCommands(Collection, Function, ResponseCollector, DeliverOrder, long, TimeUnit)}.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "9.2")
    default <T> CompletionStage<T> invokeCommands(Collection<Address> targets,
                                                  Function<Address, ReplicableCommand> commandGenerator,
                                                  ResponseCollector<T> responseCollector, long timeout,

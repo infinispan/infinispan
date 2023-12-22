@@ -18,12 +18,10 @@ public enum Attribute {
     ADDRESS_COUNT,
     AFTER,
     ALIASES,
-    @Deprecated(forRemoval=true)
+    @Deprecated(forRemoval=true, since = "11.0")
     ALLOW_DUPLICATE_DOMAINS("duplicate-domains"),
-    @Deprecated(forRemoval=true)
+    @Deprecated(forRemoval=true, since = "11.0")
     ASYNC_EXECUTOR,
-    @Deprecated(forRemoval=true)
-    ASYNC_MARSHALLING,
     AUDIT_LOGGER,
     AUTO_COMMIT,
     AVAILABILITY_INTERVAL,
@@ -36,7 +34,7 @@ public enum Attribute {
     CACHE_SIZE,
     CACHE_TIMEOUT,
     CALIBRATE_BY_DELETES,
-    @Deprecated(forRemoval=true)
+    @Deprecated(forRemoval=true, since = "13.0")
     CAPACITY,
     CAPACITY_FACTOR,
     CHUNK_SIZE,
@@ -63,9 +61,9 @@ public enum Attribute {
     ENCODER,
     EXECUTOR,
     EVICTION,
-    @Deprecated(forRemoval=true)
+    @Deprecated(forRemoval=true, since = "11.0")
     EVICTION_EXECUTOR,
-    @Deprecated(forRemoval=true)
+    @Deprecated(forRemoval=true, since = "11.0")
     EVICTION_STRATEGY,
     EXPIRATION_EXECUTOR,
     EXPORTER_PROTOCOL,
@@ -74,8 +72,6 @@ public enum Attribute {
     FAIL_SILENTLY,
     FAILURE_POLICY_CLASS,
     FETCH_STATE,
-    @Deprecated(forRemoval=true)
-    FLUSH_LOCK_TIMEOUT,
     FRAGMENTATION_FACTOR,
     GAUGES,
     GROUP_NAME,
@@ -141,7 +137,7 @@ public enum Attribute {
     PATH,
     PASSIVATION,
     PERMISSIONS,
-    @Deprecated(forRemoval=true)
+    @Deprecated(forRemoval=true, since = "11.0")
     PERSISTENCE_EXECUTOR,
     POSITION,
     PREFIX,
@@ -150,7 +146,7 @@ public enum Attribute {
     PROPERTIES,
     PURGE,
     QUEUE_COUNT,
-    @Deprecated(forRemoval=true)
+    @Deprecated(forRemoval=true, since = "11.0")
     QUEUE_FLUSH_INTERVAL,
     QUEUE_LENGTH,
     QUEUE_SIZE,
@@ -166,8 +162,6 @@ public enum Attribute {
     REMOTE_COMMAND_EXECUTOR,
     REMOTE_SITE,
     REMOTE_TIMEOUT,
-    @Deprecated(forRemoval=true)
-    REPLICATION_QUEUE_EXECUTOR,
     ROLES,
     SEGMENTED,
     SEGMENTS,
@@ -175,15 +169,9 @@ public enum Attribute {
     SHARDS,
     SHARED,
     SHUTDOWN_HOOK,
-    @Deprecated(forRemoval=true)
-    SHUTDOWN_TIMEOUT,
     SIMPLE_CACHE,
-    @Deprecated(forRemoval=true)
-    SINGLETON,
     SITE,
     SIZE,
-    @Deprecated(forRemoval=true)
-    SPIN_DURATION("deadlock-detection-spin"),
     STATISTICS,
     START,
     STARTUP_MODE,

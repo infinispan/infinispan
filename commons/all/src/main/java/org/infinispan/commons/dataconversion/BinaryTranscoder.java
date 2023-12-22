@@ -22,7 +22,7 @@ import org.infinispan.commons.util.Util;
  * @since 10.0
  * @deprecated since 13.0. Will be removed in a future version together with {@link MediaType#APPLICATION_UNKNOWN}.
  */
-@Deprecated(forRemoval=true)
+@Deprecated(forRemoval=true, since = "13.0")
 public final class BinaryTranscoder extends OneToManyTranscoder {
 
    private final AtomicReference<Marshaller> marshallerRef;

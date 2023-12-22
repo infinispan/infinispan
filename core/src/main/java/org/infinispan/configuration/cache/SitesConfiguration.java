@@ -60,7 +60,7 @@ public class SitesConfiguration extends ConfigurationElement<SitesConfiguration>
     *
     * @deprecated since 14.0. To be removed without replacement.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "14.0")
    public boolean disableBackups() {
       return false;
    }
@@ -82,7 +82,7 @@ public class SitesConfiguration extends ConfigurationElement<SitesConfiguration>
     *
     * @deprecated Since 14.0. To be removed without replacement. Use {@link #allBackups()} or {@link #allBackupsStream()}.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "14.0")
    public List<BackupConfiguration> enabledBackups() {
       return allBackups();
    }
@@ -90,7 +90,7 @@ public class SitesConfiguration extends ConfigurationElement<SitesConfiguration>
    /**
     * @deprecated Since 14.0. To be removed without replacement. Use {@link #allBackups()} or {@link #allBackupsStream()}.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "14.0")
    public Stream<BackupConfiguration> enabledBackupStream() {
       return allBackupsStream();
    }
@@ -114,7 +114,7 @@ public class SitesConfiguration extends ConfigurationElement<SitesConfiguration>
    /**
     * @deprecated since 14.0. To be removed without replacement
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "14.0")
    public boolean hasInUseBackup(String siteName) {
       return allBackups.stream().anyMatch(bc -> bc.site().equals(siteName));
    }
@@ -122,7 +122,7 @@ public class SitesConfiguration extends ConfigurationElement<SitesConfiguration>
    /**
     * @deprecated since 14.0. To be removed without replacement. Use {@link #hasBackups()} instead.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "14.0")
    public boolean hasEnabledBackups() {
       return hasBackups();
    }

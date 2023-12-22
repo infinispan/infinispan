@@ -21,7 +21,7 @@ import net.jcip.annotations.ThreadSafe;
  * @see Marshaller
  */
 @ThreadSafe
-@Deprecated(forRemoval=true)
+@Deprecated(forRemoval=true, since = "10.0")
 public interface StreamingMarshaller extends Marshaller {
 
    /**

@@ -62,7 +62,7 @@ public class SingleFileStoreConfigurationBuilder
     *
     * @deprecated Since 13.0, will be removed in 16.0
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "13.0")
    public SingleFileStoreConfigurationBuilder maxEntries(int maxEntries) {
       attributes.attribute(MAX_ENTRIES).set(maxEntries);
       return this;

@@ -107,9 +107,9 @@ public enum Element {
     ROLE,
     ROLES,
     ROOT,
-    @Deprecated(forRemoval=true)
+    @Deprecated(forRemoval=true, since = "15.0")
     SCATTERED_CACHE,
-    @Deprecated(forRemoval=true)
+    @Deprecated(forRemoval=true, since = "15.0")
     SCATTERED_CACHE_CONFIGURATION,
     SERIALIZATION_CONTEXT_INITIALIZER("context-initializer"),
     SERIALIZATION_CONTEXT_INITIALIZERS("context-initializers"),

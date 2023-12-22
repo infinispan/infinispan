@@ -444,15 +444,6 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    void putAll(Map<? extends K, ? extends V> m);
 
    /**
-    * Returns server-side statistics for this cache.
-    * @deprecated use {@link #serverStatistics()} instead
-    */
-   @Deprecated(forRemoval=true)
-   default ServerStatistics stats() {
-      return serverStatistics();
-   }
-
-   /**
     * Returns client-side statistics for this cache.
     */
    RemoteCacheClientStatisticsMXBean clientStatistics();

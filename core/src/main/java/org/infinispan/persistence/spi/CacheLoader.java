@@ -13,7 +13,7 @@ import net.jcip.annotations.ThreadSafe;
  * @deprecated since 11.0 replaced by {@link NonBlockingStore}
  */
 @ThreadSafe
-@Deprecated(forRemoval=true)
+@Deprecated(forRemoval=true, since = "11.0")
 public interface CacheLoader<K, V> extends Lifecycle {
 
    /**

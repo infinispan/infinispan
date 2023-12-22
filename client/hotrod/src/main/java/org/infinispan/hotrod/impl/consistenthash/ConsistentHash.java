@@ -17,7 +17,7 @@ public interface ConsistentHash {
          CRC16ConsistentHashV2.class
    };
 
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    void init(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, int hashSpace);
 
    SocketAddress getServer(Object key);

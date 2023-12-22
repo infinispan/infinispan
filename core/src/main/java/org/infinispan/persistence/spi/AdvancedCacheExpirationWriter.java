@@ -11,7 +11,7 @@ import org.infinispan.commons.util.Experimental;
  * @deprecated since 11.0 replaced by {@link NonBlockingStore}
  */
 @Experimental
-@Deprecated(forRemoval=true)
+@Deprecated(forRemoval=true, since = "11.0")
 public interface AdvancedCacheExpirationWriter<K, V> extends AdvancedCacheWriter<K, V> {
    /**
     * Using the thread in the pool, removed all the expired data from the persistence storage. For each removed entry,

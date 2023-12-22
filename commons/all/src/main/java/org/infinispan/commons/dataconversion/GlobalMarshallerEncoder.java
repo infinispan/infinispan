@@ -8,7 +8,7 @@ import org.infinispan.commons.marshall.Marshaller;
  * @since 9.2
  * @deprecated Since 11.0, will be removed with ISPN-9622
  */
-@Deprecated(forRemoval=true)
+@Deprecated(forRemoval=true, since = "11.0")
 public class GlobalMarshallerEncoder extends MarshallerEncoder {
 
    public GlobalMarshallerEncoder(Marshaller globalMarshaller) {

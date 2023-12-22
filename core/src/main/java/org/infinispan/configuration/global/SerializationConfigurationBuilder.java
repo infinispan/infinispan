@@ -63,7 +63,7 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
     * via {@link #addContextInitializer(SerializationContextInitializer)}, or specifying a custom marshaller for user types
     * via {@link #marshaller(Marshaller)}.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "10.0")
    public <T> SerializationConfigurationBuilder addAdvancedExternalizer(int id, AdvancedExternalizer<T> advancedExternalizer) {
       AdvancedExternalizer<?> ext = advancedExternalizers.get(id);
       if (ext != null)
@@ -86,7 +86,7 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
     * via {@link #addContextInitializer(SerializationContextInitializer)}, or specifying a custom marshaller for user types
     * via {@link #marshaller(Marshaller)}.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "10.0")
    public <T> SerializationConfigurationBuilder addAdvancedExternalizer(AdvancedExternalizer<T> advancedExternalizer) {
       Integer id = advancedExternalizer.getId();
       if (id == null)
@@ -107,7 +107,7 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
     * via {@link #addContextInitializer(SerializationContextInitializer)}, or specifying a custom marshaller for user types
     * via {@link #marshaller(Marshaller)}.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "10.0")
    public <T> SerializationConfigurationBuilder addAdvancedExternalizer(AdvancedExternalizer<T>... advancedExternalizers) {
       for (AdvancedExternalizer<T> advancedExternalizer : advancedExternalizers) {
          this.addAdvancedExternalizer(advancedExternalizer);
@@ -138,7 +138,7 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    /**
     * @deprecated since 12.0. Use {@link #allowList()} instead. To be removed in 14.0.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.0")
    public WhiteListConfigurationBuilder whiteList() {
       return new WhiteListConfigurationBuilder(allowListBuilder);
    }

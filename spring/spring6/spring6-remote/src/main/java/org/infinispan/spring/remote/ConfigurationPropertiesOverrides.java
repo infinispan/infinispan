@@ -102,7 +102,7 @@ public class ConfigurationPropertiesOverrides {
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.0")
    public void setKeySizeEstimate(final int keySizeEstimate) {
       this.overridingProperties.setProperty(KEY_SIZE_ESTIMATE, Integer.toString(keySizeEstimate));
    }
@@ -110,7 +110,7 @@ public class ConfigurationPropertiesOverrides {
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.0")
    public void setValueSizeEstimate(final int valueSizeEstimate) {
       this.overridingProperties.setProperty(VALUE_SIZE_ESTIMATE,
                                             Integer.toString(valueSizeEstimate));

@@ -103,7 +103,7 @@ public class IndexingConfiguration extends ConfigurationElement<IndexingConfigur
     * @return always false, starting with version 11.0
     * @deprecated Since 11.0 with no replacement; to be removed in next major version.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    public final boolean indexShareable() {
       return false;
    }

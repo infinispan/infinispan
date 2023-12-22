@@ -75,7 +75,7 @@ public class MemcachedServerConfigurationParser implements ConfigurationParser {
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
          switch (attribute) {
             case CACHE: {
-               builder.cache(value);
+               builder.defaultCacheName(value);
                break;
             }
             case CACHE_CONTAINER: {
