@@ -4,7 +4,7 @@ import java.util.Map;
 
 /**
  * Defines the possible list of statistics defined by the Hot Rod server.
- * Can be obtained through {@link RemoteCache#stats()}
+ * Can be obtained through {@link RemoteCache#serverStatistics()}
  *
  * @author Mircea.Markus@jboss.com
  * @since 4.1
@@ -20,7 +20,7 @@ public interface ServerStatistics {
     * Number of entries currently in the Hot Rod server
     * @deprecated Since 14.0, please use {@link #APPROXIMATE_ENTRIES}
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "14.0")
    String CURRENT_NR_OF_ENTRIES = "currentNumberOfEntries";
 
    /**

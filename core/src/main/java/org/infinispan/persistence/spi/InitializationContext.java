@@ -48,7 +48,7 @@ public interface InitializationContext {
     * @return the executor to be used with stores
     * @deprecated since 11.0 - Please use {@link #getBlockingManager()} ()} or {@link #getNonBlockingExecutor()} instead
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    ExecutorService getExecutor();
 
    /**

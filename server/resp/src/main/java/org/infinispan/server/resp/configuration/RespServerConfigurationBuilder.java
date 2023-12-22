@@ -37,7 +37,7 @@ public class RespServerConfigurationBuilder extends ProtocolServerConfigurationB
    /**
     * Use {@link ProtocolServerConfigurationBuilder#defaultCacheName(String)} instead
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "14.0")
    public RespServerConfigurationBuilder cache(String cache) {
       this.defaultCacheName(cache);
       return this;

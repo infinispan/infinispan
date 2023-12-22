@@ -15,7 +15,7 @@ public interface MarshallingTwoWayKey2StringMapper extends TwoWayKey2StringMappe
    /**
     * @deprecated since 10.0, use {@link #setMarshaller(Marshaller)} instead
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "10.0")
    default void setMarshaller(StreamingMarshaller marshaller) {
       // no-op
    }

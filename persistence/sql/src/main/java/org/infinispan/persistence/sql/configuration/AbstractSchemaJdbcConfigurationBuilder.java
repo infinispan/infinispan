@@ -23,7 +23,7 @@ public abstract class AbstractSchemaJdbcConfigurationBuilder<T extends AbstractS
     * @return builder to configure the schema
     * @deprecated use {@link #schema()} instead
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "14.0")
    public SchemaJdbcConfigurationBuilder<S> schemaJdbcConfigurationBuilder() {
       return schemaBuilder;
    }

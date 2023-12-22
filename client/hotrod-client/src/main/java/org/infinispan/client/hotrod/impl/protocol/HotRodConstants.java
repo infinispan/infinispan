@@ -165,26 +165,6 @@ public interface HotRodConstants {
    int NODE_SUSPECTED = 0x87;
    int ILLEGAL_LIFECYCLE_STATE = 0x88;
 
-   /**
-    * @deprecated use {@link org.infinispan.client.hotrod.configuration.ClientIntelligence#BASIC}
-    * instead
-    */
-   @Deprecated(forRemoval=true)
-   byte CLIENT_INTELLIGENCE_BASIC = 0x01;
-
-   /**
-    * @deprecated use {@link org.infinispan.client.hotrod.configuration.ClientIntelligence#TOPOLOGY_AWARE}
-    * instead
-    */
-   @Deprecated(forRemoval=true)
-   byte CLIENT_INTELLIGENCE_TOPOLOGY_AWARE = 0x02;
-
-   /**
-    * @deprecated use {@link org.infinispan.client.hotrod.configuration.ClientIntelligence#HASH_DISTRIBUTION_AWARE}
-    * instead
-    */
-   @Deprecated(forRemoval=true)
-   byte CLIENT_INTELLIGENCE_HASH_DISTRIBUTION_AWARE = 0x03;
    Charset HOTROD_STRING_CHARSET = StandardCharsets.UTF_8;
 
    byte[] DEFAULT_CACHE_NAME_BYTES = new byte[]{};

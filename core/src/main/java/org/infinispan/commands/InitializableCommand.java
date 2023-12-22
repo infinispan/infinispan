@@ -9,7 +9,7 @@ import org.infinispan.factories.ComponentRegistry;
  * @since 10.0
  * @deprecated since 11.0, please implement {@link ReplicableCommand#invokeAsync(ComponentRegistry)} instead
  */
-@Deprecated(forRemoval=true)
+@Deprecated(forRemoval=true, since = "11.0")
 public interface InitializableCommand {
 
    void init(ComponentRegistry componentRegistry, boolean isRemote);

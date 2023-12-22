@@ -2,8 +2,6 @@ package org.infinispan.commons.configuration;
 
 import static org.infinispan.commons.util.Immutables.immutableTypedProperties;
 
-import java.util.Properties;
-
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -20,17 +18,6 @@ public abstract class AbstractTypedPropertiesConfiguration {
 
    protected AttributeSet attributes;
    private final Attribute<TypedProperties> properties;
-
-   /**
-    * @deprecated use {@link AbstractTypedPropertiesConfiguration#AbstractTypedPropertiesConfiguration(AttributeSet)} instead
-    */
-   @Deprecated(forRemoval=true)
-   protected AbstractTypedPropertiesConfiguration(Properties properties) {
-      this.attributes = attributeSet();
-      this.attributes = attributes.protect();
-      this.properties = this.attributes.attribute(PROPERTIES);
-      this.attributes.attribute(PROPERTIES).set(immutableTypedProperties(TypedProperties.toTypedProperties(properties)));
-   }
 
    protected AbstractTypedPropertiesConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();
@@ -59,11 +46,10 @@ public abstract class AbstractTypedPropertiesConfiguration {
          return false;
       AbstractTypedPropertiesConfiguration other = (AbstractTypedPropertiesConfiguration) obj;
       if (attributes == null) {
-         if (other.attributes != null)
-            return false;
-      } else if (!attributes.equals(other.attributes))
-         return false;
-      return true;
+         return other.attributes == null;
+      } else {
+         return attributes.equals(other.attributes);
+      }
    }
 
    @Override

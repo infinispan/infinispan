@@ -1,6 +1,5 @@
 package org.infinispan.commons;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,23 +28,8 @@ public class CacheConfigurationException extends CacheException {
       super(string);
    }
 
-   @Deprecated(forRemoval=true)
-   public CacheConfigurationException(String string, String erroneousAttribute) {
-      super(string);
-   }
-
    public CacheConfigurationException(String string, Throwable throwable) {
       super(string, throwable);
-   }
-
-   @Deprecated(forRemoval=true)
-   public List<String> getErroneousAttributes() {
-      return Collections.emptyList();
-   }
-
-   @Deprecated(forRemoval=true)
-   public void addErroneousAttribute(String s) {
-      // Do nothing
    }
 
    public static Optional<RuntimeException> fromMultipleRuntimeExceptions(List<RuntimeException> exceptions) {

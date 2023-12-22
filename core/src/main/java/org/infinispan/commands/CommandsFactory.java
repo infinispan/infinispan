@@ -413,7 +413,7 @@ public interface CommandsFactory {
     * or {@link GlobalRpcCommand#invokeAsync(GlobalComponentRegistry)} instead.
     * to access any components required at invocation time.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    void initializeReplicableCommand(ReplicableCommand command, boolean isRemote);
 
    /**
@@ -422,7 +422,7 @@ public interface CommandsFactory {
     * @return a SingleRpcCommand
     * @deprecated since 11.0 use {@link #buildSingleRpcCommand(VisitableCommand)} instead.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    default SingleRpcCommand buildSingleRpcCommand(ReplicableCommand call) {
       return buildSingleRpcCommand((VisitableCommand) call);
    }

@@ -117,7 +117,7 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
     * Adds a cluster cache loader.
     * @deprecated since 11.0. To be removed in 14.0 ISPN-11864 with no direct replacement.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    public ClusterLoaderConfigurationBuilder addClusterLoader() {
       ClusterLoaderConfigurationBuilder builder = new ClusterLoaderConfigurationBuilder(this);
       this.stores.add(builder);
@@ -126,9 +126,9 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
 
    /**
     * Adds a single file cache store.
-    * @deprecated since 13.0. To be removed in 14.0 has been replaced by {@link #addSoftIndexFileStore()}
+    * @deprecated since 13.0. To be removed in 16.0 has been replaced by {@link #addSoftIndexFileStore()}
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "13.0")
    public SingleFileStoreConfigurationBuilder addSingleFileStore() {
       SingleFileStoreConfigurationBuilder builder = new SingleFileStoreConfigurationBuilder(this);
       this.stores.add(builder);

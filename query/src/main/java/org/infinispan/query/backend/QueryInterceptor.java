@@ -384,7 +384,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
     *
     * @deprecated since 11
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    public Map<String, Class<?>> indexedEntities() {
       return indexedClasses;
    }

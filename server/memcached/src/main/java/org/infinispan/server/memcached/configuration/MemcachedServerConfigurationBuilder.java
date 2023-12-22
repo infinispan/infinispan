@@ -39,15 +39,6 @@ public class MemcachedServerConfigurationBuilder extends ProtocolServerConfigura
       return this;
    }
 
-   /**
-    * Use {@link ProtocolServerConfigurationBuilder#defaultCacheName(String)} instead
-    */
-   @Deprecated(forRemoval=true)
-   public MemcachedServerConfigurationBuilder cache(String cache) {
-      this.defaultCacheName(cache);
-      return this;
-   }
-
    @Override
    public MemcachedAuthenticationConfigurationBuilder authentication() {
       return authentication;

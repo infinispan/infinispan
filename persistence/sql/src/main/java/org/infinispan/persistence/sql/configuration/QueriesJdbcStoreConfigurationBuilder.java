@@ -45,7 +45,7 @@ public class QueriesJdbcStoreConfigurationBuilder extends AbstractSchemaJdbcConf
    /**
     * @deprecated use {@link #queries()} instead
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "14.0")
    public QueriesJdbcConfigurationBuilder<?> queriesJdbcConfigurationBuilder() {
       return queriesBuilder;
    }

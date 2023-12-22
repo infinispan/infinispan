@@ -48,7 +48,7 @@ public class OutdatedTopologyException extends CacheException {
     *
     * @deprecated Since 10.0, please use the constants
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "10.0")
    public OutdatedTopologyException(String msg) {
       super(msg, null, false, false);
       this.topologyIdDelta = 1;
@@ -59,7 +59,7 @@ public class OutdatedTopologyException extends CacheException {
     *
     * @deprecated Since 10.0, the explicit topology is ignored and the delta is set to 1
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "10.0")
    public OutdatedTopologyException(int topologyIdDelta) {
       this(null, 1);
    }

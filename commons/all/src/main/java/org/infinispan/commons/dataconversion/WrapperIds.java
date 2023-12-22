@@ -13,7 +13,7 @@ public interface WrapperIds {
    /**
     * @deprecated Replaced by PROTOBUF_WRAPPER. Will be removed in next minor version.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "10.0")
    byte PROTOSTREAM_WRAPPER = PROTOBUF_WRAPPER;
 
    byte IDENTITY_WRAPPER = 3;

@@ -8,7 +8,7 @@ import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.executors.DefaultExecutorFactory;
 
 public class ExecutorFactoryConfiguration extends AbstractTypedPropertiesConfiguration {
-   static final AttributeDefinition<ExecutorFactory> FACTORY = AttributeDefinition.builder("factory", (ExecutorFactory)new DefaultExecutorFactory()).immutable().build();
+   static final AttributeDefinition<ExecutorFactory> FACTORY = AttributeDefinition.builder("factory", (ExecutorFactory) new DefaultExecutorFactory()).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(ExecutorFactoryConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), FACTORY);
@@ -33,6 +33,4 @@ public class ExecutorFactoryConfiguration extends AbstractTypedPropertiesConfigu
    public String toString() {
       return "ExecutorFactoryConfiguration [attributes=" + attributes + "]";
    }
-
-
 }

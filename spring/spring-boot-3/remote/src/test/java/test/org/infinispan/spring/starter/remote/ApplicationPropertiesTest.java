@@ -70,7 +70,7 @@ public class ApplicationPropertiesTest {
       assertThat(configuration.connectionPool().exhaustedAction()).isEqualTo(ExhaustedAction.CREATE_NEW);
 
       // Thread pool properties
-      assertThat(configuration.asyncExecutorFactory().factoryClass()).isEqualTo(DefaultAsyncExecutorFactory.class);
+      assertThat(configuration.asyncExecutorFactory().factory()).isInstanceOf(DefaultAsyncExecutorFactory.class);
       // TODO: how to assert thread pool size ? default-executor-factory-pool-size
 
       // Marshalling properties

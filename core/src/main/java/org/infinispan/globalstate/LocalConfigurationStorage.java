@@ -93,7 +93,7 @@ public interface LocalConfigurationStorage {
     * Loads all persisted cache configurations
     * @deprecated since 12.0, use {@link #loadAllCaches} instead
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.0")
    default Map<String, Configuration> loadAll() {
       return loadAllCaches();
    }

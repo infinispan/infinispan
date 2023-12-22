@@ -28,7 +28,7 @@ public interface ReplicableCommand {
     * @deprecated since 11.0, please use {@link org.infinispan.commands.remote.CacheRpcCommand#invokeAsync(ComponentRegistry)}
     * or {@link GlobalRpcCommand#invokeAsync(GlobalComponentRegistry)} instead.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    default CompletableFuture<Object> invokeAsync() throws Throwable {
       return CompletableFuture.completedFuture(invoke());
    }
@@ -40,7 +40,7 @@ public interface ReplicableCommand {
     * @deprecated since 11.0, please use {@link org.infinispan.commands.remote.CacheRpcCommand#invokeAsync(ComponentRegistry)}
     * or {@link GlobalRpcCommand#invokeAsync(GlobalComponentRegistry)} instead.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    default Object invoke() throws Throwable {
       try {
          return invokeAsync().join();

@@ -78,7 +78,7 @@ public final class MediaType {
    /**
     * @deprecated Since 11.0, without replacement.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    public static final String APPLICATION_UNKNOWN_TYPE = "application/unknown";
    public static final String WWW_FORM_URLENCODED_TYPE = "application/x-www-form-urlencoded";
    public static final String IMAGE_GIF_TYPE = "image/gif";
@@ -93,12 +93,12 @@ public final class MediaType {
    /**
     * @deprecated Since 11.0, will be removed with ISPN-9622
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    public static final String APPLICATION_INFINISPAN_MARSHALLING_TYPE = "application/x-infinispan-marshalling";
    /**
     * @deprecated Since 11.0, will be removed in 14.0. No longer used for BINARY storage.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    public static final String APPLICATION_INFINISPAN_BINARY_TYPE = "application/x-infinispan-binary";
    public static final String MATCH_ALL_TYPE = "*/*";
 
@@ -116,7 +116,7 @@ public final class MediaType {
    /**
     * @deprecated Since 11.0, will be removed with ISPN-9622
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    public static final MediaType APPLICATION_INFINISPAN_MARSHALLED = fromString(APPLICATION_INFINISPAN_MARSHALLING_TYPE);
    public static final MediaType APPLICATION_WWW_FORM_URLENCODED = fromString(WWW_FORM_URLENCODED_TYPE);
    public static final MediaType IMAGE_PNG = fromString(IMAGE_PNG_TYPE);
@@ -131,7 +131,7 @@ public final class MediaType {
    /**
     * @deprecated Since 11.0, will be removed in 14.0. No longer used for BINARY storage.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    public static final MediaType APPLICATION_INFINISPAN_BINARY = fromString(APPLICATION_INFINISPAN_BINARY_TYPE);
    public static final MediaType APPLICATION_PDF = fromString(APPLICATION_PDF_TYPE);
    public static final MediaType APPLICATION_RTF = fromString(APPLICATION_RTF_TYPE);
@@ -139,16 +139,16 @@ public final class MediaType {
    /**
     * @deprecated Since 11.0, will be removed with ISPN-9622
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    public static final MediaType APPLICATION_INFINISPAN_MARSHALLING = fromString(APPLICATION_INFINISPAN_MARSHALLING_TYPE);
    /**
     * @deprecated Since 11.0, without replacement.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    public static final MediaType APPLICATION_UNKNOWN = fromString(APPLICATION_UNKNOWN_TYPE);
    public static final MediaType MATCH_ALL = fromString(MATCH_ALL_TYPE);
 
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    public static final String BYTE_ARRAY_TYPE = BYTE_ARRAY.getName();
    private static final String WEIGHT_PARAM_NAME = "q";
    private static final String CHARSET_PARAM_NAME = "charset";
@@ -203,7 +203,7 @@ public final class MediaType {
    /**
     * @deprecated replaced by {@link #fromString}
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    public static MediaType parse(String str) {
       return fromString(str);
    }

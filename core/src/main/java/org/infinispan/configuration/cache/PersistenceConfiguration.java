@@ -15,7 +15,7 @@ public class PersistenceConfiguration extends ConfigurationElement<PersistenceCo
    public static final AttributeDefinition<Boolean> PASSIVATION = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.PASSIVATION, false).immutable().build();
    public static final AttributeDefinition<Integer> AVAILABILITY_INTERVAL = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.AVAILABILITY_INTERVAL, 30000).immutable().build();
    public static final AttributeDefinition<Integer> CONNECTION_ATTEMPTS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CONNECTION_ATTEMPTS, 10).build();
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "15.0")
    public static final AttributeDefinition<Integer> CONNECTION_INTERVAL = AttributeDefinition.builder(Attribute.CONNECTION_INTERVAL, 50).immutable().deprecated(15, 0).build();
 
    static AttributeSet attributeDefinitionSet() {
@@ -54,7 +54,7 @@ public class PersistenceConfiguration extends ConfigurationElement<PersistenceCo
       return attributes.attribute(CONNECTION_ATTEMPTS).get();
    }
 
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "15.0")
    public int connectionInterval() {
       return -1;
    }
@@ -68,7 +68,7 @@ public class PersistenceConfiguration extends ConfigurationElement<PersistenceCo
     *
     * @deprecated since 14.0. This will always return false
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "14.0")
    public Boolean fetchPersistentState() {
       return false;
    }

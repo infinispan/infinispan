@@ -145,15 +145,6 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
       }
    }
 
-   @Deprecated(forRemoval=true)
-   public boolean addInterceptorBefore(AsyncInterceptor toAdd,
-                                       Class<? extends AsyncInterceptor> beforeInterceptor,
-                                       boolean isCustom) {
-      if (isCustom)
-         validateCustomInterceptor(toAdd.getClass());
-      return addInterceptorBefore(toAdd, beforeInterceptor);
-   }
-
    @Override
    public boolean addInterceptorBefore(AsyncInterceptor toAdd,
                                        Class<? extends AsyncInterceptor> beforeInterceptor) {

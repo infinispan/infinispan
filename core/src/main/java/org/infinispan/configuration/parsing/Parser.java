@@ -1376,7 +1376,7 @@ public class Parser extends CacheParser {
    /**
     * @deprecated use {@link CacheParser#parseStoreAttribute(ConfigurationReader, int, AbstractStoreConfigurationBuilder)}
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.0")
    public static void parseStoreAttribute(ConfigurationReader reader, int index, AbstractStoreConfigurationBuilder<?, ?> storeBuilder) {
       CacheParser.parseStoreAttribute(reader, index, storeBuilder);
    }
@@ -1384,7 +1384,7 @@ public class Parser extends CacheParser {
    /**
     * @deprecated use {@link CacheParser#parseStoreElement(ConfigurationReader, StoreConfigurationBuilder)}
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.0")
    public static void parseStoreElement(ConfigurationReader reader, StoreConfigurationBuilder<?, ?> storeBuilder) {
       CacheParser.parseStoreElement(reader, storeBuilder);
    }
@@ -1392,7 +1392,7 @@ public class Parser extends CacheParser {
    /**
     * @deprecated use {@link CacheParser#parseStoreWriteBehind(ConfigurationReader, AsyncStoreConfigurationBuilder)}
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.0")
    public static void parseStoreWriteBehind(ConfigurationReader reader, AsyncStoreConfigurationBuilder<?> storeBuilder) {
       CacheParser.parseStoreWriteBehind(reader, storeBuilder);
    }
@@ -1400,16 +1400,11 @@ public class Parser extends CacheParser {
    /**
     * @deprecated use {@link CacheParser#parseStoreProperty(ConfigurationReader, StoreConfigurationBuilder)}
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.0")
    public static void parseStoreProperty(ConfigurationReader reader, StoreConfigurationBuilder<?, ?> storeBuilder) {
       String property = ParseUtils.requireSingleAttribute(reader, Attribute.NAME.getLocalName());
       String value = reader.getElementText();
       storeBuilder.addProperty(property, value);
-   }
-
-   @Override
-   public Namespace[] getNamespaces() {
-      return ParseUtils.getNamespaceAnnotations(getClass());
    }
 
    private void addJGroupsDefaultStacksIfNeeded(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {

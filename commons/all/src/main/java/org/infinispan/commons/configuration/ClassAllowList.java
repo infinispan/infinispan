@@ -40,9 +40,9 @@ public class ClassAllowList {
 
    private static final Log log = LogFactory.getLog(ClassAllowList.class);
 
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.0")
    private static final String CLASSES_PROPERTY_NAME_LEGACY = "infinispan.deserialization.whitelist.classes";
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.0")
    private static final String REGEXPS_PROPERTY_NAME_LEGACY = "infinispan.deserialization.whitelist.regexps";
    private static final String CLASSES_PROPERTY_NAME = "infinispan.deserialization.allowlist.classes";
    private static final String REGEXPS_PROPERTY_NAME = "infinispan.deserialization.allowlist.regexps";

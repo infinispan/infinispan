@@ -1,8 +1,10 @@
 package org.infinispan.hotrod.configuration;
 
 import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.executors.ExecutorFactory;
-import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.hotrod.impl.async.DefaultAsyncExecutorFactory;
 
 /**
  * ExecutorFactoryConfiguration.
@@ -11,34 +13,31 @@ import org.infinispan.commons.util.TypedProperties;
  */
 public class ExecutorFactoryConfiguration extends AbstractTypedPropertiesConfiguration {
 
-   private final Class<? extends ExecutorFactory> factoryClass;
-   private final ExecutorFactory factory;
+   static final AttributeDefinition<ExecutorFactory> FACTORY = AttributeDefinition.builder("factory", (ExecutorFactory) new DefaultAsyncExecutorFactory()).immutable().build();
+   static final AttributeDefinition<Class<? extends ExecutorFactory>> FACTORY_CLASS = AttributeDefinition.classBuilder("factoryClass", ExecutorFactory.class).immutable().build();
 
-   @Deprecated(forRemoval=true)
-   ExecutorFactoryConfiguration(Class<? extends ExecutorFactory> factoryClass, TypedProperties properties) {
-      super(properties);
-      this.factoryClass = factoryClass;
-      this.factory = null;
+   public static AttributeSet attributeDefinitionSet() {
+      return new AttributeSet(ExecutorFactoryConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), FACTORY, FACTORY_CLASS);
    }
 
-   @Deprecated(forRemoval=true)
-   ExecutorFactoryConfiguration(ExecutorFactory factory, TypedProperties properties) {
-      super(properties);
-      this.factory = factory;
-      this.factoryClass = null;
-   }
-
-   public Class<? extends ExecutorFactory> factoryClass() {
-      return factoryClass;
+   ExecutorFactoryConfiguration(AttributeSet attributes) {
+      super(attributes);
    }
 
    public ExecutorFactory factory() {
-      return factory;
+      return attributes.attribute(FACTORY).get();
+   }
+
+   public Class<? extends ExecutorFactory> factoryClass() {
+      return attributes.attribute(FACTORY_CLASS).get();
+   }
+
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    @Override
    public String toString() {
-      return "ExecutorFactoryConfiguration [factoryClass=" + factoryClass + ", factory=" + factory + ", properties()=" + properties() + "]";
+      return "ExecutorFactoryConfiguration [attributes=" + attributes + "]";
    }
-
 }

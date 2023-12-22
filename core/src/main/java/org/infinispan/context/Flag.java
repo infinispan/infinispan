@@ -205,7 +205,7 @@ public enum Flag {
     * Flag to identify that this iteration is done on a remote node and thus no additional wrappings are required
     * @deprecated Since 14.0, no longer does anything. Will be removed in 17.0.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "14.0")
    REMOTE_ITERATION,
 
    /**

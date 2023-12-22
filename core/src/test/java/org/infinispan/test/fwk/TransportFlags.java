@@ -38,7 +38,7 @@ public class TransportFlags {
    /**
     * @deprecated Since 13.0, will be removed in 16.0
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "13.0")
    public TransportFlags withPortRange(int portRange) {
       return withSiteIndex(portRange);
    }
@@ -74,7 +74,7 @@ public class TransportFlags {
    /**
     * @deprecated Since 13.0, will be removed in 16.0
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "13.0")
    public int portRange() {
       return siteIndex();
    }

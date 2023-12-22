@@ -7,7 +7,7 @@ import org.infinispan.remoting.transport.Transport;
  * @since 5.2
  * @deprecated since 11.0. Use {@link Transport#localSiteName()}
  */
-@Deprecated(forRemoval=true)
+@Deprecated(forRemoval=true, since = "11.0")
 public class SiteConfiguration {
    private final String localSite;
 
@@ -18,7 +18,7 @@ public class SiteConfiguration {
    /**
     * Returns the name of the local site. Must be a valid name defined in {@link #siteConfigurations()}
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    public final String localSite() {
       return localSite;
    }

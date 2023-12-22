@@ -16,7 +16,7 @@ import java.util.TreeSet;
  * @author (various)
  * @deprecated Since 12, will be removed in version 15.0
  */
-@Deprecated(forRemoval=true)
+@Deprecated(forRemoval=true, since = "12.0")
 public class ObjectDuplicator {
    @SuppressWarnings("unchecked")
    public static <K, V> Map<K, V> duplicateMap(Map<K, V> original) {

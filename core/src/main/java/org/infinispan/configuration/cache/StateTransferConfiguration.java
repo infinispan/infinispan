@@ -63,7 +63,7 @@ public class StateTransferConfiguration extends ConfigurationElement<StateTransf
     *
     * @deprecated Since 12.1, the attribute was never writable
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.1")
    public StateTransferConfiguration timeout(long l) {
       timeout.set(l);
       return this;

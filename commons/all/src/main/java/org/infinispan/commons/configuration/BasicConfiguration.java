@@ -10,20 +10,6 @@ import org.infinispan.commons.dataconversion.MediaType;
  */
 
 public interface BasicConfiguration {
-   @Deprecated(forRemoval=true)
-   default String toXMLString() {
-      return toXMLString("configuration");
-   }
-   /**
-    * Converts this configuration to its XML representation. The name of the configuration in the XML will be the one
-    * supplied in the argument.
-    *
-    * @return a String containing the XML representation of an Infinispan configuration using the Infinispan schema.
-    */
-   @Deprecated(forRemoval=true)
-   default String toXMLString(String name) {
-      return toStringConfiguration(name);
-   }
 
    /**
     * Converts this configuration to an XML.

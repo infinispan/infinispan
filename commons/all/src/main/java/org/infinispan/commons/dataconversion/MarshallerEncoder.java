@@ -12,7 +12,7 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
  * @since 9.1
  * @deprecated Since 12.1, to be removed in a future version.
  */
-@Deprecated(forRemoval=true)
+@Deprecated(forRemoval=true, since = "12.1")
 public abstract class MarshallerEncoder implements Encoder {
 
    private final Marshaller marshaller;

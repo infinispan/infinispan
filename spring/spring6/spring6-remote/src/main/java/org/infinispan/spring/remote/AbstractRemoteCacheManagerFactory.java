@@ -165,14 +165,6 @@ public abstract class AbstractRemoteCacheManagerFactory {
    }
 
    /**
-    * @param transportFactory
-    * @see ConfigurationPropertiesOverrides#setTransportFactory(String)
-    */
-   @Deprecated(forRemoval=true)
-   public void setTransportFactory(final String transportFactory) {
-   }
-
-   /**
     * @param serverList
     * @see ConfigurationPropertiesOverrides#setServerList(Collection)
     */
@@ -201,7 +193,7 @@ public abstract class AbstractRemoteCacheManagerFactory {
     * @see ConfigurationPropertiesOverrides#setClassAllowList(String)
     * @deprecated Use {@link #setClassAllowList(String)} instead. Will be removed in 14.0.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.0")
    public void setClassWhiteList(final String allowListRegex) {
       setClassAllowList(allowListRegex);
    }
@@ -240,7 +232,7 @@ public abstract class AbstractRemoteCacheManagerFactory {
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.0")
    public void setKeySizeEstimate(final int keySizeEstimate) {
       this.configurationPropertiesOverrides.setKeySizeEstimate(keySizeEstimate);
    }
@@ -248,7 +240,7 @@ public abstract class AbstractRemoteCacheManagerFactory {
    /**
     * @deprecated Since 12.0, does nothing and will be removed in 15.0
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.0")
    public void setValueSizeEstimate(final int valueSizeEstimate) {
       this.configurationPropertiesOverrides.setValueSizeEstimate(valueSizeEstimate);
    }

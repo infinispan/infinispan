@@ -45,7 +45,7 @@ import java.util.Set;
  * org.infinispan.protostream.SerializationContextInitializer} and utilise ProtoStream annotations on Java objects instead, or
  * specify a custom {@link Marshaller} implementation via the SerializationConfiguration.
  */
-@Deprecated(forRemoval=true)
+@Deprecated(forRemoval=true, since = "10.0")
 public interface AdvancedExternalizer<T> extends Externalizer<T> {
 
    /**

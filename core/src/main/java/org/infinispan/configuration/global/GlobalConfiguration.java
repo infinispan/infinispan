@@ -70,7 +70,7 @@ public class GlobalConfiguration {
     * @return An empty {@code ThreadPoolConfiguration}.
     * @deprecated Since 11.0, no longer used.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    public ThreadPoolConfiguration persistenceThreadPool() {
       return cacheContainerConfiguration.persistenceThreadPool();
    }
@@ -79,7 +79,7 @@ public class GlobalConfiguration {
     * @return An empty {@code ThreadPoolConfiguration}.
     * @deprecated Since 11.0, no longer used.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    public ThreadPoolConfiguration asyncThreadPool() {
       return cacheContainerConfiguration.asyncThreadPool();
    }
@@ -131,7 +131,7 @@ public class GlobalConfiguration {
    /**
     * @deprecated Since 11.0, no longer used.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    public String asyncThreadPoolName() {
       return cacheContainer().asyncExecutor();
    }
@@ -151,7 +151,7 @@ public class GlobalConfiguration {
    /**
     * @deprecated Since 11.0, no longer used.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    public String persistenceThreadPoolName() {
       return cacheContainer().persistenceExecutor();
    }

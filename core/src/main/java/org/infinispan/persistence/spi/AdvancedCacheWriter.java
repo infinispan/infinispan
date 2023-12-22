@@ -12,7 +12,7 @@ import net.jcip.annotations.ThreadSafe;
  * @deprecated since 11.0 replaced by {@link NonBlockingStore}
  */
 @ThreadSafe
-@Deprecated(forRemoval=true)
+@Deprecated(forRemoval=true, since = "11.0")
 public interface AdvancedCacheWriter<K, V> extends CacheWriter<K, V> {
 
    /**

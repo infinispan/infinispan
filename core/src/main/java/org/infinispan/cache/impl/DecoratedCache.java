@@ -113,13 +113,13 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
       throw new UnsupportedOperationException("Encoding requires EncoderCache");
    }
 
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    @Override
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> wrapperClass) {
       throw new UnsupportedOperationException("Wrapping requires EncoderCache");
    }
 
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    @Override
    public AdvancedCache<K, V> withWrapping(Class<? extends Wrapper> keyWrapperClass, Class<? extends Wrapper> valueWrapperClass) {
       throw new UnsupportedOperationException("Wrapping requires EncoderCache");

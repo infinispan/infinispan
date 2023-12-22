@@ -758,7 +758,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          description = "Number of entries in the cache including passivated entries",
          displayName = "Number of current cache entries"
    )
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "14.0")
    public int getNumberOfEntries() {
       return globalConfiguration.metrics().accurateSize() ? cache.wired().withFlags(Flag.CACHE_MODE_LOCAL).size() : -1;
    }
@@ -767,7 +767,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          description = "Number of entries currently in-memory excluding expired entries",
          displayName = "Number of in-memory cache entries"
    )
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "14.0")
    public int getNumberOfEntriesInMemory() {
       return globalConfiguration.metrics().accurateSize() ? dataContainer.size() : -1;
    }
@@ -853,24 +853,6 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    )
    public long getTimeSinceStart() {
       return timeService.timeDuration(startNanoseconds.get(), TimeUnit.SECONDS);
-   }
-
-   /**
-    * Returns number of seconds since cache started
-    *
-    * @deprecated use {@link #getTimeSinceStart()} instead.
-    * @return number of seconds since cache started
-    */
-   @ManagedAttribute(
-         description = "Number of seconds since cache started",
-         displayName = "Seconds since cache started",
-         units = Units.SECONDS,
-         measurementType = MeasurementType.TRENDSUP
-   )
-   @Deprecated(forRemoval=true)
-   public long getElapsedTime() {
-      // backward compatibility as we renamed ElapsedTime to TimeSinceStart
-      return getTimeSinceStart();
    }
 
    @ManagedAttribute(

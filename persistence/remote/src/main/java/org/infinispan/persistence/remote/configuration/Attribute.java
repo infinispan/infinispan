@@ -37,7 +37,7 @@ public enum Attribute {
    /**
     * @deprecated Since 12.0, will be removed in 15.0
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.0")
    KEY_SIZE_ESTIMATE("key-size-estimate"),
    OUTBOUND_SOCKET_BINDING("outbound-socket-binding"),
    PASSWORD("password"),
@@ -61,7 +61,7 @@ public enum Attribute {
    /**
     * @deprecated Since 12.0, will be removed in 15.0
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.0")
    VALUE_SIZE_ESTIMATE("value-size-estimate");
 
    private final String name;

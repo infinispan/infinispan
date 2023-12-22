@@ -22,7 +22,7 @@ public interface StoreConfigurationChildBuilder<S> extends ConfigurationChildBui
     *
     * @deprecated since 14.0. This method does nothing. Only the first non shared store that supports publishEntries is used for state transfer.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "14.0")
    S fetchPersistentState(boolean b);
 
    /**

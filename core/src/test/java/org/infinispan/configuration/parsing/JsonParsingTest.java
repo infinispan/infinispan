@@ -32,6 +32,6 @@ public class JsonParsingTest extends AbstractInfinispanTest {
    public void testInvalidTracingCollector() throws Exception {
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), true, System.getProperties());
       ConfigurationBuilderHolder holder = parserRegistry.parseFile("configs/tracing-endpoint-wrong.json");
-      Exceptions.expectException("^ISPN000972:.*Tracing collector endoint 'sdjsd92k2..21232' is not valid.*", () -> holder.getGlobalConfigurationBuilder().build(), CacheConfigurationException.class);
+      Exceptions.expectException("^ISPN000972:.*Tracing collector endpoint 'sdjsd92k2..21232' is not valid.*", () -> holder.getGlobalConfigurationBuilder().build(), CacheConfigurationException.class);
    }
 }

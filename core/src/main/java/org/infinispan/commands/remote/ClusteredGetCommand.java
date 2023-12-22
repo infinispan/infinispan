@@ -23,7 +23,6 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -113,11 +112,6 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand implements Seg
                   return rv;
                }
             });
-   }
-
-   @Deprecated(forRemoval=true)
-   public GlobalTransaction getGlobalTransaction() {
-      return null;
    }
 
    @Override

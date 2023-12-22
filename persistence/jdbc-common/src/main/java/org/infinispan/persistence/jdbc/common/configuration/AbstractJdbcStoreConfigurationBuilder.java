@@ -94,7 +94,7 @@ public abstract class AbstractJdbcStoreConfigurationBuilder<T extends AbstractJd
    /**
     * @deprecated since 14.0 is ignored
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "14.0")
    public S dbMajorVersion(Integer majorVersion) {
       return self();
    }
@@ -102,7 +102,7 @@ public abstract class AbstractJdbcStoreConfigurationBuilder<T extends AbstractJd
    /**
     * @deprecated since 14.0 is ignored
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "14.0")
    public S dbMinorVersion(Integer minorVersion) {
       return self();
    }

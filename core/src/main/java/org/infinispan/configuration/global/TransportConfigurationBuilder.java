@@ -8,7 +8,6 @@ import static org.infinispan.configuration.global.TransportConfiguration.MACHINE
 import static org.infinispan.configuration.global.TransportConfiguration.NODE_NAME;
 import static org.infinispan.configuration.global.TransportConfiguration.RACK_ID;
 import static org.infinispan.configuration.global.TransportConfiguration.RAFT_MEMBERS;
-import static org.infinispan.configuration.global.TransportConfiguration.REMOTE_EXECUTOR;
 import static org.infinispan.configuration.global.TransportConfiguration.SITE_ID;
 import static org.infinispan.configuration.global.TransportConfiguration.STACK;
 import static org.infinispan.configuration.global.TransportConfiguration.TRANSPORT_EXECUTOR;
@@ -227,14 +226,9 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       return this;
    }
 
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    public TransportConfigurationBuilder transportExecutor(String threadPoolName) {
       attributes.attribute(TRANSPORT_EXECUTOR).set(threadPoolName);
-      return this;
-   }
-
-   public TransportConfigurationBuilder remoteExecutor(String threadPoolName) {
-      attributes.attribute(REMOTE_EXECUTOR).set(threadPoolName);
       return this;
    }
 

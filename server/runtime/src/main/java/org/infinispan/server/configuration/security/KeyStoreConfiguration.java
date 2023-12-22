@@ -46,7 +46,7 @@ import org.wildfly.security.x500.X500;
 public class KeyStoreConfiguration extends ConfigurationElement<KeyStoreConfiguration> {
    static final AttributeDefinition<String> ALIAS = AttributeDefinition.builder(Attribute.ALIAS, null, String.class).build();
    static final AttributeDefinition<String> GENERATE_SELF_SIGNED_CERTIFICATE_HOST = AttributeDefinition.builder(Attribute.GENERATE_SELF_SIGNED_CERTIFICATE_HOST, null, String.class).build();
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "14.0")
    static final AttributeDefinition<Supplier<CredentialSource>> KEY_PASSWORD = AttributeDefinition.builder(Attribute.KEY_PASSWORD, null, (Class<Supplier<CredentialSource>>) (Class<?>) Supplier.class)
          .serializer(ServerConfigurationSerializer.CREDENTIAL).build();
    static final AttributeDefinition<Supplier<CredentialSource>> KEYSTORE_PASSWORD = AttributeDefinition.builder(Attribute.PASSWORD, null, (Class<Supplier<CredentialSource>>) (Class<?>) Supplier.class)

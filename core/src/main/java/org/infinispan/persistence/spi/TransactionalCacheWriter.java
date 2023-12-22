@@ -20,7 +20,7 @@ import jakarta.transaction.Transaction;
  * @since 9.0
  * @deprecated since 11.0 replaced by {@link NonBlockingStore}
  */
-@Deprecated(forRemoval=true)
+@Deprecated(forRemoval=true, since = "11.0")
 public interface TransactionalCacheWriter<K, V> extends AdvancedCacheWriter<K, V> {
 
    /**

@@ -21,14 +21,14 @@ public interface DistributionManager {
     * @return the consistent hash used for reading.
     * @deprecated Since 11.0, to be removed in 14.0. Please use {@link #getCacheTopology()} instead.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    ConsistentHash getReadConsistentHash();
 
    /**
     * @return the consistent hash used for writing.
     * @deprecated Since 11.0, to be removed in 14.0. Please use {@link #getCacheTopology()} instead.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    ConsistentHash getWriteConsistentHash();
 
    /**
@@ -60,7 +60,7 @@ public interface DistributionManager {
    /**
     * @deprecated Internal only.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    void setCacheTopology(CacheTopology cacheTopology);
 
    LocalizedCacheTopology createLocalizedCacheTopology(CacheTopology cacheTopology);

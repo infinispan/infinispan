@@ -1,8 +1,11 @@
 package org.infinispan.client.hotrod.configuration;
 
+import static org.infinispan.client.hotrod.configuration.ExecutorFactoryConfiguration.FACTORY;
+import static org.infinispan.client.hotrod.configuration.ExecutorFactoryConfiguration.FACTORY_CLASS;
+import static org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration.PROPERTIES;
+
 import java.util.Properties;
 
-import org.infinispan.client.hotrod.impl.async.DefaultAsyncExecutorFactory;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -17,21 +20,16 @@ import org.infinispan.commons.util.Util;
  * @since 5.3
  */
 public class ExecutorFactoryConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<ExecutorFactoryConfiguration> {
-
-   private Class<? extends ExecutorFactory> factoryClass = DefaultAsyncExecutorFactory.class;
-   private ExecutorFactory factory;
-   private Properties properties;
-   private final ConfigurationBuilder builder;
+   private final AttributeSet attributes;
 
    ExecutorFactoryConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
-      this.builder = builder;
-      this.properties = new Properties();
+      this.attributes = ExecutorFactoryConfiguration.attributeDefinitionSet();
    }
 
    @Override
    public AttributeSet attributes() {
-      return AttributeSet.EMPTY;
+      return attributes;
    }
 
    /**
@@ -42,26 +40,19 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractConfigurationCh
     * @return this ExecutorFactoryConfig
     */
    public ExecutorFactoryConfigurationBuilder factoryClass(Class<? extends ExecutorFactory> factoryClass) {
-      this.factoryClass = factoryClass;
+      attributes.attribute(FACTORY_CLASS).set(factoryClass);
       return this;
    }
 
    public ExecutorFactoryConfigurationBuilder factoryClass(String factoryClass) {
-      this.factoryClass = Util.loadClass(factoryClass, ExecutorFactoryConfigurationBuilder.class.getClassLoader());
+      return factoryClass(Util.loadClass(factoryClass, builder.classLoader()));
+   }
+
+   public ExecutorFactoryConfigurationBuilder factory(ExecutorFactory factory) {
+      attributes.attribute(FACTORY).set(factory);
       return this;
    }
 
-   /**
-    * Specify factory class for executor
-    *
-    * @param factory
-    *           clazz
-    * @return this ExecutorFactoryConfig
-    */
-   public ExecutorFactoryConfigurationBuilder factory(ExecutorFactory factory) {
-      this.factory = factory;
-      return this;
-   }
 
    /**
     * Add key/value property pair to this executor factory configuration
@@ -73,41 +64,39 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractConfigurationCh
     * @return previous value if exists, null otherwise
     */
    public ExecutorFactoryConfigurationBuilder addExecutorProperty(String key, String value) {
-      this.properties.put(key, value);
+      attributes.attribute(PROPERTIES).get().put(key, value);
       return this;
    }
 
    /**
     * Set key/value properties to this executor factory configuration
     *
-    * @param props
-    *           Properties
+    * @param props Properties
     * @return this ExecutorFactoryConfig
     */
    public ExecutorFactoryConfigurationBuilder withExecutorProperties(Properties props) {
-      this.properties = props;
+      attributes.attribute(PROPERTIES).set(TypedProperties.toTypedProperties(props));
       return this;
    }
 
    @Override
+   public void validate() {
+      // No-op, no validation required
+   }
+
+   @Override
    public ExecutorFactoryConfiguration create() {
-      if (factory != null)
-         return new ExecutorFactoryConfiguration(factory, TypedProperties.toTypedProperties(properties));
-      else
-         return new ExecutorFactoryConfiguration(factoryClass, TypedProperties.toTypedProperties(properties));
+      return new ExecutorFactoryConfiguration(attributes.protect());
    }
 
    @Override
    public ExecutorFactoryConfigurationBuilder read(ExecutorFactoryConfiguration template, Combine combine) {
-      this.factory = template.factory();
-      this.factoryClass = template.factoryClass();
-      this.properties = template.properties();
-
+      attributes.read(template.attributes(), combine);
       return this;
    }
 
    @Override
    public String toString() {
-      return "ExecutorFactoryConfigurationBuilder [factoryClass=" + factoryClass + ", factory=" + factory + ", properties=" + properties + "]";
+      return "ExecutorFactoryConfigurationBuilder [attributes=" + attributes + "]";
    }
 }

@@ -505,11 +505,6 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
-   public ServerStatistics stats() {
-      return delegate.stats();
-   }
-
-   @Override
    public void stop() {
       delegate.stop();
    }

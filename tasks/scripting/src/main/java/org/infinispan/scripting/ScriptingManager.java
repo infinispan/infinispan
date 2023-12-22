@@ -19,7 +19,7 @@ public interface ScriptingManager {
    /**
     * @deprecated since 12.1. Will be removed in 15.0. Use the CREATE permission instead.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "12.1")
    String SCRIPT_MANAGER_ROLE = "___script_manager";
 
    /**

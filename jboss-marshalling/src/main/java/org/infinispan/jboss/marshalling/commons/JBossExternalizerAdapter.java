@@ -9,7 +9,7 @@ import org.infinispan.commons.marshall.Externalizer;
 /**
  * @deprecated since 11.0. To be removed in 14.0 ISPN-11947.
  */
-@Deprecated(forRemoval=true)
+@Deprecated(forRemoval=true, since = "11.0")
 public class JBossExternalizerAdapter implements org.jboss.marshalling.Externalizer {
    private static final long serialVersionUID = 8187679200599686076L;
 

@@ -39,13 +39,13 @@ public abstract class AbstractDelegatingTransport implements Transport {
       this.actual = actual;
    }
 
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "8.0")
    @Override
    public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter, boolean totalOrder, boolean anycast) throws Exception {
       return actual.invokeRemotely(rpcCommands, mode, timeout, usePriorityQueue, responseFilter, totalOrder, anycast);
    }
 
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "8.0")
    @Override
    public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode, long timeout, ResponseFilter responseFilter, DeliverOrder deliverOrder, boolean anycast) throws Exception {
       return actual.invokeRemotely(rpcCommands, mode, timeout, responseFilter, deliverOrder, anycast);

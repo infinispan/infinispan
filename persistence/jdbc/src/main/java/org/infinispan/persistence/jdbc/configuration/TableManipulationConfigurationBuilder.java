@@ -45,7 +45,7 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
    /**
     * @deprecated Please use {@link org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder#maxBatchSize(int)} instead.
     */
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "9.1")
    public S batchSize(int batchSize) {
       attributes.attribute(BATCH_SIZE).set(batchSize);
       maxBatchSize(batchSize);

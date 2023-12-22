@@ -128,16 +128,17 @@ public class TransportConfiguration {
       return siteId() != null || rackId() != null || machineId() != null;
    }
 
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    public ThreadPoolConfiguration transportThreadPool() {
       return transportThreadPool;
    }
 
-   @Deprecated(forRemoval=true)
+   @Deprecated(forRemoval=true, since = "11.0")
    public ThreadPoolConfiguration remoteCommandThreadPool() {
       return remoteCommandThreadPool;
    }
 
+   @Deprecated(forRemoval=true, since = "11.0")
    public String transportThreadPoolName() {
       return attributes.attribute(TRANSPORT_EXECUTOR).get();
    }
