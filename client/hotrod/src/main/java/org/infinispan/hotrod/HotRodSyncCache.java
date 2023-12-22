@@ -61,52 +61,52 @@ public class HotRodSyncCache<K, V> implements SyncCache<K, V> {
 
    @Override
    public CacheEntry<K, V> getEntry(K key, CacheOptions options) {
-      return await(remoteCache.getEntry(key, options));
+      return await(remoteCache.getEntry(key, options), options);
    }
 
    @Override
    public CacheEntry<K, V> put(K key, V value, CacheWriteOptions options) {
-      return await(remoteCache.put(key, value, options));
+      return await(remoteCache.put(key, value, options), options);
    }
 
    @Override
    public void set(K key, V value, CacheWriteOptions options) {
-      await(remoteCache.set(key, value, options));
+      await(remoteCache.set(key, value, options), options);
    }
 
    @Override
    public CacheEntry<K, V> putIfAbsent(K key, V value, CacheWriteOptions options) {
-      return await(remoteCache.putIfAbsent(key, value, options));
+      return await(remoteCache.putIfAbsent(key, value, options), options);
    }
 
    @Override
    public boolean setIfAbsent(K key, V value, CacheWriteOptions options) {
-      return await(remoteCache.setIfAbsent(key, value, options));
+      return await(remoteCache.setIfAbsent(key, value, options), options);
    }
 
    @Override
    public boolean replace(K key, V value, CacheEntryVersion version, CacheWriteOptions options) {
-      return await(remoteCache.replace(key, value, version, options));
+      return await(remoteCache.replace(key, value, version, options), options);
    }
 
    @Override
    public CacheEntry<K, V> getOrReplaceEntry(K key, V value, CacheEntryVersion version, CacheWriteOptions options) {
-      return await(remoteCache.getOrReplaceEntry(key, value, version, options));
+      return await(remoteCache.getOrReplaceEntry(key, value, version, options), options);
    }
 
    @Override
    public boolean remove(K key, CacheOptions options) {
-      return await(remoteCache.remove(key, options));
+      return await(remoteCache.remove(key, options), options);
    }
 
    @Override
    public boolean remove(K key, CacheEntryVersion version, CacheOptions options) {
-      return await(remoteCache.remove(key, version, options));
+      return await(remoteCache.remove(key, version, options), options);
    }
 
    @Override
    public CacheEntry<K, V> getAndRemove(K key, CacheOptions options) {
-      return await(remoteCache.getAndRemove(key, options));
+      return await(remoteCache.getAndRemove(key, options), options);
    }
 
    @Override
@@ -121,7 +121,7 @@ public class HotRodSyncCache<K, V> implements SyncCache<K, V> {
 
    @Override
    public void putAll(Map<K, V> entries, CacheWriteOptions options) {
-      await(remoteCache.putAll(entries, options));
+      await(remoteCache.putAll(entries, options), options);
    }
 
    @Override
@@ -150,12 +150,12 @@ public class HotRodSyncCache<K, V> implements SyncCache<K, V> {
 
    @Override
    public long estimateSize(CacheOptions options) {
-      return await(remoteCache.estimateSize(options));
+      return await(remoteCache.estimateSize(options), options);
    }
 
    @Override
    public void clear(CacheOptions options) {
-      await(remoteCache.clear(options));
+      await(remoteCache.clear(options), options);
    }
 
    @Override

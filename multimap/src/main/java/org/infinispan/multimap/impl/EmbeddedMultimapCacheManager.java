@@ -1,7 +1,5 @@
 package org.infinispan.multimap.impl;
 
-import java.util.Collection;
-
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -14,7 +12,7 @@ import org.infinispan.multimap.api.embedded.MultimapCacheManager;
  * @author Katia Aresti, karesti@redhat.com
  * @since 9.2
  */
-public class EmbeddedMultimapCacheManager<K, V> implements MultimapCacheManager<K, V> {
+public class EmbeddedMultimapCacheManager implements MultimapCacheManager {
 
    private final EmbeddedCacheManager cacheManager;
 
@@ -28,10 +26,9 @@ public class EmbeddedMultimapCacheManager<K, V> implements MultimapCacheManager<
    }
 
    @Override
-   public MultimapCache<K, V> get(String name, boolean supportsDuplicates) {
-      Cache<K, Collection<V>> cache = cacheManager.getCache(name, true);
-      EmbeddedMultimapCache multimapCache = new EmbeddedMultimapCache(cache, supportsDuplicates);
-      return multimapCache;
+   public <K, V> MultimapCache<K, V> get(String name, boolean supportsDuplicates) {
+      Cache<K, Bucket<V>> cache = cacheManager.getCache(name, true);
+      return new EmbeddedMultimapCache<>(cache, supportsDuplicates);
    }
 
    /**
@@ -40,7 +37,7 @@ public class EmbeddedMultimapCacheManager<K, V> implements MultimapCacheManager<
     * @param cacheName, name of the cache
     * @return EmbeddedMultimapListCache
     */
-   public EmbeddedMultimapListCache<K, V> getMultimapList(String cacheName) {
+   public <K, V> EmbeddedMultimapListCache<K, V> getMultimapList(String cacheName) {
       Cache<K, ListBucket<V>> cache = cacheManager.getCache(cacheName);
       if (cache == null) {
          throw new IllegalStateException("Cache must exist: " + cacheName);
@@ -54,7 +51,7 @@ public class EmbeddedMultimapCacheManager<K, V> implements MultimapCacheManager<
     * @param cacheName, name of the cache
     * @return EmbeddedMultimapSortedSetCache
     */
-   public EmbeddedMultimapSortedSetCache<K, V> getMultimapSortedSet(String cacheName) {
+   public <K, V>EmbeddedMultimapSortedSetCache<K, V> getMultimapSortedSet(String cacheName) {
       Cache<K, SortedSetBucket<V>> cache = cacheManager.getCache(cacheName);
       if (cache == null) {
          throw new IllegalStateException("Cache must exist: " + cacheName);
@@ -62,7 +59,7 @@ public class EmbeddedMultimapCacheManager<K, V> implements MultimapCacheManager<
       return new EmbeddedMultimapSortedSetCache<>(cache);
    }
 
-   public <HK, HV> EmbeddedMultimapPairCache<K, HK, HV> getMultimapPair(String cacheName) {
+   public <K, HK, HV> EmbeddedMultimapPairCache<K, HK, HV> getMultimapPair(String cacheName) {
       Cache<K, HashMapBucket<HK, HV>> cache = cacheManager.getCache(cacheName);
       if (cache == null) {
          throw new IllegalStateException("Cache must exist: " + cacheName);

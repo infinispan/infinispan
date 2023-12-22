@@ -63,7 +63,6 @@ public class HotRodSyncContainer implements SyncContainer {
 
    @Override
    public void listen(SyncContainerListener listener, ContainerListenerEventType... types) {
-
    }
 
    @Override

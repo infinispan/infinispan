@@ -1,0 +1,3 @@
+<infinispan xmlns="urn:infinispan:config:15.0">
+    <cache-container name="uri"/>
+</infinispan>

@@ -89,11 +89,11 @@ public interface CacheEntryExpiration {
       @Override
       public String toString() {
          if (this == IMMORTAL) {
-            return "Impl{IMMORTAL}";
+            return "{IMMORTAL}";
          } else if (this == DEFAULT) {
-            return "Impl{DEFAULT}";
+            return "{DEFAULT}";
          } else {
-            return "Impl{" +
+            return "{" +
                   "lifespan=" + lifespan +
                   ", maxIdle=" + maxIdle +
                   '}';

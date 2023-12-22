@@ -1,4 +1,4 @@
-package org.infinispan.api.common.events.cache;
+package org.infinispan.api.common.events.container;
 
 import org.infinispan.api.common.events.container.ContainerEvent;
 

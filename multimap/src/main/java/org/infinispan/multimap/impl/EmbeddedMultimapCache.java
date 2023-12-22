@@ -201,4 +201,9 @@ public class EmbeddedMultimapCache<K, V> implements MultimapCache<K, V> {
    public Cache<K, Bucket<V>> getCache() {
       return cache;
    }
+
+   @Override
+   public String getName() {
+      return cache.getName();
+   }
 }
