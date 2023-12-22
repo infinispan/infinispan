@@ -17,8 +17,6 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
 
    public static final AttributeDefinition<String> PROXY_HOST = AttributeDefinition.builder(Attribute.EXTERNAL_HOST, null, String.class).immutable().build();
    public static final AttributeDefinition<Integer> PROXY_PORT = AttributeDefinition.builder(Attribute.EXTERNAL_PORT, -1).immutable().build();
-   // The Hot Rod server has a different default
-   public static final AttributeDefinition<Integer> WORKER_THREADS = AttributeDefinition.builder("worker-threads", 160).immutable().build();
 
    private final TopologyCacheConfiguration topologyCache;
    private final AuthenticationConfiguration authentication;
@@ -26,7 +24,7 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration {
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(HotRodServerConfiguration.class, ProtocolServerConfiguration.attributeDefinitionSet(),
-            WORKER_THREADS, PROXY_HOST, PROXY_PORT);
+            PROXY_HOST, PROXY_PORT);
    }
 
    HotRodServerConfiguration(AttributeSet attributes,

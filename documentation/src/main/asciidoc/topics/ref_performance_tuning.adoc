@@ -79,18 +79,6 @@ The recommended values are:
 * send window size - 640 KB
 * receive window size - 25 MB
 
-== Number of threads for Hot Rod connectors
-
-The Hot Rod connector for {brandname} server uses worker threads that are
-activated by clients requests. It is important to match the number of worker
-threads to the number of concurrent client requests:
-
-[source,xml,options="nowrap",subs=attributes+]
-.Hot Rod Server worker thread pool size
-----
-include::xml/hotrod_worker_threads.xml[]
-----
-
 == SSL provider
 
 {brandname} server will automatically use the native implementation of the OpenSSL libraries on supported platforms to
