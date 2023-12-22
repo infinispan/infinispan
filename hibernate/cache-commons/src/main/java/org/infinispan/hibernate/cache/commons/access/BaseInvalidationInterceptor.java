@@ -23,7 +23,6 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
-import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
@@ -65,7 +64,7 @@ public abstract class BaseInvalidationInterceptor extends BaseRpcInterceptor imp
 		return this.statisticsEnabled;
 	}
 
-	public void setStatisticsEnabled(@Parameter(name = "enabled", description = "Whether statistics should be enabled or disabled (true/false)") boolean enabled) {
+	public void setStatisticsEnabled(boolean enabled) {
 		this.statisticsEnabled = enabled;
 	}
 
