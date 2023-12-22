@@ -3,7 +3,10 @@ package org.infinispan.marshall.exts;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.irac.IracCleanupKeysCommand;
@@ -15,6 +18,7 @@ import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneRemoteSiteCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
 import org.infinispan.commands.irac.IracUpdateVersionCommand;
+import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.remote.CheckTransactionRpcCommand;
@@ -43,8 +47,8 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.notifications.cachelistener.cluster.MultiClusterEventCommand;
 import org.infinispan.reactive.publisher.impl.commands.batch.CancelPublisherCommand;
@@ -78,17 +82,23 @@ import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
  * @since 5.1
  */
 public final class CacheRpcCommandExternalizer extends AbstractExternalizer<CacheRpcCommand> {
-   private final GlobalComponentRegistry gcr;
    private final ReplicableCommandExternalizer cmdExt;
+   private final Collection<ModuleCommandFactory> moduleCommandFactories;
 
    public CacheRpcCommandExternalizer(GlobalComponentRegistry gcr, ReplicableCommandExternalizer cmdExt) {
+      this.moduleCommandFactories = ((Map<Byte, ModuleCommandFactory>) gcr.getComponent(KnownComponentNames.MODULE_COMMAND_FACTORIES)).values();
       this.cmdExt = cmdExt;
-      this.gcr = gcr;
    }
 
    @Override
    public Set<Class<? extends CacheRpcCommand>> getTypeClasses() {
-      Set<Class<? extends CacheRpcCommand>> coreCommands = Util.asSet(LockControlCommand.class,
+      Set<Class<? extends CacheRpcCommand>> collect = moduleCommandFactories.stream()
+            .map(ModuleCommandFactory::getModuleCommands)
+            .flatMap(m -> m.values().stream())
+            .filter(CacheRpcCommand.class::isAssignableFrom)
+            .map(c -> (Class<CacheRpcCommand>) c)
+            .collect(Collectors.toSet());
+      collect.addAll(Set.of(LockControlCommand.class,
             StateResponseCommand.class, ClusteredGetCommand.class,
             SingleRpcCommand.class, CommitCommand.class,
             PrepareCommand.class, RollbackCommand.class,
@@ -124,10 +134,8 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
             IracTombstoneCleanupCommand.class,
             IracTombstoneStateResponseCommand.class,
             IracTombstonePrimaryCheckCommand.class,
-            IracTombstoneRemoteSiteCheckCommand.class);
-      // Only interested in cache specific replicable commands
-      coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());
-      return coreCommands;
+            IracTombstoneRemoteSiteCheckCommand.class));
+      return collect;
    }
 
    @Override
