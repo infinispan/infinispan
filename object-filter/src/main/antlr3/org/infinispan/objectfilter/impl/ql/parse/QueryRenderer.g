@@ -232,6 +232,7 @@ propertyReferenceExpression
 function
 	: setFunction
 	| versionFunction
+	| scoreFunction
 	| standardFunction
 	;
 
@@ -246,6 +247,10 @@ setFunction
 
 versionFunction
    : 	^(VERSION { delegate.projectVersion(); } ALIAS_REF)
+   ;
+
+scoreFunction
+   : 	^(SCORE { delegate.projectScore(); } ALIAS_REF)
    ;
 
 standardFunction

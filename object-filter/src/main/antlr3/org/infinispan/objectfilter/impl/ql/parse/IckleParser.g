@@ -308,6 +308,7 @@ additiveExpression
    |  standardFunction
    |  setFunction
    |  versionFunction
+   |  scoreFunction
    |  collectionExpression
    |  atom
    ;
@@ -333,6 +334,10 @@ indexFunction
 
 versionFunction
    :   version_key^ LPAREN! aliasReference RPAREN!
+   ;
+
+scoreFunction
+   :   score_key^ LPAREN! aliasReference RPAREN!
    ;
 
 setFunction
@@ -485,6 +490,10 @@ count_key
 
 version_key
    :   {validateSoftKeyword("version")}?=> IDENTIFIER -> VERSION[$IDENTIFIER]
+	;
+
+score_key
+   :   {validateSoftKeyword("score")}?=> IDENTIFIER -> SCORE[$IDENTIFIER]
 	;
 
 size_key
