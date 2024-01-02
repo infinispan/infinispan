@@ -297,7 +297,7 @@
       <versionx.org.apache.lucene.lucene-join>${version.lucene}</versionx.org.apache.lucene.lucene-join>
       <versionx.org.apache.lucene.lucene-misc>${version.lucene}</versionx.org.apache.lucene.lucene-misc>
       <versionx.org.apache.lucene.lucene-queryparser>${version.lucene}</versionx.org.apache.lucene.lucene-queryparser>
-      <versionx.org.apache.maven.maven-core>${version.maven}</versionx.org.apache.maven.maven-core>
+      <versionx.org.apache.maven.maven-core>3.9.6</versionx.org.apache.maven.maven-core>
       <versionx.org.apache.maven.maven-plugin-api>${version.maven}</versionx.org.apache.maven.maven-plugin-api>
       <versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>3.6.4</versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>
       <versionx.org.aspectj.aspectjweaver>1.8.1</versionx.org.aspectj.aspectjweaver>
