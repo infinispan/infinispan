@@ -15,7 +15,7 @@
 
     <properties>
         <test.image>infinispan-quarkus-test</test.image>
-        <version.fabric8.maven.plugin>0.42.1</version.fabric8.maven.plugin>
+        <version.fabric8.maven.plugin>0.43.4</version.fabric8.maven.plugin>
     </properties>
 
     <dependencies>
