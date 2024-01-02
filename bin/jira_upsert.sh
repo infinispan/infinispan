@@ -26,7 +26,7 @@ EOF
 
 PROJECT=$(curl -H @headers $API_URL/project/${PROJECT_KEY})
 PROJECT_ID=$(echo ${PROJECT} | jq -r .id)
-ISSUE_TYPE_ID=$(echo ${PROJECT} | jq -r '.issueTypes[] | select(.name=="${TYPE}").id')
+ISSUE_TYPE_ID=$(echo ${PROJECT} | jq -r ".issueTypes[] | select(.name==\"${TYPE}\").id")
 
 JQL="project = ${PROJECT_KEY} AND summary ~ '${SUMMARY}'"
 # Search issues for existing Jira ticket
