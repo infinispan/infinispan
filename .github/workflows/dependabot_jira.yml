@@ -4,14 +4,17 @@ on:
   pull_request:
     branches:
       - main
+      - 14.0.x
+
     types:
       - opened
+      - reopened
 
 jobs:
   create_jira:
     name: Dependabot Jira
     runs-on: ubuntu-latest
-    if: github.actor == 'dependabot[bot]'
+#    if: github.actor == 'dependabot[bot]'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -19,11 +22,22 @@ jobs:
       - name: Extract Jira Summary
         run: echo SUMMARY=$(echo ${{ github.event.pull_request.title }} | grep -oP '(?<=Bump )(.*)(?=from)|(?<=to )(.*)' | tr -d '\n') >> $GITHUB_ENV
 
-      - name: Create Jira Ticket
-        uses: ./.github/actions/create-jira
+      - name: Create or Update Jira Ticket
+        uses: ./.github/actions/jira-upsert
         with:
           token: ${{ secrets.JIRA_API_TOKEN }}
           project: ISPN
           summary: ${{ env.SUMMARY }}
           type: Component Upgrade
           pullRequest: ${{ github.event.pull_request.html_url }}
+
+      - name: Add comment to PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '${{ env.JIRA_TICKET_URL }}'
+            })
