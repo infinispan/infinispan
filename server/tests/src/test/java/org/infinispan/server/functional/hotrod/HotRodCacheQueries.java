@@ -260,13 +260,13 @@ public class HotRodCacheQueries {
       query.setParameter("a", center.getByteEmbedding());
       query.setParameter("k", 3);
       List<Image> list = query.list();
-      Assertions.assertThat(list).extracting("name").containsExactly("bla-7", "bla-6", "bla-8");
+      Assertions.assertThat(list).extracting(image -> image.getName()).containsExactly("bla-7", "bla-6", "bla-8");
 
       query = remoteCache.query("from query.domain.Image i where i.floatEmbedding <-> [:a]~:k");
       query.setParameter("a", center.getFloatEmbedding());
       query.setParameter("k", 3);
       list = query.list();
-      Assertions.assertThat(list).extracting("name").containsExactly("bla-7", "bla-6", "bla-8");
+      Assertions.assertThat(list).extracting(image -> image.getName()).containsExactly("bla-7", "bla-6", "bla-8");
    }
 
    @Test
