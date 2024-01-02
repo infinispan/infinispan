@@ -107,6 +107,7 @@ tokens {
   OUTER;
   PROPERTIES;
   RIGHT;
+  SCORE;
   SELECT;
   SIZE;
   SOME;

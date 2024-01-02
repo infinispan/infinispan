@@ -627,6 +627,24 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       projectedNullMarkers.add(null);
    }
 
+   @Override
+   public void projectScore() {
+      if (phase != Phase.SELECT) {
+         return; // do nothing
+      }
+
+      if (projections == null) {
+         projections = new ArrayList<>(ARRAY_INITIAL_LENGTH);
+         projectedTypes = new ArrayList<>(ARRAY_INITIAL_LENGTH);
+         projectedNullMarkers = new ArrayList<>(ARRAY_INITIAL_LENGTH);
+      }
+
+      // TODO ISPN-15390 Project the score (not the version!)
+      projections.add(new VersionPropertyPath<>());
+      projectedTypes.add(Object.class); // Usually a core module EntryVersion
+      projectedNullMarkers.add(null);
+   }
+
    /**
     * Add field sort criteria.
     *
