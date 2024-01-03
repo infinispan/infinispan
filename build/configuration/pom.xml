@@ -205,11 +205,9 @@
       <version.quarkus>3.6.2</version.quarkus>
       <version.graalvm>23.0.1</version.graalvm>
       <version.jandex>3.1.6</version.jandex>
-      <version.quarkus.opentelemetry>1.30.1</version.quarkus.opentelemetry>
-      <version.quarkus.opentelemetry.alpha>1.30.0-alpha</version.quarkus.opentelemetry.alpha>
 
-      <version.opentelemetry>${version.quarkus.opentelemetry}</version.opentelemetry>
-      <version.opentelemetry.alpha>${version.quarkus.opentelemetry.alpha}</version.opentelemetry.alpha>
+      <version.opentelemetry>1.30.1</version.opentelemetry>
+      <version.opentelemetry.alpha>1.30.0-alpha</version.opentelemetry.alpha>
 
       <version.smallrye-mutiny>2.2.0</version.smallrye-mutiny>
       <!-- Spring 6, Spring Boot 3 versions -->
@@ -225,7 +223,7 @@
       <version.checkstyle.maven-plugin>3.3.0</version.checkstyle.maven-plugin>
       <version.native.maven.plugin>0.9.22</version.native.maven.plugin>
       <version.maven>3.8.2</version.maven>
-      <version.maven.antlr3>${version.antlr3}</version.maven.antlr3>
+      <version.maven.antlr3>3.5.2</version.maven.antlr3>
       <version.maven.antrun>3.1.0</version.maven.antrun>
       <version.maven.buildhelper>3.4.0</version.maven.buildhelper>
       <version.maven.bundle>4.2.1</version.maven.bundle>
