@@ -46,7 +46,7 @@ public class ConditionalMarkAsRollbackFunction extends TxFunction {
    public Byte apply(EntryView.ReadWriteEntryView<CacheXid, TxState> view) {
       if (view.find().isPresent()) {
          TxState state = view.get();
-         if (state.getStatus().value == expectStatus) {
+         if (state.getStatus().value == expectStatus || state.getStatus() == MARK_ROLLBACK) {
             view.set(state.setStatus(MARK_ROLLBACK, true, timeService));
             return OK.value;
          } else {
@@ -55,6 +55,13 @@ public class ConditionalMarkAsRollbackFunction extends TxFunction {
       } else {
          return NO_TRANSACTION.value;
       }
+   }
+
+   @Override
+   public String toString() {
+      return "ConditionalMarkAsRollbackFunction{" +
+            "expectStatus=" + expectStatus +
+            '}';
    }
 
    private static class Externalizer implements AdvancedExternalizer<ConditionalMarkAsRollbackFunction> {
