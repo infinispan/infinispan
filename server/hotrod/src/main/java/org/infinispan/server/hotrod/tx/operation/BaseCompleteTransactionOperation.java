@@ -3,8 +3,6 @@ package org.infinispan.server.hotrod.tx.operation;
 import static org.infinispan.remoting.transport.impl.VoidResponseCollector.validOnly;
 
 import java.util.Collection;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,11 +15,12 @@ import javax.transaction.xa.XAException;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.tx.TransactionBoundaryCommand;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.transport.Address;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.hotrod.HotRodHeader;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.logging.Log;
@@ -53,7 +52,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Pedro Ruivo
  * @since 9.4
  */
-abstract class BaseCompleteTransactionOperation implements CacheNameCollector, Runnable {
+abstract class BaseCompleteTransactionOperation<C1 extends TransactionBoundaryCommand, C2 extends CacheRpcCommand> implements CacheNameCollector, Runnable {
 
    private static final Log log = LogFactory.getLog(BaseCompleteTransactionOperation.class, Log.class);
 
@@ -73,8 +72,8 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
    BaseCompleteTransactionOperation(HotRodHeader header, HotRodServer server, Subject subject, XidImpl xid,
          BiConsumer<HotRodHeader, Integer> reply) {
       GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(server.getCacheManager());
-      this.globalTxTable = gcr.getComponent(GlobalTxTable.class);
-      this.blockingManager = gcr.getComponent(BlockingManager.class);
+      globalTxTable = gcr.getComponent(GlobalTxTable.class);
+      blockingManager = gcr.getComponent(BlockingManager.class);
       this.header = header;
       this.server = server;
       this.subject = subject;
@@ -84,7 +83,7 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
 
    @Override
    public final void expectedSize(int size) {
-      this.expectedCaches.set(size);
+      expectedCaches.set(size);
    }
 
    @Override
@@ -117,7 +116,7 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
     *
     * @return The completion command to broadcast to nodes in the cluster.
     */
-   abstract CacheRpcCommand buildRemoteCommand(Configuration configuration, CommandsFactory commandsFactory,
+   abstract C1 buildRemoteCommand(Configuration configuration, CommandsFactory commandsFactory,
          TxState state);
 
    /**
@@ -125,12 +124,12 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
     *
     * @return The forward command to send to the originator.
     */
-   abstract CacheRpcCommand buildForwardCommand(ByteString cacheName, long timeout);
+   abstract C2 buildForwardCommand(ByteString cacheName, long timeout);
 
    /**
     * When this node is the originator, this method is invoked to complete the transaction in the specific cache.
     */
-   abstract CompletionStage<Void> asyncCompleteLocalTransaction(AdvancedCache<?, ?> cache, long timeout);
+   abstract void asyncCompleteLocalTransaction(AdvancedCache<?, ?> cache, long timeout, AggregateCompletionStage<Void> stageCollector);
 
    /**
     * Invoked every time a cache is found to be involved in a transaction.
@@ -162,8 +161,11 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
       AggregateCompletionStage<Void> aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
       for (ByteString cacheName : cacheNames) {
          try {
-            aggregateCompletionStage.dependsOn(completeCache(cacheName));
+            completeCache(cacheName, aggregateCompletionStage);
          } catch (Throwable t) {
+            if (log.isTraceEnabled()) {
+               log.tracef(t, "[%s] Error while trying to complete transaction for cache %s", xid, cacheName);
+            }
             hasErrors = true;
          }
       }
@@ -173,58 +175,55 @@ abstract class BaseCompleteTransactionOperation implements CacheNameCollector, R
    /**
     * Completes the transaction for a specific cache.
     */
-   private CompletionStage<Void> completeCache(ByteString cacheName) throws Throwable {
+   private void completeCache(ByteString cacheName, AggregateCompletionStage<Void> stageCollector) throws Throwable {
       TxState state = globalTxTable.getState(new CacheXid(cacheName, xid));
       HotRodServer.ExtendedCacheInfo cacheInfo =
             server.getCacheInfo(cacheName.toString(), header.getVersion(), header.getMessageId(), true);
       AdvancedCache<?, ?> cache = server.cache(cacheInfo, header, subject);
-      RpcManager rpcManager = cache.getRpcManager();
-      if (rpcManager == null || rpcManager.getAddress().equals(state.getOriginator())) {
+      var distributionManager = cache.getDistributionManager();
+      var topology = distributionManager == null ? null : distributionManager.getCacheTopology();
+      if (topology == null || topology.getLocalAddress().equals(state.getOriginator())) {
          if (log.isTraceEnabled()) {
             log.tracef("[%s] Completing local executed transaction.", xid);
          }
-         return asyncCompleteLocalTransaction(cache, state.getTimeout());
-      } else if (rpcManager.getMembers().contains(state.getOriginator())) {
+         asyncCompleteLocalTransaction(cache, state.getTimeout(), stageCollector);
+      } else if (topology.getMembers().contains(state.getOriginator())) {
          if (log.isTraceEnabled()) {
             log.tracef("[%s] Forward remotely executed transaction to %s.", xid, state.getOriginator());
          }
-         return forwardCompleteCommand(cacheName, rpcManager, state);
+         forwardCompleteCommand(cacheName, state, cache.getRpcManager(), stageCollector);
       } else {
          if (log.isTraceEnabled()) {
             log.tracef("[%s] Originator, %s, left the cluster.", xid, state.getOriginator());
          }
-         return completeWithRemoteCommand(cache, rpcManager, state);
+         completeWithRemoteCommand(cache, state, cache.getRpcManager(), topology.getTopologyId(), stageCollector);
       }
    }
 
    /**
     * Completes the transaction in the cache when the originator no longer belongs to the cache topology.
     */
-   private CompletableFuture<Void> completeWithRemoteCommand(AdvancedCache<?, ?> cache, RpcManager rpcManager,
-         TxState state)
-         throws Throwable {
-      CommandsFactory commandsFactory = SecurityActions.getComponentRegistry(cache).getCommandsFactory();
-      CacheRpcCommand command = buildRemoteCommand(cache.getCacheConfiguration(), commandsFactory, state);
-      CompletableFuture<Void> remote = rpcManager
-            .invokeCommandOnAll(command, validOnly(), rpcManager.getSyncRpcOptions())
-            .handle(handler())
-            .toCompletableFuture();
-      CompletableFuture<Void> local = command.invokeAsync(cache.getComponentRegistry()).handle(handler()).toCompletableFuture();
-      return CompletableFuture.allOf(remote, local);
+   private void completeWithRemoteCommand(AdvancedCache<?, ?> cache, TxState state, RpcManager rpcManager,
+                                          int topologyId, AggregateCompletionStage<Void> stageCollector) throws Throwable {
+      var registry = SecurityActions.getCacheComponentRegistry(cache);
+      var commandsFactory = registry.getCommandsFactory();
+      var command = buildRemoteCommand(cache.getCacheConfiguration(), commandsFactory, state);
+      command.setTopologyId(topologyId);
+      stageCollector.dependsOn(rpcManager.invokeCommandOnAll(command, validOnly(), rpcManager.getSyncRpcOptions())
+            .handle(handler()));
+      stageCollector.dependsOn(command.invokeAsync(registry).handle(handler()));
    }
 
    /**
     * Completes the transaction in the cache when the originator is still in the cache topology.
     */
-   private CompletableFuture<Void> forwardCompleteCommand(ByteString cacheName, RpcManager rpcManager,
-         TxState state) {
+   private void forwardCompleteCommand(ByteString cacheName, TxState state, RpcManager rpcManager, AggregateCompletionStage<Void> stageCollector) {
       //TODO what if the originator crashes in the meanwhile?
       //actually, the reaper would rollback the transaction later...
-      Address originator = state.getOriginator();
-      CacheRpcCommand command = buildForwardCommand(cacheName, state.getTimeout());
-      return rpcManager.invokeCommand(originator, command, validOnly(), rpcManager.getSyncRpcOptions())
-            .handle(handler())
-            .toCompletableFuture();
+      var originator = state.getOriginator();
+      var command = buildForwardCommand(cacheName, state.getTimeout());
+      stageCollector.dependsOn(rpcManager.invokeCommand(originator, command, validOnly(), rpcManager.getSyncRpcOptions())
+            .handle(handler()));
    }
 
 }

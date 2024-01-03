@@ -2,21 +2,20 @@ package org.infinispan.server.hotrod.tx.operation;
 
 import static org.infinispan.server.hotrod.tx.operation.Util.commitLocalTransaction;
 
-import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
 import javax.security.auth.Subject;
-import javax.transaction.HeuristicCommitException;
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.HeuristicRollbackException;
-import javax.transaction.RollbackException;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
+import jakarta.transaction.HeuristicCommitException;
+import jakarta.transaction.HeuristicMixedException;
+import jakarta.transaction.HeuristicRollbackException;
+import jakarta.transaction.RollbackException;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.tx.TransactionBoundaryCommand;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
@@ -28,6 +27,7 @@ import org.infinispan.server.hotrod.tx.table.Status;
 import org.infinispan.server.hotrod.tx.table.TxState;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -36,12 +36,15 @@ import org.infinispan.util.logging.LogFactory;
  * @author Pedro Ruivo
  * @since 9.4
  */
-public class CommitTransactionOperation extends BaseCompleteTransactionOperation {
+public class CommitTransactionOperation extends BaseCompleteTransactionOperation<TransactionBoundaryCommand, ForwardCommitCommand> {
 
    private static final Log log = LogFactory.getLog(CommitTransactionOperation.class, Log.class);
 
    //TODO check if this class can implement the BiFunction interface!
    private final BiFunction<?, Throwable, Void> handler = (ignored, throwable) -> {
+      if (log.isTraceEnabled()) {
+         log.tracef("[%s] Handle response: value=%s, throwable=%s", xid, ignored, throwable);
+      }
       if (throwable != null) {
          while (throwable != null) {
             if (throwable instanceof HeuristicCommitException) {
@@ -108,11 +111,12 @@ public class CommitTransactionOperation extends BaseCompleteTransactionOperation
       notifyCacheCollected();
    }
 
+   @Override
    <T> BiFunction<T, Throwable, Void> handler() {
-      //noinspection unchecked
       return (BiFunction<T, Throwable, Void>) handler;
    }
 
+   @Override
    void sendReply() {
       int xaCode = XAResource.XA_OK;
       if (hasErrors) {
@@ -130,7 +134,7 @@ public class CommitTransactionOperation extends BaseCompleteTransactionOperation
    }
 
    @Override
-   CacheRpcCommand buildRemoteCommand(Configuration configuration, CommandsFactory commandsFactory, TxState state) {
+   TransactionBoundaryCommand buildRemoteCommand(Configuration configuration, CommandsFactory commandsFactory, TxState state) {
       if (configuration.transaction().lockingMode() == LockingMode.PESSIMISTIC) {
          //pessimistic locking commits in 1PC
          return commandsFactory.buildPrepareCommand(state.getGlobalTransaction(), state.getModifications(), true);
@@ -143,13 +147,13 @@ public class CommitTransactionOperation extends BaseCompleteTransactionOperation
    }
 
    @Override
-   CacheRpcCommand buildForwardCommand(ByteString cacheName, long timeout) {
+   ForwardCommitCommand buildForwardCommand(ByteString cacheName, long timeout) {
       return new ForwardCommitCommand(cacheName, xid, timeout);
    }
 
    @Override
-   CompletionStage<Void> asyncCompleteLocalTransaction(AdvancedCache<?, ?> cache, long timeout) {
-      return blockingManager.runBlocking(() -> {
+   void asyncCompleteLocalTransaction(AdvancedCache<?, ?> cache, long timeout, AggregateCompletionStage<Void> stageCollector) {
+      stageCollector.dependsOn(blockingManager.runBlocking(() -> {
          try {
             commitLocalTransaction(cache, xid, timeout);
          } catch (HeuristicMixedException e) {
@@ -160,7 +164,7 @@ public class CommitTransactionOperation extends BaseCompleteTransactionOperation
          } catch (Throwable t) {
             hasErrors = true;
          }
-      }, this);
+      }, this));
    }
 
 }

@@ -53,7 +53,7 @@ public class TxState {
       this.modifications = modifications == null ? null : Collections.unmodifiableList(modifications);
       this.recoverable = recoverable;
       this.timeout = timeout;
-      this.lastAccessTimeNs = accessTime;
+      lastAccessTimeNs = accessTime;
    }
 
 
@@ -118,6 +118,12 @@ public class TxState {
       return recoverable;
    }
 
+   public boolean isSameAs(GlobalTransaction globalTransaction, boolean recoverable, long timeout) {
+      return this.timeout == timeout &&
+            this.recoverable == recoverable &&
+            this.globalTransaction.equals(globalTransaction) &&
+            status == ACTIVE;
+   }
 
    @Override
    public String toString() {

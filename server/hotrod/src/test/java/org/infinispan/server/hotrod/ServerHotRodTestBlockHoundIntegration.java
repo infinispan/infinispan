@@ -2,10 +2,12 @@ package org.infinispan.server.hotrod;
 
 import org.infinispan.server.hotrod.counter.impl.TestCounterNotificationManager;
 import org.infinispan.server.hotrod.event.EventLogListener;
+import org.infinispan.transaction.xa.recovery.RecoveryManagerImpl;
 import org.kohsuke.MetaInfServices;
 
 import com.arjuna.ats.internal.arjuna.coordinator.ReaperThread;
 import com.arjuna.ats.internal.arjuna.coordinator.ReaperWorkerThread;
+
 import reactor.blockhound.BlockHound;
 import reactor.blockhound.integration.BlockHoundIntegration;
 
@@ -23,5 +25,8 @@ public class ServerHotRodTestBlockHoundIntegration implements BlockHoundIntegrat
       builder.allowBlockingCallsInside(EventLogListener.class.getName(), "onModified");
       builder.allowBlockingCallsInside(EventLogListener.class.getName(), "onRemoved");
       builder.allowBlockingCallsInside(EventLogListener.class.getName(), "onCustom");
+
+      // fetching in-doubt transactions from the local cache
+      builder.allowBlockingCallsInside(RecoveryManagerImpl.class.getName(), "getPreparedTransaction");
    }
 }
