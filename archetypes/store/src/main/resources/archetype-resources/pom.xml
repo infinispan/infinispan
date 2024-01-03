@@ -33,7 +33,7 @@
         <dependency>
             <groupId>org.kohsuke.metainf-services</groupId>
             <artifactId>metainf-services</artifactId>
-            <version>${versionx.org.kohsuke.metainf-services.metainf-services}</version>
+            <version>${version.metainf-services}</version>
         </dependency>
     </dependencies>
 

@@ -113,7 +113,7 @@
       <dependency>
          <groupId>org.junit.platform</groupId>
          <artifactId>junit-platform-suite</artifactId>
-         <version>${versionx.junit.platform}</version>
+         <version>${version.junit.platform}</version>
          <scope>test</scope>
       </dependency>
       <dependency>
