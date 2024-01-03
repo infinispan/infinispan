@@ -253,16 +253,10 @@
       <jboss.modules.settings.xml.url>file://${infinispan.root}/maven-settings.xml</jboss.modules.settings.xml.url>
 
       <!-- dependencies version -->
-      <versionx.ant-contrib.ant-contrib>${version.ant-contrib}</versionx.ant-contrib.ant-contrib>
-      <versionx.com.amazonaws>1.12.261</versionx.com.amazonaws>
-      <versionx.org.bouncycastle>${version.bouncycastle}</versionx.org.bouncycastle>
+      <versionx.com.amazonaws>1.12.621</versionx.com.amazonaws>
+      <versionx.org.infinispan.memcached-client>1.2.1</versionx.org.infinispan.memcached-client>
       <versionx.com.clearspring.analytics.stream>2.2.0</versionx.com.clearspring.analytics.stream>
       <versionx.com.esotericsoftware.kryo>4.0.2</versionx.com.esotericsoftware.kryo>
-      <versionx.com.fasterxml.jackson.core.jackson-annotations>${version.jackson}</versionx.com.fasterxml.jackson.core.jackson-annotations>
-      <versionx.com.fasterxml.jackson.core.jackson-core>${version.jackson}</versionx.com.fasterxml.jackson.core.jackson-core>
-      <versionx.com.fasterxml.jackson.core.jackson-databind>${version.jackson.databind}</versionx.com.fasterxml.jackson.core.jackson-databind>
-      <versionx.com.fasterxml.jackson.modules.jackson-modules-java8>${version.jackson}</versionx.com.fasterxml.jackson.modules.jackson-modules-java8>
-      <versionx.com.github.ben-manes.caffeine.caffeine>${version.caffeine}</versionx.com.github.ben-manes.caffeine.caffeine>
       <versionx.com.google.errorprone.error_prone_annotations>2.1.3</versionx.com.google.errorprone.error_prone_annotations>
       <versionx.com.google.guava.guava>32.1.1-jre</versionx.com.google.guava.guava>
       <versionx.com.google.testing.compile>0.18</versionx.com.google.testing.compile>
@@ -275,65 +269,26 @@
       <versionx.com.oracle.ojdbc.ojdbc8>19.3.0.0</versionx.com.oracle.ojdbc.ojdbc8>
       <versionx.com.squareup.okhttp3.ohhttp>${version.okhttp}</versionx.com.squareup.okhttp3.ohhttp>
       <versionx.com.squareup.protoparser>4.0.3</versionx.com.squareup.protoparser>
-      <versionx.com.thoughtworks.xstream.xstream>${version.xstream}</versionx.com.thoughtworks.xstream.xstream>
       <versionx.commons-dbcp.commons-dbcp>1.4</versionx.commons-dbcp.commons-dbcp>
       <versionx.commons-io.commons-io>2.8.0</versionx.commons-io.commons-io>
       <versionx.commons-logging.commons-logging>1.2</versionx.commons-logging.commons-logging>
       <versionx.de.javakaffee.kryo-serializers>0.41</versionx.de.javakaffee.kryo-serializers>
       <versionx.gnu.getopt.java-getopt>1.0.13</versionx.gnu.getopt.java-getopt>
-      <versionx.io.fabric8.kubernetes-client>${version.fabric8.kubernetes-client}</versionx.io.fabric8.kubernetes-client>
-      <versionx.io.netty.netty-buffer>${version.netty}</versionx.io.netty.netty-buffer>
-      <versionx.io.netty.netty-codec>${version.netty}</versionx.io.netty.netty-codec>
-      <versionx.io.netty.netty-codec-dns>${version.netty}</versionx.io.netty.netty-codec-dns>
-      <versionx.io.netty.netty-codec-http>${version.netty}</versionx.io.netty.netty-codec-http>
-      <versionx.io.netty.netty-codec-http2>${version.netty}</versionx.io.netty.netty-codec-http2>
-      <versionx.io.netty.netty-common>${version.netty}</versionx.io.netty.netty-common>
-      <versionx.io.netty.netty-handler>${version.netty}</versionx.io.netty.netty-handler>
-      <versionx.io.netty.netty-resolver>${version.netty}</versionx.io.netty.netty-resolver>
-      <versionx.io.netty.netty-resolver-dns>${version.netty}</versionx.io.netty.netty-resolver-dns>
-      <versionx.io.netty.netty-transport>${version.netty}</versionx.io.netty.netty-transport>
-      <versionx.io.netty.netty-transport-native-epoll>${version.netty}</versionx.io.netty.netty-transport-native-epoll>
-      <versionx.io.netty.netty-transport-native-unix-common>${version.netty}</versionx.io.netty.netty-transport-native-unix-common>
-      <versionx.io.protostuff.protostuff-collectionschema>${version.protostuff}</versionx.io.protostuff.protostuff-collectionschema>
-      <versionx.io.protostuff.protostuff-core>${version.protostuff}</versionx.io.protostuff.protostuff-core>
-      <versionx.io.protostuff.protostuff-runtime>${version.protostuff}</versionx.io.protostuff.protostuff-runtime>
-      <versionx.io.protostuff.protostuff-runtime-registry>${version.protostuff}</versionx.io.protostuff.protostuff-runtime-registry>
-      <versionx.io.reactivex.rxjava3.rxjava>${version.rxjava}</versionx.io.reactivex.rxjava3.rxjava>
       <versionx.javax.activation.activation>1.1.1</versionx.javax.activation.activation>
       <versionx.javax.annotation.javax.annotation-api>1.3.2</versionx.javax.annotation.javax.annotation-api>
       <versionx.javax.cache.cache-api>${version.javax.cache}</versionx.javax.cache.cache-api>
       <versionx.javax.cache.cache-tests>${version.javax.cache}</versionx.javax.cache.cache-tests>
       <versionx.javax.cache.cdi-weld-annotations-test-harness>${version.javax.cache}</versionx.javax.cache.cdi-weld-annotations-test-harness>
       <versionx.javax.inject.javax.inject>1</versionx.javax.inject.javax.inject>
-      <versionx.junit.junit>${version.junit}</versionx.junit.junit>
-      <versionx.junit.platform>${version.junit.platform}</versionx.junit.platform>
-      <versionx.junit.junit5>${version.junit5}</versionx.junit.junit5>
       <versionx.mysql.mysql-connector-java>8.0.28</versionx.mysql.mysql-connector-java>
       <versionx.net.spy.spymemcached>2.12.1</versionx.net.spy.spymemcached>
-      <versionx.org.aesh.aesh>${version.aesh}</versionx.org.aesh.aesh>
-      <versionx.org.aesh.readline>${version.aesh-readline}</versionx.org.aesh.readline>
       <versionx.org.antlr.antlr-runtime>3.5.2</versionx.org.antlr.antlr-runtime>
-      <versionx.org.apache.ant.ant>${version.ant}</versionx.org.apache.ant.ant>
       <versionx.org.apache.avro.avro>1.9.1</versionx.org.apache.avro.avro>
-      <versionx.org.apache.commons.commons-compress>${version.commons.compress}</versionx.org.apache.commons.commons-compress>
       <versionx.org.apache.commons.commons-lang3>3.9</versionx.org.apache.commons.commons-lang3>
       <versionx.org.apache.commons.commons-math>2.2</versionx.org.apache.commons.commons-math>
       <versionx.org.apache.directory.server.apacheds>2.0.0-M24</versionx.org.apache.directory.server.apacheds>
       <versionx.org.apache.mina.mina>2.0.22</versionx.org.apache.mina.mina>
       <versionx.org.apache.geronimo.components.geronimo-transaction>3.1.1</versionx.org.apache.geronimo.components.geronimo-transaction>
-      <versionx.org.apache.logging.log4j.log4j-api>${version.log4j}</versionx.org.apache.logging.log4j.log4j-api>
-      <versionx.org.apache.logging.log4j.log4j-core>${version.log4j}</versionx.org.apache.logging.log4j.log4j-core>
-      <versionx.org.apache.logging.log4j.log4j-slf4j-impl>${version.log4j}</versionx.org.apache.logging.log4j.log4j-slf4j-impl>
-      <versionx.org.apache.logging.log4j.log4j-jul>${version.log4j}</versionx.org.apache.logging.log4j.log4j-jul>
-      <versionx.org.apache.lucene.lucene-analyzers-common>${version.lucene}</versionx.org.apache.lucene.lucene-analyzers-common>
-      <versionx.org.apache.lucene.lucene-core>${version.lucene}</versionx.org.apache.lucene.lucene-core>
-      <versionx.org.apache.lucene.lucene-facet>${version.lucene}</versionx.org.apache.lucene.lucene-facet>
-      <versionx.org.apache.lucene.lucene-grouping>${version.lucene}</versionx.org.apache.lucene.lucene-grouping>
-      <versionx.org.apache.lucene.lucene-join>${version.lucene}</versionx.org.apache.lucene.lucene-join>
-      <versionx.org.apache.lucene.lucene-misc>${version.lucene}</versionx.org.apache.lucene.lucene-misc>
-      <versionx.org.apache.lucene.lucene-queryparser>${version.lucene}</versionx.org.apache.lucene.lucene-queryparser>
-      <versionx.org.apache.maven.maven-core>${version.maven}</versionx.org.apache.maven.maven-core>
-      <versionx.org.apache.maven.maven-plugin-api>${version.maven}</versionx.org.apache.maven.maven-plugin-api>
       <versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>3.6.4</versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>
       <versionx.org.aspectj.aspectjweaver>1.8.1</versionx.org.aspectj.aspectjweaver>
       <versionx.org.assertj.assertj-core>3.24.1</versionx.org.assertj.assertj-core>
@@ -341,38 +296,11 @@
       <versionx.org.codehaus.mojo.versions-maven-plugin>2.7</versionx.org.codehaus.mojo.versions-maven-plugin>
       <versionx.org.codehaus.mojo.xml-maven-plugin>1.0.2</versionx.org.codehaus.mojo.xml-maven-plugin>
       <versionx.org.dom4j.dom4j>2.1.3</versionx.org.dom4j.dom4j>
-      <versionx.org.glassfish.jaxb.jaxb-runtime>${version.glassfish.jaxb}</versionx.org.glassfish.jaxb.jaxb-runtime>
-      <versionx.org.hamcrest.hamcrest-core>${version.hamcrest}</versionx.org.hamcrest.hamcrest-core>
-      <versionx.org.hamcrest.hamcrest-library>${version.hamcrest}</versionx.org.hamcrest.hamcrest-library>
-      <versionx.org.hibernate.hibernate-core>${version.hibernate.core}</versionx.org.hibernate.hibernate-core>
-      <versionx.org.hibernate.search.hibernate-search-backend-lucene>${version.hibernate.search}</versionx.org.hibernate.search.hibernate-search-backend-lucene>
-      <versionx.org.hibernate.search.hibernate-search-mapper-pojo-base>${version.hibernate.search}</versionx.org.hibernate.search.hibernate-search-mapper-pojo-base>
-      <versionx.org.hibernate.hibernate-testing>${version.hibernate.core}</versionx.org.hibernate.hibernate-testing>
-      <versionx.org.jacoco.org.jacoco.agent>${version.jacoco}</versionx.org.jacoco.org.jacoco.agent>
       <versionx.org.javassist.javassist>3.29.1-GA</versionx.org.javassist.javassist>
       <versionx.org.jboss.arquillian.container.arquillian-weld-embedded>2.0.1.Final</versionx.org.jboss.arquillian.container.arquillian-weld-embedded>
-      <versionx.org.jboss.arquillian.junit.arquillian-junit-container>${version.arquillian}</versionx.org.jboss.arquillian.junit.arquillian-junit-container>
-      <versionx.org.jboss.arquillian.testng.arquillian-testng-container>${version.arquillian}</versionx.org.jboss.arquillian.testng.arquillian-testng-container>
-      <versionx.org.jboss.byteman.byteman>${version.byteman}</versionx.org.jboss.byteman.byteman>
-      <versionx.org.jboss.byteman.byteman-bmunit>${version.byteman}</versionx.org.jboss.byteman.byteman-bmunit>
-      <versionx.org.jboss.byteman.byteman-install>${version.byteman}</versionx.org.jboss.byteman.byteman-install>
-      <versionx.org.jboss.byteman.byteman-submit>${version.byteman}</versionx.org.jboss.byteman.byteman-submit>
       <versionx.org.jboss.jboss-common-core>2.2.16.GA</versionx.org.jboss.jboss-common-core>
       <versionx.org.jboss.jboss-transaction-spi-jakarta>7.6.1.Final</versionx.org.jboss.jboss-transaction-spi-jakarta>
-      <versionx.org.jboss.logging.jboss-logging>${version.jboss.logging}</versionx.org.jboss.logging.jboss-logging>
       <versionx.org.jboss.logging.jboss-logging-processor>2.2.1.Final</versionx.org.jboss.logging.jboss-logging-processor>
-      <versionx.org.jboss.marshalling.jboss-marshalling>${version.jboss.marshalling}</versionx.org.jboss.marshalling.jboss-marshalling>
-      <versionx.org.jboss.marshalling.jboss-marshalling-river>${version.jboss.marshalling}</versionx.org.jboss.marshalling.jboss-marshalling-river>
-      <versionx.org.jboss.naming.jnp-client>${version.jboss.naming}</versionx.org.jboss.naming.jnp-client>
-      <versionx.org.jboss.naming.jnpserver>${version.jboss.naming}</versionx.org.jboss.naming.jnpserver>
-      <versionx.org.jboss.security.jboss-negotiation-extras>${version.jboss.security}</versionx.org.jboss.security.jboss-negotiation-extras>
-      <versionx.org.jboss.shrinkwrap.depchain>${version.jboss.shrinkwrap}</versionx.org.jboss.shrinkwrap.depchain>
-      <versionx.org.jboss.shrinkwrap.descriptors.shrinkwrap-descriptors-impl-javaee>${version.jboss.shrinkwrap.descriptors}</versionx.org.jboss.shrinkwrap.descriptors.shrinkwrap-descriptors-impl-javaee>
-      <versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-api>${version.jboss.shrinkwrap.resolver}</versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-api>
-      <versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-api-maven>${version.jboss.shrinkwrap.resolver}</versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-api-maven>
-      <versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-depchain>${version.jboss.shrinkwrap.resolver}</versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-depchain>
-      <versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-impl-maven>${version.jboss.shrinkwrap.resolver}</versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-impl-maven>
-      <versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-impl-maven-archive>${version.jboss.shrinkwrap.resolver}</versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-impl-maven-archive>
       <versionx.org.jboss.spec.javax.ejb.jboss-ejb-api_3.2_spec>2.0.0.Final</versionx.org.jboss.spec.javax.ejb.jboss-ejb-api_3.2_spec>
       <versionx.org.jboss.spec.javax.jms.jboss-jms-api_2.0_spec>2.0.0.Final</versionx.org.jboss.spec.javax.jms.jboss-jms-api_2.0_spec>
       <versionx.org.jboss.spec.jboss-jakartaee-8.0>1.0.1.Final</versionx.org.jboss.spec.jboss-jakartaee-8.0>
@@ -382,52 +310,19 @@
       <versionx.org.jboss.weld.weld-api>3.1.SP1</versionx.org.jboss.weld.weld-api>
       <versionx.org.jgroups.aws.jgroups-aws>2.0.1.Final</versionx.org.jgroups.aws.jgroups-aws>
       <versionx.org.jgroups.azure.jgroups-azure>2.0.2.Final</versionx.org.jgroups.azure.jgroups-azure>
-      <versionx.org.jgroups.jgroups>${version.jgroups}</versionx.org.jgroups.jgroups>
-      <versionx.org.jgroups.jgroups-raft>${version.jgroups.raft}</versionx.org.jgroups.jgroups-raft>
       <versionx.org.jgroups.kubernetes.jgroups-kubernetes>2.0.1.Final</versionx.org.jgroups.kubernetes.jgroups-kubernetes>
       <versionx.org.jsoup>1.15.3</versionx.org.jsoup>
-      <versionx.org.kohsuke.metainf-services.metainf-services>${version.metainf-services}</versionx.org.kohsuke.metainf-services.metainf-services>
-      <versionx.org.latencyutils.LatencyUtils>${version.latencyutils}</versionx.org.latencyutils.LatencyUtils>
       <versionx.org.mariadb.jdbc>2.7.3</versionx.org.mariadb.jdbc>
-      <versionx.org.mockito.mockito-core>${version.mockito}</versionx.org.mockito.mockito-core>
       <versionx.org.objectweb.howl.howl>1.0.1-1</versionx.org.objectweb.howl.howl>
-      <versionx.org.openjdk.jmh.jmh-core>${version.openjdk.jmh}</versionx.org.openjdk.jmh.jmh-core>
-      <versionx.org.openjdk.jmh.jmh-generator-annprocess>${version.openjdk.jmh}</versionx.org.openjdk.jmh.jmh-generator-annprocess>
-      <versionx.org.openjdk.nashorn>${version.nashorn}</versionx.org.openjdk.nashorn>
       <versionx.org.postgresql>42.4.1</versionx.org.postgresql>
-      <versionx.org.picketlink.picketlink-api>${version.picketlink}</versionx.org.picketlink.picketlink-api>
-      <versionx.org.reactivestreams.reactive-streams>${version.reactivestreams}</versionx.org.reactivestreams.reactive-streams>
-      <versionx.org.rocksdb.rocksdbjni>${version.rocksdb}</versionx.org.rocksdb.rocksdbjni>
-      <versionx.org.springframework.boot.spring-boot-starter>${version.spring.boot}</versionx.org.springframework.boot.spring-boot-starter>
-      <versionx.org.springframework.boot.spring-boot-starter-security>${version.spring.boot}</versionx.org.springframework.boot.spring-boot-starter-security>
-      <versionx.org.springframework.boot.spring-boot-starter-test>${version.spring.boot}</versionx.org.springframework.boot.spring-boot-starter-test>
-      <versionx.org.springframework.boot.spring-boot-starter-web>${version.spring.boot}</versionx.org.springframework.boot.spring-boot-starter-web>
-      <versionx.org.springframework.boot.spring-boot-starter-log4j2>${version.spring.boot}</versionx.org.springframework.boot.spring-boot-starter-log4j2>
-      <versionx.org.springframework.boot.spring-boot-configuration-processor>${version.spring.boot}</versionx.org.springframework.boot.spring-boot-configuration-processor>
-      <versionx.org.springframework.boot.spring-boot-starter-actuator>${version.spring.boot}</versionx.org.springframework.boot.spring-boot-starter-actuator>
-      <versionx.org.springframework.boot.spring-boot-autoconfigure-processor>${version.spring.boot}</versionx.org.springframework.boot.spring-boot-autoconfigure-processor>
-      <versionx.org.springframework.session.spring-session>${version.spring.session}</versionx.org.springframework.session.spring-session>
-      <versionx.org.springframework.spring-beans>${version.spring}</versionx.org.springframework.spring-beans>
-      <versionx.org.springframework.spring-context>${version.spring}</versionx.org.springframework.spring-context>
-      <versionx.org.springframework.spring-context-support>${version.spring}</versionx.org.springframework.spring-context-support>
-      <versionx.org.springframework.spring-core>${version.spring}</versionx.org.springframework.spring-core>
-      <versionx.org.springframework.spring-expression>${version.spring}</versionx.org.springframework.spring-expression>
-      <versionx.org.springframework.spring-jdbc>${version.spring}</versionx.org.springframework.spring-jdbc>
-      <versionx.org.springframework.spring-test>${version.spring}</versionx.org.springframework.spring-test>
       <versionx.org.testcontainers.testcontainers>1.18.0</versionx.org.testcontainers.testcontainers>
       <versionx.com.github.docker-java>3.3.0</versionx.com.github.docker-java>
-      <versionx.micrometer>${version.micrometer}</versionx.micrometer>
       <versionx.org.testng.testng>6.14.3</versionx.org.testng.testng>
       <versionx.org.twdata.maven.mojo-executor>2.4.0</versionx.org.twdata.maven.mojo-executor>
       <versionx.org.wildfly.arquillian.wildfly-arquillian-container-managed>${version.org.wildfly.arquillian}</versionx.org.wildfly.arquillian.wildfly-arquillian-container-managed>
       <versionx.org.wildfly.common.wildfly-common>1.5.4.Final</versionx.org.wildfly.common.wildfly-common>
       <versionx.org.wildfly.core.wildfly-core-testsuite-shared>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-core-testsuite-shared>
       <versionx.org.wildfly.maven.plugins.licenses-plugin>2.3.0.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
-      <versionx.org.wildfly.openssl.natives>${version.org.wildfly.openssl.natives}</versionx.org.wildfly.openssl.natives>
-      <versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64>${version.org.wildfly.openssl.natives.linux_x86_64}</versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64>
-      <versionx.org.wildfly.openssl.wildfly-openssl-macosx-x86_64>${version.org.wildfly.openssl.natives.macos_x86_64}</versionx.org.wildfly.openssl.wildfly-openssl-macosx-x86_64>
-      <versionx.org.wildfly.openssl.wildfly-openssl-windows-x86_64>${version.org.wildfly.openssl.natives.windows_x86_64}</versionx.org.wildfly.openssl.wildfly-openssl-windows-x86_64>
-      <versionx.org.wildfly.security.wildfly-elytron>${version.org.wildfly.elytron}</versionx.org.wildfly.security.wildfly-elytron>
       <versionx.org.xerial>3.41.2.2</versionx.org.xerial>
       <versionx.software.amazon.ion.java>1.0.2</versionx.software.amazon.ion.java>
       <versionx.sun.jdk.jconsole>jdk</versionx.sun.jdk.jconsole>
@@ -448,7 +343,7 @@
          <dependency>
             <groupId>ant-contrib</groupId>
             <artifactId>ant-contrib</artifactId>
-            <version>${versionx.ant-contrib.ant-contrib}</version>
+            <version>${version.ant-contrib}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
@@ -474,12 +369,12 @@
          <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcpkix-jdk15to18</artifactId>
-            <version>${versionx.org.bouncycastle}</version>
+            <version>${version.bouncycastle}</version>
          </dependency>
          <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk15on</artifactId>
-            <version>${versionx.org.bouncycastle}</version>
+            <version>${version.bouncycastle}</version>
          </dependency>
          <dependency>
             <groupId>com.clearspring.analytics</groupId>
@@ -500,32 +395,32 @@
          <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
-            <version>${versionx.com.fasterxml.jackson.core.jackson-annotations}</version>
+            <version>${version.jackson}</version>
          </dependency>
          <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>${versionx.com.fasterxml.jackson.core.jackson-core}</version>
+            <version>${version.jackson}</version>
          </dependency>
          <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${versionx.com.fasterxml.jackson.core.jackson-databind}</version>
+            <version>${version.jackson}</version>
          </dependency>
          <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jdk8</artifactId>
-            <version>${versionx.com.fasterxml.jackson.modules.jackson-modules-java8}</version>
+            <version>${version.jackson}</version>
          </dependency>
          <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>${versionx.com.fasterxml.jackson.core.jackson-databind}</version>
+            <version>${version.jackson}</version>
          </dependency>
          <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
-            <version>${versionx.com.github.ben-manes.caffeine.caffeine}</version>
+            <version>${version.caffeine}</version>
             <exclusions>
                <exclusion>
                   <groupId>org.checkerframework</groupId>
@@ -616,12 +511,12 @@
          <dependency>
             <groupId>com.thoughtworks.xstream</groupId>
             <artifactId>xstream</artifactId>
-            <version>${versionx.com.thoughtworks.xstream.xstream}</version>
+            <version>${version.xstream}</version>
          </dependency>
          <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
-            <version>${versionx.org.apache.commons.commons-compress}</version>
+            <version>${version.commons.compress}</version>
          </dependency>
          <dependency>
             <groupId>org.apache.sshd</groupId>
@@ -669,7 +564,7 @@
          <dependency>
             <groupId>io.fabric8</groupId>
             <artifactId>kubernetes-client</artifactId>
-            <version>${versionx.io.fabric8.kubernetes-client}</version>
+            <version>${version.fabric8.kubernetes-client}</version>
          </dependency>
          <dependency>
             <groupId>io.mashona</groupId>
@@ -752,74 +647,74 @@
          <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-buffer</artifactId>
-            <version>${versionx.io.netty.netty-buffer}</version>
+            <version>${version.netty}</version>
          </dependency>
          <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-codec</artifactId>
-            <version>${versionx.io.netty.netty-codec}</version>
+            <version>${version.netty}</version>
          </dependency>
-         <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-codec-dns</artifactId>
-            <version>${versionx.io.netty.netty-codec-dns}</version>
-         </dependency>
+          <dependency>
+              <groupId>io.netty</groupId>
+              <artifactId>netty-codec-dns</artifactId>
+              <version>${version.netty}</version>
+          </dependency>
          <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-codec-http</artifactId>
-            <version>${versionx.io.netty.netty-codec-http}</version>
+            <version>${version.netty}</version>
          </dependency>
          <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-codec-http2</artifactId>
-            <version>${versionx.io.netty.netty-codec-http2}</version>
+            <version>${version.netty}</version>
          </dependency>
          <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-common</artifactId>
-            <version>${versionx.io.netty.netty-common}</version>
+            <version>${version.netty}</version>
          </dependency>
          <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-handler</artifactId>
-            <version>${versionx.io.netty.netty-handler}</version>
+            <version>${version.netty}</version>
          </dependency>
          <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-resolver</artifactId>
-            <version>${versionx.io.netty.netty-resolver}</version>
+            <version>${version.netty}</version>
          </dependency>
          <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-resolver-dns</artifactId>
-            <version>${versionx.io.netty.netty-resolver-dns}</version>
+            <version>${version.netty}</version>
          </dependency>
          <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport</artifactId>
-            <version>${versionx.io.netty.netty-transport}</version>
+            <version>${version.netty}</version>
          </dependency>
          <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-native-epoll</artifactId>
-            <version>${versionx.io.netty.netty-transport-native-epoll}</version>
+            <version>${version.netty}</version>
          </dependency>
          <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-native-epoll</artifactId>
-            <version>${versionx.io.netty.netty-transport-native-epoll}</version>
+            <version>${version.netty}</version>
             <classifier>linux-x86_64</classifier>
          </dependency>
          <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-native-epoll</artifactId>
-            <version>${versionx.io.netty.netty-transport-native-epoll}</version>
+            <version>${version.netty}</version>
             <classifier>linux-aarch_64</classifier>
          </dependency>
          <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-native-unix-common</artifactId>
-            <version>${versionx.io.netty.netty-transport-native-unix-common}</version>
+            <version>${version.netty}</version>
          </dependency>
          <dependency>
             <groupId>io.netty.incubator</groupId>
@@ -841,27 +736,27 @@
          <dependency>
             <groupId>io.protostuff</groupId>
             <artifactId>protostuff-collectionschema</artifactId>
-            <version>${versionx.io.protostuff.protostuff-collectionschema}</version>
+            <version>${version.protostuff}</version>
          </dependency>
          <dependency>
             <groupId>io.protostuff</groupId>
             <artifactId>protostuff-core</artifactId>
-            <version>${versionx.io.protostuff.protostuff-core}</version>
+            <version>${version.protostuff}</version>
          </dependency>
          <dependency>
             <groupId>io.protostuff</groupId>
             <artifactId>protostuff-runtime</artifactId>
-            <version>${versionx.io.protostuff.protostuff-runtime}</version>
+            <version>${version.protostuff}</version>
          </dependency>
          <dependency>
             <groupId>io.protostuff</groupId>
             <artifactId>protostuff-runtime-registry</artifactId>
-            <version>${versionx.io.protostuff.protostuff-runtime-registry}</version>
+            <version>${version.protostuff}</version>
          </dependency>
          <dependency>
             <groupId>io.reactivex.rxjava3</groupId>
             <artifactId>rxjava</artifactId>
-            <version>${versionx.io.reactivex.rxjava3.rxjava}</version>
+            <version>${version.rxjava}</version>
          </dependency>
          <dependency>
             <groupId>io.lettuce</groupId>
@@ -893,18 +788,18 @@
          <dependency>
             <groupId>javax.cache</groupId>
             <artifactId>cache-api</artifactId>
-            <version>${versionx.javax.cache.cache-api}</version>
+            <version>${version.javax.cache}</version>
          </dependency>
          <dependency>
             <groupId>javax.cache</groupId>
             <artifactId>cache-tests</artifactId>
-            <version>${versionx.javax.cache.cache-tests}</version>
+            <version>${version.javax.cache}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>javax.cache</groupId>
             <artifactId>cache-tests</artifactId>
-            <version>${versionx.javax.cache.cache-tests}</version>
+            <version>${version.javax.cache}</version>
             <scope>test</scope>
             <classifier>tests</classifier>
          </dependency>
@@ -927,25 +822,25 @@
          <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>${versionx.junit.junit}</version>
+            <version>${version.junit}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <version>${versionx.junit.junit5}</version>
+            <version>${version.junit5}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>${versionx.junit.junit5}</version>
+            <version>${version.junit5}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.junit.vintage</groupId>
             <artifactId>junit-vintage-engine</artifactId>
-            <version>${versionx.junit.junit5}</version>
+            <version>${version.junit5}</version>
          </dependency>
          <dependency>
             <groupId>org.junit.support</groupId>
@@ -972,12 +867,12 @@
          <dependency>
             <groupId>org.aesh</groupId>
             <artifactId>aesh</artifactId>
-            <version>${versionx.org.aesh.aesh}</version>
+            <version>${version.aesh}</version>
          </dependency>
          <dependency>
             <groupId>org.aesh</groupId>
             <artifactId>readline</artifactId>
-            <version>${versionx.org.aesh.readline}</version>
+            <version>${version.aesh-readline}</version>
          </dependency>
          <dependency>
             <groupId>org.antlr</groupId>
@@ -987,7 +882,7 @@
          <dependency>
             <groupId>org.apache.ant</groupId>
             <artifactId>ant</artifactId>
-            <version>${versionx.org.apache.ant.ant}</version>
+            <version>${version.ant}</version>
             <scope>provided</scope>
          </dependency>
          <!-- Dependency of org.hibernate:hibernate-search-serialization-avro. Overwrite version to 1.9.1 -->
@@ -1035,73 +930,73 @@
          <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
-            <version>${versionx.org.apache.logging.log4j.log4j-api}</version>
+            <version>${version.log4j}</version>
             <scope>provided</scope>
          </dependency>
          <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
-            <version>${versionx.org.apache.logging.log4j.log4j-core}</version>
+            <version>${version.log4j}</version>
             <scope>provided</scope>
          </dependency>
          <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j-impl</artifactId>
-            <version>${versionx.org.apache.logging.log4j.log4j-slf4j-impl}</version>
+            <version>${version.log4j}</version>
             <scope>provided</scope>
          </dependency>
          <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-jul</artifactId>
-            <version>${versionx.org.apache.logging.log4j.log4j-jul}</version>
+            <version>${version.log4j}</version>
             <scope>provided</scope>
          </dependency>
          <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-analyzers-common</artifactId>
-            <version>${versionx.org.apache.lucene.lucene-analyzers-common}</version>
+            <version>${version.lucene}</version>
          </dependency>
          <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
-            <version>${versionx.org.apache.lucene.lucene-core}</version>
+            <version>${version.lucene}</version>
          </dependency>
          <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-facet</artifactId>
-            <version>${versionx.org.apache.lucene.lucene-facet}</version>
+            <version>${version.lucene}</version>
          </dependency>
          <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-grouping</artifactId>
-            <version>${versionx.org.apache.lucene.lucene-grouping}</version>
+            <version>${version.lucene}</version>
          </dependency>
          <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-join</artifactId>
-            <version>${versionx.org.apache.lucene.lucene-join}</version>
+            <version>${version.lucene}</version>
          </dependency>
          <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-misc</artifactId>
-            <version>${versionx.org.apache.lucene.lucene-misc}</version>
+            <version>${version.lucene}</version>
          </dependency>
          <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-queryparser</artifactId>
-            <version>${versionx.org.apache.lucene.lucene-queryparser}</version>
+            <version>${version.lucene}</version>
          </dependency>
          <!-- Bump maven-core version. Dependency of org.twdata.maven:mojo-executor -->
          <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-core</artifactId>
-            <version>${versionx.org.apache.maven.maven-core}</version>
+            <version>${version.maven}</version>
             <scope>provided</scope>
          </dependency>
          <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-plugin-api</artifactId>
-            <version>${versionx.org.apache.maven.maven-plugin-api}</version>
+            <version>${version.maven}</version>
             <scope>provided</scope>
          </dependency>
          <dependency>
@@ -1131,7 +1026,7 @@
          <dependency>
             <groupId>org.glassfish.jaxb</groupId>
             <artifactId>jaxb-runtime</artifactId>
-            <version>${versionx.org.glassfish.jaxb.jaxb-runtime}</version>
+            <version>${version.glassfish.jaxb}</version>
          </dependency>
          <dependency>
             <groupId>org.glassfish</groupId>
@@ -1141,12 +1036,12 @@
          <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-core</artifactId>
-            <version>${versionx.org.hamcrest.hamcrest-core}</version>
+            <version>${version.hamcrest}</version>
          </dependency>
          <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-library</artifactId>
-            <version>${versionx.org.hamcrest.hamcrest-library}</version>
+            <version>${version.hamcrest}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
@@ -1158,38 +1053,38 @@
          <dependency>
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-core</artifactId>
-            <version>${versionx.org.hibernate.hibernate-core}</version>
+            <version>${version.hibernate.core}</version>
          </dependency>
          <dependency>
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-testing</artifactId>
-            <version>${versionx.org.hibernate.hibernate-core}</version>
+            <version>${version.hibernate.core}</version>
          </dependency>
          <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-jpamodelgen</artifactId>
-            <version>${versionx.org.hibernate.hibernate-core}</version>
+            <version>${version.hibernate.core}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.hibernate.search</groupId>
             <artifactId>hibernate-search-backend-lucene</artifactId>
-            <version>${versionx.org.hibernate.search.hibernate-search-backend-lucene}</version>
+            <version>${version.hibernate.search}</version>
          </dependency>
          <dependency>
             <groupId>org.hibernate.search</groupId>
             <artifactId>hibernate-search-mapper-pojo-base</artifactId>
-            <version>${versionx.org.hibernate.search.hibernate-search-mapper-pojo-base}</version>
+            <version>${version.hibernate.search}</version>
          </dependency>
          <dependency>
             <groupId>org.hibernate.search</groupId>
             <artifactId>hibernate-search-v5migrationhelper-engine</artifactId>
-            <version>${versionx.org.hibernate.search.hibernate-search-mapper-pojo-base}</version>
+            <version>${version.hibernate.search}</version>
          </dependency>
          <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-testing</artifactId>
-            <version>${versionx.org.hibernate.hibernate-testing}</version>
+            <version>${version.hibernate.core}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
@@ -1492,7 +1387,7 @@
          <dependency>
             <groupId>org.jacoco</groupId>
             <artifactId>org.jacoco.agent</artifactId>
-            <version>${versionx.org.jacoco.org.jacoco.agent}</version>
+            <version>${version.jacoco}</version>
             <scope>test</scope>
             <classifier>runtime</classifier>
          </dependency>
@@ -1516,43 +1411,43 @@
          <dependency>
             <groupId>org.jboss.arquillian.junit</groupId>
             <artifactId>arquillian-junit-container</artifactId>
-            <version>${versionx.org.jboss.arquillian.junit.arquillian-junit-container}</version>
+            <version>${version.arquillian}</version>
          </dependency>
          <dependency>
             <groupId>org.jboss.arquillian.testng</groupId>
             <artifactId>arquillian-testng-container</artifactId>
-            <version>${versionx.org.jboss.arquillian.testng.arquillian-testng-container}</version>
+            <version>${version.arquillian}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.jboss.byteman</groupId>
             <artifactId>byteman</artifactId>
-            <version>${versionx.org.jboss.byteman.byteman}</version>
+            <version>${version.byteman}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.jboss.byteman</groupId>
             <artifactId>byteman-bmunit</artifactId>
-            <version>${versionx.org.jboss.byteman.byteman-bmunit}</version>
+            <version>${version.byteman}</version>
             <scope>test</scope>
          </dependency>
          <!-- for some reason, without byteman-install and byteman-submit declared here, the hibernate cache module fails to compile... -->
          <dependency>
             <groupId>org.jboss.byteman</groupId>
             <artifactId>byteman-install</artifactId>
-            <version>${versionx.org.jboss.byteman.byteman-install}</version>
+            <version>${version.byteman}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.jboss.byteman</groupId>
             <artifactId>byteman-submit</artifactId>
-            <version>${versionx.org.jboss.byteman.byteman-submit}</version>
+            <version>${version.byteman}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging</artifactId>
-            <version>${versionx.org.jboss.logging.jboss-logging}</version>
+            <version>${version.jboss.logging}</version>
          </dependency>
          <dependency>
             <groupId>org.jboss.logging</groupId>
@@ -1564,23 +1459,23 @@
          <dependency>
             <groupId>org.jboss.marshalling</groupId>
             <artifactId>jboss-marshalling</artifactId>
-            <version>${versionx.org.jboss.marshalling.jboss-marshalling}</version>
+            <version>${version.jboss.marshalling}</version>
          </dependency>
          <dependency>
             <groupId>org.jboss.marshalling</groupId>
             <artifactId>jboss-marshalling-river</artifactId>
-            <version>${versionx.org.jboss.marshalling.jboss-marshalling-river}</version>
+            <version>${version.jboss.marshalling}</version>
          </dependency>
          <dependency>
             <groupId>org.jboss.naming</groupId>
             <artifactId>jnp-client</artifactId>
-            <version>${versionx.org.jboss.naming.jnp-client}</version>
+            <version>${version.jboss.naming}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.jboss.naming</groupId>
             <artifactId>jnpserver</artifactId>
-            <version>${versionx.org.jboss.naming.jnpserver}</version>
+            <version>${version.jboss.naming}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
@@ -1598,45 +1493,45 @@
          <dependency>
             <groupId>org.jboss.security</groupId>
             <artifactId>jboss-negotiation-extras</artifactId>
-            <version>${versionx.org.jboss.security.jboss-negotiation-extras}</version>
+            <version>${version.jboss.security}</version>
          </dependency>
          <dependency>
             <groupId>org.jboss.shrinkwrap</groupId>
             <artifactId>shrinkwrap-depchain</artifactId>
-            <version>${versionx.org.jboss.shrinkwrap.depchain}</version>
+            <version>${version.jboss.shrinkwrap}</version>
             <type>pom</type>
             <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.jboss.shrinkwrap.descriptors</groupId>
             <artifactId>shrinkwrap-descriptors-impl-javaee</artifactId>
-            <version>${versionx.org.jboss.shrinkwrap.descriptors.shrinkwrap-descriptors-impl-javaee}</version>
+            <version>${version.jboss.shrinkwrap.descriptors}</version>
          </dependency>
          <dependency>
             <groupId>org.jboss.shrinkwrap.resolver</groupId>
             <artifactId>shrinkwrap-resolver-api</artifactId>
-            <version>${versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-api}</version>
+            <version>${version.jboss.shrinkwrap.resolver}</version>
          </dependency>
          <dependency>
             <groupId>org.jboss.shrinkwrap.resolver</groupId>
             <artifactId>shrinkwrap-resolver-api-maven</artifactId>
-            <version>${versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-api-maven}</version>
+            <version>${version.jboss.shrinkwrap.resolver}</version>
          </dependency>
          <dependency>
             <groupId>org.jboss.shrinkwrap.resolver</groupId>
             <artifactId>shrinkwrap-resolver-depchain</artifactId>
-            <version>${versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-depchain}</version>
+            <version>${version.jboss.shrinkwrap.resolver}</version>
             <type>pom</type>
          </dependency>
          <dependency>
             <groupId>org.jboss.shrinkwrap.resolver</groupId>
             <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
-            <version>${versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-impl-maven}</version>
+            <version>${version.jboss.shrinkwrap.resolver}</version>
          </dependency>
          <dependency>
             <groupId>org.jboss.shrinkwrap.resolver</groupId>
             <artifactId>shrinkwrap-resolver-impl-maven-archive</artifactId>
-            <version>${versionx.org.jboss.shrinkwrap.resolver.shrinkwrap-resolver-impl-maven-archive}</version>
+            <version>${version.jboss.shrinkwrap.resolver}</version>
          </dependency>
          <dependency>
             <groupId>org.jboss.spec</groupId>
@@ -1689,7 +1584,7 @@
          <dependency>
             <groupId>org.jgroups</groupId>
             <artifactId>jgroups</artifactId>
-            <version>${versionx.org.jgroups.jgroups}</version>
+            <version>${version.jgroups}</version>
             <exclusions>
                <exclusion>
                   <groupId>org.jboss.byteman</groupId>
@@ -1700,7 +1595,7 @@
          <dependency>
             <groupId>org.jgroups</groupId>
             <artifactId>jgroups-raft</artifactId>
-            <version>${versionx.org.jgroups.jgroups-raft}</version>
+            <version>${version.jgroups.raft}</version>
             <exclusions>
                <exclusion>
                   <groupId>*</groupId>
@@ -1732,14 +1627,14 @@
          <dependency>
             <groupId>org.kohsuke.metainf-services</groupId>
             <artifactId>metainf-services</artifactId>
-            <version>${versionx.org.kohsuke.metainf-services.metainf-services}</version>
+            <version>${version.metainf-services}</version>
             <!-- compile-only dependency -->
             <scope>provided</scope>
          </dependency>
          <dependency>
             <groupId>org.latencyutils</groupId>
             <artifactId>LatencyUtils</artifactId>
-            <version>${versionx.org.latencyutils.LatencyUtils}</version>
+            <version>${version.latencyutils}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
@@ -1762,7 +1657,7 @@
          <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>${versionx.org.mockito.mockito-core}</version>
+            <version>${version.mockito}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
@@ -1774,19 +1669,19 @@
          <dependency>
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-core</artifactId>
-            <version>${versionx.org.openjdk.jmh.jmh-core}</version>
+            <version>${version.openjdk.jmh}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-generator-annprocess</artifactId>
-            <version>${versionx.org.openjdk.jmh.jmh-generator-annprocess}</version>
+            <version>${version.openjdk.jmh}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.openjdk.nashorn</groupId>
             <artifactId>nashorn-core</artifactId>
-            <version>${versionx.org.openjdk.nashorn}</version>
+            <version>${version.nashorn}</version>
          </dependency>
          <dependency>
             <groupId>org.postgresql</groupId>
@@ -1797,59 +1692,59 @@
          <dependency>
             <groupId>org.reactivestreams</groupId>
             <artifactId>reactive-streams</artifactId>
-            <version>${versionx.org.reactivestreams.reactive-streams}</version>
+            <version>${version.reactivestreams}</version>
          </dependency>
          <dependency>
             <groupId>org.rocksdb</groupId>
             <artifactId>rocksdbjni</artifactId>
-            <version>${versionx.org.rocksdb.rocksdbjni}</version>
+            <version>${version.rocksdb}</version>
          </dependency>
          <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-beans</artifactId>
-            <version>${versionx.org.springframework.spring-beans}</version>
+            <version>${version.spring}</version>
             <scope>provided</scope>
          </dependency>
          <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
-            <version>${versionx.org.springframework.spring-context}</version>
+            <version>${version.spring}</version>
             <scope>provided</scope>
          </dependency>
          <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context-support</artifactId>
-            <version>${versionx.org.springframework.spring-context-support}</version>
+            <version>${version.spring}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-core</artifactId>
-            <version>${versionx.org.springframework.spring-core}</version>
+            <version>${version.spring}</version>
             <scope>provided</scope>
          </dependency>
          <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-expression</artifactId>
-            <version>${versionx.org.springframework.spring-expression}</version>
+            <version>${version.spring}</version>
             <scope>provided</scope>
          </dependency>
          <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-jdbc</artifactId>
-            <version>${versionx.org.springframework.spring-jdbc}</version>
+            <version>${version.spring}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
-            <version>${versionx.org.springframework.spring-test}</version>
+            <version>${version.spring}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
-            <version>${versionx.org.springframework.boot.spring-boot-starter}</version>
+            <version>${version.spring.boot}</version>
             <scope>test</scope>
             <exclusions>
                <exclusion>
@@ -1863,25 +1758,25 @@
          <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-log4j2</artifactId>
-            <version>${versionx.org.springframework.boot.spring-boot-starter-log4j2}</version>
+            <version>${version.spring.boot}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
-            <version>${versionx.org.springframework.boot.spring-boot-starter-security}</version>
+            <version>${version.spring.boot}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
-            <version>${versionx.org.springframework.boot.spring-boot-starter-test}</version>
+            <version>${version.spring.boot}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <version>${versionx.org.springframework.boot.spring-boot-starter-web}</version>
+            <version>${version.spring.boot}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
@@ -1893,31 +1788,31 @@
          <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
-            <version>${versionx.org.springframework.boot.spring-boot-configuration-processor}</version>
+            <version>${version.spring.boot}</version>
             <scope>provided</scope>
          </dependency>
          <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
-            <version>${versionx.org.springframework.boot.spring-boot-starter-actuator}</version>
+            <version>${version.spring.boot}</version>
             <scope>provided</scope>
          </dependency>
          <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-autoconfigure-processor</artifactId>
-            <version>${versionx.org.springframework.boot.spring-boot-autoconfigure-processor}</version>
+            <version>${version.spring.boot}</version>
             <scope>provided</scope>
          </dependency>
          <dependency>
             <groupId>org.springframework.session</groupId>
             <artifactId>spring-session-core</artifactId>
-            <version>${versionx.org.springframework.session.spring-session}</version>
+            <version>${version.spring.session}</version>
             <scope>provided</scope>
          </dependency>
          <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-test</artifactId>
-            <version>${versionx.micrometer}</version>
+            <version>${version.micrometer}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
@@ -1955,17 +1850,17 @@
          <dependency>
             <groupId>org.wildfly.openssl</groupId>
             <artifactId>wildfly-openssl-linux-x86_64</artifactId>
-            <version>${versionx.org.wildfly.openssl.wildfly-openssl-linux-x86_64}</version>
+            <version>${version.org.wildfly.openssl.natives.linux_x86_64}</version>
          </dependency>
          <dependency>
             <groupId>org.wildfly.openssl</groupId>
             <artifactId>wildfly-openssl-macosx-x86_64</artifactId>
-            <version>${versionx.org.wildfly.openssl.wildfly-openssl-macosx-x86_64}</version>
+            <version>${version.org.wildfly.openssl.natives.macos_x86_64}</version>
          </dependency>
          <dependency>
             <groupId>org.wildfly.openssl</groupId>
             <artifactId>wildfly-openssl-windows-x86_64</artifactId>
-            <version>${versionx.org.wildfly.openssl.wildfly-openssl-windows-x86_64}</version>
+            <version>${version.org.wildfly.openssl.natives.windows_x86_64}</version>
          </dependency>
          <dependency>
             <groupId>org.wildfly.arquillian</groupId>
