@@ -1,5 +1,6 @@
 package org.infinispan.globalstate;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -13,7 +14,10 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -132,13 +136,21 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
             break;
          }
          default: {
-            // Other node without state
-            try {
-               cache(extraneousNodePosition, CACHE_NAME);
-               fail("Cache without state should not have joined coordinator with state");
-            } catch (CacheException e) {
-               // Ignore
+            // Other node without state.
+            // We create on all the members. The extraneous members uses a fork to not block.
+            Future<Cache<Object, Object>> extraneousCreate = null;
+            for (int i = 0; i < managers().length; i++) {
+               if (i == extraneousNodePosition) {
+                  extraneousCreate = fork(() -> cache(extraneousNodePosition, CACHE_NAME));
+               } else {
+                  cache(i, CACHE_NAME);
+               }
             }
+            assertThat(extraneousCreate).isNotNull();
+            extraneousCreate.get(10, TimeUnit.SECONDS);
+
+            checkClusterRestartedCorrectly(addressMappings);
+            checkData();
          }
       }
    }
@@ -190,7 +202,7 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
          assertTrue(uuids.add(ltm.getPersistentUUID()));
       }
 
-      for (int i = 0; i < cacheManagers.size(); i++) {
+      for (int i = 0; i < cacheManagers.size() && addressIterator.hasNext(); i++) {
          LocalTopologyManager ltm = TestingUtil.extractGlobalComponent(manager(i), LocalTopologyManager.class);
          // Ensure that nodes have the old UUID
          Map.Entry<JGroupsAddress, PersistentUUID> entry = addressIterator.next();

@@ -20,6 +20,9 @@ import org.infinispan.remoting.transport.Address;
 * @since 7.0
 */
 public class CacheStatusResponse implements Serializable {
+
+   private static final CacheStatusResponse EMPTY = new CacheStatusResponse(null, null, null, null, null);
+
    private final CacheJoinInfo cacheJoinInfo;
    private final CacheTopology cacheTopology;
    private final CacheTopology stableTopology;
@@ -33,6 +36,18 @@ public class CacheStatusResponse implements Serializable {
       this.stableTopology = stableTopology;
       this.availabilityMode = availabilityMode;
       this.current = current;
+   }
+
+   public static CacheStatusResponse empty() {
+      return EMPTY;
+   }
+
+   public boolean isEmpty() {
+      return cacheJoinInfo == null
+            && cacheTopology == null
+            && stableTopology == null
+            && availabilityMode == null
+            && current == null;
    }
 
    public CacheJoinInfo getCacheJoinInfo() {

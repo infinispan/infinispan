@@ -1,5 +1,6 @@
 package org.infinispan.globalstate;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -11,6 +12,7 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.topology.PersistentUUID;
 
 import org.testng.annotations.Test;
@@ -50,6 +52,20 @@ public class ThreeNodeDistGlobalStateRestartTest extends AbstractGlobalStateRest
       restartWithoutGracefulShutdown();
    }
 
+   public void testAddMemberAfterRecover() throws Throwable {
+      shutdownAndRestart(-1, false);
+      createStatefulCacheManager(Character.toString('@'), true);
+      waitForClusterToForm(CACHE_NAME);
+
+      // Ensure that the cache contains the right data.
+      // Use the extraneous member to check.
+      int index = getClusterSize();
+      assertEquals(DATA_SIZE, cache(index, CACHE_NAME).size());
+      for (int i = 0; i < DATA_SIZE; i++) {
+         assertEquals(cache(index, CACHE_NAME).get(String.valueOf(i)), String.valueOf(i));
+      }
+   }
+
    public void testDisableRebalanceRestartEnableRebalance() throws Throwable {
       Map<JGroupsAddress, PersistentUUID> addressMappings = createInitialCluster();
       ConsistentHash oldConsistentHash = advancedCache(0, CACHE_NAME).getDistributionManager().getWriteConsistentHash();
@@ -69,7 +85,10 @@ public class ThreeNodeDistGlobalStateRestartTest extends AbstractGlobalStateRest
          cache(i, CACHE_NAME);
       }
 
-      manager(0).getGlobalComponentRegistry().getLocalTopologyManager().setRebalancingEnabled(true);
+      LocalTopologyManager ltm = manager(0).getGlobalComponentRegistry().getLocalTopologyManager();
+      assertThat(ltm.isRebalancingEnabled()).isFalse();
+
+      ltm.setRebalancingEnabled(true);
 
       // Last missing.
       cache(getClusterSize() - 1, CACHE_NAME);
