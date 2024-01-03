@@ -24,25 +24,25 @@
       <dependency>
          <groupId>org.junit.jupiter</groupId>
          <artifactId>junit-jupiter-api</artifactId>
-         <version>${versionx.junit.junit5}</version>
+         <version>${version.junit5}</version>
          <scope>compile</scope>
       </dependency>
       <dependency>
          <groupId>org.junit.jupiter</groupId>
          <artifactId>junit-jupiter-engine</artifactId>
-         <version>${versionx.junit.junit5}</version>
+         <version>${version.junit5}</version>
          <scope>compile</scope>
       </dependency>
       <dependency>
          <groupId>org.junit.platform</groupId>
          <artifactId>junit-platform-launcher</artifactId>
-         <version>${versionx.junit.platform}</version>
+         <version>${version.junit.platform}</version>
          <scope>compile</scope>
       </dependency>
       <dependency>
          <groupId>org.junit.platform</groupId>
          <artifactId>junit-platform-suite-api</artifactId>
-         <version>${versionx.junit.platform}</version>
+         <version>${version.junit.platform}</version>
          <scope>compile</scope>
       </dependency>
       <dependency>
