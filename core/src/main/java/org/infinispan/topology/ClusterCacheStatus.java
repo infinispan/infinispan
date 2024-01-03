@@ -253,26 +253,6 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    }
 
    /**
-    * Validate if the member is allowed to join
-    */
-   @GuardedBy("this")
-   private void validateJoiner(Address joiner, CacheJoinInfo joinInfo) {
-      if (persistentState.isPresent()) {
-         if (!joinInfo.getPersistentStateChecksum().isPresent()) {
-            if (status == ComponentStatus.INSTANTIATED) {
-               throw CLUSTER.nodeWithoutPersistentStateJoiningCacheWithState(joiner, cacheName);
-            }
-         } else if (persistentState.get().getChecksum() != joinInfo.getPersistentStateChecksum().get()) {
-            throw CLUSTER.nodeWithIncompatibleStateJoiningCache(joiner, cacheName);
-         }
-      } else {
-         if (joinInfo.getPersistentStateChecksum().isPresent()) {
-            throw CLUSTER.nodeWithPersistentStateJoiningClusterWithoutState(joiner, cacheName);
-         }
-      }
-   }
-
-   /**
     * @return {@code true} if the leaver was a member, {@code false} otherwise
     */
    @GuardedBy("this")
@@ -711,7 +691,22 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    }
 
    public synchronized CacheStatusResponse doJoin(Address joiner, CacheJoinInfo joinInfo) {
-      validateJoiner(joiner, joinInfo);
+      if (persistentState.isPresent()) {
+         if (joinInfo.getPersistentStateChecksum().isEmpty()) {
+            // The joiner does not have a previous state, the current node has a state, and it is still not recovered!
+            // We reply with an empty cache status response so the joiner resends the request later.
+            if (status == ComponentStatus.INSTANTIATED) {
+               return CacheStatusResponse.empty();
+            }
+         } else if (persistentState.get().getChecksum() != joinInfo.getPersistentStateChecksum().get()) {
+            throw CLUSTER.nodeWithIncompatibleStateJoiningCache(joiner, cacheName);
+         }
+      } else {
+         // A joiner with state can not join a cache without a state.
+         if (joinInfo.getPersistentStateChecksum().isPresent()) {
+            throw CLUSTER.nodeWithPersistentStateJoiningClusterWithoutState(joiner, cacheName);
+         }
+      }
 
       boolean isFirstMember = getCurrentTopology() == null;
       boolean memberJoined = addMember(joiner, joinInfo);
@@ -1055,12 +1050,13 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       return CompletableFutures.completedNull();
    }
 
-   public synchronized CompletionStage<Void> shutdownCache() throws Exception {
+   public synchronized CompletionStage<Void> shutdownCache() {
       if (status == ComponentStatus.RUNNING) {
          status = ComponentStatus.STOPPING;
-         clusterTopologyManager.setRebalancingEnabled(cacheName, false);
+         CompletionStage<Void> cs = clusterTopologyManager.setRebalancingEnabled(cacheName, false);
          return clusterTopologyManager.broadcastShutdownCache(cacheName)
-               .thenRun(() -> status = ComponentStatus.TERMINATED);
+               .thenCompose(ignore -> cs)
+               .whenComplete((ignore, t) -> status = ComponentStatus.TERMINATED);
       }
       return CompletableFutures.completedNull();
    }
