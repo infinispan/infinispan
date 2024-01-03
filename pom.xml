@@ -265,7 +265,7 @@
       <versionx.org.dom4j.dom4j>2.1.3</versionx.org.dom4j.dom4j>
       <versionx.org.javassist.javassist>3.29.1-GA</versionx.org.javassist.javassist>
       <versionx.org.jboss.arquillian.container.arquillian-weld-embedded>3.0.2.Final</versionx.org.jboss.arquillian.container.arquillian-weld-embedded>
-      <versionx.org.jboss.jboss-common-core>2.2.16.GA</versionx.org.jboss.jboss-common-core>
+      <versionx.org.jboss.jboss-common-core>2.5.0.Final</versionx.org.jboss.jboss-common-core>
       <versionx.org.jboss.jboss-transaction-spi>8.0.0.Final</versionx.org.jboss.jboss-transaction-spi>
       <versionx.org.jboss.logging.jboss-logging-processor>2.2.1.Final</versionx.org.jboss.logging.jboss-logging-processor>
       <versionx.org.jboss.spec.javax.ejb.jboss-ejb-api_3.2_spec>2.0.0.Final</versionx.org.jboss.spec.javax.ejb.jboss-ejb-api_3.2_spec>
