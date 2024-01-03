@@ -8,6 +8,10 @@ import java.util.concurrent.CompletionStage;
 
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
+import jakarta.transaction.HeuristicMixedException;
+import jakarta.transaction.HeuristicRollbackException;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.SystemException;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.cache.impl.CacheImpl;
@@ -19,6 +23,7 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.LocalTxInvocationContext;
@@ -44,11 +49,6 @@ import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.TransactionFactory;
 import org.infinispan.util.ByteString;
-
-import jakarta.transaction.HeuristicMixedException;
-import jakarta.transaction.HeuristicRollbackException;
-import jakarta.transaction.RollbackException;
-import jakarta.transaction.SystemException;
 
 /**
  * A class that handles the prepare request from the Hot Rod clients.
@@ -76,10 +76,10 @@ public class PrepareCoordinator {
       this.transactionTimeout = transactionTimeout;
       this.cache = cache;
       ComponentRegistry registry = ComponentRegistry.of(cache);
-      this.transactionTable = registry.getComponent(TransactionTable.class);
-      this.perCacheTxTable = registry.getComponent(PerCacheTxTable.class);
-      this.globalTxTable = registry.getGlobalComponentRegistry().getComponent(GlobalTxTable.class);
-      this.cacheXid = new CacheXid(ByteString.fromString(cache.getName()), xid);
+      transactionTable = registry.getComponent(TransactionTable.class);
+      perCacheTxTable = registry.getComponent(PerCacheTxTable.class);
+      globalTxTable = registry.getGlobalComponentRegistry().getComponent(GlobalTxTable.class);
+      cacheXid = new CacheXid(ByteString.fromString(cache.getName()), xid);
    }
 
    /**
@@ -112,7 +112,7 @@ public class PrepareCoordinator {
          rollbackCommand.invokeAsync(componentRegistry).toCompletableFuture().join();
          cs.toCompletableFuture().join();
       } catch (Throwable throwable) {
-         throw Util.rewrapAsCacheException(throwable);
+         throw Util.rewrapAsCacheException(CompletableFutures.extractException(throwable));
       } finally {
          forgetTransaction(gtx, rpcManager, factory);
       }
@@ -128,13 +128,17 @@ public class PrepareCoordinator {
       tx.setXid(xid);
       LocalTransaction localTransaction = transactionTable
             .getOrCreateLocalTransaction(tx, false, this::newGlobalTransaction);
-      if (createGlobalState(localTransaction.getGlobalTransaction()) != Status.OK) {
+      var gtx = localTransaction.getGlobalTransaction();
+      if (!cache.getCacheConfiguration().transaction().useSynchronization()) {
+         gtx.setXid(xid);
+      }
+      if (createGlobalState(gtx) != Status.OK) {
          //no need to rollback. nothing is enlisted in the transaction.
          transactionTable.removeLocalTransaction(localTransaction);
          return false;
       } else {
          this.tx = tx;
-         this.localTxInvocationContext = new LocalTxInvocationContext(localTransaction);
+         localTxInvocationContext = new LocalTxInvocationContext(localTransaction);
          perCacheTxTable.createLocalTx(xid, tx);
          transactionTable.enlistClientTransaction(tx, localTransaction);
          return true;
@@ -259,7 +263,7 @@ public class PrepareCoordinator {
    }
 
    private <K, V> AdvancedCache<K, V> withTransaction(CacheImpl<K, V> cache) {
-      return new DecoratedCache<K, V>(cache, FlagBitSets.FORCE_WRITE_LOCK) {
+      return new DecoratedCache<>(cache, FlagBitSets.FORCE_WRITE_LOCK) {
          @Override
          protected InvocationContext readContext(int size) {
             return localTxInvocationContext;
