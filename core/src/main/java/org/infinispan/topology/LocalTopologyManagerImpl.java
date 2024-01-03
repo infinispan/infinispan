@@ -62,6 +62,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.concurrent.ActionSequencer;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -169,7 +170,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       // Use the action sequencer for the initial join request
       // This ensures that all topology updates from the coordinator will be delayed
       // until the join and the GET_CACHE_LISTENERS request are done
-      return orderOnCache(cacheName, () -> {
+      CompletionStage<KeyValuePair<CacheStatusResponse, CacheTopology>> cf = orderOnCache(cacheName, () -> {
          log.debugf("Node %s joining cache %s", transport.getAddress(), cacheName);
          LocalCacheStatus cacheStatus = new LocalCacheStatus(joinInfo, stm, phm, getNumberMembersFromState(cacheName, joinInfo));
          LocalCacheStatus previousStatus = runningCaches.put(cacheName, cacheStatus);
@@ -180,7 +181,25 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          long timeout = joinInfo.getTimeout();
          long endTime = timeService.expectedEndTime(timeout, MILLISECONDS);
          return sendJoinRequest(cacheName, joinInfo, timeout, endTime)
-                      .thenCompose(joinResponse -> handleJoinResponse(cacheName, cacheStatus, joinResponse));
+               .thenCompose(joinResponse ->
+                     handleJoinResponse(cacheName, cacheStatus, joinResponse)
+                           .thenApply(ct -> KeyValuePair.of(joinResponse, ct)));
+      });
+      // Execute outside the `orderOnCache` to allow handling topology updates.
+      return cf.thenCompose(entry -> {
+         // The join response is empty when a stateless node joins a stateful leader *before* the recover is complete.
+         // The join request is delayed until the stable topology is installed. That is, until the previous cluster restores.
+         // After that, the new node can send another join request, that should return with a new topology and start rebalance.
+         if (entry.getKey().isEmpty()) {
+            LocalCacheStatus lcs = runningCaches.get(cacheName);
+            return lcs.getStableTopologyCompletion()
+                  .thenCompose(ignore -> {
+                     lcs.setCurrentTopology(null);
+                     return join(cacheName, lcs);
+                  });
+         }
+
+         return CompletableFuture.completedFuture(entry.getValue());
       });
    }
 
@@ -245,7 +264,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                    .thenCompose(v -> sendJoinRequest(cacheName, joinInfo, timeout, endTime));
    }
 
-   public CompletionStage<CacheTopology> handleJoinResponse(String cacheName, LocalCacheStatus cacheStatus,
+   private CompletionStage<CacheTopology> handleJoinResponse(String cacheName, LocalCacheStatus cacheStatus,
                                                             CacheStatusResponse initialStatus) {
       int viewId = transport.getViewId();
       return doHandleTopologyUpdate(cacheName, initialStatus.getCacheTopology(), initialStatus.getAvailabilityMode(),
@@ -561,7 +580,6 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          CacheTopology stableTopology = cacheStatus.getStableTopology();
          if (stableTopology == null || stableTopology.getTopologyId() < newStableTopology.getTopologyId()) {
             log.tracef("Updating stable topology for cache %s: %s", cacheName, newStableTopology);
-            //System.out.printf("[%s] Updating stable topology for cache %s: %s\n", transport.getAddress(), cacheName, newStableTopology);
             cacheStatus.setStableTopology(newStableTopology);
             if (newStableTopology != null && cacheStatus.getJoinInfo().getPersistentUUID() != null) {
                // Don't use the current CH state for the next restart
@@ -817,11 +835,17 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       cacheState.setProperty(GlobalStateManagerImpl.TIMESTAMP, timeService.instant().toString());
       cacheState.setProperty(GlobalStateManagerImpl.VERSION_MAJOR, Version.getMajor());
       LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
-      ConsistentHash remappedCH = cacheStatus.getCurrentTopology().getCurrentCH()
-                                             .remapAddresses(persistentUUIDManager.addressToPersistentUUID());
-      remappedCH.toScopedState(cacheState);
-      globalStateManager.writeScopedState(cacheState);
-      if (log.isTraceEnabled()) log.tracef("Written CH state for cache %s, checksum=%s: %s", cacheName, cacheState.getChecksum(), remappedCH);
+      CacheTopology topology = cacheStatus != null ? cacheStatus.getCurrentTopology() : null;
+
+      if (cacheStatus != null && topology != null) {
+         ConsistentHash remappedCH = topology.getCurrentCH()
+               .remapAddresses(persistentUUIDManager.addressToPersistentUUID());
+         remappedCH.toScopedState(cacheState);
+         globalStateManager.writeScopedState(cacheState);
+         if (log.isTraceEnabled()) log.tracef("Written CH state for cache %s, checksum=%s: %s", cacheName, cacheState.getChecksum(), remappedCH);
+      } else {
+         log.tracef("Cache '%s' status not found (%s) to write CH or without topology", cacheName, cacheStatus);
+      }
    }
 
    private void deleteCHState(String cacheName) {
@@ -879,7 +903,7 @@ class LocalCacheStatus {
       this.joinInfo = joinInfo;
       this.handler = handler;
       this.partitionHandlingManager = phm;
-      this.stable = stableMembersSize > 0 ? new CompletableFuture<>() : CompletableFutures.completedFalse();
+      this.stable = new CompletableFuture<>();
       this.knownMembers = Collections.emptyList();
       this.stableMembersSize = stableMembersSize;
    }
@@ -927,7 +951,7 @@ class LocalCacheStatus {
    }
 
    boolean isStableTopologyRestored() {
-      return (stable.isDone() && stableTopology != null) || !needRecovery();
+      return stableMembersSize < 0 || (stable.isDone() && stableTopology != null);
    }
 
    boolean needRecovery() {

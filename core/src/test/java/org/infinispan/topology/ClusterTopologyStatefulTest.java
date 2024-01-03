@@ -1,48 +1,21 @@
 package org.infinispan.topology;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 @Test(testName = "topology.ClusterTopologyStatefulTest", groups = "functional")
-public class ClusterTopologyStatefulTest extends MultipleCacheManagersTest {
+public class ClusterTopologyStatefulTest extends AbstractStatefulCluster {
 
-   private final int clusterSize = 3;
-
-   @Override
-   protected void createCacheManagers() throws Throwable {
-      Util.recursiveFileRemove(tmpDirectory(this.getClass().getSimpleName()));
-      createStatefulCacheManager(true);
-   }
-
-   protected void createStatefulCacheManager(boolean clear) {
-      for (int i = 0; i < clusterSize; i++) {
-         createStatefulCacheManager(clear, Character.toString('A' + i));
-      }
-   }
-
-   protected void createStatefulCacheManager(boolean clear, String id) {
-      String stateDirectory = tmpDirectory(this.getClass().getSimpleName(), id);
-      if (clear) Util.recursiveFileRemove(stateDirectory);
-
-      GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      global.globalState().enable().persistentLocation(stateDirectory);
-
-      addClusterEnabledCacheManager(global, null);
+   {
+      clusterSize = 3;
    }
 
    private Condition allNodesHaveRebalanceDisabled() {
@@ -71,12 +44,7 @@ public class ClusterTopologyStatefulTest extends MultipleCacheManagersTest {
       TestingUtil.killCacheManagers(this.cacheManagers);
 
       // Verify all managers have a global state file.
-      for (int i = 0; i < clusterSize; i++) {
-         String persistentLocation = manager(i).getCacheManagerConfiguration().globalState().persistentLocation();
-         try (Stream<Path> s = Files.list(Path.of(persistentLocation))) {
-            assertThat(s.filter(p -> p.endsWith("___global.state"))).isNotEmpty();
-         }
-      }
+      assertClusterStateFiles();
       this.cacheManagers.clear();
    }
 

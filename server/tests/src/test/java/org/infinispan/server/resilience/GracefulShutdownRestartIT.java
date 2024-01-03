@@ -3,8 +3,6 @@ package org.infinispan.server.resilience;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.sync;
-import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.concurrent.TimeUnit;
 
@@ -73,7 +71,7 @@ public class GracefulShutdownRestartIT {
 
       // We get the cache details to assert it is in fact disabled.
       try (RestResponse res = sync(rest.cache(hotRod.getName()).details())) {
-         Json body = Json.read(res.body());
+         Json body = Json.read(res.getBody());
          assertThat(body.at("rebalancing_enabled").asBoolean()).isFalse();
       }
 
@@ -82,7 +80,7 @@ public class GracefulShutdownRestartIT {
 
       // After the restart, rebalance is still disabled.
       try (RestResponse res = sync(rest.cache(hotRod.getName()).details())) {
-         Json body = Json.read(res.body());
+         Json body = Json.read(res.getBody());
          assertThat(body.at("rebalancing_enabled").asBoolean()).isFalse();
       }
 
