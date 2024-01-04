@@ -1,6 +1,9 @@
 name: Needs Rebase Check
 
 on:
+  pull_request:
+    types:
+      - synchronize
   push:
     branches:
       - '*.0.x'
@@ -9,10 +12,7 @@ jobs:
   triage:
     runs-on: ubuntu-latest
     steps:
-      - uses: mschilde/auto-label-merge-conflicts@v2.0
+      - uses: eps1lon/actions-label-merge-conflict@releases/2.x
         with:
-          CONFLICT_LABEL_NAME: "Needs Rebase"
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MAX_RETRIES: 5
-          WAIT_MS: 5000
-
+          dirtyLabel: "Needs Rebase"
+          repoToken: "${{ secrets.GITHUB_TOKEN }}"
