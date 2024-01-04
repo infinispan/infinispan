@@ -5,12 +5,14 @@ import java.util.Objects;
 
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
 
 /**
  * @author anistor@redhat.com
  * @since 7.0
  */
+@ProtoName("Address")
 public class AddressHS implements Address, Serializable {
 
    private String street;

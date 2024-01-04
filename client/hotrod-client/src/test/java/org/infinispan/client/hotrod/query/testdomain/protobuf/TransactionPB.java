@@ -3,12 +3,19 @@ package org.infinispan.client.hotrod.query.testdomain.protobuf;
 import java.math.BigDecimal;
 import java.util.Date;
 
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.api.annotations.indexing.Text;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 
 /**
  * @author anistor@redhat.com
  * @since 7.0
  */
+@Indexed
+@ProtoName("Transaction")
 public class TransactionPB implements Transaction {
 
    private int id;
@@ -22,6 +29,8 @@ public class TransactionPB implements Transaction {
    private boolean isValid;
 
    @Override
+   @Basic(projectable = true, sortable = true)
+   @ProtoField(value = 1, defaultValue = "0")
    public int getId() {
       return id;
    }
@@ -32,6 +41,8 @@ public class TransactionPB implements Transaction {
    }
 
    @Override
+   @Basic(sortable = true)
+   @ProtoField(2)
    public String getDescription() {
       return description;
    }
@@ -42,11 +53,20 @@ public class TransactionPB implements Transaction {
    }
 
    @Override
+   @Text(projectable = true)
+   @ProtoField(3)
    public String getLongDescription() {
       return longDescription;
    }
 
    @Override
+   public void setLongDescription(String longDescription) {
+      this.longDescription = longDescription;
+   }
+
+   @Override
+   @Text(projectable = true, analyzer = "ngram")
+   @ProtoField(4)
    public String getNotes() {
       return notes;
    }
@@ -57,11 +77,8 @@ public class TransactionPB implements Transaction {
    }
 
    @Override
-   public void setLongDescription(String longDescription) {
-      this.longDescription = longDescription;
-   }
-
-   @Override
+   @Basic(projectable = true)
+   @ProtoField(value = 5, defaultValue = "0")
    public int getAccountId() {
       return accountId;
    }
@@ -72,6 +89,8 @@ public class TransactionPB implements Transaction {
    }
 
    @Override
+   @Basic(projectable = true)
+   @ProtoField(6)
    public Date getDate() {
       return date;
    }
@@ -82,6 +101,8 @@ public class TransactionPB implements Transaction {
    }
 
    @Override
+   @Basic(projectable = true, sortable = true)
+   @ProtoField(value = 7, defaultValue = "0.0")
    public double getAmount() {
       return amount.doubleValue();
    }
@@ -92,6 +113,8 @@ public class TransactionPB implements Transaction {
    }
 
    @Override
+   @Basic(projectable = true)
+   @ProtoField(value = 8, defaultValue = "false", name = "isDebit")
    public boolean isDebit() {
       return isDebit;
    }
@@ -102,6 +125,7 @@ public class TransactionPB implements Transaction {
    }
 
    @Override
+   @ProtoField(value = 9, defaultValue = "false", name = "isValid")
    public boolean isValid() {
       return isValid;
    }

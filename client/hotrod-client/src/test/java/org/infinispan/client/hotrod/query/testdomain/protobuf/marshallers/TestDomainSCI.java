@@ -1,39 +1,34 @@
 package org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers;
 
-import org.infinispan.protostream.FileDescriptorSource;
-import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.AccountPB;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.AddressPB;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.CalculusManual;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.LimitsPB;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.TransactionPB;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
+import org.infinispan.protostream.GeneratedSchema;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.types.java.CommonTypes;
+import org.infinispan.query.dsl.embedded.testdomain.Account;
+import org.infinispan.query.dsl.embedded.testdomain.User;
 
-public class TestDomainSCI implements SerializationContextInitializer {
-   static final String PROTOBUF_RES = "sample_bank_account/bank.proto";
-   public static final TestDomainSCI INSTANCE = new TestDomainSCI();
-
-   private TestDomainSCI() {
-   }
-
-   @Override
-   public String getProtoFileName() {
-      return PROTOBUF_RES;
-   }
-
-   @Override
-   public String getProtoFile() {
-      return FileDescriptorSource.getResourceAsString(getClass(), "/" + PROTOBUF_RES);
-   }
-
-   @Override
-   public void registerSchema(SerializationContext serCtx) {
-      serCtx.registerProtoFiles(FileDescriptorSource.fromString(getProtoFileName(), getProtoFile()));
-   }
-
-   @Override
-   public void registerMarshallers(SerializationContext ctx) {
-      ctx.registerMarshaller(new UserMarshaller());
-      ctx.registerMarshaller(new GenderMarshaller());
-      ctx.registerMarshaller(new AddressMarshaller());
-      ctx.registerMarshaller(new AccountMarshaller());
-      ctx.registerMarshaller(new CurrencyMarshaller());
-      ctx.registerMarshaller(new LimitsMarshaller());
-      ctx.registerMarshaller(new TransactionMarshaller());
-   }
+@AutoProtoSchemaBuilder(
+      dependsOn = CommonTypes.class,
+      includeClasses = {
+            AddressPB.class,
+            AccountPB.class,
+            Account.Currency.class,
+            CalculusManual.class,
+            LimitsPB.class,
+            TransactionPB.class,
+            UserPB.class,
+            User.Gender.class
+      },
+      schemaFileName = "test.client.proto",
+      schemaFilePath = "proto/generated",
+      schemaPackageName = "sample_bank_account",
+      service = false
+)
+public interface TestDomainSCI extends GeneratedSchema {
+   GeneratedSchema INSTANCE = new TestDomainSCIImpl();
 }

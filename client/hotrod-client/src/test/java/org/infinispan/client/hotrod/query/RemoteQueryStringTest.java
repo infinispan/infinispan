@@ -17,16 +17,14 @@ import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.marshall.NotIndexedSCI;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AnalyzerTestEntity;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.ModelFactoryPB;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.AnalyzerTestEntityMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.marshall.AbstractSerializationContextInitializer;
-import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.query.dsl.embedded.QueryStringTest;
 import org.infinispan.query.dsl.embedded.testdomain.ModelFactory;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
@@ -46,24 +44,17 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "client.hotrod.query.RemoteQueryStringTest")
 public class RemoteQueryStringTest extends QueryStringTest {
 
-   private static final SerializationContextInitializer CUSTOM_ANALYZER_SCI = new AbstractSerializationContextInitializer("custom_analyzer.proto") {
-      @Override
-      public String getProtoFile() {
-         return "package sample_bank_account;\n" +
-               "/* @Indexed */\n" +
-               "message AnalyzerTestEntity {\n" +
-               "\t/* @Text(projectable = true, analyzer = \"stemmer\") */\n" +
-               "\toptional string f1 = 1;\n" +
-               "\t/* @Basic(indexNullAs = \"-1\") */\n" +
-               "\toptional int32 f2 = 2;\n" +
-               "}\n";
-      }
+   @AutoProtoSchemaBuilder(
+         includeClasses = AnalyzerTestEntity.class,
+         schemaFileName = "test.client.RemoteQueryStringTest",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "sample_bank_account",
+         service = false
+   )
+   interface SCI extends SerializationContextInitializer {
+   }
 
-      @Override
-      public void registerMarshallers(SerializationContext serCtx) {
-         serCtx.registerMarshaller(new AnalyzerTestEntityMarshaller());
-      }
-   };
+   private static final SerializationContextInitializer CUSTOM_ANALYZER_SCI = new SCIImpl();
 
    protected HotRodServer hotRodServer;
    protected RemoteCacheManager remoteCacheManager;

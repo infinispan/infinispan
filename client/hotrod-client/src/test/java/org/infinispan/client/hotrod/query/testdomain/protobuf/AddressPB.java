@@ -2,12 +2,16 @@ package org.infinispan.client.hotrod.query.testdomain.protobuf;
 
 import java.util.Objects;
 
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
 
 /**
  * @author anistor@redhat.com
  * @since 7.0
  */
+@ProtoName("Address")
 public class AddressPB implements Address {
 
    private String street;
@@ -19,6 +23,8 @@ public class AddressPB implements Address {
    private boolean isCommercial;
 
    @Override
+   @Basic(projectable = true)
+   @ProtoField(1)
    public String getStreet() {
       return street;
    }
@@ -29,6 +35,8 @@ public class AddressPB implements Address {
    }
 
    @Override
+   @Basic(projectable = true)
+   @ProtoField(2)
    public String getPostCode() {
       return postCode;
    }
@@ -39,6 +47,8 @@ public class AddressPB implements Address {
    }
 
    @Override
+   @Basic(projectable = true)
+   @ProtoField(value = 3, defaultValue = "0")
    public int getNumber() {
       return number;
    }
@@ -49,6 +59,7 @@ public class AddressPB implements Address {
    }
 
    @Override
+   @ProtoField(value = 4, defaultValue = "false")
    public boolean isCommercial() {
       return isCommercial;
    }

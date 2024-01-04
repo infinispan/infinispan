@@ -23,14 +23,9 @@
             <groupId>org.infinispan.protostream</groupId>
             <artifactId>protostream-processor</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>proto-sample-domain-definition</artifactId>
         </dependency>
     </dependencies>
 </project>

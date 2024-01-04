@@ -15,7 +15,7 @@ public abstract class UserBase implements User, Serializable {
 
    @Override
    @Basic(projectable = true, sortable = true)
-   @ProtoField(number = 1)
+   @ProtoField(number = 3)
    public String getName() {
       return name;
    }

@@ -8,6 +8,7 @@ import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 
 /**
@@ -15,6 +16,7 @@ import org.infinispan.query.dsl.embedded.testdomain.Transaction;
  * @since 7.0
  */
 @Indexed
+@ProtoName("Transaction")
 public class TransactionHS implements Transaction, Serializable {
 
    private int id;

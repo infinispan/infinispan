@@ -1,19 +1,29 @@
 package org.infinispan.protostream.sampledomain;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import org.infinispan.protostream.UnknownFieldSet;
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Embedded;
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.protostream.annotations.ProtoEnumValue;
+import org.infinispan.protostream.annotations.ProtoField;
 
 /**
  * @author anistor@redhat.com
  */
+@Indexed
 public class User {
 
    public enum Gender {
-      MALE, FEMALE
+      @ProtoEnumValue(1)
+      MALE,
+      @ProtoEnumValue(2)
+      FEMALE
    }
 
    private int id;
@@ -28,8 +38,8 @@ public class User {
    private Instant creationDate;
    private Instant passwordExpirationDate;
 
-   private UnknownFieldSet unknownFieldSet;
-
+   @Basic(projectable = true, sortable = true)
+   @ProtoField(number = 1, defaultValue = "0")
    public int getId() {
       return id;
    }
@@ -38,6 +48,8 @@ public class User {
       this.id = id;
    }
 
+   @Basic(projectable = true)
+   @ProtoField(value = 2, collectionImplementation = HashSet.class)
    public Set<Integer> getAccountIds() {
       return accountIds;
    }
@@ -46,6 +58,8 @@ public class User {
       this.accountIds = accountIds;
    }
 
+   @Basic(projectable = true, sortable = true)
+   @ProtoField(3)
    public String getName() {
       return name;
    }
@@ -54,6 +68,8 @@ public class User {
       this.name = name;
    }
 
+   @Basic(projectable = true, sortable = true, indexNullAs = "_null_")
+   @ProtoField(4)
    public String getSurname() {
       return surname;
    }
@@ -62,6 +78,8 @@ public class User {
       this.surname = surname;
    }
 
+   @Basic(projectable = true, indexNullAs = "_null_")
+   @ProtoField(5)
    public String getSalutation() {
       return salutation;
    }
@@ -70,6 +88,8 @@ public class User {
       this.salutation = salutation;
    }
 
+   @Embedded
+   @ProtoField(value = 6, collectionImplementation = ArrayList.class)
    public List<Address> getAddresses() {
       return addresses;
    }
@@ -78,6 +98,8 @@ public class User {
       this.addresses = addresses;
    }
 
+   @Basic(sortable = true, indexNullAs = "-1")
+   @ProtoField(7)
    public Integer getAge() {
       return age;
    }
@@ -86,6 +108,8 @@ public class User {
       this.age = age;
    }
 
+   @Basic(projectable = true)
+   @ProtoField(8)
    public Gender getGender() {
       return gender;
    }
@@ -94,6 +118,7 @@ public class User {
       this.gender = gender;
    }
 
+   @ProtoField(9)
    public String getNotes() {
       return notes;
    }
@@ -102,6 +127,8 @@ public class User {
       this.notes = notes;
    }
 
+   @Basic(projectable = true, sortable = true, indexNullAs = "-1")
+   @ProtoField(10)
    public Instant getCreationDate() {
       return creationDate;
    }
@@ -110,20 +137,13 @@ public class User {
       this.creationDate = creationDate;
    }
 
+   @ProtoField(11)
    public Instant getPasswordExpirationDate() {
       return passwordExpirationDate;
    }
 
    public void setPasswordExpirationDate(Instant passwordExpirationDate) {
       this.passwordExpirationDate = passwordExpirationDate;
-   }
-
-   public UnknownFieldSet getUnknownFieldSet() {
-      return unknownFieldSet;
-   }
-
-   public void setUnknownFieldSet(UnknownFieldSet unknownFieldSet) {
-      this.unknownFieldSet = unknownFieldSet;
    }
 
    @Override
@@ -140,7 +160,6 @@ public class User {
             ", notes=" + notes +
             ", creationDate='" + creationDate + '\'' +
             ", passwordExpirationDate='" + passwordExpirationDate + '\'' +
-            ", unknownFieldSet=" + unknownFieldSet +
             '}';
    }
 

@@ -5,16 +5,19 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.marshall.SerializeWith;
-import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * @author anistor@redhat.com
  * @since 6.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.REMOTE_QUERY_RESPONSE)
 @SerializeWith(Externalizers.QueryResponseExternalizer.class)
 public final class QueryResponse implements BaseQueryResponse {
 
@@ -28,6 +31,7 @@ public final class QueryResponse implements BaseQueryResponse {
 
    private boolean hitCountExact;
 
+   @ProtoField(number = 1, defaultValue = "0")
    public int getNumResults() {
       return numResults;
    }
@@ -36,6 +40,7 @@ public final class QueryResponse implements BaseQueryResponse {
       this.numResults = numResults;
    }
 
+   @ProtoField(number = 2, defaultValue = "0")
    public int getProjectionSize() {
       return projectionSize;
    }
@@ -44,6 +49,7 @@ public final class QueryResponse implements BaseQueryResponse {
       this.projectionSize = projectionSize;
    }
 
+   @ProtoField(number = 3, collectionImplementation = ArrayList.class)
    public List<WrappedMessage> getResults() {
       return results;
    }
@@ -86,6 +92,7 @@ public final class QueryResponse implements BaseQueryResponse {
    }
 
    @Override
+   @ProtoField(number = 4, defaultValue = "-1")
    public int hitCount() {
       return hitCount;
    }
@@ -95,44 +102,12 @@ public final class QueryResponse implements BaseQueryResponse {
    }
 
    @Override
+   @ProtoField(number = 5, defaultValue = "false")
    public boolean hitCountExact() {
       return hitCountExact;
    }
 
    public void hitCountExact(boolean hitCountExact) {
       this.hitCountExact = hitCountExact;
-   }
-
-   static final class Marshaller implements MessageMarshaller<QueryResponse> {
-
-      @Override
-      public QueryResponse readFrom(ProtoStreamReader reader) throws IOException {
-         QueryResponse queryResponse = new QueryResponse();
-         queryResponse.setNumResults(reader.readInt("numResults"));
-         queryResponse.setProjectionSize(reader.readInt("projectionSize"));
-         queryResponse.setResults(reader.readCollection("results", new ArrayList<>(), WrappedMessage.class));
-         queryResponse.hitCount(reader.readInt("hitCount"));
-         queryResponse.hitCountExact(reader.readBoolean("hitCountExact"));
-         return queryResponse;
-      }
-
-      @Override
-      public void writeTo(ProtoStreamWriter writer, QueryResponse queryResponse) throws IOException {
-         writer.writeInt("numResults", queryResponse.numResults);
-         writer.writeInt("projectionSize", queryResponse.projectionSize);
-         writer.writeCollection("results", queryResponse.results, WrappedMessage.class);
-         writer.writeInt("hitCount", queryResponse.hitCount);
-         writer.writeBoolean("hitCountExact", queryResponse.hitCountExact);
-      }
-
-      @Override
-      public Class<QueryResponse> getJavaClass() {
-         return QueryResponse.class;
-      }
-
-      @Override
-      public String getTypeName() {
-         return "org.infinispan.query.remote.client.QueryResponse";
-      }
    }
 }

@@ -20,8 +20,6 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AccountPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.CurrencyMarshaller;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.GenderMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.api.query.Query;
@@ -31,14 +29,16 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.AbstractSerializationContextInitializer;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
+import org.infinispan.query.dsl.embedded.testdomain.hsearch.AddressHS;
+import org.infinispan.query.dsl.embedded.testdomain.hsearch.LimitsHS;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -67,7 +67,7 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = createConfigBuilder();
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
-      globalBuilder.serialization().addContextInitializers(new ServerSCI());
+      globalBuilder.serialization().addContextInitializers(new ServerSCIImpl());
 
       cacheManager = TestCacheManagerFactory.createServerModeCacheManager(globalBuilder, builder);
       cache = cacheManager.getCache();
@@ -496,27 +496,22 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
       assertEquals(42, account.getCreationDate().getTime());
    }
 
-   static class ServerSCI extends AbstractSerializationContextInitializer {
-
-      ServerSCI() {
-         super("sample_bank_account/bank.proto");
-      }
-
-      @Override
-      public void registerSchema(SerializationContext ctx) {
-         super.registerSchema(ctx);
-         NotIndexedSCI.INSTANCE.registerSchema(ctx);
-      }
-
-      @Override
-      public void registerMarshallers(SerializationContext ctx) {
-         ctx.registerMarshaller(new EmbeddedAccountMarshaller());
-         ctx.registerMarshaller(new CurrencyMarshaller());
-         ctx.registerMarshaller(new EmbeddedLimitsMarshaller());
-         ctx.registerMarshaller(new EmbeddedUserMarshaller());
-         ctx.registerMarshaller(new GenderMarshaller());
-         ctx.registerMarshaller(new EmbeddedTransactionMarshaller());
-         NotIndexedSCI.INSTANCE.registerMarshallers(ctx);
-      }
+   @AutoProtoSchemaBuilder(
+         dependsOn = NotIndexedSCI.class,
+         includeClasses = {
+               AddressHS.class,
+               AccountHS.class,
+               Account.Currency.class,
+               LimitsHS.class,
+               TransactionHS.class,
+               UserHS.class,
+               User.Gender.class
+         },
+         schemaFileName = "test.client.EmbeddedRemoteInteropQueryTest.proto",
+         schemaFilePath = "proto/generated",
+         schemaPackageName = "sample_bank_account",
+         service = false
+   )
+   interface ServerSCI extends SerializationContextInitializer {
    }
 }

@@ -14,7 +14,6 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.io.IOException;
 import java.util.List;
 
 import org.infinispan.Cache;
@@ -28,7 +27,6 @@ import org.infinispan.client.hotrod.marshall.NotIndexedSCI;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.ModelFactoryPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.query.dsl.Query;
@@ -101,10 +99,6 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       clientBuilder.version(getProtocolVersion());
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       remoteCache = remoteCacheManager.getCache();
-   }
-
-   protected String loadSchema() throws IOException {
-      return Util.getResourceAsString("/sample_bank_account/bank.proto", getClass().getClassLoader());
    }
 
    protected ConfigurationBuilder getConfigurationBuilder() {

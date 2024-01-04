@@ -1,64 +1,31 @@
 package org.infinispan.query.remote.client.impl;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import org.infinispan.protostream.EnumMarshaller;
-import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.annotations.ProtoEnumValue;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * @author anistor@redhat.com
  * @since 8.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.ICKLE_CONTINUOUS_QUERY_RESULT)
 public final class ContinuousQueryResult {
 
    public enum ResultType {
+      @ProtoEnumValue(1)
       JOINING,
+      @ProtoEnumValue(2)
       UPDATED,
-      LEAVING;
-
-      static final class Marshaller implements EnumMarshaller<ResultType> {
-
-         @Override
-         public ContinuousQueryResult.ResultType decode(int enumValue) {
-            switch (enumValue) {
-               case 0:
-                  return ContinuousQueryResult.ResultType.LEAVING;
-               case 1:
-                  return ContinuousQueryResult.ResultType.JOINING;
-               case 2:
-                  return ContinuousQueryResult.ResultType.UPDATED;
-            }
-            return null;
-         }
-
-         @Override
-         public int encode(ContinuousQueryResult.ResultType resultType) throws IllegalArgumentException {
-            switch (resultType) {
-               case LEAVING:
-                  return 0;
-               case JOINING:
-                  return 1;
-               case UPDATED:
-                  return 2;
-               default:
-            }
-            throw new IllegalArgumentException("Unexpected ResultType value : " + resultType);
-         }
-
-         @Override
-         public Class<ContinuousQueryResult.ResultType> getJavaClass() {
-            return ContinuousQueryResult.ResultType.class;
-         }
-
-         @Override
-         public String getTypeName() {
-            return "org.infinispan.query.remote.client.ContinuousQueryResult.ResultType";
-         }
-      }
+      @ProtoEnumValue(3)
+      LEAVING
    }
 
    private final ResultType resultType;
@@ -76,20 +43,39 @@ public final class ContinuousQueryResult {
       this.projection = projection;
    }
 
+   // TODO re-add logic to marshalling?
+   @ProtoFactory
+   public ContinuousQueryResult(ResultType resultType, byte[] key, byte[] value, List<WrappedMessage> wrappedProjection) {
+      this(resultType, key, value,
+            wrappedProjection == null ? null : wrappedProjection.stream().map(WrappedMessage::getValue).toArray()
+      );
+   }
+
+   @ProtoField(1)
    public ResultType getResultType() {
       return resultType;
    }
 
+   @ProtoField(2)
    public byte[] getKey() {
       return key;
    }
 
+   @ProtoField(3)
    public byte[] getValue() {
       return value;
    }
 
    public Object[] getProjection() {
       return projection;
+   }
+
+   @ProtoField(value = 4, name = "projection", collectionImplementation = ArrayList.class)
+   List<WrappedMessage> getWrappedProjection() {
+      return projection == null ? null :
+            Arrays.stream(projection)
+                  .map(WrappedMessage::new)
+                  .collect(Collectors.toList());
    }
 
    @Override
@@ -100,51 +86,5 @@ public final class ContinuousQueryResult {
             ", value=" + Arrays.toString(value) +
             ", projection=" + Arrays.toString(projection) +
             '}';
-   }
-
-   static final class Marshaller implements MessageMarshaller<ContinuousQueryResult> {
-
-      @Override
-      public ContinuousQueryResult readFrom(ProtoStreamReader reader) throws IOException {
-         ContinuousQueryResult.ResultType type = reader.readObject("resultType", ContinuousQueryResult.ResultType.class);
-         byte[] key = reader.readBytes("key");
-         byte[] value = reader.readBytes("value");
-         List<WrappedMessage> projection = reader.readCollection("projection", new ArrayList<>(), WrappedMessage.class);
-         Object[] p = null;
-         if (!projection.isEmpty()) {
-            p = new Object[projection.size()];
-            int j = 0;
-            for (WrappedMessage m : projection) {
-               p[j++] = m.getValue();
-            }
-         }
-         return new ContinuousQueryResult(type, key, value, p);
-      }
-
-      @Override
-      public void writeTo(ProtoStreamWriter writer, ContinuousQueryResult continuousQueryResult) throws IOException {
-         writer.writeObject("resultType", continuousQueryResult.getResultType(), ContinuousQueryResult.ResultType.class);
-         writer.writeBytes("key", continuousQueryResult.getKey());
-         if (continuousQueryResult.getProjection() == null) {
-            // skip marshalling the instance if there is a projection (they are mutually exclusive)
-            writer.writeBytes("value", continuousQueryResult.getValue());
-         } else {
-            WrappedMessage[] p = new WrappedMessage[continuousQueryResult.getProjection().length];
-            for (int i = 0; i < p.length; i++) {
-               p[i] = new WrappedMessage(continuousQueryResult.getProjection()[i]);
-            }
-            writer.writeArray("projection", p, WrappedMessage.class);
-         }
-      }
-
-      @Override
-      public Class<ContinuousQueryResult> getJavaClass() {
-         return ContinuousQueryResult.class;
-      }
-
-      @Override
-      public String getTypeName() {
-         return "org.infinispan.query.remote.client.ContinuousQueryResult";
-      }
    }
 }

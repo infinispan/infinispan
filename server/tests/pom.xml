@@ -57,11 +57,6 @@
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>proto-sample-domain-definition</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.infinispan</groupId>
          <artifactId>proto-sample-domain-implementation</artifactId>
          <scope>test</scope>
       </dependency>

@@ -2,6 +2,9 @@ package org.infinispan.protostream.sampledomain;
 
 import java.util.Objects;
 
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.protostream.annotations.ProtoField;
+
 /**
  * @author anistor@redhat.com
  */
@@ -26,6 +29,8 @@ public class Address {
       this.isCommercial = isCommercial;
    }
 
+   @Basic(projectable = true)
+   @ProtoField(1)
    public String getStreet() {
       return street;
    }
@@ -34,6 +39,8 @@ public class Address {
       this.street = street;
    }
 
+   @Basic(projectable = true)
+   @ProtoField(2)
    public String getPostCode() {
       return postCode;
    }
@@ -42,6 +49,8 @@ public class Address {
       this.postCode = postCode;
    }
 
+   @Basic(projectable = true)
+   @ProtoField(value = 3, defaultValue = "0")
    public int getNumber() {
       return number;
    }
@@ -50,6 +59,7 @@ public class Address {
       this.number = number;
    }
 
+   @ProtoField(value = 4, defaultValue = "false")
    public boolean isCommercial() {
       return isCommercial;
    }

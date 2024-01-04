@@ -3,7 +3,7 @@ package org.infinispan.objectfilter.test.perf;
 import org.infinispan.commons.test.categories.Profiling;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
-import org.infinispan.objectfilter.test.model.MarshallerRegistration;
+import org.infinispan.objectfilter.test.model.TestDomainSCI;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.junit.Before;
@@ -23,7 +23,8 @@ public class ProtobufPerfTest extends PerfTest {
    @Before
    public void setUp() throws Exception {
       serCtx = ProtobufUtil.newSerializationContext();
-      MarshallerRegistration.registerMarshallers(serCtx);
+      TestDomainSCI.INSTANCE.registerSchema(serCtx);
+      TestDomainSCI.INSTANCE.registerMarshallers(serCtx);
    }
 
    protected Matcher createMatcher() {

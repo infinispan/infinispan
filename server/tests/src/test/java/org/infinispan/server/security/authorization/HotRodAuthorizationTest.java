@@ -30,12 +30,12 @@ import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.test.skip.SkipJunit;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
+import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.sampledomain.TestDomainSCI;
 import org.infinispan.protostream.sampledomain.User;
-import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.functional.hotrod.HotRodCacheQueries;
 import org.infinispan.server.test.api.TestUser;
@@ -281,7 +281,7 @@ abstract class HotRodAuthorizationTest {
 
    @Test
    public void testAdminAndDeployerCanManageSchema() {
-      String schema = Exceptions.unchecked(() -> Util.getResourceAsString("/sample_bank_account/bank.proto", this.getClass().getClassLoader()));
+      String schema = TestDomainSCI.INSTANCE.getProtoFile();
       for (TestUser user : EnumSet.of(TestUser.ADMIN, TestUser.DEPLOYER)) {
          RemoteCacheManager remoteCacheManager = ext.hotrod().withClientConfiguration(hotRodBuilders.get(user)).createRemoteCacheManager();
          RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
@@ -292,7 +292,7 @@ abstract class HotRodAuthorizationTest {
 
    @Test
    public void testNonCreatorsSchema() {
-      String schema = Exceptions.unchecked(() -> Util.getResourceAsString("/sample_bank_account/bank.proto", this.getClass().getClassLoader()));
+      String schema = TestDomainSCI.INSTANCE.getProtoFile();
       for (TestUser user : EnumSet.of(TestUser.APPLICATION, TestUser.OBSERVER, TestUser.WRITER)) {
          RemoteCacheManager remoteCacheManager = ext.hotrod().withClientConfiguration(hotRodBuilders.get(user)).createRemoteCacheManager();
          RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
@@ -347,7 +347,7 @@ abstract class HotRodAuthorizationTest {
    }
 
    private org.infinispan.configuration.cache.ConfigurationBuilder prepareIndexedCache() {
-      String schema = Exceptions.unchecked(() -> Util.getResourceAsString("/sample_bank_account/bank.proto", this.getClass().getClassLoader()));
+      String schema = TestDomainSCI.INSTANCE.getProtoFile();
       RemoteCacheManager remoteCacheManager = ext.hotrod().withClientConfiguration(hotRodBuilders.get(TestUser.ADMIN)).createRemoteCacheManager();
       RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
       metadataCache.put(BANK_PROTO, schema);
@@ -369,7 +369,9 @@ abstract class HotRodAuthorizationTest {
       client.servers().clear();
       ProtoStreamMarshaller marshaller = new ProtoStreamMarshaller();
       client.marshaller(marshaller);
-      Exceptions.unchecked(() -> MarshallerRegistration.registerMarshallers(marshaller.getSerializationContext()));
+      SerializationContext ctx = marshaller.getSerializationContext();
+      TestDomainSCI.INSTANCE.registerSchema(ctx);
+      TestDomainSCI.INSTANCE.registerMarshallers(ctx);
       return client;
    }
 

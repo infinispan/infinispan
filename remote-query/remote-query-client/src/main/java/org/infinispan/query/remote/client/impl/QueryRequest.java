@@ -2,7 +2,6 @@ package org.infinispan.query.remote.client.impl;
 
 import static java.util.stream.Collectors.toList;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -11,14 +10,18 @@ import java.util.Map;
 
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.marshall.SerializeWith;
-import org.infinispan.protostream.MessageMarshaller;
 import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * @author anistor@redhat.com
  * @since 6.0
  */
+@ProtoTypeId(ProtoStreamTypeIds.REMOTE_QUERY_REQUEST)
 @SerializeWith(Externalizers.QueryRequestExternalizer.class)
 public final class QueryRequest implements JsonSerialization {
 
@@ -40,6 +43,21 @@ public final class QueryRequest implements JsonSerialization {
 
    private boolean local;
 
+   @ProtoFactory
+   QueryRequest(String queryString, Long startOffset, Integer maxResults, List<NamedParameter> namedParameters,
+                boolean local, Integer hitCountAccuracy) {
+      this.queryString = queryString;
+      this.startOffset = startOffset;
+      this.maxResults = maxResults;
+      this.namedParameters = namedParameters;
+      this.local = local;
+      this.hitCountAccuracy = hitCountAccuracy;
+   }
+
+   public QueryRequest() {
+   }
+
+   @ProtoField(1)
    public String getQueryString() {
       return queryString;
    }
@@ -48,6 +66,7 @@ public final class QueryRequest implements JsonSerialization {
       this.queryString = queryString;
    }
 
+   @ProtoField(3)
    public Long getStartOffset() {
       return startOffset == null ? Long.valueOf(-1) : startOffset;
    }
@@ -56,6 +75,7 @@ public final class QueryRequest implements JsonSerialization {
       this.startOffset = startOffset;
    }
 
+   @ProtoField(4)
    public Integer getMaxResults() {
       return maxResults == null ? Integer.valueOf(-1) : maxResults;
    }
@@ -64,24 +84,27 @@ public final class QueryRequest implements JsonSerialization {
       this.maxResults = maxResults;
    }
 
-   public Integer hitCountAccuracy() {
-      return hitCountAccuracy == null ? Integer.valueOf(-1) : hitCountAccuracy;
-   }
-
-   public void hitCountAccuracy(Integer hitCountAccuracy) {
-      this.hitCountAccuracy = hitCountAccuracy;
-   }
-
+   @ProtoField(value = 5, collectionImplementation = ArrayList.class)
    public List<NamedParameter> getNamedParameters() {
       return namedParameters;
    }
 
+   @ProtoField(value = 6, defaultValue = "false")
    public boolean isLocal() {
       return local;
    }
 
    public void setLocal(boolean local) {
       this.local = local;
+   }
+
+   @ProtoField(7)
+   public Integer hitCountAccuracy() {
+      return hitCountAccuracy == null ? Integer.valueOf(-1) : hitCountAccuracy;
+   }
+
+   public void hitCountAccuracy(Integer hitCountAccuracy) {
+      this.hitCountAccuracy = hitCountAccuracy;
    }
 
    public void setNamedParameters(List<NamedParameter> namedParameters) {
@@ -129,42 +152,6 @@ public final class QueryRequest implements JsonSerialization {
             .set(LOCAL_FIELD, Json.factory().bool(local));
    }
 
-   static final class Marshaller implements MessageMarshaller<QueryRequest> {
-
-      @Override
-      public QueryRequest readFrom(ProtoStreamReader reader) throws IOException {
-         QueryRequest queryRequest = new QueryRequest();
-         queryRequest.setQueryString(reader.readString(QUERY_STRING_FIELD));
-         queryRequest.setStartOffset(reader.readLong(START_OFFSET_FIELD));
-         queryRequest.setMaxResults(reader.readInt(MAX_RESULTS_FIELD));
-         queryRequest.hitCountAccuracy(reader.readInt(HIT_COUNT_ACCURACY));
-         queryRequest.setNamedParameters(reader.readCollection(NAMED_PARAMETERS_FIELD, new ArrayList<>(), NamedParameter.class));
-         Boolean localField = reader.readBoolean(LOCAL_FIELD);
-         if (localField != null) queryRequest.setLocal(localField);
-         return queryRequest;
-      }
-
-      @Override
-      public void writeTo(ProtoStreamWriter writer, QueryRequest queryRequest) throws IOException {
-         writer.writeString(QUERY_STRING_FIELD, queryRequest.getQueryString());
-         writer.writeLong(START_OFFSET_FIELD, queryRequest.getStartOffset());
-         writer.writeInt(MAX_RESULTS_FIELD, queryRequest.getMaxResults());
-         writer.writeInt(HIT_COUNT_ACCURACY, queryRequest.hitCountAccuracy());
-         writer.writeCollection(NAMED_PARAMETERS_FIELD, queryRequest.getNamedParameters(), NamedParameter.class);
-         writer.writeBoolean(LOCAL_FIELD, queryRequest.isLocal());
-      }
-
-      @Override
-      public Class<QueryRequest> getJavaClass() {
-         return QueryRequest.class;
-      }
-
-      @Override
-      public String getTypeName() {
-         return "org.infinispan.query.remote.client.QueryRequest";
-      }
-   }
-
    @SerializeWith(Externalizers.NamedParameterExternalizer.class)
    public static final class NamedParameter implements JsonSerialization {
       public static final String NAME_FIELD = "name";
@@ -185,12 +172,23 @@ public final class QueryRequest implements JsonSerialization {
          this.value = value;
       }
 
+      @ProtoFactory
+      NamedParameter(String name, WrappedMessage wrappedValue) {
+         this(name, wrappedValue.getValue());
+      }
+
+      @ProtoField(1)
       public String getName() {
          return name;
       }
 
       public Object getValue() {
          return value;
+      }
+
+      @ProtoField(number = 2, name = "value")
+      WrappedMessage getWrappedValue() {
+         return new WrappedMessage(value);
       }
 
       @Override
@@ -202,32 +200,6 @@ public final class QueryRequest implements JsonSerialization {
          String name = source.at(NAME_FIELD).asString();
          Object value = source.at(VALUE_FIELD).getValue();
          return new NamedParameter(name, value);
-      }
-
-      static final class Marshaller implements MessageMarshaller<NamedParameter> {
-
-         @Override
-         public NamedParameter readFrom(ProtoStreamReader reader) throws IOException {
-            String name = reader.readString("name");
-            WrappedMessage value = reader.readObject("value", WrappedMessage.class);
-            return new NamedParameter(name, value.getValue());
-         }
-
-         @Override
-         public void writeTo(ProtoStreamWriter writer, NamedParameter namedParameter) throws IOException {
-            writer.writeString("name", namedParameter.getName());
-            writer.writeObject("value", new WrappedMessage(namedParameter.getValue()), WrappedMessage.class);
-         }
-
-         @Override
-         public Class<NamedParameter> getJavaClass() {
-            return NamedParameter.class;
-         }
-
-         @Override
-         public String getTypeName() {
-            return "org.infinispan.query.remote.client.QueryRequest.NamedParameter";
-         }
       }
    }
 }

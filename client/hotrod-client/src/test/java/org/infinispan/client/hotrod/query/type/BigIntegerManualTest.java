@@ -6,7 +6,7 @@ import java.math.BigInteger;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.CalculusManual;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.CalculusManualSCI;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.testng.annotations.Test;
@@ -16,7 +16,7 @@ public class BigIntegerManualTest extends SingleHotRodServerTest {
 
    @Override
    protected SerializationContextInitializer contextInitializer() {
-      return new CalculusManualSCI();
+      return TestDomainSCI.INSTANCE;
    }
 
    @Test

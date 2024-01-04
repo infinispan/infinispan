@@ -6,12 +6,14 @@ import java.util.Objects;
 
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.query.dsl.embedded.testdomain.Limits;
 
 /**
  * @author anistor@redhat.com
  * @since 9.4.1
  */
+@ProtoName("Limits")
 public class LimitsHS implements Limits, Serializable {
 
    private Double maxDailyLimit;
