@@ -12,6 +12,7 @@ import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Embedded;
 import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
 import org.infinispan.query.dsl.embedded.testdomain.Limits;
 
@@ -20,6 +21,7 @@ import org.infinispan.query.dsl.embedded.testdomain.Limits;
  * @since 7.0
  */
 @Indexed
+@ProtoName("Account")
 public class AccountHS implements Account, Serializable {
 
    @ProtoField(number = 1, defaultValue = "0")

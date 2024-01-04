@@ -13,10 +13,10 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.TestEntity;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeClass;
@@ -39,8 +39,7 @@ public class BuiltInAnalyzersTest extends SingleHotRodServerTest {
 
       EmbeddedCacheManager manager = TestCacheManagerFactory.createServerModeCacheManager();
       Cache<String, String> metadataCache = manager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      String protoFile = Util.getResourceAsString("/analyzers.proto", getClass().getClassLoader());
-      metadataCache.put("analyzers.proto", protoFile);
+      metadataCache.put("analyzers.proto", TestEntitySCI.INSTANCE.getProtoFile());
       RemoteQueryTestUtils.checkSchemaErrors(metadataCache);
 
       manager.defineConfiguration("test", builder.build());
@@ -49,10 +48,9 @@ public class BuiltInAnalyzersTest extends SingleHotRodServerTest {
 
    @BeforeClass
    protected void registerProtobufSchema() throws Exception {
-      String protoFile = Util.getResourceAsString("/analyzers.proto", getClass().getClassLoader());
       SerializationContext serCtx = MarshallerUtil.getSerializationContext(remoteCacheManager);
-      serCtx.registerProtoFiles(FileDescriptorSource.fromString("analyzers.proto", protoFile));
-      serCtx.registerMarshaller(new TestEntity.TestEntityMarshaller());
+      TestEntitySCI.INSTANCE.registerSchema(serCtx);
+      TestEntitySCI.INSTANCE.registerMarshallers(serCtx);
    }
 
    @Override
@@ -97,5 +95,15 @@ public class BuiltInAnalyzersTest extends SingleHotRodServerTest {
       assertEquals(0, remoteCache.query("From TestEntity where name4:'Oswald lee'").execute().count().value());
       assertEquals(0, remoteCache.query("From TestEntity where name5:'json'").execute().count().value());
       assertEquals(0, remoteCache.query("From TestEntity where name6:'Georje'").execute().count().value());
+   }
+
+   @AutoProtoSchemaBuilder(
+         includeClasses = TestEntity.class,
+         schemaFileName = "test.client.BuiltInAnalyzersTest.proto",
+         schemaFilePath = "proto/generated",
+         service = false
+   )
+   public interface TestEntitySCI extends GeneratedSchema {
+      GeneratedSchema INSTANCE = new TestEntitySCIImpl();
    }
 }

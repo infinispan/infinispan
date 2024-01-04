@@ -135,7 +135,6 @@
       <module>hibernate</module>
       <module>anchored-keys</module>
       <module>cloudevents-integration</module>
-      <module>test-support/proto-sample-domain-definition</module>
       <module>test-support/proto-sample-domain-implementation</module>
    </modules>
    <properties>
@@ -1255,12 +1254,6 @@
             <artifactId>infinispan-endpoint-interop-it</artifactId>
             <version>${version.infinispan}</version>
             <type>test-jar</type>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>proto-sample-domain-definition</artifactId>
-            <version>${version.infinispan}</version>
             <scope>test</scope>
          </dependency>
          <dependency>

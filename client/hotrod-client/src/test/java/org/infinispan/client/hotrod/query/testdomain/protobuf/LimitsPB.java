@@ -3,12 +3,16 @@ package org.infinispan.client.hotrod.query.testdomain.protobuf;
 import java.util.Arrays;
 import java.util.Objects;
 
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.query.dsl.embedded.testdomain.Limits;
 
 /**
  * @author anistor@redhat.com
  * @since 9.4.1
  */
+@ProtoName("Limits")
 public class LimitsPB implements Limits {
 
    private Double maxDailyLimit;
@@ -18,6 +22,8 @@ public class LimitsPB implements Limits {
    private String[] payees = new String[0];
 
    @Override
+   @Basic(projectable = true)
+   @ProtoField(1)
    public Double getMaxDailyLimit() {
       return maxDailyLimit;
    }
@@ -28,6 +34,8 @@ public class LimitsPB implements Limits {
    }
 
    @Override
+   @Basic(projectable = true)
+   @ProtoField(2)
    public Double getMaxTransactionLimit() {
       return maxTransactionLimit;
    }
@@ -38,6 +46,8 @@ public class LimitsPB implements Limits {
    }
 
    @Override
+   @Basic(projectable = true)
+   @ProtoField(3)
    public String[] getPayees() {
       return payees;
    }

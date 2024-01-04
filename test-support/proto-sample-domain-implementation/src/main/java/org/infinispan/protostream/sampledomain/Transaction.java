@@ -3,6 +3,10 @@ package org.infinispan.protostream.sampledomain;
 import java.math.BigDecimal;
 import java.util.Date;
 
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Text;
+import org.infinispan.protostream.annotations.ProtoField;
+
 /**
  * @author anistor@redhat.com
  */
@@ -18,6 +22,8 @@ public class Transaction {
    private boolean isDebit;
    private boolean isValid;
 
+   @Basic(projectable = true, sortable = true)
+   @ProtoField(value = 1, defaultValue = "0")
    public int getId() {
       return id;
    }
@@ -26,6 +32,8 @@ public class Transaction {
       this.id = id;
    }
 
+   @Basic(sortable = true)
+   @ProtoField(2)
    public String getDescription() {
       return description;
    }
@@ -34,6 +42,8 @@ public class Transaction {
       this.description = description;
    }
 
+   @Basic(projectable = true)
+   @ProtoField(3)
    public String getLongDescription() {
       return longDescription;
    }
@@ -42,6 +52,8 @@ public class Transaction {
       this.longDescription = longDescription;
    }
 
+   @Text(projectable = true, analyzer = "ngram")
+   @ProtoField(4)
    public String getNotes() {
       return notes;
    }
@@ -50,6 +62,8 @@ public class Transaction {
       this.notes = notes;
    }
 
+   @Basic(projectable = true)
+   @ProtoField(value = 5, defaultValue = "0")
    public int getAccountId() {
       return accountId;
    }
@@ -58,6 +72,8 @@ public class Transaction {
       this.accountId = accountId;
    }
 
+   @Basic(projectable = true)
+   @ProtoField(6)
    public Date getDate() {
       return date;
    }
@@ -66,6 +82,8 @@ public class Transaction {
       this.date = date;
    }
 
+   @Basic(projectable = true, sortable = true)
+   @ProtoField(value = 7, defaultValue = "0.0")
    public double getAmount() {
       return amount.doubleValue();
    }
@@ -74,10 +92,8 @@ public class Transaction {
       this.amount = new BigDecimal(amount);
    }
 
-   public void setAmount(BigDecimal amount) {
-      this.amount = amount;
-   }
-
+   @Basic(projectable = true)
+   @ProtoField(value = 8, defaultValue = "false")
    public boolean isDebit() {
       return isDebit;
    }
@@ -86,6 +102,7 @@ public class Transaction {
       this.isDebit = isDebit;
    }
 
+   @ProtoField(value = 9, defaultValue = "false")
    public boolean isValid() {
       return isValid;
    }

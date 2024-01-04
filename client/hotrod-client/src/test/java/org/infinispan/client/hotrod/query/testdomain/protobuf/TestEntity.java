@@ -1,20 +1,43 @@
 package org.infinispan.client.hotrod.query.testdomain.protobuf;
 
 
-import java.io.IOException;
+import org.infinispan.api.annotations.indexing.Embedded;
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.api.annotations.indexing.Text;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
 
-import org.infinispan.protostream.MessageMarshaller;
-
+@Indexed
 public class TestEntity {
 
-   private final String name1;
-   private final String name2;
-   private final String name3;
-   private final String name4;
-   private final String name5;
-   private final String name6;
-   private final TestEntity child;
+   @ProtoField(1)
+   @Text(projectable = true)
+   final String name1;
+   @ProtoField(2)
+   @Text(projectable = true, analyzer = "simple")
+   final String name2;
 
+   @ProtoField(3)
+   @Text(projectable = true, analyzer = "whitespace")
+   final String name3;
+
+   @ProtoField(4)
+   @Text(projectable = true, analyzer = "keyword")
+   final String name4;
+
+   @ProtoField(5)
+   @Text(projectable = true, analyzer = "stemmer")
+   final String name5;
+
+   @ProtoField(6)
+   @Text(projectable = true, analyzer = "ngram")
+   final String name6;
+
+   @ProtoField(7)
+   @Embedded
+   final TestEntity child;
+
+   @ProtoFactory
    public TestEntity(String name1, String name2, String name3, String name4, String name5, String name6, TestEntity child) {
       this.name1 = name1;
       this.name2 = name2;
@@ -27,41 +50,5 @@ public class TestEntity {
 
    public TestEntity(String name1, String name2, String name3, String name4, String name5, String name6) {
       this(name1, name2, name3, name4, name5, name6, null);
-   }
-
-   public static class TestEntityMarshaller implements MessageMarshaller<TestEntity> {
-
-      @Override
-      public TestEntity readFrom(ProtoStreamReader reader) throws IOException {
-         String name1 = reader.readString("name1");
-         String name2 = reader.readString("name2");
-         String name3 = reader.readString("name3");
-         String name4 = reader.readString("name4");
-         String name5 = reader.readString("name5");
-         String name6 = reader.readString("name6");
-         TestEntity child = reader.readObject("child", TestEntity.class);
-         return new TestEntity(name1, name2, name3, name4, name5, name6, child);
-      }
-
-      @Override
-      public void writeTo(ProtoStreamWriter writer, TestEntity testEntity) throws IOException {
-         writer.writeString("name1", testEntity.name1);
-         writer.writeString("name2", testEntity.name2);
-         writer.writeString("name3", testEntity.name3);
-         writer.writeString("name4", testEntity.name4);
-         writer.writeString("name5", testEntity.name5);
-         writer.writeString("name6", testEntity.name6);
-         writer.writeObject("child", testEntity.child, TestEntity.class);
-      }
-
-      @Override
-      public Class<TestEntity> getJavaClass() {
-         return TestEntity.class;
-      }
-
-      @Override
-      public String getTypeName() {
-         return "TestEntity";
-      }
    }
 }

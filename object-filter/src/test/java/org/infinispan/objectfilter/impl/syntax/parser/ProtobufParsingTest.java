@@ -6,7 +6,7 @@ import static org.junit.Assert.assertNull;
 
 import java.io.IOException;
 
-import org.infinispan.objectfilter.test.model.MarshallerRegistration;
+import org.infinispan.objectfilter.test.model.TestDomainSCI;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.Descriptor;
@@ -24,7 +24,8 @@ public class ProtobufParsingTest extends AbstractParsingTest<Descriptor> {
 
    private static ObjectPropertyHelper<Descriptor> createPropertyHelper() throws IOException {
       SerializationContext serCtx = ProtobufUtil.newSerializationContext();
-      MarshallerRegistration.registerMarshallers(serCtx);
+      TestDomainSCI.INSTANCE.registerSchema(serCtx);
+      TestDomainSCI.INSTANCE.registerMarshallers(serCtx);
       return new ProtobufPropertyHelper(serCtx, null);
    }
 

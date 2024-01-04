@@ -53,10 +53,10 @@ import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.test.Exceptions;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.XSiteStateTransferMode;
+import org.infinispan.protostream.sampledomain.TestDomainSCI;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.resources.WeakSSEListener;
@@ -376,7 +376,7 @@ abstract class RESTAuthorizationTest {
 
    @Test
    public void testRestNonAdminsMustNotPerformSearchActions() {
-      String schema = Exceptions.unchecked(() -> Util.getResourceAsString("/sample_bank_account/bank.proto", this.getClass().getClassLoader()));
+      String schema = TestDomainSCI.INSTANCE.getProtoFile();
       assertStatus(OK, ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().schemas().put(BANK_PROTO, schema));
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
@@ -639,7 +639,7 @@ abstract class RESTAuthorizationTest {
    }
 
    private void createIndexedCache() {
-      String schema = Exceptions.unchecked(() -> Util.getResourceAsString("/sample_bank_account/bank.proto", this.getClass().getClassLoader()));
+      String schema = TestDomainSCI.INSTANCE.getProtoFile();
       RestClient adminClient = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get();
       RestCacheClient protobufCache = adminClient.cache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
       assertStatus(NO_CONTENT, protobufCache.put(BANK_PROTO, schema));

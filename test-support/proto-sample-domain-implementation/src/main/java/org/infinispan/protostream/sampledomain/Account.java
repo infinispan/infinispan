@@ -6,15 +6,29 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Embedded;
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.protostream.annotations.ProtoEnumValue;
+import org.infinispan.protostream.annotations.ProtoField;
+
 //todo move everything to core and make a tests jar
 
 /**
  * @author anistor@redhat.com
  */
+@Indexed
 public class Account {
 
    public enum Currency {
-      EUR, GBP, USD, BRL
+      @ProtoEnumValue(1)
+      EUR,
+      @ProtoEnumValue(2)
+      GBP,
+      @ProtoEnumValue(3)
+      USD,
+      @ProtoEnumValue(4)
+      BRL
    }
 
    private int id;
@@ -39,6 +53,8 @@ public class Account {
 
       private String[] payees = new String[0];
 
+      @Basic(projectable = true)
+      @ProtoField(1)
       public Double getMaxDailyLimit() {
          return maxDailyLimit;
       }
@@ -47,6 +63,8 @@ public class Account {
          this.maxDailyLimit = maxDailyLimit;
       }
 
+      @Basic(projectable = true)
+      @ProtoField(2)
       public Double getMaxTransactionLimit() {
          return maxTransactionLimit;
       }
@@ -55,6 +73,8 @@ public class Account {
          this.maxTransactionLimit = maxTransactionLimit;
       }
 
+      @Basic(projectable = true)
+      @ProtoField(3)
       public String[] getPayees() {
          return payees;
       }
@@ -95,6 +115,8 @@ public class Account {
       hardLimits.setMaxDailyLimit(10000.0);
    }
 
+   @Basic(projectable = true, sortable = true)
+   @ProtoField(value = 1, defaultValue = "0")
    public int getId() {
       return id;
    }
@@ -103,6 +125,8 @@ public class Account {
       this.id = id;
    }
 
+   @Basic(projectable = true, sortable = true)
+   @ProtoField(2)
    public String getDescription() {
       return description;
    }
@@ -111,6 +135,8 @@ public class Account {
       this.description = description;
    }
 
+   @Basic(projectable = true, sortable = true)
+   @ProtoField(3)
    public Date getCreationDate() {
       return creationDate;
    }
@@ -119,6 +145,8 @@ public class Account {
       this.creationDate = creationDate;
    }
 
+   @Embedded
+   @ProtoField(4)
    public Limits getLimits() {
       return limits;
    }
@@ -127,6 +155,8 @@ public class Account {
       this.limits = limits;
    }
 
+   @Embedded
+   @ProtoField(5)
    public Limits getHardLimits() {
       return hardLimits;
    }
@@ -135,6 +165,8 @@ public class Account {
       this.hardLimits = hardLimits;
    }
 
+   @Basic(projectable = true)
+   @ProtoField(6)
    public List<byte[]> getBlurb() {
       return blurb;
    }
@@ -158,6 +190,7 @@ public class Account {
       return true;
    }
 
+   @ProtoField(7)
    public Currency[] getCurrencies() {
       return currencies;
    }

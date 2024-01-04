@@ -1,6 +1,15 @@
 package org.infinispan.query.remote.client;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * When using Ickle based filters with client event listeners you will get the event data (see
@@ -9,6 +18,7 @@ import java.util.Arrays;
  * @author anistor@redhat.com
  * @since 7.2
  */
+@ProtoTypeId(ProtoStreamTypeIds.ICKLE_FILTER_RESULT)
 public final class FilterResult {
 
    private final Object instance;
@@ -24,6 +34,38 @@ public final class FilterResult {
       this.instance = instance;
       this.projection = projection;
       this.sortProjection = sortProjection;
+   }
+
+   @ProtoFactory
+   FilterResult(WrappedMessage wrappedInstance, List<WrappedMessage> wrappedProjection, List<WrappedMessage> wrappedSortProjection) {
+      this.instance = wrappedInstance == null ? null : wrappedInstance.getValue();
+      this.projection = wrappedProjection == null ? null : wrappedProjection.stream().map(WrappedMessage::getValue).toArray();
+      this.sortProjection = wrappedSortProjection == null ? null :
+            wrappedSortProjection.stream()
+                  .map(WrappedMessage::getValue)
+                  .map(c -> (Comparable<?>) c)
+                  .toArray(Comparable[]::new);
+   }
+
+   @ProtoField(value = 1, name = "instance")
+   WrappedMessage getWrappedInstance() {
+      return getProjection() == null ? new WrappedMessage(instance) : null;
+   }
+
+   @ProtoField(value = 2, name = "projection", collectionImplementation = ArrayList.class)
+   List<WrappedMessage> getWrappedProjection() {
+      return projection == null ? null :
+            Arrays.stream(projection)
+                  .map(WrappedMessage::new)
+                  .collect(Collectors.toList());
+   }
+
+   @ProtoField(value = 3, name = "sortProjection", collectionImplementation = ArrayList.class)
+   List<WrappedMessage> getWrappedSortProjection() {
+      return sortProjection == null ? null :
+            Arrays.stream(sortProjection)
+                  .map(WrappedMessage::new)
+                  .collect(Collectors.toList());
    }
 
    /**

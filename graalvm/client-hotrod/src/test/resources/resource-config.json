@@ -8,7 +8,10 @@
         "pattern": "proto/json\\.proto"
       },
       {
-        "pattern": "sample_bank_account/bank\\.proto"
+        "pattern": "proto/generated/query.proto"
+      },
+      {
+        "pattern": "proto/generated/test\\.protostream\\.sampledomain\\.proto"
       },
       {
         "pattern": "image\\.proto"

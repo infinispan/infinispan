@@ -33,7 +33,7 @@ import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.protostream.sampledomain.Address;
-import org.infinispan.protostream.sampledomain.Image;
+import org.infinispan.protostream.sampledomain.KeywordVector;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.server.functional.ClusteredIT;
@@ -50,7 +50,7 @@ import org.junit.jupiter.params.provider.ValueSource;
  **/
 public class HotRodCacheQueries {
 
-   public static final String BANK_PROTO_FILE = "/sample_bank_account/bank.proto";
+   public static final String BANK_PROTO_FILE = "/proto/generated/test.protostream.sampledomain.proto";
    public static final String ENTITY_USER = "sample_bank_account.User";
 
    @RegisterExtension
@@ -243,30 +243,30 @@ public class HotRodCacheQueries {
 
    @Test
    public void testVectorSearch() {
-      RemoteCache<String, Image> remoteCache = createQueryableCache(SERVERS, true,
-            Image.ImageSchema.INSTANCE.getProtoFileName(), "query.domain.Image");
+      RemoteCache<String, KeywordVector> remoteCache = createQueryableCache(SERVERS, true,
+            BANK_PROTO_FILE, "sample_bank_account.KeywordVector");
 
-      Image center = null;
+      KeywordVector center = null;
       for (int i = 0; i < 10; i++) {
-         Image image = createImage(i, 50);
+         KeywordVector keywordVector = createImage(i, 50);
          if (i == 7) {
-            center = image;
+            center = keywordVector;
          }
 
-         remoteCache.put(image.getName(), image);
+         remoteCache.put(keywordVector.getName(), keywordVector);
       }
 
-      Query<Image> query = remoteCache.query("from query.domain.Image i where i.byteEmbedding <-> [:a]~:k");
+      Query<KeywordVector> query = remoteCache.query("from sample_bank_account.KeywordVector i where i.byteEmbedding <-> [:a]~:k");
       query.setParameter("a", center.getByteEmbedding());
       query.setParameter("k", 3);
-      List<Image> list = query.list();
-      Assertions.assertThat(list).extracting(image -> image.getName()).containsExactly("bla-7", "bla-6", "bla-8");
+      List<KeywordVector> list = query.list();
+      Assertions.assertThat(list).extracting(KeywordVector::getName).containsExactly("bla-7", "bla-6", "bla-8");
 
-      query = remoteCache.query("from query.domain.Image i where i.floatEmbedding <-> [:a]~:k");
+      query = remoteCache.query("from sample_bank_account.KeywordVector i where i.floatEmbedding <-> [:a]~:k");
       query.setParameter("a", center.getFloatEmbedding());
       query.setParameter("k", 3);
       list = query.list();
-      Assertions.assertThat(list).extracting(image -> image.getName()).containsExactly("bla-7", "bla-6", "bla-8");
+      Assertions.assertThat(list).extracting(KeywordVector::getName).containsExactly("bla-7", "bla-6", "bla-8");
    }
 
    @Test
@@ -346,7 +346,7 @@ public class HotRodCacheQueries {
       assertEquals("1234", user.getAddresses().get(0).getPostCode());
    }
 
-   private static Image createImage(Integer seed, int dimension) {
+   private static KeywordVector createImage(Integer seed, int dimension) {
       byte[] byteEmbeddings = new byte[dimension];
       float[] floatEmbeddings = new float[dimension];
       for (int i = 0; i < dimension; i++) {
@@ -354,6 +354,6 @@ public class HotRodCacheQueries {
          floatEmbeddings[i] = seed.floatValue();
       }
 
-      return new Image("bla-" + seed, byteEmbeddings, floatEmbeddings);
+      return new KeywordVector("bla-" + seed, byteEmbeddings, floatEmbeddings);
    }
 }

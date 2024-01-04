@@ -49,7 +49,8 @@ import org.infinispan.commons.test.Exceptions;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.parsing.ParserRegistry;
-import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
+import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.sampledomain.TestDomainSCI;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.persistence.PersistenceIT;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
@@ -261,7 +262,9 @@ public class Common {
       assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
       assertNotNull(metadataCache.get(protoFile));
 
-      Exceptions.unchecked(() -> MarshallerRegistration.registerMarshallers(MarshallerUtil.getSerializationContext(remoteCacheManager)));
+      SerializationContext ctx = MarshallerUtil.getSerializationContext(remoteCacheManager);
+      TestDomainSCI.INSTANCE.registerSchema(ctx);
+      TestDomainSCI.INSTANCE.registerMarshallers(ctx);
 
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.encoding().mediaType(APPLICATION_PROTOSTREAM_TYPE);

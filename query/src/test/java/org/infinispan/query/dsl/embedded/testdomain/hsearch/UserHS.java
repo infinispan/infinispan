@@ -11,6 +11,7 @@ import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Embedded;
 import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
 
 /**
@@ -18,6 +19,7 @@ import org.infinispan.query.dsl.embedded.testdomain.Address;
  * @since 7.0
  */
 @Indexed
+@ProtoName("User")
 public class UserHS extends UserBase {
 
    private int id;
@@ -45,7 +47,7 @@ public class UserHS extends UserBase {
 
    @Override
    @Basic(projectable = true, sortable = true)
-   @ProtoField(number = 2, defaultValue = "0")
+   @ProtoField(number = 1, defaultValue = "0")
    public int getId() {
       return id;
    }
@@ -57,7 +59,7 @@ public class UserHS extends UserBase {
 
    @Override
    @Basic(projectable = true)
-   @ProtoField(number = 3, collectionImplementation = HashSet.class)
+   @ProtoField(number = 2, collectionImplementation = HashSet.class)
    public Set<Integer> getAccountIds() {
       return accountIds;
    }

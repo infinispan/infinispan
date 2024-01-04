@@ -1,7 +1,11 @@
 package org.infinispan.objectfilter.test.model;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import org.infinispan.protostream.annotations.ProtoEnumValue;
+import org.infinispan.protostream.annotations.ProtoField;
 
 /**
  * @author anistor@redhat.com
@@ -10,7 +14,10 @@ import java.util.List;
 public class Person {
 
    public enum Gender {
-      MALE, FEMALE
+      @ProtoEnumValue
+      MALE,
+      @ProtoEnumValue(1)
+      FEMALE
    }
 
    // fields start with underscore to demonstrate that property getter access is used instead of field access
@@ -36,6 +43,7 @@ public class Person {
 
    private boolean _deleted;
 
+   @ProtoField(value = 1, defaultValue = "0")
    public int getId() {
       return _id;
    }
@@ -44,6 +52,7 @@ public class Person {
       this._id = id;
    }
 
+   @ProtoField(2)
    public String getName() {
       return _name;
    }
@@ -52,6 +61,7 @@ public class Person {
       this._name = name;
    }
 
+   @ProtoField(3)
    public String getSurname() {
       return _surname;
    }
@@ -60,6 +70,7 @@ public class Person {
       this._surname = surname;
    }
 
+   @ProtoField(4)
    public Address getAddress() {
       return _address;
    }
@@ -68,22 +79,7 @@ public class Person {
       this._address = address;
    }
 
-   public int getAge() {
-      return _age;
-   }
-
-   public void setAge(int age) {
-      this._age = age;
-   }
-
-   public List<Integer> getFavouriteNumbers() {
-      return _favouriteNumbers;
-   }
-
-   public void setFavouriteNumbers(List<Integer> favouriteNumbers) {
-      this._favouriteNumbers = favouriteNumbers;
-   }
-
+   @ProtoField(value = 5, collectionImplementation = ArrayList.class)
    public List<PhoneNumber> getPhoneNumbers() {
       return _phoneNumbers;
    }
@@ -92,6 +88,26 @@ public class Person {
       this._phoneNumbers = phoneNumbers;
    }
 
+
+   @ProtoField(value = 6, defaultValue = "0")
+   public int getAge() {
+      return _age;
+   }
+
+   public void setAge(int age) {
+      this._age = age;
+   }
+
+   @ProtoField(value = 7, collectionImplementation = ArrayList.class)
+   public List<Integer> getFavouriteNumbers() {
+      return _favouriteNumbers;
+   }
+
+   public void setFavouriteNumbers(List<Integer> favouriteNumbers) {
+      this._favouriteNumbers = favouriteNumbers;
+   }
+
+   @ProtoField(8)
    public String getLicense() {
       return _license;
    }
@@ -100,6 +116,7 @@ public class Person {
       this._license = license;
    }
 
+   @ProtoField(9)
    public Gender getGender() {
       return _gender;
    }
@@ -108,6 +125,7 @@ public class Person {
       this._gender = gender;
    }
 
+   @ProtoField(10)
    public Date getLastUpdate() {
       return _lastUpdate;
    }
@@ -116,6 +134,7 @@ public class Person {
       this._lastUpdate = lastUpdate;
    }
 
+   @ProtoField(value = 11, defaultValue = "false")
    public boolean isDeleted() {
       return _deleted;
    }

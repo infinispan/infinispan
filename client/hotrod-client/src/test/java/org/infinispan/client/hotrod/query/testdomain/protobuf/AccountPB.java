@@ -7,6 +7,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.infinispan.api.annotations.indexing.Basic;
+import org.infinispan.api.annotations.indexing.Embedded;
+import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
 import org.infinispan.query.dsl.embedded.testdomain.Limits;
 
@@ -14,6 +20,8 @@ import org.infinispan.query.dsl.embedded.testdomain.Limits;
  * @author anistor@redhat.com
  * @since 7.0
  */
+@Indexed
+@ProtoName("Account")
 public class AccountPB implements Account {
 
    private int id;
@@ -22,9 +30,9 @@ public class AccountPB implements Account {
 
    private Date creationDate;
 
-   private Limits limits;
+   private LimitsPB limits;
 
-   private Limits hardLimits;
+   private LimitsPB hardLimits;
 
    // not indexed
    private List<byte[]> blurb = new ArrayList<>();
@@ -38,7 +46,20 @@ public class AccountPB implements Account {
       hardLimits.setMaxDailyLimit(10000.0);
    }
 
+   @ProtoFactory
+   AccountPB(int id, String description, Date creationDate, LimitsPB limits, LimitsPB hardLimits, List<byte[]> blurb, Currency[] currencies) {
+      this.id = id;
+      this.description = description;
+      this.creationDate = creationDate;
+      this.limits = limits;
+      this.hardLimits = hardLimits;
+      this.blurb = blurb;
+      this.currencies = currencies;
+   }
+
    @Override
+   @Basic(projectable = true, sortable = true)
+   @ProtoField(value = 1, defaultValue = "0")
    public int getId() {
       return id;
    }
@@ -49,6 +70,8 @@ public class AccountPB implements Account {
    }
 
    @Override
+   @Basic(projectable = true, sortable = true)
+   @ProtoField(value = 2, defaultValue = "Checking account")
    public String getDescription() {
       return description;
    }
@@ -59,6 +82,8 @@ public class AccountPB implements Account {
    }
 
    @Override
+   @Basic(projectable = true, sortable = true)
+   @ProtoField(3)
    public Date getCreationDate() {
       return creationDate;
    }
@@ -69,26 +94,32 @@ public class AccountPB implements Account {
    }
 
    @Override
-   public Limits getLimits() {
+   @Embedded
+   @ProtoField(4)
+   public LimitsPB getLimits() {
       return limits;
    }
 
    @Override
    public void setLimits(Limits limits) {
-      this.limits = limits;
+      this.limits = (LimitsPB) limits;
    }
 
    @Override
-   public Limits getHardLimits() {
+   @Embedded
+   @ProtoField(5)
+   public LimitsPB getHardLimits() {
       return hardLimits;
    }
 
    @Override
    public void setHardLimits(Limits hardLimits) {
-      this.hardLimits = hardLimits;
+      this.hardLimits = (LimitsPB) hardLimits;
    }
 
    @Override
+   @Basic(projectable = true)
+   @ProtoField(6)
    public List<byte[]> getBlurb() {
       return blurb;
    }
@@ -114,6 +145,7 @@ public class AccountPB implements Account {
    }
 
    @Override
+   @ProtoField(7)
    public Currency[] getCurrencies() {
       return currencies;
    }
