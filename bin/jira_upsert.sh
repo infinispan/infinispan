@@ -1,8 +1,10 @@
 #!/bin/bash
 set -e -o pipefail
 
+CURL="curl --no-progress-meter"
 if [[ "$RUNNER_DEBUG" == "1" ]]; then
   set -x
+  CURL="${CURL} --verbose"
 fi
 
 function requiredEnv() {
@@ -24,13 +26,13 @@ Authorization: Bearer ${TOKEN}
 Content-Type: application/json
 EOF
 
-PROJECT=$(curl -H @headers $API_URL/project/${PROJECT_KEY})
+PROJECT=$(${CURL} -H @headers $API_URL/project/${PROJECT_KEY})
 PROJECT_ID=$(echo ${PROJECT} | jq -r .id)
 ISSUE_TYPE_ID=$(echo ${PROJECT} | jq -r ".issueTypes[] | select(.name==\"${TYPE}\").id")
 
 JQL="project = ${PROJECT_KEY} AND summary ~ '${SUMMARY}'"
 # Search issues for existing Jira ticket
-ISSUES=$(curl --silent ${API_URL}/search \
+ISSUES=$(${CURL} ${API_URL}/search \
 -G --data-urlencode "jql=${JQL}" \
 -H @headers
 )
@@ -56,7 +58,7 @@ elif [ ${TOTAL_ISSUES} == 0 ]; then
   }
 EOF
 
-  ISSUE_KEY=$(curl -H @headers --data @create-jira.json $API_URL/issue | jq -r .key)
+  ISSUE_KEY=$(${CURL} -H @headers --data @create-jira.json $API_URL/issue | jq -r .key)
 else
   ISSUE=$(echo ${ISSUES} | jq .issues[0])
   ISSUE_KEY=$(echo ${ISSUE} | jq -r .key)
@@ -80,7 +82,7 @@ else
 EOF
 
   # Add PR to existing issue
-  curl -X PUT ${API_URL}/issue/${ISSUE_KEY} \
+  ${CURL} -X PUT ${API_URL}/issue/${ISSUE_KEY} \
   -H @headers \
   --data @update-jira.json
 fi
