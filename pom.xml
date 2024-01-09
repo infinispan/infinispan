@@ -229,7 +229,6 @@
       <jboss.modules.settings.xml.url>file://${infinispan.root}/maven-settings.xml</jboss.modules.settings.xml.url>
 
       <!-- dependencies version -->
-      <versionx.com.amazonaws>1.12.621</versionx.com.amazonaws>
       <versionx.org.infinispan.memcached-client>1.2.1</versionx.org.infinispan.memcached-client>
       <versionx.com.clearspring.analytics.stream>2.2.0</versionx.com.clearspring.analytics.stream>
       <versionx.com.google.errorprone.error_prone_annotations>2.1.3</versionx.com.google.errorprone.error_prone_annotations>
@@ -310,26 +309,6 @@
             <artifactId>ant-contrib</artifactId>
             <version>${version.ant-contrib}</version>
             <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-core</artifactId>
-            <version>${versionx.com.amazonaws}</version>
-         </dependency>
-         <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-s3</artifactId>
-            <version>${versionx.com.amazonaws}</version>
-         </dependency>
-         <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-kms</artifactId>
-            <version>${versionx.com.amazonaws}</version>
-         </dependency>
-         <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>jmespath-java</artifactId>
-            <version>${versionx.com.amazonaws}</version>
          </dependency>
          <dependency>
             <groupId>org.bouncycastle</groupId>
