@@ -204,7 +204,7 @@ public abstract class AbstractInfinispanTest {
    public void checkOpenFDs() {
       OperatingSystemMXBean os = ManagementFactory.getOperatingSystemMXBean();
       if (os instanceof UnixOperatingSystemMXBean) {
-         log.tracef("Number of open file descriptors: %d", ((UnixOperatingSystemMXBean) os).getOpenFileDescriptorCount());
+         log.infof("Number of open file descriptors: %d", ((UnixOperatingSystemMXBean) os).getOpenFileDescriptorCount());
       }
    }
 

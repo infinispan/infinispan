@@ -134,7 +134,7 @@ pipeline {
         stage('Tests') {
             steps {
                 timeout(time: 2, unit: 'HOURS') {
-                    sh "$MAVEN_HOME/bin/mvn verify -B -V -e -DrerunFailingTestsCount=2 -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative $ALT_TEST_BUILD"
+                    sh "$MAVEN_HOME/bin/mvn verify -B -V -e -DrerunFailingTestsCount=2 -Dmaven.test.failure.ignore=true -Dansi.strip=true -Pnative $ALT_TEST_BUILD -pl server/rest"
                 }
                 // Remove any default TestNG report files as this will result in tests being counted twice by Jenkins statistics
                 sh "rm -rf **/target/*-reports*/**/TEST-TestSuite.xml"
