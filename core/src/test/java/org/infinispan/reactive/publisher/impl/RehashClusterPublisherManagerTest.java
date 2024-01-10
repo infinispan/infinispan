@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.spy;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Arrays;
@@ -197,8 +196,7 @@ public class RehashClusterPublisherManagerTest extends MultipleCacheManagersTest
       // Always let it process the publisher
       checkPoint.triggerForever(Mocks.BEFORE_RELEASE);
       // Block on the publisher
-      LocalPublisherManager<?, ?> lpm = TestingUtil.extractComponent(cache2, LocalPublisherManager.class);
-      LocalPublisherManager<?, ?> spy = spy(lpm);
+      LocalPublisherManager<?, ?> spy = Mocks.replaceComponentWithSpy(cache2, LocalPublisherManager.class);
 
       Answer<SegmentAwarePublisherSupplier<?>> blockingLpmAnswer = invocation -> {
          SegmentAwarePublisherSupplier<?> result = (SegmentAwarePublisherSupplier<?>) invocation.callRealMethod();
