@@ -17,7 +17,12 @@ public enum SpanCategory {
    /**
     * Span category for x-site operations causally related by client interactions.
     */
-   X_SITE;
+   X_SITE,
+
+   /**
+    * Span category for persistence operations causally related by client interactions.
+    */
+   PERSISTENCE;
 
    @Override
    public String toString() {
