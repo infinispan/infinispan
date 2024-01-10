@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e -o pipefail
 
-CURL="curl --no-progress-meter"
+CURL="curl --no-progress-meter --fail-with-body"
 if [[ "$RUNNER_DEBUG" == "1" ]]; then
   set -x
   CURL="${CURL} --verbose"
@@ -57,8 +57,8 @@ elif [ ${TOTAL_ISSUES} == 0 ]; then
     }
   }
 EOF
-
-  ISSUE_KEY=$(${CURL} -H @headers --data @create-jira.json $API_URL/issue | jq -r .key)
+  # We retry on error here as for some reason the Jira server occasionally responds with 400 errors
+  ISSUE_KEY=$(${CURL} --retry 5 --retry-all-errors -H @headers --data @create-jira.json $API_URL/issue | jq -r .key)
 else
   ISSUE=$(echo ${ISSUES} | jq .issues[0])
   ISSUE_KEY=$(echo ${ISSUE} | jq -r .key)
