@@ -3,7 +3,6 @@ package org.infinispan.test;
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.withSettings;
 
@@ -30,6 +29,7 @@ import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.test.fwk.CheckPoint;
 import org.mockito.AdditionalAnswers;
 import org.mockito.MockSettings;
+import org.mockito.internal.util.MockUtil;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.mockito.stubbing.Stubber;
@@ -420,7 +420,9 @@ public class Mocks {
    /**
     * Replaces the given component with a spy and returns it for further mocking as needed. Note the original component
     * is not retrieved and thus requires retrieving before invoking this method if needed.
-    *
+    * <p>
+    * If the existing component is already a mock it will reuse it but reset it via {@link MockUtil#resetMock(Object)},
+    * this most likely happens between method runs in the same test file.
     * @param cache          the cache to get the component from
     * @param componentClass the class of the component to retrieve
     * @param <C>            the component class
@@ -428,9 +430,12 @@ public class Mocks {
     */
    public static <C> C replaceComponentWithSpy(Cache<?, ?> cache, Class<C> componentClass) {
       C component = TestingUtil.extractComponent(cache, componentClass);
+      if (MockUtil.isMock(component)) {
+         MockUtil.resetMock(component);
+         return component;
+      }
       C spiedComponent = spy(component);
       TestingUtil.replaceComponent(cache, componentClass, spiedComponent, true);
-      reset(spiedComponent);
       return spiedComponent;
    }
 }
