@@ -44,6 +44,7 @@ import org.infinispan.persistence.manager.PassivationPersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.persistence.manager.PreloadManager;
+import org.infinispan.persistence.manager.TracedPersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.reactive.publisher.impl.PublisherHandler;
 import org.infinispan.statetransfer.CommitManager;
@@ -114,9 +115,12 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
       } else if (componentName.equals(CommandsFactory.class.getName())) {
          return new CommandsFactoryImpl();
       } else if (componentName.equals(PersistenceManager.class.getName())) {
-         PersistenceManagerImpl persistenceManager = new PersistenceManagerImpl();
+         PersistenceManager persistenceManager = new PersistenceManagerImpl();
+         if (globalConfiguration.tracing().enabled()) {
+            persistenceManager = new TracedPersistenceManager(persistenceManager);
+         }
          if (configuration.persistence().passivation()) {
-            return new PassivationPersistenceManager(persistenceManager);
+            persistenceManager = new PassivationPersistenceManager(persistenceManager);
          }
          return persistenceManager;
       } else if (componentName.equals(PassivationManager.class.getName())) {
