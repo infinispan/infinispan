@@ -11,28 +11,35 @@ on:
       - reopened
 
 jobs:
-  create_jira:
-    name: Dependabot Jira
+  summary:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+
+    outputs:
+      summary: ${{ steps.summary.outputs.summary }}
+
+    steps:
+      - id: summary
+        run: echo summary=$(echo ${{ github.event.pull_request.title }} | grep -oP '(?<=Bump )(.*)(?=from)|(?<=to )(.*)' | tr -d '\n') >> $GITHUB_OUTPUT
+
+  jira:
+    needs: summary
+    uses: ./.github/workflows/jira_upsert.yml
+    secrets:
+      token: ${{ secrets.JIRA_API_TOKEN }}
+    with:
+      infinispanBranch: ${{ github.ref }}
+      project: ISPN
+      summary: ${{ needs.summary.outputs.summary }}
+      type: Component Upgrade
+      pullRequest: ${{ github.event.pull_request.html_url }}
+
+  comment:
+    needs: jira
+    runs-on: ubuntu-latest
     permissions:
       pull-requests: write
-    runs-on: ubuntu-latest
-    if: github.actor == 'dependabot[bot]'
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Extract Jira Summary
-        run: echo SUMMARY=$(echo ${{ github.event.pull_request.title }} | grep -oP '(?<=Bump )(.*)(?=from)|(?<=to )(.*)' | tr -d '\n') >> $GITHUB_ENV
-
-      - name: Create or Update Jira Ticket
-        uses: ./.github/actions/jira-upsert
-        with:
-          token: ${{ secrets.JIRA_API_TOKEN }}
-          project: ISPN
-          summary: ${{ env.SUMMARY }}
-          type: Component Upgrade
-          pullRequest: ${{ github.event.pull_request.html_url }}
-
       - name: Add comment to PR
         uses: actions/github-script@v7
         with:
@@ -41,5 +48,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '${{ env.JIRA_TICKET_URL }}'
+              body: '${{ needs.jira.outputs.url }}'
             })

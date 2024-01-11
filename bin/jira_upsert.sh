@@ -87,4 +87,4 @@ EOF
   --data @update-jira.json
 fi
 
-echo "JIRA_TICKET_URL=${BASE_URL}/browse/${ISSUE_KEY}" >> $GITHUB_ENV
+export JIRA_TICKET_URL="${BASE_URL}/browse/${ISSUE_KEY}"

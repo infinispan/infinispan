@@ -1,0 +1,62 @@
+name: Jira Upsert
+
+on:
+  workflow_call:
+    secrets:
+      token:
+        description: 'The Jira bearer token used to authenticate'
+        required: true
+    inputs:
+      infinispanBranch:
+        default: main
+        type: string
+      project:
+        description: 'The name of the Jira Project to create the issue for'
+        required: true
+        type: string
+      summary:
+        description: 'The Jira summary'
+        required: true
+        type: string
+      type:
+        description: 'The type of Jira to create'
+        required: true
+        type: string
+      description:
+        description: 'The Jira description'
+        type: string
+      pullRequest:
+        description: 'The url of a Pull Request to be added to the Jira ticket'
+        type: string
+    outputs:
+      url:
+        description: The URL of the Jira created or updated
+        value: ${{ jobs.upsert.outputs.url }}
+
+jobs:
+  upsert:
+    runs-on: ubuntu-latest
+
+    outputs:
+      url: ${{ steps.jira.outputs.url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.infinispanBranch }}
+          repository: infinispan/infinispan
+
+      - id: jira
+        name: Create Jira Ticket
+        run: |
+          source ./bin/jira_upsert.sh
+          echo "url=${JIRA_TICKET_URL}" >> $GITHUB_OUTPUT
+        env:
+          DESCRIPTION: ${{ inputs.description }}
+          PROJECT_KEY: ${{ inputs.project }}
+          PULL_REQUEST: ${{ inputs.pullRequest }}
+          SUMMARY: ${{ inputs.summary }}
+          TOKEN: ${{ secrets.token }}
+          TYPE: ${{ inputs.type }}
+          RUNNER_DEBUG: "1"
