@@ -21,7 +21,7 @@ requiredEnv TOKEN PROJECT_KEY PULL_REQUEST SUMMARY TYPE
 BASE_URL=https://issues.redhat.com
 API_URL=${BASE_URL}/rest/api/2
 
-cat << EOF > headers
+cat << EOF | tee headers
 Authorization: Bearer ${TOKEN}
 Content-Type: application/json
 EOF
@@ -42,7 +42,7 @@ if [ ${TOTAL_ISSUES} -gt 1 ]; then
   exit 1
 elif [ ${TOTAL_ISSUES} == 0 ]; then
   echo "Existing Jira not found, creating a new one"
-  cat << EOF > create-jira.json
+  cat << EOF | tee create-jira.json
   {
     "fields": {
       "project": {
@@ -69,7 +69,7 @@ else
   ALL_PRS="$(echo ${EXISTING_PRS} | jq '. + ["'${PULL_REQUEST}'"]' | jq -r '. |= join("\\n")')"
   echo $ALL_PRS
 
-  cat << EOF > update-jira.json
+  cat << EOF | tee update-jira.json
   {
     "update": {
       "customfield_12310220": [
