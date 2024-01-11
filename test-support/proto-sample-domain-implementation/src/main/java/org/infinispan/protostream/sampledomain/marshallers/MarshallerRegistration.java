@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.sampledomain.Image;
 
 /**
  * @author anistor@redhat.com
@@ -21,5 +22,8 @@ public class MarshallerRegistration {
       ctx.registerMarshaller(new AccountMarshaller());
       ctx.registerMarshaller(new LimitsMarshaller());
       ctx.registerMarshaller(new TransactionMarshaller());
+
+      Image.ImageSchema.INSTANCE.registerSchema(ctx);
+      Image.ImageSchema.INSTANCE.registerMarshallers(ctx);
    }
 }

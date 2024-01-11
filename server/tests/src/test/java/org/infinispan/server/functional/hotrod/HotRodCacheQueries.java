@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.assertj.core.api.Assertions;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -32,6 +33,7 @@ import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.protostream.sampledomain.Address;
+import org.infinispan.protostream.sampledomain.Image;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.server.functional.ClusteredIT;
@@ -50,6 +52,7 @@ public class HotRodCacheQueries {
 
    public static final String BANK_PROTO_FILE = "/sample_bank_account/bank.proto";
    public static final String ENTITY_USER = "sample_bank_account.User";
+
    @RegisterExtension
    public static InfinispanServerExtension SERVERS = ClusteredIT.SERVERS;
 
@@ -239,6 +242,34 @@ public class HotRodCacheQueries {
    }
 
    @Test
+   public void testVectorSearch() {
+      RemoteCache<String, Image> remoteCache = createQueryableCache(SERVERS, true,
+            Image.ImageSchema.INSTANCE.getProtoFileName(), "query.domain.Image");
+
+      Image center = null;
+      for (int i = 0; i < 10; i++) {
+         Image image = createImage(i, 50);
+         if (i == 7) {
+            center = image;
+         }
+
+         remoteCache.put(image.getName(), image);
+      }
+
+      Query<Image> query = remoteCache.query("from query.domain.Image i where i.byteEmbedding <-> [:a]~:k");
+      query.setParameter("a", center.getByteEmbedding());
+      query.setParameter("k", 3);
+      List<Image> list = query.list();
+      Assertions.assertThat(list).extracting(image -> image.getName()).containsExactly("bla-7", "bla-6", "bla-8");
+
+      query = remoteCache.query("from query.domain.Image i where i.floatEmbedding <-> [:a]~:k");
+      query.setParameter("a", center.getFloatEmbedding());
+      query.setParameter("k", 3);
+      list = query.list();
+      Assertions.assertThat(list).extracting(image -> image.getName()).containsExactly("bla-7", "bla-6", "bla-8");
+   }
+
+   @Test
    public void testWithSCI() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.addContextInitializer(Entities.INSTANCE);
@@ -313,5 +344,16 @@ public class HotRodCacheQueries {
       assertEquals(1, user.getAddresses().size());
       assertEquals("Dark Alley", user.getAddresses().get(0).getStreet());
       assertEquals("1234", user.getAddresses().get(0).getPostCode());
+   }
+
+   private static Image createImage(Integer seed, int dimension) {
+      byte[] byteEmbeddings = new byte[dimension];
+      float[] floatEmbeddings = new float[dimension];
+      for (int i = 0; i < dimension; i++) {
+         byteEmbeddings[i] = seed.byteValue();
+         floatEmbeddings[i] = seed.floatValue();
+      }
+
+      return new Image("bla-" + seed, byteEmbeddings, floatEmbeddings);
    }
 }

@@ -9,6 +9,9 @@
       },
       {
         "pattern": "sample_bank_account/bank\\.proto"
+      },
+      {
+        "pattern": "image\\.proto"
       }
     ]
   }
