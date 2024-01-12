@@ -36,8 +36,6 @@ TIP: Maven places it's output in `target/`
 | `mvn install -P-extras` |Avoids the extras profile disables the enforce plugin and generation of source jars, hence making builds run faster. Clearly, this option should not be used when making a release or publishing a snapshot.
 |===============
 
-NOTE: For non-snapshot releases (e.g., alphas, betas, release candidates and final releases) you should use the `bin/release.py` script.
-
 === Publishing releases to Maven
 
 To be able to publish releases to Maven, you need to have the following in your `settings.xml` file:
@@ -55,69 +53,6 @@ Simply running
 
 in the {brandname} root directory will deploy a snapshot.
 
-==== Publishing releases
-Use the `bin/release.py` script.
-
-=== The Maven Archetypes
-{brandname} currently has 2 separate Maven link:http://maven.apache.org/guides/introduction/introduction-to-archetypes.html[archetypes] you can use to create a skeleton project and get started using {brandname}.
-This is an easy way to get started using {brandname} as the archetype generates sample code, a sample Maven pom.xml with necessary dependencies, etc.
-
-You don't need to have any experience with or knowledge of Maven's Archetypes to use this!  Just follow the simple steps below.
-
-==== Starting a new project
-Use the `newproject-archetype` project.  The simple command below will get you started, and
-
- $ mvn archetype:generate \
-    -DarchetypeGroupId=org.infinispan.archetypes \
-    -DarchetypeArtifactId=newproject-archetype \
-    -DarchetypeVersion=1.0.5 \
-    -DarchetypeRepository=http://repository.jboss.org/nexus/content/groups/public
-
-You will be prompted for a few things, including the artifactId , groupId and version of your new project.
-And that's it - you're ready to go!
-
-===== Exploring your new project
-The skeleton project ships with a sample application class for interacting with {brandname}.
-You can open this new project in your IDE - most good IDEs such as IntelliJ and Eclipse allow you to import Maven projects, see link:https://www.jetbrains.com/idea/help/importing-project-from-maven-model.html[this guide] and link:http://m2eclipse.sonatype.org/[this guide].
-Once you open your project in your IDE, you should examine the generated classes and read through the comments.
-
-===== On the command line...
-Try running
-
- $ mvn install -Prun
-
-in your newly generated project. This runs the `main()` method in the generated application class.
-
-==== Writing a test case for {brandname}
-This archetype is useful if you wish to contribute a test to the {brandname} project and helps you get set up to use {brandname}'s testing harness and related tools.
-Use
-
- $ mvn archetype:generate \
-    -DarchetypeGroupId=org.infinispan.archetypes \
-    -DarchetypeArtifactId=testcase-archetype \
-    -DarchetypeVersion=1.0.5 \
-    -DarchetypeRepository=http://repository.jboss.org/nexus/content/groups/public
-
-As above, this will prompt you for project details and again as above, you should open this project in your IDE.
-Once you have done so, you will see some sample tests written for {brandname} making use of {brandname}'s test harness and testing tools along with extensive comments and links for further reading.
-
-===== On the command line...
-Try running
-
- $ mvn test
-
-in your newly generated project to run your tests.
-The generated project has a few different profiles you can use as well, using Maven's -P flag. For example:
-
- $ mvn test -Pudp
-
-===== Available profiles
-The profiles available in the generated sample project are:
-
-* udp: use UDP for network communications rather than TCP
-* tcp: use TCP for network communications rather than UDP
-* jbosstm: Use the embedded link:http://www.jboss.org/jbosstm[JBoss Transaction Manager] rather than {brandname}'s embedded transaction manager
-
 ==== Contributing tests back to {brandname}
 If you have written a functional, unit or stress test for {brandname} and want to contribute this back to {brandname}, your best bet is to link:https://github.com/infinispan/infinispan[fork the {brandname} sources on GitHub].
 The test you would have prototyped and tested in an isolated project created using this archetype can be simply dropped in to {brandname}'s test suite.
@@ -128,12 +63,3 @@ If you have written any new code, it is highly recommended to validate formattin
 This might be done by invoking:
 
  $ mvn checkstyle:check
-
-==== Versions
-The archetypes generate poms with dependencies to specific versions of {brandname}.
-You should edit these generated poms by hand to point to other versions of {brandname} that you are interested in.
-
-==== Source Code
-
-The source code used to generate these archetypes are link:https://github.com/infinispan/infinispan-archetypes[on GitHub].
-If you wish to enhance and contribute back to the project, fork away!
