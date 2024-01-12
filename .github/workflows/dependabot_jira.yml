@@ -12,7 +12,7 @@ on:
 
 jobs:
   createJira:
-    if: github.actor == 'dependabot[bot]'
+    if: github.actor == 'dependabot[bot]' && !contains(github.event.pull_request.labels.*.name, 'github_actions')
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
