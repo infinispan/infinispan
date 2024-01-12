@@ -10,6 +10,8 @@ on:
       - 'main'
 jobs:
   triage:
+    permissions:
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
       - uses: eps1lon/actions-label-merge-conflict@releases/2.x
