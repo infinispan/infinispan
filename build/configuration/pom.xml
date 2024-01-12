@@ -133,7 +133,7 @@
       <version.console>15.0.0.Final</version.console>
       <version.fabric8.kubernetes-client>6.9.2</version.fabric8.kubernetes-client>
       <version.glassfish.jaxb>2.3.1</version.glassfish.jaxb>
-      <version.graalvm>22.3.0</version.graalvm>
+      <version.graalvm>23.1.1</version.graalvm>
       <version.groovy>2.4.8</version.groovy>
       <version.hamcrest>2.2</version.hamcrest>
       <version.hibernate.core>6.3.1.Final</version.hibernate.core>
