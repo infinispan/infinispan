@@ -86,7 +86,7 @@ import net.jcip.annotations.GuardedBy;
 @MBean(objectName = "LocalTopologyManager", description = "Controls the cache membership and state transfer")
 @Scope(Scopes.GLOBAL)
 public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalStateProvider {
-   private static final Log log = LogFactory.getLog(LocalTopologyManagerImpl.class);
+   static final Log log = LogFactory.getLog(LocalTopologyManagerImpl.class);
 
    @Inject Transport transport;
    @Inject
@@ -173,7 +173,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       // until the join and the GET_CACHE_LISTENERS request are done
       CompletionStage<KeyValuePair<CacheStatusResponse, CacheTopology>> cf = orderOnCache(cacheName, () -> {
          log.debugf("Node %s joining cache %s", transport.getAddress(), cacheName);
-         LocalCacheStatus cacheStatus = new LocalCacheStatus(joinInfo, stm, phm, getNumberMembersFromState(cacheName, joinInfo));
+         LocalCacheStatus cacheStatus = new LocalCacheStatus(joinInfo, stm, phm,
+               getNumberMembersFromState(cacheName, joinInfo), gcr.getNamedComponentRegistry(cacheName));
          LocalCacheStatus previousStatus = runningCaches.put(cacheName, cacheStatus);
          if (previousStatus != null) {
             throw new IllegalStateException("A cache can only join once");
@@ -196,7 +197,10 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
             // We mark as waiting for the recovery, ignoring topology updates.
             // We return it again after sending the join request.
             lcs.setWaitingRecovery(true);
-            CompletionStage<CacheTopology> joining = lcs.getStableTopologyCompletion().thenCompose(ignore -> join(cacheName, lcs));
+            CompletionStage<CacheTopology> joining = lcs.getStableTopologyCompletion().thenCompose(ignore -> {
+               log.debugf("Resume join for cache %s after stable topology finished", cacheName);
+               return join(cacheName, lcs);
+            });
             return CompletionStages.handleAndCompose(joining, (res, t) -> {
 
                // We mark either way after finishing the join request.
@@ -818,28 +822,9 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    @Override
    public CompletionStage<Void> stableTopologyCompletion(String cacheName) {
       LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
-      if (cacheStatus == null) return null;
-
-      return cacheStatus.getStableTopologyCompletion().thenCompose(recovered -> {
-         // If the topology didn't need recovery or it was manually put to run.
-         if (!recovered) {
-            ComponentRegistry cr = gcr.getNamedComponentRegistry(cacheName);
-            PersistenceManager pm;
-
-            if (cr != null && (pm = cr.getComponent(PersistenceManager.class)) != null) {
-               Predicate<StoreConfiguration> predicate = PersistenceManager.AccessMode.PRIVATE;
-
-               // If the cache did not recover completely from state, we force a cleanup.
-               // Otherwise, it only cleans if it was configured.
-               if (!cacheStatus.needRecovery()) {
-                  predicate = predicate.and(StoreConfiguration::purgeOnStartup);
-               }
-               return pm.clearAllStores(predicate);
-            }
-         }
-
-         return CompletableFutures.completedNull();
-      });
+      return cacheStatus == null
+            ? null
+            : cacheStatus.getStableTopologyCompletion();
    }
 
    @Override
@@ -912,6 +897,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
 }
 
 class LocalCacheStatus {
+   private final String name;
    private final CacheJoinInfo joinInfo;
    private final CacheTopologyHandler handler;
    private final PartitionHandlingManager partitionHandlingManager;
@@ -925,13 +911,41 @@ class LocalCacheStatus {
    LocalCacheStatus(CacheJoinInfo joinInfo,
                     CacheTopologyHandler handler,
                     PartitionHandlingManager phm,
-                    int stableMembersSize) {
+                    int stableMembersSize,
+                    ComponentRegistry cr) {
       this.joinInfo = joinInfo;
       this.handler = handler;
       this.partitionHandlingManager = phm;
-      this.stable = new CompletableFuture<>();
       this.knownMembers = Collections.emptyList();
       this.stableMembersSize = stableMembersSize;
+      this.stable = new CompletableFuture<>();
+      this.name = cr != null ? cr.getCacheName() : null;
+
+      // If the cache needs recovery, we need to handle the storage after the stable topology is installed.
+      // In cases where it was not safely recovered, we need to clear the stores.
+      // We only proceed in case the CR is available to retrieve the persistence manager.
+      if (cr != null) {
+         this.stable.thenCompose(recovered -> {
+            // If the topology didn't need recovery or it was manually put to run.
+            if (!recovered) {
+               PersistenceManager pm;
+               if ((pm = cr.getComponent(PersistenceManager.class)) != null) {
+                  Predicate<StoreConfiguration> predicate = PersistenceManager.AccessMode.PRIVATE;
+
+                  // If the cache did not recover completely from state, we force a cleanup.
+                  // Otherwise, it only cleans if it was configured.
+                  if (!needRecovery()) {
+                     predicate = predicate.and(StoreConfiguration::purgeOnStartup);
+                  } else if (LocalTopologyManagerImpl.log.isDebugEnabled()) {
+                     LocalTopologyManagerImpl.log.debugf("%s: Clearing stores for %s", cr.getRpcManager().running().getAddress(), cr.getCacheName());
+                  }
+                  return pm.clearAllStores(predicate);
+               }
+            }
+
+            return CompletableFutures.completedNull();
+         });
+      }
    }
 
    public CacheJoinInfo getJoinInfo() {
@@ -962,6 +976,7 @@ class LocalCacheStatus {
       this.stableTopology = stableTopology;
       partitionHandlingManager.onTopologyUpdate(currentTopology);
       if (stableTopology != null) {
+         LocalTopologyManagerImpl.log.debugf("Cache %s stable topology complete %s", name, stableTopology);
          stable.complete(stableTopology.wasTopologyRestoredFromState());
       }
    }
@@ -974,12 +989,12 @@ class LocalCacheStatus {
       knownMembers = members;
    }
 
-   CompletionStage<Boolean> getStableTopologyCompletion() {
-      return stable;
+   CompletionStage<Void> getStableTopologyCompletion() {
+      return stable.thenApply(CompletableFutures.toNullFunction());
    }
 
    boolean isTopologyRestored() {
-      return stableMembersSize < 0 || (stable.isDone() && stableTopology != null);
+      return stableMembersSize < 0 || stable.isDone();
    }
 
    boolean needRecovery() {
