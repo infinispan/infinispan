@@ -245,7 +245,7 @@ public class InboundTransferTask {
             if (segments.contains(segmentId)) {
                unfinishedSegments.remove(segmentId);
                if (unfinishedSegments.isEmpty()) {
-                  log.debugf("Finished receiving state for segments %s", segments);
+                  log.debugf("Finished receiving state for %s with segments %s", cacheName, segments);
                   isCompleted = true;
                }
             }
