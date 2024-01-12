@@ -1,30 +1,9 @@
 #!/bin/bash
-set -e -o pipefail
-
-CURL="curl --no-progress-meter --fail-with-body"
-if [[ "$RUNNER_DEBUG" == "1" ]]; then
-  set -x
-  CURL="${CURL} --verbose"
-fi
-
-function requiredEnv() {
-  for ENV in $@; do
-      if [ -z "${!ENV}" ]; then
-        echo "${ENV} variable must be set"
-        exit 1
-      fi
-  done
-}
+# A script to create, or update an existing Jira if it exists, for a given Summary
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+source "${SCRIPT_DIR}/common.sh"
 
 requiredEnv TOKEN PROJECT_KEY PULL_REQUEST SUMMARY TYPE
-
-BASE_URL=https://issues.redhat.com
-API_URL=${BASE_URL}/rest/api/2
-
-cat << EOF | tee headers
-Authorization: Bearer ${TOKEN}
-Content-Type: application/json
-EOF
 
 PROJECT=$(${CURL} -H @headers $API_URL/project/${PROJECT_KEY})
 PROJECT_ID=$(echo ${PROJECT} | jq -r .id)
@@ -60,31 +39,11 @@ EOF
   # We retry on error here as for some reason the Jira server occasionally responds with 400 errors
   ISSUE_KEY=$(${CURL} --retry 5 --retry-all-errors -H @headers --data @create-jira.json $API_URL/issue | jq -r .key)
 else
-  ISSUE=$(echo ${ISSUES} | jq .issues[0])
-  ISSUE_KEY=$(echo ${ISSUE} | jq -r .key)
+  export ISSUE_KEY=$(echo ${ISSUES} | jq -r .issues[0].key)
+  export PULL_REQUEST
 
   echo "Updating existing Jira ${ISSUE_KEY}"
-
-  EXISTING_PRS=$(echo ${ISSUE} | jq .fields.customfield_12310220)
-  ALL_PRS="$(echo ${EXISTING_PRS} | jq '. + ["'${PULL_REQUEST}'"]' | jq -r '. |= join("\\n")')"
-  echo $ALL_PRS
-
-  cat << EOF | tee update-jira.json
-  {
-    "update": {
-      "customfield_12310220": [
-        {
-          "set": "${ALL_PRS}"
-        }
-      ]
-    }
-  }
-EOF
-
-  # Add PR to existing issue
-  ${CURL} -X PUT ${API_URL}/issue/${ISSUE_KEY} \
-  -H @headers \
-  --data @update-jira.json
+  ${SCRIPT_DIR}/add_pull_request.sh
 fi
 
 export JIRA_TICKET_URL="${BASE_URL}/browse/${ISSUE_KEY}"
