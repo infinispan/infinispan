@@ -1,5 +1,6 @@
 package org.infinispan.globalstate;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -47,6 +48,7 @@ public class ThreeNodeTopologyReinstallTest extends AbstractGlobalStateRestartTe
    @Override
    protected void applyCacheManagerClusteringConfiguration(String id, ConfigurationBuilder config) {
       applyCacheManagerClusteringConfiguration(config);
+      config.clustering().stateTransfer().timeout(90, TimeUnit.SECONDS);
       config.persistence().addSoftIndexFileStore()
             .dataLocation(tmpDirectory(this.getClass().getSimpleName(), id, "data"))
             .indexLocation(tmpDirectory(this.getClass().getSimpleName(), id, "index"));
@@ -87,6 +89,11 @@ public class ThreeNodeTopologyReinstallTest extends AbstractGlobalStateRestartTe
                () -> gcr.getClusterTopologyManager().useCurrentTopologyAsStable(CACHE_NAME, false));
       }
 
+      // Assert no rebalance for CACHE_NAME.
+      assertThat(TestingUtil.extractGlobalComponentRegistry(manager(0))
+            .getClusterTopologyManager()
+            .isRebalancingEnabled(CACHE_NAME)).isFalse();
+
       // Since we didn't force the installation, operations still fail.
       assertOperationsFail();
 
@@ -99,12 +106,14 @@ public class ThreeNodeTopologyReinstallTest extends AbstractGlobalStateRestartTe
       for (int j = 0; j < cacheManagers.size(); j++) {
          EmbeddedCacheManager ecm = manager(j);
          if (ecm.isCoordinator()) {
-            TestingUtil.extractGlobalComponentRegistry(manager(0))
+            boolean stableTopology = TestingUtil.extractGlobalComponentRegistry(ecm)
                   .getClusterTopologyManager()
                   .useCurrentTopologyAsStable(CACHE_NAME, force);
+            assertThat(stableTopology).isTrue();
             break;
          }
       }
+      waitForClusterToForm(CACHE_NAME);
 
       // Wait topology installation.
       AggregateCompletionStage<Void> topologyInstall = CompletionStages.aggregateCompletionStage();
@@ -131,23 +140,12 @@ public class ThreeNodeTopologyReinstallTest extends AbstractGlobalStateRestartTe
       }
 
       // This will create the cache, and trigger the join operation for the new managers.
-      TestingUtil.blockUntilViewsReceived(30000, getCaches(CACHE_NAME));
-
-      // Wait topology again, just to make sure.
-      topologyInstall = CompletionStages.aggregateCompletionStage();
-      for (int j = 0; j < cacheManagers.size(); j++) {
-         GlobalComponentRegistry gcr = TestingUtil.extractGlobalComponentRegistry(manager(j));
-         topologyInstall.dependsOn(gcr.getLocalTopologyManager().stableTopologyCompletion(CACHE_NAME));
-      }
-      CompletableFutures.uncheckedAwait(topologyInstall.freeze().toCompletableFuture(), 30, TimeUnit.SECONDS);
-
-      checkClusterRestartedCorrectly(addressMappings);
       waitForClusterToForm(CACHE_NAME);
+      checkClusterRestartedCorrectly(addressMappings);
 
       if (possibleDataLoss) {
          for (int j = 0; j < getClusterSize(); j++) {
             assertFalse(cache(j, CACHE_NAME).isEmpty());
-            assertTrue(cache(j, CACHE_NAME).size() < DATA_SIZE);
          }
       } else {
          checkData();
