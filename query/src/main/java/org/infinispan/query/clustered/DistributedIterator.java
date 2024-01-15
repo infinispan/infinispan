@@ -129,13 +129,13 @@ class DistributedIterator<T> implements CloseableIterator<T> {
 
       if (queryStatistics.isEnabled()) queryStatistics.entityLoaded(System.nanoTime() - start);
 
-      return decorate(key, value);
+      return decorate(key, value, scoreDoc.score);
    }
 
    /**
     * Extension point for subclasses.
     */
-   protected T decorate(Object key, Object value) {
+   protected T decorate(Object key, Object value, float score) {
       return (T) value;
    }
 

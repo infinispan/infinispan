@@ -1,7 +1,7 @@
 package org.infinispan.query.core.impl;
 
 import java.util.NoSuchElementException;
-import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.infinispan.commons.api.query.EntityEntry;
 import org.infinispan.commons.util.CloseableIterator;
@@ -9,7 +9,7 @@ import org.infinispan.commons.util.CloseableIterator;
 public class MappingEntryIterator<K, S, T> implements CloseableIterator<T> {
 
    private final CloseableIterator<EntityEntry<K, S>> entryIterator;
-   private final BiFunction<K, S, T> mapper;
+   private final Function<EntityEntry<K, S>, T> mapper;
 
    private long skip = 0;
    private long max = -1;
@@ -17,7 +17,7 @@ public class MappingEntryIterator<K, S, T> implements CloseableIterator<T> {
    private T current;
    private long index;
 
-   public MappingEntryIterator(CloseableIterator<EntityEntry<K, S>> entryIterator, BiFunction<K, S, T> mapper) {
+   public MappingEntryIterator(CloseableIterator<EntityEntry<K, S>> entryIterator, Function<EntityEntry<K, S>, T> mapper) {
       this.entryIterator = entryIterator;
       this.mapper = mapper;
    }
@@ -42,7 +42,7 @@ public class MappingEntryIterator<K, S, T> implements CloseableIterator<T> {
    private void updateNext() {
       while (current == null && entryIterator.hasNext()) {
          EntityEntry<K, S> next = entryIterator.next();
-         T mapped = transform(next.key(), next.value());
+         T mapped = transform(next);
          if (mapped != null) {
             index++;
          }
@@ -52,15 +52,15 @@ public class MappingEntryIterator<K, S, T> implements CloseableIterator<T> {
       }
    }
 
-   private T transform(K k, S s) {
-      if (s == null) {
+   private T transform(EntityEntry<K, S> next) {
+      if (next == null) {
          return null;
       }
       if (mapper == null) {
-         return (T) s;
+         return (T) next.value();
       }
 
-      return mapper.apply(k, s);
+      return mapper.apply(next);
    }
 
    public MappingEntryIterator<K, S, T> skip(long skip) {

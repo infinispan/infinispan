@@ -15,6 +15,7 @@ import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
 import org.infinispan.objectfilter.impl.syntax.parser.EntityNameResolver;
 import org.infinispan.objectfilter.impl.syntax.parser.ReflectionPropertyHelper;
 import org.infinispan.objectfilter.impl.syntax.parser.projection.CacheValuePropertyPath;
+import org.infinispan.objectfilter.impl.syntax.parser.projection.ScorePropertyPath;
 import org.infinispan.objectfilter.impl.syntax.parser.projection.VersionPropertyPath;
 import org.infinispan.objectfilter.impl.util.StringHelper;
 import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
@@ -25,6 +26,7 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
    public static final String KEY = "__ISPN_Key";
    public static final String VALUE = CacheValuePropertyPath.VALUE_PROPERTY_NAME;
    public static final String VERSION = VersionPropertyPath.VERSION_PROPERTY_NAME;
+   public static final String SCORE = ScorePropertyPath.SCORE_PROPERTY_NAME;
 
    private final SearchMapping searchMapping;
 
@@ -54,8 +56,13 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
 
    @Override
    public Class<?> getPrimitivePropertyType(Class<?> entityType, String[] propertyPath) {
-      if (propertyPath.length == 1 && propertyPath[0].equals(VERSION)) {
-         return EntryVersion.class;
+      if (propertyPath.length == 1) {
+         if (propertyPath[0].equals(VERSION)) {
+            return EntryVersion.class;
+         }
+         if (propertyPath[0].equals(SCORE)) {
+            return Float.class;
+         }
       }
 
       IndexValueFieldDescriptor fieldDescriptor = getValueFieldDescriptor(entityType, propertyPath);
@@ -107,7 +114,7 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
       }
 
       if (propertyPath.length == 1 && (propertyPath[0].equals(KEY) || propertyPath[0].equals(VALUE) ||
-            propertyPath[0].equals(VERSION)) ) {
+            propertyPath[0].equals(VERSION) || propertyPath[0].equals(SCORE)) ) {
             return true;
       }
 

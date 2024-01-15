@@ -2,6 +2,7 @@ package org.infinispan.query.dsl.embedded.impl;
 
 import static org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelper.KEY;
 import static org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelper.VALUE;
+import static org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelper.SCORE;
 import static org.infinispan.query.logging.Log.CONTAINER;
 
 import java.io.IOException;
@@ -190,6 +191,8 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
             searchProjections[i] = projectionFactory.entity().toProjection();
          } else if (KEY.equals(projections[i])) {
             searchProjections[i] = projectionFactory.entityReference().toProjection();
+         } else if (SCORE.equals(projections[i])) {
+            searchProjections[i] = projectionFactory.score().toProjection();
          } else {
             boolean isMultiField = propertyHelper.isRepeatedProperty(typeMetadata, FieldPaths.split(projections[i]));
             FieldProjectionValueStep<?, ?> projectionStep = projectionFactory.field(projections[i], projectedTypes[i]);

@@ -56,7 +56,7 @@ public class ScoreProjectionTest extends SingleCacheManagerTest {
       query = cache.query("select g, score(g) from org.infinispan.query.model.Game g where g.description : 'description'~2");
       games = query.list();
       assertThat(games).extracting(objects -> objects[0]).extracting("name").containsExactly("1", "2", "3", "4");
-      //TODO ISPN-15390 Implement score projection
+      assertThat(games).extracting(objects -> objects[1]).hasOnlyElementsOfType(Float.class).isNotNull();
    }
 
    @Test
@@ -67,7 +67,7 @@ public class ScoreProjectionTest extends SingleCacheManagerTest {
       query = cache.query("select score(g), g.name from org.infinispan.query.model.Game g where g.description : 'description'~2");
       games = query.list();
       assertThat(games).extracting(objects -> objects[1]).containsExactly("1", "2", "3", "4");
-      //TODO ISPN-15390 Implement score projection
+      assertThat(games).extracting(objects -> objects[0]).hasOnlyElementsOfType(Float.class).isNotNull();
    }
 
    @Test
@@ -78,8 +78,8 @@ public class ScoreProjectionTest extends SingleCacheManagerTest {
       query = cache.query("select g.name, score(g), g from org.infinispan.query.model.Game g where g.description : 'description'~2");
       games = query.list();
       assertThat(games).extracting(objects -> objects[0]).containsExactly("1", "2", "3", "4");
+      assertThat(games).extracting(objects -> objects[1]).hasOnlyElementsOfType(Float.class).isNotNull();
       assertThat(games).extracting(objects -> objects[2]).extracting("name").containsExactly("1", "2", "3", "4");
-      //TODO ISPN-15390 Implement score projection
    }
 
    @Test

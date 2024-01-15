@@ -23,7 +23,7 @@ class DistributedEntryIterator<K, V> extends DistributedIterator<EntityEntry<K, 
    }
 
    @Override
-   protected EntityEntry<K, V> decorate(Object key, Object value) {
-      return new EntityEntry<>((K) key, (V) value, 0f);
+   protected EntityEntry<K, V> decorate(Object key, Object value, float score) {
+      return new EntityEntry<>((K) key, (V) value, score);
    }
 }

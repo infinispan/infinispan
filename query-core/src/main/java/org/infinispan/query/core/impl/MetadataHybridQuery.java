@@ -7,6 +7,7 @@ import org.infinispan.commons.api.query.EntityEntry;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
+import org.infinispan.objectfilter.impl.syntax.parser.projection.ScorePropertyPath;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
@@ -24,6 +25,22 @@ public class MetadataHybridQuery<T, S> extends HybridQuery<T, S> {
    protected CloseableIterator<ObjectFilter.FilterResult> getInternalIterator() {
       CloseableIterator<EntityEntry<Object, S>> iterator = baseQuery
             .startOffset(0).maxResults(Integer.MAX_VALUE).local(local).entryIterator();
-      return new MappingEntryIterator<>(iterator, objectFilter::filter);
+      return new MappingEntryIterator<>(iterator, this::filter);
+   }
+
+   private ObjectFilter.FilterResult filter(EntityEntry entry) {
+      ObjectFilter.FilterResult filter = objectFilter.filter(entry.key(), entry.value());
+      String[] projection = objectFilter.getProjection();
+      if (projection == null) {
+         return filter;
+      }
+
+      for (int i=0; i<projection.length; i++) {
+         if (ScorePropertyPath.SCORE_PROPERTY_NAME.equals(projection[i])) {
+            filter.getProjection()[i] = entry.score();
+         }
+      }
+
+      return filter;
    }
 }

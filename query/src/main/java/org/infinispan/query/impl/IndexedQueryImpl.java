@@ -138,7 +138,7 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
    }
 
    private <K, V> EntityEntry<K, V> mapToEntry(List<Object> projection) {
-      return new EntityEntry<>((K) ((EntityReference) projection.get(0)).id(), (V) projection.get(1), 0f);
+      return new EntityEntry<>((K) ((EntityReference) projection.get(0)).id(), (V) projection.get(1), (float) projection.get(2));
    }
 
    @Override
