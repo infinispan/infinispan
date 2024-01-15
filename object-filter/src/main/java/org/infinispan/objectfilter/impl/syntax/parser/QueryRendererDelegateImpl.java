@@ -18,6 +18,7 @@ import org.infinispan.objectfilter.impl.syntax.ComparisonExpr;
 import org.infinispan.objectfilter.impl.syntax.ConstantValueExpr;
 import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
 import org.infinispan.objectfilter.impl.syntax.parser.projection.CacheValuePropertyPath;
+import org.infinispan.objectfilter.impl.syntax.parser.projection.ScorePropertyPath;
 import org.infinispan.objectfilter.impl.syntax.parser.projection.VersionPropertyPath;
 import org.jboss.logging.Logger;
 
@@ -639,8 +640,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
          projectedNullMarkers = new ArrayList<>(ARRAY_INITIAL_LENGTH);
       }
 
-      // TODO ISPN-15390 Project the score (not the version!)
-      projections.add(new VersionPropertyPath<>());
+      projections.add(new ScorePropertyPath<>());
       projectedTypes.add(Object.class); // Usually a core module EntryVersion
       projectedNullMarkers.add(null);
    }

@@ -9,6 +9,7 @@ import java.util.List;
 import org.infinispan.objectfilter.impl.logging.Log;
 import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
 import org.infinispan.objectfilter.impl.syntax.parser.projection.CacheValuePropertyPath;
+import org.infinispan.objectfilter.impl.syntax.parser.projection.ScorePropertyPath;
 import org.infinispan.objectfilter.impl.syntax.parser.projection.VersionPropertyPath;
 import org.infinispan.objectfilter.impl.util.StringHelper;
 import org.infinispan.protostream.SerializationContext;
@@ -36,6 +37,9 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
 
    public static final String VALUE = CacheValuePropertyPath.VALUE_PROPERTY_NAME;
    public static final int VALUE_FIELD_ATTRIBUTE_ID = 150_001;
+
+   public static final String SCORE = ScorePropertyPath.SCORE_PROPERTY_NAME;
+   public static final int SCORE_FIELD_ATTRIBUTE_ID = 150_002;
 
    private final EntityNameResolver<Descriptor> entityNameResolver;
 
@@ -69,6 +73,9 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
          if (propertyPath[0].equals(VALUE)) {
             return Arrays.asList(VALUE_FIELD_ATTRIBUTE_ID);
          }
+         if (propertyPath[0].equals(SCORE)) {
+            return Arrays.asList(SCORE_FIELD_ATTRIBUTE_ID);
+         }
       }
 
       List<Integer> translatedPath = new ArrayList<>(propertyPath.length);
@@ -93,6 +100,9 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
          }
          if (propertyPath[0].equals(VALUE)) {
             return Object.class;
+         }
+         if (propertyPath[0].equals(SCORE)) {
+            return Float.class;
          }
       }
 
@@ -158,7 +168,8 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
 
    @Override
    public boolean hasProperty(Descriptor entityType, String[] propertyPath) {
-      if (propertyPath.length == 1 && (propertyPath[0].equals(VERSION) || propertyPath[0].equals(VALUE))) {
+      if (propertyPath.length == 1 && (propertyPath[0].equals(VERSION) || propertyPath[0].equals(VALUE) ||
+            propertyPath[0].equals(SCORE))) {
          return true;
       }
 
