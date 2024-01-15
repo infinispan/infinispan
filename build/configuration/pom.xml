@@ -172,7 +172,7 @@
       <version.log4j>2.22.1</version.log4j>
       <version.lucene>9.8.0</version.lucene>
       <version.metainf-services>1.8</version.metainf-services>
-      <version.micrometer>1.9.2</version.micrometer>
+      <version.micrometer>1.12.2</version.micrometer>
       <version.mockito>5.8.0</version.mockito>
       <version.mockito_dep.bytebuddy>1.14.4</version.mockito_dep.bytebuddy>
       <version.mockito_dep.objenesis>3.3</version.mockito_dep.objenesis>
