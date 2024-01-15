@@ -3,6 +3,7 @@ package org.infinispan.query.core.impl;
 import java.util.Map;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.api.query.EntityEntry;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
@@ -21,7 +22,7 @@ public class MetadataHybridQuery<T, S> extends HybridQuery<T, S> {
 
    @Override
    protected CloseableIterator<ObjectFilter.FilterResult> getInternalIterator() {
-      CloseableIterator<Map.Entry<Object, S>> iterator = baseQuery
+      CloseableIterator<EntityEntry<Object, S>> iterator = baseQuery
             .startOffset(0).maxResults(Integer.MAX_VALUE).local(local).entryIterator();
       return new MappingEntryIterator<>(iterator, objectFilter::filter);
    }

@@ -1,9 +1,9 @@
 package org.infinispan.query.impl;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.api.query.EntityEntry;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.query.dsl.QueryResult;
 
@@ -52,7 +52,7 @@ public interface IndexedQuery<E> {
     * <p>
     * <b>NOTE:</b> The query must not contain any projections or an exception will be thrown.
     */
-   <K> CloseableIterator<Map.Entry<K, E>> entryIterator();
+   <K> CloseableIterator<EntityEntry<K, E>> entryIterator();
 
    /**
     * Executes an Ickle statement returning results (query aka. SELECT). If the statement happens to be a DELETE it

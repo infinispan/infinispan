@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.api.query.EntityEntry;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
@@ -222,7 +223,7 @@ public abstract class BaseQuery<T> implements Query<T> {
    }
 
    @Override
-   public <K> CloseableIterator<Map.Entry<K, T>> entryIterator() {
+   public <K> CloseableIterator<EntityEntry<K, T>> entryIterator() {
       throw new UnsupportedOperationException("Not implemented!");
    }
 
