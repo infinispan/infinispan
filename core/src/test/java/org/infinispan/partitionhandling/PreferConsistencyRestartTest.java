@@ -10,6 +10,8 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.context.Flag;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
@@ -37,8 +39,7 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
       checkData();
 
       // Create the key before shut down.
-      MagicKey mkOther = new MagicKey("key", cache(1, CACHE_NAME), cache(2, CACHE_NAME));
-      MagicKey mkDefault = new MagicKey("key", cache(1), cache(2));
+      MagicKey mkOther = new MagicKey("kc", cache(1, CACHE_NAME), cache(2, CACHE_NAME));
 
       killManagers1and2();
 
@@ -60,7 +61,9 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
             () -> cache(0, CACHE_NAME).put(mkOther, "fail"));
 
       // Insert the new key in the default, which should not be degraded.
+      MagicKey mkDefault = new MagicKey("kd", cache(1), cache(2));
       cache(0).put(mkDefault, "value");
+      assertThat(cache(0).get(mkDefault)).isEqualTo("value");
 
       // Stop the cache managers and recreate to restart for the other cache.
       killManagers1and2();
@@ -71,8 +74,15 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
       // Reconnect, create first default and then other.
       waitForClusterToForm();
 
-      // Default has the inserted key.
-      assertThat(cache(0).get(mkDefault)).isEqualTo("value");
+      // Default still has the inserted key.
+      if (isASegmentOwner(mkDefault.getSegment())) {
+         // Segment might have change and A could be an owner of the segment (primary or not).
+         // That would cause a local read, which returns null. In this case, we do a local read with either B or C.
+         assertThat(readKeyLocallyBOrC(mkDefault)).isEqualTo("value");
+      } else {
+         // If A is not the owner, we can execute the command from A, going to the remote nodes.
+         assertThat(cache(0).get(mkDefault)).isEqualTo("value");
+      }
 
       // Now recreates the other. Should be created and restored successfully!
       waitForClusterToForm(CACHE_NAME);
@@ -108,5 +118,18 @@ public class PreferConsistencyRestartTest extends BaseStatefulPartitionHandlingT
 
       f2.get(10, TimeUnit.SECONDS);
       f1.get(10, TimeUnit.SECONDS);
+   }
+
+   private boolean isASegmentOwner(int segment) {
+      LocalizedCacheTopology cacheTopology = cache(0).getAdvancedCache().getDistributionManager().getCacheTopology();
+      return cacheTopology.getSegmentDistribution(segment).isPrimary()
+         || cacheTopology.getSegmentDistribution(segment).isReadOwner();
+   }
+
+   private Object readKeyLocallyBOrC(MagicKey mk) {
+      Object v = cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).get(mk);
+      return v == null
+            ? cache(2).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).get(mk)
+            : v;
    }
 }
