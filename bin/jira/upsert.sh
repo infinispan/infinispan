@@ -10,7 +10,7 @@ PROJECT_ID=$(echo ${PROJECT} | jq -r .id)
 ISSUE_TYPE_ID=$(echo ${PROJECT} | jq -r ".issueTypes[] | select(.name==\"${TYPE}\").id")
 
 JQL="project = ${PROJECT_KEY} AND summary ~ '${SUMMARY}'"
-# Search issues for existing Jira ticket
+# Search issues for existing Jira issue
 ISSUES=$(${CURL} ${API_URL}/search \
 -G --data-urlencode "jql=${JQL}" \
 -H @headers
@@ -46,4 +46,5 @@ else
   ${SCRIPT_DIR}/add_pull_request.sh
 fi
 
-export JIRA_TICKET_URL="${BASE_URL}/browse/${ISSUE_KEY}"
+export JIRA_ISSUE_KEY="${ISSUE_KEY}"
+export JIRA_ISSUE_URL="${BASE_URL}/browse/${ISSUE_KEY}"
