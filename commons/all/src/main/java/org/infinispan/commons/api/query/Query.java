@@ -114,7 +114,7 @@ public interface Query<T> extends Iterable<T> {
     *
     * @return the results of the query as an iterator.
     */
-   <K> CloseableIterator<Map.Entry<K, T>> entryIterator();
+   <K> CloseableIterator<EntityEntry<K, T>> entryIterator();
 
    /**
     * Set the timeout for this query. If the query hasn't finished processing before the timeout,

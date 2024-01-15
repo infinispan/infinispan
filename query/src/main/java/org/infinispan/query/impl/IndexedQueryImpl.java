@@ -18,6 +18,7 @@ import org.hibernate.search.engine.search.query.SearchQuery;
 import org.hibernate.search.engine.search.query.SearchResult;
 import org.hibernate.search.util.common.SearchException;
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.api.query.EntityEntry;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.SearchTimeoutException;
@@ -115,7 +116,7 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
    }
 
    @Override
-   public <K> CloseableIterator<Map.Entry<K, E>> entryIterator() {
+   public <K> CloseableIterator<EntityEntry<K, E>> entryIterator() {
       partitionHandlingSupport.checkCacheAvailable();
       long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
 
@@ -127,7 +128,7 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
 
       SearchQuery<List<Object>> searchQuery = searchQueryBuilder.keyAndEntity();
 
-      MappingIterator<List<Object>, Map.Entry<K, E>> iterator = new MappingIterator<>(iterator(searchQuery), this::mapToEntry);
+      MappingIterator<List<Object>, EntityEntry<K, E>> iterator = new MappingIterator<>(iterator(searchQuery), this::mapToEntry);
       iterator.skip(queryDefinition.getFirstResult())
             .limit(queryDefinition.getMaxResults());
 
@@ -136,24 +137,8 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
       return iterator;
    }
 
-   private <K, V> Map.Entry<K, V> mapToEntry(List<Object> projection) {
-      return new Map.Entry<K, V>() {
-         @Override
-         public K getKey() {
-            // todo [anistor] should also apply keyDataConversion.fromStorage() maybe ?
-            return (K) ((EntityReference) projection.get(0)).id();
-         }
-
-         @Override
-         public V getValue() {
-            return (V) projection.get(1);
-         }
-
-         @Override
-         public V setValue(V value) {
-            throw new UnsupportedOperationException("Entry is immutable");
-         }
-      };
+   private <K, V> EntityEntry<K, V> mapToEntry(List<Object> projection) {
+      return new EntityEntry<>((K) ((EntityReference) projection.get(0)).id(), (V) projection.get(1), 0f);
    }
 
    @Override

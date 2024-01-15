@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.api.query.EntityEntry;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.syntax.parser.IckleParsingResult;
@@ -76,8 +77,8 @@ public class HybridQuery<T, S> extends BaseEmbeddedQuery<T> {
          throw LOG.unsupportedStatement();
       }
 
-      try (CloseableIterator<Map.Entry<Object, S>> entryIterator = baseQuery.startOffset(0).maxResults(-1).local(local).entryIterator()) {
-         Iterator<ObjectFilter.FilterResult> it = new MappingIterator<>(entryIterator, e -> objectFilter.filter(e.getKey(), e.getValue()));
+      try (CloseableIterator<EntityEntry<Object, S>> entryIterator = baseQuery.startOffset(0).maxResults(-1).local(local).entryIterator()) {
+         Iterator<ObjectFilter.FilterResult> it = new MappingIterator<>(entryIterator, e -> objectFilter.filter(e.key(), e.value()));
          int count = 0;
          while (it.hasNext()) {
             ObjectFilter.FilterResult fr = it.next();
