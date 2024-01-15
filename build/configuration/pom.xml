@@ -220,7 +220,7 @@
       <version.xstream>1.4.20</version.xstream>
 
       <!-- Plugin dependencies -->
-      <version.checkstyle.maven-plugin>3.3.0</version.checkstyle.maven-plugin>
+      <version.checkstyle.maven-plugin>3.3.1</version.checkstyle.maven-plugin>
       <version.native.maven.plugin>0.9.22</version.native.maven.plugin>
       <version.maven>3.9.6</version.maven>
       <version.maven.antlr3>3.5.2</version.maven.antlr3>
