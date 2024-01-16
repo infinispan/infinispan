@@ -30,7 +30,7 @@ public class VectorSearchTest extends SingleCacheManagerTest {
    public void test() {
       for (byte item = 1; item <= 10; item++) {
          byte[] bytes = {item, item, item};
-         cache.put(item, new Item("c" + item, bytes, new float[]{1.1f * item, 1.1f * item, 1.1f * item}, "bla" + item));
+         cache.put(item, new Item("c" + item, bytes, new float[]{1.1f * item, 1.1f * item, 1.1f * item}, "bla" + item, (int)item));
       }
 
       Query<Item> query = cache.query("from org.infinispan.query.model.Item i where i.byteVector <-> [7,7,7]~3");
