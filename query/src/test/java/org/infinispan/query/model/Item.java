@@ -1,5 +1,6 @@
 package org.infinispan.query.model;
 
+import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.api.annotations.indexing.Keyword;
 import org.infinispan.api.annotations.indexing.Text;
@@ -20,12 +21,15 @@ public class Item {
 
    private String buggy;
 
+   private Integer ordinal;
+
    @ProtoFactory
-   public Item(String code, byte[] byteVector, float[] floatVector, String buggy) {
+   public Item(String code, byte[] byteVector, float[] floatVector, String buggy, Integer ordinal) {
       this.code = code;
       this.byteVector = byteVector;
       this.floatVector = floatVector;
       this.buggy = buggy;
+      this.ordinal = ordinal;
    }
 
    @Keyword
@@ -50,6 +54,12 @@ public class Item {
    @ProtoField(4)
    public String getBuggy() {
       return buggy;
+   }
+
+   @Basic(sortable = true)
+   @ProtoField(5)
+   public Integer getOrdinal() {
+      return ordinal;
    }
 
    @AutoProtoSchemaBuilder(includeClasses = Item.class)

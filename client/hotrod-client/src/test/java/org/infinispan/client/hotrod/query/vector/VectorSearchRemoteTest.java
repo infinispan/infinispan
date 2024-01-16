@@ -38,7 +38,7 @@ public class VectorSearchRemoteTest extends SingleHotRodServerTest {
       RemoteCache<Object, Object> remoteCache = remoteCacheManager.getCache();
       for (byte item = 1; item <= 10; item++) {
          byte[] bytes = {item, item, item};
-         remoteCache.put(item, new Item("c" + item, bytes, new float[]{1.1f * item, 1.1f * item, 1.1f * item}, "bla" + item));
+         remoteCache.put(item, new Item("c" + item, bytes, new float[]{1.1f * item, 1.1f * item, 1.1f * item}, "bla" + item, (int)item));
       }
 
       Query<Item> query = remoteCache.query("from Item i where i.byteVector <-> [7,6,7]~3");
@@ -60,5 +60,10 @@ public class VectorSearchRemoteTest extends SingleHotRodServerTest {
       query.setParameter("b", 3);
       hits = query.list();
       assertThat(hits).extracting("code").containsExactly("c5", "c6", "c4");
+
+      Query<Object[]> scoreQuery = remoteCache.query("select score(i), i from Item i where i.byteVector <-> [7,6,7]~3");
+      List<Object[]> scoreHits = scoreQuery.list();
+      assertThat(scoreHits).extracting(objects -> objects[1]).extracting("code").containsExactly("c7", "c6", "c8");
+      assertThat(scoreHits).extracting(objects -> objects[0]).hasOnlyElementsOfType(Float.class).isNotNull().allMatch(o -> !o.equals(Float.NaN));
    }
 }
