@@ -124,7 +124,7 @@
       <version.ant-nodeps>1.8.1</version.ant-nodeps>
       <version.ant-contrib>1.0b3</version.ant-contrib>
       <version.antlr3>3.5.2</version.antlr3>
-      <version.arquillian>1.7.0.Alpha14</version.arquillian>
+      <version.arquillian>1.8.0.Final</version.arquillian>
       <version.blockhound>1.0.8.RELEASE</version.blockhound>
       <version.bouncycastle>1.70</version.bouncycastle>
       <version.byteman>4.0.22</version.byteman>
