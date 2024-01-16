@@ -339,7 +339,7 @@
             <executions>
                <execution>
                   <id>console</id>
-                  <phase>package</phase>
+                  <phase>prepare-package</phase>
                   <goals>
                      <goal>unpack</goal>
                   </goals>
@@ -386,7 +386,7 @@
                </execution>
                <execution>
                   <id>loader</id>
-                  <phase>package</phase>
+                  <phase>prepare-package</phase>
                   <goals>
                      <goal>jar</goal>
                   </goals>
