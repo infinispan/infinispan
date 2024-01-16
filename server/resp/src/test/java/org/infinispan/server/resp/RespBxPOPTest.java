@@ -73,7 +73,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
 
    @Override
    protected String parameters() {
-      return "[simpleCache=" + simpleCache + ", cacheMode=" + cacheMode + "]";
+      return "[simpleCache=" + simpleCache + ", cacheMode=" + cacheMode + ", right=" + right + "]";
    }
 
    @Override
