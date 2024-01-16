@@ -282,6 +282,7 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable, Closea
    /**
     * @deprecated Since 10.0, please use {@link #getAddress()}, {@link #getMembers()}, {@link #getCoordinator()}
     */
+   @Deprecated(forRemoval = true)
    Transport getTransport();
 
    /**
