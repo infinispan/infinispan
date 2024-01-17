@@ -40,6 +40,8 @@ public abstract class BaseQuery<T> implements Query<T> {
 
    protected boolean local;
 
+   protected boolean scoreRequired;
+
    /**
     * Optional timeout in nanoseconds.
     */
@@ -214,6 +216,12 @@ public abstract class BaseQuery<T> implements Query<T> {
 
    public boolean isLocal() {
       return local;
+   }
+
+   @Override
+   public Query<T> scoreRequired(boolean scoreRequired) {
+      this.scoreRequired = scoreRequired;
+      return this;
    }
 
    @Override

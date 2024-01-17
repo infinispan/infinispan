@@ -81,4 +81,7 @@ public interface IndexedQuery<E> {
     * @param timeUnit the time unit of the timeout parameter
     */
    IndexedQuery<E> timeout(long timeout, TimeUnit timeUnit);
+
+   void scoreRequired();
+
 }

@@ -131,4 +131,6 @@ public interface Query<T> extends Iterable<T> {
     */
    Query<T> local(boolean local);
 
+   Query<T> scoreRequired(boolean scoreRequired);
+
 }

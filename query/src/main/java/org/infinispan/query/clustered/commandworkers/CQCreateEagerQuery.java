@@ -32,7 +32,7 @@ final class CQCreateEagerQuery extends CQWorker {
       if (query.aggregation() != null) {
          nodeTopDocs = collectAggregations(query);
       } else if (query.isEntityProjection()) {
-         nodeTopDocs = collectKeys(query);
+         nodeTopDocs = collectKeys(query, queryDefinition.isScoreRequired());
       } else {
          nodeTopDocs = collectProjections(query);
       }
@@ -62,7 +62,32 @@ final class CQCreateEagerQuery extends CQWorker {
       return result;
    }
 
-   private CompletionStage<NodeTopDocs> collectKeys(SearchQueryBuilder query) {
+   public LuceneSearchResult<List<Object>> fetchIdAndScore(SearchQueryBuilder query) {
+      long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
+
+      LuceneSearchResult<List<Object>> result = query.idAndScore().fetch(queryDefinition.getMaxResults());
+
+      if (queryStatistics.isEnabled()) {
+         queryStatistics.localIndexedQueryExecuted(queryDefinition.getQueryString(), System.nanoTime() - start);
+      }
+      return result;
+   }
+
+   private CompletionStage<NodeTopDocs> collectKeys(SearchQueryBuilder query, boolean scoreRequired) {
+      if (scoreRequired) {
+         return blockingManager.supplyBlocking(() -> fetchIdAndScore(query), "CQCreateEagerQuery#collectKeys")
+               .thenApply(queryResult -> {
+                  SearchResultTotal total = queryResult.total();
+                  int hitCount = Math.toIntExact(total.hitCountLowerBound());
+                  boolean countIsExact = total.isHitCountExact();
+
+                  Object[] keys = queryResult.hits().stream().map(objects -> objects.get(0))
+                        .toArray(Object[]::new);
+                  return new NodeTopDocs(cache.getRpcManager().getAddress(), queryResult.topDocs(), hitCount, countIsExact,
+                        keys, null);
+               });
+      }
+
       return blockingManager.supplyBlocking(() -> fetchIds(query), "CQCreateEagerQuery#collectKeys")
             .thenApply(queryResult -> {
                SearchResultTotal total = queryResult.total();
