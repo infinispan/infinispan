@@ -29,6 +29,7 @@ jobs:
           echo "JIRA_ISSUE_KEY=${JIRA_ISSUE_KEY}" >> $GITHUB_ENV
           echo "JIRA_ISSUE_URL=${JIRA_ISSUE_URL}" >> $GITHUB_ENV
         env:
+          ASSIGNEE: infinispan-bot
           PROJECT_KEY: ISPN
           PULL_REQUEST: ${{ github.event.pull_request.html_url }}
           SUMMARY: ${{ env.SUMMARY }}

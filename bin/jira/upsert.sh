@@ -3,7 +3,7 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source "${SCRIPT_DIR}/common.sh"
 
-requiredEnv TOKEN PROJECT_KEY PULL_REQUEST SUMMARY TYPE
+requiredEnv TOKEN PROJECT_KEY ASSIGNEE PULL_REQUEST SUMMARY TYPE
 
 PROJECT=$(${CURL} -H @headers $API_URL/project/${PROJECT_KEY})
 PROJECT_ID=$(echo ${PROJECT} | jq -r .id)
@@ -24,6 +24,9 @@ elif [ ${TOTAL_ISSUES} == 0 ]; then
   cat << EOF | tee create-jira.json
   {
     "fields": {
+      "assignee": {
+          "name": "${ASSIGNEE}"
+      },
       "project": {
         "id": "${PROJECT_ID}"
       },
@@ -40,10 +43,11 @@ EOF
   ISSUE_KEY=$(${CURL} --retry 5 --retry-all-errors -H @headers --data @create-jira.json $API_URL/issue | jq -r .key)
 else
   export ISSUE_KEY=$(echo ${ISSUES} | jq -r .issues[0].key)
-  export PULL_REQUEST
+  export ASSIGNEE PULL_REQUEST
 
   echo "Updating existing Jira ${ISSUE_KEY}"
   ${SCRIPT_DIR}/add_pull_request.sh
+  ${SCRIPT_DIR}/assign_issue.sh
 fi
 
 export JIRA_ISSUE_KEY="${ISSUE_KEY}"
