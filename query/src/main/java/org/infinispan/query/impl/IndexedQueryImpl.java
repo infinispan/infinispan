@@ -250,4 +250,9 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
       queryDefinition.failAfter(timeout, timeUnit);
       return this;
    }
+
+   @Override
+   public void scoreRequired() {
+      queryDefinition.scoreRequired();
+   }
 }

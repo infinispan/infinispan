@@ -34,6 +34,7 @@ public final class QueryDefinition {
    private int firstResult = 0;
    private int hitCountAccuracy = -1;
    private long timeout = -1;
+   private boolean scoreRequired = false;
 
    private final Map<String, Object> namedParameters = new HashMap<>();
    private final int originalMaxResults;
@@ -165,6 +166,14 @@ public final class QueryDefinition {
       getSearchQueryBuilder().failAfter(timeout, timeUnit);
    }
 
+   public void scoreRequired() {
+      this.scoreRequired = true;
+   }
+
+   public boolean isScoreRequired() {
+      return this.scoreRequired;
+   }
+
    public static final class Externalizer implements AdvancedExternalizer<QueryDefinition> {
 
       @Override
@@ -186,6 +195,7 @@ public final class QueryDefinition {
          output.writeInt(queryDefinition.maxResults);
          output.writeInt(queryDefinition.hitCountAccuracy);
          output.writeLong(queryDefinition.timeout);
+         output.writeBoolean(queryDefinition.scoreRequired);
          Map<String, Object> namedParameters = queryDefinition.namedParameters;
          int paramSize = namedParameters.size();
          output.writeShort(paramSize);
@@ -214,6 +224,7 @@ public final class QueryDefinition {
          queryDefinition.setFirstResult(firstResult);
 
          queryDefinition.timeout = input.readLong();
+         queryDefinition.scoreRequired = input.readBoolean();
          short paramSize = input.readShort();
          if (paramSize != 0) {
             Map<String, Object> params = new HashMap<>(paramSize);

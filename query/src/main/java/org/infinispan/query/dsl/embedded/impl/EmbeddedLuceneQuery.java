@@ -141,7 +141,9 @@ final class EmbeddedLuceneQuery<TypeMetadata, T> extends BaseQuery<T> {
       } else {
          result.hitCountAccuracy(1); // lower the hit count accuracy
       }
-
+      if (scoreRequired) {
+         result.scoreRequired();
+      }
       if (timeout > 0) {
          result.timeout(timeout, TimeUnit.NANOSECONDS);
       }

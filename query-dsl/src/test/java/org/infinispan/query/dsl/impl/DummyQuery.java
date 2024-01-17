@@ -84,6 +84,11 @@ class DummyQuery<T> implements Query<T> {
    }
 
    @Override
+   public Query<T> scoreRequired(boolean scoreRequired) {
+      return this;
+   }
+
+   @Override
    public String getQueryString() {
       return null;
    }
