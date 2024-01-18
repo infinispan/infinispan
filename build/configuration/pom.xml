@@ -143,7 +143,7 @@
       <version.infinispan.doclets>1.4.0.Final</version.infinispan.doclets>
       <version.infinispan.maven-plugins>1.0.4.Final</version.infinispan.maven-plugins>
       <version.insights>2.0.1</version.insights>
-      <version.io.agroal>2.1</version.io.agroal>
+      <version.io.agroal>2.2</version.io.agroal>
       <version.io.lettuce>6.3.1.RELEASE</version.io.lettuce>
       <version.vertx>4.4.4</version.vertx>
       <version.io.mashona>1.0.0</version.io.mashona>
