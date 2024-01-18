@@ -48,7 +48,8 @@ jobs:
               body: '${{ env.JIRA_ISSUE_URL }}'
             })
 
-      - name: Update PR Title
+      - name: Update PR Title main
+        if: ${{ github.base_ref == 'main' }}
         uses: actions/github-script@v7
         with:
           script: |
@@ -57,4 +58,16 @@ jobs:
               repo: context.repo.repo,
               pull_number: ${{ github.event.pull_request.number }},
               title: '${{ env.JIRA_ISSUE_KEY }} ${{ github.event.pull_request.title }}'
+            })
+
+      - name: Update PR Title 14.0.x
+        if: ${{ github.base_ref == '14.0.x' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: ${{ github.event.pull_request.number }},
+              title: '[14.0.x] ${{ env.JIRA_ISSUE_KEY }} ${{ github.event.pull_request.title }}'
             })
