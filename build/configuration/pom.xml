@@ -217,7 +217,7 @@
 
       <version.smallrye-mutiny>1.3.1</version.smallrye-mutiny>
       <!-- Defaults to Spring 5 and Spring Boot 2 -->
-      <version.spring>5.3.28</version.spring>
+      <version.spring>5.3.31</version.spring>
       <version.spring.boot>2.7.13</version.spring.boot>
       <version.spring.session>2.7.2</version.spring.session>
 
