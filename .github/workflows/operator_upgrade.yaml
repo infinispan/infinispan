@@ -75,5 +75,5 @@ jobs:
     with:
       operand: localhost:5001/server:${{ github.sha }}
       operandArtifact: operand-image
-      ref: main
+      ref: 2.3.x
       repository: infinispan/infinispan-operator
