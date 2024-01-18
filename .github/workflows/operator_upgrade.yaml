@@ -64,7 +64,7 @@ jobs:
           docker save localhost:5001/server:${{ github.sha }} > /tmp/operand-image.tar
 
       - name: Upload
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: operand-image
           path: /tmp/operand-image.tar
