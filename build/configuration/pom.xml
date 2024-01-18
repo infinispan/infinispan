@@ -126,7 +126,7 @@
       <!-- Dependency versions -->
       <version.aesh>2.6</version.aesh>
       <version.aesh-readline>2.3</version.aesh-readline>
-      <version.ant>1.10.13</version.ant>
+      <version.ant>1.10.14</version.ant>
       <version.ant-nodeps>1.8.1</version.ant-nodeps>
       <version.ant-contrib>1.0b3</version.ant-contrib>
       <version.antlr3>3.5.2</version.antlr3>
