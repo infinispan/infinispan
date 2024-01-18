@@ -1,0 +1,60 @@
+name: Dependabot Jira
+
+on:
+  pull_request_target:
+    branches:
+      - main
+      - 14.0.x
+
+    types:
+      - opened
+      - reopened
+
+jobs:
+  createJira:
+    if: github.actor == 'dependabot[bot]' && !contains(github.event.pull_request.labels.*.name, 'github_actions') && startsWith(github.event.pull_request.title, 'Bump')
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Jira Summary
+        run: echo SUMMARY=$(echo "${{ github.event.pull_request.title }}" | grep -oP '(?<=Bump )(.*)(?=from)|(?<=to )(.*)' | tr -d '\n') >> $GITHUB_ENV
+
+      - name: Create or Update Existing Jira
+        run: |
+          source ./bin/jira/upsert.sh
+          echo "JIRA_ISSUE_KEY=${JIRA_ISSUE_KEY}" >> $GITHUB_ENV
+          echo "JIRA_ISSUE_URL=${JIRA_ISSUE_URL}" >> $GITHUB_ENV
+        env:
+          ASSIGNEE: infinispan-bot
+          PROJECT_KEY: ISPN
+          PULL_REQUEST: ${{ github.event.pull_request.html_url }}
+          SUMMARY: ${{ env.SUMMARY }}
+          TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          TYPE: Component Upgrade
+          RUNNER_DEBUG: "1"
+
+      - name: Add comment to PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '${{ env.JIRA_ISSUE_URL }}'
+            })
+
+      - name: Update PR Title
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: ${{ github.event.pull_request.number }},
+              title: '${{ env.JIRA_ISSUE_KEY }} ${{ github.event.pull_request.title }}'
+            })
