@@ -215,7 +215,7 @@
       <version.spring.boot>3.2.1</version.spring.boot>
       <version.spring.session>3.2.1</version.spring.session>
 
-      <version.kafka.client>3.5.0</version.kafka.client>
+      <version.kafka.client>3.6.1</version.kafka.client>
       <version.xom>1.3.7</version.xom>
       <version.xstream>1.4.20</version.xstream>
 
