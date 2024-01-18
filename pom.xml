@@ -312,7 +312,7 @@
       <versionx.org.jgroups.azure.jgroups-azure>2.0.2.Final</versionx.org.jgroups.azure.jgroups-azure>
       <versionx.org.jgroups.kubernetes.jgroups-kubernetes>2.0.1.Final</versionx.org.jgroups.kubernetes.jgroups-kubernetes>
       <versionx.org.jsoup>1.15.3</versionx.org.jsoup>
-      <versionx.org.mariadb.jdbc>2.7.3</versionx.org.mariadb.jdbc>
+      <versionx.org.mariadb.jdbc>2.7.11</versionx.org.mariadb.jdbc>
       <versionx.org.objectweb.howl.howl>1.0.1-1</versionx.org.objectweb.howl.howl>
       <versionx.org.postgresql>42.4.1</versionx.org.postgresql>
       <versionx.org.testcontainers.testcontainers>1.18.0</versionx.org.testcontainers.testcontainers>
