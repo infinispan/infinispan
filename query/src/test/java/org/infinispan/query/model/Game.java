@@ -21,7 +21,7 @@ public class Game {
       this.description = description;
    }
 
-   @Keyword(projectable = true)
+   @Keyword(projectable = true, sortable = true)
    @ProtoField(1)
    public String getName() {
       return name;

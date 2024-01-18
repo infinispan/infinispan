@@ -1,5 +1,6 @@
 package org.infinispan.query.impl;
 
+import static java.lang.Float.NaN;
 import static org.infinispan.query.core.impl.Log.CONTAINER;
 import static org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder.INFINISPAN_AGGREGATION_KEY_NAME;
 
@@ -126,7 +127,8 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
          throw CONTAINER.entryIteratorDoesNotAllowProjections();
       }
 
-      SearchQuery<List<Object>> searchQuery = searchQueryBuilder.keyAndEntity();
+      SearchQuery<List<Object>> searchQuery = (queryDefinition.isScoreRequired()) ?
+            searchQueryBuilder.keyEntityAndScore() : searchQueryBuilder.keyAndEntity();
 
       MappingIterator<List<Object>, EntityEntry<K, E>> iterator = new MappingIterator<>(iterator(searchQuery), this::mapToEntry);
       iterator.skip(queryDefinition.getFirstResult())
@@ -138,7 +140,8 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
    }
 
    private <K, V> EntityEntry<K, V> mapToEntry(List<Object> projection) {
-      return new EntityEntry<>((K) ((EntityReference) projection.get(0)).id(), (V) projection.get(1), (float) projection.get(2));
+      float score = (projection.size() > 2) ? (float) projection.get(2) : NaN;
+      return new EntityEntry<>((K) ((EntityReference) projection.get(0)).id(), (V) projection.get(1), score);
    }
 
    @Override
