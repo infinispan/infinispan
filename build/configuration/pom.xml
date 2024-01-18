@@ -179,7 +179,7 @@
       <version.nashorn>15.4</version.nashorn>
       <version.netty>4.1.104.Final</version.netty>
       <version.netty.incubator.iouring>0.0.24.Final</version.netty.incubator.iouring>
-      <version.openjdk.jmh>1.23</version.openjdk.jmh>
+      <version.openjdk.jmh>1.37</version.openjdk.jmh>
       <version.org.wildfly.elytron>2.2.3.Final</version.org.wildfly.elytron>
       <version.org.wildfly.openssl>2.2.5.Final</version.org.wildfly.openssl>
       <version.org.wildfly.openssl.natives>2.2.2.SP01</version.org.wildfly.openssl.natives>
