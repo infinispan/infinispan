@@ -35,6 +35,7 @@
         <schemaVersion>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}</schemaVersion>
         <protostream.api.docs>https://www.javadoc.io/doc/org.infinispan.protostream/protostream/${version.protostream}</protostream.api.docs>
         <logging.html.tmp>${project.build.directory}/report/tmp</logging.html.tmp>
+        <postgresql.database.version>${versionx.com.postgresqldatabase.postgresql}</postgresql.database.version>
     </properties>
 
     <dependencies>
@@ -180,6 +181,7 @@
                                 <download_url>${download.url}</download_url>
                                 <code_tutorials>${infinispan.tutorials}</code_tutorials>
                                 <imagesdir>../../topics/images</imagesdir>
+                                <postgresqlversion>${postgresql.database.version}</postgresqlversion>
                             </attributes>
                         </configuration>
                     </execution>
@@ -252,6 +254,7 @@
                                         <download_url>${download.url}</download_url>
                                         <code_tutorials>${infinispan.tutorials}</code_tutorials>
                                         <imagesdir>../../topics/images</imagesdir>
+                                        <postgresqlversion>${postgresql.database.version}</postgresqlversion>
                                     </attributes>
                                 </configuration>
                             </execution>
