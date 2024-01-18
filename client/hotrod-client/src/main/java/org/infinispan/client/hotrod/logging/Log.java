@@ -413,4 +413,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Client cannot marshall the server's key media type ('%s'). This could cause poor performance.", id = 4116)
    void serverKeyTypeNotRecognized(MediaType serverKeyType);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Cache '%s' with marshaller %s does not handle server storage type '%s'. Configure the cache or default marshaller.", id = 4117)
+   void invalidateNearDefaultMarshallerMismatch(String cacheName, Class<?> clazz, MediaType serverKeyType);
 }
