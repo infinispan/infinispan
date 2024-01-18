@@ -11,10 +11,12 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -22,6 +24,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "client.hotrod.near.NearCacheMarshallingTest")
 public class NearCacheMarshallingTest extends SingleHotRodServerTest {
 
+   private static final String SERVER_DEFINED_CACHE = "other-cache";
    private final Class<? extends Marshaller> marshaller;
    private final MediaType storeType;
    private final boolean useBloomFilter;
@@ -36,7 +39,12 @@ public class NearCacheMarshallingTest extends SingleHotRodServerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       org.infinispan.configuration.cache.ConfigurationBuilder serverCfg = new org.infinispan.configuration.cache.ConfigurationBuilder();
       if (storeType != null) hotRodCacheConfiguration(serverCfg, storeType);
-      return TestCacheManagerFactory.createCacheManager(contextInitializer(), serverCfg);
+      EmbeddedCacheManager ecm = TestCacheManagerFactory.createCacheManager(contextInitializer(), serverCfg);
+      org.infinispan.configuration.cache.ConfigurationBuilder cb = new org.infinispan.configuration.cache.ConfigurationBuilder();
+      cb.encoding().key().mediaType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
+      cb.encoding().value().mediaType(MediaType.APPLICATION_OCTET_STREAM_TYPE);
+      TestingUtil.defineConfiguration(ecm, SERVER_DEFINED_CACHE, cb.build());
+      return ecm;
    }
 
    @Override
@@ -50,11 +58,21 @@ public class NearCacheMarshallingTest extends SingleHotRodServerTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
       if (marshaller != null) builder.marshaller(marshaller);
+      builder.nearCache().mode(NearCacheMode.INVALIDATED).maxEntries(100);
       builder.remoteCache("").nearCacheMode(NearCacheMode.INVALIDATED)
             .nearCacheMaxEntries(2)
             .nearCacheUseBloomFilter(useBloomFilter);
       builder.connectionPool().maxActive(1);
       return new RemoteCacheManager(builder.build());
+   }
+
+   public void testServerDefinedCache() {
+      RemoteCacheManager cacheManager = getRemoteCacheManager();
+
+      assertThat(cacheManager.getCache(SERVER_DEFINED_CACHE)).isNotNull();
+      assertThat(cacheManager.getCache()).isNotNull();
+
+      cacheManager.stop();
    }
 
    public void testRemoteWriteOnLocal() throws Exception {
@@ -90,7 +108,8 @@ public class NearCacheMarshallingTest extends SingleHotRodServerTest {
                      new NearCacheMarshallingTest(GenericJBossMarshaller.class, MediaType.APPLICATION_JBOSS_MARSHALLING, useBloomFilter),
                      new NearCacheMarshallingTest(ProtoStreamMarshaller.class, MediaType.APPLICATION_PROTOSTREAM, useBloomFilter),
                      new NearCacheMarshallingTest(ProtoStreamMarshaller.class, null, useBloomFilter),
-                     new NearCacheMarshallingTest(GenericJBossMarshaller.class, null, useBloomFilter)
+                     new NearCacheMarshallingTest(GenericJBossMarshaller.class, null, useBloomFilter),
+                     new NearCacheMarshallingTest(JavaSerializationMarshaller.class, null, useBloomFilter)
                ))
             .toArray();
    }

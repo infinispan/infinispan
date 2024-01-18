@@ -19,6 +19,8 @@ import org.infinispan.client.hotrod.impl.operations.UpdateBloomFilterOperation;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.near.NearCacheService;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.marshall.Marshaller;
 
 /**
  * Near {@link org.infinispan.client.hotrod.RemoteCache} implementation enabling
@@ -192,17 +194,19 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
    }
 
    @Override
-   public void start() {
-      super.start();
-   }
-
-   @Override
-   public void resolveStorage(boolean objectStorage) {
-      super.resolveStorage(objectStorage);
-
-      // Only register the listener *after* resolving the data format to use.
-      // This is necessary for the listener to correctly marshall the data.
-      listenerAddress = nearcache.start(this);
+   public void resolveStorage(MediaType key, MediaType value, boolean objectStorage) {
+      if (key != null && !delegate.getRemoteCacheManager().getMarshaller().mediaType().match(key)) {
+         // The server has a storage type which the cache marshaller does not handle.
+         // This could lead to losing events in the bloom filter, where the client and server see the key differently.
+         // To avoid this issue, the client negotiate the type when installing the listener, but it needs a proper configuration.
+         Class<? extends Marshaller> marshallerClass = delegate.getRemoteCacheManager().getMarshaller().getClass();
+         log.invalidateNearDefaultMarshallerMismatch(delegate.getName(), marshallerClass, key);
+         listenerAddress = nearcache.start(this);
+         delegate.resolveStorage(key, value, objectStorage);
+      } else {
+         delegate.resolveStorage(key, value, objectStorage);
+         listenerAddress = nearcache.start(this);
+      }
    }
 
    @Override
