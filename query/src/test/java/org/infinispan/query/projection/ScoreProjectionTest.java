@@ -49,6 +49,17 @@ public class ScoreProjectionTest extends SingleCacheManagerTest {
    }
 
    @Test
+   public void entityNoScore() {
+      Query<Object[]> query;
+      List<Object[]> games;
+
+      // order by field to not enforce score!
+      query = cache.query("select g from org.infinispan.query.model.Game g where g.description : 'description'~2 order by g.name desc");
+      games = query.list();
+      assertThat(games).extracting(objects -> objects[0]).extracting("name").containsExactly("4", "3", "2", "1");
+   }
+
+   @Test
    public void entityAndScore() {
       Query<Object[]> query;
       List<Object[]> games;

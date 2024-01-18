@@ -80,6 +80,15 @@ public final class SearchQueryBuilder {
       SearchProjectionFactory<EntityReference, ?> projectionFactory = scope.projection();
       SearchProjection<?>[] searchProjections = new SearchProjection<?>[]{
             projectionFactory.entityReference().toProjection(),
+            projectionFactory.entity().toProjection()
+      };
+      return build((SearchProjection<List<Object>>) SearchProjectionInfo.composite(projectionFactory, searchProjections).getProjection());
+   }
+
+   public LuceneSearchQuery<List<Object>> keyEntityAndScore() {
+      SearchProjectionFactory<EntityReference, ?> projectionFactory = scope.projection();
+      SearchProjection<?>[] searchProjections = new SearchProjection<?>[]{
+            projectionFactory.entityReference().toProjection(),
             projectionFactory.entity().toProjection(),
             projectionFactory.score().toProjection()
       };
