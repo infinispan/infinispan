@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.marshall;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.registerSCI;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -12,11 +13,11 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.ProtobufUtil;
-import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoName;
-import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -79,16 +80,8 @@ public class ProtoStreamMarshallerWithAnnotationsTest extends SingleCacheManager
       ConfigurationBuilder clientBuilder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort());
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
-
       remoteCache = remoteCacheManager.getCache();
-
-      //initialize client-side serialization context
-      SerializationContext serializationContext = MarshallerUtil.getSerializationContext(remoteCacheManager);
-      ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
-      protoSchemaBuilder.fileName("test.proto")
-            .addClass(AnnotatedUser.class)
-            .build(serializationContext);
-
+      registerSCI(remoteCacheManager, ProtoStreamMarshallerWithAnnotationsTestSCI.INSTANCE);
       return cacheManager;
    }
 
@@ -130,5 +123,15 @@ public class ProtoStreamMarshallerWithAnnotationsTest extends SingleCacheManager
       assertNotNull(user);
       assertEquals(33, user.getId());
       assertEquals("Tom", user.getName());
+   }
+
+   @AutoProtoSchemaBuilder(
+         includeClasses = {AnnotatedUser.class},
+         schemaFileName = "test.client.ProtoStreamMarshallerWithAnnotationsTest.proto",
+         schemaFilePath = "proto/generated",
+         service = false
+   )
+   public interface ProtoStreamMarshallerWithAnnotationsTestSCI extends GeneratedSchema {
+      GeneratedSchema INSTANCE = new ProtoStreamMarshallerWithAnnotationsTestSCIImpl();
    }
 }

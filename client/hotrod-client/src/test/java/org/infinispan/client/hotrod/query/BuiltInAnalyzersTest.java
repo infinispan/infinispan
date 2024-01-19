@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.query;
 
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.checkSchemaErrors;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -40,7 +41,7 @@ public class BuiltInAnalyzersTest extends SingleHotRodServerTest {
       EmbeddedCacheManager manager = TestCacheManagerFactory.createServerModeCacheManager();
       Cache<String, String> metadataCache = manager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
       metadataCache.put("analyzers.proto", TestEntitySCI.INSTANCE.getProtoFile());
-      RemoteQueryTestUtils.checkSchemaErrors(metadataCache);
+      checkSchemaErrors(metadataCache);
 
       manager.defineConfiguration("test", builder.build());
       return manager;
