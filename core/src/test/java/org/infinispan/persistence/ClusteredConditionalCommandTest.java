@@ -14,6 +14,7 @@ import java.util.Map;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.Ownership;
@@ -29,8 +30,6 @@ import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.InCacheMode;
-import org.infinispan.configuration.cache.IsolationLevel;
-import org.testng.SkipException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -122,10 +121,6 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
       }
 
       List<Cache<String, String>> cacheList = getCaches(cacheName);
-      // These are not valid test combinations - so just ignore them
-      if (shared && passivation) {
-         throw new SkipException("Shared passivation is not supported");
-      }
       waitForNoRebalance(cacheList);
       final CacheHelper<String, String> cacheHelper = create(cacheList);
       final boolean skipLoad = flag == Flag.SKIP_CACHE_LOAD || flag == Flag.SKIP_CACHE_STORE;

@@ -6,7 +6,6 @@ import java.util.Spliterators;
 
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
-import org.infinispan.eviction.impl.ActivationManager;
 import org.infinispan.eviction.impl.PassivationManager;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -59,9 +58,6 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
    /**
     * Puts an entry in the cache along with metadata adding information such lifespan of entry, max idle time, version
     * information...etc.
-    * <p/>
-    * The {@code key} must be activate by invoking {@link ActivationManager#activateAsync(Object, int)}
-    * boolean)}.
     *
     * @param k key under which to store entry
     * @param v value to store
@@ -79,8 +75,6 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
 
    /**
     * Removes an entry from the cache
-    * <p/>
-    * The {@code key} must be activate by invoking {@link ActivationManager#activateAsync(Object, int)}
     *
     * @param k key to remove
     * @return entry removed, or null if it didn't exist or had expired
@@ -127,8 +121,6 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
     * <p/>
     * See {@link org.infinispan.container.DataContainer.ComputeAction#compute(Object,
     * org.infinispan.container.entries.InternalCacheEntry, InternalEntryFactory)}.
-    * <p/>
-    * The {@code key} must be activated by invoking {@link ActivationManager#activateAsync(Object, int)}.
     * <p>
     * Note the entry provided to {@link org.infinispan.container.DataContainer.ComputeAction} may be expired as these
     * entries are not filtered as many other methods do.

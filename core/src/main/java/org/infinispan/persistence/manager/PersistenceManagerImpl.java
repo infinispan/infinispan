@@ -85,6 +85,7 @@ import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.NonBlockingManager;
+import org.infinispan.util.function.TriPredicate;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
@@ -1177,13 +1178,14 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Override
    public CompletionStage<Long> writeMapCommand(PutMapCommand putMapCommand, InvocationContext ctx,
          BiPredicate<? super PutMapCommand, Object> commandKeyPredicate) {
-      Flowable<MVCCEntry<Object, Object>> mvccEntryFlowable = entriesFromCommand(putMapCommand, ctx, commandKeyPredicate);
+      Flowable<MVCCEntry<Object, Object>> mvccEntryFlowable = entriesFromCommand(putMapCommand, ctx, (c, k, e) ->
+         commandKeyPredicate.test(c, k));
       return batchOperation(mvccEntryFlowable, ctx, NonBlockingStore::batch);
    }
 
    @Override
    public CompletionStage<Long> performBatch(TxInvocationContext<AbstractCacheTransaction> ctx,
-         BiPredicate<? super WriteCommand, Object> commandKeyPredicate) {
+         TriPredicate<? super WriteCommand, Object, MVCCEntry<?, ?>> commandKeyPredicate) {
       Flowable<MVCCEntry<Object, Object>> mvccEntryFlowable = toMvccEntryFlowable(ctx, commandKeyPredicate);
       return batchOperation(mvccEntryFlowable, ctx, NonBlockingStore::batch);
    }
@@ -1365,14 +1367,14 @@ public class PersistenceManagerImpl implements PersistenceManager {
     * @return a Flowable containing MVCCEntry(s) for the modifications in the tx context
     */
    private <K, V> Flowable<MVCCEntry<K, V>> toMvccEntryFlowable(TxInvocationContext<AbstractCacheTransaction> ctx,
-         BiPredicate<? super WriteCommand, Object> commandKeyPredicate) {
+         TriPredicate<? super WriteCommand, Object, MVCCEntry<?, ?>> commandKeyPredicate) {
       return Flowable.fromIterable(ctx.getCacheTransaction().getAllModifications())
             .filter(writeCommand -> !writeCommand.hasAnyFlag(FlagBitSets.SKIP_CACHE_STORE | FlagBitSets.ROLLING_UPGRADE))
             .concatMap(writeCommand -> entriesFromCommand(writeCommand, ctx, commandKeyPredicate));
    }
 
    private <K, V, WCT extends WriteCommand> Flowable<MVCCEntry<K, V>> entriesFromCommand(WCT writeCommand, InvocationContext ctx,
-         BiPredicate<? super WCT, Object> commandKeyPredicate) {
+         TriPredicate<? super WCT, Object, MVCCEntry<?, ?>> commandKeyPredicate) {
       if (writeCommand instanceof DataWriteCommand) {
          Object key = ((DataWriteCommand) writeCommand).getKey();
          MVCCEntry<K, V> entry = acquireKeyFromContext(ctx, writeCommand, key, commandKeyPredicate);
@@ -1392,15 +1394,13 @@ public class PersistenceManagerImpl implements PersistenceManager {
    }
 
    private <K, V, WCT extends WriteCommand> MVCCEntry<K, V> acquireKeyFromContext(InvocationContext ctx, WCT command, Object key,
-         BiPredicate<? super WCT, Object> commandKeyPredicate) {
-      if (commandKeyPredicate == null || commandKeyPredicate.test(command, key)) {
-         //noinspection unchecked
-         MVCCEntry<K, V> entry = (MVCCEntry<K, V>) ctx.lookupEntry(key);
-         if (entry.isChanged()) {
-            return entry;
-         }
+         TriPredicate<? super WCT, Object, MVCCEntry<?, ?>> commandKeyPredicate) {
+      //noinspection unchecked
+      MVCCEntry<K, V> entry = (MVCCEntry<K, V>) ctx.lookupEntry(key);
+      if (commandKeyPredicate != null && !commandKeyPredicate.test(command, key, entry) || !entry.isChanged()) {
+         return null;
       }
-      return null;
+      return entry;
    }
 
    /**

@@ -2,12 +2,10 @@ package org.infinispan.persistence;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import jakarta.transaction.Transaction;
-import jakarta.transaction.TransactionManager;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -24,6 +22,9 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
 
 /**
  * Tests the interceptor chain and surrounding logic
@@ -62,6 +63,22 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
    public void afterMethod() throws PersistenceException {
       if (cache != null) cache.clear();
       if (store != null) store.clear();
+   }
+
+   private void assertInCacheAndInStore(Object key, Object cacheValue, long lifespanMillis) throws PersistenceException {
+      assertInCacheAndInStore(key, cacheValue, cacheValue, lifespanMillis);
+   }
+
+   private void assertInCacheAndInStore(Object key, Object cacheValue, Object storeValue) throws PersistenceException {
+      assertInCacheAndInStore(key, cacheValue, storeValue, -1);
+   }
+
+   private void assertInCacheAndInStore(Object key, Object cacheValue, Object storeValue, long lifespanMillis) throws PersistenceException {
+      InternalCacheValue se = cache.getAdvancedCache().getDataContainer().get(key).toInternalCacheValue();
+      testStoredEntry(se, cacheValue, lifespanMillis, "Cache", key);
+      MarshallableEntry<?, ?> storeEntry = store.loadEntry(key);
+      assertNotNull(storeEntry);
+      assertEquals(storeValue, storeEntry.getValue());
    }
 
    private void assertInCacheNotInStore(Object key, Object value) throws PersistenceException {
@@ -125,8 +142,8 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
       assert cache.get("k1").equals("v1");
       assert cache.get("k2").equals("v2");
 
-      assertInCacheNotInStore("k1", "v1");
-      assertInCacheNotInStore("k2", "v2", lifespan);
+      assertInCacheAndInStore("k1", "v1", "v1");
+      assertInCacheAndInStore("k2", "v2", lifespan);
 
       cache.evict("k1");
       cache.evict("k2");
@@ -154,30 +171,30 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
       assertNotInCacheAndStore("k1");
 
       assert cache.put("k2", "v2-NEW").equals("v2");
-      assertInCacheNotInStore("k2", "v2-NEW");
+      assertInCacheAndInStore("k2", "v2-NEW", "v2");
 
       cache.evict("k2");
       assertInStoreNotInCache("k2", "v2-NEW");
       assert cache.replace("k2", "v2-REPLACED").equals("v2-NEW");
-      assertInCacheNotInStore("k2", "v2-REPLACED");
+      assertInCacheAndInStore("k2", "v2-REPLACED", "v2-NEW");
 
       cache.evict("k2");
       assertInStoreNotInCache("k2", "v2-REPLACED");
 
       assert !cache.replace("k2", "some-rubbish", "v2-SHOULDNT-STORE"); // but should activate
-      assertInCacheNotInStore("k2", "v2-REPLACED");
+      assertInCacheAndInStore("k2", "v2-REPLACED", "v2-REPLACED");
 
       cache.evict("k2");
       assertInStoreNotInCache("k2", "v2-REPLACED");
 
       assert cache.replace("k2", "v2-REPLACED", "v2-REPLACED-AGAIN");
-      assertInCacheNotInStore("k2", "v2-REPLACED-AGAIN");
+      assertInCacheAndInStore("k2", "v2-REPLACED-AGAIN", "v2-REPLACED");
 
       cache.evict("k2");
       assertInStoreNotInCache("k2", "v2-REPLACED-AGAIN");
 
       assert cache.putIfAbsent("k2", "should-not-appear").equals("v2-REPLACED-AGAIN");
-      assertInCacheNotInStore("k2", "v2-REPLACED-AGAIN");
+      assertInCacheAndInStore("k2", "v2-REPLACED-AGAIN", "v2-REPLACED-AGAIN");
 
       assert cache.putIfAbsent("k1", "v1-if-absent") == null;
       assertInCacheNotInStore("k1", "v1-if-absent");
@@ -253,7 +270,7 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
       cache.putAll(m);
 
       assertInCacheNotInStore("k1", "v1-NEW");
-      assertInCacheNotInStore("k2", "v2-NEW");
+      assertInCacheAndInStore("k2", "v2-NEW", "v2");
       assertInCacheNotInStore("k3", "v3-NEW");
    }
 

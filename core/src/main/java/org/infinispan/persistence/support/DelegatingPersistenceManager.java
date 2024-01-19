@@ -11,6 +11,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.ComponentRegistry;
@@ -23,6 +24,7 @@ import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
+import org.infinispan.util.function.TriPredicate;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -200,7 +202,7 @@ public class DelegatingPersistenceManager implements PersistenceManager, Lifecyc
 
    @Override
    public CompletionStage<Long> performBatch(TxInvocationContext<AbstractCacheTransaction> invocationContext,
-         BiPredicate<? super WriteCommand, Object> commandKeyPredicate) {
+         TriPredicate<? super WriteCommand, Object, MVCCEntry<?, ?>> commandKeyPredicate) {
       return persistenceManager.performBatch(invocationContext, commandKeyPredicate);
    }
 

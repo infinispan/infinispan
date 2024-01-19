@@ -1,10 +1,8 @@
 [id='passivation_{context}']
 = Passivation
 Passivation configures {brandname} to write entries to cache stores when it
-evicts those entries from memory. In this way, passivation ensures that only a
-single copy of an entry is maintained, either in-memory or in a cache store,
-which prevents unnecessary and potentially expensive writes to persistent
-storage.
+evicts those entries from memory. In this way, passivation prevents unnecessary
+and potentially expensive writes to persistent storage.
 
 Activation is the process of restoring entries to memory from the cache store
 when there is an attempt to access passivated entries. For this reason, when you
@@ -16,7 +14,7 @@ When {brandname} evicts an entry from the cache, it notifies cache listeners
 that the entry is passivated then stores the entry in the cache store. When
 {brandname} gets an access request for an evicted entry, it lazily loads the
 entry from the cache store into memory and then notifies cache listeners that
-the entry is activated.
+the entry is activated while keeping the value still in the store.
 
 [NOTE]
 ====

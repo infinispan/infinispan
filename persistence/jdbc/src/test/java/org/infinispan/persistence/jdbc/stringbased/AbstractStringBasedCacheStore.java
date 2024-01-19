@@ -98,7 +98,7 @@ public abstract class AbstractStringBasedCacheStore extends AbstractInfinispanTe
             cache.get("k1");
             cache.get("k2");
             assertEquals(2, cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).size());
-            eventuallyEquals(1,  () -> getAllRows().size());
+            eventuallyEquals(2,  () -> getAllRows().size());
 
             cache.stop();
             cache.start();

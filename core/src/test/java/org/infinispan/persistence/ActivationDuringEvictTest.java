@@ -16,7 +16,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.DDAsyncInterceptor;
-import org.infinispan.interceptors.impl.PassivationCacheLoaderInterceptor;
+import org.infinispan.interceptors.impl.PassivationWriterInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
@@ -51,7 +51,7 @@ public class ActivationDuringEvictTest extends SingleCacheManagerTest {
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)
          .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder().nonClusteredDefault();
-      TestCacheManagerFactory.addInterceptor(global, TestCacheManagerFactory.DEFAULT_CACHE_NAME::equals, sdi, TestCacheManagerFactory.InterceptorPosition.AFTER, PassivationCacheLoaderInterceptor.class);
+      TestCacheManagerFactory.addInterceptor(global, TestCacheManagerFactory.DEFAULT_CACHE_NAME::equals, sdi, TestCacheManagerFactory.InterceptorPosition.AFTER, PassivationWriterInterceptor.class);
       return TestCacheManagerFactory.createCacheManager(global, config);
    }
 

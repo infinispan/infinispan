@@ -496,13 +496,8 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       assertEquals("Wrong value for key " + key + " in data container", value, entry.getValue());
 
       WaitNonBlockingStore<?, ?> loader = TestingUtil.getFirstStoreWait(cache);
-      if (passivation) {
-         // With passivation the entry must not exist in the store
-         // but the removal is sometimes delayed
-         PersistenceManager pm = TestingUtil.extractComponent(cache, PersistenceManager.class);
-         assertNull(join(pm.loadFromAllStores(key, true, true)));
-         eventuallyEquals(null, () -> loader.loadEntry(key));
-      } else {
+      // The entry may or may not be on disk with passivation
+      if (!passivation) {
          MarshallableEntry<?, ?> entryLoaded = loader.loadEntry(key);
          assertEquals("Wrong value for key " + key + " in cache loader", value, extractValue(entryLoaded));
       }

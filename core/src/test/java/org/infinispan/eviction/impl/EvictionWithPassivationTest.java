@@ -272,7 +272,7 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
       String evictedKey = evictionListener.getEvictedKey();
       assertEntryInStore(evictedKey, true);
       testCache.compute(evictedKey, (k ,v) -> v + "-modfied");
-      assertEntryInStore(evictedKey, false);
+      assertEntryInStore(evictedKey, true);
    }
 
    public void testRemoveViaComputeOnEvictedEntry() throws Exception {
@@ -285,9 +285,6 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
       // Eviction notification can be non blocking async in certain configs - so wait for notification to complete
       evictionListener.phaser.awaitAdvanceInterruptibly(phase, 10, TimeUnit.SECONDS);
       String evictedKey = evictionListener.getEvictedKey();
-      if (evictedKey == null) {
-         System.currentTimeMillis();
-      }
       assertEntryInStore(evictedKey, true);
       testCache.compute(evictedKey, (k ,v) -> null);
       assertFalse(testCache.containsKey(evictedKey));
@@ -299,7 +296,7 @@ public class EvictionWithPassivationTest extends SingleCacheManagerTest {
       testCache.clear();
       putIntoStore("key", "oldValue");
       testCache.put("key", "value");
-      assertEntryInStore("key", false);
+      assertEntryInStore("key", true);
    }
 
    public void testConcurrentWriteWithEviction() throws InterruptedException, TimeoutException, ExecutionException {
