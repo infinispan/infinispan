@@ -36,7 +36,7 @@ public class TransactionalStoreInterceptor extends DDAsyncInterceptor {
 
                // Persist the modifications in one phase
                // After they were successfully applied in the data container
-               return asyncValue(persistenceManager.performBatch(ctx, (writeCommand, o) -> true));
+               return asyncValue(persistenceManager.performBatch(ctx, (writeCommand, o, e) -> true));
             });
          }
       }

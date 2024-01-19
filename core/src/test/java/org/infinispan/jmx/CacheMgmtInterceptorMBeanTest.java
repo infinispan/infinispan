@@ -150,7 +150,7 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       assertCurrentNumberOfEntriesInMemory(1);
       assertApproximateEntriesInMemory(1);
       assertCurrentNumberOfEntries(2);
-      assertApproximateEntries(2);
+      assertApproximateEntries(3);
 
       resetStats();
 

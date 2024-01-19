@@ -1,21 +1,17 @@
 package org.infinispan.interceptors.impl;
 
-import static org.infinispan.interceptors.impl.PassivationCacheLoaderInterceptor.activateAfterLoad;
-
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.eviction.impl.ActivationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.DataOperationOrderer;
 
 public class PassivationClusteredCacheLoaderInterceptor<K, V> extends ClusteredCacheLoaderInterceptor<K, V> {
    @Inject DataOperationOrderer orderer;
-   @Inject ActivationManager activationManager;
 
    @Override
    public CompletionStage<InternalCacheEntry<K, V>> loadAndStoreInDataContainer(InvocationContext ctx, Object key,
@@ -29,14 +25,7 @@ public class PassivationClusteredCacheLoaderInterceptor<K, V> extends ClusteredC
       } else {
          retrievalStage = super.loadAndStoreInDataContainer(ctx, key, segment, cmd);
       }
-       if (CompletionStages.isCompletedSuccessfully(retrievalStage)) {
-           InternalCacheEntry<K, V> ice = CompletionStages.join(retrievalStage);
-           activateAfterLoad(key, segment, orderer, activationManager, future, ice, null);
-           return retrievalStage;
-       } else {
-           return retrievalStage.whenComplete((value, t) -> {
-               activateAfterLoad(key, segment, orderer, activationManager, future, value, t);
-           });
-       }
+
+      return retrievalStage.whenComplete((v, t) -> orderer.completeOperation(key, future, DataOperationOrderer.Operation.READ));
    }
 }
