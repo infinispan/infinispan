@@ -30,7 +30,6 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.InCacheMode;
 import org.infinispan.util.concurrent.IsolationLevel;
-import org.testng.SkipException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -108,7 +107,7 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
             assertTrue(cacheHelper.addCache(Ownership.BACKUP, cache));
          } else {
             log.debug("Cache " + address(cache) + " is the non owner");
-            assertTrue(cacheHelper.addCache(Ownership.NON_OWNER, cache) || cacheMode.isScattered());
+            assertTrue(cacheHelper.addCache(Ownership.NON_OWNER, cache));
          }
       }
       return cacheHelper;
@@ -122,10 +121,6 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
       }
 
       List<Cache<String, String>> cacheList = getCaches(cacheName);
-      // These are not valid test combinations - so just ignore them
-      if (shared && passivation) {
-         throw new SkipException("Shared passivation is not supported");
-      }
       waitForNoRebalance(cacheList);
       final CacheHelper<String, String> cacheHelper = create(cacheList);
       final boolean skipLoad = flag == Flag.SKIP_CACHE_LOAD || flag == Flag.SKIP_CACHE_STORE;

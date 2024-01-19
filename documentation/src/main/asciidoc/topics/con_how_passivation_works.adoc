@@ -7,54 +7,51 @@ Writes to data in memory result in writes to persistent storage.
 If {brandname} evicts data from memory, then data in persistent storage
 includes entries that are evicted from memory. In this way persistent storage
 is a superset of the in-memory cache.
+This is recommended when you require highest consistency as the store will be able to be read again after a crash.
 
 If you do not configure eviction, then data in persistent storage provides a
 copy of data in memory.
 
 .Passivation enabled
 {brandname} adds data to persistent storage only when it evicts data from
-memory.
+memory, an entry is removed or upon shutting down the node.
 
-When {brandname} activates entries, it restores data in memory and deletes data
-from persistent storage. In this way, data in memory and data in persistent
-storage form separate subsets of the entire data set, with no intersection
-between the two.
+When {brandname} activates entries, it restores data in memory but keeps the data in the store still.
+This allows for writes to be just as fast as without a store, and still maintains consistency.
+When an entry is created or updated only the in memory will be updated and thus
+the store will be outdated for the time being.
 
 [NOTE]
 ====
-Entries in persistent storage can become stale when using shared cache stores. This occurs because {brandname} does not delete passivated entries from shared cache stores when they are activated.
-
-Values are updated in memory but previously passivated entries remain in persistent storage with out of date values.
+Passivation is not supported when a store is also configured as shared.
+This is due to entries can become out of sync between nodes depending on when a write is evicted versus read.
 ====
+
+To gurantee data consistency any store that is not shared should always have `purgeOnStartup` enabled.
+This is true for both passivation enabled or disabled since a store could hold an outdated entry while down and resurrect it at a later point.
 
 The following table shows data in memory and in persistent storage after a
 series of operations:
 
 [options="header"]
 |===============
-|Operation|Passivation disabled|Passivation enabled|Passivation enabled with shared cache store
+|Operation|Passivation disabled|Passivation enabled
 |Insert k1.|*Memory:* k1 +
 *Disk:* k1|*Memory:* k1 +
-*Disk:* -|*Memory:* k1 +
 *Disk:* -
 |Insert k2.|*Memory:* k1, k2 +
 *Disk:* k1, k2|*Memory:* k1, k2 +
-*Disk:* -|*Memory:* k1, k2 +
 *Disk:* -
 |Eviction thread runs and evicts k1.|*Memory:* k2 +
 *Disk:* k1, k2|*Memory:* k2 +
-*Disk:* k1|*Memory:* k2 +
 *Disk:* k1
 |Read k1.|*Memory:* k1, k2 +
 *Disk:* k1, k2|*Memory:* k1, k2 +
-*Disk:* -|*Memory:* k1, k2 +
 *Disk:* k1
 |Eviction thread runs and evicts k2.|*Memory:* k1 +
 *Disk:* k1, k2|*Memory:* k1 +
-*Disk:* k2|*Memory:* k1 +
 *Disk:* k1, k2
 |Remove k2.|*Memory:* k1 +
 *Disk:* k1|*Memory:* k1 +
-*Disk:* -|*Memory:* k1 +
 *Disk:* k1
 |===============

@@ -4,7 +4,6 @@ import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
@@ -100,8 +99,8 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       loader.write(MarshalledEntryUtil.create(k(m), v(m), cache));
       assert loader.contains(k(m));
       assert cache.get(k(m)).equals(v(m));
-      assertActivationCount(1);
-      assert !loader.contains(k(m));
+      assertActivationCount(0);
+      assert loader.contains(k(m));
    }
 
    public void testActivationOnPut(Method m) {
@@ -112,8 +111,8 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       assert loader.contains(k(m));
       cache.put(k(m), v(m, 2));
       assert cache.get(k(m)).equals(v(m, 2));
-      assertActivationCount(1);
-      assert !loader.contains(k(m)) : "this should only be persisted on evict";
+      assertActivationCount(0);
+      assert loader.contains(k(m));
    }
 
    public void testActivationOnReplace(Method m) {
@@ -126,8 +125,8 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       Object prev = cache.replace(k(m), v(m, 2));
       assertNotNull(prev);
       assertEquals(v(m), prev);
-      assertActivationCount(1);
-      assertFalse(loader.contains(k(m)));
+      assertActivationCount(0);
+      assertTrue(loader.contains(k(m)));
    }
 
    public void testActivationOnPutMap(Method m) {
@@ -140,11 +139,11 @@ public class ActivationAndPassivationInterceptorMBeanTest extends SingleCacheMan
       Map<String, String> toAdd = new HashMap<>();
       toAdd.put(k(m), v(m, 2));
       cache.putAll(toAdd);
-      assertActivationCount(1);
+      assertActivationCount(0);
       Object obj = cache.get(k(m));
       assertNotNull(obj);
       assertEquals(v(m, 2), obj);
-      assertFalse(loader.contains(k(m)));
+      assertTrue(loader.contains(k(m)));
    }
 
    public void testPassivationOnEvict(Method m) throws Exception {
