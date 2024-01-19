@@ -268,7 +268,7 @@
       <versionx.org.jboss.spec.javax.ejb.jboss-ejb-api_3.2_spec>2.0.0.Final</versionx.org.jboss.spec.javax.ejb.jboss-ejb-api_3.2_spec>
       <versionx.org.jboss.spec.javax.jms.jboss-jms-api_2.0_spec>2.0.0.Final</versionx.org.jboss.spec.javax.jms.jboss-jms-api_2.0_spec>
       <versionx.org.jboss.spec.jboss-jakartaee-8.0>1.0.1.Final</versionx.org.jboss.spec.jboss-jakartaee-8.0>
-      <versionx.org.jboss.threads.jboss-threads>3.5.0.Final</versionx.org.jboss.threads.jboss-threads>
+      <versionx.org.jboss.threads.jboss-threads>3.5.1.Final</versionx.org.jboss.threads.jboss-threads>
       <versionx.org.jboss.weld.se.weld-se-core>5.1.0.Final</versionx.org.jboss.weld.se.weld-se-core>
       <versionx.org.jboss.weld.weld-core-impl>5.1.0.Final</versionx.org.jboss.weld.weld-core-impl>
       <versionx.org.jboss.weld.weld-api>5.0.SP3</versionx.org.jboss.weld.weld-api>
