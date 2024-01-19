@@ -1,48 +1,44 @@
 package org.infinispan.interceptors.impl;
 
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.factories.annotations.Inject;
-import org.infinispan.interceptors.DDAsyncInterceptor;
-import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.interceptors.InvocationStage;
+import org.infinispan.transaction.impl.AbstractCacheTransaction;
 
 /**
- * Handles store write operations when passivation enabled that don't entail reading the entry first
+ * Passivation writer ignores any create/modify operations and only does removals. The writes are done via eviction
+ * or shutdown only.
  *
  * @author William Burns
- * @since 9.0
+ * @since 15.0
  */
-public class PassivationWriterInterceptor extends DDAsyncInterceptor {
-   @Inject protected PersistenceManager persistenceManager;
+public class PassivationWriterInterceptor extends CacheWriterInterceptor {
 
-   private static final Log log = LogFactory.getLog(PassivationWriterInterceptor.class);
-
-   protected Log getLog() {
-      return log;
+   @Override
+   CompletionStage<Void> storeEntry(InvocationContext ctx, Object key, FlagAffectedCommand command, boolean incrementStats) {
+      return CompletableFutures.completedNull();
    }
 
    @Override
-   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      if (isStoreEnabled(command) && !ctx.isInTxScope())
-         return asyncInvokeNext(ctx, command, persistenceManager.clearAllStores(ctx.isOriginLocal() ? BOTH : PRIVATE));
-
-      return invokeNext(ctx, command);
+   protected Object handlePutMapCommandReturn(InvocationContext rCtx, PutMapCommand putMapCommand, Object rv) {
+      return rv;
    }
 
-   protected boolean isStoreEnabled(FlagAffectedCommand command) {
-      if (command.hasAnyFlag(FlagBitSets.SKIP_CACHE_STORE)) {
-         if (log.isTraceEnabled()) {
-            log.trace("Skipping cache store since the call contain a skip cache store flag");
-         }
-         return false;
-      }
-      return true;
+   @Override
+   protected InvocationStage store(TxInvocationContext<AbstractCacheTransaction> ctx) throws Throwable {
+      CompletionStage<Long> batchStage = persistenceManager.performBatch(ctx, ((writeCommand, k, v) ->
+         isProperWriter(ctx, writeCommand, k) && v.isRemoved()));
+      return asyncValue(batchStage);
+   }
+
+   @Override
+   boolean shouldReplicateRemove(InvocationContext ctx, RemoveCommand removeCommand) {
+      return removeCommand.isSuccessful();
    }
 }

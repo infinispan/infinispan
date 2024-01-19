@@ -175,10 +175,14 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       return xaTx;
    }
 
+   boolean shouldReplicateRemove(InvocationContext ctx, RemoveCommand removeCommand) {
+      return removeCommand.shouldReplicate(ctx, true);
+   }
+
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return invokeNextThenApply(ctx, command, (rCtx, removeCommand, rv) -> {
-         if (!isStoreEnabled(removeCommand) || rCtx.isInTxScope() || !removeCommand.shouldReplicate(ctx, true) ||
+         if (!isStoreEnabled(removeCommand) || rCtx.isInTxScope() || !shouldReplicateRemove(ctx, command) ||
                !isProperWriter(rCtx, removeCommand, removeCommand.getKey())) {
             return rv;
          }
@@ -409,8 +413,8 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       });
    }
 
-   protected final InvocationStage store(TxInvocationContext<AbstractCacheTransaction> ctx) throws Throwable {
-      CompletionStage<Long> batchStage = persistenceManager.performBatch(ctx, ((writeCommand, o) -> isProperWriter(ctx, writeCommand, o)));
+   protected InvocationStage store(TxInvocationContext<AbstractCacheTransaction> ctx) throws Throwable {
+      CompletionStage<Long> batchStage = persistenceManager.performBatch(ctx, ((writeCommand, k, v) -> isProperWriter(ctx, writeCommand, k)));
       if (getStatisticsEnabled()) {
          batchStage.thenAccept(cacheStores::addAndGet);
       }

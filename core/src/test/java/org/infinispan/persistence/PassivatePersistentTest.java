@@ -2,6 +2,9 @@ package org.infinispan.persistence;
 
 import javax.transaction.TransactionManager;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
@@ -47,20 +50,22 @@ public class PassivatePersistentTest extends AbstractInfinispanTest {
 
    public void testPersistence() throws PersistenceException {
       cache.put("k", "v");
-      assert "v".equals(cache.get("k"));
+      assertEquals("v", cache.get("k"));
       cache.evict("k");
-      assert store.contains("k");
+      assertTrue(store.contains("k"));
 
-      assert "v".equals(cache.get("k"));
-      eventually(() -> !store.contains("k"));
+      assertEquals("v", cache.get("k"));
+
+      cache.put("k", "v2");
+
+      assertEquals("v", store.loadEntry("k").getValue());
 
       cache.stop();
       cache.start();
       // The old store's marshaller is not working any more
       store = TestingUtil.getFirstStore(cache);
 
-      assert store.contains("k");
-      assert "v".equals(cache.get("k"));
-      eventually(() -> !store.contains("k"));
+      assertEquals("v2", store.loadEntry("k").getValue());
+      assertEquals("v2", cache.get("k"));
    }
 }

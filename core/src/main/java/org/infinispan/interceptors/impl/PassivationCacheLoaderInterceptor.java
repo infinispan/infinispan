@@ -7,7 +7,6 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.eviction.impl.ActivationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.DataOperationOrderer;
@@ -19,8 +18,11 @@ public class PassivationCacheLoaderInterceptor<K, V> extends CacheLoaderIntercep
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    @Inject DataOperationOrderer orderer;
-   @Inject ActivationManager activationManager;
 
+   // Normally the data container/store is updated in the order of updating the store and then the data container.
+   // In doing so loading from the store and saving into the container is usually safe.
+   // However, passivation with a concurrent remove can cause an issue with a read where the result is the
+   // read value from the loader can resurrect the value into memory, thus we have to order the read to properly handle this case
    @Override
    public CompletionStage<InternalCacheEntry<K, V>> loadAndStoreInDataContainer(InvocationContext ctx, Object key,
                                                                                 int segment, FlagAffectedCommand cmd) {
@@ -29,41 +31,11 @@ public class PassivationCacheLoaderInterceptor<K, V> extends CacheLoaderIntercep
 
       CompletionStage<InternalCacheEntry<K, V>> retrievalStage;
       if (delayStage != null && !CompletionStages.isCompletedSuccessfully(delayStage)) {
+         log.tracef("Found concurrent operation on key %s when attempting to load from store, waiting for its completion", key);
          retrievalStage = delayStage.thenCompose(ignore -> super.loadAndStoreInDataContainer(ctx, key, segment, cmd));
       } else {
          retrievalStage = super.loadAndStoreInDataContainer(ctx, key, segment, cmd);
       }
-      if (CompletionStages.isCompletedSuccessfully(retrievalStage)) {
-         InternalCacheEntry<K, V> ice = CompletionStages.join(retrievalStage);
-         activateAfterLoad(key, segment, orderer, activationManager, future, ice, null);
-         return retrievalStage;
-      } else {
-         return retrievalStage.whenComplete((value, t) -> {
-            activateAfterLoad(key, segment, orderer, activationManager, future, value, t);
-         });
-      }
-   }
-
-   static <K, V> void activateAfterLoad(Object key, int segment, DataOperationOrderer orderer, ActivationManager activationManager, CompletableFuture<Operation> future, InternalCacheEntry<K, V> value, Throwable t) {
-      if (value != null) {
-         if (log.isTraceEnabled()) {
-            log.tracef("Activating key: %s - not waiting for response", value.getKey());
-         }
-         // Note we don't wait on this to be removed, which allows the load to continue ahead.
-         // However, we can't release the orderer acquisition until the remove is complete
-         CompletionStage<Void> activationStage = activationManager.activateAsync(value.getKey(), segment);
-         if (!CompletionStages.isCompletedSuccessfully(activationStage)) {
-            activationStage.whenComplete((ignore, throwable) -> {
-               if (throwable != null) {
-                  log.warnf("Activation of key %s failed for some reason", t);
-               }
-               orderer.completeOperation(key, future, Operation.READ);
-            });
-         } else {
-            orderer.completeOperation(key, future, Operation.READ);
-         }
-      } else {
-         orderer.completeOperation(key, future, Operation.READ);
-      }
+      return retrievalStage.whenComplete((v, t) -> orderer.completeOperation(key, future, Operation.READ));
    }
 }

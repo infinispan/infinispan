@@ -305,6 +305,7 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
       ConcurrentMap<Integer, Compactor.Stats> stats;
       // Insert until compactor has filled a file - which we can force compaction on below
       while ((stats = compactor.getFileStats()).isEmpty()) {
+         cache(0, cacheName).remove("key-" + size);
          cache(0, cacheName).put("key-" + size, "value-" + size);
          size++;
       }
