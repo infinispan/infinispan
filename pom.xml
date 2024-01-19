@@ -264,7 +264,7 @@
       <versionx.com.ibm.db2>11.5.6.0</versionx.com.ibm.db2>
       <versionx.com.microsoft.azure.azure-storage>8.6.5</versionx.com.microsoft.azure.azure-storage>
       <versionx.com.microsoft.sqlserver>9.4.0.jre11</versionx.com.microsoft.sqlserver>
-      <versionx.com.mysqldatabase.mysql>8.0.32</versionx.com.mysqldatabase.mysql>
+      <versionx.com.mysqldatabase.mysql>8.0.30</versionx.com.mysqldatabase.mysql>
       <versionx.com.postgresqldatabase.postgresql>42.4.3</versionx.com.postgresqldatabase.postgresql>
       <versionx.com.oracle.ojdbc.ojdbc8>19.3.0.0</versionx.com.oracle.ojdbc.ojdbc8>
       <versionx.com.squareup.okhttp3.ohhttp>${version.okhttp}</versionx.com.squareup.okhttp3.ohhttp>
@@ -280,7 +280,7 @@
       <versionx.javax.cache.cache-tests>${version.javax.cache}</versionx.javax.cache.cache-tests>
       <versionx.javax.cache.cdi-weld-annotations-test-harness>${version.javax.cache}</versionx.javax.cache.cdi-weld-annotations-test-harness>
       <versionx.javax.inject.javax.inject>1</versionx.javax.inject.javax.inject>
-      <versionx.mysql.mysql-connector-java>8.0.28</versionx.mysql.mysql-connector-java>
+      <versionx.mysql.mysql-connector-java>8.0.30</versionx.mysql.mysql-connector-java>
       <versionx.net.spy.spymemcached>2.12.1</versionx.net.spy.spymemcached>
       <versionx.org.antlr.antlr-runtime>3.5.2</versionx.org.antlr.antlr-runtime>
       <versionx.org.apache.avro.avro>1.9.1</versionx.org.apache.avro.avro>
