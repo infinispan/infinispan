@@ -193,11 +193,20 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          // After that, the new node can send another join request, that should return with a new topology and start rebalance.
          if (entry.getKey().isEmpty()) {
             LocalCacheStatus lcs = runningCaches.get(cacheName);
-            return lcs.getStableTopologyCompletion()
-                  .thenCompose(ignore -> {
-                     lcs.setCurrentTopology(null);
-                     return join(cacheName, lcs);
-                  });
+            // We mark as waiting for the recovery, ignoring topology updates.
+            // We return it again after sending the join request.
+            lcs.setWaitingRecovery(true);
+            CompletionStage<CacheTopology> joining = lcs.getStableTopologyCompletion().thenCompose(ignore -> join(cacheName, lcs));
+            return CompletionStages.handleAndCompose(joining, (res, t) -> {
+
+               // We mark either way after finishing the join request.
+               // During this time, not topology updates are handled, only after formally joining.
+               // There is an asymmetry in this. Topology updates are not handled, although we handle the STABLE topology requests.
+               lcs.setWaitingRecovery(false);
+               return t != null
+                     ? CompletableFuture.failedFuture(t)
+                     : CompletableFuture.completedFuture(res);
+            });
          }
 
          return CompletableFuture.completedFuture(entry.getValue());
@@ -277,7 +286,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                       }
 
                       LocalCacheStatus lcs = runningCaches.get(cacheName);
-                      if (initialStatus.getStableTopology() == null && !transport.isCoordinator()) {
+                      if (lcs.needRecovery() && initialStatus.getStableTopology() == null && !transport.isCoordinator()) {
                          CONTAINER.recoverFromStateMissingMembers(cacheName, initialStatus.joinedMembers(), lcs.getStableMembersSize());
                       }
 
@@ -384,6 +393,11 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          return CompletableFutures.completedNull();
       }
 
+      if (cacheStatus.isWaitingRecovery()) {
+         log.tracef("Ignoring consistent hash update %s for cache %s since it is waiting for recovery to join");
+         return CompletableFutures.completedNull();
+      }
+
       return withView(viewId, cacheStatus.getJoinInfo().getTimeout(), MILLISECONDS)
             .thenCompose(ignored -> orderOnCache(cacheName, () -> doHandleTopologyUpdate(cacheName, cacheTopology, availabilityMode, viewId, sender,
                                           cacheStatus)))
@@ -414,8 +428,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          registerPersistentUUID(cacheTopology);
          existingTopology = cacheStatus.getCurrentTopology();
          if (existingTopology != null && cacheTopology.getTopologyId() <= existingTopology.getTopologyId()) {
-            log.debugf("Ignoring late consistent hash update for cache %s, current topology is %s: %s",
-                       cacheName, existingTopology.getTopologyId(), cacheTopology);
+            log.debugf("Ignoring late consistent hash update for cache %s, current topology is %s received %s",
+                       cacheName, existingTopology, cacheTopology);
             return CompletableFutures.completedFalse();
          }
 
@@ -906,6 +920,7 @@ class LocalCacheStatus {
    private volatile List<Address> knownMembers;
    private volatile CacheTopology currentTopology;
    private volatile CacheTopology stableTopology;
+   private volatile boolean waitingRecovery;
 
    LocalCacheStatus(CacheJoinInfo joinInfo,
                     CacheTopologyHandler handler,
@@ -973,5 +988,13 @@ class LocalCacheStatus {
 
    int getStableMembersSize() {
       return stableMembersSize;
+   }
+
+   void setWaitingRecovery(boolean value) {
+      waitingRecovery = value;
+   }
+
+   boolean isWaitingRecovery() {
+      return waitingRecovery;
    }
 }
