@@ -189,7 +189,7 @@
       <version.ow2.asm>9.5</version.ow2.asm>
       <version.picketbox>5.0.3.Final</version.picketbox>
       <version.picketlink>2.5.5.SP12</version.picketlink>
-      <version.protostream>4.6.5.Final</version.protostream>
+      <version.protostream>5.0.0.Dev01</version.protostream>
       <version.reactivestreams>1.0.4</version.reactivestreams>
       <version.rocksdb>7.1.2</version.rocksdb>
       <version.rxjava>3.1.8</version.rxjava>

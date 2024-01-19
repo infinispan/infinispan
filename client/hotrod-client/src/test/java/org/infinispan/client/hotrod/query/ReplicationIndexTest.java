@@ -1,11 +1,9 @@
 package org.infinispan.client.hotrod.query;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.registerSCI;
 import static org.infinispan.configuration.cache.CacheMode.REPL_SYNC;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
-import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX;
-import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -14,16 +12,15 @@ import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.client.hotrod.test.FixedServerBalancing;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.GeneratedSchema;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.testng.annotations.Test;
 
@@ -50,14 +47,7 @@ public class ReplicationIndexTest extends MultiHotRodServersTest {
       RemoteCacheManager remoteCacheManager = createClient(index - 1);
       clients.add(remoteCacheManager);
 
-      // Create client and server Serialization Contexts
-      SerializationContext serCtx = MarshallerUtil.getSerializationContext(remoteCacheManager);
-      ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
-      String protoFile = protoSchemaBuilder.fileName(PROTO_FILE).addClass(Entity.class).build(serCtx);
-
-      RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put(PROTO_FILE, protoFile);
-      assertFalse(metadataCache.containsKey(ERRORS_KEY_SUFFIX));
+      registerSCI(remoteCacheManager, ReplicationIndexTestSCI.INSTANCE);
 
       // Add the test caches
       org.infinispan.configuration.cache.ConfigurationBuilder builder = getDefaultClusteredCacheConfig(REPL_SYNC, isTransactional());
@@ -147,5 +137,15 @@ public class ReplicationIndexTest extends MultiHotRodServersTest {
       assertEquals(ENTRIES, remoteCache.size());
       assertEquals(ENTRIES, queryCount("FROM Entity", remoteCache));
       assertEquals(1, queryCount("FROM Entity where name:'name1'", remoteCache));
+   }
+
+   @AutoProtoSchemaBuilder(
+         includeClasses = {Entity.class},
+         schemaFileName = "test.client.ReplicationIndexTest.proto",
+         schemaFilePath = "proto/generated",
+         service = false
+   )
+   public interface ReplicationIndexTestSCI extends GeneratedSchema {
+      GeneratedSchema INSTANCE = new ReplicationIndexTestSCIImpl();
    }
 }

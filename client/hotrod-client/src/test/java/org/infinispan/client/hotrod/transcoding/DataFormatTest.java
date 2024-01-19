@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.transcoding;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.checkSchemaErrors;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM;
@@ -31,7 +32,6 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.event.EventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener.RawStaticFilteredEventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLogListener;
-import org.infinispan.client.hotrod.query.RemoteQueryTestUtils;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -307,7 +307,7 @@ public class DataFormatTest extends SingleHotRodServerTest {
    public void testJsonFromDefaultCache()  {
       RemoteCache<String, String> schemaCache = remoteCacheManager.getCache(PROTOBUF_METADATA_CACHE_NAME);
       schemaCache.put("schema.proto", "message M { optional string json_key = 1; }");
-      RemoteQueryTestUtils.checkSchemaErrors(schemaCache);
+      checkSchemaErrors(schemaCache);
 
       DataFormat jsonValues = DataFormat.builder()
             .valueType(APPLICATION_JSON)
