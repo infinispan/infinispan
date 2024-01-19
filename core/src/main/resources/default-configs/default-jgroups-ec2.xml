@@ -12,7 +12,8 @@
         thread_naming_pattern="pl"
         send_buf_size="640k"
         sock_conn_timeout="300"
-        bundler_type="transfer-queue"
+        linger="${jgroups.tcp.linger:-1}"
+        bundler_type="${jgroups.bundler.type:transfer-queue}"
         bundler.max_size="${jgroups.bundler.max_size:64000}"
 
         thread_pool.min_threads="${jgroups.thread_pool.min_threads:0}"
