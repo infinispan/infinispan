@@ -923,8 +923,12 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       if (protocol == HTTP_11) {
          Exceptions.expectCompletionException(IOException.class, "HTTP/1.1 header parser received no bytes", client.cache("default").keys());
       } else {
-         // OkHttp wraps the exception in a StreamResetException.
-         Exceptions.expectCompletionException(IOException.class, "Received RST_STREAM: Stream cancelled", client.cache("default").keys());
+         try (RestResponse res = join(client.cache("default").keys())) {
+            Assertions.assertThatThrownBy(res::body)
+                  .rootCause()
+                  .isInstanceOf(IOException.class)
+                  .hasMessage("Received RST_STREAM: Stream cancelled");
+         }
       }
       TestingUtil.replaceComponent(c, ClusterPublisherManager.class, cpm, true);
    }
@@ -949,7 +953,12 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       if (protocol == HTTP_11) {
          Exceptions.expectCompletionException(IOException.class, "HTTP/1.1 header parser received no bytes", client.cache("default").entries());
       } else {
-         Exceptions.expectCompletionException(IOException.class, "Received RST_STREAM: Stream cancelled", client.cache("default").entries());
+         try (RestResponse res = join(client.cache("default").entries())) {
+            Assertions.assertThatThrownBy(res::body)
+                  .rootCause()
+                  .isInstanceOf(IOException.class)
+                  .hasMessage("Received RST_STREAM: Stream cancelled");
+         }
       }
       TestingUtil.replaceComponent(c, ClusterPublisherManager.class, cpm, true);
    }
