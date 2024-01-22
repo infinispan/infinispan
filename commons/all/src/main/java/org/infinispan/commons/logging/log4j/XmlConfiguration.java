@@ -1,9 +1,7 @@
 package org.infinispan.commons.logging.log4j;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -86,8 +84,7 @@ public class XmlConfiguration extends AbstractConfiguration implements Reconfigu
 
    @Override
    public void setup() {
-      final File configFile = getConfigurationSource().getFile();
-      try (InputStream configStream = Files.newInputStream(configFile.toPath())) {
+      try (InputStream configStream = getConfigurationSource().getInputStream()) {
          ConfigurationReader reader = ConfigurationReader.from(configStream).withProperties(System.getProperties()).withReplacer((string, props) -> getStrSubstitutor().replace(string)).withType(MediaType.APPLICATION_XML).build();
          reader.require(ConfigurationReader.ElementType.START_DOCUMENT);
          reader.nextElement();
