@@ -6,6 +6,7 @@ import java.util.Set;
 import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.ql.PropertyPath;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
+import org.infinispan.objectfilter.impl.syntax.parser.projection.ScorePropertyPath;
 
 /**
  * @param <TypeMetadata> is either {@link java.lang.Class} or {@link org.infinispan.protostream.descriptors.Descriptor}
@@ -131,6 +132,14 @@ public final class IckleParsingResult<TypeMetadata> {
     */
    public TypeMetadata getTargetEntityMetadata() {
       return targetEntityMetadata;
+   }
+
+   public boolean hasScoreProjection() {
+      if (projectedPaths == null) {
+         return false;
+      }
+
+      return Arrays.stream(projectedPaths).sequential().anyMatch(propertyPath -> ScorePropertyPath.SCORE_PROPERTY_NAME.equals(propertyPath.asStringPath()));
    }
 
    /**

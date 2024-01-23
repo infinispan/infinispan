@@ -65,7 +65,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
    /**
     * Cache name to store the global transaction table. It contains the state of the client transactions.
     */
-   private static final String GLOBAL_TX_TABLE_CACHE_NAME = "org.infinispan.CLIENT_SERVER_TX_TABLE";
+   public static final String GLOBAL_TX_TABLE_CACHE_NAME = "org.infinispan.CLIENT_SERVER_TX_TABLE";
 
    @GuardedBy("this")
    private boolean registered = false;
@@ -74,7 +74,7 @@ public class LifecycleCallbacks implements ModuleLifecycle {
 
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalCfg) {
-      this.globalComponentRegistry = gcr;
+      globalComponentRegistry = gcr;
       this.globalCfg = globalCfg;
       Map<Integer, AdvancedExternalizer<?>> externalizers = globalCfg.serialization().advancedExternalizers();
       externalizers.put(SINGLE_HOMED_SERVER_ADDRESS, new SingleHomedServerAddress.Externalizer());

@@ -1,9 +1,9 @@
 package org.infinispan.client.hotrod.query;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.registerSCI;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 
 import java.util.Objects;
 
@@ -11,7 +11,6 @@ import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -19,10 +18,9 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.GeneratedSchema;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.testng.annotations.Test;
 
 /**
@@ -113,18 +111,7 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
 
       RemoteCacheManager remoteCacheManager = client(0);
 
-      //initialize client-side serialization context
-      SerializationContext serializationContext = MarshallerUtil.getSerializationContext(remoteCacheManager);
-      ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
-      String protoFile = protoSchemaBuilder.fileName("news.proto")
-            .addClass(News.class)
-            .addClass(NewsKey.class)
-            .build(serializationContext);
-
-      //initialize server-side serialization context
-      RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put("news.proto", protoFile);
-      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+      registerSCI(remoteCacheManager, MultiServerStoreQueryTestSCI.INSTANCE);
 
       for (int i = 0; i < cacheManagers.size(); i++) {
          EmbeddedCacheManager cm = cacheManagers.get(i);
@@ -175,7 +162,18 @@ public class MultiServerStoreQueryTest extends MultiHotRodServersTest {
       assertEquals(news1, userCache.get(newsKey1));
       assertEquals(news2, userCache.get(newsKey2));
    }
+
+   @AutoProtoSchemaBuilder(
+         includeClasses = {News.class, NewsKey.class},
+         schemaFileName = "test.client.MultiServerStoreQueryTest.proto",
+         schemaFilePath = "proto/generated",
+         service = false
+   )
+   public interface MultiServerStoreQueryTestSCI extends GeneratedSchema {
+      GeneratedSchema INSTANCE = new MultiServerStoreQueryTestSCIImpl();
+   }
 }
+
 
 class NewsKey {
    private String article;

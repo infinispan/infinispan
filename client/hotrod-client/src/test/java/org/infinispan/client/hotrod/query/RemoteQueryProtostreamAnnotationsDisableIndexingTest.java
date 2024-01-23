@@ -1,8 +1,8 @@
 package org.infinispan.client.hotrod.query;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.registerSCI;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import java.util.List;
@@ -10,17 +10,15 @@ import java.util.List;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
-import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.GeneratedSchema;
+import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -100,19 +98,8 @@ public class RemoteQueryProtostreamAnnotationsDisableIndexingTest extends Single
    }
 
    @BeforeClass
-   protected void registerProtobufSchema() throws Exception {
-      //initialize client-side serialization context
-      SerializationContext serializationContext = MarshallerUtil.getSerializationContext(remoteCacheManager);
-      ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
-      String protoSchemaFile = protoSchemaBuilder.fileName("memo.proto")
-            .addClass(Memo.class)
-            .addClass(Author.class)
-            .build(serializationContext);
-
-      //initialize server-side serialization context
-      RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put("memo.proto", protoSchemaFile);
-      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+   protected void registerProtobufSchema() {
+      registerSCI(remoteCacheManager, RemoteQueryProtostreamAnnotationsDisableIndexingTestSCI.INSTANCE);
    }
 
    public void testAttributeQuery() {
@@ -171,5 +158,15 @@ public class RemoteQueryProtostreamAnnotationsDisableIndexingTest extends Single
       assertEquals(2, memo.id);
       assertEquals("Sed ut perspiciatis unde omnis iste natus error", memo.text);
       assertEquals(2, memo.author.id);
+   }
+
+   @AutoProtoSchemaBuilder(
+         includeClasses = {Author.class, Memo.class},
+         schemaFileName = "test.client.RemoteQueryProtostreamAnnotationsDisableIndexingTest.proto",
+         schemaFilePath = "proto/generated",
+         service = false
+   )
+   public interface RemoteQueryProtostreamAnnotationsDisableIndexingTestSCI extends GeneratedSchema {
+      GeneratedSchema INSTANCE = new RemoteQueryProtostreamAnnotationsDisableIndexingTestSCIImpl();
    }
 }

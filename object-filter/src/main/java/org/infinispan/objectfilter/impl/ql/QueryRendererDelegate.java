@@ -125,6 +125,8 @@ public interface QueryRendererDelegate<TypeDescriptor> {
 
    void projectVersion();
 
+   void projectScore();
+
    /**
     * @param collateName optional collation name
     */

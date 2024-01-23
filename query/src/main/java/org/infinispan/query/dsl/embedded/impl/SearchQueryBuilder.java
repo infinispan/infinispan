@@ -12,7 +12,6 @@ import org.apache.lucene.search.Sort;
 import org.hibernate.search.backend.lucene.LuceneExtension;
 import org.hibernate.search.backend.lucene.search.query.LuceneSearchQuery;
 import org.hibernate.search.backend.lucene.search.query.dsl.LuceneSearchQueryOptionsStep;
-import org.hibernate.search.engine.backend.common.DocumentReference;
 import org.hibernate.search.engine.common.EntityReference;
 import org.hibernate.search.engine.search.aggregation.AggregationKey;
 import org.hibernate.search.engine.search.predicate.SearchPredicate;
@@ -68,6 +67,15 @@ public final class SearchQueryBuilder {
       return build(scope.projection().id().toProjection());
    }
 
+   public LuceneSearchQuery<List<Object>> idAndScore() {
+      SearchProjectionFactory<EntityReference, ?> projectionFactory = scope.projection();
+      SearchProjection<?>[] searchProjections = new SearchProjection<?>[]{
+            projectionFactory.id().toProjection(),
+            projectionFactory.score().toProjection()
+      };
+      return build((SearchProjection<List<Object>>) SearchProjectionInfo.composite(projectionFactory, searchProjections).getProjection());
+   }
+
    public LuceneSearchQuery<List<Object>> keyAndEntity() {
       SearchProjectionFactory<EntityReference, ?> projectionFactory = scope.projection();
       SearchProjection<?>[] searchProjections = new SearchProjection<?>[]{
@@ -77,8 +85,14 @@ public final class SearchQueryBuilder {
       return build((SearchProjection<List<Object>>) SearchProjectionInfo.composite(projectionFactory, searchProjections).getProjection());
    }
 
-   public LuceneSearchQuery<DocumentReference> documentReference() {
-      return build(scope.projection().documentReference().toProjection());
+   public LuceneSearchQuery<List<Object>> keyEntityAndScore() {
+      SearchProjectionFactory<EntityReference, ?> projectionFactory = scope.projection();
+      SearchProjection<?>[] searchProjections = new SearchProjection<?>[]{
+            projectionFactory.entityReference().toProjection(),
+            projectionFactory.entity().toProjection(),
+            projectionFactory.score().toProjection()
+      };
+      return build((SearchProjection<List<Object>>) SearchProjectionInfo.composite(projectionFactory, searchProjections).getProjection());
    }
 
    public void routeOnSegments(BitSet segments) {

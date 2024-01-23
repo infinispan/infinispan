@@ -50,6 +50,13 @@ public class SetCompletedTransactionFunction extends TxFunction {
       }
    }
 
+   @Override
+   public String toString() {
+      return "SetCompletedTransactionFunction{" +
+            "committed=" + committed +
+            '}';
+   }
+
    private static class Externalizer implements AdvancedExternalizer<SetCompletedTransactionFunction> {
 
       @Override

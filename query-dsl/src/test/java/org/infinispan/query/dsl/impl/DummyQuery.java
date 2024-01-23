@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.api.query.EntityEntry;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryResult;
@@ -53,8 +54,8 @@ class DummyQuery<T> implements Query<T> {
    }
 
    @Override
-   public <K> CloseableIterator<Map.Entry<K, T>> entryIterator() {
-      return new CloseableIterator<Map.Entry<K, T>>() {
+   public <K> CloseableIterator<EntityEntry<K, T>> entryIterator() {
+      return new CloseableIterator<EntityEntry<K, T>>() {
 
          @Override
          public void close() {
@@ -66,7 +67,7 @@ class DummyQuery<T> implements Query<T> {
          }
 
          @Override
-         public Map.Entry<K, T> next() {
+         public EntityEntry<K, T> next() {
             throw new NoSuchElementException();
          }
       };
@@ -79,6 +80,11 @@ class DummyQuery<T> implements Query<T> {
 
    @Override
    public Query<T> local(boolean local) {
+      return this;
+   }
+
+   @Override
+   public Query<T> scoreRequired(boolean scoreRequired) {
       return this;
    }
 

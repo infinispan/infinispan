@@ -133,7 +133,7 @@
       <version.console>15.0.0.Final</version.console>
       <version.fabric8.kubernetes-client>6.9.2</version.fabric8.kubernetes-client>
       <version.glassfish.jaxb>2.3.1</version.glassfish.jaxb>
-      <version.graalvm>23.1.1</version.graalvm>
+      <version.graalvm>23.1.2</version.graalvm>
       <version.groovy>2.4.8</version.groovy>
       <version.hamcrest>2.2</version.hamcrest>
       <version.hibernate.core>6.3.1.Final</version.hibernate.core>
@@ -143,7 +143,7 @@
       <version.infinispan.doclets>1.4.0.Final</version.infinispan.doclets>
       <version.infinispan.maven-plugins>1.0.4.Final</version.infinispan.maven-plugins>
       <version.insights>2.0.1</version.insights>
-      <version.io.agroal>2.1</version.io.agroal>
+      <version.io.agroal>2.2</version.io.agroal>
       <version.io.lettuce>6.3.1.RELEASE</version.io.lettuce>
       <version.vertx>4.4.4</version.vertx>
       <version.io.mashona>1.0.0</version.io.mashona>
@@ -159,7 +159,7 @@
       <version.jboss.logging>3.5.0.Final</version.jboss.logging>
       <version.jboss.marshalling>2.1.1.Final</version.jboss.marshalling>
       <version.jboss.naming>5.0.6.CR1</version.jboss.naming>
-      <version.jboss.narayana>6.0.1.Final</version.jboss.narayana>
+      <version.jboss.narayana>7.0.0.Final</version.jboss.narayana>
       <version.jboss.security>3.0.6.Final</version.jboss.security>
       <version.jboss.shrinkwrap>1.2.6</version.jboss.shrinkwrap>
       <version.jcip-annotations>1.0</version.jcip-annotations>
@@ -171,15 +171,15 @@
       <version.junit5>5.10.1</version.junit5>
       <version.log4j>2.22.1</version.log4j>
       <version.lucene>9.8.0</version.lucene>
-      <version.metainf-services>1.8</version.metainf-services>
+      <version.metainf-services>1.11</version.metainf-services>
       <version.micrometer>1.12.2</version.micrometer>
       <version.mockito>5.8.0</version.mockito>
       <version.mockito_dep.bytebuddy>1.14.4</version.mockito_dep.bytebuddy>
       <version.mockito_dep.objenesis>3.3</version.mockito_dep.objenesis>
       <version.nashorn>15.4</version.nashorn>
-      <version.netty>4.1.104.Final</version.netty>
+      <version.netty>4.1.106.Final</version.netty>
       <version.netty.incubator.iouring>0.0.24.Final</version.netty.incubator.iouring>
-      <version.openjdk.jmh>1.23</version.openjdk.jmh>
+      <version.openjdk.jmh>1.37</version.openjdk.jmh>
       <version.org.wildfly.elytron>2.2.3.Final</version.org.wildfly.elytron>
       <version.org.wildfly.openssl>2.2.5.Final</version.org.wildfly.openssl>
       <version.org.wildfly.openssl.natives>2.2.2.SP01</version.org.wildfly.openssl.natives>
@@ -189,7 +189,7 @@
       <version.ow2.asm>9.5</version.ow2.asm>
       <version.picketbox>5.0.3.Final</version.picketbox>
       <version.picketlink>2.5.5.SP12</version.picketlink>
-      <version.protostream>4.6.5.Final</version.protostream>
+      <version.protostream>5.0.0.Dev01</version.protostream>
       <version.reactivestreams>1.0.4</version.reactivestreams>
       <version.rocksdb>7.1.2</version.rocksdb>
       <version.rxjava>3.1.8</version.rxjava>
@@ -211,11 +211,11 @@
 
       <version.smallrye-mutiny>2.2.0</version.smallrye-mutiny>
       <!-- Spring 6, Spring Boot 3 versions -->
-      <version.spring>6.1.2</version.spring>
+      <version.spring>6.1.3</version.spring>
       <version.spring.boot>3.2.1</version.spring.boot>
       <version.spring.session>3.2.1</version.spring.session>
 
-      <version.kafka.client>3.5.0</version.kafka.client>
+      <version.kafka.client>3.6.1</version.kafka.client>
       <version.xom>1.3.7</version.xom>
       <version.xstream>1.4.20</version.xstream>
 
@@ -225,11 +225,11 @@
       <version.maven>3.9.6</version.maven>
       <version.maven.antlr3>3.5.2</version.maven.antlr3>
       <version.maven.antrun>3.1.0</version.maven.antrun>
-      <version.maven.buildhelper>3.4.0</version.maven.buildhelper>
+      <version.maven.buildhelper>3.5.0</version.maven.buildhelper>
       <version.maven.bundle>4.2.1</version.maven.bundle>
       <version.maven.gpg>3.1.0</version.maven.gpg>
       <version.maven.clean>3.3.1</version.maven.clean>
-      <version.maven-compiler-plugin>3.11.0</version.maven-compiler-plugin>
+      <version.maven-compiler-plugin>3.12.1</version.maven-compiler-plugin>
       <version.maven.enforcer>3.3.0</version.maven.enforcer>
       <version.maven.exec>3.1.1</version.maven.exec>
       <version.maven.install>3.1.1</version.maven.install>
@@ -243,7 +243,7 @@
       <version.maven.resources>3.3.1</version.maven.resources>
       <version.maven.shade>3.5.1</version.maven.shade>
       <version.maven.source>3.3.0</version.maven.source>
-      <version.maven.surefire>3.2.2</version.maven.surefire>
+      <version.maven.surefire>3.2.5</version.maven.surefire>
       <version.sonatype.nexus-staging-plugin>1.6.13</version.sonatype.nexus-staging-plugin>
       <version.eclipse.transformer>0.5.0</version.eclipse.transformer>
       <!-- overwrite version in jboss-parent -->

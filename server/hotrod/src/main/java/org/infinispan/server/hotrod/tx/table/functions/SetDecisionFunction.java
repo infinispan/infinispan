@@ -59,8 +59,8 @@ public class SetDecisionFunction extends TxFunction {
          case ACTIVE:
          case PREPARED:
          case PREPARING:
-            view.set(state.setStatus(MARK_ROLLBACK, true, timeService));
          case MARK_ROLLBACK:
+            view.set(state.setStatus(MARK_ROLLBACK, true, timeService));
             return OK.value;
          default:
             //any other status, we return it to the caller to decide what to do.
@@ -75,13 +75,20 @@ public class SetDecisionFunction extends TxFunction {
       switch (prevState) {
          case PREPARED:  //two-phase-commit
          case PREPARING: //one-phase-commit
-            view.set(state.setStatus(MARK_COMMIT, false, timeService));
          case MARK_COMMIT:
+            view.set(state.setStatus(MARK_COMMIT, false, timeService));
             return OK.value;
          default:
             //any other status, we return it to the caller to decide what to do.
             return prevState.value;
       }
+   }
+
+   @Override
+   public String toString() {
+      return "SetDecisionFunction{" +
+            "commit=" + commit +
+            '}';
    }
 
    private static class Externalizer implements AdvancedExternalizer<SetDecisionFunction> {

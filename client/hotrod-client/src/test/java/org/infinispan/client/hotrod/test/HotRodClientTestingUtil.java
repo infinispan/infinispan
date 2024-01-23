@@ -3,12 +3,15 @@ package org.infinispan.client.hotrod.test;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.DEFAULT_EXECUTOR_FACTORY_THREADNAME_PREFIX;
 import static org.infinispan.commons.test.CommonsTestingUtil.loadFileAsString;
 import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
+import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
 import static org.infinispan.test.TestingUtil.extractField;
+import static org.testng.AssertJUnit.fail;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
@@ -31,6 +34,7 @@ import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transaction.TransactionTable;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
@@ -40,6 +44,9 @@ import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.protostream.GeneratedSchema;
+import org.infinispan.protostream.SerializationContext;
+import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.server.core.test.ServerTestingUtil;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -397,6 +404,29 @@ public class HotRodClientTestingUtil {
    public static Set<Object> getListeners(RemoteCache<?, ?> cache) {
       ClientListenerNotifier notifier = extractField(cache.getRemoteCacheContainer(), "listenerNotifier");
       return notifier.getListeners(cache.getName());
+   }
+
+   public static void registerSCI(RemoteCacheManager remoteCacheManager, GeneratedSchema schema) {
+      SerializationContext serCtx = MarshallerUtil.getSerializationContext(remoteCacheManager);
+      schema.registerSchema(serCtx);
+      schema.registerMarshallers(serCtx);
+      RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(PROTOBUF_METADATA_CACHE_NAME);
+      metadataCache.put(Paths.get(schema.getProtoFileName()).getFileName().toString(), schema.getProtoFile());
+      checkSchemaErrors(metadataCache);
+   }
+
+   public static void checkSchemaErrors(BasicCache<String, String> metadataCache) {
+      if (metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX)) {
+         // The existence of this key indicates there are errors in some files
+         String files = metadataCache.get(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX);
+         for (String fname : files.split("\n")) {
+            String errorKey = fname + ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX;
+            String errorMessage = metadataCache.get(errorKey);
+            log.errorf("Found errors in Protobuf schema file: %s\n%s\n", fname, errorMessage);
+         }
+
+         fail("There are errors in the following Protobuf schema files:\n" + files);
+      }
    }
 
 }

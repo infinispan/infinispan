@@ -232,6 +232,7 @@ propertyReferenceExpression
 function
 	: setFunction
 	| versionFunction
+	| scoreFunction
 	| standardFunction
 	;
 
@@ -245,6 +246,10 @@ setFunction
 
 versionFunction
    : 	^(VERSION ALIAS_REF)
+   ;
+
+scoreFunction
+   : 	^(SCORE ALIAS_REF)
    ;
 
 standardFunction

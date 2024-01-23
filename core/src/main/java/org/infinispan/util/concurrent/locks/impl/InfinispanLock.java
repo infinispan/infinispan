@@ -109,7 +109,7 @@ public class InfinispanLock {
       lockOwners.put(owner, promise);
       lockPromise.set(promise);
       if (log.isTraceEnabled()) {
-         log.tracef("%s successfully acquired the lock.", lockPromise);
+         log.tracef("%s successfully acquired the lock.", owner);
       }
    }
 
@@ -198,7 +198,7 @@ public class InfinispanLock {
          return;
       }
 
-      final boolean released = wantToRelease.setReleased();
+      boolean released = wantToRelease.setReleased();
       if (log.isTraceEnabled()) {
          log.tracef("Release lock for %s? %s", wantToRelease, released);
       }

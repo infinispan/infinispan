@@ -2,21 +2,20 @@ package org.infinispan.server.hotrod.tx.operation;
 
 import static org.infinispan.server.hotrod.tx.operation.Util.rollbackLocalTransaction;
 
-import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
 import javax.security.auth.Subject;
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
 import jakarta.transaction.HeuristicCommitException;
 import jakarta.transaction.HeuristicMixedException;
 import jakarta.transaction.HeuristicRollbackException;
 import jakarta.transaction.RollbackException;
-import javax.transaction.xa.XAException;
-import javax.transaction.xa.XAResource;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.server.hotrod.HotRodHeader;
@@ -26,6 +25,7 @@ import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.server.hotrod.tx.table.Status;
 import org.infinispan.server.hotrod.tx.table.TxState;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -34,12 +34,15 @@ import org.infinispan.util.logging.LogFactory;
  * @author Pedro Ruivo
  * @since 9.4
  */
-public class RollbackTransactionOperation extends BaseCompleteTransactionOperation {
+public class RollbackTransactionOperation extends BaseCompleteTransactionOperation<RollbackCommand, ForwardRollbackCommand> {
 
    private static final Log log = LogFactory.getLog(RollbackTransactionOperation.class, Log.class);
 
    //TODO check if this class can implement the BiFunction interface!
    private final BiFunction<?, Throwable, Void> handler = (ignored, throwable) -> {
+      if (log.isTraceEnabled()) {
+         log.tracef("[%s] Handle response: value=%s, throwable=%s", xid, ignored, throwable);
+      }
       if (throwable != null) {
          while (throwable != null) {
             if (throwable instanceof HeuristicRollbackException || throwable instanceof RollbackException) {
@@ -85,9 +88,7 @@ public class RollbackTransactionOperation extends BaseCompleteTransactionOperati
          case COMMITTED:
             hasCommits = true; //this cache decided to commit?
             break;
-         case ERROR:
-            hasErrors = true; //we failed to update this cache
-            break;
+         case ERROR: //we failed to update this cache
          case PREPARED:
          case ACTIVE:
          case PREPARING:
@@ -131,18 +132,18 @@ public class RollbackTransactionOperation extends BaseCompleteTransactionOperati
    }
 
    @Override
-   CacheRpcCommand buildRemoteCommand(Configuration configuration, CommandsFactory commandsFactory, TxState state) {
+   RollbackCommand buildRemoteCommand(Configuration configuration, CommandsFactory commandsFactory, TxState state) {
       return commandsFactory.buildRollbackCommand(state.getGlobalTransaction());
    }
 
    @Override
-   CacheRpcCommand buildForwardCommand(ByteString cacheName, long timeout) {
+   ForwardRollbackCommand buildForwardCommand(ByteString cacheName, long timeout) {
       return new ForwardRollbackCommand(cacheName, xid, timeout);
    }
 
    @Override
-   CompletionStage<Void> asyncCompleteLocalTransaction(AdvancedCache<?, ?> cache, long timeout) {
-      return blockingManager.runBlocking(() -> {
+   void asyncCompleteLocalTransaction(AdvancedCache<?, ?> cache, long timeout, AggregateCompletionStage<Void> stageCollector) {
+      stageCollector.dependsOn(blockingManager.runBlocking(() -> {
          try {
             rollbackLocalTransaction(cache, xid, timeout);
          } catch (HeuristicMixedException e) {
@@ -151,7 +152,7 @@ public class RollbackTransactionOperation extends BaseCompleteTransactionOperati
          } catch (Throwable t) {
             hasErrors = true;
          }
-      }, this);
+      }, this));
    }
 
 }

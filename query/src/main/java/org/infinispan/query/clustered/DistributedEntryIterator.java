@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.apache.lucene.search.Sort;
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.api.query.EntityEntry;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.remoting.transport.Address;
 
@@ -13,7 +14,7 @@ import org.infinispan.remoting.transport.Address;
  * @author anistor@redhat.com
  * @since 13.0
  */
-class DistributedEntryIterator<K, V> extends DistributedIterator<Map.Entry<K, V>> {
+class DistributedEntryIterator<K, V> extends DistributedIterator<EntityEntry<K, V>> {
 
    DistributedEntryIterator(LocalQueryStatistics queryStatistics, Sort sort, int fetchSize, int resultSize,
                             int maxResults, int firstResult, Map<Address, NodeTopDocs> topDocsResponses,
@@ -22,23 +23,7 @@ class DistributedEntryIterator<K, V> extends DistributedIterator<Map.Entry<K, V>
    }
 
    @Override
-   protected Map.Entry<K, V> decorate(Object key, Object value) {
-      return new Map.Entry<K, V>() {
-
-         @Override
-         public K getKey() {
-            return (K) key;
-         }
-
-         @Override
-         public V getValue() {
-            return (V) value;
-         }
-
-         @Override
-         public V setValue(V value) {
-            throw new UnsupportedOperationException("Entry is immutable");
-         }
-      };
+   protected EntityEntry<K, V> decorate(Object key, Object value, float score) {
+      return new EntityEntry<>((K) key, (V) value, score);
    }
 }
