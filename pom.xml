@@ -2138,7 +2138,7 @@
             </plugin>
             <plugin>
                <artifactId>maven-war-plugin</artifactId>
-               <version>3.1.0</version>
+               <version>3.4.0</version>
                <configuration>
                   <attachClasses>false</attachClasses>
                </configuration>
