@@ -27,7 +27,7 @@
         <skipTests>true</skipTests>
         <defaults.file>${project.build.directory}/default-attributes.adoc</defaults.file>
         <asciidoctorj.version>2.5.2</asciidoctorj.version>
-        <asciidoctor.maven.plugin.version>2.2.1</asciidoctor.maven.plugin.version>
+        <asciidoctor.maven.plugin.version>2.2.5</asciidoctor.maven.plugin.version>
         <asciidoctorj.pdf.version>2.3.10</asciidoctorj.pdf.version>
         <jruby.version>9.2.17.0</jruby.version>
         <asciidoctorj.tabbed.code.version>0.3</asciidoctorj.tabbed.code.version>
