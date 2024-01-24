@@ -1,7 +1,10 @@
 package org.infinispan.persistence.jdbc;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,12 +25,11 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "persistence.jdbc.JdbcStoreCompatibilityTest")
 public class JdbcStoreCompatibilityTest extends AbstractPersistenceCompatibilityTest<Value> {
 
-   private static final String DB_FILE_NAME = "jdbc_db.mv.db";
    private static final Map<Version, String> data = new HashMap<>(2);
 
    static {
-      data.put(Version._10_1, "10_1_x_jdbc_data");
-      data.put(Version._11_0, "11_0_x_jdbc_data");
+      data.put(Version._10_1, "10.1.sql");
+      data.put(Version._11_0, "11.0.sql");
    }
 
    public JdbcStoreCompatibilityTest() {
@@ -38,20 +40,24 @@ public class JdbcStoreCompatibilityTest extends AbstractPersistenceCompatibility
    @Test
    public void testReadWriteFrom101() throws Exception {
       oldVersion = Version._10_1;
-
       doTestReadWrite();
    }
 
    @Test
    public void testReadWriteFrom11() throws Exception {
-      beforeStartCache();
-
+      oldVersion = Version._11_0;
       doTestReadWrite();
    }
 
-   protected void beforeStartCache() throws Exception {
-      new File(tmpDirectory).mkdirs();
-      copyFile(combinePath(data.get(oldVersion), DB_FILE_NAME), Paths.get(tmpDirectory), DB_FILE_NAME);
+   @Override
+   protected void beforeStartCache() {
+      Path path = Paths.get(System.getProperty("build.directory"), "test-classes", data.get(oldVersion));
+      // Create the DB
+      try (Connection c = DriverManager.getConnection(String.format("jdbc:h2:file:%s;DB_CLOSE_DELAY=-1;INIT=RUNSCRIPT FROM '%s'", Paths.get(System.getProperty("java.io.tmpdir"), oldVersion.toString()), path), "sa", "")) {
+         // Nothing to do
+      } catch (SQLException e) {
+         throw new RuntimeException(e);
+      }
    }
 
    @Override
@@ -73,8 +79,8 @@ public class JdbcStoreCompatibilityTest extends AbstractPersistenceCompatibility
             .segmented(false);
       jdbcB.connectionPool()
             .driverClass(org.h2.Driver.class)
-            //-1 = never closed (== thread leak reported at the end), 0 = close when all connection are closed
-            .connectionUrl(String.format("jdbc:h2:%s;DB_CLOSE_DELAY=0", combinePath(tmpDirectory, "jdbc_db")))
+            //-1 = never closed (== thread leak reported at the end), 0 = close when all connections are closed
+            .connectionUrl(String.format("jdbc:h2:file:%s;DB_CLOSE_DELAY=0", Paths.get(System.getProperty("java.io.tmpdir"), oldVersion.toString())))
             .username("sa");
    }
 }
