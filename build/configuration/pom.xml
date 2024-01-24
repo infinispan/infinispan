@@ -150,7 +150,7 @@
       <version.infinispan.maven-plugins>1.0.3.Final</version.infinispan.maven-plugins>
       <version.insights>1.0.11</version.insights>
       <version.io.agroal>1.16</version.io.agroal>
-      <version.io.lettuce>6.2.0.RELEASE</version.io.lettuce>
+      <version.io.lettuce>6.2.7.RELEASE</version.io.lettuce>
       <version.io.mashona>1.0.0</version.io.mashona>
       <version.jackson>2.15.3</version.jackson>
       <version.jackson.databind>2.15.2</version.jackson.databind>

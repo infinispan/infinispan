@@ -59,14 +59,14 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
    protected RedisClient client;
    protected RespServer server;
    protected StatefulRedisConnection<String, String> redisConnection;
-   protected static final int timeout = 60;
+   protected static final int timeout = 30_000;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() {
       cacheManager = createTestCacheManager();
       RespServerConfiguration serverConfiguration = serverConfiguration().build();
       server = startServer(cacheManager, serverConfiguration);
-      client = createClient(30000, server.getPort());
+      client = createRedisClient(server.getPort());
       redisConnection = client.connect();
       cache = cacheManager.getCache(server.getConfiguration().defaultCacheName());
       return cacheManager;
@@ -77,6 +77,10 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
       return new RespServerConfigurationBuilder().name(serverName)
             .host(RespTestingUtil.HOST)
             .port(RespTestingUtil.port());
+   }
+
+   protected RedisClient createRedisClient(int port) {
+      return createClient(timeout, port);
    }
 
    protected EmbeddedCacheManager createTestCacheManager() {
@@ -438,7 +442,7 @@ public class RespSingleNodeTest extends SingleCacheManagerTest {
 
    public void testAuth() {
       RedisCommands<String, String> redis = redisConnection.sync();
-      Exceptions.expectException(RedisCommandExecutionException.class, ".*but no password is set", () -> redis.auth("user", "pass"));
+      Exceptions.expectException(RedisCommandExecutionException.class, "WRONGPASS invalid username-password pair or user is disabled\\.", () -> redis.auth("user", "pass"));
    }
 
    public void testNotImplementedCommand() {

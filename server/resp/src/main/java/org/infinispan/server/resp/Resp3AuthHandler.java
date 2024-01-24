@@ -33,7 +33,11 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
             if (arguments.size() == 4) {
                successStage = performAuth(ctx, arguments.get(2), arguments.get(3));
             } else {
-               helloResponse(ctx, allocatorToUse);
+               if (!isAuthorized()) {
+                  stringToByteBuf("-NOAUTH HELLO must be called with the client already authenticated, otherwise the HELLO <proto> AUTH <user> <pass> option can be used to authenticate the client and select the RESP protocol version at the same time\r\n", allocatorToUse);
+               } else {
+                  helloResponse(ctx, allocatorToUse);
+               }
             }
             break;
          case AUTH:
@@ -48,11 +52,22 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
       }
 
       if (successStage != null) {
-         return stageToReturn(successStage, ctx,
-               auth -> auth ? respServer.newHandler() : this);
+         return stageToReturn(successStage, ctx, auth -> createAfterAuthentication(ctx, auth, type));
       }
 
       return myStage;
+   }
+
+   private RespRequestHandler createAfterAuthentication(ChannelHandlerContext ctx, boolean success, RespCommand type) {
+      if (success) {
+         if (type == RespCommand.HELLO) {
+            helloResponse(ctx, allocatorToUse);
+         } else {
+            Resp3Handler.OK_BICONSUMER.accept(null, allocatorToUse);
+         }
+      } else handleUnauthorized(ctx);
+
+      return success ? respServer.newHandler() : this;
    }
 
    private CompletionStage<Boolean> performAuth(ChannelHandlerContext ctx, byte[] username, byte[] password) {
@@ -67,21 +82,16 @@ public class Resp3AuthHandler extends CacheRespRequestHandler {
       return authenticator.authenticate(username, password.toCharArray())
             // Note we have to write to our variables in the event loop (in this case cache)
             .thenApplyAsync(r -> handleAuthResponse(ctx, r), ctx.channel().eventLoop())
-            .exceptionally(t -> {
-               handleUnauthorized(ctx);
-               return false;
-            });
+            .exceptionally(t -> false);
    }
 
    private boolean handleAuthResponse(ChannelHandlerContext ctx, Subject subject) {
       assert ctx.channel().eventLoop().inEventLoop();
       if (subject == null) {
-         stringToByteBuf("-ERR Client sent AUTH, but no password is set\r\n", allocatorToUse);
          return false;
       }
 
       setCache(cache.withSubject(subject));
-      Resp3Handler.OK_BICONSUMER.accept(null, allocatorToUse);
       return true;
    }
 
