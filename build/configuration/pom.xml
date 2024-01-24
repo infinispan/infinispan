@@ -209,7 +209,7 @@
       <version.opentelemetry>1.30.1</version.opentelemetry>
       <version.opentelemetry.alpha>1.30.0-alpha</version.opentelemetry.alpha>
 
-      <version.smallrye-mutiny>2.2.0</version.smallrye-mutiny>
+      <version.smallrye-mutiny>2.5.5</version.smallrye-mutiny>
       <!-- Spring 6, Spring Boot 3 versions -->
       <version.spring>6.1.3</version.spring>
       <version.spring.boot>3.2.1</version.spring.boot>
@@ -228,7 +228,7 @@
       <version.maven.buildhelper>3.5.0</version.maven.buildhelper>
       <version.maven.bundle>4.2.1</version.maven.bundle>
       <version.maven.gpg>3.1.0</version.maven.gpg>
-      <version.maven.clean>3.3.1</version.maven.clean>
+      <version.maven.clean>3.3.2</version.maven.clean>
       <version.maven-compiler-plugin>3.12.1</version.maven-compiler-plugin>
       <version.maven.enforcer>3.3.0</version.maven.enforcer>
       <version.maven.exec>3.1.1</version.maven.exec>
