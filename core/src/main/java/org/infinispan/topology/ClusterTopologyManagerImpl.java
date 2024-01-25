@@ -188,7 +188,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
                       if (throwable == null)
                          return CompletableFuture.completedFuture(rebalancingStatus != RebalancingStatus.SUSPENDED);
 
-                      if (attempts == 1 || !(throwable instanceof TimeoutException)) {
+                      if (attempts == 1 || !(CompletableFutures.extractException(throwable) instanceof TimeoutException)) {
                          log.errorReadingRebalancingStatus(coordinator, throwable);
                          return CompletableFutures.completedTrue();
                       }
