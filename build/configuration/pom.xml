@@ -257,7 +257,7 @@
       <version.sonatype.nexus-staging-plugin>1.6.13</version.sonatype.nexus-staging-plugin>
       <version.eclipse.transformer>0.5.0</version.eclipse.transformer>
       <!-- overwrite version in jboss-parent -->
-      <version.pmd.plugin>3.21.0</version.pmd.plugin>
+      <version.pmd.plugin>3.21.2</version.pmd.plugin>
       <version.owasp-dependency-check-plugin>8.3.1</version.owasp-dependency-check-plugin>
       <version.spotbugs.plugin>4.7.3.5</version.spotbugs.plugin>
       <version.weld-servlet>2.4.8.Final</version.weld-servlet>
