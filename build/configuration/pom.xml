@@ -136,7 +136,7 @@
       <version.graalvm>23.1.2</version.graalvm>
       <version.groovy>2.4.8</version.groovy>
       <version.hamcrest>2.2</version.hamcrest>
-      <version.hibernate.core>6.3.1.Final</version.hibernate.core>
+      <version.hibernate.core>6.4.2.Final</version.hibernate.core>
       <version.hibernate.search>7.1.0.Alpha1</version.hibernate.search>
       <version.infinispan>15.0.0-SNAPSHOT</version.infinispan>
       <version.infinispan.arquillian>1.2.0.Beta3</version.infinispan.arquillian>
