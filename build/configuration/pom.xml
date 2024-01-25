@@ -252,7 +252,7 @@
       <version.maven.shade>3.5.1</version.maven.shade>
       <version.maven.source>3.3.0</version.maven.source>
       <version.maven.surefire>3.1.2</version.maven.surefire>
-      <version.org.jboss.galleon>4.2.8.Final</version.org.jboss.galleon>
+      <version.org.jboss.galleon>4.2.9.Final</version.org.jboss.galleon>
       <version.org.wildfly.galleon-plugins>5.2.1.Final</version.org.wildfly.galleon-plugins>
       <version.sonatype.nexus-staging-plugin>1.6.13</version.sonatype.nexus-staging-plugin>
       <version.eclipse.transformer>0.5.0</version.eclipse.transformer>
