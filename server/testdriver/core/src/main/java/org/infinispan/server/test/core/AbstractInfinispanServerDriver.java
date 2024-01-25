@@ -279,8 +279,12 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
       if (artifacts != null && artifacts.length > 0) {
          try {
             MavenSettings.init();
-            for (String artifact : artifacts) {
-               Path resolved = Artifact.fromString(artifact).resolveArtifact();
+            for (String artifactName : artifacts) {
+               Artifact artifact = Artifact.fromString(artifactName);
+               Path resolved = artifact.resolveArtifact();
+               if (resolved == null) {
+                  throw new IllegalStateException("Cannot resolve artifact " + artifact);
+               }
                Files.copy(resolved, libDir.toPath().resolve(resolved.getFileName()), StandardCopyOption.REPLACE_EXISTING);
             }
          } catch (IOException e) {

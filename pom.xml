@@ -253,7 +253,7 @@
       <jboss.modules.settings.xml.url>file://${infinispan.root}/maven-settings.xml</jboss.modules.settings.xml.url>
 
       <!-- dependencies version -->
-      <versionx.com.amazonaws>1.12.621</versionx.com.amazonaws>
+      <versionx.com.amazonaws>1.12.643</versionx.com.amazonaws>
       <versionx.org.infinispan.memcached-client>1.2.1</versionx.org.infinispan.memcached-client>
       <versionx.com.clearspring.analytics.stream>2.2.0</versionx.com.clearspring.analytics.stream>
       <versionx.com.esotericsoftware.kryo>4.0.2</versionx.com.esotericsoftware.kryo>
@@ -261,11 +261,11 @@
       <versionx.com.google.guava.guava>32.1.1-jre</versionx.com.google.guava.guava>
       <versionx.com.google.testing.compile>0.18</versionx.com.google.testing.compile>
       <versionx.com.h2database.h2>2.1.214</versionx.com.h2database.h2>
-      <versionx.com.ibm.db2>11.5.6.0</versionx.com.ibm.db2>
+      <versionx.com.ibm.db2>11.5.9.0</versionx.com.ibm.db2>
       <versionx.com.microsoft.azure.azure-storage>8.6.5</versionx.com.microsoft.azure.azure-storage>
       <versionx.com.microsoft.sqlserver>9.4.0.jre11</versionx.com.microsoft.sqlserver>
-      <versionx.com.mysqldatabase.mysql>8.0.30</versionx.com.mysqldatabase.mysql>
-      <versionx.com.postgresqldatabase.postgresql>42.4.3</versionx.com.postgresqldatabase.postgresql>
+      <versionx.com.mysql.mysql-connector-j>8.3.0</versionx.com.mysql.mysql-connector-j>
+      <versionx.org.postgresql.postgresql>42.4.3</versionx.org.postgresql.postgresql>
       <versionx.com.oracle.ojdbc.ojdbc8>19.3.0.0</versionx.com.oracle.ojdbc.ojdbc8>
       <versionx.com.squareup.okhttp3.ohhttp>${version.okhttp}</versionx.com.squareup.okhttp3.ohhttp>
       <versionx.com.squareup.protoparser>4.0.3</versionx.com.squareup.protoparser>
@@ -280,8 +280,7 @@
       <versionx.javax.cache.cache-tests>${version.javax.cache}</versionx.javax.cache.cache-tests>
       <versionx.javax.cache.cdi-weld-annotations-test-harness>${version.javax.cache}</versionx.javax.cache.cdi-weld-annotations-test-harness>
       <versionx.javax.inject.javax.inject>1</versionx.javax.inject.javax.inject>
-      <versionx.mysql.mysql-connector-java>8.0.30</versionx.mysql.mysql-connector-java>
-      <versionx.net.spy.spymemcached>2.12.1</versionx.net.spy.spymemcached>
+      <versionx.net.spy.spymemcached>2.12.3</versionx.net.spy.spymemcached>
       <versionx.org.antlr.antlr-runtime>3.5.2</versionx.org.antlr.antlr-runtime>
       <versionx.org.apache.avro.avro>1.9.1</versionx.org.apache.avro.avro>
       <versionx.org.apache.commons.commons-lang3>3.9</versionx.org.apache.commons.commons-lang3>
@@ -290,21 +289,20 @@
       <versionx.org.apache.mina.mina>2.0.22</versionx.org.apache.mina.mina>
       <versionx.org.apache.geronimo.components.geronimo-transaction>3.1.1</versionx.org.apache.geronimo.components.geronimo-transaction>
       <versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>3.6.4</versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>
-      <versionx.org.aspectj.aspectjweaver>1.8.1</versionx.org.aspectj.aspectjweaver>
+      <versionx.org.aspectj.aspectjweaver>1.8.14</versionx.org.aspectj.aspectjweaver>
       <versionx.org.assertj.assertj-core>3.24.1</versionx.org.assertj.assertj-core>
-      <versionx.org.codehaus.plexus.plexus-utils>3.1.0</versionx.org.codehaus.plexus.plexus-utils>
       <versionx.org.codehaus.mojo.versions-maven-plugin>2.7</versionx.org.codehaus.mojo.versions-maven-plugin>
       <versionx.org.codehaus.mojo.xml-maven-plugin>1.0.2</versionx.org.codehaus.mojo.xml-maven-plugin>
       <versionx.org.dom4j.dom4j>2.1.3</versionx.org.dom4j.dom4j>
       <versionx.org.javassist.javassist>3.29.1-GA</versionx.org.javassist.javassist>
       <versionx.org.jboss.arquillian.container.arquillian-weld-embedded>2.0.1.Final</versionx.org.jboss.arquillian.container.arquillian-weld-embedded>
-      <versionx.org.jboss.jboss-common-core>2.2.16.GA</versionx.org.jboss.jboss-common-core>
+      <versionx.org.jboss.jboss-common-core>2.2.22.GA</versionx.org.jboss.jboss-common-core>
       <versionx.org.jboss.jboss-transaction-spi-jakarta>7.6.1.Final</versionx.org.jboss.jboss-transaction-spi-jakarta>
       <versionx.org.jboss.logging.jboss-logging-processor>2.2.1.Final</versionx.org.jboss.logging.jboss-logging-processor>
       <versionx.org.jboss.spec.javax.ejb.jboss-ejb-api_3.2_spec>2.0.0.Final</versionx.org.jboss.spec.javax.ejb.jboss-ejb-api_3.2_spec>
       <versionx.org.jboss.spec.javax.jms.jboss-jms-api_2.0_spec>2.0.0.Final</versionx.org.jboss.spec.javax.jms.jboss-jms-api_2.0_spec>
       <versionx.org.jboss.spec.jboss-jakartaee-8.0>1.0.1.Final</versionx.org.jboss.spec.jboss-jakartaee-8.0>
-      <versionx.org.jboss.threads.jboss-threads>2.3.3.Final</versionx.org.jboss.threads.jboss-threads>
+      <versionx.org.jboss.threads.jboss-threads>2.3.6.Final</versionx.org.jboss.threads.jboss-threads>
       <versionx.org.jboss.weld.se.weld-se-core>3.1.2.Final</versionx.org.jboss.weld.se.weld-se-core>
       <versionx.org.jboss.weld.weld-core-impl>3.1.2.Final</versionx.org.jboss.weld.weld-core-impl>
       <versionx.org.jboss.weld.weld-api>3.1.SP1</versionx.org.jboss.weld.weld-api>
@@ -314,7 +312,6 @@
       <versionx.org.jsoup>1.15.3</versionx.org.jsoup>
       <versionx.org.mariadb.jdbc>2.7.11</versionx.org.mariadb.jdbc>
       <versionx.org.objectweb.howl.howl>1.0.1-1</versionx.org.objectweb.howl.howl>
-      <versionx.org.postgresql>42.4.1</versionx.org.postgresql>
       <versionx.org.testcontainers.testcontainers>1.18.0</versionx.org.testcontainers.testcontainers>
       <versionx.com.github.docker-java>3.3.0</versionx.com.github.docker-java>
       <versionx.org.testng.testng>6.14.3</versionx.org.testng.testng>
@@ -324,7 +321,7 @@
       <versionx.org.wildfly.core.wildfly-core-testsuite-shared>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-core-testsuite-shared>
       <versionx.org.wildfly.maven.plugins.licenses-plugin>2.3.0.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
       <versionx.org.xerial>3.41.2.2</versionx.org.xerial>
-      <versionx.software.amazon.ion.java>1.0.2</versionx.software.amazon.ion.java>
+      <versionx.software.amazon.ion.java>1.0.3</versionx.software.amazon.ion.java>
       <versionx.sun.jdk.jconsole>jdk</versionx.sun.jdk.jconsole>
    </properties>
 
@@ -380,12 +377,6 @@
             <groupId>com.clearspring.analytics</groupId>
             <artifactId>stream</artifactId>
             <version>${versionx.com.clearspring.analytics.stream}</version>
-         </dependency>
-         <!-- Override dependency version to use the same version everywhere -->
-         <dependency>
-            <groupId>org.codehaus.plexus</groupId>
-            <artifactId>plexus-utils</artifactId>
-            <version>${versionx.org.codehaus.plexus.plexus-utils}</version>
          </dependency>
          <dependency>
             <groupId>com.esotericsoftware</groupId>
@@ -849,9 +840,9 @@
             <scope>test</scope>
          </dependency>
          <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>${versionx.mysql.mysql-connector-java}</version>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>${versionx.com.mysql.mysql-connector-j}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
@@ -1686,7 +1677,7 @@
          <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>${versionx.org.postgresql}</version>
+            <version>${versionx.org.postgresql.postgresql}</version>
             <scope>test</scope>
          </dependency>
          <dependency>

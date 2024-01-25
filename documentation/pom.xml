@@ -29,7 +29,7 @@
         <asciidoctorj.version>2.5.2</asciidoctorj.version>
         <asciidoctor.maven.plugin.version>2.2.5</asciidoctor.maven.plugin.version>
         <asciidoctorj.pdf.version>1.6.0</asciidoctorj.pdf.version>
-        <jruby.version>9.2.17.0</jruby.version>
+        <jruby.version>9.2.21.0</jruby.version>
         <asciidoctorj.tabbed.code.version>0.3</asciidoctorj.tabbed.code.version>
         <infinispanslot>${infinispan.module.slot.prefix}-${parsedVersion.majorVersion}.${parsedVersion.minorVersion}</infinispanslot>
         <schemaVersion>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}</schemaVersion>

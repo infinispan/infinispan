@@ -152,7 +152,7 @@
       <version.io.agroal>1.16</version.io.agroal>
       <version.io.lettuce>6.2.0.RELEASE</version.io.lettuce>
       <version.io.mashona>1.0.0</version.io.mashona>
-      <version.jackson>2.15.2</version.jackson>
+      <version.jackson>2.15.3</version.jackson>
       <version.jackson.databind>2.15.2</version.jackson.databind>
       <version.jacoco>0.8.7</version.jacoco>
       <version.jakarta.annotation-api>2.1.1</version.jakarta.annotation-api>
@@ -168,10 +168,10 @@
       <version.jboss.security>3.0.6.Final</version.jboss.security>
       <version.jboss.shrinkwrap>1.2.6</version.jboss.shrinkwrap>
       <version.jboss.shrinkwrap.descriptors>2.0.0</version.jboss.shrinkwrap.descriptors>
-      <version.jboss.shrinkwrap.resolver>3.1.3</version.jboss.shrinkwrap.resolver>
+      <version.jboss.shrinkwrap.resolver>3.1.6</version.jboss.shrinkwrap.resolver>
       <version.jcip-annotations>1.0</version.jcip-annotations>
       <version.jgroups>5.2.20.Final</version.jgroups>
-      <version.jgroups.raft>1.0.11.Final</version.jgroups.raft>
+      <version.jgroups.raft>1.0.12.Final</version.jgroups.raft>
       <version.jsr107>1.1.0</version.jsr107>
       <version.junit>4.13.2</version.junit>
       <version.junit.platform>1.9.2</version.junit.platform>
@@ -179,12 +179,12 @@
       <version.log4j>2.22.0</version.log4j>
       <version.lucene>8.11.2</version.lucene>
       <version.metainf-services>1.8</version.metainf-services>
-      <version.micrometer>1.9.2</version.micrometer>
+      <version.micrometer>1.9.17</version.micrometer>
       <version.mockito>5.3.1</version.mockito>
       <version.mockito_dep.bytebuddy>1.14.9</version.mockito_dep.bytebuddy>
       <version.mockito_dep.objenesis>3.3</version.mockito_dep.objenesis>
       <version.nashorn>15.4</version.nashorn>
-      <version.netty>4.1.105.Final</version.netty>
+      <version.netty>4.1.106.Final</version.netty>
       <version.netty.incubator.iouring>0.0.19.Final</version.netty.incubator.iouring>
       <version.okhttp>3.14.9</version.okhttp>
       <version.openjdk.jmh>1.23</version.openjdk.jmh>
@@ -218,7 +218,7 @@
       <version.smallrye-mutiny>1.3.1</version.smallrye-mutiny>
       <!-- Defaults to Spring 5 and Spring Boot 2 -->
       <version.spring>5.3.31</version.spring>
-      <version.spring.boot>2.7.13</version.spring.boot>
+      <version.spring.boot>2.7.18</version.spring.boot>
       <version.spring.session>2.7.2</version.spring.session>
 
       <!-- Spring 6, Spring Boot 3 versions -->
@@ -238,7 +238,7 @@
       <version.maven.buildhelper>3.4.0</version.maven.buildhelper>
       <version.maven.bundle>4.2.1</version.maven.bundle>
       <version.maven.gpg>3.1.0</version.maven.gpg>
-      <version.maven.clean>3.3.1</version.maven.clean>
+      <version.maven.clean>3.3.2</version.maven.clean>
       <version.maven-compiler-plugin>3.11.0</version.maven-compiler-plugin>
       <version.maven.enforcer>3.3.0</version.maven.enforcer>
       <version.maven.install>3.1.1</version.maven.install>
@@ -252,12 +252,12 @@
       <version.maven.shade>3.5.1</version.maven.shade>
       <version.maven.source>3.3.0</version.maven.source>
       <version.maven.surefire>3.1.2</version.maven.surefire>
-      <version.org.jboss.galleon>4.2.8.Final</version.org.jboss.galleon>
+      <version.org.jboss.galleon>4.2.9.Final</version.org.jboss.galleon>
       <version.org.wildfly.galleon-plugins>5.2.1.Final</version.org.wildfly.galleon-plugins>
       <version.sonatype.nexus-staging-plugin>1.6.13</version.sonatype.nexus-staging-plugin>
       <version.eclipse.transformer>0.5.0</version.eclipse.transformer>
       <!-- overwrite version in jboss-parent -->
-      <version.pmd.plugin>3.21.0</version.pmd.plugin>
+      <version.pmd.plugin>3.21.2</version.pmd.plugin>
       <version.owasp-dependency-check-plugin>8.3.1</version.owasp-dependency-check-plugin>
       <version.spotbugs.plugin>4.7.3.5</version.spotbugs.plugin>
       <version.weld-servlet>2.4.8.Final</version.weld-servlet>
