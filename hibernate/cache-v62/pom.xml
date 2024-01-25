@@ -122,12 +122,12 @@
                         <additionalClasspathDependency>
                            <groupId>org.hibernate.orm</groupId>
                            <artifactId>hibernate-core</artifactId>
-                           <version>6.2.9.Final</version>
+                           <version>6.2.22.Final</version>
                         </additionalClasspathDependency>
                         <additionalClasspathDependency>
                            <groupId>org.hibernate.orm</groupId>
                            <artifactId>hibernate-testing</artifactId>
-                           <version>6.2.9.Final</version>
+                           <version>6.2.22.Final</version>
                            <exclusions>
                               <exclusion>
                                  <groupId>*</groupId>
@@ -162,7 +162,7 @@
                         </goals>
                         <phase>test</phase>
                         <configuration>
-                           <reportNameSuffix>6_4</reportNameSuffix>
+                           <reportNameSuffix>6_5</reportNameSuffix>
                            <classpathDependencyExcludes>
                               <classpathDependencyExclude>org.hibernate.orm:hibernate-core</classpathDependencyExclude>
                               <classpathDependencyExclude>org.hibernate.orm:hibernate-testing</classpathDependencyExclude>
@@ -178,12 +178,12 @@
                               <additionalClasspathDependency>
                                  <groupId>org.hibernate.orm</groupId>
                                  <artifactId>hibernate-core</artifactId>
-                                 <version>6.4.0.CR1</version>
+                                 <version>6.5.0-SNAPSHOT</version>
                               </additionalClasspathDependency>
                               <additionalClasspathDependency>
                                  <groupId>org.hibernate.orm</groupId>
                                  <artifactId>hibernate-testing</artifactId>
-                                 <version>6.4.0.CR1</version>
+                                 <version>6.5.0-SNAPSHOT</version>
                                  <exclusions>
                                     <exclusion>
                                        <groupId>*</groupId>
