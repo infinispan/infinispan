@@ -56,16 +56,17 @@ public class MultiTenancyTest extends SingleNodeTest {
 					 return db1;
 				}
 
-				@Override
-				protected ConnectionProvider selectConnectionProvider(String tenantIdentifier) {
+				ConnectionProvider selectConnectionProvider(String tenantIdentifier) {
 					 if (DB1.equals(tenantIdentifier)) return db1;
 					 if (DB2.equals(tenantIdentifier)) return db2;
 					 throw new IllegalArgumentException();
 				}
-
-			  ConnectionProvider selectConnectionProvider(Object tenantIdentifier) {
-					return selectConnectionProvider((String) tenantIdentifier);
-			  }
+				@Override
+			   protected ConnectionProvider selectConnectionProvider(Object tenantIdentifier) {
+					if (DB1.equals(tenantIdentifier)) return db1;
+					if (DB2.equals(tenantIdentifier)) return db2;
+					throw new IllegalArgumentException();
+			   }
 		  });
 	 }
 
