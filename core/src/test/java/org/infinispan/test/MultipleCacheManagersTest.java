@@ -159,6 +159,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
          log.debug("*** Test method complete; clearing contents on all caches.");
          TestingUtil.clearContent(cacheManagers);
       } else {
+         log.debug("*** Test method complete; shutting down.");
          TestingUtil.clearContent(cacheManagers);
          TestingUtil.killCacheManagers(cacheManagers);
          TestResourceTracker.cleanUpResources(getTestName());

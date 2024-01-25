@@ -16,17 +16,22 @@ import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.reactive.publisher.impl.Notifications;
 import org.infinispan.reactive.publisher.impl.SegmentAwarePublisherSupplier;
 import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.fwk.CheckPoint;
+import org.infinispan.xsite.commands.remote.XSiteRequest;
 import org.mockito.AdditionalAnswers;
 import org.mockito.MockSettings;
 import org.mockito.internal.util.MockUtil;
@@ -415,6 +420,34 @@ public class Mocks {
                       });
          }
       });
+   }
+
+   public static void blockInboundGlobalCommand(EmbeddedCacheManager ecm, CheckPoint checkPoint,
+                                                                     Predicate<? super ReplicableCommand> predicate) {
+      Executor executor = extractGlobalComponent(ecm, ExecutorService.class, KnownComponentNames.NON_BLOCKING_EXECUTOR);
+      TestingUtil.wrapGlobalComponent(ecm, InboundInvocationHandler.class, handler -> new InboundInvocationHandler() {
+
+         @Override
+         public void handleFromCluster(Address origin, ReplicableCommand command, Reply reply, DeliverOrder order) {
+            if (!predicate.test(command)) {
+               handler.handleFromCluster(origin, command, reply, order);
+               return;
+            }
+
+            checkPoint.trigger(BEFORE_INVOCATION);
+            checkPoint.future(BEFORE_RELEASE, 20, TimeUnit.SECONDS, executor)
+                  .thenRun(() -> handler.handleFromCluster(origin, command, reply, order))
+                  .thenCompose(ignore -> {
+                     checkPoint.trigger(AFTER_INVOCATION);
+                     return checkPoint.future(AFTER_RELEASE, 20, TimeUnit.SECONDS, executor);
+                  });
+         }
+
+         @Override
+         public void handleFromRemoteSite(String origin, XSiteRequest<?> command, Reply reply, DeliverOrder order) {
+            throw new IllegalArgumentException("Not expecting cross site requests");
+         }
+      }, true);
    }
 
    /**
