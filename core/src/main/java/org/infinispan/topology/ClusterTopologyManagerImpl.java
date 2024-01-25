@@ -40,6 +40,7 @@ import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ProcessorInfo;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -74,7 +75,6 @@ import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.statetransfer.RebalanceType;
 import org.infinispan.util.concurrent.ActionSequencer;
 import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.concurrent.ConditionFuture;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -188,7 +188,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
                       if (throwable == null)
                          return CompletableFuture.completedFuture(rebalancingStatus != RebalancingStatus.SUSPENDED);
 
-                      if (attempts == 1 || !(throwable instanceof TimeoutException)) {
+                      if (attempts == 1 || !(CompletableFutures.extractException(throwable) instanceof TimeoutException)) {
                          log.errorReadingRebalancingStatus(coordinator, throwable);
                          return CompletableFutures.completedTrue();
                       }
@@ -586,8 +586,9 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
 
    private CompletionStage<CacheStatusResponseCollector> fetchClusterStatus(int newViewId) {
       int attemptCount = recoveryAttemptCount.getAndIncrement();
-      if (log.isTraceEnabled())
-         log.debugf("Recovering cluster status for view %d, attempt %d", newViewId, attemptCount);
+
+      log.debugf("Recovering cluster status for view %d, attempt %d", newViewId, attemptCount);
+
       ReplicableCommand command = new CacheStatusRequestCommand(newViewId);
       CacheStatusResponseCollector responseCollector = new CacheStatusResponseCollector();
       int timeout = getGlobalTimeout() / CLUSTER_RECOVERY_ATTEMPTS;
