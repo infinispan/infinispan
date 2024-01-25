@@ -242,7 +242,7 @@
       <versionx.com.oracle.ojdbc.ojdbc8>19.3.0.0</versionx.com.oracle.ojdbc.ojdbc8>
       <versionx.com.squareup.protoparser>4.0.3</versionx.com.squareup.protoparser>
       <versionx.commons-dbcp.commons-dbcp>1.4</versionx.commons-dbcp.commons-dbcp>
-      <versionx.commons-io.commons-io>2.8.0</versionx.commons-io.commons-io>
+      <versionx.commons-io.commons-io>2.15.1</versionx.commons-io.commons-io>
       <versionx.commons-logging.commons-logging>1.3.0</versionx.commons-logging.commons-logging>
       <versionx.javax.activation.activation>1.1.1</versionx.javax.activation.activation>
       <versionx.javax.annotation.javax.annotation-api>1.3.2</versionx.javax.annotation.javax.annotation-api>
