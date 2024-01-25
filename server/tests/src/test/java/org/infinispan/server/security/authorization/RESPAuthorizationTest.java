@@ -3,6 +3,7 @@ package org.infinispan.server.security.authorization;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,7 +20,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.impl.NoStackTraceThrowable;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.redis.client.Redis;
@@ -256,7 +256,7 @@ abstract class RESPAuthorizationTest {
                }
 
                ctx.verify(() -> assertThat(r.cause())
-                     .isExactlyInstanceOf(NoStackTraceThrowable.class)
+                     .isInstanceOf(ConnectException.class)
                      .hasMessage("Cannot connect to any of the provided endpoints"));
             });
    }
