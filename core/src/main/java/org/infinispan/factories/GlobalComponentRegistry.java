@@ -405,6 +405,10 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
       return localTopologyManager.running();
    }
 
+   public boolean isLocalTopologyManagerRunning() {
+      return localTopologyManager != null && localTopologyManager.isRunning();
+   }
+
    public XSiteCacheMapper getXSiteCacheMapper() {
       return basicComponentRegistry.getComponent(XSiteCacheMapper.class).running();
    }
