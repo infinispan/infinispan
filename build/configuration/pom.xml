@@ -183,7 +183,7 @@
       <version.org.wildfly.elytron>2.2.3.Final</version.org.wildfly.elytron>
       <version.org.wildfly.openssl>2.2.5.Final</version.org.wildfly.openssl>
       <version.org.wildfly.openssl.natives>2.2.2.SP01</version.org.wildfly.openssl.natives>
-      <version.org.wildfly.openssl.natives.linux_x86_64>2.2.2.SP01</version.org.wildfly.openssl.natives.linux_x86_64>
+      <version.org.wildfly.openssl.natives.linux_x86_64>2.2.2.Final</version.org.wildfly.openssl.natives.linux_x86_64>
       <version.org.wildfly.openssl.natives.macos_x86_64>2.2.2.Final</version.org.wildfly.openssl.natives.macos_x86_64>
       <version.org.wildfly.openssl.natives.windows_x86_64>2.2.2.Final</version.org.wildfly.openssl.natives.windows_x86_64>
       <version.ow2.asm>9.5</version.ow2.asm>
