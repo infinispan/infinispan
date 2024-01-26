@@ -1,0 +1,11 @@
+<licenseSummary>
+   <knownLicenses>
+      <license name="BSD-2-Clause" url="https://opensource.org/licenses/BSD-2-Clause"/>
+      <license name="Universal Permissive License, Version 1.0" url="http://opensource.org/licenses/UPL"/>
+      <license name="The MIT License" url="http://www.opensource.org/licenses/mit-license.php"/>
+      <license name="GNU General Public License (GPL), version 2, with the Classpath exception"
+               url="http://openjdk.java.net/legal/gplv2+ce.html"/>
+   </knownLicenses>
+   <!-- required or it fails to parse -->
+   <dependencies/>
+</licenseSummary>

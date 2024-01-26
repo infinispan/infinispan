@@ -1,0 +1,11 @@
+<licenseSummary>
+   <knownLicenses>
+      <license name="LGPL-2.1-or-later" url="https://www.gnu.org/licenses/old-licenses/lgpl-2.1"/>
+      <license name="BSD License 3" url="http://opensource.org/licenses/BSD-3-Clause"/>
+      <license name="BSD-2-Clause" url="https://opensource.org/licenses/BSD-2-Clause"/>
+      <license name="MIT" url="http://opensource.org/licenses/MIT"/>
+      <license name="Eclipse Public License v2.0" url="https://www.eclipse.org/legal/epl-v20.html"/>
+   </knownLicenses>
+   <!-- required or it fails to parse -->
+   <dependencies/>
+</licenseSummary>

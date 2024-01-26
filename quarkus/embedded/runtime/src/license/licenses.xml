@@ -1,0 +1,8 @@
+<licenseSummary>
+   <knownLicenses>
+      <license name="BSD-2-Clause" url="https://opensource.org/licenses/BSD-2-Clause"/>
+      <license name="Universal Permissive License, Version 1.0" url="http://opensource.org/licenses/UPL"/>
+   </knownLicenses>
+   <!-- required or it fails to parse -->
+   <dependencies/>
+</licenseSummary>
