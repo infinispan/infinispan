@@ -247,7 +247,7 @@
       <versionx.javax.activation.activation>1.1.1</versionx.javax.activation.activation>
       <versionx.javax.annotation.javax.annotation-api>1.3.2</versionx.javax.annotation.javax.annotation-api>
       <versionx.javax.inject.javax.inject>1</versionx.javax.inject.javax.inject>
-      <versionx.org.antlr.antlr-runtime>3.5.2</versionx.org.antlr.antlr-runtime>
+      <versionx.org.antlr.antlr-runtime>3.5.3</versionx.org.antlr.antlr-runtime>
       <versionx.org.apache.avro.avro>1.11.3</versionx.org.apache.avro.avro>
       <versionx.org.apache.commons.commons-lang3>3.14.0</versionx.org.apache.commons.commons-lang3>
       <versionx.org.apache.commons.commons-math>2.2</versionx.org.apache.commons.commons-math>
