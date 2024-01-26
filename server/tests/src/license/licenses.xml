@@ -1,0 +1,8 @@
+<licenseSummary>
+   <knownLicenses>
+      <license name="LGPL-2.1-or-later" url="https://www.gnu.org/licenses/old-licenses/lgpl-2.1"/>
+      <license name="MIT" url="http://opensource.org/licenses/MIT"/>
+   </knownLicenses>
+   <!-- required or it fails to parse -->
+   <dependencies/>
+</licenseSummary>

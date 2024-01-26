@@ -1,0 +1,7 @@
+<licenseSummary>
+   <knownLicenses>
+      <license name="Universal Permissive License, Version 1.0" url="http://opensource.org/licenses/UPL"/>
+   </knownLicenses>
+   <!-- required or it fails to parse -->
+   <dependencies/>
+</licenseSummary>

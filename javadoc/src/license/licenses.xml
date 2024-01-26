@@ -1,0 +1,8 @@
+<licenseSummary>
+   <knownLicenses>
+      <license name="BSD licence" url="http://antlr.org/license.html"/>
+      <license name="GNU General Public License, version 2" url="http://www.gnu.org/licenses/gpl-2.0.html"/>
+   </knownLicenses>
+   <!-- required or it fails to parse -->
+   <dependencies/>
+</licenseSummary>

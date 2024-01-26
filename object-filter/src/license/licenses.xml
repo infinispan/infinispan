@@ -1,0 +1,7 @@
+<licenseSummary>
+   <knownLicenses>
+      <license name="BSD licence" url="http://antlr.org/license.html"/>
+   </knownLicenses>
+   <!-- required or it fails to parse -->
+   <dependencies/>
+</licenseSummary>
