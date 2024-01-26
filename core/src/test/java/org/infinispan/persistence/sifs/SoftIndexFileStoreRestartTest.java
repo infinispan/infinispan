@@ -178,19 +178,19 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
    }
 
    long performRestart(Runnable runnable, long previousUsedSize, int iterationCount) throws Throwable {
-      log.debugf("Iteration: %s", iterationCount);
+      log.tracef("Iteration: %s", iterationCount);
       int size = 10;
       Cache<Integer, String> cache = cache(0, cacheName);
       for (int i = 0; i < size; i++) {
          // Skip a different insert each time (after first)
-         if (iterationCount > 0 && i != iterationCount) {
+         if (iterationCount > 0 && i == iterationCount) {
             continue;
          }
          String prev = cache.put(i, "iteration-" + iterationCount + " value-" + i);
          if (iterationCount > 0) {
             assertNotNull(prev);
-            // TODO: https://issues.redhat.com/browse/ISPN-13969 to fix this
-//            assertEquals("iteration-" + (iterationCount - 1) + " value-" + i, prev);
+            int offset = (iterationCount > 1 && iterationCount == i + 1) ? 2 : 1;
+            assertEquals("iteration-" + (iterationCount - offset) + " value-" + i, prev);
          }
       }
       assertEquals(size, cache.size());
