@@ -343,7 +343,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
             if (oldValue != null) {
                doneStage = replaceWithVersionAsync(key, newValue, version, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
             } else {
-               doneStage = putIfAbsentAsync(key, newValue, lifespan, lifespanUnit, maxIdle, maxIdleUnit)
+               doneStage = withFlags(Flag.FORCE_RETURN_VALUE).putIfAbsentAsync(key, newValue, lifespan, lifespanUnit, maxIdle, maxIdleUnit)
                      .thenApply(Objects::isNull);
             }
          } else {
