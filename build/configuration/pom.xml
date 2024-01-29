@@ -134,7 +134,7 @@
       <version.fabric8.kubernetes-client>6.9.2</version.fabric8.kubernetes-client>
       <version.glassfish.jaxb>2.3.1</version.glassfish.jaxb>
       <version.graalvm>23.1.2</version.graalvm>
-      <version.groovy>2.4.8</version.groovy>
+      <version.groovy>2.4.21</version.groovy>
       <version.hamcrest>2.2</version.hamcrest>
       <version.hibernate.core>6.4.2.Final</version.hibernate.core>
       <version.hibernate.search>7.1.0.Alpha1</version.hibernate.search>
