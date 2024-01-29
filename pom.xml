@@ -286,7 +286,7 @@
       <versionx.org.apache.commons.commons-lang3>3.9</versionx.org.apache.commons.commons-lang3>
       <versionx.org.apache.commons.commons-math>2.2</versionx.org.apache.commons.commons-math>
       <versionx.org.apache.directory.server.apacheds>2.0.0-M24</versionx.org.apache.directory.server.apacheds>
-      <versionx.org.apache.mina.mina>2.0.22</versionx.org.apache.mina.mina>
+      <versionx.org.apache.mina.mina>2.0.25</versionx.org.apache.mina.mina>
       <versionx.org.apache.geronimo.components.geronimo-transaction>3.1.1</versionx.org.apache.geronimo.components.geronimo-transaction>
       <versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>3.6.4</versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>
       <versionx.org.aspectj.aspectjweaver>1.8.14</versionx.org.aspectj.aspectjweaver>
