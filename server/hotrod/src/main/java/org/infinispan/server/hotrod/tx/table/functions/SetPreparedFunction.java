@@ -50,6 +50,11 @@ public class SetPreparedFunction extends TxFunction {
       }
    }
 
+   @Override
+   public String toString() {
+      return "SetPreparedFunction{}";
+   }
+
    private static class Externalizer implements AdvancedExternalizer<SetPreparedFunction> {
 
       @Override

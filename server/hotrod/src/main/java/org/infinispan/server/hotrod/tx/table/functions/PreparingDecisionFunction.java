@@ -14,6 +14,7 @@ import java.util.Set;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.Util;
 import org.infinispan.functional.EntryView;
 import org.infinispan.server.core.ExternalizerIds;
 import org.infinispan.server.hotrod.tx.table.CacheXid;
@@ -45,8 +46,8 @@ public class PreparingDecisionFunction extends TxFunction {
          TxState state = view.get();
          switch (state.getStatus()) {
             case ACTIVE:
-               view.set(state.markPreparing(modifications, timeService));
             case PREPARING:
+               view.set(state.markPreparing(modifications, timeService));
                return OK.value;
             default:
                return state.getStatus().value;
@@ -54,6 +55,13 @@ public class PreparingDecisionFunction extends TxFunction {
       } else {
          return NO_TRANSACTION.value;
       }
+   }
+
+   @Override
+   public String toString() {
+      return "PreparingDecisionFunction{" +
+            "modifications=" + Util.toStr(modifications) +
+            '}';
    }
 
    private static class Externalizer implements AdvancedExternalizer<PreparingDecisionFunction> {

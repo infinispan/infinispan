@@ -11,16 +11,19 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.List;
 
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.test.skip.SkipTestNG;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodMultiNodeTest;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.HotRodVersion;
+import org.infinispan.server.hotrod.LifecycleCallbacks;
 import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.server.hotrod.test.RemoteTransaction;
@@ -30,8 +33,10 @@ import org.infinispan.server.hotrod.tx.table.PerCacheTxTable;
 import org.infinispan.server.hotrod.tx.table.TxState;
 import org.infinispan.server.hotrod.tx.table.functions.CreateStateFunction;
 import org.infinispan.server.hotrod.tx.table.functions.TxFunction;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.util.ByteString;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -65,10 +70,10 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
    }
 
    public void testNonOriginatorLeft(Method method) {
-      final byte[] k1 = k(method, "k1");
-      final byte[] k2 = k(method, "k2");
-      final byte[] v1 = v(method, "v1");
-      final byte[] v2 = v(method, "v2");
+      byte[] k1 = k(method, "k1");
+      byte[] k2 = k(method, "k2");
+      byte[] v1 = v(method, "v1");
+      byte[] v2 = v(method, "v2");
 
       RemoteTransaction tx = RemoteTransaction.startTransaction(clients().get(0));
       tx.set(k1, v1);
@@ -89,10 +94,10 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
    }
 
    public void testNodeJoin(Method method) {
-      final byte[] k1 = k(method, "k1");
-      final byte[] k2 = k(method, "k2");
-      final byte[] v1 = v(method, "v1");
-      final byte[] v2 = v(method, "v2");
+      byte[] k1 = k(method, "k1");
+      byte[] k2 = k(method, "k2");
+      byte[] v1 = v(method, "v1");
+      byte[] v2 = v(method, "v2");
 
       RemoteTransaction tx = RemoteTransaction.startTransaction(clients().get(0));
       tx.set(k1, v1);
@@ -114,10 +119,13 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
 
    @Test(groups = "unstable", description = "ISPN-8432")
    public void testOriginatorLeft(Method method) {
-      final byte[] k1 = k(method, "k1");
-      final byte[] k2 = k(method, "k2");
-      final byte[] v1 = v(method, "v1");
-      final byte[] v2 = v(method, "v2");
+      //optimistic mode is not official supported and we don't store any versioning
+      //this test is failing without the versions
+      SkipTestNG.skipIf(lockingMode == LockingMode.OPTIMISTIC, "Optimistic transactions not supported");
+      byte[] k1 = k(method, "k1");
+      byte[] k2 = k(method, "k2");
+      byte[] v1 = v(method, "v1");
+      byte[] v2 = v(method, "v2");
 
       RemoteTransaction tx = RemoteTransaction.startTransaction(clients().get(0));
       tx.set(k1, v1);
@@ -139,10 +147,10 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
    }
 
    public void testOriginatorLeftBeforePrepare(Method method) {
-      final byte[] k1 = k(method, "k1");
-      final byte[] k2 = k(method, "k2");
-      final byte[] v1 = v(method, "v1");
-      final byte[] v2 = v(method, "v2");
+      byte[] k1 = k(method, "k1");
+      byte[] k2 = k(method, "k2");
+      byte[] v1 = v(method, "v1");
+      byte[] v2 = v(method, "v2");
 
       RemoteTransaction tx = RemoteTransaction.startTransaction(clients().get(0));
       tx.set(k1, v1);
@@ -153,6 +161,7 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
       tx.prepareAndAssert(XAResource.XA_OK);
 
       killNode(0);
+      waitForClusterToForm(LifecycleCallbacks.GLOBAL_TX_TABLE_CACHE_NAME);
 
       //set the tx state to running
       GlobalTxTable transactionTable = extractGlobalComponent(manager(0), GlobalTxTable.class);
@@ -254,6 +263,12 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
    }
 
    private void killNode(int index) {
+      // kill==stop and it waits for the transactions to complete.
+      // we drop all the transaction from the table to shutdown faster
+      var txTable = TestingUtil.extractComponent(cache(index, cacheName()), TransactionTable.class);
+      List.copyOf(txTable.getLocalTransactions()).forEach(txTable::removeLocalTransaction);
+      List.copyOf(txTable.getRemoteGlobalTransaction()).forEach(txTable::removeRemoteTransaction);
+
       killClient(clients().remove(index));
       stopClusteredServer(servers().remove(index));
    }
