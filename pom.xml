@@ -262,7 +262,7 @@
       <versionx.com.google.testing.compile>0.18</versionx.com.google.testing.compile>
       <versionx.com.h2database.h2>2.1.214</versionx.com.h2database.h2>
       <versionx.com.ibm.db2>11.5.9.0</versionx.com.ibm.db2>
-      <versionx.com.microsoft.azure.azure-storage>8.6.5</versionx.com.microsoft.azure.azure-storage>
+      <versionx.com.microsoft.azure.azure-storage>8.6.6</versionx.com.microsoft.azure.azure-storage>
       <versionx.com.microsoft.sqlserver>9.4.0.jre11</versionx.com.microsoft.sqlserver>
       <versionx.com.mysql.mysql-connector-j>8.3.0</versionx.com.mysql.mysql-connector-j>
       <versionx.org.postgresql.postgresql>42.4.3</versionx.org.postgresql.postgresql>
