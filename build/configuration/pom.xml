@@ -148,7 +148,7 @@
       <version.infinispan.arquillian>1.2.0.Beta3</version.infinispan.arquillian>
       <version.infinispan.doclets>1.4.0.Final</version.infinispan.doclets>
       <version.infinispan.maven-plugins>1.0.3.Final</version.infinispan.maven-plugins>
-      <version.insights>1.0.11</version.insights>
+      <version.insights>2.0.2</version.insights>
       <version.io.agroal>1.16</version.io.agroal>
       <version.io.lettuce>6.2.7.RELEASE</version.io.lettuce>
       <version.io.mashona>1.0.0</version.io.mashona>

@@ -8,6 +8,8 @@ import java.util.function.Supplier;
 
 import javax.net.ssl.SSLContext;
 
+import com.redhat.insights.reports.InsightsReport;
+import com.redhat.insights.reports.InsightsSubreport;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Version;
@@ -20,9 +22,7 @@ import org.infinispan.server.insights.scheduler.InfinispanInsightsScheduler;
 import org.infinispan.util.concurrent.BlockingManager;
 
 import com.redhat.insights.Filtering;
-import com.redhat.insights.InsightsReport;
 import com.redhat.insights.InsightsReportController;
-import com.redhat.insights.InsightsSubreport;
 import com.redhat.insights.config.InsightsConfiguration;
 import com.redhat.insights.core.httpclient.InsightsJdkHttpClient;
 import com.redhat.insights.http.InsightsFileWritingClient;
