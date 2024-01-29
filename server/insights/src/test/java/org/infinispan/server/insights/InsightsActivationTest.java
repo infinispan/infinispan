@@ -11,7 +11,7 @@ import org.testng.ITestContext;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
-import com.redhat.insights.InsightsReport;
+import com.redhat.insights.reports.InsightsReport;
 
 @Test(groups = "functional", testName = "server.insights.InsightsActivationTest")
 public class InsightsActivationTest extends AbstractInfinispanTest {

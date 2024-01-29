@@ -1,8 +1,6 @@
 package org.infinispan.server.insights;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.entry;
-
+import com.redhat.insights.reports.InsightsReport;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -13,7 +11,8 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-import com.redhat.insights.InsightsReport;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 
 @Test(groups = "functional", testName = "server.insights.BasicInsightsTest")
 public class BasicInsightsTest extends SingleCacheManagerTest {

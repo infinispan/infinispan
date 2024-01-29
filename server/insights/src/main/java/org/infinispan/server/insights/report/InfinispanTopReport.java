@@ -3,10 +3,10 @@ package org.infinispan.server.insights.report;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import com.redhat.insights.InsightsSubreport;
 import com.redhat.insights.config.InsightsConfiguration;
-import com.redhat.insights.core.TopLevelReportBaseImpl;
+import com.redhat.insights.core.reports.TopLevelReportBaseImpl;
 import com.redhat.insights.logging.InsightsLogger;
+import com.redhat.insights.reports.InsightsSubreport;
 
 public class InfinispanTopReport extends TopLevelReportBaseImpl {
 
