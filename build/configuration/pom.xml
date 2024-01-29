@@ -191,7 +191,7 @@
       <version.picketlink>2.5.5.SP12</version.picketlink>
       <version.protostream>5.0.0.Dev01</version.protostream>
       <version.reactivestreams>1.0.4</version.reactivestreams>
-      <version.rocksdb>7.1.2</version.rocksdb>
+      <version.rocksdb>8.10.0</version.rocksdb>
       <version.rxjava>3.1.8</version.rxjava>
       <version.sshd>2.12.0</version.sshd>
       <version.testng.engine>1.0.5</version.testng.engine>
