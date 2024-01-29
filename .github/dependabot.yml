@@ -6,17 +6,20 @@ updates:
     schedule:
       interval: daily
     open-pull-requests-limit: 10
+    rebase-strategy: disabled
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
       interval: daily
     open-pull-requests-limit: 10
+    rebase-strategy: disabled
   # 14.0.x
   - package-ecosystem: maven
     directory: "/"
     schedule:
       interval: daily
     open-pull-requests-limit: 10
+    rebase-strategy: disabled
     target-branch: "14.0.x"
     ignore:
       - dependency-name: "*"
@@ -27,4 +30,5 @@ updates:
     schedule:
       interval: daily
     open-pull-requests-limit: 10
+    rebase-strategy: disabled
     target-branch: "14.0.x"
