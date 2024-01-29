@@ -272,7 +272,7 @@
       <versionx.org.jboss.weld.se.weld-se-core>5.1.0.Final</versionx.org.jboss.weld.se.weld-se-core>
       <versionx.org.jboss.weld.weld-core-impl>5.1.0.Final</versionx.org.jboss.weld.weld-core-impl>
       <versionx.org.jboss.weld.weld-api>5.0.SP3</versionx.org.jboss.weld.weld-api>
-      <versionx.org.jgroups.aws.jgroups-aws>2.0.1.Final</versionx.org.jgroups.aws.jgroups-aws>
+      <versionx.org.jgroups.aws.jgroups-aws>3.0.0.Final</versionx.org.jgroups.aws.jgroups-aws>
       <versionx.org.jgroups.azure.jgroups-azure>2.0.2.Final</versionx.org.jgroups.azure.jgroups-azure>
       <versionx.org.jgroups.kubernetes.jgroups-kubernetes>2.0.1.Final</versionx.org.jgroups.kubernetes.jgroups-kubernetes>
       <versionx.org.mariadb.jdbc>3.3.2</versionx.org.mariadb.jdbc>
