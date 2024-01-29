@@ -293,8 +293,7 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
          CacheEntryEvent<?, ?> event = listener.getEvent(0);
          assertEquals(k(m), event.getKey());
          assertEquals(v(m, 3), event.getValue());
-         // TODO Previous value is missing, see ISPN-8652
-//         assertEquals(v(m, 2), event.getOldValue());
+         assertNull(event.getOldValue());
 
          cache1.deregisterCacheEntryListener(conf);
          listener.reset();
@@ -323,8 +322,7 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
          eventuallyEquals(1, listener::getInvocationCount);
          CacheEntryEvent<?, ?> event = listener.getEvent(0);
          assertEquals(k(m), event.getKey());
-         // TODO Previous value is missing, see ISPN-8652
-//         assertEquals(v(m, 3), event.getOldValue());
+         assertNull(event.getOldValue());
          assertNull(event.getValue());
 
          cache1.deregisterCacheEntryListener(conf);
