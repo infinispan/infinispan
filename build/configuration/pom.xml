@@ -155,7 +155,7 @@
       <version.jakarta.transaction>2.0.1</version.jakarta.transaction>
       <version.jakarta.enterprise.cdi>4.0.1</version.jakarta.enterprise.cdi>
       <version.jakarta.persistence>3.1.0</version.jakarta.persistence>
-      <version.javax.cache>1.1.0</version.javax.cache>
+      <version.javax.cache>1.1.1</version.javax.cache>
       <version.jboss.logging>3.5.3.Final</version.jboss.logging>
       <version.jboss.marshalling>2.1.3.Final</version.jboss.marshalling>
       <version.jboss.naming>5.0.6.CR1</version.jboss.naming>
