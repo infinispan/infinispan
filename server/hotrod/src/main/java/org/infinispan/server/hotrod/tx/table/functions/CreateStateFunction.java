@@ -38,11 +38,28 @@ public class CreateStateFunction extends TxFunction {
 
    @Override
    public Byte apply(EntryView.ReadWriteEntryView<CacheXid, TxState> view) {
-      if (view.find().isPresent()) {
-         return Status.ERROR.value;
+      if (view.find().isEmpty()) {
+         // most common use case
+         view.set(new TxState(globalTransaction, recoverable, timeout, timeService));
+         return Status.OK.value;
       }
-      view.set(new TxState(globalTransaction, recoverable, timeout, timeService));
-      return Status.OK.value;
+      // if it exists, we have a retry due to rebalance (isSameAs returns true), or we have a concurrent request and
+      // this one will return an error.
+      if (view.get().isSameAs(globalTransaction, recoverable, timeout)) {
+         // force the write to the backups
+         view.set(view.get());
+         return Status.OK.value;
+      }
+      return Status.ERROR.value;
+   }
+
+   @Override
+   public String toString() {
+      return "CreateStateFunction{" +
+            "globalTransaction=" + globalTransaction +
+            ", timeout=" + timeout +
+            ", recoverable=" + recoverable +
+            '}';
    }
 
    private static class Externalizer implements AdvancedExternalizer<CreateStateFunction> {
