@@ -2,11 +2,11 @@ package org.infinispan.server.insights.report;
 
 import java.util.function.Supplier;
 
+import com.redhat.insights.reports.InsightsSubreport;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.server.insights.InsightsModule;
 
 import com.fasterxml.jackson.databind.JsonSerializer;
-import com.redhat.insights.InsightsSubreport;
 
 public class InfinispanSubreport implements InsightsSubreport {
 
