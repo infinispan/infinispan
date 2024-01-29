@@ -37,8 +37,7 @@ public class JCacheListenerAdapter<K, V> extends AbstractJCacheListenerAdapter<K
    public void handleCacheEntryModifiedEvent(CacheEntryModifiedEvent<K, V> e) {
       // JCache listeners notified only once, so do it after the event
       if (!e.isPre() && !e.isCreated())
-         // TODO: ISPN-8652 Previous value is not correctly passed on
-         notifier.notifyEntryUpdated(jcache, e.getKey(), e.getValue(), e.getValue());
+         notifier.notifyEntryUpdated(jcache, e.getKey(), e.getValue(), e.getOldValue());
    }
 
    @CacheEntryRemoved
