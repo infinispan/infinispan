@@ -11,6 +11,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.telemetry.InfinispanSpanAttributes;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 import org.infinispan.util.logging.Log;
@@ -27,6 +28,7 @@ public class SingleRpcCommand extends BaseRpcCommand {
    private static final Log log = LogFactory.getLog(SingleRpcCommand.class);
 
    private VisitableCommand command;
+   private InfinispanSpanAttributes spanAttributes;
 
    private SingleRpcCommand() {
       super(null); // For command id uniqueness test
@@ -118,5 +120,21 @@ public class SingleRpcCommand extends BaseRpcCommand {
    @Override
    public boolean logThrowable(Throwable t) {
       return command.logThrowable(t);
+   }
+
+   @Override
+   public InfinispanSpanAttributes getSpanAttributes() {
+      return spanAttributes;
+   }
+
+   @Override
+   public String getOperationName() {
+      // TODO use the class name or implement this method in all commands?
+      return command.getClass().getSimpleName();
+   }
+
+   @Override
+   public void setSpanAttributes(InfinispanSpanAttributes attributes) {
+      spanAttributes = attributes;
    }
 }

@@ -5,6 +5,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commands.TracedCommand;
 import org.infinispan.factories.GlobalComponentRegistry;
 
 /**
@@ -12,7 +13,7 @@ import org.infinispan.factories.GlobalComponentRegistry;
  *
  * @since 15.0
  */
-public interface XSiteRequest<T> {
+public interface XSiteRequest<T> extends TracedCommand {
 
    /**
     * This method is invoked by the receiver node.
