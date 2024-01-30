@@ -258,7 +258,7 @@
       <versionx.org.assertj.assertj-core>3.24.2</versionx.org.assertj.assertj-core>
       <versionx.org.codehaus.plexus.plexus-utils>3.5.1</versionx.org.codehaus.plexus.plexus-utils>
       <versionx.org.codehaus.mojo.versions-maven-plugin>2.16.2</versionx.org.codehaus.mojo.versions-maven-plugin>
-      <versionx.org.codehaus.mojo.xml-maven-plugin>1.0.2</versionx.org.codehaus.mojo.xml-maven-plugin>
+      <versionx.org.codehaus.mojo.xml-maven-plugin>1.1.0</versionx.org.codehaus.mojo.xml-maven-plugin>
       <versionx.org.dom4j.dom4j>2.1.4</versionx.org.dom4j.dom4j>
       <versionx.org.javassist.javassist>3.29.1-GA</versionx.org.javassist.javassist>
       <versionx.org.jboss.arquillian.container.arquillian-weld-embedded>3.0.2.Final</versionx.org.jboss.arquillian.container.arquillian-weld-embedded>
