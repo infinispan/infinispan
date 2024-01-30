@@ -32,7 +32,7 @@
          <artifactId>jakarta.persistence-api</artifactId>
          <!-- Version is specified as it requires a different version than
               we use in Infinispan -->
-         <version>3.0.0</version>
+         <version>3.1.0</version>
       </dependency>
       <dependency>
          <groupId>jakarta.transaction</groupId>
