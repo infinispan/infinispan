@@ -20,6 +20,7 @@ import java.util.function.Function;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
+import org.infinispan.commands.TracedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
@@ -57,6 +58,9 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.XSiteResponse;
+import org.infinispan.telemetry.InfinispanSpanAttributes;
+import org.infinispan.telemetry.SpanCategory;
+import org.infinispan.telemetry.impl.CacheSpanAttribute;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -100,6 +104,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    private boolean statisticsEnabled = false; // by default, don't gather statistics.
 
    private volatile RpcOptions syncRpcOptions;
+   private InfinispanSpanAttributes remoteSpanAttributes;
 
    @Override
    public Collection<MetricInfo> getCustomMetrics(boolean nameAsTag) {
@@ -165,6 +170,11 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
       configuration.clustering()
                    .attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT)
                    .removeListener(updateRpcOptions);
+   }
+
+   @Inject
+   void cacheSpanAttributes(CacheSpanAttribute cacheSpanAttribute) {
+      remoteSpanAttributes = cacheSpanAttribute.getAttributes(SpanCategory.REMOTE);
    }
 
    private void updateRpcOptions(Attribute<Long> attribute, Long oldValue) {
@@ -383,9 +393,11 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
 
    private CacheRpcCommand toCacheRpcCommand(ReplicableCommand command) {
       checkTopologyId(command);
-      return command instanceof CacheRpcCommand ?
+      var cmd =command instanceof CacheRpcCommand ?
             (CacheRpcCommand) command :
             cf.wired().buildSingleRpcCommand((VisitableCommand) command);
+      setTraceSpanAttributes(cmd);
+      return cmd;
    }
 
    @Override
@@ -429,6 +441,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
 
    @Override
    public <O> XSiteResponse<O> invokeXSite(XSiteBackup backup, XSiteCacheRequest<O> command) {
+      setTraceSpanAttributes(command);
       if (!statisticsEnabled) {
          return t.backupRemotely(backup, command);
       }
@@ -660,5 +673,9 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    @Override
    public List<Address> getMembers() {
       return distributionManager.getCacheTopology().getMembers();
+   }
+
+   private void setTraceSpanAttributes(TracedCommand command) {
+      command.setSpanAttributes(remoteSpanAttributes);
    }
 }

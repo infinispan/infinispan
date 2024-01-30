@@ -7,7 +7,8 @@ public enum SpanCategory {
    /**
     * Default Infinispan span category, which includes all the major put/insertion operations.
     */
-   CONTAINER;
+   CONTAINER,
+   REMOTE;
 
    @Override
    public String toString() {

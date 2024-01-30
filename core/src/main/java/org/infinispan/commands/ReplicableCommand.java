@@ -19,7 +19,7 @@ import org.infinispan.remoting.transport.Address;
  * @author Manik Surtani
  * @since 4.0
  */
-public interface ReplicableCommand {
+public interface ReplicableCommand extends TracedCommand {
 
    /**
     * Invoke the command asynchronously.

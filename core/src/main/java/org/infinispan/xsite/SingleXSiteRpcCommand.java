@@ -9,6 +9,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.telemetry.InfinispanSpanAttributes;
 import org.infinispan.util.ByteString;
 import org.infinispan.xsite.commands.remote.XSiteCacheRequest;
 import org.infinispan.xsite.commands.remote.XSiteRequest;
@@ -22,6 +23,7 @@ import org.infinispan.xsite.commands.remote.XSiteRequest;
 public class SingleXSiteRpcCommand extends XSiteCacheRequest<Object> {
 
    private VisitableCommand command;
+   private InfinispanSpanAttributes spanAttributes;
 
    public SingleXSiteRpcCommand(ByteString cacheName, VisitableCommand command) {
       super(cacheName);
@@ -52,6 +54,22 @@ public class SingleXSiteRpcCommand extends XSiteCacheRequest<Object> {
    public XSiteRequest<Object> readFrom(ObjectInput input) throws IOException, ClassNotFoundException {
       command = (VisitableCommand) input.readObject();
       return super.readFrom(input);
+   }
+
+   @Override
+   public InfinispanSpanAttributes getSpanAttributes() {
+      return spanAttributes;
+   }
+
+   @Override
+   public String getOperationName() {
+      // TODO use the class name or implement this method in all commands?
+      return command.getClass().getSimpleName();
+   }
+
+   @Override
+   public void setSpanAttributes(InfinispanSpanAttributes attributes) {
+      spanAttributes = attributes;
    }
 
    @Override
