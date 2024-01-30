@@ -279,7 +279,7 @@
       <versionx.javax.cache.cache-api>${version.javax.cache}</versionx.javax.cache.cache-api>
       <versionx.javax.cache.cache-tests>${version.javax.cache}</versionx.javax.cache.cache-tests>
       <versionx.javax.cache.cdi-weld-annotations-test-harness>1.1.1</versionx.javax.cache.cdi-weld-annotations-test-harness>
-      <versionx.javax.inject.javax.inject>1</versionx.javax.inject.javax.inject>
+      <versionx.javax.inject.javax.inject>1.0-PFD-1</versionx.javax.inject.javax.inject>
       <versionx.net.spy.spymemcached>2.12.3</versionx.net.spy.spymemcached>
       <versionx.org.antlr.antlr-runtime>3.5.2</versionx.org.antlr.antlr-runtime>
       <versionx.org.apache.avro.avro>1.9.1</versionx.org.apache.avro.avro>
