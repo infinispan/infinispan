@@ -20,6 +20,14 @@ public class DataOperationOrderer {
 
    private final ConcurrentMap<Object, CompletionStage<Operation>> objectStages = new ConcurrentHashMap<>();
 
+   /**
+    * Returns how many keys have pending operations waiting for their completion
+    * @return number of keys with pending operations
+    */
+   public int pendingOperations() {
+      return objectStages.size();
+   }
+
    public enum Operation {
       READ,
       REMOVE,
