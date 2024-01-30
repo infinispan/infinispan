@@ -4,6 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.test.Eventually;
@@ -164,7 +168,11 @@ public class JdbcStringBasedCacheStorePassivation {
 
             assertEquals(0, getNumberOfEntriesInMemory(cache));
             assertEquals(1, table.countAllRows());
-            assertEquals("v1", cache.get("k1"));
+            // Eviction may not always remove k1
+            List<Map.Entry<String, String>> list = new ArrayList<>(cache.entrySet());
+            assertEquals(1, list.size());
+            Map.Entry<String, String> entry = list.get(0);
+            assertEquals(entry.getValue().substring(1), entry.getKey().substring(1));
         }
     }
 
