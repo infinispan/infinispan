@@ -186,7 +186,7 @@
       <version.org.wildfly.openssl.natives.linux_x86_64>2.2.2.SP01</version.org.wildfly.openssl.natives.linux_x86_64>
       <version.org.wildfly.openssl.natives.macos_x86_64>2.2.2.Final</version.org.wildfly.openssl.natives.macos_x86_64>
       <version.org.wildfly.openssl.natives.windows_x86_64>2.2.2.Final</version.org.wildfly.openssl.natives.windows_x86_64>
-      <version.ow2.asm>9.5</version.ow2.asm>
+      <version.ow2.asm>9.6</version.ow2.asm>
       <version.picketbox>5.0.3.Final</version.picketbox>
       <version.picketlink>2.5.5.SP12</version.picketlink>
       <version.protostream>5.0.0.Dev01</version.protostream>
