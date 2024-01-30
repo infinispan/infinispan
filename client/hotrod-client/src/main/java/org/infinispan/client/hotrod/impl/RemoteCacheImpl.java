@@ -146,7 +146,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       }
    }
 
-   private void unregisterMBean() {
+   private synchronized void unregisterMBean() {
       if (mbeanObjectName != null) {
          try {
             MBeanServer mBeanServer = getRemoteCacheContainer().getConfiguration().statistics()
@@ -156,6 +156,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
             } else {
                HOTROD.debugf("MBean not registered: %s", mbeanObjectName);
             }
+            mbeanObjectName = null;
          } catch (Exception e) {
             throw HOTROD.jmxUnregistrationFailure(e);
          }

@@ -630,8 +630,15 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
             name -> {
                synchronized (cacheName2RemoteCache) {
                   // Remove any mappings
-                  cacheName2RemoteCache.remove(new RemoteCacheKey(name, true));
-                  cacheName2RemoteCache.remove(new RemoteCacheKey(name, false));
+                  RemoteCacheHolder removed = cacheName2RemoteCache.remove(new RemoteCacheKey(name, true));
+                  if (removed != null) {
+                     // stop the remote cache like we do it in the stop() method
+                     removed.remoteCache.stop();
+                  }
+                  removed = cacheName2RemoteCache.remove(new RemoteCacheKey(name, false));
+                  if (removed != null) {
+                     removed.remoteCache.stop();
+                  }
                }
             });
    }
