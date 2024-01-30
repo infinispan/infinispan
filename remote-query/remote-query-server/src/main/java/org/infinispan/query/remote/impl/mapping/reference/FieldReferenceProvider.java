@@ -117,7 +117,9 @@ public class FieldReferenceProvider {
          case L2:
             return VectorSimilarity.L2;
          case INNER_PRODUCT:
-            return VectorSimilarity.INNER_PRODUCT;
+            return VectorSimilarity.DOT_PRODUCT;
+         case MAX_INNER_PRODUCT:
+            return VectorSimilarity.MAX_INNER_PRODUCT;
          case COSINE:
             return VectorSimilarity.COSINE;
       }
@@ -164,18 +166,19 @@ public class FieldReferenceProvider {
 
       switch (type.getJavaType()) {
          case BYTE_STRING:
-            step = (VectorFieldTypeOptionsStep<?, F>) typeFactory.asByteVector(dimension);
+            step = (VectorFieldTypeOptionsStep<?, F>) typeFactory.asByteVector();
             break;
          case FLOAT:
-            step = (VectorFieldTypeOptionsStep<?, F>) typeFactory.asFloatVector(dimension);
+            step = (VectorFieldTypeOptionsStep<?, F>) typeFactory.asFloatVector();
             break;
          default:
             throw log.wrongTypeForVector(type.toString(), name, JavaType.BYTE_STRING, JavaType.FLOAT);
       }
 
+      step.dimension(dimension);
       step.vectorSimilarity(similarity);
-      step.beamWidth(beamWidth);
-      step.maxConnections(maxConnection);
+      step.efConstruction(beamWidth);
+      step.m(maxConnection);
       step.searchable(searchable);
       step.projectable(projectable);
       if (indexNullAs != null) {

@@ -24,7 +24,7 @@ public class VectorProcessor implements PropertyMappingAnnotationProcessor<Vecto
       }
 
       vectorField.vectorSimilarity(Options.vectorSimilarity(annotation.similarity()));
-      vectorField.beamWidth(annotation.beamWidth());
-      vectorField.maxConnections(annotation.maxConnections());
+      vectorField.efConstruction(annotation.beamWidth());
+      vectorField.m(annotation.maxConnections());
    }
 }

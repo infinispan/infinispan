@@ -65,7 +65,9 @@ public final class Options {
          case L2:
             return org.hibernate.search.engine.backend.types.VectorSimilarity.L2;
          case INNER_PRODUCT:
-            return org.hibernate.search.engine.backend.types.VectorSimilarity.INNER_PRODUCT;
+            return org.hibernate.search.engine.backend.types.VectorSimilarity.DOT_PRODUCT;
+         case MAX_INNER_PRODUCT:
+            return org.hibernate.search.engine.backend.types.VectorSimilarity.MAX_INNER_PRODUCT;
          case COSINE:
             return org.hibernate.search.engine.backend.types.VectorSimilarity.COSINE;
          default:
