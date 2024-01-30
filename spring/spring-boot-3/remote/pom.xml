@@ -3,7 +3,7 @@
   <parent>
     <artifactId>infinispan-spring-boot3-starter-parent</artifactId>
     <groupId>org.infinispan</groupId>
-    <version>14.0.23-SNAPSHOT</version>
+    <version>14.0.23.Final</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
