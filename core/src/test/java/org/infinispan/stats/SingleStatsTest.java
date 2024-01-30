@@ -21,7 +21,9 @@ import org.infinispan.context.Flag;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.concurrent.DataOperationOrderer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -161,6 +163,9 @@ public class SingleStatsTest extends MultipleCacheManagersTest {
       if (insertErrors > 0 && TOTAL_ENTRIES - EVICTION_MAX_ENTRIES != insertErrors) {
          fail("Number of failed errors was: " + insertErrors + " manually check them.");
       }
+
+      DataOperationOrderer doo = TestingUtil.extractComponent(cache, DataOperationOrderer.class);
+      eventually(() -> doo.pendingOperations() == 0);
 
       int expectedSize = TOTAL_ENTRIES - insertErrors;
 
