@@ -284,7 +284,7 @@
       <versionx.org.twdata.maven.mojo-executor>2.4.0</versionx.org.twdata.maven.mojo-executor>
       <versionx.org.wildfly.common.wildfly-common>1.5.4.Final-format-001</versionx.org.wildfly.common.wildfly-common>
       <versionx.org.wildfly.maven.plugins.licenses-plugin>2.4.0.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
-      <versionx.org.xerial>3.41.2.2</versionx.org.xerial>
+      <versionx.org.xerial>3.45.0.0</versionx.org.xerial>
       <versionx.software.amazon.ion.java>1.0.2</versionx.software.amazon.ion.java>
       <versionx.sun.jdk.jconsole>jdk</versionx.sun.jdk.jconsole>
    </properties>
