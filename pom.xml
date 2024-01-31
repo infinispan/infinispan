@@ -230,7 +230,7 @@
 
       <!-- dependencies version -->
       <versionx.org.infinispan.memcached-client>1.2.3</versionx.org.infinispan.memcached-client>
-      <versionx.com.clearspring.analytics.stream>2.2.0</versionx.com.clearspring.analytics.stream>
+      <versionx.com.clearspring.analytics.stream>2.9.8</versionx.com.clearspring.analytics.stream>
       <versionx.com.google.errorprone.error_prone_annotations>2.24.1</versionx.com.google.errorprone.error_prone_annotations>
       <versionx.com.google.guava.guava>33.0.0-jre</versionx.com.google.guava.guava>
       <versionx.com.google.testing.compile>0.21.0</versionx.com.google.testing.compile>
