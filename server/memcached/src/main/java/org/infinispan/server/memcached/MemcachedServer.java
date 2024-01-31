@@ -55,6 +55,7 @@ public class MemcachedServer extends AbstractProtocolServer<MemcachedServerConfi
          }
          builder.encoding().key().mediaType(MediaType.TEXT_PLAIN);
          builder.encoding().value().mediaType(MediaType.APPLICATION_OCTET_STREAM);
+         builder.statistics().enable();
          cacheManager.defineConfiguration(configuration.defaultCacheName(), builder.build());
       }
       memcachedCache = cacheManager.getCache(configuration.defaultCacheName());
