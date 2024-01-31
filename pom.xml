@@ -2360,7 +2360,7 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-project-info-reports-plugin</artifactId>
-               <version>3.1.1</version>
+               <version>3.1.2</version>
             </plugin>
             <plugin>
                <groupId>com.github.spotbugs</groupId>
@@ -2647,7 +2647,7 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-project-info-reports-plugin</artifactId>
-            <version>3.1.1</version>
+            <version>3.1.2</version>
             <reportSets>
                <reportSet>
                   <reports>
