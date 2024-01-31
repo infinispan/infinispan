@@ -10,6 +10,7 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.AbstractProtocolServer;
@@ -17,9 +18,8 @@ import org.infinispan.server.core.transport.NettyChannelInitializer;
 import org.infinispan.server.core.transport.NettyInitializers;
 import org.infinispan.server.iteration.DefaultIterationManager;
 import org.infinispan.server.iteration.ExternalSourceIterationManager;
-import org.infinispan.server.resp.configuration.RespServerConfiguration;
-import org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner;
 import org.infinispan.server.resp.commands.cluster.SegmentSlotRelation;
+import org.infinispan.server.resp.configuration.RespServerConfiguration;
 import org.infinispan.server.resp.filter.ComposedFilterConverterFactory;
 import org.infinispan.server.resp.filter.GlobMatchFilterConverterFactory;
 import org.infinispan.server.resp.filter.RespTypeFilterConverterFactory;
@@ -90,6 +90,7 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
             }
             builder.encoding().key().mediaType(RESP_KEY_MEDIA_TYPE);
             builder.encoding().value().mediaType(configuredValueType);
+            builder.statistics().enable();
          }
          Configuration cfg = builder.build();
          cacheManager.defineConfiguration(configuration.defaultCacheName(), cfg);
