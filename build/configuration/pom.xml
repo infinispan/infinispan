@@ -145,7 +145,7 @@
       <version.insights>2.0.2</version.insights>
       <version.io.agroal>2.2</version.io.agroal>
       <version.io.lettuce>6.3.1.RELEASE</version.io.lettuce>
-      <version.vertx>4.5.1</version.vertx>
+      <version.vertx>4.5.2</version.vertx>
       <version.io.mashona>1.1.0</version.io.mashona>
       <version.jackson>2.16.1</version.jackson>
       <version.jackson.databind>2.16.0</version.jackson.databind>
