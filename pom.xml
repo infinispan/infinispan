@@ -319,7 +319,7 @@
       <versionx.org.wildfly.arquillian.wildfly-arquillian-container-managed>${version.org.wildfly.arquillian}</versionx.org.wildfly.arquillian.wildfly-arquillian-container-managed>
       <versionx.org.wildfly.common.wildfly-common>1.5.4.Final</versionx.org.wildfly.common.wildfly-common>
       <versionx.org.wildfly.core.wildfly-core-testsuite-shared>${version.org.wildfly.core}</versionx.org.wildfly.core.wildfly-core-testsuite-shared>
-      <versionx.org.wildfly.maven.plugins.licenses-plugin>2.3.0.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
+      <versionx.org.wildfly.maven.plugins.licenses-plugin>2.3.1.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
       <versionx.org.xerial>3.41.2.2</versionx.org.xerial>
       <versionx.software.amazon.ion.java>1.0.3</versionx.software.amazon.ion.java>
       <versionx.sun.jdk.jconsole>jdk</versionx.sun.jdk.jconsole>
