@@ -256,7 +256,7 @@
       <versionx.com.amazonaws>1.12.648</versionx.com.amazonaws>
       <versionx.org.infinispan.memcached-client>1.2.1</versionx.org.infinispan.memcached-client>
       <versionx.com.clearspring.analytics.stream>2.2.0</versionx.com.clearspring.analytics.stream>
-      <versionx.com.esotericsoftware.kryo>4.0.2</versionx.com.esotericsoftware.kryo>
+      <versionx.com.esotericsoftware.kryo>4.0.3</versionx.com.esotericsoftware.kryo>
       <versionx.com.google.errorprone.error_prone_annotations>2.1.3</versionx.com.google.errorprone.error_prone_annotations>
       <versionx.com.google.guava.guava>32.1.1-jre</versionx.com.google.guava.guava>
       <versionx.com.google.testing.compile>0.18</versionx.com.google.testing.compile>
