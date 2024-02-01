@@ -8,6 +8,10 @@ import org.jgroups.JChannel;
 import org.jgroups.protocols.DELAY;
 import org.jgroups.util.Util;
 
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.util.Collection;
+import java.util.List;
 import java.util.Random;
 
 public class SubstituteJGroups {
@@ -51,6 +55,16 @@ final class SubstituteDiscardProtocol {
 
 @TargetClass(Util.class)
 final class SubstituteJgroupsUtil {
+
+    @Alias
+    // Force it to null - so it can be reinitialized
+    @RecomputeFieldValue(kind = RecomputeFieldValue.Kind.Reset)
+    protected static volatile List<NetworkInterface> CACHED_INTERFACES;
+
+    @Alias
+    // Force it to null - so it can be reinitialized
+    @RecomputeFieldValue(kind = RecomputeFieldValue.Kind.Reset)
+    protected static volatile Collection<InetAddress> CACHED_ADDRESSES;
 
     @Substitute
     public static void registerChannel(JChannel channel, String name) {

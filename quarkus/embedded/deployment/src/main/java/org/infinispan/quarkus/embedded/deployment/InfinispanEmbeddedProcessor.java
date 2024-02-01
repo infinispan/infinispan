@@ -30,7 +30,6 @@ import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.Index;
 import org.jboss.jandex.IndexView;
-import org.jgroups.util.Util;
 
 import com.github.benmanes.caffeine.cache.CacheLoader;
 
@@ -44,7 +43,6 @@ import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.IndexDependencyBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
-import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ServiceProviderBuildItem;
 
 class InfinispanEmbeddedProcessor {
@@ -136,11 +134,6 @@ class InfinispanEmbeddedProcessor {
         addReflectionForClass(StoreConfiguration.class, combinedIndex, reflectiveClass, true, excludedClasses);
         addReflectionForClass(ConfigurationSerializer.class, combinedIndex, reflectiveClass, excludedClasses);
         addReflectionForClass(AbstractModuleConfigurationBuilder.class, combinedIndex, reflectiveClass, excludedClasses);
-    }
-
-    @BuildStep
-    void addRuntimeInitializedClasses(BuildProducer<RuntimeInitializedClassBuildItem> runtimeInitialized) {
-        runtimeInitialized.produce(new RuntimeInitializedClassBuildItem(Util.class.getName()));
     }
 
     private void addReflectionForClass(Class<?> classToUse, IndexView indexView,
