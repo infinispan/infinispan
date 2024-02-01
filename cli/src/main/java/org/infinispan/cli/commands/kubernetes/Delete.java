@@ -3,7 +3,6 @@ package org.infinispan.cli.commands.kubernetes;
 import static org.infinispan.cli.commands.kubernetes.Kube.DEFAULT_CLUSTER_NAME;
 import static org.infinispan.cli.commands.kubernetes.Kube.INFINISPAN_CLUSTER_CRD;
 
-import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
@@ -12,7 +11,6 @@ import org.aesh.command.option.Option;
 import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.impl.KubernetesContext;
-import org.kohsuke.MetaInfServices;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
 
@@ -43,7 +41,6 @@ public class Delete extends CliCommand {
       return CommandResult.FAILURE;
    }
 
-   @MetaInfServices(Command.class)
    @CommandDefinition(name = "cluster", description = "Deletes a cluster")
    public static class Cluster extends CliCommand {
 

@@ -2,6 +2,7 @@ package org.infinispan.cli.impl;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.concurrent.TimeUnit;
 
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandNotFoundException;
@@ -20,7 +21,7 @@ import org.infinispan.cli.Context;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-public class ContextAwareCommandInvocation implements CommandInvocation<ContextAwareCommandInvocation> {
+public class ContextAwareCommandInvocation implements CommandInvocation {
    private final CommandInvocation invocation;
    private final Context context;
    private final Shell shell;
@@ -72,6 +73,11 @@ public class ContextAwareCommandInvocation implements CommandInvocation<ContextA
    }
 
    @Override
+   public KeyAction input(long timeout, TimeUnit unit) throws InterruptedException {
+      return invocation.input(timeout, unit);
+   }
+
+   @Override
    public String inputLine() throws InterruptedException {
       return invocation.inputLine();
    }
@@ -87,7 +93,7 @@ public class ContextAwareCommandInvocation implements CommandInvocation<ContextA
    }
 
    @Override
-   public Executor<ContextAwareCommandInvocation> buildExecutor(String line) throws CommandNotFoundException, CommandLineParserException, OptionValidatorException, CommandValidatorException, IOException {
+   public Executor<? extends CommandInvocation> buildExecutor(String line) throws CommandNotFoundException, CommandLineParserException, OptionValidatorException, CommandValidatorException, IOException {
       return invocation.buildExecutor(line);
    }
 
