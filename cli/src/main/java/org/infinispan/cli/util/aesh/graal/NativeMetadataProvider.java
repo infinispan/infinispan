@@ -39,24 +39,24 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
 
    @SuppressWarnings("unchecked")
    private void loadCommand(Class<?> cmd) {
-      Class<Command<CommandInvocation<?>>> clazz = (Class<Command<CommandInvocation<?>>>) cmd;
-      CommandContainerBuilder<CommandInvocation<?>> builder = new AeshCommandContainerBuilder<>();
-      try (CommandContainer<CommandInvocation<?>> container = builder.create(clazz)) {
+      Class<Command<CommandInvocation>> clazz = (Class<Command<CommandInvocation>>) cmd;
+      CommandContainerBuilder<CommandInvocation> builder = new AeshCommandContainerBuilder<>();
+      try (CommandContainer<CommandInvocation> container = builder.create(clazz)) {
          addCommandClasses(container.getParser());
       } catch (Exception e) {
          throw new RuntimeException(e);
       }
    }
 
-   private void addCommandClasses(CommandLineParser<CommandInvocation<?>> parser) {
+   private void addCommandClasses(CommandLineParser<CommandInvocation> parser) {
       addCommandClasses(parser.getProcessedCommand());
       if (parser.isGroupCommand()) {
-         for (CommandLineParser<CommandInvocation<?>> child : parser.getAllChildParsers())
+         for (CommandLineParser<CommandInvocation> child : parser.getAllChildParsers())
             addCommandClasses(child);
       }
    }
 
-   private void addCommandClasses(ProcessedCommand<Command<CommandInvocation<?>>, CommandInvocation<?>> command) {
+   private void addCommandClasses(ProcessedCommand<Command<CommandInvocation>, CommandInvocation> command) {
       Class<?> clazz = command.getCommand().getClass();
       if (command.getActivator() != null)
          classes.add(ReflectiveClass.of(command.getActivator().getClass()));

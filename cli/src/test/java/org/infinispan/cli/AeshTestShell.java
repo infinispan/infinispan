@@ -55,6 +55,11 @@ public class AeshTestShell implements Shell {
    }
 
    @Override
+   public Key read(long timeout, TimeUnit unit) throws InterruptedException {
+      return null;
+   }
+
+   @Override
    public Key read(Prompt prompt) throws InterruptedException {
       return null;
    }
