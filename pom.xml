@@ -285,7 +285,7 @@
       <versionx.org.wildfly.common.wildfly-common>1.7.0.Final</versionx.org.wildfly.common.wildfly-common>
       <versionx.org.wildfly.maven.plugins.licenses-plugin>2.4.0.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
       <versionx.org.xerial>3.45.1.0</versionx.org.xerial>
-      <versionx.software.amazon.ion.java>1.0.2</versionx.software.amazon.ion.java>
+      <versionx.software.amazon.ion.java>1.5.1</versionx.software.amazon.ion.java>
       <versionx.sun.jdk.jconsole>jdk</versionx.sun.jdk.jconsole>
    </properties>
 
