@@ -24,7 +24,7 @@ public class Util {
 
          byte l = target[i];
          byte r = expected[i];
-         if (l != r && l != (r - 32)) return false;
+         if (l != r && l != (r + 32)) return false;
       }
       return true;
    }
