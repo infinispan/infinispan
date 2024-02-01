@@ -5,7 +5,6 @@ import static org.infinispan.cli.commands.kubernetes.Kube.INFINISPAN_CLUSTER_CRD
 import java.io.PrintStream;
 import java.util.List;
 
-import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
@@ -13,7 +12,6 @@ import org.aesh.command.option.Option;
 import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.impl.KubernetesContext;
-import org.kohsuke.MetaInfServices;
 
 import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
 import io.fabric8.kubernetes.api.model.GenericKubernetesResourceList;
@@ -48,7 +46,6 @@ public class Get extends CliCommand {
       return CommandResult.FAILURE;
    }
 
-   @MetaInfServices(Command.class)
    @CommandDefinition(name = "clusters", description = "Get clusters")
    public static class Clusters extends CliCommand {
 
