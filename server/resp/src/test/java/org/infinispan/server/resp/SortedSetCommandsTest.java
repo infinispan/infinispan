@@ -117,6 +117,7 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
                   just(10.4, "william"), just(13, "fabio"), just(13.4, "jose"),
                   just(13.4, "tristan"), just(21.9, "marc"));
       assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zadd("another", 2.3, "tristan"));
+      assertWrongType(() -> redis.zadd("data", 2.3, "tristan"), () -> redis.get("data"));
    }
 
    public void testZADDINCR() {

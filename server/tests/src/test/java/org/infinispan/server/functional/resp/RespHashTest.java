@@ -97,4 +97,24 @@ public class RespHashTest extends AbstractRespTest {
                ctx.completeNow();
             });
    }
+
+   @Test
+   public void testMixTypes(Vertx vertx, VertxTestContext ctx) {
+      RedisAPI redis = createConnection(vertx);
+
+      Map<String, String> map = Map.of("key1", "value1", "key2", "value2", "key3", "value3");
+      List<String> args = new ArrayList<>();
+      args.add("HMSET");
+      args.addAll(map.entrySet().stream().flatMap(e -> Stream.of(e.getKey(), e.getValue())).collect(Collectors.toList()));
+
+      redis.hmset(args)
+            .onFailure(ctx::failNow)
+            .compose(ignore -> redis.get("HMSET"))
+            .onComplete(res -> {
+               ctx.verify(() -> assertThat(res.failed()).isTrue());
+               ctx.verify(() -> assertThat(res.cause())
+                     .isInstanceOfSatisfying(ErrorType.class, e -> assertThat(e.is("ERRWRONGTYPE")).isTrue()));
+               ctx.completeNow();
+            });
+   }
 }

@@ -31,6 +31,7 @@ public class RespSetCommandsTest extends SingleNodeRespBaseTest {
       // SADD on an existing key that contains a List, not a Set!
       // Create a List
       assertWrongType(() -> redis.lpush("listleads", "tristan"), () -> redis.sadd("listleads", "william"));
+      assertWrongType(() -> redis.lpush("data", "e1"), () -> redis.get("data"));
    }
 
    @Test

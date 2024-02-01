@@ -1231,6 +1231,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       // TODO: Verify cardinality ISPN-14676
 
       assertWrongType(() -> redis.set("plain", "string"), () -> redis.pfadd("plain", "el1"));
+      // assertWrongType(() -> redis.pfadd("data", "e1"), () -> redis.get("data"));
    }
 
    @Test

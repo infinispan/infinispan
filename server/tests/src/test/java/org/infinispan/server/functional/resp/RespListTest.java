@@ -77,4 +77,19 @@ public class RespListTest extends AbstractRespTest {
                ctx.completeNow();
             });
    }
+
+   @Test
+   public void testMixTypes(Vertx vertx, VertxTestContext ctx) {
+      RedisAPI redis = createConnection(vertx);
+
+      redis.rpush(List.of("people", "tristan"))
+            .onFailure(ctx::failNow)
+            .compose(ignore -> redis.get("people"))
+            .onComplete(res -> {
+               ctx.verify(() -> assertThat(res.failed()).isTrue());
+               ctx.verify(() -> assertThat(res.cause())
+                     .isInstanceOfSatisfying(ErrorType.class, e -> assertThat(e.is("ERRWRONGTYPE")).isTrue()));
+               ctx.completeNow();
+            });
+   }
 }
