@@ -29,7 +29,6 @@ import org.infinispan.tasks.Task;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.IndexView;
-import org.jgroups.util.Util;
 import org.wildfly.security.password.impl.PasswordFactorySpiImpl;
 
 import com.thoughtworks.xstream.security.NoTypePermission;
@@ -113,7 +112,6 @@ class InfinispanServerProcessor {
       runtimeInitialized.produce(new RuntimeInitializedClassBuildItem(CleartextHttp2ServerUpgradeHandler.class.getName()));
       runtimeInitialized.produce(new RuntimeInitializedClassBuildItem(Http2ServerUpgradeCodec.class.getName()));
       runtimeInitialized.produce(new RuntimeInitializedClassBuildItem(Resp3Handler.class.getName()));
-      runtimeInitialized.produce(new RuntimeInitializedClassBuildItem(Util.class.getName()));
    }
 
    @BuildStep
