@@ -255,7 +255,7 @@
       <versionx.org.apache.directory.server.apacheds>2.0.0-M24</versionx.org.apache.directory.server.apacheds>
       <versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>3.11.0</versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>
       <versionx.org.aspectj.aspectjweaver>1.9.21</versionx.org.aspectj.aspectjweaver>
-      <versionx.org.assertj.assertj-core>3.24.2</versionx.org.assertj.assertj-core>
+      <versionx.org.assertj.assertj-core>3.25.2</versionx.org.assertj.assertj-core>
       <versionx.org.apache.mina.mina>2.0.22</versionx.org.apache.mina.mina>
       <versionx.org.codehaus.mojo.versions-maven-plugin>2.16.2</versionx.org.codehaus.mojo.versions-maven-plugin>
       <versionx.org.codehaus.mojo.xml-maven-plugin>1.1.0</versionx.org.codehaus.mojo.xml-maven-plugin>
