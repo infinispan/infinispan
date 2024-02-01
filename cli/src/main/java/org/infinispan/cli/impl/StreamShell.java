@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.util.concurrent.TimeUnit;
 
 import org.aesh.command.shell.Shell;
 import org.aesh.readline.Prompt;
@@ -76,6 +77,11 @@ public class StreamShell implements Shell {
       } catch (IOException e) {
          throw new RuntimeException(e);
       }
+   }
+
+   @Override
+   public Key read(long timeout, TimeUnit unit) throws InterruptedException {
+      return read();
    }
 
    @Override
