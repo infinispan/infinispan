@@ -84,7 +84,7 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
             }
          } else {
             if (cacheManager.getCacheManagerConfiguration().isClustered()) { // We are running in clustered mode
-               builder.clustering().cacheMode(CacheMode.REPL_SYNC);
+               builder.clustering().cacheMode(CacheMode.DIST_SYNC);
                // See: https://redis.io/docs/reference/cluster-spec/#key-distribution-model
                builder.clustering().hash().keyPartitioner(new RESPHashFunctionPartitioner());
             }

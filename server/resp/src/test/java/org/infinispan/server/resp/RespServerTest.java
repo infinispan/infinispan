@@ -57,7 +57,7 @@ public class RespServerTest extends AbstractInfinispanTest {
       Stoppable.useCacheManager(new DefaultCacheManager(global.build()), cm ->
             Stoppable.useServer(new RespServer(), ms -> {
                ms.start(new RespServerConfigurationBuilder().port(0).build(), cm);
-               assertEquals(CacheMode.REPL_SYNC, ms.getCache().getCacheConfiguration().clustering().cacheMode());
+               assertEquals(CacheMode.DIST_SYNC, ms.getCache().getCacheConfiguration().clustering().cacheMode());
             }));
    }
 }
