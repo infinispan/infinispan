@@ -13,8 +13,6 @@ import javax.security.sasl.SaslException;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.server.resp.authentication.RespAuthenticator;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
-import org.infinispan.test.fwk.CleanupAfterMethod;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import io.lettuce.core.RedisClient;
@@ -30,15 +28,14 @@ import io.netty.channel.Channel;
  * @author Jose Bolina
  * @since 14.0
  */
-@CleanupAfterMethod
 @Test(groups = "functional", testName = "server.resp.RespAuthSingleNodeTest")
 public class RespAuthSingleNodeTest extends RespSingleNodeTest {
    private static final String USERNAME = "default";
    private static final String PASSWORD = "password";
 
    @Override
-   protected RespServerConfigurationBuilder serverConfiguration() {
-      RespServerConfigurationBuilder builder = super.serverConfiguration();
+   protected RespServerConfigurationBuilder serverConfiguration(int i) {
+      RespServerConfigurationBuilder builder = super.serverConfiguration(i);
       builder.authentication()
             .enable()
             .authenticator(new FakeRespAuthenticator());
@@ -53,11 +50,6 @@ public class RespAuthSingleNodeTest extends RespSingleNodeTest {
             .withTimeout(Duration.ofMillis(timeout))
             .build();
       return RedisClient.create(uri);
-   }
-
-   @Override
-   protected void teardown() {
-      super.destroyAfterClass();
    }
 
    public void testNoAuthHello() {
@@ -100,7 +92,6 @@ public class RespAuthSingleNodeTest extends RespSingleNodeTest {
       }
    }
 
-   @Factory
    @Override
    public Object[] factory() {
       return new Object[] {

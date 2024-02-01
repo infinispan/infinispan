@@ -40,6 +40,8 @@ public final class PopFunction<K, V> implements SortedSetBucketBaseFunction<K, V
          Collection<ScoredValue<V>> poppedValues = sortedSetBucket.pop(min, count);
          if (sortedSetBucket.size() == 0) {
             entryView.remove();
+         } else {
+            entryView.set(sortedSetBucket);
          }
          return poppedValues;
       }

@@ -1,5 +1,7 @@
 package org.infinispan.server.resp.hll;
 
+import java.util.Objects;
+
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
@@ -120,5 +122,25 @@ public class HyperLogLog {
    @ProtoField(number = 2)
    CompactSet compact() {
       return compact;
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      HyperLogLog that = (HyperLogLog) o;
+      synchronized (this) {
+         synchronized (that) {
+            return Objects.equals(this.store(), that.store());
+         }
+      }
+   }
+
+   @Override
+   public int hashCode() {
+      synchronized (this) {
+         return Objects.hash(store());
+      }
    }
 }

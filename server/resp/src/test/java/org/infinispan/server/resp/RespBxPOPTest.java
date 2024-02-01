@@ -23,7 +23,6 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.server.resp.commands.list.blocking.BPOP;
 import org.infinispan.test.TestingUtil;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import io.lettuce.core.KeyValue;
@@ -45,7 +44,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
    private boolean simpleCache;
    private boolean right;
 
-   @Factory
+   @Override
    public Object[] factory() {
       return new Object[] {
             new RespBxPOPTest(),
@@ -62,12 +61,12 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
    }
 
    // Set test for BRPOP. Default is BLPOP
-   RespBxPOPTest right() {
+   protected RespBxPOPTest right() {
       this.right = true;
       return this;
    }
 
-   boolean isRight() {
+   protected boolean isRight() {
       return this.right;
    }
 
@@ -170,15 +169,18 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
             redis.rpush("key1", "value1a", "value1b");
             redis.rpush("key2", "value2a", "value2b");
          }
-         var res = cf.get(10, TimeUnit.SECONDS);
-         var res2 = cf2.get(10, TimeUnit.SECONDS);
-         var res3 = cf3.get(10, TimeUnit.SECONDS);
-         assertThat(res.getKey()).isEqualTo("key1");
-         assertThat(res.getValue()).isEqualTo("value1a");
-         assertThat(res2.getKey()).isEqualTo("key1");
-         assertThat(res2.getValue()).isEqualTo("value1b");
-         assertThat(res3.getKey()).isEqualTo("key2");
-         assertThat(res3.getValue()).isEqualTo("value2a");
+         List<KeyValue<String, String>> events = List.of(
+               cf.get(10, TimeUnit.SECONDS),
+               cf2.get(10, TimeUnit.SECONDS),
+               cf3.get(10, TimeUnit.SECONDS));
+
+         assertThat(events)
+               .hasSize(3)
+               .containsExactlyInAnyOrder(
+                     KeyValue.just("key1", "value1a"),
+                     KeyValue.just("key1", "value1b"),
+                     KeyValue.just("key2", "value2a")
+               );
       } finally {
          verifyListenerUnregistered();
       }
@@ -331,9 +333,11 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
          var res = cf.get(10, TimeUnit.SECONDS);
          var res2 = cf2.get(10, TimeUnit.SECONDS);
 
-         assertThat(res.getKey()).isEqualTo("key");
-         assertThat(res.getValue()).isEqualTo("first");
-         assertThat(res2).isNull();
+         KeyValue<String, String> completed = res != null ? res : res2;
+         assertThat(completed).isNotNull();
+         assertThat(completed.getKey()).isEqualTo("key");
+         assertThat(completed.getValue()).isEqualTo("first");
+         assertThat(res == null || res2 == null).isTrue();
       } finally {
          verifyListenerUnregistered();
       }
@@ -415,7 +419,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
    @Test
    public void testBxpopTimeout() throws InterruptedException, ExecutionException {
       RedisCommands<String, String> redis = redisConnection.sync();
-      RedisAsyncCommands<String, String> redisAsync = client.connect().async();
+      RedisAsyncCommands<String, String> redisAsync = newConnection().async();
 
       redis.rpush("key1", "first", "second", "third");
 
@@ -444,13 +448,13 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
    }
 
    private RedisFuture<KeyValue<String, String>> bxPopAsync(long to, String... keys) {
-      RedisAsyncCommands<String, String> redisAsync = client.connect().async();
+      RedisAsyncCommands<String, String> redisAsync = newConnection().async();
       return registerListener(() -> right ? redisAsync.brpop(to, keys)
             : redisAsync.blpop(to, keys));
    }
 
    private KeyValue<String, String> bxPop(long to, String... keys) {
-      RedisCommands<String, String> redis = client.connect().sync();
+      RedisCommands<String, String> redis = newConnection().sync();
       return right ? redis.brpop(to, keys)
             : redis.blpop(to, keys);
    }

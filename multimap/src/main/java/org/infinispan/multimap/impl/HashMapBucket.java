@@ -1,6 +1,7 @@
 package org.infinispan.multimap.impl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -110,7 +111,7 @@ public class HashMapBucket<K, V> {
          return true;
       }
 
-      if (!Objects.equals(current, expected)) return false;
+      if (!equalValues(current, expected)) return false;
 
       if (replacement == null) {
          values.remove(storeKey);
@@ -118,6 +119,16 @@ public class HashMapBucket<K, V> {
          values.put(storeKey, replacement);
       }
       return true;
+   }
+
+   private boolean equalValues(V one, Object other) {
+      boolean eq;
+      if (one instanceof byte[] && other instanceof byte[])
+         eq = Arrays.equals((byte[]) one, (byte[]) other);
+      else
+         eq = Objects.equals(one, other);
+
+      return eq;
    }
 
    private Map<MultimapObjectWrapper<K>, V> toStore(Map<K, V> raw) {
@@ -134,6 +145,34 @@ public class HashMapBucket<K, V> {
          converted.put(entry.getKey().get(), entry.getValue());
       }
       return converted;
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      try {
+         HashMapBucket<?, ?> that = (HashMapBucket<?, ?>) o;
+         if (values.size() != that.values.size()) return false;
+
+         for (Map.Entry<MultimapObjectWrapper<K>, V> e : values.entrySet()) {
+            MultimapObjectWrapper<K> key = e.getKey();
+            V value = e.getValue();
+            boolean eq = equalValues(value, that.values.get(key));
+
+            if (!eq) return false;
+         }
+      } catch (ClassCastException ignore) {
+         return false;
+      }
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(values);
    }
 
    @ProtoTypeId(ProtoStreamTypeIds.MULTIMAP_HASH_MAP_BUCKET_ENTRY)

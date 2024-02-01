@@ -1,5 +1,47 @@
 package org.infinispan.server.resp;
 
+import static io.lettuce.core.ScoredValue.just;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.fail;
+import static org.infinispan.server.resp.test.RespTestingUtil.OK;
+import static org.infinispan.server.resp.test.RespTestingUtil.PONG;
+import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
+import static org.infinispan.test.TestingUtil.getListeners;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
+import org.assertj.core.api.SoftAssertions;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.time.ControlledTimeService;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.server.resp.commands.Commands;
+import org.infinispan.server.resp.test.CommonRespTests;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
 import io.lettuce.core.ExpireArgs;
 import io.lettuce.core.FlushMode;
 import io.lettuce.core.KeyScanArgs;
@@ -20,48 +62,6 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.pubsub.RedisPubSubAdapter;
 import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
-import org.assertj.core.api.SoftAssertions;
-import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.test.Exceptions;
-import org.infinispan.commons.time.ControlledTimeService;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.server.resp.commands.Commands;
-import org.infinispan.server.resp.test.CommonRespTests;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Factory;
-import org.testng.annotations.Test;
-
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-
-import static io.lettuce.core.ScoredValue.just;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.fail;
-import static org.infinispan.server.resp.test.RespTestingUtil.OK;
-import static org.infinispan.server.resp.test.RespTestingUtil.PONG;
-import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
-import static org.infinispan.test.TestingUtil.getListeners;
-import static org.infinispan.test.TestingUtil.k;
-import static org.infinispan.test.TestingUtil.v;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Base class for single node tests.
@@ -75,7 +75,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
    private CacheMode cacheMode = CacheMode.LOCAL;
    private boolean simpleCache;
 
-   @Factory
+   @Override
    public Object[] factory() {
       return new Object[] {
             new RespSingleNodeTest(),
@@ -330,7 +330,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
    }
 
    @DataProvider(name = "booleans")
-   Object[][] booleans() {
+   protected Object[][] booleans() {
       // Reset disabled for now as the client isn't sending a reset command to the
       // server
       return new Object[][] { { true }, { false } };
@@ -486,7 +486,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
    @Test
    public void testClient() {
       RedisCommands<String, String> redis = redisConnection.sync();
-      /*Long l = redis.clientId();
+      Long l = redis.clientId();
       assertThat(l).isNotNull();
       String list = redis.clientList();
       assertThat(list).contains("id=" + l);
@@ -497,11 +497,11 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       assertThat(list).contains("name=test");
 
       redis.clientSetinfo("lib-ver", "15.0");
-      redis.clientSetinfo("lib-name", "Infinispan RESP");
+      redis.clientSetinfo("lib-name", "Infinispan-RESP");
       list = redis.clientList();
       assertThat(list)
             .contains("lib-ver=15.0")
-            .contains("lib-name=Infinispan RESP");*/
+            .contains("lib-name=Infinispan-RESP");
 
       assertThatThrownBy(() -> redis.clientSetinfo("lib-ver", "wrong version"))
             .isInstanceOf(RedisCommandExecutionException.class)
@@ -865,6 +865,36 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       redis.hset(k(2), v(2),v(2));
       redis.expire(k(2), 10);
       assertThat(redis.pttl(k(2))).isEqualTo(10_000L);
+   }
+
+   @Test
+   public void testExpireTypes() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      redis.hset(k(1), v(1), v(1));
+      assertThat(redis.expire(k(1), 1)).isTrue();
+
+      redis.lpush(k(2), v(2));
+      assertThat(redis.expire(k(2), 1)).isTrue();
+
+      redis.zadd(k(3), 10, v(3));
+      assertThat(redis.expire(k(3), 1)).isTrue();
+
+      redis.pfadd(k(4), v(4));
+      assertThat(redis.expire(k(4), 1)).isTrue();
+
+      redis.sadd(k(5), v(5));
+      assertThat(redis.expire(k(5), 1)).isTrue();
+
+      redis.set(k(6), v(6));
+      assertThat(redis.expire(k(6), 1)).isTrue();
+
+      for (int i = 1; i <= 6; i++) {
+         assertThat(redis.pttl(k(i))).isEqualTo(1_000L);
+      }
+
+      // FIXME: the entries do not expire.
+      // eventually(() -> redis.dbsize() == 0L);
    }
 
    @Test

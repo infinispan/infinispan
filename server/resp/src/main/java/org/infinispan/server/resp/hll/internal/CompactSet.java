@@ -1,6 +1,7 @@
 package org.infinispan.server.resp.hll.internal;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -315,5 +316,25 @@ public class CompactSet implements HLLRepresentation {
    @ProtoField(number = 3, javaType = byte.class, defaultValue = "0", type = Type.UINT32)
    byte minimum() {
       return minimum;
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      CompactSet that = (CompactSet) o;
+      synchronized (this) {
+         synchronized (that) {
+            return Arrays.equals(this.store, that.store);
+         }
+      }
+   }
+
+   @Override
+   public int hashCode() {
+      synchronized (this) {
+         return Arrays.hashCode(store);
+      }
    }
 }

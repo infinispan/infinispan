@@ -1,16 +1,16 @@
 package org.infinispan.multimap.impl.internal;
 
-import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.protostream.impl.MarshallableUserObject;
-import org.infinispan.protostream.annotations.ProtoFactory;
-import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.annotations.ProtoTypeId;
+import static org.infinispan.commons.marshall.ProtoStreamTypeIds.MULTIMAP_OBJECT_WRAPPER;
 
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Objects;
 
-import static org.infinispan.commons.marshall.ProtoStreamTypeIds.MULTIMAP_OBJECT_WRAPPER;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.protostream.impl.MarshallableUserObject;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 
 /**
  * Wrapper for objects stored in multimap buckets.
@@ -47,9 +47,8 @@ public class MultimapObjectWrapper<T> implements Comparable<MultimapObjectWrappe
    @Override
    public boolean equals(Object obj) {
       if (this == obj) return true;
-      if (!(obj instanceof MultimapObjectWrapper)) return false;
+      if (!(obj instanceof MultimapObjectWrapper<?> other)) return false;
 
-      MultimapObjectWrapper<?> other = (MultimapObjectWrapper<?>) obj;
       if (object instanceof byte[] && other.object instanceof byte[])
          return Arrays.equals((byte[]) object, (byte[]) other.object);
 

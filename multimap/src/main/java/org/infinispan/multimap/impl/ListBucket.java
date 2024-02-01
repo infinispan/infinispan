@@ -442,4 +442,29 @@ public class ListBucket<V> implements SortableBucket<V> {
       return result;
    }
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      try {
+         ListBucket<V> that = (ListBucket<V>) o;
+         if (values.size() != that.values.size()) return false;
+
+         for (V value : values) {
+            if (!that.contains(value))
+               return false;
+         }
+      } catch (ClassCastException ignore) {
+         return false;
+      }
+
+
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(values);
+   }
 }

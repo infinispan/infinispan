@@ -28,6 +28,7 @@ import org.infinispan.multimap.impl.function.multimap.PutFunction;
 import org.infinispan.multimap.impl.function.multimap.RemoveFunction;
 import org.infinispan.multimap.impl.function.set.SAddFunction;
 import org.infinispan.multimap.impl.function.set.SGetFunction;
+import org.infinispan.multimap.impl.function.set.SPopFunction;
 import org.infinispan.multimap.impl.function.set.SRemoveFunction;
 import org.infinispan.multimap.impl.function.set.SSetFunction;
 import org.infinispan.multimap.impl.function.sortedset.AddManyFunction;
@@ -123,6 +124,7 @@ public class MultimapModuleLifecycle implements ModuleLifecycle {
       addAdvancedExternalizer(externalizerMap, SGetFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, SSetFunction.EXTERNALIZER);
       addAdvancedExternalizer(externalizerMap, SRemoveFunction.EXTERNALIZER);
+      addAdvancedExternalizer(externalizerMap, SPopFunction.EXTERNALIZER);
    }
 
    /**

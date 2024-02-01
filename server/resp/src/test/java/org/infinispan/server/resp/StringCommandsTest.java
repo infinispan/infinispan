@@ -383,7 +383,7 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
    }
 
    @Test
-   void testSetrange() {
+   public void testSetrange() {
       RedisCommands<String, String> redis = redisConnection.sync();
       String key = "setrange";
       redis.set(key, "A long string for testing");
@@ -392,7 +392,7 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
    }
 
    @Test
-   void testSetrangePatchOverflowsLength() {
+   public void testSetrangePatchOverflowsLength() {
       RedisCommands<String, String> redis = redisConnection.sync();
       String key = "setrange";
       redis.set(key, "A long string for testing");
@@ -401,7 +401,7 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
    }
 
    @Test
-   void testSetrangeOffsetGreaterThanLength() {
+   public void testSetrangeOffsetGreaterThanLength() {
       RedisCommands<String, String> redis = redisConnection.sync();
       String key = "setrange";
       redis.set(key, "A long string for testing");
@@ -410,7 +410,7 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
    }
 
    @Test
-   void testSetrangeNotPresent() {
+   public void testSetrangeNotPresent() {
       RedisCommands<String, String> redis = redisConnection.sync();
       String key = "setrange-notpresent";
       assertThat(redis.setrange(key, 5, "my setrange")).isEqualTo(16);

@@ -1,5 +1,7 @@
 package org.infinispan.multimap.impl;
 
+import static org.infinispan.commons.marshall.ProtoStreamTypeIds.MULTIMAP_INDEX_VALUE;
+
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -14,6 +16,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -556,11 +559,16 @@ public class SortedSetBucket<V> implements SortableBucket<V> {
       return scoredEntries.size();
    }
 
+   @ProtoTypeId(MULTIMAP_INDEX_VALUE)
    public static class IndexValue {
-      private final double score;
-      private final long index;
+      @ProtoField(number = 1, defaultValue = "0")
+      final double score;
 
-      private IndexValue(double score, long index) {
+      @ProtoField(number = 2, defaultValue = "0")
+      final long index;
+
+      @ProtoFactory
+      IndexValue(double score, long index) {
          this.score = score;
          this.index = index;
       }
@@ -596,4 +604,19 @@ public class SortedSetBucket<V> implements SortableBucket<V> {
       return sort(scoredValueStream, sortOptions);
    }
 
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      SortedSetBucket<?> that = (SortedSetBucket<?>) o;
+      return Objects.equals(scoredEntries, that.scoredEntries)
+            && Objects.equals(entries, that.entries);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(scoredEntries, entries);
+   }
 }
