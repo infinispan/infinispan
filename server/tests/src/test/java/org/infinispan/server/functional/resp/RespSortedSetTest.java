@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.redis.client.RedisAPI;
+import io.vertx.redis.client.impl.types.ErrorType;
 import io.vertx.redis.client.impl.types.MultiType;
 
 public class RespSortedSetTest extends AbstractRespTest {
@@ -41,6 +42,21 @@ public class RespSortedSetTest extends AbstractRespTest {
             })
             .onSuccess(v -> {
                ctx.verify(() -> assertThat(v.toLong()).isEqualTo(1));
+               ctx.completeNow();
+            });
+   }
+
+   @Test
+   public void testMixTypes(Vertx vertx, VertxTestContext ctx) {
+      RedisAPI redis = createConnection(vertx);
+
+      redis.zadd(List.of("zadd", "10.4", "v1"))
+            .onFailure(ctx::failNow)
+            .compose(ignore -> redis.get("zadd"))
+            .onComplete(res -> {
+               ctx.verify(() -> assertThat(res.failed()).isTrue());
+               ctx.verify(() -> assertThat(res.cause())
+                     .isInstanceOfSatisfying(ErrorType.class, e -> assertThat(e.is("ERRWRONGTYPE")).isTrue()));
                ctx.completeNow();
             });
    }

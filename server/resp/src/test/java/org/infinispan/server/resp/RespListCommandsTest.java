@@ -48,6 +48,7 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.lrange("people2", 0, -1)).containsExactly("william", "jose", "pedro");
 
       assertWrongType(() -> redis.set("leads", "tristan"), () -> redis.rpush("leads", "william"));
+      assertWrongType(() -> redis.rpush("data", "e1"), () -> redis.get("data"));
    }
 
    public void testRPUSHX() {

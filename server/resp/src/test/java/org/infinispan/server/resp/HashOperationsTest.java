@@ -48,6 +48,7 @@ public class HashOperationsTest extends SingleNodeRespBaseTest {
       assertThat(redis.hget("UNKNOWN", "unknown")).isNull();
 
       assertWrongType(() -> redis.set("plain", "string"), () -> redis.hmset("plain", Map.of("k1", "v1")));
+      assertWrongType(() -> redis.hmset("data", Map.of("k1", "v1")), () -> redis.get("data"));
       assertWrongType(() -> {}, () -> redis.hget("plain", "k1"));
    }
 

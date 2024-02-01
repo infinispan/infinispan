@@ -7,6 +7,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.infinispan.server.resp.commands.connection.QUIT;
@@ -81,7 +82,21 @@ public abstract class RespRequestHandler {
          RespErrorUtil.wrongArgumentNumber(command, allocator());
          return myStage;
       }
-      return actualHandleRequest(ctx, command, arguments);
+
+      try {
+         return actualHandleRequest(ctx, command, arguments);
+      } catch (Exception e) {
+         // Extract the handler capable of writing the error message.
+         Consumer<ByteBufPool> writer = RespErrorUtil.handleException(e);
+
+         // If there is no writer capable of handling the message, return the exception to the lower level to handle.
+         if (writer == null) {
+            return CompletableFuture.failedFuture(e);
+         }
+
+         writer.accept(allocatorToUse);
+         return myStage();
+      }
    }
 
    /**
@@ -170,7 +185,8 @@ public abstract class RespRequestHandler {
             }
             biConsumer.accept(result, allocatorToUse);
          } catch (Throwable t) {
-            return CompletableFuture.failedFuture(t);
+            Resp3Handler.handleThrowable(allocatorToUse, t);
+            return myStage();
          }
          return myStage;
       }

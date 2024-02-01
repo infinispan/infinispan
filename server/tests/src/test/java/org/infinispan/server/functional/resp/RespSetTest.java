@@ -15,6 +15,7 @@ import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxTestContext;
 import io.vertx.redis.client.RedisAPI;
 import io.vertx.redis.client.Response;
+import io.vertx.redis.client.impl.types.ErrorType;
 import io.vertx.redis.client.impl.types.MultiType;
 
 public class RespSetTest extends AbstractRespTest {
@@ -81,6 +82,21 @@ public class RespSetTest extends AbstractRespTest {
                      .hasSize(size)
                      .isInstanceOfSatisfying(MultiType.class,
                            mt -> assertThat(mt.stream().map(Response::toString).allMatch(values::contains)).isTrue()));
+               ctx.completeNow();
+            });
+   }
+
+   @Test
+   public void testMixTypes(Vertx vertx, VertxTestContext ctx) {
+      RedisAPI redis = createConnection(vertx);
+
+      redis.sadd(List.of("sadd", "10.4", "v1"))
+            .onFailure(ctx::failNow)
+            .compose(ignore -> redis.get("sadd"))
+            .onComplete(res -> {
+               ctx.verify(() -> assertThat(res.failed()).isTrue());
+               ctx.verify(() -> assertThat(res.cause())
+                     .isInstanceOfSatisfying(ErrorType.class, e -> assertThat(e.is("ERRWRONGTYPE")).isTrue()));
                ctx.completeNow();
             });
    }

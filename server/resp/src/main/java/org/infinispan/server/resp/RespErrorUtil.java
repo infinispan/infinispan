@@ -88,6 +88,12 @@ public final class RespErrorUtil {
          return RespErrorUtil::wrongType;
       }
 
+      if (ex instanceof IllegalArgumentException) {
+         if (ex.getMessage().contains("No marshaller registered for object of Java type")) {
+            return RespErrorUtil::wrongType;
+         }
+      }
+
       if (ex instanceof IndexOutOfBoundsException) {
          return RespErrorUtil::indexOutOfRange;
       }
