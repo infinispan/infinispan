@@ -62,7 +62,6 @@ public class ServiceFinder {
                LOG.debugf("Ignoring already loaded service: %s", service.getClass().getName());
             }
          } catch (ServiceConfigurationError e) {
-            LOG.warnf("Skipping service: %s", Util.unwrapExceptionMessage(e));
             LOG.debug("Skipping service impl", e);
          }
       }
