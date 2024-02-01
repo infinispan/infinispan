@@ -76,7 +76,7 @@ public class SubsetFunction<K, V, T> implements SortedSetBucketBaseFunction<K, V
          }
 
       }
-      return Collections.emptySortedSet();
+      return Collections.emptySet();
    }
 
    private static class Externalizer implements AdvancedExternalizer<SubsetFunction> {

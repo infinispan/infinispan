@@ -89,7 +89,7 @@ public class TransactionOperationsTest extends SingleNodeRespBaseTest {
 
    @Test
    public void testStartNestedTx() throws Exception {
-      StatefulRedisConnection<String, String> multi = client.connect();
+      StatefulRedisConnection<String, String> multi = newConnection();
       RedisCommands<String, String> redis = multi.sync();
 
       assertThat(redis.multi()).isEqualTo(OK);
@@ -148,8 +148,8 @@ public class TransactionOperationsTest extends SingleNodeRespBaseTest {
 
    private void testMultiWithWatcher(boolean unwatchBeforeExec) {
       // Create two different connections. In CLI, need to open two windows.
-      StatefulRedisConnection<String, String> multi = client.connect();
-      StatefulRedisConnection<String, String> outside = client.connect();
+      StatefulRedisConnection<String, String> multi = newConnection();
+      StatefulRedisConnection<String, String> outside = newConnection();
 
       RedisCommands<String, String> tx = multi.sync();
       RedisCommands<String, String> redis = outside.sync();
@@ -234,7 +234,7 @@ public class TransactionOperationsTest extends SingleNodeRespBaseTest {
       assertThat(redis.set("tx-discard-k2", "value-inside")).isNull();
 
       // Another client writes the key. Originally, this would notify the listener.
-      StatefulRedisConnection<String, String> outside = client.connect();
+      StatefulRedisConnection<String, String> outside = newConnection();
       RedisCommands<String, String> outsideSync = outside.sync();
       assertThat(outsideSync.set("tx-discard-k2", "value-outside")).isEqualTo("OK");
       assertThat(outsideSync.get("tx-discard-k2")).isEqualTo("value-outside");

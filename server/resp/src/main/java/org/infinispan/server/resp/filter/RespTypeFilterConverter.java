@@ -26,7 +26,7 @@ public class RespTypeFilterConverter<V> extends AbstractKeyValueFilterConverter<
       this.type = RespTypes.fromOrdinal(ordinal);
    }
 
-   @ProtoField()
+   @ProtoField(number = 1, defaultValue = "0")
    byte ordinal() {
       return (byte) type.ordinal();
    }

@@ -2,6 +2,8 @@ package org.infinispan.server.resp;
 
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.server.resp.filter.GlobMatchFilterConverter;
+import org.infinispan.server.resp.filter.RespTypeFilterConverter;
 import org.infinispan.server.resp.hll.HyperLogLog;
 import org.infinispan.server.resp.hll.internal.CompactSet;
 import org.infinispan.server.resp.hll.internal.ExplicitSet;
@@ -12,6 +14,8 @@ import org.infinispan.server.resp.hll.internal.ExplicitSet;
             HyperLogLog.class,
             ExplicitSet.class,
             CompactSet.class,
+            GlobMatchFilterConverter.class,
+            RespTypeFilterConverter.class,
       },
       schemaFileName = "persistence.resp.proto",
       schemaFilePath = "proto/generated",

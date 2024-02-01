@@ -124,7 +124,7 @@ public class NODES extends RespCommand implements Resp3Command {
                         RespServer server = handler.respServer();
                         response.append(server.getHost()).append(':').append(server.getPort());
                         response.append('@').append(cport);
-                        response.append(",,shard-id=").append(member).append(' ');
+                        response.append(' ');
                         response.append("myself,");
                      } else {
                         response.append(":0@0 noaddr,fail?,");
@@ -186,7 +186,7 @@ public class NODES extends RespCommand implements Resp3Command {
       if (ref != null) {
          RespServer server = ref.running();
          sb.append(server.getHost()).append(':').append(server.getPort()).append('@').append("%d");
-         sb.append(",,shard-id=").append(name).append(' ');
+         sb.append(' ');
       } else {
          sb.append(":0@0 noaddr,");
       }

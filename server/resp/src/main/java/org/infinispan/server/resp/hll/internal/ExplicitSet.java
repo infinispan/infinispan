@@ -4,6 +4,7 @@ import static org.infinispan.server.resp.hll.internal.CompactSet.STORE_SIZE;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -64,5 +65,19 @@ public class ExplicitSet implements HLLRepresentation {
    @ProtoField(number = 1, collectionImplementation = HashSet.class)
    Collection<Long> storage() {
       return new HashSet<>(storage);
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ExplicitSet that = (ExplicitSet) o;
+      return Objects.equals(storage, that.storage);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(storage);
    }
 }

@@ -1,86 +1,52 @@
 package org.infinispan.server.resp;
 
-import static org.infinispan.server.resp.test.RespTestingUtil.createClient;
-import static org.infinispan.server.resp.test.RespTestingUtil.killClient;
-import static org.infinispan.server.resp.test.RespTestingUtil.killServer;
-import static org.infinispan.server.resp.test.RespTestingUtil.startServer;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.infinispan.commons.dataconversion.MediaType;
-import org.infinispan.commons.test.TestResourceTracker;
-import org.infinispan.commons.time.ControlledTimeService;
-import org.infinispan.commons.time.TimeService;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner;
+import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.resp.configuration.RespServerConfiguration;
-import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
-import org.infinispan.server.resp.test.RespTestingUtil;
-import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.server.resp.test.TestSetup;
 import org.testng.annotations.AfterClass;
 
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
 
-public abstract class SingleNodeRespBaseTest extends SingleCacheManagerTest {
+public abstract class SingleNodeRespBaseTest extends AbstractRespTest {
    protected RedisClient client;
    protected RespServer server;
    protected StatefulRedisConnection<String, String> redisConnection;
-   protected static final int timeout = 30_000;
-   protected final TimeService timeService = new ControlledTimeService();
+   private List<StatefulRedisConnection<String, String>> connections;
+   protected Cache<Object, Object> cache;
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() {
-      cacheManager = createTestCacheManager();
-      RespServerConfiguration serverConfiguration = serverConfiguration().build();
-      server = startServer(cacheManager, serverConfiguration);
-      client = createRedisClient(server.getPort());
+   protected void afterSetupFinished() {
+      EmbeddedCacheManager cacheManager = manager(0);
+      server = server(0);
+      client = client(0);
       redisConnection = client.connect();
+      connections = new ArrayList<>();
+      connections.add(redisConnection);
       cache = cacheManager.getCache(server.getConfiguration().defaultCacheName());
-      return cacheManager;
    }
 
-   protected RedisClient createRedisClient(int port) {
-      return createClient(timeout, port);
+   @Override
+   protected TestSetup setup() {
+      return TestSetup.singleNodeTestSetup();
    }
 
-   protected EmbeddedCacheManager createTestCacheManager() {
-      GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
-      TestCacheManagerFactory.amendGlobalConfiguration(globalBuilder, new TransportFlags());
-      ConfigurationBuilder builder = defaultRespConfiguration();
-      amendConfiguration(builder);
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.newDefaultCacheManager(true, globalBuilder, builder);
-      TestingUtil.replaceComponent(cacheManager, TimeService.class, timeService, true);
-      return cacheManager;
-   }
-
-   protected ConfigurationBuilder defaultRespConfiguration() {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.encoding().key().mediaType(MediaType.APPLICATION_OCTET_STREAM);
-      builder.clustering().hash().keyPartitioner(new RESPHashFunctionPartitioner()).numSegments(256);
-      return builder;
-   }
-
-   protected void amendConfiguration(ConfigurationBuilder configurationBuilder) {
-
-   }
-
-   protected RespServerConfigurationBuilder serverConfiguration() {
-      String serverName = TestResourceTracker.getCurrentTestShortName();
-      return new RespServerConfigurationBuilder().name(serverName)
-            .host(RespTestingUtil.HOST)
-            .port(RespTestingUtil.port());
+   protected final StatefulRedisConnection<String, String> newConnection() {
+      StatefulRedisConnection<String, String> conn = client.connect();
+      connections.add(conn);
+      return conn;
    }
 
    @AfterClass(alwaysRun = true)
    @Override
-   protected void destroyAfterClass() {
-      super.destroyAfterClass();
-      log.debug("Test finished, close resp server");
-      killClient(client);
-      killServer(server);
+   protected void destroy() {
+      for (StatefulRedisConnection<String, String> conn : connections) {
+         conn.close();
+      }
+
+      super.destroy();
    }
 }

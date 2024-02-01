@@ -1,15 +1,21 @@
 package org.infinispan.server.resp.filter;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.Util;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.protostream.annotations.ProtoFactory;
-import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.protostream.annotations.ProtoName;
+import org.infinispan.server.resp.ExternalizerIds;
 
 /**
  * A filter which is composed of other filters.
@@ -21,13 +27,11 @@ import org.infinispan.protostream.annotations.ProtoName;
  * @param <V>: The filters value types.
  * @param <C>: The filters return type.
  */
-@ProtoName("ComposedFilterConverter")
 public class ComposedFilterConverter<K, V, C> extends AbstractKeyValueFilterConverter<K, V, C> {
+   public static final AdvancedExternalizer<ComposedFilterConverter> EXTERNALIZER = new Externalizer();
 
-   @ProtoField(collectionImplementation = ArrayList.class)
    final List<KeyValueFilterConverter<K, V, C>> filterConverters;
 
-   @ProtoFactory
    public ComposedFilterConverter(List<KeyValueFilterConverter<K, V, C>> filterConverters) {
       this.filterConverters = filterConverters;
    }
@@ -45,5 +49,30 @@ public class ComposedFilterConverter<K, V, C> extends AbstractKeyValueFilterConv
    @Override
    public MediaType format() {
       return null;
+   }
+
+   @SuppressWarnings({"unchecked", "rawtypes"})
+   private static class Externalizer extends AbstractExternalizer<ComposedFilterConverter> {
+
+      @Override
+      public Integer getId() {
+         return ExternalizerIds.COMPOSED_FILTER_CONVERTER;
+      }
+
+      @Override
+      public Set<Class<? extends ComposedFilterConverter>> getTypeClasses() {
+         return Util.asSet(ComposedFilterConverter.class);
+      }
+
+      @Override
+      public void writeObject(ObjectOutput output, ComposedFilterConverter object) throws IOException {
+         MarshallUtil.marshallCollection(object.filterConverters, output);
+      }
+
+      @Override
+      public ComposedFilterConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         List<KeyValueFilterConverter> filters = MarshallUtil.unmarshallCollection(input, ArrayList::new);
+         return new ComposedFilterConverter(filters);
+      }
    }
 }

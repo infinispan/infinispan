@@ -31,6 +31,6 @@ public class GlobMatchFilterConverterFactory implements ParamKeyValueFilterConve
    }
 
    static KeyValueFilterConverter<byte[], byte[], byte[]> create(byte[] params, boolean returnValue) {
-      return new GlobMatchFilterConverter(new String(params, StandardCharsets.UTF_8), returnValue);
+      return new GlobMatchFilterConverter<>(new String(params, StandardCharsets.UTF_8), returnValue);
    }
 }

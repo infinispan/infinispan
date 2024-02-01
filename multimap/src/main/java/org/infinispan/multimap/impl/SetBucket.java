@@ -121,4 +121,18 @@ public class SetBucket<V> implements SortableBucket<V> {
       }
       return sort(scoredValueStream, sortOptions);
    }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      SetBucket<?> setBucket = (SetBucket<?>) o;
+      return Objects.equals(values, setBucket.values);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(values);
+   }
 }

@@ -14,7 +14,8 @@ import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
             MultimapObjectWrapper.class,
             SetBucket.class,
             SortedSetBucket.class,
-            ScoredValue.class
+            ScoredValue.class,
+            SortedSetBucket.IndexValue.class,
       },
       schemaFileName = "persistence.multimap.proto",
       schemaFilePath = "proto/generated",

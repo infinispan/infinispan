@@ -1,5 +1,6 @@
 package org.infinispan.server.resp.test;
 
+import io.lettuce.core.AbstractRedisClient;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisURI;
@@ -76,7 +77,7 @@ public class RespTestingUtil {
       return server;
    }
 
-   public static void killClient(RedisClient client) {
+   public static void killClient(AbstractRedisClient client) {
       try {
          if (client != null)
             client.shutdown();

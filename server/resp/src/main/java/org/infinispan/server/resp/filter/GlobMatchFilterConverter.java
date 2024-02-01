@@ -20,7 +20,7 @@ import org.infinispan.protostream.annotations.ProtoName;
  **/
 @ProtoName("GlobMatchFilterConverter")
 public class GlobMatchFilterConverter<K, V> extends AbstractKeyValueFilterConverter<byte[], V, byte[]> {
-   @ProtoField()
+   @ProtoField(number = 1)
    final String glob;
 
    @ProtoField(number = 2, defaultValue = "false")

@@ -29,7 +29,7 @@ public class ZCARD extends RespCommand implements Resp3Command {
                                                       List<byte[]> arguments) {
 
       byte[] name = arguments.get(0);
-      EmbeddedMultimapSortedSetCache sortedSetCache = handler.getSortedSeMultimap();
+      EmbeddedMultimapSortedSetCache<byte[], ?> sortedSetCache = handler.getSortedSeMultimap();
       return handler.stageToReturn(sortedSetCache.size(name), ctx, Consumers.LONG_BICONSUMER);
    }
 }

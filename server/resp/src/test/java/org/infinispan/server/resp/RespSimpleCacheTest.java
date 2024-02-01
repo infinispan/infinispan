@@ -8,7 +8,6 @@ import java.util.Map;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 import io.lettuce.core.ZAddArgs;
@@ -20,7 +19,7 @@ public class RespSimpleCacheTest extends SingleNodeRespBaseTest {
    protected CacheMode cacheMode = CacheMode.LOCAL;
    protected boolean simpleCache;
 
-   @Factory
+   @Override
    public Object[] factory() {
       return new Object[] {
             new RespSimpleCacheTest(),

@@ -4,6 +4,7 @@ import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.AdvancedCache;
@@ -49,7 +50,8 @@ public abstract class BaseIterationCommand extends RespCommand implements Resp3C
          return initializeAndIterate(handler, ctx, manager, args, null);
       }
 
-      return iterate(handler, manager, cursor, args);
+      iterate(handler, manager, cursor, args);
+      return handler.myStage();
    }
 
    private CompletionStage<RespRequestHandler> initializeAndIterate(Resp3Handler handler, ChannelHandlerContext ctx,
@@ -60,14 +62,23 @@ public abstract class BaseIterationCommand extends RespCommand implements Resp3C
             arguments.getFilterConverterParams(), null, arguments.getCount(),
             false, DeliveryGuarantee.AT_LEAST_ONCE, iic);
       iterationState.getReaper().registerChannel(ctx.channel());
-      return iterate(handler, manager, iterationState.getId(), arguments);
+
+      if (!ctx.executor().inEventLoop()) {
+         return CompletableFuture.supplyAsync(() -> {
+            iterate(handler, manager, iterationState.getId(), arguments);
+            return handler;
+         }, ctx.executor());
+      }
+
+      iterate(handler, manager, iterationState.getId(), arguments);
+      return handler.myStage();
    }
 
-   private CompletionStage<RespRequestHandler> iterate(Resp3Handler handler, IterationManager manager, String cursor,
+   private void iterate(Resp3Handler handler, IterationManager manager, String cursor,
                                                        IterationArguments arguments) {
       if (manager == null) {
          ByteBufferUtils.stringToByteBufAscii("*2\r\n$1\r\n0\r\n*0\r\n", handler.allocator());
-         return handler.myStage();
+         return;
       }
 
       IterableIterationResult result = manager.next(cursor, arguments.getCount());
@@ -94,7 +105,7 @@ public abstract class BaseIterationCommand extends RespCommand implements Resp3C
          }
          ByteBufferUtils.bytesToResult(writeResponse(result.getEntries()), handler.allocator());
       }
-      return handler.myStage();
+      return;
    }
 
    protected boolean writeCursor() {

@@ -9,6 +9,7 @@ import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.commons.test.skip.StringLogAppender;
 import org.infinispan.server.resp.SingleNodeRespBaseTest;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import io.lettuce.core.api.sync.RedisCommands;
@@ -21,7 +22,7 @@ public class RespAccessLoggingTest extends SingleNodeRespBaseTest {
    private String testShortName;
 
    @Override
-   protected void setup() throws Exception {
+   protected void afterSetupFinished() {
       testShortName = TestResourceTracker.getCurrentTestShortName();
 
       logAppender = new StringLogAppender(RespAccessLogger.log.getName(),
@@ -30,13 +31,14 @@ public class RespAccessLoggingTest extends SingleNodeRespBaseTest {
             PatternLayout.newBuilder().withPattern(LOG_FORMAT).build());
       logAppender.install();
       assertThat(RespAccessLogger.isEnabled()).isTrue();
-      super.setup();
+      super.afterSetupFinished();
    }
 
+   @AfterClass(alwaysRun = true)
    @Override
-   protected void teardown() {
+   protected void destroy() {
       logAppender.uninstall();
-      super.teardown();
+      super.destroy();
    }
 
    @Test

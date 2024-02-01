@@ -1,7 +1,9 @@
 package org.infinispan.server.resp.commands.tx;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -57,15 +59,19 @@ public class EXEC extends RespCommand implements Resp3Command, TransactionResp3C
       // One such example, trying to WATCH while in transaction context. This is not a command failed to execute yet.
       // See: https://redis.io/docs/interact/transactions/#errors-inside-a-transaction
       if (curr.hasFailed()) {
-         RespErrorUtil.transactionAborted(curr.allocator());
-         return CompletableFutures.completedNull();
+         return CompletableFuture.supplyAsync(() -> {
+            RespErrorUtil.transactionAborted(curr.allocator());
+            return null;
+         }, ctx.executor());
       }
 
       // Using WATCH and keys changed. Abort transaction.
       if (commands == null) {
          // Should write `(nil)` since the transaction is aborted.
-         Consumers.GET_BICONSUMER.accept(null, curr.allocator());
-         return CompletableFutures.completedNull();
+         return CompletableFuture.supplyAsync(() -> {
+            Consumers.GET_BICONSUMER.accept(null, curr.allocator());
+            return null;
+         }, ctx.executor());
       }
 
       AdvancedCache<byte[], byte[]> cache = curr.cache();
@@ -78,12 +84,14 @@ public class EXEC extends RespCommand implements Resp3Command, TransactionResp3C
       } else {
          cache.startBatch();
       }
-      Resp3Handler.writeArrayPrefix(commands.size(), curr.allocator());
-      return orderlyExecution(next, ctx, commands, 0, CompletableFutures.completedNull())
-            .whenComplete((ignore, t) -> {
-               if (batchEnabled)
-                  cache.endBatch(true);
-            });
+      return CompletableFuture.supplyAsync(() -> {
+         Resp3Handler.writeArrayPrefix(commands.size(), curr.allocator());
+         return orderlyExecution(next, ctx, commands, 0, CompletableFutures.completedNull())
+               .whenComplete((ignore, t) -> {
+                  if (batchEnabled)
+                     cache.endBatch(true);
+               });
+      }, ctx.executor()).thenCompose(Function.identity());
    }
 
    private CompletionStage<?> orderlyExecution(Resp3Handler handler, ChannelHandlerContext ctx,
