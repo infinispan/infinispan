@@ -26,7 +26,7 @@
         <javaee.docroot>https://jakarta.ee/specifications/platform/9/apidocs</javaee.docroot>
         <skipTests>true</skipTests>
         <defaults.file>${project.build.directory}/default-attributes.adoc</defaults.file>
-        <asciidoctorj.version>2.5.2</asciidoctorj.version>
+        <asciidoctorj.version>2.5.11</asciidoctorj.version>
         <asciidoctor.maven.plugin.version>2.2.5</asciidoctor.maven.plugin.version>
         <asciidoctorj.pdf.version>2.3.10</asciidoctorj.pdf.version>
         <jruby.version>9.4.5.0</jruby.version>
