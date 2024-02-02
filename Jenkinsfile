@@ -53,44 +53,44 @@ pipeline {
             }
         }
 
-        stage('Image') {
-            when {
-                expression {
-                    return !env.BRANCH_NAME.startsWith("PR-") || pullRequest.labels.contains('Image Required')
-                }
-            }
-            steps {
-                script {
-                    def mvnCmd = '-q -Dexec.executable=echo -Dexec.args=\'${project.version}\' --non-recursive exec:exec'
-                    def SERVER_VERSION = sh(
-                            script: "${MAVEN_HOME}/bin/mvn ${mvnCmd}",
-                            returnStdout: true
-                    ).trim()
-                    def REPO = 'quay.io/infinispan-test/server'
-                    def TAG = env.BRANCH_NAME
-                    def IMAGE_BRANCH = env.CHANGE_ID ? pullRequest.base : env.BRANCH_NAME
-
-                    sh "rm -rf infinispan-images"
-                    sh "git clone --single-branch --branch ${IMAGE_BRANCH} --depth 1 https://github.com/infinispan/infinispan-images.git"
-
-
-                    dir('infinispan-images') {
-                        sh "cekit -v --descriptor server-openjdk.yaml build --overrides '{\"name\":\"${REPO}\", \"version\":\"${TAG}\"}' --overrides '{\"artifacts\":[{\"name\":\"server\",\"path\":\"../distribution/target/distribution/infinispan-server-${SERVER_VERSION}.zip\"}]}' docker\n"
-
-                        withDockerRegistry(credentialsId: 'Quay-InfinispanTest', url: 'https://quay.io') {
-                            sh "docker push ${REPO}:${TAG}"
-                        }
-                        sh "docker rmi ${REPO}:${TAG}"
-                        deleteDir()
-                    }
-
-                    // CHANGE_ID is set only for pull requests, so it is safe to access the pullRequest global variable
-                    if (env.CHANGE_ID) {
-                        pullRequest.comment("Image pushed for Jenkins build [#${env.BUILD_NUMBER}](${env.BUILD_URL}):\n```\n${REPO}:${TAG}\n```")
-                    }
-                }
-            }
-        }
+//         stage('Image') {
+//             when {
+//                 expression {
+//                     return !env.BRANCH_NAME.startsWith("PR-") || pullRequest.labels.contains('Image Required')
+//                 }
+//             }
+//             steps {
+//                 script {
+//                     def mvnCmd = '-q -Dexec.executable=echo -Dexec.args=\'${project.version}\' --non-recursive exec:exec'
+//                     def SERVER_VERSION = sh(
+//                             script: "${MAVEN_HOME}/bin/mvn ${mvnCmd}",
+//                             returnStdout: true
+//                     ).trim()
+//                     def REPO = 'quay.io/infinispan-test/server'
+//                     def TAG = env.BRANCH_NAME
+//                     def IMAGE_BRANCH = env.CHANGE_ID ? pullRequest.base : env.BRANCH_NAME
+//
+//                     sh "rm -rf infinispan-images"
+//                     sh "git clone --single-branch --branch ${IMAGE_BRANCH} --depth 1 https://github.com/infinispan/infinispan-images.git"
+//
+//
+//                     dir('infinispan-images') {
+//                         sh "cekit -v --descriptor server-openjdk.yaml build --overrides '{\"name\":\"${REPO}\", \"version\":\"${TAG}\"}' --overrides '{\"artifacts\":[{\"name\":\"server\",\"path\":\"../distribution/target/distribution/infinispan-server-${SERVER_VERSION}.zip\"}]}' docker\n"
+//
+//                         withDockerRegistry(credentialsId: 'Quay-InfinispanTest', url: 'https://quay.io') {
+//                             sh "docker push ${REPO}:${TAG}"
+//                         }
+//                         sh "docker rmi ${REPO}:${TAG}"
+//                         deleteDir()
+//                     }
+// 
+//                     // CHANGE_ID is set only for pull requests, so it is safe to access the pullRequest global variable
+//                     if (env.CHANGE_ID) {
+//                         pullRequest.comment("Image pushed for Jenkins build [#${env.BUILD_NUMBER}](${env.BUILD_URL}):\n```\n${REPO}:${TAG}\n```")
+//                     }
+//                 }
+//             }
+//         }
 
         stage('Tests') {
             steps {
