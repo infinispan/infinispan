@@ -1,13 +1,13 @@
 package org.infinispan.server.functional;
 
-import java.io.File;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 import org.infinispan.cli.commands.CLI;
 import org.infinispan.cli.impl.AeshDelegatingShell;
@@ -23,21 +23,25 @@ import org.junit.jupiter.api.BeforeAll;
  */
 public class RollingUpgradeDynamicStoreCliIT extends RollingUpgradeDynamicStoreIT {
 
-   private static File workingDir;
+   private static Path workingDir;
    private static Properties properties;
-   private static Path dest;
+
+   private static String configTemplateJson;
    private static final String REMOTE_STORE_CFG_FILE = "remote-store.json";
 
    @BeforeAll
    public static void setup() {
-      workingDir = new File(CommonsTestingUtil.tmpDirectory(RollingUpgradeDynamicStoreCliIT.class));
+      workingDir = Path.of(CommonsTestingUtil.tmpDirectory(RollingUpgradeDynamicStoreCliIT.class));
       Util.recursiveFileRemove(workingDir);
-      workingDir.mkdirs();
       properties = new Properties(System.getProperties());
-      properties.put("cli.dir", workingDir.getAbsolutePath());
-      dest = workingDir.toPath().resolve(REMOTE_STORE_CFG_FILE);
+      properties.put("cli.dir", workingDir.toAbsolutePath());
       try (InputStream is = RollingUpgradeDynamicStoreCliIT.class.getResourceAsStream("/cli/" + REMOTE_STORE_CFG_FILE)) {
-         Files.copy(is, dest);
+         assert is != null;
+         try (InputStreamReader isr = new InputStreamReader(is)) {
+            BufferedReader reader = new BufferedReader(isr);
+            configTemplateJson = reader.lines().collect(Collectors.joining(System.lineSeparator()));
+         }
+         Files.createDirectories(workingDir);
       } catch (IOException e) {
          throw new IllegalStateException(e);
       }
@@ -49,12 +53,14 @@ public class RollingUpgradeDynamicStoreCliIT extends RollingUpgradeDynamicStoreI
    }
 
    @Override
-   protected void connectTargetCluster() {
+   protected void connectTargetCluster(String cacheName) {
+      Path cacheConfig = workingDir.resolve(cacheName);
       try {
-         String cfg = new String(Files.readAllBytes(dest), StandardCharsets.UTF_8);
+         String cfg = configTemplateJson;
          cfg = cfg.replace("127.0.0.1", source.driver.getServerAddress(0).getHostAddress());
          cfg = cfg.replace("11222", Integer.toString(source.getSinglePort(0)));
-         Files.write(dest, cfg.getBytes(StandardCharsets.UTF_8), StandardOpenOption.TRUNCATE_EXISTING);
+         cfg = cfg.replace("cache-name", cacheName);
+         Files.writeString(cacheConfig, cfg);
       } catch (IOException e) {
          throw new RuntimeException(e);
       }
@@ -64,56 +70,56 @@ public class RollingUpgradeDynamicStoreCliIT extends RollingUpgradeDynamicStoreI
          connectToCluster(terminal, target);
          terminal.assertContains("//containers/default]>");
          terminal.clear();
-         terminal.send("migrate cluster connect --file=" + dest + " --cache=" + CACHE_NAME);
+         terminal.send("migrate cluster connect --file=" + cacheConfig + " --cache=" + cacheName);
          terminal.clear();
-         terminal.send("migrate cluster source-connection --cache=" + CACHE_NAME);
+         terminal.send("migrate cluster source-connection --cache=" + cacheName);
          terminal.assertContains("remote-store");
       }
    }
 
    @Override
-   protected void assertSourceConnected() {
+   protected void assertSourceConnected(String cacheName) {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
          connectToCluster(terminal, target);
          terminal.assertContains("//containers/default]>");
          terminal.clear();
-         terminal.send("migrate cluster source-connection --cache=" + CACHE_NAME);
+         terminal.send("migrate cluster source-connection --cache=" + cacheName);
          terminal.assertContains("remote-store");
       }
    }
 
    @Override
-   protected void assertSourceDisconnected() {
+   protected void assertSourceDisconnected(String cacheName) {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
          connectToCluster(terminal, target);
          terminal.assertContains("//containers/default]>");
          terminal.clear();
-         terminal.send("migrate cluster source-connection --cache=" + CACHE_NAME);
+         terminal.send("migrate cluster source-connection --cache=" + cacheName);
          terminal.assertContains("Not Found");
       }
    }
 
    @Override
-   protected void doRollingUpgrade(RestClient client) {
+   protected void doRollingUpgrade(String cacheName, RestClient client) {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
          connectToCluster(terminal, target);
          terminal.assertContains("//containers/default]>");
          terminal.clear();
-         terminal.send("migrate cluster synchronize --cache=" + CACHE_NAME);
+         terminal.send("migrate cluster synchronize --cache=" + cacheName);
       }
    }
 
    @Override
-   protected void disconnectSource(RestClient client) {
+   protected void disconnectSource(String cacheName, RestClient client) {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
          connectToCluster(terminal, target);
          terminal.assertContains("//containers/default]>");
          terminal.clear();
-         terminal.send("migrate cluster disconnect --cache=" + CACHE_NAME);
+         terminal.send("migrate cluster disconnect --cache=" + cacheName);
       }
    }
 

@@ -82,7 +82,7 @@ abstract class AbstractMultiClusterIT {
 
    protected void addSchema(RestClient client) {
       RestCacheClient cache = client.cache(PROTOBUF_METADATA_CACHE_NAME);
-      assertStatus(NO_CONTENT, cache.put("schema.proto", "message Person {required string name = 1;}"));
+      assertStatus(NO_CONTENT, cache.put("schema.proto", "/* @Indexed */ message Person {  /* @Text(projectable = true) */ required string name = 1; }"));
       assertStatus(NOT_FOUND,  client.cache(PROTOBUF_METADATA_CACHE_NAME).get("schema.proto.errors"));
    }
 
