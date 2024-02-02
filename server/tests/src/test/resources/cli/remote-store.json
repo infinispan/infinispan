@@ -1,9 +1,9 @@
 {
   "remote-store": {
+    "segmented": false,
     "shared": true,
     "raw-values": true,
-    "protocol-version": "2.5",
-    "cache": "rolling",
+    "cache": "cache-name",
     "remote-server": {
       "host": "127.0.0.1",
       "port": 11222

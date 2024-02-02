@@ -5,7 +5,7 @@ import org.infinispan.util.KeyValuePair;
 /**
  * @since 12.1
  */
-public class RollingUpgradeSecureIT extends RollingUpgradeIT {
+public class RollingUpgradeSecureIT extends RollingUpgradeDynamicStoreIT {
 
    static final String USER = "all_user";
    static final String PASS = "all";
