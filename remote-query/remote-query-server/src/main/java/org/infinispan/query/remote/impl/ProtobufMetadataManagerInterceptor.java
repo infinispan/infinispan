@@ -172,6 +172,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
    };
 
    private void registerProtoFile(String name, String content, FileDescriptorSource.ProgressCallback callback) {
+      log.debugf("Registering proto file '%s': %s", name, content);
       FileDescriptorSource source = new FileDescriptorSource()
             .withProgressCallback(callback)
             .addProtoFile(name, content);
@@ -481,7 +482,31 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
    @Override
    public Object visitComputeCommand(InvocationContext ctx, ComputeCommand command) {
+      if (command.hasAnyFlag(FlagBitSets.ROLLING_UPGRADE)) {
+         return invokeNextThenApply(ctx, command, this::handleComputeCommandResult);
+      }
       return handleUnsupportedCommand(command);
+   }
+
+   private InvocationStage handleComputeCommandResult(InvocationContext ctx, ComputeCommand cmd, Object rv) {
+      if (cmd.isSuccessful()) {
+         Object key = cmd.getKey();
+         if (!(key instanceof String)) {
+            throw log.keyMustBeString(key.getClass());
+         }
+         if (!(rv instanceof String)) {
+            throw log.valueMustBeString(rv.getClass());
+         }
+         if (ctx.isOriginLocal()) {
+            ProgressCallback progressCallback = new ProgressCallback();
+            registerProtoFile((String) key, (String) rv, progressCallback);
+            List<KeyValuePair<String, String>> errorUpdates = computeErrorUpdates(progressCallback);
+            InvocationStage updateStage = updateSchemaErrorsIterator(ctx, 0, errorUpdates.iterator());
+            return makeStage(updateStage.thenReturn(ctx, cmd, rv));
+         }
+         registerProtoFile((String) key, (String) rv, EMPTY_CALLBACK);
+      }
+      return makeStage(rv);
    }
 
    @Override
