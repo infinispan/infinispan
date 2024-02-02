@@ -236,7 +236,7 @@
       <version.maven.invoker>3.6.0</version.maven.invoker>
       <version.maven.jar>3.3.0</version.maven.jar>
       <version.maven.javadoc>3.6.3</version.maven.javadoc>
-      <version.maven-plugin-plugin>3.9.0</version.maven-plugin-plugin>
+      <version.maven-plugin-plugin>3.11.0</version.maven-plugin-plugin>
       <version.maven.os>1.7.1</version.maven.os>
       <version.maven.release>3.0.1</version.maven.release>
       <version.maven.remote.resource>3.1.0</version.maven.remote.resource>
