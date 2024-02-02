@@ -41,6 +41,11 @@ public class RespHashTest extends AbstractRespTest {
                return redis.hget("HMSET", "unknown");
             })
             .onSuccess(v -> ctx.verify(() -> assertThat(v).isNull()))
+            .compose(ignore -> redis.hdel(List.of("HMSET", "key1", "key2", "unknown")))
+            .andThen(res -> {
+               ctx.verify(() -> assertThat(res.succeeded()).isTrue());
+               ctx.verify(() -> assertThat(res.result().toInteger()).isEqualTo(2));
+            })
             .andThen(ignore -> redis.set(List.of("plain", "string")))
             .compose(ignore -> ctx.assertFailure(redis.hmset(List.of("plain", "k1", "v1")))
                   .onFailure(t -> ctx.verify(() -> assertThat(t)

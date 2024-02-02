@@ -5,12 +5,14 @@ import static org.infinispan.multimap.impl.ExternalizerIds.HASH_MAP_REMOVE_FUNCT
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.functional.EntryView;
 import org.infinispan.multimap.impl.HashMapBucket;
 
@@ -56,13 +58,13 @@ public class HashMapRemoveFunction<K, HK, HV> extends HashMapBucketBaseFunction<
 
       @Override
       public void writeObject(ObjectOutput output, HashMapRemoveFunction object) throws IOException {
-         output.writeObject(object.keys);
+         MarshallUtil.marshallCollection(object.keys, output);
       }
 
       @Override
       @SuppressWarnings("unchecked")
       public HashMapRemoveFunction readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Collection keys = (Collection) input.readObject();
+         Collection keys = MarshallUtil.unmarshallCollection(input, ArrayList::new);
          return new HashMapRemoveFunction(keys);
       }
    }
