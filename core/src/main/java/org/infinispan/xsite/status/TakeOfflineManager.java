@@ -7,6 +7,7 @@ import java.util.Map;
 import org.infinispan.commons.stat.MetricInfo;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.configuration.cache.TakeOfflineConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalMetricsConfiguration;
 import org.infinispan.metrics.impl.CustomMetricsSupplier;
 import org.infinispan.remoting.transport.XSiteResponse;
 
@@ -93,7 +94,7 @@ public interface TakeOfflineManager extends CustomMetricsSupplier {
    TakeSiteOfflineResponse takeSiteOffline(String siteName);
 
    @Override
-   default Collection<MetricInfo> getCustomMetrics(boolean nameAsTag) {
+   default Collection<MetricInfo> getCustomMetrics(GlobalMetricsConfiguration configuration) {
       return Collections.emptyList();
    }
 }

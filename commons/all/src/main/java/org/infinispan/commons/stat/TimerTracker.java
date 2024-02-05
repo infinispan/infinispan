@@ -11,6 +11,18 @@ import java.util.concurrent.TimeUnit;
  */
 public interface TimerTracker {
 
+   TimerTracker NO_OP = new TimerTracker() {
+      @Override
+      public void update(Duration duration) {
+         //no-op
+      }
+
+      @Override
+      public void update(long value, TimeUnit timeUnit) {
+         //no-op
+      }
+   };
+
    /**
     * Adds a record.
     *

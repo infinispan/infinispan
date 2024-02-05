@@ -20,6 +20,7 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalMetricsConfiguration;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -166,13 +167,13 @@ public class DefaultTakeOfflineManager implements TakeOfflineManager, XSiteRespo
    }
 
    @Override
-   public Collection<MetricInfo> getCustomMetrics(boolean nameAsTag) {
+   public Collection<MetricInfo> getCustomMetrics(GlobalMetricsConfiguration configuration) {
       List<MetricInfo> attributes = new ArrayList<>(offlineStatus.size() * 3);
       for (Map.Entry<String, OfflineStatus> entry : offlineStatus.entrySet()) {
          OfflineStatus status = entry.getValue();
          Map<String, String> tags = Map.of(Constants.SITE_TAG_NAME, entry.getKey());
 
-         if (nameAsTag) {
+         if (configuration.namesAsTags()) {
             attributes.add(MetricUtils.createGauge("status", entry.getKey() + " status. 1=online, 0=offline", o -> status.isOffline() ? 0 : 1, tags));
             attributes.add(MetricUtils.createGauge("failures_count", "Number of consecutive failures to " + entry.getKey(), o -> status.getFailureCount(), tags));
             attributes.add(MetricUtils.createGauge("millis_since_first_failure", "Milliseconds from first consecutive failure to " + entry.getKey(), o -> status.millisSinceFirstFailure(), tags));
