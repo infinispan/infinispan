@@ -4,8 +4,8 @@ import static org.infinispan.remoting.rpc.RpcManagerImpl.OBJECT_NAME;
 import static org.infinispan.util.logging.Log.CLUSTER;
 
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,11 +26,11 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeListener;
 import org.infinispan.commons.stat.MetricInfo;
-import org.infinispan.commons.stat.TimerTracker;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.logging.TraceException;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalMetricsConfiguration;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
@@ -102,11 +102,25 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    private volatile RpcOptions syncRpcOptions;
 
    @Override
-   public Collection<MetricInfo> getCustomMetrics(boolean nameAsTag) {
-      List<MetricInfo> attributes = new LinkedList<>();
+   public Collection<MetricInfo> getCustomMetrics(GlobalMetricsConfiguration configuration) {
+      var histograms = configuration.histograms();
+      List<MetricInfo> attributes = new ArrayList<>(7);
+
+      // global metric
+      if (histograms) {
+         attributes.add(MetricUtils.<RpcManagerImpl>createTimer("CrossSiteReplicationTimes",
+               "Cross Site Replication Times",
+               (rpcManager, timerTracker) -> rpcManager.xSiteMetricsCollector.registerTimer(timerTracker), null));
+      } else {
+         attributes.add(MetricUtils.<RpcManagerImpl>createFunctionTimer("CrossSiteReplicationTimes",
+               "Cross Site Replication Times",
+               (rpcManager, timerTracker) -> rpcManager.xSiteMetricsCollector.registerTimer(timerTracker),
+               TimeUnit.NANOSECONDS, null));
+      }
+
       for (String site : xSiteMetricsCollector.sites()) {
          Map<String, String> tags = Map.of(Constants.SITE_TAG_NAME, site);
-         if (nameAsTag) {
+         if (configuration.namesAsTags()) {
             attributes.add(MetricUtils.<RpcManagerImpl>createGauge("AverageXSiteReplicationTimeToSite",
                   "Average Cross-Site replication time to " + site,
                   rpcManager -> rpcManager.getAverageXSiteReplicationTimeTo(site), tags));
@@ -122,9 +136,16 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
             attributes.add(MetricUtils.<RpcManagerImpl>createGauge("NumberXSiteRequestsReceivedFromSite",
                   "Number of Cross-Site request received from " + site,
                   rpcManager -> rpcManager.getNumberXSiteRequestsReceivedFrom(site), tags));
-            attributes.add(MetricUtils.<RpcManagerImpl>createTimer("ReplicationTimesToSite",
-                  "Replication times to " + site,
-                  (rpcManager, timer) -> rpcManager.xSiteMetricsCollector.registerTimer(site, timer), tags));
+            if (histograms) {
+               attributes.add(MetricUtils.<RpcManagerImpl>createTimer("ReplicationTimesToSite",
+                     "Replication times to " + site,
+                     (rpcManager, timer) -> rpcManager.xSiteMetricsCollector.registerTimer(site, timer), tags));
+            } else {
+               attributes.add(MetricUtils.<RpcManagerImpl>createFunctionTimer("ReplicationTimesToSite",
+                     "Replication times to " + site,
+                     (rpcManager, timer) -> rpcManager.xSiteMetricsCollector.registerTimer(site, timer),
+                     TimeUnit.NANOSECONDS, tags));
+            }
          } else {
             String lSite = site.toLowerCase();
             attributes.add(MetricUtils.<RpcManagerImpl>createGauge("AverageXSiteReplicationTimeTo_" + lSite,
@@ -142,9 +163,16 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
             attributes.add(MetricUtils.<RpcManagerImpl>createGauge("NumberXSiteRequestsReceivedFrom_" + lSite,
                   "Number of Cross-Site request received from " + site,
                   rpcManager -> rpcManager.getNumberXSiteRequestsReceivedFrom(site), tags));
-            attributes.add(MetricUtils.<RpcManagerImpl>createTimer("ReplicationTimesTo_" + lSite,
-                  "Replication times to " + site,
-                  (rpcManager, timer) -> rpcManager.xSiteMetricsCollector.registerTimer(site, timer), tags));
+            if (histograms) {
+               attributes.add(MetricUtils.<RpcManagerImpl>createTimer("ReplicationTimesTo_" + lSite,
+                     "Replication times to " + site,
+                     (rpcManager, timer) -> rpcManager.xSiteMetricsCollector.registerTimer(site, timer), tags));
+            } else {
+               attributes.add(MetricUtils.<RpcManagerImpl>createFunctionTimer("ReplicationTimesTo_" + lSite,
+                     "Replication times to " + site,
+                     (rpcManager, timer) -> rpcManager.xSiteMetricsCollector.registerTimer(site, timer),
+                     TimeUnit.NANOSECONDS, tags));
+            }
          }
       }
       return attributes;
@@ -631,14 +659,6 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    public long getNumberXSiteRequestsReceivedFrom(
          @Parameter(name = "srcSite", description = "Originator site name") String srcSite) {
       return isStatisticsEnabled() ? xSiteMetricsCollector.countRequestsReceived(srcSite) : 0;
-   }
-
-   @ManagedAttribute(description = "Cross Site Replication Times",
-         displayName = "Cross Site Replication Times",
-         dataType = DataType.TIMER,
-         units = Units.NANOSECONDS)
-   public void setCrossSiteReplicationTimes(TimerTracker timer) {
-      xSiteMetricsCollector.registerTimer(timer);
    }
 
    // mainly for unit testing
