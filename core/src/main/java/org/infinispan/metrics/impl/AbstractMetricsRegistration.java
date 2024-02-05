@@ -86,7 +86,7 @@ abstract class AbstractMetricsRegistration {
                   Set<Object> ids = registerAttributes(instance, beanMetadata.getJmxObjectName(), beanMetadata.getAttributes(), null, component.getName(), null);
                   metricIds.addAll(ids);
                   if (instance instanceof CustomMetricsSupplier) {
-                     metricIds.addAll(registerMetrics(instance, beanMetadata.getJmxObjectName(), ((CustomMetricsSupplier) instance).getCustomMetrics(globalConfig.metrics().namesAsTags()), null, component.getName(), null));
+                     metricIds.addAll(registerMetrics(instance, beanMetadata.getJmxObjectName(), ((CustomMetricsSupplier) instance).getCustomMetrics(globalConfig.metrics()), null, component.getName(), null));
                   }
                }
             }

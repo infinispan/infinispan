@@ -8,6 +8,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import org.infinispan.commons.stat.MetricInfo;
+import org.infinispan.configuration.global.GlobalMetricsConfiguration;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 
 /**
@@ -32,9 +33,9 @@ public interface CustomMetricsSupplier {
     * These can be dynamic metrics that cannot use {@link ManagedAttribute} annotation. Extra tags can be set in
     * {@link AttributeMetadata}.
     *
-    * @param nameAsTag True if the cache name or any other identifier must be set as Tags instead of metric name.
+    * @param configuration The {@link GlobalMetricsConfiguration}. Implementation can make decision based on {@link GlobalMetricsConfiguration#namesAsTags()} or {@link GlobalMetricsConfiguration#histograms()}.
     * @return A list of {@link AttributeMetadata} to be registered.
     */
-   Collection<MetricInfo> getCustomMetrics(boolean nameAsTag);
+   Collection<MetricInfo> getCustomMetrics(GlobalMetricsConfiguration configuration);
 
 }
