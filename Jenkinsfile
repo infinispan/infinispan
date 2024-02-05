@@ -168,9 +168,12 @@ pipeline {
 
         stage('Deploy snapshot') {
             steps {
-                script {
-                    if (!env.BRANCH_NAME.startsWith('PR-')) {
-                        sh "$MAVEN_HOME/bin/mvn deploy -B -e -Pdistribution -Drelease-mode=upstream -DdeployServerZip=true -DskipTests -Dcheckstyle.skip=true"
+                catchError {
+                    // from Jenkins docs: Note that the build result can only get worse, so you cannot change the result to SUCCESS if the current result is UNSTABLE or worse
+                    script(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                        if (!env.BRANCH_NAME.startsWith('PR-')) {
+                            sh "$MAVEN_HOME/bin/mvn deploy -B -e -Pdistribution -Drelease-mode=upstream -DdeployServerZip=true -DskipTests -Dcheckstyle.skip=true"
+                        }
                     }
                 }
             }
