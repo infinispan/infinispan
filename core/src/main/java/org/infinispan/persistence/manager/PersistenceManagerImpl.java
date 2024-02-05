@@ -964,6 +964,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
          } else {
             stage = firstStoreStatus.store.approximateSize(IntSets.immutableRangeSet(segmentCount))
                   .thenApply(size -> {
+                     // local caches
+                     if (distributionManager == null) {
+                        return size;
+                     }
                      // Counting only the keys in the given segments would be expensive,
                      // so we compute an estimate assuming that each segment has a similar number of entries
                      LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();

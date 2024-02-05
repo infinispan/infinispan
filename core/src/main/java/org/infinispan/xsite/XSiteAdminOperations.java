@@ -20,6 +20,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.stat.MetricInfo;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.configuration.cache.XSiteStateTransferMode;
+import org.infinispan.configuration.global.GlobalMetricsConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.factories.scopes.Scope;
@@ -421,8 +422,8 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
    }
 
    @Override
-   public Collection<MetricInfo> getCustomMetrics(boolean nameAsTag) {
-      return takeOfflineManager.getCustomMetrics(nameAsTag);
+   public Collection<MetricInfo> getCustomMetrics(GlobalMetricsConfiguration configuration) {
+      return takeOfflineManager.getCustomMetrics(configuration);
    }
 
    private interface Operation {
