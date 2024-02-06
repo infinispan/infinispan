@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.client.hotrod.DataFormat;
+import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.impl.ClientTopology;
 
 /**
@@ -17,7 +18,7 @@ public class HeaderParams {
    final short opCode;
    final short opRespCode;
    byte[] cacheName;
-   final int flags;
+   int flags;
    final byte txMarker;
    final AtomicReference<ClientTopology> clientTopology;
    final long messageId;
@@ -72,6 +73,16 @@ public class HeaderParams {
 
    public int flags() {
       return flags;
+   }
+
+   public void addFlags(Flag ... flags) {
+      if (flags == null) return;
+
+      for (Flag flag : flags) {
+         if (flag == null) continue;
+
+         this.flags |= flag.getFlagInt();
+      }
    }
 
    public AtomicReference<ClientTopology> getClientTopology() {

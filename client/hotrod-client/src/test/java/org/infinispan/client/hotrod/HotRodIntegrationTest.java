@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertHotRodEquals;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.test.TestingUtil.k;
@@ -20,12 +21,15 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -349,6 +353,54 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       byte[] bytes = serializeObject(new MyValue<>("aValue"));
       binaryRemote.put("aKey", bytes);
       assertArrayEquals(bytes, binaryRemote.get("aKey"));
+   }
+
+   public void testComputeConcurrently() throws Exception {
+      String key = "key";
+      String value = "value";
+      String anotherValue = "anotherValue";
+      CheckPoint checkPoint = new CheckPoint();
+
+      // Execute compute async. This notifies the compute mapping is executing and blocks.
+      // We keep track of how many times the callback executes, since it needs to retry because of the concurrent creation.
+      AtomicInteger retries = new AtomicInteger();
+      CompletableFuture<String> first = remoteCache.computeAsync(key, (k, v) -> {
+         if (retries.incrementAndGet() == 1) {
+            assertThat(k).isEqualTo(key);
+            assertThat(v).isNull();
+            checkPoint.trigger("computed_first");
+            try {
+               checkPoint.awaitStrict("computed_first_proceed", 10, TimeUnit.SECONDS);
+            } catch (InterruptedException | TimeoutException e) {
+               throw new RuntimeException("Failed receiving event", e);
+            }
+         }
+         return value;
+      });
+
+      checkPoint.awaitStrict("computed_first", 10, TimeUnit.SECONDS);
+
+      // The entry concurrently created while the client executes the mapping.
+      // We utilize another client because the thread is blocked.
+      try (RemoteCacheManager anotherCm = getRemoteCacheManager()) {
+         RemoteCache<String, String> anotherClient = anotherCm.getCache(CACHE_NAME);
+         String concurrent = anotherClient.put(key, anotherValue);
+         assertThat(concurrent).isNull();
+         assertThat(anotherClient.get(key)).isEqualTo(anotherValue);
+      }
+
+      // Let the compute operation proceed.
+      // This should cause a retry, since the entry version changed on the server.
+      checkPoint.trigger("computed_first_proceed");
+
+      // Wait until the operation finishes.
+      String res1 = first.get(10, TimeUnit.SECONDS);
+
+      // The value now should be updated accordingly to the compute function.
+      // The remapping was executed twice.
+      assertThat(remoteCache.get(key)).isEqualTo(value);
+      assertThat(res1).isEqualTo(value);
+      assertThat(retries.get()).isEqualTo(2);
    }
 
    private byte[] serializeObject(Object obj) {
