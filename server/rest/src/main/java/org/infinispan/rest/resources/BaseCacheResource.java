@@ -37,7 +37,6 @@ import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.telemetry.InfinispanSpan;
 import org.infinispan.telemetry.InfinispanSpanAttributes;
 import org.infinispan.telemetry.InfinispanTelemetry;
-import org.infinispan.telemetry.SpanCategory;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -69,7 +68,9 @@ public class BaseCacheResource {
       MediaType keyContentType = request.keyContentType();
       RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
       AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, keyContentType, MediaType.MATCH_ALL, request);
-      var span = requestStart("deleteCacheValue", cache, request);
+
+      var attributes = restCacheManager.getInfinispanSpanAttributes(cacheName, request);
+      var span = requestStart("deleteCacheValue", attributes, request);
       try (var ignored = span.makeCurrent()) {
          CompletionStage<RestResponse> response = restCacheManager.getPrivilegedInternalEntry(cache, key, true)
                .thenCompose(entry -> {
@@ -105,7 +106,8 @@ public class BaseCacheResource {
       RestCacheManager<Object> restCacheManager = invocationHelper.getRestCacheManager();
       AdvancedCache<Object, Object> cache = restCacheManager.getCache(cacheName, keyContentType, contentType, request);
 
-      var span = requestStart("putValueToCache", cache, request);
+      var attributes = restCacheManager.getInfinispanSpanAttributes(cacheName, request);
+      var span = requestStart("putValueToCache", attributes, request);
       try (var ignored = span.makeCurrent()) {
          Object key = getKey(request);
 
@@ -151,7 +153,8 @@ public class BaseCacheResource {
       responseBuilder.status(HttpResponseStatus.NO_CONTENT);
 
       Cache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
-      var span = requestStart("clearEntireCache", cache, request);
+      var attributes = invocationHelper.getRestCacheManager().getInfinispanSpanAttributes(cacheName, request);
+      var span = requestStart("clearEntireCache", attributes, request);
       try (var ignored = span.makeCurrent()) {
          CompletableFuture<RestResponse> response = cache.clearAsync().thenApply(v -> responseBuilder.build());
          // Attach span events
@@ -284,10 +287,7 @@ public class BaseCacheResource {
       return stage.thenApply(o -> responseBuilder.build());
    }
 
-   private <T> InfinispanSpan<T> requestStart(String operationName, Cache<Object, Object> cache, RestRequest request) {
-      var attributes = new InfinispanSpanAttributes.Builder(SpanCategory.CONTAINER)
-            .withCache(cache.getName(), SecurityActions.getCacheConfiguration(cache.getAdvancedCache()))
-            .build();
+   private <T> InfinispanSpan<T> requestStart(String operationName, InfinispanSpanAttributes attributes, RestRequest request) {
       return telemetryService.startTraceRequest(operationName, attributes, request);
    }
 }

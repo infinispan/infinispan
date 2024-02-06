@@ -34,7 +34,6 @@ import org.infinispan.stats.Stats;
 import org.infinispan.telemetry.InfinispanSpan;
 import org.infinispan.telemetry.InfinispanSpanAttributes;
 import org.infinispan.telemetry.InfinispanTelemetry;
-import org.infinispan.telemetry.SpanCategory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -226,7 +225,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    void put(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata.Builder metadata) {
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
-      InfinispanSpan<CacheEntry<?, ?>> span = requestStart(header, cache);
+      InfinispanSpan<CacheEntry<?, ?>> span = requestStart(header, cacheInfo.getInfinispanSpanAttributes());
       try (var ignored = span.makeCurrent()) {
          metadata.version(cacheInfo.versionGenerator.generateNew());
          putInternal(header, cache, key, value, metadata.build(), span);
@@ -251,7 +250,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    void replaceIfUnmodified(HotRodHeader header, Subject subject, byte[] key, long version, byte[] value, Metadata.Builder metadata) {
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
-      InfinispanSpan<ConditionalResponse> span = requestStart(header, cache);
+      InfinispanSpan<ConditionalResponse> span = requestStart(header, cacheInfo.getInfinispanSpanAttributes());
       try (var ignored = span.makeCurrent()) {
          metadata.version(cacheInfo.versionGenerator.generateNew());
          replaceIfUnmodifiedInternal(header, cache, key, version, value, metadata.build(), span);
@@ -301,7 +300,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    void replace(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata.Builder metadata) {
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
-      InfinispanSpan<CacheEntry<?, ?>> span = requestStart(header, cache);
+      InfinispanSpan<CacheEntry<?, ?>> span = requestStart(header, cacheInfo.getInfinispanSpanAttributes());
       try (var ignored = span.makeCurrent()) {
          metadata.version(cacheInfo.versionGenerator.generateNew());
          replaceInternal(header, cache, key, value, metadata.build(), span);
@@ -337,7 +336,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    void putIfAbsent(HotRodHeader header, Subject subject, byte[] key, byte[] value, Metadata.Builder metadata) {
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
-      InfinispanSpan<CacheEntry<?, ?>> span = requestStart(header, cache);
+      InfinispanSpan<CacheEntry<?, ?>> span = requestStart(header, cacheInfo.getInfinispanSpanAttributes());
       try (var ignored = span.makeCurrent()) {
          metadata.version(cacheInfo.versionGenerator.generateNew());
          putIfAbsentInternal(header, cache, key, value, metadata.build(), span);
@@ -364,7 +363,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    void remove(HotRodHeader header, Subject subject, byte[] key) {
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
-      InfinispanSpan<CacheEntry<?, ?>> span = requestStart(header, cache);
+      InfinispanSpan<CacheEntry<?, ?>> span = requestStart(header, cacheInfo.getInfinispanSpanAttributes());
       try (var ignored = span.makeCurrent()) {
          removeInternal(header, cache, key, span);
       }
@@ -390,7 +389,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    void removeIfUnmodified(HotRodHeader header, Subject subject, byte[] key, long version) {
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
-      InfinispanSpan<ConditionalResponse> span = requestStart(header, cache);
+      InfinispanSpan<ConditionalResponse> span = requestStart(header, cacheInfo.getInfinispanSpanAttributes());
       try (var ignored = span.makeCurrent()) {
          removeIfUnmodifiedInternal(header, cache, key, version, span);
       }
@@ -422,7 +421,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    void clear(HotRodHeader header, Subject subject) {
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
-      InfinispanSpan<Void> span = requestStart(header, cache);
+      InfinispanSpan<Void> span = requestStart(header, cacheInfo.getInfinispanSpanAttributes());
       try (var ignored = span.makeCurrent()) {
          clearInternal(header, cache, span);
       }
@@ -437,7 +436,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    void putAll(HotRodHeader header, Subject subject, Map<byte[], byte[]> entries, Metadata.Builder metadata) {
       ExtendedCacheInfo cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
-      InfinispanSpan<Void> span = requestStart(header, cache);
+      InfinispanSpan<Void> span = requestStart(header, cacheInfo.getInfinispanSpanAttributes());
       try (var ignored = span.makeCurrent()) {
          metadata.version(cacheInfo.versionGenerator.generateNew());
          putAllInternal(header, cache, entries, metadata.build(), span);
@@ -479,8 +478,9 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void size(HotRodHeader header, Subject subject) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
-      InfinispanSpan<Long> span = requestStart(header, cache);
+      var cacheInfo = server.getCacheInfo(header);
+      AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
+      InfinispanSpan<Long> span = requestStart(header, cacheInfo.getInfinispanSpanAttributes());
       try (var ignored = span.makeCurrent()) {
          sizeInternal(header, cache, span);
       }
@@ -549,8 +549,9 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    void addClientListener(HotRodHeader header, Subject subject, byte[] listenerId, boolean includeCurrentState,
                           String filterFactory, List<byte[]> filterParams, String converterFactory,
                           List<byte[]> converterParams, boolean useRawData, int listenerInterests, int bloomBits) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
-      var span = requestStart(header, cache);
+      var cacheInfo = server.getCacheInfo(header);
+      AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
+      var span = requestStart(header, cacheInfo.getInfinispanSpanAttributes());
       try (var ignored = span.makeCurrent()) {
          BloomFilter<byte[]> bloomFilter = null;
          if (bloomBits > 0) {
@@ -577,8 +578,9 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void removeClientListener(HotRodHeader header, Subject subject, byte[] listenerId) {
-      AdvancedCache<byte[], byte[]> cache = server.cache(server.getCacheInfo(header), header, subject);
-      InfinispanSpan<Boolean> span = requestStart(header, cache);
+      var cacheInfo = server.getCacheInfo(header);
+      AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
+      InfinispanSpan<Boolean> span = requestStart(header, cacheInfo.getInfinispanSpanAttributes());
       try (var ignored = span.makeCurrent()) {
          removeClientListenerInternal(header, cache, listenerId, span);
       }
@@ -654,11 +656,8 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       }
    }
 
-   private <T> InfinispanSpan<T> requestStart(HotRodHeader header, AdvancedCache<?, ?> cache) {
-      var attributes = new InfinispanSpanAttributes.Builder(SpanCategory.CONTAINER)
-            .withCache(header.cacheName, SecurityActions.getCacheConfiguration(cache))
-            .build();
-      return telemetryService.startTraceRequest(header.op.name(), attributes, header);
+   private <T> InfinispanSpan<T> requestStart(HotRodHeader header, InfinispanSpanAttributes spanAttributes) {
+      return telemetryService.startTraceRequest(header.op.name(), spanAttributes, header);
    }
 
    private static class ConditionalResponse {
