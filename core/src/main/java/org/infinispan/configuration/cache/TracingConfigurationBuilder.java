@@ -1,14 +1,19 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.configuration.cache.TracingConfiguration.CLUSTER;
-import static org.infinispan.configuration.cache.TracingConfiguration.CONTAINER;
 import static org.infinispan.configuration.cache.TracingConfiguration.ENABLED;
-import static org.infinispan.configuration.cache.TracingConfiguration.PERSISTENCE;
-import static org.infinispan.configuration.cache.TracingConfiguration.X_SITE;
+import static org.infinispan.util.logging.Log.CONFIG;
+
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeParser;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.telemetry.SpanCategory;
 
 public class TracingConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<TracingConfiguration> {
 
@@ -52,46 +57,36 @@ public class TracingConfigurationBuilder extends AbstractConfigurationChildBuild
    }
 
    /**
-    * Enable or disable tracing for container category on the given cache.
+    * Enable tracing for the given category on the given cache.
     * This property can be used to enable tracing at runtime.
     *
     * @return <code>this</code>, for method chaining
     */
-   public TracingConfigurationBuilder container(boolean enable) {
-      attributes.attribute(CONTAINER).set(enable);
+   public TracingConfigurationBuilder enableCategory(SpanCategory category) {
+      Attribute<Set<SpanCategory>> attribute = attributes.attribute(TracingConfiguration.CATEGORIES);
+      Set<SpanCategory> policies = attribute.get();
+      boolean added = policies.add(category);
+      if (added) {
+         attribute.set(policies);
+      }
+
       return this;
    }
 
    /**
-    * Enable or disable tracing for cluster category on the given cache.
+    * Disable tracing for the given category on the given cache.
     * This property can be used to enable tracing at runtime.
     *
     * @return <code>this</code>, for method chaining
     */
-   public TracingConfigurationBuilder cluster(boolean enable) {
-      attributes.attribute(CLUSTER).set(enable);
-      return this;
-   }
+   public TracingConfigurationBuilder disableCategory(SpanCategory category) {
+      Attribute<Set<SpanCategory>> attribute = attributes.attribute(TracingConfiguration.CATEGORIES);
+      Set<SpanCategory> policies = attribute.get();
+      boolean removed = policies.remove(category);
+      if (removed) {
+         attribute.set(policies);
+      }
 
-   /**
-    * Enable or disable tracing for x-site category on the given cache.
-    * This property can be used to enable tracing at runtime.
-    *
-    * @return <code>this</code>, for method chaining
-    */
-   public TracingConfigurationBuilder xSite(boolean enable) {
-      attributes.attribute(X_SITE).set(enable);
-      return this;
-   }
-
-   /**
-    * Enable or disable tracing for persistence category on the given cache.
-    * This property can be used to enable tracing at runtime.
-    *
-    * @return <code>this</code>, for method chaining
-    */
-   public TracingConfigurationBuilder persistence(boolean enable) {
-      attributes.attribute(PERSISTENCE).set(enable);
       return this;
    }
 
@@ -111,5 +106,28 @@ public class TracingConfigurationBuilder extends AbstractConfigurationChildBuild
       return "TracingConfigurationBuilder{" +
             "attributes=" + attributes +
             '}';
+   }
+
+   @Override
+   public void validate() {
+      Set<SpanCategory> spanCategories = attributes.attribute(TracingConfiguration.CATEGORIES).get();
+      if (spanCategories.contains(SpanCategory.SECURITY)) {
+         throw CONFIG.securityCacheTracing();
+      }
+   }
+
+   enum CategoriesAttributeParser implements AttributeParser<Set<SpanCategory>> {
+      INSTANCE;
+
+      @Override
+      public Set<SpanCategory> parse(Class klass, String value) {
+         LinkedHashSet<SpanCategory> spanCategories = Arrays.stream(value.split(",")).sequential().map(String::trim)
+               .map(SpanCategory::fromString)
+               .collect(Collectors.toCollection(LinkedHashSet::new));
+         if (spanCategories.contains(SpanCategory.SECURITY)) {
+            throw CONFIG.securityCacheTracing();
+         }
+         return spanCategories;
+      }
    }
 }

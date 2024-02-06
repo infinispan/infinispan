@@ -1237,37 +1237,26 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="container" type="xs:boolean" default="${Tracing.container}">
+          <xs:attribute name="categories" default="container">
             <xs:annotation>
               <xs:documentation>
-                Enable or disable tracing for container category on the given cache.
-                This property can be used to enable or disable tracing at runtime.
+                <![CDATA[
+                  Enable or disable tracing for the categories defined in the list.
+                  This property can be used to enable or disable tracing at runtime,
+                  enabling / disabling specific categories for a given cache.
+                ]]>
               </xs:documentation>
             </xs:annotation>
-          </xs:attribute>
-          <xs:attribute name="cluster" type="xs:boolean" default="${Tracing.cluster}">
-            <xs:annotation>
-              <xs:documentation>
-                Enable or disable tracing for cluster category on the given cache.
-                This property can be used to enable or disable tracing at runtime.
-              </xs:documentation>
-            </xs:annotation>
-          </xs:attribute>
-          <xs:attribute name="x-site" type="xs:boolean" default="${Tracing.x-site}">
-            <xs:annotation>
-              <xs:documentation>
-                Enable or disable tracing for x-site category on the given cache.
-                This property can be used to enable or disable tracing at runtime.
-              </xs:documentation>
-            </xs:annotation>
-          </xs:attribute>
-          <xs:attribute name="persistence" type="xs:boolean" default="${Tracing.persistence}">
-            <xs:annotation>
-              <xs:documentation>
-                Enable or disable tracing for persistence category on the given cache.
-                This property can be used to enable or disable tracing at runtime.
-              </xs:documentation>
-            </xs:annotation>
+            <xs:list>
+              <xs:simpleType>
+                <xs:restriction base="xs:token">
+                  <xs:enumeration value="container"/>
+                  <xs:enumeration value="cluster"/>
+                  <xs:enumeration value="persistence"/>
+                  <xs:enumeration value="xsite"/>
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:list>
           </xs:attribute>
         </xs:complexType>
       </xs:element>

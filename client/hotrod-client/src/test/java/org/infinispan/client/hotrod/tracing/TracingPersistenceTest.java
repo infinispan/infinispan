@@ -16,6 +16,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.server.core.telemetry.TelemetryServiceFactory;
 import org.infinispan.server.core.telemetry.inmemory.InMemoryTelemetryClient;
+import org.infinispan.telemetry.SpanCategory;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -42,7 +43,7 @@ public class TracingPersistenceTest extends SingleHotRodServerTest {
       global.tracing().collectorEndpoint(TelemetryServiceFactory.IN_MEMORY_COLLECTOR_ENDPOINT);
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.tracing().persistence(true);
+      builder.tracing().enableCategory(SpanCategory.PERSISTENCE);
       builder.persistence()
             .passivation(false)
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)

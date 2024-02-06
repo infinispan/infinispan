@@ -1,6 +1,10 @@
 package org.infinispan.telemetry;
 
+import org.infinispan.commons.configuration.io.NamingStrategy;
+
 import java.util.Locale;
+
+import static java.util.Arrays.stream;
 
 public enum SpanCategory {
 
@@ -29,8 +33,20 @@ public enum SpanCategory {
     */
    SECURITY;
 
+   private final String name;
+
+   SpanCategory() {
+      this.name = NamingStrategy.KEBAB_CASE.convert(name().toLowerCase());
+   }
+
    @Override
    public String toString() {
       return name().toLowerCase(Locale.ROOT);
+   }
+
+   public static SpanCategory fromString(String value) {
+      return stream(SpanCategory.values())
+              .filter(p -> p.name.equalsIgnoreCase(value))
+              .findFirst().orElse(null);
    }
 }
