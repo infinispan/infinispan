@@ -47,6 +47,9 @@ import org.infinispan.security.Security;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.security.impl.Authorizer;
 import org.infinispan.server.core.CacheInfo;
+import org.infinispan.telemetry.InfinispanSpanAttributes;
+import org.infinispan.telemetry.SpanCategory;
+import org.infinispan.telemetry.impl.CacheSpanAttribute;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.concurrent.CompletionStages;
@@ -295,6 +298,17 @@ public class RestCacheManager<V> {
       if (am != null) {
          am.checkPermission(subject, permission);
       }
+   }
+
+   public InfinispanSpanAttributes getInfinispanSpanAttributes(String cacheName, RestRequest request) {
+      var cacheInfo = knownCaches.get(cacheName);
+      if (cacheInfo != null) {
+         return cacheInfo.getInfinispanSpanAttributes();
+      }
+      // the code below should never be invoked.
+      return SecurityActions.getCacheComponentRegistry(getCache(cacheName, request))
+            .getComponent(CacheSpanAttribute.class)
+            .getAttributes(SpanCategory.CONTAINER);
    }
 
    @Listener
