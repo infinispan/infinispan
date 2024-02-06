@@ -15,6 +15,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.server.core.telemetry.TelemetryServiceFactory;
 import org.infinispan.server.core.telemetry.inmemory.InMemoryTelemetryClient;
+import org.infinispan.telemetry.SpanCategory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
@@ -39,7 +40,7 @@ public class TracingClusterTest extends MultiHotRodServersTest {
       assertThat(telemetryClient.finishedSpanItems()).isEmpty();
 
       ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      config.tracing().cluster(true);
+      config.tracing().enableCategory(SpanCategory.CLUSTER);
       createHotRodServers(NUM_SERVERS, config);
       waitForClusterToForm();
    }

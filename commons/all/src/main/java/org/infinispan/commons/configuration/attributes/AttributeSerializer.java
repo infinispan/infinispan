@@ -29,6 +29,7 @@ public interface AttributeSerializer<T> {
    AttributeSerializer<String[]> STRING_ARRAY = (writer, name, value) -> writer.writeAttribute(name, Arrays.asList(value));
    AttributeSerializer<Collection<String>> STRING_COLLECTION = ConfigurationWriter::writeAttribute;
    AttributeSerializer<Collection<? extends Enum<?>>> ENUM_COLLECTION = (writer, name, value) -> writer.writeAttribute(name, value.stream().map(Enum::toString).collect(Collectors.toList()));
+   AttributeSerializer<Collection<? extends Enum<?>>> ENUM_SET = (writer, name, value) -> writer.writeAttribute(name, value.stream().map(Enum::toString).collect(Collectors.toSet()));
    AttributeSerializer<Object> INSTANCE_CLASS_NAME = ((writer, name, value) -> writer.writeAttribute(name, value.getClass().getName()));
    AttributeSerializer<Class> CLASS_NAME = ((writer, name, value) -> writer.writeAttribute(name, value.getName()));
 

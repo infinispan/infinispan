@@ -70,6 +70,7 @@ import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration;
+import org.infinispan.telemetry.SpanCategory;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
@@ -149,10 +150,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             // enabled by default, even if the tracing property is not present in the cache configuration
             assertThat(tracing).isNotNull();
             assertThat(tracing.enabled()).isTrue();
-            assertThat(tracing.container()).isTrue();
-            assertThat(tracing.cluster()).isFalse();
-            assertThat(tracing.xSite()).isFalse();
-            assertThat(tracing.persistence()).isFalse();
+            assertThat(tracing.categories()).containsExactly(SpanCategory.CONTAINER);
 
             tracing = getConfiguration(holder, "disabled-tracing").tracing();
             assertThat(tracing).isNotNull();

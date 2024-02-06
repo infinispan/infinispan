@@ -51,6 +51,7 @@ import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.persistence.cluster.ClusterLoader;
 import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigurationBuilder;
+import org.infinispan.telemetry.SpanCategory;
 import org.infinispan.transaction.LockingMode;
 import org.kohsuke.MetaInfServices;
 
@@ -1495,21 +1496,11 @@ public class CacheParser implements ConfigurationParser {
             case ENABLED:
                builder.tracing().enabled(ParseUtils.parseBoolean(reader, i, value));
                break;
-            case CONTAINER:
-               boolean container = ParseUtils.parseBoolean(reader, i, value);
-               builder.tracing().container(container);
-               break;
-            case CLUSTER:
-               boolean cluster = ParseUtils.parseBoolean(reader, i, value);
-               builder.tracing().cluster(cluster);
-               break;
-            case X_SITE:
-               boolean xSite = ParseUtils.parseBoolean(reader, i, value);
-               builder.tracing().xSite(xSite);
-               break;
-            case PERSISTENCE:
-               boolean persistence = ParseUtils.parseBoolean(reader, i, value);
-               builder.tracing().persistence(persistence);
+            case CATEGORIES:
+               for (String p : reader.getListAttributeValue(i)) {
+                  SpanCategory spanCategory = SpanCategory.fromString(p);
+                  builder.tracing().enableCategory(spanCategory);
+               }
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);

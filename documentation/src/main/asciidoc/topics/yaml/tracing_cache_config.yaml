@@ -1,7 +1,6 @@
 distributedCache:
   tracing:
     enabled: true
-    container: true
-    cluster: true
-    x-site: false
-    persistence: false
+    categories:
+      - container
+      - cluster

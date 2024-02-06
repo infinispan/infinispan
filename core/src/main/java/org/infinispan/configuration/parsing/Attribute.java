@@ -37,6 +37,7 @@ public enum Attribute {
     @Deprecated(forRemoval=true, since = "13.0")
     CAPACITY,
     CAPACITY_FACTOR,
+    CATEGORIES,
     CHUNK_SIZE,
     CLASS,
     CLUSTER,
@@ -49,7 +50,6 @@ public enum Attribute {
     CONNECTION_ATTEMPTS,
     CONNECTION_INTERVAL,
     CONSISTENT_HASH_FACTORY,
-    CONTAINER,
     CONTEXT_INITIALIZER,
     CORE_THREADS,
     DATA_CONTAINER,
@@ -219,12 +219,10 @@ public enum Attribute {
     ACCURATE_SIZE,
     REGEX,
     PATTERN,
-    PERSISTENCE,
     REPLACEMENT,
     REPLACE_ALL,
     UNCLEAN_SHUTDOWN_ACTION,
     UPPERCASE,
-    X_SITE,
    ;
 
     private final String name;

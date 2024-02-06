@@ -15,7 +15,7 @@ Several categories are potentially traced:
 * X-Site. Operations that are replicated to another external site.
 * Persistence. All the operations involving persistence via a cache store and/or cache loader.
 
-Each of category can be enabled/disabled at start time or runtime using the related tracing configuration attributes.
+Each of category can be enabled/disabled at start time or runtime listing them in the `categories` list attribute.
 By default only the container category is enabled.
 
 There is also the `Security` category, to trace security audit events.

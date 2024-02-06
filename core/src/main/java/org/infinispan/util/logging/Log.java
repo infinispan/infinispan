@@ -2382,4 +2382,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot use id %d for commands, as it is already in use by %s", id = 973)
    IllegalArgumentException commandIdAlreadyInUse(byte id, String name);
+
+   @Message(value = "Security container cannot be enabled/disabled at cache level, since it is configured globally.", id = 974)
+   CacheConfigurationException securityCacheTracing();
+
 }
