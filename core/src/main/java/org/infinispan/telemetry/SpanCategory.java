@@ -8,7 +8,16 @@ public enum SpanCategory {
     * Default Infinispan span category, which includes all the major put/insertion operations.
     */
    CONTAINER,
-   REMOTE;
+
+   /**
+    * Span category for cluster operations causally related by client interactions.
+    */
+   CLUSTER,
+
+   /**
+    * Span category for x-site operations causally related by client interactions.
+    */
+   X_SITE;
 
    @Override
    public String toString() {

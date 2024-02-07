@@ -104,7 +104,8 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
    private boolean statisticsEnabled = false; // by default, don't gather statistics.
 
    private volatile RpcOptions syncRpcOptions;
-   private InfinispanSpanAttributes remoteSpanAttributes;
+   private InfinispanSpanAttributes clusterSpanAttributes;
+   private InfinispanSpanAttributes xSiteSpanAttributes;
 
    @Override
    public Collection<MetricInfo> getCustomMetrics(boolean nameAsTag) {
@@ -174,13 +175,13 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
 
    @Inject
    void cacheSpanAttributes(CacheSpanAttribute cacheSpanAttribute) {
-      remoteSpanAttributes = cacheSpanAttribute.getAttributes(SpanCategory.REMOTE);
+      clusterSpanAttributes = cacheSpanAttribute.getAttributes(SpanCategory.CLUSTER);
+      xSiteSpanAttributes = cacheSpanAttribute.getAttributes(SpanCategory.X_SITE);
    }
 
    private void updateRpcOptions(Attribute<Long> attribute, Long oldValue) {
       syncRpcOptions = new RpcOptions(DeliverOrder.NONE, attribute.get(), TimeUnit.MILLISECONDS);
    }
-
 
    @ManagedAttribute(description = "Retrieves the committed view.", displayName = "Committed view", dataType = DataType.TRAIT)
    public String getCommittedViewAsString() {
@@ -396,7 +397,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
       var cmd =command instanceof CacheRpcCommand ?
             (CacheRpcCommand) command :
             cf.wired().buildSingleRpcCommand((VisitableCommand) command);
-      setTraceSpanAttributes(cmd);
+      setClusterTraceSpanAttributes(cmd);
       return cmd;
    }
 
@@ -441,7 +442,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
 
    @Override
    public <O> XSiteResponse<O> invokeXSite(XSiteBackup backup, XSiteCacheRequest<O> command) {
-      setTraceSpanAttributes(command);
+      setXSiteTraceSpanAttributes(command);
       if (!statisticsEnabled) {
          return t.backupRemotely(backup, command);
       }
@@ -675,7 +676,11 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
       return distributionManager.getCacheTopology().getMembers();
    }
 
-   private void setTraceSpanAttributes(TracedCommand command) {
-      command.setSpanAttributes(remoteSpanAttributes);
+   private void setClusterTraceSpanAttributes(TracedCommand command) {
+      command.setSpanAttributes(clusterSpanAttributes);
+   }
+
+   private void setXSiteTraceSpanAttributes(TracedCommand command) {
+      command.setSpanAttributes(xSiteSpanAttributes);
    }
 }
