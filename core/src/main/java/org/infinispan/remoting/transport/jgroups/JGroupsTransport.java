@@ -91,6 +91,7 @@ import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
 import org.infinispan.remoting.transport.impl.SiteUnreachableXSiteResponse;
 import org.infinispan.remoting.transport.impl.XSiteResponseImpl;
 import org.infinispan.remoting.transport.raft.RaftManager;
+import org.infinispan.telemetry.InfinispanSpan;
 import org.infinispan.telemetry.InfinispanTelemetry;
 import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
@@ -1154,7 +1155,8 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
    private void traceRequest(AbstractRequest<?> request, TracedCommand command) {
       var traceSpan = command.getSpanAttributes();
       if (traceSpan != null) {
-         request.whenComplete(telemetry.startTraceRequest(command.getOperationName(), traceSpan));
+         InfinispanSpan<Object> span = telemetry.startTraceRequest(command.getOperationName(), traceSpan);
+         request.whenComplete(span);
       }
    }
 
