@@ -21,7 +21,7 @@ public class SslConfiguration {
    private final AttributeSet attributes;
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(SslConfiguration.class, ENABLED, SNI_HOSTNAME,HOSTNAME_VALIDATION, PROTOCOL);
+      return new AttributeSet(SslConfiguration.class, ENABLED, SSL_CONTEXT, SNI_HOSTNAME, HOSTNAME_VALIDATION, PROTOCOL);
    }
 
    private KeyStoreConfiguration keyStoreConfiguration;
