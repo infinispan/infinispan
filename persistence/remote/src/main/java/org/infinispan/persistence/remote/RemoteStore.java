@@ -385,7 +385,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
             .thenApplyAsync(CompletableFutures.toNullFunction(), nonBlockingExecutor);
    }
 
-   private Object getKey(MarshallableEntry entry) {
+   private static Object getKey(MarshallableEntry entry) {
       return unwrap(entry.getKey());
    }
 
@@ -409,7 +409,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
             .groupBy(MarshallableEntry::getMetadata)
             .flatMapCompletable(meFlowable -> meFlowable.buffer(configuration.maxBatchSize())
                   .flatMapCompletable(meList -> {
-                     Map<Object, Object> map = meList.stream().collect(Collectors.toMap(this::getKey, this::getValue));
+                     Map<Object, Object> map = meList.stream().collect(Collectors.toMap(RemoteStore::getKey, this::getValue));
 
                      Metadata metadata = meFlowable.getKey();
                      long lifespan = metadata != null ? toSeconds(metadata.lifespan(), "batch", LIFESPAN) : -1;
@@ -440,7 +440,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
             .thenApplyAsync(v -> null, nonBlockingExecutor);
    }
 
-   private long toSeconds(long millis, Object key, String desc) {
+   private static long toSeconds(long millis, Object key, String desc) {
       if (millis > 0 && millis < 1000) {
          if (log.isTraceEnabled()) {
             log.tracef("Adjusting %s time for key %s from %d millis to 1 sec, as milliseconds are not supported by HotRod",
@@ -462,7 +462,7 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
       return remoteCache;
    }
 
-   private ConfigurationBuilder buildRemoteConfiguration(RemoteStoreConfiguration configuration, Marshaller marshaller) {
+   private static ConfigurationBuilder buildRemoteConfiguration(RemoteStoreConfiguration configuration, Marshaller marshaller) {
 
       ConfigurationBuilder builder;
       if (configuration.uri() != null && !configuration.uri().isEmpty()) {
@@ -516,7 +516,8 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
                .trustStoreType(ssl.trustStoreType())
                .protocol(ssl.protocol())
                .hostnameValidation(ssl.hostnameValidation())
-               .sniHostName(ssl.sniHostName());
+               .sniHostName(ssl.sniHostName())
+               .sslContext(ssl.sslContext());
       }
 
       AuthenticationConfiguration auth = configuration.security().authentication();

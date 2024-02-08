@@ -19,7 +19,7 @@ public class SslConfiguration extends ConfigurationElement<SslConfiguration> {
    static final AttributeDefinition<Boolean> HOSTNAME_VALIDATION = AttributeDefinition.builder("ssl-hostname-validation", true).immutable().build();
    static final AttributeDefinition<String> PROTOCOL = AttributeDefinition.builder(Attribute.PROTOCOL, null, String.class).immutable().build();
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(SslConfiguration.class, ENABLED, SNI_HOSTNAME,HOSTNAME_VALIDATION, PROTOCOL);
+      return new AttributeSet(SslConfiguration.class, ENABLED, SSL_CONTEXT, SNI_HOSTNAME, HOSTNAME_VALIDATION, PROTOCOL);
    }
 
    private final KeyStoreConfiguration keyStoreConfiguration;
