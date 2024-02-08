@@ -9,13 +9,18 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
 import org.infinispan.server.core.telemetry.TelemetryServiceFactory;
 import org.infinispan.server.core.telemetry.inmemory.InMemoryTelemetryClient;
+import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.telemetry.SpanCategory;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -35,6 +40,14 @@ public class TracingPersistenceTest extends SingleHotRodServerTest {
    }
 
    @Override
+   protected HotRodServer createHotRodServer() {
+      HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
+      serverBuilder.adminOperationsHandler(new EmbeddedServerAdminOperationHandler());
+
+      return HotRodClientTestingUtil.startHotRodServer(cacheManager, serverBuilder);
+   }
+
+   @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       telemetryClient.reset();
       assertThat(telemetryClient.finishedSpanItems()).isEmpty();
@@ -47,7 +60,7 @@ public class TracingPersistenceTest extends SingleHotRodServerTest {
       builder.persistence()
             .passivation(false)
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)
-            .storeName(getClass().getName())
+            // TODO ISPN-15667 cannot use store-name
             .purgeOnStartup(true);
 
       EmbeddedCacheManager manager = TestCacheManagerFactory.createServerModeCacheManager(global);
@@ -60,17 +73,21 @@ public class TracingPersistenceTest extends SingleHotRodServerTest {
       RemoteCache<Integer, String> remoteCache = remoteCacheManager.getCache("persistence");
       remoteCache.put(1, "bla bla bla");
       remoteCache.put(2, "one two three");
+
+      // disable persistence tracing
+      remoteCacheManager.administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE)
+            .updateConfigurationAttribute("persistence", "tracing.categories", "cluster, container");
       remoteCache.put(3, "foo bar baz");
 
       eventually(() -> telemetryClient.finishedSpanItems().toString(),
-            () -> telemetryClient.finishedSpanItems().size() == 6, 10, TimeUnit.SECONDS);
+            () -> telemetryClient.finishedSpanItems().size() == 5, 10, TimeUnit.SECONDS);
       List<SpanData> spanItems = telemetryClient.finishedSpanItems();
 
       Map<String, List<SpanData>> spansByName = InMemoryTelemetryClient.aggregateByName(spanItems);
       List<SpanData> parents = spansByName.get("PUT");
       assertThat(parents).hasSize(3);
       List<SpanData> children = spansByName.get("writeToAllNonTxStores");
-      assertThat(children).hasSize(3);
+      assertThat(children).hasSize(2); // 1 contribution has been disabled at runtime
 
       Set<String> parentSpanIds = new HashSet<>(3);
       String rootId = null;
