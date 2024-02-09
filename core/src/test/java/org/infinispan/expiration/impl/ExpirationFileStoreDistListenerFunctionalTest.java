@@ -69,12 +69,6 @@ public class ExpirationFileStoreDistListenerFunctionalTest extends ExpirationSto
       }
    }
 
-   @AfterClass(alwaysRun = true)
-   protected void clearTempDir() {
-      Util.recursiveFileRemove(PERSISTENT_LOCATION);
-      Util.recursiveFileRemove(EXTRA_MANAGER_LOCATION);
-   }
-
    protected void removeFromContainer(String key) {
       super.removeFromContainer(key);
       extraCache.getAdvancedCache().getDataContainer().remove(key);
@@ -94,6 +88,21 @@ public class ExpirationFileStoreDistListenerFunctionalTest extends ExpirationSto
       super.clearContent();
       // We also have to clear the content of the extraManager
       TestingUtil.clearContent(extraManager);
+   }
+
+   @Override
+   protected void teardown() {
+      super.teardown();
+      TestingUtil.killCacheManagers(extraManager);
+   }
+
+   @AfterClass(alwaysRun = true)
+   @Override
+   protected void destroyAfterClass() {
+      super.destroyAfterClass();
+      // Delete the directories after killing all managers
+      Util.recursiveFileRemove(PERSISTENT_LOCATION);
+      Util.recursiveFileRemove(EXTRA_MANAGER_LOCATION);
    }
 
    @Override
