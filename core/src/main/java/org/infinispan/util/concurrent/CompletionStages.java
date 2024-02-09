@@ -253,12 +253,11 @@ public class CompletionStages {
       @SuppressWarnings({"unused"})
       private volatile int remaining;
       private volatile boolean frozen = false;
-      private volatile Throwable throwable;
 
       @Override
       public void accept(Object o, Throwable t) {
          if (t != null) {
-            throwable = t;
+            completeExceptionally(t);
          }
          if (remainingUpdater.decrementAndGet(this) == 0 && frozen) {
             complete();
@@ -289,12 +288,7 @@ public class CompletionStages {
       }
 
       private void complete() {
-         Throwable t = throwable;
-         if (t != null) {
-            completeExceptionally(t);
-         } else {
-            complete(getValue());
-         }
+         complete(getValue());
       }
 
       abstract R getValue();
