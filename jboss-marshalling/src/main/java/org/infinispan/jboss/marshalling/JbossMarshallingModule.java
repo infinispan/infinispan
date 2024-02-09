@@ -1,7 +1,5 @@
 package org.infinispan.jboss.marshalling;
 
-import static org.infinispan.util.logging.Log.PERSISTENCE;
-
 import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -27,8 +25,6 @@ public class JbossMarshallingModule implements ModuleLifecycle {
 
    @Override
    public void cacheManagerStarting(GlobalComponentRegistry gcr, GlobalConfiguration globalConfiguration) {
-      PERSISTENCE.jbossMarshallingDetected();
-
       Marshaller userMarshaller = globalConfiguration.serialization().marshaller();
       if (userMarshaller instanceof JBossUserMarshaller) {
          // Core automatically registers a transcoder for the user marshaller

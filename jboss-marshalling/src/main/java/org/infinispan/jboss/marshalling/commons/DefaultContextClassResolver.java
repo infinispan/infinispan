@@ -10,9 +10,7 @@ import org.jboss.marshalling.ContextClassResolver;
  *
  * @author Dan Berindei &lt;dberinde@redhat.com&gt;
  * @since 4.2
- * @deprecated since 11.0. To be removed in 14.0 ISPN-11947.
  */
-@Deprecated(forRemoval = true)
 public class DefaultContextClassResolver extends ContextClassResolver {
 
    private final WeakReference<ClassLoader> defaultClassLoader;
