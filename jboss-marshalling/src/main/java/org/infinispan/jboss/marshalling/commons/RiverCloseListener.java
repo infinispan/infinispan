@@ -6,9 +6,7 @@ package org.infinispan.jboss.marshalling.commons;
  *
  * @author Sanne Grinovero
  * @since 5.1
- * @deprecated since 11.0. To be removed in 14.0 ISPN-11947.
  */
-@Deprecated(forRemoval=true, since = "11.0")
 public interface RiverCloseListener {
 
    void closeMarshaller();
