@@ -343,7 +343,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
             if (oldValue != null) {
                doneStage = replaceWithVersionAsync(key, newValue, version, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
             } else {
-               doneStage = putIfAbsentAsync(key, newValue, lifespan, lifespanUnit, maxIdle, maxIdleUnit)
+               doneStage = putIfAbsentAsync(key, newValue, lifespan, lifespanUnit, maxIdle, maxIdleUnit, Flag.FORCE_RETURN_VALUE)
                      .thenApply(Objects::isNull);
             }
          } else {
@@ -410,9 +410,14 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
 
    @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      return putIfAbsentAsync(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit, (Flag[]) null);
+   }
+
+   private CompletableFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit, Flag ... flags) {
       assertRemoteCacheManagerIsStarted();
       PutIfAbsentOperation<V> op = operationsFactory.newPutIfAbsentOperation(key,
             keyToBytes(key), valueToBytes(value), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit, dataFormat);
+      op.header().addFlags(flags);
       return op.execute();
    }
 
