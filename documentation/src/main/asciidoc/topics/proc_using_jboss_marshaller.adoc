@@ -1,12 +1,6 @@
 [id='using-jboss-marshaller_{context}']
 = Using JBoss Marshalling
-JBoss Marshalling is a serialization-based marshalling library and was the default marshaller in previous {brandname} versions but is now deprecated.
-
-[NOTE]
-====
-JBoss Marshalling is deprecated.
-You should use it only as a temporary measure while migrating your applications from an older version of {brandname}.
-====
+JBoss Marshalling is a serialization-based marshalling library and was the default marshaller in previous {brandname} versions.
 
 .Procedure
 
