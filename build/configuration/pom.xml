@@ -207,7 +207,7 @@
       <version.jandex>3.1.6</version.jandex>
 
       <version.opentelemetry>1.32.0</version.opentelemetry>
-      <version.opentelemetry.alpha>1.32.0-alpha</version.opentelemetry.alpha>
+      <version.opentelemetry.alpha>1.35.0-alpha</version.opentelemetry.alpha>
 
       <version.smallrye-mutiny>2.5.6</version.smallrye-mutiny>
       <!-- Spring 6, Spring Boot 3 versions -->
