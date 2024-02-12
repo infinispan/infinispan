@@ -8,8 +8,13 @@ requiredEnv TOKEN ISSUE_KEY PULL_REQUEST
 ISSUE_URL="${API_URL}/issue/${ISSUE_KEY}"
 ISSUE=$(${CURL} -H @headers ${ISSUE_URL} | jq .)
 EXISTING_PRS=$(echo ${ISSUE} | jq .fields.customfield_12310220)
-PULL_REQUESTS="$(echo ${EXISTING_PRS} | jq '. + ["'${PULL_REQUEST}'"]' | jq -r '. |= join("\\n")')"
 
+if [[ ${EXISTING_PRS} == *"${PULL_REQUEST}"* ]]; then
+  echo "Pull Request '${PULL_REQUEST}' already linked to ${ISSUE_KEY}"
+  exit
+fi
+
+PULL_REQUESTS="$(echo ${EXISTING_PRS} | jq '. + ["'${PULL_REQUEST}'"]' | jq -r '. |= join("\\n")')"
 cat << EOF | tee update-jira.json
 {
   "update": {
