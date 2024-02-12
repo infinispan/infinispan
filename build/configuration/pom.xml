@@ -249,7 +249,7 @@
       <!-- overwrite version in jboss-parent -->
       <version.pmd.plugin>3.21.2</version.pmd.plugin>
       <version.owasp-dependency-check-plugin>9.0.9</version.owasp-dependency-check-plugin>
-      <version.spotbugs.plugin>4.8.3.0</version.spotbugs.plugin>
+      <version.spotbugs.plugin>4.8.3.1</version.spotbugs.plugin>
       <version.weld-servlet>2.4.8.Final</version.weld-servlet>
       <version.deploy.plugin>3.1.1</version.deploy.plugin>
 
