@@ -254,7 +254,7 @@
       <jboss.modules.settings.xml.url>file://${infinispan.root}/maven-settings.xml</jboss.modules.settings.xml.url>
 
       <!-- dependencies version -->
-      <versionx.com.amazonaws>1.12.656</versionx.com.amazonaws>
+      <versionx.com.amazonaws>1.12.657</versionx.com.amazonaws>
       <versionx.org.infinispan.memcached-client>1.2.1</versionx.org.infinispan.memcached-client>
       <versionx.com.clearspring.analytics.stream>2.2.0</versionx.com.clearspring.analytics.stream>
       <versionx.com.esotericsoftware.kryo>4.0.3</versionx.com.esotericsoftware.kryo>
