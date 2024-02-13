@@ -8,6 +8,8 @@ import org.infinispan.commons.dataconversion.internal.JsonSerialization;
 public abstract class JsonQueryResponse implements JsonSerialization {
 
    public static final String ENTITY_PROJECTION_KEY = "*";
+   public static final String SCORE_PROJECTION_KEY = "score()";
+   public static final String VERSION_PROJECTION_KEY = "version()";
 
    private final int hitCount;
    private final boolean hitCountExact;

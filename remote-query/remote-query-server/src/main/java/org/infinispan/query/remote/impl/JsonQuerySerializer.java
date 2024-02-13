@@ -13,6 +13,8 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.objectfilter.impl.syntax.parser.projection.CacheValuePropertyPath;
+import org.infinispan.objectfilter.impl.syntax.parser.projection.ScorePropertyPath;
+import org.infinispan.objectfilter.impl.syntax.parser.projection.VersionPropertyPath;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.query.remote.client.impl.QueryRequest;
 import org.infinispan.query.remote.json.EntityProjection;
@@ -66,6 +68,10 @@ class JsonQuerySerializer implements QuerySerializer<JsonQueryResponse> {
                   value = new EntityProjection(transcoderFromStorage.transcode(((WrappedMessage) value).getValue(),
                         storageMediaTye, APPLICATION_JSON));
                   p.put(JsonQueryResponse.ENTITY_PROJECTION_KEY, value);
+               } else if (ScorePropertyPath.SCORE_PROPERTY_NAME.equals(projectionKey)) {
+                  p.put(JsonQueryResponse.SCORE_PROJECTION_KEY, value);
+               } else if (VersionPropertyPath.VERSION_PROPERTY_NAME.equals(projectionKey)) {
+                  p.put(JsonQueryResponse.VERSION_PROJECTION_KEY, value);
                } else {
                   p.put(projectionKey, value);
                }

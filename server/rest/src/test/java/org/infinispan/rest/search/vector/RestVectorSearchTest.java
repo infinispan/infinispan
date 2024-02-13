@@ -97,7 +97,7 @@ public class RestVectorSearchTest extends SingleCacheManagerTest {
             .extracting(json -> json.at("hit").at(JsonQueryResponse.ENTITY_PROJECTION_KEY)
                   .at("code").asString()).containsExactly("c5", "c6", "c4");
       Assertions.assertThat(body.at("hits").asJsonList())
-            .extracting(json -> json.at("hit").at("__ISPN_Score").asString())
+            .extracting(json -> json.at("hit").at(JsonQueryResponse.SCORE_PROJECTION_KEY).asString())
             .hasSize(3);
    }
 
