@@ -4,10 +4,7 @@ import static org.infinispan.query.remote.json.JSONConstants.HITS;
 import static org.infinispan.query.remote.json.JSONConstants.HIT_COUNT;
 import static org.infinispan.query.remote.json.JSONConstants.HIT_COUNT_EXACT;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.infinispan.commons.dataconversion.internal.Json;
 
@@ -18,17 +15,9 @@ public class ProjectedJsonResult extends JsonQueryResponse {
 
    private final List<JsonProjection> hits;
 
-   public ProjectedJsonResult(int hitCount, boolean hitCountExact, String[] projections, List<Object> values) {
+   public ProjectedJsonResult(int hitCount, boolean hitCountExact, List<JsonProjection> hits) {
       super(hitCount, hitCountExact);
-      hits = new ArrayList<>(projections.length);
-      for (Object v : values) {
-         Object[] result = (Object[]) v;
-         Map<String, Object> p = new HashMap<>();
-         for (int i = 0; i < projections.length; i++) {
-            p.put(projections[i], result[i]);
-         }
-         hits.add(new JsonProjection(p));
-      }
+      this.hits = hits;
    }
 
    public List<JsonProjection> getHits() {
