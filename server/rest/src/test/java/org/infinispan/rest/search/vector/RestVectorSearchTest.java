@@ -20,6 +20,7 @@ import org.infinispan.commons.test.TestResourceTracker;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.remote.json.JsonQueryResponse;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -88,6 +89,16 @@ public class RestVectorSearchTest extends SingleCacheManagerTest {
       body = Json.read(response.toCompletableFuture().get().body());
       Assertions.assertThat(body.at("hits").asJsonList())
             .extracting(json -> json.at("hit").at("code").asString()).containsExactly("c5", "c6", "c4");
+
+      response = cacheClient.query("select i, score(i) from Item i where i.floatVector <-> [7.1,7.0,3.1]~3", 10, 0);
+      assertThat(response).isOk();
+      body = Json.read(response.toCompletableFuture().get().body());
+      Assertions.assertThat(body.at("hits").asJsonList())
+            .extracting(json -> json.at("hit").at(JsonQueryResponse.ENTITY_PROJECTION_KEY)
+                  .at("code").asString()).containsExactly("c5", "c6", "c4");
+      Assertions.assertThat(body.at("hits").asJsonList())
+            .extracting(json -> json.at("hit").at("__ISPN_Score").asString())
+            .hasSize(3);
    }
 
    private static void writeEntries(RestCacheClient cacheClient) {
