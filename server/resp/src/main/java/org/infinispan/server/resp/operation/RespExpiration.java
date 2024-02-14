@@ -32,6 +32,7 @@ public enum RespExpiration {
       }
    };
 
+   public static final byte[] EX_BYTES = "EX".getBytes(StandardCharsets.US_ASCII);
    public static final byte[] EXAT_BYTES = "EXAT".getBytes(StandardCharsets.US_ASCII);
    public static final byte[] PXAT_BYTES = "PXAT".getBytes(StandardCharsets.US_ASCII);
 
