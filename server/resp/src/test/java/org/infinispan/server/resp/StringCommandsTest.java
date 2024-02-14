@@ -539,4 +539,21 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
 
       assertThat(redis.get("key")).isEqualTo("value");
    }
+
+   @Test
+   public void testGetset() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      assertThat(redis.getset("key", "value")).isNull();
+      assertThat(redis.getset("key", "another")).isEqualTo("value");
+      assertThat(redis.get("key")).isEqualTo("another");
+   }
+
+   public void testGetsetCounter() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      assertThat(redis.incr("counter")).isEqualTo(1);
+      assertThat(redis.getset("counter", "0")).isEqualTo("1");
+      assertThat(redis.get("counter")).isEqualTo("0");
+   }
 }

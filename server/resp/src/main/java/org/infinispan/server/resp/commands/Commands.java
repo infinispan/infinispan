@@ -134,6 +134,7 @@ import org.infinispan.server.resp.commands.string.GET;
 import org.infinispan.server.resp.commands.string.GETDEL;
 import org.infinispan.server.resp.commands.string.GETEX;
 import org.infinispan.server.resp.commands.string.GETRANGE;
+import org.infinispan.server.resp.commands.string.GETSET;
 import org.infinispan.server.resp.commands.string.INCR;
 import org.infinispan.server.resp.commands.string.INCRBY;
 import org.infinispan.server.resp.commands.string.INCRBYFLOAT;
@@ -171,7 +172,7 @@ public final class Commands {
       ALL_COMMANDS[4] = new RespCommand[]{new ECHO(), new EXISTS(), new EXPIRE(), new EXPIREAT(), new EXPIRETIME(), new EXEC()};
       ALL_COMMANDS[5] = new RespCommand[]{new FLUSHDB(), new FLUSHALL()};
       // GET should always be first here
-      ALL_COMMANDS[6] = new RespCommand[]{new GET(), new GETDEL(), new GETEX(), new GETRANGE()};
+      ALL_COMMANDS[6] = new RespCommand[]{new GET(), new GETDEL(), new GETEX(), new GETRANGE(), new GETSET()};
       ALL_COMMANDS[7] = new RespCommand[]{new HELLO(), new HGET(), new HSET(), new HLEN(), new HEXISTS(), new HDEL(), new HMGET(), new HKEYS(), new HVALS(), new HSCAN(), new HGETALL(), new HMSET(), new HINCRBY(), new HINCRBYFLOAT(), new HRANDFIELD()};
       ALL_COMMANDS[8] = new RespCommand[]{new INCR(), new INCRBY(), new INCRBYFLOAT(), new INFO()};
       ALL_COMMANDS[10] = new RespCommand[]{new KEYS()};
