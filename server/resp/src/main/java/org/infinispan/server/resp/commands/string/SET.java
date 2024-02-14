@@ -18,7 +18,11 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class SET extends RespCommand implements Resp3Command {
    public SET() {
-      super(-3, 1, 1, 1);
+      this(-3, 1, 1, 1);
+   }
+
+   protected SET(int arity, int firstKeyPos, int lastKeyPos, int steps) {
+      super(arity, firstKeyPos, lastKeyPos, steps);
    }
 
    @Override
@@ -27,7 +31,7 @@ public class SET extends RespCommand implements Resp3Command {
                                                       List<byte[]> arguments) {
       if (arguments.size() != 2) {
          return handler
-               .stageToReturn(SetOperation.performOperation(handler.cache(), arguments, handler.respServer().getTimeService()), ctx,
+               .stageToReturn(SetOperation.performOperation(handler.cache(), arguments, handler.respServer().getTimeService(), getName()), ctx,
                      Consumers.SET_BICONSUMER);
       }
       return handler.stageToReturn(

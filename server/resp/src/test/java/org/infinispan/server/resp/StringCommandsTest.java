@@ -512,4 +512,21 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
       results = redis.mget("k4", "k5", "k6");
       assertThat(results).containsExactlyElementsOf(expected);
    }
+
+   @Test
+   public void testSetex() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      assertThatThrownBy(() -> redis.setex("key", -30, "value"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR invalid expire time in 'SETEX' command");
+
+      assertThat(redisConnection.isOpen()).isTrue();
+
+      assertThat(redis.setex("key", 1, "value")).isEqualTo("OK");
+      assertThat(redis.ttl("key")).isEqualTo(1);
+
+      ((ControlledTimeService) timeService).advance(2_000);
+      assertThat(redis.get("key")).isNull();
+   }
 }

@@ -10,6 +10,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.server.resp.Util;
+import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.response.SetResponse;
 import org.infinispan.util.concurrent.CompletionStages;
 
@@ -21,11 +22,11 @@ public class SetOperation {
    private static final byte[] KEEP_TTL_BYTES = "KEEPTTL".getBytes(StandardCharsets.US_ASCII);
    private static final CompletionStage<SetResponse> MISSING_ARGUMENTS = CompletableFuture.failedFuture(new IllegalStateException("Missing arguments"));
 
-   public static CompletionStage<SetResponse> performOperation(AdvancedCache<byte[], byte[]> cache, List<byte[]> arguments, TimeService timeService) {
+   public static CompletionStage<SetResponse> performOperation(AdvancedCache<byte[], byte[]> cache, List<byte[]> arguments, TimeService timeService, String command) {
       try {
          if (arguments.size() < 2) return MISSING_ARGUMENTS;
 
-         SetOperationOptions options = new SetOperationOptions(arguments, timeService);
+         SetOperationOptions options = new SetOperationOptions(arguments, timeService, command);
          if (options.operationType == XX_BYTES) {
             return performOperationWithXX(cache, options, timeService);
          }
@@ -97,7 +98,7 @@ public class SetOperation {
       private boolean setAndReturnPrevious;
       private byte[] operationType;
 
-      public SetOperationOptions(List<byte[]> arguments, TimeService timeService) {
+      public SetOperationOptions(List<byte[]> arguments, TimeService timeService, String command) {
          this.arguments = arguments;
          this.key = null;
          this.value = null;
@@ -105,7 +106,7 @@ public class SetOperation {
          this.keepTtl = false;
          this.setAndReturnPrevious = false;
          this.operationType = null;
-         parseAndLoadOptions(timeService);
+         parseAndLoadOptions(timeService, command);
       }
 
       public void withKey(byte[] key) {
@@ -144,7 +145,7 @@ public class SetOperation {
          return expirationMs > 0 || isKeepingTtl();
       }
 
-      private void parseAndLoadOptions(TimeService timeService) {
+      private void parseAndLoadOptions(TimeService timeService, String command) {
          withKey(arguments.get(0));
          withValue(arguments.get(1));
 
@@ -191,7 +192,10 @@ public class SetOperation {
                      if (isKeepingTtl()) throw new IllegalArgumentException("KEEPTTL and EX/PX/EXAT/PXAT are mutually exclusive");
                      if (i + 1 > arguments.size()) throw new IllegalArgumentException("No argument accompanying expiration");
 
-                     withExpiration(expiration.convert(Long.parseLong(new String(arguments.get(i + 1), StandardCharsets.US_ASCII)), timeService));
+                     long time = ArgumentUtils.toLong(arguments.get(i + 1));
+                     if (time <= 0) throw new IllegalArgumentException(String.format("invalid expire time in '%s' command", command));
+
+                     withExpiration(expiration.convert(time, timeService));
                      i++;
                      continue;
                }
