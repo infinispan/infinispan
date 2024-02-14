@@ -100,6 +100,9 @@ The {brandname} RESP endpoint implements the following Redis commands:
 | link:https://redis.io/commands/getrange[GETRANGE]
 |
 
+| link:https://redis.io/commands/getset[GETSET]
+| Deprecated. Use the `SET` command with the appropriate flags.
+
 | link:https://redis.io/commands/hdel[HDEL]
 |
 
@@ -215,6 +218,9 @@ for concurrent operations or failures unless the resp cache is configured to use
 | link:https://redis.io/commands/mset[MSET]
 |
 
+| link:https://redis.io/commands/msetnx[MSETNX]
+|
+
 | link:https://redis.io/commands/multi[MULTI] [[multi_command]]
 | The current implementation has a relaxed isolation level. Redis offers serializable transactions, but {{brandname}}
 provides a read-uncommitted isolation.
@@ -225,11 +231,11 @@ provides a read-uncommitted isolation.
 | link:https://redis.io/commands/pexpiretime[PEXPIRETIME]
 |
 
-| link:https://redis.io/commands/msetnx[MSETNX]
-|
-
 | link:https://redis.io/commands/ping[PING]
 |
+
+| link:https://redis.io/commands/psetex[PSETEX]
+| Deprecated. Utilize `SET` with the appropriate flags.
 
 | link:https://redis.io/commands/psubscribe[PSUBSCRIBE]
 |
@@ -294,6 +300,12 @@ provides a read-uncommitted isolation.
 | link:https://redis.io/commands/set[SET]
 |
 
+| link:https://redis.io/commands/setex[SETEX]
+| Deprecated. Use the `SET` command with the appropriate flags.
+
+| link:https://redis.io/commands/setnx[SETNX]
+| Deprecated. Use the `SET` command with the appropriate flags.
+
 | link:https://redis.io/commands/set[SETRANGE]
 |
 
@@ -332,6 +344,9 @@ provides a read-uncommitted isolation.
 
 | link:https://redis.io/commands/strlen[STRLEN]
 |
+
+| link:https://redis.io/commands/substr[SUBSTR]
+| Deprecated. Use the `GETRANGE` command.
 
 | link:https://redis.io/commands/subscribe[SUBSCRIBE]
 |
