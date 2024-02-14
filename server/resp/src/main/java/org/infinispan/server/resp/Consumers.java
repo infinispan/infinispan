@@ -75,6 +75,14 @@ public final class Consumers {
    public static final BiConsumer<byte[], ByteBufPool> DELETE_BICONSUMER = (prev, alloc) ->
          ByteBufferUtils.stringToByteBufAscii(":" + (prev == null ? "0" : "1") + CRLF_STRING, alloc);
 
+   public static final BiConsumer<Boolean, ByteBufPool> BOOLEAN_BICONSUMER = (res, alloc) -> {
+      if (res) {
+         LONG_BICONSUMER.accept(1L, alloc);
+      } else {
+         LONG_BICONSUMER.accept(0L, alloc);
+      }
+   };
+
    public static final BiConsumer<SetResponse, ByteBufPool> SET_BICONSUMER = (res, alloc) -> {
       // The set operation has three return options, with a precedence:
       //

@@ -17,7 +17,7 @@ import org.infinispan.util.concurrent.CompletionStages;
 public class SetOperation {
 
    private static final byte[] GET_BYTES = "GET".getBytes(StandardCharsets.US_ASCII);
-   private static final byte[] NX_BYTES = "NX".getBytes(StandardCharsets.US_ASCII);
+   public static final byte[] NX_BYTES = "NX".getBytes(StandardCharsets.US_ASCII);
    private static final byte[] XX_BYTES = "XX".getBytes(StandardCharsets.US_ASCII);
    private static final byte[] KEEP_TTL_BYTES = "KEEPTTL".getBytes(StandardCharsets.US_ASCII);
    private static final CompletionStage<SetResponse> MISSING_ARGUMENTS = CompletableFuture.failedFuture(new IllegalStateException("Missing arguments"));
