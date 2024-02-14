@@ -47,6 +47,12 @@ POST /rest/v2/caches/myCache/rolling-upgrade/source-connection
 .. Update client configuration with the location of the target cluster.
 .. Restart clients.
 
+[IMPORTANT]
+====
+If you need to migrate Indexed caches you must first migrate the internal `___protobuf_metadata` cache so that the .proto
+schemas defined on the source cluster will also be present on the target cluster.
+====
+
 [role="_additional-resources"]
 .Additional resources
 * link:{configdocroot}infinispan-cachestore-remote-config-{schemaversion}.html[Remote cache store configuration schema]
