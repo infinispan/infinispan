@@ -48,6 +48,8 @@ public class GETRANGE extends RespCommand implements Resp3Command {
    }
 
    private byte[] subrange(byte[] arr, int begin, int end) {
+      if (arr == null) return Util.EMPTY_BYTE_ARRAY;
+
       // Deal with negative
       if (begin < 0) {
          begin = Math.max(0, arr.length + begin);

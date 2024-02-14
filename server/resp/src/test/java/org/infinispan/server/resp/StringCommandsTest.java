@@ -369,6 +369,8 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.getrange(key, 0, 0)).isEqualTo("");
       // End before beginning
       assertThat(redis.getrange(key, 3, 2)).isEqualTo("");
+      // Non-existent entry
+      assertThat(redis.getrange("something", 0, 10)).isEqualTo("");
    }
 
    @Test
