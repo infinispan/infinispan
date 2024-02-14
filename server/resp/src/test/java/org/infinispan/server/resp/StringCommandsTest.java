@@ -529,4 +529,14 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
       ((ControlledTimeService) timeService).advance(2_000);
       assertThat(redis.get("key")).isNull();
    }
+
+   @Test
+   public void testSetnx() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      assertThat(redis.setnx("key", "value")).isTrue();
+      assertThat(redis.setnx("key", "another-value")).isFalse();
+
+      assertThat(redis.get("key")).isEqualTo("value");
+   }
 }
