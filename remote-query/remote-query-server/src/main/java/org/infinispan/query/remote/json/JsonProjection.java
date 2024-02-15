@@ -14,7 +14,7 @@ public class JsonProjection implements JsonSerialization {
 
    private final Map<String, Object> value;
 
-   JsonProjection(Map<String, Object> value) {
+   public JsonProjection(Map<String, Object> value) {
       this.value = value;
    }
 
