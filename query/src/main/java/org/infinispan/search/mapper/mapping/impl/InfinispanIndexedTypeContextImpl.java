@@ -4,11 +4,14 @@ import org.hibernate.search.engine.backend.index.IndexManager;
 import org.hibernate.search.engine.mapper.mapping.spi.MappedIndexManager;
 import org.hibernate.search.engine.search.projection.spi.ProjectionMappedTypeContext;
 import org.hibernate.search.mapper.pojo.identity.spi.IdentifierMapping;
+import org.hibernate.search.mapper.pojo.loading.definition.spi.PojoEntityLoadingBindingContext;
 import org.hibernate.search.mapper.pojo.mapping.building.spi.PojoIndexedTypeExtendedMappingCollector;
 import org.hibernate.search.mapper.pojo.model.path.spi.PojoPathFilter;
 import org.hibernate.search.mapper.pojo.model.spi.PojoPropertyModel;
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
 import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
+import org.infinispan.search.mapper.search.loading.context.impl.InfinispanSelectionLoadingBinder;
+import org.infinispan.search.mapper.search.loading.context.impl.InfinispanSelectionLoadingStrategy;
 import org.infinispan.search.mapper.session.impl.InfinispanIndexedTypeContext;
 
 class InfinispanIndexedTypeContextImpl<E> implements SearchIndexedEntity, ProjectionMappedTypeContext,
@@ -62,6 +65,7 @@ class InfinispanIndexedTypeContextImpl<E> implements SearchIndexedEntity, Projec
       private IdentifierMapping identifierMapping;
       private MappedIndexManager indexManager;
       private PojoPathFilter dirtyFilter;
+      private InfinispanSelectionLoadingStrategy loadingStrategy;
 
       Builder(PojoRawTypeIdentifier<E> typeIdentifier, String entityName) {
          this.typeIdentifier = typeIdentifier;
@@ -81,6 +85,15 @@ class InfinispanIndexedTypeContextImpl<E> implements SearchIndexedEntity, Projec
       @Override
       public void dirtyFilter(PojoPathFilter dirtyFilter) {
          // Nothing to do
+      }
+
+      @Override
+      public void applyLoadingBinder(Object binder, PojoEntityLoadingBindingContext context) {
+         var castBinder = (InfinispanSelectionLoadingBinder) binder;
+         this.loadingStrategy = castBinder.createLoadingStrategy();
+         if ( this.loadingStrategy != null ) {
+            context.selectionLoadingStrategy( typeIdentifier.javaClass(), this.loadingStrategy );
+         }
       }
 
       @Override

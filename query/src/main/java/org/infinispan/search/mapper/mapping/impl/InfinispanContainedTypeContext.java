@@ -1,6 +1,7 @@
 package org.infinispan.search.mapper.mapping.impl;
 
 import org.hibernate.search.mapper.pojo.identity.spi.IdentifierMapping;
+import org.hibernate.search.mapper.pojo.loading.definition.spi.PojoEntityLoadingBindingContext;
 import org.hibernate.search.mapper.pojo.mapping.building.spi.PojoContainedTypeExtendedMappingCollector;
 import org.hibernate.search.mapper.pojo.model.path.spi.PojoPathFilter;
 import org.hibernate.search.mapper.pojo.model.spi.PojoPropertyModel;
@@ -29,6 +30,17 @@ class InfinispanContainedTypeContext {
 
       @Override
       public void dirtyFilter(PojoPathFilter dirtyFilter) {
+
+      }
+
+      @Override
+      public void dirtyContainingAssociationFilter(PojoPathFilter filter) {
+         PojoContainedTypeExtendedMappingCollector.super.dirtyContainingAssociationFilter(filter);
+      }
+
+      @Override
+      public void applyLoadingBinder(Object o,
+                                               PojoEntityLoadingBindingContext pojoEntityLoadingBindingContext) {
 
       }
    }
