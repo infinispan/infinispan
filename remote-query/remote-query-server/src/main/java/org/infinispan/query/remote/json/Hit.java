@@ -13,7 +13,7 @@ import org.infinispan.commons.dataconversion.internal.Json;
  */
 public class Hit implements JsonSerialization {
 
-   private final Object value;
+   protected final Object value;
 
    public Hit(Object value) {
       this.value = value;
