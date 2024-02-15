@@ -60,11 +60,6 @@
          <artifactId>jgroups-azure</artifactId>
       </dependency>
 
-      <dependency>
-         <groupId>org.jgroups.kubernetes</groupId>
-         <artifactId>jgroups-kubernetes</artifactId>
-      </dependency>
-
    </dependencies>
 
    <build>
