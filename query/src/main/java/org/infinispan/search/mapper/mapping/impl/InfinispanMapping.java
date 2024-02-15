@@ -14,7 +14,6 @@ import org.hibernate.search.engine.common.EntityReference;
 import org.hibernate.search.engine.common.spi.SearchIntegration;
 import org.hibernate.search.engine.environment.thread.spi.ThreadPoolProvider;
 import org.hibernate.search.engine.reporting.FailureHandler;
-import org.hibernate.search.engine.search.projection.spi.ProjectionMappedTypeContext;
 import org.hibernate.search.mapper.pojo.loading.spi.PojoSelectionEntityLoader;
 import org.hibernate.search.mapper.pojo.mapping.spi.AbstractPojoMappingImplementor;
 import org.hibernate.search.mapper.pojo.mapping.spi.PojoMappingDelegate;
@@ -258,15 +257,5 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
       @SuppressWarnings("unchecked")
       PojoRawTypeIdentifier<? extends T> castedTypeIdentifier = (PojoRawTypeIdentifier<? extends T>) typeIdentifier;
       return castedTypeIdentifier;
-   }
-
-   @Override
-   public ProjectionMappedTypeContext mappedTypeContext(String mappedTypeName) {
-      InfinispanIndexedTypeContextImpl<?> typeContext = typeContextContainer.indexedForEntityName(mappedTypeName);
-      if (typeContext == null) {
-         throw log.invalidEntityName(mappedTypeName);
-      }
-
-      return typeContext;
    }
 }
