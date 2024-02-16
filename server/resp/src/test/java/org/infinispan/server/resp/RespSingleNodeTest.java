@@ -985,7 +985,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       redis.set(k(), v());
       assertThat(redis.expiretime(k())).isEqualTo(-1);
       assertThat(redis.expireat(k(), timeService.wallClockTime() + 1000)).isTrue();
-      assertThat(redis.expiretime(k())).isEqualTo((timeService.wallClockTime() + 1000) / 1000);
+      assertThat(redis.expiretime(k())).isEqualTo(timeService.wallClockTime() + 1000);
       assertThat(redis.expireat(k(), timeService.wallClockTime() + 500, ExpireArgs.Builder.gt())).isFalse();
       assertThat(redis.expireat(k(), timeService.wallClockTime() + 1500, ExpireArgs.Builder.gt())).isTrue();
       assertThat(redis.expireat(k(), timeService.wallClockTime() + 2000, ExpireArgs.Builder.lt())).isFalse();
@@ -996,6 +996,25 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       redis.set(k(1), v(1));
       assertThat(redis.expireat(k(1), timeService.wallClockTime() + 1000, ExpireArgs.Builder.xx())).isFalse();
       assertThat(redis.expireat(k(1), timeService.wallClockTime() + 1000, ExpireArgs.Builder.nx())).isTrue();
+   }
+
+   @Test
+   public void testPExpireAt() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      assertThat(redis.expiretime(k())).isEqualTo(-1);
+      assertThat(redis.pexpireat(k(), timeService.wallClockTime() + 1000)).isTrue();
+      assertThat(redis.expiretime(k())).isEqualTo((timeService.wallClockTime() + 1000) / 1000);
+      assertThat(redis.pexpireat(k(), timeService.wallClockTime() + 500, ExpireArgs.Builder.gt())).isFalse();
+      assertThat(redis.pexpireat(k(), timeService.wallClockTime() + 1500, ExpireArgs.Builder.gt())).isTrue();
+      assertThat(redis.pexpireat(k(), timeService.wallClockTime() + 2000, ExpireArgs.Builder.lt())).isFalse();
+      assertThat(redis.pexpireat(k(), timeService.wallClockTime() + 1000, ExpireArgs.Builder.lt())).isTrue();
+      assertThat(redis.pexpireat(k(), timeService.wallClockTime() + 1250, ExpireArgs.Builder.xx())).isTrue();
+      assertThat(redis.pexpireat(k(), timeService.wallClockTime() + 1000, ExpireArgs.Builder.nx())).isFalse();
+      assertThat(redis.pexpireat(k(1), timeService.wallClockTime() + 1000)).isFalse();
+      redis.set(k(1), v(1));
+      assertThat(redis.pexpireat(k(1), timeService.wallClockTime() + 1000, ExpireArgs.Builder.xx())).isFalse();
+      assertThat(redis.pexpireat(k(1), timeService.wallClockTime() + 1000, ExpireArgs.Builder.nx())).isTrue();
    }
 
    @Test
