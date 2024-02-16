@@ -4,7 +4,7 @@
 -->
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.2.xsd">
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.3.xsd">
    <!-- jgroups.tcp.address is deprecated and will be removed, see ISPN-11867 -->
    <TCP bind_addr="${jgroups.bind.address,jgroups.tcp.address:SITE_LOCAL}"
         bind_port="${jgroups.bind.port,jgroups.tcp.port:7800}"
@@ -15,6 +15,7 @@
         linger="${jgroups.tcp.linger:-1}"
         bundler_type="${jgroups.bundler.type:transfer-queue}"
         bundler.max_size="${jgroups.bundler.max_size:64000}"
+        non_blocking_sends="${jgroups.non_blocking_sends:false}"
 
         thread_pool.min_threads="${jgroups.thread_pool.min_threads:0}"
         thread_pool.max_threads="${jgroups.thread_pool.max_threads:200}"
