@@ -11,6 +11,7 @@
         linger="${jgroups.tcp.linger:-1}"
         bundler_type="${jgroups.bundler.type:transfer-queue}"
         bundler.max_size="${jgroups.bundler.max_size:64000}"
+        non_blocking_sends="${jgroups.non_blocking_sends:false}"
 
         thread_pool.min_threads="${jgroups.thread_pool.min_threads:0}"
         thread_pool.max_threads="${jgroups.thread_pool.max_threads:200}"
