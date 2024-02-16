@@ -2,7 +2,7 @@
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="urn:infinispan:config:${infinispan.core.schema.version} https://infinispan.org/schemas/infinispan-config-${infinispan.core.schema.version}.xsd
-                          urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.2.xsd"
+                          urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.3.xsd"
       xmlns="urn:infinispan:config:${infinispan.core.schema.version}">
    <jgroups>
       <!-- Inline definition -->

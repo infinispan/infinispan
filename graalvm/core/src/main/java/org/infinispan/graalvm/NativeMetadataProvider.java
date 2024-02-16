@@ -53,6 +53,7 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
          "default-configs/default-jgroups-ec2\\.xml",
          "default-configs/default-jgroups-google\\.xml",
          "default-configs/default-jgroups-azure\\.xml",
+         "default-configs/default-jgroups-tunnel\\.xml",
          ClassConfigurator.MAGIC_NUMBER_FILE,
          ClassConfigurator.PROTOCOL_ID_FILE,
          Version.VERSION_FILE

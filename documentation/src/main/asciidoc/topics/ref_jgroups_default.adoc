@@ -38,6 +38,13 @@ endif::remote_caches[]
 |`azure`
 |Uses TCP for transport and `AZURE_PING` for discovery. Suitable for Microsoft Azure nodes where UDP multicast is not available. Requires additional dependencies.
 
+|`default-jgroups-tunnel.xml`
+|`tunnel`
+|Uses `TUNNEL` for transport.
+Suitable for environments where the {brandname} is behind a firewall and direct connection between {brandname} nodes is impossible.
+It requires an external and accessible service (http://jgroups.org/manual5/index.html#TUNNEL_Advanced[Gossip Router]) to redirect the traffic.
+It requires `jgroups.tunnel.hosts` property to be set in the format `host1[port],host2[port],...` with the Gossip Router(s) hosts and ports.
+
 |===
 
 [role="_additional-resources"]

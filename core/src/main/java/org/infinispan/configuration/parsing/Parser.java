@@ -1420,6 +1420,7 @@ public class Parser extends CacheParser {
          holder.addJGroupsStack(BuiltinJGroupsChannelConfigurator.EC2(reader.getProperties()));
          holder.addJGroupsStack(BuiltinJGroupsChannelConfigurator.GOOGLE(reader.getProperties()));
          holder.addJGroupsStack(BuiltinJGroupsChannelConfigurator.AZURE(reader.getProperties()));
+         holder.addJGroupsStack(BuiltinJGroupsChannelConfigurator.TUNNEL(reader.getProperties()));
       }
    }
 }
