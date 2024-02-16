@@ -36,14 +36,16 @@ public class EXPIRE extends RespCommand implements Resp3Command {
    }
 
    private final boolean unixTime;
+   private final boolean seconds;
 
    public EXPIRE() {
-      this(false);
+      this(false, true);
    }
 
-   protected EXPIRE(boolean at) {
+   protected EXPIRE(boolean at, boolean seconds) {
       super(-3, 1, 1, 1);
       this.unixTime = at;
+      this.seconds = seconds;
    }
 
    @Override
@@ -52,6 +54,9 @@ public class EXPIRE extends RespCommand implements Resp3Command {
                                                       List<byte[]> arguments) {
       byte[] key = arguments.get(0);
       long expiration = ArgumentUtils.toLong(arguments.get(1));
+      if (seconds) {
+         expiration = TimeUnit.SECONDS.toMillis(expiration);
+      }
       Mode mode = Mode.NONE;
       if (arguments.size() == 3) {
          // Handle mode
@@ -72,7 +77,7 @@ public class EXPIRE extends RespCommand implements Resp3Command {
             if (unixTime) {
                ttl = toUnixTime(ttl, handler.respServer().getTimeService());
             } else if (ttl >= 0) {
-               ttl = TimeUnit.MILLISECONDS.toSeconds(e.getLifespan());
+               ttl = e.getLifespan();
             }
             switch (mode) {
                case NX:
@@ -100,7 +105,7 @@ public class EXPIRE extends RespCommand implements Resp3Command {
             if (unixTime) {
                replace = acm.replaceAsync(e.getKey(), e.getValue(), e.getValue(), fromUnixTime(expiration, handler.respServer().getTimeService()), TimeUnit.MILLISECONDS);
             } else {
-               replace = acm.replaceAsync(e.getKey(), e.getValue(), e.getValue(), expiration, TimeUnit.SECONDS);
+               replace = acm.replaceAsync(e.getKey(), e.getValue(), e.getValue(), expiration, TimeUnit.MILLISECONDS);
             }
             return replace.thenCompose(b -> {
                if (b) {
