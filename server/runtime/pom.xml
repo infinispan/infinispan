@@ -120,10 +120,6 @@
          <artifactId>infinispan-anchored-keys</artifactId>
       </dependency>
       <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cloudevents-integration</artifactId>
-      </dependency>
-      <dependency>
          <groupId>io.agroal</groupId>
          <artifactId>agroal-pool</artifactId>
       </dependency>

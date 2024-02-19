@@ -29,7 +29,7 @@ import org.infinispan.lifecycle.ModuleLifecycle;
  * @author Dan Berindei
  * @since 9.4
  */
-@InfinispanModule(name = "core-tests", requiredModules = "core", optionalModules = {"cloudevents"})
+@InfinispanModule(name = "core-tests", requiredModules = "core")
 public final class TestModuleLifecycle implements ModuleLifecycle, DynamicModuleMetadataProvider {
 
    private TestGlobalConfiguration testGlobalConfiguration;
