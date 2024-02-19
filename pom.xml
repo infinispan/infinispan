@@ -135,7 +135,6 @@
       <module>integrationtests/cdi-weld-se-it</module>
       <module>hibernate</module>
       <module>anchored-keys</module>
-      <module>cloudevents-integration</module>
       <module>test-support/proto-sample-domain-implementation</module>
    </modules>
    <properties>
