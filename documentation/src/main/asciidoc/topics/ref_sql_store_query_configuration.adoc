@@ -26,17 +26,18 @@ include::sql/address.sql[]
 
 Protobuf schema for the "person" and "address" tables are as follows:
 
+.Protobuf schema for the "address" table
+[source,proto,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::protobuf/address-db-table.proto[]
+----
+
 .Protobuf schema for the "person" table
 [source,proto,options="nowrap",subs=attributes+,role="primary"]
 ----
 include::protobuf/person-db-table.proto[]
 ----
 
-.Protobuf schema for the "address" table
-[source,proto,options="nowrap",subs=attributes+,role="secondary"]
-----
-include::protobuf/address-db-table.proto[]
-----
 
 [discrete]
 == Cache configuration
