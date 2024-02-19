@@ -429,11 +429,6 @@
             <version>${version.xstream}</version>
          </dependency>
          <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-compress</artifactId>
-            <version>${version.commons.compress}</version>
-         </dependency>
-         <dependency>
             <groupId>org.apache.sshd</groupId>
             <artifactId>sshd-common</artifactId>
             <version>${version.sshd}</version>
