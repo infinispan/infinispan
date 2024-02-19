@@ -13,17 +13,17 @@
 |`aws.S3_PING`
 |`default-jgroups-ec2.xml`
 |`org.jgroups.aws:jgroups-aws`
-|`2.0.1.Final`
+|`3.0.0.Final`
 
 |`GOOGLE_PING2`
 |`default-jgroups-google.xml`
 |`org.jgroups.google:jgroups-google`
-|`1.0.0.Final`
+|`2.0.0.Final`
 
 |`azure.AZURE_PING`
 |`default-jgroups-azure.xml`
 |`org.jgroups.azure:jgroups-azure`
-|`2.0.0.Final`
+|`2.0.2.Final`
 |===
 
 [discrete]

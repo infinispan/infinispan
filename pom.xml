@@ -272,8 +272,6 @@
       <versionx.org.jboss.weld.se.weld-se-core>5.1.2.Final</versionx.org.jboss.weld.se.weld-se-core>
       <versionx.org.jboss.weld.weld-core-impl>5.1.2.Final</versionx.org.jboss.weld.weld-core-impl>
       <versionx.org.jboss.weld.weld-api>5.0.SP3</versionx.org.jboss.weld.weld-api>
-      <versionx.org.jgroups.aws.jgroups-aws>3.0.0.Final</versionx.org.jgroups.aws.jgroups-aws>
-      <versionx.org.jgroups.azure.jgroups-azure>2.0.2.Final</versionx.org.jgroups.azure.jgroups-azure>
       <versionx.org.mariadb.jdbc>3.3.2</versionx.org.mariadb.jdbc>
       <versionx.org.objectweb.howl.howl>1.0.1-1</versionx.org.objectweb.howl.howl>
       <versionx.org.postgresql>42.7.1</versionx.org.postgresql>
@@ -284,7 +282,6 @@
       <versionx.org.wildfly.common.wildfly-common>1.7.0.Final</versionx.org.wildfly.common.wildfly-common>
       <versionx.org.wildfly.maven.plugins.licenses-plugin>2.4.1.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
       <versionx.org.xerial>3.45.1.0</versionx.org.xerial>
-      <versionx.software.amazon.ion.java>1.5.1</versionx.software.amazon.ion.java>
       <versionx.sun.jdk.jconsole>jdk</versionx.sun.jdk.jconsole>
    </properties>
 
@@ -1477,16 +1474,6 @@
             </exclusions>
          </dependency>
          <dependency>
-            <groupId>org.jgroups.aws</groupId>
-            <artifactId>jgroups-aws</artifactId>
-            <version>${versionx.org.jgroups.aws.jgroups-aws}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.jgroups.azure</groupId>
-            <artifactId>jgroups-azure</artifactId>
-            <version>${versionx.org.jgroups.azure.jgroups-azure}</version>
-         </dependency>
-         <dependency>
             <groupId>org.kohsuke.metainf-services</groupId>
             <artifactId>metainf-services</artifactId>
             <version>${version.metainf-services}</version>
@@ -1850,11 +1837,6 @@
             <artifactId>sqlite-jdbc</artifactId>
             <version>${versionx.org.xerial}</version>
             <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>software.amazon.ion</groupId>
-            <artifactId>ion-java</artifactId>
-            <version>${versionx.software.amazon.ion.java}</version>
          </dependency>
          <dependency>
             <groupId>sun.jdk</groupId>
