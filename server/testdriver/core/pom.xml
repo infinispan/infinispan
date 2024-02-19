@@ -35,6 +35,12 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-cli-client</artifactId>
+         <exclusions>
+            <exclusion>
+               <groupId>org.apache.commons</groupId>
+               <artifactId>commons-compress</artifactId>
+            </exclusion>
+         </exclusions>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>

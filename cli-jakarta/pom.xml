@@ -20,6 +20,18 @@
       <transform.tests.skip>false</transform.tests.skip>
    </properties>
 
+   <dependencyManagement>
+      <dependencies>
+         <!-- We can't define the commons-compress dependency in the parent pom as the TestContainer dependency relies on
+         and older version of commons-compress https://github.com/testcontainers/testcontainers-java/issues/8169 -->
+         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>${version.commons.compress}</version>
+         </dependency>
+      </dependencies>
+   </dependencyManagement>
+
    <dependencies>
       <dependency>
          <groupId>org.aesh</groupId>
