@@ -55,11 +55,6 @@
          <scope>provided</scope>
       </dependency>
 
-      <dependency>
-         <groupId>org.jgroups.azure</groupId>
-         <artifactId>jgroups-azure</artifactId>
-      </dependency>
-
    </dependencies>
 
    <build>
