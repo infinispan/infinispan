@@ -1,4 +1,4 @@
-package com.example
+package com.example;
 
 message Address {
    optional string street = 1;
