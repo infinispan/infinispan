@@ -231,7 +231,7 @@
       <!-- dependencies version -->
       <versionx.org.infinispan.memcached-client>1.2.3</versionx.org.infinispan.memcached-client>
       <versionx.com.clearspring.analytics.stream>2.9.8</versionx.com.clearspring.analytics.stream>
-      <versionx.com.google.errorprone.error_prone_annotations>2.24.1</versionx.com.google.errorprone.error_prone_annotations>
+      <versionx.com.google.errorprone.error_prone_annotations>2.25.0</versionx.com.google.errorprone.error_prone_annotations>
       <versionx.com.google.guava.guava>33.0.0-jre</versionx.com.google.guava.guava>
       <versionx.com.google.testing.compile>0.21.0</versionx.com.google.testing.compile>
       <versionx.com.h2database.h2>2.2.224</versionx.com.h2database.h2>
