@@ -275,7 +275,7 @@
       <versionx.org.objectweb.howl.howl>1.0.1-1</versionx.org.objectweb.howl.howl>
       <versionx.org.postgresql>42.7.1</versionx.org.postgresql>
       <versionx.org.testcontainers.testcontainers>1.19.5</versionx.org.testcontainers.testcontainers>
-      <versionx.com.github.docker-java>3.3.4</versionx.com.github.docker-java>
+      <versionx.com.github.docker-java>3.3.5</versionx.com.github.docker-java>
       <versionx.org.testng.testng>6.14.3</versionx.org.testng.testng>
       <versionx.org.twdata.maven.mojo-executor>2.4.0</versionx.org.twdata.maven.mojo-executor>
       <versionx.org.wildfly.common.wildfly-common>1.7.0.Final</versionx.org.wildfly.common.wildfly-common>
