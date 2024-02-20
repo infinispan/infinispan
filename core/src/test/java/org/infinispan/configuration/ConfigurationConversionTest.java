@@ -1,5 +1,7 @@
 package org.infinispan.configuration;
 
+import static org.testng.AssertJUnit.assertEquals;
+
 import java.util.Map;
 import java.util.Properties;
 
@@ -25,11 +27,18 @@ public class ConfigurationConversionTest {
                 "          </security>\n" +
                 "        <encoding media-type=\"application/x-java-serialized-object\" />\n" +
                 "      </distributed-cache> ";
-        String json = convert(xml, MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON);
-        convert(json, MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML);
+        String json = convert(xml, MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON, true);
+        convert(json, MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, true);
     }
 
-    private String convert(String source, MediaType src, MediaType dst) {
+    @Test
+    public void testAdditionalConfigurationNotSerialized() {
+        String inputJson = "{\"local-cache\":{}}";
+        String json = convert(inputJson, MediaType.APPLICATION_JSON, MediaType.APPLICATION_JSON, false);
+        assertEquals(inputJson, json);
+    }
+
+    private String convert(String source, MediaType src, MediaType dst, boolean prettyPrint) {
         ParserRegistry parserRegistry = new ParserRegistry();
         Properties properties = new Properties();
         ConfigurationReader reader = ConfigurationReader.from(source)
@@ -42,7 +51,7 @@ public class ConfigurationConversionTest {
         Map.Entry<String, ConfigurationBuilder> entry = holder.getNamedConfigurationBuilders().entrySet().iterator().next();
         Configuration configuration = entry.getValue().build();
         StringBuilderWriter out = new StringBuilderWriter();
-        try (ConfigurationWriter writer = ConfigurationWriter.to(out).withType(dst).clearTextSecrets(true).prettyPrint(true).build()) {
+        try (ConfigurationWriter writer = ConfigurationWriter.to(out).withType(dst).clearTextSecrets(true).prettyPrint(prettyPrint).build()) {
             parserRegistry.serialize(writer, entry.getKey(), configuration);
         }
         return out.toString();

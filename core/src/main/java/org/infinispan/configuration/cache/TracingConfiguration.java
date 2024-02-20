@@ -16,16 +16,13 @@ public class TracingConfiguration extends ConfigurationElement<TracingConfigurat
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ENABLED, true, Boolean.class).build();
 
    public static final AttributeDefinition<Set<SpanCategory>> CATEGORIES = AttributeDefinition.builder(
-           org.infinispan.configuration.parsing.Attribute.CATEGORIES, new LinkedHashSet<>(Collections.singleton(SpanCategory.CONTAINER)),
-                   (Class<Set<SpanCategory>>) (Class<?>) Set.class)
-           .initializer(LinkedHashSet::new).serializer(AttributeSerializer.ENUM_SET)
+               org.infinispan.configuration.parsing.Attribute.CATEGORIES, null, (Class<Set<SpanCategory>>) (Class<?>) Set.class)
+         .initializer(() -> new LinkedHashSet<>(Collections.singleton(SpanCategory.CONTAINER)))
+         .serializer(AttributeSerializer.ENUM_SET)
          .parser(TracingConfigurationBuilder.CategoriesAttributeParser.INSTANCE).build();
 
    static AttributeSet attributeDefinitionSet() {
-      AttributeSet attributeSet = new AttributeSet(TracingConfiguration.class, ENABLED, CATEGORIES);
-      attributeSet.attribute(CATEGORIES).set(new LinkedHashSet<>(Collections.singleton(SpanCategory.CONTAINER)));
-
-      return attributeSet;
+      return new AttributeSet(TracingConfiguration.class, ENABLED, CATEGORIES);
    }
 
    protected TracingConfiguration(AttributeSet attributes) {
