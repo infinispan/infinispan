@@ -6,8 +6,8 @@ source "${SCRIPT_DIR}/common.sh"
 requiredEnv TOKEN ISSUE_KEY TRANSITION
 
 TRANSITIONS_URL="${API_URL}/issue/${ISSUE_KEY}/transitions"
-TRANSITIONS=$(${CURL} -H @headers ${TRANSITIONS_URL} | jq .)
-TRANSITION_ID=$(echo ${TRANSITIONS} | jq -r ".transitions[] | select(.name==\"${TRANSITION}\").id")
+TRANSITIONS=$(curl ${TRANSITIONS_URL} | jq .)
+TRANSITION_ID=$(echo "${TRANSITIONS}" | jq -r ".transitions[] | select(.name==\"${TRANSITION}\").id")
 
 cat << EOF | tee update-jira.json
 {
@@ -17,6 +17,4 @@ cat << EOF | tee update-jira.json
 }
 EOF
 
-${CURL} -X POST "${TRANSITIONS_URL}" \
-  -H @headers \
-  --data @update-jira.json
+curl -X POST "${TRANSITIONS_URL}" --data @update-jira.json
