@@ -16,10 +16,10 @@ import org.infinispan.remoting.transport.Address;
  */
 class DistributedEntryIterator<K, V> extends DistributedIterator<EntityEntry<K, V>> {
 
-   DistributedEntryIterator(LocalQueryStatistics queryStatistics, Sort sort, int fetchSize, int resultSize,
+   DistributedEntryIterator(LocalQueryStatistics queryStatistics, Sort sort, int resultSize,
                             int maxResults, int firstResult, Map<Address, NodeTopDocs> topDocsResponses,
                             AdvancedCache<?, ?> cache) {
-      super(queryStatistics, sort, fetchSize, resultSize, maxResults, firstResult, topDocsResponses, cache);
+      super(queryStatistics, sort, resultSize, maxResults, firstResult, topDocsResponses, cache);
    }
 
    @Override
