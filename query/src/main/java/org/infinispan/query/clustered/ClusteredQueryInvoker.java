@@ -18,9 +18,11 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.query.SearchTimeoutException;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
+import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Invoke a ClusteredQueryCommand on the cluster, including on own node.
@@ -30,6 +32,8 @@ import org.infinispan.remoting.transport.impl.SingleResponseCollector;
  * @since 5.1
  */
 final class ClusteredQueryInvoker {
+
+   private static final Log log = LogFactory.getLog(ClusteredQueryInvoker.class, Log.class);
 
    private final RpcManager rpcManager;
    private final LocalQueryStatistics queryStatistics;
@@ -56,6 +60,14 @@ final class ClusteredQueryInvoker {
    List<QueryResponse> broadcast(ClusteredQueryOperation operation) {
       long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
 
+      String queryString = null;
+      if (log.isTraceEnabled() || queryStatistics.isEnabled()) {
+         queryString = operation.getQueryDefinition().getQueryString();
+      }
+      if (log.isTraceEnabled()) {
+         log.tracef("Broadcast query started: '%s'.", queryString);
+      }
+
       Map<Address, BitSet> split = partitioner.split();
       SegmentsClusteredQueryCommand localCommand = new SegmentsClusteredQueryCommand(cache.getName(), operation, split.get(myAddress));
       // sends the request remotely first
@@ -77,8 +89,10 @@ final class ClusteredQueryInvoker {
          results.addAll(await(sequence(futureRemoteResponses)));
 
          if (queryStatistics.isEnabled()) {
-            String queryString = operation.getQueryDefinition().getQueryString();
             queryStatistics.distributedIndexedQueryExecuted(queryString, System.nanoTime() - start);
+         }
+         if (log.isTraceEnabled()) {
+            log.tracef("Broadcast query completed: '%s'.", queryString);
          }
       } catch (InterruptedException e) {
          throw new SearchException("Interrupted while searching locally", e);

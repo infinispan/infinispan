@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Spliterator;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -26,7 +27,9 @@ import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
 import org.infinispan.query.impl.IndexedQuery;
 import org.infinispan.query.impl.IndexedQueryImpl;
 import org.infinispan.query.impl.QueryDefinition;
+import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * An extension of IndexedQueryImpl used for distributed queries.
@@ -35,6 +38,8 @@ import org.infinispan.remoting.transport.Address;
  * @since 5.1
  */
 public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
+
+   private static final Log log = LogFactory.getLog(DistributedIndexedQueryImpl.class, Log.class);
 
    private Integer resultSize;
    private boolean countIsExact = true;
@@ -148,8 +153,17 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
 
       try {
          partitionHandlingSupport.checkCacheAvailable();
-         List<E> hits = stream(spliteratorUnknownSize(iterator(), 0), false)
+         Spliterator<E> spliterator = spliteratorUnknownSize(iterator(), 0);
+
+         if (log.isTraceEnabled()) {
+            log.trace("Broadcast entity loading started.");
+         }
+         List<E> hits = stream(spliterator, false)
                .filter(Objects::nonNull).collect(Collectors.toList());
+         if (log.isTraceEnabled()) {
+            log.tracef("Broadcast entity loading completed: '%s'.", hits.size());
+         }
+
          return countIsExact ? new QueryResultImpl<>(resultSize, hits) : new QueryResultImpl<>(hits);
       } catch (org.hibernate.search.util.common.SearchTimeoutException timeoutException) {
          throw new SearchTimeoutException();
