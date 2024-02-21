@@ -266,7 +266,7 @@
       <versionx.com.microsoft.azure.azure-storage>8.6.6</versionx.com.microsoft.azure.azure-storage>
       <versionx.com.microsoft.sqlserver>9.4.0.jre11</versionx.com.microsoft.sqlserver>
       <versionx.com.mysql.mysql-connector-j>8.3.0</versionx.com.mysql.mysql-connector-j>
-      <versionx.org.postgresql.postgresql>42.4.3</versionx.org.postgresql.postgresql>
+      <versionx.org.postgresql.postgresql>42.4.4</versionx.org.postgresql.postgresql>
       <versionx.com.oracle.ojdbc.ojdbc8>19.3.0.0</versionx.com.oracle.ojdbc.ojdbc8>
       <versionx.com.squareup.okhttp3.ohhttp>${version.okhttp}</versionx.com.squareup.okhttp3.ohhttp>
       <versionx.com.squareup.protoparser>4.0.3</versionx.com.squareup.protoparser>
