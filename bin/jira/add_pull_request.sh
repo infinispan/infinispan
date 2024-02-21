@@ -6,7 +6,7 @@ source "${SCRIPT_DIR}/common.sh"
 requiredEnv TOKEN ISSUE_KEY PULL_REQUEST
 
 ISSUE_URL="${API_URL}/issue/${ISSUE_KEY}"
-ISSUE=$(${CURL} -H @headers ${ISSUE_URL} | jq .)
+ISSUE=$(curl ${ISSUE_URL} | jq .)
 EXISTING_PRS=$(echo ${ISSUE} | jq .fields.customfield_12310220)
 
 if [[ ${EXISTING_PRS} == *"${PULL_REQUEST}"* ]]; then
@@ -27,6 +27,4 @@ cat << EOF | tee update-jira.json
 }
 EOF
 
-${CURL} -X PUT ${ISSUE_URL} \
-  -H @headers \
-  --data @update-jira.json
+curl -X PUT ${ISSUE_URL} --data @update-jira.json
