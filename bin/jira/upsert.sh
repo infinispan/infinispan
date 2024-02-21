@@ -5,16 +5,13 @@ source "${SCRIPT_DIR}/common.sh"
 
 requiredEnv TOKEN PROJECT_KEY ASSIGNEE PULL_REQUEST SUMMARY TYPE
 
-PROJECT=$(${CURL} -H @headers $API_URL/project/${PROJECT_KEY})
+PROJECT=$(curl $API_URL/project/${PROJECT_KEY})
 PROJECT_ID=$(echo ${PROJECT} | jq -r .id)
 ISSUE_TYPE_ID=$(echo ${PROJECT} | jq -r ".issueTypes[] | select(.name==\"${TYPE}\").id")
 
 JQL="project = ${PROJECT_KEY} AND summary ~ '${SUMMARY}'"
 # Search issues for existing Jira issue
-ISSUES=$(${CURL} ${API_URL}/search \
--G --data-urlencode "jql=${JQL}" \
--H @headers
-)
+ISSUES=$(curl ${API_URL}/search -G --data-urlencode "jql=${JQL}")
 TOTAL_ISSUES=$(echo ${ISSUES} | jq -r .total)
 if [ ${TOTAL_ISSUES} -gt 1 ]; then
   echo "Multiple Jiras found in '${PROJECT}' with summary ~ '${SUMMARY}'"
@@ -40,7 +37,7 @@ elif [ ${TOTAL_ISSUES} == 0 ]; then
   }
 EOF
   # We retry on error here as for some reason the Jira server occasionally responds with 400 errors
-  ISSUE_KEY=$(${CURL} --retry 5 --retry-all-errors -H @headers --data @create-jira.json $API_URL/issue | jq -r .key)
+  ISSUE_KEY=$(curl --retry 5 --retry-all-errors --data @create-jira.json $API_URL/issue | jq -r .key)
 else
   export ISSUE_KEY=$(echo ${ISSUES} | jq -r .issues[0].key)
   export ASSIGNEE PULL_REQUEST
