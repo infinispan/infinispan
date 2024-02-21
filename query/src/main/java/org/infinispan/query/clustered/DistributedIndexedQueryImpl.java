@@ -2,7 +2,6 @@ package org.infinispan.query.clustered;
 
 import static java.util.Spliterators.spliteratorUnknownSize;
 import static java.util.stream.StreamSupport.stream;
-
 import static org.infinispan.query.logging.Log.CONTAINER;
 
 import java.util.Collections;
@@ -96,7 +95,7 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
                aggregation.displayGroupFirst(), luceneSort);
       }
 
-      return new DistributedIterator<>(queryStatistics, luceneSort, maxResults, resultSize, maxResults,
+      return new DistributedIterator<>(queryStatistics, luceneSort, resultSize, maxResults,
             firstResult, topDocsResponses, cache);
    }
 
@@ -114,7 +113,7 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
       }
 
       return new DistributedEntryIterator<>(queryStatistics, queryDefinition.getSearchQueryBuilder().getLuceneSort(),
-            maxResults, resultSize, maxResults, firstResult, topDocsResponses, cache);
+              resultSize, maxResults, firstResult, topDocsResponses, cache);
    }
 
    // number of results of each node of cluster
