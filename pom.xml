@@ -238,7 +238,7 @@
       <versionx.com.microsoft.azure.azure-storage>8.6.6</versionx.com.microsoft.azure.azure-storage>
       <versionx.com.microsoft.sqlserver>12.6.0.jre11</versionx.com.microsoft.sqlserver>
       <versionx.com.mysqldatabase.mysql>8.3.0</versionx.com.mysqldatabase.mysql>
-      <versionx.com.postgresqldatabase.postgresql>42.7.1</versionx.com.postgresqldatabase.postgresql>
+      <versionx.com.postgresqldatabase.postgresql>42.7.2</versionx.com.postgresqldatabase.postgresql>
       <versionx.com.oracle.ojdbc.ojdbc8>19.3.0.0</versionx.com.oracle.ojdbc.ojdbc8>
       <versionx.com.squareup.protoparser>4.0.3</versionx.com.squareup.protoparser>
       <versionx.commons-dbcp.commons-dbcp>1.4</versionx.commons-dbcp.commons-dbcp>
@@ -273,7 +273,7 @@
       <versionx.org.jboss.weld.weld-api>5.0.SP3</versionx.org.jboss.weld.weld-api>
       <versionx.org.mariadb.jdbc>3.3.2</versionx.org.mariadb.jdbc>
       <versionx.org.objectweb.howl.howl>1.0.1-1</versionx.org.objectweb.howl.howl>
-      <versionx.org.postgresql>42.7.1</versionx.org.postgresql>
+      <versionx.org.postgresql>42.7.2</versionx.org.postgresql>
       <versionx.org.testcontainers.testcontainers>1.19.5</versionx.org.testcontainers.testcontainers>
       <versionx.com.github.docker-java>3.3.5</versionx.com.github.docker-java>
       <versionx.org.testng.testng>6.14.3</versionx.org.testng.testng>
