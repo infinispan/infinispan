@@ -58,8 +58,7 @@ final class ClusteredQueryInvoker {
 
       Map<Address, BitSet> split = partitioner.split();
       SegmentsClusteredQueryCommand localCommand = new SegmentsClusteredQueryCommand(cache.getName(), operation, split.get(myAddress));
-      // invoke on own node
-      CompletionStage<QueryResponse> localResponse = localInvoke(localCommand);
+      // sends the request remotely first
       List<CompletableFuture<QueryResponse>> futureRemoteResponses = split.entrySet().stream()
             .filter(e -> !e.getKey().equals(myAddress)).map(e -> {
                Address address = e.getKey();
@@ -69,6 +68,9 @@ final class ClusteredQueryInvoker {
                                                rpcManager.getSyncRpcOptions()).toCompletableFuture();
             }).map(a -> a.thenApply(r -> (QueryResponse) r.getResponseValue())).collect(Collectors.toList());
 
+      // then, invoke on own node
+      CompletionStage<QueryResponse> localResponse = localInvoke(localCommand);
+      
       List<QueryResponse> results = new ArrayList<>();
       try {
          results.add(await(localResponse.toCompletableFuture()));

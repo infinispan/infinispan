@@ -15,30 +15,14 @@ import org.infinispan.remoting.transport.Address;
  */
 class DistributedEntryIterator<K, V> extends DistributedIterator<Map.Entry<K, V>> {
 
-   DistributedEntryIterator(LocalQueryStatistics queryStatistics, Sort sort, int fetchSize, int resultSize,
+   DistributedEntryIterator(LocalQueryStatistics queryStatistics, Sort sort, int resultSize,
                             int maxResults, int firstResult, Map<Address, NodeTopDocs> topDocsResponses,
                             AdvancedCache<?, ?> cache) {
-      super(queryStatistics, sort, fetchSize, resultSize, maxResults, firstResult, topDocsResponses, cache);
+      super(queryStatistics, sort, resultSize, maxResults, firstResult, topDocsResponses, cache);
    }
 
    @Override
    protected Map.Entry<K, V> decorate(Object key, Object value) {
-      return new Map.Entry<K, V>() {
-
-         @Override
-         public K getKey() {
-            return (K) key;
-         }
-
-         @Override
-         public V getValue() {
-            return (V) value;
-         }
-
-         @Override
-         public V setValue(V value) {
-            throw new UnsupportedOperationException("Entry is immutable");
-         }
-      };
+      return Map.entry((K) key, (V) value);
    }
 }
