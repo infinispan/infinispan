@@ -1,10 +1,11 @@
 #!/bin/bash
 set -e -o pipefail
+shopt -s expand_aliases
 
-CURL="curl --no-progress-meter --fail-with-body"
+
 if [[ "$RUNNER_DEBUG" == "1" ]]; then
   set -x
-  CURL="${CURL} --verbose"
+  CURL_VERBOSE="--verbose"
 fi
 
 function requiredEnv() {
@@ -16,10 +17,7 @@ function requiredEnv() {
   done
 }
 
+alias curl="curl ${CURL_VERBOSE} --no-progress-meter --fail-with-body -H 'Authorization: Bearer ${TOKEN}' -H 'Content-Type: application/json'"
+
 BASE_URL=https://issues.redhat.com
 API_URL=${BASE_URL}/rest/api/2
-
-cat << EOF | tee headers
-Authorization: Bearer ${TOKEN}
-Content-Type: application/json
-EOF

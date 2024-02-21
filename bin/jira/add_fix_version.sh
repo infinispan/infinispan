@@ -19,6 +19,4 @@ cat << EOF | tee update-jira.json
 }
 EOF
 
-${CURL} -X PUT ${API_URL}/issue/${ISSUE_KEY} \
-  -H @headers \
-  --data @update-jira.json
+curl -X PUT ${API_URL}/issue/${ISSUE_KEY} --data @update-jira.json

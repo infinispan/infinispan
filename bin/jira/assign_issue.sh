@@ -5,6 +5,4 @@ source "${SCRIPT_DIR}/common.sh"
 
 requiredEnv TOKEN ISSUE_KEY ASSIGNEE
 
-${CURL} -X PUT ${API_URL}/issue/${ISSUE_KEY}/assignee \
-  -H @headers \
-  --data "{\"name\":\"${ASSIGNEE}\"}"
+curl -X PUT ${API_URL}/issue/${ISSUE_KEY}/assignee --data "{\"name\":\"${ASSIGNEE}\"}"

@@ -5,6 +5,10 @@ pipeline {
         label 'slave-group-normal || slave-group-k8s'
     }
 
+    environment {
+      TOKEN = credentials('jira-infinspan-bot')
+    }
+
     parameters {
         choice(name: 'TEST_JDK', choices: ['Default', 'JDK 17', 'JDK 21', 'JDK latest'], description: 'The JDK used to run tests')
     }
@@ -148,10 +152,15 @@ pipeline {
                 // TODO Add StabilityTestDataPublisher after https://issues.jenkins-ci.org/browse/JENKINS-42610 is fixed
                 // Capture target/surefire-reports/*.xml, target/failsafe-reports/*.xml,
                 // target/failsafe-reports-embedded/*.xml, target/failsafe-reports-remote/*.xml
-                junit testResults: '**/target/*-reports*/**/TEST-*.xml',
-                    testDataPublishers: [[$class: 'ClaimTestDataPublisher']],
-                    healthScaleFactor: 100, allowEmptyResults: true
-
+                script {
+                   def testResults = sh(
+                     script: 'shopt -s nullglob globstar; ls **/target/*-reports*/**/TEST-*.xml | grep -v "FLAKY.xml" | paste -s -d, -',
+                     returnStdout: true
+                   ).trim()
+                   junit testResults: "${testResults}",
+                       testDataPublishers: [[$class: 'ClaimTestDataPublisher']],
+                       healthScaleFactor: 100, allowEmptyResults: true
+                }
                 // Workaround for SUREFIRE-1426: Fail the build if there a fork crashed
                 script {
                     if (manager.logContains("org.apache.maven.surefire.booter.SurefireBooterForkException:.*")) {
@@ -193,6 +202,10 @@ pipeline {
                 pmdParser(pattern: '**/target/pmd.xml'),
                 cpd(pattern: '**/target/cpd.xml')
             ]
+
+            script {
+               sh 'RUNNER_DEBUG=1 FLAKY_TEST_GLOB="**/target/*-reports*/**/TEST-*FLAKY.xml" PROJECT_KEY=ISPN TYPE=Bug JENKINS_JOB_URL=$BUILD_URL ./bin/jira/track_flaky_tests.sh'
+            }
         }
 
         // Send notification email when a build fails, has test failures, or is the first successful build
