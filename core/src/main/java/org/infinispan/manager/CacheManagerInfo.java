@@ -76,12 +76,6 @@ public class CacheManagerInfo implements JsonSerialization {
          return Immutables.immutableSetWrap(names);
    }
 
-   public List<String> externalCacheConfigurations() {
-      return configurationManager.getDefinedConfigurations()
-            .stream().filter(c -> !internalCacheRegistry.isInternalCache(c))
-            .collect(Collectors.toList());
-   }
-
    public long getCreatedCacheCount() {
       return getCacheNames().count();
    }

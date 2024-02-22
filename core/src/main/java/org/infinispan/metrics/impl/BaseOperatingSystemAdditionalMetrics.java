@@ -9,7 +9,6 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 
-import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -54,23 +53,6 @@ public class BaseOperatingSystemAdditionalMetrics implements MeterBinder {
                .description("Displays the CPU time, in nanoseconds, used by the process on which the Java virtual machine is running.")
                .register(registry);
       }
-   }
-
-   public Json cpuReport() {
-      OperatingSystemMXBean operatingSystemBean = ManagementFactory.getOperatingSystemMXBean();
-      Json report = Json.object("system-load-average", operatingSystemBean.getSystemLoadAverage());
-
-      Method processCpuLoadMethod = getProcessCpuLoad(operatingSystemBean);
-      if (processCpuLoadMethod != null) {
-         report.set("process-cpu-load", invoke(operatingSystemBean, processCpuLoadMethod));
-      }
-
-      Method processCpuTimeMethod = getProcessCpuTime(operatingSystemBean);
-      if (processCpuTimeMethod != null) {
-         report.set("process-cpu-time", invoke(operatingSystemBean, processCpuTimeMethod));
-      }
-
-      return report;
    }
 
    private static Method getProcessCpuLoad(OperatingSystemMXBean operatingSystemBean) {
