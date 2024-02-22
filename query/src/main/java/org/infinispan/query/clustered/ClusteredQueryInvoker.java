@@ -65,12 +65,12 @@ final class ClusteredQueryInvoker {
                BitSet segments = e.getValue();
                SegmentsClusteredQueryCommand cmd = new SegmentsClusteredQueryCommand(cache.getName(), operation, segments);
                return rpcManager.invokeCommand(address, cmd, SingleResponseCollector.validOnly(),
-                                               rpcManager.getSyncRpcOptions()).toCompletableFuture();
+                     rpcManager.getSyncRpcOptions()).toCompletableFuture();
             }).map(a -> a.thenApply(r -> (QueryResponse) r.getResponseValue())).collect(Collectors.toList());
 
       // then, invoke on own node
       CompletionStage<QueryResponse> localResponse = localInvoke(localCommand);
-      
+
       List<QueryResponse> results = new ArrayList<>();
       try {
          results.add(await(localResponse.toCompletableFuture()));
