@@ -119,10 +119,12 @@ public class AuthorizationCertIT extends InfinispanSuite {
                   .setPath(SERVERS.getServerDriver().getCertificateFile("ca.pfx").getPath())
                   .setPassword(KEY_PASSWORD);
             options.getNetClientOptions()
+                  .setTrustAll(true)
                   .setSsl(true)
                   .setSslEngineOptions(new JdkSSLEngineOptions())
-                  .setPfxKeyCertOptions(certOpts)
-                  .setPfxTrustOptions(trustOpts);
+                  .setKeyCertOptions(certOpts)
+                  .setTrustOptions(trustOpts)
+                  .setHostnameVerificationAlgorithm("");
 
             return options;
          });
