@@ -2,9 +2,9 @@
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
    <parent>
       <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-parent</artifactId>
+      <artifactId>infinispan-bom</artifactId>
       <version>15.0.0-SNAPSHOT</version>
-      <relativePath>../../pom.xml</relativePath>
+      <relativePath>../bom/pom.xml</relativePath>
    </parent>
    <modelVersion>4.0.0</modelVersion>
 
@@ -22,21 +22,19 @@
       <dependency>
          <groupId>org.jgroups</groupId>
          <artifactId>jgroups</artifactId>
-         <optional>true</optional>
+         <version>${version.jgroups}</version>
       </dependency>
       <dependency>
          <groupId>org.kohsuke.metainf-services</groupId>
          <artifactId>metainf-services</artifactId>
+         <version>${version.metainf-services}</version>
       </dependency>
 
       <dependency>
          <groupId>junit</groupId>
          <artifactId>junit</artifactId>
+         <version>${version.junit}</version>
          <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>com.google.testing.compile</groupId>
-         <artifactId>compile-testing</artifactId>
       </dependency>
    </dependencies>
 
@@ -46,18 +44,33 @@
             <artifactId>maven-compiler-plugin</artifactId>
             <version>${version.maven-compiler-plugin}</version>
             <configuration>
+               <annotationProcessorPaths>
+                  <annotationProcessorPath>
+                     <groupId>org.kohsuke.metainf-services</groupId>
+                     <artifactId>metainf-services</artifactId>
+                     <version>${version.metainf-services}</version>
+                  </annotationProcessorPath>
+               </annotationProcessorPaths>
                <encoding>UTF-8</encoding>
                <excludes>
                   <exclude>**/package-info.java</exclude>
                </excludes>
-               <annotationProcessorPaths>
-                  <path>
-                     <groupId>org.kohsuke.metainf-services</groupId>
-                     <artifactId>metainf-services</artifactId>
-                     <version>${version.metainf-services}</version>
-                  </path>
-               </annotationProcessorPaths>
             </configuration>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>attach-sources</id>
+                  <phase>verify</phase>
+                  <goals>
+                     <goal>jar-no-fork</goal>
+                     <goal>test-jar</goal>
+                  </goals>
+               </execution>
+            </executions>
+            <inherited>true</inherited>
          </plugin>
       </plugins>
    </build>

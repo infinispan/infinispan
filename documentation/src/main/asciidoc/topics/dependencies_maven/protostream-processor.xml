@@ -1,19 +1,18 @@
-<dependencyManagement>
-  <dependencies>
-    <dependency>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-bom</artifactId>
-      <version>${version.infinispan}</version>
-      <type>pom</type>
-      <scope>import</scope>
-    </dependency>
-  </dependencies>
-</dependencyManagement>
-
-<dependencies>
-  <dependency>
-    <groupId>org.infinispan.protostream</groupId>
-    <artifactId>protostream-processor</artifactId>
-    <scope>provided</scope>
-  </dependency>
-</dependencies>
+<build>
+  <plugins>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-compiler-plugin</artifactId>
+      <version>...</version>
+      <configuration>
+        <annotationProcessorPaths>
+          <annotationProcessorPath>
+            <groupId>org.infinispan.protostream</groupId>
+            <artifactId>protostream-processor</artifactId>
+            <version>...</version>
+          </annotationProcessorPath>
+        </annotationProcessorPaths>
+      </configuration>
+    </plugin>
+  </plugins>
+</build>
