@@ -21,7 +21,6 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
-import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.AnnotatedConstruct;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
@@ -56,7 +55,6 @@ import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.jmx.annotations.Units;
 import org.kohsuke.MetaInfServices;
 
-@SupportedSourceVersion(SourceVersion.RELEASE_11)
 @SupportedAnnotationTypes({ComponentAnnotationProcessor.INFINISPAN_MODULE,
                            ComponentAnnotationProcessor.DEFAULT_FACTORY_FOR,
                            ComponentAnnotationProcessor.SURVIVES_RESTARTS,
@@ -107,6 +105,11 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
    }
 
    @Override
+   public SourceVersion getSupportedSourceVersion() {
+      return SourceVersion.latestSupported();
+   }
+
+   @Override
    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
       try {
          TypeElement autoInstantiableElement = elements().getTypeElement(AUTO_INSTANTIABLE_FACTORY_CLASS);
@@ -123,7 +126,7 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
          if (roundEnv.processingOver()) {
             Model model = modelBuilder.getModel();
             if (modelBuilder.module == null) {
-               error(null, "@InfinispanModule annotation not found in any class, please perform a clean build. " +
+               warn(null, "@InfinispanModule annotation not found in any class. " +
                            "Found components %s", modelBuilder.annotatedTypes.keySet());
                return true;
             }

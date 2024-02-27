@@ -2171,6 +2171,34 @@
                   <!-- Include method parameter debug info -->
                   <parameters>true</parameters>
                   <forceJavacCompilerUse>true</forceJavacCompilerUse>
+                  <!-- Annotation processors -->
+                  <annotationProcessorPaths>
+                     <annotationProcessorPath>
+                        <groupId>org.kohsuke.metainf-services</groupId>
+                        <artifactId>metainf-services</artifactId>
+                        <version>${version.metainf-services}</version>
+                     </annotationProcessorPath>
+                     <annotationProcessorPath>
+                        <groupId>org.infinispan</groupId>
+                        <artifactId>infinispan-component-processor</artifactId>
+                        <version>${version.infinispan}</version>
+                     </annotationProcessorPath>
+                     <annotationProcessorPath>
+                        <groupId>org.infinispan</groupId>
+                        <artifactId>infinispan-logging-processor</artifactId>
+                        <version>${version.infinispan}</version>
+                     </annotationProcessorPath>
+                     <annotationProcessorPath>
+                        <groupId>org.infinispan.protostream</groupId>
+                        <artifactId>protostream-processor</artifactId>
+                        <version>${version.protostream}</version>
+                     </annotationProcessorPath>
+                     <annotationProcessorPath>
+                        <groupId>org.jboss.logging</groupId>
+                        <artifactId>jboss-logging-processor</artifactId>
+                        <version>${version.jboss.logging.processor}</version>
+                     </annotationProcessorPath>
+                  </annotationProcessorPaths>
                </configuration>
             </plugin>
             <plugin>
