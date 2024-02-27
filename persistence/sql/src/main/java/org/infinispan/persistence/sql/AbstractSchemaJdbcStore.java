@@ -40,6 +40,7 @@ import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.GenericDescriptor;
+import org.infinispan.protostream.descriptors.Label;
 import org.infinispan.protostream.descriptors.Type;
 
 public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbcConfiguration> extends BaseJdbcStore<K, V, C> {
@@ -285,7 +286,7 @@ public abstract class AbstractSchemaJdbcStore<K, V, C extends AbstractSchemaJdbc
 
          Parameter parameter = parameterMap.get(name.toUpperCase());
          if (parameter == null) {
-            if (fieldDescriptor.isRequired()) {
+            if (fieldDescriptor.getLabel() == Label.REQUIRED) {
                throw log.requiredSchemaFieldNotPresent(name, fieldDescriptor.getTypeName());
             }
             continue;

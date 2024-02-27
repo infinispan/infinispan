@@ -22,7 +22,7 @@ public class Revision {
       this.message = message;
    }
 
-   @ProtoField(number = 1, required = true)
+   @ProtoField(number = 1)
    @Basic
    public String getKey() {
       return messageId;
@@ -32,14 +32,14 @@ public class Revision {
       this.messageId = key;
    }
 
-   @ProtoField(number = 2, required = true)
+   @ProtoField(number = 2)
    @Basic(searchable = false)
    public String getMessage() {
       return message;
    }
 
-   public void setMessage(String text) {
-      this.message = text;
+   public void setMessage(String message) {
+      this.message = message;
    }
 
    @ProtoField(number = 3, collectionImplementation = ArrayList.class)

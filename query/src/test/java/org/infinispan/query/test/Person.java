@@ -2,6 +2,7 @@ package org.infinispan.query.test;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Objects;
 
 import org.infinispan.api.annotations.indexing.Basic;
 import org.infinispan.api.annotations.indexing.Indexed;
@@ -94,24 +95,13 @@ public class Person implements Serializable {
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
-
       Person person = (Person) o;
-      if (age != person.age) return false;
-      if (blurb != null ? !blurb.equals(person.blurb) : person.blurb != null) return false;
-      if (name != null ? !name.equals(person.name) : person.name != null) return false;
-      if (nonIndexedField != null ? !nonIndexedField.equals(person.nonIndexedField) : person.nonIndexedField != null)
-         return false;
-      return dateOfGraduation != null ? dateOfGraduation.equals(person.dateOfGraduation) : person.dateOfGraduation == null;
+      return age == person.age && Objects.equals(name, person.name) && Objects.equals(blurb, person.blurb) && Objects.equals(dateOfGraduation, person.dateOfGraduation) && Objects.equals(nonIndexedField, person.nonIndexedField);
    }
 
    @Override
    public int hashCode() {
-      int result = (name != null ? name.hashCode() : 0);
-      result = 31 * result + (blurb != null ? blurb.hashCode() : 0);
-      result = 31 * result + (nonIndexedField != null ? nonIndexedField.hashCode() : 0);
-      result = 31 * result + (dateOfGraduation != null ? dateOfGraduation.hashCode() : 0);
-      result = 31 * result + age;
-      return result;
+      return Objects.hash(name, blurb, age, dateOfGraduation, nonIndexedField);
    }
 
    @Override

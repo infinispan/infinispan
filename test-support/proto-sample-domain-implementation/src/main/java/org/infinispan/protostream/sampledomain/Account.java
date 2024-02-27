@@ -21,13 +21,13 @@ import org.infinispan.protostream.annotations.ProtoField;
 public class Account {
 
    public enum Currency {
-      @ProtoEnumValue(1)
+      @ProtoEnumValue(0)
       EUR,
-      @ProtoEnumValue(2)
+      @ProtoEnumValue(1)
       GBP,
-      @ProtoEnumValue(3)
+      @ProtoEnumValue(2)
       USD,
-      @ProtoEnumValue(4)
+      @ProtoEnumValue(3)
       BRL
    }
 

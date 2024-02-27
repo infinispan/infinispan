@@ -3,8 +3,8 @@ package org.infinispan.test.data;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 
 public enum Sex {
-   @ProtoEnumValue(number = 1)
+   @ProtoEnumValue(number = 0)
    FEMALE,
-   @ProtoEnumValue(number = 2)
+   @ProtoEnumValue(number = 1)
    MALE,
 }

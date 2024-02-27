@@ -21,7 +21,7 @@ public class Reviewer {
       this.lastName = lastName;
    }
 
-   @ProtoField(number = 1, required = true)
+   @ProtoField(number = 1)
    @Basic(searchable = false)
    public String getFirstName() {
       return firstName;
@@ -31,7 +31,7 @@ public class Reviewer {
       this.firstName = name;
    }
 
-   @ProtoField(number = 2, required = true)
+   @ProtoField(number = 2)
    @Basic(searchable = false)
    public String getLastName() {
       return lastName;

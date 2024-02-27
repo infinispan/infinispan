@@ -46,7 +46,7 @@ public class ProtoStreamMarshallerWithAnnotationsTest extends SingleCacheManager
 
       private String name;
 
-      @ProtoField(number = 1, required = true)
+      @ProtoField(number = 1, defaultValue = "0")
       public int getId() {
          return id;
       }

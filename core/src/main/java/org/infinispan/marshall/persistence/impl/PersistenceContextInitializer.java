@@ -12,6 +12,7 @@ import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSyntax;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.CacheRoleImpl;
@@ -58,7 +59,8 @@ import org.infinispan.util.logging.events.EventLogLevel;
       schemaFileName = "persistence.core.proto",
       schemaFilePath = "proto/generated",
       schemaPackageName = PersistenceContextInitializer.PACKAGE_NAME,
-      service = false
+      service = false,
+      syntax = ProtoSyntax.PROTO2
 )
 public interface PersistenceContextInitializer extends SerializationContextInitializer {
    String PACKAGE_NAME = "org.infinispan.persistence.core";
