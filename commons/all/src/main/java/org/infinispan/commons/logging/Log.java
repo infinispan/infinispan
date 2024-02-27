@@ -275,6 +275,10 @@ public interface Log extends BasicLogger {
    IllegalArgumentException invalidConfiguration(String name);
 
 
+   @LogMessage(level = ERROR)
+   @Message(value = "Failed creating initial JNDI context", id = 968)
+   void failedToCreateInitialCtx(@Cause Throwable e);
+
    //----- counters exceptions // don't use the same id range ------
 
    @Message(value = CounterOutOfBoundsException.FORMAT_MESSAGE, id = 29501)

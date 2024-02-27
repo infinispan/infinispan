@@ -1,16 +1,10 @@
 package org.infinispan.client.hotrod.transaction.lookup;
 
-import java.util.Optional;
-
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
-import javax.transaction.TransactionManager;
-
 import org.infinispan.client.hotrod.transaction.manager.RemoteTransactionManager;
-import org.infinispan.commons.util.Util;
 import org.infinispan.commons.tx.lookup.LookupNames;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 
+import jakarta.transaction.TransactionManager;
 import net.jcip.annotations.GuardedBy;
 
 /**
@@ -43,48 +37,9 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
          return transactionManager;
       }
 
-      transactionManager = tryTmFactoryLookup().orElseGet(RemoteTransactionManager::getInstance);
-      transactionManager = tryJndiLookup().orElseGet(
-            () -> tryTmFactoryLookup().orElseGet(RemoteTransactionManager::getInstance));
+      transactionManager = LookupNames.lookupKnownTransactionManagers(GenericTransactionManagerLookup.class.getClassLoader())
+            .orElseGet(RemoteTransactionManager::getInstance);
       return transactionManager;
    }
 
-   private Optional<TransactionManager> tryJndiLookup() {
-      InitialContext ctx;
-      try {
-         ctx = new InitialContext();
-      } catch (NamingException e) {
-         return Optional.empty();
-      }
-
-      try {
-         //probe jndi lookups first
-         for (LookupNames.JndiTransactionManager knownJNDIManager : LookupNames.JndiTransactionManager.values()) {
-            Object jndiObject;
-            try {
-               jndiObject = ctx.lookup(knownJNDIManager.getJndiLookup());
-            } catch (NamingException e) {
-               continue;
-            }
-            if (jndiObject instanceof TransactionManager) {
-               return Optional.of((TransactionManager) jndiObject);
-            }
-         }
-      } finally {
-         Util.close(ctx);
-      }
-      return Optional.empty();
-   }
-
-   private Optional<TransactionManager> tryTmFactoryLookup() {
-      for (LookupNames.TransactionManagerFactory transactionManagerFactory : LookupNames.TransactionManagerFactory
-            .values()) {
-         TransactionManager transactionManager = transactionManagerFactory
-               .tryLookup(GenericTransactionManagerLookup.class.getClassLoader());
-         if (transactionManager != null) {
-            return Optional.of(transactionManager);
-         }
-      }
-      return Optional.empty();
-   }
 }
