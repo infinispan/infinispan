@@ -4,7 +4,6 @@ import static org.infinispan.util.logging.Log.CONTAINER;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import jakarta.transaction.TransactionManager;
 
 import org.infinispan.commons.tx.lookup.LookupNames;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
@@ -16,6 +15,8 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import jakarta.transaction.TransactionManager;
 
 /**
  * A transaction manager lookup class that attempts to locate a TransactionManager. A variety of different classes and
@@ -143,19 +144,14 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
          Util.close(ctx);
       }
 
-      boolean found = true;
       // The TM may be deployed embedded alongside the app, so this needs to be looked up on the same CL as the Cache
-      for (LookupNames.TransactionManagerFactory transactionManagerFactory : LookupNames.TransactionManagerFactory.values()) {
-         log.debugf("Trying %s: %s", transactionManagerFactory.getPrettyName(), transactionManagerFactory.getFactoryClazz());
-         TransactionManager transactionManager = transactionManagerFactory.tryLookup(cl);
-         if (transactionManager != null) {
-            log.debugf("Found %s: %s", transactionManagerFactory.getPrettyName(), transactionManagerFactory.getFactoryClazz());
-            tm = transactionManager;
-            found = false;
-         }
-      }
+      var txManagerOpt = LookupNames.lookupKnownTransactionManagers(cl);
       lookupDone = true;
-      lookupFailed = found;
+      if (txManagerOpt.isEmpty()) {
+         lookupFailed = true;
+         return;
+      }
+      lookupFailed = false;
+      tm = txManagerOpt.get();
    }
-
 }
