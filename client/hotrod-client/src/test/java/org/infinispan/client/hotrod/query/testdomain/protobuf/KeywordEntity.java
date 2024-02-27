@@ -17,7 +17,7 @@ public class KeywordEntity {
       this.keyword = keyword;
    }
 
-   @ProtoField(value = 1, required = true)
+   @ProtoField(value = 1)
    @Text(projectable = true, analyzer = "keyword")
    public String getKeyword() {
       return keyword;

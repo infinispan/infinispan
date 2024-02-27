@@ -50,7 +50,7 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
       public Memo() {
       }
 
-      @ProtoField(number = 10, required = true)
+      @ProtoField(number = 10, defaultValue = "0")
       public int getId() {
          return id;
       }
@@ -101,7 +101,7 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
       public Author() {
       }
 
-      @ProtoField(number = 1, required = true)
+      @ProtoField(number = 1, defaultValue = "0")
       public int getId() {
          return id;
       }
@@ -111,7 +111,7 @@ public class RemoteQueryWithProtostreamAnnotationsTest extends SingleHotRodServe
       }
 
       @Basic(projectable = true)
-      @ProtoField(number = 2, required = true)
+      @ProtoField(number = 2)
       public String getName() {
          return name;
       }

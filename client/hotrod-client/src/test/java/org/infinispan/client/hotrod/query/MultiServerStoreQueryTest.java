@@ -181,7 +181,7 @@ class NewsKey {
    NewsKey() {
    }
 
-   @ProtoField(number = 1, required = true)
+   @ProtoField(number = 1)
    public void setArticle(String article) {
       this.article = article;
    }
@@ -216,13 +216,13 @@ class News {
       return id;
    }
 
-   @ProtoField(number = 1, required = true)
+   @ProtoField(number = 1, defaultValue = "0")
    public void setId(String id) {
       this.id = id;
    }
 
    @Basic(sortable = true)
-   @ProtoField(number = 2, required = true)
+   @ProtoField(number = 2, defaultValue = "0")
    public long getTimestamp() {
       return timestamp;
    }

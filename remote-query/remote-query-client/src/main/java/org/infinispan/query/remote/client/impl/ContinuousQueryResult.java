@@ -25,7 +25,12 @@ public final class ContinuousQueryResult {
       @ProtoEnumValue(2)
       UPDATED,
       @ProtoEnumValue(3)
-      LEAVING
+      LEAVING,
+      /*
+       * This is here so that we have a 0-valued protobuf enum
+       */
+      @ProtoEnumValue(0)
+      UNUSED
    }
 
    private final ResultType resultType;

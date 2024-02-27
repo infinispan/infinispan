@@ -32,7 +32,7 @@ public final class ServerEventImpl extends BaseEventLog {
       this(when, level, category, message, null, null, null, null);
    }
 
-   /**
+   /*
     * Milliseconds since epoch.
     */
    @ProtoField(number = 1, name = "when", defaultValue = "0")
@@ -52,7 +52,7 @@ public final class ServerEventImpl extends BaseEventLog {
       return category;
    }
 
-   @ProtoField(4)
+   @ProtoField(value = 4)
    @Override
    public String getMessage() {
       return message;

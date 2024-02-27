@@ -65,8 +65,7 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
 
       RestResponse response = join(schemaClient.post("error", errorProto));
 
-      String cause = "java.lang.IllegalStateException:"
-            + " Syntax error in error.proto at 3:8: unexpected label: messoge";
+      String cause = "Syntax error in error.proto at 3:7: unexpected label: messoge";
 
       ResponseAssertion.assertThat(response).isOk();
       Json jsonNode = Json.read(response.body());

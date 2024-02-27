@@ -20,9 +20,9 @@ import org.infinispan.protostream.annotations.ProtoField;
 public class User {
 
    public enum Gender {
-      @ProtoEnumValue(1)
+      @ProtoEnumValue(0)
       MALE,
-      @ProtoEnumValue(2)
+      @ProtoEnumValue(1)
       FEMALE
    }
 

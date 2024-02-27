@@ -167,7 +167,7 @@ public class MapSessionProtoAdapter {
                   if (wrappedMessageDelegate == null) {
                      wrappedMessageDelegate = ((SerializationContextImpl) ctx.getSerializationContext()).getMarshallerDelegate(WrappedMessage.class);
                   }
-                  int length = in.readRawVarint32();
+                  int length = in.readUInt32();
                   int oldLimit = in.pushLimit(length);
                   WrappedMessage wrappedMessage = readMessage(wrappedMessageDelegate, ctx);
                   value = wrappedMessage.getValue();

@@ -112,15 +112,13 @@ final class Search5MetadataCreator implements AnnotationMetadataCreator<Indexing
 
       AnnotationElement.Annotation fieldLevelAnalyzerAnnotationAttribute = (AnnotationElement.Annotation) fieldAnnotation.getAttributeValue(Search5Annotations.FIELD_ANALYZER_ATTRIBUTE).getValue();
       String fieldLevelAnalyzerAttribute = (String) fieldLevelAnalyzerAnnotationAttribute.getAttributeValue(Search5Annotations.ANALYZER_DEFINITION_ATTRIBUTE).getValue();
-      if (fieldLevelAnalyzerAttribute.isEmpty()) {
-         fieldLevelAnalyzerAttribute = null;
-      } else {
+      if (!fieldLevelAnalyzerAttribute.isEmpty()) {
          // TODO [anistor] field level analyzer attribute overrides the one specified by an eventual field level Analyzer annotation. Need to check if this is consistent with hibernate search
          fieldLevelAnalyzer = fieldLevelAnalyzerAttribute;
       }
 
       // field level analyzer should not be specified unless the field is analyzed
-      if (!isAnalyzed && (fieldLevelAnalyzer != null || fieldLevelAnalyzerAttribute != null)) {
+      if (!isAnalyzed && fieldLevelAnalyzer != null) {
          throw new IllegalStateException("Cannot specify an analyzer for field " + fd.getFullName() + " unless the field is analyzed.");
       }
 
