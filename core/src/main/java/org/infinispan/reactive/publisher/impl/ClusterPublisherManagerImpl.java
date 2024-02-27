@@ -299,7 +299,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       }
 
       if (localKeys != null) {
-         DeliveryGuarantee guarantee = deliveryToUse(null, deliveryGuarantee);
+         DeliveryGuarantee guarantee = deliveryToUse(null, deliveryGuarantee, explicitFlags);
          CompletionStage<PublisherResult<R>> localStage = composedType.localInvocation(parallelPublisher, null,
                localKeys, null, explicitFlags, guarantee, transformer, finalizer);
 
@@ -331,7 +331,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
          FlowableProcessor<R> flowableProcessor) {
       LocalizedCacheTopology topology = distributionManager.getCacheTopology();
       Address localAddress = topology.getLocalAddress();
-      Map<Address, IntSet> targets = determineSegmentTargets(topology, segments, localAddress);
+      Map<Address, IntSet> targets = determineSegmentTargets(topology, segments, localAddress, explicitFlags);
 
       int targetSize = targets.size();
 
@@ -376,7 +376,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       }
 
       if (localSegments != null) {
-         DeliveryGuarantee guarantee = deliveryToUse(null, deliveryGuarantee);
+         DeliveryGuarantee guarantee = deliveryToUse(null, deliveryGuarantee, explicitFlags);
          CompletionStage<PublisherResult<R>> localStage = composedType.localInvocation(parallelPublisher, localSegments,
                null, keysToExcludeByAddress.get(localAddress), explicitFlags, guarantee, transformer, finalizer);
 
@@ -668,8 +668,8 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
       }
    }
 
-   private Map<Address, IntSet> determineSegmentTargets(LocalizedCacheTopology topology, IntSet segments, Address localAddress) {
-      if ((sharedStore || replicatedCache) && !writeBehindShared) {
+   private Map<Address, IntSet> determineSegmentTargets(LocalizedCacheTopology topology, IntSet segments, Address localAddress, long explicitFlags) {
+      if (skipRemoteInvocation(explicitFlags)) {
          // A shared store without write behind will have all values available on all nodes, so just do local lookup
          var map = new HashMap<Address, IntSet>();
          map.put(localAddress, segments == null ? IntSets.immutableRangeSet(maxSegment) : segments);
@@ -1013,7 +1013,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             int currentTopology = topology.getTopologyId();
             this.currentTopology = currentTopology;
             Address localAddress = rpcManager.getAddress();
-            Map<Address, IntSet> targets = determineSegmentTargets(topology, segmentsToComplete, localAddress);
+            Map<Address, IntSet> targets = determineSegmentTargets(topology, segmentsToComplete, localAddress, publisher.explicitFlags);
             if (previousTopology != -1 && previousTopology == currentTopology || targets.isEmpty()) {
                int nextTopology = currentTopology + 1;
                if (log.isTraceEnabled()) {
@@ -1113,7 +1113,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
                   target, segments);
          }
          boolean local = target == rpcManager.getAddress();
-         InitialPublisherCommand cmd = publisher.buildInitialCommand(target, requestId, segments, excludedKeys, batchSize,
+         InitialPublisherCommand cmd = publisher.buildInitialCommand(local ? null : target, requestId, segments, excludedKeys, batchSize,
                local && useContext.getAndSet(false));
          if (cmd == null) {
             return CompletableFuture.completedFuture(PublisherResponse.emptyResponse(segments, null));
@@ -1333,7 +1333,7 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             functionToUse = transformer;
          }
 
-         DeliveryGuarantee guarantee = deliveryToUse(target, deliveryGuarantee);
+         DeliveryGuarantee guarantee = deliveryToUse(target, deliveryGuarantee, explicitFlags);
 
          return commandsFactory.buildInitialPublisherCommand(requestId, guarantee,
                batchSize, segments, keysToUse, excludedKeys, explicitFlags, composedType.isEntry(), shouldTrackKeys,
@@ -1368,16 +1368,32 @@ public class ClusterPublisherManagerImpl<K, V> implements ClusterPublisherManage
             functionToUse = transformer;
          }
 
-         DeliveryGuarantee guarantee = deliveryToUse(target, deliveryGuarantee);
+         DeliveryGuarantee guarantee = deliveryToUse(target, deliveryGuarantee, explicitFlags);
 
          return commandsFactory.buildInitialPublisherCommand(requestId, guarantee,
                batchSize, segments, null, excludedKeys, explicitFlags, composedType.isEntry(), shouldTrackKeys, functionToUse);
       }
    }
 
-   private DeliveryGuarantee deliveryToUse(Address target, DeliveryGuarantee desiredGuarantee) {
+   private DeliveryGuarantee deliveryToUse(Address target, DeliveryGuarantee desiredGuarantee, long explicitFlags) {
       // When the target is the local node and we have a shared store that doesn't have write behind we don't
       // need any special delivery guarantee as our store will hold all entries
-      return target == null && ((sharedStore || replicatedCache) && !writeBehindShared) ? DeliveryGuarantee.AT_MOST_ONCE : desiredGuarantee;
+      return target == null && skipRemoteInvocation(explicitFlags) ? DeliveryGuarantee.AT_MOST_ONCE : desiredGuarantee;
+   }
+
+
+   /**
+    * Returns true if the publisher can do its thing without contacting the other nodes.
+    * <p>
+    * Replicated caches and Shared stores have all data locally. We do not need RPCs.
+    * <p>
+    * Consider {@link org.infinispan.context.Flag#SKIP_CACHE_LOAD}.
+    *
+    * @param explicitFlags The flags used by the command.
+    * @return {@code true} if it can perform everything locally.
+    */
+   private boolean skipRemoteInvocation(long explicitFlags) {
+      // write behind may lose some data in remote nodes queues.
+      return ((sharedStore && EnumUtil.noneOf(explicitFlags, FlagBitSets.SKIP_CACHE_LOAD)) || replicatedCache) && !writeBehindShared;
    }
 }

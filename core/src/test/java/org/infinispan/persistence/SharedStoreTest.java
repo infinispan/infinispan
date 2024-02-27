@@ -4,7 +4,11 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
@@ -119,8 +123,44 @@ public class SharedStoreTest extends MultipleCacheManagersTest {
       assertStoreStatInvocationEquals(cache0, "size", 1);
    }
 
-   private void assertStoreStatInvocationEquals(Cache<?, ?> cache, String invocationName, int invocationCount) {
-      DummyInMemoryStore dims = TestingUtil.getFirstStore(cache);
+   public void testIterationWithSkipCacheLoad(Method method) {
+      // store 10 entries
+      IntStream.range(0, 10).forEach(i -> cache(0).put(TestingUtil.k(method, i), TestingUtil.v(method, i)));
+
+      // evict the last 5 entries from all caches
+      IntStream.range(5, 10).forEach(i -> caches().forEach(c -> c.evict(TestingUtil.k(method, i))));
+
+      for (var store : TestingUtil.cachestores(caches())) {
+         assertEquals(10, store.size());
+      }
+
+      assertIterationData(method, this.<String, String>cache(0).getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD), 5);
+      assertIterationData(method, cache(0), 10);
+   }
+
+   private void assertIterationData(Method method, Cache<String, String> cache, int expectedSize) {
+      assertEquals(expectedSize, cache.size());
+
+      var entries = new HashMap<>();
+      for (var e : cache.entrySet()) {
+         entries.put(e.getKey(), e.getValue());
+      }
+      assertEquals("Wrong size: " + entries, expectedSize, entries.size());
+      IntStream.range(0, expectedSize).forEach(i -> assertEquals("Wrong key " + i, TestingUtil.v(method, i), entries.get(TestingUtil.k(method, i))));
+
+      var keys = new HashSet<>(cache.keySet());
+
+      assertEquals("Wrong size: " + keys, expectedSize, keys.size());
+      IntStream.range(0, expectedSize).forEach(i -> assertTrue("Wrong key " + i, keys.contains(TestingUtil.k(method, i))));
+
+      var values = new HashSet<>(cache.values());
+
+      assertEquals("Wrong size: " + values, expectedSize, values.size());
+      IntStream.range(0, expectedSize).forEach(i -> assertTrue("Wrong value " + i, values.contains(TestingUtil.v(method, i))));
+   }
+
+   private void assertStoreStatInvocationEquals(Cache<String, String> cache, String invocationName, int invocationCount) {
+      DummyInMemoryStore<String, String> dims = TestingUtil.getFirstStore(cache);
       assertEquals(invocationCount, dims.stats().get(invocationName).intValue());
    }
 
