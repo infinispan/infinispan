@@ -12,7 +12,6 @@ import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
-import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
@@ -31,10 +30,15 @@ import org.kohsuke.MetaInfServices;
 /**
  * @since 14.0
  **/
-@SupportedSourceVersion(SourceVersion.RELEASE_11)
 @SupportedAnnotationTypes("org.infinispan.external.JGroupsProtocolComponent")
 @MetaInfServices(Processor.class)
 public class JGroupsComponentProcessor extends AbstractProcessor {
+
+   @Override
+   public SourceVersion getSupportedSourceVersion() {
+      return SourceVersion.latestSupported();
+   }
+
    @Override
    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
       for (TypeElement annotation : annotations) {

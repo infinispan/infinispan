@@ -162,6 +162,7 @@
       <version.jakarta.persistence>3.1.0</version.jakarta.persistence>
       <version.javax.cache>1.1.1</version.javax.cache>
       <version.jboss.logging>3.5.3.Final</version.jboss.logging>
+      <version.jboss.logging.processor>2.2.1.Final</version.jboss.logging.processor>
       <version.jboss.marshalling>2.1.4.Final</version.jboss.marshalling>
       <version.jboss.naming>5.0.6.CR1</version.jboss.naming>
       <version.jboss.narayana>5.13.1.Final</version.jboss.narayana>
