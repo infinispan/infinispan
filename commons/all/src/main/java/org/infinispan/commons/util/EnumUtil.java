@@ -107,6 +107,10 @@ public class EnumUtil {
       return (bitSet & testBitSet) != 0;
    }
 
+   public static boolean noneOf(long bitSet, long testBitSet) {
+      return (bitSet & testBitSet) == 0;
+   }
+
    public static int bitSetSize(long bitSet) {
       return Long.bitCount(bitSet);
    }
