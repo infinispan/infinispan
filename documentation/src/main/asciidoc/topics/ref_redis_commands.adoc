@@ -41,7 +41,7 @@ The {brandname} RESP endpoint implements the following Redis commands:
 |
 
 | link:https://redis.io/commands/cluster-nodes/[CLUSTER NODES]
-| This commands includes all required fields, some are set to 0 as they do not apply to {{brandname}}.
+| This commands includes all required fields, some are set to 0 as they do not apply to {brandname}.
 
 | link:https://redis.io/commands/cluster-shards/[CLUSTER SHARDS]
 |
@@ -83,7 +83,7 @@ The {brandname} RESP endpoint implements the following Redis commands:
 |
 
 | link:https://redis.io/commands/flushall[FLUSHALL]
-| Behaves like *FLUSHDB* since {{brandname}} does not support multiple Redis databases yet.
+| Behaves like `FLUSHDB` since {brandname} does not support multiple Redis databases yet.
 
 | link:https://redis.io/commands/flushdb[FLUSHDB]
 |
@@ -155,7 +155,7 @@ The {brandname} RESP endpoint implements the following Redis commands:
 |
 
 | link:https://redis.io/commands/info[INFO]
-| This implementation attempts to return all attributes that a real Redis server returns. However, in most cases, the values are set to 0, because they cannot be retrieved or don't make any sense in {{brandname}}.
+| This implementation attempts to return all attributes that a real Redis server returns. However, in most cases, the values are set to 0, because they cannot be retrieved or don't make any sense in {brandname}.
 
 | link:https://redis.io/commands/keys[KEYS]
 |
@@ -222,7 +222,7 @@ for concurrent operations or failures unless the resp cache is configured to use
 |
 
 | link:https://redis.io/commands/multi[MULTI] [[multi_command]]
-| The current implementation has a relaxed isolation level. Redis offers serializable transactions, but {{brandname}}
+| The current implementation has a relaxed isolation level. Redis offers serializable transactions, but {brandname}
 provides a read-uncommitted isolation.
 
 | link:https://redis.io/commands/persist[PERSIST]
@@ -461,3 +461,5 @@ provides a read-uncommitted isolation.
 
 | link:https://redis.io/commands/zscore[ZSCORE]
 |
+
+|===
