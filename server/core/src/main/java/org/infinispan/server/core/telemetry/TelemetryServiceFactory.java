@@ -15,9 +15,8 @@ import org.infinispan.factories.AutoInstantiableFactory;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.server.core.telemetry.inmemory.InMemoryTelemetryService;
 import org.infinispan.telemetry.InfinispanTelemetry;
-import org.infinispan.telemetry.impl.DisabledInfinispanTelemetry;
+import org.infinispan.telemetry.jfr.JfrTelemetry;
 import org.jboss.logging.Logger;
 
 import io.opentelemetry.api.OpenTelemetry;
@@ -39,11 +38,11 @@ public class TelemetryServiceFactory extends AbstractComponentFactory implements
 
       GlobalTracingConfiguration tracing = globalConfiguration.tracing();
       if (!tracing.enabled()) {
-         return new DisabledInfinispanTelemetry();
+         return JfrTelemetry.getInstance();
       }
 
       if (IN_MEMORY_COLLECTOR_ENDPOINT.equals(tracing.collectorEndpoint())) {
-         return new OpenTelemetryService(InMemoryTelemetryService.instance().openTelemetry());
+         return JfrTelemetry.getInstance();
       }
 
       try {
@@ -53,10 +52,10 @@ public class TelemetryServiceFactory extends AbstractComponentFactory implements
                .getOpenTelemetrySdk();
 
          log.telemetryLoaded(openTelemetry);
-         return new OpenTelemetryService(openTelemetry);
+         return JfrTelemetry.getInstance();
       } catch (Throwable e) {
          log.errorOnLoadingTelemetry(e);
-         return new DisabledInfinispanTelemetry();
+         return JfrTelemetry.getInstance();
       }
    }
 

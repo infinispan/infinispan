@@ -8,6 +8,7 @@ import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.telemetry.InfinispanTelemetry;
+import org.infinispan.telemetry.jfr.JfrTelemetry;
 
 @Scope(Scopes.GLOBAL)
 @DefaultFactoryFor(classes = InfinispanTelemetry.class)
@@ -17,7 +18,7 @@ public class InfinispanTelemetryFactory extends AbstractComponentFactory impleme
    public Object construct(String componentName) {
       // by default, it is disabled. Server module will create a new factory.
       if (componentName.equals(InfinispanTelemetry.class.getName())) {
-         return new DisabledInfinispanTelemetry();
+         return JfrTelemetry.getInstance();
       }
 
       throw CONTAINER.factoryCannotConstructComponent(componentName);
