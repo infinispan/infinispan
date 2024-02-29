@@ -305,6 +305,7 @@ public class JGroupsMetricsManagerImpl implements JGroupsMetricsManager {
          this.destination = destination;
          this.metrics = metrics;
          this.timeService = timeService;
+         this.sentTimeNanos = timeService.time();
       }
 
       @Override
