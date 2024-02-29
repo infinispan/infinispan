@@ -1,10 +1,11 @@
 package org.infinispan.hotrod.transaction.lookup;
 
+import javax.transaction.TransactionManager;
+
 import org.infinispan.commons.tx.lookup.LookupNames;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.hotrod.transaction.manager.RemoteTransactionManager;
 
-import jakarta.transaction.TransactionManager;
 import net.jcip.annotations.GuardedBy;
 
 /**
