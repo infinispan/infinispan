@@ -170,7 +170,7 @@
       <version.jboss.shrinkwrap.descriptors>2.0.0</version.jboss.shrinkwrap.descriptors>
       <version.jboss.shrinkwrap.resolver>3.1.6</version.jboss.shrinkwrap.resolver>
       <version.jcip-annotations>1.0</version.jcip-annotations>
-      <version.jgroups>5.2.22.Final</version.jgroups>
+      <version.jgroups>5.2.23.Final</version.jgroups>
       <version.jgroups.raft>1.0.12.Final</version.jgroups.raft>
       <version.jsr107>1.1.0</version.jsr107>
       <version.junit>4.13.2</version.junit>
