@@ -17,10 +17,12 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.api.AbstractDoubleAssert;
 import org.assertj.core.api.AbstractStringAssert;
 import org.infinispan.client.rest.RestCacheClient;
@@ -50,6 +52,12 @@ public class RestMetricsResourceIT {
    private static final Pattern PROMETHEUS_PATTERN = Pattern.compile("^(?<metric>[a-zA-Z_:][a-zA-Z0-9_:]*]*)(?<tags>\\{.*})?[\\t ]*(?<value>-?[0-9E.]*)[\\t ]*(?<timestamp>[0-9]+)?$");
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private static final int NUM_SERVERS = 3;
+
+   // assertions
+   private static final Consumer<AbstractDoubleAssert<?>> IS_POSITIVE = AbstractDoubleAssert::isPositive;
+   private static final Consumer<AbstractDoubleAssert<?>> IS_ZERO = AbstractDoubleAssert::isZero;
+   // between 1ms and 1s
+   private static final Consumer<AbstractDoubleAssert<?>> LESS_THAN_ONE = doubleAssert -> doubleAssert.isBetween(0.001, 1.0);
 
    @RegisterExtension
    public static final InfinispanServerExtension SERVERS =
@@ -170,20 +178,20 @@ public class RestMetricsResourceIT {
       List<Metric> metrics = getMetrics(metricsClient);
 
       // async requests counter
-      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_async_requests_total", false);
+      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_async_requests_total", IS_POSITIVE);
       // timed out request counter (no timeouts expected during testing)
-      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_timed_out_requests_total", true);
+      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_timed_out_requests_total", IS_ZERO);
       // sync requests histogram
-      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_sync_requests_seconds_count", false);
-      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_sync_requests_seconds_sum", false);
-      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_sync_requests_seconds_max", false);
+      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_sync_requests_seconds_count", IS_POSITIVE);
+      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_sync_requests_seconds_sum", LESS_THAN_ONE);
+      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_sync_requests_seconds_max", LESS_THAN_ONE);
       // bytes sent distribution summary
-      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_bytes_sent_count", false);
-      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_bytes_sent_sum", false);
-      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_bytes_sent_max", false);
+      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_bytes_sent_count", IS_POSITIVE);
+      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_bytes_sent_sum", IS_POSITIVE);
+      assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_bytes_sent_max", IS_POSITIVE);
    }
 
-   private static void assertDetailedMetrics(List<Metric> allMetrics, String name, boolean isZero) {
+   private static void assertDetailedMetrics(List<Metric> allMetrics, String name, Consumer<AbstractDoubleAssert<?>> consumer) {
       List<Metric> metrics = allMetrics.stream().filter(metric -> metric.matches(name)).collect(Collectors.toList());
       log.debugf("Filtered metrics: %s", metrics);
       int expectedNumberOfMetrics = NUM_SERVERS - 1;
@@ -195,15 +203,7 @@ public class RestMetricsResourceIT {
          a.assertSameName(b);
          a.assertNotSameTags(b);
       }
-      if (isZero) {
-         for (Metric m : metrics) {
-            m.value().isZero();
-         }
-      } else {
-         for (Metric m : metrics) {
-            m.value().isPositive();
-         }
-      }
+      metrics.stream().map(Metric::value).forEach(consumer);
    }
 
    public static void checkIsPrometheus(MediaType contentType) {
@@ -277,15 +277,20 @@ public class RestMetricsResourceIT {
       }
 
       public AbstractStringAssert<?> metricName() {
-         return assertThat(name);
+         return addDescription(assertThat(name));
       }
 
       public AbstractStringAssert<?> tags() {
-         return assertThat(rawTags);
+         return addDescription(assertThat(rawTags));
       }
 
       public AbstractDoubleAssert<?> value() {
-         return assertThat(value);
+         return addDescription(assertThat(value));
+      }
+
+      private <T extends AbstractAssert<?,?>> T addDescription(T abstractAssert) {
+         abstractAssert.getWritableAssertionInfo().description("metric=%s, tags=%s", name, rawTags);
+         return abstractAssert;
       }
 
       @Override
