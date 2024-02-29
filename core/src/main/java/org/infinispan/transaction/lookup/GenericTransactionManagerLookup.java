@@ -4,6 +4,7 @@ import static org.infinispan.util.logging.Log.CONTAINER;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.transaction.TransactionManager;
 
 import org.infinispan.commons.tx.lookup.LookupNames;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
@@ -15,8 +16,6 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import jakarta.transaction.TransactionManager;
 
 /**
  * A transaction manager lookup class that attempts to locate a TransactionManager. A variety of different classes and
