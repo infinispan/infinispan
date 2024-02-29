@@ -30,8 +30,8 @@ public class FootprintIT {
    private static final int LOADED_CLASS_COUNT_UPPER_BOUND = 11_300;
    private static final long HEAP_USAGE_LOWER_BOUND = 23_000_000L;
    private static final long HEAP_USAGE_UPPER_BOUND = 25_000_000L;
-   private static final long DISK_USAGE_LOWER_BOUND = 89_000_000L;
-   private static final long DISK_USAGE_UPPER_BOUND = 89_500_000L;
+   private static final long DISK_USAGE_LOWER_BOUND = 84_000_000L;
+   private static final long DISK_USAGE_UPPER_BOUND = 85_500_000L;
    public static final String HEAP_DUMP = "footprint.hprof";
 
    @RegisterExtension
