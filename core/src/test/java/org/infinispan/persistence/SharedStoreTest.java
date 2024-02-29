@@ -160,7 +160,7 @@ public class SharedStoreTest extends MultipleCacheManagersTest {
    }
 
    private void assertStoreStatInvocationEquals(Cache<String, String> cache, String invocationName, int invocationCount) {
-      DummyInMemoryStore<String, String> dims = TestingUtil.getFirstStore(cache);
+      DummyInMemoryStore dims = TestingUtil.getFirstStore(cache);
       assertEquals(invocationCount, dims.stats().get(invocationName).intValue());
    }
 
