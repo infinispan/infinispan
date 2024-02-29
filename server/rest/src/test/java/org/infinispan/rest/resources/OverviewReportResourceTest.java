@@ -28,12 +28,11 @@ public class OverviewReportResourceTest extends AbstractRestResourceTest {
       Json report = Json.read(join(response).getBody());
 
       assertThat(report.at("version").asString()).isNotBlank();
+      assertThat(report.at("product-version").asString()).isNotBlank();
       assertThat(report.at("node-id").asString()).isNotBlank();
       assertThat(report.at("coordinator-id").asString()).isNotBlank();
-      assertThat(report.at("cluster-name").asString()).isNotBlank();
       assertThat(report.at("cluster-size").asInteger()).isEqualTo(2);
-      assertThat(report.at("number-of-caches").asInteger()).isEqualTo(2);
-      assertThat(report.at("cache-features").asJsonMap())
-            .containsExactly(entry("indexed", Json.make(1)), entry("no-features", Json.make(1)));
+      assertThat(report.at("sites").asInteger()).isEqualTo(1);
+      assertThat(report.at("cache-features").asJsonMap()).containsExactly(entry("no-features", Json.make(1)));
    }
 }
