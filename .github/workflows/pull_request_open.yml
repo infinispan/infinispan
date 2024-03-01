@@ -39,3 +39,15 @@ jobs:
           ISSUE_KEY: ${{ env.ISSUE_KEY }}
           TOKEN: ${{ secrets.JIRA_API_TOKEN }}
           TRANSITION: Code Review
+
+      - name: Set PR Milestone
+        id: milestone
+        run: |
+          sudo apt-get install xmlstarlet
+          MVN_VERSION=$(xmlstarlet sel -t -m _:project -v _:version pom.xml)
+          export MAJOR_VERSION=${MVN_VERSION%.*.*}
+          gh pr edit ${{ github.event.pull_request.number }} --milestone "$(./bin/jira/get_milestone.sh)"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROJECT_KEY: ISPN
+          TOKEN: ${{ secrets.JIRA_API_TOKEN }}
