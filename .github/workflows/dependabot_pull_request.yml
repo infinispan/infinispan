@@ -38,39 +38,21 @@ jobs:
           RUNNER_DEBUG: "1"
 
       - name: Add comment to PR
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '${{ env.JIRA_ISSUE_URL }}'
-            })
+        run: gh pr comment ${{ github.event.pull_request.number }} --body ${{ env.JIRA_ISSUE_URL }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update PR Title main
         if: ${{ github.base_ref == 'main' }}
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.pulls.update({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: ${{ github.event.pull_request.number }},
-              title: '${{ env.JIRA_ISSUE_KEY }} ${{ github.event.pull_request.title }}'
-            })
+        run: gh pr edit ${{ github.event.pull_request.number }} --title "${{ env.JIRA_ISSUE_KEY }} ${{ github.event.pull_request.title }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update PR Title 14.0.x
         if: ${{ github.base_ref == '14.0.x' }}
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.pulls.update({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: ${{ github.event.pull_request.number }},
-              title: '[14.0.x] ${{ env.JIRA_ISSUE_KEY }} ${{ github.event.pull_request.title }}'
-            })
+        run: gh pr edit ${{ github.event.pull_request.number }} --title "[14.0.x] ${{ env.JIRA_ISSUE_KEY }} ${{ github.event.pull_request.title }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set PR Milestone
         id: milestone
