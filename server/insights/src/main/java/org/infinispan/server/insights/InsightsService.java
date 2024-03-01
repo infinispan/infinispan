@@ -66,7 +66,8 @@ public class InsightsService {
          try {
             return pemSupport.createTLSContext();
          } catch (Throwable ex) {
-            throw log.insightsCertificateError(ex);
+            log.insightsCertificateError();
+            throw ex;
          }
       };
 

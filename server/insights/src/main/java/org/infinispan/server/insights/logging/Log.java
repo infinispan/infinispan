@@ -46,8 +46,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Error configuring Red Hat Insight client", id = 32006)
    CacheConfigurationException insightsConfigurationError();
 
+   @LogMessage(level = ERROR)
    @Message(value = "Error getting certificate to connect to Red Hat Insight", id = 32007)
-   CacheException insightsCertificateError(@Cause Throwable t);
+   void insightsCertificateError();
 
    @Message(value = "Error setting up Red Hat Insight report service", id = 32008)
    CacheException insightsServiceSetupError(@Cause Throwable t);
