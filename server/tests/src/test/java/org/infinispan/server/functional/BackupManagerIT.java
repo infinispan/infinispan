@@ -420,6 +420,13 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
       RestResponse getResponse = backupAndDownload.apply(client);
       String fileName = getResponse.getHeader("Content-Disposition").split("=")[1];
 
+      // Copy the returned zip bytes to the local working dir
+      File backupZip = new File(WORKING_DIR, fileName);
+      try (InputStream is = getResponse.getBodyAsStream()) {
+         Files.copy(is, backupZip.toPath(), StandardCopyOption.REPLACE_EXISTING);
+      }
+      getResponse.close();
+
       // Delete the backup from the server
       try (RestResponse deleteResponse = delete.apply(client)) {
          assertEquals(204, deleteResponse.getStatus());
@@ -436,13 +443,6 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
       // Start the target cluster
       startTargetCluster();
       client = target.getClient();
-
-      // Copy the returned zip bytes to the local working dir
-      File backupZip = new File(WORKING_DIR, fileName);
-      try (InputStream is = getResponse.getBodyAsStream()) {
-         Files.copy(is, backupZip.toPath(), StandardCopyOption.REPLACE_EXISTING);
-      }
-      getResponse.close();
 
       if (syncToServer) {
          backupZip = new File(target.driver.syncFilesToServer(0, backupZip.getAbsolutePath()));
@@ -535,7 +535,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
       assertStatusAndBodyEquals(OK, Long.toString(expectedValue), client.counter(name).get());
    }
 
-   private void assertNoServerBackupFilesExist(Cluster cluster) {
+   static void assertNoServerBackupFilesExist(Cluster cluster) {
       for (int i = 0; i < 2; i++) {
          cluster.driver.syncFilesFromServer(i, "data");
          Path root = cluster.driver.getRootDir().toPath();
