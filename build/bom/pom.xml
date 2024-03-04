@@ -60,7 +60,7 @@
     </issueManagement>
 
     <properties>
-        <versionx.org.infinispan.infinispan-console>${version.console}</versionx.org.infinispan.infinispan-console>
+        <versionx.org.infinispan.infinispan-console>15.0.2.Final</versionx.org.infinispan.infinispan-console>
     </properties>
 
     <dependencyManagement>
