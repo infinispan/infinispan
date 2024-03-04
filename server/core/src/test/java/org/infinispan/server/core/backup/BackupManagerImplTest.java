@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
@@ -208,6 +209,35 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
                await(backupManager.restore(name, backup, paramMap));
                assertTrue(target.cacheExists(cacheName));
                assertEquals(1, target.getCache(cacheName).size());
+            });
+   }
+
+   @Test(groups = "stress")
+   public void testBackupAndRestoreLargeCache() {
+      String name = "testBackupAndRestoreLargeCache";
+      String cacheName = "cache";
+      int numEntries = 250_000;
+      createAndRestore(
+            (source, backupManager) -> {
+               Cache<String, String> cache = source.administration().getOrCreateCache(cacheName, config(APPLICATION_OBJECT_TYPE));
+               for (int i = 0; i < numEntries; i++) {
+                  cache.put("my-key-" + i, UUID.randomUUID().toString());
+               }
+
+               return backupManager.create(name, null);
+            },
+            (target, backupManager, backup) -> {
+               assertTrue(target.getCacheNames().isEmpty());
+               Map<String, BackupManager.Resources> paramMap = Collections.singletonMap("default",
+                     new BackupManagerResources.Builder()
+                           .includeAll()
+                           .build()
+               );
+
+               // Waits for 30s.
+               await(backupManager.restore(name, backup, paramMap));
+               assertTrue(target.cacheExists(cacheName));
+               assertEquals(numEntries, target.getCache(cacheName).size());
             });
    }
 

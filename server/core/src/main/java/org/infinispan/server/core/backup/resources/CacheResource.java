@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Iterator;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
@@ -29,7 +30,9 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.parsing.CacheParser;
@@ -61,6 +64,8 @@ import org.infinispan.util.concurrent.CompletionStages;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * {@link org.infinispan.server.core.backup.ContainerResource} implementation for {@link
@@ -70,6 +75,7 @@ import io.reactivex.rxjava3.core.Flowable;
  * @since 12.0
  */
 public class CacheResource extends AbstractContainerResource {
+
    private final EmbeddedCacheManager cm;
    private final ParserRegistry parserRegistry;
 
@@ -117,49 +123,82 @@ public class CacheResource extends AbstractContainerResource {
       Properties properties = new Properties();
       properties.put(CacheParser.IGNORE_DUPLICATES, true);
       for (String cacheName : resources) {
-         stages.dependsOn(blockingManager.runBlocking(() -> {
-            Path cacheRoot = root.resolve(cacheName);
+         CompletionStage<Void> cs = blockingManager
+               .supplyBlocking(() -> recoverCache(cacheName, properties, configurationManager, zip), "restore-cache-" + cacheName)
+               .thenCompose(Function.identity());
+         stages.dependsOn(cs);
+      }
+      return stages.freeze();
+   }
 
-            // Process .xml
-            String configFile = configFile(cacheName);
-            String zipPath = cacheRoot.resolve(configFile).toString();
-            try (InputStream is = zip.getInputStream(zip.getEntry(zipPath))) {
-               ConfigurationReader reader = ConfigurationReader.from(is).withProperties(properties).withNamingStrategy(NamingStrategy.KEBAB_CASE).withType(MediaType.fromExtension(configFile)).build();
-               ConfigurationBuilderHolder builderHolder = parserRegistry.parse(reader, configurationManager.toBuilderHolder());
-               Configuration config = builderHolder.getNamedConfigurationBuilders().get(cacheName).build();
-               log.debugf("Restoring Cache %s: %s", cacheName, config.toStringConfiguration(cacheName));
-               // Create the cache
-               SecurityActions.getOrCreateCache(cm, cacheName, config);
-            } catch (IOException e) {
-               throw new CacheException(e);
+   private CompletionStage<Void> recoverCache(String cacheName, Properties properties, ConfigurationManager configurationManager, ZipFile zip) {
+      Path cacheRoot = root.resolve(cacheName);
+
+      // Process .xml
+      String configFile = configFile(cacheName);
+      String zipPath = cacheRoot.resolve(configFile).toString();
+      try (InputStream is = zip.getInputStream(zip.getEntry(zipPath))) {
+         ConfigurationReader reader = ConfigurationReader.from(is).withProperties(properties).withNamingStrategy(NamingStrategy.KEBAB_CASE).withType(MediaType.fromExtension(configFile)).build();
+         ConfigurationBuilderHolder builderHolder = parserRegistry.parse(reader, configurationManager.toBuilderHolder());
+         Configuration config = builderHolder.getNamedConfigurationBuilders().get(cacheName).build();
+         log.debugf("Restoring Cache %s: %s", cacheName, config.toStringConfiguration(cacheName));
+         // Create the cache
+         SecurityActions.getOrCreateCache(cm, cacheName, config);
+      } catch (IOException e) {
+         throw new CacheException(e);
+      }
+
+      // Process .dat
+      String dataFile = dataFile(cacheName);
+      String data = cacheRoot.resolve(dataFile).toString();
+      ZipEntry zipEntry = zip.getEntry(data);
+      if (zipEntry == null)
+         return CompletableFutures.completedNull();
+
+      AdvancedCache<Object, Object> cache = cm.getCache(cacheName).getAdvancedCache();
+      ComponentRegistry cr = SecurityActions.getCacheComponentRegistry(cache);
+      CommandsFactory commandsFactory = cr.getCommandsFactory();
+      KeyPartitioner keyPartitioner = cr.getComponent(KeyPartitioner.class);
+      InvocationHelper invocationHelper = cr.getComponent(InvocationHelper.class);
+      StorageConfigurationManager scm = cr.getComponent(StorageConfigurationManager.class);
+      PersistenceMarshaller persistenceMarshaller = cr.getPersistenceMarshaller();
+      Marshaller userMarshaller = persistenceMarshaller.getUserMarshaller();
+
+      boolean keyMarshalling = !scm.getKeyStorageMediaType().isBinary();
+      boolean valueMarshalling = !scm.getValueStorageMediaType().isBinary();
+
+      SerializationContextRegistry ctxRegistry = SecurityActions.getGlobalComponentRegistry(cm).getComponent(SerializationContextRegistry.class);
+      ImmutableSerializationContext serCtx = ctxRegistry.getPersistenceCtx();
+
+      try {
+         DataInputStream is = new DataInputStream(zip.getInputStream(zipEntry));
+         Iterator<CacheBackupEntry> backupEntries = new Iterator<>() {
+            @Override
+            public boolean hasNext() {
+               try {
+                  return is.available() > 0;
+               } catch (IOException e) {
+                  log.errorf("Failed checking data available to recover %s", cacheName, e);
+                  return false;
+               }
             }
 
-            // Process .dat
-            String dataFile = dataFile(cacheName);
-            String data = cacheRoot.resolve(dataFile).toString();
-            ZipEntry zipEntry = zip.getEntry(data);
-            if (zipEntry == null)
-               return;
+            @Override
+            public CacheBackupEntry next() {
+               try {
+                  return readMessageStream(serCtx, CacheBackupEntry.class, is);
+               } catch (IOException e) {
+                  log.errorf("Failed reading entry to recover %s", cacheName, e);
+                  throw new CacheException(e);
+               }
+            }
+         };
 
-            AdvancedCache<Object, Object> cache = cm.getCache(cacheName).getAdvancedCache();
-            ComponentRegistry cr = SecurityActions.getCacheComponentRegistry(cache);
-            CommandsFactory commandsFactory = cr.getCommandsFactory();
-            KeyPartitioner keyPartitioner = cr.getComponent(KeyPartitioner.class);
-            InvocationHelper invocationHelper = cr.getComponent(InvocationHelper.class);
-            StorageConfigurationManager scm = cr.getComponent(StorageConfigurationManager.class);
-            PersistenceMarshaller persistenceMarshaller = cr.getPersistenceMarshaller();
-            Marshaller userMarshaller = persistenceMarshaller.getUserMarshaller();
-
-            boolean keyMarshalling = !scm.getKeyStorageMediaType().isBinary();
-            boolean valueMarshalling = !scm.getValueStorageMediaType().isBinary();
-
-            SerializationContextRegistry ctxRegistry = SecurityActions.getGlobalComponentRegistry(cm).getComponent(SerializationContextRegistry.class);
-            ImmutableSerializationContext serCtx = ctxRegistry.getPersistenceCtx();
-
-            int entries = 0;
-            try (DataInputStream is = new DataInputStream(zip.getInputStream(zipEntry))) {
-               while (is.available() > 0) {
-                  CacheBackupEntry entry = readMessageStream(serCtx, CacheBackupEntry.class, is);
+         int batchSize = (int) (Long.highestOneBit(ProcessorInfo.availableProcessors()) << 1);
+         log.debugf("Cache %s has file of size %d, batch size %d", cacheName, is.available(), batchSize);
+         Single<Long> restored = Flowable.fromIterable(() -> backupEntries)
+               .rebatchRequests(batchSize)
+               .map(entry -> {
                   Object key = keyMarshalling ? unmarshall(entry.key, userMarshaller) : scm.getKeyWrapper().wrap(entry.key);
                   Object value = valueMarshalling ? unmarshall(entry.value, userMarshaller) : scm.getValueWrapper().wrap(entry.value);
                   Metadata metadata = unmarshall(entry.metadata, persistenceMarshaller);
@@ -167,17 +206,37 @@ public class CacheResource extends AbstractContainerResource {
 
                   PutKeyValueCommand cmd = commandsFactory.buildPutKeyValueCommand(key, value, keyPartitioner.getSegment(key),
                         internalMetadataImpl, FlagBitSets.IGNORE_RETURN_VALUES);
+                  commandsFactory.buildPutKeyValueCommand(key, value, keyPartitioner.getSegment(key),
+                        internalMetadataImpl, FlagBitSets.IGNORE_RETURN_VALUES);
                   cmd.setInternalMetadata(entry.internalMetadata);
-                  invocationHelper.invoke(cmd, 1);
-                  entries++;
-               }
-            } catch (IOException e) {
-               throw new CacheException(e);
-            }
-            log.debugf("Cache %s restored %d entries", cacheName, entries);
-         }, "restore-cache-" + cacheName));
+                  return cmd;
+               })
+               .flatMap(cmd -> {
+                  // Flowable does not accept null values.
+                  CompletionStage<Boolean> cs = invocationHelper.invokeAsync(cmd, 1)
+                              .thenApply(CompletableFutures.toTrueFunction());
+                  return Flowable.fromCompletionStage(cs);
+               }, batchSize)
+               .count();
+
+         return restored
+               .observeOn(Schedulers.from(blockingManager.asExecutor("restore-cache-" + cacheName)))
+               .toCompletionStage()
+               .handle((entries, t) -> {
+                  try {
+                     is.close();
+                  } catch (IOException ignore) { }
+
+                  if (t != null) {
+                     throw CompletableFutures.asCompletionException(t);
+                  }
+
+                  log.debugf("Cache %s restored %d entries", cacheName, entries);
+                  return null;
+               });
+      } catch (IOException e) {
+         throw new CacheException(e);
       }
-      return stages.freeze();
    }
 
    private CompletionStage<Void> createCacheBackup(String cacheName) {
