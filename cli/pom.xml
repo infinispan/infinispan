@@ -102,11 +102,6 @@
          <optional>true</optional>
       </dependency>
       <dependency>
-         <groupId>org.openjdk.jmh</groupId>
-         <artifactId>jmh-generator-annprocess</artifactId>
-         <scope>provided</scope>
-      </dependency>
-      <dependency>
          <groupId>junit</groupId>
          <artifactId>junit</artifactId>
          <scope>test</scope>
@@ -126,6 +121,18 @@
          </resource>
       </resources>
       <plugins>
+         <plugin>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+               <annotationProcessorPaths combine.children="append">
+                  <annotationProcessorPath>
+                     <groupId>org.openjdk.jmh</groupId>
+                     <artifactId>jmh-generator-annprocess</artifactId>
+                     <version>${version.openjdk.jmh}</version>
+                  </annotationProcessorPath>
+               </annotationProcessorPaths>
+            </configuration>
+         </plugin>
          <plugin>
             <artifactId>maven-jar-plugin</artifactId>
             <configuration>
