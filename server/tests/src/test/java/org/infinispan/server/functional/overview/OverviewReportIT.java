@@ -44,6 +44,9 @@ public class OverviewReportIT {
       CompletionStage<RestResponse> response = restClient.server().overviewReport();
       ResponseAssertion.assertThat(response).isOk();
       Json report = Json.read(join(response).getBody());
-      assertThat(report).isNotNull();
+
+      Json security = report.at("security");
+      assertThat(security.at("security-realms").at("default").at("tls").asString()).isEqualTo("NONE");
+      assertThat(security.at("tls-endpoints").asJsonList()).isEmpty();
    }
 }

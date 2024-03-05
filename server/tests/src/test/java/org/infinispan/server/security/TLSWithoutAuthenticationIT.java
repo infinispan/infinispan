@@ -1,17 +1,26 @@
 package org.infinispan.server.security;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.commons.test.Exceptions.expectException;
+import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.nio.channels.ClosedChannelException;
+import java.util.concurrent.CompletionStage;
 
 import javax.net.ssl.SSLHandshakeException;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestResponse;
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.server.test.core.category.Security;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
@@ -84,5 +93,25 @@ public class TLSWithoutAuthenticationIT {
       SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
       builder.security().ssl().protocol("TLSv1.3").sniHostName("infinispan.test");
       SERVERS.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create();
+   }
+
+   @Test
+   public void overviewReport() {
+      RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
+      SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
+      builder.security().ssl().sniHostName("infinispan.test").hostnameVerifier((hostname, session) -> true);
+
+      try (RestClient restClient = SERVERS.rest().withClientConfiguration(builder)
+            .withCacheMode(CacheMode.DIST_SYNC).create()) {
+         CompletionStage<RestResponse> response = restClient.server().overviewReport();
+         ResponseAssertion.assertThat(response).isOk();
+         Json report = Json.read(join(response).getBody());
+         Json security = report.at("security");
+         assertThat(security.at("security-realms").at("default").at("tls").asString()).isEqualTo("SERVER");
+         assertThat(security.at("tls-endpoints").asJsonList()).extracting(Json::asString)
+               .containsExactly("endpoint-default");
+      } catch (Exception e) {
+         fail(e);
+      }
    }
 }
