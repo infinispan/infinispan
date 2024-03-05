@@ -111,6 +111,7 @@ import org.infinispan.server.security.ElytronHTTPAuthenticator;
 import org.infinispan.server.security.ElytronJMXAuthenticator;
 import org.infinispan.server.security.ElytronSASLAuthenticator;
 import org.infinispan.server.security.ElytronUsernamePasswordAuthenticator;
+import org.infinispan.server.security.ServerSecurityRealm;
 import org.infinispan.server.state.ServerStateManagerImpl;
 import org.infinispan.server.tasks.admin.ServerAdminOperationsHandler;
 import org.infinispan.tasks.TaskManager;
@@ -809,9 +810,16 @@ public class Server extends BaseServerManagement implements AutoCloseable {
 
       Json securityRealms = Json.object();
       for (Map.Entry<String, RealmConfiguration> realm : serverConfiguration.security().realms().realms().entrySet()) {
-         RealmConfiguration realConfig = realm.getValue();
-         securityRealms.set(realm.getKey(), Json.object(
-               "server-ssl", realConfig.hasServerSSLContext(), "client-ssl", realConfig.hasClientSSLContext()));
+         RealmConfiguration realmConfig = realm.getValue();
+         if (realmConfig.hasServerSSLContext()) {
+            if (realmConfig.hasFeature(ServerSecurityRealm.Feature.TRUST)) {
+               securityRealms.set(realm.getKey(), Json.object("tls", "CLIENT"));
+            } else {
+               securityRealms.set(realm.getKey(), Json.object("tls", "SERVER"));
+            }
+         } else {
+            securityRealms.set(realm.getKey(), Json.object("tls", "NONE"));
+         }
       }
       result.set("security-realms", securityRealms);
 
