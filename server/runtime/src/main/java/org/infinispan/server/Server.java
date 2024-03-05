@@ -816,13 +816,10 @@ public class Server extends BaseServerManagement implements AutoCloseable {
       result.set("security-realms", securityRealms);
 
       Json tlsEndpoints = Json.array();
-      for (EndpointConfiguration endpoint : serverConfiguration.endpoints().endpoints()) {
-         for (ProtocolServerConfiguration<?, ?> connector : endpoint.connectors()) {
-            if (connector.ssl().enabled()) {
-               tlsEndpoints.add(endpoint.elementName() + ":" + connector.name());
-            }
-         }
-      }
+      getProtocolServers().entrySet().stream()
+            .filter(e -> e.getValue().getConfiguration().startTransport() && e.getValue().getConfiguration().ssl().enabled())
+            .map(Map.Entry::getKey)
+            .forEach(tlsEndpoints::add);
       result.set("tls-endpoints", tlsEndpoints);
 
       return result;
