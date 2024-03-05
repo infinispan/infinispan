@@ -204,7 +204,8 @@ pipeline {
             ]
 
             script {
-               sh 'RUNNER_DEBUG=1 FLAKY_TEST_GLOB="**/target/*-reports*/**/TEST-*FLAKY.xml" PROJECT_KEY=ISPN TYPE=Bug JENKINS_JOB_URL=$BUILD_URL ./bin/jira/track_flaky_tests.sh'
+               def TARGET_BRANCH = env.BRANCH_NAME.startsWith('PR-') ? env.CHANGE_TARGET : env.BRANCH_NAME
+               sh 'RUNNER_DEBUG=1 FLAKY_TEST_GLOB="**/target/*-reports*/**/TEST-*FLAKY.xml" PROJECT_KEY=ISPN TYPE=Bug JENKINS_JOB_URL=$BUILD_URL TARGET_BRANCH=${TARGET_BRANCH}./bin/jira/track_flaky_tests.sh'
             }
         }
 
