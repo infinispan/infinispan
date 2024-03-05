@@ -63,5 +63,9 @@ public class OverviewReportIT {
 
       Map<String, Json> singlePort = clients.get("SinglePort").asJsonMap();
       assertThat(singlePort.get("protocol-versions").asList()).isNotEmpty();
+
+      Json security = report.at("security");
+      assertThat(security.at("security-realms").at("default").at("tls").asString()).isEqualTo("NONE");
+      assertThat(security.at("tls-endpoints").asJsonList()).isEmpty();
    }
 }

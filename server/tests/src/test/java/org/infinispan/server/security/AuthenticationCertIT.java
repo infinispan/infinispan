@@ -1,19 +1,28 @@
 package org.infinispan.server.security;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
 import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.assertStatusAndBodyContains;
+import static org.infinispan.util.concurrent.CompletionStages.join;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.rest.RestCacheClient;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.test.Exceptions;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.server.test.core.category.Security;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.infinispan.server.test.junit5.InfinispanServerExtensionBuilder;
@@ -31,7 +40,7 @@ public class AuthenticationCertIT {
    @RegisterExtension
    public static InfinispanServerExtension SERVERS =
          InfinispanServerExtensionBuilder.config("configuration/AuthenticationServerTrustTest.xml")
-                                    .build();
+               .build();
 
    @Test
    public void testTrustedCertificateHotRod() {
@@ -94,5 +103,32 @@ public class AuthenticationCertIT {
       assertStatus(NO_CONTENT, cache.put("k1", "v1"));
       assertStatusAndBodyContains(OK, "1", cache.size());
       assertStatusAndBodyContains(OK, "v1", cache.get("k1"));
+   }
+
+   @Test
+   public void overviewReport() {
+      RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
+      SERVERS.getServerDriver().applyTrustStore(builder, "ca.pfx");
+      SERVERS.getServerDriver().applyKeyStore(builder, "admin.pfx");
+      builder
+            .protocol(Protocol.HTTP_20)
+            .security()
+            .authentication()
+            .ssl()
+            .sniHostName("infinispan")
+            .hostnameVerifier((hostname, session) -> true).connectionTimeout(120_000).socketTimeout(120_000);
+
+      try (RestClient restClient = SERVERS.rest().withClientConfiguration(builder)
+            .withCacheMode(CacheMode.DIST_SYNC).create()) {
+         CompletionStage<RestResponse> response = restClient.server().overviewReport();
+         ResponseAssertion.assertThat(response).isOk();
+         Json report = Json.read(join(response).body());
+         Json security = report.at("security");
+         assertThat(security.at("security-realms").at("default").at("tls").asString()).isEqualTo("CLIENT");
+         assertThat(security.at("tls-endpoints").asJsonList()).extracting(Json::asString)
+               .containsExactly("endpoint-default");
+      } catch (Exception e) {
+         fail(e);
+      }
    }
 }
