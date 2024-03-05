@@ -5,7 +5,7 @@ set -e
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source "${SCRIPT_DIR}/common.sh"
 
-requiredEnv TOKEN PROJECT_KEY TYPE JENKINS_JOB_URL FLAKY_TEST_GLOB
+requiredEnv TOKEN PROJECT_KEY TYPE JENKINS_JOB_URL FLAKY_TEST_GLOB TARGET_BRANCH
 
 PROJECT=$(curl $API_URL/project/${PROJECT_KEY})
 PROJECT_ID=$(echo ${PROJECT} | jq -r .id)
@@ -61,6 +61,7 @@ EOF
   COMMENT=$(
   cat << EOF
   h1. ${TEST_NAME}
+  Target Branch: ${TARGET_BRANCH}
   [Jenkins Job|${JENKINS_JOB_URL}]
   {code:java}
   ${STACK_TRACE}
