@@ -284,6 +284,7 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
 
       TestUpdatedListener listener = new TestUpdatedListener();
       MutableCacheEntryListenerConfiguration<String, String> conf = new MutableCacheEntryListenerConfiguration<>(FactoryBuilder.factoryOf(listener), null, false, true);
+      MutableCacheEntryListenerConfiguration<String, String> confWithOldValuesEnabled = new MutableCacheEntryListenerConfiguration<>(FactoryBuilder.factoryOf(listener), null, true, true);
       try {
          cache1.registerCacheEntryListener(conf);
          cache1.put(k(m), v(m, 2));
@@ -302,6 +303,16 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
 
          TestingUtil.sleepThread(50);
          assertEquals(0, listener.getInvocationCount());
+
+         cache1.registerCacheEntryListener(confWithOldValuesEnabled);
+         cache2.put(k(m), v(m, 5));
+         eventuallyEquals(1, listener::getInvocationCount);
+         event = listener.getEvent(0);
+         assertEquals(v(m, 5), event.getValue());
+         assertEquals(v(m, 4), event.getOldValue());
+
+         cache1.deregisterCacheEntryListener(conf);
+         listener.reset();
       } finally {
          cache1.deregisterCacheEntryListener(conf);
       }
