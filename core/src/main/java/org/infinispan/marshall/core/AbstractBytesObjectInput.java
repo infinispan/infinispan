@@ -257,7 +257,7 @@ abstract public class AbstractBytesObjectInput implements ObjectInput {
    }
 
    private void checkPosLength(int len) throws EOFException {
-      if (len > 0 && pos + len > bytes.length) {
+      if (len > 0 && (bytes == null || pos + len > bytes.length)) {
          throw new EOFException();
       }
    }
