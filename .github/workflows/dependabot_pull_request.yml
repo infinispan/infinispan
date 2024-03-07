@@ -15,6 +15,7 @@ jobs:
     if: github.actor == 'dependabot[bot]' && !contains(github.event.pull_request.labels.*.name, 'github_actions') && startsWith(github.event.pull_request.title, 'Bump')
     runs-on: ubuntu-latest
     permissions:
+      contents: write
       pull-requests: write
     steps:
       - name: Checkout repository
