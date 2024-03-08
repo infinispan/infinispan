@@ -126,7 +126,7 @@ public class AuthenticationCertIT {
          Json security = report.at("security");
          assertThat(security.at("security-realms").at("default").at("tls").asString()).isEqualTo("CLIENT");
          assertThat(security.at("tls-endpoints").asJsonList()).extracting(Json::asString)
-               .containsExactly("endpoint-default");
+               .containsExactly("endpoint-default-default");
       } catch (Exception e) {
          fail(e);
       }
