@@ -29,9 +29,15 @@ public class HashMapPutFunction<K, HK, HV> extends HashMapBucketBaseFunction<K, 
    public static final AdvancedExternalizer<HashMapPutFunction> EXTERNALIZER = new Externalizer();
 
    private final Collection<Map.Entry<HK, HV>> entries;
+   private final boolean putIfAbsent;
 
    public HashMapPutFunction(Collection<Map.Entry<HK, HV>> entries) {
+      this(entries, false);
+   }
+
+   public HashMapPutFunction(Collection<Map.Entry<HK, HV>> entries, boolean putIfAbsent) {
       this.entries = entries;
+      this.putIfAbsent = putIfAbsent;
    }
 
    @Override
@@ -43,7 +49,9 @@ public class HashMapPutFunction<K, HK, HV> extends HashMapBucketBaseFunction<K, 
       HashMapBucket<HK, HV> bucket;
       if (existing.isPresent()) {
          bucket = existing.get();
-         res = bucket.putAll(values);
+         res = putIfAbsent
+               ? bucket.putIfAbsent(values)
+               : bucket.putAll(values);
       } else {
          bucket = HashMapBucket.create(values);
          res = values.size();
@@ -73,6 +81,7 @@ public class HashMapPutFunction<K, HK, HV> extends HashMapBucketBaseFunction<K, 
             output.writeObject(entry.getKey());
             output.writeObject(entry.getValue());
          }
+         output.writeBoolean(object.putIfAbsent);
       }
 
       @Override
@@ -82,7 +91,7 @@ public class HashMapPutFunction<K, HK, HV> extends HashMapBucketBaseFunction<K, 
          for (int i = 0; i < size; i++) {
             values.put(input.readObject(), input.readObject());
          }
-         return new HashMapPutFunction<>(values.entrySet());
+         return new HashMapPutFunction<>(values.entrySet(), input.readBoolean());
       }
    }
 }

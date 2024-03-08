@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.marshall.protostream.impl.MarshallableUserObject;
 import org.infinispan.multimap.impl.internal.MultimapObjectWrapper;
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -48,6 +49,18 @@ public class HashMapBucket<K, V> {
          if (prev == null) res++;
       }
       return res;
+   }
+
+   public int putIfAbsent(Map<K, V> map) {
+      ByRef.Integer created = new ByRef.Integer(0);
+      for (Map.Entry<K, V> entry : map.entrySet()) {
+         // The `values` map can have null values, we use compute instead of putIfAbsent.
+         values.computeIfAbsent(new MultimapObjectWrapper<>(entry.getKey()), ignore -> {
+            created.inc();
+            return entry.getValue();
+         });
+      }
+      return created.get();
    }
 
    public Map<K, V> getAll(Set<K> keys) {

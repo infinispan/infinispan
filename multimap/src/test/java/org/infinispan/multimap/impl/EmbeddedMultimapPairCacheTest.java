@@ -3,6 +3,9 @@ package org.infinispan.multimap.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.functional.FunctionalTestUtils.await;
+import static org.infinispan.multimap.impl.EmbeddedMultimapPairCache.ERR_KEY_CAN_T_BE_NULL;
+import static org.infinispan.multimap.impl.EmbeddedMultimapPairCache.ERR_PROPERTY_CANT_BE_NULL;
+import static org.infinispan.multimap.impl.EmbeddedMultimapPairCache.ERR_VALUE_CANT_BE_NULL;
 
 import java.util.Map;
 
@@ -185,5 +188,21 @@ public class EmbeddedMultimapPairCacheTest extends SingleCacheManagerTest {
             .isInstanceOf(NullPointerException.class);
       assertThatThrownBy(() -> await(embeddedPairCache.get("multiple-test", new String[0])))
             .isInstanceOf(IllegalArgumentException.class);
+   }
+
+   public void testSetIfAbsent() {
+      assertThat(await(embeddedPairCache.setIfAbsent("key", "propK", "propV"))).isTrue();
+      assertThat(await(embeddedPairCache.setIfAbsent("key", "propK", "value"))).isFalse();
+      assertThat(await(embeddedPairCache.get("key", "propK"))).isEqualTo("propV");
+
+      assertThatThrownBy(() -> await(embeddedPairCache.setIfAbsent(null, "k1", "k2")))
+            .hasMessage(ERR_KEY_CAN_T_BE_NULL)
+            .isInstanceOf(NullPointerException.class);
+      assertThatThrownBy(() -> await(embeddedPairCache.setIfAbsent("b", null, "k2")))
+            .hasMessage(ERR_PROPERTY_CANT_BE_NULL)
+            .isInstanceOf(NullPointerException.class);
+      assertThatThrownBy(() -> await(embeddedPairCache.setIfAbsent("b", "k1", null)))
+            .hasMessage(ERR_VALUE_CANT_BE_NULL)
+            .isInstanceOf(NullPointerException.class);
    }
 }

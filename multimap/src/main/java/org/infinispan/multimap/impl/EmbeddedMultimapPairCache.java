@@ -44,6 +44,7 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
 
    public static final String ERR_KEY_CAN_T_BE_NULL = "key can't be null";
    public static final String ERR_PROPERTY_CANT_BE_NULL = "property can't be null";
+   public static final String ERR_VALUE_CANT_BE_NULL = "property value can't be null";
    public static final String ERR_PROPERTIES_CANT_BE_EMPTY = "properties can't be empty";
    public static final String ERR_COUNT_MUST_BE_POSITIVE = "count must be positive";
 
@@ -70,6 +71,25 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
       requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
       List<Map.Entry<HK, HV>> values = new ArrayList<>(Arrays.asList(entries));
       return readWriteMap.eval(key, new HashMapPutFunction<>(values));
+   }
+
+   /**
+    * Set the given key-value in the multimap under the given key.
+    * <p>
+    * If the key is not present, a new multimap is created. If the property already exists, the operation has no effect.
+    * </p>
+    *
+    * @param key: Cache key to store key-value pair.
+    * @param propertyKey: The property key.
+    * @param propertyValue: The property value.
+    * @return <code>true</code> if the value is set, <code>false</code>, otherwise.
+    */
+   public final CompletionStage<Boolean> setIfAbsent(K key, HK propertyKey, HV propertyValue) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      requireNonNull(propertyKey, ERR_PROPERTY_CANT_BE_NULL);
+      requireNonNull(propertyValue, ERR_VALUE_CANT_BE_NULL);
+      return readWriteMap.eval(key, new HashMapPutFunction<>(List.of(Map.entry(propertyKey, propertyValue)), true))
+            .thenApply(v -> v > 0L);
    }
 
    /**

@@ -292,4 +292,12 @@ public class HashOperationsTest extends SingleNodeRespBaseTest {
             .contains(KeyValue.just("key3", "value3"))
             .contains(KeyValue.empty("key4"));
    }
+
+   public void testHSetNx() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      assertThat(redis.hsetnx("key", "propK", "propV")).isTrue();
+      assertThat(redis.hsetnx("key", "propK", "value")).isFalse();
+      assertThat(redis.hget("key", "propK")).isEqualTo("propV");
+   }
 }
