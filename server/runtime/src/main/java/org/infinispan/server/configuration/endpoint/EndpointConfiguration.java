@@ -52,4 +52,8 @@ public class EndpointConfiguration extends ConfigurationElement<EndpointConfigur
    public String socketBinding() {
       return attributes.attribute(SOCKET_BINDING).get();
    }
+
+   public String securityReam() {
+      return attributes.attribute(SECURITY_REALM).get();
+   }
 }
