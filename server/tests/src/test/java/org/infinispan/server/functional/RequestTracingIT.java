@@ -68,6 +68,7 @@ public class RequestTracingIT {
       org.infinispan.configuration.cache.ConfigurationBuilder cache = new org.infinispan.configuration.cache.ConfigurationBuilder();
       cache.clustering().cacheMode(CacheMode.DIST_SYNC);
       cache.tracing().enableCategory(SpanCategory.CLUSTER); // we want to trace also cluster spans
+      cache.tracing().enableCategory(SpanCategory.X_SITE);
 
       RemoteCache<Object, Object> remoteCache = SERVER.hotrod().withServerConfiguration(cache).create();
       remoteCache.put("key", "value");

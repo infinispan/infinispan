@@ -41,6 +41,7 @@ public class TracingClusterTest extends MultiHotRodServersTest {
 
       ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
       config.tracing().enableCategory(SpanCategory.CLUSTER);
+      config.tracing().enableCategory(SpanCategory.X_SITE);
       createHotRodServers(NUM_SERVERS, config);
       waitForClusterToForm();
    }
