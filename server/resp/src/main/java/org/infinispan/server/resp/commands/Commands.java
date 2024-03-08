@@ -32,6 +32,7 @@ import org.infinispan.server.resp.commands.generic.PEXPIRE;
 import org.infinispan.server.resp.commands.generic.PEXPIREAT;
 import org.infinispan.server.resp.commands.generic.PEXPIRETIME;
 import org.infinispan.server.resp.commands.generic.PTTL;
+import org.infinispan.server.resp.commands.generic.RANDOMKEY;
 import org.infinispan.server.resp.commands.generic.RENAME;
 import org.infinispan.server.resp.commands.generic.RENAMENX;
 import org.infinispan.server.resp.commands.generic.SCAN;
@@ -185,7 +186,7 @@ public final class Commands {
       ALL_COMMANDS[12] = new RespCommand[]{new MGET(), new MSET(), new MSETNX(), new MULTI(), new MODULE(), new MEMORY()};
       ALL_COMMANDS[15] = new RespCommand[]{new PUBLISH(), new PING(), new PSUBSCRIBE(), new PUNSUBSCRIBE(), new PTTL(), new PEXPIREAT(), new PEXPIRE(), new PEXPIRETIME(), new PERSIST(), new PFADD(), new PSETEX()};
       ALL_COMMANDS[16] = new RespCommand[]{new QUIT()};
-      ALL_COMMANDS[17] = new RespCommand[]{new RPUSH(), new RPUSHX(), new RPOP(), new RESET(), new READWRITE(), new READONLY(), new RPOPLPUSH(), new RENAME(), new RENAMENX() };
+      ALL_COMMANDS[17] = new RespCommand[]{new RPUSH(), new RPUSHX(), new RPOP(), new RESET(), new READWRITE(), new READONLY(), new RPOPLPUSH(), new RENAME(), new RENAMENX(), new RANDOMKEY() };
       // SET should always be first here
       ALL_COMMANDS[18] = new RespCommand[]{new SET(), new SETEX(), new SETNX(), new SMEMBERS(), new SISMEMBER(), new SADD(), new STRLEN(), new SMOVE(), new SCARD(), new SINTER(), new SINTERSTORE(), new SINTERCARD(), new SUNION(), new SUNIONSTORE(), new SPOP(), new SRANDMEMBER(), new SREM(), new SDIFF(), new SDIFFSTORE(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN(), new SSCAN(), new SETRANGE(), new SORT(), new SORT_RO(), new SUBSTR()};
       ALL_COMMANDS[19] = new RespCommand[]{new TTL(), new TYPE(), new TOUCH(), new TIME() };

@@ -1324,4 +1324,25 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       assertThat(redis.keys("hello_[^1]")).containsExactlyInAnyOrder("hello_0", "hello_2", "hello_3",
             "hello_4", "hello_5", "hello_6", "hello_7", "hello_8", "hello_9");
    }
+
+   public void testRandomKey() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      assertThat(redis.randomkey()).isNull();
+      assertThat(redis.set("k1", "v1")).isEqualTo(OK);
+      assertThat(redis.randomkey()).isEqualTo("k1");
+
+      assertThat(redis.set("k2", "v2")).isEqualTo(OK);
+
+      boolean c = false;
+      for (int i = 0; i < 20; i++) {
+         String k = redis.randomkey();
+         if (k.equals("k2")) {
+            c = true;
+            break;
+         }
+      }
+
+      assertThat(c).isTrue();
+   }
 }
