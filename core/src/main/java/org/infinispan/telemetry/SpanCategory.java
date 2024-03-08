@@ -2,8 +2,6 @@ package org.infinispan.telemetry;
 
 import org.infinispan.commons.configuration.io.NamingStrategy;
 
-import java.util.Locale;
-
 import static java.util.Arrays.stream;
 
 public enum SpanCategory {
@@ -41,7 +39,7 @@ public enum SpanCategory {
 
    @Override
    public String toString() {
-      return name().toLowerCase(Locale.ROOT);
+      return name;
    }
 
    public static SpanCategory fromString(String value) {
