@@ -1018,6 +1018,25 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
    }
 
    @Test
+   public void testPExpire() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set(k(), v());
+      assertThat(redis.pttl(k())).isEqualTo(-1);
+      assertThat(redis.pexpire(k(), timeService.wallClockTime() + 1000)).isTrue();
+      assertThat(redis.pttl(k())).isEqualTo(timeService.wallClockTime() + 1000);
+      assertThat(redis.pexpire(k(), timeService.wallClockTime() + 500, ExpireArgs.Builder.gt())).isFalse();
+      assertThat(redis.pexpire(k(), timeService.wallClockTime() + 1500, ExpireArgs.Builder.gt())).isTrue();
+      assertThat(redis.pexpire(k(), timeService.wallClockTime() + 2000, ExpireArgs.Builder.lt())).isFalse();
+      assertThat(redis.pexpire(k(), timeService.wallClockTime() + 1000, ExpireArgs.Builder.lt())).isTrue();
+      assertThat(redis.pexpire(k(), timeService.wallClockTime() + 1250, ExpireArgs.Builder.xx())).isTrue();
+      assertThat(redis.pexpire(k(), timeService.wallClockTime() + 1000, ExpireArgs.Builder.nx())).isFalse();
+      assertThat(redis.pexpire(k(1), timeService.wallClockTime() + 1000)).isFalse();
+      redis.set(k(1), v(1));
+      assertThat(redis.pexpire(k(1), timeService.wallClockTime() + 1000, ExpireArgs.Builder.xx())).isFalse();
+      assertThat(redis.pexpire(k(1), timeService.wallClockTime() + 1000, ExpireArgs.Builder.nx())).isTrue();
+   }
+
+   @Test
    public void testTouch() {
       RedisCommands<String, String> redis = redisConnection.sync();
       assertThat(redis.touch("unexisting")).isZero();
