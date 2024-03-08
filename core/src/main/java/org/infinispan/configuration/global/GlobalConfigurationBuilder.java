@@ -280,6 +280,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       }
       cacheContainerConfiguration.read(template.cacheContainer(), Combine.DEFAULT);
       site.read(template.sites(), Combine.DEFAULT);
+      tracing().read(template.tracing(), Combine.DEFAULT);
       return this;
    }
 
