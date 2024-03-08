@@ -142,6 +142,9 @@ The {brandname} RESP endpoint implements the following Redis commands:
 | link:https://redis.io/commands/hset[HSET]
 |
 
+| link:https://redis.io/commands/hsetnx[HSETNX]
+|
+
 | link:https://redis.io/commands/hvals[HVALS]
 |
 
@@ -228,6 +231,9 @@ provides a read-uncommitted isolation.
 | link:https://redis.io/commands/persist[PERSIST]
 |
 
+| link:https://redis.io/commands/pexpire[PEXPIRE]
+|
+
 | link:https://redis.io/commands/pexpiretime[PEXPIRETIME]
 |
 
@@ -250,6 +256,9 @@ provides a read-uncommitted isolation.
 |
 
 | link:https://redis.io/commands/quit[QUIT]
+|
+
+| link:https://redis.io/commands/randomkey[RANDOMKEY]
 |
 
 | link:https://redis.io/commands/rpop[RPOP]
