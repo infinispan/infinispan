@@ -92,4 +92,9 @@ System properties for `DNS_PING`.
 | No default value.
 | Required
 
+| `jgroups.dns.record`
+| Sets the DNS record type.
+| A
+| Optional
+
 |===
