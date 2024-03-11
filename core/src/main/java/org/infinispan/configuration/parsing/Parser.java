@@ -1117,7 +1117,6 @@ public class Parser extends CacheParser {
          ParseUtils.requireNoNamespaceAttribute(reader, i);
          String value = reader.getAttributeValue(i);
          Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         ParseUtils.requireNoContent(reader);
          switch (attribute) {
             case COLLECTOR_ENDPOINT: {
                builder.tracing().collectorEndpoint(value);
