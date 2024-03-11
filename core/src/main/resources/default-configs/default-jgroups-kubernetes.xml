@@ -29,6 +29,7 @@
    />
    <RED/>
    <dns.DNS_PING dns_query="${jgroups.dns.query}"
+                 dns_record_type="${jgroups.dns.record:A}"
                  num_discovery_runs="3"
    />
    <MERGE3 min_interval="10000"
