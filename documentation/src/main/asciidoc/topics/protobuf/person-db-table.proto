@@ -1,6 +1,6 @@
 package com.example;
 
-import com.example.Address;
+import "/path/to/address.proto";
 
 enum Sex {
    FEMALE = 1;
