@@ -23,7 +23,7 @@ When append-only files:
 
 [NOTE]
 ====
-SoftIndexFileStore should use purge on startup to ensure stale entries are not resurrected.
+Using SoftIndexFileStore in a clustered cache should enable purge on startup to ensure stale entries are not resurrected.
 ====
 
 .B+ trees
