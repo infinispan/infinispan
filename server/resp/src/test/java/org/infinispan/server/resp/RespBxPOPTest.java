@@ -2,6 +2,7 @@ package org.infinispan.server.resp;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 
 import java.util.Arrays;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.infinispan.Cache;
@@ -21,13 +23,15 @@ import org.infinispan.notifications.cachelistener.CacheNotifierImpl;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
-import org.infinispan.server.resp.commands.list.blocking.BPOP;
+import org.infinispan.server.resp.commands.list.blocking.AbstractBlockingPop;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 import io.lettuce.core.KeyValue;
+import io.lettuce.core.LMPopArgs;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisFuture;
+import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 
@@ -84,24 +88,20 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
       }
    }
 
-   RedisFuture<KeyValue<String, String>> registerListener(Supplier<RedisFuture<KeyValue<String, String>>> redisOp) {
+   <T> RedisFuture<T> registerListener(Supplier<RedisFuture<T>> redisOp) {
       return registerListener(cache, redisOp);
    }
 
-   static RedisFuture<KeyValue<String, String>> registerListener(Cache<Object, Object> cache,
-         Supplier<RedisFuture<KeyValue<String, String>>> redisOp) {
-      var cni = (CacheNotifierImpl<?, ?>) TestingUtil.extractComponent(cache, CacheNotifier.class);
-      long pre = cni.getListeners().stream()
-            .filter(l -> l instanceof BPOP.PubSubListener || l instanceof RespBxPOPTest.FailingListener)
-            .count();
-      RedisFuture<KeyValue<String, String>> rf = redisOp.get();
+   protected final <T> RedisFuture<T> registerListener(Cache<Object, Object> cache, Supplier<RedisFuture<T>> redisOp) {
+      Predicate<Object> p = l -> l instanceof AbstractBlockingPop.PubSubListener || l instanceof RespBxPOPTest.FailingListener;
+      CacheNotifierImpl<?, ?> cni = (CacheNotifierImpl<?, ?>) TestingUtil.extractComponent(cache, CacheNotifier.class);
+      long pre = cni.getListeners().stream().filter(p).count();
+      RedisFuture<T> rf = redisOp.get();
+
       // If there's a listener ok otherwise
       // if rf is done an error during listener registration has happend
       // no need to wait anymore. test will fail
-      eventually(() -> (cni.getListeners().stream()
-            .filter(l -> l instanceof BPOP.PubSubListener || l instanceof RespBxPOPTest.FailingListener)
-            .count() == pre + 1)
-            || rf.isDone());
+      eventually(() -> (cni.getListeners().stream().filter(p).count() == pre + 1) || rf.isDone());
       return rf;
    }
 
@@ -113,12 +113,11 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
       CacheNotifierImpl<?, ?> cni = (CacheNotifierImpl<?, ?>) TestingUtil.extractComponent(cache, CacheNotifier.class);
       // Check listener is unregistered
       eventually(() -> cni.getListeners().stream().noneMatch(
-            l -> l instanceof BPOP.PubSubListener || l instanceof RespBxPOPTest.FailingListener));
+            l -> l instanceof AbstractBlockingPop.PubSubListener || l instanceof RespBxPOPTest.FailingListener));
    }
 
    @Test
-   public void testBxpop()
-         throws InterruptedException, ExecutionException, TimeoutException, java.util.concurrent.TimeoutException {
+   public void testBxpop() throws Exception {
       RedisCommands<String, String> redis = redisConnection.sync();
       try {
          var cf = registerListener(() -> bxPopAsync(0, "keyZ"));
@@ -187,8 +186,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
    }
 
    @Test
-   public void testBxPopTwoListenersWithValues()
-         throws InterruptedException, ExecutionException, TimeoutException, java.util.concurrent.TimeoutException {
+   public void testBxPopTwoListenersWithValues() throws Exception {
       RedisCommands<String, String> redis = redisConnection.sync();
       try {
          var cf = registerListener(() -> bxPopAsync(0, "key"));
@@ -302,8 +300,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
    }
 
    @Test
-   public void testBxpopTwoListenersTwoKeysOneEvent()
-         throws InterruptedException, ExecutionException, TimeoutException {
+   public void testBxpopTwoListenersTwoKeysOneEvent() throws Exception {
       try {
          var data = new String[] { "value2a", "value2b" };
          RedisCommands<String, String> redis = redisConnection.sync();
@@ -323,8 +320,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
    }
 
    @Test
-   public void testBxpopTwoListenersOneTimeout()
-         throws InterruptedException, ExecutionException, TimeoutException, java.util.concurrent.TimeoutException {
+   public void testBxpopTwoListenersOneTimeout() throws Exception {
       RedisCommands<String, String> redis = redisConnection.sync();
       try {
          var cf = registerListener(() -> bxPopAsync(10, "key"));
@@ -344,8 +340,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
    }
 
    @Test
-   public void testBxpopTwoListenersTwoProducers()
-         throws InterruptedException, ExecutionException, TimeoutException, java.util.concurrent.TimeoutException {
+   public void testBxpopTwoListenersTwoProducers() throws Exception {
       RedisCommands<String, String> redis1 = redisConnection.sync();
       RedisCommands<String, String> redis2 = redisConnection.sync();
       try {
@@ -367,8 +362,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
    }
 
    @Test
-   public void testBxpopThreeListenersOneTimesOutTwoProducers()
-         throws InterruptedException, ExecutionException, TimeoutException, java.util.concurrent.TimeoutException {
+   public void testBxpopThreeListenersOneTimesOutTwoProducers() throws Exception {
       RedisCommands<String, String> redis1 = redisConnection.sync();
       RedisCommands<String, String> redis2 = redisConnection.sync();
       try {
@@ -389,8 +383,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
    }
 
    @Test
-   public void testBxpopThreeListenersTwoProducers()
-         throws InterruptedException, ExecutionException, TimeoutException, java.util.concurrent.TimeoutException {
+   public void testBxpopThreeListenersTwoProducers() throws Exception {
       RedisCommands<String, String> redis1 = redisConnection.sync();
       RedisCommands<String, String> redis2 = redisConnection.sync();
       try {
@@ -453,6 +446,13 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
             : redisAsync.blpop(to, keys));
    }
 
+   private RedisFuture<KeyValue<String, List<String>>> blmpop(long timeout, int count, String ... keys) {
+      RedisAsyncCommands<String, String> async = newConnection().async();
+      LMPopArgs args = (right ? LMPopArgs.Builder.right() : LMPopArgs.Builder.left())
+            .count(count);
+      return registerListener(() -> async.blmpop(timeout, args, keys));
+   }
+
    private KeyValue<String, String> bxPop(long to, String... keys) {
       RedisCommands<String, String> redis = newConnection().sync();
       return right ? redis.brpop(to, keys)
@@ -478,9 +478,9 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
 
    @Listener(clustered = true)
    public static class FailingListener {
-      BPOP.PubSubListener blpop;
+      AbstractBlockingPop.PubSubListener blpop;
 
-      public FailingListener(BPOP.PubSubListener arg) {
+      public FailingListener(AbstractBlockingPop.PubSubListener arg) {
          blpop = arg;
       }
 
@@ -511,4 +511,142 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
       }
    }
 
+
+   public void testBLMPOP() throws Exception {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "key-blmpop";
+      redis.lpush(key, "v1", "v2", "v3", "v4", "v5");
+
+      try {
+         RedisFuture<KeyValue<String, List<String>>> rf = blmpop(0, 3, key);
+         KeyValue<String, List<String>> response = rf.get(10, TimeUnit.SECONDS);
+         List<String> expected = right
+               ? List.of("v1", "v2", "v3")
+               : List.of("v5", "v4", "v3");
+
+         assertThat(response.getKey()).isEqualTo(key);
+         assertThat(response.getValue()).containsExactlyElementsOf(expected);
+
+         String[] remaining = right
+               ? new String[] { "v5", "v4" }
+               : new String[] { "v2", "v1" };
+         assertThat(redis.lrange(key, 0, -1)).containsExactly(remaining);
+      } finally {
+         verifyListenerUnregistered();
+      }
+   }
+
+   public void testSplitBLMPOP() throws Exception {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "key-blmpop-split";
+
+      try {
+         RedisFuture<KeyValue<String, List<String>>> rf = blmpop(0, 3, key);
+
+         redis.lpush(key, "v1");
+         redis.lpush(key, "v2");
+         redis.lpush(key, "v3", "v4", "v5");
+
+         KeyValue<String, List<String>> response = rf.get(10, TimeUnit.SECONDS);
+
+         assertThat(response.getKey()).isEqualTo(key);
+         assertThat(response.getValue()).containsExactly("v1");
+         assertThat(redis.lrange(key, 0, -1)).containsExactly("v5", "v4", "v3", "v2");
+      } finally {
+         verifyListenerUnregistered();
+      }
+   }
+
+   public void testSplitAndSpreadBLMPOP() throws Exception {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key1 = "key-blmpop-split-1";
+      String key2 = "key-blmpop-split-2";
+
+      try {
+         RedisFuture<KeyValue<String, List<String>>> rf = blmpop(0, 3, key1, key2);
+
+         redis.lpush(key1, "v1-1", "v2-1");
+         redis.lpush(key2, "v1-2", "v2-2", "v3-2");
+
+         KeyValue<String, List<String>> response = rf.get(10, TimeUnit.SECONDS);
+
+         assertThat(response.getKey()).isEqualTo(key1);
+         assertThat(response.getValue()).containsExactlyInAnyOrder("v2-1", "v1-1");
+         assertThat(redis.lrange(key1, 0, -1)).isEmpty();
+         assertThat(redis.lrange(key2, 0, -1)).containsExactly("v3-2", "v2-2", "v1-2");
+      } finally {
+         verifyListenerUnregistered();
+      }
+   }
+
+   public void testTwoListenersBLMPOP() throws Exception {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "key-blmpop-two";
+
+      try {
+         RedisFuture<KeyValue<String, List<String>>> rf1 = blmpop(0, 2, key);
+         RedisFuture<KeyValue<String, List<String>>> rf2 = blmpop(0, 2, key);
+
+         redis.lpush(key, "v1", "v2", "v3", "v4", "v5");
+
+         KeyValue<String, List<String>> res1 = rf1.get(10, TimeUnit.SECONDS);
+         KeyValue<String, List<String>> res2 = rf2.get(10, TimeUnit.SECONDS);
+
+         assertThat(res1.getKey()).isEqualTo(key);
+         assertThat(res2.getKey()).isEqualTo(key);
+
+         String[] exp1 = right
+               ? new String[] { "v1", "v2" }
+               : new String[] { "v5", "v4" };
+         String[] exp2 = right
+               ? new String[] { "v3", "v4" }
+               : new String[] { "v3", "v2" };
+
+         assertThat(res1.getValue()).hasSize(2)
+               .satisfiesAnyOf(
+                     l -> assertThat((List<String>) l).containsExactlyInAnyOrder(exp1),
+                     l -> assertThat((List<String>) l).containsExactlyInAnyOrder(exp2));
+         assertThat(res2.getValue()).hasSize(2)
+               .satisfiesAnyOf(
+                     l -> assertThat((List<String>) l).containsExactlyInAnyOrder(exp1),
+                     l -> assertThat((List<String>) l).containsExactlyInAnyOrder(exp2));
+         assertThat(res1.getValue()).doesNotContainAnyElementsOf(res2.getValue());
+         assertThat(redis.lrange(key, 0, -1)).containsExactly(right ? "v5" : "v1");
+      } finally {
+         verifyListenerUnregistered();
+      }
+   }
+
+   public void testBLMPOPListenerTimeout() throws Exception {
+      try (StatefulRedisConnection<String, String> conn = newConnection()) {
+         LMPopArgs args = LMPopArgs.Builder.left().count(3);
+         RedisFuture<KeyValue<String, List<String>>> rf = registerListener(() -> conn.async().blmpop(1, args, "whatever"));
+         KeyValue<String, List<String>> response = rf.get(3, TimeUnit.SECONDS);
+
+         assertThat(response).isNull();
+      } finally {
+         verifyListenerUnregistered();
+      }
+   }
+
+   public void testBLMPOPTimeoutWhenNotAList() throws Exception {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String key = "key-blmpop-string";
+
+      try {
+         RedisFuture<KeyValue<String, List<String>>> rf = blmpop(3, 1, key);
+         redis.set(key, "some-value");
+
+         KeyValue<String, List<String>> response = rf.get(10, TimeUnit.SECONDS);
+         assertThat(response).isNull();
+      } finally {
+         verifyListenerUnregistered();
+      }
+   }
+
+   public void testBLMPOPWhenKeyNotAList() throws Exception {
+      String key = "blmpop-string";
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertWrongType(() -> redis.set(key, "something"), () -> redis.blmpop(0, LMPopArgs.Builder.left().count(1), key));
+   }
 }
