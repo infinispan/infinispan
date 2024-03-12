@@ -1,5 +1,6 @@
 package org.infinispan.persistence.dummy;
 
+import static org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration.ASYNC_OPERATION;
 import static org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration.SLOW;
 import static org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration.START_FAILURES;
 import static org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration.STORE_NAME;
@@ -27,6 +28,16 @@ public class DummyInMemoryStoreConfigurationBuilder extends
    @Deprecated(forRemoval = true)
    public DummyInMemoryStoreConfigurationBuilder slow(boolean slow) {
       attributes.attribute(SLOW).set(slow);
+      return this;
+   }
+
+   /**
+    * If true, then operations will be performed "asynchronously" on the non blocking executor.
+    * @param asyncOperation whether the store should perform the operations on the non blocking executor.
+    * @return this builder
+    */
+   public DummyInMemoryStoreConfigurationBuilder asyncOperation(boolean asyncOperation) {
+      attributes.attribute(ASYNC_OPERATION).set(asyncOperation);
       return this;
    }
 

@@ -12,6 +12,7 @@ import static org.testng.AssertJUnit.fail;
 import java.lang.reflect.Method;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -50,17 +51,33 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
    private AsyncNonBlockingStore<Object, Object> store;
    private TestObjectStreamMarshaller marshaller;
 
+   private final int CACHE_SEGMENT_MAX = 256;
+
    private InitializationContext createStore() throws PersistenceException {
       ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       DummyInMemoryStoreConfigurationBuilder dummyCfg = builder
             .persistence()
                .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+                  // Async store doesn't help much if operations are always synchronous
+                  .asyncOperation(true)
                   .storeName(AsyncStoreTest.class.getName())
             .segmented(false);
       dummyCfg
          .async()
             .enable();
-      InitializationContext ctx = PersistenceMockUtil.createContext(getClass(), builder.build(), marshaller);
+      InitializationContext testCtx = PersistenceMockUtil.createContext(getClass(), builder.build(), marshaller);
+      InitializationContext ctx = new DelegatingInitializationContext() {
+         @Override
+         public InitializationContext delegate() {
+            return testCtx;
+         }
+
+         @Override
+         public Executor getNonBlockingExecutor() {
+            // The testCtx gives a WithinExecutor
+            return testExecutor();
+         }
+      };
       DummyInMemoryStore underlying = new DummyInMemoryStore();
       store = new AsyncNonBlockingStore(underlying);
       CompletionStages.join(store.start(ctx));
@@ -190,24 +207,30 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       doTestRemove(number, key);
    }
 
+   public int segmentForKey(Object key) {
+      return String.valueOf(key).hashCode() % CACHE_SEGMENT_MAX;
+   }
+
    private void doTestPut(int number, String key, String value) {
       for (int i = 0; i < number; i++) {
          InternalCacheEntry cacheEntry = TestInternalCacheEntryFactory.create(key + i, value + i);
-         store.write(0, MarshalledEntryUtil.create(cacheEntry, marshaller));
+         store.write(segmentForKey(cacheEntry.getKey()), MarshalledEntryUtil.create(cacheEntry, marshaller));
       }
 
       for (int i = 0; i < number; i++) {
-         MarshallableEntry me = CompletionStages.join(store.load(0, key + i));
+         String keyStr = key + i;
+         MarshallableEntry me = CompletionStages.join(store.load(segmentForKey(keyStr), key + i));
          assertNotNull(me);
          assertEquals(value + i, me.getValue());
       }
    }
 
    private void doTestSameKeyPut(int number, String key, String value) {
+      int segment = segmentForKey(key);
       for (int i = 0; i < number; i++) {
-         store.write(0, MarshalledEntryUtil.create(key, value + i, marshaller));
+         store.write(segment, MarshalledEntryUtil.create(key, value + i, marshaller));
       }
-      MarshallableEntry me = CompletionStages.join(store.load(0, key));
+      MarshallableEntry me = CompletionStages.join(store.load(segment, key));
       assertNotNull(me);
       assertEquals(value + (number - 1), me.getValue());
    }
