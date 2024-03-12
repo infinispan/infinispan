@@ -1,9 +1,8 @@
 package org.infinispan.server.resp.commands.list.blocking;
 
 import java.lang.invoke.MethodHandles;
-import java.time.Duration;
 import java.util.ArrayDeque;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -25,9 +24,7 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.server.resp.Consumers;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
-import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.filter.EventListenerConverter;
 import org.infinispan.server.resp.filter.EventListenerKeysFilter;
@@ -41,54 +38,46 @@ import io.netty.channel.ChannelHandlerContext;
  *       on a BLPOP, the order in which they will be served is unspecified.
  * @since 15.0
  */
-public class BPOP extends RespCommand implements Resp3Command {
+public abstract class AbstractBlockingPop extends RespCommand implements Resp3Command {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
-   protected final boolean isFirst;
 
-   public BPOP(boolean isFirst) {
-      super(-3, 1, -2, 1);
-      this.isFirst = isFirst;
+   public AbstractBlockingPop(int arity, int firstKeyPos, int lastKeyPos, int steps) {
+      super(arity, firstKeyPos, lastKeyPos, steps);
    }
+
+   abstract PopConfiguration parseArguments(Resp3Handler handler, List<byte[]> arguments);
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
          ChannelHandlerContext ctx,
          List<byte[]> arguments) {
       EmbeddedMultimapListCache<byte[], byte[]> listMultimap = handler.getListMultimap();
-      var lastKeyIdx = arguments.size() - 1;
-      var filterKeys = arguments.subList(0, lastKeyIdx);
-      // Using last arg as timeout if it can be a double
-      var argTimeout = ArgumentUtils.toDouble(arguments.get(lastKeyIdx));
-      if (argTimeout < 0) {
-         RespErrorUtil.mustBePositive(handler.allocator());
+      PopConfiguration configuration = parseArguments(handler, arguments);
+      if (configuration == null) {
          return handler.myStage();
       }
-      long timeout = (long) (argTimeout * Duration.ofSeconds(1).toMillis());
 
       // If all the keys are empty or null, create a listener
       // otherwise return the left value of the first non empty list
-      var pollStage = pollAllKeys(listMultimap, filterKeys, isFirst);
+      var pollStage = pollAllKeys(listMultimap, configuration);
       // If no value returned, we need subscribers
       return handler.stageToReturn(pollStage.thenCompose(v -> {
          // addSubscriber call can rise exception that needs to be reported
          // as error
-         var retStage = (v != null && !v.isEmpty())
+         return (v != null && !v.isEmpty())
                ? CompletableFuture.completedFuture(v)
-               : addSubscriber(listMultimap, filterKeys, timeout, handler);
-         return retStage;
+               : addSubscriber(configuration, handler);
       }), ctx, Consumers.COLLECTION_BULK_BICONSUMER);
    }
 
-   CompletionStage<Collection<byte[]>> addSubscriber(EmbeddedMultimapListCache<byte[], byte[]> listMultimap,
-         List<byte[]> filterKeys, long timeout, Resp3Handler handler) {
+   private CompletableFuture<Collection<byte[]>> addSubscriber(PopConfiguration configuration, Resp3Handler handler) {
       if (log.isTraceEnabled()) {
-         log.tracef("Subscriber for keys: " +
-               filterKeys.toString());
+         log.tracef("Subscriber for keys: " + configuration.keys());
       }
       AdvancedCache<byte[], Object> cache = handler.typedCache(null);
       DataConversion vc = cache.getValueDataConversion();
-      PubSubListener pubSubListener = new PubSubListener(filterKeys, handler, cache, listMultimap, isFirst);
-      EventListenerKeysFilter filter = new EventListenerKeysFilter(filterKeys.toArray(byte[][]::new));
+      PubSubListener pubSubListener = new PubSubListener(handler, cache, configuration);
+      EventListenerKeysFilter filter = new EventListenerKeysFilter(configuration.keys().toArray(byte[][]::new));
       CompletionStage<Void> addListenerStage = cache.addListenerAsync(pubSubListener, filter,
             new EventListenerConverter<Object, Object, byte[]>(vc));
       addListenerStage.whenComplete((ignore, t) -> {
@@ -101,33 +90,38 @@ public class BPOP extends RespCommand implements Resp3Command {
          // and if we get values complete the listener future. In case of exception
          // completeExceptionally
          // Start a timer if required
-         pubSubListener.startTimer(timeout);
+         pubSubListener.startTimer(configuration.timeout());
          pubSubListener.synchronizer.onListenerAdded();
       });
       return pubSubListener.getFuture();
    }
 
    private static CompletionStage<Collection<byte[]>> pollAllKeys(
-         EmbeddedMultimapListCache<byte[], byte[]> listMultimap,
-         List<byte[]> filterKeys, boolean isFirst) {
-      var pollStage = pollKeyValue(listMultimap, filterKeys.get(0), isFirst);
-      for (int i = 1; i < filterKeys.size(); ++i) {
-         var keyChannel = filterKeys.get(i);
+         EmbeddedMultimapListCache<byte[], byte[]> listMultimap, PopConfiguration configuration) {
+      var pollStage = pollKeyValue(listMultimap, configuration.key(0), configuration);
+      for (int i = 1; i < configuration.keys().size(); ++i) {
+         var keyChannel = configuration.key(i);
          pollStage = pollStage.thenCompose(
                v -> (v == null || v.isEmpty())
-                     ? pollKeyValue(listMultimap, keyChannel, isFirst)
+                     ? pollKeyValue(listMultimap, keyChannel, configuration)
                      : CompletableFuture.completedFuture(v));
       }
       return pollStage;
    }
 
    static CompletionStage<Collection<byte[]>> pollKeyValue(EmbeddedMultimapListCache<byte[], byte[]> mmList,
-         byte[] key, boolean isFirst) {
-            var cs = isFirst ? mmList.pollFirst(key, 1) : mmList.pollLast(key, 1);
+                                                           byte[] key, PopConfiguration configuration) {
+      var cs = configuration.isHead() ? mmList.pollFirst(key, configuration.count()) : mmList.pollLast(key, configuration.count());
       return cs
-            .thenApply((v) -> (v == null || v.isEmpty())
-                  ? null
-                  : Arrays.asList(key, v.iterator().next()));
+            .thenApply(v -> {
+               if (v == null || v.isEmpty())
+                  return null;
+
+               List<byte[]> res = new ArrayList<>(1 + v.size());
+               res.add(key);
+               res.addAll(v);
+               return res;
+            });
    }
 
    @Listener(clustered = true)
@@ -137,11 +131,10 @@ public class BPOP extends RespCommand implements Resp3Command {
       private final Resp3Handler handler;
       private final PollListenerSynchronizer synchronizer;
 
-      private PubSubListener(List<byte[]> filterKeys, Resp3Handler handler, AdvancedCache<byte[], Object> cache,
-            EmbeddedMultimapListCache<byte[], byte[]> mml, boolean isFirst) {
+      private PubSubListener(Resp3Handler handler, AdvancedCache<byte[], Object> cache, PopConfiguration configuration) {
          this.cache = cache;
          this.handler = handler;
-         this.synchronizer = new PollListenerSynchronizer(filterKeys, mml, isFirst);
+         this.synchronizer = new PollListenerSynchronizer(handler.getListMultimap(), configuration);
 
          synchronizer.resultFuture.whenComplete((ignore_v, ignore_t) -> {
             deleteTimer();
@@ -200,17 +193,15 @@ public class BPOP extends RespCommand implements Resp3Command {
       private final ArrayDeque<Object> keyQueue;
       private final CompletableFuture<Collection<byte[]>> resultFuture;
       private final EmbeddedMultimapListCache<byte[], byte[]> multimapList;
-      private final List<byte[]> keys;
       private final BiConsumer<? super Collection<byte[]>, ? super Throwable> whenCompleteConsumer;
       private volatile boolean canPollJustEventKey;
-      private final boolean isFirst;
+      private final PopConfiguration configuration;
 
-      private PollListenerSynchronizer(List<byte[]> keys, EmbeddedMultimapListCache<byte[], byte[]> multimapList, boolean isFirst) {
-         keyQueue = new ArrayDeque<Object>();
-         resultFuture = new CompletableFuture<Collection<byte[]>>();
+      private PollListenerSynchronizer(EmbeddedMultimapListCache<byte[], byte[]> multimapList, PopConfiguration configuration) {
+         keyQueue = new ArrayDeque<>();
+         resultFuture = new CompletableFuture<>();
          this.multimapList = multimapList;
-         this.keys = keys;
-         this.isFirst = isFirst;
+         this.configuration = configuration;
          whenCompleteConsumer = (v, t) -> {
             if (t != null) {
                resultFuture.completeExceptionally(t);
@@ -233,9 +224,9 @@ public class BPOP extends RespCommand implements Resp3Command {
 
       private void runPoll(Object key) {
          if (canPollJustEventKey && key != this) {
-            BPOP.pollKeyValue(multimapList, (byte[])key, isFirst).whenComplete(whenCompleteConsumer);
+            AbstractBlockingPop.pollKeyValue(multimapList, (byte[]) key, configuration).whenComplete(whenCompleteConsumer);
          } else {
-            BPOP.pollAllKeys(multimapList, keys, isFirst).whenComplete(whenCompleteConsumer);
+            AbstractBlockingPop.pollAllKeys(multimapList, configuration).whenComplete(whenCompleteConsumer);
          }
       }
 
@@ -246,7 +237,7 @@ public class BPOP extends RespCommand implements Resp3Command {
             keyQueue.offer(this);
          }
          if (emptyQueue) {
-            BPOP.pollAllKeys(multimapList, keys, isFirst).whenComplete(whenCompleteConsumer);
+            AbstractBlockingPop.pollAllKeys(multimapList, configuration).whenComplete(whenCompleteConsumer);
          }
       }
 

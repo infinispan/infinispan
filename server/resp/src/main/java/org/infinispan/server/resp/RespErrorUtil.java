@@ -44,6 +44,11 @@ public final class RespErrorUtil {
             "-ERR value is out of range, must be positive\r\n", allocator);
    }
 
+   public static void mustBePositive(ByteBufPool allocator, String argumentName) {
+      ByteBufferUtils.stringToByteBufAscii(
+            "-ERR value for ' " + argumentName + "' is out of range, must be positive\r\n", allocator);
+   }
+
    public static void syntaxError(ByteBufPool allocator) {
       ByteBufferUtils.stringToByteBufAscii("-ERR syntax error\r\n", allocator);
    }

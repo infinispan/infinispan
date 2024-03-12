@@ -1,16 +1,17 @@
 package org.infinispan.server.resp;
 
-import org.infinispan.multimap.impl.ScoredValue;
-import org.infinispan.server.resp.response.LCSResponse;
-import org.infinispan.server.resp.response.SetResponse;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.function.BiConsumer;
-
 import static org.infinispan.server.resp.RespConstants.CRLF_STRING;
 import static org.infinispan.server.resp.RespConstants.OK;
 import static org.infinispan.server.resp.RespConstants.QUEUED_REPLY;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.function.BiConsumer;
+
+import org.infinispan.multimap.impl.ScoredValue;
+import org.infinispan.server.resp.response.LCSResponse;
+import org.infinispan.server.resp.response.SetResponse;
 
 /**
  * Utility class with Consumers
@@ -80,6 +81,19 @@ public final class Consumers {
          LONG_BICONSUMER.accept(1L, alloc);
       } else {
          LONG_BICONSUMER.accept(0L, alloc);
+      }
+   };
+
+   public static final BiConsumer<Map<byte[], Collection<byte[]>>, ByteBufPool> MAP_CONSUMER = (res, alloc) -> {
+      if (res == null) {
+         ByteBufferUtils.stringToByteBufAscii("$-1\r\n", alloc);
+         return;
+      }
+
+      Resp3Handler.writeMapPrefix(res.size(), alloc);
+      for (Map.Entry<byte[], Collection<byte[]>> entry : res.entrySet()) {
+         Resp3Handler.handleBulkResult(entry.getKey(), alloc);
+         Resp3Handler.handleCollectionBulkResult(entry.getValue(), alloc);
       }
    };
 

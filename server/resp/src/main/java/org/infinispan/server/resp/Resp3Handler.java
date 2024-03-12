@@ -215,6 +215,10 @@ public class Resp3Handler extends Resp3AuthHandler {
       allocAndWriteLengthPrefix('*', size, alloc, 0);
    }
 
+   public static void writeMapPrefix(int size, ByteBufPool alloc) {
+      allocAndWriteLengthPrefix('%', size, alloc, 0);
+   }
+
    private static ByteBuf allocAndWriteLengthPrefix(char type, int size, ByteBufPool alloc, int additionalBytes) {
       int strLength = lenghtInChars(size);
       ByteBuf buffer = alloc.acquire(strLength + additionalBytes + 3);

@@ -6,9 +6,9 @@ package org.infinispan.server.resp.commands.list.blocking;
  *       on a BRPOP, the order in which they will be served is unspecified.
  * @since 15.0
  */
-public class BRPOP extends BPOP {
+public class BRPOP extends SingleBlockingPop {
 
    public BRPOP() {
-      super(false);
+      super(false, -3, 1, -2, 1);
    }
 }
