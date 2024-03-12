@@ -527,6 +527,16 @@
                 "name": "permissions",
                 "type": "AuthorizationPermission",
                 "is_repeated": true
+              },
+              {
+                "id": 4,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "implicit",
+                "type": "bool"
               }
             ]
           },

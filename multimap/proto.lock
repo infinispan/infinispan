@@ -5,12 +5,12 @@
       "def": {
         "messages": [
           {
-            "name": "Bucket",
+            "name": "SetBucket",
             "fields": [
               {
                 "id": 1,
                 "name": "wrappedValues",
-                "type": "org.infinispan.persistence.core.MarshallableUserObject",
+                "type": "MultimapObjectWrapper",
                 "is_repeated": true
               }
             ]
@@ -27,12 +27,12 @@
             ]
           },
           {
-            "name": "SetBucket",
+            "name": "Bucket",
             "fields": [
               {
                 "id": 1,
                 "name": "wrappedValues",
-                "type": "MultimapObjectWrapper",
+                "type": "org.infinispan.persistence.core.MarshallableUserObject",
                 "is_repeated": true
               }
             ]
@@ -44,6 +44,46 @@
                 "id": 1,
                 "name": "wrapper",
                 "type": "org.infinispan.persistence.core.MarshallableUserObject"
+              }
+            ]
+          },
+          {
+            "name": "SortedSetBucket",
+            "fields": [
+              {
+                "id": 1,
+                "name": "wrappedValues",
+                "type": "ScoredValue",
+                "is_repeated": true
+              }
+            ],
+            "messages": [
+              {
+                "name": "IndexValue",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "score",
+                    "type": "double",
+                    "options": [
+                      {
+                        "name": "default",
+                        "value": "0.0"
+                      }
+                    ]
+                  },
+                  {
+                    "id": 2,
+                    "name": "index",
+                    "type": "int64",
+                    "options": [
+                      {
+                        "name": "default",
+                        "value": "0"
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           },
@@ -76,30 +116,17 @@
             ]
           },
           {
-            "name": "SortedSetBucket",
+            "name": "ScoredValue",
             "fields": [
               {
                 "id": 1,
-                "name": "wrappedValues",
-                "type": "ScoredValue",
-                "is_repeated": true
-              }
-            ],
-            "messages": [
+                "name": "score",
+                "type": "double"
+              },
               {
-                "name": "ScoredValue",
-                "fields": [
-                  {
-                    "id": 1,
-                    "name": "score",
-                    "type": "double"
-                  },
-                  {
-                    "id": 2,
-                    "name": "wrappedValue",
-                    "type": "org.infinispan.persistence.core.MarshallableUserObject"
-                  }
-                ]
+                "id": 2,
+                "name": "wrappedValue",
+                "type": "MultimapObjectWrapper"
               }
             ]
           }

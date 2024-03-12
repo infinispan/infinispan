@@ -5,6 +5,27 @@
       "def": {
         "messages": [
           {
+            "name": "GlobMatchFilterConverter",
+            "fields": [
+              {
+                "id": 1,
+                "name": "glob",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "returnValue",
+                "type": "bool",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "false"
+                  }
+                ]
+              }
+            ]
+          },
+          {
             "name": "CompactSet",
             "fields": [
               {
@@ -23,6 +44,22 @@
                 "id": 3,
                 "name": "minimum",
                 "type": "uint32",
+                "options": [
+                  {
+                    "name": "default",
+                    "value": "0"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "RespTypeFilterConverter",
+            "fields": [
+              {
+                "id": 1,
+                "name": "ordinal",
+                "type": "int32",
                 "options": [
                   {
                     "name": "default",
