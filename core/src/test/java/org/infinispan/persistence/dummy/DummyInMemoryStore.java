@@ -13,6 +13,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReferenceArray;
@@ -40,7 +41,6 @@ import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.WaitNonBlockingStore;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
@@ -71,6 +71,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
    private PersistenceMarshaller marshaller;
    private DummyInMemoryStoreConfiguration configuration;
    private KeyPartitioner keyPartitioner;
+   private Executor nonBlockingExecutor;
    private InitializationContext ctx;
    private volatile boolean running;
    private volatile boolean available;
@@ -87,6 +88,7 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
       this.storeName = makeStoreName(configuration, cache);
       this.initCount.incrementAndGet();
       this.timeService = ctx.getTimeService();
+      this.nonBlockingExecutor = ctx.getNonBlockingExecutor();
 
       if (store != null)
          return CompletableFutures.completedNull();
@@ -197,15 +199,30 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
          TestingUtil.sleepThread(SLOW_STORE_WAIT);
       }
 
+      if (configuration.asyncOperation()) {
+         return CompletableFuture.runAsync(() -> actualWrite(segment, entry), nonBlockingExecutor);
+      }
+      actualWrite(segment, entry);
+      return CompletableFutures.completedNull();
+   }
+
+   private void actualWrite(int segment, MarshallableEntry entry) {
       if (log.isTraceEnabled()) log.tracef("Store %s for segment %s in dummy map store@%s", entry, segment, Util.hexIdHashCode(store));
       Map<Object, byte[]> map = mapForSegment(segment);
       map.put(entry.getKey(), serialize(entry));
-      return CompletableFutures.completedNull();
    }
 
    @Override
    public CompletionStage<Void> clear() {
       assertRunning();
+      if (configuration.asyncOperation()) {
+         return CompletableFuture.runAsync(this::actualClear, nonBlockingExecutor);
+      }
+      actualClear();
+      return CompletableFutures.completedNull();
+   }
+
+   private void actualClear() {
       record("clear");
       if (log.isTraceEnabled()) log.trace("Clear store");
       for (int i = 0; i < store.length(); ++i) {
@@ -214,21 +231,28 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
             map.clear();
          }
       }
-      return CompletableFutures.completedNull();
    }
 
    @Override
    public CompletionStage<Boolean> delete(int segment, Object key) {
       assertRunning();
+      if (configuration.asyncOperation()) {
+         return CompletableFuture.supplyAsync(() -> actualDelete(segment, key), nonBlockingExecutor);
+      }
+
+      return actualDelete(segment, key) ? CompletableFutures.completedTrue() : CompletableFutures.completedFalse();
+   }
+
+   private boolean actualDelete(int segment, Object key) {
       record("delete");
       Map<Object, byte[]> map = mapForSegment(segment);
       if (map.remove(key) != null) {
          if (log.isTraceEnabled()) log.tracef("Removed %s from dummy store for segment %s", key, segment);
-         return CompletableFutures.completedTrue();
+         return true;
       }
 
       if (log.isTraceEnabled()) log.tracef("Key %s not present in store, so don't remove", key);
-      return CompletableFutures.completedFalse();
+      return false;
    }
 
    @Override
@@ -255,17 +279,28 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
    @Override
    public CompletionStage<MarshallableEntry> load(int segment, Object key) {
       assertRunning();
+      if (configuration.asyncOperation()) {
+         return CompletableFuture.supplyAsync(() -> actualLoad(segment, key), nonBlockingExecutor);
+      }
+      MarshallableEntry entry = actualLoad(segment, key);
+      if (entry == null) {
+         return CompletableFutures.completedNull();
+      }
+      return CompletableFuture.completedFuture(entry);
+   }
+
+   private MarshallableEntry actualLoad(int segment, Object key) {
       record("load");
       if (key == null) return null;
       Map<Object, byte[]> map = mapForSegment(segment);
       MarshallableEntry me = deserialize(key, map.get(key));
-      if (me == null) return CompletableFutures.completedNull();
+      if (me == null) return null;
       long now = timeService.wallClockTime();
       if (isExpired(me, now)) {
          log.tracef("Key %s exists, but has expired.  Entry is %s", key, me);
-         return CompletableFutures.completedNull();
+         return null;
       }
-      return CompletableFuture.completedFuture(me);
+      return me;
    }
 
    private boolean isExpired(MarshallableEntry me, long now) {
@@ -319,6 +354,14 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
 
    @Override
    public CompletionStage<Void> stop() {
+      if (configuration.asyncOperation()) {
+         return CompletableFuture.runAsync(this::actualStop, nonBlockingExecutor);
+      }
+      actualStop();
+      return CompletableFutures.completedNull();
+   }
+
+   private void actualStop() {
       if (running) {
          record("stop");
          running = false;
@@ -326,15 +369,21 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
 
          store = null;
       }
-      return CompletableFutures.completedNull();
    }
 
    @Override
    public CompletionStage<Boolean> isAvailable() {
+      if (configuration.asyncOperation()) {
+         return CompletableFuture.supplyAsync(this::actualIsAvailable, nonBlockingExecutor);
+      }
+      return CompletableFutures.booleanStage(actualIsAvailable());
+   }
+
+   private boolean actualIsAvailable() {
       if (exceptionOnAvailbilityCheck) {
          throw new RuntimeException();
       }
-      return CompletableFutures.booleanStage(available);
+      return available;
    }
 
    public void setExceptionOnAvailbilityCheck(boolean throwException) {
@@ -354,13 +403,12 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
     * @return a count of entries in all the segments, including expired entries
     */
    public long getStoreDataSize() {
-      return CompletionStages.join(sizeIncludingExpired(IntSets.immutableRangeSet(store.length()), store));
+      return sizeIncludingExpired(IntSets.immutableRangeSet(store.length()), store);
    }
 
    public static long getStoreDataSize(String storeName) {
       AtomicReferenceArray<Map<Object, byte[]>> store = stores.get(storeName);
-      return store != null ? CompletionStages.join(
-            sizeIncludingExpired(IntSets.immutableRangeSet(store.length()), store)) : 0;
+      return store != null ? sizeIncludingExpired(IntSets.immutableRangeSet(store.length()), store) : 0;
    }
 
    public static void removeStoreData(String storeName) {
@@ -414,6 +462,14 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
 
    @Override
    public CompletionStage<Long> size(IntSet segments) {
+      if (configuration.asyncOperation()) {
+         return CompletableFuture.supplyAsync(() -> actualSize(segments), nonBlockingExecutor);
+      }
+
+      return CompletableFuture.completedFuture(actualSize(segments));
+   }
+
+   private long actualSize(IntSet segments) {
       record("size");
 
       AtomicLong size = new AtomicLong();
@@ -430,17 +486,17 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
             });
          }
       }
-      return CompletableFuture.completedFuture(size.get());
+      return size.get();
    }
 
    /**
     * Helper method only invoked by tests
     */
    public long size() {
-      return CompletionStages.join(size(IntSets.immutableRangeSet(store.length())));
+      return actualSize(IntSets.immutableRangeSet(store.length()));
    }
 
-   private static CompletionStage<Long> sizeIncludingExpired(IntSet segments, AtomicReferenceArray<Map<Object, byte[]>> store) {
+   private static long sizeIncludingExpired(IntSet segments, AtomicReferenceArray<Map<Object, byte[]>> store) {
       long size = 0;
       for (PrimitiveIterator.OfInt iter = segments.iterator(); iter.hasNext(); ) {
          int segment = iter.nextInt();
@@ -449,29 +505,44 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
             size += map.size();
          }
       }
-      return CompletableFuture.completedFuture(size);
+      return size;
    }
 
    @Override
    public CompletionStage<Long> approximateSize(IntSet segments) {
+      assertRunning();
+      if (configuration.asyncOperation()) {
+         return CompletableFuture.supplyAsync(() -> {
+            record("size");
+            return sizeIncludingExpired(segments, store);
+         }, nonBlockingExecutor);
+      }
       record("size");
-      return sizeIncludingExpired(segments, store);
+      return CompletableFuture.completedFuture(sizeIncludingExpired(segments, store));
    }
 
    @Override
    public CompletionStage<Boolean> containsKey(int segment, Object key) {
       assertRunning();
+      if (configuration.asyncOperation()) {
+         return CompletableFuture.supplyAsync(() -> actualContainsKey(segment, key), nonBlockingExecutor);
+      }
+
+      return actualContainsKey(segment, key) ? CompletableFutures.completedTrue() : CompletableFutures.completedFalse();
+   }
+
+   private boolean actualContainsKey(int segment, Object key) {
       record("containsKey");
-      if (key == null) return CompletableFutures.completedFalse();
+      if (key == null) return false;
       Map<Object, byte[]> map = mapForSegment(segment);
       MarshallableEntry me = deserialize(key, map.get(key));
-      if (me == null) return CompletableFutures.completedFalse();
+      if (me == null) return false;
       long now = timeService.wallClockTime();
       if (isExpired(me, now)) {
          log.tracef("Key %s exists, but has expired.  Entry is %s", key, me);
-         return CompletableFutures.completedFalse();
+         return false;
       }
-      return CompletableFutures.completedTrue();
+      return true;
    }
 
    private byte[] serialize(MarshallableEntry entry) {
@@ -509,6 +580,15 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
    @Override
    public CompletionStage<Void> addSegments(IntSet segments) {
       assertRunning();
+      if (configuration.asyncOperation()) {
+         return CompletableFuture.runAsync(() -> actualAddSegments(segments), nonBlockingExecutor);
+      }
+
+      actualAddSegments(segments);
+      return CompletableFutures.completedNull();
+   }
+
+   private void actualAddSegments(IntSet segments) {
       record("addSegments");
       if (configuration.segmented() && storeName == null) {
          if (log.isTraceEnabled()) log.tracef("Adding segments %s", segments);
@@ -518,18 +598,25 @@ public class DummyInMemoryStore implements WaitNonBlockingStore {
             }
          });
       }
-      return CompletableFutures.completedNull();
    }
 
    @Override
    public CompletionStage<Void> removeSegments(IntSet segments) {
       assertRunning();
+      if (configuration.asyncOperation()) {
+         return CompletableFuture.runAsync(() -> actualRemoveSegments(segments), nonBlockingExecutor);
+      }
+
+      actualRemoveSegments(segments);
+      return CompletableFutures.completedNull();
+   }
+
+   private void actualRemoveSegments(IntSet segments) {
       record("removeSegments");
       if (configuration.segmented() && storeName == null) {
          if (log.isTraceEnabled()) log.tracef("Removing segments %s", segments);
          segments.forEach((int segment) -> store.getAndSet(segment, null));
       }
-      return CompletableFutures.completedNull();
    }
 
    public DummyInMemoryStoreConfiguration getConfiguration() {

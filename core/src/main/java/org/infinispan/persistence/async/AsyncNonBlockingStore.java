@@ -457,16 +457,20 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
       return null;
    }
 
+   public int segmentToUse(int segment) {
+      return segmentCount == 1 ? 0 : segment;
+   }
+
    @Override
    public CompletionStage<Void> batch(int publisherCount, Publisher<SegmentedPublisher<Object>> removePublisher,
          Publisher<SegmentedPublisher<MarshallableEntry<K, V>>> writePublisher) {
       assertNotStopped();
       Completable removeCompletable = Flowable.fromPublisher(removePublisher)
             .flatMapCompletable(sp -> Flowable.fromPublisher(sp)
-                  .concatMapCompletable(key -> Completable.fromCompletionStage(submitModification(new RemoveModification(sp.getSegment(), key))), publisherCount));
+                  .concatMapCompletable(key -> Completable.fromCompletionStage(submitModification(new RemoveModification(segmentToUse(sp.getSegment()), key))), publisherCount));
       Completable modifyCompletable = Flowable.fromPublisher(writePublisher)
             .flatMapCompletable(sp -> Flowable.fromPublisher(sp)
-                  .concatMapCompletable(me -> Completable.fromCompletionStage(submitModification(new PutModification(sp.getSegment(), me))), publisherCount));
+                  .concatMapCompletable(me -> Completable.fromCompletionStage(submitModification(new PutModification(segmentToUse(sp.getSegment()), me))), publisherCount));
       return removeCompletable.mergeWith(modifyCompletable)
             .toCompletionStage(null);
    }
@@ -509,7 +513,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
    @Override
    public CompletionStage<Void> write(int segment, MarshallableEntry<? extends K, ? extends V> entry) {
       assertNotStopped();
-      return submitModification(new PutModification(segment, entry));
+      return submitModification(new PutModification(segmentToUse(segment), entry));
    }
 
    @Override
@@ -517,7 +521,7 @@ public class AsyncNonBlockingStore<K, V> extends DelegatingNonBlockingStore<K, V
       assertNotStopped();
       // Return null to signal that we don't know if the key exists in the store
       // Use erasure to avoid calling thenApply
-      return (CompletionStage)submitModification(new RemoveModification(segment, key));
+      return (CompletionStage)submitModification(new RemoveModification(segmentToUse(segment), key));
    }
 
    @Override
