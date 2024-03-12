@@ -116,17 +116,6 @@
                </dependenciesToScan>
             </configuration>
          </plugin>
-         <plugin>
-            <groupId>org.infinispan.maven-plugins</groupId>
-            <artifactId>proto-schema-compatibility</artifactId>
-            <executions>
-               <execution>
-                  <goals>
-                     <goal>proto-schema-compatibility-check</goal>
-                  </goals>
-               </execution>
-            </executions>
-         </plugin>
       </plugins>
    </build>
 
