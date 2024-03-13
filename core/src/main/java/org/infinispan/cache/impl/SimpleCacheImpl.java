@@ -1594,8 +1594,6 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
          }
          ref.set(k, newValue, null, null);
          return factory.create(k, newValue, metadata);
-      } else if (Objects.equals(oldValue, newValue)) {
-         return oldEntry;
       } else {
          if (hasListeners) {
             CompletionStages.join(cacheNotifier.notifyCacheEntryModified(k, newValue, metadata, oldValue, oldEntry.getMetadata(), true, ImmutableContext.INSTANCE, null));
