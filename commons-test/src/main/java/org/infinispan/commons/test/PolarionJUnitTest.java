@@ -35,20 +35,16 @@ public class PolarionJUnitTest {
 
    void add(ITestResult tr) {
       switch (tr.getStatus()) {
-         case ITestResult.SUCCESS:
-            status = failures.isEmpty() ? Status.SUCCESS : Status.FLAKY;
+         case ITestResult.SUCCESS -> {
+            status = failures.isEmpty() || exceptionsOkay(failures) ? Status.SUCCESS : Status.FLAKY;
             successes.incrementAndGet();
-            break;
-         case ITestResult.FAILURE:
+         }
+         case ITestResult.FAILURE -> {
             failures.add(tr.getThrowable());
             status = Status.FAILURE;
-            break;
-         case ITestResult.SKIP:
-         case ITestResult.SUCCESS_PERCENTAGE_FAILURE:
-            status = Status.SKIPPED;
-            break;
-         default:
-            status = Status.ERROR;
+         }
+         case ITestResult.SKIP, ITestResult.SUCCESS_PERCENTAGE_FAILURE -> status = Status.SKIPPED;
+         default -> status = Status.ERROR;
       }
       elapsedTime.addAndGet(tr.getEndMillis() - tr.getStartMillis());
    }
@@ -59,5 +55,26 @@ public class PolarionJUnitTest {
 
    int numberOfExecutions() {
       return successes.get() + failures.size();
+   }
+
+   boolean exceptionsOkay(List<Throwable> throwables) {
+      return throwables.stream().allMatch(t -> {
+         do {
+            if (exceptionOkay(t)) {
+               return true;
+            }
+         } while ((t = t.getCause()) != null);
+         return false;
+      });
+   }
+
+   boolean exceptionOkay(Throwable t) {
+      if (t instanceof IllegalStateException) {
+         StackTraceElement topElement = t.getStackTrace()[0];
+         // MagicKey can cause random failures where the cluster isn't in a good state, just ignore those
+         // failures in regards to being flaky
+         return topElement.getClassName().contains("MagicKey") && topElement.getMethodName().equals("<init>");
+      }
+      return false;
    }
 }

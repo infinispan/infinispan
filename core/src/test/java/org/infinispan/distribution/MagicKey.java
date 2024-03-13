@@ -10,6 +10,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -96,6 +97,9 @@ public class MagicKey implements Serializable {
          return true;
 
       });
+      if (failOnce.getAndSet(false)) {
+         throw new IllegalStateException("Forced Exception!");
+      }
       if (segment < 0) {
          throw new IllegalStateException("Could not find any segment owned by " + primaryOwner + ", "
             + Arrays.toString(backupOwners) + ", primary segments: " + segments(primaryOwner)
@@ -104,6 +108,8 @@ public class MagicKey implements Serializable {
       hashcode = getHashCodeForSegment(cacheTopology, segment);
       unique = counter.getAndIncrement();
    }
+
+   private static final AtomicBoolean failOnce = new AtomicBoolean(true);
 
    private int findSegment(int numSegments, Predicate<Integer> predicate) {
       // use random offset so that we don't use only lower segments
