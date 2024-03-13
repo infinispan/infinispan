@@ -42,7 +42,7 @@ public abstract class BaseIterationFailOverTest extends MultiHotRodServersTest i
    @Override
    protected int maxRetries() {
       // We kill one node in many tests - let it failover in that case
-      return 1;
+      return 2;
    }
 
    @Test(groups = "functional")
