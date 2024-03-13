@@ -722,6 +722,16 @@ class Compactor {
             }
             scheduledOffset += header.totalLength();
          }
+         // Need to notify subscriber of expired entries before completing request
+         if (subscriber != null) {
+            log.tracef("Expired entries in temporary table %s and in index %s", expiredTemp, expiredIndex);
+            for (EntryPosition entryPosition : expiredTemp) {
+               subscriber.onEntryPosition(entryPosition);
+            }
+            for (EntryRecord entryRecord : expiredIndex) {
+               subscriber.onEntryEntryRecord(entryRecord);
+            }
+         }
          if (!clearSignal.get()) {
             // We delay the next operation until all prior moves are done. By moving it can trigger another
             // compaction before the index has been fully updated. Thus we block any other compaction events
@@ -749,14 +759,7 @@ class Compactor {
             completeFuture(compactionRequest);
          }
       }
-      if (subscriber != null) {
-         for (EntryPosition entryPosition : expiredTemp) {
-            subscriber.onEntryPosition(entryPosition);
-         }
-         for (EntryRecord entryRecord : expiredIndex) {
-            subscriber.onEntryEntryRecord(entryRecord);
-         }
-      }
+
       if (isLogFile) {
          log.tracef("Finished expiring entries in log file %d, leaving file as is", scheduledFile);
       } else {
