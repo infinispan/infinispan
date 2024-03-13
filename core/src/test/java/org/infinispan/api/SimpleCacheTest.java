@@ -226,6 +226,11 @@ public class SimpleCacheTest extends APINonTxTest {
       assertNull(await(f));
    }
 
+   public void testComputeWithExistingValue() {
+      assertNull(cache.put("k", "v"));
+      assertEquals("v", cache.compute("k", (key, value) -> value));
+   }
+
    public void testReplaceAsyncEntryExistingKey() {
       AdvancedCache<Object, Object> c = cache.getAdvancedCache();
       Metadata metadata = new EmbeddedMetadata.Builder()
