@@ -161,6 +161,7 @@
                                 <numbered>true</numbered>
                                 <icons>font</icons>
                                 <docinfo>true</docinfo>
+                                <stem>latexmath</stem>
                                 <experimental>true</experimental>
                                 <infinispanversion>${infinispan.base.version}</infinispanversion>
                                 <infinispancomponentversion>${version.infinispan}</infinispancomponentversion>
@@ -237,6 +238,7 @@
                                         <numbered>true</numbered>
                                         <icons>font</icons>
                                         <docinfo>true</docinfo>
+                                        <stem>latexmath</stem>
                                         <experimental>true</experimental>
                                         <infinispanversion>${infinispan.base.version}</infinispanversion>
                                         <infinispancomponentversion>${version.infinispan}</infinispancomponentversion>

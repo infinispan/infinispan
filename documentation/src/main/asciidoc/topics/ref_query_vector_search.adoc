@@ -1,0 +1,132 @@
+[id='vector-search_{context}']
+= Vector search queries
+
+You can perform vector kNN searches with the Ickle query language using the special operator `+<->+` to define predicates.
+
+This is an example of kNN query:
+
+[source,sql]
+----
+from play.Item i where i.myVector <-> [7,7,7]~3
+----
+
+This query will find the items that have the `myVector` fields that are within `3` nearest neighbourhood from the vector `[7,7,7]`.
+
+Notice that in order to use this kind of search the entity, in our example `play.Item`, has to be `@Indexed` and
+the field, in our example `myVector`, should be annotated with `@Vector`.
+
+We support two kinds of vector field types:
+
+* `byte` / `Byte` (to work with byte vectors)
+* `float` / `Float` (to work with float vectors)
+
+You can have different vector fields on the same entity, but in any case you can have only one vector predicate on your queries.
+
+== Vector search parameters
+
+Both the k-value and the vector can be passed as query parameter.
+The k-value scalar can be expressed with the usual placeholder `:k` in the Ickle text.
+For the vector we can use either a placeholder for each term of the vector:
+
+[source,java]
+----
+Query<Item> query = cache.query("from play.Item i where i.floatVector <-> [:a,:b,:c]~:k");
+query.setParameter("a", 1);
+query.setParameter("b", 4.3);
+query.setParameter("c", 3.3);
+query.setParameter("k", 4);
+----
+
+Or a placeholder can be used for the entire vector:
+
+[source,java]
+----
+Query<Item> query = cache.query("from play.Item i where i.floatVector <-> [:a]~:k");
+query.setParameter("a", new float[]{7.1f, 7.0f, 3.1f});
+query.setParameter("k", 3);
+----
+
+== Score projection with vector search
+
+Is very common also to return the score of the computation, using the link:{query_docs}#score_projection[score projection].
+In the case of vector search the query will be like the following:
+
+[source,java]
+----
+Query<Object[]> query = cache.query("select i, score(i) from play.Item i where i.floatVector <-> [:a]~:k");
+query.setParameter("a", new float[]{7.1f, 7.0f, 3.1f});
+query.setParameter("k", 3);
+
+List<Object[]> resultList = query.list();
+----
+
+In this case the first element of each array will contain the entity,
+and the second element will contain the score of the matching.
+
+== Vector field attributes
+
+It is always required to specify the **dimension** of the vector field.
+
+The other mapping attributes are optional, since Infinispan will have a default for each of them.
+You can configure them, for instance, to tune the desired accuracy / performance.
+
+=== Similarity
+
+Different `VectorSimilarity` algorithms are supported
+
+[%autowidth]
+|===
+| Value | Distance | Score | Note
+
+| `L2`
+|
+ifdef::backend-html5[stem:[d(x,y) = \sqrt{\sum_{i=1}^{n} (x_i - y_i)^2 } ]]
+ifdef::backend-pdf[`d(x,y) = sqrt(sum[i=1; i<n+1]( (x(i) - y(i))*(x(i) - y(i)) )`]
+|
+ifdef::backend-html5[stem:[s = \frac{1}{1+d^2}]]
+ifdef::backend-pdf[`s = 1/(1+d*d)`]
+| This is the {brandname} default
+| `INNER_PRODUCT`
+|
+ifdef::backend-html5[stem:[d(x,y) = \sum_{i=1}^{n} x_i \cdot y_i ]]
+ifdef::backend-pdf[`d(x,y) = sum[i=1; i< n+1] ( x(i)*y(i) ) `]
+|
+ifdef::backend-html5[stem:[s = \frac{1}{1+d}]]
+ifdef::backend-pdf[`s = 1/(1+d)`]
+| To use this similarity efficiently, both index and search vectors must be normalized
+| `MAX_INNER_PRODUCT`
+|
+ifdef::backend-html5[stem:[d(x,y) = \sum_{i=1}^{n} x_i \cdot y_i ]]
+ifdef::backend-pdf[`d(x,y) = sum[i=1; i<n+1] ( x(i)*y(i) )`]
+|
+ifdef::backend-html5[]
+s = \begin{cases}
+\frac{1}{1-d} & \text{if d < 0}\\
+d+1 & \text{otherwise}
+\end{cases}
+endif::[]
+ifdef::backend-pdf[`d<0 ? 1/(1-d) : d+1`]
+| This similarity does not require vector normalization
+| `COSINE`
+|
+ifdef::backend-html5[stem:[d(x,y) = \frac{1 - \sum_{i=1} ^{n} x_i \cdot y_i }{ \sqrt{ \sum_{i=1} ^{n} x_i^2 } \sqrt{ \sum_{i=1} ^{n} y_i^2 }} ]]
+ifdef::backend-pdf[`d(x,y) = (1 - sum[i=1; i<n+1] ( x(i)*y(i) )/( sqrt( sum[i=1; i<n+1] x(i)*x(i) ) sqrt( sum[i=1; i<n+1] y(i)*y(i) ) ) )`]
+|
+ifdef::backend-html5[stem:[s = \frac{1}{1+d}]]
+ifdef::backend-pdf[`s = 1/(1+d)`]
+| This similarity cannot be of `zero magnitude`, e.g. when a vector is all zeroes: `[0,0,0,... 0,0]`, the cosine is not defined and will result in an error.
+|===
+
+=== Beanwidth
+
+Changing the `beamWidth` you can modify the the size of the dynamic list used during k-NN graph creation.
+It affects how vectors are stored. Higher values lead to a more accurate graph but slower indexing speed.
+The {brandname} default is 512.
+
+=== Max Connections
+
+The number of neighbors each node will be connected to in the HNSW graph.
+Modifying this value will have an impact on memory consumption. It is recommended to keep this value between 2 and 100.
+The {brandname} default is 16.
+
+

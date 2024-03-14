@@ -128,6 +128,18 @@ in the same `Object[]` returned hit.
 SELECT b, version(b) FROM org.infinispan.sample.Book b WHERE b.title like '%Data Grid%'
 ----
 
+[id='score_projection']
+=== Project the score
+If the query is indexed, it is possible to project the score obtained by each matching together with other projections.
+It can be used for instance to project the cache entry value together with the score
+in the same `Object[]` returned hit.
+
+[source,sql]
+----
+# return the cache entry value and the the score of the matching
+SELECT b, score(b) FROM org.infinispan.sample.Book b WHERE b.title like '%Data Grid%'
+----
+
 [discrete]
 == Sorting
 Ordering the results based on one or more attributes or attribute paths is done with the `ORDER BY` clause. If multiple sorting criteria
