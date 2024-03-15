@@ -41,6 +41,16 @@ public class InsightsModule implements ModuleLifecycle {
          return;
       }
 
+      if (service.isOptingOut()) {
+         // in this case the Insights Java client (at least with the current Insights client version)
+         // will produce an error is started,
+         // so we simply avoid to start the Insights client service
+         String envOptOut = InfinispanInsightsConfiguration.ENV_OPT_OUT;
+         String sysOptOut = envOptOut.toLowerCase().replace('_', '.');
+         log.optOutTrue(envOptOut, sysOptOut);
+         return;
+      }
+
       log.insightsEnabled();
       BlockingManager blockingManager = gcr.getComponent(BlockingManager.class);
       service.start(blockingManager);
