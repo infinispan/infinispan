@@ -36,6 +36,10 @@ public class CacheJoinCommand extends AbstractCacheControlCommand {
       this.viewId = viewId;
    }
 
+   public String getCacheName() {
+      return cacheName;
+   }
+
    @Override
    public CompletionStage<?> invokeAsync(GlobalComponentRegistry gcr) throws Throwable {
       return gcr.getClusterTopologyManager()
