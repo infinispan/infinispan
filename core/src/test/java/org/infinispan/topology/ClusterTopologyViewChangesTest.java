@@ -5,7 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.IntStream;
 
+import org.infinispan.Cache;
 import org.infinispan.commands.topology.RebalanceStatusRequestCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -21,6 +23,8 @@ import org.testng.annotations.Test;
 @CleanupAfterMethod
 @Test(testName = "topology.ClusterTopologyViewChangesTest", groups = "functional")
 public class ClusterTopologyViewChangesTest extends MultipleCacheManagersTest {
+
+   private final int dataSize = 100;
 
 
    @Override
@@ -56,7 +60,7 @@ public class ClusterTopologyViewChangesTest extends MultipleCacheManagersTest {
       executeJoinTest(-1);
    }
 
-   public void nodeLeftDuringCacheWithRebalanceDisabled() throws Exception {
+   public void nodeLeftDuringCacheJoinWithRebalanceDisabled() throws Exception {
       waitForClusterToForm();
       TestingUtil.extractGlobalComponentRegistry(findCoordinator())
             .getClusterTopologyManager()
@@ -70,12 +74,16 @@ public class ClusterTopologyViewChangesTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
       TestingUtil.extractGlobalComponentRegistry(findCoordinator())
             .getClusterTopologyManager()
-            .setRebalancingEnabled(false);
+            .setRebalancingEnabled(false)
+            .toCompletableFuture().get(10, TimeUnit.SECONDS);
 
       executeJoinTest(findCoordinatorIndex());
    }
 
    private void executeJoinTest(int nodeToStop) throws Exception {
+      // First step, populate the cache.
+      populateCache();
+
       CheckPoint checkPoint = new CheckPoint();
       AtomicBoolean onlyOnce = new AtomicBoolean(true);
 
@@ -109,8 +117,32 @@ public class ClusterTopologyViewChangesTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager joiner = joining.get(10, TimeUnit.SECONDS);
 
       // Assert the joiner has the same status as the coordinator.
+      boolean rebalanced = TestingUtil.extractGlobalComponentRegistry(joiner).getClusterTopologyManager().isRebalancingEnabled();
       assertThat(TestingUtil.extractGlobalComponentRegistry(findCoordinator()).getClusterTopologyManager().isRebalancingEnabled())
-            .isEqualTo(TestingUtil.extractGlobalComponentRegistry(joiner).getClusterTopologyManager().isRebalancingEnabled());
+            .isEqualTo(rebalanced);
+
+      // Assert data on all caches if rebalance enabled.
+      if (rebalanced) assertCacheData();
+   }
+
+   private void populateCache() {
+      Cache<String, String> cache = cache(0);
+      IntStream.range(0, dataSize).parallel()
+            .forEach(i -> cache.put("key-" + i, "value-" + i));
+   }
+
+   private void assertCacheData() {
+      for (int m = 0; m < managers().length; m++) {
+         Cache<String, String> cache = cache(m);
+         int size = cache.size();
+         assertThat(size)
+               .withFailMessage(String.format("Cache %d has %d/%d entries", m, size, dataSize))
+               .isEqualTo(dataSize);
+
+         for (int i = 0; i < dataSize; i++) {
+            assertThat(cache.get("key-" + i)).isEqualTo("value-" + i);
+         }
+      }
    }
 
    private EmbeddedCacheManager findCoordinator() {
