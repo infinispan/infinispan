@@ -48,10 +48,6 @@ public class InsightsService {
       this.config = new InfinispanInsightsConfiguration(this::identificationName);
       this.insightsLogger = new InsightsLoggerDelegate(log);
 
-      if (config.isOptingOut()) {
-         throw log.insightsConfigurationError();
-      }
-
       Map<String, InsightsSubreport> subReports = new LinkedHashMap<>(2);
       InfinispanSubreport infinispanSubreport = new InfinispanSubreport(this::overviewReport);
       ClasspathJarInfoSubreport jarsSubreport = new ClasspathJarInfoSubreport(insightsLogger);
@@ -82,7 +78,7 @@ public class InsightsService {
                new LinkedBlockingQueue<>());
          insightsReportController.generate();
       } catch (Throwable ex) {
-         throw log.insightsServiceSetupError(ex);
+         log.insightsServiceSetupError(ex);
       }
    }
 
@@ -102,6 +98,10 @@ public class InsightsService {
          overviewReport();
       }
       return identificationName;
+   }
+
+   public boolean isOptingOut() {
+      return config.isOptingOut();
    }
 
    private Json overviewReport() {

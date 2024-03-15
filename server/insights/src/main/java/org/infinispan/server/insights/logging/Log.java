@@ -1,11 +1,8 @@
 package org.infinispan.server.insights.logging;
 
-import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.WARN;
 
-import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.CacheException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
@@ -30,7 +27,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Red Hat Insights integration is fully disabled", id = 32002)
    void insightsDisabled();
 
-   @LogMessage(level = ERROR)
+   @LogMessage(level = WARN)
    @Message(value = "Infinispan failed to lookup the server management component. " +
          "Thus Red Hat Insights integration will be fully disabled.", id = 32003)
    void serverManagementLookupFailed();
@@ -43,17 +40,21 @@ public interface Log extends BasicLogger {
    @Message(value = "Remote Insights reporting", id = 32005)
    void insightsEnabled();
 
-   @Message(value = "Error configuring Red Hat Insight client", id = 32006)
-   CacheConfigurationException insightsConfigurationError();
+   @LogMessage(level = INFO)
+   @Message(value = "The environment variable '%s' or the system property '%s' is set to true. " +
+         "The Insights reports will be disabled.", id = 32006)
+   void optOutTrue(String environmentVariable, String systemProperty);
 
-   @LogMessage(level = ERROR)
+   @LogMessage(level = INFO)
    @Message(value = "Error getting certificate to connect to Red Hat Insight", id = 32007)
    void insightsCertificateError();
 
+   @LogMessage(level = INFO)
    @Message(value = "Error setting up Red Hat Insight report service", id = 32008)
-   CacheException insightsServiceSetupError(@Cause Throwable t);
+   void insightsServiceSetupError(@Cause Throwable t);
 
+   @LogMessage(level = INFO)
    @Message(value = "Red Hat Insight client shut down, it is not possible to schedule other tasks on it", id = 32009)
-   CacheConfigurationException clientSchedulerShutDown();
+   void clientSchedulerShutDown();
 
 }
