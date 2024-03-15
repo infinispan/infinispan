@@ -10,6 +10,7 @@ import java.util.TreeMap;
 
 import org.infinispan.commons.util.ClassFinder;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.Mocks;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "commands.CommandIdUniquenessTest")
@@ -19,7 +20,7 @@ public class CommandIdUniquenessTest extends AbstractInfinispanTest {
       SortedMap<Byte, String> cmdIds = new TreeMap<Byte, String>();
 
       for (Class<?> c : commands) {
-         if (!c.isInterface() && !Modifier.isAbstract(c.getModifiers()) && !LocalCommand.class.isAssignableFrom(c)) {
+         if (!c.isInterface() && !Modifier.isAbstract(c.getModifiers()) && !LocalCommand.class.isAssignableFrom(c) && !c.getName().contains(Mocks.class.getName())) {
             log.infof("Testing %s", c.getSimpleName());
             Constructor<?>[] declaredCtors = c.getDeclaredConstructors();
             Constructor<?> constructor = null;
