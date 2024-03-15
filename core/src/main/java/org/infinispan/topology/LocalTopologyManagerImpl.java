@@ -286,8 +286,10 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
 
    private CompletionStage<CacheTopology> handleJoinResponse(String cacheName, LocalCacheStatus cacheStatus,
                                                             CacheStatusResponse initialStatus) {
+      log.debugf("Cache %s received join response %s", cacheName, initialStatus);
+      CacheTopology ct = getJoinTopology(initialStatus);
       int viewId = transport.getViewId();
-      return doHandleTopologyUpdate(cacheName, initialStatus.getCacheTopology(), initialStatus.getAvailabilityMode(),
+      return doHandleTopologyUpdate(cacheName, ct, initialStatus.getAvailabilityMode(),
                                     viewId, transport.getCoordinator(), cacheStatus)
                    .thenCompose(applied -> {
                       if (!applied) {
@@ -304,7 +306,24 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                       return doHandleStableTopologyUpdate(cacheName, initialStatus.getStableTopology(), viewId,
                                                           transport.getCoordinator(), cacheStatus);
                    })
-                   .thenApply(ignored -> initialStatus.getCacheTopology());
+                  .thenApply(ignored -> ct);
+   }
+
+   private CacheTopology getJoinTopology(CacheStatusResponse response) {
+      // First, try to utilize the coordinator topology *before* the join.
+      CacheTopology ct = response.getCacheTopology();
+      if (ct == null)
+         return null;
+
+      // If the join receives a topology already in rebalance AND it is counted towards the current members, utilize the stable topology.
+      // This scenario could happen when the node retries the join operation due to a view change when received the response.
+      // Counting itself as a member *during* the join would cause the node to be identified as a state donor in the state transfer.
+      // However, since the node is joining, it does not have any state to donate. Instead, utilize the stable topology to bootstrap.
+      // During this processing, a lock is held to this cache, and the rebalance message should be received *after* the join completes.
+      if (ct.getPhase() != CacheTopology.Phase.NO_REBALANCE && ct.getActualMembers().contains(transport.getAddress()))
+         return response.getStableTopology();
+
+      return ct;
    }
 
    private int getNumberMembersFromState(String cacheName, CacheJoinInfo joinInfo) {
@@ -719,8 +738,10 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
 
    private CompletionStage<Void> withView(int viewId, long timeout, TimeUnit timeUnit) {
       CompletableFuture<Void> viewFuture = transport.withView(viewId);
+      // Generate here to keep the stack trace.
+      Throwable t = CLUSTER.timeoutWaitingForView(viewId, transport.getViewId());
       ScheduledFuture<Boolean> cancelTask = timeoutExecutor.schedule(
-            () -> viewFuture.completeExceptionally(CLUSTER.timeoutWaitingForView(viewId, transport.getViewId())),
+            () -> viewFuture.completeExceptionally(t),
             timeout, timeUnit);
       viewFuture.whenComplete((v, throwable) -> cancelTask.cancel(false));
       return viewFuture;

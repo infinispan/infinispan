@@ -9,6 +9,7 @@ import static org.mockito.Mockito.withSettings;
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -16,10 +17,12 @@ import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.GlobalRpcCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.reactive.publisher.impl.Notifications;
@@ -448,6 +451,58 @@ public class Mocks {
             throw new IllegalArgumentException("Not expecting cross site requests");
          }
       }, true);
+   }
+
+   public static CheckPoint blockInboundGlobalCommandExecution(EmbeddedCacheManager ecm, Predicate<? super ReplicableCommand> predicate) {
+      CheckPoint checkPoint = new CheckPoint();
+      Executor executor = extractGlobalComponent(ecm, ExecutorService.class, KnownComponentNames.NON_BLOCKING_EXECUTOR);
+      TestingUtil.wrapGlobalComponent(ecm, InboundInvocationHandler.class, handler -> new InboundInvocationHandler() {
+
+         @Override
+         public void handleFromCluster(Address origin, ReplicableCommand command, Reply reply, DeliverOrder order) {
+            if (!predicate.test(command)) {
+               handler.handleFromCluster(origin, command, reply, order);
+               return;
+            }
+
+            ReplicableCommand wrapped = new GlobalRpcCommand() {
+
+               @Override
+               public byte getCommandId() {
+                  return command.getCommandId();
+               }
+
+               @Override
+               public boolean isReturnValueExpected() {
+                  return command.isReturnValueExpected();
+               }
+
+               @Override
+               public CompletionStage<?> invokeAsync(GlobalComponentRegistry globalComponentRegistry) {
+                  checkPoint.trigger(BEFORE_INVOCATION);
+                  return checkPoint.future(BEFORE_RELEASE, 20, TimeUnit.SECONDS, executor)
+                        .thenCompose(ignore -> {
+                           CompletableFuture<Object> cf = new CompletableFuture<>();
+                           Reply completableReply = response -> {
+                              checkPoint.trigger(AFTER_INVOCATION);
+                              checkPoint.future(AFTER_RELEASE, 20, TimeUnit.SECONDS, executor)
+                                    .thenRun(() -> cf.complete(response));
+                           };
+                           handler.handleFromCluster(origin, command, completableReply, order);
+                           return cf;
+                        });
+               }
+            };
+
+            handler.handleFromCluster(origin, wrapped, reply, order);
+         }
+
+         @Override
+         public void handleFromRemoteSite(String origin, XSiteRequest<?> command, Reply reply, DeliverOrder order) {
+            throw new IllegalArgumentException("Not expecting cross site requests");
+         }
+      }, true);
+      return checkPoint;
    }
 
    /**
