@@ -58,7 +58,9 @@ public class InsightsModule implements ModuleLifecycle {
 
    @Override
    public void cacheManagerStopping(GlobalComponentRegistry gcr) {
-      service.stop();
+      if (service != null) {
+         service.stop();
+      }
    }
 
    private static InsightsActivation activation() {
