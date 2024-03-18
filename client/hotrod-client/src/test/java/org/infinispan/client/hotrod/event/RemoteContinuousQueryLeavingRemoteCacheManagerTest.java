@@ -19,19 +19,17 @@ import java.util.function.Function;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.api.query.ContinuousQuery;
+import org.infinispan.commons.api.query.ContinuousQueryListener;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.api.continuous.ContinuousQuery;
-import org.infinispan.query.api.continuous.ContinuousQueryListener;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.remote.impl.filter.IckleContinuousQueryProtobufCacheEventFilterConverterFactory;
 import org.infinispan.test.TestingUtil;
@@ -108,12 +106,10 @@ public class RemoteContinuousQueryLeavingRemoteCacheManagerTest extends MultiHot
    }
 
    private Listener applyContinuousQuery(RemoteCache<String, User> cacheToUse) {
-      QueryFactory qf = Search.getQueryFactory(cacheToUse);
-
-      Query<User> query = qf.<User>create("FROM sample_bank_account.User WHERE age <= :ageParam")
+      Query<User> query = cacheToUse.<User>query("FROM sample_bank_account.User WHERE age <= :ageParam")
                       .setParameter("ageParam", 32);
 
-      ContinuousQuery<String, User> continuousQuery = Search.getContinuousQuery(cacheToUse);
+      ContinuousQuery<String, User> continuousQuery = remoteCache.continuousQuery();
       Listener listener = new Listener();
       continuousQuery.addContinuousQueryListener(query, listener);
 

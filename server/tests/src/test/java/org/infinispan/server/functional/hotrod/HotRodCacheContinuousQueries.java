@@ -12,12 +12,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.Search;
+import org.infinispan.commons.api.query.ContinuousQuery;
+import org.infinispan.commons.api.query.ContinuousQueryListener;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.protostream.sampledomain.User;
-import org.infinispan.query.api.continuous.ContinuousQuery;
-import org.infinispan.query.api.continuous.ContinuousQueryListener;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -43,8 +41,7 @@ public class HotRodCacheContinuousQueries {
       remoteCache.put(3, createUser(3, 20));
       assertEquals(3, remoteCache.size());
 
-      QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query<User> query = qf.create("FROM sample_bank_account.User WHERE name = 'user1' AND age > 20");
+      Query<User> query = remoteCache.query("FROM sample_bank_account.User WHERE name = 'user1' AND age > 20");
 
       final BlockingQueue<Integer> joined = new LinkedBlockingQueue<>();
       final BlockingQueue<Integer> updated = new LinkedBlockingQueue<>();
@@ -66,7 +63,7 @@ public class HotRodCacheContinuousQueries {
             left.add(key);
          }
       };
-      ContinuousQuery<Integer, User> continuousQuery = Search.getContinuousQuery(remoteCache);
+      ContinuousQuery<Integer, User> continuousQuery = remoteCache.continuousQuery();
       continuousQuery.addContinuousQueryListener(query, listener);
 
       expectElementsInQueue(joined, 1);

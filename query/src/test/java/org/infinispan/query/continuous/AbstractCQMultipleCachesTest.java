@@ -4,12 +4,11 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.Map;
 
+import org.infinispan.Cache;
+import org.infinispan.commons.api.query.ContinuousQuery;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.Search;
-import org.infinispan.query.api.continuous.ContinuousQuery;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -47,12 +46,11 @@ public abstract class AbstractCQMultipleCachesTest extends MultipleCacheManagers
    }
 
    protected CallCountingCQResultListener<Integer, Person> createContinuousQuery() {
-      QueryFactory qf = Search.getQueryFactory(cache(0));
-
-      Query<Person> query = qf.create("FROM org.infinispan.query.test.Person WHERE age <= 30");
+      Cache<Integer, Person> cache = cache(0);
+      Query<Person> query = cache.query("FROM org.infinispan.query.test.Person WHERE age <= 30");
 
       CallCountingCQResultListener<Integer, Person> listener = new CallCountingCQResultListener<>();
-      ContinuousQuery<Integer, Person> cq = Search.getContinuousQuery(cache(0));
+      ContinuousQuery<Integer, Person> cq = cache.continuousQuery();
       cq.addContinuousQueryListener(query, listener);
       return listener;
    }
