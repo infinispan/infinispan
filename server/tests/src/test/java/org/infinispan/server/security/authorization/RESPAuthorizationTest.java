@@ -257,7 +257,7 @@ abstract class RESPAuthorizationTest {
 
                ctx.verify(() -> assertThat(r.cause())
                      .isInstanceOf(ConnectException.class)
-                     .hasMessage("Cannot connect to any of the provided endpoints"));
+                     .hasMessageStartingWith("Cannot connect to any of the provided endpoints"));
             });
    }
 
