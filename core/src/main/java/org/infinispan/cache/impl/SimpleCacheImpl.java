@@ -36,6 +36,7 @@ import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
 import org.infinispan.LockedStream;
 import org.infinispan.batch.BatchContainer;
+import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -923,6 +924,11 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache
 
    @Override
    public <T> Query<T> query(String query) {
+      throw log.querySimpleCacheNotSupported();
+   }
+
+   @Override
+   public ContinuousQuery<K, V> continuousQuery() {
       throw log.querySimpleCacheNotSupported();
    }
 

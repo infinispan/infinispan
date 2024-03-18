@@ -685,6 +685,16 @@ public class SecureCacheTestDriver {
    }
 
    @TestCachePermission(AuthorizationPermission.BULK_READ)
+   public void testContinuousQuery(SecureCache<String, String> cache) {
+      try {
+         // we cannot invoke it without any query module linked to the core
+         cache.continuousQuery();
+      } catch (CacheException ex) {
+         // catch CacheException (raised because we don't have any query module) but not a SecurityException
+      }
+   }
+
+   @TestCachePermission(AuthorizationPermission.BULK_READ)
    public void testCacheEntrySet(SecureCache<String, String> cache) {
       cache.getAdvancedCache().getAllCacheEntries(Collections.emptySet());
    }

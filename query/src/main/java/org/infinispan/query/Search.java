@@ -77,7 +77,9 @@ public final class Search {
 
    /**
     * Obtains the {@link ContinuousQuery} object for the cache.
+    * @deprecated use {@link Cache#continuousQuery()} instead.
     */
+   @Deprecated
    public static <K, V> ContinuousQuery<K, V> getContinuousQuery(Cache<K, V> cache) {
       return new ContinuousQueryImpl<>(cache);
    }

@@ -1,7 +1,10 @@
 package org.infinispan.client.hotrod.impl.query;
 
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.event.impl.ContinuousQueryImpl;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
+import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.SerializationContext;
@@ -57,5 +60,9 @@ public final class RemoteQueryFactory extends BaseQueryFactory {
          serializationContext.getMarshaller(entityType);
       }
       return new RemoteQueryBuilder(this, cache, serializationContext, entityType);
+   }
+
+   public <K, V> ContinuousQuery<K, V> continuousQuery(RemoteCache<K, V> cache) {
+      return new ContinuousQueryImpl<>(cache);
    }
 }

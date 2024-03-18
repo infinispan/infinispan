@@ -20,6 +20,7 @@ import org.infinispan.CacheSet;
 import org.infinispan.LockedStream;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.cache.impl.InternalCache;
+import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -861,6 +862,12 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V>, InternalC
    public <T> Query<T> query(String query) {
       authzManager.checkPermission(subject, AuthorizationPermission.BULK_READ);
       return delegate.query(query);
+   }
+
+   @Override
+   public ContinuousQuery<K, V> continuousQuery() {
+      authzManager.checkPermission(subject, AuthorizationPermission.BULK_READ);
+      return delegate.continuousQuery();
    }
 
    @Override

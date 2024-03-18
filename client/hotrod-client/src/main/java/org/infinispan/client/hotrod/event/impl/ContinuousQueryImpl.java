@@ -15,11 +15,11 @@ import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.ClientCacheEntryCustomEvent;
 import org.infinispan.client.hotrod.filter.Filters;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
+import org.infinispan.commons.api.query.ContinuousQueryListener;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.api.continuous.ContinuousQuery;
-import org.infinispan.query.api.continuous.ContinuousQueryListener;
-import org.infinispan.query.dsl.Query;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.query.remote.client.impl.ContinuousQueryResult;
 
 /**

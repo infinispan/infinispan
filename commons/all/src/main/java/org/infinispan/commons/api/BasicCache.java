@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.api.query.Query;
 
 /**
@@ -305,5 +306,10 @@ public interface BasicCache<K, V> extends AsyncCache<K, V>, ConcurrentMap<K, V>,
    V remove(Object key);
 
    <T> Query<T> query(String query);
+
+   /**
+    * @return a continuous query service usable with the current cache context
+    */
+   ContinuousQuery<K, V> continuousQuery();
 
 }

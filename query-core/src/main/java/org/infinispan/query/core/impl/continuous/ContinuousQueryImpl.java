@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.api.query.ContinuousQueryListener;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
@@ -14,8 +15,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.query.api.continuous.ContinuousQuery;
-import org.infinispan.query.api.continuous.ContinuousQueryListener;
-import org.infinispan.query.dsl.Query;
+import org.infinispan.commons.api.query.Query;
 
 /**
  * A container of continuous query listeners for a cache.
