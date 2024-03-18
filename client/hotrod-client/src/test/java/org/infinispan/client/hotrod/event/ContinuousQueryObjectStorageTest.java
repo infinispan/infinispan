@@ -18,20 +18,18 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.api.query.ContinuousQuery;
+import org.infinispan.commons.api.query.ContinuousQueryListener;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.api.continuous.ContinuousQuery;
-import org.infinispan.query.api.continuous.ContinuousQueryListener;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
 import org.infinispan.query.remote.impl.filter.IckleContinuousQueryProtobufCacheEventFilterConverterFactory;
@@ -93,9 +91,8 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
     */
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN028509:.*")
    public void testDisallowGroupingAndAggregation() {
-      QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query<Object[]> query = qf.create("SELECT MAX(age) FROM sample_bank_account.User WHERE age >= 20");
-      ContinuousQuery<String, User> continuousQuery = Search.getContinuousQuery(remoteCache);
+      Query<Object[]> query = remoteCache.query("SELECT MAX(age) FROM sample_bank_account.User WHERE age >= 20");
+      ContinuousQuery<String, User> continuousQuery = remoteCache.continuousQuery();
 
       ContinuousQueryListener<String, Object[]> listener = new ContinuousQueryListener<String, Object[]>() {
       };
@@ -133,9 +130,7 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
       remoteCache.put("user" + user3.getId(), user3);
       assertEquals(3, remoteCache.size());
 
-      QueryFactory qf = Search.getQueryFactory(remoteCache);
-
-      Query<User> query = qf.<User>create("FROM sample_bank_account.User WHERE age <= :ageParam")
+      Query<User> query = remoteCache.<User>query("FROM sample_bank_account.User WHERE age <= :ageParam")
             .setParameter("ageParam", 32);
 
       final BlockingQueue<KeyValuePair<String, User>> joined = new LinkedBlockingQueue<>();
@@ -154,7 +149,7 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
          }
       };
 
-      ContinuousQuery<String, User> continuousQuery = Search.getContinuousQuery(remoteCache);
+      ContinuousQuery<String, User> continuousQuery = remoteCache.continuousQuery();
       continuousQuery.addContinuousQueryListener(query, listener);
 
       expectElementsInQueue(joined, 2, (kv) -> kv.getValue().getAge(), 32, 22);
@@ -238,9 +233,7 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
       remoteCache.put("user" + user3.getId(), user3);
       assertEquals(3, remoteCache.size());
 
-      QueryFactory qf = Search.getQueryFactory(remoteCache);
-
-      Query<Object[]> query = qf.<Object[]>create("SELECT age FROM sample_bank_account.User WHERE age <= :ageParam")
+      Query<Object[]> query = remoteCache.<Object[]>query("SELECT age FROM sample_bank_account.User WHERE age <= :ageParam")
                       .setParameter("ageParam", 32);
 
       final BlockingQueue<KeyValuePair<String, Object[]>> joined = new LinkedBlockingQueue<>();
@@ -259,7 +252,7 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
          }
       };
 
-      ContinuousQuery<String, User> continuousQuery = Search.getContinuousQuery(remoteCache);
+      ContinuousQuery<String, User> continuousQuery = remoteCache.continuousQuery();
       continuousQuery.addContinuousQueryListener(query, listener);
 
       expectElementsInQueue(joined, 2, (kv) -> kv.getValue()[0], 32, 22);
@@ -339,9 +332,7 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
       remoteCache.put("user" + user3.getId(), user3);
       assertEquals(3, remoteCache.size());
 
-      QueryFactory qf = Search.getQueryFactory(remoteCache);
-
-      Query<Object[]> query = qf.<Object[]>create("SELECT age FROM sample_bank_account.User WHERE age <= :ageParam")
+      Query<Object[]> query = remoteCache.<Object[]>query("SELECT age FROM sample_bank_account.User WHERE age <= :ageParam")
                       .setParameter("ageParam", 32);
 
       final BlockingQueue<KeyValuePair<String, Object[]>> joined = new LinkedBlockingQueue<>();
@@ -360,7 +351,7 @@ public class ContinuousQueryObjectStorageTest extends MultiHotRodServersTest {
          }
       };
 
-      ContinuousQuery<String, User> cq = Search.getContinuousQuery(remoteCache);
+      ContinuousQuery<String, User> cq = remoteCache.continuousQuery();
       cq.addContinuousQueryListener(query, listener);
 
       expectElementsInQueue(joined, 2, (kv) -> kv.getValue()[0], 32, 22);

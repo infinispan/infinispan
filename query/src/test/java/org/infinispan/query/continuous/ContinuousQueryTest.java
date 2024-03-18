@@ -5,14 +5,13 @@ import static org.testng.AssertJUnit.assertEquals;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.Cache;
+import org.infinispan.commons.api.query.ContinuousQuery;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.ParsingException;
-import org.infinispan.query.Search;
-import org.infinispan.query.api.continuous.ContinuousQuery;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -43,10 +42,9 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
     */
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = ".*ISPN028521:.*")
    public void testDisallowFullTextQuery() {
-      QueryFactory qf = Search.getQueryFactory(cache());
-      Query<Person> query = qf.create("FROM org.infinispan.query.test.Person WHERE name : 'john'");
+      Query<Person> query = cache().query("FROM org.infinispan.query.test.Person WHERE name : 'john'");
 
-      ContinuousQuery<Object, Object> cq = Search.getContinuousQuery(cache());
+      ContinuousQuery<Object, Object> cq = cache().continuousQuery();
       cq.addContinuousQueryListener(query, new CallCountingCQResultListener<>());
    }
 
@@ -55,14 +53,15 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
     */
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = ".*ISPN028509:.*")
    public void testDisallowGroupingAndAggregation() {
-      QueryFactory qf = Search.getQueryFactory(cache());
-      Query<Object[]> query = qf.create("SELECT MAX(age) FROM org.infinispan.query.test.Person WHERE age >= 20");
+      Cache<Integer, Person> myCache = cache();
+      Query<Object[]> query = myCache.query("SELECT MAX(age) FROM org.infinispan.query.test.Person WHERE age >= 20");
 
-      ContinuousQuery<Integer, Person> cq = Search.getContinuousQuery(cache());
+      ContinuousQuery<Integer, Person> cq = myCache.continuousQuery();
       cq.addContinuousQueryListener(query, new CallCountingCQResultListener<>());
    }
 
    public void testContinuousQuery() {
+      Cache<Integer, Person> myCache = cache();
       for (int i = 0; i < 2; i++) {
          Person value = new Person();
          value.setName("John");
@@ -70,11 +69,9 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
          cache().put(i, value);
       }
 
-      QueryFactory qf = Search.getQueryFactory(cache());
+      ContinuousQuery<Integer, Person> cq = myCache.continuousQuery();
 
-      ContinuousQuery<Integer, Person> cq = Search.getContinuousQuery(cache());
-
-      Query<Object[]> query = qf.create("SELECT age FROM org.infinispan.query.test.Person WHERE age <= :ageParam");
+      Query<Object[]> query = myCache.query("SELECT age FROM org.infinispan.query.test.Person WHERE age <= :ageParam");
       query.setParameter("ageParam", 30);
 
       CallCountingCQResultListener<Integer, Person> listener = new CallCountingCQResultListener<>();
@@ -172,11 +169,9 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
          cache().put(i, value);
       }
 
-      QueryFactory qf = Search.getQueryFactory(cache());
+      ContinuousQuery<Object, Object> cq = cache().continuousQuery();
 
-      ContinuousQuery<Object, Object> cq = Search.getContinuousQuery(cache());
-
-      Query<Object[]> query = qf.create("SELECT age FROM org.infinispan.query.test.Person WHERE age <= :ageParam");
+      Query<Object[]> query = cache().query("SELECT age FROM org.infinispan.query.test.Person WHERE age <= :ageParam");
 
       query.setParameter("ageParam", 30);
 
@@ -210,15 +205,14 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
    }
 
    public void testTwoSimilarCQ() {
-      QueryFactory qf = Search.getQueryFactory(cache());
       CallCountingCQResultListener<Object, Object> listener = new CallCountingCQResultListener<>();
 
-      Query<Person> query1 = qf.create("FROM org.infinispan.query.test.Person WHERE (age <= 30 AND name = 'John') OR name = 'Johny'");
-      ContinuousQuery<Object, Object> cq1 = Search.getContinuousQuery(cache());
+      Query<Person> query1 = cache().query("FROM org.infinispan.query.test.Person WHERE (age <= 30 AND name = 'John') OR name = 'Johny'");
+      ContinuousQuery<Object, Object> cq1 = cache().continuousQuery();
       cq1.addContinuousQueryListener(query1, listener);
 
-      Query<Person> query2 = qf.create("FROM org.infinispan.query.test.Person WHERE age <= 30 OR name = 'Joe'");
-      ContinuousQuery<Object, Object> cq2 = Search.getContinuousQuery(cache());
+      Query<Person> query2 = cache().query("FROM org.infinispan.query.test.Person WHERE age <= 30 OR name = 'Joe'");
+      ContinuousQuery<Object, Object> cq2 = cache().continuousQuery();
       cq2.addContinuousQueryListener(query2, listener);
 
       final Map<Object, Integer> joined = listener.getJoined();

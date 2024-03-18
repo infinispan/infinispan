@@ -1,13 +1,11 @@
 package org.infinispan.query.continuous;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.api.query.ContinuousQuery;
+import org.infinispan.commons.api.query.ContinuousQueryListener;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.Search;
-import org.infinispan.query.api.continuous.ContinuousQuery;
-import org.infinispan.query.api.continuous.ContinuousQueryListener;
-import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -46,9 +44,10 @@ public class ContinuousQueryProfilingTest extends MultipleCacheManagersTest {
    }
 
    private long testContinuousQueryPerformance(boolean doRegisterListener) {
-      ContinuousQuery<String, Person> cq = Search.getContinuousQuery(cache(0));
+      Cache<String, Person> myCache = cache(0);
+      ContinuousQuery<String, Person> cq = myCache.continuousQuery();
       if (doRegisterListener) {
-         Query<Person> query = makeQuery(cache(0));
+         Query<Person> query = makeQuery(myCache);
          for (int i = 0; i < NUM_LISTENERS; i++) {
             cq.addContinuousQueryListener(query, new ContinuousQueryListener<String, Person>() {
             });
@@ -82,7 +81,6 @@ public class ContinuousQueryProfilingTest extends MultipleCacheManagersTest {
    }
 
    private Query<Person> makeQuery(Cache<?, ?> c) {
-      QueryFactory qf = Search.getQueryFactory(c);
-      return qf.create("FROM org.infinispan.query.test.Person WHERE age >= 18");
+      return c.query("FROM org.infinispan.query.test.Person WHERE age >= 18");
    }
 }
