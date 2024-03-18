@@ -15,6 +15,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
+import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.format.PropertyFormatter;
 import org.infinispan.factories.ComponentRegistry;
@@ -597,6 +598,11 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V>, Inte
    @Override
    public <T> Query<T> query(String query) {
       return cache.query(query);
+   }
+
+   @Override
+   public ContinuousQuery<K, V> continuousQuery() {
+      return cache.continuousQuery();
    }
 
    @ManagedAttribute(

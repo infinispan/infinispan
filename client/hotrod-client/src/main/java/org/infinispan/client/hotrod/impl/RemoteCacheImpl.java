@@ -58,6 +58,7 @@ import org.infinispan.client.hotrod.impl.query.RemoteQueryFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.near.NearCacheService;
+import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.CloseableIterator;
@@ -534,8 +535,15 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       if (queryFactory == null) {
          throw log.queryNotSupported();
       }
-
       return queryFactory.create(query);
+   }
+
+   @Override
+   public ContinuousQuery<K, V> continuousQuery() {
+      if (queryFactory == null) {
+         throw log.queryNotSupported();
+      }
+      return queryFactory.continuousQuery(this);
    }
 
    @Override

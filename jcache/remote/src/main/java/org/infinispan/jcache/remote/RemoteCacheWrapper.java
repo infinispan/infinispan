@@ -17,6 +17,7 @@ import org.infinispan.client.hotrod.RemoteCacheContainer;
 import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.StreamingRemoteCache;
 import org.infinispan.client.hotrod.jmx.RemoteCacheClientStatisticsMXBean;
+import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorCollection;
 import org.infinispan.commons.util.CloseableIteratorSet;
@@ -618,5 +619,10 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    @Override
    public <T> org.infinispan.commons.api.query.Query<T> query(String query) {
       return delegate.query(query);
+   }
+
+   @Override
+   public ContinuousQuery<K, V> continuousQuery() {
+      return delegate.continuousQuery();
    }
 }

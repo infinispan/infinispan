@@ -23,6 +23,12 @@ public final class Search {
       return new RemoteQueryFactory((InternalRemoteCache<?, ?>) cache);
    }
 
+   /**
+    *
+    * @return the continuous query service for the provided cache
+    * @deprecated use {@link RemoteCache#continuousQuery()} instead.
+    */
+   @Deprecated
    public static <K, V> ContinuousQuery<K, V> getContinuousQuery(RemoteCache<K, V> cache) {
       return new ContinuousQueryImpl<>(cache);
    }

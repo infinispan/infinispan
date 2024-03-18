@@ -54,6 +54,7 @@ import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -698,6 +699,15 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache<K, V>
       }
 
       return queryProducer.query(query);
+   }
+
+   @Override
+   public ContinuousQuery<K, V> continuousQuery() {
+      if (queryProducer == null) {
+         throw log.queryNotSupported();
+      }
+
+      return queryProducer.continuousQuery(this);
    }
 
    final V remove(Object key, long explicitFlags, ContextBuilder contextBuilder) {
