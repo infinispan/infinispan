@@ -252,7 +252,12 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
             nextExpirationTime = -1;
             currentOffset = 0;
             logFile = null;
-            completeRequest(actualRequest);
+            // Completing in the completionProcessor ensures that we don't complete the clear until all completion
+            // notifications are done as well. This is important as those notifications update the index and we don't
+            // want to continue with clearing the index until all updates were sent to it
+            // This also ensure the complete log File update below is done before we clear as well - which would
+            // cause incorrect stats after a clear
+            completionProcessor.onNext(ignore -> completeRequest(actualRequest));
             return;
          }
          int actualLength = actualRequest.length();
