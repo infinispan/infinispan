@@ -13,8 +13,6 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStopped;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStoppedEvent;
-import org.infinispan.security.mappers.ClusterPermissionMapper;
-import org.infinispan.security.mappers.ClusterRoleMapper;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -59,7 +57,7 @@ public class CacheDependencyTest extends SingleCacheManagerTest {
       cacheManager.stop();
 
       assertAllTerminated(cacheA, cacheB);
-      assertEquals(Arrays.asList("B", ClusterRoleMapper.CLUSTER_ROLE_MAPPER_CACHE, GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME, getDefaultCacheName(), ClusterPermissionMapper.CLUSTER_PERMISSION_MAPPER_CACHE), listener.stopOrder);
+      assertEquals(Arrays.asList("B", GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME, getDefaultCacheName()), listener.stopOrder);
    }
 
    @Test
@@ -103,7 +101,7 @@ public class CacheDependencyTest extends SingleCacheManagerTest {
       cacheManager.stop();
 
       assertAllTerminated(cacheA, cacheB, cacheC, cacheD);
-      assertEquals(Arrays.asList("A", "B", "D", "C", ClusterRoleMapper.CLUSTER_ROLE_MAPPER_CACHE, GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME, getDefaultCacheName(), ClusterPermissionMapper.CLUSTER_PERMISSION_MAPPER_CACHE), listener.stopOrder);
+      assertEquals(Arrays.asList("A", "B", "D", "C", GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME, getDefaultCacheName()), listener.stopOrder);
    }
 
    @Test
@@ -128,7 +126,7 @@ public class CacheDependencyTest extends SingleCacheManagerTest {
       cacheManager.stop();
 
       assertAllTerminated(cacheA, cacheB, cacheC);
-      assertEquals(Arrays.asList("A", "C", ClusterRoleMapper.CLUSTER_ROLE_MAPPER_CACHE, GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME, getDefaultCacheName(), ClusterPermissionMapper.CLUSTER_PERMISSION_MAPPER_CACHE), listener.stopOrder);
+      assertEquals(Arrays.asList("A", "C", GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME, getDefaultCacheName()), listener.stopOrder);
 
    }
 
