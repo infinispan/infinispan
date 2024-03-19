@@ -88,11 +88,19 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
          return new RankCalculator();
       else if (componentName.equals(EventLoggerNotifier.class.getName()))
          return new EventLoggerNotifierImpl();
-      else if (componentName.equals(PrincipalRoleMapper.class.getName()))
-         return globalConfiguration.security().authorization().principalRoleMapper();
-      else if (componentName.equals(RolePermissionMapper.class.getName()))
-         return globalConfiguration.security().authorization().rolePermissionMapper();
-      else if (componentName.equals(ContainerStats.class.getName()))
+      else if (componentName.equals(PrincipalRoleMapper.class.getName())) {
+         if (globalConfiguration.security().authorization().enabled()) {
+            return globalConfiguration.security().authorization().principalRoleMapper();
+         } else {
+            return null;
+         }
+      } else if (componentName.equals(RolePermissionMapper.class.getName())) {
+         if (globalConfiguration.security().authorization().enabled()) {
+            return globalConfiguration.security().authorization().rolePermissionMapper();
+         } else {
+            return null;
+         }
+      } else if (componentName.equals(ContainerStats.class.getName()))
          return new LocalContainerStatsImpl();
       else if (componentName.equals(ClusterContainerStats.class.getName()))
          return new ClusterContainerStatsImpl();
