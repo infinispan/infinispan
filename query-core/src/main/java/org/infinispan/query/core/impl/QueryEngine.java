@@ -89,9 +89,7 @@ public class QueryEngine<TypeMetadata> {
    }
 
    public Query<?> buildQuery(QueryFactory queryFactory, IckleParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters, long startOffset, int maxResults, boolean local) {
-      if (log.isDebugEnabled()) {
-         log.debugf("Building query '%s' with parameters %s", parsingResult.getQueryString(), namedParameters);
-      }
+      log.tracef("Building query '%s' with parameters %s", parsingResult.getQueryString(), namedParameters);
 
       BaseQuery<?> query = parsingResult.hasGroupingOrAggregations() ?
             buildQueryWithAggregations(queryFactory, parsingResult.getQueryString(), namedParameters, startOffset, maxResults, parsingResult, local) :

@@ -653,9 +653,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
    }
 
    public SearchQueryBuilder buildSearchQuery(String queryString, Map<String, Object> namedParameters) {
-      if (log.isDebugEnabled()) {
-         log.debugf("Building Lucene query for Ickle query: %s", queryString);
-      }
+      log.tracef("Building Lucene query for Ickle query: %s", queryString);
 
       if (!isIndexed) {
          throw CONTAINER.cannotRunLuceneQueriesIfNotIndexed(cache.getName());
