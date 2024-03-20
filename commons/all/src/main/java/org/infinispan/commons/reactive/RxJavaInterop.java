@@ -1,8 +1,10 @@
 package org.infinispan.commons.reactive;
 
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -64,6 +66,33 @@ public class RxJavaInterop {
     */
    public static <R> FlowableProcessor<R> completedFlowableProcessor() {
       return (FlowableProcessor<R>) completeFlowableProcessor;
+   }
+
+   /**
+    * Transforms a void completable future into a flowable.
+    * <p>
+    * The flowable completes without emitting any value.
+    * </p>
+    *
+    * @param stage: Completable future to transform.
+    * @return A Flowable that completes once the completable future completes.
+    * @param <R>: A generic type for the flowable.
+    */
+   public static <R> Flowable<R> voidCompletionStageToFlowable(CompletionStage<Void> stage) {
+      if (CompletionStages.isCompletedSuccessfully(stage)) {
+         return Flowable.empty();
+      }
+      AsyncProcessor<R> ap = AsyncProcessor.create();
+
+      stage.whenComplete((value, t) -> {
+         if (t != null) {
+            ap.onError(t);
+         } else {
+            ap.onComplete();
+         }
+      });
+
+      return ap;
    }
 
    private static final Function<Object, Object> identityFunction = i -> i;
