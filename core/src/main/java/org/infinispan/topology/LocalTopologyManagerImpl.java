@@ -33,8 +33,8 @@ import org.infinispan.commands.topology.CacheShutdownRequestCommand;
 import org.infinispan.commands.topology.RebalancePhaseConfirmCommand;
 import org.infinispan.commands.topology.RebalancePolicyUpdateCommand;
 import org.infinispan.commands.topology.RebalanceStatusRequestCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
-import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Version;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -257,10 +257,11 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
             log.debugf("Join request received CacheNotFoundResponse for cache %s, retrying", cacheName);
          } else {
             log.debugf(t, "Join request failed for cache %s", cacheName);
-            if (t instanceof TimeoutException) {
-               throw (TimeoutException) t;
+            if (t.getCause() instanceof CacheJoinException) {
+               throw (CacheJoinException) t.getCause();
+            } else {
+               throw new CacheException(t);
             }
-            throw (CacheJoinException) t.getCause();
          }
 
          // Can't use a value based on the state transfer timeout because cache org.infinispan.CONFIG
