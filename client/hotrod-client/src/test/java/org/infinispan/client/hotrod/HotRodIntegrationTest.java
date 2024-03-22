@@ -20,6 +20,7 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -361,33 +362,36 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       String anotherValue = "anotherValue";
       CheckPoint checkPoint = new CheckPoint();
 
+      // Create a second client to send the operation concurrently.
+      RemoteCacheManager anotherCm = getRemoteCacheManager();
+      RemoteCache<String, String> anotherClient = anotherCm.getCache(CACHE_NAME);
+
       // Execute compute async. This notifies the compute mapping is executing and blocks.
       // We keep track of how many times the callback executes, since it needs to retry because of the concurrent creation.
       AtomicInteger retries = new AtomicInteger();
-      CompletableFuture<String> first = remoteCache.computeAsync(key, (k, v) -> {
+      Future<String> first = fork(() -> remoteCache.compute(key, (k, v) -> {
          if (retries.incrementAndGet() == 1) {
             assertThat(k).isEqualTo(key);
             assertThat(v).isNull();
-            checkPoint.trigger("computed_first");
             try {
+               checkPoint.awaitStrict("synchronize_lambda", 10, TimeUnit.SECONDS);
+               checkPoint.trigger("computed_first");
                checkPoint.awaitStrict("computed_first_proceed", 10, TimeUnit.SECONDS);
             } catch (InterruptedException | TimeoutException e) {
                throw new RuntimeException("Failed receiving event", e);
             }
          }
          return value;
-      });
+      }));
 
+      checkPoint.trigger("synchronize_lambda");
       checkPoint.awaitStrict("computed_first", 10, TimeUnit.SECONDS);
 
       // The entry concurrently created while the client executes the mapping.
       // We utilize another client because the thread is blocked.
-      try (RemoteCacheManager anotherCm = getRemoteCacheManager()) {
-         RemoteCache<String, String> anotherClient = anotherCm.getCache(CACHE_NAME);
-         String concurrent = anotherClient.put(key, anotherValue);
-         assertThat(concurrent).isNull();
-         assertThat(anotherClient.get(key)).isEqualTo(anotherValue);
-      }
+      String concurrent = anotherClient.put(key, anotherValue);
+      assertThat(concurrent).isNull();
+      assertThat(anotherClient.get(key)).isEqualTo(anotherValue);
 
       // Let the compute operation proceed.
       // This should cause a retry, since the entry version changed on the server.
@@ -401,6 +405,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       assertThat(remoteCache.get(key)).isEqualTo(value);
       assertThat(res1).isEqualTo(value);
       assertThat(retries.get()).isEqualTo(2);
+      anotherCm.stop();
    }
 
    private byte[] serializeObject(Object obj) {
