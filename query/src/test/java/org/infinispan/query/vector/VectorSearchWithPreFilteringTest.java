@@ -11,6 +11,7 @@ import org.hibernate.search.engine.search.predicate.dsl.SimpleBooleanPredicateOp
 import org.hibernate.search.engine.search.projection.SearchProjection;
 import org.hibernate.search.engine.search.query.SearchQuery;
 import org.hibernate.search.engine.search.query.SearchResult;
+import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -20,7 +21,7 @@ import org.infinispan.search.mapper.scope.SearchScope;
 import org.infinispan.search.mapper.session.SearchSession;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "query.vector.VectorSearchWithPreFilteringTest")
@@ -38,7 +39,7 @@ public class VectorSearchWithPreFilteringTest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.createCacheManager(indexed);
    }
 
-   @BeforeClass
+   @BeforeMethod
    public void beforeClass() {
       for (byte item = 1; item <= 50; item++) {
          byte[] bytes = {item, item, item};
@@ -68,5 +69,31 @@ public class VectorSearchWithPreFilteringTest extends SingleCacheManagerTest {
       SearchResult<List<?>> result = nativeQuery.fetch(100);
       assertThat(result.hits()).extracting(objects -> objects.get(1))
             .extracting("code").containsExactly("c7", "c8", "c1");
+   }
+
+   @Test
+   public void ickleQuery_simpleFiltering() {
+      Query<Object[]> query = cache.query(
+            "select score(i), i from org.infinispan.query.model.Item i where i.floatVector <-> [:a]~:k filtering i.buggy : 'cat'");
+      query.setParameter("a", new float[]{7.0f, 7.0f, 7.0f});
+      query.setParameter("k", 3);
+
+      List<Object[]> hits = query.list();
+      assertThat(hits).extracting(objects -> objects[1])
+            // TOTO ISPN-15383 Apply the filtering
+            .extracting("code").containsExactly("c6", "c7", "c5");
+   }
+
+   @Test
+   public void ickleQuery_complexFiltering() {
+      Query<Object[]> query = cache.query(
+            "select score(i), i from org.infinispan.query.model.Item i where i.floatVector <-> [:a]~:k filtering (i.buggy : 'cat' or i.buggy : 'code')");
+      query.setParameter("a", new float[]{7.0f, 7.0f, 7.0f});
+      query.setParameter("k", 3);
+
+      List<Object[]> hits = query.list();
+      assertThat(hits).extracting(objects -> objects[1])
+            // TOTO ISPN-15383 Apply the filtering
+            .extracting("code").containsExactly("c6", "c7", "c5");
    }
 }

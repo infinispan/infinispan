@@ -19,15 +19,19 @@ public class VirtualExpressionBuilder<TypeMetadata> {
 
    private final ExpressionBuilder<TypeMetadata> havingBuilder;
 
+   private final ExpressionBuilder<TypeMetadata> filteringBuilder;
+
    public VirtualExpressionBuilder(QueryRendererDelegateImpl<TypeMetadata> owner, ObjectPropertyHelper<TypeMetadata> propertyHelper) {
       this.owner = owner;
       this.whereBuilder = new ExpressionBuilder<>(propertyHelper);
       this.havingBuilder = new ExpressionBuilder<>(propertyHelper);
+      this.filteringBuilder = new ExpressionBuilder<>(propertyHelper);
    }
 
    public void setEntityType(TypeMetadata targetEntityMetadata) {
       whereBuilder.setEntityType(targetEntityMetadata);
       havingBuilder.setEntityType(targetEntityMetadata);
+      filteringBuilder.setEntityType(targetEntityMetadata);
    }
 
    public ExpressionBuilder<TypeMetadata> whereBuilder() {
@@ -36,6 +40,10 @@ public class VirtualExpressionBuilder<TypeMetadata> {
 
    public ExpressionBuilder<TypeMetadata> havingBuilder() {
       return havingBuilder;
+   }
+
+   public ExpressionBuilder<TypeMetadata> filteringBuilder() {
+      return filteringBuilder;
    }
 
    public void pushOr() {
@@ -116,7 +124,7 @@ public class VirtualExpressionBuilder<TypeMetadata> {
 
    private ExpressionBuilder<TypeMetadata> builder() {
       if (phase() == QueryRendererDelegateImpl.Phase.WHERE) {
-         return whereBuilder;
+         return (filtering()) ? filteringBuilder : whereBuilder;
       } else if (phase() == QueryRendererDelegateImpl.Phase.HAVING) {
          return havingBuilder;
       } else {
@@ -126,7 +134,7 @@ public class VirtualExpressionBuilder<TypeMetadata> {
 
    private ExpressionBuilder<TypeMetadata> fullTextBuilder() {
       if (phase() == QueryRendererDelegateImpl.Phase.WHERE) {
-         return whereBuilder;
+         return (filtering()) ? filteringBuilder : whereBuilder;
       } else if (phase() == QueryRendererDelegateImpl.Phase.HAVING) {
          throw log.getFullTextQueriesNotAllowedInHavingClauseException();
       } else {
@@ -136,9 +144,12 @@ public class VirtualExpressionBuilder<TypeMetadata> {
 
    private ExpressionBuilder<TypeMetadata> knnBuilder() {
       if (phase() == QueryRendererDelegateImpl.Phase.WHERE) {
+         if (filtering()) {
+            throw log.knnPredicateOnFilteringClause();
+         }
          return whereBuilder;
       } else if (phase() == QueryRendererDelegateImpl.Phase.HAVING) {
-         throw log.knnQueryOnHavingClause();
+         throw log.knnPredicateOnHavingClause();
       } else {
          throw new IllegalStateException();
       }
@@ -146,5 +157,9 @@ public class VirtualExpressionBuilder<TypeMetadata> {
 
    private QueryRendererDelegateImpl.Phase phase() {
       return owner.phase;
+   }
+
+   private boolean filtering() {
+      return owner.filtering;
    }
 }

@@ -69,6 +69,10 @@ groupingValue
    :  additiveExpression collationSpecification? -> ^(GROUPING_VALUE additiveExpression collationSpecification?)
 	;
 
+filteringClause
+   :  filtering_key^ logicalExpression
+   ;
+
 whereClause
 	:	where_key^ logicalExpression
 	;
@@ -563,6 +567,10 @@ having_key
    :   {validateSoftKeyword("having")}?=> IDENTIFIER -> HAVING[$IDENTIFIER]
 	;
 
+filtering_key
+   :   {validateSoftKeyword("filtering")}?=> IDENTIFIER -> FILTERING[$IDENTIFIER]
+	;
+
 with_key
    :   {validateSoftKeyword("with")}?=> IDENTIFIER -> WITH[$IDENTIFIER]
 	;
@@ -729,7 +737,7 @@ ftTerm
    ;
 
 knnTerm
-   :  vectorSearch knnDistance? -> ^(KNN_TERM vectorSearch knnDistance?)
+   :  vectorSearch knnDistance? filteringClause? -> ^(KNN_TERM vectorSearch knnDistance? filteringClause?)
    ;
 
 // TODO [anistor] maybe we should not accept space between TILDE and following number/param to get rid of syntactic ambiguity

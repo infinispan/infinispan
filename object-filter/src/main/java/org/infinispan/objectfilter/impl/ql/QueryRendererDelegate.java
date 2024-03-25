@@ -50,6 +50,10 @@ public interface QueryRendererDelegate<TypeDescriptor> {
 
    void activateOrderByStrategy();
 
+   void activateFiltering();
+
+   void deactivateFiltering();
+
    void deactivateStrategy();
 
    void activateOR();
