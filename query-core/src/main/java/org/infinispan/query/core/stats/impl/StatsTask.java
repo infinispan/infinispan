@@ -10,7 +10,7 @@ import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.query.core.stats.SearchStatisticsSnapshot;
 import org.infinispan.security.actions.SecurityActions;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 
 @ProtoTypeId(ProtoStreamTypeIds.STATS_TASK)
 public class StatsTask implements Function<EmbeddedCacheManager, SearchStatisticsSnapshot> {

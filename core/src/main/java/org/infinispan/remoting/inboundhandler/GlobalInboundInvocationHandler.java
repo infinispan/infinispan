@@ -26,7 +26,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.HeartBeatCommand;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.commands.remote.XSiteRequest;

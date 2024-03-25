@@ -7,6 +7,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 
 import org.infinispan.commons.test.BlockHoundHelper;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.Mocks;
 import org.mockito.Mockito;

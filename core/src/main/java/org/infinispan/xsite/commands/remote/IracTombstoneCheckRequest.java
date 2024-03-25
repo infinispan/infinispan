@@ -26,8 +26,8 @@ import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ValidSingleResponseCollector;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.xsite.irac.IracManager;
 
 /**

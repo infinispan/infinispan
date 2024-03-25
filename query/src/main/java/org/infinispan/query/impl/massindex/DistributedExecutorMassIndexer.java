@@ -22,7 +22,7 @@ import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.Authorizer;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.LogFactory;
 

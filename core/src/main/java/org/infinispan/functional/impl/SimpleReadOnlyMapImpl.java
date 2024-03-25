@@ -15,7 +15,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.Traversable;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 
 /**
  * A {@link ReadOnlyMapImpl} that works with a simple cache.

@@ -14,8 +14,8 @@ import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.ByteString;
-import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

@@ -3,7 +3,7 @@ package org.infinispan.persistence;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
-import static org.infinispan.util.concurrent.CompletionStages.join;
+import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 

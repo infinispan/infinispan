@@ -23,7 +23,7 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.server.resp.commands.PubSubResp3Command;
 import org.infinispan.server.resp.commands.pubsub.KeyChannelUtils;
 import org.infinispan.server.resp.logging.Log;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;

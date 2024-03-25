@@ -30,7 +30,7 @@ import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.support.ComposedSegmentedLoadWriteStore;
 import org.infinispan.persistence.support.NonBlockingStoreAdapter;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;

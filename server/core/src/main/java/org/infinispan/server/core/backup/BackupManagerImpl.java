@@ -31,7 +31,7 @@ import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogger;

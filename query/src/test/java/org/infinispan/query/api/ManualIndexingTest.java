@@ -1,6 +1,6 @@
 package org.infinispan.query.api;
 
-import static org.infinispan.util.concurrent.CompletionStages.join;
+import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.util.ArrayList;

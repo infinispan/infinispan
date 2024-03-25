@@ -13,7 +13,7 @@ import org.infinispan.counter.impl.weak.WeakCounterImpl;
 import org.infinispan.counter.impl.weak.WeakCounterKey;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 
 /**
  * Creates {@link WeakCounter} stored in a {@link Cache}.

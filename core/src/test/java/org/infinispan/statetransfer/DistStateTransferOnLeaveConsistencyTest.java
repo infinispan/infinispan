@@ -32,7 +32,7 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
