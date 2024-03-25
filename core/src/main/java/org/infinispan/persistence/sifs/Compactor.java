@@ -579,59 +579,58 @@ class Compactor {
                      break;
                   }
                   log.tracef("No index found for key %s, dropping - assuming lost due to segments removed", key);
-                  scheduledOffset += header.totalLength();
-                  continue;
-               }
-               if (info.numRecords <= 0) {
-                  throw new IllegalArgumentException("Number of records " + info.numRecords + " for index of key " + key + " should be more than zero!");
-               }
-               if (info.file == scheduledFile && info.offset == scheduledOffset) {
-                  assert header.valueLength() > 0;
-                  long entryExpiryTime = header.expiryTime();
-                  // live record with data
-                  if (entryExpiryTime >= 0 && entryExpiryTime <= currentTimeMilliseconds) {
-                     // We can only truncate expired entries if this was compacted with purge expire
-                     if (expiredIndex != null) {
-                        EntryRecord record = index.getRecordEvenIfExpired(key, segment, serializedKey);
-                        if (record == null) {
-                           log.tracef("Key %s is not in index to do expiration event - assuming lost due to segments removed", key);
-                           scheduledOffset += header.totalLength();
-                           continue;
-                        }
-                        truncate = true;
-                        expiredIndex.add(record);
-                        // If there are more entries we cannot drop the index as we need a tombstone
-                        if (info.numRecords > 1) {
+               } else {
+                  if (info.numRecords <= 0) {
+                     throw new IllegalArgumentException("Number of records " + info.numRecords + " for index of key " + key + " should be more than zero!");
+                  }
+                  if (info.file == scheduledFile && info.offset == scheduledOffset) {
+                     assert header.valueLength() > 0;
+                     long entryExpiryTime = header.expiryTime();
+                     // live record with data
+                     if (entryExpiryTime >= 0 && entryExpiryTime <= currentTimeMilliseconds) {
+                        // We can only truncate expired entries if this was compacted with purge expire
+                        if (expiredIndex != null) {
+                           EntryRecord record = index.getRecordEvenIfExpired(key, segment, serializedKey);
+                           if (record == null) {
+                              log.tracef("Key %s is not in index to do expiration event - assuming lost due to segments removed", key);
+                              scheduledOffset += header.totalLength();
+                              continue;
+                           }
+                           truncate = true;
+                           expiredIndex.add(record);
+                           // If there are more entries we cannot drop the index as we need a tombstone
+                           if (info.numRecords > 1) {
+                              drop = false;
+                           }
+                        } else {
+                           // We can't drop an expired entry without notifying, so we write it to the new compacted file
                            drop = false;
                         }
+                     } else if (isLogFile) {
+                        // Non expired entry in a log file, just skip it
+                        scheduledOffset += header.totalLength();
+                        continue;
                      } else {
-                        // We can't drop an expired entry without notifying, so we write it to the new compacted file
                         drop = false;
                      }
+
+                     if (log.isTraceEnabled()) {
+                        log.tracef("Is key %s at %d:%d expired? %s, numRecords? %d", key, scheduledFile, scheduledOffset, truncate, info.numRecords);
+                     }
                   } else if (isLogFile) {
-                     // Non expired entry in a log file, just skip it
+                     // If entry doesn't match the index we can't touch it when it is a log file
                      scheduledOffset += header.totalLength();
                      continue;
-                  } else {
+                  } else if (info.file == scheduledFile && info.offset == ~scheduledOffset && info.numRecords > 1) {
+                     // The entry was expired, but we have other records so we can't drop this one or else the index will rebuild incorrectly
                      drop = false;
+                  } else if (log.isTraceEnabled()) {
+                     log.tracef("Key %s for %d:%d was found in index on %d:%d, %d record => drop", key,
+                           scheduledFile, scheduledOffset, info.file, info.offset, info.numRecords);
                   }
-
-                  if (log.isTraceEnabled()) {
-                     log.tracef("Is key %s at %d:%d expired? %s, numRecords? %d", key, scheduledFile, scheduledOffset, truncate, info.numRecords);
-                  }
-               } else if (isLogFile) {
-                  // If entry doesn't match the index we can't touch it when it is a log file
-                  scheduledOffset += header.totalLength();
-                  continue;
-               } else if (info.file == scheduledFile && info.offset == ~scheduledOffset && info.numRecords > 1) {
-                  // The entry was expired, but we have other records so we can't drop this one or else the index will rebuild incorrectly
-                  drop = false;
-               } else if (log.isTraceEnabled()) {
-                  log.tracef("Key %s for %d:%d was found in index on %d:%d, %d record => drop", key,
-                        scheduledFile, scheduledOffset, info.file, info.offset, info.numRecords);
+                  prevFile = info.file;
+                  prevOffset = info.offset;
                }
-               prevFile = info.file;
-               prevOffset = info.offset;
             }
 
             if (drop) {
