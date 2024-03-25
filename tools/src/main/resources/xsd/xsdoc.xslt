@@ -222,8 +222,10 @@
             <xsl:apply-templates select="xs:attribute" />
          </table>
       </xsl:if>
-      <xsl:if test="xs:all | xs:sequence | xs:complexContent | xs:choice">
-         <xsl:apply-templates select="xs:all | xs:sequence | xs:complexContent | xs:choice" />
+      <xsl:if test="not(@name='ForkStacksType')">
+         <xsl:if test="xs:all | xs:sequence | xs:complexContent | xs:choice">
+            <xsl:apply-templates select="xs:all | xs:sequence | xs:complexContent | xs:choice" />
+         </xsl:if>
       </xsl:if>
    </xsl:template>
 
