@@ -73,6 +73,10 @@ havingClause
 	:	^(HAVING searchCondition)
 	;
 
+filteringClause
+   :	^(FILTERING searchCondition)
+   ;
+
 selectFrom
 	:	^(SELECT_FROM fromClause selectClause)
 	;
@@ -397,8 +401,8 @@ knnExpression
 
 ftClause
    :  ^(FT_TERM ftLiteralOrParameter TILDE?)
-   |  ^(KNN_TERM vectorExpression TILDE?)
-   |  ^(KNN_TERM vectorParameter TILDE?)
+   |  ^(KNN_TERM vectorExpression TILDE? filteringClause?)
+   |  ^(KNN_TERM vectorParameter TILDE? filteringClause?)
    |  ^(FT_REGEXP REGEXP_LITERAL)
    |  ^(FT_RANGE (LSQUARE | LCURLY) ftRangeBound ftRangeBound (RSQUARE | RCURLY))
    |  ^(OR ftClause ftClause)

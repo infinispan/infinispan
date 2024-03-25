@@ -73,6 +73,10 @@ havingClause
 	:	{ delegate.activateHavingStrategy(); } ^(HAVING searchCondition) { delegate.deactivateStrategy(); }
 	;
 
+filteringClause
+	:	{ delegate.activateFiltering(); } ^(FILTERING searchCondition) { delegate.deactivateFiltering(); }
+	;
+
 selectFrom
 	:	^(SELECT_FROM fromClause selectClause)
 	;
@@ -378,9 +382,9 @@ knnExpression
 ftClause
    :  ^(FT_TERM ftLiteralOrParameter fuzzyFlop=TILDE?)
          { delegate.predicateFullTextTerm($ftLiteralOrParameter.text, $fuzzyFlop.text); }
-   |  ^(KNN_TERM vectorExpression knnDistance=TILDE?)
+   |  ^(KNN_TERM vectorExpression knnDistance=TILDE? filteringClause?)
             { delegate.predicateKNN($vectorExpression.elements, $knnDistance.text); }
-   |  ^(KNN_TERM vectorParameter knnDistance=TILDE?)
+   |  ^(KNN_TERM vectorParameter knnDistance=TILDE? filteringClause?)
                { delegate.predicateKNN($vectorParameter.text, $knnDistance.text); }
    |  ^(FT_REGEXP REGEXP_LITERAL)
          { delegate.predicateFullTextRegexp($REGEXP_LITERAL.text); }

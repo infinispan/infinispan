@@ -52,6 +52,8 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
     */
    protected Phase phase;
 
+   protected boolean filtering;
+
    private IckleParsingResult.StatementType statementType;
 
    private String targetTypeName;
@@ -61,6 +63,8 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    private IndexedFieldProvider.FieldIndexingMetadata fieldIndexingMetadata;
 
    private PropertyPath<TypeDescriptor<TypeMetadata>> propertyPath;
+
+   private PropertyPath<TypeDescriptor<TypeMetadata>> propertyPathBackup;
 
    private AggregationFunction aggregationFunction;
 
@@ -178,11 +182,24 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    }
 
    @Override
+   public void activateFiltering() {
+      filtering = true;
+      propertyPathBackup = propertyPath;
+   }
+
+   @Override
+   public void deactivateFiltering() {
+      filtering = false;
+      propertyPath = propertyPathBackup;
+   }
+
+   @Override
    public void deactivateStrategy() {
       phase = null;
       alias = null;
       propertyPath = null;
       aggregationFunction = null;
+      filtering = false;
    }
 
    @Override
@@ -403,7 +420,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
 
    public void checkIsVector(PropertyPath<?> propertyPath) {
       if (!fieldIndexingMetadata.isVector(propertyPath.asArrayPath())) {
-         throw log.knnQueryOnNotVectorField(targetTypeName, propertyPath.asStringPath());
+         throw log.knnPredicateOnNotVectorField(targetTypeName, propertyPath.asStringPath());
       }
    }
 
