@@ -147,6 +147,7 @@ pipeline {
             recordIssues enabledForFailure: true,
                          forensicsDisabled: true,
                          blameDisabled: true,
+                         quiet: true,
                          tools: [
                 mavenConsole(), java(), javaDoc(),
                 checkStyle(),
