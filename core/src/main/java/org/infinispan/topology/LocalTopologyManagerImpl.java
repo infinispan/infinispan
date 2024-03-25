@@ -185,18 +185,23 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          return sendJoinRequest(cacheName, joinInfo, timeout, endTime)
                .thenCompose(joinResponse ->
                      handleJoinResponse(cacheName, cacheStatus, joinResponse)
-                           .thenApply(ct -> KeyValuePair.of(joinResponse, ct)));
+                           .thenApply(ct -> {
+                              if (joinResponse.isEmpty()){
+                                 // We mark as waiting for the recovery, ignoring topology updates.
+                                 // We return it again after sending the join request.
+                                 cacheStatus.setWaitingRecovery(true);
+                              }
+
+                              return KeyValuePair.of(joinResponse, ct);
+                           }));
       });
-      // Execute outside the `orderOnCache` to allow handling topology updates.
+      // Execute outside the `orderOnCache` to allow handling stable topology updates.
       return cf.thenCompose(entry -> {
          // The join response is empty when a stateless node joins a stateful leader *before* the recover is complete.
          // The join request is delayed until the stable topology is installed. That is, until the previous cluster restores.
          // After that, the new node can send another join request, that should return with a new topology and start rebalance.
          if (entry.getKey().isEmpty()) {
             LocalCacheStatus lcs = runningCaches.get(cacheName);
-            // We mark as waiting for the recovery, ignoring topology updates.
-            // We return it again after sending the join request.
-            lcs.setWaitingRecovery(true);
             CompletionStage<CacheTopology> joining = lcs.getStableTopologyCompletion().thenCompose(ignore -> {
                log.debugf("Resume join for cache %s after stable topology finished", cacheName);
                return join(cacheName, lcs);
@@ -404,8 +409,15 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       }
 
       return withView(viewId, cacheStatus.getJoinInfo().getTimeout(), MILLISECONDS)
-            .thenCompose(ignored -> orderOnCache(cacheName, () -> doHandleTopologyUpdate(cacheName, cacheTopology, availabilityMode, viewId, sender,
-                                          cacheStatus)))
+            .thenCompose(ignored -> orderOnCache(cacheName, () -> {
+               // Ignore update as node will try joining again and will receive topology.
+               if (cacheStatus.isWaitingRecovery()) {
+                  log.tracef("Ignoring consistent hash update %s for cache %s since it is waiting for recovery to join");
+                  return CompletableFutures.completedNull();
+               }
+
+               return doHandleTopologyUpdate(cacheName, cacheTopology, availabilityMode, viewId, sender, cacheStatus);
+            }))
             .handle((ignored, throwable) -> {
                if (throwable != null && !(throwable instanceof IllegalLifecycleStateException)) {
                   log.topologyUpdateError(cacheName, throwable);
