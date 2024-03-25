@@ -15,6 +15,8 @@ import java.util.function.BiFunction;
 import org.infinispan.commons.stat.DefaultSimpleStat;
 import org.infinispan.commons.stat.SimpleStat;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 
 /**
  * Orders multiple actions/tasks based on a key.

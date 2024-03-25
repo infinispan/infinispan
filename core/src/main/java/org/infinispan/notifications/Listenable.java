@@ -3,7 +3,7 @@ package org.infinispan.notifications;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.IllegalLifecycleStateException;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 
 /**
  * Interface that denotes that the implementation can have listeners attached to it.

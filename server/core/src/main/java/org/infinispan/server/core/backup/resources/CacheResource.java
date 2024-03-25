@@ -58,9 +58,9 @@ import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.BackupManager;
-import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;

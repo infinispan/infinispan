@@ -7,7 +7,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.server.resp.logging.AccessLoggerManager;
 import org.infinispan.server.resp.logging.Log;
 import org.infinispan.server.resp.logging.RespAccessLogger;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;

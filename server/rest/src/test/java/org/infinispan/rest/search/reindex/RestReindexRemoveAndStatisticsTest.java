@@ -1,7 +1,7 @@
 package org.infinispan.rest.search.reindex;
 
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
-import static org.infinispan.util.concurrent.CompletionStages.join;
+import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 

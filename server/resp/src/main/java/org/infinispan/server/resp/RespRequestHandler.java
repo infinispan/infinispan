@@ -11,7 +11,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.infinispan.server.resp.commands.connection.QUIT;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.AttributeKey;

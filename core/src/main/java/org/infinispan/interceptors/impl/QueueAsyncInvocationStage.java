@@ -9,7 +9,7 @@ import org.infinispan.interceptors.ExceptionSyncInvocationStage;
 import org.infinispan.interceptors.InvocationCallback;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jgroups.annotations.GuardedBy;

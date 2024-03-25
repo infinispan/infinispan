@@ -72,7 +72,7 @@ import org.infinispan.metrics.impl.MetricUtils;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManager.AccessMode;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 
 /**
  * Captures cache management statistics.

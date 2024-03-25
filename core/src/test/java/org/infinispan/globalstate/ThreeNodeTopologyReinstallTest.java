@@ -22,8 +22,8 @@ import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.MissingMembersException;
 import org.infinispan.topology.PersistentUUID;
-import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
 @Test(testName = "globalstate.ThreeNodeTopologyReinstallTest", groups = "functional")

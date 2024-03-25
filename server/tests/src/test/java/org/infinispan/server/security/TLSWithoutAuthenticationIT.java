@@ -2,7 +2,7 @@ package org.infinispan.server.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.commons.test.Exceptions.expectException;
-import static org.infinispan.util.concurrent.CompletionStages.join;
+import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;

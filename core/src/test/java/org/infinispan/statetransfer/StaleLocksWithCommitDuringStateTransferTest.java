@@ -22,7 +22,7 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionCoordinator;
 import org.infinispan.transaction.impl.TransactionTable;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
 @Test(testName = "statetransfer.StaleLocksWithCommitDuringStateTransferTest", groups = "functional")

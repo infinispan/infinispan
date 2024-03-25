@@ -26,7 +26,7 @@ import org.infinispan.tasks.TaskContext;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.MultiCacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 

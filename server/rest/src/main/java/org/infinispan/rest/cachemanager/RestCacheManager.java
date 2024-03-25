@@ -52,7 +52,7 @@ import org.infinispan.telemetry.SpanCategory;
 import org.infinispan.telemetry.impl.CacheSpanAttribute;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.KeyValuePair;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.function.SerializableFunction;
 import org.infinispan.util.logging.LogFactory;
 

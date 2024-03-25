@@ -56,9 +56,9 @@ import org.infinispan.interceptors.impl.BaseRpcInterceptor;
 import org.infinispan.interceptors.impl.MultiSubCommandInvoker;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.statetransfer.StateTransferLock;
-import org.infinispan.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

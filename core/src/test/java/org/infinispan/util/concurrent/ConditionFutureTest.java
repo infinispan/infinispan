@@ -2,7 +2,7 @@ package org.infinispan.util.concurrent;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.commons.test.Exceptions.expectCompletionException;
-import static org.infinispan.util.concurrent.CompletionStages.isCompletedSuccessfully;
+import static org.infinispan.commons.util.concurrent.CompletionStages.isCompletedSuccessfully;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -15,6 +15,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Predicate;
 
 import org.infinispan.commons.IllegalLifecycleStateException;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;

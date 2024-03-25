@@ -7,7 +7,7 @@ import static org.infinispan.query.remote.json.JSONConstants.HIT_COUNT;
 import static org.infinispan.rest.JSONConstants.TYPE;
 import static org.infinispan.rest.framework.Method.GET;
 import static org.infinispan.rest.framework.Method.POST;
-import static org.infinispan.util.concurrent.CompletionStages.join;
+import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;

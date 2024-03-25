@@ -6,7 +6,7 @@ import java.util.function.IntConsumer;
 
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.server.resp.RespCommand;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;

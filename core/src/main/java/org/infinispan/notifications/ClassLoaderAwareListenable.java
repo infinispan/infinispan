@@ -2,7 +2,7 @@ package org.infinispan.notifications;
 
 import java.util.concurrent.CompletionStage;
 
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 
 /**
  * Interface that enhances {@link Listenable} with the possibility of specifying the

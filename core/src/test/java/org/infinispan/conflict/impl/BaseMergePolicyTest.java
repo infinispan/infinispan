@@ -28,7 +28,7 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.ClusterTopologyManagerImpl;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.topology.ManagerStatusResponse;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

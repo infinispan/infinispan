@@ -16,7 +16,7 @@ import org.infinispan.security.mappers.IdentityRoleMapper;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "scripting.SecureScriptingTest")

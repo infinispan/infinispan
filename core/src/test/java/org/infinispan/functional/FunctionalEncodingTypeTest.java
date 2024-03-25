@@ -16,7 +16,7 @@
 //import org.infinispan.marshall.core.EncoderRegistry;
 //import org.infinispan.test.fwk.InTransactionMode;
 //import org.infinispan.transaction.TransactionMode;
-//import org.infinispan.util.concurrent.CompletionStages;
+//import org.infinispan.commons.util.concurrent.CompletionStages;
 //import org.testng.annotations.Test;
 //
 //@Test(groups = "functional", testName = "functional.FunctionalEncodingTypeTest")
