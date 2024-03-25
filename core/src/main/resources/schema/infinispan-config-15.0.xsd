@@ -1237,7 +1237,7 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
-          <xs:attribute name="categories" default="container">
+          <xs:attribute name="categories" default="container" type="tns:tracing-category-list">
             <xs:annotation>
               <xs:documentation>
                 <![CDATA[
@@ -1247,16 +1247,6 @@
                 ]]>
               </xs:documentation>
             </xs:annotation>
-            <xs:list>
-              <xs:simpleType>
-                <xs:restriction base="xs:token">
-                  <xs:enumeration value="container"/>
-                  <xs:enumeration value="cluster"/>
-                  <xs:enumeration value="persistence"/>
-                  <xs:enumeration value="xsite"/>
-                </xs:restriction>
-              </xs:simpleType>
-            </xs:list>
           </xs:attribute>
         </xs:complexType>
       </xs:element>
@@ -3283,6 +3273,50 @@
         <xs:annotation>
           <xs:documentation>
             Clears the persistent global state if a dangling lock file is found in the persistent global state.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="tracing-category-list">
+    <xs:list itemType="tns:tracing-category"/>
+  </xs:simpleType>
+
+  <xs:simpleType name="tracing-category">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="container">
+        <xs:annotation>
+          <xs:documentation>
+            Default Infinispan span category, which includes all the major put/insertion operations.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="cluster">
+        <xs:annotation>
+          <xs:documentation>
+            Span category for cluster operations causally related by client interactions.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="x_site">
+        <xs:annotation>
+          <xs:documentation>
+            Span category for x-site operations causally related by client interactions.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="persistence">
+        <xs:annotation>
+          <xs:documentation>
+            Span category for persistence operations causally related by client interactions.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="security">
+        <xs:annotation>
+          <xs:documentation>
+            Span category for security operations causally related by client interactions.
           </xs:documentation>
         </xs:annotation>
       </xs:enumeration>
