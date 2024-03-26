@@ -640,7 +640,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
                                                                     SortField[] sortFields) {
       String queryString = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), projection, normalizedWhereClause, sortFields);
       return new IckleParsingResult<>(queryString, parsingResult.getStatementType(), parsingResult.getParameterNames(),
-            normalizedWhereClause, null,
+            normalizedWhereClause, null, parsingResult.getFilteringClause(),
             parsingResult.getTargetEntityName(), parsingResult.getTargetEntityMetadata(),
             projection, projectedTypes, projectedNullMarkers, null, sortFields);
    }

@@ -711,6 +711,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
             Collections.unmodifiableSet(new HashSet<>(namedParameters.keySet())),
             expressionBuilder.whereBuilder().build(),
             expressionBuilder.havingBuilder().build(),
+            expressionBuilder.filteringBuilder().build(),
             targetTypeName,
             targetEntityMetadata,
             projections == null ? null : projections.toArray(new PropertyPath[projections.size()]),

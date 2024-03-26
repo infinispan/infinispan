@@ -56,6 +56,7 @@ public final class IckleParsingResult<TypeMetadata> {
    private final Set<String> parameterNames;
    private final BooleanExpr whereClause;
    private final BooleanExpr havingClause;
+   private final BooleanExpr filteringClause;
    private final String targetEntityName;
    private final TypeMetadata targetEntityMetadata;
    private final PropertyPath[] projectedPaths;
@@ -68,8 +69,7 @@ public final class IckleParsingResult<TypeMetadata> {
    public IckleParsingResult(String queryString,
                              StatementType statementType,
                              Set<String> parameterNames,
-                             BooleanExpr whereClause,
-                             BooleanExpr havingClause,
+                             BooleanExpr whereClause, BooleanExpr havingClause, BooleanExpr filteringClause,
                              String targetEntityName, TypeMetadata targetEntityMetadata,
                              PropertyPath[] projectedPaths, Class<?>[] projectedTypes, Object[] projectedNullMarkers,
                              PropertyPath[] groupBy,
@@ -79,6 +79,7 @@ public final class IckleParsingResult<TypeMetadata> {
       this.parameterNames = parameterNames;
       this.whereClause = whereClause;
       this.havingClause = havingClause;
+      this.filteringClause = filteringClause;
       this.targetEntityName = targetEntityName;
       this.targetEntityMetadata = targetEntityMetadata;
       if (projectedPaths != null && (projectedTypes == null || projectedTypes.length != projectedPaths.length) || projectedPaths == null && projectedTypes != null) {
@@ -114,6 +115,10 @@ public final class IckleParsingResult<TypeMetadata> {
 
    public BooleanExpr getHavingClause() {
       return havingClause;
+   }
+
+   public BooleanExpr getFilteringClause() {
+      return filteringClause;
    }
 
    /**
