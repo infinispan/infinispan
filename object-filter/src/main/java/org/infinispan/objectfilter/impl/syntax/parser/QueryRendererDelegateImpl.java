@@ -38,7 +38,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
     */
    private static final int ARRAY_INITIAL_LENGTH = 5;
 
-   private enum Phase {
+   protected enum Phase {
       SELECT,
       FROM,
       WHERE,
@@ -50,7 +50,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    /**
     * The current parsing phase
     */
-   private Phase phase;
+   protected Phase phase;
 
    private IckleParsingResult.StatementType statementType;
 
@@ -64,9 +64,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
 
    private AggregationFunction aggregationFunction;
 
-   private final ExpressionBuilder<TypeMetadata> whereBuilder;
-
-   private final ExpressionBuilder<TypeMetadata> havingBuilder;
+   private final VirtualExpressionBuilder<TypeMetadata> expressionBuilder;
 
    /**
     * Persister space: keep track of aliases and entity names.
@@ -98,8 +96,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
    QueryRendererDelegateImpl(String queryString, ObjectPropertyHelper<TypeMetadata> propertyHelper) {
       this.queryString = queryString;
       this.propertyHelper = propertyHelper;
-      this.whereBuilder = new ExpressionBuilder<>(propertyHelper);
-      this.havingBuilder = new ExpressionBuilder<>(propertyHelper);
+      this.expressionBuilder = new VirtualExpressionBuilder<>(this, propertyHelper);
    }
 
    /**
@@ -121,8 +118,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
          throw log.getUnknownEntity(targetTypeName);
       }
       fieldIndexingMetadata = propertyHelper.getIndexedFieldProvider().get(targetEntityMetadata);
-      whereBuilder.setEntityType(targetEntityMetadata);
-      havingBuilder.setEntityType(targetEntityMetadata);
+      expressionBuilder.setEntityType(targetEntityMetadata);
    }
 
    // TODO [anistor] unused ??
@@ -191,35 +187,17 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
 
    @Override
    public void activateOR() {
-      if (phase == Phase.WHERE) {
-         whereBuilder.pushOr();
-      } else if (phase == Phase.HAVING) {
-         havingBuilder.pushOr();
-      } else {
-         throw new IllegalStateException();
-      }
+      expressionBuilder.pushOr();
    }
 
    @Override
    public void activateAND() {
-      if (phase == Phase.WHERE) {
-         whereBuilder.pushAnd();
-      } else if (phase == Phase.HAVING) {
-         havingBuilder.pushAnd();
-      } else {
-         throw new IllegalStateException();
-      }
+      expressionBuilder.pushAnd();
    }
 
    @Override
    public void activateNOT() {
-      if (phase == Phase.WHERE) {
-         whereBuilder.pushNot();
-      } else if (phase == Phase.HAVING) {
-         havingBuilder.pushNot();
-      } else {
-         throw new IllegalStateException();
-      }
+      expressionBuilder.pushNot();
    }
 
    @Override
@@ -269,13 +247,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       }
       Object comparisonValue = parameterValue(value);
       checkAnalyzed(property, false);
-      if (phase == Phase.WHERE) {
-         whereBuilder.addComparison(property, comparisonType, comparisonValue);
-      } else if (phase == Phase.HAVING) {
-         havingBuilder.addComparison(property, comparisonType, comparisonValue);
-      } else {
-         throw new IllegalStateException();
-      }
+      expressionBuilder.addComparison(property, comparisonType, comparisonValue);
    }
 
    @Override
@@ -289,13 +261,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       if (property.isEmpty()) {
          throw log.getPredicatesOnEntityAliasNotAllowedException(propertyPath.asStringPath());
       }
-      if (phase == Phase.WHERE) {
-         whereBuilder.addIn(property, values);
-      } else if (phase == Phase.HAVING) {
-         havingBuilder.addIn(property, values);
-      } else {
-         throw new IllegalStateException();
-      }
+      expressionBuilder.addIn(property, values);
    }
 
    @Override
@@ -308,13 +274,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
          throw log.getPredicatesOnEntityAliasNotAllowedException(propertyPath.asStringPath());
       }
       checkAnalyzed(property, false);
-      if (phase == Phase.WHERE) {
-         whereBuilder.addRange(property, lowerComparisonValue, upperComparisonValue);
-      } else if (phase == Phase.HAVING) {
-         havingBuilder.addRange(property, lowerComparisonValue, upperComparisonValue);
-      } else {
-         throw new IllegalStateException();
-      }
+      expressionBuilder.addRange(property, lowerComparisonValue, upperComparisonValue);
    }
 
    @Override
@@ -326,13 +286,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
          throw log.getPredicatesOnEntityAliasNotAllowedException(propertyPath.asStringPath());
       }
       checkAnalyzed(property, false);
-      if (phase == Phase.WHERE) {
-         whereBuilder.addLike(property, pattern, escapeCharacter);
-      } else if (phase == Phase.HAVING) {
-         havingBuilder.addLike(property, pattern, escapeCharacter);
-      } else {
-         throw new IllegalStateException();
-      }
+      expressionBuilder.addLike(property, pattern, escapeCharacter);
    }
 
    @Override
@@ -343,24 +297,12 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
          throw log.getPredicatesOnEntityAliasNotAllowedException(propertyPath.asStringPath());
       }
       checkAnalyzed(property, false);
-      if (phase == Phase.WHERE) {
-         whereBuilder.addIsNull(property);
-      } else if (phase == Phase.HAVING) {
-         havingBuilder.addIsNull(property);
-      } else {
-         throw new IllegalStateException();
-      }
+      expressionBuilder.addIsNull(property);
    }
 
    @Override
    public void predicateConstantBoolean(boolean booleanConstant) {
-      if (phase == Phase.WHERE) {
-         whereBuilder.addConstantBoolean(booleanConstant);
-      } else if (phase == Phase.HAVING) {
-         havingBuilder.addConstantBoolean(booleanConstant);
-      } else {
-         throw new IllegalStateException();
-      }
+      expressionBuilder.addConstantBoolean(booleanConstant);
    }
 
    @Override
@@ -370,15 +312,11 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       if (property.isEmpty()) {
          throw log.getPredicatesOnEntityAliasNotAllowedException(propertyPath.asStringPath());
       }
-      if (phase == Phase.WHERE) {
-         checkAnalyzed(property, true);
-         Object comparisonObject = parameterValue(term);
-         whereBuilder.addFullTextTerm(property, comparisonObject, fuzzyFlop == null ? null : (fuzzyFlop.equals("~") ? 2 : Integer.parseInt(fuzzyFlop)));
-      } else if (phase == Phase.HAVING) {
-         throw log.getFullTextQueriesNotAllowedInHavingClauseException();
-      } else {
-         throw new IllegalStateException();
-      }
+
+      checkAnalyzed(property, true);
+      Object comparisonObject = parameterValue(term);
+      Integer fuzzy = fuzzyFlop == null ? null : (fuzzyFlop.equals("~") ? 2 : Integer.parseInt(fuzzyFlop));
+      expressionBuilder.addFullTextTerm(property, comparisonObject, fuzzy);
    }
 
    @Override
@@ -388,33 +326,21 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       if (property.isEmpty()) {
          throw log.getPredicatesOnEntityAliasNotAllowedException(propertyPath.asStringPath());
       }
-      if (phase == Phase.WHERE) {
-         checkAnalyzed(property, true);
-         whereBuilder.addFullTextRegexp(property, term);
-      } else if (phase == Phase.HAVING) {
-         throw log.getFullTextQueriesNotAllowedInHavingClauseException();
-      } else {
-         throw new IllegalStateException();
-      }
+      checkAnalyzed(property, true);
+      expressionBuilder.addFullTextRegexp(property, term);
    }
 
    @Override
    public void predicateFullTextRange(boolean includeLower, String lower, String upper, boolean includeUpper) {
       ensureLeftSideIsAPropertyPath();
-      if (phase == Phase.WHERE) {
-         PropertyPath<TypeDescriptor<TypeMetadata>> property = resolveAlias(propertyPath);
-         if (property.isEmpty()) {
-            throw log.getPredicatesOnEntityAliasNotAllowedException(propertyPath.asStringPath());
-         }
-         Object from = lower != null ? parameterValue(lower) : null;
-         Object to = upper != null ? parameterValue(upper) : null;
-         checkIndexed(property);
-         whereBuilder.addFullTextRange(property, includeLower, from, to, includeUpper);
-      } else if (phase == Phase.HAVING) {
-         throw log.getFullTextQueriesNotAllowedInHavingClauseException();
-      } else {
-         throw new IllegalStateException();
+      PropertyPath<TypeDescriptor<TypeMetadata>> property = resolveAlias(propertyPath);
+      if (property.isEmpty()) {
+         throw log.getPredicatesOnEntityAliasNotAllowedException(propertyPath.asStringPath());
       }
+      Object from = lower != null ? parameterValue(lower) : null;
+      Object to = upper != null ? parameterValue(upper) : null;
+      checkIndexed(property);
+      expressionBuilder.addFullTextRange(property, includeLower, from, to, includeUpper);
    }
 
    @Override
@@ -425,12 +351,6 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
          throw log.getPredicatesOnEntityAliasNotAllowedException(propertyPath.asStringPath());
       }
 
-      if (phase == Phase.HAVING) {
-         throw log.knnQueryOnHavingClause();
-      } else if (phase != Phase.WHERE) {
-         throw new IllegalStateException();
-      }
-
       checkIsVector(property);
       Class<?> expectedType = getIndexedPropertyType();
 
@@ -439,7 +359,8 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
          vector.add(parameterStringValue(string));
       }
       Object knn = parameterStringValue(knnString);
-      whereBuilder.addKnnPredicate(property, expectedType, vector, knn);
+
+      expressionBuilder.addKnnPredicate(property, expectedType, vector, knn);
    }
 
    @Override
@@ -448,12 +369,6 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       PropertyPath<TypeDescriptor<TypeMetadata>> property = resolveAlias(propertyPath);
       if (property.isEmpty()) {
          throw log.getPredicatesOnEntityAliasNotAllowedException(propertyPath.asStringPath());
-      }
-
-      if (phase == Phase.HAVING) {
-         throw log.knnQueryOnHavingClause();
-      } else if (phase != Phase.WHERE) {
-         throw new IllegalStateException();
       }
 
       checkIsVector(property);
@@ -468,7 +383,8 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
 
       Object knn = parameterStringValue(knnString);
       Class<?> expectedType = getIndexedPropertyType();
-      whereBuilder.addKnnPredicate(property, expectedType, vectorParam, knn);
+
+      expressionBuilder.addKnnPredicate(property, expectedType, vectorParam, knn);
    }
 
    private void checkAnalyzed(PropertyPath<?> propertyPath, boolean expectAnalyzed) {
@@ -499,46 +415,22 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
 
    @Override
    public void activateFullTextBoost(float boost) {
-      if (phase == Phase.WHERE) {
-         whereBuilder.pushFullTextBoost(boost);
-      } else if (phase == Phase.HAVING) {
-         throw log.getFullTextQueriesNotAllowedInHavingClauseException();
-      } else {
-         throw new IllegalStateException();
-      }
+      expressionBuilder.pushFullTextBoost(boost);
    }
 
    @Override
    public void deactivateFullTextBoost() {
-      if (phase == Phase.WHERE) {
-         whereBuilder.pop();
-      } else if (phase == Phase.HAVING) {
-         throw log.getFullTextQueriesNotAllowedInHavingClauseException();
-      } else {
-         throw new IllegalStateException();
-      }
+      expressionBuilder.popFullTextBoost();
    }
 
    @Override
    public void activateFullTextOccur(Occur occur) {
-      if (phase == Phase.WHERE) {
-         whereBuilder.pushFullTextOccur(occur);
-      } else if (phase == Phase.HAVING) {
-         throw log.getFullTextQueriesNotAllowedInHavingClauseException();
-      } else {
-         throw new IllegalStateException();
-      }
+      expressionBuilder.pushFullTextOccur(occur);
    }
 
    @Override
    public void deactivateFullTextOccur() {
-      if (phase == Phase.WHERE) {
-         whereBuilder.pop();
-      } else if (phase == Phase.HAVING) {
-         throw log.getFullTextQueriesNotAllowedInHavingClauseException();
-      } else {
-         throw new IllegalStateException();
-      }
+      expressionBuilder.popFullTextOccur();
    }
 
    /**
@@ -751,13 +643,7 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
 
    @Override
    public void deactivateBoolean() {
-      if (phase == Phase.WHERE) {
-         whereBuilder.pop();
-      } else if (phase == Phase.HAVING) {
-         havingBuilder.pop();
-      } else {
-         throw new IllegalStateException();
-      }
+      expressionBuilder.popBoolean();
    }
 
    private PropertyPath<TypeDescriptor<TypeMetadata>> resolveAlias(PropertyPath<TypeDescriptor<TypeMetadata>> path) {
@@ -806,8 +692,8 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
             queryString,
             statementType,
             Collections.unmodifiableSet(new HashSet<>(namedParameters.keySet())),
-            whereBuilder.build(),
-            havingBuilder.build(),
+            expressionBuilder.whereBuilder().build(),
+            expressionBuilder.havingBuilder().build(),
             targetTypeName,
             targetEntityMetadata,
             projections == null ? null : projections.toArray(new PropertyPath[projections.size()]),
