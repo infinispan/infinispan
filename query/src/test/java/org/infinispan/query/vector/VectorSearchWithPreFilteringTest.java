@@ -80,8 +80,7 @@ public class VectorSearchWithPreFilteringTest extends SingleCacheManagerTest {
 
       List<Object[]> hits = query.list();
       assertThat(hits).extracting(objects -> objects[1])
-            // TOTO ISPN-15383 Apply the filtering
-            .extracting("code").containsExactly("c6", "c7", "c5");
+            .extracting("code").containsExactly("c7", "c14", "c21");
    }
 
    @Test
@@ -93,7 +92,6 @@ public class VectorSearchWithPreFilteringTest extends SingleCacheManagerTest {
 
       List<Object[]> hits = query.list();
       assertThat(hits).extracting(objects -> objects[1])
-            // TOTO ISPN-15383 Apply the filtering
-            .extracting("code").containsExactly("c6", "c7", "c5");
+            .extracting("code").containsExactly("c7", "c8", "c1");
    }
 }

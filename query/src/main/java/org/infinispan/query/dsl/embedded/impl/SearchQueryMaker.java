@@ -25,6 +25,8 @@ import org.hibernate.search.engine.search.aggregation.SearchAggregation;
 import org.hibernate.search.engine.search.predicate.SearchPredicate;
 import org.hibernate.search.engine.search.predicate.dsl.BooleanPredicateClausesStep;
 import org.hibernate.search.engine.search.predicate.dsl.ExistsPredicateOptionsStep;
+import org.hibernate.search.engine.search.predicate.dsl.KnnPredicateOptionsStep;
+import org.hibernate.search.engine.search.predicate.dsl.KnnPredicateVectorStep;
 import org.hibernate.search.engine.search.predicate.dsl.MatchPredicateOptionsStep;
 import org.hibernate.search.engine.search.predicate.dsl.PhrasePredicateOptionsStep;
 import org.hibernate.search.engine.search.predicate.dsl.PredicateFinalStep;
@@ -99,6 +101,7 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
    private LuceneSearchPredicateFactory predicateFactory;
    private SearchIndexedEntity indexedEntity;
    private Integer knn;
+   private BooleanExpr filteringClause;
 
    SearchQueryMaker(SearchMapping searchMapping, ObjectPropertyHelper<TypeMetadata> propertyHelper, int maxResults, int hitCountAccuracy) {
       this.searchMapping = searchMapping;
@@ -124,6 +127,7 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
       indexedEntity = targetedTypeName == null ? searchMapping.indexedEntity(targetedType) :
             searchMapping.indexedEntity(targetedTypeName);
 
+      filteringClause = parsingResult.getFilteringClause();
       InfinispanAggregation<?> aggregation = makeAggregation(scope, parsingResult);
       SearchPredicate predicate = makePredicate(parsingResult.getWhereClause(), aggregation).toPredicate();
       SearchProjectionInfo projection = makeProjection(parsingResult.getTargetEntityMetadata(), scope.projection(), parsingResult.getProjections(),
@@ -420,10 +424,19 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
          knn = maxResults;
       }
 
+      KnnPredicateVectorStep knnPredicateVector = predicateFactory.knn(knn).field(absoluteFieldPath);
+      KnnPredicateOptionsStep knnPredicateOptions;
       if (knnPredicate.floats()) {
-         return predicateFactory.knn(knn).field(absoluteFieldPath).matching(knnPredicate.floatsArray(namedParameters));
+         knnPredicateOptions = knnPredicateVector.matching(knnPredicate.floatsArray(namedParameters));
+      } else {
+         knnPredicateOptions = knnPredicateVector.matching(knnPredicate.bytesArray(namedParameters));
       }
-      return predicateFactory.knn(knn).field(absoluteFieldPath).matching(knnPredicate.bytesArray(namedParameters));
+
+      if (filteringClause != null) {
+         PredicateFinalStep predicateFinalStep = filteringClause.acceptVisitor(this);
+         knnPredicateOptions.filter(predicateFinalStep);
+      }
+      return knnPredicateOptions;
    }
 
    @Override
