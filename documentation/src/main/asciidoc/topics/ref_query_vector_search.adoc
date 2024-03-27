@@ -63,6 +63,28 @@ List<Object[]> resultList = query.list();
 In this case the first element of each array will contain the entity,
 and the second element will contain the score of the matching.
 
+== Filtering entities
+
+Instead of applying the kNN search to the entire population of entities of a given type,
+you can limiting the searching set applying classic predicates (match, full-text-search, range, ...) to the kNN queries,
+defining what we call a filtering clause.
+
+A filtering clause can contain any kind of predicates with the only exception of kNN predicates that cannot be included.
+
+For instance the following query:
+
+[source,java]
+----
+Query<Object[]> query = remoteCache.query(
+   "select score(i), i from Item i where i.floatVector <-> [:a]~:k filtering (i.buggy : 'cat' or i.text : 'code')");
+query.setParameter("a", new float[]{7, 7, 7});
+query.setParameter("k", 3);
+----
+
+Will return the nearest 3 items from the point `[7,7,7]` selecting only the items that have a text containing the term `cat` or `code`.
+
+The filtering queries is a way to apply the classic indexed search to the new vector search.
+
 == Vector field attributes
 
 It is always required to specify the **dimension** of the vector field.
