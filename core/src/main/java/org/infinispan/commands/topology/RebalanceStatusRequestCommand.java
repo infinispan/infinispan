@@ -43,6 +43,10 @@ public class RebalanceStatusRequestCommand extends AbstractCacheControlCommand {
       return CompletableFuture.completedFuture(status);
    }
 
+   public String getCacheName() {
+      return cacheName;
+   }
+
    @Override
    public void writeTo(ObjectOutput output) throws IOException {
       MarshallUtil.marshallString(cacheName, output);

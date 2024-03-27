@@ -8,12 +8,15 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.marshall.MarshallUtil;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.PersistentUUID;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Coordinator to member:
@@ -24,6 +27,7 @@ import org.infinispan.topology.PersistentUUID;
  * @since 11.0
  */
 public class TopologyUpdateCommand extends AbstractCacheControlCommand {
+   private static final Log log = LogFactory.getLog(TopologyUpdateCommand.class);
 
    public static final byte COMMAND_ID = 95;
 
@@ -60,6 +64,11 @@ public class TopologyUpdateCommand extends AbstractCacheControlCommand {
 
    @Override
    public CompletionStage<?> invokeAsync(GlobalComponentRegistry gcr) throws Throwable {
+      if (!gcr.isLocalTopologyManagerRunning()) {
+         log.debugf("Discard topology update because topology manager not running %s", this);
+         return CompletableFutures.completedNull();
+      }
+
       CacheTopology topology = new CacheTopology(topologyId, rebalanceId, currentCH, pendingCH, phase, actualMembers, persistentUUIDs);
       return gcr.getLocalTopologyManager()
             .handleTopologyUpdate(cacheName, topology, availabilityMode, viewId, origin);
