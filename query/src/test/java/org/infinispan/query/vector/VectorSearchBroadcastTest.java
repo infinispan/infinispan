@@ -129,4 +129,23 @@ public class VectorSearchBroadcastTest extends MultipleCacheManagersTest {
       assertThat(hits).extracting(objects -> objects[1])
             .extracting("code").containsExactly("c7", "c8", "c1");
    }
+
+   @Test
+   public void entityProjection() {
+      Query<Item> query = cache.query(
+            "from org.infinispan.query.model.Item i where i.floatVector <-> [:a]~:k filtering i.buggy : 'cat'");
+      query.setParameter("a", new float[]{7.0f, 7.0f, 7.0f});
+      query.setParameter("k", 3);
+
+      List<Item> hits = query.list();
+      assertThat(hits).extracting("code").containsExactly("c7", "c14", "c21");
+
+      query = cache.query(
+            "from org.infinispan.query.model.Item i where i.floatVector <-> [:a]~:k filtering (i.buggy : 'cat' or i.buggy : 'code')");
+      query.setParameter("a", new float[]{7.0f, 7.0f, 7.0f});
+      query.setParameter("k", 3);
+
+      hits = query.list();
+      assertThat(hits).extracting("code").containsExactly("c7", "c8", "c1");
+   }
 }
