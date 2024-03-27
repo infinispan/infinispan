@@ -29,8 +29,11 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "rest.search.vector.RestVectorSearchTest")
 public class RestVectorSearchTest extends SingleCacheManagerTest {
 
+   private static final String[] BUGGY_OPTIONS =
+         {"cat lover", "code lover", "mystical", "philologist", "algorithm designer", "decisionist", "philosopher"};
+
    private static final String CACHE_NAME = "items";
-   private static final int ENTRIES = 10;
+   private static final int ENTRIES = 50;
 
    private RestServerHelper restServer;
    private RestClient restClient;
@@ -99,17 +102,45 @@ public class RestVectorSearchTest extends SingleCacheManagerTest {
       Assertions.assertThat(body.at("hits").asJsonList())
             .extracting(json -> json.at("hit").at(JsonQueryResponse.SCORE_PROJECTION_KEY).asString())
             .hasSize(3);
+
+      response = cacheClient.query("from Item i where i.floatVector <-> [7,7,7]~3 filtering i.buggy : 'cat'", 10, 0);
+      assertThat(response).isOk();
+      body = Json.read(response.toCompletableFuture().get().body());
+      Assertions.assertThat(body.at("hits").asJsonList())
+            .extracting(json -> json.at("hit").at("code").asString()).containsExactly("c7", "c14", "c21");
+
+      response = cacheClient.query("from Item i where i.floatVector <-> [7,7,7]~3 filtering (i.buggy : 'cat' or i.buggy : 'code')", 10, 0);
+      assertThat(response).isOk();
+      body = Json.read(response.toCompletableFuture().get().body());
+      Assertions.assertThat(body.at("hits").asJsonList())
+            .extracting(json -> json.at("hit").at("code").asString()).containsExactly("c7", "c8", "c1");
+
+      response = cacheClient.query("select score(i), i from Item i where i.floatVector <-> [7,7,7]~3 filtering i.buggy : 'cat'", 10, 0);
+      assertThat(response).isOk();
+      body = Json.read(response.toCompletableFuture().get().body());
+      Assertions.assertThat(body.at("hits").asJsonList())
+            .extracting(json -> json.at("hit").at(JsonQueryResponse.ENTITY_PROJECTION_KEY)
+                  .at("code").asString()).containsExactly("c7", "c14", "c21");
+
+      response = cacheClient.query("select score(i), i from Item i where i.floatVector <-> [7,7,7]~3 filtering (i.buggy : 'cat' or i.buggy : 'code')", 10, 0);
+      assertThat(response).isOk();
+      body = Json.read(response.toCompletableFuture().get().body());
+      Assertions.assertThat(body.at("hits").asJsonList())
+            .extracting(json -> json.at("hit").at(JsonQueryResponse.ENTITY_PROJECTION_KEY)
+                  .at("code").asString()).containsExactly("c7", "c8", "c1");
    }
 
    private static void writeEntries(RestCacheClient cacheClient) {
       List<CompletionStage<RestResponse>> responses = new ArrayList<>(ENTRIES);
       for (byte item = 1; item <= ENTRIES; item++) {
+         String buggy = BUGGY_OPTIONS[item % 7];
+
          Json game = Json.object()
                .set("_type", "Item")
                .set("code", "c" + item)
                .set("byteVector", byteArray(item))
                .set("floatVector", new float[]{1.1f * item, 1.1f * item, 1.1f * item})
-               .set("buggy", "bla " + item);
+               .set("buggy", buggy);
 
          String json = game.toString();
          responses.add(cacheClient.put("item-" + item, RestEntity.create(MediaType.APPLICATION_JSON, json)));
