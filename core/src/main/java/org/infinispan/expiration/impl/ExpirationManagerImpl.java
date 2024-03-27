@@ -122,7 +122,15 @@ public class ExpirationManagerImpl<K, V> implements InternalExpirationManager<K,
       }
 
       if (!Thread.currentThread().isInterrupted()) {
+         if (log.isTraceEnabled()) {
+            log.trace("Purging store(s) of expired entries");
+            start = timeService.time();
+         }
          CompletionStages.join(persistenceManager.purgeExpired());
+         if (log.isTraceEnabled()) {
+            log.tracef("Purging store(s) completed in %s",
+                  Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
+         }
       }
    }
 
