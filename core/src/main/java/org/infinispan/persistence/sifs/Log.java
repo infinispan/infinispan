@@ -92,4 +92,12 @@ public interface Log extends BasicLogger {
    @LogMessage(level = Logger.Level.WARN)
    @Message(value = "Compaction skipping a corrupted entry for key %s, at %s:%s|%s that doesn't have enough bytes for header %s", id = 29022)
    void compactedFileNotLongEnough(byte[] key, int file, long offset, long fileSize, EntryHeader record);
+
+   @LogMessage(level = Logger.Level.FATAL)
+   @Message(value = "Error encountered with index, SIFS may not operate properly.", id = 29023)
+   void fatalIndexError(@Cause Throwable t);
+
+   @LogMessage(level = Logger.Level.WARN)
+   @Message(value = "Clear encountered an exception, size stats for future invocations may be incorrect", id = 29024)
+   void clearError(@Cause Throwable t);
 }
