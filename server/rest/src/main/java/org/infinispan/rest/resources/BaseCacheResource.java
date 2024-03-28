@@ -124,8 +124,7 @@ public class BaseCacheResource {
             if (request.method() == POST && entry != null) {
                return CompletableFuture.completedFuture(responseBuilder.status(HttpResponseStatus.CONFLICT).entity("An entry already exists").build());
             }
-            if (entry instanceof InternalCacheEntry) {
-               InternalCacheEntry<?,?> ice = (InternalCacheEntry<?,?>) entry;
+            if (entry instanceof InternalCacheEntry<?, ?> ice) {
                String etagNoneMatch = request.getEtagIfNoneMatchHeader();
                if (etagNoneMatch != null) {
                   String etag = calcETAG(ice.getValue());
@@ -181,8 +180,7 @@ public class BaseCacheResource {
          NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
          responseBuilder.status(HttpResponseStatus.NOT_FOUND);
 
-         if (entry instanceof InternalCacheEntry) {
-            InternalCacheEntry<Object, Object> ice = (InternalCacheEntry<Object, Object>) entry;
+         if (entry instanceof InternalCacheEntry<Object, Object> ice) {
             Long lastMod = CacheOperationsHelper.lastModified(ice);
             Date expires = ice.canExpire() ? new Date(ice.getExpiryTime()) : null;
             OptionalInt minFreshSeconds = CacheOperationsHelper.minFresh(cacheControl);

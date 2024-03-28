@@ -11,6 +11,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestEntity;
+import org.infinispan.client.rest.RestHeaders;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -186,7 +187,7 @@ public class RestCacheClientJDK implements RestCacheClient {
       if (extended) {
          url = url + "?extended=true";
       }
-      return client.get(url, mediaType != null ? Map.of(RestClientJDK.ACCEPT, mediaType) : Collections.emptyMap());
+      return client.get(url, mediaType != null ? Map.of(RestHeaders.ACCEPT, mediaType) : Collections.emptyMap());
    }
 
    @Override
@@ -256,13 +257,13 @@ public class RestCacheClientJDK implements RestCacheClient {
 
    @Override
    public CompletionStage<RestResponse> keys(String mediaType) {
-      return client.get(path + "?action=keys", Map.of(RestClientJDK.ACCEPT, mediaType), HttpResponse.BodyHandlers::ofInputStream);
+      return client.get(path + "?action=keys", Map.of(RestHeaders.ACCEPT, mediaType), HttpResponse.BodyHandlers::ofInputStream);
 
    }
 
    @Override
    public CompletionStage<RestResponse> configuration(String mediaType) {
-      return client.get(path + "?action=config", mediaType != null ? Map.of(RestClientJDK.ACCEPT, mediaType) : Collections.emptyMap());
+      return client.get(path + "?action=config", mediaType != null ? Map.of(RestHeaders.ACCEPT, mediaType) : Collections.emptyMap());
    }
 
    @Override

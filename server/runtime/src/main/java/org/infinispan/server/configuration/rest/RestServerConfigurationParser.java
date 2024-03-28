@@ -98,6 +98,10 @@ public class RestServerConfigurationParser implements ConfigurationParser {
                builder.compressionLevel(ParseUtils.parseInt(reader, i, value));
                break;
             }
+            case COMPRESSION_THRESHOLD: {
+               builder.compressionThreshold(ParseUtils.parseInt(reader, i, value));
+               break;
+            }
             case SOCKET_BINDING: {
                builder.socketBinding(value);
                builder.startTransport(true);

@@ -14,7 +14,9 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
+import io.netty.handler.codec.compression.StandardCompressionOptions;
 import io.netty.handler.codec.http.HttpContentCompressor;
+import io.netty.handler.codec.http.HttpContentDecompressor;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.HttpServerKeepAliveHandler;
@@ -71,10 +73,14 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
     */
    private static void addCommonHandlers(ChannelPipeline pipeline, RestServer restServer) {
       // Handles IP filtering for the HTTP connector
-      RestServerConfiguration restServerConfiguration = restServer.getConfiguration();
-      pipeline.addLast(new AccessControlFilter<>(restServerConfiguration, false));
+      RestServerConfiguration configuration = restServer.getConfiguration();
+      pipeline.addLast(new AccessControlFilter<>(configuration, false));
       // Handles http content encoding (gzip)
-      pipeline.addLast(new HttpContentCompressor(restServerConfiguration.getCompressionLevel()));
+      pipeline.addLast(new HttpContentCompressor(configuration.getCompressionThreshold(),
+            StandardCompressionOptions.deflate(configuration.getCompressionLevel(), 15, 8),
+            StandardCompressionOptions.gzip(configuration.getCompressionLevel(), 15, 8)
+      ));
+      pipeline.addLast(new HttpContentDecompressor());
       // Handles chunked data
       pipeline.addLast(new HttpObjectAggregator(restServer.maxContentLength()));
       // Handles Http/2 headers propagation from request to response

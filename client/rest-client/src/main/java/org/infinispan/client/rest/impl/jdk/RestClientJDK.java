@@ -5,9 +5,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.client.rest.RestCacheClient;
-import org.infinispan.client.rest.RestContainerClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestClusterClient;
+import org.infinispan.client.rest.RestContainerClient;
 import org.infinispan.client.rest.RestCounterClient;
 import org.infinispan.client.rest.RestMetricsClient;
 import org.infinispan.client.rest.RestRawClient;
@@ -22,12 +22,6 @@ import org.infinispan.client.rest.configuration.RestClientConfiguration;
  * @since 15.0
  **/
 public class RestClientJDK implements RestClient {
-   public static final String CONTENT_TYPE = "Content-Type";
-   public static final String CONTENT_DISPOSITION = "Content-Disposition";
-   public static final String CONTENT_LENGTH = "Content-Length";
-   public static final String CONTENT_TRANSFER_ENCODING = "Content-Transfer-Encoding";
-   public static final String ACCEPT = "Accept";
-   public static final String AUTHORIZATION = "Authorization";
 
    private final RestRawClientJDK rawClient;
    private final String contextPath;

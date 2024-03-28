@@ -1,6 +1,7 @@
 package org.infinispan.rest.configuration;
 
 import static org.infinispan.rest.configuration.RestServerConfiguration.COMPRESSION_LEVEL;
+import static org.infinispan.rest.configuration.RestServerConfiguration.COMPRESSION_THRESHOLD;
 import static org.infinispan.rest.configuration.RestServerConfiguration.CONTEXT_PATH;
 import static org.infinispan.rest.configuration.RestServerConfiguration.EXTENDED_HEADERS;
 import static org.infinispan.rest.configuration.RestServerConfiguration.MAX_CONTENT_LENGTH;
@@ -66,6 +67,11 @@ public class RestServerConfigurationBuilder extends ProtocolServerConfigurationB
 
    public RestServerConfigurationBuilder compressionLevel(int compressLevel) {
       attributes.attribute(COMPRESSION_LEVEL).set(compressLevel);
+      return this;
+   }
+
+   public RestServerConfigurationBuilder compressionThreshold(int compressThreshold) {
+      attributes.attribute(COMPRESSION_THRESHOLD).set(compressThreshold);
       return this;
    }
 

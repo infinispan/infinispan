@@ -6,6 +6,7 @@ import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.client.rest.RestHeaders;
 import org.infinispan.client.rest.RestMetricsClient;
 import org.infinispan.client.rest.RestResponse;
 
@@ -36,7 +37,7 @@ public class RestMetricsClientJDK implements RestMetricsClient {
    }
 
    private CompletionStage<RestResponse> metricsGet(boolean openMetricsFormat) {
-      return client.get(path, Map.of(RestClientJDK.ACCEPT, openMetricsFormat ? APPLICATION_OPENMETRICS_TYPE : TEXT_PLAIN_TYPE));
+      return client.get(path, Map.of(RestHeaders.ACCEPT, openMetricsFormat ? APPLICATION_OPENMETRICS_TYPE : TEXT_PLAIN_TYPE));
    }
 
    private CompletionStage<RestResponse> metricsOptions() {

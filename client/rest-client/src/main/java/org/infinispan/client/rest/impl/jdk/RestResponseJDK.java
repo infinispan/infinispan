@@ -1,7 +1,7 @@
 package org.infinispan.client.rest.impl.jdk;
 
-import static org.infinispan.client.rest.impl.jdk.RestClientJDK.AUTHORIZATION;
-import static org.infinispan.client.rest.impl.jdk.RestClientJDK.CONTENT_TYPE;
+import static org.infinispan.client.rest.RestHeaders.AUTHORIZATION;
+import static org.infinispan.client.rest.RestHeaders.CONTENT_TYPE;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -87,14 +87,10 @@ public class RestResponseJDK<T> implements RestResponse {
 
    @Override
    public Protocol protocol() {
-      switch (response.version()) {
-         case HTTP_1_1:
-            return Protocol.HTTP_11;
-         case HTTP_2:
-            return Protocol.HTTP_20;
-         default:
-            throw new IllegalArgumentException(response.version().name());
-      }
+      return switch (response.version()) {
+         case HTTP_1_1 -> Protocol.HTTP_11;
+         case HTTP_2 -> Protocol.HTTP_20;
+      };
    }
 
    @Override

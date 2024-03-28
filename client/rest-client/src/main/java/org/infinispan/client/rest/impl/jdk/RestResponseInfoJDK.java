@@ -1,6 +1,6 @@
 package org.infinispan.client.rest.impl.jdk;
 
-import static org.infinispan.client.rest.impl.jdk.RestClientJDK.CONTENT_TYPE;
+import static org.infinispan.client.rest.RestHeaders.CONTENT_TYPE;
 
 import java.net.http.HttpResponse;
 import java.util.List;
