@@ -22,6 +22,8 @@ import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.StampedLock;
+import java.util.function.Function;
 
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.time.TimeService;
@@ -69,7 +71,7 @@ class Index {
    private final Compactor compactor;
    private final int minNodeSize;
    private final int maxNodeSize;
-   private final ReadWriteLock lock = new ReentrantReadWriteLock();
+   private final StampedLock lock = new StampedLock();
    @GuardedBy("lock")
    private final Segment[] segments;
    @GuardedBy("lock")
@@ -82,7 +84,6 @@ class Index {
 
    private final Executor executor;
 
-   private final Throwable END_EARLY = new Throwable("SIFS Index stopping");
    // This is used to signal that a segment is not currently being used
    private final Segment emptySegment;
    private final FlowableProcessor<IndexRequest> emptyFlowable;
@@ -153,7 +154,7 @@ class Index {
       this.emptyFlowable = UnicastProcessor.<IndexRequest>create()
             .toSerialized();
       emptyFlowable.subscribe(this::handleNonOwnedIndexRequest,
-            e -> log.fatal("Error encountered with index, SIFS may not operate properly.", e));
+            log::fatalIndexError);
    }
 
    /**
@@ -295,11 +296,11 @@ class Index {
    }
 
    private EntryRecord getRecord(Object key, int cacheSegment, byte[] indexKey, IndexNode.ReadOperation readOperation) throws IOException {
-      lock.readLock().lock();
+      long stamp = lock.readLock();
       try {
          return IndexNode.applyOnLeaf(segments[cacheSegment], cacheSegment, indexKey, segments[cacheSegment].rootReadLock(), readOperation);
       } finally {
-         lock.readLock().unlock();
+         lock.unlockRead(stamp);
       }
    }
 
@@ -307,11 +308,11 @@ class Index {
     * Get position or null if expired
     */
    public EntryPosition getPosition(Object key, int cacheSegment, org.infinispan.commons.io.ByteBuffer serializedKey) throws IOException {
-      lock.readLock().lock();
+      long stamp = lock.readLock();
       try {
          return IndexNode.applyOnLeaf(segments[cacheSegment], cacheSegment, toIndexKey(serializedKey), segments[cacheSegment].rootReadLock(), IndexNode.ReadOperation.GET_POSITION);
       } finally {
-         lock.readLock().unlock();
+         lock.unlockRead(stamp);
       }
    }
 
@@ -319,17 +320,29 @@ class Index {
     * Get position + numRecords, without expiration
     */
    public EntryInfo getInfo(Object key, int cacheSegment, byte[] serializedKey) throws IOException {
-      lock.readLock().lock();
+      long stamp = lock.readLock();
       try {
          return IndexNode.applyOnLeaf(segments[cacheSegment], cacheSegment, serializedKey, segments[cacheSegment].rootReadLock(), IndexNode.ReadOperation.GET_INFO);
       } finally {
-         lock.readLock().unlock();
+         lock.unlockRead(stamp);
       }
    }
 
    public CompletionStage<Void> clear() {
       log.tracef("Clearing index");
-      lock.writeLock().lock();
+      long stamp;
+      if ((stamp = lock.tryWriteLock()) != 0) {
+         // actualSubmitClear handles all the lock release calls
+         return actualSubmitClear(stamp);
+      } else {
+         return CompletableFuture.supplyAsync(() -> {
+            long innerStamp = lock.writeLock();
+            return actualSubmitClear(innerStamp);
+         }, executor).thenCompose(Function.identity());
+      }
+   }
+
+   private CompletionStage<Void> actualSubmitClear(long writeStampToUnlock) {
       try {
          AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
          for (FlowableProcessor<IndexRequest> processor : flowableProcessors) {
@@ -341,12 +354,24 @@ class Index {
             processor.onNext(clearRequest);
             stage.dependsOn(clearRequest);
          }
-         for (int i = 0; i < sizePerSegment.length(); ++i) {
-            sizePerSegment.set(i, 0);
-         }
-         return stage.freeze();
-      } finally {
-         lock.writeLock().unlock();
+
+         return stage.freeze().whenComplete((ignore, t) -> {
+            if (t != null) {
+               log.clearError(t);
+            } else {
+               log.tracef("Clear has completed");
+               // Clear is done, now purge the size segments
+               for (int i = 0; i < sizePerSegment.length(); ++i) {
+                  sizePerSegment.set(i, 0);
+               }
+            }
+            // Unlock has to happen after clearing sizePerSegment to have it stay consistent
+            lock.unlockWrite(writeStampToUnlock);
+         });
+      } catch (Throwable t) {
+         lock.unlockWrite(writeStampToUnlock);
+         log.debugf(t, "Clear encountered exception");
+         throw t;
       }
    }
 
@@ -378,7 +403,7 @@ class Index {
 
    public CompletionStage<Void> stop() throws InterruptedException {
       AggregateCompletionStage<Void> aggregateCompletionStage;
-      lock.readLock().lock();
+      long stamp = lock.readLock();
       try {
          for (FlowableProcessor<IndexRequest> flowableProcessor : flowableProcessors) {
             flowableProcessor.onComplete();
@@ -391,7 +416,7 @@ class Index {
 
          aggregateCompletionStage.dependsOn(removeSegmentsStage);
       } finally {
-         lock.readLock().unlock();
+         lock.unlockRead(stamp);
       }
 
       // After all SIFS segments are complete we write the size
@@ -451,13 +476,13 @@ class Index {
 
    public long getMaxSeqId() throws IOException {
       long maxSeqId = 0;
-      lock.readLock().lock();
+      long stamp = lock.readLock();
       try {
          for (Segment seg : segments) {
             maxSeqId = Math.max(maxSeqId, IndexNode.calculateMaxSeqId(seg, seg.rootReadLock()));
          }
       } finally {
-         lock.readLock().unlock();
+         lock.unlockRead(stamp);
       }
       return maxSeqId;
    }
@@ -510,21 +535,22 @@ class Index {
    }
 
    public CompletionStage<Void> addSegments(IntSet addedSegments) {
+      long stamp;
       // Since actualAddSegments doesn't block we try a quick write lock acquisition to possibly avoid context change
-      if (lock.writeLock().tryLock()) {
+      if ((stamp = lock.tryWriteLock()) != 0) {
          try {
             actualAddSegments(addedSegments);
          } finally {
-            lock.writeLock().unlock();
+            lock.unlockWrite(stamp);
          }
          return CompletableFutures.completedNull();
       }
       return CompletableFuture.runAsync(() -> {
-         lock.writeLock().lock();
+         long innerStamp = lock.writeLock();
          try {
             actualAddSegments(addedSegments);
          } finally {
-            lock.writeLock().unlock();
+            lock.unlockWrite(innerStamp);
          }
       }, executor);
    }
@@ -564,30 +590,30 @@ class Index {
          flowableProcessors[i]
                .observeOn(Schedulers.from(executor))
                .subscribe(segment, t -> {
-                  if (t != END_EARLY)
-                     log.error("Error encountered with index, SIFS may not operate properly.", t);
+                  log.error("Error encountered with index, SIFS may not operate properly.", t);
                   segment.completeExceptionally(t);
                }, segment);
       }
    }
    public CompletionStage<Void> removeSegments(IntSet removedCacheSegments) {
+      long stamp;
       // Use a try lock to avoid context switch if possible
-      if (lock.writeLock().tryLock()) {
+      if ((stamp = lock.tryWriteLock()) != 0) {
          try {
             // This method doesn't block if we can acquire lock immediately, just replaces segments and flowables
             // and submits an async task
             actualRemoveSegments(removedCacheSegments);
          } finally {
-            lock.writeLock().unlock();
+            lock.unlockWrite(stamp);
          }
          return CompletableFutures.completedNull();
       }
       return CompletableFuture.runAsync(() -> {
-         lock.writeLock().lock();
+         long innerStamp = lock.writeLock();
          try {
             actualRemoveSegments(removedCacheSegments);
          } finally {
-            lock.writeLock().unlock();
+            lock.unlockWrite(innerStamp);
          }
       }, executor);
    }
@@ -1006,22 +1032,29 @@ class Index {
    }
 
    Flowable<EntryRecord> publish(int cacheSegment, boolean loadValues) {
-      var segment = segments[cacheSegment];
-      if (segment.index.sizePerSegment.get(cacheSegment) == 0) {
-         return Flowable.empty();
-      }
-      return segment.root.publish((keyAndMetadataRecord, leafNode, fileProvider, currentTime) -> {
-         long expiryTime = keyAndMetadataRecord.getHeader().expiryTime();
-         // Ignore any key or value if it is expired or was removed
-         if (expiryTime > 0 && expiryTime < currentTime || keyAndMetadataRecord.getHeader().valueLength() <= 0) {
-            return null;
+      long stamp = lock.readLock();
+      try {
+         var segment = segments[cacheSegment];
+         if (segment.index.sizePerSegment.get(cacheSegment) == 0) {
+            lock.unlockRead(stamp);
+            return Flowable.empty();
          }
-         if (loadValues) {
-            log.tracef("Loading value record for leafNode: %s", leafNode);
+         return segment.root.publish((keyAndMetadataRecord, leafNode, fileProvider, currentTime) -> {
+            long expiryTime = keyAndMetadataRecord.getHeader().expiryTime();
+            // Ignore any key or value if it is expired or was removed
+            if (expiryTime > 0 && expiryTime < currentTime || keyAndMetadataRecord.getHeader().valueLength() <= 0) {
+               return null;
+            }
+            if (loadValues) {
+               log.tracef("Loading value record for leafNode: %s", leafNode);
 
-            return leafNode.loadValue(keyAndMetadataRecord, fileProvider);
-         }
-         return keyAndMetadataRecord;
-      });
+               return leafNode.loadValue(keyAndMetadataRecord, fileProvider);
+            }
+            return keyAndMetadataRecord;
+         }).doFinally(() -> lock.unlockRead(stamp));
+      } catch (Throwable t) {
+         lock.unlockRead(stamp);
+         throw t;
+      }
    }
 }

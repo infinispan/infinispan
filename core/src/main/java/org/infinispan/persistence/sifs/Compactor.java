@@ -419,7 +419,7 @@ class Compactor {
                nextExpirationTime = -1;
             }
 
-            nonBlockingManager.complete(stageRequest, null);
+            completeFuture(stageRequest);
          } else {
             log.tracef("Ignoring compaction request for %s as compactor is being cleared", stageRequest);
             completeFuture(stageRequest);
