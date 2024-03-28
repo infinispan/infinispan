@@ -17,6 +17,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
 
 import org.infinispan.client.hotrod.RemoteCache;
@@ -26,6 +33,8 @@ import org.infinispan.client.rest.RestCacheClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
@@ -33,6 +42,8 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.functional.XSiteIT;
 import org.infinispan.server.test.junit5.InfinispanXSiteServerExtension;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionMode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -56,6 +67,7 @@ public class XSiteHotRodCacheOperations {
       insertAndVerifyEntries(lonCache, nycCache, false);
    }
 
+   @SuppressWarnings("resource")
    @Test
    public void testHotRodOperationsWithDifferentCacheName() {
       RemoteCache<String, String> lonCache = SERVERS.hotrod(LON)
@@ -116,6 +128,58 @@ public class XSiteHotRodCacheOperations {
       assertMultimapData(nycCache, key, values);
    }
 
+   @SuppressWarnings("resource")
+   @Test
+   public void testConcurrentReplaces() throws ExecutionException, InterruptedException, TimeoutException {
+      var cacheName = "concurrent-replaces";
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC);
+
+      builder.transaction()
+            .transactionMode(TransactionMode.TRANSACTIONAL)
+            .useSynchronization(true)
+            .lockingMode(LockingMode.PESSIMISTIC);
+
+      builder.locking()
+            .lockAcquisitionTimeout(100, TimeUnit.MILLISECONDS);
+
+      builder.sites().addBackup()
+            .site(NYC)
+            .strategy(BackupConfiguration.BackupStrategy.SYNC)
+            .backupFailurePolicy(BackupFailurePolicy.FAIL)
+            .useTwoPhaseCommit(true);
+
+      builder.sites().addBackup()
+            .site(LON)
+            .strategy(BackupConfiguration.BackupStrategy.SYNC)
+            .backupFailurePolicy(BackupFailurePolicy.FAIL)
+            .useTwoPhaseCommit(true);
+
+      RemoteCache<String, Integer> c1 = SERVERS.hotrod(LON).createRemoteCacheManager().administration().getOrCreateCache(cacheName, builder.build());
+      RemoteCache<String, Integer> c2 = SERVERS.hotrod(NYC).createRemoteCacheManager().administration().getOrCreateCache(cacheName, builder.build());
+
+      var latch = new CountDownLatch(1);
+      var maxUpdates = 10;
+
+      var r1 = new CounterRunnable(latch, c1, maxUpdates);
+      var r2 = new CounterRunnable(latch, c2, maxUpdates);
+
+      Future<Void> f1 = CompletableFuture.runAsync(r1);
+      Future<Void> f2 = CompletableFuture.runAsync(r2);
+
+      latch.countDown();
+
+      f1.get(10, TimeUnit.SECONDS);
+      f2.get(10, TimeUnit.SECONDS);
+
+      // assert unique updates
+      var updates = IntSets.concurrentSet(maxUpdates * 2);
+      updates.addAll(r1.addedValues);
+      for (var i : r2.addedValues) {
+         assertTrue(updates.add(i), "concurrent update detected: " + r1.addedValues + " - " + r2.addedValues);
+      }
+   }
+
    private void assertMultimapData(RemoteMultimapCache<String, String> cache, String key, Collection<String> values) {
       Collection<String> data = cache.get(key).join();
       assertEquals(values.size(), data.size());
@@ -164,5 +228,47 @@ public class XSiteHotRodCacheOperations {
          assertNull(lonCache.get("k2"));
       }
       assertEquals ("v2", nycCache.get("k2"));
+   }
+
+   private static class CounterRunnable implements Runnable {
+
+      final CountDownLatch latch;
+      final RemoteCache<String, Integer> cache;
+      final int maxUpdates;
+      final IntSet addedValues;
+
+      private CounterRunnable(CountDownLatch latch, RemoteCache<String, Integer> cache, int maxUpdates) {
+         this.latch = latch;
+         this.cache = cache;
+         this.maxUpdates = maxUpdates;
+         addedValues = IntSets.concurrentSet(maxUpdates);
+      }
+
+      @Override
+      public void run() {
+         for (int i = 0; i < maxUpdates; ++i) {
+            try {
+               Thread.sleep(ThreadLocalRandom.current().nextInt(5));
+            } catch (InterruptedException e) {
+               Thread.currentThread().interrupt();
+               return;
+            }
+
+            var success = true;
+            int updatedValue = -1;
+            try {
+               var entry = cache.getWithMetadata("counter");
+               updatedValue = entry.getValue() + 1;
+               success = cache.replaceWithVersion("counter", updatedValue, entry.getVersion());
+            } catch (Exception e) {
+               success = false;
+            }
+
+            if (success) {
+               assertTrue(updatedValue > 0);
+               addedValues.add(updatedValue);
+            }
+         }
+      }
    }
 }
