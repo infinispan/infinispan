@@ -40,12 +40,23 @@ public final class KnnPredicate implements PrimaryPredicateExpr {
 
    @Override
    public String toString() {
-      return leftChild.toString() + "<-> " + vector + "~" + knn;
+      return toQueryString();
    }
 
    @Override
    public String toQueryString() {
-      return leftChild.toQueryString() + "<-> " + vector + "~" + knn;
+      StringBuilder builder = new StringBuilder(leftChild.toQueryString());
+      builder.append(" <-> ");
+      if (vector != null) {
+         builder.append(vector);
+      } else {
+         builder.append("[");
+         builder.append(vectorParam);
+         builder.append("]");
+      }
+      builder.append("~");
+      builder.append(knn);
+      return builder.toString();
    }
 
    public Integer knn(Map<String, Object> namedParameters) {
