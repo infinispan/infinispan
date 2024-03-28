@@ -168,6 +168,10 @@ public class BackupSenderImpl implements BackupSender {
       return backupCommand(command, command, xSiteBackups, transaction);
    }
 
+   public CustomFailurePolicy<Object, Object> getCustomFailurePolicy(String site) {
+      return siteFailurePolicy.get(site);
+   }
+
    private InvocationStage backupCommand(VisitableCommand command, VisitableCommand originalCommand,
          List<XSiteBackup> xSiteBackups, Transaction transaction) {
       XSiteCacheRequest<Object> xsiteCommand = commandsFactory.buildSingleXSiteRpcCommand(command);
@@ -333,9 +337,8 @@ public class BackupSenderImpl implements BackupSender {
                addException(siteName, throwable);
                break;
             case CUSTOM:
-               CustomFailurePolicy<Object,Object> failurePolicy = siteFailurePolicy.get(siteName);
                try {
-                  command.acceptVisitor(null, new CustomBackupPolicyInvoker(siteName, failurePolicy, transaction));
+                  command.acceptVisitor(null, new CustomBackupPolicyInvoker(siteName, getCustomFailurePolicy(siteName), transaction));
                } catch (Throwable t) {
                   addException(siteName, t);
                }
