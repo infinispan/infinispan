@@ -4,11 +4,11 @@ import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.concurrent.ExecutionException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.Cache;
@@ -70,7 +70,7 @@ public class SoftIndexFileStoreStressTest extends SingleCacheManagerTest {
       return persistence;
    }
 
-   public void testConstantReadsWithCompaction() throws InterruptedException, ExecutionException, TimeoutException {
+   public void testConstantReadsWithCompaction() throws Exception {
       ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       createCacheStoreConfig(cb.persistence(), CACHE_NAME, false);
       TestingUtil.defineConfiguration(cacheManager, CACHE_NAME, cb.build());
@@ -92,7 +92,10 @@ public class SoftIndexFileStoreStressTest extends SingleCacheManagerTest {
       Future<Void> retrievalFork = fork(() -> {
          while (continueRunning.get()) {
             int i = ThreadLocalRandom.current().nextInt(numKeys);
-            assertEquals("value-" + i, cache.get("key-" + i));
+            Object value = cache.get("key-" + i);
+            if (value != null) {
+               assertEquals("value-" + i, value);
+            }
          }
       });
 
@@ -109,6 +112,22 @@ public class SoftIndexFileStoreStressTest extends SingleCacheManagerTest {
          while (continueRunning.get()) {
             int i = ThreadLocalRandom.current().nextInt(numKeys);
             cache.remove("k" + i);
+         }
+      });
+
+      Future<Void> clearFork = fork(() -> {
+         while (continueRunning.get()) {
+            cache.clear();
+            Thread.sleep(20);
+         }
+      });
+
+      Future<Void> iterationFork = fork(() -> {
+         while (continueRunning.get()) {
+            var list = new ArrayList<>(cache.entrySet());
+            if (list.size() == 1000) {
+               log.tracef("List size was: " + list.size());
+            }
          }
       });
 
@@ -144,7 +163,13 @@ public class SoftIndexFileStoreStressTest extends SingleCacheManagerTest {
       long secondsToRun = TimeUnit.MINUTES.toSeconds(10);
 
       while (TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - startTime) < secondsToRun) {
-         if (retrievalFork.isDone() || compactionFork.isDone() || writeFork.isDone() || removeFork.isDone()) {
+         if (retrievalFork.isDone()
+               || compactionFork.isDone()
+               || writeFork.isDone()
+               || removeFork.isDone()
+               || clearFork.isDone()
+               || iterationFork.isDone()
+               ) {
             continueRunning.set(false);
             break;
          }
@@ -157,9 +182,23 @@ public class SoftIndexFileStoreStressTest extends SingleCacheManagerTest {
          TestBlocking.get(compactionFork, 10, TimeUnit.SECONDS);
          TestBlocking.get(writeFork, 10, TimeUnit.SECONDS);
          TestBlocking.get(removeFork, 10, TimeUnit.SECONDS);
+         TestBlocking.get(clearFork, 10, TimeUnit.SECONDS);
+         TestBlocking.get(iterationFork, 10, TimeUnit.SECONDS);
       } catch (Throwable t) {
          log.tracef(Util.threadDump());
          throw t;
       }
+
+      // Kill and restart the cache just to make sure we can use data
+      TestingUtil.killCacheManagers(cacheManager);
+      cacheManager = createCacheManager();
+
+      TestingUtil.defineConfiguration(cacheManager, CACHE_NAME, cb.build());
+
+      Cache newCache = cacheManager.getCache(CACHE_NAME);
+      newCache.start();
+
+      List<Object> entries = new ArrayList<>(newCache.entrySet());
+      log.info("Size of entries after restart was: " + entries.size());
    }
 }
