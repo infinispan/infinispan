@@ -7,14 +7,28 @@ import java.util.Optional;
  * @since 14.0
  **/
 public interface CacheOptions {
+   /**
+    * The default options:
+    * <ul>
+    *    <li>No timeout</li>
+    *    <li>No flags</li>
+    * </ul>
+    */
    CacheOptions DEFAULT = new Impl();
 
    static Builder options() {
       return new Builder();
    }
 
+   /**
+    * How long to wait for an operation to complete. This only applies to synchronous calls.
+    * Timeouts for asynchronous and reactive calls must be handled by the application.
+    */
    Optional<Duration> timeout();
 
+   /**
+    * Context-specific flags to apply to the operation.
+    */
    Optional<Flags<?, ?>> flags();
 
    class Impl implements CacheOptions {

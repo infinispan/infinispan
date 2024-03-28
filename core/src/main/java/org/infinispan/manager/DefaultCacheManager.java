@@ -530,6 +530,12 @@ public class DefaultCacheManager extends InternalCacheManager {
       return internalGetCache(cacheName);
    }
 
+   @Override
+   public <K, V> CompletionStage<Cache<K, V>> getCacheAsync(String cacheName) {
+      Executor blockingExecutor = globalComponentRegistry.getComponent(ExecutorService.class, KnownComponentNames.BLOCKING_EXECUTOR);
+      return CompletableFuture.supplyAsync(() -> getCache(cacheName), blockingExecutor);
+   }
+
    private <K, V> Cache<K, V> internalGetCache(String cacheName) {
       if (cacheName == null)
          throw new NullPointerException("Null arguments not allowed");

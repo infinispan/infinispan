@@ -4,6 +4,7 @@ import static org.infinispan.util.concurrent.CompletionStages.join;
 
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.concurrent.CompletionStage;
 
 import javax.security.auth.Subject;
 
@@ -44,6 +45,12 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
    }
 
    @Override
+   public <K, V> CompletionStage<Cache<K, V>> createCacheAsync(String name, Configuration configuration) {
+      authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
+      return clusterConfigurationManager.createCache(name, configuration, flags).thenCompose(__ -> cacheManager.getCacheAsync(name));
+   }
+
+   @Override
    public <K, V> Cache<K, V> getOrCreateCache(String cacheName, Configuration configuration) {
       authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
       join(clusterConfigurationManager.getOrCreateCache(cacheName, configuration, flags));
@@ -58,6 +65,12 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
    }
 
    @Override
+   public <K, V> CompletionStage<Cache<K, V>> createCacheAsync(String name, String template) {
+      authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
+      return clusterConfigurationManager.createCache(name, template, flags).thenCompose(__ -> cacheManager.getCacheAsync(name));
+   }
+
+   @Override
    public <K, V> Cache<K, V> getOrCreateCache(String cacheName, String template) {
       authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
       join(clusterConfigurationManager.getOrCreateCache(cacheName, template, flags));
@@ -66,27 +79,46 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
 
    @Override
    public void createTemplate(String name, Configuration configuration) {
+      join(createTemplateAsync(name, configuration));
+   }
+
+   @Override
+   public CompletionStage<Void> createTemplateAsync(String name, Configuration configuration) {
       authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
-      join(clusterConfigurationManager.createTemplate(name, configuration, flags));
+      return clusterConfigurationManager.createTemplate(name, configuration, flags);
    }
 
    @Override
    public Configuration getOrCreateTemplate(String name, Configuration configuration) {
+      return join(getOrCreateTemplateAsync(name, configuration));
+   }
+
+   @Override
+   public CompletionStage<Configuration> getOrCreateTemplateAsync(String name, Configuration configuration) {
       authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
-      join(clusterConfigurationManager.getOrCreateTemplate(name, configuration, flags));
-      return cacheManager.getCacheConfiguration(name);
+      return clusterConfigurationManager.getOrCreateTemplate(name, configuration, flags).thenApply(__ -> cacheManager.getCacheConfiguration(name));
    }
 
    @Override
    public void removeTemplate(String name) {
-      authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
-      join(clusterConfigurationManager.removeTemplate(name, flags));
+      join(removeTemplateAsync(name));
    }
 
    @Override
-   public void removeCache(String cacheName) {
+   public CompletionStage<Void> removeTemplateAsync(String name) {
       authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
-      join(clusterConfigurationManager.removeCache(cacheName, flags));
+      return clusterConfigurationManager.removeTemplate(name, flags);
+   }
+
+   @Override
+   public void removeCache(String name) {
+      join(removeCacheAsync(name));
+   }
+
+   @Override
+   public CompletionStage<Void> removeCacheAsync(String name) {
+      authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
+      return clusterConfigurationManager.removeCache(name, flags);
    }
 
    @Override
