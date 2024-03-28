@@ -45,8 +45,8 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollectors;
 import org.infinispan.remoting.transport.ValidSingleResponseCollector;
 import org.infinispan.transaction.impl.RemoteTransaction;
-import org.infinispan.util.concurrent.AggregateCompletionStage;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 
 /**
  * Interceptor used by IRAC for pessimistic transactional caches to handle the local site updates.

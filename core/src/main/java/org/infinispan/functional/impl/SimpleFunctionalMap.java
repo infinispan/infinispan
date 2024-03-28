@@ -8,7 +8,7 @@ import org.infinispan.container.entries.ReadCommittedEntry;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 
 /**
  * An internal interface for implementation of {@link FunctionalMap} for a simple cache.

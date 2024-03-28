@@ -1,6 +1,6 @@
 package org.infinispan.manager;
 
-import static org.infinispan.util.concurrent.CompletionStages.join;
+import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 
 import java.util.Collections;
 import java.util.EnumSet;

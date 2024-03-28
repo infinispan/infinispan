@@ -4,7 +4,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.impl.ImmutableContext;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 
 /**
  * Notification mechanism for the simple functional map writes.

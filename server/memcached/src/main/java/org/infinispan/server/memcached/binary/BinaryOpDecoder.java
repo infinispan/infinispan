@@ -33,7 +33,7 @@ import org.infinispan.server.memcached.MemcachedMetadata;
 import org.infinispan.server.memcached.MemcachedResponse;
 import org.infinispan.server.memcached.MemcachedServer;
 import org.infinispan.server.memcached.ParseUtil;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.jgroups.util.CompletableFutures;
 
 abstract class BinaryOpDecoder extends BinaryDecoder {

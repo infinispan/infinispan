@@ -4,7 +4,7 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.server.memcached.logging.Log;
 import org.infinispan.server.memcached.logging.MemcachedAccessLogging;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;

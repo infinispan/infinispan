@@ -62,7 +62,7 @@ import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.resources.WeakSSEListener;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.junit5.InfinispanServerExtension;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.junit.jupiter.api.Test;
 
 abstract class RESTAuthorizationTest {

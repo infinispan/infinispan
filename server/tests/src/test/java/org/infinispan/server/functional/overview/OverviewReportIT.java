@@ -1,7 +1,7 @@
 package org.infinispan.server.functional.overview;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.infinispan.util.concurrent.CompletionStages.join;
+import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 
 import java.util.Map;
 import java.util.concurrent.CompletionStage;

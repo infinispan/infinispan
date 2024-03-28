@@ -1,6 +1,6 @@
 package org.infinispan.rest.logging;
 
-import static org.infinispan.util.concurrent.CompletionStages.join;
+import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertTrue;
 
 import org.apache.logging.log4j.Level;

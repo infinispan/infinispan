@@ -25,7 +25,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.util.KeyValuePair;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.reactivestreams.Publisher;
 

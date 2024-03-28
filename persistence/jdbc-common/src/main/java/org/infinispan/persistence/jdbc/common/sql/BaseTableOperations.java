@@ -24,7 +24,7 @@ import org.infinispan.persistence.jdbc.common.configuration.AbstractJdbcStoreCon
 import org.infinispan.persistence.jdbc.common.logging.Log;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 

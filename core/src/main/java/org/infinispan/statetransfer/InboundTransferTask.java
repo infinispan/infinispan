@@ -1,6 +1,6 @@
 package org.infinispan.statetransfer;
 
-import static org.infinispan.util.concurrent.CompletionStages.handleAndCompose;
+import static org.infinispan.commons.util.concurrent.CompletionStages.handleAndCompose;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;

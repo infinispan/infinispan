@@ -1,4 +1,5 @@
-package org.infinispan.util.concurrent;
+package org.infinispan.commons.util.concurrent;
+
 
 import java.util.Iterator;
 import java.util.Objects;
@@ -16,10 +17,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collector;
 
-import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
 /**
  * Utility methods for handling {@link CompletionStage} instances.
  * @author wburns
@@ -31,7 +28,6 @@ public class CompletionStages {
 
    private CompletionStages() { }
 
-   private static final Log log = LogFactory.getLog(CompletionStages.class);
 
    /**
     * Returns a CompletionStage that also can be composed of many other CompletionStages. A stage can compose another

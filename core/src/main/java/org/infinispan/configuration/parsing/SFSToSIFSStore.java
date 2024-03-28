@@ -19,7 +19,7 @@ import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.support.DelegatingInitializationContext;
 import org.infinispan.persistence.support.DelegatingNonBlockingStore;
 import org.infinispan.persistence.support.SegmentPublisherWrapper;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.flowables.GroupedFlowable;

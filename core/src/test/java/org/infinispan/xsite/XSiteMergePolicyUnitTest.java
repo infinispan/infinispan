@@ -6,7 +6,7 @@ import java.util.Random;
 
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.xsite.spi.AlwaysRemoveXSiteEntryMergePolicy;
 import org.infinispan.xsite.spi.DefaultXSiteEntryMergePolicy;
 import org.infinispan.xsite.spi.PreferNonNullXSiteEntryMergePolicy;

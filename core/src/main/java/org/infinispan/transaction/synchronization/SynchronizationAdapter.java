@@ -10,7 +10,7 @@ import org.infinispan.transaction.impl.AbstractEnlistmentAdapter;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 
 /**
  * {@link Synchronization} implementation for integrating with the TM. See <a href="https://issues.jboss.org/browse/ISPN-888">ISPN-888</a>

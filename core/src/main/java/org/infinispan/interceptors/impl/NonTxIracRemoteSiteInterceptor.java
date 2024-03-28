@@ -27,7 +27,7 @@ import org.infinispan.metadata.impl.PrivateMetadata;
 import org.infinispan.transaction.impl.WriteSkewHelper;
 import org.infinispan.util.logging.LogSupplier;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.irac.IracManager;

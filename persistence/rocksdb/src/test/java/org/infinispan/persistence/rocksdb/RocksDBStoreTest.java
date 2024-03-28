@@ -2,7 +2,7 @@ package org.infinispan.persistence.rocksdb;
 
 import static java.util.Collections.singletonList;
 import static org.infinispan.commons.util.IntSets.immutableSet;
-import static org.infinispan.util.concurrent.CompletionStages.join;
+import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;

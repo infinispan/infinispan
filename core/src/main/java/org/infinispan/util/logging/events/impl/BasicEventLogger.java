@@ -7,7 +7,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.time.TimeService;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLog;
 import org.infinispan.util.logging.events.EventLogCategory;

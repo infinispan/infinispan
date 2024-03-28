@@ -3,7 +3,7 @@ package org.infinispan.server.router.integration;
 import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
-import static org.infinispan.util.concurrent.CompletionStages.join;
+import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 
 import java.lang.invoke.MethodHandles;
 import java.net.InetAddress;

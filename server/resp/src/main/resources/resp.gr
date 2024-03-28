@@ -26,7 +26,7 @@ import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.resp.logging.Log;
 import org.infinispan.server.resp.Intrinsics.Resp2LongProcessor;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 
 init {
    private final List<byte[]> reusedList = new ArrayList<>(16);

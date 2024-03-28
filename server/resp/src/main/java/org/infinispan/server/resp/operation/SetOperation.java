@@ -12,7 +12,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.server.resp.Util;
 import org.infinispan.server.resp.commands.ArgumentUtils;
 import org.infinispan.server.resp.response.SetResponse;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 
 public class SetOperation {
 

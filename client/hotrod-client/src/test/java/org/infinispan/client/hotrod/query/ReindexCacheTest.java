@@ -17,7 +17,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.query.Indexer;
 import org.infinispan.query.dsl.embedded.testdomain.User;
-import org.infinispan.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
