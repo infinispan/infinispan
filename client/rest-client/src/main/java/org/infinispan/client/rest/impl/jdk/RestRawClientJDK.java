@@ -1,8 +1,9 @@
 package org.infinispan.client.rest.impl.jdk;
 
 import static org.infinispan.client.rest.RestClient.LOG;
-import static org.infinispan.client.rest.impl.jdk.RestClientJDK.ACCEPT;
-import static org.infinispan.client.rest.impl.jdk.RestClientJDK.CONTENT_TYPE;
+import static org.infinispan.client.rest.RestHeaders.ACCEPT;
+import static org.infinispan.client.rest.RestHeaders.ACCEPT_ENCODING;
+import static org.infinispan.client.rest.RestHeaders.CONTENT_TYPE;
 
 import java.io.Closeable;
 import java.net.URI;
@@ -211,18 +212,19 @@ public class RestRawClientJDK implements RestRawClient, AutoCloseable {
 
    private Supplier<HttpResponse.BodyHandler<?>> bodyHandlerSupplier(Map<String, String> headers) {
       String accept = headers.get(ACCEPT);
-      if (accept == null) {
+      String encoding = headers.get(ACCEPT_ENCODING);
+      if (accept == null && encoding == null) {
          return HttpResponse.BodyHandlers::ofString;
       } else {
-         MediaType mediaType = MediaType.parseList(accept).findFirst().get();
-         switch (mediaType.getTypeSubtype()) {
-            case MediaType.APPLICATION_OCTET_STREAM_TYPE:
-            case MediaType.APPLICATION_PROTOSTREAM_TYPE:
-            case MediaType.APPLICATION_SERIALIZED_OBJECT_TYPE:
-               return HttpResponse.BodyHandlers::ofByteArray;
-            default:
-               return HttpResponse.BodyHandlers::ofString;
+         if (encoding != null && !encoding.equals("identity")) {
+            return HttpResponse.BodyHandlers::ofByteArray;
          }
+         MediaType mediaType = MediaType.parseList(accept).findFirst().get();
+         return switch (mediaType.getTypeSubtype()) {
+            case MediaType.APPLICATION_OCTET_STREAM_TYPE, MediaType.APPLICATION_PROTOSTREAM_TYPE,
+                 MediaType.APPLICATION_SERIALIZED_OBJECT_TYPE -> HttpResponse.BodyHandlers::ofByteArray;
+            default -> HttpResponse.BodyHandlers::ofString;
+         };
       }
    }
 

@@ -23,16 +23,16 @@ public class RestServerConfiguration extends ProtocolServerConfiguration<RestSer
    public static final AttributeDefinition<String> CONTEXT_PATH = AttributeDefinition.builder("context-path", "rest").immutable().build();
    public static final AttributeDefinition<Integer> MAX_CONTENT_LENGTH = AttributeDefinition.builder("max-content-length", 10 * 1024 * 1024).immutable().build();
    public static final AttributeDefinition<Integer> COMPRESSION_LEVEL = AttributeDefinition.builder("compression-level", 6).immutable().build();
+   public static final AttributeDefinition<Integer> COMPRESSION_THRESHOLD = AttributeDefinition.builder("compression-threshold", 0).immutable().build();
 
    private final Attribute<ExtendedHeaders> extendedHeaders;
    private final Attribute<String> contextPath;
    private final Attribute<Integer> maxContentLength;
-   private final Attribute<Integer> compressionLevel;
    private final Path staticResources;
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(RestServerConfiguration.class, ProtocolServerConfiguration.attributeDefinitionSet(),
-            EXTENDED_HEADERS, CONTEXT_PATH, MAX_CONTENT_LENGTH, COMPRESSION_LEVEL);
+            EXTENDED_HEADERS, CONTEXT_PATH, MAX_CONTENT_LENGTH, COMPRESSION_LEVEL, COMPRESSION_THRESHOLD);
    }
 
    private final CorsConfiguration cors;
@@ -48,7 +48,6 @@ public class RestServerConfiguration extends ProtocolServerConfiguration<RestSer
       this.contextPath = attributes.attribute(CONTEXT_PATH);
       this.maxContentLength = attributes.attribute(MAX_CONTENT_LENGTH);
       this.cors = cors;
-      this.compressionLevel = attributes.attribute(COMPRESSION_LEVEL);
       this.encryption = encryption;
    }
 
@@ -86,7 +85,11 @@ public class RestServerConfiguration extends ProtocolServerConfiguration<RestSer
    }
 
    public int getCompressionLevel() {
-      return compressionLevel.get();
+      return attributes.attribute(COMPRESSION_LEVEL).get();
+   }
+
+   public int getCompressionThreshold() {
+      return attributes.attribute(COMPRESSION_THRESHOLD).get();
    }
 
    @Override

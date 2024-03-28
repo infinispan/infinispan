@@ -471,10 +471,14 @@
                   <xs:documentation>Sets the maximum allowed content length.</xs:documentation>
                </xs:annotation>
             </xs:attribute>
-            <xs:attribute name="compression-level" type="xs:int" use="optional">
+            <xs:attribute name="compression-level" type="xs:int" use="optional" default="6">
                <xs:annotation>
-                  <xs:documentation>Sets the level for compressed requests and responses.
-                  </xs:documentation>
+                  <xs:documentation>Sets the level for compressed requests and responses.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="compression-threshold" type="xs:int" use="optional" default="0">
+               <xs:annotation>
+                  <xs:documentation>The response body is compressed when the size of the response body exceeds the threshold. The value should be a non-negative number. 0 will enable compression for all responses.</xs:documentation>
                </xs:annotation>
             </xs:attribute>
             <xs:attribute name="security-realm" type="xs:string">

@@ -1,5 +1,6 @@
 package org.infinispan.server.security.authorization;
 
+import static org.infinispan.client.rest.RestHeaders.CONTENT_DISPOSITION;
 import static org.infinispan.client.rest.RestResponse.ACCEPTED;
 import static org.infinispan.client.rest.RestResponse.CREATED;
 import static org.infinispan.client.rest.RestResponse.FORBIDDEN;
@@ -8,7 +9,6 @@ import static org.infinispan.client.rest.RestResponse.NOT_MODIFIED;
 import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
 import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.client.rest.RestResponse.TEMPORARY_REDIRECT;
-import static org.infinispan.client.rest.impl.jdk.RestClientJDK.CONTENT_DISPOSITION;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.assertStatusAndBodyEquals;
 import static org.infinispan.server.test.core.Common.awaitStatus;
@@ -39,9 +39,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.infinispan.client.rest.RestCacheClient;
-import org.infinispan.client.rest.RestContainerClient;
 import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.RestClusterClient;
+import org.infinispan.client.rest.RestContainerClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestResponseInfo;

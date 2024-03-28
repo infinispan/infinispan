@@ -1,9 +1,9 @@
 package org.infinispan.client.rest.impl.jdk.form;
 
-import static org.infinispan.client.rest.impl.jdk.RestClientJDK.CONTENT_DISPOSITION;
-import static org.infinispan.client.rest.impl.jdk.RestClientJDK.CONTENT_LENGTH;
-import static org.infinispan.client.rest.impl.jdk.RestClientJDK.CONTENT_TRANSFER_ENCODING;
-import static org.infinispan.client.rest.impl.jdk.RestClientJDK.CONTENT_TYPE;
+import static org.infinispan.client.rest.RestHeaders.CONTENT_DISPOSITION;
+import static org.infinispan.client.rest.RestHeaders.CONTENT_LENGTH;
+import static org.infinispan.client.rest.RestHeaders.CONTENT_TRANSFER_ENCODING;
+import static org.infinispan.client.rest.RestHeaders.CONTENT_TYPE;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -1,8 +1,5 @@
 package org.infinispan.dataconversion;
 
-import static org.infinispan.dataconversion.Gzip.compress;
-import static org.infinispan.dataconversion.Gzip.decompress;
-
 import org.infinispan.commons.dataconversion.Encoder;
 import org.infinispan.commons.dataconversion.MediaType;
 
@@ -11,13 +8,13 @@ public class GzipEncoder implements Encoder {
    @Override
    public Object toStorage(Object content) {
       assert content instanceof String;
-      return compress(content.toString());
+      return Compression.GZIP.compress(content.toString());
    }
 
    @Override
    public Object fromStorage(Object content) {
       assert content instanceof byte[];
-      return decompress((byte[]) content);
+      return Compression.GZIP.decompress((byte[]) content);
    }
 
    @Override

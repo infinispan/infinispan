@@ -1,14 +1,16 @@
 package org.infinispan.rest.resources;
 
-import static io.netty.handler.codec.http.HttpHeaderNames.ACCEPT_ENCODING;
-import static io.netty.handler.codec.http.HttpHeaderNames.ACCESS_CONTROL_ALLOW_HEADERS;
-import static io.netty.handler.codec.http.HttpHeaderNames.ACCESS_CONTROL_ALLOW_METHODS;
-import static io.netty.handler.codec.http.HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN;
-import static io.netty.handler.codec.http.HttpHeaderNames.ACCESS_CONTROL_EXPOSE_HEADERS;
-import static io.netty.handler.codec.http.HttpHeaderNames.ACCESS_CONTROL_REQUEST_METHOD;
-import static io.netty.handler.codec.http.HttpHeaderNames.HOST;
-import static io.netty.handler.codec.http.HttpHeaderNames.ORIGIN;
 import static java.util.Collections.singletonMap;
+import static org.infinispan.client.rest.RestHeaders.ACCEPT;
+import static org.infinispan.client.rest.RestHeaders.ACCEPT_ENCODING;
+import static org.infinispan.client.rest.RestHeaders.ACCESS_CONTROL_ALLOW_HEADERS;
+import static org.infinispan.client.rest.RestHeaders.ACCESS_CONTROL_ALLOW_METHODS;
+import static org.infinispan.client.rest.RestHeaders.ACCESS_CONTROL_ALLOW_ORIGIN;
+import static org.infinispan.client.rest.RestHeaders.ACCESS_CONTROL_EXPOSE_HEADERS;
+import static org.infinispan.client.rest.RestHeaders.ACCESS_CONTROL_REQUEST_METHOD;
+import static org.infinispan.client.rest.RestHeaders.CONTENT_ENCODING;
+import static org.infinispan.client.rest.RestHeaders.HOST;
+import static org.infinispan.client.rest.RestHeaders.ORIGIN;
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
@@ -21,15 +23,14 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.commons.test.skip.SkipTestNG.skipIf;
-import static org.infinispan.commons.util.Util.getResourceAsString;
-import static org.infinispan.dataconversion.Gzip.decompress;
 import static org.infinispan.rest.JSONConstants.TYPE;
 import static org.infinispan.rest.RequestHeader.IF_MODIFIED_SINCE;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
+import static org.infinispan.test.TestingUtil.k;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,6 +48,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.dataconversion.Compression;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.rest.DateUtils;
 import org.infinispan.rest.RequestHeader;
@@ -320,16 +322,16 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       join(client.cache("default").put("key", "value"));
 
       Map<String, String> headers = new HashMap<>();
-      headers.put(HOST.toString(), "localhost");
-      headers.put(ORIGIN.toString(), "http://localhost:" + restServer().getPort());
-      headers.put(ACCESS_CONTROL_REQUEST_METHOD.toString(), "GET");
+      headers.put(HOST, "localhost");
+      headers.put(ORIGIN, "http://localhost:" + restServer().getPort());
+      headers.put(ACCESS_CONTROL_REQUEST_METHOD, "GET");
 
       CompletionStage<RestResponse> preFlight = rawClient.options(url, headers);
 
       assertThat(preFlight).isOk();
       assertThat(preFlight).hasNoContent();
-      assertThat(preFlight).containsAllHeaders(ACCESS_CONTROL_ALLOW_ORIGIN.toString(), ACCESS_CONTROL_ALLOW_METHODS.toString(), ACCESS_CONTROL_ALLOW_HEADERS.toString());
-      assertThat(preFlight).hasHeaderWithValues(ACCESS_CONTROL_ALLOW_HEADERS.toString(), (String[]) RequestHeader.toArray());
+      assertThat(preFlight).containsAllHeaders(ACCESS_CONTROL_ALLOW_ORIGIN, ACCESS_CONTROL_ALLOW_METHODS, ACCESS_CONTROL_ALLOW_HEADERS);
+      assertThat(preFlight).hasHeaderWithValues(ACCESS_CONTROL_ALLOW_HEADERS, (String[]) RequestHeader.toArray());
    }
 
    @Test
@@ -338,18 +340,18 @@ public class CacheResourceTest extends BaseCacheResourceTest {
 
       putStringValueInCache("default", "test", "test");
 
-      Map<String, String> headers = singletonMap(ORIGIN.toString(), "http://127.0.0.1:" + port);
+      Map<String, String> headers = singletonMap(ORIGIN, "http://127.0.0.1:" + port);
       CompletionStage<RestResponse> response = client.cache("default").get("test", headers);
 
       assertThat(response).isOk();
       assertThat(response).containsAllHeaders("access-control-allow-origin");
-      assertThat(response).hasHeaderWithValues(ACCESS_CONTROL_EXPOSE_HEADERS.toString(), (String[]) ResponseHeader.toArray());
+      assertThat(response).hasHeaderWithValues(ACCESS_CONTROL_EXPOSE_HEADERS, (String[]) ResponseHeader.toArray());
    }
 
    @Test
    public void testCorsAllowedJVMProp() {
       CompletionStage<RestResponse> response = client.raw()
-            .get("/rest/v2/caches", singletonMap(ORIGIN.toString(), "http://infinispan.org"));
+            .get("/rest/v2/caches", singletonMap(ORIGIN, "http://infinispan.org"));
 
       assertThat(response).isOk();
       assertThat(response).containsAllHeaders("access-control-allow-origin");
@@ -360,8 +362,8 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       skipIf(protocol == HTTP_20, "Skipping for HTTP/2");
       Map<String, String> headers = new HashMap<>();
       String scheme = ssl ? "https://" : "http://";
-      headers.put(ORIGIN.toString(), scheme + "origin-host.org");
-      headers.put(HOST.toString(), "origin-host.org");
+      headers.put(ORIGIN, scheme + "origin-host.org");
+      headers.put(HOST, "origin-host.org");
 
       CompletionStage<RestResponse> response = client.raw().get("/rest/v2/caches", headers);
 
@@ -385,7 +387,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
          clientConfig.clearServers().addServer().host("localhost").port(restServerHelper.getPort());
          client = RestClient.forConfiguration(clientConfig.build());
          RestResponse response = join(client.cache("default")
-               .get("test", singletonMap(ORIGIN.toString(), "http://host.example.com:5576")));
+               .get("test", singletonMap(ORIGIN, "http://host.example.com:5576")));
          assertThat(response).containsAllHeaders("access-control-allow-origin");
       } finally {
          client.close();
@@ -416,25 +418,34 @@ public class CacheResourceTest extends BaseCacheResourceTest {
    }
 
    private String plus1Day(String rfc1123Date) {
-      ZonedDateTime plus = DateUtils.parseRFC1123(rfc1123Date).plus(1, ChronoUnit.DAYS);
+      ZonedDateTime plus = DateUtils.parseRFC1123(rfc1123Date).plusDays(1);
       return DateUtils.toRFC1123(plus.toEpochSecond() * 1000);
    }
 
    @Test
-   public void testCompression() throws Exception {
-      String payload = getResourceAsString("person.proto", getClass().getClassLoader());
-      putStringValueInCache("default", "k", payload);
+   public void testCompression() {
+      String payload = "A long time ago in a galaxy far, far away....";
 
-      String path = String.format("/rest/v2/caches/%s/%s", "default", "k");
-      RestResponse response = join(client.raw().get(path, singletonMap(ACCEPT_ENCODING.toString(), "none")));
+      // Write
+      for (Compression compression : Arrays.asList(Compression.GZIP, Compression.DEFLATE)) {
+         String path = String.format("/rest/v2/caches/%s/%s", "default", k(0, compression.name()));
+         RestResponse response = join(client.raw().put(path, Map.of(CONTENT_ENCODING, compression.name()), RestEntity.create(MediaType.TEXT_PLAIN, compression.compress(payload))));
+         assertThat(response).isOk();
+         response = join(client.raw().get(path));
+         assertThat(response).isOk();
+         assertEquals(payload, response.body());
+      }
 
-      assertThat(response).hasNoContentEncoding();
-      assertThat(response).hasContentLength(payload.getBytes().length);
-
-      response = join(client.raw().get(path, Map.of("Accept", MediaType.APPLICATION_OCTET_STREAM.toString(), ACCEPT_ENCODING.toString(), "gzip")));
-
-      assertThat(response).hasGzipContentEncoding();
-      assertEquals(decompress(response.bodyAsByteArray()), payload);
+      // Read
+      for (Compression compression : Arrays.asList(Compression.GZIP, Compression.DEFLATE)) {
+         String path = String.format("/rest/v2/caches/%s/%s", "default", k(1, compression.name()));
+         RestResponse response = join(client.raw().put(path, RestEntity.create(MediaType.TEXT_PLAIN, payload)));
+         assertThat(response).isOk();
+         response = join(client.raw().get(path, Map.of(ACCEPT, MediaType.TEXT_PLAIN.toString(), ACCEPT_ENCODING, compression.name())));
+         assertThat(response).hasContentEncoding(compression.name());
+         byte[] body = response.bodyAsByteArray();
+         assertEquals(payload, compression.decompress(body));
+      }
    }
 
    @Test

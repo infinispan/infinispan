@@ -42,7 +42,6 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import org.assertj.core.api.Assertions;
 import org.infinispan.client.rest.RestResponse;
@@ -167,8 +166,8 @@ public class ResponseAssertion {
       return this;
    }
 
-   public ResponseAssertion hasGzipContentEncoding() {
-      Assertions.assertThat(response.header(CONTENT_ENCODING_HEADER.getValue())).isEqualTo("gzip");
+   public ResponseAssertion hasContentEncoding(String encoding) {
+      Assertions.assertThat(response.header(CONTENT_ENCODING_HEADER.getValue())).isEqualTo(encoding);
       return this;
    }
 
@@ -178,15 +177,16 @@ public class ResponseAssertion {
    }
 
    public ResponseAssertion hasHeaderWithValues(String header, String... headers) {
-      List<String> expected = Arrays.stream(headers).map(String::toLowerCase).sorted().collect(Collectors.toList());
+      List<String> expected = Arrays.stream(headers).map(String::toLowerCase).sorted().toList();
       List<String> actual = response.headers().get(header).stream().flatMap(s -> Arrays.stream(s.split(",")))
-            .map(String::toLowerCase).sorted().collect(Collectors.toList());
+            .map(String::toLowerCase).sorted().toList();
       assertEquals(expected, actual);
       return this;
    }
 
    public ResponseAssertion containsAllHeaders(String... headers) {
-      Assertions.assertThat(response.headers().keySet()).contains(headers);
+      String[] expected = Arrays.stream(headers).map(String::toLowerCase).sorted().toArray(String[]::new);
+      Assertions.assertThat(response.headers().keySet()).contains(expected);
       return this;
    }
 

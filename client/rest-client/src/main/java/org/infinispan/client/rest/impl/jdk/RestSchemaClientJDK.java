@@ -1,6 +1,6 @@
 package org.infinispan.client.rest.impl.jdk;
 
-import static org.infinispan.client.rest.impl.jdk.RestClientJDK.ACCEPT;
+import static org.infinispan.client.rest.RestHeaders.ACCEPT;
 import static org.infinispan.client.rest.impl.jdk.RestClientJDK.sanitize;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;

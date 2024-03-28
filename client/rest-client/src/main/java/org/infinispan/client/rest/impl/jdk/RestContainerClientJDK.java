@@ -9,6 +9,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.client.rest.MultiPartRestEntity;
 import org.infinispan.client.rest.RestContainerClient;
 import org.infinispan.client.rest.RestEntity;
+import org.infinispan.client.rest.RestHeaders;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
@@ -31,7 +32,7 @@ public class RestContainerClientJDK implements RestContainerClient {
    }
    @Override
    public CompletionStage<RestResponse> globalConfiguration(String mediaType) {
-      return client.get(path + "/config", Map.of(RestClientJDK.ACCEPT, mediaType));
+      return client.get(path + "/config", Map.of(RestHeaders.ACCEPT, mediaType));
    }
 
    @Override
@@ -41,12 +42,12 @@ public class RestContainerClientJDK implements RestContainerClient {
 
    @Override
    public CompletionStage<RestResponse> cacheConfigurations(String mediaType) {
-      return client.get(path + "/cache-configs", Map.of(RestClientJDK.ACCEPT, mediaType));
+      return client.get(path + "/cache-configs", Map.of(RestHeaders.ACCEPT, mediaType));
    }
 
    @Override
    public CompletionStage<RestResponse> templates(String mediaType) {
-      return client.get(path + "/cache-configs/templates", Map.of(RestClientJDK.ACCEPT, mediaType));
+      return client.get(path + "/cache-configs/templates", Map.of(RestHeaders.ACCEPT, mediaType));
    }
 
    @Override
@@ -129,7 +130,7 @@ public class RestContainerClientJDK implements RestContainerClient {
       if (skipBody) {
          return client.head(backup(name));
       } else {
-         return client.get(backup(name), Map.of(RestClientJDK.ACCEPT, MediaType.APPLICATION_OCTET_STREAM_TYPE), HttpResponse.BodyHandlers::ofInputStream);
+         return client.get(backup(name), Map.of(RestHeaders.ACCEPT, MediaType.APPLICATION_OCTET_STREAM_TYPE), HttpResponse.BodyHandlers::ofInputStream);
       }
    }
 
