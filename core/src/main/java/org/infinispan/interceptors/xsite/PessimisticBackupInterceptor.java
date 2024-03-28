@@ -47,11 +47,15 @@ public class PessimisticBackupInterceptor extends BaseBackupInterceptor {
          stage = InvocationStage.completedNullStage();
       }
 
-      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         //for async, all nodes need to keep track of the updates keys after it is applied locally.
-         keysFromMods(rCommand.getModifications().stream())
-               .forEach(key -> iracManager.trackUpdatedKey(key.getSegment(), key.getKey(), rCommand.getGlobalTransaction()));
-         return stage.thenReturn(rCtx, rCommand, rv);
-      });
+      // We need to way for the other site commit.
+      // In the local site, we have locks locked so no other transaction will commit.
+      // If the other site fails to commit, we abort it here.
+      return makeStage(asyncInvokeNext(ctx, command, stage))
+            .thenApply(ctx, command, (rCtx, rCommand, rv) -> {
+               //for async, all nodes need to keep track of the updates keys after it is applied locally.
+               keysFromMods(rCommand.getModifications().stream())
+                     .forEach(key -> iracManager.trackUpdatedKey(key.getSegment(), key.getKey(), rCommand.getGlobalTransaction()));
+               return rv;
+            });
    }
 }

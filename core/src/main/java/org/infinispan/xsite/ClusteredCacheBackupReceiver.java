@@ -34,9 +34,11 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
@@ -69,8 +71,9 @@ import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.ResponseCollectors;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
+import org.infinispan.transaction.tm.EmbeddedTransaction;
+import org.infinispan.transaction.tm.EmbeddedTransactionManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.ByteString;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.commons.util.concurrent.CompletionStages;
@@ -80,7 +83,9 @@ import org.infinispan.xsite.irac.DiscardUpdateException;
 import org.infinispan.xsite.statetransfer.XSiteState;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 
-import jakarta.transaction.TransactionManager;
+import jakarta.transaction.HeuristicMixedException;
+import jakarta.transaction.HeuristicRollbackException;
+import jakarta.transaction.RollbackException;
 
 /**
  * {@link org.infinispan.xsite.BackupReceiver} implementation for clustered caches.
@@ -99,6 +104,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
       }
       throw CompletableFutures.asCompletionException(throwable);
    };
+   private static final long TRANSACTIONAL_FLAGS = EnumUtil.bitSetOf(IGNORE_RETURN_VALUES, SKIP_XSITE_BACKUP);
 
    @Inject Cache<Object, Object> cache;
    @Inject TimeService timeService;
@@ -109,13 +115,10 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
    @Inject RpcManager rpcManager;
    @Inject ClusteringDependentLogic clusteringDependentLogic;
 
-   private final ByteString cacheName;
-
    private volatile DefaultHandler defaultHandler;
 
-   public ClusteredCacheBackupReceiver(String cacheName) {
+   public ClusteredCacheBackupReceiver() {
       //TODO #3 [ISPN-11824] split this class for pes/opt tx and non tx mode.
-      this.cacheName = ByteString.fromString(cacheName);
    }
 
    @Start
@@ -123,7 +126,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
       //it would be nice if we could inject bootstrap component
       //this feels kind hacky but saves 3 fields in this class
       ComponentRegistry cr =  ComponentRegistry.of(cache);
-      TransactionHandler txHandler = new TransactionHandler(cache, cr.getTransactionTable());
+      TransactionHandler txHandler = new TransactionHandler(cache, cr.getTransactionTable(), invocationContextFactory, invocationHelper);
       defaultHandler = new DefaultHandler(txHandler, cr.getComponent(BlockingManager.class));
    }
 
@@ -149,9 +152,9 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
          return allowInvocation;
       }
 
-      final long endTime = timeService.expectedEndTime(timeoutMs, TimeUnit.MILLISECONDS);
-      final Map<Address, List<XSiteState>> primaryOwnersChunks = new HashMap<>();
-      final Address localAddress = rpcManager.getAddress();
+      long endTime = timeService.expectedEndTime(timeoutMs, TimeUnit.MILLISECONDS);
+      Map<Address, List<XSiteState>> primaryOwnersChunks = new HashMap<>();
+      Address localAddress = rpcManager.getAddress();
 
       if (log.isTraceEnabled()) {
          log.tracef("Received X-Site state transfer %s keys. Splitting by primary owner.", chunk.length);
@@ -163,7 +166,7 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
          primaryOwnerList.add(state);
       }
 
-      final List<XSiteState> localChunks = primaryOwnersChunks.remove(localAddress);
+      List<XSiteState> localChunks = primaryOwnersChunks.remove(localAddress);
       AggregateCompletionStage<Void> cf = CompletionStages.aggregateCompletionStage();
 
       for (Map.Entry<Address, List<XSiteState>> entry : primaryOwnersChunks.entrySet()) {
@@ -252,6 +255,10 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
    @Override
    public CompletionStage<Boolean> touchEntry(Object key) {
       return cache.getAdvancedCache().touch(key, false);
+   }
+
+   public boolean isTransactionTableEmpty() {
+      return defaultHandler.txHandler.remote2localTx.isEmpty();
    }
 
    private CompletionStage<Void> invokeRemotelyInLocalSite(CacheRpcCommand command) {
@@ -346,13 +353,17 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
       private final AdvancedCache<Object, Object> backupCache;
       private final FunctionalMap.WriteOnlyMap<Object, Object> writeOnlyMap;
       private final TransactionTable transactionTable;
+      private final InvocationContextFactory invocationContextFactory;
+      private final InvocationHelper invocationHelper;
 
-      TransactionHandler(Cache<Object, Object> backup, TransactionTable transactionTable) {
+      TransactionHandler(Cache<Object, Object> backup, TransactionTable transactionTable, InvocationContextFactory invocationContextFactory, InvocationHelper invocationHelper) {
          //ignore return values on the backup
-         this.backupCache = backup.getAdvancedCache().withStorageMediaType().withFlags(IGNORE_RETURN_VALUES, SKIP_XSITE_BACKUP);
-         this.writeOnlyMap = WriteOnlyMapImpl.create(FunctionalMapImpl.create(backupCache));
-         this.remote2localTx = new ConcurrentHashMap<>();
+         backupCache = backup.getAdvancedCache().withStorageMediaType().withFlags(IGNORE_RETURN_VALUES, SKIP_XSITE_BACKUP);
+         writeOnlyMap = WriteOnlyMapImpl.create(FunctionalMapImpl.create(backupCache));
+         remote2localTx = new ConcurrentHashMap<>();
          this.transactionTable = transactionTable;
+         this.invocationContextFactory = invocationContextFactory;
+         this.invocationHelper = invocationHelper;
       }
 
       @Override
@@ -381,16 +392,16 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
       }
 
       void handlePrepareCommand(PrepareCommand command) {
+         // Sanity check -- if the remote tx doesn't have modifications, it never should have been propagated!
+         if (!command.hasModifications()) {
+            throw new IllegalStateException("TxInvocationContext has no modifications!");
+         }
          if (isTransactional()) {
-            // Sanity check -- if the remote tx doesn't have modifications, it never should have been propagated!
-            if (!command.hasModifications()) {
-               throw new IllegalStateException("TxInvocationContext has no modifications!");
-            }
-
             try {
                replayModificationsInTransaction(command, command.isOnePhaseCommit());
             } catch (Throwable throwable) {
-               throw CompletableFutures.asCompletionException(throwable);
+               // let's not sent JakartaEE/JavaEE transactions through the network
+               throw CompletableFutures.asCompletionException(new CacheException(throwable.getMessage()));
             }
          } else {
             try {
@@ -441,70 +452,109 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
       }
 
       private void completeTransaction(GlobalTransaction globalTransaction, boolean commit) throws Throwable {
-         GlobalTransaction localTxId = remote2localTx.remove(globalTransaction);
-         if (localTxId == null) {
-            throw XSITE.unableToFindRemoteSiteTransaction(globalTransaction);
+         var globalTx = remote2localTx.remove(globalTransaction);
+         if (globalTx == null) {
+            if (commit) {
+               throw XSITE.unableToFindRemoteSiteTransaction(globalTransaction);
+            }
+            return;
          }
-         LocalTransaction localTx = transactionTable.getLocalTransaction(localTxId);
+         var localTx = transactionTable.getLocalTransaction(globalTx);
          if (localTx == null) {
-            throw XSITE.unableToFindLocalTransactionFromRemoteSiteTransaction(globalTransaction);
+            if (commit) {
+               throw XSITE.unableToFindLocalTransactionFromRemoteSiteTransaction(globalTransaction);
+            }
+            return;
          }
-         TransactionManager txManager = txManager();
-         txManager.resume(localTx.getTransaction());
+         EmbeddedTransaction tx = (EmbeddedTransaction) localTx.getTransaction();
          if (!localTx.isEnlisted()) {
             if (log.isTraceEnabled()) {
                log.tracef("%s isn't enlisted! Removing it manually.", localTx);
             }
             transactionTable.removeLocalTransaction(localTx);
          }
-         if (commit) {
-            txManager.commit();
-         } else {
-            txManager.rollback();
-         }
+         tx.runCommit(!commit);
       }
 
-      private void replayModificationsInTransaction(PrepareCommand command, boolean onePhaseCommit) throws Throwable {
-         TransactionManager tm = txManager();
-         boolean replaySuccessful = false;
+      private void replayModificationsInTransaction(PrepareCommand command, boolean onePhaseCommit) throws Exception {
+         var tx = createTransaction();
+         var localTx = transactionTable.getOrCreateLocalTransaction(tx, false);
+
+         replayModificationsWithTransaction(tx, localTx, command);
+         localTx.setFromRemoteSite(true);
+         throwExceptionIfFailed(tx, localTx);
+
+         if (onePhaseCommit) {
+            runOnePhaseCommitAfterPrepare(tx, localTx);
+            return;
+         }
+
+         // prepare only
          try {
-
-            tm.begin();
-            replayModifications(command);
-            replaySuccessful = true;
-         } finally {
-            LocalTransaction localTx = transactionTable.getLocalTransaction(tm.getTransaction());
-            if (localTx != null) { //possible for the tx to be null if we got an exception during applying modifications
-               localTx.setFromRemoteSite(true);
-
-               if (onePhaseCommit) {
-                  if (replaySuccessful) {
-                     if (log.isTraceEnabled()) {
-                        log.tracef("Committing remotely originated tx %s as it is 1PC", command.getGlobalTransaction());
-                     }
-                     tm.commit();
-                  } else {
-                     if (log.isTraceEnabled()) {
-                        log.tracef("Rolling back remotely originated tx %s", command.getGlobalTransaction());
-                     }
-                     tm.rollback();
-                  }
-               } else { // Wait for a remote commit/rollback.
-                  remote2localTx.put(command.getGlobalTransaction(), localTx.getGlobalTransaction());
-                  tm.suspend();
-               }
+            if (tx.runPrepare()) {
+               // store tx for the commit/rollback
+               remote2localTx.put(command.getGlobalTransaction(), localTx.getGlobalTransaction());
+               return;
             }
+         } catch (Throwable t) {
+            tx.transactionFailed(t);
          }
-      }
 
-      private TransactionManager txManager() {
-         return backupCache.getTransactionManager();
+         assert tx.getRollbackException() != null;
+         throwExceptionIfFailed(tx, localTx);
       }
 
       private void replayModifications(PrepareCommand command) throws Throwable {
          for (WriteCommand c : command.getModifications()) {
             c.acceptVisitor(null, this);
          }
+      }
+
+      private void replayModificationsWithTransaction(EmbeddedTransaction tx, LocalTransaction localTx, PrepareCommand command) {
+         var ctx = invocationContextFactory.createTxInvocationContext(localTx);
+         var stage = CompletionStages.aggregateCompletionStage();
+         try {
+            for (WriteCommand c : command.getModifications()) {
+               c.setFlagsBitSet(EnumUtil.mergeBitSets(TRANSACTIONAL_FLAGS, c.getFlagsBitSet()));
+               stage.dependsOn(invocationHelper.invokeAsync(ctx, c).exceptionally(throwable -> {
+                  tx.transactionFailed(throwable);
+                  return null;
+               }));
+            }
+            CompletionStages.await(stage.freeze());
+         } catch (Throwable t) {
+            tx.transactionFailed(t);
+         }
+      }
+
+      private void throwExceptionIfFailed(EmbeddedTransaction tx, LocalTransaction localTx) throws RollbackException {
+         if (tx.getRollbackException() != null) {
+            try {
+               tx.rollback();
+            } catch (Throwable t) {
+               //ignored, RollbackException will be thrown below
+            }
+            if (!localTx.isEnlisted()) {
+               transactionTable.removeLocalTransaction(localTx);
+            }
+            assert !transactionTable.containsLocalTx(localTx.getGlobalTransaction());
+            throw tx.getRollbackException();
+         }
+      }
+
+      private void runOnePhaseCommitAfterPrepare(EmbeddedTransaction tx, LocalTransaction localTx) throws HeuristicRollbackException, HeuristicMixedException, RollbackException {
+         try {
+            tx.commit();
+         } finally {
+            if (!localTx.isEnlisted()) {
+               transactionTable.removeLocalTransaction(localTx);
+            }
+            assert !transactionTable.containsLocalTx(localTx.getGlobalTransaction());
+         }
+      }
+
+      private EmbeddedTransaction createTransaction() {
+         return new EmbeddedTransaction(EmbeddedTransactionManager.getInstance());
       }
    }
 
@@ -528,14 +578,14 @@ public class ClusteredCacheBackupReceiver implements BackupReceiver {
                return null;
             }
 
-            if (rpcManager.getMembers().contains(this.address) && !rpcManager.getAddress().equals(this.address)) {
+            if (rpcManager.getMembers().contains(address) && !rpcManager.getAddress().equals(address)) {
                if (log.isTraceEnabled()) {
-                  log.tracef(throwable, "An exception was sent by %s. Retrying!", this.address);
+                  log.tracef(throwable, "An exception was sent by %s. Retrying!", address);
                }
                executeRemote(); //retry remote
             } else {
                if (log.isTraceEnabled()) {
-                  log.tracef(throwable, "An exception was sent by %s. Retrying locally!", this.address);
+                  log.tracef(throwable, "An exception was sent by %s. Retrying locally!", address);
                }
                //if the node left the cluster, we apply the missing state. This avoids the site provider to re-send the
                //full chunk.
