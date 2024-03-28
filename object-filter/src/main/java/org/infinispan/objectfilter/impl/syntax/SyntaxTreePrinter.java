@@ -15,19 +15,23 @@ public final class SyntaxTreePrinter {
    }
 
    public static String printTree(BooleanExpr whereClause) {
+      return printTree(whereClause, " WHERE ");
+   }
+
+   public static String printTree(BooleanExpr clause, String clauseName) {
       StringBuilder sb = new StringBuilder();
-      if (whereClause != null) {
-         if (whereClause == ConstantBooleanExpr.FALSE) {
-            throw new IllegalArgumentException("The WHERE clause must not be a contradiction");
+      if (clause != null) {
+         if (clause == ConstantBooleanExpr.FALSE) {
+            throw new IllegalArgumentException("The clause must not be a contradiction");
          }
-         if (whereClause != ConstantBooleanExpr.TRUE) {
-            sb.append(" WHERE ").append(whereClause.toQueryString());
+         if (clause != ConstantBooleanExpr.TRUE) {
+            sb.append(clauseName).append(clause.toQueryString());
          }
       }
       return sb.toString();
    }
 
-   public static String printTree(String fromEntityTypeName, PropertyPath[] projection, BooleanExpr whereClause, SortField[] orderBy) {
+   public static String printTree(String fromEntityTypeName, PropertyPath[] projection, BooleanExpr whereClause, BooleanExpr filtering, SortField[] orderBy) {
       StringBuilder sb = new StringBuilder();
       if (projection != null && projection.length != 0) {
          sb.append("SELECT ");
@@ -42,6 +46,11 @@ public final class SyntaxTreePrinter {
 
       sb.append("FROM ").append(fromEntityTypeName);
       sb.append(printTree(whereClause));
+
+      if (filtering != null) {
+         sb.append(printTree(filtering, " FILTERING "));
+      }
+
       if (orderBy != null && orderBy.length != 0) {
          sb.append(" ORDER BY ");
          for (int i = 0; i < orderBy.length; i++) {

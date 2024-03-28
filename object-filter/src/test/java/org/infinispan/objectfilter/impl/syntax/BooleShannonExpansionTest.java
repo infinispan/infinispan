@@ -79,7 +79,7 @@ public class BooleShannonExpansionTest {
          assertNull(expr);
       }
       if (expectedQuery != null) {
-         String queryOut = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), null, expr, parsingResult.getSortFields());
+         String queryOut = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), null, expr, null, parsingResult.getSortFields());
          assertEquals(expectedQuery, queryOut);
       }
    }

@@ -83,6 +83,7 @@ tokens {
   ESCAPE;
   EXISTS;
   FETCH;
+  FILTERING;
   FROM;
   FULL;
   GROUP_BY;
