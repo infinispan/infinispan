@@ -82,7 +82,12 @@ public class VolatileLocalConfigurationStorage implements LocalConfigurationStor
       } else if (!existing.matches(configuration)) {
          throw CONFIG.incompatibleClusterConfiguration(name, configuration, existing);
       } else {
-         log.debugf("%s already has a cache %s with configuration %s", cacheManager.getAddress(), name, configuration);
+         if (!existing.equals(configuration)) {
+            // This is actually an update for a programmatically-defined cache
+            return updateConfiguration(name, configuration, flags);
+         } else {
+            log.debugf("%s already has a cache %s with configuration %s", cacheManager.getAddress(), name, configuration);
+         }
       }
       // Ensure the cache is started
       return blockingManager.<Void>supplyBlocking(() -> {
@@ -98,12 +103,10 @@ public class VolatileLocalConfigurationStorage implements LocalConfigurationStor
    @Override
    public CompletionStage<Void> validateConfigurationUpdate(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       Configuration existing = SecurityActions.getCacheConfiguration(cacheManager, name);
-      if (existing == null) {
-         throw CONFIG.noSuchCacheConfiguration(name);
-      } else {
+      if (existing != null) {
          existing.validateUpdate(name, configuration);
-         return CompletableFutures.completedNull();
       }
+      return CompletableFutures.completedNull();
    }
 
    @Override

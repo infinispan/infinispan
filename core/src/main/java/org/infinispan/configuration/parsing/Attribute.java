@@ -223,7 +223,7 @@ public enum Attribute {
     REPLACE_ALL,
     UNCLEAN_SHUTDOWN_ACTION,
     UPPERCASE,
-   ;
+    ;
 
     private final String name;
 

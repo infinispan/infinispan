@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.infinispan.commons.CacheException;
@@ -124,6 +125,10 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>>, U
       }
    }
 
+   public void removeListener(Predicate<AttributeListener<T>> filter) {
+      listeners.removeIf(filter);
+   }
+
    public boolean isNull() {
       return value == null;
    }
@@ -220,7 +225,9 @@ public final class Attribute<T> implements Cloneable, Matchable<Attribute<?>>, U
       if (!this.definition.equals(other.definition))
          return false;
       if (this.definition.isGlobal()) {
-         if (Matchable.class.isAssignableFrom(this.definition.getType())) {
+         if (this.definition.matcher() != null) {
+            return this.definition.matcher().matches(this, (Attribute<T>) other);
+         } else if (Matchable.class.isAssignableFrom(this.definition.getType())) {
             return ((Matchable) value).matches(other.value);
          } else {
             return Objects.equals(value, other.value);

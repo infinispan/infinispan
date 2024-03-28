@@ -146,6 +146,8 @@ public class CLIENT extends RespCommand implements Resp3Command {
       sb.append(" lib-ver=").append(libVer != null ? libVer : "");
       sb.append(" age=");
       sb.append(Duration.between(metadata.created(), Instant.now()).getSeconds());
+      sb.append(" db=");
+      sb.append(metadata.cache());
       sb.append(" user=");
       sb.append(Security.getSubjectUserPrincipalName(metadata.subject()));
       sb.append(" resp=3");

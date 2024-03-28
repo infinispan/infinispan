@@ -17,6 +17,7 @@ include::{topics}/proc_creating_caches_templates.adoc[leveloffset=+2]
 include::{topics}/con_cache_template_inheritance.adoc[leveloffset=+2]
 include::{topics}/con_cache_template_wildcards.adoc[leveloffset=+2]
 include::{topics}/con_cache_template_xinclude.adoc[leveloffset=+2]
+include::{topics}/con_cache_aliases.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

@@ -6,6 +6,7 @@ import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.globalstate.ScopedState;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -14,7 +15,6 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.security.actions.SecurityActions;
 
 /**
@@ -33,9 +33,9 @@ public class GlobalConfigurationStateListener {
 
    @CacheEntryCreated
    public CompletionStage<Void> handleCreate(CacheEntryCreatedEvent<ScopedState, CacheState> event) {
-      // We are only interested in POST for creation
-      if (event.isPre())
+      if (event.isPre()) {
          return CompletableFutures.completedNull();
+      }
       String scope = event.getKey().getScope();
       if (!isKnownScope(scope))
          return CompletableFutures.completedNull();

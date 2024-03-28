@@ -133,7 +133,7 @@
          <temporary-location path="tmpPath" relative-to="jboss.server.temp.dir" />
          <overlay-configuration-storage />
       </global-state>
-      <local-cache name="local" statistics="true">
+      <local-cache name="local" statistics="true" aliases="0 abc">
          <encoding>
             <key media-type="application/x-java-object"/>
             <value media-type="application/x-java-object"/>
@@ -155,7 +155,7 @@
          <expiration interval="10500" lifespan="11" max-idle="11"/>
          <memory storage="BINARY" max-count="20500"/>
       </invalidation-cache>
-      <replicated-cache name="repl" mode="SYNC" statistics="true" segments="10"
+      <replicated-cache name="repl" mode="SYNC" statistics="true" segments="16"
                         consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"
                         key-partitioner="org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner">
          <encoding>

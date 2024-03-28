@@ -1,6 +1,5 @@
 package org.infinispan.distribution.ch.impl;
 
-import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.group.impl.GroupManager;
 import org.infinispan.distribution.group.impl.GroupingPartitioner;
@@ -24,10 +23,7 @@ public class KeyPartitionerFactory extends AbstractNamedCacheComponentFactory
    @Inject GroupManager groupManager;
 
    private KeyPartitioner getConfiguredPartitioner() {
-      HashConfiguration hashConfiguration = configuration.clustering().hash();
-      KeyPartitioner partitioner = hashConfiguration.keyPartitioner();
-      partitioner.init(hashConfiguration);
-      return partitioner;
+      return configuration.clustering().hash().keyPartitioner();
    }
 
    @Override

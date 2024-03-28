@@ -304,7 +304,7 @@ provides a read-uncommitted isolation.
 |
 
 | link:https://redis.io/commands/select[SELECT]
-| Always returns `-ERR Select not supported in cluster mode`
+|
 
 | link:https://redis.io/commands/set[SET]
 |

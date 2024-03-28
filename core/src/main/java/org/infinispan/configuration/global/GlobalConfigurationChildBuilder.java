@@ -6,7 +6,6 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 public interface GlobalConfigurationChildBuilder {
-
    /**
     * Transport-related (i.e. clustering) configuration
     */

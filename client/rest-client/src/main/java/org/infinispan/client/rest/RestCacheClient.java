@@ -540,7 +540,7 @@ public interface RestCacheClient {
    /**
     * Updates a configuration attribute.
     */
-   CompletionStage<RestResponse> updateConfigurationAttribute(String attribute, String value);
+   CompletionStage<RestResponse> updateConfigurationAttribute(String attribute, String... values);
 
    /**
     * Retrieves all available configuration attributes for this cache

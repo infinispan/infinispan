@@ -1,0 +1,4 @@
+distributedCache:
+  aliases:
+    - "0"
+    - "anothername"

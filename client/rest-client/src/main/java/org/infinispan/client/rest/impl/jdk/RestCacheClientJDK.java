@@ -476,8 +476,15 @@ public class RestCacheClientJDK implements RestCacheClient {
    }
 
    @Override
-   public CompletionStage<RestResponse> updateConfigurationAttribute(String attribute, String value) {
-      return client.post(path + "?action=set-mutable-attribute&attribute-name=" + attribute + "&attribute-value=" + sanitize(value));
+   public CompletionStage<RestResponse> updateConfigurationAttribute(String attribute, String... value) {
+      StringBuilder sb = new StringBuilder(path);
+      sb.append("?action=set-mutable-attribute&attribute-name=");
+      sb.append(sanitize(attribute));
+      for(String v : value) {
+         sb.append("&attribute-value=");
+         sb.append(sanitize(v));
+      }
+      return client.post(sb.toString());
    }
 
    @Override

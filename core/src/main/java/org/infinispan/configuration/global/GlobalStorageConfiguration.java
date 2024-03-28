@@ -2,6 +2,7 @@ package org.infinispan.configuration.global;
 
 import java.util.function.Supplier;
 
+import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.globalstate.ConfigurationStorage;
@@ -11,6 +12,7 @@ import org.infinispan.globalstate.LocalConfigurationStorage;
 /**
  * @since 10.0
  */
+@BuiltBy(GlobalStorageConfigurationBuilder.class)
 public class GlobalStorageConfiguration {
    static final AttributeDefinition<Supplier<? extends LocalConfigurationStorage>> CONFIGURATION_STORAGE_SUPPLIER = AttributeDefinition
          .supplierBuilder("class", LocalConfigurationStorage.class).autoPersist(false)

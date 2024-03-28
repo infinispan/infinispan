@@ -1055,7 +1055,7 @@ public final class Util {
       }
    }
 
-   public static Object fromString(Class klass, String value) {
+   public static Object fromString(Class<?> klass, String value) {
       if (klass == Character.class) {
          if (value.length() == 1) {
             return value.charAt(0);
@@ -1078,6 +1078,8 @@ public final class Util {
          return value != null ? value.split(" ") : null;
       } else if (klass == Set.class) {
          return value != null ? new HashSet<>(Arrays.asList(value.split(" "))) : null;
+      } else if (klass == List.class) {
+         return value != null ? Arrays.asList(value.split(" ")) : null;
       } else if (klass == char[].class) {
          return value.toCharArray();
       } else if (klass == Float.class) {
@@ -1091,7 +1093,7 @@ public final class Util {
       } else if (klass == File.class) {
          return new File(value);
       } else if (klass.isEnum()) {
-         return parseEnum(klass, value);
+         return parseEnum((Class)klass, value);
       } else if (klass == Properties.class) {
          try {
             Properties props = new Properties();
