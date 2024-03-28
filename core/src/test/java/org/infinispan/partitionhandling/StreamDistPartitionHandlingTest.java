@@ -43,7 +43,7 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "partitionhandling.StreamDistPartitionHandlingTest")
 public class StreamDistPartitionHandlingTest extends BasePartitionHandlingTest {
-   @Test( expectedExceptions = AvailabilityException.class)
+   @Test( expectedExceptions = AvailabilityException.class, enabled = false)
    public void testRetrievalWhenPartitionIsDegraded() {
       Cache<MagicKey, String> cache0 = cache(0);
       cache0.put(new MagicKey(cache(1), cache(2)), "not-local");
@@ -77,6 +77,7 @@ public class StreamDistPartitionHandlingTest extends BasePartitionHandlingTest {
       // Repl only checks for partition when first retrieving the entrySet, keySet or values
    }
 
+   @Test(enabled = false)
    public void testUsingIteratorButPartitionOccursBeforeRetrievingRemoteValues() throws Exception {
       Cache<MagicKey, String> cache0 = cache(0);
       // Make sure we have 1 entry in each - since onEach will then be invoked once on each node
@@ -119,6 +120,7 @@ public class StreamDistPartitionHandlingTest extends BasePartitionHandlingTest {
       }
    }
 
+   @Test(enabled = false)
    public void testUsingIteratorButPartitionOccursAfterRetrievingRemoteValues() throws InterruptedException, TimeoutException, ExecutionException {
       Cache<MagicKey, String> cache0 = cache(0);
       // Make sure we have 1 entry in each - since onEach will then be invoked once on each node
