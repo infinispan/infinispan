@@ -438,6 +438,22 @@ public class TransactionImpl implements Transaction {
       return this == obj;
    }
 
+   public synchronized void transactionFailed(Throwable throwable) {
+      if (isDone()) {
+         throw new IllegalStateException("Transaction is done. Cannot change status");
+      }
+      if (status == Status.STATUS_MARKED_ROLLBACK) {
+         return;
+      }
+      status = Status.STATUS_MARKED_ROLLBACK;
+      if (firstRollbackException == null) {
+         firstRollbackException = new RollbackException("Exception caught while running transaction");
+         firstRollbackException.addSuppressed(throwable);
+      } else if (!(throwable instanceof RollbackException)) {
+         firstRollbackException.addSuppressed(throwable);
+      }
+   }
+
    private RollbackException hasRollbackException(boolean forceRollback) {
       if (firstRollbackException != null) {
          if (forceRollback && FORCE_ROLLBACK_MESSAGE.equals(firstRollbackException.getMessage())) {
@@ -684,6 +700,10 @@ public class TransactionImpl implements Transaction {
             return true;
       }
       return false;
+   }
+
+   public RollbackException getRollbackException() {
+      return firstRollbackException;
    }
 
    private static class XaResourceData {
