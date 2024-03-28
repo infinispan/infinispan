@@ -17,8 +17,12 @@ import java.util.function.Function;
 import java.util.stream.Collector;
 
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.reactive.RxJavaInterop;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Scheduler;
 
 /**
  * Utility methods for handling {@link CompletionStage} instances.
@@ -298,6 +302,16 @@ public class CompletionStages {
       }
 
       abstract R getValue();
+   }
+
+   public static <I> CompletionStage<Void> performConcurrently(Iterable<I> iterable, int parallelism, Scheduler scheduler,
+                                                               Function<? super I, CompletionStage<Void>> function) {
+      return Flowable.fromIterable(iterable)
+            .parallel(parallelism)
+            .runOn(scheduler)
+            .concatMap(i -> RxJavaInterop.voidCompletionStageToFlowable(function.apply(i)))
+            .sequential()
+            .ignoreElements().toCompletionStage(null);
    }
 
    public static <I> CompletionStage<Void> performSequentially(Iterator<I> iterator, Function<? super I, CompletionStage<Void>> function) {
