@@ -27,7 +27,9 @@ public final class NotExpr implements BooleanExpr {
    }
 
    @Override
-   public String toQueryString() {
-      return "NOT(" + child.toQueryString() + ")";
+   public void appendQueryString(StringBuilder sb) {
+      sb.append("NOT(");
+      child.appendQueryString(sb);
+      sb.append(")");
    }
 }

@@ -68,7 +68,7 @@ public class PropertyValueExpr implements ValueExpr {
    }
 
    @Override
-   public String toQueryString() {
-      return propertyPath.toString();
+   public void appendQueryString(StringBuilder sb) {
+      sb.append(propertyPath);
    }
 }

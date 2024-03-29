@@ -35,7 +35,8 @@ public final class FullTextRegexpExpr implements PrimaryPredicateExpr {
    }
 
    @Override
-   public String toQueryString() {
-      return leftChild.toQueryString() + ":/" + regexp + "/";
+   public void appendQueryString(StringBuilder sb) {
+      leftChild.appendQueryString(sb);
+      sb.append(":/").append(regexp).append("/");
    }
 }

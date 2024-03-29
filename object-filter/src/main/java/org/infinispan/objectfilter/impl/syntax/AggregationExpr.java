@@ -39,8 +39,11 @@ public final class AggregationExpr extends PropertyValueExpr {
    }
 
    @Override
-   public String toQueryString() {
-      return propertyPath.getAggregationFunction().name() + "(" + super.toQueryString() + ")";
+   public void appendQueryString(StringBuilder sb) {
+      sb.append(propertyPath.getAggregationFunction().name());
+      sb.append("(");
+      super.appendQueryString(sb);
+      sb.append(")");
    }
 
    @Override

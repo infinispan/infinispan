@@ -49,11 +49,23 @@ public final class FullTextRangeExpr implements PrimaryPredicateExpr {
    }
 
    @Override
-   public String toQueryString() {
-      return leftChild.toQueryString() + ":" +
-            (includeLower ? '[' : '{') + (lower == null ? "*" : lower) +
-            " TO " +
-            (upper == null ? "*" : upper) + (includeUpper ? ']' : '}');
+   public void appendQueryString(StringBuilder sb) {
+      leftChild.appendQueryString(sb);
+      sb.append(":");
+      if (includeLower) {
+         sb.append('[');
+      } else {
+         sb.append('{');
+      }
+      sb.append(" TO ");
+      if (upper == null) {
+         sb.append("*");
+      }
+      if (includeUpper) {
+         sb.append(']');
+      } else {
+         sb.append('}');
+      }
    }
 
    @Override

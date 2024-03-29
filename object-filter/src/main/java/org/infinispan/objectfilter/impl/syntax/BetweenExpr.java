@@ -65,7 +65,11 @@ public final class BetweenExpr implements PrimaryPredicateExpr {
    }
 
    @Override
-   public String toQueryString() {
-      return leftChild.toQueryString() + " BETWEEN " + fromChild.toQueryString() + " AND " + toChild.toQueryString();
+   public void appendQueryString(StringBuilder sb) {
+      leftChild.appendQueryString(sb);
+      sb.append(" BETWEEN ");
+      fromChild.appendQueryString(sb);
+      sb.append(" AND ");
+      toChild.appendQueryString(sb);
    }
 }

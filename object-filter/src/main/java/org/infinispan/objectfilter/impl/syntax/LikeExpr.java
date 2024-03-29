@@ -72,7 +72,10 @@ public final class LikeExpr implements PrimaryPredicateExpr {
    }
 
    @Override
-   public String toQueryString() {
-      return child.toQueryString() + " LIKE '" + pattern + "'";
+   public void appendQueryString(StringBuilder sb) {
+      child.appendQueryString(sb);
+      sb.append(" LIKE '");
+      sb.append(pattern);
+      sb.append("'");
    }
 }

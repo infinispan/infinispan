@@ -21,7 +21,8 @@ public final class SyntaxTreePrinter {
             throw new IllegalArgumentException("The WHERE clause must not be a contradiction");
          }
          if (whereClause != ConstantBooleanExpr.TRUE) {
-            sb.append(" WHERE ").append(whereClause.toQueryString());
+            sb.append(" WHERE ");
+            whereClause.appendQueryString(sb);
          }
       }
       return sb.toString();

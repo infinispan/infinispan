@@ -192,22 +192,19 @@ public final class ConstantValueExpr implements ValueExpr {
    }
 
    @Override
-   public String toQueryString() {
+   public void appendQueryString(StringBuilder sb) {
       if (constantValue instanceof ParamPlaceholder) {
-         return constantValue.toString();
+         sb.append(constantValue);
+      } else if (constantValue instanceof String) {
+         sb.append("\"").append(constantValue).append("\"");
+      } else if (constantValue instanceof Character) {
+         sb.append("'").append(constantValue).append("'");
+      } else if (constantValue instanceof Date) {
+         sb.append("'").append(DateHelper.getJpaDateFormat().format((Date) constantValue)).append("'");
+      } else if (constantValue instanceof Instant) {
+         sb.append("'").append(constantValue).append("'");
+      } else {
+         sb.append(constantValue);
       }
-      if (constantValue instanceof String) {
-         return "\"" + constantValue + "\"";
-      }
-      if (constantValue instanceof Character) {
-         return "'" + constantValue + "'";
-      }
-      if (constantValue instanceof Date) {
-         return "'" + DateHelper.getJpaDateFormat().format((Date) constantValue) + "'";
-      }
-      if (constantValue instanceof Instant) {
-         return "'" + constantValue.toString() + "'";
-      }
-      return "" + constantValue;
    }
 }

@@ -41,7 +41,8 @@ public class IsNullExpr implements PrimaryPredicateExpr {
    }
 
    @Override
-   public String toQueryString() {
-      return child.toQueryString() + " IS NULL";
+   public void appendQueryString(StringBuilder sb) {
+      child.appendQueryString(sb);
+      sb.append(" IS NULL");
    }
 }

@@ -34,7 +34,9 @@ public final class FullTextBoostExpr implements BooleanExpr {
    }
 
    @Override
-   public String toQueryString() {
-      return "(" + child.toQueryString() + ")^" + boost;
+   public void appendQueryString(StringBuilder sb) {
+      sb.append("(");
+      child.appendQueryString(sb);
+      sb.append(")^").append(boost);
    }
 }

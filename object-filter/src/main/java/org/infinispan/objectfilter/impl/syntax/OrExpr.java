@@ -39,14 +39,14 @@ public final class OrExpr extends BooleanOperatorExpr {
    }
 
    @Override
-   public String toQueryString() {
-      StringBuilder sb = new StringBuilder();
+   public void appendQueryString(StringBuilder sb) {
       for (int i = 0; i < children.size(); i++) {
          if (i != 0) {
             sb.append(" OR ");
          }
-         sb.append('(').append(children.get(i).toQueryString()).append(')');
+         sb.append('(');
+         children.get(i).appendQueryString(sb);
+         sb.append(')');
       }
-      return sb.toString();
    }
 }
