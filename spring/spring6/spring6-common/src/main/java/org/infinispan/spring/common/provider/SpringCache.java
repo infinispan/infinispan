@@ -1,25 +1,28 @@
 package org.infinispan.spring.common.provider;
 
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.api.BasicCache;
+import org.infinispan.commons.util.NullValue;
+import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.springframework.cache.Cache;
+import org.springframework.cache.support.SimpleValueWrapper;
+import org.springframework.util.Assert;
+
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
-
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.api.BasicCache;
-import org.infinispan.commons.util.NullValue;
-import org.springframework.cache.Cache;
-import org.springframework.cache.support.SimpleValueWrapper;
-import org.springframework.util.Assert;
+import java.util.function.Supplier;
 
 /**
  * <p>
  * A {@link Cache <code>Cache</code>} implementation that delegates to a
- * {@link org.infinispan.Cache <code>org.infinispan.Cache</code>} instance supplied at construction
- * time.
+ * {@link BasicCache } instance supplied at construction time.
  * </p>
  *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
@@ -32,6 +35,7 @@ public class SpringCache implements Cache {
    private final long readTimeout;
    private final long writeTimeout;
    private final Map<Object, ReentrantLock> synchronousGetLocks = new ConcurrentHashMap<>();
+   private final Map<Object, CompletableFuture> computationResults = new ConcurrentHashMap<>();
 
    /**
     * @param nativeCache underlying cache
@@ -228,6 +232,10 @@ public class SpringCache implements Cache {
       return "InfinispanCache [nativeCache = " + this.nativeCache + "]";
    }
 
+   private CompletableFuture<ValueWrapper> encodedToValueWrapper(CompletableFuture<Object> cf) {
+      return cf.thenApply(value -> encodedToValueWrapper(value));
+   }
+
    private ValueWrapper encodedToValueWrapper(Object value) {
       if (value == null) {
          return null;
@@ -258,5 +266,50 @@ public class SpringCache implements Cache {
 
    public long getWriteTimeout() {
       return writeTimeout;
+   }
+
+   @Override
+   public CompletableFuture<?> retrieve(Object key) {
+      return encodedToValueWrapper(nativeCache.getAsync(key));
+   }
+
+   @Override
+   public <T> CompletableFuture<T> retrieve(Object key, Supplier<CompletableFuture<T>> valueLoaderAsync) {
+      CompletionStage<T> completionStage = CompletionStages.handleAndCompose(nativeCache.getAsync(key), (v1, ex1) -> {
+         if (ex1 != null) {
+            return CompletableFuture.failedFuture(ex1);
+         }
+
+         if (v1 != null) {
+            return CompletableFuture.completedFuture(decodeNull(v1));
+         }
+
+         CompletableFuture result = new CompletableFuture<>();
+         CompletableFuture<T> computedValue = computationResults.putIfAbsent(key, result);
+         if (computedValue != null) {
+            return computedValue;
+         }
+
+         return CompletionStages.handleAndCompose(valueLoaderAsync.get(), (newValue, ex2) -> {
+                     if (ex2 != null) {
+                        result.completeExceptionally(ex2);
+                        computationResults.remove(key);
+                     } else {
+                        nativeCache.putIfAbsentAsync(key, encodeNull(newValue))
+                              .whenComplete((existing, ex3) -> {
+                                 if (ex3 != null) {
+                                    result.completeExceptionally((Throwable) ex3);
+                                 } else if (existing == null) {
+                                    result.complete(newValue);
+                                 } else {
+                                    result.complete(decodeNull(existing));
+                                 }
+                                 computationResults.remove(key);
+                              });
+                     }
+                     return result;
+                  });
+         });
+      return (CompletableFuture<T>) completionStage;
    }
 }

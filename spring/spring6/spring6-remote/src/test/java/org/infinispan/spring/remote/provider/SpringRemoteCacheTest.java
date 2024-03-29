@@ -1,13 +1,5 @@
 package org.infinispan.spring.remote.provider;
 
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -27,6 +19,16 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
 
 @Test(testName = "spring.provider.SpringRemoteCacheTest", groups = "functional")
 public class SpringRemoteCacheTest extends SingleCacheManagerTest {
@@ -80,19 +82,19 @@ public class SpringRemoteCacheTest extends SingleCacheManagerTest {
       final SpringRemoteCacheManager springRemoteCacheManager = new SpringRemoteCacheManager(remoteCacheManager);
       final SpringCache cache = springRemoteCacheManager.getCache(TEST_CACHE_NAME);
 
-      CountDownLatch waitUntilThread1LocksValueGetter = new CountDownLatch(1);
-
-      //when
+      CyclicBarrier barrier = new CyclicBarrier(2);
       Future<String> thread1 = fork(() -> cache.get("test", () -> {
-         waitUntilThread1LocksValueGetter.countDown();
-//         /TimeUnit.MILLISECONDS.sleep(10);
+         barrier.await(10, TimeUnit.SECONDS);
+         barrier.await(10, TimeUnit.SECONDS);
          return "thread1";
       }));
 
-      Future<String> thread2 = fork(() -> {
-         waitUntilThread1LocksValueGetter.await();
-         return cache.get("test", () -> "thread2");
-      });
+      // Ensure first retrieval is in lambda before continuing
+      barrier.await(10, TimeUnit.SECONDS);
+
+      Future<String> thread2 = fork(() ->  cache.get("test", () -> "thread2"));
+
+      barrier.await(1, TimeUnit.SECONDS);
 
       String valueObtainedByThread1 = thread1.get();
       String valueObtainedByThread2 = thread2.get();
@@ -102,6 +104,49 @@ public class SpringRemoteCacheTest extends SingleCacheManagerTest {
       //then
       assertNotNull(valueAfterGetterIsDone);
       assertEquals("thread1", valueAfterGetterIsDone.get());
+      assertEquals("thread1", valueObtainedByThread1);
+      assertEquals("thread1", valueObtainedByThread2);
+   }
+
+   @Test(timeOut = 30_000)
+   public void testRetrieveMethods() throws Exception {
+      final SpringRemoteCacheManager springRemoteCacheManager = new SpringRemoteCacheManager(remoteCacheManager);
+      final SpringCache cache = springRemoteCacheManager.getCache(TEST_CACHE_NAME);
+
+      cache.put("test-one", "one");
+      String result = (String) ((Cache.ValueWrapper) cache.retrieve("test-one").get(1, TimeUnit.SECONDS)).get();
+      assertEquals("one", result);
+
+      result = cache.retrieve("test-two", () -> CompletableFuture.completedFuture("two")).get();
+      assertEquals("two", result);
+
+      CyclicBarrier barrier = new CyclicBarrier(2);
+
+      Future<String> thread1 = fork(() -> cache.retrieve("test-3", () -> {
+         try {
+            barrier.await(10, TimeUnit.SECONDS);
+            barrier.await(10, TimeUnit.SECONDS);
+         } catch (Exception e) {
+            return CompletableFuture.failedFuture(e);
+         }
+         return CompletableFuture.completedFuture("thread1");
+      }).get());
+
+      // Ensure first retrieval is in lambda before continuing
+      barrier.await(10, TimeUnit.SECONDS);
+
+      Future<String> thread2 = fork(() -> cache.retrieve("test-3",
+            () -> CompletableFuture.completedFuture("thread2")
+      ).get());
+
+      barrier.await(1, TimeUnit.SECONDS);
+
+      String valueObtainedByThread1 = thread1.get();
+      String valueObtainedByThread2 = thread2.get();
+
+      Cache.ValueWrapper valueAfterGetterIsDoneTest2 = cache.get("test-3");
+      assertNotNull(valueAfterGetterIsDoneTest2);
+      assertEquals("thread1", valueAfterGetterIsDoneTest2.get());
       assertEquals("thread1", valueObtainedByThread1);
       assertEquals("thread1", valueObtainedByThread2);
    }
