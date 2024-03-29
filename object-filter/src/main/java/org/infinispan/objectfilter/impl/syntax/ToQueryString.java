@@ -6,5 +6,18 @@ package org.infinispan.objectfilter.impl.syntax;
  */
 interface ToQueryString {
 
-   String toQueryString();
+   /**
+    * This method can be used only to log exceptions.
+    * In any other case, use {@link #appendQueryString(StringBuilder)}.
+    *
+    * @return the query string
+    */
+   default String toQueryString() {
+      StringBuilder sb = new StringBuilder();
+      appendQueryString(sb);
+      return sb.toString();
+   }
+
+   void appendQueryString(StringBuilder sb);
+
 }

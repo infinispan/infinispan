@@ -103,9 +103,9 @@ public final class ComparisonExpr implements PrimaryPredicateExpr {
    }
 
    @Override
-   public String toQueryString() {
-      StringBuilder sb = new StringBuilder();
-      sb.append(leftChild.toQueryString()).append(' ');
+   public void appendQueryString(StringBuilder sb) {
+      leftChild.appendQueryString(sb);
+      sb.append(' ');
       switch (type) {
          case LESS:
             sb.append('<');
@@ -126,7 +126,7 @@ public final class ComparisonExpr implements PrimaryPredicateExpr {
             sb.append('>');
             break;
       }
-      sb.append(' ').append(rightChild.toQueryString());
-      return sb.toString();
+      sb.append(' ');
+      rightChild.appendQueryString(sb);
    }
 }

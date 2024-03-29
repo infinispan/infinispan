@@ -41,8 +41,12 @@ public final class FullTextTermExpr implements PrimaryPredicateExpr {
    }
 
    @Override
-   public String toQueryString() {
-      return leftChild.toQueryString() + ":'" + term + "'" + (fuzzySlop != null ? "~" + fuzzySlop : "");
+   public void appendQueryString(StringBuilder sb) {
+      leftChild.appendQueryString(sb);
+      sb.append(":'").append(term).append("'");
+      if (fuzzySlop != null) {
+         sb.append("~").append(fuzzySlop);
+      }
    }
 
    public String getTerm(Map<String, Object> namedParameters) {

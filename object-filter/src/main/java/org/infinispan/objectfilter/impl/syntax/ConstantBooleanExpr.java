@@ -59,7 +59,11 @@ public final class ConstantBooleanExpr implements PrimaryPredicateExpr {
    }
 
    @Override
-   public String toQueryString() {
-      return constantValue ? "TRUE" : "FALSE";
+   public void appendQueryString(StringBuilder sb) {
+      if (constantValue) {
+         sb.append("TRUE");
+      } else {
+         sb.append("FALSE");
+      }
    }
 }
