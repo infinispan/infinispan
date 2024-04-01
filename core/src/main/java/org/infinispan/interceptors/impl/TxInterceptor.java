@@ -1,12 +1,14 @@
 package org.infinispan.interceptors.impl;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 
-import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
@@ -40,7 +42,11 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.stat.MetricInfo;
+import org.infinispan.commons.stat.TimerTracker;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configurations;
+import org.infinispan.configuration.global.GlobalMetricsConfiguration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.LocalTxInvocationContext;
@@ -49,8 +55,8 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.interceptors.DDAsyncInterceptor;
+import org.infinispan.interceptors.InvocationFinallyAction;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
@@ -58,12 +64,15 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
+import org.infinispan.metrics.impl.CustomMetricsSupplier;
+import org.infinispan.metrics.impl.MetricUtils;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.transaction.xa.TransactionXaAdapter;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.concurrent.locks.LockReleasedException;
 import org.infinispan.util.logging.Log;
@@ -75,23 +84,29 @@ import org.infinispan.util.logging.LogFactory;
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Mircea.Markus@jboss.com
- * @see org.infinispan.transaction.xa.TransactionXaAdapter
+ * @see TransactionXaAdapter
  * @since 9.0
  */
 @MBean(objectName = "Transactions", description = "Component that manages the cache's participation in JTA transactions.")
-public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatisticsExposer {
+public class TxInterceptor extends DDAsyncInterceptor implements JmxStatisticsExposer, CustomMetricsSupplier {
 
    private static final Log log = LogFactory.getLog(TxInterceptor.class);
+   private static final InvocationFinallyAction<?> NO_OP = (rCtx, rCommand, rv, throwable) -> {
+   };
 
    private final AtomicLong prepares = new AtomicLong(0);
    private final AtomicLong commits = new AtomicLong(0);
    private final AtomicLong rollbacks = new AtomicLong(0);
 
+   private TimerTracker preparesTracker = TimerTracker.NO_OP;
+   private TimerTracker commitsTracker = TimerTracker.NO_OP;
+   private TimerTracker rollbackTrackers = TimerTracker.NO_OP;
+
    @Inject CommandsFactory commandsFactory;
-   @Inject ComponentRef<Cache<K, V>> cache;
    @Inject RecoveryManager recoveryManager;
    @Inject TransactionTable txTable;
    @Inject KeyPartitioner keyPartitioner;
+   @Inject TimeService timeService;
 
    private boolean useOnePhaseForAutoCommitTx;
    private boolean useVersioning;
@@ -118,60 +133,59 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    private Object handlePrepareCommand(TxInvocationContext<?> ctx, PrepareCommand command) {
       // Debugging for ISPN-5379
       ctx.getCacheTransaction().freezeModifications();
+      if (this.statisticsEnabled) prepares.incrementAndGet();
+
+      if (ctx.isOriginLocal()) {
+         return invokeNextAndFinally(ctx, command, startSample(preparesTracker));
+      }
 
       //if it is remote and 2PC then first log the tx only after replying mods
-      if (this.statisticsEnabled) prepares.incrementAndGet();
-      if (!ctx.isOriginLocal()) {
-         ((RemoteTransaction) ctx.getCacheTransaction()).setLookedUpEntriesTopology(command.getTopologyId());
-         Object verifyResult = invokeNextAndHandle(ctx, command, (rCtx, rCommand, rv, throwable) -> {
-            if (!rCtx.isOriginLocal()) {
-               return verifyRemoteTransaction((RemoteTxInvocationContext) rCtx, rCommand, rv, throwable);
-            }
+      ((RemoteTransaction) ctx.getCacheTransaction()).setLookedUpEntriesTopology(command.getTopologyId());
+      Object verifyResult = invokeNextAndHandle(ctx, command, (rCtx, rCommand, rv, throwable) -> {
+         if (!rCtx.isOriginLocal()) {
+            return verifyRemoteTransaction((RemoteTxInvocationContext) rCtx, rCommand, rv, throwable);
+         }
 
-            return valueOrException(rv, throwable);
-         });
-         return makeStage(verifyResult).thenAccept(ctx, command, (rCtx, prepareCommand, rv) -> {
-            if (prepareCommand.isOnePhaseCommit()) {
-               txTable.remoteTransactionCommitted(prepareCommand.getGlobalTransaction(), true);
-            } else {
-               txTable.remoteTransactionPrepared(prepareCommand.getGlobalTransaction());
-            }
-         });
-      } else {
-         return invokeNext(ctx, command);
-      }
+         return valueOrException(rv, throwable);
+      });
+      return makeStage(verifyResult).thenAccept(ctx, command, (rCtx, prepareCommand, rv) -> {
+         if (prepareCommand.isOnePhaseCommit()) {
+            txTable.remoteTransactionCommitted(prepareCommand.getGlobalTransaction(), true);
+         } else {
+            txTable.remoteTransactionPrepared(prepareCommand.getGlobalTransaction());
+         }
+      });
    }
 
    @Override
    public Object visitCommitCommand(@SuppressWarnings("rawtypes") TxInvocationContext ctx, CommitCommand command) throws Throwable {
-      // TODO The local origin check is needed for CommitFailsTest, but it doesn't appear correct to roll back an in-doubt tx
-      if (!ctx.isOriginLocal()) {
-         GlobalTransaction gtx = ctx.getGlobalTransaction();
-         if (txTable.isTransactionCompleted(gtx)) {
-            if (log.isTraceEnabled()) log.tracef("Transaction %s already completed, skipping commit", gtx);
-            return null;
-         }
-
-         InvocationStage replayStage = replayRemoteTransactionIfNeeded((RemoteTxInvocationContext) ctx,
-               command.getTopologyId());
-         if (replayStage != null) {
-            return replayStage.andHandle(ctx, command, (rCtx, rCommand, rv, t) ->
-                  finishCommit((TxInvocationContext<?>) rCtx, rCommand));
-         } else {
-            return finishCommit(ctx, command);
-         }
+      if (this.statisticsEnabled) commits.incrementAndGet();
+      if (ctx.isOriginLocal()) {
+         return invokeNextAndFinally(ctx, command, startSample(commitsTracker));
       }
 
-      return finishCommit(ctx, command);
+      // TODO The local origin check is needed for CommitFailsTest, but it doesn't appear correct to roll back an in-doubt tx
+      GlobalTransaction gtx = ctx.getGlobalTransaction();
+      if (txTable.isTransactionCompleted(gtx)) {
+         if (log.isTraceEnabled()) log.tracef("Transaction %s already completed, skipping commit", gtx);
+         return null;
+      }
+
+      InvocationStage replayStage = replayRemoteTransactionIfNeeded((RemoteTxInvocationContext) ctx,
+            command.getTopologyId());
+      if (replayStage != null) {
+         return replayStage.andHandle(ctx, command, (rCtx, rCommand, rv, t) ->
+               finishCommit((TxInvocationContext<?>) rCtx, rCommand));
+      } else {
+         return finishCommit(ctx, command);
+      }
    }
 
-   private Object finishCommit(TxInvocationContext<?> ctx, VisitableCommand command) {
-      GlobalTransaction gtx = ctx.getGlobalTransaction();
-      if (this.statisticsEnabled) commits.incrementAndGet();
+   private Object finishCommit(TxInvocationContext<?> ctx, CommitCommand command) {
       return invokeNextThenAccept(ctx, command, (rCtx, rCommand, rv) -> {
-         if (!rCtx.isOriginLocal()) {
-            txTable.remoteTransactionCommitted(gtx, false);
-         }
+         assert !rCtx.isOriginLocal();
+         assert rCtx instanceof TxInvocationContext<?>;
+         txTable.remoteTransactionCommitted(((TxInvocationContext<?>) rCtx).getGlobalTransaction(), false);
       });
    }
 
@@ -179,10 +193,16 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
    public Object visitRollbackCommand(@SuppressWarnings("rawtypes") TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (this.statisticsEnabled) rollbacks.incrementAndGet();
       // The transaction was marked as completed in RollbackCommand.prepare()
-      if (!ctx.isOriginLocal()) {
+      InvocationFinallyAction<RollbackCommand> sample;
+      if (ctx.isOriginLocal()) {
+         sample = startSample(rollbackTrackers);
+      } else {
          txTable.remoteTransactionRollback(command.getGlobalTransaction());
+         //noinspection unchecked
+         sample = (InvocationFinallyAction<RollbackCommand>) NO_OP;
       }
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
+         sample.accept(rCtx, rCommand, rv, t);
          //for tx that rollback we do not send a TxCompletionNotification, so we should cleanup
          // the recovery info here
          if (recoveryManager != null) {
@@ -416,7 +436,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       return localTransaction;
    }
 
-   private boolean isNotValid(int status) {
+   private static boolean isNotValid(int status) {
       return status != Status.STATUS_ACTIVE
             && status != Status.STATUS_PREPARING
             && status != Status.STATUS_COMMITTING;
@@ -485,7 +505,7 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
 
    private Object verifyRemoteTransaction(RemoteTxInvocationContext ctx, AbstractTransactionBoundaryCommand command,
                                           Object rv, Throwable throwable) throws Throwable {
-      final GlobalTransaction globalTransaction = command.getGlobalTransaction();
+      GlobalTransaction globalTransaction = command.getGlobalTransaction();
 
       // It is also possible that the LCC timed out on the originator's end and this node has processed
       // a TxCompletionNotification.  So we need to check the presence of the remote transaction to
@@ -542,4 +562,57 @@ public class TxInterceptor<K, V> extends DDAsyncInterceptor implements JmxStatis
       }
       return null;
    }
+
+   private <C extends VisitableCommand> InvocationFinallyAction<C> startSample(TimerTracker tracker) {
+      //noinspection unchecked
+      return statisticsEnabled ? new Sample<>(tracker, timeService) : (InvocationFinallyAction<C>) NO_OP;
+   }
+
+   private void setPreparesTracker(TimerTracker tracker) {
+      this.preparesTracker = tracker;
+   }
+
+   private void setCommitsTracker(TimerTracker tracker) {
+      this.commitsTracker = tracker;
+   }
+
+   private void setRollbacksTracker(TimerTracker tracker) {
+      this.rollbackTrackers = tracker;
+   }
+
+   @Override
+   public Collection<MetricInfo> getCustomMetrics(GlobalMetricsConfiguration configuration) {
+      if (configuration.histograms()) {
+         return List.of(
+               MetricUtils.createTimer("PrepareTimes", "The prepare command times", TxInterceptor::setPreparesTracker, null),
+               MetricUtils.createTimer("CommitTimes", "The commit command times", TxInterceptor::setCommitsTracker, null),
+               MetricUtils.createTimer("RollbackTimes", "The rollback command times", TxInterceptor::setRollbacksTracker, null)
+         );
+      } else {
+         return List.of(
+               MetricUtils.createFunctionTimer("PrepareTimes", "The prepare command times", TxInterceptor::setPreparesTracker, null),
+               MetricUtils.createFunctionTimer("CommitTimes", "The commit command times", TxInterceptor::setCommitsTracker, null),
+               MetricUtils.createFunctionTimer("RollbackTimes", "The rollback command times", TxInterceptor::setRollbacksTracker, null)
+         );
+      }
+   }
+
+   private static class Sample<C extends VisitableCommand> implements InvocationFinallyAction<C> {
+
+      private final long startNanos;
+      private final TimerTracker tracker;
+      private final TimeService timeService;
+
+      private Sample(TimerTracker tracker, TimeService timeService) {
+         this.startNanos = timeService.time();
+         this.tracker = tracker;
+         this.timeService = timeService;
+      }
+
+      @Override
+      public void accept(InvocationContext rCtx, C rCommand, Object rv, Throwable throwable) {
+         tracker.update(timeService.timeDuration(startNanos, TimeUnit.NANOSECONDS), TimeUnit.NANOSECONDS);
+      }
+   }
+
 }
