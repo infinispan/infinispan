@@ -1,10 +1,12 @@
 package org.infinispan.server.functional.rest;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.infinispan.client.rest.RestResponse.NOT_FOUND;
 import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
 import static org.infinispan.client.rest.RestResponse.OK;
 import static org.infinispan.server.test.core.Common.assertStatus;
 import static org.infinispan.server.test.core.Common.sync;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -52,6 +54,11 @@ public class RestMetricsResourceIT {
    private static final Pattern PROMETHEUS_PATTERN = Pattern.compile("^(?<metric>[a-zA-Z_:][a-zA-Z0-9_:]*]*)(?<tags>\\{.*})?[\\t ]*(?<value>-?[0-9E.]*)[\\t ]*(?<timestamp>[0-9]+)?$");
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private static final int NUM_SERVERS = 3;
+   private static final String[] OWNERSHIP = new String[]{
+         "primary_owner",
+         "backup_owner",
+         "non_owner"
+   };
 
    // assertions
    private static final Consumer<AbstractDoubleAssert<?>> IS_POSITIVE = AbstractDoubleAssert::isPositive;
@@ -121,7 +128,7 @@ public class RestMetricsResourceIT {
    }
 
    @Test
-   public void testTimerMetrics() throws Exception {
+   public void testTimerMetrics() {
       RestClient client = SERVERS.rest().create();
       RestMetricsClient metricsClient = client.metrics();
 
@@ -189,6 +196,87 @@ public class RestMetricsResourceIT {
       assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_bytes_sent_count", IS_POSITIVE);
       assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_bytes_sent_sum", IS_POSITIVE);
       assertDetailedMetrics(metrics, "vendor_jgroups_o_i_s_f_r_RestMetricsResourceIT_stats_bytes_sent_max", IS_POSITIVE);
+   }
+
+   @Test
+   public void testDetailedKeyMetrics() throws Exception {
+      try (var client = SERVERS.rest().create()) {
+         // put some entries then check that the stats were updated
+         var cache = client.cache(SERVERS.getMethodName());
+
+         // store + read hit
+         assertStatus(NO_CONTENT, cache.post("hit", "value"));
+         assertStatus(OK, cache.get("hit"));
+
+         var metrics = getMetrics(client.metrics());
+
+         var reads = new int[OWNERSHIP.length];
+         var writes = new int[OWNERSHIP.length];
+
+         log.debugf("Test hit:%n%s", metrics.stream().map(Metric::toString).collect(Collectors.joining("\n")));
+
+         // unable to test remove hit since the return value is always ignored.
+         for (var i = 0; i < OWNERSHIP.length; ++i) {
+            reads[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_hit_%s_total", cache.name(), OWNERSHIP[i])).value;
+            writes[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_store_%s_total", cache.name(), OWNERSHIP[i])).value;
+         }
+
+         int sum = 0;
+         for (var v : reads) {
+            sum += v;
+         }
+         // only 1 operation was performed
+         assertEquals(1, sum);
+
+         // all arrays must have the same position set
+         assertArrayEquals(reads, writes);
+      }
+   }
+
+   @Test
+   public void testDetailedKeyMetrics2() throws Exception {
+      try (var client = SERVERS.rest().create()) {
+         // put some entries then check that the stats were updated
+         var cache = client.cache(SERVERS.getMethodName());
+
+
+         assertStatus(NO_CONTENT, cache.post("hit", "value"));
+         assertStatus(NOT_FOUND, cache.get("miss"));
+         // count as miss because if IGNORE_RETURN_VALUE flag.
+         assertStatus(NO_CONTENT, cache.remove("hit"));
+
+         var metrics = getMetrics(client.metrics());
+
+         var reads = new int[OWNERSHIP.length];
+         var writes = new int[OWNERSHIP.length];
+         var removes = new int[OWNERSHIP.length];
+
+         log.debugf("Test miss:%n%s", metrics.stream().map(Metric::toString).collect(Collectors.joining("\n")));
+
+         // unable to test remove hit since the return value is always ignored.
+         for (var i = 0; i < OWNERSHIP.length; ++i) {
+            reads[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_miss_%s_total", cache.name(), OWNERSHIP[i])).value;
+            writes[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_store_%s_total", cache.name(), OWNERSHIP[i])).value;
+            removes[i] = (int) findMetric(metrics, String.format("vendor_cache_manager_default_cache_%s_statistics_remove_miss_%s_total", cache.name(), OWNERSHIP[i])).value;
+         }
+
+         int sum = 0;
+         for (var v : reads) {
+            sum += v;
+         }
+         // 1 miss + 1 hit (remove performs a read before removing)
+         assertEquals(2, sum);
+
+         sum = 0;
+         for (var v : writes) {
+            sum += v;
+         }
+         // 1 write
+         assertEquals(1, sum);
+
+         // arrays must have the same position set
+         assertArrayEquals(writes, removes);
+      }
    }
 
    private static void assertDetailedMetrics(List<Metric> allMetrics, String name, Consumer<AbstractDoubleAssert<?>> consumer) {
@@ -304,13 +392,21 @@ public class RestMetricsResourceIT {
 
       @Override
       public boolean equals(Object o) {
-         if (this == o) return true;
-         if (o == null || getClass() != o.getClass()) return false;
+         if (this == o) {
+            return true;
+         }
+         if (o == null || getClass() != o.getClass()) {
+            return false;
+         }
 
          Metric metric = (Metric) o;
 
-         if (Double.compare(value, metric.value) != 0) return false;
-         if (!name.equals(metric.name)) return false;
+         if (Double.compare(value, metric.value) != 0) {
+            return false;
+         }
+         if (!name.equals(metric.name)) {
+            return false;
+         }
          return Objects.equals(rawTags, metric.rawTags);
       }
 
