@@ -121,7 +121,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
          attributes.add(MetricUtils.<RpcManagerImpl>createFunctionTimer("CrossSiteReplicationTimes",
                "Cross Site Replication Times",
                (rpcManager, timerTracker) -> rpcManager.xSiteMetricsCollector.registerTimer(timerTracker),
-               TimeUnit.NANOSECONDS, null));
+               null));
       }
 
       for (String site : xSiteMetricsCollector.sites()) {
@@ -150,7 +150,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
                attributes.add(MetricUtils.<RpcManagerImpl>createFunctionTimer("ReplicationTimesToSite",
                      "Replication times to " + site,
                      (rpcManager, timer) -> rpcManager.xSiteMetricsCollector.registerTimer(site, timer),
-                     TimeUnit.NANOSECONDS, tags));
+                     tags));
             }
          } else {
             String lSite = site.toLowerCase();
@@ -177,7 +177,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer, CustomM
                attributes.add(MetricUtils.<RpcManagerImpl>createFunctionTimer("ReplicationTimesTo_" + lSite,
                      "Replication times to " + site,
                      (rpcManager, timer) -> rpcManager.xSiteMetricsCollector.registerTimer(site, timer),
-                     TimeUnit.NANOSECONDS, tags));
+                     tags));
             }
          }
       }

@@ -1,7 +1,6 @@
 package org.infinispan.metrics.impl;
 
 import java.time.Duration;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.concurrent.atomic.LongAdder;
@@ -21,10 +20,8 @@ public class FunctionTimerTrackerImpl implements TimerTracker {
 
    private final LongAdder counter;
    private final DoubleAdder totalTime;
-   private final TimeUnit totalTimeTimeUnit;
 
-   FunctionTimerTrackerImpl(TimeUnit totalTimeTimeUnit) {
-      this.totalTimeTimeUnit = Objects.requireNonNull(totalTimeTimeUnit);
+   FunctionTimerTrackerImpl() {
       counter = new LongAdder();
       totalTime = new DoubleAdder();
    }
@@ -37,10 +34,11 @@ public class FunctionTimerTrackerImpl implements TimerTracker {
    @Override
    public void update(long value, TimeUnit timeUnit) {
       counter.increment();
-      totalTime.add(TimeUtils.convert(value, timeUnit, totalTimeTimeUnit));
+      totalTime.add(TimeUtils.convert(value, timeUnit, TimeUnit.NANOSECONDS));
    }
 
-   private long count() {
+   @Override
+   public long count() {
       return counter.sum();
    }
 
@@ -55,6 +53,6 @@ public class FunctionTimerTrackerImpl implements TimerTracker {
     * @return The builder instance.
     */
    public FunctionTimer.Builder<FunctionTimerTrackerImpl> create(String metricName) {
-      return FunctionTimer.builder(metricName, this, FunctionTimerTrackerImpl::count, FunctionTimerTrackerImpl::totalTime, totalTimeTimeUnit);
+      return FunctionTimer.builder(metricName, this, FunctionTimerTrackerImpl::count, FunctionTimerTrackerImpl::totalTime, TimeUnit.NANOSECONDS);
    }
 }

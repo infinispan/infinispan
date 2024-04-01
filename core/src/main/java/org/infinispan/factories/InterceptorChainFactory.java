@@ -141,7 +141,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
       // load the tx interceptor
       if (transactionMode.isTransactional())
-         interceptorChain.appendInterceptor(createInterceptor(new TxInterceptor<>(), TxInterceptor.class), false);
+         interceptorChain.appendInterceptor(createInterceptor(new TxInterceptor(), TxInterceptor.class), false);
 
       if (transactionMode.isTransactional()) {
          if (configuration.transaction().lockingMode() == LockingMode.PESSIMISTIC) {

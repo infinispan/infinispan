@@ -205,7 +205,7 @@ public class JGroupsMetricsManagerImpl implements JGroupsMetricsManager {
                DestinationMetricsBuilder::setBytesSentSummary, tags));
       } else {
          attrs.add(MetricUtils.createFunctionTimer("SyncRequests", "Number of synchronous requests to " + dst,
-               DestinationMetricsBuilder::setSyncRequests, TimeUnit.NANOSECONDS, tags));
+               DestinationMetricsBuilder::setSyncRequests, tags));
          attrs.add(MetricUtils.createCounter("BytesSent", "Bytes sent to " + dst,
                DestinationMetricsBuilder::setBytesSentCounter, tags));
       }
