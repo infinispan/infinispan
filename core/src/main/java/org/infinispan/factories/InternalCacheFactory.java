@@ -7,7 +7,6 @@ import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.util.Collection;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -19,6 +18,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
@@ -26,6 +26,7 @@ import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.context.Flag;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.context.impl.ImmutableContext;
+import org.infinispan.distribution.Ownership;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.eviction.impl.PassivationManager;
@@ -48,7 +49,6 @@ import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 import org.infinispan.upgrade.RollingUpgradeManager;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.xsite.XSiteAdminOperations;
 
 /**
@@ -376,7 +376,7 @@ public class InternalCacheFactory<K, V> {
          if (interceptor.getStatisticsEnabled()) {
             long beginTime = timeService.time();
             value = cache.get(key);
-            interceptor.addDataRead(value != null, timeService.timeDuration(beginTime, TimeUnit.NANOSECONDS));
+            interceptor.addDataRead(value != null, beginTime, Ownership.PRIMARY);
          } else {
             value = cache.get(key);
          }

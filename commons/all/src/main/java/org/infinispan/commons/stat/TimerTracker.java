@@ -21,6 +21,11 @@ public interface TimerTracker {
       public void update(long value, TimeUnit timeUnit) {
          //no-op
       }
+
+      @Override
+      public long count() {
+         return 0;
+      }
    };
 
    /**
@@ -37,5 +42,10 @@ public interface TimerTracker {
     * @param timeUnit The {@link TimeUnit} of the value.
     */
    void update(long value, TimeUnit timeUnit);
+
+   /**
+    * @return The amount of records.
+    */
+   long count();
 
 }

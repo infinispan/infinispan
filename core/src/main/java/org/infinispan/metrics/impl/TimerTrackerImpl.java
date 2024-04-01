@@ -32,4 +32,9 @@ public class TimerTrackerImpl implements TimerTracker {
    public void update(long value, TimeUnit timeUnit) {
       timer.record(Duration.ofNanos(timeUnit.toNanos(value)));
    }
+
+   @Override
+   public long count() {
+      return timer.count();
+   }
 }

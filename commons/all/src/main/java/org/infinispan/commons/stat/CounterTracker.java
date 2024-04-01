@@ -7,6 +7,18 @@ package org.infinispan.commons.stat;
  */
 public interface CounterTracker {
 
+   CounterTracker NO_OP = new CounterTracker() {
+      @Override
+      public void increment() {
+         //no-op
+      }
+
+      @Override
+      public void increment(double amount) {
+         //no-op
+      }
+   };
+
    /**
     * Update the counter by one.
     */

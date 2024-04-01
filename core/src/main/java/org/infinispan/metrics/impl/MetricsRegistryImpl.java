@@ -255,7 +255,7 @@ public class MetricsRegistryImpl implements MetricsRegistry {
    }
 
    private Meter.Id createFunctionTimer(Object instance, String prefix, FunctionTimerMetricInfo<Object> info, Map<String, String> tags) {
-      FunctionTimerTrackerImpl timerTracker = new FunctionTimerTrackerImpl(info.getTimeUnit());
+      FunctionTimerTrackerImpl timerTracker = new FunctionTimerTrackerImpl();
       info.accept(instance, timerTracker);
       return timerTracker.create(metricName(prefix, info))
             .description(info.getDescription())
