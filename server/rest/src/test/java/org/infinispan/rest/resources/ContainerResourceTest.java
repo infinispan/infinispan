@@ -5,6 +5,8 @@ import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_XML_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
+import static org.infinispan.commons.internal.InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME;
+import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
 import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.configuration.cache.CacheMode.DIST_SYNC;
 import static org.infinispan.configuration.cache.CacheMode.LOCAL;
@@ -277,7 +279,7 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
 
          // Assert that all of the existing caches and templates have a corresponding event
          List<String> elements = List.of(TEMPLATE_CONFIG, CACHE_1, CACHE_2, CACHE_3, DEFAULT_CACHE,
-               INVALID_CACHE, "___protobuf_metadata", "___script_cache");
+               INVALID_CACHE, PROTOBUF_METADATA_CACHE_NAME, SCRIPT_CACHE_NAME);
          List<KeyValuePair<String, String>> events = sseListener.poll(elements.size());
          Assertions.assertThat(events).extracting(KeyValuePair::getKey)
                .containsAnyOf("create-cache", "create-template");

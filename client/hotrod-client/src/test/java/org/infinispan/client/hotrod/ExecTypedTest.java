@@ -3,7 +3,7 @@ package org.infinispan.client.hotrod;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withScript;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
-import static org.infinispan.scripting.ScriptingManager.SCRIPT_CACHE;
+import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -74,7 +74,7 @@ public class ExecTypedTest extends MultiHotRodServersTest {
    }
 
    public void testLocalTypedExecPutGetEmptyString() {
-      withScript(addScriptClient.getCache(SCRIPT_CACHE), "/typed-put-get.js", scriptName -> {
+      withScript(addScriptClient.getCache(SCRIPT_CACHE_NAME), "/typed-put-get.js", scriptName -> {
          Map<String, String> params = new HashMap<>();
          params.put("k", "empty-key");
          params.put("v", "");
@@ -84,7 +84,7 @@ public class ExecTypedTest extends MultiHotRodServersTest {
    }
 
    public void testLocalTypedExecSize() {
-      withScript(addScriptClient.getCache(SCRIPT_CACHE), "/typed-size.js", scriptName -> {
+      withScript(addScriptClient.getCache(SCRIPT_CACHE_NAME), "/typed-size.js", scriptName -> {
          execClient.getCache(NAME).clear();
          String result = execClient.getCache(NAME).execute(scriptName, new HashMap<>());
          assertEquals("0", result);
@@ -92,21 +92,21 @@ public class ExecTypedTest extends MultiHotRodServersTest {
    }
 
    public void testLocalTypedExecWithCacheManager() {
-      withScript(addScriptClient.getCache(SCRIPT_CACHE), "/typed-cachemanager-put-get.js", scriptName -> {
+      withScript(addScriptClient.getCache(SCRIPT_CACHE_NAME), "/typed-cachemanager-put-get.js", scriptName -> {
          String result = execClient.getCache(NAME).execute(scriptName, new HashMap<>());
          assertEquals("a", result);
       });
    }
 
    public void testLocalTypedExecNullReturn() {
-      withScript(addScriptClient.getCache(SCRIPT_CACHE), "/typed-null-return.js", scriptName -> {
+      withScript(addScriptClient.getCache(SCRIPT_CACHE_NAME), "/typed-null-return.js", scriptName -> {
          String result = execClient.getCache(NAME).execute(scriptName, new HashMap<>());
          assertEquals(null, result);
       });
    }
 
    public void testDistTypedExecNullReturn() {
-      withScript(addScriptClient.getCache(SCRIPT_CACHE), "/typed-dist-null-return.js", scriptName -> {
+      withScript(addScriptClient.getCache(SCRIPT_CACHE_NAME), "/typed-dist-null-return.js", scriptName -> {
          String result = execClient.getCache(NAME).execute(scriptName, new HashMap<>());
          assertEquals("[null,null]", result.replaceAll("\\s", ""));
 
@@ -125,7 +125,7 @@ public class ExecTypedTest extends MultiHotRodServersTest {
    public void testLocalTypedExecPutGetWithListener() {
       EventLogListener<String> l = new EventLogListener<>(execClient.getCache(NAME));
       withClientListener(l, remote -> {
-         withScript(addScriptClient.getCache(SCRIPT_CACHE), "/typed-put-get.js", scriptName -> {
+         withScript(addScriptClient.getCache(SCRIPT_CACHE_NAME), "/typed-put-get.js", scriptName -> {
             Map<String, String> params = new HashMap<>();
             params.put("k", "local-typed-key-listen");
             params.put("v", "local-typed-value-listen");
@@ -137,7 +137,7 @@ public class ExecTypedTest extends MultiHotRodServersTest {
    }
 
    private void execPutGet(String path, ExecMode mode, String key, String value) {
-      withScript(addScriptClient.getCache(SCRIPT_CACHE), path, scriptName -> {
+      withScript(addScriptClient.getCache(SCRIPT_CACHE_NAME), path, scriptName -> {
          Map<String, String> params = new HashMap<>();
          params.put("k", key);
          params.put("v", value);

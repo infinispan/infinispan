@@ -3,6 +3,7 @@ package org.infinispan.server.hotrod.counter.impl;
 import static java.lang.Math.abs;
 import static org.infinispan.counter.api.CounterConfiguration.builder;
 import static org.infinispan.counter.impl.Util.awaitCounterOperation;
+import static org.infinispan.commons.internal.InternalCacheNames.CONFIG_STATE_CACHE_NAME;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
@@ -23,7 +24,6 @@ import org.infinispan.counter.api.CounterType;
 import org.infinispan.counter.api.Storage;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.counter.impl.manager.CounterConfigurationManager;
-import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.globalstate.ScopedState;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.counter.CounterManagerTestStrategy;
@@ -198,7 +198,7 @@ public class CounterManagerImplTestStrategy implements CounterManagerTestStrateg
       //we need to cleanup other tests counter from the caches.
       EmbeddedCacheManager cacheManager = cacheManagerSupplier.get();
       cacheManager.getCache(CounterModuleLifecycle.COUNTER_CACHE_NAME).clear();
-      cacheManager.<ScopedState, Object>getCache(GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME).keySet().removeIf(o -> CounterConfigurationManager.COUNTER_SCOPE.equals(o.getScope()));
+      cacheManager.<ScopedState, Object>getCache(CONFIG_STATE_CACHE_NAME).keySet().removeIf(o -> CounterConfigurationManager.COUNTER_SCOPE.equals(o.getScope()));
    }
 
 }

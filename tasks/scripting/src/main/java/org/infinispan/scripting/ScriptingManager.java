@@ -1,5 +1,7 @@
 package org.infinispan.scripting;
 
+import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
+
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -14,7 +16,8 @@ import org.infinispan.tasks.TaskContext;
  * @since 7.2
  */
 public interface ScriptingManager {
-   String SCRIPT_CACHE = "___script_cache";
+   @Deprecated(forRemoval = true, since = "15.0")
+   String SCRIPT_CACHE = SCRIPT_CACHE_NAME;
 
    /**
     * @deprecated since 12.1. Will be removed in 15.0. Use the CREATE permission instead.

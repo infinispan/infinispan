@@ -1,5 +1,6 @@
 package org.infinispan.scripting;
 
+import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
 import static org.testng.AssertJUnit.assertEquals;
 
 import javax.security.auth.Subject;
@@ -132,17 +133,17 @@ public class SecureScriptingTest extends AbstractScriptingTest {
 
    @Test(expectedExceptions = SecurityException.class)
    public void testUploadScriptDirectlyWithEXECNotManager() {
-      Security.doAs(PHEIDIPPIDES, () -> cacheManager.getCache(ScriptingManager.SCRIPT_CACHE).put("my_script", "1+1"));
+      Security.doAs(PHEIDIPPIDES, () -> cacheManager.getCache(SCRIPT_CACHE_NAME).put("my_script", "1+1"));
    }
 
    @Test(expectedExceptions = SecurityException.class)
    public void testRemoveScriptDirectlyWithEXECNotManager() {
-      Security.doAs(PHEIDIPPIDES, () -> cacheManager.getCache(ScriptingManager.SCRIPT_CACHE).remove("test.js"));
+      Security.doAs(PHEIDIPPIDES, () -> cacheManager.getCache(SCRIPT_CACHE_NAME).remove("test.js"));
    }
 
    @Test(expectedExceptions = SecurityException.class)
    public void testClearScriptDirectlyWithEXECNotManager() {
-      Security.doAs(PHEIDIPPIDES, () -> cacheManager.getCache(ScriptingManager.SCRIPT_CACHE).clear());
+      Security.doAs(PHEIDIPPIDES, () -> cacheManager.getCache(SCRIPT_CACHE_NAME).clear());
    }
 
    public void testScriptOnNonSecuredCache() {

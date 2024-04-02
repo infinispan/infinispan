@@ -5,6 +5,7 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClie
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withScript;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
 import static org.infinispan.commons.test.CommonsTestingUtil.loadFileAsString;
+import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -24,11 +25,11 @@ import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.scripting.utils.ScriptingUtils;
 import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.configuration.cache.IsolationLevel;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.DataProvider;
@@ -118,7 +119,7 @@ public class ExecTest extends MultiHotRodServersTest {
       defineInAll(cacheName, builder);
       try (InputStream is = this.getClass().getResourceAsStream("/distExec.js")) {
          String script = loadFileAsString(is);
-         manager(0).getCache(ScriptingManager.SCRIPT_CACHE).put("testScriptExecutionWithPassingParams.js", script);
+         manager(0).getCache(SCRIPT_CACHE_NAME).put("testScriptExecutionWithPassingParams.js", script);
       }
       populateCache(cacheName);
 
