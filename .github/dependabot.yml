@@ -7,15 +7,15 @@ updates:
       interval: daily
     open-pull-requests-limit: 10
     rebase-strategy: disabled
+    ignore:
+      - dependency-name: "io.opentelemetry:opentelemetry-api"
+      - update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
       interval: daily
     open-pull-requests-limit: 10
     rebase-strategy: disabled
-    ignore:
-      - dependency-name: "io.opentelemetry:opentelemetry-api"
-      - update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
   # 14.0.x
   - package-ecosystem: maven
     directory: "/"
