@@ -4,6 +4,7 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.loadScri
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withScript;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT_TYPE;
+import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
 import static org.infinispan.commons.test.CommonsTestingUtil.loadFileAsString;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
@@ -117,7 +118,7 @@ public class ExecTest extends MultiHotRodServersTest {
       defineInAll(cacheName, builder);
       try (InputStream is = this.getClass().getResourceAsStream("/distExec.js")) {
          String script = loadFileAsString(is);
-         manager(0).getCache(ScriptingManager.SCRIPT_CACHE).put("testScriptExecutionWithPassingParams.js", script);
+         manager(0).getCache(SCRIPT_CACHE_NAME).put("testScriptExecutionWithPassingParams.js", script);
       }
       populateCache(cacheName);
 

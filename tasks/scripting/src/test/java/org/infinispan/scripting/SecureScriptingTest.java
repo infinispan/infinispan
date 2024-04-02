@@ -1,5 +1,6 @@
 package org.infinispan.scripting;
 
+import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.security.PrivilegedAction;
@@ -150,7 +151,7 @@ public class SecureScriptingTest extends AbstractScriptingTest {
    @Test(expectedExceptions = PrivilegedActionException.class)
    public void testUploadScriptDirectlyWithEXECNotManager() throws Exception {
       Security.doAs(PHEIDIPPIDES, (PrivilegedExceptionAction<Void>) () -> {
-         cacheManager.getCache(ScriptingManager.SCRIPT_CACHE).put("my_script", "1+1");
+         cacheManager.getCache(SCRIPT_CACHE_NAME).put("my_script", "1+1");
          return null;
       });
    }
@@ -158,7 +159,7 @@ public class SecureScriptingTest extends AbstractScriptingTest {
    @Test(expectedExceptions = PrivilegedActionException.class)
    public void testRemoveScriptDirectlyWithEXECNotManager() throws Exception {
       Security.doAs(PHEIDIPPIDES, (PrivilegedExceptionAction<Void>) () -> {
-         cacheManager.getCache(ScriptingManager.SCRIPT_CACHE).remove("test.js");
+         cacheManager.getCache(SCRIPT_CACHE_NAME).remove("test.js");
          return null;
       });
    }
@@ -166,7 +167,7 @@ public class SecureScriptingTest extends AbstractScriptingTest {
    @Test(expectedExceptions = PrivilegedActionException.class)
    public void testClearScriptDirectlyWithEXECNotManager() throws Exception {
       Security.doAs(PHEIDIPPIDES, (PrivilegedExceptionAction<Void>) () -> {
-         cacheManager.getCache(ScriptingManager.SCRIPT_CACHE).clear();
+         cacheManager.getCache(SCRIPT_CACHE_NAME).clear();
          return null;
       });
    }

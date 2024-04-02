@@ -15,6 +15,7 @@ import javax.management.MBeanException;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.UserContextInitializerImpl;
 import org.infinispan.commons.util.ServiceFinder;
@@ -142,7 +143,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
    }
 
    /**
-    * Adds a stop dependency on ___protobuf_metadata cache. This must be invoked for each cache that uses protobuf.
+    * Adds a stop dependency on {@link InternalCacheNames#PROTOBUF_METADATA_CACHE_NAME} cache. This must be invoked for each cache that uses protobuf.
     *
     * @param dependantCacheName the name of the cache depending on the protobuf metadata cache
     */

@@ -1,5 +1,7 @@
 package org.infinispan.scripting.impl;
 
+import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
+
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -80,7 +82,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
 
    Cache<String, String> getScriptCache() {
       if (scriptCache == null && cacheManager != null) {
-         scriptCache = SecurityActions.getCache(cacheManager, SCRIPT_CACHE);
+         scriptCache = SecurityActions.getCache(cacheManager, SCRIPT_CACHE_NAME);
       }
       return scriptCache;
    }

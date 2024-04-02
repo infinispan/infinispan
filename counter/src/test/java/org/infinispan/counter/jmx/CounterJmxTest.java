@@ -1,8 +1,9 @@
 package org.infinispan.counter.jmx;
 
+import static org.infinispan.commons.internal.InternalCacheNames.CONFIG_STATE_CACHE_NAME;
+import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.infinispan.counter.api.CounterConfiguration.builder;
 import static org.infinispan.counter.impl.Util.awaitCounterOperation;
-import static org.infinispan.commons.test.Exceptions.expectException;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -35,7 +36,6 @@ import org.infinispan.counter.exception.CounterOutOfBoundsException;
 import org.infinispan.counter.impl.BaseCounterTest;
 import org.infinispan.counter.impl.CounterModuleLifecycle;
 import org.infinispan.counter.impl.manager.EmbeddedCounterManager;
-import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.AssertJUnit;
@@ -111,7 +111,7 @@ public class CounterJmxTest extends BaseCounterTest {
    @Override
    protected void clearContent() throws Throwable {
       findCache(CounterModuleLifecycle.COUNTER_CACHE_NAME).ifPresent(Cache::clear);
-      findCache(GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME).ifPresent(Cache::clear);
+      findCache(CONFIG_STATE_CACHE_NAME).ifPresent(Cache::clear);
       super.clearContent();
    }
 

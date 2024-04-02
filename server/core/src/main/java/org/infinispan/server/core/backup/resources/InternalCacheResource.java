@@ -1,5 +1,7 @@
 package org.infinispan.server.core.backup.resources;
 
+import static org.infinispan.commons.internal.InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME;
+import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
 import static org.infinispan.server.core.BackupManager.Resources.Type.PROTO_SCHEMAS;
 import static org.infinispan.server.core.BackupManager.Resources.Type.TASKS;
 
@@ -35,8 +37,8 @@ class InternalCacheResource extends AbstractContainerResource {
    private static final Map<BackupManager.Resources.Type, String> cacheMap = new HashMap<>(2);
 
    static {
-      cacheMap.put(PROTO_SCHEMAS, "___protobuf_metadata");
-      cacheMap.put(TASKS, "___script_cache");
+      cacheMap.put(PROTO_SCHEMAS, PROTOBUF_METADATA_CACHE_NAME);
+      cacheMap.put(TASKS, SCRIPT_CACHE_NAME);
    }
 
    private final AdvancedCache<String, String> cache;

@@ -15,7 +15,6 @@ import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
 import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
@@ -34,6 +33,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
@@ -53,7 +53,6 @@ import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.query.remote.ProtobufMetadataManager;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.impl.logging.Log;
 import org.infinispan.util.KeyValuePair;
 
@@ -122,10 +121,7 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
-         final String key = (String) command.getKey();
-         if (shouldIntercept(key)) {
-            registerProtoFile(key, (String) command.getValue(), EMPTY_CALLBACK);
-         }
+         registerSingleProtoFile(command.getKey(), command.getValue());
          return null;
       }
 
@@ -134,9 +130,13 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
          final Map<Object, Object> map = command.getMap();
          FileDescriptorSource source = new FileDescriptorSource().withProgressCallback(EMPTY_CALLBACK);
          for (Object key : map.keySet()) {
-            if (shouldIntercept(key)) {
-               source.addProtoFile((String) key, (String) map.get(key));
+            var protoKey = validateKey(key);
+            if (isErrorKeySuffix(protoKey)) {
+               continue;
             }
+            var value = validateValue(map.get(key));
+            log.debugf("Registering proto file '%s': %s", protoKey, value);
+            source.addProtoFile(protoKey, value);
          }
          registerFileDescriptorSource(source, source.getFiles().keySet().toString());
          return null;
@@ -144,30 +144,28 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
       @Override
       public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) {
-         final String key = (String) command.getKey();
-         if (shouldIntercept(key)) {
-            registerProtoFile(key, (String) command.getNewValue(), EMPTY_CALLBACK);
-         }
+         registerSingleProtoFile(command.getKey(), command.getNewValue());
          return null;
       }
 
       @Override
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) {
-         final String key = (String) command.getKey();
-         if (shouldIntercept(key)) {
-            if (serializationContext.getFileDescriptors().containsKey(key)) {
-               serializationContext.unregisterProtoFile(key);
-            }
+         var key = validateKey(command.getKey());
+         if (isErrorKeySuffix(key)) {
+            return null;
          }
+         validateKeySuffix(key);
+         removeProtoFile(key);
          return null;
       }
 
-      @Override
-      public Object visitClearCommand(InvocationContext ctx, ClearCommand command) {
-         for (String fileName : serializationContext.getFileDescriptors().keySet()) {
-            serializationContext.unregisterProtoFile(fileName);
+      private void registerSingleProtoFile(Object key, Object value) {
+         var protoKey = validateKey(key);
+         if (isErrorKeySuffix(protoKey)) {
+            return;
          }
-         return null;
+         validateKeySuffix(protoKey);
+         registerProtoFile(protoKey, validateValue(value), EMPTY_CALLBACK);
       }
    };
 
@@ -203,24 +201,21 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
-      final Object key = command.getKey();
-      if (!(key instanceof String)) {
-         throw log.keyMustBeString(key.getClass());
-      }
-
-      if (!shouldIntercept(key)) {
+      if (!ctx.isOriginLocal()) {
          return invokeNext(ctx, command);
       }
+      var key = validateKey(command.getKey());
+
+      if (isErrorKeySuffix(key)) {
+         return invokeNext(ctx, command);
+      }
+      validateKeySuffix(key);
 
       InvocationStage stage;
-      if (ctx.isOriginLocal() && !command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER | FlagBitSets.SKIP_LOCKING)) {
-         if (!((String) key).endsWith(PROTO_KEY_SUFFIX)) {
-            throw log.keyMustBeStringEndingWithProto(key);
-         }
 
+      if (!command.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER | FlagBitSets.SKIP_LOCKING)) {
          // lock global errors key
-         LockControlCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, command.getFlagsBitSet(), null);
-         stage = invoker.running().invokeStage(ctx, cmd);
+         stage = invoker.running().invokeStage(ctx, buildLockCommand(command.getFlagsBitSet()));
       } else {
          stage = SyncInvocationStage.completedNullStage();
       }
@@ -229,26 +224,17 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
             .thenApply(ctx, command, this::handlePutKeyValueResult);
    }
 
-   private InvocationStage handlePutKeyValueResult(InvocationContext ctx, PutKeyValueCommand putKeyValueCommand, Object rv) {
-      if (putKeyValueCommand.isSuccessful()) {
-         // StateConsumerImpl uses PutKeyValueCommands with InternalCacheEntry
-         // values in order to preserve timestamps, so read the value from the context
-         Object key = putKeyValueCommand.getKey();
-         Object value = ctx.lookupEntry(key).getValue();
-         if (!(value instanceof String)) {
-            throw log.valueMustBeString(value.getClass());
-         }
+   private InvocationStage handlePutKeyValueResult(InvocationContext ctx, PutKeyValueCommand cmd, Object rv) {
+      assert ctx.isOriginLocal();
+      if (cmd.isSuccessful()) {
+         var key = validateKey(cmd.getKey());
+         var value = validateValue(cmd.getValue());
 
-         long flagsBitSet = copyFlags(putKeyValueCommand);
-         if (ctx.isOriginLocal() && !putKeyValueCommand.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
-            ProgressCallback progressCallback = new ProgressCallback();
-            registerProtoFile((String) key, (String) value, progressCallback);
-
-            List<KeyValuePair<String, String>> errorUpdates = computeErrorUpdates(progressCallback);
-            InvocationStage updateStage = updateSchemaErrorsIterator(ctx, flagsBitSet, errorUpdates.iterator());
-            return makeStage(updateStage.thenReturn(ctx, putKeyValueCommand, rv));
+         if (cmd.hasAnyFlag(FlagBitSets.PUT_FOR_STATE_TRANSFER)) {
+            registerProtoFile(key, value, EMPTY_CALLBACK);
+            return makeStage(rv);
          }
-         registerProtoFile((String) key, (String) value, EMPTY_CALLBACK);
+         return handleLocalProtoFileRegister(ctx, key, value, copyFlags(cmd));
       }
       return makeStage(rv);
    }
@@ -276,60 +262,35 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       return errorUpdates;
    }
 
-   /**
-    * For preload, we need to copy the CACHE_MODE_LOCAL flag from the put command.
-    * But we also need to remove the SKIP_CACHE_STORE flag, so that existing .errors keys are updated.
-    */
-   private long copyFlags(FlagAffectedCommand command) {
-      return command.getFlagsBitSet() | FlagBitSets.IGNORE_RETURN_VALUES & ~FlagBitSets.SKIP_CACHE_STORE;
-   }
-
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) {
       if (!ctx.isOriginLocal()) {
          return invokeNext(ctx, command);
       }
 
-      final Map<Object, Object> map = command.getMap();
-
-      FileDescriptorSource source = new FileDescriptorSource();
-      for (Object key : map.keySet()) {
-         final Object value = map.get(key);
-         if (!(key instanceof String)) {
-            throw log.keyMustBeString(key.getClass());
-         }
-         if (!(value instanceof String)) {
-            throw log.valueMustBeString(value.getClass());
-         }
-         if (shouldIntercept(key)) {
-            if (!((String) key).endsWith(PROTO_KEY_SUFFIX)) {
-               throw log.keyMustBeStringEndingWithProto(key);
-            }
-            source.addProtoFile((String) key, (String) value);
-         }
-      }
-
       // lock global errors key
-      VisitableCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, command.getFlagsBitSet(), null);
-      InvocationStage stage = invoker.running().invokeStage(ctx, cmd);
+      InvocationStage stage = invoker.running().invokeStage(ctx, buildLockCommand(command.getFlagsBitSet()));
+      return makeStage(asyncInvokeNext(ctx, command, stage)).thenApply(ctx, command, this::handleLocalPutMapResult);
+   }
 
-      return makeStage(asyncInvokeNext(ctx, command, stage)).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         long flagsBitSet = copyFlags(rCommand);
-         ProgressCallback progressCallback = null;
-         if (rCtx.isOriginLocal()) {
-            progressCallback = new ProgressCallback();
-            source.withProgressCallback(progressCallback);
-         } else {
-            source.withProgressCallback(EMPTY_CALLBACK);
+   private InvocationStage handleLocalPutMapResult(InvocationContext ctx, PutMapCommand cmd, Object ignored) {
+      assert ctx.isOriginLocal();
+      FileDescriptorSource source = new FileDescriptorSource();
+      for (Object key : cmd.getMap().keySet()) {
+         var protoKey = validateKey(key);
+         var value = validateValue(cmd.getMap().get(key));
+         if (isErrorKeySuffix(protoKey)) {
+            continue;
          }
-         registerFileDescriptorSource(source, source.getFiles().keySet().toString());
-
-         if (progressCallback != null) {
-            List<KeyValuePair<String, String>> errorUpdates = computeErrorUpdates(progressCallback);
-            return updateSchemaErrorsIterator(rCtx, flagsBitSet, errorUpdates.iterator());
-         }
-         return InvocationStage.completedNullStage();
-      });
+         validateKeySuffix(protoKey);
+         log.debugf("Registering proto file '%s': %s", protoKey, value);
+         source.addProtoFile(protoKey, value);
+      }
+      var callback = new ProgressCallback();
+      source.withProgressCallback(callback);
+      registerFileDescriptorSource(source, source.getFiles().keySet().toString());
+      List<KeyValuePair<String, String>> errorUpdates = computeErrorUpdates(callback);
+      return updateSchemaErrorsIterator(ctx, copyFlags(cmd), errorUpdates.iterator());
    }
 
    private void registerFileDescriptorSource(FileDescriptorSource source, String fileNameString) {
@@ -349,33 +310,30 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       if (!ctx.isOriginLocal()) {
          return invokeNext(ctx, command);
       }
-      if (!(command.getKey() instanceof String)) {
-         throw log.keyMustBeString(command.getKey().getClass());
-      }
-      String key = (String) command.getKey();
-      if (!shouldIntercept(key)) {
+      var key = validateKey(command.getKey());
+      if (isErrorKeySuffix(key)) {
          return invokeNext(ctx, command);
       }
       // lock global errors key
-      long flagsBitSet = copyFlags(command);
-      LockControlCommand lockCommand = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, flagsBitSet, null);
-
-      InvocationStage stage = invoker.running().invokeStage(ctx, lockCommand);
+      InvocationStage stage = invoker.running().invokeStage(ctx, buildLockCommand(copyFlags(command)));
       stage = stage.thenApplyMakeStage(ctx, command, (rCtx, rCommand, __) -> {
-         if (serializationContext.getFileDescriptors().containsKey(key)) {
-            serializationContext.unregisterProtoFile(key);
-         }
-         if (serializationContextRegistry.getUserCtx().getFileDescriptors().containsKey(key)) {
-            serializationContextRegistry.removeProtoFile(SerializationContextRegistry.MarshallerType.USER, key);
-         }
-
+         removeProtoFile(validateKey(rCommand.getKey()));
          // put error key for all unresolved files and remove error key for all resolved files
          // Error keys to be removed have a null value
          List<KeyValuePair<String, String>> errorUpdates = computeErrorUpdatesAfterRemove(key);
-         return updateSchemaErrorsIterator(rCtx, flagsBitSet, errorUpdates.iterator());
+         return updateSchemaErrorsIterator(rCtx, copyFlags(rCommand), errorUpdates.iterator());
       });
 
       return asyncInvokeNext(ctx, command, stage);
+   }
+
+   private void removeProtoFile(String key) {
+      if (serializationContext.getFileDescriptors().containsKey(key)) {
+         serializationContext.unregisterProtoFile(key);
+      }
+      if (serializationContextRegistry.getUserCtx().getFileDescriptors().containsKey(key)) {
+         serializationContextRegistry.removeProtoFile(SerializationContextRegistry.MarshallerType.USER, key);
+      }
    }
 
    private List<KeyValuePair<String, String>> computeErrorUpdatesAfterRemove(String key) {
@@ -425,44 +383,25 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) {
-      final Object key = command.getKey();
-      final Object value = command.getNewValue();
-
       if (!ctx.isOriginLocal()) {
          return invokeNext(ctx, command);
       }
-      if (!(key instanceof String)) {
-         throw log.keyMustBeString(key.getClass());
-      }
-      if (!(value instanceof String)) {
-         throw log.valueMustBeString(value.getClass());
-      }
-      if (!shouldIntercept(key)) {
+      var key = validateKey(command.getKey());
+      if (isErrorKeySuffix(key)) {
          return invokeNext(ctx, command);
       }
-      if (!((String) key).endsWith(PROTO_KEY_SUFFIX)) {
-         throw log.keyMustBeStringEndingWithProto(key);
-      }
+      validateKeySuffix(key);
 
       // lock global errors key
-      LockControlCommand cmd = commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, command.getFlagsBitSet(),
-                                                                       null);
-      InvocationStage stage = invoker.running().invokeStage(ctx, cmd);
+      InvocationStage stage = invoker.running().invokeStage(ctx, buildLockCommand(copyFlags(command)));
 
-      return makeStage(asyncInvokeNext(ctx, command, stage)).thenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         if (rCommand.isSuccessful()) {
-            long flagsBitSet = copyFlags(rCommand);
-            if (rCtx.isOriginLocal()) {
-               ProgressCallback progressCallback = new ProgressCallback();
-               registerProtoFile((String) key, (String) value, progressCallback);
-
-               List<KeyValuePair<String, String>> errorUpdates = computeErrorUpdates(progressCallback);
-               return updateSchemaErrorsIterator(rCtx, flagsBitSet, errorUpdates.iterator());
-            }
-            registerProtoFile((String) key, (String) value, EMPTY_CALLBACK);
-         }
-         return InvocationStage.completedNullStage();
-      });
+      return makeStage(asyncInvokeNext(ctx, command, stage))
+            .thenApply(ctx, command, (rCtx, rCommand, rv) -> {
+               assert rCtx.isOriginLocal();
+               return rCommand.isSuccessful() ?
+                     handleLocalProtoFileRegister(rCtx, validateKey(rCommand.getKey()), validateValue(rCommand.getNewValue()), copyFlags(rCommand)) :
+                     InvocationStage.completedNullStage();
+            });
    }
 
    @Override
@@ -470,12 +409,11 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       for (String fileName : serializationContext.getFileDescriptors().keySet()) {
          serializationContext.unregisterProtoFile(fileName);
       }
+      for (var name : serializationContextRegistry.getUserCtx().getFileDescriptors().keySet()) {
+         serializationContextRegistry.removeProtoFile(SerializationContextRegistry.MarshallerType.USER, name);
+      }
 
       return invokeNext(ctx, command);
-   }
-
-   private boolean shouldIntercept(Object key) {
-      return !((String) key).endsWith(ERRORS_KEY_SUFFIX);
    }
 
    // --- unsupported operations: compute, computeIfAbsent, eval or any other functional map commands  ---
@@ -488,25 +426,16 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       return handleUnsupportedCommand(command);
    }
 
-   private InvocationStage handleComputeCommandResult(InvocationContext ctx, ComputeCommand cmd, Object rv) {
+   private Object handleComputeCommandResult(InvocationContext ctx, ComputeCommand cmd, Object rv) {
       if (cmd.isSuccessful()) {
-         Object key = cmd.getKey();
-         if (!(key instanceof String)) {
-            throw log.keyMustBeString(key.getClass());
-         }
-         if (!(rv instanceof String)) {
-            throw log.valueMustBeString(rv.getClass());
-         }
+         var key = validateKey(cmd.getKey());
+         var value = validateValue(rv);
          if (ctx.isOriginLocal()) {
-            ProgressCallback progressCallback = new ProgressCallback();
-            registerProtoFile((String) key, (String) rv, progressCallback);
-            List<KeyValuePair<String, String>> errorUpdates = computeErrorUpdates(progressCallback);
-            InvocationStage updateStage = updateSchemaErrorsIterator(ctx, 0, errorUpdates.iterator());
-            return makeStage(updateStage.thenReturn(ctx, cmd, rv));
+            return handleLocalProtoFileRegister(ctx, key, value, 0);
          }
-         registerProtoFile((String) key, (String) rv, EMPTY_CALLBACK);
+         registerProtoFile(key, value, EMPTY_CALLBACK);
       }
-      return makeStage(rv);
+      return rv;
    }
 
    @Override
@@ -554,7 +483,50 @@ final class ProtobufMetadataManagerInterceptor extends BaseCustomAsyncIntercepto
       return handleUnsupportedCommand(command);
    }
 
-   private Object handleUnsupportedCommand(ReplicableCommand command) {
-      throw log.cacheDoesNotSupportCommand(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME, command.getClass().getName());
+   private static Object handleUnsupportedCommand(ReplicableCommand command) {
+      throw log.cacheDoesNotSupportCommand(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME, command.getClass().getName());
+   }
+
+   private InvocationStage handleLocalProtoFileRegister(InvocationContext ctx, String key, String value, long flags) {
+      ProgressCallback progressCallback = new ProgressCallback();
+      registerProtoFile(key, value, progressCallback);
+      List<KeyValuePair<String, String>> errorUpdates = computeErrorUpdates(progressCallback);
+      return updateSchemaErrorsIterator(ctx, flags, errorUpdates.iterator());
+   }
+
+   private LockControlCommand buildLockCommand(long flags) {
+      return commandsFactory.buildLockControlCommand(ERRORS_KEY_SUFFIX, flags, null);
+   }
+
+   private static String validateKey(Object key) {
+      if (key instanceof String) {
+         return (String) key;
+      }
+      throw log.keyMustBeString(key.getClass());
+   }
+
+   private static String validateValue(Object value) {
+      if (value instanceof String) {
+         return (String) value;
+      }
+      throw log.valueMustBeString(value.getClass());
+   }
+
+   private static void validateKeySuffix(String key) {
+      if (!key.endsWith(PROTO_KEY_SUFFIX)) {
+         throw log.keyMustBeStringEndingWithProto(key);
+      }
+   }
+
+   private static boolean isErrorKeySuffix(String key) {
+      return key.endsWith(ERRORS_KEY_SUFFIX);
+   }
+
+   /**
+    * For preload, we need to copy the CACHE_MODE_LOCAL flag from the put command.
+    * But we also need to remove the SKIP_CACHE_STORE flag, so that existing .errors keys are updated.
+    */
+   private static long copyFlags(FlagAffectedCommand command) {
+      return command.getFlagsBitSet() | FlagBitSets.IGNORE_RETURN_VALUES & ~FlagBitSets.SKIP_CACHE_STORE;
    }
 }

@@ -1,5 +1,7 @@
 package org.infinispan.server.test.core;
 
+import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
+
 import java.io.Closeable;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -26,7 +28,6 @@ import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.test.Eventually;
 import org.infinispan.commons.util.Util;
 import org.infinispan.counter.api.CounterManager;
-import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
 import org.infinispan.server.test.api.RestTestClientDriver;
 
@@ -107,7 +108,7 @@ public class TestClient {
    }
 
    public String addScript(RemoteCacheManager remoteCacheManager, String script) {
-      RemoteCache<String, String> scriptCache = remoteCacheManager.getCache(ScriptingManager.SCRIPT_CACHE);
+      RemoteCache<String, String> scriptCache = remoteCacheManager.getCache(SCRIPT_CACHE_NAME);
       try (InputStream in = this.getClass().getClassLoader().getResourceAsStream(script)) {
          scriptCache.put(getMethodName(), CommonsTestingUtil.loadFileAsString(in));
       }  catch (HotRodClientException e) {
