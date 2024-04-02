@@ -6,6 +6,8 @@ import static org.infinispan.client.rest.RestResponse.CREATED;
 import static org.infinispan.client.rest.RestResponse.NOT_FOUND;
 import static org.infinispan.client.rest.RestResponse.NO_CONTENT;
 import static org.infinispan.client.rest.RestResponse.OK;
+import static org.infinispan.commons.internal.InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME;
+import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.server.core.BackupManager.Resources.Type.CACHES;
 import static org.infinispan.server.core.BackupManager.Resources.Type.COUNTERS;
@@ -44,8 +46,8 @@ import java.util.zip.ZipFile;
 import org.infinispan.cli.commands.CLI;
 import org.infinispan.cli.impl.AeshDelegatingShell;
 import org.infinispan.client.rest.RestCacheClient;
-import org.infinispan.client.rest.RestContainerClient;
 import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestContainerClient;
 import org.infinispan.client.rest.RestCounterClient;
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
@@ -153,7 +155,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
             },
             client -> {
                // Assert that only caches and the specified "weak-volatile" counter have been backed up. Internal caches will still be present
-               assertStatusAndBodyEquals(OK, "[\"___protobuf_metadata\",\"___script_cache\",\"cache1\",\"memcachedCache\",\"respCache\"]", client.caches());
+               assertStatusAndBodyEquals(OK, "[\"" + PROTOBUF_METADATA_CACHE_NAME + "\",\"" + SCRIPT_CACHE_NAME + "\",\"cache1\",\"memcachedCache\",\"respCache\"]", client.caches());
                assertStatusAndBodyEquals(OK, "[\"weak-volatile\"]", client.counters());
                assertStatus(NOT_FOUND, client.schemas().get("schema.proto"));
                assertStatusAndBodyEquals(OK, "[]", client.tasks().list(RestTaskClient.ResultType.USER));
@@ -216,7 +218,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
                assertEquals("scripts/test.js", tasks.iterator().next().at("name").asString());
 
                // Assert that no other content has been restored
-               assertStatusAndBodyEquals(OK, "[\"___protobuf_metadata\",\"___script_cache\",\"memcachedCache\",\"respCache\"]", client.caches());
+               assertStatusAndBodyEquals(OK, "[\"" + PROTOBUF_METADATA_CACHE_NAME + "\",\"" + SCRIPT_CACHE_NAME + "\",\"memcachedCache\",\"respCache\"]", client.caches());
                assertStatusAndBodyEquals(OK, "[]", client.counters());
                assertStatus(NOT_FOUND, client.schemas().get("schema.proto"));
             },

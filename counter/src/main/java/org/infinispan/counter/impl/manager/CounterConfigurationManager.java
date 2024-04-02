@@ -3,6 +3,7 @@ package org.infinispan.counter.impl.manager;
 import static org.infinispan.counter.configuration.ConvertUtil.parsedConfigToConfig;
 import static org.infinispan.counter.impl.Utils.validateStrongCounterBounds;
 import static org.infinispan.counter.logging.Log.CONTAINER;
+import static org.infinispan.commons.internal.InternalCacheNames.CONFIG_STATE_CACHE_NAME;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -25,7 +26,6 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.globalstate.ScopeFilter;
 import org.infinispan.globalstate.ScopedState;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -84,7 +84,7 @@ public class CounterConfigurationManager {
    @Start
    public void start() {
       stateCache = cacheManager
-            .<ScopedState, CounterConfiguration>getCache(GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME)
+            .<ScopedState, CounterConfiguration>getCache(CONFIG_STATE_CACHE_NAME)
             .getAdvancedCache();
       listener = new CounterConfigurationListener();
       Map<String, CounterConfiguration> persisted = storage.loadAll();

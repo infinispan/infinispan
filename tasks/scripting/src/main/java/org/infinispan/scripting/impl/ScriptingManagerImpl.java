@@ -1,13 +1,6 @@
 package org.infinispan.scripting.impl;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.function.BiFunction;
-import java.util.function.Function;
+import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
 
 import javax.script.Bindings;
 import javax.script.Compilable;
@@ -16,6 +9,14 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import javax.script.SimpleBindings;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -81,7 +82,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
 
    Cache<String, String> getScriptCache() {
       if (scriptCache == null && cacheManager != null) {
-         scriptCache = SecurityActions.getCache(cacheManager, SCRIPT_CACHE);
+         scriptCache = SecurityActions.getCache(cacheManager, SCRIPT_CACHE_NAME);
       }
       return scriptCache;
    }

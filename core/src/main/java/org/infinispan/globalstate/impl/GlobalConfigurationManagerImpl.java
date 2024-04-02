@@ -15,7 +15,9 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.io.ConfigurationReader;
+import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -39,7 +41,6 @@ import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.ByteString;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -100,7 +101,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       }
 
       internalCacheRegistry.registerInternalCache(
-            CONFIG_STATE_CACHE_NAME,
+            InternalCacheNames.CONFIG_STATE_CACHE_NAME,
             new ConfigurationBuilder().build(),
             EnumSet.of(InternalCacheRegistry.Flag.GLOBAL));
 
@@ -192,7 +193,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    @Override
    public Cache<ScopedState, Object> getStateCache() {
       if (stateCache == null) {
-         stateCache = cacheManager.getCache(CONFIG_STATE_CACHE_NAME);
+         stateCache = cacheManager.getCache(InternalCacheNames.CONFIG_STATE_CACHE_NAME);
       }
       return stateCache;
    }

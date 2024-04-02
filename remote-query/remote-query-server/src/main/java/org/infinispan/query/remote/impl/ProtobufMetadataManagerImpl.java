@@ -1,5 +1,6 @@
 package org.infinispan.query.remote.impl;
 
+import javax.management.MBeanException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -10,17 +11,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.management.MBeanException;
-
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.UserContextInitializerImpl;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.configuration.global.GlobalAuthorizationConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -56,7 +57,6 @@ import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.security.impl.CreatePermissionConfigurationBuilder;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.configuration.cache.IsolationLevel;
 
 /**
  * @author anistor@redhat.com
@@ -144,7 +144,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
    }
 
    /**
-    * Adds a stop dependency on ___protobuf_metadata cache. This must be invoked for each cache that uses protobuf.
+    * Adds a stop dependency on {@link InternalCacheNames#PROTOBUF_METADATA_CACHE_NAME} cache. This must be invoked for each cache that uses protobuf.
     *
     * @param dependantCacheName the name of the cache depending on the protobuf metadata cache
     */

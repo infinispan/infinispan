@@ -2,6 +2,7 @@ package org.infinispan.cli.connection.rest;
 
 import static org.infinispan.cli.logging.Messages.MSG;
 import static org.infinispan.cli.util.TransformingIterable.SINGLETON_MAP_VALUE;
+import static org.infinispan.commons.internal.InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -46,7 +47,6 @@ import org.infinispan.commons.util.Util;
  * @since 10.0
  **/
 public class RestConnection implements Connection, Closeable {
-   private static final String PROTOBUF_METADATA_CACHE_NAME = "___protobuf_metadata";
    private final RestClientConfigurationBuilder builder;
    private Resource activeResource;
    private MediaType encoding = MediaType.TEXT_PLAIN;

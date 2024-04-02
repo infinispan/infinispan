@@ -13,14 +13,15 @@ import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_YAML;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_YAML_TYPE;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
+import static org.infinispan.commons.internal.InternalCacheNames.CONFIG_STATE_CACHE_NAME;
+import static org.infinispan.commons.internal.InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME;
+import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
 import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
 import static org.infinispan.commons.util.EnumUtil.EMPTY_BIT_SET;
 import static org.infinispan.commons.util.Util.getResourceAsString;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.context.Flag.SKIP_CACHE_LOAD;
 import static org.infinispan.context.Flag.SKIP_INDEXING;
-import static org.infinispan.globalstate.GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME;
-import static org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME;
 import static org.infinispan.rest.RequestHeader.ACCEPT_HEADER;
 import static org.infinispan.rest.RequestHeader.KEY_CONTENT_TYPE_HEADER;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
@@ -30,6 +31,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
+import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.IOException;
@@ -51,8 +53,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.assertj.core.api.Assertions;
 import org.infinispan.AdvancedCache;
@@ -82,7 +82,6 @@ import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.container.versioning.SimpleClusteredVersion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.globalstate.ConfigurationStorage;
-import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.globalstate.ScopedState;
 import org.infinispan.globalstate.impl.CacheState;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -98,7 +97,6 @@ import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.reactive.publisher.impl.SegmentPublisherSupplier;
 import org.infinispan.rest.ResponseHeader;
 import org.infinispan.rest.assertion.ResponseAssertion;
-import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.LocalTopologyManager;
@@ -564,7 +562,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
    @Test
    @TestForIssue(jiraKey = "ISPN-14957")
    public void getCacheInfoInternalCache() {
-      RestCacheClient scriptCache = client.cache("___script_cache");
+      RestCacheClient scriptCache = client.cache(SCRIPT_CACHE_NAME);
       CompletionStage<RestResponse> details = scriptCache.details();
       assertThat(details).isOk();
 
@@ -691,7 +689,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       Json jsonNode = Json.read(json);
       List<String> names = find(jsonNode, "name");
       Set<String> expectedNames = new HashSet<>(cacheManagers.get(0).getCacheNames());
-      expectedNames.remove(ScriptingManager.SCRIPT_CACHE);
+      expectedNames.remove(SCRIPT_CACHE_NAME);
       expectedNames.remove(PROTOBUF_METADATA_CACHE_NAME);
 
       assertEquals(expectedNames, new HashSet<>(names));
@@ -1827,7 +1825,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       });
 
       // Ensure that the endpoints can be utilised with internal caches
-      RestCacheClient adminCacheClient = adminClient.cache(GlobalConfigurationManager.CONFIG_STATE_CACHE_NAME);
+      RestCacheClient adminCacheClient = adminClient.cache(CONFIG_STATE_CACHE_NAME);
       restResponse = join(adminCacheClient.getAvailability());
       ResponseAssertion.assertThat(restResponse).isOk().containsReturnedText("AVAILABLE");
 
