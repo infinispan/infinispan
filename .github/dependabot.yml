@@ -9,7 +9,8 @@ updates:
     rebase-strategy: disabled
     ignore:
       - dependency-name: "io.opentelemetry:opentelemetry-api"
-      - update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
+      - dependency-name: "*"
+        update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
