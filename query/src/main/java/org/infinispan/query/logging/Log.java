@@ -10,6 +10,7 @@ import javax.transaction.Transaction;
 import org.hibernate.search.util.common.SearchException;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.objectfilter.ParsingException;
 import org.infinispan.search.mapper.common.EntityReference;
 import org.jboss.logging.Logger;
@@ -201,6 +202,16 @@ public interface Log extends org.infinispan.query.core.impl.Log {
    @LogMessage(level = INFO)
    @Message(value = "Reindexing starting.", id = 14063)
    void indexingStarting();
+
+   @Message(value = "Multiple knn predicates are not supported at the moment.", id = 14064)
+   ParsingException multipleKnnPredicates();
+
+   @Message(value = "Boolean predicates containing knn predicates are not supported at the moment.", id = 14065)
+   ParsingException booleanKnnPredicates();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Failed to purge index for segments %s", id = 14066)
+   void failedToPurgeIndexForSegments(@Cause Throwable cause, IntSet removedSegments);
 
    // !!!!!! When adding anything new here please check the last used id in org.infinispan.query.core.impl.Log !!!!!!
 }

@@ -26,8 +26,8 @@ import org.infinispan.search.mapper.mapping.SearchIndexedEntity;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.mapping.SearchMappingBuilder;
 import org.infinispan.search.mapper.mapping.SearchMappingCommonBuilding;
-import org.infinispan.search.mapper.mapping.metamodel.IndexMetamodel;
 import org.infinispan.search.mapper.mapping.impl.InfinispanMapping;
+import org.infinispan.search.mapper.mapping.metamodel.IndexMetamodel;
 import org.infinispan.search.mapper.scope.SearchScope;
 import org.infinispan.search.mapper.session.SearchSession;
 import org.infinispan.search.mapper.work.SearchIndexer;
@@ -73,13 +73,19 @@ public class LazySearchMapping implements SearchMapping {
    }
 
    @Override
+   public Optional<SearchScope<?>> findScopeAll() {
+      return findMapping().map(SearchMapping::scopeAll);
+   }
+
+   @Override
    public FailureHandler getFailureHandler() {
       return mapping().getFailureHandler();
    }
 
    @Override
    public void close() {
-      mapping().close();
+      // no need to create a SearchMapping if we are going to close it.
+      findMapping().ifPresent(SearchMapping::close);
    }
 
    @Override
@@ -208,6 +214,25 @@ public class LazySearchMapping implements SearchMapping {
       return searchMapping;
    }
 
+   private Optional<SearchMapping> findMapping() {
+      var stamp = stampedLock.tryOptimisticRead();
+      SearchMapping mapping = null;
+      if (searchMappingRef.available()) {
+         mapping = searchMappingRef.get();
+      }
+      if (!stampedLock.validate(stamp)) {
+         stamp = stampedLock.readLock();
+         try {
+            if (searchMappingRef.available()) {
+               mapping = searchMappingRef.get();
+            }
+         } finally {
+            stampedLock.unlockRead(stamp);
+         }
+      }
+      return Optional.ofNullable(mapping);
+   }
+
    private SearchMapping createMapping() {
       return createMapping(Optional.empty());
    }
@@ -228,11 +253,15 @@ public class LazySearchMapping implements SearchMapping {
             Set<String> knownTypes = protobufMetadataManager.getKnownTypes();
             for (String typeName : indexedEntityTypes) {
                if (!knownTypes.contains(typeName)) {
-                  if (searchMapping != null) searchMapping.close();
+                  if (searchMapping != null) {
+                     searchMapping.close();
+                  }
                   throw log.unknownType(typeName);
                }
                if (searchMapping == null || searchMapping.indexedEntity(typeName) == null) {
-                  if (searchMapping != null) searchMapping.close();
+                  if (searchMapping != null) {
+                     searchMapping.close();
+                  }
                   throw log.typeNotIndexed(typeName);
                }
             }

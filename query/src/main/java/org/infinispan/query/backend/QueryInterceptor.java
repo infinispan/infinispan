@@ -55,6 +55,8 @@ import org.infinispan.persistence.manager.PersistenceManager.StoreChangeListener
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.logging.Log;
 import org.infinispan.search.mapper.mapping.SearchMapping;
+import org.infinispan.search.mapper.scope.SearchScope;
+import org.infinispan.search.mapper.scope.SearchWorkspace;
 import org.infinispan.search.mapper.work.SearchIndexer;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.BlockingManager;
@@ -112,9 +114,9 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
                            AdvancedCache<?, ?> cache, Map<String, Class<?>> indexedClasses) {
       this.isManualIndexing = isManualIndexing;
       this.txOldValues = txOldValues;
-      this.valueDataConversion = cache.getValueDataConversion();
-      this.keyDataConversion = cache.getKeyDataConversion();
-      this.isPersistenceEnabled = cache.getCacheConfiguration().persistence().usingStores();
+      valueDataConversion = cache.getValueDataConversion();
+      keyDataConversion = cache.getKeyDataConversion();
+      isPersistenceEnabled = cache.getCacheConfiguration().persistence().usingStores();
       this.cache = cache;
       this.indexedClasses = Collections.unmodifiableMap(indexedClasses);
    }
@@ -124,8 +126,8 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       stopping.set(false);
       boolean isClustered = cache.getCacheConfiguration().clustering().cacheMode().isClustered();
       if (isClustered) {
-         segmentListener = new SegmentListener(cache, this::purgeIndex, blockingManager);
-         this.cache.addListener(segmentListener);
+         segmentListener = new SegmentListener(cache.getRpcManager().getAddress(), this::purgeIndex, blockingManager);
+         cache.addListener(segmentListener);
       }
       searchMapping = ComponentRegistryUtils.getSearchMapping(cache);
       persistenceManager.addStoreListener(storeChangeListener);
@@ -137,12 +139,16 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    }
 
    public void prepareForStopping() {
-      if (segmentListener != null) cache.removeListener(segmentListener);
+      if (segmentListener != null) {
+         cache.removeListener(segmentListener);
+      }
       stopping.set(true);
    }
 
    private boolean shouldModifyIndexes(FlagAffectedCommand command, InvocationContext ctx, Object key) {
-      if (isManualIndexing) return false;
+      if (isManualIndexing) {
+         return false;
+      }
 
       if (distributionManager == null || key == null) {
          return true;
@@ -334,7 +340,8 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
          return;
       }
 
-      searchMapping.scopeAll().workspace().purge();
+      // avoid starting if not created yet
+      searchMapping.findScopeAll().map(SearchScope::workspace).ifPresent(SearchWorkspace::purge);
    }
 
    public void purgeIndex(Class<?> entityType) {
@@ -353,8 +360,14 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
          return;
       }
 
+      var scope = searchMapping.findScopeAll();
+      if (scope.isEmpty()) {
+         // nothing to purge
+         return;
+      }
+
       Set<String> routingKeys = segments.intStream().boxed().map(Objects::toString).collect(Collectors.toSet());
-      searchMapping.scopeAll().workspace().purge(routingKeys);
+      scope.get().workspace().purge(routingKeys);
    }
 
    /**

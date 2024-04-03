@@ -3,6 +3,7 @@ package org.infinispan.search.mapper.mapping;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.hibernate.search.engine.reporting.FailureHandler;
@@ -39,6 +40,8 @@ public interface SearchMapping extends AutoCloseable {
    <E> SearchScope<E> scope(Collection<? extends Class<? extends E>> types);
 
    SearchScope<?> scopeAll();
+
+   Optional<SearchScope<?>> findScopeAll();
 
    FailureHandler getFailureHandler();
 
