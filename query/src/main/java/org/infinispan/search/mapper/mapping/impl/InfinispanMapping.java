@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -66,13 +67,13 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
       this.typeContextContainer = typeContextContainer;
       this.entityLoader = entityLoader;
       this.entityConverter = entityConverter;
-      this.mappingSession = new InfinispanSearchSession(this, entityLoader);
-      this.searchIndexer = new SearchIndexerImpl(mappingSession.createIndexer(), entityConverter, typeContextContainer,
+      mappingSession = new InfinispanSearchSession(this, entityLoader);
+      searchIndexer = new SearchIndexerImpl(mappingSession.createIndexer(), entityConverter, typeContextContainer,
             blockingManager);
       this.failureCounter = failureCounter;
-      this.allIndexedEntityNames = typeContextContainer.allIndexed().stream()
+      allIndexedEntityNames = typeContextContainer.allIndexed().stream()
             .map(SearchIndexedEntity::name).collect(Collectors.toSet());
-      this.allIndexedEntityJavaClasses = typeContextContainer.allIndexed().stream()
+      allIndexedEntityJavaClasses = typeContextContainer.allIndexed().stream()
             .map(SearchIndexedEntity::javaClass).collect(Collectors.toSet());
    }
 
@@ -93,6 +94,11 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
    @Override
    public <E> SearchScope<E> scope(Collection<? extends Class<? extends E>> targetedTypes) {
       return createScope(targetedTypes);
+   }
+
+   @Override
+   public Optional<SearchScope<?>> findScopeAll() {
+      return Optional.of(doCreateScope(typeContextContainer.allTypeIdentifiers()));
    }
 
    @Override
@@ -240,7 +246,7 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
             delegate().createPojoScope(this, typeIdentifiers,
                   // Store the type identifier as additional metadata
                   typeIdentifier -> typeIdentifier);
-      return new SearchScopeImpl(this, pojoScopeDelegate, this.entityLoader);
+      return new SearchScopeImpl(this, pojoScopeDelegate, entityLoader);
    }
 
    private <T> PojoRawTypeIdentifier<? extends T> entityTypeIdentifier(Class<T> expectedSuperType, String entityName) {
