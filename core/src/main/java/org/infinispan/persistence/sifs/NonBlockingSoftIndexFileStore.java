@@ -458,7 +458,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
    public CompletionStage<Void> stop() {
       return blockingManager.runBlocking(() -> {
          try {
-            logAppender.stop();
+            CompletionStages.join(logAppender.stop());
             compactor.stopOperations();
             compactor = null;
             CompletionStages.join(index.stop());
