@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.util.concurrent.NonBlockingManager;
@@ -58,6 +59,8 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
    // This is only accessed by the writeProcessor thread
    private FlowableProcessor<Consumer<LogAppender>> completionProcessor;
 
+   private volatile CompletableFuture<Void> stopped = CompletableFutures.completedNull();
+
    public LogAppender(NonBlockingManager nonBlockingManager, Index index,
                       TemporaryTable temporaryTable, Compactor compactor,
                       FileProvider fileProvider, boolean syncWrites, int maxFileSize) {
@@ -75,13 +78,7 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
    public synchronized void start(Executor executor) {
       assert requestProcessor == null;
 
-      writeProcessor = UnicastProcessor.create();
-      writeProcessor.observeOn(Schedulers.from(executor))
-            .subscribe(this, e -> log.warn("Exception encountered while performing write log request ", e));
-
-      completionProcessor = UnicastProcessor.create();
-      completionProcessor.observeOn(nonBlockingManager.asScheduler())
-            .subscribe(this::complete, e -> log.warn("Exception encountered while performing write log request ", e));
+      stopped = new CompletableFuture<>();
 
       // Need to be serialized in case if we receive requests from concurrent threads
       requestProcessor = UnicastProcessor.<LogRequest>create().toSerialized();
@@ -89,6 +86,11 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
             e -> log.warn("Exception encountered while handling log request for log appender", e), () -> {
                writeProcessor.onComplete();
                writeProcessor = null;
+            });
+
+      writeProcessor = UnicastProcessor.create();
+      writeProcessor.observeOn(Schedulers.from(executor))
+            .subscribe(this, e -> log.warn("Exception encountered while performing write log request ", e), () -> {
                completionProcessor.onComplete();
                completionProcessor = null;
                if (logFile != null) {
@@ -99,12 +101,19 @@ public class LogAppender implements Consumer<LogAppender.WriteOperation> {
                   logFile = null;
                }
             });
+
+      completionProcessor = UnicastProcessor.create();
+      completionProcessor.observeOn(nonBlockingManager.asScheduler())
+            .subscribe(this::complete, e -> log.warn("Exception encountered while performing write log request ", e),
+                  () -> stopped.complete(null));
    }
 
-   public synchronized void stop() {
+   public synchronized CompletionStage<Void> stop() {
       assert requestProcessor != null;
       requestProcessor.onComplete();
       requestProcessor = null;
+
+      return stopped;
    }
 
    void handleRequestCompletion(LogRequest request) {

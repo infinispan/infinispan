@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyInt;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
@@ -33,8 +34,10 @@ import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.test.Mocks;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
+import org.mockito.Mockito;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import io.reactivex.rxjava3.internal.subscriptions.AsyncSubscription;
@@ -371,5 +374,45 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
 
       // After removing the segment even the removed entries are updated in stats
       verifyStatsHaveNoData(-123, fileStats);
+   }
+
+   @DataProvider(name = "booleans")
+   Object[][] booleans() {
+      return new Object[][]{
+            {Boolean.TRUE}, {Boolean.FALSE}};
+   }
+
+   @Test(dataProvider = "booleans")
+   public void testWriteDuringStop(boolean deleteIndexes) throws InterruptedException, TimeoutException, ExecutionException {
+      LogAppender logAppender = TestingUtil.extractField(store.delegate(), "logAppender");
+
+      // This will block the write until after it is written to the logAppender but hasn't completed yet, which means
+      // it won't be able to write to the index
+      CheckPoint putCheckPoint = new CheckPoint();
+      putCheckPoint.triggerForever(Mocks.AFTER_RELEASE);
+      Mocks.blockingFieldMock(putCheckPoint, FlowableProcessor.class, logAppender, LogAppender.class, "completionProcessor",
+            (stub, processor) -> stub.when(processor).onNext(Mockito.any()));
+
+      Future<Void> putFuture = fork(() -> TestingUtil.join(store.write(1, marshalledEntry(internalCacheEntry("foo-231", "bar-231", -1)))));
+      putCheckPoint.awaitStrict(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS);
+
+      Future<Void> stopFuture = fork(() -> TestingUtil.join(store.stop()));
+      // Just an extra sleep to let stop hopefully break things - we can't wait for it to complete as the stop
+      // should confirm the write is done first
+      Thread.sleep(10);
+
+      putCheckPoint.triggerForever(Mocks.BEFORE_RELEASE);
+
+      putFuture.get(10, TimeUnit.SECONDS);
+
+      stopFuture.get(10, TimeUnit.SECONDS);
+
+      if (deleteIndexes) {
+         Util.recursiveFileRemove(Paths.get(tmpDirectory, "index"));
+      }
+
+      startStore(store);
+
+      assertNotNull("bar-231", TestingUtil.join(store.load(1, "foo-231")));
    }
 }
