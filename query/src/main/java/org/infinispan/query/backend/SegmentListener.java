@@ -1,19 +1,19 @@
 package org.infinispan.query.backend;
 
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 
-import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
-import org.infinispan.distribution.LocalizedCacheTopology;
-import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
+import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * SegmentListener will detect segments that were lost for this node due to topology changes so they can be removed
@@ -25,43 +25,41 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 @SuppressWarnings("unused")
 final class SegmentListener {
 
-   private final AdvancedCache<?, ?> cache;
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+
    private final Consumer<IntSet> segmentDeleted;
    private final Address address;
    private final BlockingManager blockingManager;
 
-   SegmentListener(AdvancedCache<?, ?> cache, Consumer<IntSet> segmentsDeleted, BlockingManager blockingManager) {
-      this.cache = cache;
-      this.segmentDeleted = segmentsDeleted;
-      this.address = cache.getRpcManager().getAddress();
+   SegmentListener(Address address, Consumer<IntSet> segmentsDeleted, BlockingManager blockingManager) {
+      segmentDeleted = segmentsDeleted;
+      this.address = address;
       this.blockingManager = blockingManager;
    }
 
    @TopologyChanged
    public CompletionStage<Void> topologyChanged(TopologyChangedEvent<?, ?> event) {
-      if (event.isPre()) return CompletableFutures.completedNull();
-      ConsistentHash newWriteCh = event.getWriteConsistentHashAtEnd();
-      LocalizedCacheTopology cacheTopology = cache.getDistributionManager().getCacheTopology();
-
-      boolean isMember = cacheTopology.getMembers().contains(address);
-
-      if (!isMember) return CompletableFutures.completedNull();
-
-      int numSegments = newWriteCh.getNumSegments();
-
-      IntSet removedSegments = IntSets.mutableEmptySet(numSegments);
-      IntSet newSegments = IntSets.from(newWriteCh.getSegmentsForOwner(address));
-
-      for (int i = 0; i < numSegments; ++i) {
-         if (!newSegments.contains(i)) {
-            removedSegments.set(i);
-         }
+      if (event.isPre()) {
+         return CompletableFutures.completedNull();
       }
+      var newWriteCh = event.getWriteConsistentHashAtEnd();
+
+      if (!newWriteCh.getMembers().contains(address)) {
+         return CompletableFutures.completedNull();
+      }
+
+      var removedSegments = IntSets.mutableCopyFrom(event.getWriteConsistentHashAtStart().getSegmentsForOwner(address));
+      removedSegments.removeAll(IntSets.from(newWriteCh.getSegmentsForOwner(address)));
 
       if (removedSegments.isEmpty()) {
          return CompletableFutures.completedNull();
       }
 
-      return blockingManager.runBlocking(() -> segmentDeleted.accept(removedSegments), this);
+      return blockingManager.runBlocking(() -> segmentDeleted.accept(removedSegments), this)
+            .exceptionally(throwable -> {
+               // catch exception to allow the cache topology to be installed
+               log.failedToPurgeIndexForSegments(throwable, removedSegments);
+               return null;
+            });
    }
 }
