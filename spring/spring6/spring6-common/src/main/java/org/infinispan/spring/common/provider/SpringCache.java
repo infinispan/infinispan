@@ -1,12 +1,19 @@
 package org.infinispan.spring.common.provider;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.BasicCache;
@@ -32,6 +39,7 @@ public class SpringCache implements Cache {
    private final long readTimeout;
    private final long writeTimeout;
    private final Map<Object, ReentrantLock> synchronousGetLocks = new ConcurrentHashMap<>();
+   private final Map<Object, CompletableFuture> computationResults = new ConcurrentHashMap<>();
 
    /**
     * @param nativeCache underlying cache
@@ -45,6 +53,97 @@ public class SpringCache implements Cache {
       this.nativeCache = nativeCache;
       this.readTimeout = readTimeout;
       this.writeTimeout = writeTimeout;
+   }
+
+
+   @Override
+   public CompletableFuture<?> retrieve(Object key) {
+      return encodedToValueWrapper(nativeCache.getAsync(key));
+   }
+   private CompletableFuture<ValueWrapper> encodedToValueWrapper(CompletableFuture<Object> cf) {
+      return cf.thenApply(value -> encodedToValueWrapper(value));
+   }
+
+   @Override
+   public <T> CompletableFuture<T> retrieve(Object key, Supplier<CompletableFuture<T>> valueLoaderAsync) {
+      CompletionStage<T> completionStage = handleAndCompose(nativeCache.getAsync(key), (v1, ex1) -> {
+         if (ex1 != null) {
+            return CompletableFuture.failedFuture(ex1);
+         }
+
+         if (v1 != null) {
+            return CompletableFuture.completedFuture(decodeNull(v1));
+         }
+
+         CompletableFuture result = new CompletableFuture<>();
+         CompletableFuture<T> computedValue = computationResults.putIfAbsent(key, result);
+         if (computedValue != null) {
+            return computedValue;
+         }
+
+         return handleAndCompose(valueLoaderAsync.get(), (newValue, ex2) -> {
+            if (ex2 != null) {
+               result.completeExceptionally(ex2);
+               computationResults.remove(key);
+            } else {
+               nativeCache.putIfAbsentAsync(key, encodeNull(newValue))
+                       .whenComplete((existing, ex3) -> {
+                          if (ex3 != null) {
+                             result.completeExceptionally((Throwable) ex3);
+                          } else if (existing == null) {
+                             result.complete(newValue);
+                          } else {
+                             result.complete(decodeNull(existing));
+                          }
+                          computationResults.remove(key);
+                       });
+            }
+            return result;
+         });
+      });
+      return (CompletableFuture<T>) completionStage;
+   }
+
+   private static <T, U> CompletionStage<U> handleAndCompose(CompletionStage<T> stage,
+                                                            BiFunction<T, Throwable, CompletionStage<U>> handleFunction) {
+      if (isCompletedSuccessfully(stage)) {
+         T value = join(stage);
+         try {
+            return handleFunction.apply(value, null);
+         } catch (Throwable t) {
+            return completedExceptionFuture(t);
+         }
+      }
+      return stage.handle(handleFunction).thenCompose(Function.identity());
+   }
+
+   private static <T> CompletableFuture<T> completedExceptionFuture(Throwable ex) {
+      CompletableFuture<T> future = new CompletableFuture<>();
+      future.completeExceptionally(ex);
+      return future;
+   }
+
+   private static boolean isCompletedSuccessfully(CompletionStage<?> stage) {
+      CompletableFuture<?> future = stage.toCompletableFuture();
+      return future.isDone() && !future.isCompletedExceptionally();
+   }
+
+   private static <R> R join(CompletionStage<R> stage) {
+      try {
+         return await(stage.toCompletableFuture());
+      } catch (ExecutionException e) {
+         throw new CompletionException(e.getCause());
+      } catch (InterruptedException e) {
+         throw new CompletionException(e);
+      }
+   }
+   private static final long BIG_DELAY_NANOS = TimeUnit.DAYS.toNanos(1);
+   private static <T> T await(CompletableFuture<T> future) throws ExecutionException, InterruptedException {
+      try {
+         return Objects.requireNonNull(future, "Completable Future must be non-null.").get(BIG_DELAY_NANOS, TimeUnit.NANOSECONDS);
+      } catch (java.util.concurrent.TimeoutException e) {
+         throw new IllegalStateException("This should never happen!", e);
+      }
    }
 
    /**
