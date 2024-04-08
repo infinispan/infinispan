@@ -103,4 +103,8 @@ public interface Log extends BasicLogger {
    @Message(id = 28025, value = "The key property name '%s' is already used by another mapped field. You can change it setting the attribute 'keyPropertyName'.")
    CacheConfigurationException keyPropertyNameAlreadyInUse(String keyPropertyName);
 
+   @LogMessage(level = WARN)
+   @Message(id = 28026, value = "Error indexing protobuf entity.")
+   void errorIndexingProtobufEntry(@Cause Throwable cause);
+
 }

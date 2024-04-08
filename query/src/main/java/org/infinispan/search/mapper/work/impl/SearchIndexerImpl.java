@@ -38,7 +38,7 @@ public class SearchIndexerImpl implements SearchIndexer {
 
    @Override
    public CompletableFuture<?> add(Object providedId, String routingKey, Object entity) {
-      ConvertedValue convertedValue = convertedValue(entity);
+      ConvertedValue convertedValue = convertedValue(entity, providedId);
       if (convertedValue == null) {
          return CompletableFutures.completedNull();
       }
@@ -51,7 +51,7 @@ public class SearchIndexerImpl implements SearchIndexer {
 
    @Override
    public CompletableFuture<?> addOrUpdate(Object providedId, String routingKey, Object entity) {
-      ConvertedValue convertedValue = convertedValue(entity);
+      ConvertedValue convertedValue = convertedValue(entity, providedId);
       if (convertedValue == null) {
          return CompletableFutures.completedNull();
       }
@@ -64,7 +64,7 @@ public class SearchIndexerImpl implements SearchIndexer {
 
    @Override
    public CompletableFuture<?> delete(Object providedId, String routingKey, Object entity) {
-      ConvertedValue convertedValue = convertedValue(entity);
+      ConvertedValue convertedValue = convertedValue(entity, providedId);
       if (convertedValue == null) {
          return CompletableFutures.completedNull();
       }
@@ -89,7 +89,7 @@ public class SearchIndexerImpl implements SearchIndexer {
    public void close() {
    }
 
-   private ConvertedValue convertedValue(Object entity) {
+   private ConvertedValue convertedValue(Object entity, Object providedId) {
       if (entity == null) {
          return null;
       }
@@ -103,7 +103,7 @@ public class SearchIndexerImpl implements SearchIndexer {
          return new ConvertedValue(typeContext, entity);
       }
 
-      EntityConverter.ConvertedEntity converted = entityConverter.convert(entity);
+      EntityConverter.ConvertedEntity converted = entityConverter.convert(entity, providedId);
       if (converted.skip()) {
          return null;
       }

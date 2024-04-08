@@ -17,6 +17,7 @@ import org.infinispan.query.remote.impl.logging.Log;
 import org.infinispan.query.remote.impl.mapping.reference.GlobalReferenceHolder;
 import org.infinispan.query.remote.impl.mapping.reference.IndexReferenceHolder;
 import org.infinispan.query.remote.impl.mapping.reference.MessageReferenceProvider;
+import org.infinispan.query.remote.impl.mapping.type.ProtobufKeyValuePair;
 
 public class ProtobufMessageBinder implements TypeBinder {
 
@@ -33,9 +34,20 @@ public class ProtobufMessageBinder implements TypeBinder {
    @Override
    public void bind(TypeBindingContext context) {
       context.dependencies().useRootOnly();
+      MessageReferenceProvider messageReferenceProvider = globalReferenceHolder.messageReferenceProvider(rootMessageName);
+      String keyMessageName = messageReferenceProvider.keyMessageName();
+      String keyPropertyName = messageReferenceProvider.keyPropertyName();
+
       IndexReferenceHolder indexReferenceProvider = createIndexReferenceProvider(context);
-      Descriptor descriptor = globalReferenceHolder.getDescriptor(rootMessageName);
-      context.bridge(byte[].class, new ProtobufMessageBridge(indexReferenceProvider, descriptor));
+      Descriptor valueDescriptor = globalReferenceHolder.getDescriptor(rootMessageName);
+      if (keyMessageName == null) {
+         context.bridge(byte[].class, new ProtobufMessageBridge(indexReferenceProvider, valueDescriptor));
+         return;
+      }
+
+      Descriptor keyDescriptor = globalReferenceHolder.getDescriptor(keyMessageName);
+      context.bridge(ProtobufKeyValuePair.class, new ProtobufKeyValueBridge(indexReferenceProvider, keyPropertyName,
+            keyDescriptor, valueDescriptor));
    }
 
    private IndexReferenceHolder createIndexReferenceProvider(TypeBindingContext context) {

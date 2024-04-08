@@ -31,9 +31,10 @@ public interface EntityConverter {
     * Perform the conversion.
     *
     * @param entity The entity to convert
+    * @param providedId The id that could be used in the conversion process
     * @return The converted entity
     */
-   ConvertedEntity convert(Object entity);
+   ConvertedEntity convert(Object entity, Object providedId);
 
    /**
     * The result of an entity conversion

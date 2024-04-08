@@ -22,10 +22,10 @@ public final class SerializationContextSearchMapping {
                                                     Set<String> indexedEntityTypes,
                                                     SerializationContext serializationContext) {
       GlobalReferenceHolder globalReferenceHolder = new GlobalReferenceHolder(serializationContext.getGenericDescriptors());
-      ProtobufBootstrapIntrospector introspector = new ProtobufBootstrapIntrospector();
+      ProtobufBootstrapIntrospector introspector = new ProtobufBootstrapIntrospector(globalReferenceHolder);
       SearchMappingBuilder builder = commonBuilding.builder(introspector);
       builder.setEntityLoader(entityLoader);
-      builder.setEntityConverter(new ProtobufEntityConverter(serializationContext, globalReferenceHolder.getRootMessages()));
+      builder.setEntityConverter(new ProtobufEntityConverter(serializationContext, globalReferenceHolder));
       ProgrammaticMappingConfigurationContext programmaticMapping = builder.programmaticMapping();
 
       boolean existIndexedEntities = false;

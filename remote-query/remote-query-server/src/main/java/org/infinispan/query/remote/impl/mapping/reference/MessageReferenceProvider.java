@@ -32,6 +32,8 @@ public class MessageReferenceProvider {
 
    private final List<FieldReferenceProvider> fields;
    private final List<Embedded> embedded;
+   private final String keyMessageName;
+   private final String keyPropertyName;
 
    public MessageReferenceProvider(Descriptor descriptor) {
       this.fields = new ArrayList<>(descriptor.getFields().size());
@@ -40,6 +42,8 @@ public class MessageReferenceProvider {
       IndexingMetadata indexingMetadata = findProcessedAnnotation(descriptor, IndexingMetadata.INDEXED_ANNOTATION);
       // Skip if not annotated with @Indexed
       if (indexingMetadata == null) {
+         keyMessageName = null;
+         keyPropertyName = null;
          return;
       }
 
@@ -72,6 +76,11 @@ public class MessageReferenceProvider {
       IndexingKeyMetadata keyMetadata = indexingMetadata.indexingKey();
       if (keyMetadata != null) {
          embedded.add(new Embedded(keyMetadata.fieldName(), keyMetadata.typeFullName(), keyMetadata.includeDepth()));
+         keyMessageName = keyMetadata.typeFullName();
+         keyPropertyName = keyMetadata.fieldName();
+      } else {
+         keyMessageName = null;
+         keyPropertyName = null;
       }
    }
 
@@ -108,6 +117,14 @@ public class MessageReferenceProvider {
 
    public List<Embedded> getEmbedded() {
       return embedded;
+   }
+
+   public String keyMessageName() {
+      return keyMessageName;
+   }
+
+   public String keyPropertyName() {
+      return keyPropertyName;
    }
 
    public static class Embedded {

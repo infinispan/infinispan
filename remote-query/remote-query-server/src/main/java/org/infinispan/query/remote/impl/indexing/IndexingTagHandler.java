@@ -23,12 +23,14 @@ import org.infinispan.query.remote.impl.mapping.reference.IndexReferenceHolder;
 public final class IndexingTagHandler implements TagHandler {
 
    private final IndexReferenceHolder indexReferenceHolder;
-
+   private final String prefix;
    private IndexingMessageContext messageContext;
 
-   public IndexingTagHandler(Descriptor messageDescriptor, DocumentElement document, IndexReferenceHolder indexReferenceHolder) {
+   public IndexingTagHandler(Descriptor messageDescriptor, DocumentElement document,
+                             IndexReferenceHolder indexReferenceHolder, String prefix) {
       this.indexReferenceHolder = indexReferenceHolder;
       this.messageContext = new IndexingMessageContext(null, null, messageDescriptor, document, null);
+      this.prefix = prefix;
    }
 
    @Override
@@ -52,7 +54,7 @@ public final class IndexingTagHandler implements TagHandler {
    private void addFieldToDocument(FieldDescriptor fieldDescriptor, Object value) {
       // We always use fully qualified field names because Lucene does not allow two identically named fields defined by
       // different entity types to have different field types or different indexing options in the same index.
-      String fieldPath = messageContext.getFieldPath();
+      String fieldPath = baseFieldPath();
       fieldPath = fieldPath != null ? fieldPath + '.' + fieldDescriptor.getName() : fieldDescriptor.getName();
 
       if (fieldDescriptor.getAnnotations().containsKey(InfinispanAnnotations.VECTOR_ANNOTATION) && Type.FLOAT.equals(fieldDescriptor.getType())) {
@@ -68,7 +70,7 @@ public final class IndexingTagHandler implements TagHandler {
    private void addDefaultFieldToDocument(FieldDescriptor fieldDescriptor, Object value) {
       // We always use fully qualified field names because Lucene does not allow two identically named fields defined by
       // different entity types to have different field types or different indexing options in the same index.
-      String fieldPath = messageContext.getFieldPath();
+      String fieldPath = baseFieldPath();
       fieldPath = fieldPath != null ? fieldPath + '.' + fieldDescriptor.getName() : fieldDescriptor.getName();
 
       IndexFieldReference<?> fieldReference = indexReferenceHolder.getFieldReference(fieldPath);
@@ -93,8 +95,18 @@ public final class IndexingTagHandler implements TagHandler {
       indexMissingFields();
    }
 
+   private String baseFieldPath() {
+      if (prefix == null) {
+         return messageContext.getFieldPath();
+      }
+      if (messageContext.getFieldPath() == null) {
+         return prefix;
+      }
+      return prefix + "." + messageContext.getFieldPath();
+   }
+
    private void pushContext(FieldDescriptor fieldDescriptor, Descriptor messageDescriptor) {
-      String fieldPath = messageContext.getFieldPath();
+      String fieldPath = baseFieldPath();
       fieldPath = fieldPath != null ? fieldPath + '.' + fieldDescriptor.getName() : fieldDescriptor.getName();
 
       IndexFieldReference<?> messageField = indexReferenceHolder.getFieldReference(fieldPath);
