@@ -37,11 +37,18 @@ public final class IndexingMetadata {
     */
    private final Map<String, FieldMapping> fields;
 
-   public IndexingMetadata(boolean isIndexed, String indexName, String analyzer, Map<String, FieldMapping> fields) {
+   /**
+    * Key mapping. This is null if key indexing is disabled.
+    */
+   private final IndexingKeyMetadata indexingKey;
+
+   public IndexingMetadata(boolean isIndexed, String indexName, String analyzer, Map<String, FieldMapping> fields,
+                           IndexingKeyMetadata indexingKey) {
       this.isIndexed = isIndexed;
       this.indexName = indexName;
       this.analyzer = analyzer;
       this.fields = fields;
+      this.indexingKey = indexingKey;
    }
 
    public boolean isIndexed() {
@@ -55,6 +62,10 @@ public final class IndexingMetadata {
 
    public String analyzer() {
       return analyzer;
+   }
+
+   public IndexingKeyMetadata indexingKey() {
+      return indexingKey;
    }
 
    public boolean isFieldSearchable(String fieldName) {
@@ -135,6 +146,7 @@ public final class IndexingMetadata {
             ", indexName='" + indexName + '\'' +
             ", analyzer='" + analyzer + '\'' +
             ", fields=" + fields +
+            ", key=" + indexingKey +
             '}';
    }
 

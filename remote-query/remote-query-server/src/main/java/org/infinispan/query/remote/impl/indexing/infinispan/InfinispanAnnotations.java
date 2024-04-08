@@ -15,6 +15,9 @@ public class InfinispanAnnotations {
    public static final String ANNOTATIONS_OPTIONS_PACKAGE = "org.infinispan.api.annotations.indexing.option";
 
    public static final String ENABLED_ATTRIBUTE = "enabled";
+   public static final String KEY_ENTITY_ATTRIBUTE = "keyEntity";
+   public static final String KEY_PROPERTY_NAME_ATTRIBUTE = "keyPropertyName";
+   public static final String KEY_INCLUDE_DEPTH_ATTRIBUTE = "keyIncludeDepth";
 
    public static final String BASIC_ANNOTATION = "Basic";
    public static final String NAME_ATTRIBUTE = "name";

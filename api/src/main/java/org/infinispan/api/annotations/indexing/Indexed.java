@@ -37,4 +37,28 @@ public @interface Indexed {
     */
    boolean enabled() default true;
 
+   /**
+    * Enables indexes / queries by keys.
+    *
+    * @return The fully qualified name of the type of entities used as keys
+    */
+   String keyEntity() default "";
+
+   /**
+    * Used only if {@link #keyEntity()} is provided.
+    *
+    * @return The property name to use in the queries to indicate the key of the entry
+    */
+   String keyPropertyName() default "key";
+
+   /**
+    * Used only if {@link #keyEntity()} is provided.
+    *
+    * @return The number of levels of indexed-key that will have all their fields included by default.
+    * By default, three levels will be included.
+    *
+    * @see Embedded#includeDepth()
+    */
+   int keyIncludeDepth() default 3;
+
 }

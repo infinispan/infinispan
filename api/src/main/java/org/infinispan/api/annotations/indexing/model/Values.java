@@ -17,6 +17,8 @@ public final class Values {
 
    public static final int DEFAULT_MAX_CONNECTIONS = 16;
 
+   public static final String DEFAULT_KEY_PROPERTY_NAME = "key";
+
    private Values() {
    }
 

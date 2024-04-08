@@ -17,6 +17,7 @@ import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.query.remote.impl.indexing.FieldMapping;
+import org.infinispan.query.remote.impl.indexing.IndexingKeyMetadata;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
 
 /**
@@ -66,6 +67,11 @@ public class MessageReferenceProvider {
          if (!fieldReferenceProvider.nothingToBind()) {
             fields.add(fieldReferenceProvider);
          }
+      }
+
+      IndexingKeyMetadata keyMetadata = indexingMetadata.indexingKey();
+      if (keyMetadata != null) {
+         embedded.add(new Embedded(keyMetadata.fieldName(), keyMetadata.typeFullName(), keyMetadata.includeDepth()));
       }
    }
 
@@ -118,6 +124,15 @@ public class MessageReferenceProvider {
          this.includeDepth = fieldMapping.includeDepth();
          this.structure = (fieldMapping.structure() == null) ? null:
                (Structure.NESTED.equals(fieldMapping.structure())) ? ObjectStructure.NESTED : ObjectStructure.FLATTENED;
+      }
+
+      // typically invoked to create an index-embedded for the cache key
+      public Embedded(String fieldName, String typeFullName, Integer includeDepth) {
+         this.fieldName = fieldName;
+         this.typeFullName = typeFullName;
+         this.repeated = false;
+         this.includeDepth = includeDepth;
+         this.structure = ObjectStructure.DEFAULT; // use the Hibernate Search Lucene backend value
       }
 
       public String getFieldName() {

@@ -100,4 +100,7 @@ public interface Log extends BasicLogger {
    @Message(id = 28024, value = "The type '%s' is not valid for the vector field '%s'. Valid types are: '%s' or '%s'.")
    CacheException wrongTypeForVector(String typeName, String fieldName, JavaType validType1, JavaType validType2);
 
+   @Message(id = 28025, value = "The key property name '%s' is already used by another mapped field. You can change it setting the attribute 'keyPropertyName'.")
+   CacheConfigurationException keyPropertyNameAlreadyInUse(String keyPropertyName);
+
 }

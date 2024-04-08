@@ -1,5 +1,6 @@
 package org.infinispan.query.remote.impl.indexing.search5;
 
+import org.infinispan.api.annotations.indexing.model.Values;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
@@ -54,6 +55,15 @@ public final class Search5Annotations {
                .attribute(InfinispanAnnotations.ENABLED_ATTRIBUTE)
                   .type(AnnotationElement.AttributeType.BOOLEAN)
                   .defaultValue(true)
+               .attribute(InfinispanAnnotations.KEY_ENTITY_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.STRING)
+                  .defaultValue("")
+               .attribute(InfinispanAnnotations.KEY_PROPERTY_NAME_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.STRING)
+                  .defaultValue(Values.DEFAULT_KEY_PROPERTY_NAME)
+               .attribute(InfinispanAnnotations.KEY_INCLUDE_DEPTH_ATTRIBUTE)
+                  .type(AnnotationElement.AttributeType.INT)
+                  .defaultValue(Values.DEFAULT_INCLUDE_DEPTH)
                .metadataCreator(new Search5MetadataCreator())
             .annotation(ANALYZER_ANNOTATION, AnnotationElement.AnnotationTarget.MESSAGE, AnnotationElement.AnnotationTarget.FIELD)
                .packageName(LEGACY_ANNOTATION_PACKAGE)
