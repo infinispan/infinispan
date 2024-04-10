@@ -8,17 +8,19 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.jcip.annotations.GuardedBy;
 import org.infinispan.configuration.global.JGroupsConfiguration;
 import org.infinispan.xsite.XSiteNamedCache;
 import org.jgroups.ChannelListener;
 import org.jgroups.JChannel;
 import org.jgroups.conf.ProtocolConfiguration;
 import org.jgroups.conf.ProtocolStackConfigurator;
+import org.jgroups.protocols.JDBC_PING;
 import org.jgroups.protocols.relay.RELAY2;
 import org.jgroups.protocols.relay.config.RelayConfig;
 import org.jgroups.stack.Protocol;
 import org.jgroups.util.SocketFactory;
+
+import net.jcip.annotations.GuardedBy;
 
 /**
  * A JGroups {@link ProtocolStackConfigurator} which
@@ -82,15 +84,25 @@ public class EmbeddedJGroupsChannelConfigurator extends AbstractJGroupsChannelCo
 
    @Override
    public void afterCreation(Protocol protocol) {
-      if (!(protocol instanceof RELAY2)) {
-         return;
+      if (protocol instanceof RELAY2) {
+         setupRELAY2((RELAY2) protocol);
+      } else if (protocol instanceof JDBC_PING) {
+         setupJDBC_PING((JDBC_PING) protocol);
       }
+   }
+
+   private void setupJDBC_PING(JDBC_PING jdbc_ping) {
+      if (dataSource != null) {
+         jdbc_ping.setDataSource(dataSource);
+      }
+   }
+
+   private void setupRELAY2(RELAY2 relay2) {
       // Process remote sites if any
       RemoteSites actualSites = getRemoteSites();
       if (actualSites.remoteSites.isEmpty()) {
          throw CONFIG.jgroupsRelayWithoutRemoteSites(name);
       }
-      RELAY2 relay2 = (RELAY2) protocol;
       for (Map.Entry<String, RemoteSite> remoteSite : actualSites.remoteSites.entrySet()) {
          JGroupsChannelConfigurator configurator = jgroupsConfiguration.configurator(remoteSite.getValue().stack);
          SocketFactory socketFactory = getSocketFactory();

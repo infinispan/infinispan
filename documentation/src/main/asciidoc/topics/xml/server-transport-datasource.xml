@@ -1,0 +1,10 @@
+<infinispan>
+    <jgroups>
+        <stack name="jdbc" extends="tcp">
+            <JDBC_PING stack.combine="REPLACE" stack.position="MPING" />
+        </stack>
+    </jgroups>
+    <cache-container>
+        <transport stack="jdbc" server:data-source="ds" />
+    </cache-container>
+</infinispan>

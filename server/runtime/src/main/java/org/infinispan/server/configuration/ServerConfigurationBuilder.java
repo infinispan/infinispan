@@ -15,6 +15,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.server.configuration.endpoint.EndpointsConfigurationBuilder;
 import org.infinispan.server.configuration.security.SecurityConfiguration;
 import org.infinispan.server.configuration.security.SecurityConfigurationBuilder;
+import org.infinispan.server.configuration.security.ServerTransportConfigurationBuilder;
 
 /**
  * @author Tristan Tarrant
@@ -27,6 +28,7 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
    private final SecurityConfigurationBuilder security = new SecurityConfigurationBuilder(this);
    private final DataSourcesConfigurationBuilder dataSources = new DataSourcesConfigurationBuilder();
    private final EndpointsConfigurationBuilder endpoints = new EndpointsConfigurationBuilder(this);
+   private final ServerTransportConfigurationBuilder transport = new ServerTransportConfigurationBuilder();
    private final List<SSLContextSupplier> suppliers = new ArrayList<>();
    private final GlobalConfigurationBuilder builder;
 
@@ -69,9 +71,13 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
       return endpoints;
    }
 
+   public ServerTransportConfigurationBuilder transport() {
+      return transport;
+   }
+
    @Override
    public void validate() {
-      Arrays.asList(interfaces, socketBindings, security, endpoints).forEach(Builder::validate);
+      Arrays.asList(interfaces, socketBindings, security, endpoints, transport).forEach(Builder::validate);
    }
 
    @Override
@@ -87,7 +93,8 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
             bindingsConfiguration,
             securityConfiguration,
             dataSources.create(),
-            endpoints.create(builder, bindingsConfiguration, securityConfiguration)
+            endpoints.create(builder, bindingsConfiguration, securityConfiguration),
+            transport.create()
       );
    }
 

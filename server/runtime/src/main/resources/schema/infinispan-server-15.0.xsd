@@ -2011,6 +2011,15 @@
       </xs:annotation>
    </xs:attribute>
 
+   <xs:attribute name="data-source" type="xs:string">
+      <xs:annotation>
+         <xs:documentation>
+            Defines a data-source which will be used to provide database connections.
+            It may be used to on the cache-container transport element to configure JDBC_PING.
+         </xs:documentation>
+      </xs:annotation>
+   </xs:attribute>
+
    <xs:complexType name="security-evidence-decoder">
       <xs:choice>
          <xs:element type="tns:x500-subject-evidence-decoder" name="x500-subject-evidence-decoder" minOccurs="0"/>

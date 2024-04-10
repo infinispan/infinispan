@@ -38,9 +38,9 @@ import org.junit.platform.suite.api.Suite;
 })
 public class PersistenceIT extends InfinispanSuite {
 
-   private static final String DATABASE_LIBS = System.getProperty(TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_LIBS);
-   private static final String EXTERNAL_JDBC_DRIVER = System.getProperty(TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_EXTERNAL_DRIVERS);
-   private static final String JDBC_DRIVER_FROM_FILE = System.getProperty(TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_DRIVERS_FILE, "target/test-classes/database/jdbc-drivers.txt");
+   static final String DATABASE_LIBS = System.getProperty(TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_LIBS);
+   static final String EXTERNAL_JDBC_DRIVER = System.getProperty(TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_EXTERNAL_DRIVERS);
+   static final String JDBC_DRIVER_FROM_FILE = System.getProperty(TestSystemPropertyNames.INFINISPAN_TEST_CONTAINER_DATABASE_DRIVERS_FILE, "target/test-classes/database/jdbc-drivers.txt");
 
    public static final DatabaseServerListener DATABASE_LISTENER = new DatabaseServerListener("h2", "mysql", "postgres");
 
@@ -55,7 +55,7 @@ public class PersistenceIT extends InfinispanSuite {
                                     .property(INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED, "true")
                                     .build();
 
-   private static String[] getJdbcDrivers() {
+   public static String[] getJdbcDrivers() {
       Map<String, String> jdbcDrivers = Exceptions.unchecked(() -> Files.lines(Paths.get(JDBC_DRIVER_FROM_FILE))
               .collect(Collectors.toMap(PersistenceIT::getArtifactId, Function.identity())));
 
@@ -73,7 +73,7 @@ public class PersistenceIT extends InfinispanSuite {
    }
 
    //Some jdbc drivers are not available through maven (like sybase), in this case we can pass the jdbc driver location
-   private static JavaArchive[] getJavaArchive() {
+   public static JavaArchive[] getJavaArchive() {
       List<JavaArchive> externalJdbcDriver = new ArrayList<>();
 
       if(EXTERNAL_JDBC_DRIVER != null) {

@@ -14,4 +14,11 @@
       <FD_ALL3 timeout="3000"
                interval="1000"/>
    </stack>
+   <stack name="test-jdbc" extends="tcp">
+      <MERGE3 min_interval="1000" max_interval="5000" ispn:stack.combine="REPLACE"/>
+      <FD_SOCK2 connect_timeout="3000"/>
+      <FD_ALL3 timeout="3000"
+               interval="1000"/>
+      <JDBC_PING stack.combine="REPLACE" stack.position="MPING" />
+   </stack>
 </jgroups>

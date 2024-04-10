@@ -1764,7 +1764,10 @@ public class ServerConfigurationParser implements ConfigurationParser {
          String attributeName = reader.getAttributeName(attributeIndex);
          switch (Attribute.forName(attributeName)) {
             case SECURITY_REALM:
-               serverBuilder.security().transport().securityRealm(reader.getAttributeValue(attributeIndex));
+               serverBuilder.transport().securityRealm(reader.getAttributeValue(attributeIndex));
+               break;
+            case DATA_SOURCE:
+               serverBuilder.transport().dataSource(reader.getAttributeValue(attributeIndex));
                break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, attributeName);

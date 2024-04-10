@@ -32,9 +32,11 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import javax.management.ObjectName;
+import javax.sql.DataSource;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TracedCommand;
@@ -49,6 +51,7 @@ import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.commons.util.logging.TraceException;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.TransportConfiguration;
@@ -93,7 +96,6 @@ import org.infinispan.remoting.transport.impl.XSiteResponseImpl;
 import org.infinispan.remoting.transport.raft.RaftManager;
 import org.infinispan.telemetry.InfinispanSpan;
 import org.infinispan.telemetry.InfinispanTelemetry;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteBackup;
@@ -151,6 +153,7 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
    public static final String CHANNEL_LOOKUP = "channelLookup";
    public static final String CHANNEL_CONFIGURATOR = "channelConfigurator";
    public static final String SOCKET_FACTORY = "socketFactory";
+   public static final String DATA_SOURCE = "dataSource";
    public static final short REQUEST_FLAGS_UNORDERED =
          (short) (Message.Flag.OOB.value() | Message.Flag.NO_TOTAL_ORDER.value());
    public static final short REQUEST_FLAGS_UNORDERED_NO_FC = (short) (REQUEST_FLAGS_UNORDERED | Message.Flag.NO_FC.value());
@@ -734,6 +737,10 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
          }
          configurator.setSocketFactory(socketFactory);
       }
+      if (props.containsKey(DATA_SOURCE)) {
+         Supplier<DataSource> dataSourceSupplier = (Supplier<DataSource>) props.get(DATA_SOURCE);
+         configurator.setDataSource(dataSourceSupplier.get());
+      }
       configurator.addChannelListener(this);
       try {
          channel = configurator.createChannel(configuration.transport().clusterName());
@@ -839,7 +846,7 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
    private static List<Address> fromJGroupsAddressList(List<org.jgroups.Address> list) {
       return list.stream()
             .map(JGroupsAddressCache::fromJGroupsAddress)
-            .collect(Collectors.toUnmodifiableList());
+            .toList();
    }
 
    @Stop
@@ -1226,18 +1233,12 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
    }
 
    private static short encodeDeliverMode(DeliverOrder deliverOrder) {
-      switch (deliverOrder) {
-         case PER_SENDER:
-            return REQUEST_FLAGS_PER_SENDER;
-         case PER_SENDER_NO_FC:
-            return REQUEST_FLAGS_PER_SENDER_NO_FC;
-         case NONE:
-            return REQUEST_FLAGS_UNORDERED;
-         case NONE_NO_FC:
-            return REQUEST_FLAGS_UNORDERED_NO_FC;
-         default:
-            throw new IllegalArgumentException("Unsupported deliver mode " + deliverOrder);
-      }
+      return switch (deliverOrder) {
+         case PER_SENDER -> REQUEST_FLAGS_PER_SENDER;
+         case PER_SENDER_NO_FC -> REQUEST_FLAGS_PER_SENDER_NO_FC;
+         case NONE -> REQUEST_FLAGS_UNORDERED;
+         case NONE_NO_FC -> REQUEST_FLAGS_UNORDERED_NO_FC;
+      };
    }
 
    /**
