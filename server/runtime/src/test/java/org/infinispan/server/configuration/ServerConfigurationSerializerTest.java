@@ -100,7 +100,7 @@ public class ServerConfigurationSerializerTest {
       compare(serverBefore.dataSources, serverAfter.dataSources);
       compare(serverBefore.security.credentialStores(), serverAfter.security.credentialStores());
       compare(serverBefore.security.realms().realms(), serverAfter.security.realms().realms());
-      compare(serverBefore.security.transport(), serverAfter.security.transport(), org.infinispan.server.configuration.Attribute.SECURITY_REALM.toString());
+      compare(serverBefore.transport(), serverAfter.transport(), org.infinispan.server.configuration.Attribute.SECURITY_REALM.toString());
       compare(serverBefore.endpoints.endpoints(), serverAfter.endpoints.endpoints());
    }
 

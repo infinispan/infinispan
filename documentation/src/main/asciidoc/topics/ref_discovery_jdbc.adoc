@@ -17,6 +17,34 @@ include::xml/jdbc_ping.xml[]
 Add the appropriate JDBC driver to the classpath so {brandname} can use JDBC_PING.
 ====
 
+[id='discovery-jdbcping-datasource_{context}']
+== Using a server datasource for JDBC_PING discovery
+
+Add a managed datasource to a {brandname} Server and use it to provide database connections for the cluster transport JDBC_PING discovery protocol.
+
+.Prerequisites
+
+* Install a {brandname} Server cluster.
+
+.Procedure
+
+. Deploy a JDBC driver JAR to your {brandname} Server `server/lib` directory
+. Create a datasource for your database.
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/server_datasources.xml[]
+----
++
+. Create a JGroups stack which uses the `JDBC_PING` protocol for discovery.
+. Configure cluster transport to use the datasource by specifying the name of the datasource with the `server:data-source` attribute.
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/server-transport-datasource.xml[]
+----
+
+
 [role="_additional-resources"]
 .Additional resources
 * link:{jgroups_docs}#_jdbc_ping[JDBC_PING]

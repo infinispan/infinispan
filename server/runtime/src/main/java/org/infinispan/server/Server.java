@@ -77,8 +77,8 @@ import org.infinispan.server.configuration.endpoint.EndpointConfiguration;
 import org.infinispan.server.configuration.endpoint.EndpointConfigurationBuilder;
 import org.infinispan.server.configuration.security.RealmConfiguration;
 import org.infinispan.server.configuration.security.RealmsConfiguration;
+import org.infinispan.server.configuration.security.ServerTransportConfiguration;
 import org.infinispan.server.configuration.security.TokenRealmConfiguration;
-import org.infinispan.server.configuration.security.TransportSecurityConfiguration;
 import org.infinispan.server.context.ServerInitialContextFactoryBuilder;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.BaseServerManagement;
@@ -362,14 +362,20 @@ public class Server extends BaseServerManagement implements AutoCloseable {
          ServerConfigurationBuilder serverBuilder = global.module(ServerConfigurationBuilder.class);
 
          // Set up transport security
-         TransportSecurityConfiguration transportSecurityConfiguration = serverBuilder.security().transport().create();
-         if (transportSecurityConfiguration.securityRealm() != null) {
-            String securityRealm = transportSecurityConfiguration.securityRealm();
+         ServerTransportConfiguration serverTransportConfiguration = serverBuilder.transport().create();
+         if (serverTransportConfiguration.securityRealm() != null) {
+            String securityRealm = serverTransportConfiguration.securityRealm();
             Supplier<SSLContext> serverSSLContextSupplier = serverBuilder.serverSSLContextSupplier(securityRealm);
             Supplier<SSLContext> clientSSLContextSupplier = serverBuilder.clientSSLContextSupplier(securityRealm);
             NamedSocketFactory namedSocketFactory = new NamedSocketFactory(() -> clientSSLContextSupplier.get().getSocketFactory(), () -> serverSSLContextSupplier.get().getServerSocketFactory());
             global.transport().addProperty(JGroupsTransport.SOCKET_FACTORY, namedSocketFactory);
             Server.log.sslTransport(securityRealm);
+         }
+         // Set up the transport data source
+         if (serverTransportConfiguration.dataSource() != null) {
+            String dataSource = serverTransportConfiguration.dataSource();
+            Supplier<DataSource> dataSourceSupplier = () -> dataSources.get(dataSource);
+            global.transport().addProperty(JGroupsTransport.DATA_SOURCE, dataSourceSupplier);
          }
 
          // Set the operation handler on all endpoints

@@ -10,6 +10,7 @@ import org.infinispan.configuration.serializing.SerializedWith;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.endpoint.EndpointsConfiguration;
 import org.infinispan.server.configuration.security.SecurityConfiguration;
+import org.infinispan.server.configuration.security.ServerTransportConfiguration;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -23,6 +24,7 @@ public class ServerConfiguration {
    final SecurityConfiguration security;
    final DataSourcesConfiguration dataSources;
    final EndpointsConfiguration endpoints;
+   final ServerTransportConfiguration transport;
    private Server server;
 
    ServerConfiguration(
@@ -30,12 +32,13 @@ public class ServerConfiguration {
          SocketBindingsConfiguration socketBindings,
          SecurityConfiguration security,
          DataSourcesConfiguration dataSources,
-         EndpointsConfiguration endpoints) {
+         EndpointsConfiguration endpoints, ServerTransportConfiguration transport) {
       this.interfaces = interfaces;
       this.socketBindings = socketBindings;
       this.security = security;
       this.dataSources = dataSources;
       this.endpoints = endpoints;
+      this.transport = transport;
    }
 
    public Map<String, InterfaceConfiguration> networkInterfaces() {
@@ -57,6 +60,10 @@ public class ServerConfiguration {
 
    public EndpointsConfiguration endpoints() {
       return endpoints;
+   }
+
+   public ServerTransportConfiguration transport() {
+      return transport;
    }
 
    public Server getServer() {

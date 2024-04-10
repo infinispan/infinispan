@@ -30,6 +30,7 @@ public enum Attribute {
    CONNECTION_POOLING,
    CONNECTION_TIMEOUT,
    CREDENTIAL,
+   DATA_SOURCE,
    DEBUG,
    DEFAULT_INTERFACE,
    DEFAULT_REALM,
@@ -120,6 +121,7 @@ public enum Attribute {
    WORKER_THREADS,
    WRAP_GSS_CREDENTIAL,
    WRITABLE, UPPERCASE, EVIDENCE_DECODER, SEGMENT;
+
    private static final Map<String, Attribute> ATTRIBUTES;
 
    static {

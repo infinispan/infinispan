@@ -8,12 +8,10 @@ import java.util.Properties;
 public class SecurityConfiguration {
    private final CredentialStoresConfiguration credentialStoresConfiguration;
    private final RealmsConfiguration realmsConfiguration;
-   private final TransportSecurityConfiguration transportConfiguration;
 
-   SecurityConfiguration(CredentialStoresConfiguration credentialStoresConfiguration, RealmsConfiguration realmsConfiguration, TransportSecurityConfiguration transportConfiguration, Properties properties) {
+   SecurityConfiguration(CredentialStoresConfiguration credentialStoresConfiguration, RealmsConfiguration realmsConfiguration, Properties properties) {
       this.credentialStoresConfiguration = credentialStoresConfiguration;
       this.realmsConfiguration = realmsConfiguration;
-      this.transportConfiguration = transportConfiguration;
       realmsConfiguration.init(this, properties);
    }
 
@@ -23,9 +21,5 @@ public class SecurityConfiguration {
 
    public RealmsConfiguration realms() {
       return realmsConfiguration;
-   }
-
-   public TransportSecurityConfiguration transport() {
-      return transportConfiguration;
    }
 }

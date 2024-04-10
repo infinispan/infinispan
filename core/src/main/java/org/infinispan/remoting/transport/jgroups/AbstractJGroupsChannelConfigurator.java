@@ -4,6 +4,8 @@ package org.infinispan.remoting.transport.jgroups;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.sql.DataSource;
+
 import org.jgroups.ChannelListener;
 import org.jgroups.JChannel;
 import org.jgroups.stack.Protocol;
@@ -15,6 +17,7 @@ import org.jgroups.util.SocketFactory;
  **/
 public abstract class AbstractJGroupsChannelConfigurator implements JGroupsChannelConfigurator {
    private SocketFactory socketFactory;
+   protected DataSource dataSource;
    protected List<ChannelListener> channelListeners = new ArrayList<>(2);
 
    @Override
@@ -24,6 +27,11 @@ public abstract class AbstractJGroupsChannelConfigurator implements JGroupsChann
 
    public SocketFactory getSocketFactory() {
       return socketFactory;
+   }
+
+   @Override
+   public void setDataSource(DataSource dataSource) {
+      this.dataSource = dataSource;
    }
 
    protected JChannel amendChannel(JChannel channel) {
