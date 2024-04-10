@@ -18,6 +18,9 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.vector.VectorSearchBroadcastTest")
 public class VectorSearchBroadcastTest extends MultipleCacheManagersTest {
 
+   private static final String[] BUGGY_OPTIONS =
+         {"cat lover", "code lover", "mystical", "philologist", "algorithm designer", "decisionist", "philosopher"};
+
    private Cache<Object, Object> cache;
 
    @Override
@@ -33,9 +36,10 @@ public class VectorSearchBroadcastTest extends MultipleCacheManagersTest {
 
    @BeforeMethod
    public void populateCache() {
-      for (byte item = 1; item <= 10; item++) {
+      for (byte item = 1; item <= 50; item++) {
          byte[] bytes = {item, item, item};
-         cache.put(item, new Item("c" + item, bytes, new float[]{1.1f * item, 1.1f * item, 1.1f * item}, "bla" + item, (int)item));
+         String buggy = BUGGY_OPTIONS[item % 7];
+         cache.put(item, new Item("c" + item, bytes, new float[]{1.1f * item, 1.1f * item, 1.1f * item}, buggy, (int)item));
       }
    }
 
@@ -100,5 +104,48 @@ public class VectorSearchBroadcastTest extends MultipleCacheManagersTest {
       List<Object[]> hits = query.list();
       assertThat(hits).extracting(objects -> objects[0]).hasOnlyElementsOfType(Float.class).isNotNull().allMatch(o -> !o.equals(Float.NaN));
       assertThat(hits).extracting(objects -> objects[1]).extracting("code").containsExactly("c7", "c6", "c8");
+   }
+
+   @Test
+   public void ickleQuery_simpleFiltering() {
+      Query<Object[]> query = cache.query(
+            "select score(i), i from org.infinispan.query.model.Item i where i.floatVector <-> [:a]~:k filtering i.buggy : 'cat'");
+      query.setParameter("a", new float[]{7.0f, 7.0f, 7.0f});
+      query.setParameter("k", 3);
+
+      List<Object[]> hits = query.list();
+      assertThat(hits).extracting(objects -> objects[1])
+            .extracting("code").containsExactly("c7", "c14", "c21");
+   }
+
+   @Test
+   public void ickleQuery_complexFiltering() {
+      Query<Object[]> query = cache.query(
+            "select score(i), i from org.infinispan.query.model.Item i where i.floatVector <-> [:a]~:k filtering (i.buggy : 'cat' or i.buggy : 'code')");
+      query.setParameter("a", new float[]{7.0f, 7.0f, 7.0f});
+      query.setParameter("k", 3);
+
+      List<Object[]> hits = query.list();
+      assertThat(hits).extracting(objects -> objects[1])
+            .extracting("code").containsExactly("c7", "c8", "c1");
+   }
+
+   @Test
+   public void entityProjection() {
+      Query<Item> query = cache.query(
+            "from org.infinispan.query.model.Item i where i.floatVector <-> [:a]~:k filtering i.buggy : 'cat'");
+      query.setParameter("a", new float[]{7.0f, 7.0f, 7.0f});
+      query.setParameter("k", 3);
+
+      List<Item> hits = query.list();
+      assertThat(hits).extracting("code").containsExactly("c7", "c14", "c21");
+
+      query = cache.query(
+            "from org.infinispan.query.model.Item i where i.floatVector <-> [:a]~:k filtering (i.buggy : 'cat' or i.buggy : 'code')");
+      query.setParameter("a", new float[]{7.0f, 7.0f, 7.0f});
+      query.setParameter("k", 3);
+
+      hits = query.list();
+      assertThat(hits).extracting("code").containsExactly("c7", "c8", "c1");
    }
 }

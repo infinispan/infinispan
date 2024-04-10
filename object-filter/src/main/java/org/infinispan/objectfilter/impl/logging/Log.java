@@ -102,13 +102,16 @@ public interface Log extends BasicLogger {
    @Message(id = 28528, value = "Error parsing content. Data not stored as protobuf?")
    ParsingException errorParsingProtobuf(@Cause Exception e);
 
-   @Message(id = 28529, value = "Knn queries are not allowed in the HAVING clause")
-   ParsingException knnQueryOnHavingClause();
+   @Message(id = 28529, value = "Knn predicates are not allowed in the HAVING clause")
+   ParsingException knnPredicateOnHavingClause();
 
-   @Message(id = 28530, value = "Knn queries cannot be applied to property '%2$s' in type %1$s unless the property is a vector field.")
-   ParsingException knnQueryOnNotVectorField(String typeName, String propertyName);
+   @Message(id = 28530, value = "Knn predicates cannot be applied to property '%2$s' in type %1$s unless the property is a vector field.")
+   ParsingException knnPredicateOnNotVectorField(String typeName, String propertyName);
 
    @Message(id = 28531, value = "Knn vector parameter not valid.")
    ParsingException knnVectorParameterNotValid();
+
+   @Message(id = 28532, value = "Knn predicates are not allowed in the FILTERING clause")
+   ParsingException knnPredicateOnFilteringClause();
 
 }
