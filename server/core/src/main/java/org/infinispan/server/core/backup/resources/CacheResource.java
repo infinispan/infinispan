@@ -233,7 +233,6 @@ public class CacheResource extends AbstractContainerResource {
                commandsFactory.buildPutKeyValueCommand(key, value, keyPartitioner.getSegment(key),
                      internalMetadataImpl, FlagBitSets.IGNORE_RETURN_VALUES);
                cmd.setInternalMetadata(entry.internalMetadata);
-               log.infof("Out entry for %s", cacheName);
                return cmd;
             })
             .flatMap(cmd -> RxJavaInterop.voidCompletionStageToFlowable(invocationHelper.invokeAsync(cmd, 1)));
@@ -243,7 +242,7 @@ public class CacheResource extends AbstractContainerResource {
       return Flowable.fromPublisher(blockingManager.blockingPublisher(p))
             .count()
             .toCompletionStage()
-            .thenAccept(entries -> log.infof("Cache %s restored %d entries", cacheName, entries));
+            .thenAccept(entries -> log.debugf("Cache %s restored %d entries", cacheName, entries));
    }
 
    private CompletionStage<Void> createCacheBackup(String cacheName) {
