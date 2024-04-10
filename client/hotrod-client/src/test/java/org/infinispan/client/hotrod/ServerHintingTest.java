@@ -12,11 +12,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import org.infinispan.client.hotrod.impl.transport.netty.ChannelFactory;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -41,11 +39,9 @@ public class ServerHintingTest extends MultipleCacheManagersTest {
    HotRodServer hotRodServer3;
    HotRodServer hotRodServer4;
 
-   RemoteCache cache2;
+   RemoteCache<String, String> cache2;
 
    private RemoteCacheManager remoteCacheManager;
-   private ChannelFactory channelFactory;
-   private ConfigurationBuilder config;
 
    @AfterMethod
    @Override
@@ -67,7 +63,7 @@ public class ServerHintingTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      config = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
+      ConfigurationBuilder config = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       config.clustering().hash().numOwners(1);
       for (int i = 0; i < 3; ++i) {
          GlobalConfigurationBuilder gb = GlobalConfigurationBuilder.defaultClusteredBuilder();
@@ -101,8 +97,6 @@ public class ServerHintingTest extends MultipleCacheManagersTest {
       clientBuilder.addServer().host("127.0.0.1").port(hotRodServer2.getPort());
       remoteCacheManager = new InternalRemoteCacheManager(clientBuilder.build());
       cache2 = remoteCacheManager.getCache();
-
-      channelFactory = ((InternalRemoteCacheManager) remoteCacheManager).getChannelFactory();
    }
 
    @Test
@@ -111,7 +105,7 @@ public class ServerHintingTest extends MultipleCacheManagersTest {
       // Send a command just in case topology wasn't updated
       cache2.put("foo", "bar");
 
-      CacheTopologyInfo cti = cache2.getCacheTopologyInfo();;
+      CacheTopologyInfo cti = cache2.getCacheTopologyInfo();
       assertEquals(3, cti.getSegmentsPerServer().entrySet().size());
       for (Map.Entry<SocketAddress, Set<Integer>> entry : cti.getSegmentsPerServer().entrySet()) {
          IntSet serverPrimarySegments;
