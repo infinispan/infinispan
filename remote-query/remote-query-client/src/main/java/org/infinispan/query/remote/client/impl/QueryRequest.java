@@ -137,10 +137,9 @@ public final class QueryRequest implements JsonSerialization {
          queryRequest.setQueryString(reader.readString(QUERY_STRING_FIELD));
          queryRequest.setStartOffset(reader.readLong(START_OFFSET_FIELD));
          queryRequest.setMaxResults(reader.readInt(MAX_RESULTS_FIELD));
-         queryRequest.hitCountAccuracy(reader.readInt(HIT_COUNT_ACCURACY));
          queryRequest.setNamedParameters(reader.readCollection(NAMED_PARAMETERS_FIELD, new ArrayList<>(), NamedParameter.class));
-         Boolean localField = reader.readBoolean(LOCAL_FIELD);
-         if (localField != null) queryRequest.setLocal(localField);
+         queryRequest.setLocal(reader.readBoolean(LOCAL_FIELD));
+         queryRequest.hitCountAccuracy(reader.readInt(HIT_COUNT_ACCURACY));
          return queryRequest;
       }
 
@@ -149,9 +148,9 @@ public final class QueryRequest implements JsonSerialization {
          writer.writeString(QUERY_STRING_FIELD, queryRequest.getQueryString());
          writer.writeLong(START_OFFSET_FIELD, queryRequest.getStartOffset());
          writer.writeInt(MAX_RESULTS_FIELD, queryRequest.getMaxResults());
-         writer.writeInt(HIT_COUNT_ACCURACY, queryRequest.hitCountAccuracy());
          writer.writeCollection(NAMED_PARAMETERS_FIELD, queryRequest.getNamedParameters(), NamedParameter.class);
          writer.writeBoolean(LOCAL_FIELD, queryRequest.isLocal());
+         writer.writeInt(HIT_COUNT_ACCURACY, queryRequest.hitCountAccuracy());
       }
 
       @Override
