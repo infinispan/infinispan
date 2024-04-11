@@ -63,6 +63,7 @@ public interface ProtoStreamTypeIds {
    int ROLE_SET = CORE_LOWER_BOUND + 10;
    int ROLE = CORE_LOWER_BOUND + 11;
    int AUTHORIZATION_PERMISSION = CORE_LOWER_BOUND + 12;
+   int BITSET = CORE_LOWER_BOUND + 13;
 
    // Counter range 4000 -> 4199
    int COUNTERS_LOWER_BOUND = 4000;
