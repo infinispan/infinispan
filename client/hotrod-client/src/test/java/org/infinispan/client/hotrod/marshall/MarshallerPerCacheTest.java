@@ -34,9 +34,9 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -68,7 +68,7 @@ public class MarshallerPerCacheTest extends SingleHotRodServerTest {
       return cm;
    }
 
-   @AutoProtoSchemaBuilder(
+   @ProtoSchema(
          includeClasses = CustomValue.class,
          schemaFileName = "custom-value.proto",
          schemaFilePath = "proto/generated",
@@ -119,8 +119,7 @@ public class MarshallerPerCacheTest extends SingleHotRodServerTest {
       @Override
       protected ByteBuffer objectToBuffer(Object o, int estimatedSize) {
          String json;
-         if (o instanceof CustomValue) {
-            CustomValue customValue = (CustomValue) o;
+         if (o instanceof CustomValue customValue) {
             json = Json.object().set("field", customValue.getField()).toString();
          } else {
             json = Json.make(o).asString();

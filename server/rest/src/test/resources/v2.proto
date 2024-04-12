@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package evolution;
+
+enum e1 {
+  V0 = 0;
+  V1 = 1;
+  //V2 = 2; Remove a value without reserving it
+
+  reserved 3; // Remove some reservations
+  reserved "V3"; // Remove some reservations
+}
+
+message m1 {
+  string f1 = 8; // Change the number
+  //int32 f2 = 2; // Remove a value without reserving it
+  sfixed32 f3 = 3; // change the type from bool
+  map<string,string> f4 = 4;
+
+  reserved 5; // Remove some reservations
+  reserved "f5"; // Remove some reservations
+}

@@ -12,11 +12,11 @@ You must then manually register all other implementations.
 
 .Procedure
 
-. Set a value of `false` for the `AutoProtoSchemaBuilder.service` annotation.
+. Set a value of `false` for the `ProtoSchema.service` annotation.
 +
 [source,java]
 ----
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
       includeClasses = SomeClass.class,
       ...
       service = false

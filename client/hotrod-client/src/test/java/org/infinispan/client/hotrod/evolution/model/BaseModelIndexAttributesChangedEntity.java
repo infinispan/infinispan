@@ -43,7 +43,7 @@ public class BaseModelIndexAttributesChangedEntity implements Model {
         return id;
     }
 
-    @AutoProtoSchemaBuilder(includeClasses = BaseModelIndexAttributesChangedEntity.class, schemaFileName = "evolution-schema.proto", schemaPackageName = "evolution")
+    @AutoProtoSchemaBuilder(includeClasses = BaseModelIndexAttributesChangedEntity.class, schemaFileName = "evolution-schema.proto", schemaPackageName = "evolution", service = false)
     public interface BaseModelIndexAttributesChangedEntitySchema extends GeneratedSchema {
         BaseModelIndexAttributesChangedEntitySchema INSTANCE = new BaseModelIndexAttributesChangedEntitySchemaImpl();
     }

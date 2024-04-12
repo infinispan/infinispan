@@ -33,7 +33,7 @@ public class BaseModelWithNewIndexedFieldEntity implements Model {
         return id;
     }
 
-    @AutoProtoSchemaBuilder(includeClasses = BaseModelWithNewIndexedFieldEntity.class, schemaFileName = "evolution-schema.proto", schemaPackageName = "evolution")
+    @AutoProtoSchemaBuilder(includeClasses = BaseModelWithNewIndexedFieldEntity.class, schemaFileName = "evolution-schema.proto", schemaPackageName = "evolution", service = false)
     public interface BaseModelWithNewIndexedFieldEntitySchema extends GeneratedSchema {
         BaseModelWithNewIndexedFieldEntitySchema INSTANCE = new BaseModelWithNewIndexedFieldEntitySchemaImpl();
     }

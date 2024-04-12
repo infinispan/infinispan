@@ -21,15 +21,15 @@ public class BaseModelWithNameFieldAnalyzedEntity implements Model {
     public String id;
 
     @ProtoField(number = 3)
-    @Text()
-    public String nameAnalyzed;
+    @Text
+    public String name;
 
     @Override
     public String getId() {
         return id;
     }
 
-    @AutoProtoSchemaBuilder(includeClasses = BaseModelWithNameFieldAnalyzedEntity.class, schemaFileName = "evolution-schema.proto", schemaPackageName = "evolution")
+    @AutoProtoSchemaBuilder(includeClasses = BaseModelWithNameFieldAnalyzedEntity.class, schemaFileName = "evolution-schema.proto", schemaPackageName = "evolution", service = false)
     public interface BaseModelWithNameFieldAnalyzedEntitySchema extends GeneratedSchema {
         BaseModelWithNameFieldAnalyzedEntitySchema INSTANCE = new BaseModelWithNameFieldAnalyzedEntitySchemaImpl();
     }

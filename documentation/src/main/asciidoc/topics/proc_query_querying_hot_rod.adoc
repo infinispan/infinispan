@@ -24,7 +24,7 @@ include::dependencies_maven/protostream-processor.xml[]
 include::code_examples/BookIndexed.java[]
 ----
 +
-. Implement the `SerializationContextInitializer` interface in a new class and then add the `@AutoProtoSchemaBuilder` annotation.
+. Implement the `SerializationContextInitializer` interface in a new class and then add the `@ProtoSchema` annotation.
 .. Reference the class that includes the `@ProtoField` annotations with the `includeClasses` parameter.
 .. Define a name for the Protobuf schema that you generate and filesystem path with the `schemaFileName` and `schemaFilePath` parameters.
 .. Specify the package name for the Protobuf schema with the `schemaPackageName` parameter.

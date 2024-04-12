@@ -27,7 +27,7 @@ public class CalculusIndexed {
 +
 [source,java]
 ----
-@AutoProtoSchemaBuilder(includeClasses = CalculusIndexed.class, dependsOn = CommonTypes.class,
+@ProtoSchema(includeClasses = CalculusIndexed.class, dependsOn = CommonTypes.class,
      schemaFilePath = "/protostream", schemaFileName = "calculus-indexed.proto",
      schemaPackageName = "lab.indexed")
 public interface CalculusIndexedSchema extends GeneratedSchema {

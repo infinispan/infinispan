@@ -23,26 +23,27 @@ The ProtoStream library includes several adapter classes for common Java types, 
 * `java.math.BigDecimal`
 * `java.math.BigInteger`
 * `java.util.UUID`
+* `java.util.BitSet`
 
 {brandname} provides all adapter classes for some common JDK classes in the `protostream-types` artifact, which is included in the `infinispan-core` and `infinispan-client-hotrod` dependencies.
 You do not need any configuration to store adapter classes as keys or values.
 
-However, if you want to use adapter classes as marshallable fields in ProtoStream-annotated POJOS, you can do so in the following ways:
+However, if you want to use adapter classes as marshallable fields in ProtoStream-annotated POJOs, you can do so in the following ways:
 
-* Specify the `CommonTypesSchema` and `CommonContainerTypesSchema` classes with the `dependsOn` element of the `AutoProtoSchemaBuilder` annotation.
+* Specify the `CommonTypesSchema` and `CommonContainerTypesSchema` classes with the `dependsOn` element of the `ProtoSchema` annotation.
 
 [source,java,options="nowrap",subs=attributes+]
 ----
-@AutoProtoSchemaBuilder(dependsOn = {org.infinispan.protostream.types.java.CommonTypes, org.infinispan.protostream.types.java.CommonContainerTypes}, schemaFileName = "library.proto", schemaFilePath = "proto", schemaPackageName = "example")
+@ProtoSchema(dependsOn = {org.infinispan.protostream.types.java.CommonTypes, org.infinispan.protostream.types.java.CommonContainerTypes}, schemaFileName = "library.proto", schemaFilePath = "proto", schemaPackageName = "example")
 public interface LibraryInitalizer extends SerializationContextInitializer {
 }
 ----
 
-* Specify the required adapter classes with the `includeClasses` element of the `AutoProtoSchemaBuilder` annotation
+* Specify the required adapter classes with the `includeClasses` element of the `ProtoSchema` annotation
 
 [source,java,options="nowrap",subs=attributes+]
 ----
-@AutoProtoSchemaBuilder(includeClasses = { Author.class, Book.class, UUIDAdapter.class, java.math.BigInteger }, schemaFileName = "library.proto", schemaFilePath = "proto", schemaPackageName = "library")
+@ProtoSchema(includeClasses = { Author.class, Book.class, UUIDAdapter.class, java.math.BigInteger }, schemaFileName = "library.proto", schemaFilePath = "proto", schemaPackageName = "library")
 public interface LibraryInitalizer extends SerializationContextInitializer {
 
 }

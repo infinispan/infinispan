@@ -25,15 +25,15 @@ public class BaseModelWithNameIndexedAndNameFieldEntity implements Model {
     public String name;
 
     @ProtoField(number = 4)
-    @Text()
-    public String nameAnalyzed;
+    @Text
+    public String analyzed;
 
     @Override
     public String getId() {
         return id;
     }
 
-    @AutoProtoSchemaBuilder(includeClasses = BaseModelWithNameIndexedAndNameFieldEntity.class, schemaFileName = "evolution-schema.proto", schemaPackageName = "evolution")
+    @AutoProtoSchemaBuilder(includeClasses = BaseModelWithNameIndexedAndNameFieldEntity.class, schemaFileName = "evolution-schema.proto", schemaPackageName = "evolution", service = false)
     public interface BaseModelWithNameIndexedAndNameFieldEntitySchema extends GeneratedSchema {
         BaseModelWithNameIndexedAndNameFieldEntitySchema INSTANCE = new BaseModelWithNameIndexedAndNameFieldEntitySchemaImpl();
     }

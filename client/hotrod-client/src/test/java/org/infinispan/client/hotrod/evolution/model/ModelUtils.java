@@ -1,9 +1,9 @@
 package org.infinispan.client.hotrod.evolution.model;
 
+import java.util.function.Function;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.model.Model;
-
-import java.util.function.Function;
 
 public class ModelUtils {
 
@@ -36,7 +36,7 @@ public class ModelUtils {
             BaseModelWithNameFieldAnalyzedEntity m = new BaseModelWithNameFieldAnalyzedEntity();
             m.entityVersion = version;
             m.id = String.valueOf((2 * ID_VERSION_OFFSET) + i);
-            m.nameAnalyzed = "modelC # " + i;
+            m.name = "modelC # " + i;
 
             return m;
         };
@@ -48,7 +48,7 @@ public class ModelUtils {
             m.entityVersion = version;
             m.id = String.valueOf((3 * ID_VERSION_OFFSET) + i);
             m.name = "modelD # " + i;
-            m.nameAnalyzed = "modelD # " + i;
+            m.analyzed = "modelD # " + i;
 
             return m;
         };
@@ -71,7 +71,7 @@ public class ModelUtils {
             BaseModelWithNameIndexedFieldEntity m = new BaseModelWithNameIndexedFieldEntity();
             m.entityVersion = version;
             m.id = String.valueOf((5 * ID_VERSION_OFFSET) + i);
-            m.nameAnalyzed = "modelF # " + i;
+            m.analyzed = "modelF # " + i;
 
             return m;
         };
@@ -82,8 +82,8 @@ public class ModelUtils {
             BaseModelWithNameAnalyzedAndNameNonAnalyzedFieldEntity m = new BaseModelWithNameAnalyzedAndNameNonAnalyzedFieldEntity();
             m.entityVersion = version;
             m.id = String.valueOf((6 * ID_VERSION_OFFSET) + i);
-            m.nameAnalyzed = "modelG # " + i;
-            m.nameNonAnalyzed = m.nameAnalyzed;
+            m.name = "modelG # " + i;
+            m.analyzed = m.name;
 
             return m;
         };
@@ -94,7 +94,7 @@ public class ModelUtils {
             BaseEntityWithNonAnalyzedNameFieldEntity m = new BaseEntityWithNonAnalyzedNameFieldEntity();
             m.entityVersion = version;
             m.id = String.valueOf((7 * ID_VERSION_OFFSET) + i);
-            m.nameNonAnalyzed = "modelH # " + i;
+            m.analyzed = "modelH # " + i;
 
             return m;
         };
@@ -105,7 +105,7 @@ public class ModelUtils {
             BaseModelWithNameFieldIndexedAndNameAnalyzedFieldEntity m = new BaseModelWithNameFieldIndexedAndNameAnalyzedFieldEntity();
             m.entityVersion = version;
             m.id = String.valueOf((7 * ID_VERSION_OFFSET) + i);
-            m.nameAnalyzed = "modelI # " + i;
+            m.analyzed = "modelI # " + i;
             m.name = "modelI # " + i;
 
             return m;

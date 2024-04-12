@@ -14,9 +14,10 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.config.Configuration;
 
 public class SerializationConfiguration {
-   public static final AttributeDefinition<Marshaller> MARSHALLER = AttributeDefinition.builder("marshaller", null, Marshaller.class)
+   public static final AttributeDefinition<Marshaller> MARSHALLER = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MARSHALLER, null, Marshaller.class)
          .serializer(AttributeSerializer.INSTANCE_CLASS_NAME)
          .immutable().build();
    public static final AttributeDefinition<Map<Integer, AdvancedExternalizer<?>>> ADVANCED_EXTERNALIZERS = AttributeDefinition.builder("advancedExternalizer", null, (Class<Map<Integer, AdvancedExternalizer<?>>>) (Class<?>) Map.class)
@@ -26,9 +27,11 @@ public class SerializationConfiguration {
    public static final AttributeDefinition<List<SerializationContextInitializer>> SERIALIZATION_CONTEXT_INITIALIZERS =
          AttributeDefinition.builder("contextInitializers", null, (Class<List<SerializationContextInitializer>>) (Class<?>) List.class)
                .immutable().build();
+   public static final AttributeDefinition<Configuration.SchemaValidation> SCHEMA_COMPATIBILITY =
+         AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.SCHEMA_COMPATIBILITY, Configuration.SchemaValidation.STRICT, Configuration.SchemaValidation.class).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(SerializationConfiguration.class, MARSHALLER, ADVANCED_EXTERNALIZERS, SERIALIZATION_CONTEXT_INITIALIZERS);
+      return new AttributeSet(SerializationConfiguration.class, MARSHALLER, ADVANCED_EXTERNALIZERS, SERIALIZATION_CONTEXT_INITIALIZERS, SCHEMA_COMPATIBILITY);
    }
 
    private final Attribute<Map<Integer, AdvancedExternalizer<?>>> advancedExternalizers;
@@ -59,6 +62,10 @@ public class SerializationConfiguration {
 
    public List<SerializationContextInitializer> contextInitializers() {
       return contextInitializers.get();
+   }
+
+   public Configuration.SchemaValidation schemaCompatibilityValidation() {
+      return attributes.attribute(SCHEMA_COMPATIBILITY).get();
    }
 
    public AttributeSet attributes() {

@@ -164,6 +164,7 @@ public enum Attribute {
     REMOTE_SITE,
     REMOTE_TIMEOUT,
     ROLES,
+    SCHEMA_COMPATIBILITY,
     SECURITY,
     SEGMENTED,
     SEGMENTS,
@@ -223,7 +224,7 @@ public enum Attribute {
     REPLACE_ALL,
     UNCLEAN_SHUTDOWN_ACTION,
     UPPERCASE,
-   ;
+    ;
 
     private final String name;
 

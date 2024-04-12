@@ -1,5 +1,6 @@
 package org.infinispan.rest.resources;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.commons.util.Util.getResourceAsString;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
@@ -9,6 +10,8 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestSchemaClient;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.test.Exceptions;
+import org.infinispan.commons.util.Util;
 import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.security.Security;
@@ -166,6 +169,28 @@ public class ProtobufResourceTest extends AbstractRestResourceTest {
    public void uploadEmptySchema() {
       CompletionStage<RestResponse> response = client.schemas().put("empty", "");
       ResponseAssertion.assertThat(response).isBadRequest();
+   }
+
+   @Test
+   public void testSchemaCompatibilityCheck() {
+      String v1 = Exceptions.unchecked(() -> Util.getResourceAsString("/v1.proto", getClass().getClassLoader()));
+      RestResponse response = join(client.schemas().put("compatibility.proto", v1));
+      ResponseAssertion.assertThat(response).isOk();
+      String v2 = Exceptions.unchecked(() -> Util.getResourceAsString("/v2.proto", getClass().getClassLoader()));
+      response = join(client.schemas().put("compatibility.proto", v2));
+      ResponseAssertion.assertThat(response).isError();
+      String body = response.body();
+      assertThat(body).contains("IPROTO000039");
+      assertThat(body).contains("IPROTO000035: Field 'evolution.m1.f1' number was changed from 1 to 8");
+      assertThat(body).contains("IPROTO000036: Field 'evolution.m1.f2' was removed, but its name has not been reserved");
+      assertThat(body).contains("IPROTO000037: Field 'evolution.m1.f2' was removed, but its number 2 has not been reserved");
+      assertThat(body).contains("IPROTO000038: Field 'evolution.m1.f3''s type was changed from 'bool' to 'sfixed32'");
+      assertThat(body).contains("IPROTO000033: Type 'evolution.m1' no longer reserves field names '[f6]'");
+      assertThat(body).contains("IPROTO000034: Type 'evolution.m1' no longer reserves field numbers '{6, 7}'");
+      assertThat(body).contains("IPROTO000036: Field 'evolution.e1.V2' was removed, but its name has not been reserved");
+      assertThat(body).contains("IPROTO000037: Field 'evolution.e1.V2' was removed, but its number 2 has not been reserved");
+      assertThat(body).contains("IPROTO000033: Type 'evolution.e1' no longer reserves field names '[V4]'");
+      assertThat(body).contains("IPROTO000034: Type 'evolution.e1' no longer reserves field numbers '{4, 5}'");
    }
 
    private void checkListProtobufEndpointUrl(String fileName, String errorMessage) {
