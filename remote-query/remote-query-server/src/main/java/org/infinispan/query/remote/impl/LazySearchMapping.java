@@ -165,8 +165,13 @@ public class LazySearchMapping implements SearchMapping {
    }
 
    @Override
-   public Class<?> toConvertedEntityJavaClass(Object value) {
-      return mapping().toConvertedEntityJavaClass(value);
+   public boolean typeIsIndexed(Object value) {
+      return mapping().typeIsIndexed(value);
+   }
+
+   @Override
+   public boolean typeIsIndexed(Object value, Collection<Class<?>> restricted) {
+      return mapping().typeIsIndexed(value, restricted);
    }
 
    @Override

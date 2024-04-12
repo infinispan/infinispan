@@ -484,7 +484,6 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       if (searchMapping == null) {
          return false;
       }
-      Class<?> convertedType = searchMapping.toConvertedEntityJavaClass(value);
-      return searchMapping.allIndexedEntityJavaClasses().contains(convertedType);
+      return searchMapping.typeIsIndexed(value);
    }
 }

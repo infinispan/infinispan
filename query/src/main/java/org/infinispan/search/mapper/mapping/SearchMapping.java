@@ -102,21 +102,9 @@ public interface SearchMapping extends AutoCloseable {
    default void restart() {
    }
 
-   /**
-    * @param value An entity.
-    * @return The internal Java class for this entity after conversion,
-    * i.e. the Java class that will be returned by {@link #allIndexedEntityJavaClasses()}
-    * if this entity is potentially indexed.
-    * In practice, this is only useful to handle protobuf type: if an instance of ProtobufValueWrapper is passed,
-    * this will return byte[] because that's the type we use for protobuf values internally.
-    * For all other types, this just returns value.getClass().
-    * @see EntityConverter
-    */
-   //TODO: ISPN-12449 this would be really simpler if we were just using entity names.
-   // see allIndexedEntityJavaClasses.
-   // However, there's a challenge here: we don't know the type of a ProtobufValueWrapper until it's deserialized,
-   // and deserializing is costly so we don't want to deserialize it until we know we need to index it...
-   Class<?> toConvertedEntityJavaClass(Object value);
+   boolean typeIsIndexed(Object value);
+
+   boolean typeIsIndexed(Object value, Collection<Class<?>> restricted);
 
    Map<String, IndexMetamodel> metamodel();
 

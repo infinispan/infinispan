@@ -31,8 +31,13 @@ public class ProtobufEntityConverter implements EntityConverter {
    }
 
    @Override
-   public PojoRawTypeIdentifier<?> convertedTypeIdentifier() {
-      return BYTE_ARRAY_TYPE_IDENTIFIER;
+   public Set<PojoRawTypeIdentifier<?>> convertedTypeIdentifiers() {
+      return Set.of(BYTE_ARRAY_TYPE_IDENTIFIER);
+   }
+
+   @Override
+   public boolean typeIsIndexed(Class<?> type) {
+      return type.equals(targetType());
    }
 
    @Override
