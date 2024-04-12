@@ -1,6 +1,5 @@
 package org.infinispan.query.remote.impl;
 
-import javax.management.MBeanException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -10,6 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.management.MBeanException;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
@@ -69,7 +70,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
 
    private static final Log log = LogFactory.getLog(ProtobufMetadataManagerImpl.class, Log.class);
 
-   private final SerializationContext serCtx;
+   private SerializationContext serCtx;
 
    private volatile Cache<String, String> protobufSchemaCache;
 
@@ -83,18 +84,6 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
    SerializationContextRegistry serializationContextRegistry;
 
    public ProtobufMetadataManagerImpl() {
-      Configuration.Builder protostreamCfgBuilder = Configuration.builder();
-      Search5Annotations.configure(protostreamCfgBuilder);
-      InfinispanAnnotations.configure(protostreamCfgBuilder);
-      serCtx = ProtobufUtil.newSerializationContext(protostreamCfgBuilder.build());
-      try {
-         MarshallerRegistration.init(serCtx);
-      } catch (DescriptorParserException e) {
-         throw new CacheException("Failed to initialise the Protobuf serialization context", e);
-      }
-      register(new CommonTypesSchema());
-      register(new CommonContainerTypesSchema());
-      register(new UserContextInitializerImpl());
    }
 
    void register(SerializationContextInitializer initializer) {
@@ -105,6 +94,20 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
    @Start
    void start() {
       GlobalConfiguration globalConfiguration = cacheManager.getCacheManagerConfiguration();
+
+      Configuration.Builder configuration = Configuration.builder();
+      configuration.schemaValidation(globalConfiguration.serialization().schemaCompatibilityValidation());
+      Search5Annotations.configure(configuration);
+      InfinispanAnnotations.configure(configuration);
+      serCtx = ProtobufUtil.newSerializationContext(configuration.build());
+      try {
+         MarshallerRegistration.init(serCtx);
+      } catch (DescriptorParserException e) {
+         throw new CacheException("Failed to initialise the Protobuf serialization context", e);
+      }
+      register(new CommonTypesSchema());
+      register(new CommonContainerTypesSchema());
+      register(new UserContextInitializerImpl());
 
       internalCacheRegistry.registerInternalCache(PROTOBUF_METADATA_CACHE_NAME,
             getProtobufMetadataCacheConfig(globalConfiguration).build(),
@@ -125,7 +128,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
                sci.registerSchema(serCtx);
                sci.registerMarshallers(serCtx);
             } catch (Exception e) {
-               throw log.errorInitializingSerCtx(e);
+               throw Log.CONTAINER.errorInitializingSerCtx(e);
             }
          }
       }

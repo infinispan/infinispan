@@ -28,7 +28,7 @@ public class BaseModelWithNameFieldIndexedEntity implements Model {
         return id;
     }
 
-    @AutoProtoSchemaBuilder(includeClasses = BaseModelWithNameFieldIndexedEntity.class, schemaFileName = "evolution-schema.proto", schemaPackageName = "evolution")
+    @AutoProtoSchemaBuilder(includeClasses = BaseModelWithNameFieldIndexedEntity.class, schemaFileName = "evolution-schema.proto", schemaPackageName = "evolution", service = false)
     public interface BaseModelWithNameFieldIndexedEntitySchema extends GeneratedSchema {
         BaseModelWithNameFieldIndexedEntitySchema INSTANCE = new BaseModelWithNameFieldIndexedEntitySchemaImpl();
     }

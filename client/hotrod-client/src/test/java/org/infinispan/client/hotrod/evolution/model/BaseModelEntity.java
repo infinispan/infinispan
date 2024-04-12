@@ -27,7 +27,7 @@ public class BaseModelEntity implements Model {
         return id;
     }
 
-    @AutoProtoSchemaBuilder(includeClasses = BaseModelEntity.class, schemaFileName = "evolution-schema.proto", schemaPackageName = "evolution")
+    @AutoProtoSchemaBuilder(includeClasses = BaseModelEntity.class, schemaFileName = "evolution-schema.proto", schemaPackageName = "evolution", service = false)
     public interface BaseModelEntitySchema extends GeneratedSchema {
         BaseModelEntitySchema INSTANCE = new BaseModelEntitySchemaImpl();
     }

@@ -1,0 +1,47 @@
+[id='protostream-protocol-buffers-best-practices{context}']
+= Protocol Buffers best practices
+
+The Protocol Buffers documentation provides a list of link:https://protobuf.dev/programming-guides/dos-donts/[best practices]
+on how to design messages and how to link:https://protobuf.dev/programming-guides/proto3/#updating[evolve] the schema in
+order to maintain backwards compatibility.
+
+{brandname} can automatically perform compatibility checks when schemas are updated and reject updates when incompatibilities are detected.
+The types of checks can be configured via the `schema-compatibility` attribute of the global `serialization` configuration.
+The available levels are:
+
+* `UNRESTRICTED`: no checks are performed
+* `LENIENT`: a subset of the rules are enforced
+* `STRICT`: all the rules are enforced (default)
+
+The following table shows the compatibility check rules enabled for each level
+
+[%header,cols=3*]
+|===
+|Rule
+|Description
+|Level
+
+|No Using Reserved Fields
+|Compares the current and updated definitions and returns a list of warnings if any message's previously reserved fields or IDs are now being used as part of the same message.
+|`LENIENT`, `STRICT`
+
+|No Changing Field IDs
+|Compares the current and updated definitions and returns a list of warnings if any field ID number has been changed.
+|`LENIENT`, `STRICT`
+
+|No Changing Field Types
+|Compares the current and updated definitions and returns a list of warnings if any field type has been changed.
+|`LENIENT`, `STRICT`
+
+|No Removing Fields Without Reserve
+|Compares the current and updated definitions and returns a list of warnings if any field has been removed without a corresponding reservation of that field name or ID.
+|`LENIENT`, `STRICT`
+
+|No Removing Reserved Fields
+|Compares the current and updated definitions and returns a list of warnings if any reserved field has been removed.
+|`STRICT`
+
+|No Changing Field Names
+|Compares the current and updated definitions and returns a list of warnings if any message's previous fields have been renamed.
+|`STRICT`
+|===

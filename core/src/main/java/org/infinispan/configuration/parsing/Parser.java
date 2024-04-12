@@ -50,6 +50,7 @@ import org.infinispan.configuration.global.TransportConfigurationBuilder;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.globalstate.LocalConfigurationStorage;
+import org.infinispan.protostream.config.Configuration;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.BuiltinJGroupsChannelConfigurator;
 import org.infinispan.remoting.transport.jgroups.EmbeddedJGroupsChannelConfigurator;
@@ -118,6 +119,10 @@ public class Parser extends CacheParser {
          switch (attribute) {
             case MARSHALLER: {
                builder.serialization().marshaller(Util.getInstance(value, holder.getClassLoader()));
+               break;
+            }
+            case SCHEMA_COMPATIBILITY: {
+               builder.serialization().schemaCompatibilityValidation(ParseUtils.parseEnum(reader, i, Configuration.SchemaValidation.class, value));
                break;
             }
             case VERSION: {

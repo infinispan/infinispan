@@ -2,6 +2,7 @@ package org.infinispan.configuration.global;
 
 import static org.infinispan.configuration.global.SerializationConfiguration.ADVANCED_EXTERNALIZERS;
 import static org.infinispan.configuration.global.SerializationConfiguration.MARSHALLER;
+import static org.infinispan.configuration.global.SerializationConfiguration.SCHEMA_COMPATIBILITY;
 import static org.infinispan.configuration.global.SerializationConfiguration.SERIALIZATION_CONTEXT_INITIALIZERS;
 
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.config.Configuration;
 
 /**
  * Configures serialization and marshalling settings.
@@ -135,6 +137,11 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
       return allowListBuilder;
    }
 
+   public SerializationConfigurationBuilder schemaCompatibilityValidation(Configuration.SchemaValidation schemaValidation) {
+      attributes.attribute(SCHEMA_COMPATIBILITY).set(schemaValidation);
+      return this;
+   }
+
    /**
     * @deprecated since 12.0. Use {@link #allowList()} instead. To be removed in 14.0.
     */
@@ -168,5 +175,4 @@ public class SerializationConfigurationBuilder extends AbstractGlobalConfigurati
    public String toString() {
       return "SerializationConfigurationBuilder [attributes=" + attributes + ", advancedExternalizers=" + advancedExternalizers + "]";
    }
-
 }

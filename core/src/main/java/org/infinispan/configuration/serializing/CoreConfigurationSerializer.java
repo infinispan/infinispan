@@ -316,7 +316,8 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
          try {
             ConfigurationSerializer<Object> serializer = Util.getInstanceStrict(serializedWith.value());
             serializer.serialize(writer, entry.getValue());
-         } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+         } catch (InstantiationException | IllegalAccessException | NoSuchMethodException |
+                  InvocationTargetException e) {
             throw CONFIG.unableToInstantiateSerializer(serializedWith.value());
          }
       }
@@ -532,6 +533,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       if (attributes.isModified()) {
          writer.writeStartElement(Element.SERIALIZATION);
          attributes.write(writer, SerializationConfiguration.MARSHALLER, Attribute.MARSHALLER);
+         attributes.write(writer, SerializationConfiguration.SCHEMA_COMPATIBILITY, Attribute.SCHEMA_COMPATIBILITY);
          SerializationConfiguration config = globalConfiguration.serialization();
          writeSerializationContextInitializers(writer, config);
          writeClassAllowList(writer, config.allowList());
@@ -799,7 +801,8 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
             try {
                serializer = Util.getInstanceStrict(serializedWith.value());
                serializer.serialize(writer, configuration);
-            } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            } catch (InstantiationException | NoSuchMethodException | InvocationTargetException |
+                     IllegalAccessException e) {
                throw CONFIG.unableToInstantiateSerializer(serializedWith.value());
             }
          }

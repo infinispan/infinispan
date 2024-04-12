@@ -6,12 +6,26 @@ This topic provides additional details about ProtoStream annotations.
 You should refer to the documentation in the link:{protostreamdocroot}/org/infinispan/protostream/annotations/package-summary.html[org.infinispan.protostream.annotations] package for complete information.
 
 [discrete]
+== Proto
+
+`@Proto` defines a Protocol Buffers message without the requirement of having to annotate all fields with the `@ProtoField` annotation.
+
+* Use this annotation to quickly generate messages from records or classes with public fields.
+* Fields must be public and they will be assigned incremental numbers based on the declaration order.
+* It is possible to override the automated defaults for a field by using the `ProtoField` annotation.
+
+[WARNING]
+====
+Use automatic Protobuf field numbering only for quick prototyping. For production environments you should follow the link:{encoding_docs}#protostream-protocol-buffers-best-practices[Protocol Buffers best practices] in order to guarantee future/backwards compatibility with your schema.
+====
+
+[discrete]
 == ProtoField
 
 `@ProtoField` defines a Protobuf message field.
 
-This annotation is required and applies to fields as well as getter and setter methods.
-A class must have at least one field annotated with `@ProtoField` before {brandname} can marshall it as Protobuf.
+This annotation applies to fields as well as getter and setter methods.
+Unless you are using the `@Proto` annotation, a class must have at least one field annotated with `@ProtoField` before {brandname} can marshall it as Protobuf.
 
 [%header,cols=4*]
 |===
@@ -71,9 +85,9 @@ All fields annotated with `@ProtoField` must be included in the parameters.
 * If you do not add a `@ProtoFactory` annotated constructor to a class, that class must have a default no-argument constructor, otherwise errors occur during compilation.
 
 [discrete]
-== AutoProtoSchemaBuilder
+== ProtoSchema
 
-`@AutoProtoSchemaBuilder` generates an implementation of a class or interface that extends `SerializationContextInitializer`.
+`@ProtoSchema` generates an implementation of a class or interface that extends `SerializationContextInitializer`.
 
 If active, the ProtoStream processor generates the implementation at compile time in the same package with the `Impl` suffix or a name that you specify with the `className` parameter.
 
@@ -89,7 +103,7 @@ You can also use the `marshallersOnly` to generate marshallers only and suppress
 The ProtoStream process automatically generates `META-INF/services` service metadata files, which you can use so that {brandname} Server automatically picks up the JAR to register the Protobuf schema.
 
 The `dependsOn` parameter lists annotated classes that implement `SerializedContextInitializer` to execute first.
-If the class does not implement `SerializedContextInitializer` or is not annotated with `AutoProtoSchemaBuilder`, a compile time error occurs.
+If the class does not implement `SerializedContextInitializer` or is not annotated with `ProtoSchema`, a compile time error occurs.
 
 [discrete]
 == ProtoAdapter
@@ -104,7 +118,7 @@ If you use this annotation for:
 [discrete]
 == ProtoName
 
-`@ProtoName` is an optional annotation that specifies the Protobuf message or enum type name and replaces the `@ProtoMessage` annotation.
+`@ProtoName` is an optional annotation that specifies the Protobuf message or enum type name. It can be used on classes, records and enums.
 
 [discrete]
 == ProtoEnumValue

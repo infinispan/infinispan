@@ -1,7 +1,7 @@
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
+import org.infinispan.protostream.annotations.ProtoSchema;
 
-@AutoProtoSchemaBuilder(
+@ProtoSchema(
       includeClasses = {
             Book.class
       },

@@ -3,7 +3,7 @@ package org.infinispan.client.hotrod.annotation.model;
 import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 
-@AutoProtoSchemaBuilder(includeClasses = ModelB.class, schemaFileName = "model-schema.proto", schemaPackageName = "model")
+@AutoProtoSchemaBuilder(includeClasses = ModelB.class, schemaFileName = "model-schema.proto", schemaPackageName = "model", service = false)
 public interface SchemaB extends GeneratedSchema {
 
    SchemaB INSTANCE = new SchemaBImpl();

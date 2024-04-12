@@ -22,19 +22,19 @@ public class BaseModelWithNameAnalyzedAndNameNonAnalyzedFieldEntity implements M
 
     @ProtoField(number = 3)
     @Deprecated(forRemoval=true)
-    @Text()
-    public String nameAnalyzed;
+    @Text
+    public String name;
 
     @ProtoField(number = 4)
     @Basic(projectable = true)
-    public String nameNonAnalyzed;
+    public String analyzed;
 
     @Override
     public String getId() {
         return id;
     }
 
-    @AutoProtoSchemaBuilder(includeClasses = BaseModelWithNameAnalyzedAndNameNonAnalyzedFieldEntity.class, schemaFileName = "evolution-schema.proto", schemaPackageName = "evolution")
+    @AutoProtoSchemaBuilder(includeClasses = BaseModelWithNameAnalyzedAndNameNonAnalyzedFieldEntity.class, schemaFileName = "evolution-schema.proto", schemaPackageName = "evolution", service = false)
     public interface BaseModelWithNameAnalyzedAndNameNonAnalyzedFieldEntitySchema extends GeneratedSchema {
         BaseModelWithNameAnalyzedAndNameNonAnalyzedFieldEntitySchema INSTANCE = new BaseModelWithNameAnalyzedAndNameNonAnalyzedFieldEntitySchemaImpl();
     }

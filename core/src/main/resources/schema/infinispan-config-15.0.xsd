@@ -796,6 +796,13 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute name="schema-compatibility" type="tns:schema-compatibility" default="STRICT">
+      <xs:annotation>
+        <xs:documentation>
+          The kind of compatibility validation that is performed when updating schemas.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="metrics">
@@ -3323,4 +3330,32 @@
     </xs:restriction>
   </xs:simpleType>
 
+  <xs:simpleType name="schema-compatibility">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="UNRESTRICTED">
+        <xs:annotation>
+          <xs:documentation>
+            Replaces existing schemas without performing any backwards-compatibility checks.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="LENIENT">
+        <xs:annotation>
+          <xs:documentation>
+            Enables lenient compatibility checks when updating an existing schema. The following checks are performed:
+            No Using Reserved Fields, No Changing Field IDs, No Changing Field Types, No Removing Fields Without Reserve
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="STRICT">
+        <xs:annotation>
+          <xs:documentation>
+            Enables strict compatibility checks when updating an existing schema. The following checks are performed:
+            No Using Reserved Fields, No Changing Field IDs, No Changing Field Types, No Removing Fields Without Reserve,
+            No Removing Reserved Fields, No Changing Field Names
+          </xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
 </xs:schema>

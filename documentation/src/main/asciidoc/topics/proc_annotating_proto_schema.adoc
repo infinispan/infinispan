@@ -1,7 +1,7 @@
 [id='annotating-autoprotoschemabuilder_{context}']
 = Generating serialization context initializers
 
-After you add the ProtoStream processor and annotate your Java classes, you can add the `@AutoProtoSchemaBuilder` annotation to an interface so that {brandname} generates the Protobuf schema, accompanying marshallers, and a concrete implementation of the `SerializationContextInitializer`.
+After you add the ProtoStream processor and annotate your Java classes, you can add the `@ProtoSchema` annotation to an interface so that {brandname} generates the Protobuf schema, accompanying marshallers, and a concrete implementation of the `SerializationContextInitializer`.
 
 [NOTE]
 ====
@@ -17,13 +17,13 @@ By default, generated implementation names are the annotated class name with an 
 The `GeneratedSchema` interface includes a method to access the Protobuf schema whereas the `SerializationContextInitializer` interface supports only registration methods.
 ====
 +
-. Annotate the interface with `@AutoProtoSchemaBuilder`.
+. Annotate the interface with `@ProtoSchema`.
 . Ensure that `includeClasses` parameter includes all classes for the generated `SerializationContextInitializer` implementation.
 . Specify a name for the generated `.proto` schema with the `schemaFileName` parameter.
 . Set a path under `target/classes` where schema files are generated with the `schemaFilePath` parameter.
 . Specify a package name for the generated `.proto` schema with the `schemaPackageName` parameter.
 
-The following example shows a `GeneratedSchema` interface annotated with `@AutoProtoSchemaBuilder`:
+The following example shows a `GeneratedSchema` interface annotated with `@ProtoSchema`:
 
 [source,java,options="nowrap",subs=attributes+]
 ----
@@ -38,4 +38,4 @@ If you use remote caches, you must register your `SerializationContextInitialize
 
 [role="_additional-resources"]
 .Additional resources
-* link:{protostreamdocroot}/org/infinispan/protostream/annotations/AutoProtoSchemaBuilder.html[org.infinispan.protostream.annotations.AutoProtoSchemaBuilder]
+* link:{protostreamdocroot}/org/infinispan/protostream/annotations/ProtoSchema.html[org.infinispan.protostream.annotations.ProtoSchema]

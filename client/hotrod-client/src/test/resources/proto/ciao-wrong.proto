@@ -12,4 +12,7 @@ message author {
    */
   required string name = 1;
 
+  reserved "age";
+  reserved 2;
+
 }
