@@ -78,18 +78,7 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
          }
       }
 
-      List<Integer> translatedPath = new ArrayList<>(propertyPath.length);
-      Descriptor md = messageDescriptor;
-      for (String prop : propertyPath) {
-         FieldDescriptor fd = md.findFieldByName(prop);
-         translatedPath.add(fd.getNumber());
-         if (fd.getJavaType() == JavaType.MESSAGE) {
-            md = fd.getMessageType();
-         } else {
-            md = null; // iteration is expected to stop here
-         }
-      }
-      return translatedPath;
+      return translatePropertyPath(messageDescriptor, propertyPath);
    }
 
    @Override
@@ -145,25 +134,72 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
    }
 
    /**
-    * @param entityType
-    * @param propertyPath
+    * @param entityType   The owner of the field
+    * @param propertyPath The path to search for
     * @return the field descriptor or null if not found
     */
    private FieldDescriptor getField(Descriptor entityType, String[] propertyPath) {
       Descriptor messageDescriptor = entityType;
-      int i = 0;
-      for (String p : propertyPath) {
-         FieldDescriptor field = messageDescriptor.findFieldByName(p);
-         if (field == null || ++i == propertyPath.length) {
-            return field;
-         }
-         if (field.getJavaType() == JavaType.MESSAGE) {
-            messageDescriptor = field.getMessageType();
+      FieldDescriptor field = null;
+
+      for (int i = 0; i < propertyPath.length; i++) {
+         String property = propertyPath[i];
+         field = messageDescriptor.findFieldByName(property);
+         if (field != null) {
+            if (field.getJavaType() == JavaType.MESSAGE) {
+               // nesting for the next iteration
+               messageDescriptor = field.getMessageType();
+            }
          } else {
-            break;
+            // not found
+            return null;
          }
       }
-      return null;
+      return field;
+   }
+
+   private List<Integer> translatePropertyPath(Descriptor entityType, String[] propertyPath) {
+      List<Integer> translatedPath = new ArrayList<>(propertyPath.length);
+      Descriptor messageDescriptor = entityType;
+
+      for (int i = 0; i < propertyPath.length; i++) {
+         String property = propertyPath[i];
+         FieldDescriptor field = messageDescriptor.findFieldByName(property);
+         if (field != null) {
+            translatedPath.add(field.getNumber());
+            if (field.getJavaType() == JavaType.MESSAGE) {
+               // nesting for the next iteration
+               messageDescriptor = field.getMessageType();
+            }
+         } else {
+            // not found
+            return null;
+         }
+      }
+      return translatedPath;
+   }
+
+   @Override
+   public boolean isRepeatedProperty(Descriptor entityType, String[] propertyPath) {
+      Descriptor messageDescriptor = entityType;
+
+      for (int i = 0; i < propertyPath.length; i++) {
+         String property = propertyPath[i];
+         FieldDescriptor field = messageDescriptor.findFieldByName(property);
+         if (field != null) {
+            if (field.isRepeated()) {
+               return true;
+            }
+            if (field.getJavaType() == JavaType.MESSAGE) {
+               // nesting for the next iteration
+               messageDescriptor = field.getMessageType();
+            }
+         } else {
+            // not found
+            return false;
+         }
+      }
+      return false;
    }
 
    @Override
@@ -172,58 +208,16 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
             propertyPath[0].equals(SCORE))) {
          return true;
       }
-
-      Descriptor messageDescriptor = entityType;
-      int i = 0;
-      for (String p : propertyPath) {
-         i++;
-         FieldDescriptor field = messageDescriptor.findFieldByName(p);
-         if (field == null) {
-            return false;
-         }
-         if (field.getJavaType() == JavaType.MESSAGE) {
-            messageDescriptor = field.getMessageType();
-         } else {
-            break;
-         }
-      }
-      return i == propertyPath.length;
+      return getField(entityType, propertyPath) != null;
    }
 
    @Override
    public boolean hasEmbeddedProperty(Descriptor entityType, String[] propertyPath) {
-      Descriptor messageDescriptor = entityType;
-      for (String p : propertyPath) {
-         FieldDescriptor field = messageDescriptor.findFieldByName(p);
-         if (field == null) {
-            return false;
-         }
-         if (field.getJavaType() == JavaType.MESSAGE) {
-            messageDescriptor = field.getMessageType();
-         } else {
-            return false;
-         }
+      FieldDescriptor field = getField(entityType, propertyPath);
+      if (field == null) {
+         return false;
       }
-      return true;
-   }
-
-   @Override
-   public boolean isRepeatedProperty(Descriptor entityType, String[] propertyPath) {
-      Descriptor messageDescriptor = entityType;
-      for (String p : propertyPath) {
-         FieldDescriptor field = messageDescriptor.findFieldByName(p);
-         if (field == null) {
-            break;
-         }
-         if (field.isRepeated()) {
-            return true;
-         }
-         if (field.getJavaType() != JavaType.MESSAGE) {
-            break;
-         }
-         messageDescriptor = field.getMessageType();
-      }
-      return false;
+      return field.getJavaType() == JavaType.MESSAGE;
    }
 
    @Override
