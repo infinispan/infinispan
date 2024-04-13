@@ -7,9 +7,9 @@ package org.infinispan.objectfilter.impl.syntax;
 @FunctionalInterface
 public interface IndexedFieldProvider<TypeMetadata> {
 
-   FieldIndexingMetadata get(TypeMetadata typeMetadata);
+   FieldIndexingMetadata<TypeMetadata> get(TypeMetadata typeMetadata);
 
-   interface FieldIndexingMetadata {
+   interface FieldIndexingMetadata<TypeMetadata> {
 
       /**
        * Checks if the property of the indexed entity is indexed.
@@ -62,47 +62,49 @@ public interface IndexedFieldProvider<TypeMetadata> {
       boolean isVector(String[] propertyPath);
 
       Object getNullMarker(String[] propertyPath);
+
+      TypeMetadata keyType(String property);
+
    }
 
-   FieldIndexingMetadata NO_INDEXING = new FieldIndexingMetadata() {
-      @Override
-      public boolean isSearchable(String[] propertyPath) {
-         return false;
-      }
-
-      @Override
-      public boolean isAnalyzed(String[] propertyPath) {
-         return false;
-      }
-
-      @Override
-      public boolean isNormalized(String[] propertyPath) {
-         return false;
-      }
-
-      @Override
-      public boolean isProjectable(String[] propertyPath) {
-         return false;
-      }
-
-      @Override
-      public boolean isAggregable(String[] propertyPath) {
-         return false;
-      }
-
-      @Override
-      public boolean isSortable(String[] propertyPath) {
-         return false;
-      }
-
-      @Override
-      public boolean isVector(String[] propertyPath) {
-         return false;
-      }
-
-      @Override
-      public Object getNullMarker(String[] propertyPath) {
-         return null;
-      }
-   };
+   static <TM> FieldIndexingMetadata<TM> noIndexing() {
+      return new FieldIndexingMetadata<>() {
+         @Override
+         public boolean isSearchable(String[] propertyPath) {
+            return false;
+         }
+         @Override
+         public boolean isAnalyzed(String[] propertyPath) {
+            return false;
+         }
+         @Override
+         public boolean isNormalized(String[] propertyPath) {
+            return false;
+         }
+         @Override
+         public boolean isProjectable(String[] propertyPath) {
+            return false;
+         }
+         @Override
+         public boolean isAggregable(String[] propertyPath) {
+            return false;
+         }
+         @Override
+         public boolean isSortable(String[] propertyPath) {
+            return false;
+         }
+         @Override
+         public boolean isVector(String[] propertyPath) {
+            return false;
+         }
+         @Override
+         public Object getNullMarker(String[] propertyPath) {
+            return null;
+         }
+         @Override
+         public TM keyType(String property) {
+            return null;
+         }
+      };
+   }
 }

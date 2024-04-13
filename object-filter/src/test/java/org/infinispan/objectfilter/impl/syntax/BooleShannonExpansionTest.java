@@ -20,7 +20,7 @@ public class BooleShannonExpansionTest {
 
    private final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
 
-   private final BooleShannonExpansion booleShannonExpansion = new BooleShannonExpansion(3, new IndexedFieldProvider.FieldIndexingMetadata() {
+   private final BooleShannonExpansion booleShannonExpansion = new BooleShannonExpansion(3, new IndexedFieldProvider.FieldIndexingMetadata<>() {
       @Override
       public boolean isSearchable(String[] propertyPath) {
          String last = propertyPath[propertyPath.length - 1];
@@ -59,6 +59,11 @@ public class BooleShannonExpansionTest {
 
       @Override
       public Object getNullMarker(String[] propertyPath) {
+         return null;
+      }
+
+      @Override
+      public Object keyType(String property) {
          return null;
       }
    });

@@ -2,11 +2,13 @@ package org.infinispan.query.remote.impl;
 
 import static org.infinispan.query.remote.impl.indexing.IndexingMetadata.findProcessedAnnotation;
 
+import java.util.Map;
 import java.util.function.BiFunction;
 
 import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
+import org.infinispan.protostream.descriptors.GenericDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.query.remote.impl.indexing.FieldMapping;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
@@ -21,12 +23,23 @@ import org.infinispan.query.remote.impl.mapping.reference.MessageReferenceProvid
 final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldIndexingMetadata {
 
    private final Descriptor messageDescriptor;
+   private final IndexingMetadata indexingMetadata;
+   private final String keyProperty;
+   private final Descriptor keyMessageDescriptor;
 
-   ProtobufFieldIndexingMetadata(Descriptor messageDescriptor) {
+   ProtobufFieldIndexingMetadata(Descriptor messageDescriptor, Map<String, GenericDescriptor> genericDescriptors) {
       if (messageDescriptor == null) {
          throw new IllegalArgumentException("argument cannot be null");
       }
       this.messageDescriptor = messageDescriptor;
+      indexingMetadata = findProcessedAnnotation(messageDescriptor, IndexingMetadata.INDEXED_ANNOTATION);
+      if (indexingMetadata != null && indexingMetadata.indexingKey() != null) {
+         keyProperty = indexingMetadata.indexingKey().fieldName();
+         keyMessageDescriptor = (Descriptor) genericDescriptors.get(indexingMetadata.indexingKey().typeFullName());
+      } else {
+         keyProperty = null;
+         keyMessageDescriptor = null;
+      }
    }
 
    @Override
@@ -86,11 +99,24 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
       return null;
    }
 
+   @Override
+   public Descriptor keyType(String property) {
+      return (property.equals(keyProperty)) ? keyMessageDescriptor : null;
+   }
+
    private boolean getFlag(String[] propertyPath, BiFunction<IndexingMetadata, String, Boolean> metadataFun) {
       Descriptor md = messageDescriptor;
-      for (String p : propertyPath) {
-         FieldDescriptor field = md.findFieldByName(p);
+      for (int i=0; i<propertyPath.length; i++) {
+         String property = propertyPath[i];
+         FieldDescriptor field = md.findFieldByName(property);
          if (field == null) {
+            if (i == 0) {
+               md = keyType(property);
+               if (md != null) {
+                  continue;
+               }
+            }
+
             return false;
          }
 
@@ -101,7 +127,7 @@ final class ProtobufFieldIndexingMetadata implements IndexedFieldProvider.FieldI
 
          if (field.getJavaType() == JavaType.MESSAGE &&
                !MessageReferenceProvider.COMMON_MESSAGE_TYPES.contains(field.getTypeName())) {
-            FieldMapping embeddedMapping = indexingMetadata.getFieldMapping(p);
+            FieldMapping embeddedMapping = indexingMetadata.getFieldMapping(property);
             if (embeddedMapping == null || !embeddedMapping.searchable()) {
                return false;
             }

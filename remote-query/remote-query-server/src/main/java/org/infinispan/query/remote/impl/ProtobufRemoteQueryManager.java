@@ -26,7 +26,8 @@ final class ProtobufRemoteQueryManager extends BaseRemoteQueryManager {
 
    ProtobufRemoteQueryManager(AdvancedCache<?, ?> cache, ComponentRegistry cr, SerializationContext serCtx, QuerySerializers querySerializers) {
       super(cache, querySerializers, cr);
-      Matcher matcher = new ObjectProtobufMatcher(serCtx, ProtobufFieldIndexingMetadata::new, cache);
+      Matcher matcher = new ObjectProtobufMatcher(serCtx, (messageDescriptor) ->
+            new ProtobufFieldIndexingMetadata(messageDescriptor, serCtx.getGenericDescriptors()), cache);
       cr.registerComponent(matcher, ProtobufMatcher.class);
 
       Configuration configuration = cache.getCacheConfiguration();

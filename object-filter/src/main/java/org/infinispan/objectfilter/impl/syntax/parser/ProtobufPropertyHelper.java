@@ -41,6 +41,8 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
    public static final String SCORE = ScorePropertyPath.SCORE_PROPERTY_NAME;
    public static final int SCORE_FIELD_ATTRIBUTE_ID = 150_002;
 
+   public static final int KEY_FIELD_ATTRIBUTE_ID = 150_003;
+
    private final EntityNameResolver<Descriptor> entityNameResolver;
 
    private final IndexedFieldProvider<Descriptor> indexedFieldProvider;
@@ -151,6 +153,13 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
                messageDescriptor = field.getMessageType();
             }
          } else {
+            if (i == 0) {
+               messageDescriptor = indexedFieldProvider.get(messageDescriptor).keyType(property);
+               if (messageDescriptor != null) {
+                  field = syntheticKeyField(property, messageDescriptor.getFullName());
+                  continue;
+               }
+            }
             // not found
             return null;
          }
@@ -172,6 +181,14 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
                messageDescriptor = field.getMessageType();
             }
          } else {
+            if (i == 0) {
+               messageDescriptor = indexedFieldProvider.get(messageDescriptor).keyType(property);
+               if (messageDescriptor != null) {
+                  field = syntheticKeyField(property, messageDescriptor.getFullName());
+                  translatedPath.add(field.getNumber());
+                  continue;
+               }
+            }
             // not found
             return null;
          }
@@ -195,6 +212,12 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
                messageDescriptor = field.getMessageType();
             }
          } else {
+            if (i == 0) {
+               messageDescriptor = indexedFieldProvider.get(messageDescriptor).keyType(property);
+               if (messageDescriptor != null) {
+                  continue;
+               }
+            }
             // not found
             return false;
          }
@@ -258,5 +281,13 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
       }
 
       return super.convertToPropertyType(entityType, propertyPath, value);
+   }
+
+   public static FieldDescriptor syntheticKeyField(String name, String type) {
+      return new FieldDescriptor.Builder()
+            .withName(name)
+            .withNumber(KEY_FIELD_ATTRIBUTE_ID)
+            .withTypeName(type)
+            .build();
    }
 }
