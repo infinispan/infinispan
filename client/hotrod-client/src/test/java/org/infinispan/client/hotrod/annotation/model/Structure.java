@@ -9,7 +9,7 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoSchema;
 
-@Indexed
+@Indexed(keyEntity = "model.StructureKey")
 public class Structure {
 
    private final String code;
