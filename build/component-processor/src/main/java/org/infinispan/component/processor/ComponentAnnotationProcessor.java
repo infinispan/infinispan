@@ -33,7 +33,7 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.ElementScanner8;
+import javax.lang.model.util.ElementScanner14;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
@@ -278,7 +278,7 @@ public class ComponentAnnotationProcessor extends AbstractProcessor {
       return classPrefix.toString();
    }
 
-   private class ModelBuilder extends ElementScanner8<Void, Void> {
+   private class ModelBuilder extends ElementScanner14<Void, Void> {
       private Model.Module module;
       Map<String, Model.ParsedType> parsedTypes;
 
