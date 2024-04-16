@@ -211,8 +211,7 @@ public class ThrowableExternalizer implements AdvancedExternalizer<Throwable> {
          case MARSHALLING:
             return readMessageAndCause(in, MarshallingException::new);
          case OUTDATED_TOPOLOGY:
-            boolean retryNextTopology = in.readBoolean();
-            return retryNextTopology ? OutdatedTopologyException.RETRY_NEXT_TOPOLOGY : OutdatedTopologyException.RETRY_SAME_TOPOLOGY;
+            return in.readBoolean() ? OutdatedTopologyException.RETRY_SAME_TOPOLOGY : OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
          case PERSISTENCE:
             return readMessageAndCause(in, PersistenceException::new);
          case REMOTE:
@@ -241,24 +240,24 @@ public class ThrowableExternalizer implements AdvancedExternalizer<Throwable> {
       }
    }
 
-   private void writeMessageAndCause(ObjectOutput out, Throwable t) throws IOException {
+   private static void writeMessageAndCause(ObjectOutput out, Throwable t) throws IOException {
       MarshallUtil.marshallString(t.getMessage(), out);
       out.writeObject(t.getCause());
       MarshallUtil.marshallArray(t.getSuppressed(), out);
    }
 
-   private void writeGenericThrowable(ObjectOutput out, Throwable t) throws IOException {
+   private static void writeGenericThrowable(ObjectOutput out, Throwable t) throws IOException {
       out.writeUTF(t.getClass().getName());
       writeMessageAndCause(out, t);
    }
 
-   private Throwable readMessageAndCause(ObjectInput in, BiFunction<String, Throwable, Throwable> throwableBuilder) throws ClassNotFoundException, IOException{
+   private static Throwable readMessageAndCause(ObjectInput in, BiFunction<String, Throwable, Throwable> throwableBuilder) throws ClassNotFoundException, IOException {
       String msg = MarshallUtil.unmarshallString(in);
       Throwable cause = (Throwable) in.readObject();
       return readSuppressed(in, throwableBuilder.apply(msg, cause));
    }
 
-   private Throwable readGenericThrowable(ObjectInput in) throws IOException, ClassNotFoundException {
+   private static Throwable readGenericThrowable(ObjectInput in) throws IOException, ClassNotFoundException {
       String impl = in.readUTF();
       String msg = MarshallUtil.unmarshallString(in);
       Throwable cause = (Throwable) in.readObject();
@@ -266,11 +265,11 @@ public class ThrowableExternalizer implements AdvancedExternalizer<Throwable> {
       return readSuppressed(in, throwable);
    }
 
-   private Throwable readSuppressed(ObjectInput in, Throwable t) throws ClassNotFoundException, IOException {
+   private static Throwable readSuppressed(ObjectInput in, Throwable t) throws ClassNotFoundException, IOException {
       return addSuppressed(t, MarshallUtil.unmarshallArray(in, Util::throwableArray));
    }
 
-   private Throwable addSuppressed(Throwable t, Throwable[] suppressed) {
+   private static Throwable addSuppressed(Throwable t, Throwable[] suppressed) {
       if (suppressed != null) {
          for (Throwable s : suppressed)
             t.addSuppressed(s);
@@ -278,7 +277,7 @@ public class ThrowableExternalizer implements AdvancedExternalizer<Throwable> {
       return t;
    }
 
-   private Throwable newThrowableInstance(String impl, String msg, Throwable t) throws ClassNotFoundException {
+   private static Throwable newThrowableInstance(String impl, String msg, Throwable t) throws ClassNotFoundException {
       try {
          Class<?> clazz = Class.forName(impl);
          if (t == null && msg == null) {
