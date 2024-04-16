@@ -29,8 +29,7 @@ public final class ScriptingInterceptor extends BaseCustomAsyncInterceptor {
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       String name = (String) command.getKey();
       String script = (String) command.getValue();
-      command.setMetadata(scriptingManager.compileScript(name, script));
-      return invokeNext(ctx, command);
+      return asyncInvokeNext(ctx, command, scriptingManager.compileScript(name, script).thenAccept(command::setMetadata));
    }
 
    @Override
@@ -49,8 +48,7 @@ public final class ScriptingInterceptor extends BaseCustomAsyncInterceptor {
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       String name = (String) command.getKey();
       String script = (String) command.getNewValue();
-      command.setMetadata(scriptingManager.compileScript(name, script));
-      return invokeNext(ctx, command);
+      return asyncInvokeNext(ctx, command, scriptingManager.compileScript(name, script).thenAccept(command::setMetadata));
    }
 
 }
