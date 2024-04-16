@@ -1,8 +1,7 @@
 [id='enabling-resp-endpoint_{context}']
-= Enabling the RESP endpoint
+= Using the RESP endpoint
 
-Add the `resp-connector` to {brandname} Server configuration to enable the RESP endpoint.
-You can enable the RESP endpoint with:
+The RESP endpoint works with:
 
 * Standalone {brandname} Server deployments, exactly like standalone Redis, where each server instance runs independently of each other.
 * Clustered {brandname} Server deployments, where server instances replicate or distribute data between each other. Clustered deployments provides clients with failover capabilities.
@@ -13,25 +12,7 @@ You can enable the RESP endpoint with:
 
 .Procedure
 
-. Open your {brandname} Server configuration for editing.
-. Add cache configuration to the `cache-container` section if required.
-+
-Cache configuration cannot enable capabilities that violate the RESP protocol.
-For example, specifying expiration values in a cache for the RESP endpoint results in a fatal error at startup.
-+
-If the cache is defined you must define the key encoding as `application/octet-stream`.
-+
-[TIP]
-====
-Configure your cache value encoding with Protobuf encoding if you want to view cache entries in the {brandname} Console (`value media-type="application/x-protostream"`).
-====
-. Add an `endpoint` declaration to your configuration.
-. Add the `resp-connector` element and specify the name of the cache to use with the RESP connector with the `cache` attribute.
-+
-You can use only one cache with the RESP endpoint.
-. Declare the security realm to use with the RESP endpoint with the `security-realm` attribute, if required.
-. Ensure that the endpoint declaration also adds a Hot Rod and REST connector.
-. Save the changes to your configuration.
+. link:{server_docs}#creating-users_server-getting-started[Create a user]
 
 .Verification
 
@@ -59,8 +40,26 @@ OK
 127.0.0.1:11222> quit
 ----
 
+== Configuring caches for the RESP endpoint
+
+The RESP endpoint automatically configures and starts a `respCache` cache. This cache has the following configuration:
+
+* `local-cache` or `distributed-cache` depending on the {brandname} Server clustering mode.
+* `application/octet-stream` encoding for both keys and values.
+* `RESPHashFunctionPartitioner` hash partitioner, which supports the CRC16 hashing used by Redis clients
+
+The cache configuration cannot enable capabilities that violate the RESP protocol.
+For example, specifying an incompatible hash partitioning function or a key encoding different from `application/octet-stream`.
+
+[TIP]
+====
+Configure your cache value encoding with Protobuf encoding if you want to view cache entries in the {brandname} Console (`value media-type="application/x-protostream"`).
+====
+
 [discrete]
 === RESP endpoint configuration
+
+If the implicit configuration used by the single-port endpoint does not fit your needs, use explicit configuration.
 
 .XML
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
