@@ -1,5 +1,7 @@
 package org.infinispan.scripting.impl;
 
+import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
+
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -85,20 +87,22 @@ public class ScriptingManagerImpl implements ScriptingManager {
       return scriptCache;
    }
 
-   ScriptMetadata compileScript(String name, String script) {
-      ScriptMetadata metadata = ScriptMetadataParser.parse(name, script);
-      ScriptEngine engine = getEngineForScript(metadata);
-      if (engine instanceof Compilable) {
-         try {
-            CompiledScript compiledScript = ((Compilable) engine).compile(script);
-            compiledScripts.put(name, compiledScript);
-            return metadata;
-         } catch (ScriptException e) {
-            throw log.scriptCompilationException(e, name);
+   CompletionStage<ScriptMetadata> compileScript(String name, String script) {
+      return blockingManager.supplyBlocking(() -> {
+         ScriptMetadata metadata = ScriptMetadataParser.parse(name, script);
+         ScriptEngine engine = getEngineForScript(metadata);
+         if (engine instanceof Compilable) {
+            try {
+               CompiledScript compiledScript = ((Compilable) engine).compile(script);
+               compiledScripts.put(name, compiledScript);
+               return metadata;
+            } catch (ScriptException e) {
+               throw log.scriptCompilationException(e, name);
+            }
+         } else {
+            return null;
          }
-      } else {
-         return null;
-      }
+      }, "scripting-compile");
    }
 
    @Override
