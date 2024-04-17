@@ -10,6 +10,7 @@ include::{topics}/proc_query_querying_console_cli.adoc[leveloffset=+1]
 include::{topics}/proc_query_using_analyzers.adoc[leveloffset=+1]
 include::{topics}/ref_query_default_analyzers.adoc[leveloffset=+2]
 include::{topics}/proc_query_creating_analyzers.adoc[leveloffset=+2]
+include::{topics}/proc_query_queries_by_keys.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]
