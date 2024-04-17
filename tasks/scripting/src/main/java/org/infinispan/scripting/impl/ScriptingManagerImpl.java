@@ -1,7 +1,5 @@
 package org.infinispan.scripting.impl;
 
-import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
-
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
