@@ -3,11 +3,15 @@ package org.infinispan.objectfilter.impl.syntax.parser;
 import java.util.Collections;
 import java.util.List;
 
+import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
+
 /**
  * @author anistor@redhat.com
  * @since 8.0
  */
 public final class RowPropertyHelper extends ObjectPropertyHelper<RowPropertyHelper.RowMetadata> {
+
+   private static final IndexedFieldProvider.FieldIndexingMetadata<RowMetadata> NO_INDEXING = IndexedFieldProvider.noIndexing();
 
    public static final class RowMetadata {
 
@@ -143,5 +147,10 @@ public final class RowPropertyHelper extends ObjectPropertyHelper<RowPropertyHel
    @Override
    public boolean isRepeatedProperty(RowPropertyHelper.RowMetadata entityType, String[] propertyPath) {
       return false;
+   }
+
+   @Override
+   public IndexedFieldProvider<RowMetadata> getIndexedFieldProvider() {
+      return typeMetadata -> NO_INDEXING;
    }
 }

@@ -126,7 +126,7 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
       return entityType -> {
          IndexDescriptor indexDescriptor = getIndexDescriptor(entityType);
          if (indexDescriptor == null) {
-            return IndexedFieldProvider.noIndexing();
+            return CLASS_NO_INDEXING;
          }
 
          return new SearchFieldIndexingMetadata(indexDescriptor);

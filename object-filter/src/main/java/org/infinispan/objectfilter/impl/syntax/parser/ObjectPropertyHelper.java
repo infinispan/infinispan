@@ -163,9 +163,7 @@ public abstract class ObjectPropertyHelper<TypeMetadata> {
     */
    public abstract boolean isRepeatedProperty(TypeMetadata entityType, String[] propertyPath);
 
-   public IndexedFieldProvider<TypeMetadata> getIndexedFieldProvider() {
-      return typeMetadata -> IndexedFieldProvider.noIndexing();
-   }
+   public abstract IndexedFieldProvider<TypeMetadata> getIndexedFieldProvider();
 
    public abstract List<?> mapPropertyNamePathToFieldIdPath(TypeMetadata type, String[] propertyPath);
 

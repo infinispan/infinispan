@@ -43,6 +43,8 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
 
    public static final int KEY_FIELD_ATTRIBUTE_ID = 150_003;
 
+   private static final IndexedFieldProvider.FieldIndexingMetadata<Descriptor> PROTO_NO_INDEXING = IndexedFieldProvider.noIndexing();
+
    private final EntityNameResolver<Descriptor> entityNameResolver;
 
    private final IndexedFieldProvider<Descriptor> indexedFieldProvider;
@@ -53,7 +55,8 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
 
    public ProtobufPropertyHelper(EntityNameResolver<Descriptor> entityNameResolver, IndexedFieldProvider<Descriptor> indexedFieldProvider) {
       this.entityNameResolver = entityNameResolver;
-      this.indexedFieldProvider = indexedFieldProvider != null ? indexedFieldProvider : super.getIndexedFieldProvider();
+      this.indexedFieldProvider = indexedFieldProvider != null ? indexedFieldProvider :
+            typeMetadata -> PROTO_NO_INDEXING;
    }
 
    @Override
