@@ -9,6 +9,7 @@ updates:
       - dependency-name: "*"
         # Only create PRs for new patch releases
         update-types: [ "version-update:semver-major", "version-update:semver-minor" ]
+      - dependency-name: "com.amazonaws*"
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
