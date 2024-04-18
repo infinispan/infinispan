@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -26,6 +25,7 @@ import org.infinispan.remoting.transport.impl.PassthroughMapResponseCollector;
 import org.infinispan.remoting.transport.impl.PassthroughSingleResponseCollector;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.security.Security;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.Log;
@@ -42,9 +42,9 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
    private static final Log log = LogFactory.getLog(AllClusterExecutor.class);
 
    AllClusterExecutor(Predicate<? super Address> predicate, EmbeddedCacheManager manager,
-         Transport transport, long time, TimeUnit unit, Executor localExecutor,
+         Transport transport, long time, TimeUnit unit, BlockingManager blockingManager,
          ScheduledExecutorService timeoutExecutor) {
-      super(predicate, manager, transport, time, unit, localExecutor, timeoutExecutor);
+      super(predicate, manager, transport, time, unit, blockingManager, timeoutExecutor);
    }
 
    @Override
@@ -54,7 +54,7 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
 
    @Override
    protected AllClusterExecutor sameClusterExecutor(Predicate<? super Address> predicate, long time, TimeUnit unit) {
-      return new AllClusterExecutor(predicate, manager, transport, time, unit, localExecutor, timeoutExecutor);
+      return new AllClusterExecutor(predicate, manager, transport, time, unit, blockingManager, timeoutExecutor);
    }
 
    private <T> CompletableFuture<Void> startLocalInvocation(Function<? super EmbeddedCacheManager, ? extends T> callable,
@@ -217,13 +217,13 @@ class AllClusterExecutor extends AbstractClusterExecutor<AllClusterExecutor> {
 
    @Override
    public ClusterExecutor singleNodeSubmission() {
-      return ClusterExecutors.singleNodeSubmissionExecutor(predicate, manager, transport, time, unit, localExecutor,
+      return ClusterExecutors.singleNodeSubmissionExecutor(predicate, manager, transport, time, unit, blockingManager,
             timeoutExecutor, 0);
    }
 
    @Override
    public ClusterExecutor singleNodeSubmission(int failOverCount) {
-      return ClusterExecutors.singleNodeSubmissionExecutor(predicate, manager, transport, time, unit, localExecutor,
+      return ClusterExecutors.singleNodeSubmissionExecutor(predicate, manager, transport, time, unit, blockingManager,
             timeoutExecutor, failOverCount);
    }
 

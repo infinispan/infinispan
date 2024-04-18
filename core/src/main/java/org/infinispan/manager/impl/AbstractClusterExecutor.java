@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -21,6 +20,7 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.logging.Log;
 
 /**
@@ -33,9 +33,9 @@ abstract class AbstractClusterExecutor<T extends ClusterExecutor> extends LocalC
    protected final Address me;
 
    AbstractClusterExecutor(Predicate<? super Address> predicate, EmbeddedCacheManager manager,
-         Transport transport, long time, TimeUnit unit, Executor localExecutor,
+         Transport transport, long time, TimeUnit unit, BlockingManager blockingManager,
          ScheduledExecutorService timeoutExecutor) {
-      super(predicate, manager, localExecutor, time, unit, timeoutExecutor);
+      super(predicate, manager, blockingManager, time, unit, timeoutExecutor);
       this.transport = transport;
       this.me = Objects.requireNonNull(transport.getAddress(),
                "Transport was not started before retrieving a ClusterExecutor!");

@@ -3,7 +3,6 @@ package org.infinispan.manager.impl;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -12,11 +11,13 @@ import java.util.function.Predicate;
 
 import javax.security.auth.Subject;
 
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.manager.ClusterExecutionPolicy;
 import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.Security;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.function.TriConsumer;
 
@@ -29,14 +30,14 @@ class LocalClusterExecutor implements ClusterExecutor {
    protected final EmbeddedCacheManager manager;
    protected final long time;
    protected final TimeUnit unit;
-   protected final Executor localExecutor;
+   protected final BlockingManager blockingManager;
    protected final ScheduledExecutorService timeoutExecutor;
 
-   LocalClusterExecutor(Predicate<? super Address> predicate, EmbeddedCacheManager manager, Executor localExecutor,
-         long time, TimeUnit unit, ScheduledExecutorService timeoutExecutor) {
+   LocalClusterExecutor(Predicate<? super Address> predicate, EmbeddedCacheManager manager, BlockingManager blockingManager,
+                        long time, TimeUnit unit, ScheduledExecutorService timeoutExecutor) {
       this.predicate = predicate;
       this.manager = new UnwrappingEmbeddedCacheManager(Objects.requireNonNull(manager));
-      this.localExecutor = Objects.requireNonNull(localExecutor);
+      this.blockingManager = Objects.requireNonNull(blockingManager);
       if (time <= 0) {
          throw new IllegalArgumentException("time must be greater than 0");
       }
@@ -52,20 +53,17 @@ class LocalClusterExecutor implements ClusterExecutor {
    @Override
    public void execute(Runnable command) {
       // We ignore time out since user can't ever even respond to it, so no reason to create extra fluff
-      localExecutor.execute(command);
+      blockingManager.runBlocking(command, getClass().getSimpleName() + "-execute");
    }
 
    @Override
    public CompletableFuture<Void> submit(Runnable command) {
       CompletableFuture<Void> future = new CompletableFuture<>();
-      localExecutor.execute(() -> {
-         try {
-            command.run();
-            future.complete(null);
-         } catch (Throwable t) {
-            future.completeExceptionally(t);
-         }
-      });
+      blockingManager.runBlocking(command, getClass().getSimpleName() + "-submit")
+            .whenComplete((ignore, t) -> {
+               if (t != null) future.completeExceptionally(CompletableFutures.extractException(t));
+               else future.complete(null);
+            });
       ScheduledFuture<Boolean> scheduledFuture = timeoutExecutor.schedule(
             () -> future.completeExceptionally(new TimeoutException()), time, unit);
       future.whenComplete((v, t) -> scheduledFuture.cancel(true));
@@ -78,7 +76,7 @@ class LocalClusterExecutor implements ClusterExecutor {
       CompletableFuture<Void> future = new CompletableFuture<>();
       localInvocation(callable).whenComplete((r, t) -> {
          try {
-            triConsumer.accept(getMyAddress(), r, t);
+            triConsumer.accept(getMyAddress(), r, CompletableFutures.extractException(t));
             future.complete(null);
          } catch (Throwable throwable) {
             future.completeExceptionally(throwable);
@@ -91,22 +89,14 @@ class LocalClusterExecutor implements ClusterExecutor {
    }
 
    <T> CompletableFuture<T> localInvocation(Function<? super EmbeddedCacheManager, ? extends T> function) {
-      CompletableFuture<T> future = new CompletableFuture<>();
       Subject subject = Security.getSubject();
-      localExecutor.execute(() -> {
-         try {
-            T result = Security.doAs(subject, function, manager);
-            future.complete(result);
-         } catch (Throwable t) {
-            future.completeExceptionally(t);
-         }
-      });
-      return future;
+      return blockingManager.supplyBlocking(() -> (T) Security.doAs(subject, function, manager), getClass().getSimpleName() + "local-invocation")
+            .toCompletableFuture();
    }
 
    protected ClusterExecutor sameClusterExecutor(Predicate<? super Address> predicate,
          long time, TimeUnit unit) {
-      return new LocalClusterExecutor(predicate, manager, localExecutor, time, unit, timeoutExecutor);
+      return new LocalClusterExecutor(predicate, manager, blockingManager, time, unit, timeoutExecutor);
    }
 
    @Override
