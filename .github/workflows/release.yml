@@ -37,6 +37,7 @@ jobs:
     needs: release
     if: needs.release.outputs.images == 'true'
     uses: infinispan/infinispan-images/.github/workflows/release.yml@main
+    secrets: inherit
     with:
       # TODO set the branch accordingly once we branch for 16.0.x
       branch: main
