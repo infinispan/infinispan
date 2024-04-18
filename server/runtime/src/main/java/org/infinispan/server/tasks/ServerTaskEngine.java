@@ -45,8 +45,8 @@ public class ServerTaskEngine implements TaskEngine {
       this.scriptConversions = new ScriptConversions(encoderRegistry);
       this.globalauthorizer = registry.getComponent(Authorizer.class);
       this.tasks = tasks;
-      this.localRunner = new LocalServerTaskRunner(this);
-      this.distributedRunner = new DistributedServerTaskRunner();
+      this.localRunner = LocalServerTaskRunner.getInstance();
+      this.distributedRunner = DistributedServerTaskRunner.getInstance();
    }
 
    @Override
@@ -79,7 +79,7 @@ public class ServerTaskEngine implements TaskEngine {
       launderParameters(context);
       MediaType requestMediaType = context.getCache().map(c -> c.getAdvancedCache().getValueDataConversion().getRequestMediaType()).orElse(MediaType.MATCH_ALL);
       context.getCache().ifPresent(c -> context.cache(c.getAdvancedCache().withMediaType(APPLICATION_OBJECT, APPLICATION_OBJECT)));
-      return runner.execute(task.getName(), context).thenApply(r -> (T) scriptConversions.convertToRequestType(r, APPLICATION_OBJECT, requestMediaType));
+      return runner.execute(task, context).thenApply(r -> (T) scriptConversions.convertToRequestType(r, APPLICATION_OBJECT, requestMediaType));
    }
 
    private void launderParameters(TaskContext context) {

@@ -14,10 +14,10 @@ public interface ServerTaskRunner {
     * Trigger execution of a ServerTask with given name. Returns a CompletableFuture, from which the result of execution
     * can be obtained.
     *
-    * @param taskName name of the task to be executed
+    * @param task     task to be executed
     * @param context  task context injected into task upon execution
     * @param <T>      task return type
     * @return completable future providing a way to get the result
     */
-   <T> CompletableFuture<T> execute(String taskName, TaskContext context);
+   <T> CompletableFuture<T> execute(ServerTaskWrapper<T> task, TaskContext context);
 }
