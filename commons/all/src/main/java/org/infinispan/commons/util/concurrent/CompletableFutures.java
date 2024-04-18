@@ -162,6 +162,8 @@ public final class CompletableFutures {
    }
 
    public static Throwable extractException(Throwable t) {
+      if (t == null) return null;
+
       Throwable cause = t.getCause();
       if (cause != null && t instanceof CompletionException) {
          return cause;

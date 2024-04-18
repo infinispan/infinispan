@@ -3,7 +3,6 @@ package org.infinispan.manager.impl;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -22,6 +21,7 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.PassthroughSingleResponseCollector;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.security.Security;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.function.TriConsumer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -37,9 +37,9 @@ class SingleClusterExecutor extends AbstractClusterExecutor<SingleClusterExecuto
    private static final Log log = LogFactory.getLog(SingleClusterExecutor.class);
 
    SingleClusterExecutor(Predicate<? super Address> predicate, EmbeddedCacheManager manager,
-         Transport transport, long time, TimeUnit unit, Executor localExecutor,
+         Transport transport, long time, TimeUnit unit, BlockingManager blockingManager,
          ScheduledExecutorService timeoutExecutor) {
-      super(predicate, manager, transport, time, unit, localExecutor, timeoutExecutor);
+      super(predicate, manager, transport, time, unit, blockingManager, timeoutExecutor);
    }
 
    @Override
@@ -49,7 +49,7 @@ class SingleClusterExecutor extends AbstractClusterExecutor<SingleClusterExecuto
 
    @Override
    protected SingleClusterExecutor sameClusterExecutor(Predicate<? super Address> predicate, long time, TimeUnit unit) {
-      return new SingleClusterExecutor(predicate, manager, transport, time, unit, localExecutor, timeoutExecutor);
+      return new SingleClusterExecutor(predicate, manager, transport, time, unit, blockingManager, timeoutExecutor);
    }
 
    private Address findTarget() {
@@ -166,13 +166,12 @@ class SingleClusterExecutor extends AbstractClusterExecutor<SingleClusterExecuto
       if (failOverCount == 0) {
          return this;
       }
-      return ClusterExecutors.singleNodeSubmissionExecutor(predicate, manager, transport, time, unit, localExecutor,
+      return ClusterExecutors.singleNodeSubmissionExecutor(predicate, manager, transport, time, unit, blockingManager,
             timeoutExecutor, failOverCount);
    }
 
    @Override
    public ClusterExecutor allNodeSubmission() {
-      return ClusterExecutors.allSubmissionExecutor(predicate, manager, transport, time, unit, localExecutor,
-            timeoutExecutor);
+      return ClusterExecutors.allSubmissionExecutor(predicate, manager, transport, time, unit, blockingManager, timeoutExecutor);
    }
 }
