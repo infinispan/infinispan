@@ -8,12 +8,13 @@ import java.util.function.Function;
 
 import javax.security.auth.Subject;
 
-import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.factories.annotations.Inject;
+import org.infinispan.commands.GlobalRpcCommand;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
+import org.infinispan.util.concurrent.BlockingManager;
 
 /**
  * Replicable Command that runs the given Function passing the {@link EmbeddedCacheManager} as an argument
@@ -22,13 +23,12 @@ import org.infinispan.security.Security;
  * @since 8.2
  */
 @Scope(Scopes.NONE)
-public class ReplicableManagerFunctionCommand implements ReplicableCommand {
+public class ReplicableManagerFunctionCommand implements GlobalRpcCommand {
 
    public static final byte COMMAND_ID = 60;
 
    private Function<? super EmbeddedCacheManager, ?> function;
    private Subject subject;
-   @Inject EmbeddedCacheManager manager;
 
    public ReplicableManagerFunctionCommand() {
 
@@ -40,12 +40,15 @@ public class ReplicableManagerFunctionCommand implements ReplicableCommand {
    }
 
    @Override
-   public CompletableFuture<Object> invokeAsync() throws Throwable {
-      if (subject == null) {
-         return CompletableFuture.completedFuture(function.apply(new UnwrappingEmbeddedCacheManager(manager)));
-      } else {
-         return CompletableFuture.completedFuture(Security.doAs(subject, function, new UnwrappingEmbeddedCacheManager(manager)));
-      }
+   public CompletableFuture<Object> invokeAsync(GlobalComponentRegistry globalComponentRegistry) throws Throwable {
+      BlockingManager bm = globalComponentRegistry.getComponent(BlockingManager.class);
+      return bm.supplyBlocking(() -> {
+         if (subject == null) {
+            return function.apply(new UnwrappingEmbeddedCacheManager(globalComponentRegistry.getCacheManager()));
+         } else {
+            return Security.doAs(subject, function, new UnwrappingEmbeddedCacheManager(globalComponentRegistry.getCacheManager()));
+         }
+      }, "replicable-manager-function").toCompletableFuture();
    }
 
    @Override
