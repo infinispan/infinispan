@@ -67,7 +67,7 @@ jobs:
           PROJECT_KEY: ISPN
           TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 
-      - name: Approve PR for auto-merge
-        run: gh pr merge --auto --rebase ${{ github.event.pull_request.number }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Approve PR for auto-merge
+#        run: gh pr merge --auto --rebase ${{ github.event.pull_request.number }}
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
