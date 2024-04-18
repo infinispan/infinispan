@@ -16,13 +16,18 @@ import org.infinispan.util.function.TriConsumer;
 /**
  * @author Michal Szynkiewicz, michal.l.szynkiewicz@gmail.com
  */
-public class DistributedServerTaskRunner implements ServerTaskRunner {
+public final class DistributedServerTaskRunner implements ServerTaskRunner {
 
-   public DistributedServerTaskRunner() {
+   private static final DistributedServerTaskRunner INSTANCE = new DistributedServerTaskRunner();
+
+   private DistributedServerTaskRunner() { }
+
+   public static DistributedServerTaskRunner getInstance() {
+      return INSTANCE;
    }
 
    @Override
-   public <T> CompletableFuture<T> execute(String taskName, TaskContext context) {
+   public <T> CompletableFuture<T> execute(ServerTaskWrapper<T> task, TaskContext context) {
       String cacheName = context.getCache().map(Cache::getName).orElse(null);
 
       ClusterExecutor clusterExecutor = SecurityActions.getClusterExecutor(context.getCacheManager());
@@ -37,10 +42,9 @@ public class DistributedServerTaskRunner implements ServerTaskRunner {
          }
       };
       CompletableFuture<Void> future = Security.doAs(context.subject(), () -> clusterExecutor.submitConsumer(
-            new DistributedServerTask<>(taskName, cacheName, context),
+            new DistributedServerTask<>(task.getName(), cacheName, context),
             triConsumer
       ));
       return (CompletableFuture<T>) future.thenApply(ignore -> results);
    }
-
 }
