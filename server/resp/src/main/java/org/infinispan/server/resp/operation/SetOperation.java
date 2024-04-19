@@ -35,6 +35,11 @@ public class SetOperation {
          if (options.isKeepingTtl()) {
             cacheOperation =  cache.getCacheEntryAsync(options.key)
                   .thenCompose(e -> performOperation(cache, options, e != null ? extractCurrentTTL(e, timeService) : -1));
+         } else if (options.isReturningPrevious()) {
+            cacheOperation =  cache.getAsync(options.key)
+                  .thenCompose(
+                     e -> performOperation(cache, options, options.expirationMs)
+                     );
          } else {
             cacheOperation = performOperation(cache, options, options.expirationMs);
          }
