@@ -3,6 +3,7 @@ package org.infinispan.server.resp;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.withPrecision;
+import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -549,6 +550,14 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.getset("key", "value")).isNull();
       assertThat(redis.getset("key", "another")).isEqualTo("value");
       assertThat(redis.get("key")).isEqualTo("another");
+   }
+
+   @Test
+   public void testGetsetWrongType() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertWrongType(() -> redis.lpush("key","value"), () -> redis.getset("key", "shouldfail"));
+      assertWrongType(() -> {} , () -> redis.get("key"));
+      assertThat(redis.lrange("key", 0, -1)).containsExactly("value");
    }
 
    @Test
