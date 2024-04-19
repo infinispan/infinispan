@@ -36,6 +36,6 @@ public class TYPE extends RespCommand implements Resp3Command {
          }
          Class<?> c = e.getValue().getClass();
          return RespTypes.fromValueClass(c).name().getBytes(StandardCharsets.US_ASCII);
-      }), ctx, Consumers.GET_BICONSUMER);
+      }), ctx, Consumers.GET_SIMPLESTRING_BICONSUMER);
    }
 }

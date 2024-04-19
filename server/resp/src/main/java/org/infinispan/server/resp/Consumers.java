@@ -52,6 +52,10 @@ public final class Consumers {
       }
    };
 
+   public static final BiConsumer<byte[], ByteBufPool> GET_SIMPLESTRING_BICONSUMER = (innerValueBytes, alloc) -> {
+      ByteBufferUtils.stringToResult(innerValueBytes, alloc);
+   };
+
    public static final BiConsumer<Collection<byte[]>, ByteBufPool> GET_ARRAY_BICONSUMER = (innerValueBytes, alloc) -> {
       if (innerValueBytes != null) {
          ByteBufferUtils.bytesToResult(innerValueBytes, alloc);

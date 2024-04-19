@@ -46,6 +46,17 @@ public final class ByteBufferUtils {
          '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
    };
 
+   public static ByteBuf stringToResult(byte[] result, ByteBufPool alloc) {
+      int exactSize = result == null ? 1 + CRLF.length : 1 + stringSize(result.length) + CRLF.length;
+      ByteBuf buffer = alloc.acquire(exactSize);
+      buffer.writeByte('+');
+      if (result!=null) {
+         buffer.writeBytes(result);
+      }
+      buffer.writeBytes(CRLF);
+      return buffer;
+   }
+
    public static ByteBuf bytesToResult(byte[] result, ByteBufPool alloc) {
       int length = result.length;
       int stringLength = stringSize(length);
