@@ -55,10 +55,12 @@ import io.lettuce.core.StrAlgoArgs;
 import io.lettuce.core.StringMatchResult;
 import io.lettuce.core.ZAddArgs;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.ArrayOutput;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.pubsub.RedisPubSubAdapter;
 import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
@@ -295,6 +297,15 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
    public void testPingNoArg() {
       RedisCommands<String, String> redis = redisConnection.sync();
       assertThat(redis.ping()).isEqualTo(PONG);
+   }
+
+   @Test
+   public void testPingArg() {
+      RedisCodec<String,String> codec = StringCodec.UTF8;
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThat(redis.dispatch(CommandType.PING,
+                                 new StatusOutput<>(codec),
+                                 new CommandArgs<>(codec).add("Hey"))).isEqualTo("Hey");
    }
 
    public void testEcho() {
