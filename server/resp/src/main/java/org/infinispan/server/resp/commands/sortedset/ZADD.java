@@ -75,7 +75,7 @@ public class ZADD extends RespCommand implements Resp3Command {
 
       int pos = 1;
       while (pos < arguments.size()) {
-         String arg = new String(arguments.get(pos));
+         String arg = (new String(arguments.get(pos)).toUpperCase());
          if (ARGUMENTS.contains(arg)) {
             parseArgument(addManyArgs, arg);
             pos++;
