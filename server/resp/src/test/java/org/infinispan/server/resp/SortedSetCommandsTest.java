@@ -10,6 +10,12 @@ import io.lettuce.core.ZAggregateArgs;
 import io.lettuce.core.ZPopArgs;
 import io.lettuce.core.ZStoreArgs;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.output.IntegerOutput;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandType;
+
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -118,6 +124,22 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
                   just(13.4, "tristan"), just(21.9, "marc"));
       assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zadd("another", 2.3, "tristan"));
       assertWrongType(() -> redis.zadd("data", 2.3, "tristan"), () -> redis.get("data"));
+   }
+
+   @Test
+   public void testZADDLowerCaseArg() {
+      // One test to check lowercase options are handled
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      assertThat(redis.zadd("people", 10.4, "william", 12.0, "vittorio")).isEqualTo(2);
+      assertThat(redis.dispatch(CommandType.ZADD, new IntegerOutput<>(codec),
+                                 new CommandArgs<>(codec).addKey("people")
+                                                         .add("ch")
+                                                         .add("gt")
+                                                         .add(14.0)
+                                                         .addValue("tristan")
+                                                         .add(12.1)
+                                                         .add("vittorio")
+                                                         )).isEqualTo(2);
    }
 
    public void testZADDINCR() {
