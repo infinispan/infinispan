@@ -19,7 +19,6 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisURI;
-import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 import io.netty.channel.Channel;
 
 /**
@@ -62,13 +61,6 @@ public class RespAuthSingleNodeTest extends RespSingleNodeTest {
                .isInstanceOf(RedisCommandExecutionException.class)
                .hasMessage("NOAUTH HELLO must be called with the client already authenticated, otherwise the HELLO <proto> AUTH <user> <pass> option can be used to authenticate the client and select the RESP protocol version at the same time");
       }
-   }
-
-   @Override
-   protected RedisPubSubCommands<String, String> createPubSubConnection() {
-      RedisPubSubCommands<String, String> connection = super.createPubSubConnection();
-      connection.auth(USERNAME, PASSWORD);
-      return connection;
    }
 
    public static class FakeRespAuthenticator implements RespAuthenticator {

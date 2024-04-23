@@ -16,14 +16,15 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.server.resp.commands.PubSubResp3Command;
 import org.infinispan.server.resp.commands.pubsub.KeyChannelUtils;
+import org.infinispan.server.resp.commands.pubsub.RespCacheListener;
 import org.infinispan.server.resp.logging.Log;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -42,11 +43,13 @@ public class SubscriberHandler extends CacheRespRequestHandler {
    }
 
    @Listener(clustered = true)
-   public static class PubSubListener {
+   public static class PubSubListener implements RespCacheListener {
       private final Channel channel;
+      private final byte[] key;
 
-      public PubSubListener(Channel channel) {
+      public PubSubListener(Channel channel, byte[] key) {
          this.channel = channel;
+         this.key = key;
       }
 
       @CacheEntryCreated
@@ -78,6 +81,11 @@ public class SubscriberHandler extends CacheRespRequestHandler {
          return key instanceof WrappedByteArray
                ? ((WrappedByteArray) key).getBytes()
                : (byte[]) key;
+      }
+
+      @Override
+      public byte[] subscribedChannel() {
+         return key;
       }
    }
 

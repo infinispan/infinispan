@@ -3,11 +3,9 @@ package org.infinispan.server.resp;
 import static io.lettuce.core.ScoredValue.just;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.fail;
 import static org.infinispan.server.resp.test.RespTestingUtil.OK;
 import static org.infinispan.server.resp.test.RespTestingUtil.PONG;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
-import static org.infinispan.test.TestingUtil.getListeners;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 import static org.testng.AssertJUnit.assertEquals;
@@ -21,9 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -62,8 +58,6 @@ import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ProtocolKeyword;
-import io.lettuce.core.pubsub.RedisPubSubAdapter;
-import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 
 /**
  * Base class for single node tests.
@@ -314,117 +308,6 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       assertThat(redis.echo(stringToSend)).isEqualTo(stringToSend);
    }
 
-   private BlockingQueue<String> addPubSubListener(RedisPubSubCommands<String, String> connection) {
-      BlockingQueue<String> handOffQueue = new LinkedBlockingQueue<>();
-
-      connection.getStatefulConnection().addListener(new RedisPubSubAdapter<String, String>() {
-         @Override
-         public void message(String channel, String message) {
-            log.tracef("Received message on channel %s of %s", channel, message);
-            handOffQueue.add("message-" + channel + "-" + message);
-         }
-
-         @Override
-         public void subscribed(String channel, long count) {
-            log.tracef("Subscribed to %s with %s", channel, count);
-            handOffQueue.add("subscribed-" + channel + "-" + count);
-         }
-
-         @Override
-         public void unsubscribed(String channel, long count) {
-            log.tracef("Unsubscribed to %s with %s", channel, count);
-            handOffQueue.add("unsubscribed-" + channel + "-" + count);
-         }
-      });
-
-      return handOffQueue;
-   }
-
-   @DataProvider(name = "booleans")
-   protected Object[][] booleans() {
-      // Reset disabled for now as the client isn't sending a reset command to the
-      // server
-      return new Object[][] { { true }, { false } };
-   }
-
-   @Test(dataProvider = "booleans")
-   public void testPubSubUnsubscribe(boolean quit) throws InterruptedException {
-      int listenersBefore = getListeners(cache).size();
-
-      RedisPubSubCommands<String, String> connection = createPubSubConnection();
-      BlockingQueue<String> handOffQueue = addPubSubListener(connection);
-
-      // Subscribe to some channels
-      connection.subscribe("channel2", "test");
-      String value = handOffQueue.poll(10, TimeUnit.SECONDS);
-      assertThat(value).isEqualTo("subscribed-channel2-1");
-      value = handOffQueue.poll(10, TimeUnit.SECONDS);
-      assertThat(value).isEqualTo("subscribed-test-2");
-
-      // 2 listeners, one for each sub above
-      assertThat(getListeners(cache)).hasSize(listenersBefore + 2);
-      // Unsubscribe to all channels
-      if (quit) {
-         // Originally wanted to use reset or quit, but they don't do what we expect from
-         // lettuce
-         connection.getStatefulConnection().close();
-
-         // Have to use eventually as they are removed asynchronously
-         eventually(() -> getListeners(cache).size() == listenersBefore);
-         assertThat(getListeners(cache)).hasSize(listenersBefore);
-
-         assertThat(handOffQueue).isEmpty();
-      } else {
-         connection.unsubscribe();
-
-         // Unsubscribed channels can be in different orders
-         for (int i = 0; i < 2; ++i) {
-            value = handOffQueue.poll(10, TimeUnit.SECONDS);
-            assertThat(value).withFailMessage("Didn't receive any notifications").isNotNull();
-            if (!value.startsWith("unsubscribed-channel2-") && !value.startsWith("unsubscribed-test-")
-                  && (!value.endsWith("0") || !value.endsWith("1"))) {
-               fail("Notification doesn't match expected, was: " + value);
-            }
-         }
-
-         assertThat(getListeners(cache)).hasSize(listenersBefore);
-         assertThat(connection.ping()).isEqualTo(PONG);
-      }
-   }
-
-   @Test
-   public void testPubSub() throws InterruptedException {
-      RedisPubSubCommands<String, String> connection = createPubSubConnection();
-      BlockingQueue<String> handOffQueue = addPubSubListener(connection);
-      // Subscribe to some channels
-      List<String> channels = Arrays.asList("channel2", "test", "channel");
-      connection.subscribe("channel2", "test");
-      String value = handOffQueue.poll(10, TimeUnit.SECONDS);
-      assertThat(value).isEqualTo("subscribed-channel2-1");
-      value = handOffQueue.poll(10, TimeUnit.SECONDS);
-      assertThat(value).isEqualTo("subscribed-test-2");
-
-      // Send a message to confirm it is properly listening
-      RedisCommands<String, String> redis = redisConnection.sync();
-      redis.publish("channel2", "boomshakayaka");
-      value = handOffQueue.poll(10, TimeUnit.SECONDS);
-      assertThat(value).isEqualTo("message-channel2-boomshakayaka");
-
-      connection.subscribe("channel");
-      value = handOffQueue.poll(10, TimeUnit.SECONDS);
-      assertThat(value).isEqualTo("subscribed-channel-3");
-
-      connection.unsubscribe("channel2");
-      connection.unsubscribe("doesn't-exist");
-      connection.unsubscribe("channel", "test");
-
-      int subscriptions = 3;
-      for (String channel : new String[] { "channel2", "doesn't-exist", "channel", "test" }) {
-         value = handOffQueue.poll(10, TimeUnit.SECONDS);
-         assertThat(value).isEqualTo("unsubscribed-" + channel + "-" + Math.max(0, --subscriptions));
-      }
-   }
-
    public void testCommand() {
       RedisCommands<String, String> redis = redisConnection.sync();
 
@@ -443,10 +326,6 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       RedisCommands<String, String> redis = redisConnection.sync();
       Exceptions.expectException(RedisCommandExecutionException.class, "ERR unknown command",
             () -> redis.xdel("not-supported", "should error"));
-   }
-
-   protected RedisPubSubCommands<String, String> createPubSubConnection() {
-      return client.connectPubSub().sync();
    }
 
    public void testPipeline() throws ExecutionException, InterruptedException, TimeoutException {
