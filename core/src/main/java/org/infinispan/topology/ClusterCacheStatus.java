@@ -887,7 +887,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                // We reuse the previous topology, only changing it to reflect the current members.
                // This is necessary to keep the same segments mapping as before.
                // If another node joins, it will trigger rebalance, properly redistributing the segments.
-               ch = pastConsistentHash.remapAddressRemoveMissing(persistentUUIDManager.persistentUUIDToAddress());
+               ch = pastConsistentHash.remapAddressRemoveMissing(persistentUUIDManager.persistentUUIDToAddressConstrained(Set.copyOf(members)));
             } else {
                // We don't have enough members to safely recover the previous topology, so we create a new one, as the
                // node will clear the storage, so we don't need the same segments mapping.

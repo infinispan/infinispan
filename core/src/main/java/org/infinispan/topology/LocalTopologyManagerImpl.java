@@ -290,7 +290,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       CacheTopology ct = getJoinTopology(initialStatus);
       int viewId = transport.getViewId();
       return doHandleTopologyUpdate(cacheName, ct, initialStatus.getAvailabilityMode(),
-                                    viewId, transport.getCoordinator(), cacheStatus)
+                                    viewId, transport.getCoordinator(), cacheStatus, initialStatus)
                    .thenCompose(applied -> {
                       if (!applied) {
                          throw new IllegalStateException(
@@ -435,7 +435,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                   return CompletableFutures.completedNull();
                }
 
-               return doHandleTopologyUpdate(cacheName, cacheTopology, availabilityMode, viewId, sender, cacheStatus);
+               return doHandleTopologyUpdate(cacheName, cacheTopology, availabilityMode, viewId, sender, cacheStatus, null);
             }))
             .handle((ignored, throwable) -> {
                if (throwable != null && !(throwable instanceof IllegalLifecycleStateException)) {
@@ -452,7 +452,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
     */
    private CompletionStage<Boolean> doHandleTopologyUpdate(String cacheName, CacheTopology cacheTopology,
                                                            AvailabilityMode availabilityMode, int viewId,
-                                                           Address sender, LocalCacheStatus cacheStatus) {
+                                                           Address sender, LocalCacheStatus cacheStatus, CacheStatusResponse joinResponse) {
       CacheTopology existingTopology;
       synchronized (cacheStatus) {
          if (cacheTopology == null) {
@@ -462,6 +462,12 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          }
          // Register all persistent UUIDs locally
          registerPersistentUUID(cacheTopology);
+
+         // If updating during a join in degraded mode, the node needs to include the UUIDs of the last stable topology.
+         // This is necessary to identify the nodes when they join again after a restart.
+         if (joinResponse != null && joinResponse.getStableTopology() != null && availabilityMode == AvailabilityMode.DEGRADED_MODE)
+            registerPersistentUUID(joinResponse.getStableTopology());
+
          existingTopology = cacheStatus.getCurrentTopology();
          if (existingTopology != null && cacheTopology.getTopologyId() <= existingTopology.getTopologyId()) {
             log.debugf("Ignoring late consistent hash update for cache %s, current topology is %s received %s",
