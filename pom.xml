@@ -1686,31 +1686,6 @@
             <artifactId>mojo-executor</artifactId>
             <version>${versionx.org.twdata.maven.mojo-executor}</version>
          </dependency>
-         <dependency>
-            <groupId>org.wildfly.openssl</groupId>
-            <artifactId>wildfly-openssl-java</artifactId>
-            <version>${version.org.wildfly.openssl}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.openssl</groupId>
-            <artifactId>wildfly-openssl</artifactId>
-            <version>${version.org.wildfly.openssl}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.openssl</groupId>
-            <artifactId>wildfly-openssl-linux-x86_64</artifactId>
-            <version>${version.org.wildfly.openssl.natives.linux_x86_64}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.openssl</groupId>
-            <artifactId>wildfly-openssl-macosx-x86_64</artifactId>
-            <version>${version.org.wildfly.openssl.natives.macos_x86_64}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.wildfly.openssl</groupId>
-            <artifactId>wildfly-openssl-windows-x86_64</artifactId>
-            <version>${version.org.wildfly.openssl.natives.windows_x86_64}</version>
-         </dependency>
          <!-- transitive dependency! force this version everywhere -->
          <dependency>
             <groupId>org.wildfly.common</groupId>

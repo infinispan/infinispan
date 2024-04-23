@@ -173,15 +173,6 @@
          <scope>compile</scope>
       </dependency>
       <dependency>
-         <groupId>org.wildfly.openssl</groupId>
-         <artifactId>wildfly-openssl-java</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>org.wildfly.openssl</groupId>
-         <artifactId>wildfly-openssl-linux-x86_64</artifactId>
-         <scope>compile</scope>
-      </dependency>
-      <dependency>
          <groupId>org.wildfly.security</groupId>
          <artifactId>wildfly-elytron-auth-server-http</artifactId>
       </dependency>

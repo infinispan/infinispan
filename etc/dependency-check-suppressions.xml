@@ -14,14 +14,4 @@
       <packageUrl regex="true">^pkg:maven/org\.jgroups/jgroups-raft@.*$</packageUrl>
       <cpe>cpe:/a:redhat:jgroups</cpe>
    </suppress>
-   <suppress>
-      <notes><![CDATA[
-      Suppress reports on WildFly OpenSSL which are for unrelated packages instead
-      ]]></notes>
-      <packageUrl regex="true">^pkg:maven/org\.wildfly\.openssl/wildfly\-openssl.*$</packageUrl>
-      <cpe>cpe:/a:openssl:openssl</cpe>
-      <cpe>cpe:/a:redhat:openssl</cpe>
-      <cpe>cpe:/a:redhat:wildfly</cpe>
-      <cpe>cpe:/a:wildfly:wildfly</cpe>
-   </suppress>
 </suppressions>

@@ -24,9 +24,6 @@ public class ServerHotRodBlockHoundIntegration implements BlockHoundIntegration 
       // Stream method is blocking
       builder.allowBlockingCallsInside(Encoder2x.class.getName(), "generateTopologyResponse");
 
-      // Wildfly open ssl reads a properties file
-      builder.allowBlockingCallsInside("org.wildfly.openssl.OpenSSLEngine", "unwrap");
-
       builder.allowBlockingCallsInside(SaslUtils.class.getName(), "getFactories");
 
       // Blocks on non blocking method - should return CompletionStage

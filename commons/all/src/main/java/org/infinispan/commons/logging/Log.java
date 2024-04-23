@@ -213,13 +213,13 @@ public interface Log extends BasicLogger {
 //   @Message(value = "Unable to marshall Object '%s' wrapped by '%s', the wrapped object must be registered with the marshallers SerializationContext", id = 945)
 //   MarshallingException unableToMarshallRuntimeObject(String wrappedObjectClass, String wrapperClass);
 
-   @LogMessage(level = INFO)
-   @Message(value = "Using OpenSSL Provider", id = 946)
-   void openSSLAvailable();
-
-   @LogMessage(level = INFO)
-   @Message(value = "Using Java SSL Provider", id = 947)
-   void openSSLNotAvailable();
+//   @LogMessage(level = INFO)
+//   @Message(value = "Using OpenSSL Provider", id = 946)
+//   void openSSLAvailable();
+//
+//   @LogMessage(level = INFO)
+//   @Message(value = "Using Java SSL Provider", id = 947)
+//   void openSSLNotAvailable();
 
    @Message(value = "Unsupported conversion of '%s' from '%s' to '%s'", id = 948)
    EncodingException unsupportedConversion(String content, MediaType contentType, MediaType requestType);

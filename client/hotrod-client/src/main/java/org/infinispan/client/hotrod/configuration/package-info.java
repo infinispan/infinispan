@@ -314,7 +314,7 @@
  *          <td><b>infinispan.client.hotrod.ssl_provider</b></td>
  *          <td>String</td>
  *          <td>N/A</td>
- *          <td>The security provider to use when creating the SSL engine. If left unspecified, it will attempt to use the <tt>openssl</tt> for the high-performance native implementation, otherwise the internal JDK will be used.</td>
+ *          <td>The security provider to use when creating the SSL engine. If left unspecified, it will use the default JDK provider.</td>
  *       </tr>
  *       <tr>
  *          <th colspan="4">Authentication properties</th>
