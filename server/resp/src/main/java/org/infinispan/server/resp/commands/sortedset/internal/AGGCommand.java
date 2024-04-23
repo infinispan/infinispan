@@ -77,7 +77,7 @@ public abstract class AGGCommand extends RespCommand implements Resp3Command {
       boolean withScores = false;
       SortedSetBucket.AggregateFunction aggOption = SortedSetBucket.AggregateFunction.SUM;
       while (pos < arguments.size()) {
-         String arg = new String(arguments.get(pos++));
+         String arg = new String(arguments.get(pos++)).toUpperCase();
          switch (arg) {
             case WITHSCORES:
                if (getArity() == -3) {
@@ -90,7 +90,7 @@ public abstract class AGGCommand extends RespCommand implements Resp3Command {
             case AGGREGATE:
                if (pos < arguments.size()) {
                   try {
-                     aggOption = SortedSetBucket.AggregateFunction.valueOf(new String(arguments.get(pos++)));
+                     aggOption = SortedSetBucket.AggregateFunction.valueOf(new String(arguments.get(pos++)).toUpperCase());
                   } catch (Exception ex) {
                      RespErrorUtil.syntaxError(handler.allocator());
                      return handler.myStage();

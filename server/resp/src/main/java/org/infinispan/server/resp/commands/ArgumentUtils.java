@@ -39,14 +39,24 @@ public final class ArgumentUtils {
       if (argument == null || argument.length == 0)
          throw new NumberFormatException("Empty argument");
 
-      return Double.parseDouble(new String(argument, offset, argument.length - offset, CharsetUtil.US_ASCII));
+      return toDoubleWithInfinity(new String(argument, offset, argument.length - offset, CharsetUtil.US_ASCII));
    }
 
    public static double toDouble(byte[] argument) {
       if (argument == null || argument.length == 0)
          throw new NumberFormatException("Empty argument");
+      String sArg = toNumberString(argument);
+      return toDoubleWithInfinity(sArg);
+   }
 
-      return Double.parseDouble(toNumberString(argument));
+   private static double toDoubleWithInfinity(String sArg) {
+      if (sArg.equalsIgnoreCase("Inf") || sArg.equalsIgnoreCase("+Inf")) {
+      sArg="Infinity";
+      }
+      if (sArg.equalsIgnoreCase("-Inf")) {
+      sArg="-Infinity";
+      }
+      return Double.parseDouble(sArg);
    }
 
    public static long toLong(byte[] argument) {
