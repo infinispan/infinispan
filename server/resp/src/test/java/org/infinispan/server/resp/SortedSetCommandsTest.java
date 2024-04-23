@@ -1169,6 +1169,34 @@ public class SortedSetCommandsTest extends SingleNodeRespBaseTest {
       assertWrongType(() -> redis.set("another", "tristan"), () ->  redis.zunionstore("people", "another"));
    }
 
+   @Test
+   @SuppressWarnings("unchecked")
+   public void testZUNIONSTORELowerCaseArgsAndInf() {
+      RedisCodec<String,String> codec = StringCodec.UTF8;
+      // ZUNIONSTORE s1 1 s1
+      assertThat(redis.zunionstore("s1", "s1")).isZero();
+      // EXISTS s1
+      assertThat(redis.exists("s1")).isZero();
+      // ZADD s1 1 a 2 b 3 c
+      assertThat(redis.zadd("s1",
+            just(1, "a"),
+            just(2, "b"),
+            just(3, "c"))).isEqualTo(3);
+      assertThat(redis.zadd("s2",
+            just(1, "a"),
+            just(3, "d"))).isEqualTo(2);
+      assertThat(redis.dispatch(CommandType.ZUNIONSTORE, new IntegerOutput<>(codec),
+                  new CommandArgs<>(codec).addKey("sout").add(2)
+                        .add("s1").add("s2").add("weights").add(1).add("Inf"))).isEqualTo(4);
+      assertThat(redis.zrangeWithScores("sout", 0, -1)).containsExactlyInAnyOrder(
+                           just(Double.POSITIVE_INFINITY, "a"),
+                           just(2.0, "b"),
+                           just(3.0, "c"),
+                           just(Double.POSITIVE_INFINITY, "d")
+                           );
+   }
+
+
    public void testZINTER() {
       // ZINTER 1 s1
       assertThat(redis.zinter("s1")).isEmpty();
