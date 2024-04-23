@@ -61,7 +61,7 @@ In terms of performance the effect of TLS/SSL connections between clients and re
 Negotiating secure connections takes longer and requires some additional work but, once the connections are established latency from encryption is not a concern for {brandname} performance.
 
 Apart from using TLSv1.3, the only means of offsetting performance loss from encryption are to configure the JVM on which {brandname} runs.
-For instance using OpenSSL libraries instead of standard Java encryption provides more efficient handling with results up to 20% faster.
+Java 17's TLS performance is now on-par with that of native implementations.
 
 [discrete]
 == Authorization

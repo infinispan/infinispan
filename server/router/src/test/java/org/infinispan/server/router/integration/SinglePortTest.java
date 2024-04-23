@@ -43,7 +43,6 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.wildfly.openssl.OpenSSLEngine;
 
 import io.netty.util.CharsetUtil;
 
@@ -176,8 +175,6 @@ public class SinglePortTest {
 
     @Test
     public void shouldUpgradeThroughALPN() throws Exception {
-        checkForOpenSSL();
-
         //given
         restServer = RestTestingUtil.createDefaultRestServer("rest", "default");
 
@@ -215,8 +212,6 @@ public class SinglePortTest {
 
     @Test
     public void shouldUpgradeToHotRodThroughALPN() {
-        checkForOpenSSL();
-
         //given
         hotrodServer = HotRodTestingUtil.startHotRodServerWithoutTransport("default");
         restServer = RestTestingUtil.createDefaultRestServer("rest", "default");
@@ -250,11 +245,5 @@ public class SinglePortTest {
         builder.security().ssl().trustStoreFileName(TestCertificates.certificate("ca")).trustStorePassword(TestCertificates.KEY_PASSWORD).sniHostName("server");
         hotRodClient = new RemoteCacheManager(builder.build());
         hotRodClient.getCache("default").put("test", "test");
-    }
-
-    private void checkForOpenSSL() {
-        if (!OpenSSLEngine.isAlpnSupported()) {
-            throw new IllegalStateException("OpenSSL is not present, can not test TLS/ALPN support.");
-        }
     }
 }

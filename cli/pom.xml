@@ -73,11 +73,6 @@
          <artifactId>commons-compress</artifactId>
       </dependency>
       <dependency>
-         <groupId>org.wildfly.openssl</groupId>
-         <artifactId>wildfly-openssl-java</artifactId>
-         <optional>true</optional>
-      </dependency>
-      <dependency>
          <groupId>org.wildfly.security</groupId>
          <artifactId>wildfly-elytron-credential-store</artifactId>
       </dependency>

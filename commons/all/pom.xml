@@ -69,12 +69,6 @@
       </dependency>
 
       <dependency>
-         <groupId>org.wildfly.openssl</groupId>
-         <artifactId>wildfly-openssl-java</artifactId>
-         <optional>true</optional>
-      </dependency>
-
-      <dependency>
          <groupId>io.projectreactor.tools</groupId>
          <artifactId>blockhound</artifactId>
          <optional>true</optional>

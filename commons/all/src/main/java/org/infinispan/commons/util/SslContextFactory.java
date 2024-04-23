@@ -21,9 +21,6 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
-import org.wildfly.openssl.OpenSSLProvider;
-import org.wildfly.openssl.SSL;
-
 /**
  * SslContextFactory.
  *
@@ -31,26 +28,10 @@ import org.wildfly.openssl.SSL;
  * @since 5.3
  */
 public class SslContextFactory {
-   private static final String DEFAULT_KEYSTORE_TYPE = "JKS";
-   private static final String DEFAULT_SSL_PROTOCOL = "TLSv1.2";
+   private static final String DEFAULT_KEYSTORE_TYPE = "PKCS12";
+   private static final String DEFAULT_SSL_PROTOCOL = "TLSv1.3";
    private static final String CLASSPATH_RESOURCE = "classpath:";
-   private static final String SSL_PROVIDER;
    private static final ConcurrentHashMap<ClassLoader, Provider[]> PER_CLASSLOADER_PROVIDERS = new ConcurrentHashMap<>(2);
-
-   static {
-      String sslProvider = null;
-      if (Boolean.parseBoolean(System.getProperty("org.infinispan.openssl", "true"))) {
-         try {
-            OpenSSLProvider.register();
-            SSL.getInstance();
-            sslProvider = "openssl";
-            SECURITY.openSSLAvailable();
-         } catch (Throwable e) {
-            SECURITY.openSSLNotAvailable();
-         }
-      }
-      SSL_PROVIDER = sslProvider;
-   }
 
    private String keyStoreFileName;
    private char[] keyStorePassword;
@@ -60,7 +41,6 @@ public class SslContextFactory {
    private char[] trustStorePassword;
    private String trustStoreType = DEFAULT_KEYSTORE_TYPE;
    private String sslProtocol = DEFAULT_SSL_PROTOCOL;
-   private boolean useNativeIfAvailable = true;
    private ClassLoader classLoader;
    private String provider;
 
@@ -120,8 +100,8 @@ public class SslContextFactory {
       return this;
    }
 
+   @Deprecated(forRemoval = true, since = "15.0")
    public SslContextFactory useNativeIfAvailable(boolean useNativeIfAvailable) {
-      this.useNativeIfAvailable = useNativeIfAvailable;
       return this;
    }
 
@@ -147,10 +127,6 @@ public class SslContextFactory {
          if (this.provider != null) {
             // If the user has supplied a provider, try to use it
             provider = findProvider(this.provider, SSLContext.class.getSimpleName(), sslProtocol);
-         }
-         if (provider == null && useNativeIfAvailable && SSL_PROVIDER != null) {
-            // Try to use the native provider if possible
-            provider = findProvider(SSL_PROVIDER, SSLContext.class.getSimpleName(), sslProtocol);
          }
          sslContext = provider != null ? SSLContext.getInstance(sslProtocol, provider) : SSLContext.getInstance(sslProtocol);
          sslContext.init(keyManagers, trustManagers, null);
@@ -196,8 +172,9 @@ public class SslContextFactory {
       return tmf;
    }
 
+   @Deprecated(forRemoval = true, since = "15.0")
    public static String getSslProvider() {
-      return SSL_PROVIDER;
+      return null;
    }
 
    public static SSLEngine getEngine(SSLContext sslContext, boolean useClientMode, boolean needClientAuth) {

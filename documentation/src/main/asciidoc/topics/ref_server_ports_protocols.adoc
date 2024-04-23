@@ -34,12 +34,6 @@ Client applications can then send the `Upgrade: protocol` header field, where `p
 .Application-Layer Protocol Negotiation (ALPN)/Transport Layer Security (TLS)
 Client requests include Server Name Indication (SNI) mappings for {brandname} Server endpoints to negotiate protocols over a TLS connection.
 
-[NOTE]
-====
-Applications must use a TLS library that supports the ALPN extension.
-{brandname} uses WildFly OpenSSL bindings for Java.
-====
-
 .Automatic Hot Rod detection
 
 Client requests that include Hot Rod headers automatically route to Hot Rod endpoints.

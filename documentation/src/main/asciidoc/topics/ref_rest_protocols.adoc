@@ -6,10 +6,3 @@ You can do either of the following to use `HTTP/2`:
 
 * Perform an link:https://http2.github.io/http2-spec/#discover-http[HTTP/1.1 upgrade].
 * Negotiate the communication protocol using a link:https://http2.github.io/http2-spec/#versioning[TLS/ALPN extension].
-
-[NOTE]
-====
-TLS/ALPN with JDK8 requires additional client configuration. Refer to the
-appropriate documentation for your REST client. In most cases you need to use
-either the Jetty ALPN Agent or OpenSSL bindings.
-====

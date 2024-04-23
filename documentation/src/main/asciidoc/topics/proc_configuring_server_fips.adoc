@@ -24,13 +24,6 @@ You can configure the PKCS11 cryptographic provider by specifying the PKCS11 key
 * Install the JDK with the `java.security` file configured to enable the `SunPKCS11` provider. This provider points to the NSS database and the SSL provider.
 * Install a certificate in the NSS database.
 
-[NOTE]
-====
-The OpenSSL provider requires a private key, but you cannot retrieve a private key from the PKCS#11 store.
-FIPS blocks the export of unencrypted keys from a FIPS-compliant cryptographic module, so you cannot use the OpenSSL provider for TLS when in FIPS mode. 
-You can disable the OpenSSL provider at startup with the `-Dorg.infinispan.openssl=false` argument.
-====
-
 .Procedure
 
 . Open your {brandname} Server configuration for editing.

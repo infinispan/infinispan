@@ -336,11 +336,6 @@
                            <artifactId>agroal-api</artifactId>
                            <version>${version.io.agroal}</version>
                         </additionalDependency>
-                        <additionalDependency>
-                           <groupId>org.wildfly.openssl</groupId>
-                           <artifactId>wildfly-openssl-java</artifactId>
-                           <version>${version.org.wildfly.openssl}</version>
-                        </additionalDependency>
                      </additionalDependencies>
                   </configuration>
                </execution>
