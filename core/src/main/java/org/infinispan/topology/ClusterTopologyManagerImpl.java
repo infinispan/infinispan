@@ -748,6 +748,15 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
    }
 
    @Override
+   public AvailabilityMode getAvailabilityMode(String cacheName) {
+      ClusterCacheStatus cacheStatus = cacheStatusMap.get(cacheName);
+      if (cacheStatus != null) {
+         return cacheStatus.getAvailabilityMode();
+      }
+      return null;
+   }
+
+   @Override
    public RebalancingStatus getRebalancingStatus(String cacheName) {
       ClusterCacheStatus cacheStatus = cacheStatusMap.get(cacheName);
       if (cacheStatus != null) {
