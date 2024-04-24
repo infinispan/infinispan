@@ -64,6 +64,20 @@ public class HashOperationsTest extends SingleNodeRespBaseTest {
       assertWrongType(() -> redis.set("plain", "string"), () -> redis.hlen("plain"));
    }
 
+   @Test
+   public void testHashStringLength() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      Map<String, String> map = Map.of("key1", "value1", "key2", "value2", "key3", "value3");
+      assertThat(redis.hset("len-test", map)).isEqualTo(3);
+
+      assertThat(redis.hstrlen("len-test", "key1")).isEqualTo(6);
+      assertThat(redis.hstrlen("UNKNOWN", "key1")).isEqualTo(0);
+      assertThat(redis.hstrlen("len-test", "UNKNOWN")).isEqualTo(0);
+
+      assertWrongType(() -> redis.set("plain", "string"), () -> redis.hstrlen("plain", "field"));
+   }
+
    public void testHScanOperation() {
       RedisCommands<String, String> redis = redisConnection.sync();
       Map<String, String> content = new HashMap<>();
