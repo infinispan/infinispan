@@ -145,6 +145,9 @@ The {brandname} RESP endpoint implements the following Redis commands:
 | link:https://redis.io/commands/hsetnx[HSETNX]
 |
 
+| link:https://redis.io/commands/hstrlen[HSTRLEN]
+|
+
 | link:https://redis.io/commands/hvals[HVALS]
 |
 

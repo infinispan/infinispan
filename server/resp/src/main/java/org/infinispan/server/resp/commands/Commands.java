@@ -56,6 +56,7 @@ import org.infinispan.server.resp.commands.hash.HRANDFIELD;
 import org.infinispan.server.resp.commands.hash.HSCAN;
 import org.infinispan.server.resp.commands.hash.HSET;
 import org.infinispan.server.resp.commands.hash.HSETNX;
+import org.infinispan.server.resp.commands.hash.HSTRLEN;
 import org.infinispan.server.resp.commands.hash.HVALS;
 import org.infinispan.server.resp.commands.hll.PFADD;
 import org.infinispan.server.resp.commands.list.LINDEX;
@@ -180,7 +181,7 @@ public final class Commands {
       ALL_COMMANDS[5] = new RespCommand[]{new FLUSHDB(), new FLUSHALL()};
       // GET should always be first here
       ALL_COMMANDS[6] = new RespCommand[]{new GET(), new GETDEL(), new GETEX(), new GETRANGE(), new GETSET()};
-      ALL_COMMANDS[7] = new RespCommand[]{new HELLO(), new HGET(), new HSET(), new HLEN(), new HEXISTS(), new HDEL(), new HMGET(), new HSETNX(), new HKEYS(), new HVALS(), new HSCAN(), new HGETALL(), new HMSET(), new HINCRBY(), new HINCRBYFLOAT(), new HRANDFIELD()};
+      ALL_COMMANDS[7] = new RespCommand[]{new HELLO(), new HGET(), new HSET(), new HLEN(), new HEXISTS(), new HDEL(), new HMGET(), new HSETNX(), new HKEYS(), new HVALS(), new HSCAN(), new HGETALL(), new HMSET(), new HINCRBY(), new HINCRBYFLOAT(), new HRANDFIELD(), new HSTRLEN()};
       ALL_COMMANDS[8] = new RespCommand[]{new INCR(), new INCRBY(), new INCRBYFLOAT(), new INFO()};
       ALL_COMMANDS[10] = new RespCommand[]{new KEYS()};
       ALL_COMMANDS[11] = new RespCommand[]{new LINDEX(), new LINSERT(), new LPUSH(), new LPUSHX(), new LPOP(), new LRANGE(), new LLEN(), new LPOS(), new LREM(), new LSET(), new LTRIM(), new LMOVE(), new LMPOP() };
