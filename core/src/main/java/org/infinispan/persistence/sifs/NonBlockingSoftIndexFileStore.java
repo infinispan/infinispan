@@ -33,6 +33,8 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.commons.util.concurrent.FileSystemLock;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.ExpiryHelper;
 import org.infinispan.distribution.ch.KeyPartitioner;
@@ -47,7 +49,6 @@ import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.concurrent.ActionSequencer;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 
@@ -139,6 +140,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
    public static final String PREFIX_12_0 = "ispn12.";
    public static final String PREFIX_LATEST = PREFIX_12_0;
 
+   private FileSystemLock directoryLock;
    private SoftIndexFileStoreConfiguration configuration;
    private TemporaryTable temporaryTable;
    private FileProvider fileProvider;
@@ -197,6 +199,15 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       // Use index files between 1 and cacheSegments
       int maxOpenIndexFiles = Math.min(Math.max(maxOpenFiles / 10, 1), cacheSegments);
       int maxOpenDataFiles = maxOpenFiles - maxOpenIndexFiles;
+
+      directoryLock = new FileSystemLock(getDataCacheRootLocation(), ctx.getCache().getName());
+      try {
+         if (!directoryLock.tryLock()) {
+            throw log.failedAcquiringLockFile(null, directoryLock);
+         }
+      } catch (IOException e) {
+         throw log.failedAcquiringLockFile(e, directoryLock);
+      }
 
       fileProvider = new FileProvider(getDataLocation(), maxOpenDataFiles, PREFIX_LATEST,
             configuration.maxFileSize());
@@ -407,6 +418,10 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       CompletionStages.join(stage);
    }
 
+   private Path getDataCacheRootLocation() {
+      return getQualifiedLocation(ctx.getGlobalConfiguration(), configuration.dataLocation(), ctx.getCache().getName(), "");
+   }
+
    private Path getDataLocation() {
       return getQualifiedLocation(ctx.getGlobalConfiguration(), configuration.dataLocation(), ctx.getCache().getName(), "data");
    }
@@ -469,6 +484,8 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
          } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw log.interruptedWhileStopping(e);
+         } finally {
+            directoryLock.unlock();
          }
       }, "soft-index-stop");
    }

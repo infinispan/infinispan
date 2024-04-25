@@ -9,7 +9,9 @@ import org.infinispan.commons.test.CommonsTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -33,19 +35,23 @@ public class SoftIndexFileStoreSplitInnerNodeTest extends MultipleCacheManagersT
 
    @Override
    protected void createCacheManagers() {
-      ConfigurationBuilder cb = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
-      cb.clustering().hash().numSegments(1);
-      cb.memory().maxCount((long) Math.ceil(MAX_ENTRIES * 0.2))
-            .persistence().passivation(false)
-            .addSoftIndexFileStore()
-            .dataLocation(Paths.get(tmpDirectory, "data").toString())
-            .indexLocation(Paths.get(tmpDirectory, "index").toString())
-            .purgeOnStartup(true)
-            .preload(false)
-            .expiration().wakeUpInterval(Long.MAX_VALUE)
-            .indexing().disable();
+      createCluster(2);
 
-      createClusteredCaches(2, cb, CACHE_NAME);
+      for (EmbeddedCacheManager manager : managers()) {
+         ConfigurationBuilder cb = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+         cb.clustering().hash().numSegments(1);
+         cb.memory().maxCount((long) Math.ceil(MAX_ENTRIES * 0.2))
+               .persistence().passivation(false)
+               .addSoftIndexFileStore()
+               .dataLocation(Paths.get(tmpDirectory, manager.getAddress().toString(), "data").toString())
+               .indexLocation(Paths.get(tmpDirectory, manager.getAddress().toString(), "index").toString())
+               .purgeOnStartup(true)
+               .preload(false)
+               .expiration().wakeUpInterval(Long.MAX_VALUE)
+               .indexing().disable();
+
+         TestingUtil.defineConfiguration(manager, CACHE_NAME, cb.build());
+      }
 
       c1 = cache(0, CACHE_NAME);
    }

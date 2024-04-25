@@ -3,6 +3,7 @@ package org.infinispan.persistence.sifs;
 import java.io.IOException;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.util.concurrent.FileSystemLock;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
@@ -100,4 +101,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = Logger.Level.WARN)
    @Message(value = "Clear encountered an exception, size stats for future invocations may be incorrect", id = 29024)
    void clearError(@Cause Throwable t);
+
+   @Message(value = "Failed acquiring lock '%s' for SIFS", id = 29025)
+   PersistenceException failedAcquiringLockFile(@Cause Throwable cause, FileSystemLock lock);
 }
