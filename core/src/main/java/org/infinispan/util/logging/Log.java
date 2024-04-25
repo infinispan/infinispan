@@ -36,6 +36,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.commons.util.concurrent.FileSystemLock;
 import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
@@ -1766,7 +1767,7 @@ public interface Log extends BasicLogger {
    CacheConfigurationException managerConfigurationStorageUnavailable();
 
    @Message(value = "Cannot acquire lock '%s' for persistent global state", id = 512)
-   CacheConfigurationException globalStateCannotAcquireLockFile(@Cause Throwable cause, File lockFile);
+   CacheConfigurationException globalStateCannotAcquireLockFile(@Cause Throwable cause, FileSystemLock lockFile);
 
    @Message(value = "Exception based eviction requires a transactional cache that doesn't allow for 1 phase commit or synchronizations", id = 513)
    CacheConfigurationException exceptionBasedEvictionOnlySupportedInTransactionalCaches();
@@ -2388,7 +2389,7 @@ public interface Log extends BasicLogger {
    void flushedACLCache();
 
    @Message(value = "Dangling lock file '%s' in persistent global state, probably left behind by an unclean shutdown. ", id = 693)
-   CacheConfigurationException globalStateLockFilePresent(File lockFile);
+   CacheConfigurationException globalStateLockFilePresent(FileSystemLock lockFile);
 
    @Message(value = "Cache '%s' has number of owners %d but is missing too many members (%d/%d) to reinstall topology", id = 694)
    MissingMembersException missingTooManyMembers(String cacheName, int owners, int missing, int total);
