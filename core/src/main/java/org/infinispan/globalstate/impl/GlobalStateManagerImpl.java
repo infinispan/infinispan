@@ -5,13 +5,12 @@ import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -19,6 +18,7 @@ import java.util.Optional;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
+import org.infinispan.commons.util.concurrent.FileSystemLock;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -53,9 +53,8 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
    TimeService timeService;
 
    private final List<GlobalStateProvider> stateProviders = new ArrayList<>();
+   private FileSystemLock globalLock;
    private boolean persistentState;
-   FileOutputStream globalLockFile;
-   private FileLock globalLock;
    private ScopedPersistentState globalState;
 
    @Start // Must start before everything else
@@ -76,42 +75,35 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
    }
 
    private void acquireGlobalLock() {
-      File lockFile = getLockFile();
-      if (lockFile.exists()) {
-         // The node was not shutdown cleanly
-         switch (globalConfiguration.globalState().uncleanShutdownAction()) {
-            case FAIL:
-               throw CONTAINER.globalStateLockFilePresent(lockFile);
-            case PURGE:
-               deleteScopedState(GLOBAL_SCOPE);
-               lockFile.delete();
-               break;
-            case IGNORE:
-               // Do nothing;
-               break;
-         }
-      }
+      globalLock = new FileSystemLock(Paths.get(globalConfiguration.globalState().persistentLocation()), GLOBAL_SCOPE);
       try {
-         lockFile.getParentFile().mkdirs();
-         globalLockFile = new FileOutputStream(lockFile);
-         globalLock = globalLockFile.getChannel().tryLock();
-         if (globalLock == null) {
-            throw CONTAINER.globalStateCannotAcquireLockFile(null, lockFile);
+         boolean checkAcquire = true;
+         if (!globalLock.tryLock()) {
+            // The node was not shutdown cleanly
+            checkAcquire = switch (globalConfiguration.globalState().uncleanShutdownAction()) {
+               case FAIL:
+                  throw CONTAINER.globalStateLockFilePresent(globalLock);
+               case PURGE:
+                  deleteScopedState(GLOBAL_SCOPE);
+                  globalLock.unsafeLock();
+                  yield true;
+               case IGNORE:
+                  // Do nothing;
+                  yield false;
+            };
+         }
+
+         if (checkAcquire && !globalLock.isAcquired()) {
+            throw CONTAINER.globalStateCannotAcquireLockFile(null, globalLock);
          }
       } catch (IOException | OverlappingFileLockException e) {
-         throw CONTAINER.globalStateCannotAcquireLockFile(e, lockFile);
+         throw CONTAINER.globalStateCannotAcquireLockFile(e, globalLock);
       }
    }
 
    private void releaseGlobalLock() {
-      if (globalLockFile != null) {
-         if (globalLock != null && globalLock.isValid())
-            Util.close(globalLock);
-         globalLock = null;
-         Util.close(globalLockFile);
-         // Only delete the file if we had successfully acquired it
-         getLockFile().delete();
-      }
+      if (globalLock != null && globalLock.isAcquired())
+         globalLock.unlock();
    }
 
    private void loadGlobalState() {
@@ -212,10 +204,6 @@ public class GlobalStateManagerImpl implements GlobalStateManager {
 
    private File getStateFile(String scope) {
       return new File(globalConfiguration.globalState().persistentLocation(), scope + ".state");
-   }
-
-   private File getLockFile() {
-      return new File(globalConfiguration.globalState().persistentLocation(), GLOBAL_SCOPE + ".lck");
    }
 
    @Override

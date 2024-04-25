@@ -42,11 +42,14 @@ public class SoftIndexFileStoreStressTest extends SingleCacheManagerTest {
 
    @AfterClass(alwaysRun = true, dependsOnMethods = "destroyAfterClass")
    protected void clearTempDir() throws IOException {
-      SoftIndexFileStoreTestUtils.StatsValue statsValue = SoftIndexFileStoreTestUtils.readStatsFile(tmpDirectory, CACHE_NAME, log);
-      long dataDirectorySize = SoftIndexFileStoreTestUtils.dataDirectorySize(tmpDirectory, CACHE_NAME);
+      try {
+         SoftIndexFileStoreTestUtils.StatsValue statsValue = SoftIndexFileStoreTestUtils.readStatsFile(tmpDirectory, CACHE_NAME, log);
+         long dataDirectorySize = SoftIndexFileStoreTestUtils.dataDirectorySize(tmpDirectory, CACHE_NAME);
 
-      assertEquals(dataDirectorySize, statsValue.getStatsSize());
-      Util.recursiveFileRemove(tmpDirectory);
+         assertEquals(dataDirectorySize, statsValue.getStatsSize());
+      } finally {
+         Util.recursiveFileRemove(tmpDirectory);
+      }
    }
 
    @Override
@@ -70,69 +73,63 @@ public class SoftIndexFileStoreStressTest extends SingleCacheManagerTest {
       return persistence;
    }
 
-   public void testConstantReadsWithCompaction() throws Exception {
-      ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      createCacheStoreConfig(cb.persistence(), CACHE_NAME, false);
-      TestingUtil.defineConfiguration(cacheManager, CACHE_NAME, cb.build());
-
-      Cache<String, Object> cache = cacheManager.getCache(CACHE_NAME);
-      cache.start();
-
-      int numKeys = 22;
-
-      for (int i = 0; i < numKeys; ++i) {
-         cache.put("key-" + i, "value-" + i);
-      }
-
-      WaitDelegatingNonBlockingStore<?, ?> store = TestingUtil.getFirstStoreWait(cache);
-
-      Compactor compactor = TestingUtil.extractField(store.delegate(), "compactor");
-
-      AtomicBoolean continueRunning = new AtomicBoolean(true);
-      Future<Void> retrievalFork = fork(() -> {
-         while (continueRunning.get()) {
-            int i = ThreadLocalRandom.current().nextInt(numKeys);
+   private enum Operation {
+      READ {
+         @Override
+         public void execute(Cache<String, Object> cache, int keySpace) {
+            int i = ThreadLocalRandom.current().nextInt(keySpace);
             Object value = cache.get("key-" + i);
             if (value != null) {
                assertEquals("value-" + i, value);
             }
          }
-      });
+      },
 
-      Future<Void> writeFork = fork(() -> {
-         while (continueRunning.get()) {
-            int i = ThreadLocalRandom.current().nextInt(numKeys);
+      WRITE {
+         @Override
+         public void execute(Cache<String, Object> cache, int keySpace) {
+            int i = ThreadLocalRandom.current().nextInt(keySpace);
             String sb = i +
                   "vjaofijeawofiejafioeh23uh123eu213heu1he u1ni 1uh13iueh 1iuehn12ujhen12ujhn2112w!@KEO@J!E I!@JEIO! J@@@E1j ie1jvjaofijeawofiejafioeha".repeat(i);
             cache.put("k" + i, sb);
          }
-      });
+      },
 
-      Future<Void> removeFork = fork(() -> {
-         while (continueRunning.get()) {
-            int i = ThreadLocalRandom.current().nextInt(numKeys);
+      REMOVE {
+         @Override
+         public void execute(Cache<String, Object> cache, int keySpace) {
+            int i = ThreadLocalRandom.current().nextInt(keySpace);
             cache.remove("k" + i);
          }
-      });
+      },
 
-      Future<Void> clearFork = fork(() -> {
-         while (continueRunning.get()) {
+      CLEAR {
+         @Override
+         public void execute(Cache<String, Object> cache, int keySpace) {
             cache.clear();
-            Thread.sleep(20);
+            try {
+               Thread.sleep(20);
+            } catch (InterruptedException ignore) {}
          }
-      });
+      },
 
-      Future<Void> iterationFork = fork(() -> {
-         while (continueRunning.get()) {
+      ITERATE {
+         @Override
+         public void execute(Cache<String, Object> cache, int keySpace) {
             var list = new ArrayList<>(cache.entrySet());
             if (list.size() == 1000) {
                log.tracef("List size was: " + list.size());
             }
          }
-      });
+      },
 
-      Future<Void> compactionFork = fork(() -> {
-         while (continueRunning.get()) {
+
+      COMPACTION {
+         @Override
+         public void execute(Cache<String, Object> cache, int keySpace) {
+            WaitDelegatingNonBlockingStore<?, ?> store = TestingUtil.getFirstStoreWait(cache);
+            Compactor compactor = TestingUtil.extractField(store.delegate(), "compactor");
+
             TestSubscriber<Object> testSubscriber = TestSubscriber.create();
             testSubscriber.onSubscribe(new AsyncSubscription());
             Compactor.CompactionExpirationSubscriber expSub = new Compactor.CompactionExpirationSubscriber() {
@@ -157,19 +154,30 @@ public class SoftIndexFileStoreStressTest extends SingleCacheManagerTest {
             testSubscriber.awaitDone(5, TimeUnit.SECONDS)
                   .assertComplete().assertNoErrors();
          }
-      });
+      };
+
+      public abstract void execute(Cache<String, Object> cache, int keySpace);
+   }
+
+   public void testConstantReadsWithCompaction() throws Throwable {
+      ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      createCacheStoreConfig(cb.persistence(), CACHE_NAME, false);
+      TestingUtil.defineConfiguration(cacheManager, CACHE_NAME, cb.build());
+
+      Cache<String, Object> cache = cacheManager.getCache(CACHE_NAME);
+      cache.start();
+
+      AtomicBoolean continueRunning = new AtomicBoolean(true);
+      List<Future<?>> futures = new ArrayList<>();
+      for (Operation operation : Operation.values()) {
+         futures.add(fork(() -> runOperationOnCache(cache, continueRunning, operation)));
+      }
 
       long startTime = System.nanoTime();
       long secondsToRun = TimeUnit.MINUTES.toSeconds(10);
 
       while (TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - startTime) < secondsToRun) {
-         if (retrievalFork.isDone()
-               || compactionFork.isDone()
-               || writeFork.isDone()
-               || removeFork.isDone()
-               || clearFork.isDone()
-               || iterationFork.isDone()
-               ) {
+         if (futures.stream().anyMatch(Future::isDone)) {
             continueRunning.set(false);
             break;
          }
@@ -178,12 +186,7 @@ public class SoftIndexFileStoreStressTest extends SingleCacheManagerTest {
       continueRunning.set(false);
 
       try {
-         TestBlocking.get(retrievalFork, 10, TimeUnit.SECONDS);
-         TestBlocking.get(compactionFork, 10, TimeUnit.SECONDS);
-         TestBlocking.get(writeFork, 10, TimeUnit.SECONDS);
-         TestBlocking.get(removeFork, 10, TimeUnit.SECONDS);
-         TestBlocking.get(clearFork, 10, TimeUnit.SECONDS);
-         TestBlocking.get(iterationFork, 10, TimeUnit.SECONDS);
+         get(10, TimeUnit.SECONDS, futures.toArray(Future[]::new));
       } catch (Throwable t) {
          log.tracef(Util.threadDump());
          throw t;
@@ -200,5 +203,23 @@ public class SoftIndexFileStoreStressTest extends SingleCacheManagerTest {
 
       List<Object> entries = new ArrayList<>(newCache.entrySet());
       log.info("Size of entries after restart was: " + entries.size());
+   }
+
+   private void runOperationOnCache(Cache<String, Object> cache, AtomicBoolean continueRunning, Operation operation) {
+      int numKeys = 22;
+      for (int i = 0; i < numKeys; ++i) {
+         cache.put("key-" + i, "value-" + i);
+      }
+
+      while (continueRunning.get()) {
+         operation.execute(cache, numKeys);
+      }
+      cache.clear();
+   }
+
+   private void get(long time, TimeUnit unit, Future<?> ... futures) throws Throwable {
+      for (Future<?> future : futures) {
+         TestBlocking.get(future, time, unit);
+      }
    }
 }
