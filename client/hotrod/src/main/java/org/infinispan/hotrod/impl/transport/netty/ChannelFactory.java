@@ -4,8 +4,10 @@ import static org.infinispan.hotrod.impl.Util.await;
 import static org.infinispan.hotrod.impl.Util.wrapBytes;
 import static org.infinispan.hotrod.impl.logging.Log.HOTROD;
 
+import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.security.Provider;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -28,15 +30,19 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.io.FileWatcher;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.commons.util.ProcessorInfo;
+import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.hotrod.configuration.ClientIntelligence;
 import org.infinispan.hotrod.configuration.ClusterConfiguration;
 import org.infinispan.hotrod.configuration.FailoverRequestBalancingStrategy;
 import org.infinispan.hotrod.configuration.HotRodConfiguration;
 import org.infinispan.hotrod.configuration.ServerConfiguration;
+import org.infinispan.hotrod.configuration.SslConfiguration;
 import org.infinispan.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.hotrod.impl.ClientTopology;
 import org.infinispan.hotrod.impl.ConfigurationProperties;
@@ -59,6 +65,11 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
+import io.netty.handler.ssl.ClientAuth;
+import io.netty.handler.ssl.IdentityCipherSuiteFilter;
+import io.netty.handler.ssl.JdkSslContext;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.resolver.AddressResolverGroup;
 import io.netty.resolver.dns.DnsNameResolverBuilder;
 import io.netty.resolver.dns.RoundRobinDnsAddressResolverGroup;
@@ -99,6 +110,8 @@ public class ChannelFactory {
    // Servers for which the last connection attempt failed and which have no established connections
    @GuardedBy("lock")
    private final Set<SocketAddress> failedServers = new HashSet<>();
+   private SslContext sslContext;
+   private FileWatcher watcher;
 
    public void start(Codec codec, HotRodConfiguration configuration, Marshaller marshaller, ExecutorService executorService,
                      ClientListenerNotifier listenerNotifier, MarshallerRegistry marshallerRegistry) {
@@ -116,6 +129,7 @@ public class ChannelFactory {
          // Note that each event loop opens a selector which counts
          int maxExecutors = Math.min(asyncThreads, eventLoopThreads);
          this.eventLoopGroup = configuration.transportFactory().createEventLoopGroup(maxExecutors, executorService);
+         this.sslContext = initSslContext();
 
          List<InetSocketAddress> initialServers = new ArrayList<>();
          for (ServerConfiguration server : configuration.servers()) {
@@ -157,6 +171,59 @@ public class ChannelFactory {
          lock.writeLock().unlock();
       }
       pingServersIgnoreException();
+   }
+
+
+   private SslContext initSslContext() {
+      SslConfiguration ssl = configuration.security().ssl();
+      if (!ssl.enabled()) {
+         return null;
+      } else if (ssl.sslContext() == null) {
+         this.watcher = new FileWatcher();
+         SslContextBuilder builder = SslContextBuilder.forClient();
+         try {
+            if (ssl.keyStoreFileName() != null) {
+               builder.keyManager(new SslContextFactory()
+                     .keyStoreFileName(ssl.keyStoreFileName())
+                     .keyStoreType(ssl.keyStoreType())
+                     .keyStorePassword(ssl.keyStorePassword())
+                     .keyAlias(ssl.keyAlias())
+                     .provider(ssl.provider())
+                     .watcher(watcher)
+                     .build().keyManager());
+            }
+            if (ssl.trustStoreFileName() != null) {
+               if ("pem".equalsIgnoreCase(ssl.trustStoreType())) {
+                  builder.trustManager(new File(ssl.trustStoreFileName()));
+               } else {
+                  builder.trustManager(new SslContextFactory()
+                        .trustStoreFileName(ssl.trustStoreFileName())
+                        .trustStoreType(ssl.trustStoreType())
+                        .trustStorePassword(ssl.trustStorePassword())
+                        .provider(ssl.provider())
+                        .watcher(watcher)
+                        .build()
+                        .trustManager());
+               }
+            }
+            if (ssl.protocol() != null) {
+               builder.protocols(ssl.protocol());
+            }
+            if (ssl.ciphers() != null) {
+               builder.ciphers(Arrays.asList(ssl.ciphers()));
+            }
+            if (ssl.provider() != null) {
+               Provider provider = SslContextFactory.findProvider(ssl.provider(), SslContext.class.getSimpleName(), "TLS");
+               builder.sslContextProvider(provider);
+            }
+            return builder.build();
+         } catch (Exception e) {
+            throw new CacheConfigurationException(e);
+         }
+      } else {
+         return new JdkSslContext(ssl.sslContext(), true, null, IdentityCipherSuiteFilter.INSTANCE,
+               null, ClientAuth.NONE, null, false);
+      }
    }
 
    private int maxAsyncThreads(ExecutorService executorService, HotRodConfiguration configuration) {
@@ -205,7 +272,7 @@ public class ChannelFactory {
    }
 
    protected ChannelInitializer createChannelInitializer(SocketAddress address, Bootstrap bootstrap) {
-      return new ChannelInitializer(bootstrap, address, cacheOperationsFactory, configuration, this, topologyInfo.getCluster());
+      return new ChannelInitializer(bootstrap, address, cacheOperationsFactory, configuration, this, topologyInfo.getCluster(), sslContext);
    }
 
    public CacheOperationsFactory getCacheOperationsFactory() {
@@ -232,6 +299,9 @@ public class ChannelFactory {
 
    public void destroy() {
       try {
+         if (watcher != null) {
+            watcher.stop();
+         }
          channelPoolMap.values().forEach(ChannelPool::close);
          eventLoopGroup.shutdownGracefully(0, 0, TimeUnit.MILLISECONDS).get();
          executorService.shutdownNow();

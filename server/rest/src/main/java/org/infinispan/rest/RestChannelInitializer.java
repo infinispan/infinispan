@@ -34,7 +34,7 @@ public class RestChannelInitializer extends NettyChannelInitializer<RestServerCo
     * @param transport  Netty transport.
     */
    public RestChannelInitializer(RestServer restServer, NettyTransport transport) {
-      super(restServer, transport, null, null);
+      super(restServer, transport, null, null, getAlpnConfiguration(restServer));
       this.restServer = restServer;
    }
 
@@ -48,8 +48,7 @@ public class RestChannelInitializer extends NettyChannelInitializer<RestServerCo
       }
    }
 
-   @Override
-   protected ApplicationProtocolConfig getAlpnConfiguration() {
+   private static ApplicationProtocolConfig getAlpnConfiguration(RestServer restServer) {
       if (restServer.getConfiguration().ssl().enabled()) {
          return new ApplicationProtocolConfig(
                ApplicationProtocolConfig.Protocol.ALPN,
@@ -59,8 +58,9 @@ public class RestChannelInitializer extends NettyChannelInitializer<RestServerCo
                ApplicationProtocolConfig.SelectedListenerFailureBehavior.ACCEPT,
                ApplicationProtocolNames.HTTP_2,
                ApplicationProtocolNames.HTTP_1_1);
+      } else {
+         return null;
       }
-      return null;
    }
 
    public ChannelHandler getRestHandler() {

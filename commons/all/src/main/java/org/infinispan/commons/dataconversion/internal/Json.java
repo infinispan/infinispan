@@ -1159,11 +1159,15 @@ public class Json implements java.io.Serializable {
       public Json make(Object anything) {
          if (anything == null)
             return nil();
-         else if (anything instanceof Properties) {
-            Properties properties = (Properties) anything;
+         else if (anything instanceof Properties properties) {
             Json O = object();
-            for (Map.Entry<?, ?> x : properties.entrySet())
-               O.set(x.getKey().toString(), factory().make(x.getValue()));
+            for (Map.Entry<?, ?> x : properties.entrySet()) {
+               try {
+                  O.set(x.getKey().toString(), factory().make(x.getValue()));
+               } catch (IllegalArgumentException e) {
+                  // Ignore unknown properties
+               }
+            }
             return O;
          } else if (anything instanceof Json)
             return (Json) anything;

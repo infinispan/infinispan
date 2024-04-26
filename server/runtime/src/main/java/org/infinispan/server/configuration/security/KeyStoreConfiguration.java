@@ -7,6 +7,7 @@ import static org.wildfly.security.provider.util.ProviderUtil.findProvider;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.Provider;
@@ -21,10 +22,11 @@ import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.X509ExtendedKeyManager;
 
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.commons.io.FileWatcher;
+import org.infinispan.commons.util.ReloadingX509KeyManager;
 import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.server.Server;
@@ -46,7 +48,7 @@ import org.wildfly.security.x500.X500;
 public class KeyStoreConfiguration extends ConfigurationElement<KeyStoreConfiguration> {
    static final AttributeDefinition<String> ALIAS = AttributeDefinition.builder(Attribute.ALIAS, null, String.class).build();
    static final AttributeDefinition<String> GENERATE_SELF_SIGNED_CERTIFICATE_HOST = AttributeDefinition.builder(Attribute.GENERATE_SELF_SIGNED_CERTIFICATE_HOST, null, String.class).build();
-   @Deprecated(forRemoval=true, since = "14.0")
+   @Deprecated(forRemoval = true, since = "14.0")
    static final AttributeDefinition<Supplier<CredentialSource>> KEY_PASSWORD = AttributeDefinition.builder(Attribute.KEY_PASSWORD, null, (Class<Supplier<CredentialSource>>) (Class<?>) Supplier.class)
          .serializer(ServerConfigurationSerializer.CREDENTIAL).build();
    static final AttributeDefinition<Supplier<CredentialSource>> KEYSTORE_PASSWORD = AttributeDefinition.builder(Attribute.PASSWORD, null, (Class<Supplier<CredentialSource>>) (Class<?>) Supplier.class)
@@ -67,33 +69,54 @@ public class KeyStoreConfiguration extends ConfigurationElement<KeyStoreConfigur
    public void build(SSLContextBuilder builder, Properties properties, EnumSet<ServerSecurityRealm.Feature> features) {
       if (attributes.isModified()) {
          Provider[] providers = SslContextFactory.discoverSecurityProviders(Thread.currentThread().getContextClassLoader());
-         try {
-            final KeyStore keyStore;
-            String providerName = attributes.attribute(PROVIDER).get();
-            String type = attributes.attribute(TYPE).get();
-            if (attributes.attribute(PATH).isNull()) {
-               keyStore = buildFilelessKeyStore(providers, providerName, type);
-            } else {
-               keyStore = buildKeyStore(providers, properties);
+         String providerName = attributes.attribute(PROVIDER).get();
+         String type = attributes.attribute(TYPE).get();
+
+         final X509ExtendedKeyManager keyManager;
+         if (attributes.attribute(PATH).isNull()) {
+            try {
+               keyManager = keyManagerFromStore(buildFilelessKeyStore(providers, providerName, type), providers, providerName);
+            } catch (GeneralSecurityException | IOException e) {
+               throw new RuntimeException(e);
             }
-            String algorithm = KeyManagerFactory.getDefaultAlgorithm();
-            Provider provider = findProvider(providers, providerName, KeyManagerFactory.class, algorithm);
-            KeyManagerFactory keyManagerFactory = provider != null ? KeyManagerFactory.getInstance(algorithm, provider) : KeyManagerFactory.getInstance(algorithm);
-            char[] keyStorePassword = resolvePassword(attributes.attribute(KEYSTORE_PASSWORD));
-            char[] keyPassword = resolvePassword(attributes.attribute(KEY_PASSWORD));
-            keyManagerFactory.init(keyStore, keyPassword != null ? keyPassword : keyStorePassword);
-            for (KeyManager keyManager : keyManagerFactory.getKeyManagers()) {
-               if (keyManager instanceof X509ExtendedKeyManager) {
-                  builder.setKeyManager((X509ExtendedKeyManager) keyManager);
-                  features.add(ServerSecurityRealm.Feature.ENCRYPT);
-                  return;
+         } else {
+            String keyStoreFileName = ParseUtils.resolvePath(attributes.attribute(PATH).get(), properties.getProperty(attributes.attribute(RELATIVE_TO).get()));
+            FileWatcher watcher = (FileWatcher) properties.get(Server.INFINISPAN_FILE_WATCHER);
+            if (watcher == null) {
+               try {
+                  keyManager = keyManagerFromStore(buildKeyStore(providers, properties), providers, providerName);
+               } catch (GeneralSecurityException | IOException e) {
+                  throw new RuntimeException(e);
                }
+            } else {
+               keyManager = new ReloadingX509KeyManager(watcher, Paths.get(keyStoreFileName), p -> {
+                  try {
+                     return keyManagerFromStore(buildKeyStore(providers, properties), providers, providerName);
+                  } catch (IOException | GeneralSecurityException e) {
+                     throw new RuntimeException(e);
+                  }
+               });
             }
-            throw Server.log.noDefaultKeyManager();
-         } catch (Exception e) {
-            throw new CacheConfigurationException(e);
+         }
+
+         builder.setKeyManager(keyManager);
+         features.add(ServerSecurityRealm.Feature.ENCRYPT);
+      }
+   }
+
+   private X509ExtendedKeyManager keyManagerFromStore(KeyStore keyStore, Provider[] providers, String providerName) throws GeneralSecurityException {
+      String algorithm = KeyManagerFactory.getDefaultAlgorithm();
+      Provider provider = findProvider(providers, providerName, KeyManagerFactory.class, algorithm);
+      KeyManagerFactory keyManagerFactory = provider != null ? KeyManagerFactory.getInstance(algorithm, provider) : KeyManagerFactory.getInstance(algorithm);
+      char[] keyStorePassword = resolvePassword(attributes.attribute(KEYSTORE_PASSWORD));
+      char[] keyPassword = resolvePassword(attributes.attribute(KEY_PASSWORD));
+      keyManagerFactory.init(keyStore, keyPassword != null ? keyPassword : keyStorePassword);
+      for (KeyManager keyManager : keyManagerFactory.getKeyManagers()) {
+         if (keyManager instanceof X509ExtendedKeyManager) {
+            return (X509ExtendedKeyManager) keyManager;
          }
       }
+      throw Server.log.noDefaultKeyManager();
    }
 
    private KeyStore buildKeyStore(Provider[] providers, Properties properties) throws GeneralSecurityException, IOException {

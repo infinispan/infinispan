@@ -1319,8 +1319,8 @@
 
    <xs:complexType name="security-realm-properties">
       <xs:sequence>
-         <xs:element type="tns:security-realm-user-properties" name="user-properties"/>
-         <xs:element type="tns:security-realm-group-properties" name="group-properties"/>
+         <xs:element type="tns:security-realm-user-properties" name="user-properties" minOccurs="0"/>
+         <xs:element type="tns:security-realm-group-properties" name="group-properties" minOccurs="0"/>
       </xs:sequence>
       <xs:attribute type="xs:string" name="name">
          <xs:annotation>
@@ -1334,14 +1334,14 @@
 
    <xs:complexType name="security-realm-user-properties">
       <xs:attribute type="xs:string" name="path" default="users.properties"/>
-      <xs:attribute type="xs:string" name="relative-to"/>
+      <xs:attribute type="xs:string" name="relative-to" default="infinispan.server.config.path"/>
       <xs:attribute type="xs:string" name="digest-realm-name"/>
       <xs:attribute type="xs:boolean" name="plain-text" default="false"/>
    </xs:complexType>
 
    <xs:complexType name="security-realm-group-properties">
       <xs:attribute type="xs:string" name="path" default="groups.properties"/>
-      <xs:attribute type="xs:string" name="relative-to"/>
+      <xs:attribute type="xs:string" name="relative-to" default="infinispan.server.config.path"/>
    </xs:complexType>
 
    <xs:complexType name="security-realm-ldap">

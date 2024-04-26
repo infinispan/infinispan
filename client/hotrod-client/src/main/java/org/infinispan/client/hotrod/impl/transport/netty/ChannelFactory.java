@@ -4,8 +4,10 @@ import static org.infinispan.client.hotrod.impl.Util.await;
 import static org.infinispan.client.hotrod.impl.Util.wrapBytes;
 import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
+import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.security.Provider;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,6 +37,7 @@ import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.configuration.ClusterConfiguration;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ServerConfiguration;
+import org.infinispan.client.hotrod.configuration.SslConfiguration;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
@@ -51,15 +54,23 @@ import org.infinispan.client.hotrod.impl.topology.ClusterInfo;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelPool.ChannelEventType;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.io.FileWatcher;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.WrappedBytes;
 import org.infinispan.commons.util.ProcessorInfo;
+import org.infinispan.commons.util.SslContextFactory;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
+import io.netty.handler.ssl.ClientAuth;
+import io.netty.handler.ssl.IdentityCipherSuiteFilter;
+import io.netty.handler.ssl.JdkSslContext;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.resolver.AddressResolverGroup;
 import io.netty.resolver.dns.DnsNameResolverBuilder;
 import io.netty.resolver.dns.RoundRobinDnsAddressResolverGroup;
@@ -102,6 +113,8 @@ public class ChannelFactory {
    private final Set<SocketAddress> failedServers = new HashSet<>();
    private final CodecHolder codecHolder;
    private AddressResolverGroup<?> dnsResolver;
+   private SslContext sslContext;
+   private FileWatcher watcher;
 
    public ChannelFactory(CodecHolder codecHolder) {
       this.codecHolder = codecHolder;
@@ -128,6 +141,7 @@ public class ChannelFactory {
                .ttl(configuration.dnsResolverMinTTL(), configuration.dnsResolverMaxTTL())
                .negativeTtl(configuration.dnsResolverNegativeTTL());
          this.dnsResolver = new RoundRobinDnsAddressResolverGroup(builder);
+         this.sslContext = initSslContext();
 
          List<InetSocketAddress> initialServers = new ArrayList<>();
          for (ServerConfiguration server : configuration.servers()) {
@@ -172,6 +186,64 @@ public class ChannelFactory {
       pingServersIgnoreException();
    }
 
+
+   private SslContext initSslContext() {
+      SslConfiguration ssl = configuration.security().ssl();
+      if (!ssl.enabled()) {
+         return null;
+      } else if (ssl.sslContext() == null) {
+         this.watcher = new FileWatcher();
+         SslContextBuilder builder = SslContextBuilder.forClient();
+         try {
+            if (ssl.keyStoreFileName() != null) {
+               builder.keyManager(new SslContextFactory()
+                     .keyStoreFileName(ssl.keyStoreFileName())
+                     .keyStoreType(ssl.keyStoreType())
+                     .keyStorePassword(ssl.keyStorePassword())
+                     .keyAlias(ssl.keyAlias())
+                     .classLoader(configuration.classLoader())
+                     .provider(ssl.provider())
+                     .watcher(watcher)
+                     .build().keyManager());
+            }
+            if (ssl.trustStoreFileName() != null) {
+               if ("pem".equalsIgnoreCase(ssl.trustStoreType())) {
+                  builder.trustManager(new File(ssl.trustStoreFileName()));
+               } else {
+                  builder.trustManager(new SslContextFactory()
+                        .trustStoreFileName(ssl.trustStoreFileName())
+                        .trustStoreType(ssl.trustStoreType())
+                        .trustStorePassword(ssl.trustStorePassword())
+                        .classLoader(configuration.classLoader())
+                        .provider(ssl.provider())
+                        .watcher(watcher)
+                        .build()
+                        .trustManager());
+               }
+            }
+            if (ssl.trustStorePath() != null) {
+               builder.trustManager(new File(ssl.trustStorePath()));
+            }
+            if (ssl.protocol() != null) {
+               builder.protocols(ssl.protocol());
+            }
+            if (ssl.ciphers() != null) {
+               builder.ciphers(ssl.ciphers());
+            }
+            if (ssl.provider() != null) {
+               Provider provider = SslContextFactory.findProvider(ssl.provider(), SslContext.class.getSimpleName(), "TLS");
+               builder.sslContextProvider(provider);
+            }
+            return builder.build();
+         } catch (Exception e) {
+            throw new CacheConfigurationException(e);
+         }
+      } else {
+         return new JdkSslContext(ssl.sslContext(), true, null, IdentityCipherSuiteFilter.INSTANCE,
+               null, ClientAuth.NONE, null, false);
+      }
+   }
+
    public Codec getNegotiatedCodec() {
       return codecHolder.getCodec();
    }
@@ -212,7 +284,7 @@ public class ChannelFactory {
    }
 
    public ChannelInitializer createChannelInitializer(SocketAddress address, Bootstrap bootstrap) {
-      return new ChannelInitializer(bootstrap, address, operationsFactory, configuration, this, topologyInfo.getCluster());
+      return new ChannelInitializer(bootstrap, address, operationsFactory, configuration, this, topologyInfo.getCluster(), sslContext);
    }
 
    protected ChannelPool createChannelPool(Bootstrap bootstrap, ChannelInitializer channelInitializer, SocketAddress address) {
@@ -250,6 +322,9 @@ public class ChannelFactory {
 
    public void destroy() {
       try {
+         if (watcher != null) {
+            watcher.stop();
+         }
          channelPoolMap.values().forEach(ChannelPool::close);
          eventLoopGroup.shutdownGracefully(0, 0, TimeUnit.MILLISECONDS).get();
          executorService.shutdownNow();
