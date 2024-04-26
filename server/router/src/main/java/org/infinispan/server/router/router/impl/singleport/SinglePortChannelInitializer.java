@@ -26,7 +26,7 @@ class SinglePortChannelInitializer extends NettyChannelInitializer<SinglePortRou
    private final Map<String, ProtocolServer<?>> upgradeServers;
 
    public SinglePortChannelInitializer(SinglePortEndpointRouter server, NettyTransport transport, RestServer restServer, Map<String, ProtocolServer<?>> upgradeServers) {
-      super(server, transport, null, null);
+      super(server, transport, null, null, getAlpnConfiguration(server, upgradeServers));
       this.restServer = restServer;
       this.upgradeServers = upgradeServers;
    }
@@ -44,8 +44,7 @@ class SinglePortChannelInitializer extends NettyChannelInitializer<SinglePortRou
       }
    }
 
-   @Override
-   protected ApplicationProtocolConfig getAlpnConfiguration() {
+   private static ApplicationProtocolConfig getAlpnConfiguration(SinglePortEndpointRouter server, Map<String, ProtocolServer<?>> upgradeServers) {
       if (server.getConfiguration().ssl().enabled()) {
          List<String> supportedProtocols = new ArrayList<>();
          supportedProtocols.add(ApplicationProtocolNames.HTTP_2);
@@ -59,8 +58,9 @@ class SinglePortChannelInitializer extends NettyChannelInitializer<SinglePortRou
                // ACCEPT is currently the only mode supported by both OpenSsl and JDK providers.
                ApplicationProtocolConfig.SelectedListenerFailureBehavior.ACCEPT,
                supportedProtocols);
+      } else {
+         return null;
       }
-      return null;
    }
 
 }

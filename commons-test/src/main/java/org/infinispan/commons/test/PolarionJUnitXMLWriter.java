@@ -4,13 +4,15 @@ package org.infinispan.commons.test;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
-
-import org.testng.internal.Utils;
 
 /**
  * A JUnit XML report generator for Polarion based on the JUnitXMLReporter
@@ -137,7 +139,11 @@ public class PolarionJUnitXMLWriter implements AutoCloseable {
    private void writeCauseElement(String tag, Throwable throwable) throws XMLStreamException {
       String throwableClass = throwable.getClass().getName();
       String message = throwable.getMessage();
-      String stackTrace = Utils.shortStackTrace(throwable, true);
+      StringWriter sw = new StringWriter();
+      PrintWriter pw = new PrintWriter(sw);
+      throwable.printStackTrace(pw);
+      pw.flush();
+      String stackTrace = escapeHtml(sw.toString());
 
       xmlWriter.writeStartElement(tag);
       xmlWriter.writeAttribute(ATTR_TYPE, throwableClass);
@@ -185,5 +191,32 @@ public class PolarionJUnitXMLWriter implements AutoCloseable {
       }
 
       xmlWriter.writeEndElement();
+   }
+
+   private static final Map<Character, String> ESCAPES = new HashMap<>();
+
+   static {
+      ESCAPES.put('<', "&lt;");
+      ESCAPES.put('>', "&gt;");
+      ESCAPES.put('\'', "&apos;");
+      ESCAPES.put('"', "&quot;");
+      ESCAPES.put('&', "&amp;");
+   }
+
+   public static String escapeHtml(String s) {
+      if (s == null) {
+         return null;
+      }
+      StringBuilder result = new StringBuilder();
+      for (int i = 0; i < s.length(); i++) {
+         char c = s.charAt(i);
+         String nc = ESCAPES.get(c);
+         if (nc != null) {
+            result.append(nc);
+         } else {
+            result.append(c);
+         }
+      }
+      return result.toString();
    }
 }

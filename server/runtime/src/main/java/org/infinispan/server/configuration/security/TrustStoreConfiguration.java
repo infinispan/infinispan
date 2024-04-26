@@ -6,6 +6,7 @@ import static org.wildfly.security.provider.util.ProviderUtil.findProvider;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -13,14 +14,18 @@ import java.security.Provider;
 import java.util.Properties;
 import java.util.function.Supplier;
 
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509ExtendedTrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.commons.io.FileWatcher;
+import org.infinispan.commons.util.ReloadingX509TrustManager;
 import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.server.Server;
@@ -73,23 +78,50 @@ public class TrustStoreConfiguration extends ConfigurationElement<TrustStoreConf
    public void build(SSLContextBuilder builder, Properties properties) {
       if (attributes.isModified()) {
          Provider[] providers = SslContextFactory.discoverSecurityProviders(Thread.currentThread().getContextClassLoader());
-         try {
-            KeyStore trustStore = trustStore(providers, properties);
-            String algorithm = TrustManagerFactory.getDefaultAlgorithm();
-            String providerName = attributes.attribute(PROVIDER).get();
-            Provider provider = findProvider(providers, providerName, TrustManagerFactory.class, algorithm);
-            TrustManagerFactory trustManagerFactory = provider != null ? TrustManagerFactory.getInstance(algorithm, provider) : TrustManagerFactory.getInstance(algorithm);
-            trustManagerFactory.init(trustStore);
-            for (TrustManager trustManager : trustManagerFactory.getTrustManagers()) {
-               if (trustManager instanceof X509TrustManager) {
-                  builder.setTrustManager((X509TrustManager) trustManager);
-                  return;
-               }
+         final X509TrustManager trustManager;
+         if (attributes.attribute(PATH).isNull()) {
+            try {
+               String providerName = attributes.attribute(PROVIDER).get();
+               String type = attributes.attribute(TYPE).get();
+               KeyStore keyStore = buildFilelessKeyStore(providers, providerName, type);
+               trustManager = trustManagerFromStore(keyStore, providers, providerName);
+            } catch (GeneralSecurityException | IOException e) {
+               throw new RuntimeException(e);
             }
-            throw Server.log.noDefaultTrustManager();
-         } catch (Exception e) {
-            throw new CacheConfigurationException(e);
+         } else {
+            String providerName = attributes.attribute(PROVIDER).get();
+            String keyStoreFileName = ParseUtils.resolvePath(attributes.attribute(PATH).get(), properties.getProperty(attributes.attribute(RELATIVE_TO).get()));
+            FileWatcher watcher = (FileWatcher) properties.get(Server.INFINISPAN_FILE_WATCHER);
+            if (watcher == null) {
+               try {
+                  trustManager = trustManagerFromStore(trustStore(providers, properties), providers, providerName);
+               } catch (GeneralSecurityException e) {
+                  throw new RuntimeException(e);
+               }
+            } else {
+               trustManager = new ReloadingX509TrustManager(watcher, Paths.get(keyStoreFileName), p -> {
+                  try {
+                     return trustManagerFromStore(trustStore(providers, properties), providers, providerName);
+                  } catch (GeneralSecurityException e) {
+                     throw new RuntimeException(e);
+                  }
+               });
+            }
+         }
+         builder.setTrustManager(trustManager);
+      }
+   }
+
+   private X509ExtendedTrustManager trustManagerFromStore(KeyStore keyStore, Provider[] providers, String providerName) throws GeneralSecurityException {
+      String algorithm = TrustManagerFactory.getDefaultAlgorithm();
+      Provider provider = findProvider(providers, providerName, KeyManagerFactory.class, algorithm);
+      TrustManagerFactory trustManagerFactory = provider != null ? TrustManagerFactory.getInstance(algorithm, provider) : TrustManagerFactory.getInstance(algorithm);
+      trustManagerFactory.init(keyStore);
+      for (TrustManager trustManager : trustManagerFactory.getTrustManagers()) {
+         if (trustManager instanceof X509ExtendedTrustManager) {
+            return (X509ExtendedTrustManager) trustManager;
          }
       }
+      throw Server.log.noDefaultTrustManager();
    }
 }

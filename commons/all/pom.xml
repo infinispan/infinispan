@@ -50,6 +50,12 @@
       </dependency>
 
       <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-keystore</artifactId>
+         <version>${version.org.wildfly.elytron}</version>
+      </dependency>
+
+      <dependency>
          <groupId>org.apache.logging.log4j</groupId>
          <artifactId>log4j-core</artifactId>
          <optional>true</optional>
@@ -88,6 +94,11 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-commons-test</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-x500-cert</artifactId>
          <scope>test</scope>
       </dependency>
    </dependencies>

@@ -52,13 +52,12 @@ public class MemcachedTestingUtil {
          builder.setAuthDescriptor(AuthDescriptor.typical(USERNAME, PASSWORD));
       }
       if (configuration.ssl().enabled()) {
-         SSLContext sslContext = new SslContextFactory().trustStoreFileName(TestCertificates.certificate("ca")).trustStorePassword(TestCertificates.KEY_PASSWORD).getContext();
+         SSLContext sslContext = new SslContextFactory().trustStoreFileName(TestCertificates.certificate("ca")).trustStorePassword(TestCertificates.KEY_PASSWORD).build().sslContext();
          builder.setSSLContext(sslContext).setSkipTlsHostnameVerification(true);
       }
       builder.setClientMode(ClientMode.Static); // Legacy memcached mode
 
-      MemcachedClient client = new MemcachedClient(builder.build(), Collections.singletonList(new InetSocketAddress(host, server.getPort())));
-      return client;
+      return new MemcachedClient(builder.build(), Collections.singletonList(new InetSocketAddress(host, server.getPort())));
    }
 
    public static MemcachedServerConfigurationBuilder serverBuilder() {

@@ -79,9 +79,8 @@ public class RestRawClientJDK implements RestRawClient, AutoCloseable {
                   .trustStoreFileName(ssl.trustStoreFileName())
                   .trustStorePassword(ssl.trustStorePassword())
                   .trustStoreType(ssl.trustStoreType())
-                  .classLoader(Thread.currentThread().getContextClassLoader())
-                  .useNativeIfAvailable(false);
-            sslContext = sslContextFactory.getContext();
+                  .classLoader(Thread.currentThread().getContextClassLoader());
+            sslContext = sslContextFactory.build().sslContext();
          }
          builder.sslContext(sslContext);
       }
