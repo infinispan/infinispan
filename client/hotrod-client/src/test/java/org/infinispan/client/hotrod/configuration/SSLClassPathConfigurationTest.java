@@ -23,7 +23,7 @@ public class SSLClassPathConfigurationTest {
                   .keyStorePassword(TestCertificates.KEY_PASSWORD)
                   .trustStoreFileName(truststoreFileName)
                   .trustStoreType(TestCertificates.KEYSTORE_TYPE)
-                  .trustStorePassword(TestCertificates.KEY_PASSWORD).getContext();
+                  .trustStorePassword(TestCertificates.KEY_PASSWORD).build().sslContext();
 
       assertNotNull(context);
    }

@@ -1,29 +1,22 @@
 package org.infinispan.server.router.routes.hotrod;
 
-import java.util.Optional;
-
 import javax.net.ssl.SSLContext;
 
 import org.infinispan.commons.util.SslContextFactory;
-import org.infinispan.server.router.router.impl.hotrod.handlers.util.SslUtils;
 import org.infinispan.server.router.routes.SniRouteSource;
-
-import io.netty.handler.ssl.SslContext;
 
 public class SniNettyRouteSource implements SniRouteSource {
 
-   private final SslContext nettyContext;
    private final SSLContext jdkContext;
    private final String sniHostName;
 
    public SniNettyRouteSource(String sniHostName, SSLContext sslContext) {
       this.sniHostName = sniHostName;
       this.jdkContext = sslContext;
-      nettyContext = SslUtils.INSTANCE.toNettySslContext(Optional.ofNullable(jdkContext));
    }
 
    public SniNettyRouteSource(String sniHostName, String keyStoreFileName, char[] keyStorePassword) {
-      this(sniHostName, new SslContextFactory().keyStoreFileName(keyStoreFileName).keyStorePassword(keyStorePassword).getContext());
+      this(sniHostName, new SslContextFactory().keyStoreFileName(keyStoreFileName).keyStorePassword(keyStorePassword).build().sslContext());
    }
 
    @Override
@@ -43,9 +36,7 @@ public class SniNettyRouteSource implements SniRouteSource {
 
       SniNettyRouteSource that = (SniNettyRouteSource) o;
 
-      if (!getSniHostName().equals(that.getSniHostName())) return false;
-
-      return true;
+      return getSniHostName().equals(that.getSniHostName());
    }
 
    @Override

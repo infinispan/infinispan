@@ -186,7 +186,7 @@ public class SinglePortTest {
         RouterConfigurationBuilder routerConfigurationBuilder = new RouterConfigurationBuilder();
         routerConfigurationBuilder
               .singlePort()
-              .sslContext(sslContextFactory.keyStoreFileName(TestCertificates.certificate("server")).keyStorePassword(TestCertificates.KEY_PASSWORD).getContext())
+              .sslContext(sslContextFactory.keyStoreFileName(TestCertificates.certificate("server")).keyStorePassword(TestCertificates.KEY_PASSWORD).build().sslContext())
               .port(0)
               .ip(InetAddress.getLoopbackAddress())
               .routing()
@@ -228,7 +228,7 @@ public class SinglePortTest {
         RouterConfigurationBuilder routerConfigurationBuilder = new RouterConfigurationBuilder();
         routerConfigurationBuilder
               .singlePort()
-              .sslContext(sslContextFactory.keyStoreFileName(TestCertificates.certificate("server")).keyStorePassword(TestCertificates.KEY_PASSWORD).getContext())
+              .sslContext(sslContextFactory.keyStoreFileName(TestCertificates.certificate("server")).keyStorePassword(TestCertificates.KEY_PASSWORD).build().sslContext())
               .port(0)
               .ip(InetAddress.getLoopbackAddress())
               .routing()

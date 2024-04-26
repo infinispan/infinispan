@@ -11,8 +11,8 @@ import org.infinispan.server.router.routes.SniRouteSource;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.handler.ssl.SslContext;
-import io.netty.util.DomainNameMapping;
-import io.netty.util.DomainNameMappingBuilder;
+import io.netty.util.DomainWildcardMappingBuilder;
+import io.netty.util.Mapping;
 
 /**
  * Initializer for SNI Handlers.
@@ -34,13 +34,13 @@ public class SniHandlerInitializer extends ChannelInitializer<Channel> {
     @Override
     protected void initChannel(Channel channel)  {
         SslContext defaultContext = SslUtils.INSTANCE.toNettySslContext(Optional.empty());
-        DomainNameMappingBuilder<SslContext> domainMappingBuilder = new DomainNameMappingBuilder<>(defaultContext);
+        DomainWildcardMappingBuilder<SslContext> domainMappingBuilder = new DomainWildcardMappingBuilder<>(defaultContext);
 
         routingTable.streamRoutes(SniRouteSource.class, RouteDestination.class)
                 .map(r -> r.getRouteSource())
                 .forEach(r -> domainMappingBuilder.add(r.getSniHostName(), SslUtils.INSTANCE.toNettySslContext(Optional.of(r.getSslContext()))));
 
-        DomainNameMapping<SslContext> domainNameMapping = domainMappingBuilder.build();
+        Mapping<String, SslContext> domainNameMapping = domainMappingBuilder.build();
 
         RouterLogger.SERVER.debugf("Using SNI Handler with domain mapping %s", domainNameMapping);
 

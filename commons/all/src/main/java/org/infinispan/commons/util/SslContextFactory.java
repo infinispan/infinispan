@@ -6,6 +6,7 @@ import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.Provider;
@@ -20,6 +21,11 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509ExtendedKeyManager;
+import javax.net.ssl.X509ExtendedTrustManager;
+
+import org.infinispan.commons.io.FileWatcher;
+
 
 /**
  * SslContextFactory.
@@ -43,6 +49,7 @@ public class SslContextFactory {
    private String sslProtocol = DEFAULT_SSL_PROTOCOL;
    private ClassLoader classLoader;
    private String provider;
+   private FileWatcher watcher;
 
    public SslContextFactory() {
    }
@@ -100,6 +107,13 @@ public class SslContextFactory {
       return this;
    }
 
+   public SslContextFactory watcher(FileWatcher watcher) {
+      if (watcher != null) {
+         this.watcher = watcher;
+      }
+      return this;
+   }
+
    @Deprecated(forRemoval = true, since = "15.0")
    public SslContextFactory useNativeIfAvailable(boolean useNativeIfAvailable) {
       return this;
@@ -110,17 +124,23 @@ public class SslContextFactory {
       return this;
    }
 
-   public SSLContext getContext() {
+   public Context build() {
       try {
-         KeyManager[] keyManagers = null;
+         KeyManager[] kms = null;
          if (keyStoreFileName != null) {
-            KeyManagerFactory kmf = getKeyManagerFactory();
-            keyManagers = kmf.getKeyManagers();
+            if (watcher != null) {
+               kms = new KeyManager[]{new ReloadingX509KeyManager(watcher, Path.of(keyStoreFileName), p -> getKeyManager())};
+            } else {
+               kms = new KeyManager[]{getKeyManager()};
+            }
          }
-         TrustManager[] trustManagers = null;
+         TrustManager[] tms = null;
          if (trustStoreFileName != null) {
-            TrustManagerFactory tmf = getTrustManagerFactory();
-            trustManagers = tmf.getTrustManagers();
+            if (watcher != null) {
+               tms = new TrustManager[]{new ReloadingX509TrustManager(watcher, Path.of(trustStoreFileName), p -> getTrustManager())};
+            } else {
+               tms = new TrustManager[]{getTrustManager()};
+            }
          }
          SSLContext sslContext;
          Provider provider = null;
@@ -129,47 +149,65 @@ public class SslContextFactory {
             provider = findProvider(this.provider, SSLContext.class.getSimpleName(), sslProtocol);
          }
          sslContext = provider != null ? SSLContext.getInstance(sslProtocol, provider) : SSLContext.getInstance(sslProtocol);
-         sslContext.init(keyManagers, trustManagers, null);
-         return sslContext;
+         sslContext.init(kms, tms, null);
+         return new Context(sslContext, kms != null ? kms[0] : null, tms != null ? tms[0] : null);
       } catch (Exception e) {
          throw SECURITY.sslInitializationException(e);
       }
    }
 
-   public KeyManagerFactory getKeyManagerFactory() throws IOException, GeneralSecurityException {
-      String type = keyStoreType != null ? keyStoreType : DEFAULT_KEYSTORE_TYPE;
-      Provider provider = findProvider(this.provider, KeyManagerFactory.class.getSimpleName(), type);
-      KeyStore ks = provider != null ? KeyStore.getInstance(type, provider) : KeyStore.getInstance(type);
-      loadKeyStore(ks, keyStoreFileName, keyStorePassword, classLoader);
-      if (keyAlias != null) {
-         if (ks.containsAlias(keyAlias) && ks.isKeyEntry(keyAlias)) {
-            KeyStore.PasswordProtection passParam = new KeyStore.PasswordProtection(keyStorePassword);
-            KeyStore.Entry entry = ks.getEntry(keyAlias, passParam);
-            // Recreate the keystore with just one key
-            ks = provider != null ? KeyStore.getInstance(type, provider) : KeyStore.getInstance(type);
-            ks.load(null, null);
-            ks.setEntry(keyAlias, entry, passParam);
-         } else {
-            throw SECURITY.noSuchAliasInKeyStore(keyAlias, keyStoreFileName);
+   private X509ExtendedKeyManager getKeyManager() {
+      try {
+         String type = keyStoreType != null ? keyStoreType : DEFAULT_KEYSTORE_TYPE;
+         Provider provider = findProvider(this.provider, KeyManagerFactory.class.getSimpleName(), type);
+         KeyStore ks = provider != null ? KeyStore.getInstance(type, provider) : KeyStore.getInstance(type);
+         loadKeyStore(ks, keyStoreFileName, keyStorePassword, classLoader);
+         if (keyAlias != null) {
+            if (ks.containsAlias(keyAlias) && ks.isKeyEntry(keyAlias)) {
+               KeyStore.PasswordProtection passParam = new KeyStore.PasswordProtection(keyStorePassword);
+               KeyStore.Entry entry = ks.getEntry(keyAlias, passParam);
+               // Recreate the keystore with just one key
+               ks = provider != null ? KeyStore.getInstance(type, provider) : KeyStore.getInstance(type);
+               ks.load(null, null);
+               ks.setEntry(keyAlias, entry, passParam);
+            } else {
+               throw SECURITY.noSuchAliasInKeyStore(keyAlias, keyStoreFileName);
+            }
          }
+         String algorithm = KeyManagerFactory.getDefaultAlgorithm();
+         provider = findProvider(this.provider, KeyManagerFactory.class.getSimpleName(), algorithm);
+         KeyManagerFactory kmf = provider != null ? KeyManagerFactory.getInstance(algorithm, provider) : KeyManagerFactory.getInstance(algorithm);
+         kmf.init(ks, keyStorePassword);
+         for (KeyManager km : kmf.getKeyManagers()) {
+            if (km instanceof X509ExtendedKeyManager xkm) {
+               return xkm;
+            }
+         }
+         throw new GeneralSecurityException("Could not obtain an X509ExtendedKeyManager");
+      } catch (GeneralSecurityException | IOException e) {
+         throw SECURITY.sslInitializationException(e);
       }
-      String algorithm = KeyManagerFactory.getDefaultAlgorithm();
-      provider = findProvider(this.provider, KeyManagerFactory.class.getSimpleName(), algorithm);
-      KeyManagerFactory kmf = provider != null ? KeyManagerFactory.getInstance(algorithm, provider) : KeyManagerFactory.getInstance(algorithm);
-      kmf.init(ks, keyStorePassword);
-      return kmf;
    }
 
-   public TrustManagerFactory getTrustManagerFactory() throws IOException, GeneralSecurityException {
-      String type = trustStoreType != null ? trustStoreType : DEFAULT_KEYSTORE_TYPE;
-      Provider provider = findProvider(this.provider, KeyStore.class.getSimpleName(), trustStoreType);
-      KeyStore ks = provider != null ? KeyStore.getInstance(type, provider) : KeyStore.getInstance(type);
-      loadKeyStore(ks, trustStoreFileName, trustStorePassword, classLoader);
-      String algorithm = KeyManagerFactory.getDefaultAlgorithm();
-      provider = findProvider(this.provider, TrustManagerFactory.class.getSimpleName(), algorithm);
-      TrustManagerFactory tmf = provider != null ? TrustManagerFactory.getInstance(algorithm, provider) : TrustManagerFactory.getInstance(algorithm);
-      tmf.init(ks);
-      return tmf;
+   private X509ExtendedTrustManager getTrustManager() {
+      try {
+         String type = trustStoreType != null ? trustStoreType : DEFAULT_KEYSTORE_TYPE;
+         Provider provider = findProvider(this.provider, KeyStore.class.getSimpleName(), trustStoreType);
+         KeyStore ks = provider != null ? KeyStore.getInstance(type, provider) : KeyStore.getInstance(type);
+         loadKeyStore(ks, trustStoreFileName, trustStorePassword, classLoader);
+         String algorithm = KeyManagerFactory.getDefaultAlgorithm();
+         provider = findProvider(this.provider, TrustManagerFactory.class.getSimpleName(), algorithm);
+         TrustManagerFactory tmf = provider != null ? TrustManagerFactory.getInstance(algorithm, provider) : TrustManagerFactory.getInstance(algorithm);
+         tmf.init(ks);
+         for (TrustManager tm : tmf.getTrustManagers()) {
+            if (tm instanceof X509ExtendedTrustManager xkm) {
+               return xkm;
+            }
+         }
+         throw new GeneralSecurityException("Could not obtain an X509TrustManager");
+      } catch (GeneralSecurityException | IOException e) {
+         throw SECURITY.sslInitializationException(e);
+      }
    }
 
    @Deprecated(forRemoval = true, since = "15.0")
@@ -228,5 +266,8 @@ public class SslContextFactory {
                return providers.values().toArray(new Provider[0]);
             }
       );
+   }
+
+   public record Context(SSLContext sslContext, KeyManager keyManager, TrustManager trustManager) {
    }
 }

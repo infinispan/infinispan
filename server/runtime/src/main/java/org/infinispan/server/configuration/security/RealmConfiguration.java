@@ -133,7 +133,7 @@ public class RealmConfiguration extends ConfigurationElement<RealmConfiguration>
          buildSSLContexts(sslContextBuilder);
       }
       realms = new HashMap<>(realmProviders.size());
-      for(RealmProvider provider : realmProviders) {
+      for (RealmProvider provider : realmProviders) {
          SecurityRealm realm = provider.build(security, this, domainBuilder, properties);
          provider.applyFeatures(features);
          realms.put(provider.name(), realm);

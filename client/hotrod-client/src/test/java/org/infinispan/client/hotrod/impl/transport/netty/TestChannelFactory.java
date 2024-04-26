@@ -15,7 +15,7 @@ public class TestChannelFactory extends ChannelFactory {
 
    @Override
    public ChannelInitializer createChannelInitializer(SocketAddress address, Bootstrap bootstrap) {
-      return new ChannelInitializer(bootstrap, address, getOperationsFactory(), getConfiguration(), this, null) {
+      return new ChannelInitializer(bootstrap, address, getOperationsFactory(), getConfiguration(), this, null, null) {
          @Override
          protected void initChannel(Channel channel) throws Exception {
             super.initChannel(channel);

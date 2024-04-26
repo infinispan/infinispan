@@ -3,14 +3,13 @@
           xmlns="urn:infinispan:server:15.0">
    <security-realms>
       <security-realm name="default">
+         <server-identities>
+            <ssl>
+               <keystore path="reload.pfx" password="secret" alias="reload"/>
+            </ssl>
+         </server-identities>
          <properties-realm>
             <user-properties plain-text="true"/>
-         </properties-realm>
-      </security-realm>
-      <security-realm name="alternate">
-         <properties-realm>
-            <user-properties path="alternate-users.properties" plain-text="true"/>
-            <group-properties path="alternate-groups.properties"/>
          </properties-realm>
       </security-realm>
    </security-realms>

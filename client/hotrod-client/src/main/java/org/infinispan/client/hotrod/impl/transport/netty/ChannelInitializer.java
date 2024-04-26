@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod.impl.transport.netty;
 
-import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.security.Principal;
@@ -31,20 +30,14 @@ import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.topology.ClusterInfo;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.SaslUtils;
-import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.commons.util.Util;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
-import io.netty.handler.ssl.ClientAuth;
-import io.netty.handler.ssl.IdentityCipherSuiteFilter;
-import io.netty.handler.ssl.JdkSslContext;
 import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 
@@ -59,6 +52,7 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
    private final ClusterInfo cluster;
    private ChannelPool channelPool;
    private volatile boolean isFirstPing = true;
+   private final SslContext sslContext;
 
    private static final Provider[] SECURITY_PROVIDERS;
 
@@ -80,13 +74,14 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
       SECURITY_PROVIDERS = providers.toArray(new Provider[0]);
    }
 
-   ChannelInitializer(Bootstrap bootstrap, SocketAddress unresolvedAddress, OperationsFactory operationsFactory, Configuration configuration, ChannelFactory channelFactory, ClusterInfo cluster) {
+   ChannelInitializer(Bootstrap bootstrap, SocketAddress unresolvedAddress, OperationsFactory operationsFactory, Configuration configuration, ChannelFactory channelFactory, ClusterInfo cluster, SslContext sslContext) {
       this.bootstrap = bootstrap;
       this.unresolvedAddress = unresolvedAddress;
       this.operationsFactory = operationsFactory;
       this.configuration = configuration;
       this.channelFactory = channelFactory;
       this.cluster = cluster;
+      this.sslContext = sslContext;
    }
 
    CompletableFuture<Channel> createChannel() {
@@ -132,55 +127,6 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
 
    private void initSsl(Channel channel) {
       SslConfiguration ssl = configuration.security().ssl();
-      SslContext sslContext;
-      if (ssl.sslContext() == null) {
-         SslContextBuilder builder = SslContextBuilder.forClient();
-         try {
-            if (ssl.keyStoreFileName() != null) {
-               builder.keyManager(new SslContextFactory()
-                     .keyStoreFileName(ssl.keyStoreFileName())
-                     .keyStoreType(ssl.keyStoreType())
-                     .keyStorePassword(ssl.keyStorePassword())
-                     .keyAlias(ssl.keyAlias())
-                     .classLoader(configuration.classLoader())
-                     .provider(ssl.provider())
-                     .getKeyManagerFactory());
-            }
-            if (ssl.trustStoreFileName() != null) {
-               if ("pem".equalsIgnoreCase(ssl.trustStoreType())) {
-                  builder.trustManager(new File(ssl.trustStoreFileName()));
-               } else {
-                  builder.trustManager(new SslContextFactory()
-                        .trustStoreFileName(ssl.trustStoreFileName())
-                        .trustStoreType(ssl.trustStoreType())
-                        .trustStorePassword(ssl.trustStorePassword())
-                        .classLoader(configuration.classLoader())
-                        .provider(ssl.provider())
-                        .getTrustManagerFactory());
-               }
-            }
-            if (ssl.trustStorePath() != null) {
-               builder.trustManager(new File(ssl.trustStorePath()));
-            }
-            if (ssl.protocol() != null) {
-               builder.protocols(ssl.protocol());
-            }
-            if (ssl.ciphers() != null) {
-               builder.ciphers(ssl.ciphers());
-            }
-            if (ssl.provider() != null) {
-               Provider provider = SslContextFactory.findProvider(ssl.provider(), SslContext.class.getSimpleName(), "TLS");
-               builder.sslContextProvider(provider);
-            }
-            sslContext = builder.build();
-         } catch (Exception e) {
-            throw new CacheConfigurationException(e);
-         }
-      } else {
-         sslContext = new JdkSslContext(ssl.sslContext(), true, null, IdentityCipherSuiteFilter.INSTANCE,
-               null, ClientAuth.NONE, null, false);
-      }
-
       SslHandler sslHandler = sslContext.newHandler(channel.alloc(), ssl.sniHostName(), -1);
       String sniHostName;
       if (cluster != null && cluster.getSniHostName() != null) {
