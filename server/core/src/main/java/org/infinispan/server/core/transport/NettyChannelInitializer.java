@@ -16,7 +16,9 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.JdkSslContext;
 import io.netty.handler.ssl.SniHandler;
+import io.netty.handler.ssl.SslContext;
 import io.netty.util.DomainWildcardMappingBuilder;
+import io.netty.util.Mapping;
 
 /**
  * Pipeline factory for Netty-based channels. For each pipeline created, a new decoder is created which means that each
@@ -33,13 +35,41 @@ public class NettyChannelInitializer<A extends ProtocolServerConfiguration> impl
    protected final NettyTransport transport;
    protected final ChannelOutboundHandler encoder;
    protected final Supplier<ChannelInboundHandler> decoderSupplier;
-
+   protected final Mapping<? super String, ? extends SslContext> mapping;
 
    public NettyChannelInitializer(ProtocolServer<A> server, NettyTransport transport, ChannelOutboundHandler encoder, Supplier<ChannelInboundHandler> decoderSupplier) {
       this.server = server;
       this.transport = transport;
       this.encoder = encoder;
       this.decoderSupplier = decoderSupplier;
+      this.mapping = initMapping(null);
+   }
+
+   protected NettyChannelInitializer(ProtocolServer<A> server, NettyTransport transport, ChannelOutboundHandler encoder, Supplier<ChannelInboundHandler> decoderSupplier, ApplicationProtocolConfig alpnConfiguration) {
+      this.server = server;
+      this.transport = transport;
+      this.encoder = encoder;
+      this.decoderSupplier = decoderSupplier;
+      this.mapping = initMapping(alpnConfiguration);
+   }
+
+   protected Mapping<? super String, ? extends SslContext> initMapping(ApplicationProtocolConfig alpnConfiguration) {
+      SslConfiguration ssl = server.getConfiguration().ssl();
+      if (ssl.enabled()) {
+         //add default domain mapping
+         JdkSslContext defaultNettySslContext = SslUtils.createNettySslContext(ssl, ssl.sniDomainsConfiguration().get(SslConfiguration.DEFAULT_SNI_DOMAIN), alpnConfiguration);
+         DomainWildcardMappingBuilder<JdkSslContext> mappingBuilder = new DomainWildcardMappingBuilder<>(defaultNettySslContext);
+
+         //and the rest
+         ssl.sniDomainsConfiguration().forEach((k, v) -> {
+            if (!SslConfiguration.DEFAULT_SNI_DOMAIN.equals(k)) {
+               mappingBuilder.add(k, SslUtils.createNettySslContext(ssl, v, alpnConfiguration));
+            }
+         });
+         return mappingBuilder.build();
+      } else {
+         return null;
+      }
    }
 
    @Override
@@ -51,21 +81,8 @@ public class NettyChannelInitializer<A extends ProtocolServerConfiguration> impl
       pipeline.addLast("iprules", new AccessControlFilter<>(server.getConfiguration()));
       if (transport != null) {
          pipeline.addLast("stats", new StatsChannelHandler(transport));
-         SslConfiguration ssl = server.getConfiguration().ssl();
-         if (ssl.enabled()) {
-            ApplicationProtocolConfig alpnConfig = getAlpnConfiguration();
-
-            //add default domain mapping
-            JdkSslContext defaultNettySslContext = SslUtils.createNettySslContext(ssl, ssl.sniDomainsConfiguration().get(SslConfiguration.DEFAULT_SNI_DOMAIN), alpnConfig);
-            DomainWildcardMappingBuilder<JdkSslContext> domainMappingBuilder = new DomainWildcardMappingBuilder<>(defaultNettySslContext);
-
-            //and the rest
-            ssl.sniDomainsConfiguration().forEach((k, v) -> {
-               if (!SslConfiguration.DEFAULT_SNI_DOMAIN.equals(k)) {
-                  domainMappingBuilder.add(k, SslUtils.createNettySslContext(ssl, v, alpnConfig));
-               }
-            });
-            pipeline.addLast("sni", new SniHandler(domainMappingBuilder.build()));
+         if (mapping != null) {
+            pipeline.addLast("sni", new SniHandler(mapping));
          }
       }
       ChannelInboundHandler decoder = decoderSupplier != null ? decoderSupplier.get() : null;
@@ -75,9 +92,5 @@ public class NettyChannelInitializer<A extends ProtocolServerConfiguration> impl
       if (encoder != null) {
          pipeline.addLast("encoder", encoder);
       }
-   }
-
-   protected ApplicationProtocolConfig getAlpnConfiguration() {
-      return null;
    }
 }

@@ -1,7 +1,8 @@
 [id='hotrod_client_certs-{context}']
 = Requiring Hot Rod Clients to Present SSL Certificates
 You can configure {brandname} servers to require SSL certificates from Hot Rod
-clients when establishing connections.
+clients when establishing connections. This is also known as mutual authentication,
+or `mTLS`.
 
 .Procedure
 

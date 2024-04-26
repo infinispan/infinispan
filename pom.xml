@@ -1830,6 +1830,11 @@
          </dependency>
          <dependency>
             <groupId>org.wildfly.security</groupId>
+            <artifactId>wildfly-elytron-x500-cert</artifactId>
+            <version>${version.org.wildfly.elytron}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.wildfly.security</groupId>
             <artifactId>wildfly-elytron-x500-principal</artifactId>
             <version>${version.org.wildfly.elytron}</version>
          </dependency>

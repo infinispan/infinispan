@@ -37,6 +37,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.internal.Json;
+import org.infinispan.commons.io.FileWatcher;
 import org.infinispan.commons.io.StringBuilderWriter;
 import org.infinispan.commons.jdkspecific.ProcessInfo;
 import org.infinispan.commons.marshall.SerializeWith;
@@ -186,6 +187,7 @@ public class Server extends BaseServerManagement implements AutoCloseable {
    // "Internal" properties, used by tests
    public static final String INFINISPAN_LOG4J_SHUTDOWN = "infinispan.server.log4j.shutdown";
    public static final String INFINISPAN_ELYTRON_NONCE_SHUTDOWN = "infinispan.security.elytron.nonceshutdown";
+   public static final String INFINISPAN_FILE_WATCHER = "infinispan.file.watcher";
 
    // Defaults
    private static final String SERVER_DEFAULTS = "infinispan-defaults.xml";
@@ -229,6 +231,7 @@ public class Server extends BaseServerManagement implements AutoCloseable {
    private BackupManager backupManager;
    private Map<String, DataSource> dataSources;
    private final Path dataPath;
+   private final FileWatcher watcher;
 
    /**
     * Initializes a server with the default server root, the default configuration file and system properties
@@ -276,6 +279,8 @@ public class Server extends BaseServerManagement implements AutoCloseable {
 
       this.dataPath = Paths.get(properties.getProperty(INFINISPAN_SERVER_DATA_PATH));
       this.serverConf = new File(properties.getProperty(INFINISPAN_SERVER_CONFIG_PATH));
+      this.watcher = new FileWatcher();
+      properties.put(INFINISPAN_FILE_WATCHER, this.watcher);
 
       // Register our simple naming context factory builder
       registerInitialContextFactoryBuilder();
@@ -620,10 +625,7 @@ public class Server extends BaseServerManagement implements AutoCloseable {
       }
       // Set the status to TERMINATED
       this.status = ComponentStatus.TERMINATED;
-      // Don't wait for the scheduler to finish
-      if (scheduler != null) {
-         scheduler.shutdown();
-      }
+      close();
 
       shutdownLog4jLogManager();
    }
@@ -676,6 +678,9 @@ public class Server extends BaseServerManagement implements AutoCloseable {
 
    @Override
    public void close() {
+      if (watcher != null) {
+         watcher.stop();
+      }
       if (scheduler != null) {
          scheduler.shutdown();
       }

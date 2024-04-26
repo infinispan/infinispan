@@ -5,7 +5,7 @@
       <security-realm name="default">
          <server-identities>
             <ssl>
-               <keystore path="server.bcfks" password="secret" alias="server" provider="BC" type="BCFKS"/>
+               <keystore path="reload.pfx" password="secret" alias="reload"/>
             </ssl>
          </server-identities>
          <properties-realm>

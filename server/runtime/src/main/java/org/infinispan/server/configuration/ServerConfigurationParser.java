@@ -1020,18 +1020,16 @@ public class ServerConfigurationParser implements ConfigurationParser {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {
             case USER_PROPERTIES: {
-               String path = ParseUtils.requireAttributes(reader, Attribute.PATH)[0];
-               String relativeTo = Server.INFINISPAN_SERVER_CONFIG_PATH;
                for (int i = 0; i < reader.getAttributeCount(); i++) {
                   ParseUtils.requireNoNamespaceAttribute(reader, i);
                   String value = reader.getAttributeValue(i);
                   Attribute attribute = Attribute.forName(reader.getAttributeName(i));
                   switch (attribute) {
                      case PATH:
-                        // Already seen
+                        userPropertiesBuilder.path(value);
                         break;
                      case RELATIVE_TO:
-                        relativeTo = value;
+                        userPropertiesBuilder.relativeTo(value);
                         break;
                      case DIGEST_REALM_NAME:
                         userPropertiesBuilder.digestRealmName(value);
@@ -1043,28 +1041,25 @@ public class ServerConfigurationParser implements ConfigurationParser {
                         throw ParseUtils.unexpectedAttribute(reader, i);
                   }
                }
-               userPropertiesBuilder.path(path).relativeTo(relativeTo);
                ParseUtils.requireNoContent(reader);
                break;
             }
             case GROUP_PROPERTIES: {
-               String path = ParseUtils.requireAttributes(reader, Attribute.PATH)[0];
-               String relativeTo = Server.INFINISPAN_SERVER_CONFIG_PATH;
                for (int i = 0; i < reader.getAttributeCount(); i++) {
                   ParseUtils.requireNoNamespaceAttribute(reader, i);
+                  String value = reader.getAttributeValue(i);
                   Attribute attribute = Attribute.forName(reader.getAttributeName(i));
                   switch (attribute) {
                      case PATH:
-                        // Already seen
+                        groupsBuilder.path(value);
                         break;
                      case RELATIVE_TO:
-                        relativeTo = reader.getAttributeValue(i);
+                        groupsBuilder.relativeTo(value);
                         break;
                      default:
                         throw ParseUtils.unexpectedAttribute(reader, i);
                   }
                }
-               groupsBuilder.path(path).relativeTo(relativeTo);
                ParseUtils.requireNoContent(reader);
                break;
             }

@@ -48,7 +48,7 @@ public class HotRodSslFunctionalTest extends HotRodFunctionalTest {
             .trustStoreFileName(ssl.trustStoreFileName())
             .trustStorePassword(ssl.trustStorePassword())
             .trustStoreType(TestCertificates.KEYSTORE_TYPE)
-            .getContext();
+            .build().sslContext();
       SSLEngine sslEngine = SslContextFactory.getEngine(sslContext, true, false);
       return new HotRodClient(hotRodServer.getHost(), hotRodServer.getPort(), cacheName,
                               HotRodClient.DEFAULT_TIMEOUT_SECONDS, protocolVersion, sslEngine);

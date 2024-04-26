@@ -290,6 +290,9 @@ public interface Log extends BasicLogger {
    @Message(value = "Failed creating initial JNDI context", id = 968)
    void failedToCreateInitialCtx(@Cause Throwable e);
 
+   @Message(value = "Error while reloading certificate", id = 970)
+   RuntimeException certificateReloadError(@Cause Exception ex);
+
    //----- counters exceptions // don't use the same id range ------
 
    @Message(value = CounterOutOfBoundsException.FORMAT_MESSAGE, id = 29501)
@@ -304,7 +307,7 @@ public interface Log extends BasicLogger {
    @Message(value = "WEAK and BOUNDED encoded flag isn't supported!", id = 29522)
    CounterException invalidCounterTypeEncoded();
 
-   @Message(value = "Cannot instantiate class '%s'")
+   @Message(value = "Cannot instantiate class '%s'", id = 29523)
    CacheConfigurationException cannotInstantiateClass(String classname, @Suppressed Throwable t);
 
    //----- counters exceptions // don't use the same id range  ------

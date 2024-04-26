@@ -27,8 +27,7 @@ public class MemcachedChannelInitializer implements NettyInitializer {
             : memcachedServer.getDecoder(protocol);
 
       ch.pipeline().addLast("decoder", cih);
-      if (cih instanceof MemcachedBaseDecoder) {
-         MemcachedBaseDecoder decoder = (MemcachedBaseDecoder) cih;
+      if (cih instanceof MemcachedBaseDecoder decoder) {
          memcachedServer.installMemcachedInboundHandler(ch, decoder);
       }
    }

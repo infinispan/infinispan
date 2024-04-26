@@ -2,7 +2,6 @@ package org.infinispan.server.configuration.security;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
 
 import java.util.Locale;
 
@@ -31,8 +30,7 @@ public class KeyStoreConfigurationTest extends AbstractConfigurationParserTest {
    @Test
    public void shouldThrowOnInvalidAlias() {
       CacheConfigurationException e = assertThrows(CacheConfigurationException.class, this::loadAndParseConfiguration);
-      assertTrue("Cause is: " + e.getCause(), e.getCause() instanceof CacheConfigurationException);
-      assertEquals(exceptionMessage(), e.getCause().getMessage());
+      assertEquals(exceptionMessage(), e.getMessage());
    }
 
    private String exceptionMessage() {

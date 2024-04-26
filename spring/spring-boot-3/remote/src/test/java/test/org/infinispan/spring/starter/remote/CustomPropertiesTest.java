@@ -3,6 +3,9 @@ package test.org.infinispan.spring.starter.remote;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.groups.Tuple.tuple;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
@@ -21,6 +24,7 @@ import org.infinispan.client.hotrod.security.BasicCallbackHandler;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.spring.starter.remote.InfinispanRemoteAutoConfiguration;
 import org.infinispan.spring.starter.remote.InfinispanRemoteCacheManagerAutoConfiguration;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -39,6 +43,11 @@ public class CustomPropertiesTest {
 
    @Autowired
    private RemoteCacheManager remoteCacheManager;
+
+   @BeforeAll
+   public static void initCertificates() throws GeneralSecurityException, IOException {
+      CertUtil.initCertificates("keyStoreFile.pfx", "trustFileName.pfx", "aliasKey");
+   }
 
    @Test
    public void testDefaultClient() throws Exception {
@@ -82,14 +91,14 @@ public class CustomPropertiesTest {
 
       // Encryption properties
       assertThat(configuration.security().ssl().enabled()).isTrue();
-      assertThat(configuration.security().ssl().keyStoreFileName()).isEqualTo("keyStoreFile");
-      assertThat(configuration.security().ssl().keyStoreType()).isEqualTo("JKS");
-      assertThat(configuration.security().ssl().keyStorePassword()).hasSize(12);
-      assertThat(configuration.security().ssl().keyAlias()).isEqualTo("aliasKey");
-      assertThat(configuration.security().ssl().trustStoreFileName()).isEqualTo("trustFileName");
+      assertThat(configuration.security().ssl().keyStoreFileName()).isEqualTo("classpath:keyStoreFile.pfx");
+      assertThat(configuration.security().ssl().keyStoreType()).isEqualTo("PKCS12");
+      assertThat(configuration.security().ssl().keyStorePassword()).hasSize(6);
+      assertThat(configuration.security().ssl().keyAlias()).isEqualTo("aliaskey");
+      assertThat(configuration.security().ssl().trustStoreFileName()).isEqualTo("classpath:trustFileName.pfx");
       assertThat(configuration.security().ssl().trustStorePath()).isNull();
-      assertThat(configuration.security().ssl().trustStoreType()).isEqualTo("LOL");
-      assertThat(configuration.security().ssl().trustStorePassword().length).isEqualTo(13);
+      assertThat(configuration.security().ssl().trustStoreType()).isEqualTo("PKCS12");
+      assertThat(configuration.security().ssl().trustStorePassword().length).isEqualTo(6);
       assertThat(configuration.security().ssl().sniHostName()).isEqualTo("oihost");
       assertThat(configuration.security().ssl().protocol()).isEqualTo("TLSv1.3");
 

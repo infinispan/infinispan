@@ -152,7 +152,7 @@ public class HotRodSniFunctionalTest extends HotRodSingleNodeTest {
                .trustStoreFileName(truststoreFileName)
                .trustStorePassword(truststorePassword)
                .trustStoreType(TestCertificates.KEYSTORE_TYPE)
-               .getContext();
+               .build().sslContext();
          sslEngine = SslContextFactory.getEngine(sslContext, true, false);
          return this;
       }

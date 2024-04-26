@@ -40,7 +40,7 @@ public class SslUtils {
             .trustStoreType(sslEngineConfiguration.trustStoreType())
             .trustStorePassword(sslEngineConfiguration.trustStorePassword())
             .sslProtocol(sslEngineConfiguration.protocol())
-            .getContext();
+            .build().sslContext();
    }
 
    private static JdkSslContext createSslContext(SSLContext sslContext, ClientAuth clientAuth, ApplicationProtocolConfig alpnConfig) {
