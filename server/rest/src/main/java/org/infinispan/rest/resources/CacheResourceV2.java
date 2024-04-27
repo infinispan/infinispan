@@ -440,14 +440,15 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
       Cache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request);
       RollingUpgradeManager upgradeManager = ComponentRegistry.componentOf(cache, RollingUpgradeManager.class);
+      return CompletableFuture.supplyAsync(() -> {
+         if (upgradeManager.isConnected(MIGRATOR_NAME)) {
+            upgradeManager.disconnectSource(MIGRATOR_NAME);
+         } else {
+            builder.status(HttpResponseStatus.NOT_MODIFIED);
+         }
 
-      if (upgradeManager.isConnected(MIGRATOR_NAME)) {
-         upgradeManager.disconnectSource(MIGRATOR_NAME);
-      } else {
-         builder.status(HttpResponseStatus.NOT_MODIFIED);
-      }
-
-      return completedFuture(builder.build());
+         return builder.build();
+      }, invocationHelper.getExecutor());
    }
 
    private CompletionStage<RestResponse> addSourceConnection(RestRequest request) {
