@@ -1,6 +1,7 @@
 package org.infinispan.server.resp;
 
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 import org.infinispan.commons.CacheException;
@@ -11,7 +12,8 @@ public final class RespErrorUtil {
    }
 
    public static void unauthorized(ByteBufPool allocator) {
-      ByteBufferUtils.stringToByteBufAscii("-WRONGPASS invalid username-password pair or user is disabled.\r\n", allocator);
+      ByteBufferUtils.stringToByteBufAscii("-WRONGPASS invalid username-password pair or user is disabled.\r\n",
+            allocator);
    }
 
    public static void noSuchKey(ByteBufPool allocatorToUse) {
@@ -30,6 +32,7 @@ public final class RespErrorUtil {
             "-ERRWRONGTYPE Operation against a key holding the wrong kind of value\r\n", allocatorToUse);
 
    }
+
    public static void wrongArgumentNumber(RespCommand command, ByteBufPool allocatorToUse) {
       ByteBufferUtils.stringToByteBufAscii(
             "-ERR wrong number of arguments for '" + command.getName().toLowerCase() + "' command\r\n", allocatorToUse);
@@ -54,7 +57,8 @@ public final class RespErrorUtil {
    }
 
    public static void wrongArgumentCount(RespCommand command, ByteBufPool allocator) {
-      ByteBufferUtils.stringToByteBufAscii("ERR wrong number of arguments for '" + command.getName().toLowerCase() + "' command\r\n", allocator);
+      ByteBufferUtils.stringToByteBufAscii(
+            "ERR wrong number of arguments for '" + command.getName().toLowerCase() + "' command\r\n", allocator);
    }
 
    public static void valueNotInteger(ByteBufPool allocator) {
@@ -108,5 +112,14 @@ public final class RespErrorUtil {
       }
 
       return null;
+   }
+
+   public static boolean isWrongTypeError(Throwable t) {
+      while (t instanceof CompletionException || t instanceof CacheException || t instanceof ExecutionException) {
+         t = t.getCause();
+      }
+      return t instanceof ClassCastException ||
+            (t instanceof IllegalArgumentException &&
+                  t.getMessage().contains("No marshaller registered for object of Java type"));
    }
 }

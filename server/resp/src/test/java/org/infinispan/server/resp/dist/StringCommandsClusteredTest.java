@@ -6,6 +6,7 @@ import org.infinispan.server.resp.StringCommandsTest;
 import org.infinispan.server.resp.test.TestSetup;
 import org.testng.annotations.Test;
 
+
 @Test(groups = "functional", testName = "dist.server.resp.StringCommandsClusteredTest")
 public class StringCommandsClusteredTest extends StringCommandsTest {
 

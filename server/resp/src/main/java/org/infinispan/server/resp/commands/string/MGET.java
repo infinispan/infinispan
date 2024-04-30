@@ -1,18 +1,20 @@
 package org.infinispan.server.resp.commands.string;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.server.resp.ByteBufferUtils;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
+import org.infinispan.server.resp.RespErrorUtil;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.commands.Resp3Command;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -21,48 +23,64 @@ import io.netty.channel.ChannelHandlerContext;
  * @since 14.0
  */
 public class MGET extends RespCommand implements Resp3Command {
+
+   private static final Function<Object, byte[]> TYPE_CHECKER = res -> {
+      if (!(res instanceof byte[]))
+         return null;
+      return (byte[]) res;
+   };
+
    public MGET() {
       super(-2, 1, -1, 1);
    }
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
-                                                      ChannelHandlerContext ctx,
-                                                      List<byte[]> arguments) {
+         ChannelHandlerContext ctx,
+         List<byte[]> arguments) {
       int keysToRetrieve = arguments.size();
       if (keysToRetrieve == 0) {
          ByteBufferUtils.stringToByteBufAscii("*0\r\n", handler.allocator());
          return handler.myStage();
       }
-      List<byte[]> results = Collections.synchronizedList(Arrays.asList(
-            new byte[keysToRetrieve][]));
       AtomicInteger resultBytesSize = new AtomicInteger();
-      AggregateCompletionStage<Void> getStage = CompletionStages.aggregateCompletionStage();
-      for (int i = 0; i < keysToRetrieve; ++i) {
-         int innerCount = i;
-         byte[] keyBytes = arguments.get(i);
-         getStage.dependsOn(handler.cache().getAsync(keyBytes)
-               .whenComplete((returnValue, t) -> {
-                  if (returnValue != null) {
-                     results.set(innerCount, returnValue);
-                     int length = returnValue.length;
-                     if (length > 0) {
-                        // $ + digit length (log10 + 1) + /r/n + byte length
-                        resultBytesSize.addAndGet(1 + (int) Math.log10(length) + 1 + 2 + returnValue.length);
-                     } else {
-                        // $0 + /r/n
-                        resultBytesSize.addAndGet(2 + 2);
-                     }
+      CompletionStage<List<byte[]>> results = CompletionStages.performSequentially(arguments.iterator(), k -> getAsync(handler, k)
+            .exceptionally(MGET::handleWrongTypeError)
+            .handle((returnValue, t) -> {
+               if (returnValue != null) {
+                  int length = returnValue.length;
+                  if (length > 0) {
+                     // $ + digit length (log10 + 1) + /r/n + byte length
+                     resultBytesSize.addAndGet(1 + (int) Math.log10(length) + 1 + 2 + returnValue.length);
                   } else {
-                     // $-1
-                     resultBytesSize.addAndGet(3);
+                     // $0 + /r/n
+                     resultBytesSize.addAndGet(2 + 2);
                   }
-                  // /r/n
-                  resultBytesSize.addAndGet(2);
-               }));
+               } else {
+                  // $-1
+                  resultBytesSize.addAndGet(3);
+               }
+               // /r/n
+               resultBytesSize.addAndGet(2);
+               return returnValue;
+            }), Collectors.toList());
+      return handler.stageToReturn(results, ctx, (r, alloc) -> ByteBufferUtils.bytesToResult(resultBytesSize.get(), r, alloc));
+   }
+
+   private static CompletionStage<byte[]> getAsync(Resp3Handler handler, byte[] key) {
+      CompletableFuture<?> async;
+      try {
+         async = handler.cache().getAsync(key);
+      } catch (Exception ex) {
+         async = CompletableFuture.completedFuture(handleWrongTypeError(ex));
       }
-      return handler.stageToReturn(getStage.freeze(), ctx, (ignore, alloc) ->
-         ByteBufferUtils.bytesToResult(resultBytesSize.get(), results, alloc)
-      );
+      return async.thenApply(TYPE_CHECKER);
+   }
+
+   private static byte[] handleWrongTypeError(Throwable ex) {
+      if (RespErrorUtil.isWrongTypeError(ex)) {
+         return null;
+      }
+      throw CompletableFutures.asCompletionException(ex);
    }
 }

@@ -578,6 +578,22 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
 
       ((ControlledTimeService) timeService).advance(1001);
       assertThat(redis.get("key")).isNull();
+   }
 
+   @Test
+   public void testMget() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set("k1", "v1");
+      redis.sadd("k2", "s1", "s2", "s3");
+      redis.set("k3", "v3");
+      redis.set("k4", "v4");
+      var results = redis.mget("k1", "k2", "k3", "k4","k5");
+      List<KeyValue<String, String>> expected = new ArrayList<>(5);
+      expected.add(KeyValue.just("k1", "v1"));
+      expected.add(KeyValue.empty("k2"));
+      expected.add(KeyValue.just("k3", "v3"));
+      expected.add(KeyValue.just("k4", "v4"));
+      expected.add(KeyValue.empty("k5"));
+      assertThat(results).containsExactlyElementsOf(expected);
    }
 }
