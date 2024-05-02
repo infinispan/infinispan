@@ -8,7 +8,7 @@ import java.net.http.HttpResponse;
 import java.util.Base64;
 
 /**
- * RestExample class shows you how to access your cache via HttpClient API with Java 11 or later.
+ * RestExample class shows you how to access your cache via the JDK HttpClient API available since Java 11
  *
  * @author Gustavo Lira (glira@redhat.com)
  */

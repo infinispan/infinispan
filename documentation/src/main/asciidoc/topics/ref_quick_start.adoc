@@ -8,8 +8,8 @@ management tooling, and either the {brandname} server or core libraries.
 
 To run {brandname}, you'll need:
 
-* Java 17 JDK at a minimum.
-* Maven 3.2 or later. {brandname} also works with Gradle and Ivy.
+* Java {jdkminversion} JDK at a minimum.
+* Maven {mavenminversion} or later. {brandname} also works with Gradle and Ivy.
 
 == JDK
 Choose your Java runtime and follow their installation instructions. For example, you could choose:
@@ -19,7 +19,7 @@ Choose your Java runtime and follow their installation instructions. For example
 
 == Maven
 
-Run `mvn --version` to check your current Maven version. If you have Maven 3.2
+Run `mvn --version` to check your current Maven version. If you have Maven {mavenminversion}
 or later, you are ready to go.
 
 If you need to install Maven, visit link:https://maven.apache.org/install.html[https://maven.apache.org/install.html].

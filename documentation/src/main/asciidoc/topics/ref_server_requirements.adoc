@@ -3,12 +3,12 @@
 
 //Community
 ifdef::community[]
-{brandname} Server requires a Java Virtual Machine and works with Java 11 and later.
+{brandname} Server requires a Java Virtual Machine and works with Java {jdkminversion} and later.
 
 [NOTE]
 ====
-{brandname} Server does not support Java 8. However, you can use Java 8 with
-Hot Rod Java clients.
+{brandname} Server does not support versions prior to Java {jdkminversion}. However, you can use Hot Rod clients from older versions
+of {brandname} which still work fine with more recent servers.
 ====
 endif::community[]
 
