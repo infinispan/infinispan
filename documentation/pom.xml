@@ -20,10 +20,10 @@
         <infinispan.tutorials>https://infinispan.org/tutorials/simple/simple_tutorials.html</infinispan.tutorials>
         <javadoc.root>https://docs.jboss.org/infinispan/${infinispan.base.version}/apidocs</javadoc.root>
         <configdoc.root>https://docs.jboss.org/infinispan/${infinispan.base.version}/configdocs/</configdoc.root>
-        <wildfly.docroot>https://docs.jboss.org/author/display/WFLY11</wildfly.docroot>
-        <jdk.root>https://docs.oracle.com/en/java/javase/11</jdk.root>
+        <jdk.root>https://docs.oracle.com/en/java/javase/${maven.compiler.release}</jdk.root>
         <jdk.docroot>${jdk.root}/docs/api</jdk.docroot>
         <javaee.docroot>https://jakarta.ee/specifications/platform/9/apidocs</javaee.docroot>
+        <maven.min.version>3.8</maven.min.version>
         <skipTests>true</skipTests>
         <defaults.file>${project.build.directory}/default-attributes.adoc</defaults.file>
         <asciidoctorj.version>2.5.12</asciidoctorj.version>
@@ -174,9 +174,10 @@
                                 <defaults>${defaults.file}</defaults>
                                 <javadocroot>${javadoc.root}</javadocroot>
                                 <jdkroot>${jdk.root}</jdkroot>
+                                <jdkminversion>${maven.compiler.release}</jdkminversion>
+                                <mavenminversion>${maven.min.version}</mavenminversion>
                                 <protostreamdocroot>${protostream.api.docs}</protostreamdocroot>
                                 <configdocroot>${configdoc.root}</configdocroot>
-                                <wildflydocroot>${wildfly.docroot}</wildflydocroot>
                                 <jdkdocroot>${jdk.docroot}</jdkdocroot>
                                 <javaeedocroot>${javaee.docroot}</javaeedocroot>
                                 <download_url>${download.url}</download_url>
@@ -250,9 +251,10 @@
                                         <javadocroot>${javadoc.root}</javadocroot>
                                         <protostreamdocroot>${protostream.api.docs}</protostreamdocroot>
                                         <configdocroot>${configdoc.root}</configdocroot>
-                                        <wildflydocroot>${wildfly.docroot}</wildflydocroot>
                                         <jdkdocroot>${jdk.docroot}</jdkdocroot>
                                         <javaeedocroot>${javaee.docroot}</javaeedocroot>
+                                        <jdkminversion>${maven.compiler.release}</jdkminversion>
+                                        <mavenminversion>${maven.min.version}</mavenminversion>
                                         <download_url>${download.url}</download_url>
                                         <code_tutorials>${infinispan.tutorials}</code_tutorials>
                                         <imagesdir>../../topics/images</imagesdir>

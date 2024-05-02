@@ -3,14 +3,14 @@ In this chapter we quickly walk through the basics on contributing; future chapt
 
 == Pre-requisites
 |=============
-| Java 17   | {brandname} is built with and requires Java 17 for runtime (we build with OpenJDK)
-| Maven 3.5 | The {brandname} build uses Maven, and you should be using at least Maven 3.5
+| Java 21   | {brandname} is built with Java 21 and requires Java {jdkminversion} for runtime (we build with OpenJDK)
+| Maven {mavenminversion} | The {brandname} build uses Maven, and you should be using at least Maven {mavenminversion}
 | Git       | The {brandname} source code is stored in Git.
 |=============
 
 == Java compatibility
 
-{brandname} can run with Java 11 or greater.
+{brandname} can run with Java {jdkminversion} or greater.
 
 == Issue Management
 
@@ -142,7 +142,7 @@ TIP: If you are running a multi-core environment (e.g. quad-core or above) then 
 Download the code style JAR file from link:https://github.com/infinispan/infinispan/blob/main/ide-settings/intellij/IntelliJ_IDEA_Code_Style.jar?raw=true[here] and import this into IntelliJ IDEA.
 
 == Builds
-{brandname} uses link:http://maven.apache.org/[Maven] for builds. Make sure you have Maven 3 installed, and properly configured.
+{brandname} uses link:http://maven.apache.org/[Maven] for builds. Make sure you have Maven {mavenminversion} installed, and properly configured.
 
 === Continuous Integration
 {brandname} uses link:http://www.jetbrains.com/teamcity[TeamCity] for continuous integration.

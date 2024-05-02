@@ -8,7 +8,7 @@ these projects into your IDE and start building and running applications with
 
 .Prerequisites
 
-* Maven 3.2 or later.
+* Maven {mavenminversion} or later.
 //Community content
 ifdef::community[]
 * Configure Maven settings to include the link:https://search.maven.org/search?q=g:org.infinispan.archetypes[`org.infinispan.archetypes`] artifacts.

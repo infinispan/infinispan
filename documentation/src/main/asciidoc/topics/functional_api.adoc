@@ -85,7 +85,7 @@ to interact with the data in the cache, which include these operations:
 * link:{javadocroot}/org/infinispan/functional/EntryView.ReadEntryView.html#key()[`key()`]
 method returns the key for which this function is being executed.
 * link:{javadocroot}/org/infinispan/functional/EntryView.ReadEntryView.html#find()[`find()`]
-returns a Java 8 `Optional` wrapping the value if present,
+returns an `Optional` wrapping the value if present,
 otherwise it returns an empty optional. Unless the value is guaranteed to
 be associated with the key, it's recommended to use `find()` to verify
 whether there's a value associated with the key.
