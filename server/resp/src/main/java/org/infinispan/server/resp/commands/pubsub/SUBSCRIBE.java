@@ -53,7 +53,7 @@ public class SUBSCRIBE extends RespCommand implements Resp3Command, PubSubResp3C
          }
          WrappedByteArray wrappedByteArray = new WrappedByteArray(keyChannel);
          if (handler.specificChannelSubscribers().get(wrappedByteArray) == null) {
-            SubscriberHandler.PubSubListener pubSubListener = new SubscriberHandler.PubSubListener(ctx.channel());
+            SubscriberHandler.PubSubListener pubSubListener = new SubscriberHandler.PubSubListener(ctx.channel(), keyChannel);
             handler.specificChannelSubscribers().put(wrappedByteArray, pubSubListener);
             byte[] channel = KeyChannelUtils.keyToChannel(keyChannel);
             DataConversion dc = handler.cache().getValueDataConversion();
