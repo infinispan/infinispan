@@ -1,10 +1,9 @@
 package org.infinispan.server.resp.commands.pubsub;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -29,10 +28,10 @@ import io.netty.channel.ChannelHandlerContext;
  * </p>
  *
  * @since 15.0
- * @link <a href="https://redis.io/docs/latest/commands/pubsub-channels/">Redis documentation.</a>
+ * @see <a href="https://redis.io/docs/latest/commands/pubsub-channels/">Redis documentation.</a>
  * @author José Bolina
  */
-public class CHANNELS extends RespCommand implements Resp3Command {
+class CHANNELS extends RespCommand implements Resp3Command {
 
    private static final Predicate<byte[]> PASS_ALL = ignore -> true;
 
@@ -56,8 +55,9 @@ public class CHANNELS extends RespCommand implements Resp3Command {
             .filter(l -> l instanceof RespCacheListener)
             .map(l -> (RespCacheListener) l)
             .map(RespCacheListener::subscribedChannel)
+            .filter(Objects::nonNull)
             .filter(filter)
-            .collect(Collectors.filtering(deduplicate(), Collectors.toList()));
+            .collect(Collectors.filtering(PUBSUB.deduplicate(), Collectors.toList()));
 
       Consumers.COLLECTION_BULK_BICONSUMER.accept(channels, handler.allocator());
       return handler.myStage();
@@ -68,18 +68,6 @@ public class CHANNELS extends RespCommand implements Resp3Command {
       return channel -> {
          String converted = new String(channel, StandardCharsets.US_ASCII);
          return pattern.matcher(converted).matches();
-      };
-   }
-
-   private Predicate<byte[]> deduplicate() {
-      List<byte[]> channels = new ArrayList<>(4);
-      return channel -> {
-         for (byte[] bytes : channels) {
-            if (Arrays.equals(channel, bytes))
-               return false;
-         }
-         channels.add(channel);
-         return true;
       };
    }
 }

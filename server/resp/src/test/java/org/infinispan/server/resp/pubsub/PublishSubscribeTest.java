@@ -216,6 +216,27 @@ public class PublishSubscribeTest extends SingleNodeRespBaseTest {
       }
    }
 
+   @Test
+   public void testCountOnlyPatterns() throws Exception {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThat(redis.pubsubNumpat()).isZero();
+
+      RedisPubSubCommands<String, String> connection = createPubSubConnection();
+      BlockingQueue<String> handOffQueue = addPubSubListener(connection);
+
+      // Subscribe to some channels
+      connection.subscribe("channel2", "test");
+      assertSubscription(handOffQueue, "channel2", "test");
+
+      // We have two subscribers
+      assertThat(redis.pubsubChannels()).containsExactlyInAnyOrder("channel2", "test");
+
+      // But they are not patterns.
+      assertThat(redis.pubsubNumpat()).isZero();
+
+      connection.unsubscribe("channel2", "test");
+   }
+
    protected RedisPubSubCommands<String, String> createPubSubConnection() {
       return client.connectPubSub().sync();
    }

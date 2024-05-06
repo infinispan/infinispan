@@ -1,5 +1,10 @@
 package org.infinispan.server.resp.commands.pubsub;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Predicate;
+
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.commands.FamilyCommand;
 
@@ -16,6 +21,7 @@ public class PUBSUB extends FamilyCommand {
    static {
       PUBSUB_COMMANDS = new RespCommand[] {
             new CHANNELS(),
+            new NUMPAT(),
       };
    }
 
@@ -26,5 +32,17 @@ public class PUBSUB extends FamilyCommand {
    @Override
    public RespCommand[] getFamilyCommands() {
       return PUBSUB_COMMANDS;
+   }
+
+   static Predicate<byte[]> deduplicate() {
+      List<byte[]> channels = new ArrayList<>(4);
+      return channel -> {
+         for (byte[] bytes : channels) {
+            if (Arrays.equals(channel, bytes))
+               return false;
+         }
+         channels.add(channel);
+         return true;
+      };
    }
 }

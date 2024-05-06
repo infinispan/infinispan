@@ -42,14 +42,28 @@ public class SubscriberHandler extends CacheRespRequestHandler {
       this.resp3Handler = prevHandler;
    }
 
+   public static RespCacheListener newKeyListener(Channel channel, byte[] key) {
+      return new PubSubListener(channel, key);
+   }
+
+   public static RespCacheListener newPatternListener(Channel channel, byte[] pattern) {
+      return new PubSubListener(channel, null, pattern);
+   }
+
    @Listener(clustered = true)
    public static class PubSubListener implements RespCacheListener {
       private final Channel channel;
       private final byte[] key;
+      private final byte[] pattern;
 
-      public PubSubListener(Channel channel, byte[] key) {
+      private PubSubListener(Channel channel, byte[] key) {
+         this(channel, key, null);
+      }
+
+      private PubSubListener(Channel channel, byte[] key, byte[] pattern) {
          this.channel = channel;
          this.key = key;
+         this.pattern = pattern;
       }
 
       @CacheEntryCreated
@@ -87,11 +101,16 @@ public class SubscriberHandler extends CacheRespRequestHandler {
       public byte[] subscribedChannel() {
          return key;
       }
+
+      @Override
+      public byte[] pattern() {
+         return pattern;
+      }
    }
 
-   private final Map<WrappedByteArray, PubSubListener> specificChannelSubscribers = new HashMap<>();
+   private final Map<WrappedByteArray, RespCacheListener> specificChannelSubscribers = new HashMap<>();
 
-   public Map<WrappedByteArray, PubSubListener> specificChannelSubscribers() {
+   public Map<WrappedByteArray, RespCacheListener> specificChannelSubscribers() {
       return specificChannelSubscribers;
    }
 
@@ -127,9 +146,9 @@ public class SubscriberHandler extends CacheRespRequestHandler {
    }
 
    public void removeAllListeners() {
-      for (Iterator<Map.Entry<WrappedByteArray, PubSubListener>> iterator = specificChannelSubscribers.entrySet().iterator(); iterator.hasNext(); ) {
-         Map.Entry<WrappedByteArray, PubSubListener> entry = iterator.next();
-         PubSubListener listener = entry.getValue();
+      for (Iterator<Map.Entry<WrappedByteArray, RespCacheListener>> iterator = specificChannelSubscribers.entrySet().iterator(); iterator.hasNext(); ) {
+         Map.Entry<WrappedByteArray, RespCacheListener> entry = iterator.next();
+         RespCacheListener listener = entry.getValue();
          cache.removeListenerAsync(listener);
          iterator.remove();
       }
@@ -138,9 +157,9 @@ public class SubscriberHandler extends CacheRespRequestHandler {
    public CompletionStage<RespRequestHandler> unsubscribeAll(ChannelHandlerContext ctx) {
       var aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
       List<byte[]> channels = new ArrayList<>(specificChannelSubscribers.size());
-      for (Iterator<Map.Entry<WrappedByteArray, PubSubListener>> iterator = specificChannelSubscribers.entrySet().iterator(); iterator.hasNext(); ) {
-         Map.Entry<WrappedByteArray, PubSubListener> entry = iterator.next();
-         PubSubListener listener = entry.getValue();
+      for (Iterator<Map.Entry<WrappedByteArray, RespCacheListener>> iterator = specificChannelSubscribers.entrySet().iterator(); iterator.hasNext(); ) {
+         Map.Entry<WrappedByteArray, RespCacheListener> entry = iterator.next();
+         RespCacheListener listener = entry.getValue();
          CompletionStage<Void> stage = cache.removeListenerAsync(listener);
          byte[] keyChannel = entry.getKey().getBytes();
          channels.add(keyChannel);

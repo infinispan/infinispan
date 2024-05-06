@@ -7,6 +7,8 @@ import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
@@ -17,8 +19,6 @@ import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.filter.EventListenerConverter;
 import org.infinispan.server.resp.filter.EventListenerKeysFilter;
 import org.infinispan.server.resp.logging.Log;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.CharsetUtil;
@@ -53,7 +53,7 @@ public class SUBSCRIBE extends RespCommand implements Resp3Command, PubSubResp3C
          }
          WrappedByteArray wrappedByteArray = new WrappedByteArray(keyChannel);
          if (handler.specificChannelSubscribers().get(wrappedByteArray) == null) {
-            SubscriberHandler.PubSubListener pubSubListener = new SubscriberHandler.PubSubListener(ctx.channel(), keyChannel);
+            RespCacheListener pubSubListener = SubscriberHandler.newKeyListener(ctx.channel(), keyChannel);
             handler.specificChannelSubscribers().put(wrappedByteArray, pubSubListener);
             byte[] channel = KeyChannelUtils.keyToChannel(keyChannel);
             DataConversion dc = handler.cache().getValueDataConversion();
