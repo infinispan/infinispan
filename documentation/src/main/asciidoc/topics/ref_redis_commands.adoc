@@ -249,6 +249,12 @@ provides a read-uncommitted isolation.
 | link:https://redis.io/commands/psubscribe[PSUBSCRIBE]
 |
 
+| link:https://redis.io/docs/latest/commands/pubsub-channels[PUBSUB CHANNELS]
+|
+
+| link:https://redis.io/docs/latest/commands/pubsub-numpat[PUBSUB NUMPAT]
+|
+
 | link:https://redis.io/commands/pttl[PTTL]
 |
 

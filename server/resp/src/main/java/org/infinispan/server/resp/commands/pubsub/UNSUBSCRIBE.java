@@ -36,7 +36,7 @@ public class UNSUBSCRIBE extends RespCommand implements Resp3Command, PubSubResp
       } else {
          for (byte[] keyChannel : arguments) {
             WrappedByteArray wrappedByteArray = new WrappedByteArray(keyChannel);
-            SubscriberHandler.PubSubListener listener = handler.specificChannelSubscribers().remove(wrappedByteArray);
+            RespCacheListener listener = handler.specificChannelSubscribers().remove(wrappedByteArray);
             if (listener != null) {
                aggregateCompletionStage.dependsOn(handler.handleStageListenerError(handler.cache().removeListenerAsync(listener), keyChannel, false));
             }
