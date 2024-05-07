@@ -20,6 +20,7 @@ public class OpenTelemetryService implements InfinispanTelemetry, TextMapGetter<
 
    private final OpenTelemetry openTelemetry;
    private final Tracer tracer;
+   private volatile String nodeName = "n/a";
 
    public OpenTelemetryService(OpenTelemetry openTelemetry) {
       this.openTelemetry = openTelemetry;
@@ -56,9 +57,17 @@ public class OpenTelemetryService implements InfinispanTelemetry, TextMapGetter<
       return createOpenTelemetrySpan(builder, attributes);
    }
 
+   @Override
+   public void setNodeName(String nodeName) {
+      if (nodeName != null) {
+         this.nodeName = nodeName;
+      }
+   }
+
    private <T> InfinispanSpan<T> createOpenTelemetrySpan(SpanBuilder builder, InfinispanSpanAttributes attributes) {
       attributes.cacheName().ifPresent(cacheName -> builder.setAttribute("cache", cacheName));
       builder.setAttribute("category", attributes.category().toString());
+      builder.setAttribute("server.address", nodeName);
       return new OpenTelemetrySpan<>(builder.startSpan());
    }
 

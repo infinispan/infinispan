@@ -63,9 +63,10 @@ public class TracingXSiteTest extends AbstractHotRodSiteFailoverTest {
       assertThat(spanItems).hasSize(1);
       Attributes attributes = spanItems.get(0).getAttributes();
       assertThat(attributes.asMap())
-            .hasSize(2)
+            .hasSize(3)
             .containsEntry(AttributeKey.stringKey("cache"), cacheA.getName())
-            .containsEntry(AttributeKey.stringKey("category"), SpanCategory.X_SITE.toString());
+            .containsEntry(AttributeKey.stringKey("category"), SpanCategory.X_SITE.toString())
+            .containsKey(AttributeKey.stringKey("server.address"));
    }
 
    @AfterClass(alwaysRun = true)

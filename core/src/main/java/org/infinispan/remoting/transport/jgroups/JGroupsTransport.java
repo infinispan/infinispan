@@ -595,6 +595,7 @@ public class JGroupsTransport implements Transport, ChannelListener, AddressGene
       if (!(channel instanceof ForkChannel)) {
          CLUSTER.localAndPhysicalAddress(clusterName, getAddress(), getPhysicalAddresses());
       }
+      telemetry.setNodeName(String.valueOf(channel.getAddress()));
    }
 
    // This needs to stay as a separate method to allow for substitution for Substrate
