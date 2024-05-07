@@ -6,4 +6,5 @@ public interface InfinispanTelemetry {
 
    <T> InfinispanSpan<T> startTraceRequest(String operationName, InfinispanSpanAttributes attributes, InfinispanSpanContext context);
 
+   void setNodeName(String nodeName);
 }

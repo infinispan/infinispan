@@ -16,4 +16,9 @@ public class DisabledInfinispanTelemetry implements InfinispanTelemetry {
    public <T> InfinispanSpan<T> startTraceRequest(String operationName, InfinispanSpanAttributes attributes, InfinispanSpanContext context) {
       return DisabledInfinispanSpan.instance();
    }
+
+   @Override
+   public void setNodeName(String nodeName) {
+      //no-op
+   }
 }
