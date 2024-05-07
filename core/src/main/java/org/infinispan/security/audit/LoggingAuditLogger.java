@@ -35,7 +35,7 @@ public class LoggingAuditLogger implements AuditLogger {
          AuditResponse response) {
       auditLog.auditMessage(response, Security.getSubjectUserPrincipal(subject), permission, context, contextName);
 
-      if (telemetryService != null) {
+      if (telemetryService != null && context != null) {
          String cacheName = (AuditContext.CACHE.equals(context)) ? contextName : context.toString();
 
          InfinispanSpanAttributes attributes = new InfinispanSpanAttributes.Builder(SpanCategory.SECURITY)
