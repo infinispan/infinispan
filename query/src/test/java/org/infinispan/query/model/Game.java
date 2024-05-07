@@ -4,9 +4,9 @@ import org.infinispan.api.annotations.indexing.Indexed;
 import org.infinispan.api.annotations.indexing.Keyword;
 import org.infinispan.api.annotations.indexing.Text;
 import org.infinispan.protostream.GeneratedSchema;
-import org.infinispan.protostream.annotations.AutoProtoSchemaBuilder;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoSchema;
 
 @Indexed(index = "play")
 public class Game {
@@ -41,7 +41,7 @@ public class Game {
             '}';
    }
 
-   @AutoProtoSchemaBuilder(includeClasses = {Game.class, NonIndexedGame.class})
+   @ProtoSchema(includeClasses = {Game.class, NonIndexedGame.class, GameKey.class})
    public interface GameSchema extends GeneratedSchema {
       GameSchema INSTANCE = new GameSchemaImpl();
    }

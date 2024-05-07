@@ -11,18 +11,23 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.query.remote.impl.mapping.reference.GlobalReferenceHolder;
+import org.infinispan.query.remote.impl.mapping.type.ProtobufKeyValuePair;
 import org.infinispan.search.mapper.mapping.EntityConverter;
 
 public class ProtobufEntityConverter implements EntityConverter {
 
    private final static PojoRawTypeIdentifier<byte[]> BYTE_ARRAY_TYPE_IDENTIFIER = PojoRawTypeIdentifier.of(byte[].class);
+   private final static PojoRawTypeIdentifier<ProtobufKeyValuePair> KEY_VALUE_TYPE_IDENTIFIER = PojoRawTypeIdentifier.of(ProtobufKeyValuePair.class);
 
    private final SerializationContext serializationContext;
+   private final GlobalReferenceHolder globalReferenceHolder;
    private final Set<String> indexedMessageTypes;
 
-   public ProtobufEntityConverter(SerializationContext serializationContext, Set<GlobalReferenceHolder.RootMessageInfo> rootMessages) {
+   public ProtobufEntityConverter(SerializationContext serializationContext, GlobalReferenceHolder globalReferenceHolder) {
       this.serializationContext = serializationContext;
-      this.indexedMessageTypes = rootMessages.stream().map(rootMessage -> rootMessage.getFullName()).collect(Collectors.toSet());
+      this.globalReferenceHolder = globalReferenceHolder;
+      this.indexedMessageTypes = globalReferenceHolder.getRootMessages().stream()
+            .map(rootMessage -> rootMessage.getFullName()).collect(Collectors.toSet());
    }
 
    @Override
@@ -31,12 +36,17 @@ public class ProtobufEntityConverter implements EntityConverter {
    }
 
    @Override
-   public PojoRawTypeIdentifier<?> convertedTypeIdentifier() {
-      return BYTE_ARRAY_TYPE_IDENTIFIER;
+   public Set<PojoRawTypeIdentifier<?>> convertedTypeIdentifiers() {
+      return Set.of(BYTE_ARRAY_TYPE_IDENTIFIER, KEY_VALUE_TYPE_IDENTIFIER);
    }
 
    @Override
-   public ConvertedEntity convert(Object entity) {
+   public boolean typeIsIndexed(Class<?> type) {
+      return type.equals(targetType());
+   }
+
+   @Override
+   public ConvertedEntity convert(Object entity, Object providedId) {
       ProtobufValueWrapper valueWrapper = (ProtobufValueWrapper) entity;
       WrappedMessageTagHandler tagHandler = new WrappedMessageTagHandler(valueWrapper, serializationContext);
       try {
@@ -54,7 +64,20 @@ public class ProtobufEntityConverter implements EntityConverter {
       String entityName = messageDescriptor.getFullName();
       boolean skip = !indexedMessageTypes.contains(entityName);
       byte[] messageBytes = tagHandler.getMessageBytes();
-      return new ProtobufConvertedEntity(skip, entityName, messageBytes);
+      if (skip || !globalReferenceHolder.hasKeyMapping(entityName)) {
+         return new ProtobufConvertedEntity(skip, entityName, messageBytes);
+      }
+
+      ProtobufValueWrapper keyValueWrapper = new ProtobufValueWrapper((byte[]) providedId);
+      tagHandler = new WrappedMessageTagHandler(keyValueWrapper, serializationContext);
+      try {
+         Descriptor wrapperDescriptor = serializationContext.getMessageDescriptor(WrappedMessage.PROTOBUF_TYPE_NAME);
+         ProtobufParser.INSTANCE.parse(tagHandler, wrapperDescriptor, keyValueWrapper.getBinary());
+      } catch (IOException e) {
+         throw new CacheException(e);
+      }
+
+      return new ProtobufKeyValueConvertedEntity(skip, entityName, tagHandler.getMessageBytes(), messageBytes);
    }
 
    private static class ProtobufConvertedEntity implements ConvertedEntity {
@@ -72,16 +95,38 @@ public class ProtobufEntityConverter implements EntityConverter {
       public boolean skip() {
          return skip;
       }
-
       @Override
       public String entityName() {
          return entityName;
       }
-
       @Override
       public Object value() {
          return value;
       }
    }
 
+   private static class ProtobufKeyValueConvertedEntity implements ConvertedEntity {
+      private final boolean skip;
+      private final String entityName;
+      private final ProtobufKeyValuePair value;
+
+      public ProtobufKeyValueConvertedEntity(boolean skip, String entityName, byte[] key, byte[] value) {
+         this.skip = skip;
+         this.entityName = entityName;
+         this.value = new ProtobufKeyValuePair(key, value);
+      }
+
+      @Override
+      public boolean skip() {
+         return skip;
+      }
+      @Override
+      public String entityName() {
+         return entityName;
+      }
+      @Override
+      public Object value() {
+         return value;
+      }
+   }
 }

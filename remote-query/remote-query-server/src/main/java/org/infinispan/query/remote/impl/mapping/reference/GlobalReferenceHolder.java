@@ -60,6 +60,18 @@ public class GlobalReferenceHolder {
       return rootDescriptors.get(fullName);
    }
 
+   public MessageReferenceProvider messageReferenceProvider(String fullName) {
+      return messageReferenceProviders.get(fullName);
+   }
+
+   public boolean hasKeyMapping(String fullName) {
+      MessageReferenceProvider messageReferenceProvider = messageReferenceProvider(fullName);
+      if (messageReferenceProvider == null) {
+         return false;
+      }
+      return messageReferenceProvider.keyMessageName() != null;
+   }
+
    @Override
    public String toString() {
       return messageReferenceProviders.toString();

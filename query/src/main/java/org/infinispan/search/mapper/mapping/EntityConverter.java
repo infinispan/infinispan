@@ -1,5 +1,7 @@
 package org.infinispan.search.mapper.mapping;
 
+import java.util.Set;
+
 import org.hibernate.search.mapper.pojo.model.spi.PojoRawTypeIdentifier;
 
 /**
@@ -17,15 +19,22 @@ public interface EntityConverter {
    /**
     * @return The resulting converted type
     */
-   PojoRawTypeIdentifier<?> convertedTypeIdentifier();
+   Set<PojoRawTypeIdentifier<?>> convertedTypeIdentifiers();
+
+   /**
+    * @param type The type to check
+    * @return Whether the type is supposed to be converted
+    */
+   boolean typeIsIndexed(Class<?> type);
 
    /**
     * Perform the conversion.
     *
     * @param entity The entity to convert
+    * @param providedId The id that could be used in the conversion process
     * @return The converted entity
     */
-   ConvertedEntity convert(Object entity);
+   ConvertedEntity convert(Object entity, Object providedId);
 
    /**
     * The result of an entity conversion

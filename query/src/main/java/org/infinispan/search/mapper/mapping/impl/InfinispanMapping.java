@@ -142,15 +142,20 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
    }
 
    @Override
-   public Class<?> toConvertedEntityJavaClass(Object value) {
+   public boolean typeIsIndexed(Object value) {
+      return typeIsIndexed(value, allIndexedEntityJavaClasses());
+   }
+
+   @Override
+   public boolean typeIsIndexed(Object value, Collection<Class<?>> restricted) {
       if (value == null) {
-         return null;
+         return false;
       }
       Class<?> c = value.getClass();
-      if (entityConverter != null && c == entityConverter.targetType()) {
-         return entityConverter.convertedTypeIdentifier().javaClass();
+      if (entityConverter != null) {
+         return entityConverter.typeIsIndexed(c);
       } else {
-         return c;
+         return restricted.contains(c);
       }
    }
 
@@ -184,7 +189,9 @@ public class InfinispanMapping extends AbstractPojoMappingImplementor<SearchMapp
       for (Class<? extends E> clazz : classes) {
          if (clazz == converterTargetType) {
             // Include all protobuf types
-            typeIdentifiers.add((PojoRawTypeIdentifier<? extends E>) entityConverter.convertedTypeIdentifier());
+            for (PojoRawTypeIdentifier<?> pojoRawTypeIdentifier : entityConverter.convertedTypeIdentifiers()) {
+               typeIdentifiers.add((PojoRawTypeIdentifier<? extends E>) pojoRawTypeIdentifier);
+            }
          } else {
             typeIdentifiers.add(PojoRawTypeIdentifier.of(clazz));
          }

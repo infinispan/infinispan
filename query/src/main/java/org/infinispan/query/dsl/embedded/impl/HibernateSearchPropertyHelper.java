@@ -126,7 +126,7 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
       return entityType -> {
          IndexDescriptor indexDescriptor = getIndexDescriptor(entityType);
          if (indexDescriptor == null) {
-            return IndexedFieldProvider.NO_INDEXING;
+            return CLASS_NO_INDEXING;
          }
 
          return new SearchFieldIndexingMetadata(indexDescriptor);
@@ -161,7 +161,7 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
       return indexedEntity.indexManager().descriptor();
    }
 
-   private static class SearchFieldIndexingMetadata implements IndexedFieldProvider.FieldIndexingMetadata {
+   private static class SearchFieldIndexingMetadata implements IndexedFieldProvider.FieldIndexingMetadata<Class<?>> {
 
       private final IndexDescriptor indexDescriptor;
 
@@ -215,6 +215,11 @@ public class HibernateSearchPropertyHelper extends ReflectionPropertyHelper {
 
       @Override
       public Object getNullMarker(String[] propertyPath) {
+         return null;
+      }
+
+      @Override
+      public Class<?> keyType(String property) {
          return null;
       }
 

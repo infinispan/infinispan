@@ -69,8 +69,8 @@ public class IndexUpdater {
       return getSearchMapping().allIndexedEntityJavaClasses();
    }
 
-   public Class<?> toConvertedEntityJavaClass(Object value) {
-      return getSearchMapping().toConvertedEntityJavaClass(value);
+   public boolean typeIsIndexed(Object value, Collection<Class<?>> restricted) {
+      return getSearchMapping().typeIsIndexed(value, restricted);
    }
 
    public CompletableFuture<?> updateIndex(Object key, Object value, int segment) {

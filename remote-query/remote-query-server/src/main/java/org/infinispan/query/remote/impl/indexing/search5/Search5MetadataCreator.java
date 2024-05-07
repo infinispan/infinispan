@@ -12,6 +12,7 @@ import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.Type;
 import org.infinispan.query.remote.impl.indexing.FieldMapping;
+import org.infinispan.query.remote.impl.indexing.IndexingKeyMetadata;
 import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
 import org.infinispan.query.remote.impl.indexing.infinispan.InfinispanAnnotations;
 import org.infinispan.query.remote.impl.indexing.infinispan.InfinispanMetadataCreator;
@@ -65,7 +66,19 @@ final class Search5MetadataCreator implements AnnotationMetadataCreator<Indexing
          }
       }
 
-      IndexingMetadata indexingMetadata = new IndexingMetadata(enabled, indexName, entityAnalyzer, fields);
+      String keyEntity = (String) annotation.getAttributeValue(InfinispanAnnotations.KEY_ENTITY_ATTRIBUTE).getValue();
+      IndexingKeyMetadata indexingKeyMetadata = null;
+      if (!keyEntity.isEmpty()) {
+         String keyPropertyName = (String) annotation.getAttributeValue(InfinispanAnnotations.KEY_PROPERTY_NAME_ATTRIBUTE).getValue();
+         if (fields.containsKey(keyPropertyName)) {
+            throw log.keyPropertyNameAlreadyInUse(keyPropertyName);
+         }
+
+         Integer includeDepth = (Integer) annotation.getAttributeValue(InfinispanAnnotations.KEY_INCLUDE_DEPTH_ATTRIBUTE).getValue();
+         indexingKeyMetadata = new IndexingKeyMetadata(keyPropertyName, keyEntity, includeDepth);
+      }
+
+      IndexingMetadata indexingMetadata = new IndexingMetadata(enabled, indexName, entityAnalyzer, fields, indexingKeyMetadata);
       if (log.isDebugEnabled()) {
          log.debugf("Descriptor name=%s indexingMetadata=%s", descriptor.getFullName(), indexingMetadata);
       }

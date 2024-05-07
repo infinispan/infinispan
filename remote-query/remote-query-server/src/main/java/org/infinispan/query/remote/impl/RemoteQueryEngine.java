@@ -11,7 +11,9 @@ import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.remote.impl.filter.IckleProtobufFilterAndConverter;
+import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
 import org.infinispan.util.function.SerializableFunction;
+import org.infinispan.query.remote.impl.mapping.type.ProtobufKeyValuePair;
 
 /**
  * Same as ObjectRemoteQueryEngine but able to deal with protobuf payloads.
@@ -60,7 +62,12 @@ final class RemoteQueryEngine extends ObjectRemoteQueryEngine {
 
    @Override
    protected Class<?> getTargetedClass(IckleParsingResult<?> parsingResult) {
-      return byte[].class;
+      Descriptor metadata = (Descriptor) parsingResult.getTargetEntityMetadata();
+      IndexingMetadata indexingMetadata = metadata.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
+      if (indexingMetadata == null) {
+         return byte[].class;
+      }
+      return (indexingMetadata.indexingKey() == null) ? byte[].class : ProtobufKeyValuePair.class;
    }
 
    @Override

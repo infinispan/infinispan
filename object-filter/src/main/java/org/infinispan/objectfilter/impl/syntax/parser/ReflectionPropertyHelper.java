@@ -3,6 +3,7 @@ package org.infinispan.objectfilter.impl.syntax.parser;
 import java.util.Arrays;
 import java.util.List;
 
+import org.infinispan.objectfilter.impl.syntax.IndexedFieldProvider;
 import org.infinispan.objectfilter.impl.util.ReflectionHelper;
 
 /**
@@ -11,6 +12,7 @@ import org.infinispan.objectfilter.impl.util.ReflectionHelper;
  */
 public class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?>> {
 
+   protected static final IndexedFieldProvider.FieldIndexingMetadata<Class<?>> CLASS_NO_INDEXING = IndexedFieldProvider.noIndexing();
    private final EntityNameResolver<Class<?>> entityNameResolver;
 
    public ReflectionPropertyHelper(EntityNameResolver<Class<?>> entityNameResolver) {
@@ -71,6 +73,11 @@ public class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?>> {
          // ignored
       }
       return false;
+   }
+
+   @Override
+   public IndexedFieldProvider<Class<?>> getIndexedFieldProvider() {
+      return typeMetadata -> CLASS_NO_INDEXING;
    }
 
    @Override

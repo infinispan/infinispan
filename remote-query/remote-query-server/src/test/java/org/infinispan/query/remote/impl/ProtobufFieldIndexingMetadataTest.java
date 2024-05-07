@@ -72,8 +72,10 @@ public class ProtobufFieldIndexingMetadataTest extends SingleCacheManagerTest {
 
    public void testProtobufFieldIndexingMetadata() {
       SerializationContext serCtx = ProtobufMetadataManagerImpl.getSerializationContext(cacheManager);
-      ProtobufFieldIndexingMetadata userIndexedFieldProvider = new ProtobufFieldIndexingMetadata(serCtx.getMessageDescriptor("User"));
-      ProtobufFieldIndexingMetadata addressIndexedFieldProvider = new ProtobufFieldIndexingMetadata(serCtx.getMessageDescriptor("User.Address"));
+      ProtobufFieldIndexingMetadata userIndexedFieldProvider =
+            new ProtobufFieldIndexingMetadata(serCtx.getMessageDescriptor("User"), serCtx.getGenericDescriptors());
+      ProtobufFieldIndexingMetadata addressIndexedFieldProvider =
+            new ProtobufFieldIndexingMetadata(serCtx.getMessageDescriptor("User.Address"), serCtx.getGenericDescriptors());
 
       // try top level attributes
       assertTrue(userIndexedFieldProvider.isSearchable(new String[]{"name"}));
