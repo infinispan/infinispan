@@ -280,6 +280,7 @@
                <version>${version.sonatype.nexus-staging-plugin}</version>
                <configuration>
                   <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                  <keepStagingRepositoryOnCloseRuleFailure>true</keepStagingRepositoryOnCloseRuleFailure>
                   <stagingDescription>${infinispan.brand.name} ${project.version} release</stagingDescription>
                   <nexusUrl>${maven.releases.nexus.url}</nexusUrl>
                   <serverId>${maven.releases.repo.id}</serverId>
