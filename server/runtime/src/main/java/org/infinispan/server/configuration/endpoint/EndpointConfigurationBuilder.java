@@ -28,9 +28,9 @@ import org.infinispan.server.memcached.configuration.MemcachedServerConfiguratio
 import org.infinispan.server.resp.configuration.RespAuthenticationConfigurationBuilder;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
 import org.infinispan.server.security.ElytronHTTPAuthenticator;
+import org.infinispan.server.security.ElytronRESPAuthenticator;
 import org.infinispan.server.security.ElytronSASLAuthenticator;
 import org.infinispan.server.security.ElytronUsernamePasswordAuthenticator;
-import org.infinispan.server.security.ElytronRESPAuthenticator;
 import org.infinispan.server.security.RespClientCertAuthenticator;
 import org.infinispan.server.security.ServerSecurityRealm;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
@@ -295,12 +295,16 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
             // The connector was added implicitly, but the security realm cannot support it. Remove it.
             return null;
          } else {
-            throw Server.log.respEndpointRequiresRealmWithPasswordOrTrustore();
+            if (!securityRealm.isAnonymous()) {
+               throw Server.log.respEndpointRequiresRealmWithPasswordOrTrustore();
+            } else {
+               return builder;
+            }
          }
+      } else {
+         authentication.authenticator(respAuthenticator);
+         return builder;
       }
-
-      authentication.authenticator(respAuthenticator);
-      return builder;
    }
 
    private ProtocolServerConfigurationBuilder<?, ?, ?> enableImplicitAuthentication(SecurityConfiguration security, String securityRealmName, MemcachedServerConfigurationBuilder builder) {
@@ -323,7 +327,11 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
                // The connector was added implicitly, but the security realm cannot support it. Remove it.
                return null;
             } else {
-               throw Server.log.memcachedTextEndpointRequiresRealmWithPassword();
+               if (!securityRealm.isAnonymous()) {
+                  throw Server.log.memcachedTextEndpointRequiresRealmWithPassword();
+               } else {
+                  return builder;
+               }
             }
          }
       }

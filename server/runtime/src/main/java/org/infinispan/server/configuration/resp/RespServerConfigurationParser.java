@@ -16,8 +16,8 @@ import org.infinispan.server.configuration.endpoint.EndpointConfigurationBuilder
 import org.infinispan.server.core.configuration.EncryptionConfigurationBuilder;
 import org.infinispan.server.resp.configuration.RespAuthenticationConfigurationBuilder;
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
-import org.infinispan.server.security.ElytronUsernamePasswordAuthenticator;
 import org.infinispan.server.security.ElytronRESPAuthenticator;
+import org.infinispan.server.security.ElytronUsernamePasswordAuthenticator;
 import org.infinispan.server.security.RespClientCertAuthenticator;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -92,6 +92,7 @@ public class RespServerConfigurationParser implements ConfigurationParser {
             }
             case SECURITY_REALM: {
                securityRealm = value;
+               builder.authentication().securityRealm(securityRealm);
             }
             default: {
                ServerConfigurationParser.parseCommonConnectorAttributes(reader, i, serverBuilder, builder);

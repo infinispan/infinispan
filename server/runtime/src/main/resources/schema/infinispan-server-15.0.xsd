@@ -437,9 +437,27 @@
                   </xs:documentation>
                </xs:annotation>
             </xs:attribute>
+            <xs:attribute name="protocol" type="tns:memcached-protocol" default="AUTO"/>
+            <xs:attribute name="security-realm" type="xs:string">
+               <xs:annotation>
+                  <xs:documentation>Names the security realm to use for authentication, cache authorization, and encryption. </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
          </xs:extension>
       </xs:complexContent>
    </xs:complexType>
+
+   <xs:simpleType name="memcached-protocol">
+      <xs:list>
+         <xs:simpleType>
+            <xs:restriction base="xs:token">
+               <xs:enumeration value="AUTO"/>
+               <xs:enumeration value="TEXT"/>
+               <xs:enumeration value="BINARY"/>
+            </xs:restriction>
+         </xs:simpleType>
+      </xs:list>
+   </xs:simpleType>
 
    <xs:complexType name="rest-connector">
       <xs:complexContent>
