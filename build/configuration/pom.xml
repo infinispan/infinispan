@@ -113,6 +113,10 @@
       <maven.snapshots.repo.id>ossrh</maven.snapshots.repo.id>
       <maven.snapshots.repo.url>https://s01.oss.sonatype.org/content/repositories/snapshots</maven.snapshots.repo.url>
 
+      <!-- org.wildfly / org.jboss.eap -->
+      <appserver.groupId>org.wildfly</appserver.groupId>
+      <appserver.version>32.0.0.Final</appserver.version>
+
       <!-- Java source/target version -->
       <maven.min.version>3.9.0</maven.min.version>
       <jdk.min.version>17</jdk.min.version>
@@ -163,6 +167,8 @@
       <version.jboss.narayana>7.0.1.Final</version.jboss.narayana>
       <version.jboss.security>3.0.6.Final</version.jboss.security>
       <version.jboss.shrinkwrap>1.2.6</version.jboss.shrinkwrap>
+      <version.jboss.shrinkwrap.descriptors>2.0.0</version.jboss.shrinkwrap.descriptors>
+      <version.jboss.shrinkwrap.resolver>3.3.0</version.jboss.shrinkwrap.resolver>
       <version.jcip-annotations>1.0</version.jcip-annotations>
       <version.jgroups>5.3.6.Final</version.jgroups>
       <version.jgroups.raft>1.0.13.Final</version.jgroups.raft>
@@ -181,6 +187,7 @@
       <version.netty>4.1.109.Final</version.netty>
       <version.netty.incubator.iouring>0.0.25.Final</version.netty.incubator.iouring>
       <version.openjdk.jmh>1.37</version.openjdk.jmh>
+      <version.org.wildfly.arquillian>5.0.1.Final</version.org.wildfly.arquillian>
       <version.org.wildfly.elytron>2.4.1.Final</version.org.wildfly.elytron>
       <version.ow2.asm>9.7</version.ow2.asm>
       <version.picketbox>5.0.3.Final</version.picketbox>
@@ -240,13 +247,15 @@
       <version.maven.shade>3.5.3</version.maven.shade>
       <version.maven.source>3.3.1</version.maven.source>
       <version.maven.surefire>3.2.5</version.maven.surefire>
+      <version.org.jboss.galleon>6.0.1.Final</version.org.jboss.galleon>
+      <version.org.wildfly.galleon-plugins>7.0.0.Final</version.org.wildfly.galleon-plugins>
       <version.sonatype.nexus-staging-plugin>1.6.13</version.sonatype.nexus-staging-plugin>
       <version.eclipse.transformer>0.5.0</version.eclipse.transformer>
       <!-- overwrite version in jboss-parent -->
       <version.pmd.plugin>3.21.2</version.pmd.plugin>
       <version.owasp-dependency-check-plugin>9.0.10</version.owasp-dependency-check-plugin>
       <version.spotbugs.plugin>4.8.5.0</version.spotbugs.plugin>
-      <version.weld-servlet>2.4.8.Final</version.weld-servlet>
+      <version.weld-servlet>5.1.2.Final</version.weld-servlet>
       <version.deploy.plugin>3.1.1</version.deploy.plugin>
 
       <!-- versionx -->
