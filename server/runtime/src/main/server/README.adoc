@@ -52,6 +52,8 @@ ${infinispan.brand.name} provides other ready-to-use configuration files that ar
 `infinispan-dev-mode.xml`:: Configures ${infinispan.brand.name} Server specifically for cross-site replication with IP multicast discovery. The configuration provides `BASIC` authentication to connect to the Hot Rod and REST endpoints. The configuration is designed for development mode and should not be used in production environments.
 `infinispan-local.xml`:: Configures ${infinispan.brand.name} Server without clustering capabilities.
 `infinispan-xsite.xml`:: Configures cross-site replication on a single host and uses IP multicast for discovery.
+`infinispan-memcached.xml`:: Configures ${infinispan.brand.name} Server to behave like a default Memcached server, listening on port 11221 and without authentication.
+`infinispan-resp.xml`:: Configures ${infinispan.brand.name} Server to behave like a default Redis server, listening on port 6379 and without authentication.
 `log4j2.xml`:: Configures ${infinispan.brand.name} Server logging.
 
 Use different configuration files with the `-c` argument, as in the following example that starts a server without clustering capabilities:

@@ -54,6 +54,10 @@ public class ServerSecurityRealm {
       return features.contains(feature);
    }
 
+   public boolean isAnonymous() {
+      return features.isEmpty();
+   }
+
    @Override
    public String toString() {
       return "ServerSecurityRealm{" +
