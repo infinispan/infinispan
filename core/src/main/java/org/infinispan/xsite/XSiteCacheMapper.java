@@ -80,6 +80,13 @@ public class XSiteCacheMapper {
             .map(c -> c.cacheNameInSite(site));
    }
 
+   public Stream<String> sitesNameFromCache(String cacheName) {
+      return findConfiguration(cacheName)
+            .stream()
+            .flatMap(NamedConfiguration::allBackupsStream)
+            .map(BackupConfiguration::site);
+   }
+
    private LocalCacheInfoImpl lookupLocalCaches(RemoteCacheInfoImpl remoteCache) {
       var optConf = getCacheNames().stream()
             .map(this::getConfiguration)
@@ -139,8 +146,12 @@ public class XSiteCacheMapper {
 
       @Override
       public boolean equals(Object o) {
-         if (this == o) return true;
-         if (o == null || getClass() != o.getClass()) return false;
+         if (this == o) {
+            return true;
+         }
+         if (o == null || getClass() != o.getClass()) {
+            return false;
+         }
          var that = (LocalCacheInfoImpl) o;
          return local == that.local && Objects.equals(cacheName, that.cacheName);
       }
@@ -264,6 +275,10 @@ public class XSiteCacheMapper {
                return new RemoteCacheInfoImpl(c.site(), name);
             }
          });
+      }
+
+      Stream<BackupConfiguration> allBackupsStream() {
+         return configuration.sites().allBackupsStream();
       }
 
       @Override

@@ -364,6 +364,10 @@ public class RestMetricsResourceIT {
          tags().doesNotContain(tagKey + "=\"" + tagValue + "\"");
       }
 
+      public boolean containsTag(String tagKey, String tagValue) {
+         return rawTags.contains(tagKey + "=\"" + tagValue + "\"");
+      }
+
       public AbstractStringAssert<?> metricName() {
          return addDescription(assertThat(name));
       }

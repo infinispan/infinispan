@@ -1,0 +1,65 @@
+<jgroups xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="urn:infinispan:config:15.0 https://infinispan.org/schemas/infinispan-config-fragment-15.0.xsd
+                             urn:org:jgroups http://www.jgroups.org/schema/jgroups-5.3.xsd"
+         xmlns="urn:infinispan:config:15.0"
+         xmlns:ispn="urn:infinispan:config:15.0">
+   <stack name="global" extends="tcp">
+      <MPING mcast_addr="${jgroups.xsite.mcast_addr:239.6.7.8}"
+             mcast_port="${jgroups.xsite.mcast_port:55556}"
+             num_discovery_runs="3"
+             ip_ttl="${jgroups.udp.ip_ttl:2}"
+             ispn:stack.combine="REPLACE"
+      />
+   </stack>
+   <stack name="test-tcp" extends="tcp">
+      <MPING mcast_addr="${jgroups.mcast_addr:239.6.7.8}"
+             mcast_port="${jgroups.cluster.mcast_port}"
+             num_discovery_runs="3"
+             ip_ttl="${jgroups.udp.ip_ttl:2}"
+             ispn:stack.combine="REPLACE"
+      />
+      <MERGE3 min_interval="1000" max_interval="5000" ispn:stack.combine="REPLACE"/>
+      <FD_SOCK2 connect_timeout="3000"/>
+      <FD_ALL3 timeout="3000"
+               interval="1000"/>
+      <relay.RELAY2 site="${relay.site_name}" max_site_masters="1" xmlns="urn:org:jgroups"/>
+      <remote-sites default-stack="global">
+         <remote-site name="LON"/>
+         <remote-site name="NYC"/>
+      </remote-sites>
+   </stack>
+   <stack name="test-udp" extends="udp">
+      <UDP bind_addr="${jgroups.bind.address,jgroups.udp.address:SITE_LOCAL}"
+           bind_port="${jgroups.bind.port,jgroups.udp.port:0}"
+           mcast_addr="${jgroups.mcast_addr:239.6.7.8}"
+           mcast_port="${jgroups.cluster.mcast_port}"
+           tos="0"
+           ucast_send_buf_size="1m"
+           mcast_send_buf_size="1m"
+           ucast_recv_buf_size="20m"
+           mcast_recv_buf_size="25m"
+           ip_ttl="${jgroups.ip_ttl:2}"
+           thread_naming_pattern="pl"
+           diag.enabled="false"
+           bundler_type="transfer-queue"
+           bundler.max_size="8500"
+
+           thread_pool.min_threads="${jgroups.thread_pool.min_threads:0}"
+           thread_pool.max_threads="${jgroups.thread_pool.max_threads:200}"
+           thread_pool.keep_alive_time="60000"
+
+           thread_pool.thread_dumps_threshold="${jgroups.thread_dumps_threshold:10000}"
+           use_virtual_threads="${jgroups.thread.virtual,org.infinispan.threads.virtual:false}"
+           ispn:stack.combine="REPLACE"
+      />
+      <MERGE3 min_interval="1000" max_interval="5000" ispn:stack.combine="REPLACE"/>
+      <FD_SOCK2 connect_timeout="3000"/>
+      <FD_ALL3 timeout="3000"
+               interval="1000"/>
+      <relay.RELAY2 site="${relay.site_name}" max_site_masters="1" xmlns="urn:org:jgroups"/>
+      <remote-sites default-stack="global">
+         <remote-site name="LON"/>
+         <remote-site name="NYC"/>
+      </remote-sites>
+   </stack>
+</jgroups>
