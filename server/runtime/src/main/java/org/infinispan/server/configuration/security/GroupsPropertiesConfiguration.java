@@ -12,7 +12,7 @@ import org.infinispan.server.configuration.Attribute;
 import org.infinispan.server.configuration.Element;
 
 public class GroupsPropertiesConfiguration extends ConfigurationElement<GroupsPropertiesConfiguration> {
-   static final AttributeDefinition<String> PATH = AttributeDefinition.builder(Attribute.PATH, null, String.class).build();
+   static final AttributeDefinition<String> PATH = AttributeDefinition.builder(Attribute.PATH, "groups.properties", String.class).build();
    static final AttributeDefinition<String> RELATIVE_TO = AttributeDefinition.builder(Attribute.RELATIVE_TO, Server.INFINISPAN_SERVER_CONFIG_PATH, String.class).autoPersist(false).build();
 
    static AttributeSet attributeDefinitionSet() {
