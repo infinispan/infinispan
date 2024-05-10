@@ -21,7 +21,7 @@ import org.wildfly.security.auth.server.SecurityRealm;
 @BuiltBy(PropertiesRealmConfigurationBuilder.class)
 public class PropertiesRealmConfiguration extends ConfigurationElement<PropertiesRealmConfiguration> implements RealmProvider {
    static final AttributeDefinition<String> NAME = AttributeDefinition.builder(Attribute.NAME, "properties", String.class).immutable().build();
-   static final AttributeDefinition<String> GROUPS_ATTRIBUTE = AttributeDefinition.builder(Attribute.GROUPS_ATTRIBUTE, "groups", String.class).build();
+   static final AttributeDefinition<String> GROUPS_ATTRIBUTE = AttributeDefinition.builder(Attribute.GROUPS_ATTRIBUTE, "Roles", String.class).build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(PropertiesRealmConfiguration.class, NAME, GROUPS_ATTRIBUTE);

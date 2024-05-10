@@ -1311,18 +1311,18 @@
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute type="xs:string" name="groups-attribute"/>
+      <xs:attribute type="xs:string" name="groups-attribute" default="Roles"/>
    </xs:complexType>
 
    <xs:complexType name="security-realm-user-properties">
-      <xs:attribute type="xs:string" name="path" use="required"/>
+      <xs:attribute type="xs:string" name="path" default="users.properties"/>
       <xs:attribute type="xs:string" name="relative-to"/>
       <xs:attribute type="xs:string" name="digest-realm-name"/>
       <xs:attribute type="xs:boolean" name="plain-text" default="false"/>
    </xs:complexType>
 
    <xs:complexType name="security-realm-group-properties">
-      <xs:attribute type="xs:string" name="path" use="required"/>
+      <xs:attribute type="xs:string" name="path" default="groups.properties"/>
       <xs:attribute type="xs:string" name="relative-to"/>
    </xs:complexType>
 

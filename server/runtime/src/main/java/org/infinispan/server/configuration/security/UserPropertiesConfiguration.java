@@ -13,7 +13,7 @@ import org.infinispan.server.configuration.Element;
 
 public class UserPropertiesConfiguration extends ConfigurationElement<UserPropertiesConfiguration> {
    static final AttributeDefinition<String> DIGEST_REALM_NAME = AttributeDefinition.builder(Attribute.DIGEST_REALM_NAME, null, String.class).build();
-   static final AttributeDefinition<String> PATH = AttributeDefinition.builder(Attribute.PATH, null, String.class).build();
+   static final AttributeDefinition<String> PATH = AttributeDefinition.builder(Attribute.PATH, "users.properties", String.class).build();
    static final AttributeDefinition<Boolean> PLAIN_TEXT = AttributeDefinition.builder(Attribute.PLAIN_TEXT, false, Boolean.class).build();
    static final AttributeDefinition<String> RELATIVE_TO = AttributeDefinition.builder(Attribute.RELATIVE_TO, Server.INFINISPAN_SERVER_CONFIG_PATH, String.class).autoPersist(false).build();
 
