@@ -16,12 +16,15 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.metrics.impl.MetricsRegistry;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.annotation.CacheStarted;
 import org.infinispan.notifications.cachemanagerlistener.annotation.SiteViewChanged;
+import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent;
 import org.infinispan.notifications.cachemanagerlistener.event.SitesViewChangedEvent;
+import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.ByteString;
@@ -52,7 +55,14 @@ public class XSiteEventsManagerImpl implements XSiteEventsManager {
    @Inject CacheManagerNotifier notifier;
    @Inject GlobalComponentRegistry globalRegistry;
    @Inject XSiteCacheMapper xSiteCacheMapper;
+   @Inject MetricsRegistry metricsRegistry;
    private Executor backOffExecutor;
+
+   private final XSiteViewMetrics xSiteViewMetrics;
+
+   public XSiteEventsManagerImpl() {
+      xSiteViewMetrics = new XSiteViewMetrics(this::getMetricsRegistry, this::getTransport);
+   }
 
    @Start
    public void start() {
@@ -62,6 +72,7 @@ public class XSiteEventsManagerImpl implements XSiteEventsManager {
    @Stop
    public void stop() {
       notifier.removeListener(this);
+      xSiteViewMetrics.stop();
    }
 
    @Inject
@@ -109,18 +120,24 @@ public class XSiteEventsManagerImpl implements XSiteEventsManager {
 
    @SiteViewChanged
    public void onSiteViewChanged(SitesViewChangedEvent event) {
+      // This event is only triggered in SiteMaster nodes.
+      xSiteViewMetrics.updateAllBasedOnNewView(event.getSites());
       if (!transport.isPrimaryRelayNode()) {
          return;
       }
       log.debugf("On site view changed event: %s", event);
       event.getJoiners().stream()
-            .filter(s -> !Objects.equals(s, localSite().toString()))
+            .filter(this::isRemoteSite)
             .forEach(this::sendNewConnectionEvent);
    }
 
    @CacheStarted
    public void onCacheStarted(CacheStartedEvent event) {
       log.debugf("On cache started (is coordinator? %s): %s", transport.isCoordinator(), event.getCacheName());
+      // If any site is configured, add metrics for it.
+      xSiteCacheMapper.sitesNameFromCache(event.getCacheName())
+            .filter(this::isRemoteSite)
+            .forEach(this::registerMetricForSite);
       if (!transport.isCoordinator()) {
          return;
       }
@@ -130,6 +147,25 @@ public class XSiteEventsManagerImpl implements XSiteEventsManager {
       } catch (Exception e) {
          log.debugf(e, "Unable to send state request for cache %s", event.getCacheName());
       }
+   }
+
+   @ViewChanged
+   public void onViewChanged(ViewChangedEvent event) {
+      if (transport.isSiteCoordinator()) {
+         // The node is a SiteMaster, or it is being promoted to SiteMaster.
+         // Update the metrics.
+         xSiteViewMetrics.updateAllBasedOnNewView(transport.getSitesView());
+      } else {
+         // A node can lose its SiteMaster role, for example, during the merge event (in cluster split brain).
+         // Mark all unknown to signal the results from this node is not reliable.
+         xSiteViewMetrics.markAllUnknown();
+      }
+   }
+
+   private void registerMetricForSite(String siteName) {
+      // A non SiteMaster returns an empty list. Change to null to signal that the metric is unreliable.
+      var siteView = transport.isSiteCoordinator() ? transport.getSitesView() : null;
+      xSiteViewMetrics.onNewSiteFound(siteName, siteView);
    }
 
    private void onRemoteSiteConnected(ByteString site, XSiteEventSender sender) {
@@ -172,6 +208,18 @@ public class XSiteEventsManagerImpl implements XSiteEventsManager {
 
    private Executor delayExecutor(int step) {
       return CompletableFuture.delayedExecutor(BACK_OFF_DELAYS[step], TimeUnit.MILLISECONDS, backOffExecutor);
+   }
+
+   private MetricsRegistry getMetricsRegistry() {
+      return metricsRegistry;
+   }
+
+   private Transport getTransport() {
+      return transport;
+   }
+
+   private boolean isRemoteSite(String siteName) {
+      return !Objects.equals(siteName, transport.localSiteName());
    }
 
    private class BackOffSender implements Runnable, Function<Throwable, Void> {
