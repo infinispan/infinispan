@@ -1,6 +1,6 @@
 package org.infinispan.client.rest.impl.jdk;
 
-import static org.infinispan.client.rest.impl.jdk.RestClientJDK.sanitize;
+import static org.infinispan.client.rest.impl.jdk.Util.sanitize;
 
 import java.net.http.HttpResponse;
 import java.util.Collections;
