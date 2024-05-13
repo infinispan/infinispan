@@ -1,5 +1,7 @@
 package org.infinispan.client.rest.impl.jdk;
 
+import static org.infinispan.client.rest.impl.jdk.Util.sanitize;
+
 import java.io.File;
 import java.net.http.HttpResponse;
 import java.util.List;
@@ -193,10 +195,10 @@ public class RestContainerClientJDK implements RestContainerClient {
    }
 
    private String backup(String name) {
-      return path + "/backups/" + name;
+      return path + "/backups/" + sanitize(name);
    }
 
    private String restore(String name) {
-      return path + "/restores/" + name;
+      return path + "/restores/" + sanitize(name);
    }
 }

@@ -1,7 +1,5 @@
 package org.infinispan.client.rest.impl.jdk;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.client.rest.RestCacheClient;
@@ -94,10 +92,6 @@ public class RestClientJDK implements RestClient {
    @Override
    public RestRawClient raw() {
       return rawClient;
-   }
-
-   static String sanitize(String s) {
-      return URLEncoder.encode(s, StandardCharsets.UTF_8);
    }
 
    @Override

@@ -1,5 +1,6 @@
 package org.infinispan.server.functional;
 
+import static java.lang.String.format;
 import static org.infinispan.client.rest.RestResponse.ACCEPTED;
 import static org.infinispan.client.rest.RestResponse.CONFLICT;
 import static org.infinispan.client.rest.RestResponse.CREATED;
@@ -310,7 +311,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
 
       try (AeshTestConnection t = cli(source)) {
          t.clear();
-         t.send(String.format("backup create -d %s -n %s", serverBackupDir.getPath(), backupName));
+         t.send(format("backup create -d %s -n %s", serverBackupDir.getPath(), backupName));
          // Ensure that the backup has finished before stopping the source cluster
          t.send("backup get --no-content " + backupName);
       }
@@ -366,11 +367,11 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
          t.send("ls");
          t.assertContains("k1");
          t.clear();
-         String backupName = "example-backup";
-         t.send("backup create -n " + backupName);
-         t.send("backup get " + backupName);
+         String backupName = "example backup";
+         t.send(format("backup create -n '%s'", backupName));
+         t.send(format("backup get '%s'", backupName));
          Thread.sleep(1000);
-         t.send("backup delete " + backupName);
+         t.send(format("backup delete '%s'", backupName));
          String fileName = backupName + ".zip";
          createdBackup = Paths.get(System.getProperty("user.dir")).resolve(fileName);
       }
@@ -379,7 +380,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
       startTargetCluster();
 
       try (AeshTestConnection t = cli(target)) {
-         t.send("backup restore -u " + createdBackup);
+         t.send(format("backup restore -u '%s'", createdBackup));
          Thread.sleep(1000);
          t.send("ls caches/backupCache");
          t.assertContains("k1");
@@ -392,7 +393,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
       CLI.main(new AeshDelegatingShell(t), new String[]{}, new Properties());
       String host = cluster.driver.getServerAddress(0).getHostAddress();
       int port = cluster.driver.getServerSocket(0, 11222).getPort();
-      t.send(String.format("connect %s:%d", host, port));
+      t.send(format("connect %s:%d", host, port));
       t.assertContains("//containers/default]>");
       t.clear();
       return t;
@@ -512,7 +513,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
    }
 
    private void createCounter(String name, Element type, Storage storage, RestClient client, long delta) {
-      String config = String.format("{\n" +
+      String config = format("{\n" +
             "    \"%s\":{\n" +
             "        \"initial-value\":0,\n" +
             "        \"storage\":\"%s\"\n" +
