@@ -112,9 +112,7 @@ public class GracefulShutdownRestartIT {
             .connectionTimeout(RestClientConfigurationProperties.DEFAULT_CONNECT_TIMEOUT * 60);
       RestClient rest = SERVER.rest().withClientConfiguration(restClientBuilder).get();
 
-      // Locks is built-in and uses partition handling. We wait for it to be available on both nodes and then stops
-      // one of the nodes. It will move availability to DEGRADED.
-      CountdownLatchLoggingConsumer consumer = new CountdownLatchLoggingConsumer(1, ".*LOCKS]\\[Scope=.*]ISPN100010.*");
+      CountdownLatchLoggingConsumer consumer = new CountdownLatchLoggingConsumer(1, ".*respCache]\\[Scope=.*]ISPN100010.*");
 
       serverDriver.stop(1);
       serverDriver.restart(1, consumer);
@@ -123,11 +121,10 @@ public class GracefulShutdownRestartIT {
       // Stop the CM before finishing start.
       serverDriver.stop(1);
 
-      // Since the node left abruptly, the cluster should be DEGRADED.
       try (RestResponse res = sync(rest.container().health())) {
          Json body = Json.read(res.body());
          Json clusterHealth = body.at("cluster_health");
-         assertThat(clusterHealth.at("health_status").asString()).isEqualTo("DEGRADED");
+         assertThat(clusterHealth.at("health_status").asString()).isEqualTo("HEALTHY");
          assertThat(clusterHealth.at("number_of_nodes").asInteger()).isEqualTo(1);
       }
 

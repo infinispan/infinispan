@@ -1,11 +1,9 @@
 <infinispan
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="urn:infinispan:config:13.0 https://infinispan.org/schemas/infinispan-config-13.0.xsd
-                            urn:infinispan:config:clustered-locks:13.0 https://infinispan.org/schemas/infinispan-clustered-locks-config-13.0.xsd
                             urn:infinispan:server:13.0 https://infinispan.org/schemas/infinispan-server-13.0.xsd"
         xmlns="urn:infinispan:config:13.0"
-        xmlns:server="urn:infinispan:server:13.0"
-        xmlns:locks="urn:infinispan:config:clustered-locks:13.0">
+        xmlns:server="urn:infinispan:server:13.0">
 
     <jgroups>
         <stack name="test-tcp" extends="tcp">
@@ -23,7 +21,6 @@
                 <regex>.*</regex>
             </allow-list>
         </serialization>
-        <locks:clustered-locks num-owners="-1"/>
     </cache-container>
 
     <server xmlns="urn:infinispan:server:13.0">

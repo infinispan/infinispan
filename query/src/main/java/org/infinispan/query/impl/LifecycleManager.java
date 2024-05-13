@@ -91,7 +91,7 @@ import org.infinispan.util.concurrent.BlockingManager;
  *
  * @author Sanne Grinovero &lt;sanne@hibernate.org&gt; (C) 2011 Red Hat Inc.
  */
-@InfinispanModule(name = "query", requiredModules = {"core", "query-core", "clustered-lock"}, optionalModules = "lucene-directory")
+@InfinispanModule(name = "query", requiredModules = {"core", "query-core"}, optionalModules = "lucene-directory")
 public class LifecycleManager implements ModuleLifecycle {
 
    /**
