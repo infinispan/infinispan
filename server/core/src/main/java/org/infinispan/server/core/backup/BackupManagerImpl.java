@@ -14,15 +14,12 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.parsing.ParserRegistry;
-import org.infinispan.lock.EmbeddedClusteredLockManagerFactory;
-import org.infinispan.lock.api.ClusteredLock;
-import org.infinispan.lock.api.ClusteredLockManager;
+import org.infinispan.globalstate.impl.ConfigCacheLock;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.AuthorizationPermission;
@@ -31,7 +28,6 @@ import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.BackupManager;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.util.logging.events.EventLogCategory;
 import org.infinispan.util.logging.events.EventLogger;
@@ -50,8 +46,8 @@ public class BackupManagerImpl implements BackupManager {
    final BlockingManager blockingManager;
    final Path rootDir;
    final BackupReader reader;
-   final Lock backupLock;
-   final Lock restoreLock;
+   final ConfigCacheLock backupLock;
+   final ConfigCacheLock restoreLock;
    private final EmbeddedCacheManager cacheManager;
    final Map<String, DefaultCacheManager> cacheManagers;
    final Map<String, BackupRequest> backupMap;
@@ -65,8 +61,8 @@ public class BackupManagerImpl implements BackupManager {
       this.cacheManagers = Collections.singletonMap(cm.getName(), cm);
       this.parserRegistry = new ParserRegistry();
       this.reader = new BackupReader(blockingManager, cacheManagers, parserRegistry);
-      this.backupLock = new Lock("backup", cm);
-      this.restoreLock = new Lock("restore", cm);
+      this.backupLock = new ConfigCacheLock("backup", cm);
+      this.restoreLock = new ConfigCacheLock("restore", cm);
       this.backupMap = new ConcurrentHashMap<>();
       this.restoreMap = new ConcurrentHashMap<>();
    }
@@ -164,7 +160,7 @@ public class BackupManagerImpl implements BackupManager {
          return CompletableFuture.failedFuture(log.backupAlreadyExists(name));
 
       BackupWriter writer = new BackupWriter(name, eventLogger, blockingManager, cacheManagers, parserRegistry, workingDir == null ? rootDir : workingDir);
-      CompletionStage<Path> backupStage = backupLock.lock()
+      CompletionStage<Path> backupStage = backupLock.tryLock()
             .thenCompose(lockAcquired -> {
                log.tracef("Backup %s locked = %s", backupLock, lockAcquired);
                if (!lockAcquired)
@@ -237,7 +233,7 @@ public class BackupManagerImpl implements BackupManager {
          return CompletableFuture.failedFuture(e);
       }
 
-      CompletionStage<Void> restoreStage = restoreLock.lock()
+      CompletionStage<Void> restoreStage = restoreLock.tryLock()
             .thenCompose(lockAcquired -> {
                if (!lockAcquired)
                   return CompletableFuture.failedFuture(log.restoreInProgress());
@@ -271,65 +267,6 @@ public class BackupManagerImpl implements BackupManager {
       BackupRequest(BackupWriter writer, CompletionStage<Path> stage) {
          this.writer = writer;
          this.future = stage.toCompletableFuture();
-      }
-   }
-
-   static class Lock {
-      final String name;
-      final EmbeddedCacheManager cm;
-      final boolean isClustered;
-      volatile ClusteredLock clusteredLock;
-      volatile AtomicBoolean localLock;
-
-      Lock(String name, EmbeddedCacheManager cm) {
-         this.name = String.format("%s-%s", BackupManagerImpl.class.getSimpleName(), name);
-         this.cm = cm;
-         this.isClustered = SecurityActions.getCacheManagerConfiguration(cm).isClustered();
-      }
-
-      CompletionStage<Boolean> lock() {
-         if (isClustered)
-            return getClusteredLock().tryLock();
-
-         return CompletableFuture.completedFuture(getLocalLock().compareAndSet(false, true));
-      }
-
-      CompletionStage<Void> unlock() {
-         if (isClustered)
-            return getClusteredLock().unlock();
-
-         getLocalLock().compareAndSet(true, false);
-         return CompletableFutures.completedNull();
-      }
-
-      private ClusteredLock getClusteredLock() {
-         if (clusteredLock == null) {
-            synchronized (this) {
-               if (clusteredLock == null) {
-                  ClusteredLockManager lockManager = EmbeddedClusteredLockManagerFactory.from(cm);
-                  boolean isDefined = lockManager.isDefined(name);
-                  if (!isDefined) {
-                     lockManager.defineLock(name);
-                  }
-                  clusteredLock = lockManager.get(name);
-               }
-            }
-         }
-         return clusteredLock;
-      }
-
-      private AtomicBoolean getLocalLock() {
-         if (localLock == null)
-            localLock = new AtomicBoolean();
-         return localLock;
-      }
-
-      @Override
-      public String toString() {
-         return "Lock{" +
-               "name='" + name + '\'' +
-               ", isClustered=" + isClustered +
-               '}';
       }
    }
 }

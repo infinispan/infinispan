@@ -48,11 +48,6 @@
          <artifactId>protostream-processor</artifactId>
       </dependency>
 
-       <dependency>
-           <groupId>org.infinispan</groupId>
-           <artifactId>infinispan-clustered-lock</artifactId>
-       </dependency>
-
       <dependency>
          <groupId>org.hibernate.search</groupId>
          <artifactId>hibernate-search-v5migrationhelper-engine</artifactId>

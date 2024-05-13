@@ -5,6 +5,7 @@
             <key media-type="application/x-protostream"/>
             <value media-type="application/x-protostream"/>
          </encoding>
+         <partition-handling when-split="DENY_READ_WRITES" />
          <indexing>
             <indexed-entities>
                <indexed-entity>org.infinispan.rest.search.entity.Person</indexed-entity>

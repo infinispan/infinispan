@@ -13,7 +13,6 @@ import org.infinispan.commands.module.ModuleCommandExtensions;
 import org.infinispan.commons.util.JVMMemoryInfoInfo;
 import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.counter.configuration.CounterManagerConfigurationBuilder;
-import org.infinispan.lock.configuration.ClusteredLockManagerConfigurationBuilder;
 import org.infinispan.manager.CacheManagerInfo;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.quarkus.embedded.deployment.InfinispanReflectionExcludedBuildItem;
@@ -78,8 +77,7 @@ class InfinispanServerProcessor {
             "infinispan-client-hotrod",
             "infinispan-cachestore-jdbc",
             "infinispan-cachestore-remote",
-            "infinispan-clustered-counter",
-            "infinispan-clustered-lock"
+            "infinispan-clustered-counter"
       )) {
          indexedDependencies.produce(new IndexDependencyBuildItem("org.infinispan", infinispanArtifact));
       }
@@ -196,7 +194,6 @@ class InfinispanServerProcessor {
 
       reflectionClass.produce(new ReflectiveClassBuildItem(false, false, CounterManagerConfigurationBuilder.class));
       reflectionClass.produce(new ReflectiveClassBuildItem(false, false, AnchoredKeysConfigurationBuilder.class));
-      reflectionClass.produce(new ReflectiveClassBuildItem(false, false, ClusteredLockManagerConfigurationBuilder.class));
       reflectionClass.produce(new ReflectiveClassBuildItem(false, false, RespServerConfigurationBuilder.class));
    }
 

@@ -1,7 +1,6 @@
 package org.infinispan.server.cli;
 
 import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NAME;
-import static org.infinispan.lock.impl.ClusteredLockModuleLifecycle.CLUSTERED_LOCK_CACHE_NAME;
 
 import java.io.File;
 import java.io.IOException;
@@ -320,14 +319,16 @@ public class CliIT {
       try (AeshTestConnection terminal = new AeshTestConnection()) {
          CLI.main(new AeshDelegatingShell(terminal), new String[]{}, properties);
 
+         var cacheName = "qcache";
          connect(terminal);
-         terminal.send("availability " + CLUSTERED_LOCK_CACHE_NAME);
+         terminal.send("create cache --file=" + getCliResource("qcache.xml").getPath() + " " + cacheName);
+         terminal.send("availability " + cacheName);
          terminal.assertContains("AVAILABLE");
-         terminal.send("availability --mode=DEGRADED_MODE " + CLUSTERED_LOCK_CACHE_NAME);
-         terminal.send("availability " + CLUSTERED_LOCK_CACHE_NAME);
+         terminal.send("availability --mode=DEGRADED_MODE " + cacheName);
+         terminal.send("availability " + cacheName);
          terminal.assertContains("DEGRADED_MODE");
-         terminal.send("availability --mode=AVAILABILITY " + CLUSTERED_LOCK_CACHE_NAME);
-         terminal.send("availability " + CLUSTERED_LOCK_CACHE_NAME);
+         terminal.send("availability --mode=AVAILABILITY " + cacheName);
+         terminal.send("availability " + cacheName);
          terminal.assertContains("AVAILABLE");
       }
    }
