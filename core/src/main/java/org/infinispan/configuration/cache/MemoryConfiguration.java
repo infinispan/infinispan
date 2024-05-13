@@ -19,7 +19,7 @@ import org.infinispan.eviction.EvictionType;
 public class MemoryConfiguration extends ConfigurationElement<MemoryConfiguration> {
 
    public static final AttributeDefinition<StorageType> STORAGE = AttributeDefinition.builder(Attribute.STORAGE, StorageType.HEAP).immutable().build();
-   public static final AttributeDefinition<String> MAX_SIZE = AttributeDefinition.builder(Attribute.MAX_SIZE, null, String.class).build();
+   public static final AttributeDefinition<String> MAX_SIZE = AttributeDefinition.builder(Attribute.MAX_SIZE, null, String.class).matcher((a1, a2) -> maxSizeToBytes(a1.get()) == maxSizeToBytes(a2.get())).build();
    public static final AttributeDefinition<Long> MAX_COUNT = AttributeDefinition.builder(Attribute.MAX_COUNT, -1L).build();
    public static final AttributeDefinition<EvictionStrategy> WHEN_FULL = AttributeDefinition.builder(Attribute.WHEN_FULL, EvictionStrategy.NONE).immutable().build();
 
