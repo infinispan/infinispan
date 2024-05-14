@@ -133,6 +133,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertThat(indexed.indexingMode()).isEqualTo(IndexingMode.MANUAL);
             assertThat(indexed.sharding()).isNotNull();
             assertThat(indexed.sharding().getShards()).isEqualTo(7);
+            assertThat(indexed.useJavaEmbeddedEntities()).isTrue();
 
             QueryConfiguration query = getConfiguration(holder, "local").query();
             assertThat(query.hitCountAccuracy()).isEqualTo(10_000);

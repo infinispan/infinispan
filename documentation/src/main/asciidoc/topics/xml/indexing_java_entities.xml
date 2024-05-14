@@ -1,0 +1,5 @@
+<distributed-cache>
+  <indexing use-java-embedded-entities="true">
+    <!-- Additional indexing configuration goes here. -->
+  </indexing>
+</distributed-cache>

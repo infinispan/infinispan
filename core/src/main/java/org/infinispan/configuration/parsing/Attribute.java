@@ -203,6 +203,7 @@ public enum Attribute {
     TRANSPORT,
     TYPE,
     UNRELIABLE_RETURN_VALUES,
+    USE_JAVA_EMBEDDED_ENTITIES,
     USE_TWO_PHASE_COMMIT("two-phase-commit"),
     VALUE,
     VALUE_EQUIVALENCE,

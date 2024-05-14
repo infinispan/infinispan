@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import static org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration.PROPERTIES;
 import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
 import static org.infinispan.configuration.cache.IndexingConfiguration.ENABLED;
+import static org.infinispan.configuration.cache.IndexingConfiguration.USE_JAVA_EMBEDDED_ENTITIES;
 import static org.infinispan.configuration.cache.IndexingConfiguration.INDEXED_ENTITIES;
 import static org.infinispan.configuration.cache.IndexingConfiguration.INDEXING_MODE;
 import static org.infinispan.configuration.cache.IndexingConfiguration.KEY_TRANSFORMERS;
@@ -93,6 +94,16 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    public IndexingConfigurationBuilder indexingMode(IndexingMode indexingMode) {
       attributes.attribute(INDEXING_MODE).set(indexingMode);
+      return this;
+   }
+
+   public IndexingConfigurationBuilder useJavaEmbeddedEntities() {
+      useJavaEmbeddedEntities(true);
+      return this;
+   }
+
+   public IndexingConfigurationBuilder useJavaEmbeddedEntities(boolean useJavaEmbeddedEntities) {
+      attributes.attribute(USE_JAVA_EMBEDDED_ENTITIES).set(useJavaEmbeddedEntities);
       return this;
    }
 
@@ -240,5 +251,6 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
             ", shardingConfigurationBuilder=" + shardingConfigurationBuilder +
             '}';
    }
+
 
 }

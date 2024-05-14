@@ -33,9 +33,11 @@ public class IndexingConfiguration extends ConfigurationElement<IndexingConfigur
    public static final AttributeDefinition<String> PATH = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.PATH, null, String.class).immutable().build();
    public static final AttributeDefinition<IndexingMode> INDEXING_MODE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.INDEXING_MODE, IndexingMode.AUTO)
          .immutable().build();
+   public static final AttributeDefinition<Boolean> USE_JAVA_EMBEDDED_ENTITIES = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.USE_JAVA_EMBEDDED_ENTITIES, false).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(IndexingConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), KEY_TRANSFORMERS, INDEXED_ENTITIES, ENABLED, STORAGE, STARTUP_MODE, PATH, INDEXING_MODE);
+      return new AttributeSet(IndexingConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(),
+            KEY_TRANSFORMERS, INDEXED_ENTITIES, ENABLED, STORAGE, STARTUP_MODE, PATH, INDEXING_MODE, USE_JAVA_EMBEDDED_ENTITIES);
    }
 
    private final IndexReaderConfiguration readerConfiguration;
@@ -78,6 +80,19 @@ public class IndexingConfiguration extends ConfigurationElement<IndexingConfigur
     */
    public IndexingMode indexingMode() {
       return attributes.attribute(INDEXING_MODE).get();
+   }
+
+   /**
+    * Whether true, the indexes will be defined on the Java indexed entities accessible from the class path of the server VM.
+    * Even if the cache is Protobuf encoded and the indexes are run in server mode.
+    * <p>
+    * Useful in case we want to run embedded queries from a server task, in the case the cache is Protobuf encoded.
+    * By default, false.
+    *
+    * @return useJavaEmbeddedEntities
+    */
+   public boolean useJavaEmbeddedEntities() {
+      return attributes.attribute(USE_JAVA_EMBEDDED_ENTITIES).get();
    }
 
    /**

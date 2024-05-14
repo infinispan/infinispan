@@ -64,6 +64,11 @@ abstract class AbstractIndexingConfigurationChildBuilder
    }
 
    @Override
+   public IndexingConfigurationBuilder useJavaEmbeddedEntities(boolean useJavaEmbeddedEntities) {
+      return indexingBuilder.useJavaEmbeddedEntities(true);
+   }
+
+   @Override
    public IndexingConfigurationBuilder addKeyTransformer(Class<?> keyClass, Class<?> keyTransformerClass) {
       return indexingBuilder.addKeyTransformer(keyClass, keyTransformerClass);
    }
