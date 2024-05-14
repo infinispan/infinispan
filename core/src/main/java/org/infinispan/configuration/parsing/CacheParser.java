@@ -1416,6 +1416,9 @@ public class CacheParser implements ConfigurationParser {
             case INDEXING_MODE:
                indexing.indexingMode(IndexingMode.requireValid(value));
                break;
+            case USE_JAVA_EMBEDDED_ENTITIES:
+               indexing.useJavaEmbeddedEntities(ParseUtils.parseBoolean(reader, i, value));
+               break;
             case INDEXED_ENTITIES:
                indexing.addIndexedEntities(reader.getListAttributeValue(i));
                break;
