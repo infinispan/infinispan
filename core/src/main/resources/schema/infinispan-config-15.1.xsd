@@ -1227,6 +1227,16 @@
               </xs:documentation>
             </xs:annotation>
           </xs:attribute>
+          <xs:attribute name="use-java-embedded-entities" type="xs:boolean" default="${Indexing.use-java-embedded-entities}">
+            <xs:annotation>
+              <xs:documentation>
+                Whether true, the indexes will be defined on the Java indexed entities accessible from the class path of the server VM.
+                Even if the cache is Protobuf encoded and the indexes are run in server mode.
+                Useful in case we want to run embedded queries from a server task, in the case the cache is Protobuf encoded.
+                By default, false.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
         </xs:complexType>
       </xs:element>
       <xs:element name="tracing" minOccurs="0">

@@ -118,8 +118,11 @@ public class LifecycleManager implements ModuleLifecycle {
 
          SearchMapping searchMapping = null;
          if (isIndexed) {
+            boolean useJavaEmbeddedEntities = cfg.indexing().useJavaEmbeddedEntities();
+
             Map<String, Class<?>> indexedClasses;
-            if (!scm.getValueStorageMediaType().match(MediaType.APPLICATION_PROTOSTREAM) || !remoteQueryEnabled) {
+            if (!scm.getValueStorageMediaType().match(MediaType.APPLICATION_PROTOSTREAM) || !remoteQueryEnabled ||
+                  useJavaEmbeddedEntities) {
                indexedClasses = makeIndexedClassesMap(cache);
             } else {
                indexedClasses = Collections.emptyMap();

@@ -82,6 +82,20 @@ include::xml/indexing_manual.xml[]
 ----
 
 [discrete]
+== Use Java Entities
+
+If the cache is protostream-encoded and the indexes initialized from a {brandname} server instance,
+the indexed entities must be the indexed Protobuf messages defined on some Proto schema.
+It is possible to change this behavior forcing the indexes be defined on the indexed entities that are discovered
+from the java entities locally accessible from the server VM.
+Useful in case we want to run embedded queries from a server task, in the case the cache is Protobuf encoded.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+include::xml/indexing_java_entities.xml[]
+----
+
+[discrete]
 == Index reader
 
 The index reader is an internal component that provides access to the indexes to perform queries. As the index content changes, {brandname} needs to refresh the reader so that search results are up to date.

@@ -36,6 +36,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.entries.ReadCommittedEntry;
@@ -85,6 +86,7 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
          return "<UNKNOWN>";
       }
    };
+   private final boolean javaEmbeddedEntities;
 
    @Inject
    DistributionManager distributionManager;
@@ -116,7 +118,9 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       this.txOldValues = txOldValues;
       valueDataConversion = cache.getValueDataConversion();
       keyDataConversion = cache.getKeyDataConversion();
-      isPersistenceEnabled = cache.getCacheConfiguration().persistence().usingStores();
+      Configuration cacheConfiguration = cache.getCacheConfiguration();
+      isPersistenceEnabled = cacheConfiguration.persistence().usingStores();
+      javaEmbeddedEntities = cacheConfiguration.indexing().useJavaEmbeddedEntities();
       this.cache = cache;
       this.indexedClasses = Collections.unmodifiableMap(indexedClasses);
    }
@@ -407,11 +411,11 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
    }
 
    private Object extractValue(Object storedValue) {
-      return valueDataConversion.extractIndexable(storedValue);
+      return valueDataConversion.extractIndexable(storedValue, javaEmbeddedEntities);
    }
 
    private Object extractKey(Object storedKey) {
-      return keyDataConversion.extractIndexable(storedKey);
+      return keyDataConversion.extractIndexable(storedKey, javaEmbeddedEntities);
    }
 
    CompletableFuture<?> processChange(InvocationContext ctx, FlagAffectedCommand command, Object storedKey, Object storedOldValue, Object storedNewValue) {

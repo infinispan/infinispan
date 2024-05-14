@@ -33,4 +33,6 @@ public interface IndexingConfigurationChildBuilder extends ConfigurationChildBui
 
    IndexingConfigurationBuilder indexingMode(IndexingMode indexingMode);
 
+   IndexingConfigurationBuilder useJavaEmbeddedEntities(boolean useJavaEmbeddedEntities);
+
 }
