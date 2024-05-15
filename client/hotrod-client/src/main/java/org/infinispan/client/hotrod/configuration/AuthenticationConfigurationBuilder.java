@@ -32,7 +32,7 @@ import org.infinispan.commons.util.Util;
 public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<AuthenticationConfiguration> {
    public static final String DEFAULT_REALM = "default";
    public static final String DEFAULT_SERVER_NAME = "infinispan";
-   public static final String DEFAULT_MECHANISM = "SCRAM-SHA-512";
+   public static final String DEFAULT_MECHANISM = "SCRAM-SHA-256";
    private static final String EXTERNAL_MECH = "EXTERNAL";
    private static final String OAUTHBEARER_MECH = "OAUTHBEARER";
    private static final String GSSAPI_MECH = "GSSAPI";
