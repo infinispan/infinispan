@@ -2228,7 +2228,7 @@
             </plugin>
             <plugin>
                <groupId>org.infinispan.maven-plugins</groupId>
-               <artifactId>proto-schema-compatibility</artifactId>
+               <artifactId>proto-schema-compatibility-maven-plugin</artifactId>
                <version>${version.infinispan.maven-plugins}</version>
                <configuration>
                   <commitProtoLock>${commitProtoLockChanges}</commitProtoLock>
@@ -2236,7 +2236,7 @@
             </plugin>
             <plugin>
                <groupId>org.infinispan.maven-plugins</groupId>
-               <artifactId>protocol-parser-generator</artifactId>
+               <artifactId>protocol-parser-generator-maven-plugin</artifactId>
                <version>${version.infinispan.maven-plugins}</version>
             </plugin>
             <plugin>
