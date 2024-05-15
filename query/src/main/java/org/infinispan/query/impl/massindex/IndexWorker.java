@@ -52,6 +52,7 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
       DataConversion valueDataConversion = cache.getValueDataConversion();
 
       AdvancedCache<Object, Object> reindexCache = cache.withStorageMediaType();
+      boolean javaEmbeddedEntities = SecurityActions.getCacheConfiguration(reindexCache).indexing().useJavaEmbeddedEntities();
 
       SearchMapping searchMapping = ComponentRegistryUtils.getSearchMapping(cache);
       TimeService timeService = ComponentRegistryUtils.getTimeService(cache);
@@ -68,7 +69,7 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
                   .cacheEntrySet().stream()) {
                stream.forEach(entry -> {
                   Object key = entry.getKey();
-                  Object value = valueDataConversion.extractIndexable(entry.getValue());
+                  Object value = valueDataConversion.extractIndexable(entry.getValue(), javaEmbeddedEntities);
                   int segment = keyPartitioner.getSegment(key);
 
                   if (value != null && indexUpdater.typeIsIndexed(value, indexedTypes)) {
@@ -86,7 +87,7 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
 
          for (Object key : keys) {
             Object storedKey = keyDataConversion.toStorage(key);
-            Object unwrappedKey = keyDataConversion.extractIndexable(storedKey);
+            Object unwrappedKey = keyDataConversion.extractIndexable(storedKey, javaEmbeddedEntities);
             Object value = cache.get(key);
             if (value != null) {
                updates.dependsOn(indexUpdater.updateIndex(unwrappedKey, value, keyPartitioner.getSegment(storedKey)));

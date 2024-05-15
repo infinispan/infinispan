@@ -225,14 +225,14 @@ public final class DataConversion {
    /**
     * Convert the stored object in a format suitable to be indexed.
     */
-   public Object extractIndexable(Object stored) {
+   public Object extractIndexable(Object stored, boolean javaEmbeddedEntities) {
       if (stored == null) return null;
 
       // Keys are indexed as stored, without the wrapper
       Wrapper wrapper = getWrapper();
       if (isKey) return wrapper.unwrap(stored);
 
-      if (wrapper.isFilterable()) {
+      if (wrapper.isFilterable() && !javaEmbeddedEntities) {
          // If the value wrapper is indexable, return the already wrapped value or wrap it otherwise
          return stored.getClass() == wrapperClass ? stored : wrapper.wrap(stored);
       }
