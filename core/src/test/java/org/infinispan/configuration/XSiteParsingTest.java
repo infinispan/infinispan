@@ -10,9 +10,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.remoting.transport.Transport;
@@ -65,7 +62,7 @@ public class XSiteParsingTest extends AbstractInfinispanTest {
                   "      </distributed-cache>" +
                   "</cache-container>"
       );
-      assertCacheConfigurationException(config1, "A", "ISPN000951: Invalid value -1 for attribute max-cleanup-delay: must be a number greater than zero");
+      assertCacheConfigurationException(config1, "ISPN000951: Invalid value -1 for attribute max-cleanup-delay: must be a number greater than zero");
       String config2 = wrapXMLWithSchema(
             "<cache-container>" +
                   "   <transport/>" +
@@ -74,16 +71,12 @@ public class XSiteParsingTest extends AbstractInfinispanTest {
                   "      </distributed-cache>" +
                   "</cache-container>"
       );
-      assertCacheConfigurationException(config2, "B", "ISPN000951: Invalid value 0 for attribute max-cleanup-delay: must be a number greater than zero");
+      assertCacheConfigurationException(config2, "ISPN000951: Invalid value 0 for attribute max-cleanup-delay: must be a number greater than zero");
    }
 
-   private void assertCacheConfigurationException(String config, String cacheName, String messageRegex) {
+   private void assertCacheConfigurationException(String config, String messageRegex) {
       ParserRegistry parserRegistry = new ParserRegistry();
-      ConfigurationBuilderHolder holder = parserRegistry.parse(config);
-      GlobalConfiguration globalConfiguration = holder.getGlobalConfigurationBuilder().build();
-      ConfigurationBuilder builder = holder.getNamedConfigurationBuilders().get(cacheName);
-      expectException(CacheConfigurationException.class, messageRegex, builder::validate);
-      expectException(CacheConfigurationException.class, messageRegex, () -> builder.validate(globalConfiguration));
+      expectException(CacheConfigurationException.class, messageRegex, () -> parserRegistry.parse(config));
    }
 
 }
