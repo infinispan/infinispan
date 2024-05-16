@@ -170,12 +170,14 @@ public class ConfigurationBuilderHolder implements ConfigurationReaderContext {
       }
       String parent = builder.configuration();
       if (parent == null) {
+         builder.validate();
          // No parents, return as-is
          return builder;
       } else {
          ConfigurationBuilder rebased = new ConfigurationBuilder();
          rebased.read(resolveConfiguration(parent, combine).build(), combine);
-         rebased.read(builder.build(), combine);
+         rebased.read(builder.build(false), combine);
+         rebased.validate();
          return rebased;
       }
    }
