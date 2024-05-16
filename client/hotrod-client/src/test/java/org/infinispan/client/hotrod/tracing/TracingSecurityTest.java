@@ -73,7 +73,7 @@ public class TracingSecurityTest extends SingleHotRodServerTest {
    @Override
    protected void teardown() {
       telemetryClient.reset();
-      Security.doAs(ADMIN, () -> TracingSecurityTest.super.teardown());
+      Security.doAs(ADMIN, TracingSecurityTest.super::teardown);
    }
 
    @Override
@@ -87,7 +87,18 @@ public class TracingSecurityTest extends SingleHotRodServerTest {
       Security.doAs(READER, () -> cacheManager.getCache().get("key"));
 
       eventually(() -> telemetryClient.finishedSpanItems().toString(),
-            () -> telemetryClient.finishedSpanItems().size() == 5, 10, TimeUnit.SECONDS);
+            () -> {
+               List<SpanData> spanItems = telemetryClient.finishedSpanItems();
+               if (spanItems.size() < 5) {
+                  return false;
+               }
+
+               Map<String, List<SpanData>> spansByName = InMemoryTelemetryClient.aggregateByName(spanItems);
+               if (spansByName.get("DENY").isEmpty()) {
+                  return false;
+               }
+               return spansByName.get("ALLOW").size() >= 4;
+            }, 10, TimeUnit.SECONDS);
       List<SpanData> spanItems = telemetryClient.finishedSpanItems();
 
       Map<String, List<SpanData>> spansByName = InMemoryTelemetryClient.aggregateByName(spanItems);
