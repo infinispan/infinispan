@@ -21,7 +21,7 @@ public class AuthenticationConfiguration extends ConfigurationElement<Authentica
    static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("use-auth", false, Boolean.class).build();
    static final AttributeDefinition<CallbackHandler> CALLBACK_HANDLER = AttributeDefinition.builder("callback-handler", null, CallbackHandler.class).build();
    static final AttributeDefinition<Subject> CLIENT_SUBJECT = AttributeDefinition.builder("client-subject", null, Subject.class).build();
-   static final AttributeDefinition<String> SASL_MECHANISM = AttributeDefinition.builder("sasl-mechanism", "SCRAM-SHA-512", String.class).build();
+   static final AttributeDefinition<String> SASL_MECHANISM = AttributeDefinition.builder("sasl-mechanism", "SCRAM-SHA-256", String.class).build();
    static final AttributeDefinition<Map<String, String>> SASL_PROPERTIES = AttributeDefinition.builder("sasl-properties", null, (Class<Map<String, String>>) (Class<?>) Map.class)
          .copier(collectionCopier())
          .initializer(HashMap::new).immutable().build();
