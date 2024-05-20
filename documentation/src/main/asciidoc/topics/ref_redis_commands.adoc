@@ -3,481 +3,351 @@
 
 The {brandname} RESP endpoint implements the following Redis commands:
 
-[cols="1,1"]
-|===
-| Command | Notes
 
-| link:https://redis.io/commands/append[APPEND]
-|
+* link:https://redis.io/commands/append[APPEND]
 
-| link:https://redis.io/commands/auth[AUTH]
-|
+* link:https://redis.io/commands/auth[AUTH]
 
-| link:https://redis.io/commands/blpop[BLPOP]
-|
+* link:https://redis.io/commands/blpop[BLPOP]
 
-| link:https://redis.io/commands/brpop[BRPOP]
-|
+* link:https://redis.io/commands/brpop[BRPOP]
 
-| link:https://redis.io/commands/client-getname[CLIENT GETNAME]
-|
+* link:https://redis.io/commands/client-getname[CLIENT GETNAME]
 
-| link:https://redis.io/commands/client-id[CLIENT ID]
-|
+* link:https://redis.io/commands/client-id[CLIENT ID]
 
-| link:https://redis.io/commands/client-info[CLIENT INFO]
-|
+* link:https://redis.io/commands/client-info[CLIENT INFO]
 
-| link:https://redis.io/commands/client-list[CLIENT LIST]
-|
+* link:https://redis.io/commands/client-list[CLIENT LIST]
 
-| link:https://redis.io/commands/client-setinfo[CLIENT SETINFO]
-|
+* link:https://redis.io/commands/client-setinfo[CLIENT SETINFO]
 
-| link:https://redis.io/commands/client-setname[CLIENT SETNAME]
-|
+* link:https://redis.io/commands/client-setname[CLIENT SETNAME]
 
-| link:https://redis.io/commands/command[COMMAND]
-|
+* link:https://redis.io/commands/command[COMMAND]
 
-| link:https://redis.io/commands/cluster-nodes/[CLUSTER NODES]
-| This commands includes all required fields, some are set to 0 as they do not apply to {brandname}.
+* link:https://redis.io/commands/cluster-nodes/[CLUSTER NODES]
++
+NOTE: This commands includes all required fields, but some fields are set to `0` as they do not apply to {brandname}.
 
-| link:https://redis.io/commands/cluster-shards/[CLUSTER SHARDS]
-|
+* link:https://redis.io/commands/cluster-shards/[CLUSTER SHARDS]
 
-| link:https://redis.io/commands/cluster-slots/[CLUSTER SLOTS]
-|
+* link:https://redis.io/commands/cluster-slots/[CLUSTER SLOTS]
 
-| link:https://redis.io/commands/dbsize[DBSIZE]
-|
+* link:https://redis.io/commands/dbsize[DBSIZE]
 
-| link:https://redis.io/commands/decr[DECR]
-|
+* link:https://redis.io/commands/decr[DECR]
 
-| link:https://redis.io/commands/decrby[DECRBY]
-|
+* link:https://redis.io/commands/decrby[DECRBY]
 
-| link:https://redis.io/commands/del[DEL]
-|
+* link:https://redis.io/commands/del[DEL]
 
-| link:https://redis.io/commands/discard[DISCARD]
-|
+* link:https://redis.io/commands/discard[DISCARD]
 
-| link:https://redis.io/commands/echo[ECHO]
-|
+* link:https://redis.io/commands/echo[ECHO]
 
-| link:https://redis.io/commands/exec[EXEC]
-| See <<multi_command, *MULTI*>>.
+* link:https://redis.io/commands/exec[EXEC]
++
+See the xref:multi_command[MULTI] command.
 
-| link:https://redis.io/commands/exists[EXISTS]
-|
+* link:https://redis.io/commands/exists[EXISTS]
 
-| link:https://redis.io/commands/expire[EXPIRE]
-|
+* link:https://redis.io/commands/expire[EXPIRE]
 
-| link:https://redis.io/commands/expireat[EXPIREAT]
-|
+* link:https://redis.io/commands/expireat[EXPIREAT]
 
-| link:https://redis.io/commands/expiretime[EXPIRETIME]
-|
+* link:https://redis.io/commands/expiretime[EXPIRETIME]
 
-| link:https://redis.io/commands/flushall[FLUSHALL]
-| Behaves like `FLUSHDB` since {brandname} does not support multiple Redis databases yet.
+* link:https://redis.io/commands/flushall[FLUSHALL]
++
+NOTE: This command behaves like `FLUSHDB` since {brandname} does not support multiple Redis databases yet.
 
-| link:https://redis.io/commands/flushdb[FLUSHDB]
-|
+* link:https://redis.io/commands/flushdb[FLUSHDB]
 
-| link:https://redis.io/commands/get[GET]
-|
+* link:https://redis.io/commands/get[GET]
 
-| link:https://redis.io/commands/getdel[GETDEL]
-|
+* link:https://redis.io/commands/getdel[GETDEL]
 
-| link:https://redis.io/commands/getex[GETEX]
-|
+* link:https://redis.io/commands/getex[GETEX]
 
-| link:https://redis.io/commands/getrange[GETRANGE]
-|
+* link:https://redis.io/commands/getrange[GETRANGE]
 
-| link:https://redis.io/commands/getset[GETSET]
-| Deprecated. Use the `SET` command with the appropriate flags.
+* link:https://redis.io/commands/getset[GETSET]
++
+NOTE: This command is deprecated. Use the `SET` command with the appropriate flags instead.
 
-| link:https://redis.io/commands/hdel[HDEL]
-|
+* link:https://redis.io/commands/hdel[HDEL]
 
-| link:https://redis.io/commands/hello[HELLO]
-|
+* link:https://redis.io/commands/hello[HELLO]
 
-| link:https://redis.io/commands/hexists[HEXISTS]
-|
+* link:https://redis.io/commands/hexists[HEXISTS]
 
-| link:https://redis.io/commands/hget[HGET]
-|
+* link:https://redis.io/commands/hget[HGET]
 
-| link:https://redis.io/commands/hincrby[HINCRBY]
-|
+* link:https://redis.io/commands/hincrby[HINCRBY]
 
-| link:https://redis.io/commands/hincrbyfloat[HINCRBYFLOAT]
-|
+* link:https://redis.io/commands/hincrbyfloat[HINCRBYFLOAT]
 
-| link:https://redis.io/commands/hkeys[HKEYS]
-|
+* link:https://redis.io/commands/hkeys[HKEYS]
 
-| link:https://redis.io/commands/hlen[HLEN]
-|
+* link:https://redis.io/commands/hlen[HLEN]
 
-| link:https://redis.io/commands/hmget[HMGET]
-|
+* link:https://redis.io/commands/hmget[HMGET]
 
-| link:https://redis.io/commands/hmset[HMSET]
-|
+* link:https://redis.io/commands/hmset[HMSET]
 
-| link:https://redis.io/commands/hrandfield[HRANDFIELD]
-|
+* link:https://redis.io/commands/hrandfield[HRANDFIELD]
 
-| link:https://redis.io/commands/hscan[HSCAN]
-|
+* link:https://redis.io/commands/hscan[HSCAN]
 
-| link:https://redis.io/commands/hset[HSET]
-|
+* link:https://redis.io/commands/hset[HSET]
 
-| link:https://redis.io/commands/hsetnx[HSETNX]
-|
+* link:https://redis.io/commands/hsetnx[HSETNX]
 
-| link:https://redis.io/commands/hstrlen[HSTRLEN]
-|
+* link:https://redis.io/commands/hstrlen[HSTRLEN]
 
-| link:https://redis.io/commands/hvals[HVALS]
-|
+* link:https://redis.io/commands/hvals[HVALS]
 
-| link:https://redis.io/commands/incr[INCR]
-|
+* link:https://redis.io/commands/incr[INCR]
 
-| link:https://redis.io/commands/incrby[INCRBY]
-|
+* link:https://redis.io/commands/incrby[INCRBY]
 
-| link:https://redis.io/commands/incrbyfloat[INCRBYFLOAT]
-|
+* link:https://redis.io/commands/incrbyfloat[INCRBYFLOAT]
 
-| link:https://redis.io/commands/info[INFO]
-| This implementation attempts to return all attributes that a real Redis server returns. However, in most cases, the values are set to 0, because they cannot be retrieved or don't make any sense in {brandname}.
+* link:https://redis.io/commands/info[INFO]
++
+NOTE: This implementation attempts to return all attributes that a real Redis server returns. However, in most cases, the values are set to `0` because they cannot be retrieved, or don't apply to {brandname}.
 
-| link:https://redis.io/commands/keys[KEYS]
-|
+* link:https://redis.io/commands/keys[KEYS]
 
-| link:https://redis.io/commands/lindex[LINDEX]
-|
+* link:https://redis.io/commands/lindex[LINDEX]
 
-| link:https://redis.io/commands/linsert[LINSERT]
-| Current implementation time complexity is O(N), where N is the size of the list.
+* link:https://redis.io/commands/linsert[LINSERT]
++
+NOTE: The current implementation has a time complexity of O(N), where N is the size of the list.
 
-| link:https://redis.io/commands/llen[LLEN]
-|
+* link:https://redis.io/commands/llen[LLEN]
 
-| link:https://redis.io/commands/lcs[LCS]
-|
+* link:https://redis.io/commands/lcs[LCS]
 
-| link:https://redis.io/commands/lmove[LMOVE]
-| Current implementation is atomic for rotation (source and destination are the same list). For different lists there is relaxed consistency
-for concurrent operations or failures unless the resp cache is configured to used transactions.
+* link:https://redis.io/commands/lmove[LMOVE]
++
+NOTE: The current implementation is atomic for rotation when the source and destination are the same list. For different lists, there is relaxed consistency for concurrent operations or failures unless the resp cache is configured to use transactions.
 
-| link:https://redis.io/commands/lmpop[LMPOP]
-|
+* link:https://redis.io/commands/lmpop[LMPOP]
 
-| link:https://redis.io/commands/lpop[LPOP]
-|
+* link:https://redis.io/commands/lpop[LPOP]
 
-| link:https://redis.io/commands/lpos[LPOS]
-|
+* link:https://redis.io/commands/lpos[LPOS]
 
-| link:https://redis.io/commands/lpush[LPUSH]
-|
+* link:https://redis.io/commands/lpush[LPUSH]
 
-| link:https://redis.io/commands/lpushx[LPUSHX]
-|
+* link:https://redis.io/commands/lpushx[LPUSHX]
 
-| link:https://redis.io/commands/lrange[LRANGE]
-|
+* link:https://redis.io/commands/lrange[LRANGE]
 
-| link:https://redis.io/commands/lrem[LREM]
-|
+* link:https://redis.io/commands/lrem[LREM]
 
-| link:https://redis.io/commands/lset[LSET]
-|
+* link:https://redis.io/commands/lset[LSET]
 
-| link:https://redis.io/commands/ltrim[LTRIM]
-|
+* link:https://redis.io/commands/ltrim[LTRIM]
 
-| link:https://redis.io/commands/memory-info[MEMORY-USAGE]
-| This command will return the memory used by the key and the value. It doesn't include the memory used by additional metadata associated with the entry.
+* link:https://redis.io/commands/memory-info[MEMORY-USAGE]
++ 
+NOTE: This command will return the memory used by the key and the value. It doesn't include the memory used by additional metadata associated with the entry.
 
-| link:https://redis.io/commands/memory-stats[MEMORY-STATS]
-| This command will return the same fields as a real Redis server, but all values will be set to 0.
 
-| link:https://redis.io/commands/mget[MGET]
-|
+* link:https://redis.io/commands/memory-stats[MEMORY-STATS]
++
+NOTE: This command will return the same fields as a real Redis server, but all values will be set to `0`.
 
-| link:https://redis.io/commands/module-list[MODULE LIST]
-| Always returns an empty list of modules.
+* link:https://redis.io/commands/mget[MGET]
 
-| link:https://redis.io/commands/mset[MSET]
-|
+* link:https://redis.io/commands/module-list[MODULE LIST]
++
+NOTE: This command always returns an empty list of modules.
 
-| link:https://redis.io/commands/msetnx[MSETNX]
-|
+* link:https://redis.io/commands/mset[MSET]
 
-| link:https://redis.io/commands/multi[MULTI] [[multi_command]]
-| The current implementation has a relaxed isolation level. Redis offers serializable transactions, but {brandname}
+* link:https://redis.io/commands/msetnx[MSETNX]
+
+* link:https://redis.io/commands/multi[MULTI] [[multi_command]]
++
+NOTE: The current implementation has a relaxed isolation level. Redis offers serializable transactions, but {brandname}
 provides a read-uncommitted isolation.
 
-| link:https://redis.io/commands/persist[PERSIST]
-|
+* link:https://redis.io/commands/persist[PERSIST]
 
-| link:https://redis.io/commands/pexpire[PEXPIRE]
-|
+* link:https://redis.io/commands/pexpire[PEXPIRE]
 
-| link:https://redis.io/commands/pexpiretime[PEXPIRETIME]
-|
+* link:https://redis.io/commands/pexpiretime[PEXPIRETIME]
 
-| link:https://redis.io/commands/ping[PING]
-|
+* link:https://redis.io/commands/ping[PING]
 
-| link:https://redis.io/commands/psetex[PSETEX]
-| Deprecated. Utilize `SET` with the appropriate flags.
+* link:https://redis.io/commands/psetex[PSETEX]
++
+NOTE: This command is deprecated. Use the `SET` command with the appropriate flags.
 
-| link:https://redis.io/commands/psubscribe[PSUBSCRIBE]
-|
+* link:https://redis.io/commands/psubscribe[PSUBSCRIBE]
 
-| link:https://redis.io/docs/latest/commands/pubsub-channels[PUBSUB CHANNELS]
-|
+* link:https://redis.io/docs/latest/commands/pubsub-channels[PUBSUB CHANNELS]
 
-| link:https://redis.io/docs/latest/commands/pubsub-numpat[PUBSUB NUMPAT]
-|
+* link:https://redis.io/docs/latest/commands/pubsub-numpat[PUBSUB NUMPAT]
 
-| link:https://redis.io/commands/pttl[PTTL]
-|
+* link:https://redis.io/commands/pttl[PTTL]
 
-| link:https://redis.io/commands/publish[PUBLISH]
-|
+* link:https://redis.io/commands/publish[PUBLISH]
 
-| link:https://redis.io/commands/punsubscribe[PUNSUBSCRIBE]
-|
+* link:https://redis.io/commands/punsubscribe[PUNSUBSCRIBE]
 
-| link:https://redis.io/commands/quit[QUIT]
-|
+* link:https://redis.io/commands/quit[QUIT]
 
-| link:https://redis.io/commands/randomkey[RANDOMKEY]
-|
+* link:https://redis.io/commands/randomkey[RANDOMKEY]
 
-| link:https://redis.io/commands/rpop[RPOP]
-|
+* link:https://redis.io/commands/rpop[RPOP]
 
-| link:https://redis.io/commands/rpoplpush[RPOPLPUSH]
-|
+* link:https://redis.io/commands/rpoplpush[RPOPLPUSH]
 
-| link:https://redis.io/commands/rpush[RPUSH]
-|
+* link:https://redis.io/commands/rpush[RPUSH]
 
-| link:https://redis.io/commands/rpushx[RPUSHX]
-|
+* link:https://redis.io/commands/rpushx[RPUSHX]
 
-| https://redis.io/commands/readonly[READONLY]
-|
+* https://redis.io/commands/readonly[READONLY]
 
-| https://redis.io/commands/readwrite[READWRITE]
-|
+* https://redis.io/commands/readwrite[READWRITE]
 
-| https://redis.io/commands/rename[RENAME]
-|
+* https://redis.io/commands/rename[RENAME]
 
-| https://redis.io/commands/renamenx[RENAMENX]
-|
+* https://redis.io/commands/renamenx[RENAMENX]
 
-| link:https://redis.io/commands/reset[RESET]
-|
+* link:https://redis.io/commands/reset[RESET]
 
-| link:https://redis.io/commands/sadd[SADD]
-|
+* link:https://redis.io/commands/sadd[SADD]
 
-| link:https://redis.io/commands/scard[SCARD]
-|
+* link:https://redis.io/commands/scard[SCARD]
 
-| link:https://redis.io/commands/scan[SCAN]
-| Cursors are reaped in case they have not been used within a timeout (5 minutes)
+* link:https://redis.io/commands/scan[SCAN]
++
+NOTE: Cursors are reaped in case they have not been used within a timeout. The timeout is 5 minutes.
 
-| link:https://redis.io/commands/sdiff[SDIFF]
-|
+* link:https://redis.io/commands/sdiff[SDIFF]
 
-| link:https://redis.io/commands/sdiffstore[SDIFFSTORE]
-|
+* link:https://redis.io/commands/sdiffstore[SDIFFSTORE]
 
-| link:https://redis.io/commands/select[SELECT]
-|
+* link:https://redis.io/commands/select[SELECT]
 
-| link:https://redis.io/commands/set[SET]
-|
+* link:https://redis.io/commands/set[SET]
 
-| link:https://redis.io/commands/setex[SETEX]
-| Deprecated. Use the `SET` command with the appropriate flags.
+* link:https://redis.io/commands/setex[SETEX]
++
+NOTE: This command is deprecated. Use the `SET` command with the appropriate flags instead.
 
-| link:https://redis.io/commands/setnx[SETNX]
-| Deprecated. Use the `SET` command with the appropriate flags.
+* link:https://redis.io/commands/setnx[SETNX]
++
+NOTE: This command is deprecated. Use the `SET` command with the appropriate flags instead.
 
-| link:https://redis.io/commands/set[SETRANGE]
-|
+* link:https://redis.io/commands/set[SETRANGE]
 
-| link:https://redis.io/commands/sinter[SINTER]
-|
+* link:https://redis.io/commands/sinter[SINTER]
 
-| link:https://redis.io/commands/sintercard[SINTERCARD]
-|
+* link:https://redis.io/commands/sintercard[SINTERCARD]
 
-| link:https://redis.io/commands/sinterstore[SINTERSTORE]
-|
+* link:https://redis.io/commands/sinterstore[SINTERSTORE]
 
-| link:https://redis.io/commands/sismember[SISMEMBER]
-|
+* link:https://redis.io/commands/sismember[SISMEMBER]
 
-| link:https://redis.io/commands/sort[SORT]
-|
+* link:https://redis.io/commands/sort[SORT]
 
-| link:https://redis.io/commands/sort_ro[SORT_RO]
-|
+* link:https://redis.io/commands/sort_ro[SORT_RO]
 
-| link:https://redis.io/commands/members[SMEMBERS]
-|
+* link:https://redis.io/commands/members[SMEMBERS]
 
-| link:https://redis.io/commands/smove[SMOVE]
-|
+* link:https://redis.io/commands/smove[SMOVE]
 
-| link:https://redis.io/commands/spop[SPOP]
-|
+* link:https://redis.io/commands/spop[SPOP]
 
-| link:https://redis.io/commands/srandmember[SRANDMEMBER]
-|
+* link:https://redis.io/commands/srandmember[SRANDMEMBER]
 
-| link:https://redis.io/commands/sscan[SSCAN]
-|
+* link:https://redis.io/commands/sscan[SSCAN]
 
-| link:https://redis.io/commands/strlen[STRLEN]
-|
+* link:https://redis.io/commands/strlen[STRLEN]
 
-| link:https://redis.io/commands/substr[SUBSTR]
-| Deprecated. Use the `GETRANGE` command.
+* link:https://redis.io/commands/substr[SUBSTR]
++
+NOTE: This command is deprecated. Use the `GETRANGE` command instead.
 
-| link:https://redis.io/commands/subscribe[SUBSCRIBE]
-|
+* link:https://redis.io/commands/subscribe[SUBSCRIBE]
 
-| link:https://redis.io/commands/sunion[SUNION]
-|
+* link:https://redis.io/commands/sunion[SUNION]
 
-| link:https://redis.io/commands/sunionstore[SUNIONSTORE]
-|
+* link:https://redis.io/commands/sunionstore[SUNIONSTORE]
 
-| link:https://redis.io/commands/time[TIME]
-|
+* link:https://redis.io/commands/time[TIME]
 
-| link:https://redis.io/commands/ttl[TTL]
-|
+* link:https://redis.io/commands/ttl[TTL]
 
-| link:https://redis.io/commands/type[TYPE]
-|
+* link:https://redis.io/commands/type[TYPE]
 
-| link:https://redis.io/commands/unsubscribe[UNSUBSCRIBE]
-|
+* link:https://redis.io/commands/unsubscribe[UNSUBSCRIBE]
 
-| link:https://redis.io/commands/unwatch[UNWATCH]
-|
+* link:https://redis.io/commands/unwatch[UNWATCH]
 
-| link:https://redis.io/commands/watch[WATCH]
-|
+* link:https://redis.io/commands/watch[WATCH]
 
-| link:https://redis.io/commands/zadd[ZADD]
-|
+* link:https://redis.io/commands/zadd[ZADD]
 
-| link:https://redis.io/commands/zcard[ZCARD]
-|
+* link:https://redis.io/commands/zcard[ZCARD]
 
-| link:https://redis.io/commands/zcount[ZCOUNT]
-|
+* link:https://redis.io/commands/zcount[ZCOUNT]
 
-| link:https://redis.io/commands/zdiff[ZDIFF]
-|
+* link:https://redis.io/commands/zdiff[ZDIFF]
 
-| link:https://redis.io/commands/zdiffstore[ZDIFFSTORE]
-|
+* link:https://redis.io/commands/zdiffstore[ZDIFFSTORE]
 
-| link:https://redis.io/commands/zincrby[ZINCRBY]
-|
+* link:https://redis.io/commands/zincrby[ZINCRBY]
 
-| link:https://redis.io/commands/zinter[ZINTER]
-|
+* link:https://redis.io/commands/zinter[ZINTER]
 
-| link:https://redis.io/commands/zintercard[ZINTERCARD]
-|
+* link:https://redis.io/commands/zintercard[ZINTERCARD]
 
-| link:https://redis.io/commands/zinterstore[ZINTERSTORE]
-|
+* link:https://redis.io/commands/zinterstore[ZINTERSTORE]
 
-| link:https://redis.io/commands/zlexcount[ZLEXCOUNT]
-|
+* link:https://redis.io/commands/zlexcount[ZLEXCOUNT]
 
-| link:https://redis.io/commands/zmpop[ZMPOP]
-|
+* link:https://redis.io/commands/zmpop[ZMPOP]
 
-| link:https://redis.io/commands/zpopmax[ZPOPMAX]
-|
+* link:https://redis.io/commands/zpopmax[ZPOPMAX]
 
-| link:https://redis.io/commands/zpopmin[ZPOPMIN]
-|
+* link:https://redis.io/commands/zpopmin[ZPOPMIN]
 
-| link:https://redis.io/commands/zunion[ZUNION]
-|
+* link:https://redis.io/commands/zunion[ZUNION]
 
-| link:https://redis.io/commands/zunionstore[ZUNIONSTORE]
-|
+* link:https://redis.io/commands/zunionstore[ZUNIONSTORE]
 
-| link:https://redis.io/commands/zrandmember[ZRANDMEMBER]
-|
+* link:https://redis.io/commands/zrandmember[ZRANDMEMBER]
 
-| link:https://redis.io/commands/zrange[ZRANGE]
-|
+* link:https://redis.io/commands/zrange[ZRANGE]
 
-| link:https://redis.io/commands/zrangebylex[ZRANGEBYLEX]
-|
+* link:https://redis.io/commands/zrangebylex[ZRANGEBYLEX]
 
-| link:https://redis.io/commands/zrangebyscore[ZRANGEBYSCORE]
-|
+* link:https://redis.io/commands/zrangebyscore[ZRANGEBYSCORE]
 
-| link:https://redis.io/commands/zrevrange[ZREVRANGE]
-|
+* link:https://redis.io/commands/zrevrange[ZREVRANGE]
 
-| link:https://redis.io/commands/zrevrangebylex[ZREVRANGEBYLEX]
-|
+* link:https://redis.io/commands/zrevrangebylex[ZREVRANGEBYLEX]
 
-| link:https://redis.io/commands/zrevrangebyscore[ZREVRANGEBYSCORE]
-|
+* link:https://redis.io/commands/zrevrangebyscore[ZREVRANGEBYSCORE]
 
-| link:https://redis.io/commands/zrangestore[ZRANGESTORE]
-|
+* link:https://redis.io/commands/zrangestore[ZRANGESTORE]
 
-| link:https://redis.io/commands/zrem[ZREM]
-|
+* link:https://redis.io/commands/zrem[ZREM]
 
-| link:https://redis.io/commands/zremrangebylex[ZREMRANGEBYLEX]
-|
+* link:https://redis.io/commands/zremrangebylex[ZREMRANGEBYLEX]
 
-| link:https://redis.io/commands/zremrangebyrank[ZREMRANGEBYRANK]
-|
+* link:https://redis.io/commands/zremrangebyrank[ZREMRANGEBYRANK]
 
-| link:https://redis.io/commands/zremrangebyscore[ZREMRANGEBYSCORE]
-|
+* link:https://redis.io/commands/zremrangebyscore[ZREMRANGEBYSCORE]
 
-| link:https://redis.io/commands/zscore[ZSCAN]
-|
+* link:https://redis.io/commands/zscore[ZSCAN]
 
-| link:https://redis.io/commands/zscore[ZSCORE]
-|
-
-|===
+* link:https://redis.io/commands/zscore[ZSCORE]
