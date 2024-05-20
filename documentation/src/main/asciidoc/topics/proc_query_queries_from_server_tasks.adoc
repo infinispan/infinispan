@@ -1,0 +1,25 @@
+[id='queries_server_tasks_{context}']
+= Remote queries from server tasks
+
+Indexes for remote caches encoded with ProtoBuf can be used to run queries from server tasks,
+even if the server tasks are run embedded with the server JVM.
+
+Here is an example:
+
+.Run remote queries from a server task
+[source,java]
+----
+include::code_examples/RemoteQueryAccessTask.java[]
+----
+
+The `RemoteQueryAccess` can be obtained from the `TaskContext`.
+
+It allows run the remote queries.
+
+Using the method `executeQuery`, that will take the following parameter:
+
+. `queryString`: the Iclke query to execute, as it was executed from a client
+. `namedParametersMap`: the parameters to pass to the query
+. `offset` and `maxResults`: for pagination
+. `hitCountAccuracy`: the bound up to hit count will be exact
+. `local`: if the query should report results only considering the local index shard
