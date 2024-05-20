@@ -17,3 +17,12 @@ include::code_examples/HotRodConnectionPools.java[]
 ----
 include::properties/hotrod-client-connection-pool.properties[]
 ----
+
+These configuration options give fine-grained control over the pool.
+We recommend tuning the pool according to the application needs.
+Otherwise, you might experience an increase in latency for new connections opening or a decrease in throughput with few connections available.
+
+A large pool could lead to a "herd effect" of new connections, given an abrupt increase in load.
+However, it should help in throughput with more connections to attend requests.
+A smaller pool avoids this effect and consumes fewer resources.
+However, it can only handle so many requests before starting to degrade.

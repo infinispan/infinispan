@@ -110,6 +110,10 @@ Additionally, setting the `sni_host_name` is now required when hostname validati
 | `min_evictable_idle_time`
 | *180000 ms / 3 minutes*
 | 1800000 ms / 30 minutes
+
+| `sasl_mechanism`
+| *SCRAM-SHA-512*
+| SCRAM-SHA-256
 |===
 
 == RESP Endpoint
