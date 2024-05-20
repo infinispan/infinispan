@@ -380,7 +380,7 @@ public class ChannelFactory {
             } else {
                newCacheInfo = cacheInfo.withNewServers(responseTopologyAge, responseTopologyId, addressList);
             }
-            updateCacheInfo(wrappedCacheName, newCacheInfo, false);
+            updateCacheInfo(wrappedCacheName, newCacheInfo);
          } else {
             if (log.isTraceEnabled())
                log.tracef("[%s] Ignoring outdated topology: topology id = %s, topology age = %s, servers = %s",
@@ -406,7 +406,7 @@ public class ChannelFactory {
    }
 
    @GuardedBy("lock")
-   protected void updateCacheInfo(WrappedBytes cacheName, CacheInfo newCacheInfo, boolean quiet) {
+   protected void updateCacheInfo(WrappedBytes cacheName, CacheInfo newCacheInfo) {
       List<InetSocketAddress> newServers = newCacheInfo.getServers();
       CacheInfo oldCacheInfo = topologyInfo.getCacheInfo(cacheName);
       List<InetSocketAddress> oldServers = oldCacheInfo.getServers();
@@ -425,7 +425,7 @@ public class ChannelFactory {
       // First add new servers. For servers that went down, the returned transport will fail for now
       for (SocketAddress server : addedServers) {
          HOTROD.newServerAdded(server);
-         fetchChannelAndInvoke(server, new ReleaseChannelOperation(quiet));
+         fetchChannelAndInvoke(server, cacheOperationsFactory.newPingOperation(true));
       }
 
       // Then update the server list for new operations
