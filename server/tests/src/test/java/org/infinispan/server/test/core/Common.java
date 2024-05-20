@@ -256,11 +256,13 @@ public class Common {
       HotRodTestClientDriver hotRodTestClientDriver = server.hotrod().withClientConfiguration(config);
       RemoteCacheManager remoteCacheManager = hotRodTestClientDriver.createRemoteCacheManager();
 
-      RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      String schema = Exceptions.unchecked(() -> Util.getResourceAsString(protoFile, server.getClass().getClassLoader()));
-      metadataCache.putIfAbsent(protoFile, schema);
-      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
-      assertNotNull(metadataCache.get(protoFile));
+      if (protoFile != null) {
+         RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+         String schema = Exceptions.unchecked(() -> Util.getResourceAsString(protoFile, server.getClass().getClassLoader()));
+         metadataCache.putIfAbsent(protoFile, schema);
+         assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+         assertNotNull(metadataCache.get(protoFile));
+      }
 
       SerializationContext ctx = MarshallerUtil.getSerializationContext(remoteCacheManager);
       TestDomainSCI.INSTANCE.registerSchema(ctx);
@@ -270,6 +272,7 @@ public class Common {
       builder.encoding().mediaType(APPLICATION_PROTOSTREAM_TYPE);
       builder.clustering().cacheMode(CacheMode.DIST_SYNC).stateTransfer().awaitInitialTransfer(true);
       if (indexed) {
+         builder.statistics().enable(); // we want to double-check if the queries are indexed or not
          builder.indexing().enable()
                .storage(LOCAL_HEAP)
                .addIndexedEntity(entityName);
