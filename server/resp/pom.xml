@@ -77,7 +77,7 @@
       <plugins>
          <plugin>
             <groupId>org.infinispan.maven-plugins</groupId>
-            <artifactId>protocol-parser-generator</artifactId>
+            <artifactId>protocol-parser-generator-maven-plugin</artifactId>
             <configuration>
                <files>
                   <file>${basedir}/src/main/resources/resp.gr</file>
