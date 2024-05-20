@@ -383,7 +383,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
     * @param key, the key to be computed
     * @param mappingFunction, mapping function to be appliyed to the key
-    * @return computed value or null if nothing is computed or computation value is null
+    * @return the current (existing or computed) value associated with  the specified key, or null if the computed value is null
     */
    default V computeIfAbsent(K key, SerializableFunction<? super K, ? extends V> mappingFunction) {
       return computeIfAbsent(key, (Function<? super K, ? extends V>) mappingFunction);
@@ -395,7 +395,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
     * @param key, the key to be computed
     * @param mappingFunction, mapping function to be appliyed to the key
-    * @return computed value or null if nothing is computed or computation value is null
+    * @return the current (existing or computed) value associated with  the specified key, or null if the computed value is null
     */
    default V computeIfAbsent(K key, SerializableFunction<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit) {
       return computeIfAbsent(key, (Function<? super K, ? extends V>) mappingFunction, lifespan, lifespanUnit);
@@ -407,7 +407,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
     * @param key, the key to be computed
     * @param mappingFunction, mapping function to be appliyed to the key
-    * @return computed value or null if nothing is computed or computation value is null
+    * @return the current (existing or computed) value associated with  the specified key, or null if the computed value is null
     */
    default V computeIfAbsent(K key, SerializableFunction<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       return computeIfAbsent(key, (Function<? super K, ? extends V>) mappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
@@ -419,7 +419,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
     * @param key, the key to be computed
     * @param mappingFunction, mapping function to be appliyed to the key
-    * @return computed value or null if nothing is computed or computation value is null
+    * @return the current (existing or computed) value associated with  the specified key, or null if the computed value is null
     */
    default CompletableFuture<V> computeIfAbsentAsync(K key, SerializableFunction<? super K, ? extends V> mappingFunction) {
       return computeIfAbsentAsync(key, (Function<? super K, ? extends V>) mappingFunction);
@@ -431,7 +431,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
     * @param key, the key to be computed
     * @param mappingFunction, mapping function to be appliyed to the key
-    * @return computed value or null if nothing is computed or computation value is null
+    * @return the current (existing or computed) value associated with  the specified key, or null if the computed value is null
     */
    default CompletableFuture<V> computeIfAbsentAsync(K key, SerializableFunction<? super K, ? extends V> mappingFunction,
          long lifespan, TimeUnit lifespanUnit) {
@@ -444,7 +444,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * The compiler will pick this overload for lambda parameters, making them {@link java.io.Serializable}
     * @param key, the key to be computed
     * @param mappingFunction, mapping function to be appliyed to the key
-    * @return computed value or null if nothing is computed or computation value is null
+    * @return the current (existing or computed) value associated with  the specified key, or null if the computed value is null
     */
    default CompletableFuture<V> computeIfAbsentAsync(K key, SerializableFunction<? super K, ? extends V> mappingFunction,
          long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
