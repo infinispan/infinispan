@@ -24,6 +24,7 @@ import org.infinispan.security.impl.Authorizer;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.TaskExecutionMode;
+import org.infinispan.tasks.query.RemoteQueryAccess;
 import org.infinispan.tasks.spi.TaskEngine;
 import org.infinispan.util.concurrent.BlockingManager;
 
@@ -80,7 +81,11 @@ public class ServerTaskEngine implements TaskEngine {
       }
       launderParameters(context);
       MediaType requestMediaType = context.getCache().map(c -> c.getAdvancedCache().getValueDataConversion().getRequestMediaType()).orElse(MediaType.MATCH_ALL);
-      context.getCache().ifPresent(c -> context.cache(c.getAdvancedCache().withMediaType(APPLICATION_OBJECT, APPLICATION_OBJECT)));
+      context.getCache().ifPresent(c -> {
+         context.cache(c.getAdvancedCache().withMediaType(APPLICATION_OBJECT, APPLICATION_OBJECT));
+         RemoteQueryAccess remoteQueryAccess = SecurityActions.getCacheComponentRegistry(c.getAdvancedCache()).getComponent(RemoteQueryAccess.class);
+         context.remoteQueryAccess(remoteQueryAccess);
+      });
       return runner.execute(task, context).thenApply(r -> (T) scriptConversions.convertToRequestType(r, APPLICATION_OBJECT, requestMediaType));
    }
 

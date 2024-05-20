@@ -48,6 +48,7 @@ import org.infinispan.query.stats.impl.LocalIndexStatistics;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.search.mapper.mapping.SearchMapping;
 import org.infinispan.search.mapper.mapping.SearchMappingCommonBuilding;
+import org.infinispan.tasks.query.RemoteQueryAccess;
 
 /**
  * Initializes components for remote query. Each cache manager has its own instance of this class during its lifetime.
@@ -167,6 +168,8 @@ public final class LifecycleManager implements ModuleLifecycle {
             BasicComponentRegistry bcr = cr.getComponent(BasicComponentRegistry.class);
             bcr.replaceComponent(IndexStatistics.class.getName(), new LocalIndexStatistics(), true);
             bcr.rewire();
+
+            cr.registerComponent(new RemoteQueryAccessImpl(), RemoteQueryAccess.class);
          }
 
       }
