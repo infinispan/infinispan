@@ -17,6 +17,7 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.security.Security;
+import org.infinispan.tasks.query.RemoteQueryAccess;
 
 /**
  * TaskContext. Defines the execution context of a task by specifying parameters, cache and marshaller
@@ -32,6 +33,7 @@ public class TaskContext {
    private Map<String, Object> parameters = Collections.emptyMap();
    private Subject subject;
    private transient boolean logEvent;
+   private transient RemoteQueryAccess remoteQueryAccess;
 
    public TaskContext() {
    }
@@ -120,6 +122,11 @@ public class TaskContext {
       return this;
    }
 
+   public TaskContext remoteQueryAccess(RemoteQueryAccess remoteQueryAccess) {
+      this.remoteQueryAccess = remoteQueryAccess;
+      return this;
+   }
+
    /**
     * CacheManager for this task execution
     *
@@ -172,6 +179,17 @@ public class TaskContext {
     */
    public boolean isLogEvent() {
       return logEvent;
+   }
+
+   /**
+    * Provides the access to the remote queries even if the task is executed in the server JVM.
+    * This can be useful if the indexes are defined to support remote queries,
+    * and we want the access to the same indexed queries from the server tasks.
+    *
+    * @return the {@link RemoteQueryAccess}
+    */
+   public Optional<RemoteQueryAccess> getRemoteQueryAccess() {
+      return Optional.ofNullable(remoteQueryAccess);
    }
 
    @Override
