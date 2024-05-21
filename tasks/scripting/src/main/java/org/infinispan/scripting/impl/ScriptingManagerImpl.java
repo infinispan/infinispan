@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -52,6 +53,7 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.GLOBAL)
 public class ScriptingManagerImpl implements ScriptingManager {
    private static final Log log = LogFactory.getLog(ScriptingManagerImpl.class, Log.class);
+   private static final ThreadLocal<Integer> RUNNING_IN_SCRIPT = ThreadLocal.withInitial(() -> 0);
 
    @Inject
    EmbeddedCacheManager cacheManager;
@@ -243,20 +245,29 @@ public class ScriptingManagerImpl implements ScriptingManager {
    }
 
    <T> CompletionStage<T> execute(ScriptMetadata metadata, Bindings bindings) {
-      return blockingManager.supplyBlocking(() -> {
-         CompiledScript compiled = compiledScripts.get(metadata.name());
-         try {
-            if (compiled != null) {
-               return (T) compiled.eval(bindings);
-            } else {
-               ScriptEngine engine = getEngineForScript(metadata);
-               String script = getScriptCache().get(metadata.name());
-               return (T) engine.eval(script, bindings);
-            }
-         } catch (ScriptException e) {
-            throw log.scriptExecutionError(e);
+      if (RUNNING_IN_SCRIPT.get() > 0) {
+         return CompletableFuture.completedFuture(executeDirectly(metadata, bindings));
+      }
+      return blockingManager.supplyBlocking(() -> executeDirectly(metadata, bindings), "ScriptingManagerImpl - execute");
+   }
+
+   private <T> T executeDirectly(ScriptMetadata metadata, Bindings bindings) {
+      var initial = RUNNING_IN_SCRIPT.get();
+      RUNNING_IN_SCRIPT.set(initial + 1);
+      CompiledScript compiled = compiledScripts.get(metadata.name());
+      try {
+         if (compiled != null) {
+            return (T) compiled.eval(bindings);
+         } else {
+            ScriptEngine engine = getEngineForScript(metadata);
+            String script = getScriptCache().get(metadata.name());
+            return (T) engine.eval(script, bindings);
          }
-      }, "ScriptingManagerImpl - execute");
+      } catch (ScriptException e) {
+         throw log.scriptExecutionError(e);
+      } finally {
+         RUNNING_IN_SCRIPT.set(initial);
+      }
    }
 
    private ScriptEngine getEngineForScript(ScriptMetadata metadata) {

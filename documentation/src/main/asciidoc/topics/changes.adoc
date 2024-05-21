@@ -66,9 +66,24 @@ infinispan_statistics_hits{cache_manager="Foo",cache="Bar"}
 
 [NOTE]
 ====
-For backwards compatibility, metrics are currently exported in the previous format. The setting `legacy` should be set to 
+For backwards compatibility, metrics are currently exported in the previous format. The setting `legacy` should be set to
 `false` to export metrics in the new format.
 ====
+
+=== Virtual threads enabled by default (JDK 21+)
+
+This release now enables virtual thread pools by default.
+This change can lead to improved application responsiveness and scalability under high concurrency.
+
+However, we've identified a potential issue on systems with very low CPU counts (2 or fewer cores).
+In these specific environments, virtual threads might, in rare cases, lead to system freezes due to thread pinning.
+
+If you encounter this, you have a couple of straightforward solutions:
+
+* **Disable virtual threads:** You can revert to the previous behavior by adding the following Java option: `-Dorg.infinispan.threads.virtual=false`
+* **Increase scheduler parallelism:** Alternatively, you can try increasing the parallelism of the virtual thread scheduler using this Java option: `-Djdk.virtualThreadScheduler.parallelism=4`
+
+We recommend monitoring your application's performance after the upgrade, especially if you are running on a system with a low CPU count.
 
 == Upgrading from 15.1 to 15.2
 
