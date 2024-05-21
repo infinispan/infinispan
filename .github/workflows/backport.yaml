@@ -29,3 +29,12 @@ jobs:
           pull-request: ${{ github.event.pull_request.url }}
           auth: ${{ secrets.GITHUB_TOKEN }}
           no-squash: true
+
+      - if: contains(github.event.pull_request.labels.*.name, '15.0.x')
+        name: 15.0.x Backport
+        uses: kiegroup/git-backporting@v4.8.0
+        with:
+          target-branch: 15.0.x
+          pull-request: ${{ github.event.pull_request.url }}
+          auth: ${{ secrets.GITHUB_TOKEN }}
+          no-squash: true
