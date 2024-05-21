@@ -123,6 +123,14 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public enum ParserVersionCheck {
+      INFINISPAN_151(15, 1) {
+         @Override
+         public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
+            Configuration manualIndexingConfig = getConfiguration(holder, "indexed-manual-indexing");
+            IndexingConfiguration indexed = manualIndexingConfig.indexing();
+            assertThat(indexed.useJavaEmbeddedEntities()).isTrue();
+         }
+      },
       INFINISPAN_150(15, 0) {
          @Override
          public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
@@ -133,7 +141,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertThat(indexed.indexingMode()).isEqualTo(IndexingMode.MANUAL);
             assertThat(indexed.sharding()).isNotNull();
             assertThat(indexed.sharding().getShards()).isEqualTo(7);
-            assertThat(indexed.useJavaEmbeddedEntities()).isTrue();
 
             QueryConfiguration query = getConfiguration(holder, "local").query();
             assertThat(query.hitCountAccuracy()).isEqualTo(10_000);
