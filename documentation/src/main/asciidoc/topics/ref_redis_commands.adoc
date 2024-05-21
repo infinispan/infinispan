@@ -235,6 +235,8 @@ NOTE: Cursors are reaped in case they have not been used within a timeout. The t
 * link:https://redis.io/commands/sdiffstore[SDIFFSTORE]
 
 * link:https://redis.io/commands/select[SELECT]
++
+NOTE: {brandname} allows the SELECT command both in local and clustered mode, unlike Redis Cluster which forbids use of this command and only supports database zero.
 
 * link:https://redis.io/commands/set[SET]
 
