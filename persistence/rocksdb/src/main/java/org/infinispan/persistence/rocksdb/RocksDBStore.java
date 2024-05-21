@@ -38,6 +38,7 @@ import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.marshall.persistence.PersistenceMarshaller;
 import org.infinispan.marshall.persistence.impl.MarshallableEntryImpl;
@@ -56,7 +57,6 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.util.concurrent.BlockingManager;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.util.logging.LogFactory;
 import org.reactivestreams.Publisher;
 import org.rocksdb.BuiltinComparator;
@@ -165,6 +165,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
       return new NonSegmentedRocksDBHandler(data, expired, keyPartitioner);
    }
 
+   @SuppressWarnings("checkstyle:ForbiddenMethod")
    private void migrateFromV11() throws IOException, RocksDBException {
       IntSet segments;
       if (configuration.segmented()) {
@@ -195,7 +196,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
          WriteBatch batch = new WriteBatch();
          Set<MarshallableEntry<K, V>> expirableEntries = new HashSet<>();
          Flowable.fromPublisher(publisher)
-               .subscribe(e -> {
+               .blockingSubscribe(e -> {
                   ColumnFamilyHandle handle = migrationHandler.getHandle(keyPartitioner.getSegment(e.getKey()));
                   batch.put(handle, e.getKeyBytes().copy().getBuf(), marshall(e.getMarshalledValue()));
                   if (e.expiryTime() > 1)
@@ -248,7 +249,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
       return dataWriteOptions;
    }
 
-   protected DBOptions dataDbOptions() {
+   private DBOptions dataDbOptions() {
       DBOptions dbOptions;
       if (databaseProperties != null) {
          dbOptions = DBOptions.getDBOptionsFromProps(databaseProperties);
@@ -353,7 +354,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
 
    @Override
    public CompletionStage<Void> batch(int publisherCount, Publisher<SegmentedPublisher<Object>> removePublisher,
-         Publisher<SegmentedPublisher<MarshallableEntry<K, V>>> writePublisher) {
+                                      Publisher<SegmentedPublisher<MarshallableEntry<K, V>>> writePublisher) {
       WriteBatch batch = new WriteBatch();
       Set<MarshallableEntry<K, V>> expirableEntries = new HashSet<>();
       Flowable.fromPublisher(removePublisher)
@@ -482,7 +483,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
    }
 
    private MarshalledValue handlePossiblyExpiredKey(ColumnFamilyHandle columnFamilyHandle, byte[] marshalledKey,
-         long now) throws RocksDBException {
+                                                    long now) throws RocksDBException {
       byte[] valueBytes = db.get(columnFamilyHandle, marshalledKey);
       if (valueBytes == null) {
          return null;
@@ -562,7 +563,8 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
       @ProtoField(number = 1, collectionImplementation = ArrayList.class)
       List<byte[]> entries;
 
-      ExpiryBucket(){}
+      ExpiryBucket() {
+      }
 
       ExpiryBucket(byte[] existingKey, byte[] newKey) {
          entries = new ArrayList<>(2);
@@ -624,7 +626,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
       @Override
       protected MarshallableEntry<K, V> getNext() {
          MarshallableEntry<K, V> entry = null;
-         while (entry == null ) {
+         while (entry == null) {
             K key = unmarshall(readKey(), userMarshaller);
             if (key == null) break;
 
@@ -827,7 +829,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
       abstract CompletionStage<Void> clear();
 
       abstract Publisher<MarshallableEntry<K, V>> publishEntries(IntSet segments, Predicate<? super K> filter,
-            boolean fetchValue);
+                                                                 boolean fetchValue);
 
       CompletionStage<Long> size(IntSet segments) {
          return Flowable.fromPublisher(publishKeys(segments, null))
@@ -988,7 +990,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
       }
 
       byte[] byteArrayFromInt(int val) {
-         return new byte[] {
+         return new byte[]{
                (byte) (val >>> 24),
                (byte) (val >>> 16),
                (byte) (val >>> 8),
@@ -1047,6 +1049,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
 
       /**
        * Clear out the entries for a segment
+       *
        * @param segment the segment to clear out
        */
       private void clearForSegment(int segment) {
