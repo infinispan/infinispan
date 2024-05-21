@@ -1,0 +1,20 @@
+[id='virtual-threads-{context}']
+= Virtual Threads Support
+
+Infinispan supports virtual threads, which can significantly improve application responsiveness and scalability under high concurrency.
+By default, they are enabled if you are running on JDK 21 or higher.
+
+[WARNING]
+====
+On systems with JDK versions prior to 24 and low CPU counts (2 or less), {brandname} might experience thread pinning issues when using virtual threads.
+Thread pinning is a situation where virtual threads are unexpectedly bound to a limited number of OS threads, potentially leading to performance degradation or system freezes.
+
+To work around this problem, virtual threads can be disabled as described in the procedure below, or the virtual thread scheduler parallelism may be increased with the Java option `-Djdk.virtualThreadScheduler.parallelism=<value>`.
+A common starting point for `<value>` on low-CPU systems is `4`.
+====
+
+include::{topics}/proc_disable_virtual_threads.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]
