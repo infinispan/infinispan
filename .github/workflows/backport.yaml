@@ -21,7 +21,7 @@ jobs:
           auth: ${{ secrets.GITHUB_TOKEN }}
           no-squash: true
 
-      - if: contains(github.event.pull_request.labels.*.name, '14.0.x')
+      - if: always() && contains(github.event.pull_request.labels.*.name, '14.0.x')
         name: 14.0.x Backport
         uses: kiegroup/git-backporting@v4.8.0
         with:
@@ -30,7 +30,7 @@ jobs:
           auth: ${{ secrets.GITHUB_TOKEN }}
           no-squash: true
 
-      - if: contains(github.event.pull_request.labels.*.name, '15.0.x')
+      - if: always() && contains(github.event.pull_request.labels.*.name, '15.0.x')
         name: 15.0.x Backport
         uses: kiegroup/git-backporting@v4.8.0
         with:
