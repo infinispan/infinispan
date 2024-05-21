@@ -1,6 +1,7 @@
 [id='enabling-resp-endpoint_{context}']
-= Using the RESP endpoint
+= {brandname} RESP endpoint
 
+The RESP endpoint is enabled by default on the single-port endpoint. Redis client connections will automatically be detected and routed to the internal connector.
 The RESP endpoint works with:
 
 * Standalone {brandname} Server deployments, exactly like standalone Redis, where each server instance runs independently of each other.
