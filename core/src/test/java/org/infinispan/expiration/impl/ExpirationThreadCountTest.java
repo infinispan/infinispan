@@ -25,8 +25,10 @@ public class ExpirationThreadCountTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
+      var tf = new DefaultThreadFactory(null, 1, EXPIRATION_THREAD_NAME_PREFIX, null, null);
+      tf.useVirtualThread(false);
       GlobalConfigurationBuilder globalCfg = new GlobalConfigurationBuilder();
-      globalCfg.expirationThreadPool().threadFactory(new DefaultThreadFactory(null, 1, EXPIRATION_THREAD_NAME_PREFIX, null, null));
+      globalCfg.expirationThreadPool().threadFactory(tf);
       return TestCacheManagerFactory.createCacheManager(globalCfg, new ConfigurationBuilder());
    }
 

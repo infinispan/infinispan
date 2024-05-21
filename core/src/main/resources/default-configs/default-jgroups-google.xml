@@ -28,7 +28,7 @@
         thread_pool.keep_alive_time="60000"
         thread_pool.thread_dumps_enabled="${jgroups.thread_dumps_enabled:false}"
 
-        use_virtual_threads="${jgroups.thread.virtual,org.infinispan.threads.virtual:false}"
+        use_virtual_threads="${jgroups.thread.virtual,org.infinispan.threads.virtual:true}"
    />
    <RED/>
    <org.jgroups.protocols.google.GOOGLE_PING2

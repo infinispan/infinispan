@@ -11,6 +11,7 @@ import static org.mockito.Mockito.withSettings;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -21,6 +22,7 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commands.triangle.BackupWriteCommand;
 import org.infinispan.commands.write.BackupAckCommand;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
@@ -221,7 +223,8 @@ public class NonTxStateTransferOverwritingValue2Test extends MultipleCacheManage
                   checkPoint.trigger("post_commit_entry_" + getKey() + "_from_" + source);
                }
             };
-            return super.commitEntry(newEntry, command, ctx, trackFlag, l1Invalidation);
+            return CompletableFuture.runAsync(() -> super.commitEntry(newEntry, command, ctx, trackFlag, l1Invalidation))
+                  .thenApply(CompletableFutures.identity());
          }
       };
       TestingUtil.replaceComponent(cache, ClusteringDependentLogic.class, replaceCdl, true);

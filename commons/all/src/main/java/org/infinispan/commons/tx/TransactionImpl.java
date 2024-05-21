@@ -10,6 +10,8 @@ import static org.infinispan.commons.util.concurrent.CompletableFutures.extractE
 import static org.infinispan.commons.util.concurrent.CompletableFutures.identity;
 import static org.infinispan.commons.util.concurrent.CompletableFutures.rethrowExceptionIfPresent;
 
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -19,8 +21,12 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
-import java.util.stream.Collectors;
+
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 
 import jakarta.transaction.HeuristicMixedException;
 import jakarta.transaction.HeuristicRollbackException;
@@ -29,11 +35,6 @@ import jakarta.transaction.Status;
 import jakarta.transaction.Synchronization;
 import jakarta.transaction.SystemException;
 import jakarta.transaction.Transaction;
-import javax.transaction.xa.XAException;
-import javax.transaction.xa.XAResource;
-
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
 
 
 /**
@@ -61,15 +62,17 @@ public class TransactionImpl implements Transaction {
    private static final String FORCE_ROLLBACK_MESSAGE = "Force rollback invoked. (debug mode)";
    private final List<Synchronization> syncs;
    private final List<XaResourceData> resources;
-   private final Object xidLock = new Object();
+   private final Lock xidLock;
    private volatile XidImpl xid;
    private volatile int status;
    private RollbackException firstRollbackException;
+
 
    protected TransactionImpl() {
       status = Status.STATUS_ACTIVE;
       syncs = new ArrayList<>(2);
       resources = new ArrayList<>(2);
+      xidLock = new ReentrantLock();
    }
 
    private static boolean isRollbackCode(XAException ex) {
@@ -265,8 +268,11 @@ public class TransactionImpl implements Transaction {
          }
       }
 
-      synchronized (xidLock) {
+      xidLock.lock();
+      try {
          resources.add(new XaResourceData(resource));
+      } finally {
+         xidLock.unlock();
       }
 
       try {
@@ -319,13 +325,16 @@ public class TransactionImpl implements Transaction {
       if (log.isTraceEnabled()) {
          log.tracef("Registering synchronization handler %s", sync);
       }
-      synchronized (xidLock) {
+      xidLock.lock();
+      try {
          syncs.add(sync);
+      } finally {
+         xidLock.unlock();
       }
    }
 
    public Collection<XAResource> getEnlistedResources() {
-      return resources.stream().map(xaResourceData -> xaResourceData.xaResource).collect(Collectors.toUnmodifiableList());
+      return resources.stream().map(XaResourceData::getXaResource).toList();
    }
 
    public boolean runPrepare() {
@@ -362,8 +371,9 @@ public class TransactionImpl implements Transaction {
     *
     * @param forceRollback force the transaction to rollback.
     */
-   public synchronized void runCommit(boolean forceRollback) //synchronized because of client transactions
+   public void runCommit(boolean forceRollback)
          throws HeuristicMixedException, HeuristicRollbackException, RollbackException {
+      xidLock.lock(); //locked because of client transactions
       try {
          runCommitAsync(forceRollback, DefaultResourceConverter.INSTANCE).toCompletableFuture().get();
       } catch (InterruptedException e) {
@@ -371,6 +381,8 @@ public class TransactionImpl implements Transaction {
       } catch (ExecutionException e) {
          Throwable cause = throwChecked(e.getCause());
          throwRuntimeException(cause);
+      } finally {
+         xidLock.unlock();
       }
    }
 
@@ -414,10 +426,13 @@ public class TransactionImpl implements Transaction {
    }
 
    public void setXid(XidImpl xid) {
-      synchronized (xidLock) {
+      xidLock.lock();
+      try {
          if (syncs.isEmpty() && resources.isEmpty()) {
             this.xid = xid;
          }
+      } finally {
+         xidLock.unlock();
       }
    }
 
@@ -438,19 +453,24 @@ public class TransactionImpl implements Transaction {
       return this == obj;
    }
 
-   public synchronized void transactionFailed(Throwable throwable) {
-      if (isDone()) {
-         throw new IllegalStateException("Transaction is done. Cannot change status");
-      }
-      if (status == Status.STATUS_MARKED_ROLLBACK) {
-         return;
-      }
-      status = Status.STATUS_MARKED_ROLLBACK;
-      if (firstRollbackException == null) {
-         firstRollbackException = new RollbackException("Exception caught while running transaction");
-         firstRollbackException.addSuppressed(throwable);
-      } else if (!(throwable instanceof RollbackException)) {
-         firstRollbackException.addSuppressed(throwable);
+   public void transactionFailed(Throwable throwable) {
+      xidLock.lock();
+      try {
+         if (isDone()) {
+            throw new IllegalStateException("Transaction is done. Cannot change status");
+         }
+         if (status == Status.STATUS_MARKED_ROLLBACK) {
+            return;
+         }
+         status = Status.STATUS_MARKED_ROLLBACK;
+         if (firstRollbackException == null) {
+            firstRollbackException = new RollbackException("Exception caught while running transaction");
+            firstRollbackException.addSuppressed(throwable);
+         } else if (!(throwable instanceof RollbackException)) {
+            firstRollbackException.addSuppressed(throwable);
+         }
+      } finally {
+         xidLock.unlock();
       }
    }
 
@@ -710,8 +730,12 @@ public class TransactionImpl implements Transaction {
       final XAResource xaResource;
       volatile int status;
 
-      private XaResourceData(XAResource xaResource) {
+      XaResourceData(XAResource xaResource) {
          this.xaResource = Objects.requireNonNull(xaResource);
+      }
+
+      XAResource getXaResource() {
+         return xaResource;
       }
    }
 
@@ -749,8 +773,7 @@ public class TransactionImpl implements Transaction {
          throwable = extractException(throwable);
          log.errorCommittingTx(throwable);
          exceptions.add(throwable);
-         if (throwable instanceof XAException) {
-            XAException e = (XAException) throwable;
+         if (throwable instanceof XAException e) {
             switch (e.errorCode) {
                case XAException.XA_HEURCOM:
                case XAException.XA_HEURRB:

@@ -152,7 +152,7 @@
       <!-- unstable and stress because we can have them inside a functional class, for example -->
       <defaultExcludedTestNGGroups>unstable,stress</defaultExcludedTestNGGroups>
       <defaultTestNGGroups>functional,unit,xsite,arquillian</defaultTestNGGroups>
-      <org.infinispan.tests.threads.virtual>false</org.infinispan.tests.threads.virtual>
+      <org.infinispan.tests.threads.virtual>true</org.infinispan.tests.threads.virtual>
       <dir.ispn>../</dir.ispn>
       <dir.jacoco>${session.executionRootDirectory}/jacoco/</dir.jacoco>
       <dir.jacoco.merged>../jacoco/merged/</dir.jacoco.merged>
@@ -3171,16 +3171,6 @@
                </plugin>
             </plugins>
          </build>
-      </profile>
-      <profile>
-         <id>vthreads-tests</id>
-         <activation>
-            <activeByDefault>false</activeByDefault>
-         </activation>
-         <properties>
-            <org.infinispan.tests.threads.virtual>true</org.infinispan.tests.threads.virtual>
-            <infinispan.test.parallel.threads>${system.numCores}</infinispan.test.parallel.threads>
-         </properties>
       </profile>
    </profiles>
 </project>
