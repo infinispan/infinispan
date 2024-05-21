@@ -1,14 +1,7 @@
 [id='resp-endpoint']
 :context: resp-endpoint
-= Using the RESP endpoint
 
-{brandname} Server includes a module that implements the link:https://github.com/redis/redis-specifications/blob/master/protocol/RESP3.md[RESP3 protocol].
-The RESP endpoint allows Redis clients to connect to one or several {brandname}-backed RESP servers and perform cache operations.
-
-The RESP endpoint is enabled by default on the single-port endpoint. Redis client connections will automatically be detected and routed to the internal connector.
-
-
-include::{topics}/proc_server_enabling_resp.adoc[leveloffset=+1]
+include::{topics}/proc_server_configuring_resp.adoc[leveloffset=+1]
 include::{topics}/proc_server_resp_databases.adoc[leveloffset=+1]
 include::{topics}/ref_redis_commands.adoc[leveloffset=+1]
 
