@@ -1,74 +1,61 @@
 {
-  "definitions": [
-    {
-      "protopath": "generated:/:persistence.scripting.proto",
-      "def": {
-        "enums": [
-          {
-            "name": "ExecutionMode",
-            "enum_fields": [
-              {
-                "name": "LOCAL"
-              },
-              {
-                "name": "DISTRIBUTED",
-                "integer": 1
-              }
-            ]
-          }
-        ],
-        "messages": [
-          {
-            "name": "ScriptMetadata",
-            "fields": [
-              {
-                "id": 1,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "mode",
-                "type": "ExecutionMode"
-              },
-              {
-                "id": 3,
-                "name": "extension",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "parameters",
-                "type": "string",
-                "is_repeated": true
-              },
-              {
-                "id": 5,
-                "name": "dataType",
-                "type": "org.infinispan.persistence.commons.MediaType"
-              },
-              {
-                "id": 6,
-                "name": "language",
-                "type": "string"
-              },
-              {
-                "id": 7,
-                "name": "role",
-                "type": "string"
-              }
-            ]
-          }
-        ],
-        "imports": [
-          {
-            "path": "persistence.commons.proto"
-          }
-        ],
-        "package": {
-          "name": "org.infinispan.persistence.scripting"
-        }
+  "definitions" : [ {
+    "protopath" : "generated:/:persistence.scripting.proto",
+    "def" : {
+      "enums" : [ {
+        "name" : "ExecutionMode",
+        "enum_fields" : [ {
+          "name" : "LOCAL"
+        }, {
+          "name" : "DISTRIBUTED",
+          "integer" : 1
+        } ]
+      } ],
+      "messages" : [ {
+        "name" : "ScriptMetadata",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "name",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "mode",
+          "type" : "ExecutionMode",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "extension",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "parameters",
+          "type" : "string",
+          "is_repeated" : true
+        }, {
+          "id" : 5,
+          "name" : "dataType",
+          "type" : "org.infinispan.persistence.commons.MediaType",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "language",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "role",
+          "type" : "string",
+          "optional" : true
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "persistence.commons.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.persistence.scripting"
       }
     }
-  ]
+  } ]
 }

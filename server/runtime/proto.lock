@@ -1,191 +1,162 @@
 {
-  "definitions": [
-    {
-      "protopath": "generated:/:persistence.event_logger.proto",
-      "def": {
-        "messages": [
-          {
-            "name": "ServerEventImpl",
-            "fields": [
-              {
-                "id": 1,
-                "name": "when",
-                "type": "int64",
-                "options": [
-                  {
-                    "name": "default",
-                    "value": "0"
-                  }
-                ]
-              },
-              {
-                "id": 2,
-                "name": "level",
-                "type": "org.infinispan.persistence.core.EventLogLevel"
-              },
-              {
-                "id": 3,
-                "name": "category",
-                "type": "org.infinispan.persistence.core.EventLogCategory"
-              },
-              {
-                "id": 4,
-                "name": "message",
-                "type": "string"
-              },
-              {
-                "id": 5,
-                "name": "detail",
-                "type": "string"
-              },
-              {
-                "id": 6,
-                "name": "who",
-                "type": "string"
-              },
-              {
-                "id": 7,
-                "name": "context",
-                "type": "string"
-              },
-              {
-                "id": 8,
-                "name": "scope",
-                "type": "string"
-              }
-            ]
-          }
-        ],
-        "imports": [
-          {
-            "path": "persistence.core.proto"
-          }
-        ],
-        "package": {
-          "name": "org.infinispan.persistence.event_logger"
-        }
-      }
-    },
-    {
-      "protopath": "generated:/:persistence.server_state.proto",
-      "def": {
-        "messages": [
-          {
-            "name": "IgnoredCaches",
-            "fields": [
-              {
-                "id": 1,
-                "name": "caches",
-                "type": "string",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "IpFilterRules",
-            "fields": [
-              {
-                "id": 1,
-                "name": "rules",
-                "type": "IpFilterRule",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "IpFilterRule",
-            "fields": [
-              {
-                "id": 1,
-                "name": "cidr",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "type",
-                "type": "string"
-              }
-            ]
-          }
-        ],
-        "package": {
-          "name": "org.infinispan.persistence.server_state"
-        }
-      }
-    },
-    {
-      "protopath": "generated:/:persistence.servertasks.proto",
-      "def": {
-        "messages": [
-          {
-            "name": "TaskContext",
-            "fields": [
-              {
-                "id": 1,
-                "name": "parameters",
-                "type": "TaskContext.TaskParameter",
-                "is_repeated": true
-              },
-              {
-                "id": 2,
-                "name": "subject",
-                "type": "Subject"
-              }
-            ],
-            "messages": [
-              {
-                "name": "TaskParameter",
-                "fields": [
-                  {
-                    "id": 1,
-                    "name": "key",
-                    "type": "string"
-                  },
-                  {
-                    "id": 2,
-                    "name": "value",
-                    "type": "string"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "name": "DistributedServerTask",
-            "fields": [
-              {
-                "id": 1,
-                "name": "taskName",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "cacheName",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "context",
-                "type": "TaskContext"
-              }
-            ]
-          },
-          {
-            "name": "Subject",
-            "fields": [
-              {
-                "id": 1,
-                "name": "principals",
-                "type": "string",
-                "is_repeated": true
-              }
-            ]
-          }
-        ],
-        "package": {
-          "name": "org.infinispan.persistence.servertasks"
-        }
+  "definitions" : [ {
+    "protopath" : "generated:/:persistence.event_logger.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "ServerEventImpl",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "when",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        }, {
+          "id" : 2,
+          "name" : "level",
+          "type" : "org.infinispan.persistence.core.EventLogLevel",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "category",
+          "type" : "org.infinispan.persistence.core.EventLogCategory",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "message",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "detail",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "who",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "context",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "scope",
+          "type" : "string",
+          "optional" : true
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "persistence.core.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.persistence.event_logger"
       }
     }
-  ]
+  }, {
+    "protopath" : "generated:/:persistence.servertasks.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "TaskContext",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "parameters",
+          "type" : "TaskContext.TaskParameter",
+          "is_repeated" : true
+        }, {
+          "id" : 2,
+          "name" : "subject",
+          "type" : "Subject",
+          "optional" : true
+        } ],
+        "messages" : [ {
+          "name" : "TaskParameter",
+          "fields" : [ {
+            "id" : 1,
+            "name" : "key",
+            "type" : "string",
+            "optional" : true
+          }, {
+            "id" : 2,
+            "name" : "value",
+            "type" : "string",
+            "optional" : true
+          } ]
+        } ]
+      }, {
+        "name" : "DistributedServerTask",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "taskName",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "cacheName",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "context",
+          "type" : "TaskContext",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "Subject",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "principals",
+          "type" : "string",
+          "is_repeated" : true
+        } ]
+      } ],
+      "package" : {
+        "name" : "org.infinispan.persistence.servertasks"
+      }
+    }
+  }, {
+    "protopath" : "generated:/:persistence.server_state.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "IgnoredCaches",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "caches",
+          "type" : "string",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "IpFilterRules",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "rules",
+          "type" : "IpFilterRule",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "IpFilterRule",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cidr",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "type",
+          "type" : "string",
+          "optional" : true
+        } ]
+      } ],
+      "package" : {
+        "name" : "org.infinispan.persistence.server_state"
+      }
+    }
+  } ]
 }

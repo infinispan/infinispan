@@ -1,56 +1,46 @@
 {
-  "definitions": [
-    {
-      "protopath": "generated:/:persistence.memcached.proto",
-      "def": {
-        "messages": [
-          {
-            "name": "MemcachedMetadata",
-            "fields": [
-              {
-                "id": 1,
-                "name": "numericVersion",
-                "type": "org.infinispan.persistence.core.NumericVersion"
-              },
-              {
-                "id": 2,
-                "name": "clusteredVersion",
-                "type": "org.infinispan.persistence.core.SimpleClusteredVersion"
-              },
-              {
-                "id": 3,
-                "name": "lifespan",
-                "type": "int64",
-                "options": [
-                  {
-                    "name": "default",
-                    "value": "-1"
-                  }
-                ]
-              },
-              {
-                "id": 5,
-                "name": "flags",
-                "type": "int32",
-                "options": [
-                  {
-                    "name": "default",
-                    "value": "0"
-                  }
-                ]
-              }
-            ]
-          }
-        ],
-        "imports": [
-          {
-            "path": "persistence.core.proto"
-          }
-        ],
-        "package": {
-          "name": "org.infinispan.persistence.memcached"
-        }
+  "definitions" : [ {
+    "protopath" : "generated:/:persistence.memcached.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "MemcachedMetadata",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "numericVersion",
+          "type" : "org.infinispan.persistence.core.NumericVersion",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "clusteredVersion",
+          "type" : "org.infinispan.persistence.core.SimpleClusteredVersion",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "lifespan",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "-1"
+          } ]
+        }, {
+          "id" : 5,
+          "name" : "flags",
+          "type" : "int32",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "persistence.core.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.persistence.memcached"
       }
     }
-  ]
+  } ]
 }

@@ -1,128 +1,105 @@
 {
-  "definitions": [
-    {
-      "protopath": "generated:/:persistence.distribution.proto",
-      "def": {
-        "messages": [
-          {
-            "name": "NodeDistributionInfo",
-            "fields": [
-              {
-                "id": 1,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "addresses",
-                "type": "string",
-                "is_repeated": true
-              },
-              {
-                "id": 3,
-                "name": "memoryAvailable",
-                "type": "int64",
-                "options": [
-                  {
-                    "name": "default",
-                    "value": "0"
-                  }
-                ]
-              },
-              {
-                "id": 4,
-                "name": "memoryUsed",
-                "type": "int64",
-                "options": [
-                  {
-                    "name": "default",
-                    "value": "0"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "name": "CacheDistributionInfo",
-            "fields": [
-              {
-                "id": 1,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "addresses",
-                "type": "string",
-                "is_repeated": true
-              },
-              {
-                "id": 3,
-                "name": "memoryEntries",
-                "type": "int64",
-                "options": [
-                  {
-                    "name": "default",
-                    "value": "0"
-                  }
-                ]
-              },
-              {
-                "id": 4,
-                "name": "totalEntries",
-                "type": "int64",
-                "options": [
-                  {
-                    "name": "default",
-                    "value": "0"
-                  }
-                ]
-              },
-              {
-                "id": 5,
-                "name": "memoryUsed",
-                "type": "int64",
-                "options": [
-                  {
-                    "name": "default",
-                    "value": "0"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "name": "KeyDistributionInfo",
-            "fields": [
-              {
-                "id": 1,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "primary",
-                "type": "bool",
-                "options": [
-                  {
-                    "name": "default",
-                    "value": "false"
-                  }
-                ]
-              },
-              {
-                "id": 3,
-                "name": "addresses",
-                "type": "string",
-                "is_repeated": true
-              }
-            ]
-          }
-        ],
-        "package": {
-          "name": "org.infinispan.persistence.distribution"
-        }
+  "definitions" : [ {
+    "protopath" : "generated:/:persistence.distribution.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "NodeDistributionInfo",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "name",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "addresses",
+          "type" : "string",
+          "is_repeated" : true
+        }, {
+          "id" : 3,
+          "name" : "memoryAvailable",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        }, {
+          "id" : 4,
+          "name" : "memoryUsed",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        } ]
+      }, {
+        "name" : "CacheDistributionInfo",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "name",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "addresses",
+          "type" : "string",
+          "is_repeated" : true
+        }, {
+          "id" : 3,
+          "name" : "memoryEntries",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        }, {
+          "id" : 4,
+          "name" : "totalEntries",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        }, {
+          "id" : 5,
+          "name" : "memoryUsed",
+          "type" : "int64",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "0"
+          } ]
+        } ]
+      }, {
+        "name" : "KeyDistributionInfo",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "name",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "primary",
+          "type" : "bool",
+          "optional" : true,
+          "options" : [ {
+            "name" : "default",
+            "value" : "false"
+          } ]
+        }, {
+          "id" : 3,
+          "name" : "addresses",
+          "type" : "string",
+          "is_repeated" : true
+        } ]
+      } ],
+      "package" : {
+        "name" : "org.infinispan.persistence.distribution"
       }
     }
-  ]
+  } ]
 }

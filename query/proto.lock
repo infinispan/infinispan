@@ -1,29 +1,25 @@
 {
-  "definitions": [
-    {
-      "protopath": "generated:/:persistence.query.proto",
-      "def": {
-        "messages": [
-          {
-            "name": "KnownClassKey",
-            "fields": [
-              {
-                "id": 1,
-                "name": "cacheName",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "className",
-                "type": "string"
-              }
-            ]
-          }
-        ],
-        "package": {
-          "name": "org.infinispan.persistence.query"
-        }
+  "definitions" : [ {
+    "protopath" : "generated:/:persistence.query.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "KnownClassKey",
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "string",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "className",
+          "type" : "string",
+          "optional" : true
+        } ]
+      } ],
+      "package" : {
+        "name" : "org.infinispan.persistence.query"
       }
     }
-  ]
+  } ]
 }
