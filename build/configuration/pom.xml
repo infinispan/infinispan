@@ -12,7 +12,7 @@
 
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-build-configuration-parent</artifactId>
-   <version>15.0.5-SNAPSHOT</version>
+   <version>15.1.0-SNAPSHOT</version>
    <packaging>pom</packaging>
 
    <name>Infinispan Common Parent</name>
@@ -94,9 +94,9 @@
       <infinispan.brand.prefix>infinispan</infinispan.brand.prefix>
       <infinispan.brand.short-name>infinispan</infinispan.brand.short-name>
       <infinispan.brand.version>${project.version}</infinispan.brand.version>
-      <infinispan.codename>I'm Still Standing</infinispan.codename>
+      <infinispan.codename>N/A</infinispan.codename>
       <infinispan.module.slot.prefix>ispn</infinispan.module.slot.prefix>
-      <infinispan.base.version>15.0</infinispan.base.version>
+      <infinispan.base.version>15.1</infinispan.base.version>
       <infinispan.module.slot>${infinispan.module.slot.prefix}-${infinispan.base.version}</infinispan.module.slot>
       <infinispan.core.schema.version>${infinispan.base.version}</infinispan.core.schema.version>
       <infinispan.olm.openshift.source>community-operators</infinispan.olm.openshift.source>
@@ -142,7 +142,7 @@
       <version.hamcrest>2.2</version.hamcrest>
       <version.hibernate.core>6.4.8.Final</version.hibernate.core>
       <version.hibernate.search>7.1.1.Final</version.hibernate.search>
-      <version.infinispan>15.0.5-SNAPSHOT</version.infinispan>
+      <version.infinispan>15.1.0-SNAPSHOT</version.infinispan>
       <version.infinispan.arquillian>1.2.0.Beta3</version.infinispan.arquillian>
       <version.infinispan.doclets>1.4.0.Final</version.infinispan.doclets>
       <version.infinispan.maven-plugins>1.0.5.Final</version.infinispan.maven-plugins>
