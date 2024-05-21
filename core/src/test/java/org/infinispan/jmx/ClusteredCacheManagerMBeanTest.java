@@ -16,6 +16,7 @@ import java.util.concurrent.ExecutorService;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import org.infinispan.commons.jdkspecific.ThreadCreator;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.configuration.cache.CacheMode;
@@ -113,8 +114,9 @@ public class ClusteredCacheManagerMBeanTest extends MultipleCacheManagersTest {
 
       objectName = getCacheManagerObjectName(JMX_DOMAIN, "DefaultCacheManager", NON_BLOCKING_EXECUTOR);
       assertTrue(server.isRegistered(objectName));
-      assertEquals(30000L, server.getAttribute(objectName, "KeepAliveTime"));
-      assertEquals(TestCacheManagerFactory.NAMED_EXECUTORS_THREADS_NO_QUEUE,
-                   server.getAttribute(objectName, "MaximumPoolSize"));
+      assertEquals(ThreadCreator.useVirtualThreads() ? -1L : 30000L,
+            server.getAttribute(objectName, "KeepAliveTime"));
+      assertEquals(ThreadCreator.useVirtualThreads() ? -1 : TestCacheManagerFactory.NAMED_EXECUTORS_THREADS_NO_QUEUE,
+            server.getAttribute(objectName, "MaximumPoolSize"));
    }
 }

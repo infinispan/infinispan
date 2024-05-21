@@ -42,3 +42,5 @@ classes
 # Checkstyle in Eclipse
 .checkstyle
 .idea
+# recording files
+*.jfr
